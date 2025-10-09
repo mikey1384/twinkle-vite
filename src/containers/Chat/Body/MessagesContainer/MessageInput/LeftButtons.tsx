@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import { useChatContext, useKeyContext } from '~/contexts';
+import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
 
 export default function LeftButtons({
   buttonColor,
@@ -13,6 +15,7 @@ export default function LeftButtons({
   loading,
   nextDayTimeStamp,
   onChessButtonClick,
+  onOmokButtonClick,
   onTopicButtonClick,
   onWordleButtonClick,
   topicId
@@ -27,10 +30,61 @@ export default function LeftButtons({
   loading: boolean;
   nextDayTimeStamp: number;
   onChessButtonClick: () => void;
+  onOmokButtonClick: () => void;
   onTopicButtonClick: () => void;
   onWordleButtonClick: () => void;
   topicId: number;
 }) {
+  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
+  const channelState = useChatContext(
+    (v) => v.state.channelsObj[selectedChannelId]
+  );
+  const myId = useKeyContext((v) => v.myState.userId);
+
+  const chessButtonIsGlowing = useMemo(() => {
+    if (!isTwoPeopleChannel || !channelState) return false;
+    const latestMessage = getLatestGameMessage(channelState, 'chess');
+    const chessState = latestMessage?.chessState;
+    if (!chessState) return false;
+    if (
+      chessState.isDiscussion ||
+      chessState.isDraw ||
+      chessState.isStalemate
+    ) {
+      return false;
+    }
+    const gameWinner =
+      latestMessage?.gameWinnerId ?? chessState.winnerId ?? null;
+    if (gameWinner !== null && gameWinner !== undefined) return false;
+    const playerColors = chessState.playerColors || {};
+    const myColor =
+      playerColors?.[myId] ?? playerColors?.[String(myId)] ?? 'white';
+    const moveNumber =
+      typeof chessState.move?.number === 'number' ? chessState.move.number : 0;
+    const nextColor = moveNumber % 2 === 0 ? 'white' : 'black';
+    if (chessState.move?.by === myId) return false;
+    return myColor === nextColor;
+  }, [channelState, isTwoPeopleChannel, myId]);
+
+  const omokButtonIsGlowing = useMemo(() => {
+    if (!isTwoPeopleChannel || !channelState) return false;
+    const latestMessage = getLatestGameMessage(channelState, 'omok');
+    const omokState = latestMessage?.omokState;
+    if (!omokState) return false;
+    const gameWinner =
+      latestMessage?.gameWinnerId ?? omokState.winnerId ?? null;
+    if (gameWinner !== null && gameWinner !== undefined) return false;
+    const board = Array.isArray(omokState.board) ? omokState.board : null;
+    if (!board) return false;
+    const stonesPlaced = countOmokStones(board);
+    const nextColor: OmokColor = stonesPlaced % 2 === 0 ? 'black' : 'white';
+    const playerColors = omokState.playerColors || {};
+    const assigned =
+      playerColors?.[myId] ?? playerColors?.[String(myId)] ?? nextColor;
+    if (omokState.move?.by === myId) return false;
+    return assigned === nextColor;
+  }, [channelState, isTwoPeopleChannel, myId]);
   return (
     <div
       style={{
@@ -40,18 +94,29 @@ export default function LeftButtons({
       }}
     >
       {isTwoPeopleChannel ? (
-        <Button
-          disabled={loading || isChessBanned || isRestrictedChannel}
-          skeuomorphic
-          onClick={onChessButtonClick}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
-        >
-          <Icon size="lg" icon={['fas', 'chess']} />
-          <span className="desktop" style={{ marginLeft: '0.7rem' }}>
-            Chess
-          </span>
-        </Button>
+        <>
+          <Button
+            disabled={loading || isChessBanned || isRestrictedChannel}
+            skeuomorphic
+            filled={chessButtonIsGlowing}
+            onClick={onChessButtonClick}
+            color={chessButtonIsGlowing ? alertColor : buttonColor}
+            hoverColor={chessButtonIsGlowing ? alertColor : buttonHoverColor}
+          >
+            <Icon size="lg" icon={['fas', 'chess']} />
+          </Button>
+          <Button
+            disabled={loading || isChessBanned || isRestrictedChannel}
+            style={{ marginLeft: '0.5rem' }}
+            skeuomorphic
+            filled={omokButtonIsGlowing}
+            onClick={onOmokButtonClick}
+            color={omokButtonIsGlowing ? alertColor : buttonColor}
+            hoverColor={omokButtonIsGlowing ? alertColor : buttonHoverColor}
+          >
+            O<span className="desktop">mok</span>
+          </Button>
+        </>
       ) : hasWordleButton ? (
         <Button
           loading={loading || !nextDayTimeStamp}
@@ -75,11 +140,40 @@ export default function LeftButtons({
           hoverColor={buttonHoverColor}
         >
           <Icon
-            size={isTwoPeopleChannel || hasWordleButton ? null : 'lg'}
+            size={isTwoPeopleChannel || hasWordleButton ? '' : 'lg'}
             icon="comment"
           />
         </Button>
       )}
     </div>
+  );
+}
+
+function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
+  if (!channelState) return null;
+  const messagesObj = channelState.messagesObj || {};
+  const lastId =
+    game === 'chess'
+      ? channelState.lastChessMessageId
+      : channelState.lastOmokMessageId;
+  const direct =
+    (lastId !== null && lastId !== undefined && messagesObj[lastId]) ||
+    (lastId !== null && lastId !== undefined && messagesObj[String(lastId)]);
+  if (direct) return direct;
+  return game === 'chess'
+    ? channelState.recentChessMessage || null
+    : channelState.recentOmokMessage || null;
+}
+
+function countOmokStones(board: OmokCell[][]) {
+  return board.reduce(
+    (total, row) =>
+      total +
+      row.reduce(
+        (rowSum, cell) =>
+          rowSum + (cell === 'black' || cell === 'white' ? 1 : 0),
+        0
+      ),
+    0
   );
 }

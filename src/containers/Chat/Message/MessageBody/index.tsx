@@ -11,6 +11,7 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import Chess from '../../Chess';
+import Omok from '../../Omok';
 import GameOverMessage from './GameOverMessage';
 import TextMessage from './TextMessage';
 import Icon from '~/components/Icon';
@@ -50,6 +51,7 @@ import {
   ZERO_TWINKLE_ID,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
+import useBoardSpoilerOff from '../hooks/useBoardSpoilerOff';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 const deviceIsMobile = isMobile(navigator);
@@ -61,6 +63,7 @@ const editLabel = localize('edit');
 function MessageBody({
   channelId,
   chessCountdownNumber,
+  omokCountdownNumber,
   partner,
   currentChannel,
   displayedThemeColor,
@@ -84,6 +87,7 @@ function MessageBody({
     aiThoughtContent,
     attachmentHidden,
     chessState,
+    omokState,
     content,
     fileToUpload,
     fileName,
@@ -127,6 +131,8 @@ function MessageBody({
   onDeclineRewind,
   onDelete,
   onChessSpoilerClick,
+  onOmokBoardClick,
+  onOmokSpoilerClick,
   onReceiveNewMessage,
   onReplyClick,
   onRequestRewind,
@@ -141,6 +147,7 @@ function MessageBody({
   zIndex
 }: {
   chessCountdownNumber: number;
+  omokCountdownNumber?: number;
   partner: any;
   channelId: number;
   currentChannel: any;
@@ -165,6 +172,8 @@ function MessageBody({
   onAcceptGroupInvitation: (v: any) => void;
   onChessBoardClick: () => void;
   onChessSpoilerClick: (v: number) => void;
+  onOmokBoardClick: () => void;
+  onOmokSpoilerClick: (v: number) => void;
   onCancelRewindRequest: () => void;
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
@@ -209,19 +218,23 @@ function MessageBody({
       onSetActualTitle,
       onSetIsEditing,
       onSetSiteUrl,
-      onSetThumbUrl,
-      onSetReplyTarget,
-      onUpdateLastChessMessageId,
-      onUpdateLastChessMoveViewerId,
-      onUpdateRecentChessMessage
-    },
-    requests: {
-      editChatMessage,
-      saveChatMessage,
-      setChessMoveViewTimeStamp,
-      postChatReaction,
-      removeChatReaction
-    },
+    onSetThumbUrl,
+    onSetReplyTarget,
+    onUpdateLastChessMessageId,
+    onUpdateLastChessMoveViewerId,
+    onUpdateRecentChessMessage,
+    onUpdateLastOmokMessageId,
+    onUpdateLastOmokMoveViewerId,
+    onUpdateRecentOmokMessage
+  },
+  requests: {
+    editChatMessage,
+    saveChatMessage,
+    setChessMoveViewTimeStamp,
+    setOmokMoveViewTimeStamp,
+    postChatReaction,
+    removeChatReaction
+  },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
   const user = useAppContext((v) => v.user.state.userObj[userId]) || {};
@@ -301,6 +314,11 @@ function MessageBody({
   let appliedProfilePicUrl = memberProfilePicUrl || profilePicUrl;
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
   const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
+  const isOmokMsg = useMemo(() => !!omokState, [omokState]);
+  const isChessBoardMsg = useMemo(
+    () => Boolean(isChessMsg && !isOmokMsg),
+    [isChessMsg, isOmokMsg]
+  );
 
   if (fileToUpload && !userId) {
     userId = myId;
@@ -308,20 +326,29 @@ function MessageBody({
     appliedProfilePicUrl = myProfilePicUrl;
   }
   useEffect(() => {
-    if (isChessMsg && typeof messageId === 'number') {
+    if (isOmokMsg && typeof messageId === 'number') {
+      onUpdateLastOmokMessageId({ channelId, messageId });
+    } else if (isChessBoardMsg && typeof messageId === 'number') {
       onUpdateLastChessMessageId({ channelId, messageId });
     } else if (gameWinnerId || isDraw) {
       onUpdateLastChessMessageId({
         channelId,
         messageId: null
       });
+      onUpdateLastOmokMessageId({
+        channelId,
+        messageId: null
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, isChessMsg, messageId]);
+  }, [channelId, isOmokMsg, isChessBoardMsg, messageId, gameWinnerId, isDraw]);
 
   useEffect(() => {
-    if (!message.id && message.isChessMsg) {
+    if (!message.id && isChessBoardMsg) {
       onUpdateRecentChessMessage({ channelId, message });
+    }
+    if (!message.id && isOmokMsg) {
+      onUpdateRecentOmokMessage({ channelId, message });
     }
     if (
       userIsUploader &&
@@ -345,6 +372,7 @@ function MessageBody({
       isResign: boolean;
       isNotification?: boolean;
       chessState: any;
+      omokState: any;
       content: string;
       channelId: number;
       gameWinnerId: number;
@@ -366,6 +394,7 @@ function MessageBody({
         content: newMessage.content,
         channelId: newMessage.channelId,
         chessState: newMessage.chessState,
+        omokState: newMessage.omokState,
         isCallMsg: newMessage.isCallMsg,
         isChessMsg: newMessage.isChessMsg,
         isDrawOffer: newMessage.isDrawOffer,
@@ -435,31 +464,25 @@ function MessageBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const spoilerOff = useMemo(() => {
-    if (typeof chessCountdownNumber === 'number') {
-      return true;
-    }
-    const userMadeThisMove = chessState?.move?.by === myId;
-    const userIsTheLastMoveViewer =
-      currentChannel.lastChessMoveViewerId === myId;
-    if (
-      userMadeThisMove ||
-      userIsTheLastMoveViewer ||
-      moveViewTimeStamp ||
-      messageId < currentChannel.lastChessMessageId
-    ) {
-      return true;
-    }
-    return false;
-  }, [
-    chessCountdownNumber,
-    chessState?.move?.by,
-    currentChannel.lastChessMessageId,
-    currentChannel.lastChessMoveViewerId,
+  const chessSpoilerOff = useBoardSpoilerOff({
+    countdownNumber: chessCountdownNumber,
+    moveByUserId: chessState?.move?.by,
+    myId,
+    lastMoveViewerId: currentChannel.lastChessMoveViewerId,
+    lastMessageId: currentChannel.lastChessMessageId,
     messageId,
-    moveViewTimeStamp,
-    myId
-  ]);
+    moveViewTimeStamp
+  });
+
+  const omokSpoilerOff = useBoardSpoilerOff({
+    countdownNumber: omokCountdownNumber,
+    moveByUserId: omokState?.move?.by,
+    myId,
+    lastMoveViewerId: currentChannel.lastOmokMoveViewerId,
+    lastMessageId: currentChannel.lastOmokMessageId,
+    messageId,
+    moveViewTimeStamp
+  });
 
   useEffect(() => {
     const url = fetchURLFromText(content);
@@ -684,6 +707,22 @@ function MessageBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChessSpoilerClick, channelId, message, userId]);
 
+  const handleOmokSpoilerClick = useCallback(async () => {
+    if (spoilerClickedRef.current) return;
+    spoilerClickedRef.current = true;
+    onSetReplyTarget({ channelId: currentChannel.id, target: null });
+    try {
+      await setOmokMoveViewTimeStamp({ channelId, message });
+      onUpdateLastOmokMoveViewerId({ channelId, viewerId: myId });
+      onOmokSpoilerClick(userId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      spoilerClickedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onOmokSpoilerClick, channelId, message, userId]);
+
   const handleEditCancel = useCallback(() => {
     onSetIsEditing({
       contentId: messageId,
@@ -841,7 +880,16 @@ function MessageBody({
     );
   }
 
-  if (!chessState && (gameWinnerId || isDraw || isAbort)) {
+  const gameTypeForResult = useMemo(() => {
+    const lc = (content || '').toLowerCase();
+    if (lc.includes('omok')) return 'omok';
+    if (lc.includes('chess')) return 'chess';
+    return 'chess';
+  }, [content]);
+
+  // Only show plain GameOverMessage when there is no board state to render.
+  // For Omok connect-five wins, the message carries omokState; let the board render instead.
+  if (!chessState && !omokState && (gameWinnerId || isDraw || isAbort)) {
     return (
       <GameOverMessage
         winnerId={gameWinnerId}
@@ -850,6 +898,9 @@ function MessageBody({
         isAbort={!!isAbort}
         isResign={!!isResign}
         isDraw={!!isDraw}
+        gameType={gameTypeForResult as 'chess' | 'omok'}
+        omokState={omokState}
+        content={content}
       />
     );
   }
@@ -968,7 +1019,26 @@ function MessageBody({
                   username={appliedUsername}
                   onClick={onChessBoardClick}
                 />
-              ) : isChessMsg ? (
+              ) : isOmokMsg ? (
+                <Omok
+                  channelId={channelId}
+                  countdownNumber={omokCountdownNumber}
+                  gameWinnerId={gameWinnerId}
+                  initialState={omokState}
+                  lastOmokMessageId={currentChannel.lastOmokMessageId}
+                  loaded={socketConnected}
+                  messageId={messageId}
+                  moveViewed={!!moveViewTimeStamp}
+                  myId={myId}
+                  onBoardClick={onOmokBoardClick}
+                  onSpoilerClick={handleOmokSpoilerClick}
+                  opponentId={partner?.id}
+                  opponentName={partner?.username}
+                  senderId={userId}
+                  spoilerOff={omokSpoilerOff}
+                  style={{ marginTop: '1rem', width: '100%' }}
+                />
+              ) : isChessBoardMsg ? (
                 <Chess
                   key={chessThemeVersion}
                   loaded
@@ -976,7 +1046,7 @@ function MessageBody({
                   channelId={channelId}
                   countdownNumber={chessCountdownNumber}
                   gameWinnerId={gameWinnerId}
-                  spoilerOff={spoilerOff}
+                  spoilerOff={chessSpoilerOff}
                   messageId={messageId}
                   myId={myId}
                   initialState={chessState}

@@ -2518,12 +2518,18 @@ export default function ChatReducer(
           ? state.numUnreads
           : state.numUnreads + 1;
       const prevChannelObj = state.channelsObj[action.message.channelId] || {};
-      const lastChessMoveViewerId =
+      const isChessMoveMessage =
         action.message.isChessMsg &&
-        action.message.userId &&
-        !action.message.isDrawOffer
+        !!action.message.chessState &&
+        !action.message.omokState;
+      const lastChessMoveViewerId =
+        isChessMoveMessage && action.message.userId && !action.message.isDrawOffer
           ? action.message.userId
           : prevChannelObj.lastChessMoveViewerId;
+      const lastOmokMoveViewerId =
+        action.message.isChessMsg && action.message.omokState && action.message.userId
+          ? action.message.userId
+          : prevChannelObj.lastOmokMoveViewerId;
       const messageIds = subchannelId
         ? prevChannelObj.messageIds
         : [messageId].concat(prevChannelObj.messageIds);
@@ -2615,6 +2621,7 @@ export default function ChatReducer(
             messageIds,
             messagesObj,
             lastChessMoveViewerId,
+            lastOmokMoveViewerId,
             members,
             numUnreads:
               subchannelId || (action.usingChat && !action.currentSubchannelId)
@@ -2753,10 +2760,18 @@ export default function ChatReducer(
                 },
                 lastChessMoveViewerId:
                   action.message.isChessMsg &&
+                  !!action.message.chessState &&
+                  !action.message.omokState &&
                   action.message.userId &&
                   !action.message.isDrawOffer
                     ? action.message.userId
                     : prevChannelObj?.lastChessMoveViewerId,
+                lastOmokMoveViewerId:
+                  action.message.isChessMsg &&
+                  action.message.omokState &&
+                  action.message.userId
+                    ? action.message.userId
+                    : prevChannelObj?.lastOmokMoveViewerId,
                 numUnreads: action.isMyMessage
                   ? Number(prevChannelObj?.numUnreads || 0)
                   : Number(prevChannelObj?.numUnreads || 0) + 1
@@ -3341,6 +3356,11 @@ export default function ChatReducer(
       return {
         ...state,
         chessModalShown: action.shown
+      };
+    case 'SET_OMOK_MODAL_SHOWN':
+      return {
+        ...state,
+        omokModalShown: action.shown
       };
     case 'SET_CREATING_NEW_DM_CHANNEL':
       return {
@@ -3928,6 +3948,22 @@ export default function ChatReducer(
           }
         }
       };
+    case 'UPDATE_LAST_OMOK_MESSAGE_ID':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            lastOmokMessageId:
+              typeof action.messageId === 'number' &&
+              action.messageId >
+                (state.channelsObj[action.channelId]?.lastOmokMessageId || 0)
+                ? action.messageId
+                : state.channelsObj[action.channelId]?.lastOmokMessageId
+          }
+        }
+      };
     case 'UPDATE_LAST_CHESS_MOVE_VIEWER_ID':
       return {
         ...state,
@@ -3936,6 +3972,17 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             lastChessMoveViewerId: action.viewerId
+          }
+        }
+      };
+    case 'UPDATE_LAST_OMOK_MOVE_VIEWER_ID':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            lastOmokMoveViewerId: action.viewerId
           }
         }
       };
@@ -3953,6 +4000,17 @@ export default function ChatReducer(
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
             recentChessMessage: action.message
+          }
+        }
+      };
+    case 'UPDATE_RECENT_OMOK_MESSAGE':
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            recentOmokMessage: action.message
           }
         }
       };

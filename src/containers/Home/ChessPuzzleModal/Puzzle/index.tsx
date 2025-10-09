@@ -427,7 +427,6 @@ export default function Puzzle({
 
   useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
-    // Pause countdown while awaiting user to pick a promotion piece
     if (promotionPending) return;
 
     if (timeLeft <= 0) {

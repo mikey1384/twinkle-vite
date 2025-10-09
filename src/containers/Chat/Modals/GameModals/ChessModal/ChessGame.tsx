@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
-import Chess from '../../Chess';
-import { getUserChatSquareColors } from '../../Chess/helpers/theme';
+import Chess from '../../../Chess';
+import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
-export default function Game({
+export default function ChessGame({
   boardState,
   countdownNumber,
   channelId,
@@ -25,7 +25,7 @@ export default function Game({
   squareColors
 }: {
   boardState: any;
-  countdownNumber: number;
+  countdownNumber: number | null;
   channelId: number;
   currentChannel: any;
   initialState: any;

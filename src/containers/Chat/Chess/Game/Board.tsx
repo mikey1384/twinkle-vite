@@ -1,14 +1,14 @@
 import React, { useMemo, Fragment } from 'react';
 import getPiece from '../helpers/piece';
 import Square from '../Square';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { isTablet } from '~/helpers';
 import { css } from '@emotion/css';
 import CastlingButton from './CastlingButton';
+import BoardSpoiler from '~/containers/Chat/BoardSpoiler';
 
 const deviceIsTablet = isTablet(navigator);
-const boardWidth = deviceIsTablet ? '25vh' : '50vh';
+const defaultBoardWidth = deviceIsTablet ? '25vh' : '50vh';
 
 export default function Board({
   interactable,
@@ -19,7 +19,8 @@ export default function Board({
   onSpoilerClick,
   opponentName,
   spoilerOff,
-  squares
+  squares,
+  size = 'regular'
 }: {
   interactable: boolean;
   myColor: string;
@@ -30,36 +31,20 @@ export default function Board({
   opponentName: string;
   spoilerOff: boolean;
   squares: any[];
+  size?: 'regular' | 'compact';
 }) {
-  const madeNewMoveLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          <p>{opponentName}님이 체스 메시지를 보냈습니다.</p>
-          <p>조회하시려면 여기를 탭 하세요.</p>
-          <p>
-            {`${opponentName}님의 체스 메시지를 열어보신 다음에는`}
-            반드시 <b>5분</b>안에 회답하셔야 하며, 그렇지 못할 경우 패배
-            처리됩니다.
-          </p>
-        </>
-      );
-    }
-    return (
-      <>
-        <p>{opponentName} made a new chess move.</p>
-        <p>Tap here to view it.</p>
-        <p>
-          {`After viewing ${opponentName}'s move, you `}
-          <b>must</b> make your own move in <b>5 minutes</b>. Otherwise, you
-          will lose.
-        </p>
-      </>
-    );
-  }, [opponentName]);
-
   const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   if (myColor === 'black') letters.reverse();
+
+  // Smaller axis fonts for compact view on mobile
+  const axisFontClass =
+    size === 'compact'
+      ? css`
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 0.8rem;
+          }
+        `
+      : '';
 
   const board = useMemo(() => {
     const result = [];
@@ -89,34 +74,45 @@ export default function Board({
     return result;
   }, [interactable, myColor, onClick, squares]);
 
-  if (spoilerOff) {
-    return (
+  const grid = (
+    <div
+      onClick={spoilerOff ? onBoardClick : undefined}
+      className={css`
+        cursor: ${spoilerOff && !!onBoardClick ? 'pointer' : ''};
+        display: grid;
+        width: 100%;
+        height: 100%;
+        grid-template-areas:
+          'num chess'
+          'num letter';
+        grid-template-columns: 2rem ${
+          size === 'compact' ? '16rem' : defaultBoardWidth
+        };
+        grid-template-rows: ${
+          size === 'compact' ? '16rem' : defaultBoardWidth
+        } 2.5rem;
+        background: #fff;
+        @media (max-width: ${mobileMaxWidth}) {
+          grid-template-columns: 2rem ${
+            size === 'compact' ? 'min(90vw, 14rem)' : '50vw'
+          };
+          grid-template-rows: ${
+            size === 'compact' ? 'min(90vw, 14rem)' : '50vw'
+          } 2.5rem;
+        }
+      `}
+    >
       <div
-        onClick={spoilerOff ? onBoardClick : undefined}
-        className={css`
-          cursor: ${spoilerOff && !!onBoardClick ? 'pointer' : ''};
-          display: ${!spoilerOff ? 'flex' : 'grid'};
-          align-items: ${!spoilerOff ? 'center' : ''};
-          width: 100%;
-          height: 100%;
-          grid-template-areas:
-            'num chess'
-            '. letter';
-          grid-template-columns: 2rem ${boardWidth};
-          grid-template-rows: ${boardWidth} 2.5rem;
-          background: ${spoilerOff ? '#fff' : ''};
-          @media (max-width: ${mobileMaxWidth}) {
-            grid-template-columns: 2rem 50vw;
-            grid-template-rows: 50vw 2.5rem;
-          }
-        `}
+        className={axisFontClass}
+        style={{
+          gridArea: 'num',
+          background: '#fff',
+          display: 'grid',
+          gridTemplateRows: '1fr 2.5rem'
+        }}
       >
         <div
-          style={{
-            gridArea: 'num',
-            display: 'grid',
-            gridTemplateRows: 'repeat(8, 1fr)'
-          }}
+          style={{ display: 'grid', gridTemplateRows: 'repeat(8, 1fr)' }}
         >
           {Array(8)
             .fill(null)
@@ -133,111 +129,70 @@ export default function Board({
               </div>
             ))}
         </div>
+        <div />
+      </div>
+      <div
+        style={{
+          gridArea: 'chess',
+          position: 'relative'
+        }}
+      >
         <div
           style={{
-            gridArea: 'chess',
-            position: 'relative'
-          }}
-        >
-          <div
-            style={{
-              margin: '0 auto',
-              width: '100%',
-              height: '100%',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(8, 1fr)'
-            }}
-          >
-            {board}
-          </div>
-        </div>
-        {squares.length > 0 && (
-          <CastlingButton
-            interactable={interactable}
-            myColor={myColor}
-            onCastling={onCastling}
-            squares={squares}
-          />
-        )}
-        <div
-          style={{
-            gridArea: 'letter',
+            margin: '0 auto',
+            width: '100%',
+            height: '100%',
             display: 'grid',
             gridTemplateColumns: 'repeat(8, 1fr)'
           }}
         >
-          {letters.map((elem, index) => (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              key={index}
-            >
-              {elem}
-            </div>
-          ))}
+          {board}
         </div>
       </div>
-    );
-  } else if (spoilerOff === false) {
-    return (
+      {squares.length > 0 && (
+        <CastlingButton
+          interactable={interactable}
+          myColor={myColor}
+          onCastling={onCastling}
+          squares={squares}
+        />
+      )}
       <div
-        onClick={spoilerOff ? onBoardClick : undefined}
-        className={css`
-          cursor: ${spoilerOff && !!onBoardClick ? 'pointer' : ''};
-          display: ${spoilerOff === false ? 'flex' : 'grid'};
-          align-items: ${spoilerOff === false ? 'center' : ''};
-          width: 100%;
-          height: 100%;
-          grid-template-areas:
-            'num chess'
-            '. letter';
-          grid-template-columns: 2rem 100%;
-          grid-template-rows: 100% 2.5rem;
-          background: ${spoilerOff ? '#fff' : ''};
-          @media (max-width: ${mobileMaxWidth}) {
-            grid-template-columns: 2rem 50vw;
-            grid-template-rows: 50vw 2.5rem;
-          }
-        `}
+        className={axisFontClass}
+        style={{
+          gridArea: 'letter',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(8, 1fr)',
+          background: '#fff'
+        }}
       >
-        <div
-          className={css`
-            margin: 0 auto;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            font-size: 1.7rem;
-            line-height: 2;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
-            }
-          `}
-        >
+        {letters.map((elem, index) => (
           <div
-            className={css`
-              cursor: pointer;
-              background: #fff;
-              border: 1px solid ${Color.darkGray()};
-              padding: 1rem;
-              &:hover {
-                text-decoration: underline;
-              }
-            `}
-            onClick={onSpoilerClick}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            key={index}
           >
-            {madeNewMoveLabel}
+            {elem}
           </div>
-        </div>
+        ))}
       </div>
-    );
-  } else return null;
+    </div>
+  );
+
+  return (
+    <BoardSpoiler
+      revealed={spoilerOff}
+      onReveal={onSpoilerClick}
+      style={{ width: '100%', height: '100%' }}
+      gameType="chess"
+      opponentName={opponentName}
+    >
+      {grid}
+    </BoardSpoiler>
+  );
 
   function isEven(num: number) {
     return num % 2 === 0;

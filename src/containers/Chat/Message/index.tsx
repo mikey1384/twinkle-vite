@@ -21,6 +21,7 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 function Message({
   channelId,
   chessCountdownNumber,
+  omokCountdownNumber,
   partner,
   currentChannel,
   displayedThemeColor,
@@ -45,6 +46,8 @@ function Message({
   onDeclineRewind,
   onDelete,
   onChessSpoilerClick,
+  onOmokBoardClick,
+  onOmokSpoilerClick,
   onReceiveNewMessage,
   onReplyClick,
   onRequestRewind,
@@ -60,6 +63,7 @@ function Message({
 }: {
   channelId: number;
   chessCountdownNumber: number;
+  omokCountdownNumber?: number;
   partner: any;
   currentChannel: any;
   displayedThemeColor: string;
@@ -91,6 +95,8 @@ function Message({
   onDeclineRewind: () => void;
   onDelete: (v: any) => void;
   onChessSpoilerClick: (v: number) => void;
+  onOmokBoardClick: () => void;
+  onOmokSpoilerClick: (v: number) => void;
   onReceiveNewMessage: () => void;
   onReplyClick: (target: any) => void;
   onRequestRewind: (v: any) => void;
@@ -250,6 +256,7 @@ function Message({
             <MessageBody
               channelId={channelId}
               chessCountdownNumber={chessCountdownNumber}
+              omokCountdownNumber={omokCountdownNumber}
               partner={partner}
               currentChannel={currentChannel}
               displayedThemeColor={displayedThemeColor}
@@ -274,6 +281,8 @@ function Message({
               onAcceptGroupInvitation={onAcceptGroupInvitation}
               onChessBoardClick={onChessBoardClick}
               onChessSpoilerClick={onChessSpoilerClick}
+              onOmokBoardClick={onOmokBoardClick}
+              onOmokSpoilerClick={onOmokSpoilerClick}
               onCancelRewindRequest={onCancelRewindRequest}
               onAcceptRewind={onAcceptRewind}
               onDeclineRewind={onDeclineRewind}
