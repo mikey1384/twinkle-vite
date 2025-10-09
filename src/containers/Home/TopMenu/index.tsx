@@ -43,6 +43,7 @@ export default function TopMenu({
   const navigate = useNavigate();
   const wordleTimerIdRef = useRef<any>(null);
   const chessTimerIdRef = useRef<any>(null);
+  const omokTimerIdRef = useRef<any>(null);
   const chatLoadedRef = useRef(false);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
@@ -66,6 +67,9 @@ export default function TopMenu({
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
+  const onSetOmokModalShown = useChatContext(
+    (v) => v.actions.onSetOmokModalShown
+  );
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
   );
@@ -73,6 +77,7 @@ export default function TopMenu({
     (v) => v.actions.onSetChessPuzzleModalShown
   );
   const [loadingChess, setLoadingChess] = useState(false);
+  const [loadingOmok, setLoadingOmok] = useState(false);
   const [chessModalShown, setChessModalShown] = useState(false);
   const username = useKeyContext((v) => v.myState.username);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -88,6 +93,9 @@ export default function TopMenu({
       }
       if (chessTimerIdRef.current) {
         clearTimeout(chessTimerIdRef.current);
+      }
+      if (omokTimerIdRef.current) {
+        clearTimeout(omokTimerIdRef.current);
       }
     };
   }, []);
@@ -116,9 +124,13 @@ export default function TopMenu({
   const checkUnansweredChess = useAppContext(
     (v) => v.requestHelpers.checkUnansweredChess
   );
+  const checkUnansweredOmok = useAppContext(
+    (v) => v.requestHelpers.checkUnansweredOmok
+  );
 
   useEffect(() => {
     handleCheckUnansweredChess();
+    handleCheckUnansweredOmok();
 
     async function handleCheckUnansweredChess() {
       try {
@@ -128,6 +140,16 @@ export default function TopMenu({
         });
       } catch (error) {
         console.error('Error checking unanswered chess:', error);
+      }
+    }
+    async function handleCheckUnansweredOmok() {
+      try {
+        const { unansweredOmokMsgChannelId } = await checkUnansweredOmok();
+        onUpdateTodayStats({
+          newStats: { unansweredOmokMsgChannelId }
+        });
+      } catch (error) {
+        console.error('Error checking unanswered omok:', error);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,6 +287,26 @@ export default function TopMenu({
                 <Icon icon="chess" />
               </NewTopButton>
             </ErrorBoundary>
+            {todayStats.unansweredOmokMsgChannelId && (
+              <ErrorBoundary componentPath="Home/Stories/TopMenu/OmokButton">
+                <NewTopButton
+                  key="omokButton"
+                  loading={loadingOmok}
+                  onClick={handleNavigateToOmokMessage}
+                  variant="orange"
+                  style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
+                >
+                  {loadingOmok && (
+                    <Icon
+                      style={{ marginRight: '0.7rem' }}
+                      icon="spinner"
+                      pulse
+                    />
+                  )}
+                  O
+                </NewTopButton>
+              </ErrorBoundary>
+            )}
           </div>
         </div>
       </div>
@@ -335,6 +377,28 @@ export default function TopMenu({
       );
       setTimeout(() => {
         onSetChessModalShown(true);
+      }, 1000);
+    }, 10);
+  }
+
+  function handleNavigateToOmokMessage(): any {
+    if (!isMountedRef.current) return;
+    setLoadingOmok(true);
+    if (!chatLoadedRef.current) {
+      omokTimerIdRef.current = setTimeout(() => handleNavigateToOmokMessage(), 500);
+      return;
+    }
+    onUpdateSelectedChannelId(todayStats.unansweredOmokMsgChannelId);
+    onUpdateTodayStats({ newStats: { unansweredOmokMsgChannelId: null } });
+    omokTimerIdRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      navigate(
+        `/chat/${
+          Number(CHAT_ID_BASE_NUMBER) + Number(todayStats.unansweredOmokMsgChannelId)
+        }`
+      );
+      setTimeout(() => {
+        onSetOmokModalShown(true);
       }, 1000);
     }, 10);
   }
