@@ -75,6 +75,16 @@ export default function notificationRequestHelpers({
         return handleError(error);
       }
     },
+    async checkUnansweredOmok() {
+      try {
+        const {
+          data: { unansweredOmokMsgChannelId }
+        } = await request.get(`${URL}/notification/omok`, auth());
+        return { unansweredOmokMsgChannelId };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMoreNotifications(lastId: number) {
       try {
         const {
