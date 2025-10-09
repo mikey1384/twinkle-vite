@@ -730,6 +730,13 @@ function MessageBody({
     return !!targetSubject;
   }, [currentChannel?.id, currentChannel?.selectedTab, targetSubject]);
 
+  const gameTypeForResult = useMemo(() => {
+    const lc = (content || '').toLowerCase();
+    if (lc.includes('omok')) return 'omok';
+    if (lc.includes('chess')) return 'chess';
+    return 'chess';
+  }, [content]);
+
   const handleChessSpoilerClick = useCallback(async () => {
     if (spoilerClickedRef.current) return;
     spoilerClickedRef.current = true;
@@ -919,15 +926,6 @@ function MessageBody({
     );
   }
 
-  const gameTypeForResult = useMemo(() => {
-    const lc = (content || '').toLowerCase();
-    if (lc.includes('omok')) return 'omok';
-    if (lc.includes('chess')) return 'chess';
-    return 'chess';
-  }, [content]);
-
-  // Only show plain GameOverMessage when there is no board state to render.
-  // For Omok connect-five wins, the message carries omokState; let the board render instead.
   if (!chessState && !omokState && (gameWinnerId || isDraw || isAbort)) {
     return (
       <GameOverMessage
