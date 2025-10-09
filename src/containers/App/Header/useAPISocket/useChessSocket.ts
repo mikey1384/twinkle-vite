@@ -13,6 +13,9 @@ export default function useChessSocket({
   const onSetChessModalShown = useChatContext(
     (v) => v.actions.onSetChessModalShown
   );
+  const onSetOmokModalShown = useChatContext(
+    (v) => v.actions.onSetOmokModalShown
+  );
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const onUpdateRecentChessMessage = useChatContext(
     (v) => v.actions.onUpdateRecentChessMessage
@@ -35,8 +38,18 @@ export default function useChessSocket({
       socket.off('rewound_chess_game', handleChessRewind);
     };
 
-    function handleChessMoveMade({ channelId }: { channelId: number }) {
-      if (channelId === selectedChannelId) {
+    function handleChessMoveMade({
+      channelId,
+      gameType
+    }: {
+      channelId: number;
+      gameType?: 'chess' | 'omok';
+    }) {
+      if (channelId !== selectedChannelId) return;
+      if (gameType === 'omok') {
+        onSetOmokModalShown(false);
+      } else {
+        // default to chess to preserve backward compatibility
         onSetChessModalShown(false);
       }
     }
