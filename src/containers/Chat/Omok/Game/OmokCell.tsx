@@ -68,7 +68,7 @@ export default function OmokCell({
             border: `1px solid ${Color.black(0.6)}`,
             boxShadow: `0 0.6rem 1.6rem rgba(0,0,0,0.2)${
               isWinCell
-                ? ', 0 0 0.9rem rgba(255,215,0,0.95), 0 0 2.6rem rgba(255,215,0,0.7)'
+                ? ', 0 0 0 5px rgba(255,215,0,0.98), 0 0 1.5rem rgba(255,215,0,0.95), 0 0 3rem rgba(255,215,0,0.75)'
                 : isLastMove
                 ? ', 0 0 0 3px rgba(255,140,0,0.9), 0 0 1.2rem rgba(255,140,0,0.95), 0 0 2.4rem rgba(255,140,0,0.7)'
                 : ''
@@ -84,7 +84,7 @@ export default function OmokCell({
             border: `1px solid ${Color.black(0.2)}`,
             boxShadow: `0 0.6rem 1.6rem rgba(0,0,0,0.2)${
               isWinCell
-                ? ', 0 0 0.9rem rgba(255,140,0,0.95), 0 0 2.6rem rgba(255,140,0,0.7)'
+                ? ', 0 0 0 5px rgba(255,215,0,0.98), 0 0 1.5rem rgba(255,215,0,0.95), 0 0 3rem rgba(255,215,0,0.75)'
                 : isLastMove
                 ? ', 0 0 0 3px rgba(255,140,0,0.9), 0 0 1.2rem rgba(255,140,0,0.95), 0 0 2.4rem rgba(255,140,0,0.7)'
                 : ''
