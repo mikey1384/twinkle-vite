@@ -51,7 +51,6 @@ import {
   ZERO_TWINKLE_ID,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
-import useBoardSpoilerOff from '../hooks/useBoardSpoilerOff';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 const deviceIsMobile = isMobile(navigator);
@@ -466,25 +465,63 @@ function MessageBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const chessSpoilerOff = useBoardSpoilerOff({
-    countdownNumber: chessCountdownNumber,
-    moveByUserId: chessState?.move?.by,
-    myId,
-    lastMoveViewerId: currentChannel.lastChessMoveViewerId,
-    lastMessageId: currentChannel.lastChessMessageId,
+  const chessSpoilerOff = useMemo(() => {
+    if (typeof chessCountdownNumber === 'number') {
+      return true;
+    }
+    const userMadeThisMove = chessState?.move?.by === myId;
+    const userIsTheLastMoveViewer =
+      currentChannel?.lastChessMoveViewerId === myId;
+    const lastMessageId = currentChannel?.lastChessMessageId;
+    if (
+      userMadeThisMove ||
+      userIsTheLastMoveViewer ||
+      !!moveViewTimeStamp ||
+      (typeof messageId === 'number' &&
+        typeof lastMessageId === 'number' &&
+        messageId < lastMessageId)
+    ) {
+      return true;
+    }
+    return false;
+  }, [
+    chessCountdownNumber,
+    chessState?.move?.by,
+    currentChannel?.lastChessMessageId,
+    currentChannel?.lastChessMoveViewerId,
     messageId,
-    moveViewTimeStamp
-  });
+    moveViewTimeStamp,
+    myId
+  ]);
 
-  const omokSpoilerOff = useBoardSpoilerOff({
-    countdownNumber: omokCountdownNumber,
-    moveByUserId: omokState?.move?.by,
-    myId,
-    lastMoveViewerId: currentChannel.lastOmokMoveViewerId,
-    lastMessageId: currentChannel.lastOmokMessageId,
+  const omokSpoilerOff = useMemo(() => {
+    if (typeof omokCountdownNumber === 'number') {
+      return true;
+    }
+    const userMadeThisMove = omokState?.move?.by === myId;
+    const userIsTheLastMoveViewer =
+      currentChannel?.lastOmokMoveViewerId === myId;
+    const lastMessageId = currentChannel?.lastOmokMessageId;
+    if (
+      userMadeThisMove ||
+      userIsTheLastMoveViewer ||
+      !!moveViewTimeStamp ||
+      (typeof messageId === 'number' &&
+        typeof lastMessageId === 'number' &&
+        messageId < lastMessageId)
+    ) {
+      return true;
+    }
+    return false;
+  }, [
+    currentChannel?.lastOmokMessageId,
+    currentChannel?.lastOmokMoveViewerId,
     messageId,
-    moveViewTimeStamp
-  });
+    moveViewTimeStamp,
+    myId,
+    omokCountdownNumber,
+    omokState?.move?.by
+  ]);
 
   useEffect(() => {
     const url = fetchURLFromText(content);
