@@ -62,8 +62,8 @@ function Message({
   zIndex
 }: {
   channelId: number;
-  chessCountdownNumber: number;
-  omokCountdownNumber?: number;
+  chessCountdownNumber?: number | null;
+  omokCountdownNumber?: number | null;
   partner: any;
   currentChannel: any;
   displayedThemeColor: string;

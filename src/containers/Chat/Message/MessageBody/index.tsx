@@ -146,8 +146,8 @@ function MessageBody({
   recentThumbUrl,
   zIndex
 }: {
-  chessCountdownNumber: number;
-  omokCountdownNumber?: number;
+  chessCountdownNumber?: number | null;
+  omokCountdownNumber?: number | null;
   partner: any;
   channelId: number;
   currentChannel: any;
@@ -218,23 +218,23 @@ function MessageBody({
       onSetActualTitle,
       onSetIsEditing,
       onSetSiteUrl,
-    onSetThumbUrl,
-    onSetReplyTarget,
-    onUpdateLastChessMessageId,
-    onUpdateLastChessMoveViewerId,
-    onUpdateRecentChessMessage,
-    onUpdateLastOmokMessageId,
-    onUpdateLastOmokMoveViewerId,
-    onUpdateRecentOmokMessage
-  },
-  requests: {
-    editChatMessage,
-    saveChatMessage,
-    setChessMoveViewTimeStamp,
-    setOmokMoveViewTimeStamp,
-    postChatReaction,
-    removeChatReaction
-  },
+      onSetThumbUrl,
+      onSetReplyTarget,
+      onUpdateLastChessMessageId,
+      onUpdateLastChessMoveViewerId,
+      onUpdateRecentChessMessage,
+      onUpdateLastOmokMessageId,
+      onUpdateLastOmokMoveViewerId,
+      onUpdateRecentOmokMessage
+    },
+    requests: {
+      editChatMessage,
+      saveChatMessage,
+      setChessMoveViewTimeStamp,
+      setOmokMoveViewTimeStamp,
+      postChatReaction,
+      removeChatReaction
+    },
     state: { filesBeingUploaded, socketConnected }
   } = useContext(LocalContext);
   const user = useAppContext((v) => v.user.state.userObj[userId]) || {};
@@ -705,7 +705,7 @@ function MessageBody({
       spoilerClickedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onChessSpoilerClick, channelId, message, userId]);
+  }, [channelId, message, userId]);
 
   const handleOmokSpoilerClick = useCallback(async () => {
     if (spoilerClickedRef.current) return;
@@ -721,7 +721,7 @@ function MessageBody({
       spoilerClickedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onOmokSpoilerClick, channelId, message, userId]);
+  }, [channelId, message, userId]);
 
   const handleEditCancel = useCallback(() => {
     onSetIsEditing({
@@ -900,7 +900,6 @@ function MessageBody({
         isDraw={!!isDraw}
         gameType={gameTypeForResult as 'chess' | 'omok'}
         omokState={omokState}
-        content={content}
       />
     );
   }
