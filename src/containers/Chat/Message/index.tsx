@@ -206,12 +206,12 @@ function Message({
     onDelete({ messageId: message?.id });
   };
 
-  if (loadFailed) {
-    return null;
-  }
+  let renderedContent: React.ReactNode = null;
 
-  if (aiMessageHasError) {
-    return (
+  if (loadFailed) {
+    renderedContent = null;
+  } else if (aiMessageHasError) {
+    renderedContent = (
       <ErrorBoundary componentPath="Chat/Message/index">
         <div
           className={css`
@@ -234,83 +234,85 @@ function Message({
         </div>
       </ErrorBoundary>
     );
-  }
-
-  return (
-    <ErrorBoundary componentPath="Chat/Message/index">
-      <div
-        className={css`
-          width: 100%;
-        `}
-        ref={ComponentRef}
-      >
+  } else {
+    renderedContent = (
+      <ErrorBoundary componentPath="Chat/Message/index">
         <div
           className={css`
             width: 100%;
           `}
-          ref={PanelRef}
+          ref={ComponentRef}
         >
-          {!message?.isLoaded && !message?.isNotification ? (
-            <LoadingPlaceholder />
-          ) : contentShown || isOneOfVisibleMessages ? (
-            <MessageBody
-              channelId={channelId}
-              chessCountdownNumber={chessCountdownNumber}
-              omokCountdownNumber={omokCountdownNumber}
-              partner={partner}
-              currentChannel={currentChannel}
-              displayedThemeColor={displayedThemeColor}
-              isAICardModalShown={isAICardModalShown}
-              isAIMessage={isAIMessage}
-              isCielMessage={userId === Number(CIEL_TWINKLE_ID)}
-              isApprovalRequest={isApprovalRequest}
-              isModificationNotice={isModificationNotice}
-              groupObjs={groupObjs}
-              onSetGroupObjs={onSetGroupObjs}
-              message={message}
-              nextMessageHasTopic={nextMessageHasTopic}
-              prevMessageHasTopic={prevMessageHasTopic}
-              onDelete={onDelete}
-              index={index}
-              isBanned={isBanned}
-              isEditing={isEditing}
-              isLastMsg={isLastMsg}
-              isNotification={isNotification}
-              isRestricted={isRestricted}
-              loading={loading}
-              onAcceptGroupInvitation={onAcceptGroupInvitation}
-              onChessBoardClick={onChessBoardClick}
-              onChessSpoilerClick={onChessSpoilerClick}
-              onOmokBoardClick={onOmokBoardClick}
-              onOmokSpoilerClick={onOmokSpoilerClick}
-              onCancelRewindRequest={onCancelRewindRequest}
-              onAcceptRewind={onAcceptRewind}
-              onDeclineRewind={onDeclineRewind}
-              onReceiveNewMessage={onReceiveNewMessage}
-              onReplyClick={onReplyClick}
-              onRequestRewind={onRequestRewind}
-              onSetAICardModalCardId={onSetAICardModalCardId}
-              onSetChessTarget={onSetChessTarget}
-              onSetMessageToScrollTo={onSetMessageToScrollTo}
-              onSetTransactionModalShown={onSetTransactionModalShown}
-              onRewardMessageSubmit={onRewardMessageSubmit}
-              onShowSubjectMsgsModal={onShowSubjectMsgsModal}
-              recentThumbUrl={recentThumbUrl}
-              zIndex={zIndex}
-            />
-          ) : (
-            <div
-              style={{
-                width: '100%',
-                display: 'block',
-                paddingTop: MessageHeights[message?.id] || 0
-              }}
-            />
-          )}
+          <div
+            className={css`
+              width: 100%;
+            `}
+            ref={PanelRef}
+          >
+            {!message?.isLoaded && !message?.isNotification ? (
+              <LoadingPlaceholder />
+            ) : contentShown || isOneOfVisibleMessages ? (
+              <MessageBody
+                channelId={channelId}
+                chessCountdownNumber={chessCountdownNumber}
+                omokCountdownNumber={omokCountdownNumber}
+                partner={partner}
+                currentChannel={currentChannel}
+                displayedThemeColor={displayedThemeColor}
+                isAICardModalShown={isAICardModalShown}
+                isAIMessage={isAIMessage}
+                isCielMessage={userId === Number(CIEL_TWINKLE_ID)}
+                isApprovalRequest={isApprovalRequest}
+                isModificationNotice={isModificationNotice}
+                groupObjs={groupObjs}
+                onSetGroupObjs={onSetGroupObjs}
+                message={message}
+                nextMessageHasTopic={nextMessageHasTopic}
+                prevMessageHasTopic={prevMessageHasTopic}
+                onDelete={onDelete}
+                index={index}
+                isBanned={isBanned}
+                isEditing={isEditing}
+                isLastMsg={isLastMsg}
+                isNotification={isNotification}
+                isRestricted={isRestricted}
+                loading={loading}
+                onAcceptGroupInvitation={onAcceptGroupInvitation}
+                onChessBoardClick={onChessBoardClick}
+                onChessSpoilerClick={onChessSpoilerClick}
+                onOmokBoardClick={onOmokBoardClick}
+                onOmokSpoilerClick={onOmokSpoilerClick}
+                onCancelRewindRequest={onCancelRewindRequest}
+                onAcceptRewind={onAcceptRewind}
+                onDeclineRewind={onDeclineRewind}
+                onReceiveNewMessage={onReceiveNewMessage}
+                onReplyClick={onReplyClick}
+                onRequestRewind={onRequestRewind}
+                onSetAICardModalCardId={onSetAICardModalCardId}
+                onSetChessTarget={onSetChessTarget}
+                onSetMessageToScrollTo={onSetMessageToScrollTo}
+                onSetTransactionModalShown={onSetTransactionModalShown}
+                onRewardMessageSubmit={onRewardMessageSubmit}
+                onShowSubjectMsgsModal={onShowSubjectMsgsModal}
+                recentThumbUrl={recentThumbUrl}
+                zIndex={zIndex}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'block',
+                  paddingTop: MessageHeights[message?.id] || 0
+                }}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    </ErrorBoundary>
-  );
+      </ErrorBoundary>
+    );
+  }
+
+  return renderedContent;
 }
 
 export default memo(Message);
