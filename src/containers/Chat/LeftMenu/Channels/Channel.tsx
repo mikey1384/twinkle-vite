@@ -175,20 +175,27 @@ export default function Channel({
           </span>
         );
       }
+      const isOmokGame = /omok match/i.test(content || '');
       if (isAbort) {
-        return <span>chess match was aborted</span>;
+        return <span>{isOmokGame ? 'omok match was aborted' : 'chess match was aborted'}</span>;
       }
       if (isDraw) {
-        return <span>chess match ended in a draw</span>;
+        return <span>{isOmokGame ? 'omok match ended in a draw' : 'chess match ended in a draw'}</span>;
       }
       if (typeof gameWinnerId === 'number') {
         if (gameWinnerId === 0) {
-          return <span>The chess match ended in a draw</span>;
+          return (
+            <span>
+              {isOmokGame
+                ? 'The omok match ended in a draw'
+                : 'The chess match ended in a draw'}
+            </span>
+          );
         }
         return gameWinnerId === userId ? (
-          <span>You won the chess match!</span>
+          <span>{isOmokGame ? 'You won the omok match!' : 'You won the chess match!'}</span>
         ) : (
-          <span>You lost the chess match</span>
+          <span>{isOmokGame ? 'You lost the omok match' : 'You lost the chess match'}</span>
         );
       }
       if (transferId) {
