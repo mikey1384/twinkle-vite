@@ -192,7 +192,6 @@ export default function Omok({
     return initialNextColor;
   }, [effectivePlayerColors, myId, initialNextColor]);
 
-  // Axis labels: reverse order for white perspective; board is mirrored accordingly
   const colLabels = useMemo(() => {
     const base = COLUMN_LABELS.slice();
     return myAssignedColor === 'white' ? base.reverse() : base;
