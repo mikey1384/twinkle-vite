@@ -9,7 +9,7 @@ export default function useBoardSpoilerOff({
   messageId,
   moveViewTimeStamp
 }: {
-  countdownNumber?: number;
+  countdownNumber?: number | null;
   moveByUserId?: number;
   myId: number;
   lastMoveViewerId?: number;
