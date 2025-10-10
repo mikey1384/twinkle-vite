@@ -833,8 +833,7 @@ export default function MessagesContainer({
             await startNewDMChannel({
               ...params,
               content,
-              recipientId: partner?.id,
-              gameType: 'omok'
+              recipientId: partner?.id
             });
           if (alreadyExists) {
             return window.location.reload();
