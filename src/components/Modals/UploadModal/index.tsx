@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import UploadModalContent from './Content';
+
+const useThisImageButtonStyle = {
+  padding: '1rem 3rem',
+  fontSize: '1.1rem',
+  fontWeight: 600,
+  minWidth: 200,
+  borderRadius: '12px',
+  textTransform: 'none',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)'
+};
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -19,6 +29,46 @@ export default function UploadModal({
   const [selectedOption, setSelectedOption] = useState<
     'select' | 'upload' | 'generate'
   >('select');
+  const [canUseGeneratedImage, setCanUseGeneratedImage] = useState(false);
+  const useGeneratedImageHandlerRef = useRef<
+    (() => void | Promise<void>) | null
+  >(null);
+
+  let footerContent: React.ReactNode = null;
+
+  if (selectedOption === 'select') {
+    footerContent = (
+      <Button transparent onClick={handleClose}>
+        Cancel
+      </Button>
+    );
+  } else if (selectedOption === 'generate') {
+    footerContent = (
+      <>
+        {canUseGeneratedImage && (
+          <Button
+            filled
+            color="green"
+            onClick={handleUseThisImageClick}
+            style={useThisImageButtonStyle as React.CSSProperties}
+            mobilePadding="1rem"
+            mobileBorderRadius="12px"
+          >
+            Use This Image
+          </Button>
+        )}
+        <Button transparent onClick={() => handleChangeOption('select')}>
+          Back
+        </Button>
+      </>
+    );
+  } else if (selectedOption === 'upload') {
+    footerContent = (
+      <Button transparent onClick={() => handleChangeOption('select')}>
+        Back
+      </Button>
+    );
+  }
 
   return (
     <NewModal
@@ -29,29 +79,24 @@ export default function UploadModal({
       closeOnBackdropClick={selectedOption === 'select'}
       modalLevel={2}
       preventBodyScroll={false}
-      footer={
-        selectedOption === 'select' ? (
-          <Button transparent onClick={handleClose}>Cancel</Button>
-        ) : selectedOption === 'generate' || selectedOption === 'upload' ? (
-          <Button transparent onClick={() => setSelectedOption('select')}>
-            Back
-          </Button>
-        ) : null
-      }
+      footer={footerContent}
     >
       <UploadModalContent
         selectedOption={selectedOption}
         onFileSelect={handleFileSelection}
-        onFileUploadSelect={() => setSelectedOption('upload')}
-        onAIGenerateSelect={() => setSelectedOption('generate')}
+        onFileUploadSelect={() => handleChangeOption('upload')}
+        onAIGenerateSelect={() => handleChangeOption('generate')}
         onGeneratedImage={handleGeneratedImage}
-        onSetSelectedOption={setSelectedOption}
+        onSetSelectedOption={handleChangeOption}
+        onUseImageAvailabilityChange={setCanUseGeneratedImage}
+        onRegisterUseImageHandler={handleRegisterUseImageHandler}
         accept={accept || '*/*'}
       />
     </NewModal>
   );
 
   function handleClose() {
+    resetUseImageState();
     setSelectedOption('select');
     onHide();
   }
@@ -65,6 +110,26 @@ export default function UploadModal({
       default:
         return 'Upload';
     }
+  }
+
+  function handleRegisterUseImageHandler(
+    handler: (() => void | Promise<void>) | null
+  ) {
+    useGeneratedImageHandlerRef.current = handler;
+  }
+
+  function handleUseThisImageClick() {
+    useGeneratedImageHandlerRef.current?.();
+  }
+
+  function handleChangeOption(option: 'select' | 'upload' | 'generate') {
+    resetUseImageState();
+    setSelectedOption(option);
+  }
+
+  function resetUseImageState() {
+    setCanUseGeneratedImage(false);
+    useGeneratedImageHandlerRef.current = null;
   }
 
   function handleFileSelection(file: File) {

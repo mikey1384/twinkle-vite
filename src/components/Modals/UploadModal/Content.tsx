@@ -11,6 +11,8 @@ export default function UploadModalContent({
   onAIGenerateSelect,
   onGeneratedImage,
   onSetSelectedOption,
+  onUseImageAvailabilityChange,
+  onRegisterUseImageHandler,
   accept,
   onError
 }: {
@@ -20,6 +22,10 @@ export default function UploadModalContent({
   onAIGenerateSelect: () => void;
   onGeneratedImage: (file: File) => void;
   onSetSelectedOption: (option: 'select' | 'upload' | 'generate') => void;
+  onUseImageAvailabilityChange?: (available: boolean) => void;
+  onRegisterUseImageHandler?: (
+    handler: (() => void | Promise<void>) | null
+  ) => void;
   accept: string;
   onError?: (error: string) => void;
 }) {
@@ -32,6 +38,8 @@ export default function UploadModalContent({
           onImageGenerated={onGeneratedImage}
           onBack={() => onSetSelectedOption('select')}
           onError={onError}
+          onUseImageAvailabilityChange={onUseImageAvailabilityChange}
+          onRegisterUseImageHandler={onRegisterUseImageHandler}
         />
       );
     default:
