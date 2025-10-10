@@ -1056,7 +1056,7 @@ export default function Chess({
       ) : null}
       <BoardWrapper
         statusShown={gameStatusMessageShown}
-        timerPlacement={isFromModal ? 'overlay' : 'overlay'}
+        timerPlacement="inline"
         size={isCompact ? 'compact' : 'regular'}
         gameInfo={{
           type: 'chess',
