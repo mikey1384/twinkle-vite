@@ -15,11 +15,17 @@ interface ImageGeneratorProps {
   onImageGenerated: (file: File) => void;
   onBack: () => void;
   onError?: (error: string) => void;
+  onUseImageAvailabilityChange?: (available: boolean) => void;
+  onRegisterUseImageHandler?: (
+    handler: (() => void | Promise<void>) | null
+  ) => void;
 }
 
 export default function ImageGenerator({
   onImageGenerated,
-  onError
+  onError,
+  onUseImageAvailabilityChange,
+  onRegisterUseImageHandler
 }: ImageGeneratorProps) {
   const [prompt, setPrompt] = useState('');
   const [followUpPrompt, setFollowUpPrompt] = useState('');
@@ -55,6 +61,7 @@ export default function ImageGenerator({
     null
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const useImageHandlerRef = useRef<(() => void | Promise<void>) | null>(null);
 
   const isShowingLoadingState = useMemo(() => {
     return (
@@ -68,6 +75,35 @@ export default function ImageGenerator({
     () => !!generatedImageUrl && !isShowingLoadingState,
     [generatedImageUrl, isShowingLoadingState]
   );
+
+  const canUseGeneratedImage = useMemo(
+    () =>
+      Boolean(
+        (generatedImageUrl ||
+          referenceImageUrl ||
+          hasBeenEdited ||
+          (drawingCanvasUrl && canvasHasContent)) &&
+          !isShowingLoadingState
+      ),
+    [
+      generatedImageUrl,
+      referenceImageUrl,
+      hasBeenEdited,
+      drawingCanvasUrl,
+      canvasHasContent,
+      isShowingLoadingState
+    ]
+  );
+
+  useEffect(() => {
+    onUseImageAvailabilityChange?.(canUseGeneratedImage);
+  }, [canUseGeneratedImage, onUseImageAvailabilityChange]);
+
+  useEffect(() => {
+    return () => {
+      onUseImageAvailabilityChange?.(false);
+    };
+  }, [onUseImageAvailabilityChange]);
 
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
@@ -207,6 +243,32 @@ export default function ImageGenerator({
       setReferenceImageUrl(null);
     }
   }, [referenceImage]);
+
+  useImageHandlerRef.current = handleUseImage;
+
+  useEffect(() => {
+    if (!onRegisterUseImageHandler) return;
+
+    if (!canUseGeneratedImage) {
+      onRegisterUseImageHandler(null);
+      return () => {
+        onRegisterUseImageHandler(null);
+      };
+    }
+
+    const handler = () => {
+      const fn = useImageHandlerRef.current;
+      if (fn) {
+        fn();
+      }
+    };
+
+    onRegisterUseImageHandler(handler);
+
+    return () => {
+      onRegisterUseImageHandler(null);
+    };
+  }, [canUseGeneratedImage, onRegisterUseImageHandler]);
 
   return (
     <div
@@ -537,15 +599,8 @@ export default function ImageGenerator({
     if (!currentImageSrc) return;
 
     try {
-      let blob: Blob;
-
-      if (currentImageSrc.startsWith('data:image/')) {
-        const response = await fetch(currentImageSrc);
-        blob = await response.blob();
-      } else {
-        const response = await fetch(currentImageSrc);
-        blob = await response.blob();
-      }
+      const response = await fetch(currentImageSrc);
+      const blob = await response.blob();
 
       const timestamp = Date.now();
       const file = new File([blob], `ai-generated-${timestamp}.png`, {
@@ -569,17 +624,6 @@ export default function ImageGenerator({
     ) {
       event.preventDefault();
       handleGenerate();
-    }
-  }
-
-  function safeErrorToString(error: any): string {
-    if (typeof error === 'string') {
-      return error;
-    }
-    try {
-      return JSON.stringify(error);
-    } catch {
-      return String(error);
     }
   }
 
@@ -719,5 +763,16 @@ export default function ImageGenerator({
       reader.onload = () => resolve((reader.result as string).split(',')[1]);
       reader.onerror = (error) => reject(error);
     });
+  }
+}
+
+function safeErrorToString(error: any): string {
+  if (typeof error === 'string') {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
   }
 }
