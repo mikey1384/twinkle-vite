@@ -1056,7 +1056,7 @@ export default function Chess({
       ) : null}
       <BoardWrapper
         statusShown={gameStatusMessageShown}
-        timerPlacement="inline"
+        timerPlacement={isFromModal ? 'overlay' : 'inline'}
         size={isCompact ? 'compact' : 'regular'}
         gameInfo={{
           type: 'chess',
@@ -1076,7 +1076,8 @@ export default function Chess({
         timerData={{
           shown: !isCompact && statusMsgShown && !isRewinded,
           countdownNumber,
-          awaitingOpponentName: opponentName
+          awaitingOpponentName: opponentName,
+          showAwaitingStatus: !isFromModal
         }}
         beforeBoard={
           !isCompact && loaded && chessBoardShown ? (
