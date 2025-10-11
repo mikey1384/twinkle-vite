@@ -128,6 +128,7 @@ export default function Channel({
       username: senderName,
       isAbort,
       isDraw,
+      omokState,
       rewardAmount,
       rootType,
       targetMessage,
@@ -143,6 +144,7 @@ export default function Channel({
       username?: string;
       isAbort?: boolean;
       isDraw?: boolean;
+      omokState?: any;
       rewardAmount?: number;
       rootType?: string;
       targetMessage?: {
@@ -175,12 +177,23 @@ export default function Channel({
           </span>
         );
       }
-      const isOmokGame = /omok match/i.test(content || '');
+
+      const isOmokGame = Boolean(omokState) || /omok/i.test(content || '');
       if (isAbort) {
-        return <span>{isOmokGame ? 'omok match was aborted' : 'chess match was aborted'}</span>;
+        return (
+          <span>
+            {isOmokGame ? 'omok match was aborted' : 'chess match was aborted'}
+          </span>
+        );
       }
       if (isDraw) {
-        return <span>{isOmokGame ? 'omok match ended in a draw' : 'chess match ended in a draw'}</span>;
+        return (
+          <span>
+            {isOmokGame
+              ? 'omok match ended in a draw'
+              : 'chess match ended in a draw'}
+          </span>
+        );
       }
       if (typeof gameWinnerId === 'number') {
         if (gameWinnerId === 0) {
@@ -193,9 +206,17 @@ export default function Channel({
           );
         }
         return gameWinnerId === userId ? (
-          <span>{isOmokGame ? 'You won the omok match!' : 'You won the chess match!'}</span>
+          <span>
+            {isOmokGame
+              ? 'You won the omok match!'
+              : 'You won the chess match!'}
+          </span>
         ) : (
-          <span>{isOmokGame ? 'You lost the omok match' : 'You lost the chess match'}</span>
+          <span>
+            {isOmokGame
+              ? 'You lost the omok match'
+              : 'You lost the chess match'}
+          </span>
         );
       }
       if (transferId) {
@@ -285,7 +306,9 @@ export default function Channel({
 
   const badgeShown = useMemo(() => {
     return (
-      channelId !== selectedChannelId && totalNumUnreads > 0 && lastSenderId !== userId
+      channelId !== selectedChannelId &&
+      totalNumUnreads > 0 &&
+      lastSenderId !== userId
     );
   }, [channelId, lastSenderId, totalNumUnreads, selectedChannelId, userId]);
 
