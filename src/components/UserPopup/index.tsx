@@ -105,8 +105,11 @@ export default function UserPopup({
 
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const { isOnline: onlineFromStatus, isAway, isBusy } =
-    chatStatus[user.id] || {};
+  const {
+    isOnline: onlineFromStatus,
+    isAway,
+    isBusy
+  } = chatStatus[user.id] || {};
   const online =
     typeof onlineFromStatus === 'boolean'
       ? onlineFromStatus
@@ -256,7 +259,10 @@ export default function UserPopup({
       style={{
         width: '33rem',
         maxWidth: '50vw',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        opacity: usernameHistoryShown || titleModalShown ? 0 : 1,
+        pointerEvents:
+          usernameHistoryShown || titleModalShown ? 'none' : undefined
       }}
     >
       {isLoading ? (
@@ -529,17 +535,14 @@ export default function UserPopup({
   async function handleLinkClick() {
     onSetPopupContext(null);
 
-    // Bail if not logged in
     if (!userId) {
       return;
     }
 
-    // Bail if the user clicks their own name/chat button
     if (user.id === userId) {
       return;
     }
 
-    // Existing DM logic
     const { channelId, pathId } = await loadDMChannel({ recipient: user });
     if (!pathId) {
       if (!user?.id) {

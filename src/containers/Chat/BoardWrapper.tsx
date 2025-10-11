@@ -50,6 +50,7 @@ export default function BoardWrapper({
     shown?: boolean;
     countdownNumber?: number | null;
     awaitingOpponentName?: string;
+    showAwaitingStatus?: boolean;
   };
   timerPlacement?: 'overlay' | 'inline';
   beforeBoard?: React.ReactNode;
@@ -80,6 +81,9 @@ export default function BoardWrapper({
           )}`
         : Number((n % 600) / 10).toFixed(1);
     }
+    if (timerData?.showAwaitingStatus === false) {
+      return null;
+    }
     if (SELECTED_LANGUAGE === 'kr') {
       return (
         <>
@@ -103,6 +107,7 @@ export default function BoardWrapper({
   }, [
     timerData?.awaitingOpponentName,
     timerData?.countdownNumber,
+    timerData?.showAwaitingStatus,
     timerData?.shown
   ]);
 
@@ -303,7 +308,7 @@ export default function BoardWrapper({
               justifySelf: 'end'
             }}
           >
-            {timerData?.shown ? (
+            {timerData?.shown && awaitingMoveLabel ? (
               <div
                 className={css`
                   padding: 0.5rem 1rem;
@@ -344,7 +349,7 @@ export default function BoardWrapper({
             zIndex: 6
           }}
         >
-          {timerData?.shown ? (
+          {timerData?.shown && awaitingMoveLabel ? (
             <div
               className={css`
                 padding: 0.5rem 1rem;

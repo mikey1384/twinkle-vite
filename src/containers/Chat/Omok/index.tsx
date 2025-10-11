@@ -457,7 +457,7 @@ export default function Omok({
     <div className={containerClass} style={{ ...style }}>
       <BoardWrapper
         style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
-        timerPlacement="inline"
+        timerPlacement={isFromModal ? 'overlay' : 'inline'}
         statusShown={topInfoShown}
         gameInfo={{
           type: 'omok',
@@ -495,7 +495,8 @@ export default function Omok({
           shown: statusMsgShown,
           countdownNumber:
             typeof countdownNumber === 'number' ? countdownNumber : null,
-          awaitingOpponentName: opponentName
+          awaitingOpponentName: opponentName,
+          showAwaitingStatus: !isFromModal
         }}
         afterBoard={
           <>
