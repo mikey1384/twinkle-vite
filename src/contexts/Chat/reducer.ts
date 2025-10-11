@@ -434,12 +434,10 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            messageIds:
-              state.selectedChannelId === action.channelId
-                ? [notificationId].concat(
-                    state.channelsObj[action.channelId].messageIds
-                  )
-                : state.channelsObj[action.channelId].messageIds,
+            // Always push the notification as the most recent message
+            messageIds: [notificationId].concat(
+              state.channelsObj[action.channelId].messageIds
+            ),
             messagesObj: {
               ...state.channelsObj[action.channelId].messagesObj,
               [notificationId]: action.message
