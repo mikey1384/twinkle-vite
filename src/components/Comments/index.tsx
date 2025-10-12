@@ -10,11 +10,7 @@ import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Container from './Container';
 import { v1 as uuidv1 } from 'uuid';
-import {
-  returnTheme,
-  returnImageFileFromUrl,
-  scrollElementToCenter
-} from '~/helpers';
+import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { generateFileName } from '~/helpers/stringHelpers';
@@ -25,6 +21,8 @@ import {
   useKeyContext
 } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { ThemeName } from '~/theme/themes';
 
 function Comments({
   autoFocus,
@@ -100,9 +98,10 @@ function Comments({
   const banned = useKeyContext((v) => v.myState.banned);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
@@ -378,62 +377,63 @@ function Comments({
           onSubmitWithAttachment: handleFileUpload
         }}
       >
-        <div
-          className={`${
-            isPreview && !(commentsShown || autoExpand)
-              ? css`
-                  border-bottom-left-radius: ${borderRadius};
-                  border-bottom-right-radius: ${borderRadius};
-                  &:hover {
-                    background: ${Color.highlightGray()};
-                  }
-                  @media (max-width: ${mobileMaxWidth}) {
+        <ScopedTheme theme={themeName} roles={['loadMoreButton']}>
+          <div
+            className={`${
+              isPreview && !(commentsShown || autoExpand)
+                ? css`
+                    border-bottom-left-radius: ${borderRadius};
+                    border-bottom-right-radius: ${borderRadius};
                     &:hover {
-                      background: #fff;
+                      background: ${Color.highlightGray()};
                     }
-                  }
-                `
-              : ''
-          } ${className}`}
-          style={style}
-          ref={ContainerRef}
-          onClick={isPreview ? onPreviewClick : () => null}
-        >
-          <Container
-            autoFocus={autoFocus}
-            autoExpand={autoExpand}
-            banned={banned}
-            comments={comments}
-            commentsShown={commentsShown}
-            commentsHidden={commentsHidden}
-            commentsLoadLimit={commentsLoadLimit}
-            CommentRefs={CommentRefs}
-            CommentInputAreaRef={CommentInputAreaRef}
-            disableReason={disableReason}
-            inputAreaInnerRef={inputAreaInnerRef}
-            inputAtBottom={inputAtBottom}
-            inputTypeLabel={inputTypeLabel}
-            isLoading={isLoading}
-            isPreview={isPreview}
-            isSubjectPannelComments={isSubjectPannelComments}
-            loadMoreShown={loadMoreButton}
-            loadMoreButtonColor={loadMoreButtonColor}
-            noInput={noInput}
-            numInputRows={numInputRows}
-            numPreviews={numPreviews}
-            onCommentSubmit={onCommentSubmit}
-            onLoadMoreComments={onLoadMoreComments}
-            onSetCommentSubmitted={setCommentSubmitted}
-            parent={parent}
-            previewComments={previewComments}
-            showSecretButtonAvailable={showSecretButtonAvailable}
-            subject={subject}
-            subjectId={subjectId}
-            theme={theme}
-            uploadComment={uploadComment}
-            rootContent={rootContent}
-          />
-        </div>
+                    @media (max-width: ${mobileMaxWidth}) {
+                      &:hover {
+                        background: #fff;
+                      }
+                    }
+                  `
+                : ''
+            } ${className || ''}`}
+            style={style}
+            ref={ContainerRef}
+            onClick={isPreview ? onPreviewClick : () => null}
+          >
+            <Container
+              autoFocus={autoFocus}
+              autoExpand={autoExpand}
+              banned={banned}
+              comments={comments}
+              commentsShown={commentsShown}
+              commentsHidden={commentsHidden}
+              commentsLoadLimit={commentsLoadLimit}
+              CommentRefs={CommentRefs}
+              CommentInputAreaRef={CommentInputAreaRef}
+              disableReason={disableReason}
+              inputAreaInnerRef={inputAreaInnerRef}
+              inputAtBottom={inputAtBottom}
+              inputTypeLabel={inputTypeLabel}
+              isLoading={isLoading}
+              isPreview={isPreview}
+              isSubjectPannelComments={isSubjectPannelComments}
+              loadMoreShown={loadMoreButton}
+              noInput={noInput}
+              numInputRows={numInputRows}
+              numPreviews={numPreviews}
+              onCommentSubmit={onCommentSubmit}
+              onLoadMoreComments={onLoadMoreComments}
+              onSetCommentSubmitted={setCommentSubmitted}
+              parent={parent}
+              previewComments={previewComments}
+              showSecretButtonAvailable={showSecretButtonAvailable}
+              subject={subject}
+              subjectId={subjectId}
+              theme={theme}
+              uploadComment={uploadComment}
+              rootContent={rootContent}
+            />
+          </div>
+        </ScopedTheme>
       </Context.Provider>
     </ErrorBoundary>
   );

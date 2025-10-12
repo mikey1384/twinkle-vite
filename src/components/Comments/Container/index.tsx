@@ -25,7 +25,6 @@ export default function Container({
   isPreview,
   isSubjectPannelComments,
   loadMoreShown,
-  loadMoreButtonColor,
   noInput,
   numInputRows,
   numPreviews,
@@ -58,7 +57,6 @@ export default function Container({
   isPreview?: boolean;
   isSubjectPannelComments?: boolean;
   loadMoreShown?: boolean;
-  loadMoreButtonColor: string;
   noInput?: boolean;
   numInputRows?: number;
   numPreviews?: number;
@@ -122,7 +120,6 @@ export default function Container({
           pinnedCommentId={pinnedCommentId}
           rootContent={rootContent}
           poster={searchedPoster}
-          loadMoreButtonColor={loadMoreButtonColor}
           subject={subject}
           theme={theme}
         />
@@ -145,7 +142,6 @@ export default function Container({
           isPreview={isPreview}
           isSubjectPannelComments={isSubjectPannelComments}
           loadMoreShown={loadMoreShown}
-          loadMoreButtonColor={loadMoreButtonColor}
           noInput={noInput}
           numInputRows={numInputRows}
           numPreviews={numPreviews}

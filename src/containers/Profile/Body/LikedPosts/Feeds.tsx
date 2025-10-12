@@ -7,7 +7,6 @@ import Loading from '~/components/Loading';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { useAppContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -30,9 +29,6 @@ export default function Feeds({
   username: string;
 }) {
   const { filter } = useParams();
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(() => returnTheme(selectedTheme || 'logoBlue'), [selectedTheme]);
   const location = useLocation();
   const navigate = useNavigate();
   const [loadingFeeds, setLoadingFeeds] = useState(false);
@@ -193,7 +189,7 @@ export default function Feeds({
                 style={{ marginBottom: '1rem' }}
                 onClick={handleLoadMoreFeeds}
                 loading={loadingMore}
-                color={loadMoreButtonColor}
+                theme={selectedTheme}
                 filled
               />
             )}

@@ -1,7 +1,12 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
-import { innerBorderRadius, borderRadius, mobileMaxWidth } from '~/constants/css';
+import {
+  innerBorderRadius,
+  borderRadius,
+  mobileMaxWidth,
+  Color
+} from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import SearchInput from './SearchInput';
@@ -9,6 +14,7 @@ import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
@@ -53,6 +59,27 @@ export default function ChatFilterBar({
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
   const topicButtonRef = useRef(null);
+  const normalizedTheme = useMemo<ThemeName>(
+    () => (themeColor || 'logoBlue') as ThemeName,
+    [themeColor]
+  );
+  const { chatTopicColorVar, chatTopicTextColorVar } = useMemo(() => {
+    const roles = getThemeRoles(normalizedTheme);
+    const topicColorKey = roles.chatTopic?.color || normalizedTheme;
+    const topicColorFn = Color[topicColorKey as keyof typeof Color];
+    const topicFallback = topicColorFn ? topicColorFn() : topicColorKey;
+    const topicColorVar = `var(--role-chatTopic-color, ${topicFallback})`;
+
+    const textColorKey = roles.chatTopicText?.color || 'white';
+    const textColorFn = Color[textColorKey as keyof typeof Color];
+    const textFallback = textColorFn ? textColorFn() : textColorKey;
+    const textColorVar = `var(--role-chatTopicText-color, ${textFallback})`;
+
+    return {
+      chatTopicColorVar: topicColorVar,
+      chatTopicTextColorVar: textColorVar
+    };
+  }, [normalizedTheme]);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -70,7 +97,10 @@ export default function ChatFilterBar({
   });
 
   return (
-    <ScopedTheme theme={themeColor as any}>
+    <ScopedTheme
+      theme={normalizedTheme}
+      roles={['chatTopic', 'chatTopicText']}
+    >
       <div
         className={css`
         display: flex;
@@ -102,12 +132,14 @@ export default function ChatFilterBar({
             cursor: pointer;
             box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
             ${selectedTab === 'all'
-              ? `background-color: var(--chat-bg);`
+              ? `background-color: ${chatTopicColorVar};`
               : ''};
-            ${selectedTab === 'all' ? `color: var(--chat-text);` : ''};
+            ${selectedTab === 'all'
+              ? `color: ${chatTopicTextColorVar};`
+              : ''};
             &:hover {
-              color: var(--chat-text);
-              background-color: var(--chat-bg);
+              color: ${chatTopicTextColorVar};
+              background-color: ${chatTopicColorVar};
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0;
@@ -165,12 +197,14 @@ export default function ChatFilterBar({
                 display: flex;
                 align-items: center;
                 ${selectedTab === 'topic'
-                  ? `background-color: var(--chat-bg);`
+                  ? `background-color: ${chatTopicColorVar};`
                   : ''}
-                ${selectedTab === 'topic' ? `color: var(--chat-text);` : ''}
+                ${selectedTab === 'topic'
+                  ? `color: ${chatTopicTextColorVar};`
+                  : ''}
               &:hover {
-                  color: var(--chat-text);
-                  background-color: var(--chat-bg);
+                  color: ${chatTopicTextColorVar};
+                  background-color: ${chatTopicColorVar};
                 }
                 max-width: 20vw;
                 @media (max-width: ${mobileMaxWidth}) {

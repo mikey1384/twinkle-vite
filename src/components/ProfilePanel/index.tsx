@@ -19,7 +19,6 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { replaceFakeAtSymbol } from '~/helpers/stringHelpers';
 import { useInView } from 'react-intersection-observer';
 import {
@@ -31,6 +30,8 @@ import {
 } from '~/contexts';
 import localize from '~/constants/localize';
 import MessagesButton from './MessagesButton';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const chatLabel = localize('chat2');
 const changePicLabel = localize('changePic');
@@ -256,9 +257,28 @@ function ProfilePanel({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const banned = useKeyContext((v) => v.myState.banned);
-  const {
-    profilePanel: { color: profilePanelColor }
-  } = useMemo(() => returnTheme(profileTheme || 'logoBlue'), [profileTheme]);
+  const themeName = useMemo<ThemeName>(
+    () => (profileTheme || 'logoBlue') as ThemeName,
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const profilePanelFallbackColor = useMemo(() => {
+    const role = themeRoles.profilePanel;
+    if (!role?.color) {
+      return Color.logoBlue();
+    }
+    const colorFn = Color[role.color as keyof typeof Color];
+    if (colorFn) {
+      return typeof role.opacity === 'number'
+        ? colorFn(role.opacity)
+        : colorFn();
+    }
+    return role.color;
+  }, [themeRoles]);
+  const profilePanelColorVar = useMemo(
+    () => `var(--role-profilePanel-color, ${profilePanelFallbackColor})`,
+    [profilePanelFallbackColor]
+  );
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -339,21 +359,22 @@ function ProfilePanel({
         }}
       >
         {contentShown ? (
-          <div
-            ref={PanelRef}
-            className={css`
-              content-visibility: auto;
-              contain-intrinsic-size: 600px;
-              background: #fff;
-              width: 100%;
-              line-height: 2.3rem;
-              font-size: 1.5rem;
-              position: relative;
-            `}
-          >
+          <ScopedTheme theme={themeName} roles={['profilePanel']}>
+            <div
+              ref={PanelRef}
+              className={css`
+                content-visibility: auto;
+                contain-intrinsic-size: 600px;
+                background: #fff;
+                width: 100%;
+                line-height: 2.3rem;
+                font-size: 1.5rem;
+                position: relative;
+              `}
+            >
             <div
               className={`unselectable ${css`
-                background: ${Color[profilePanelColor]()};
+                background: ${profilePanelColorVar};
                 border-top-right-radius: ${borderRadius};
                 border-top-left-radius: ${borderRadius};
                 border-bottom: none;
@@ -751,6 +772,7 @@ function ProfilePanel({
               />
             )}
           </div>
+        </ScopedTheme>
         ) : (
           <div
             style={{

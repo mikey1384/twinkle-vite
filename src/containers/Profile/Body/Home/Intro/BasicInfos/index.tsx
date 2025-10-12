@@ -5,7 +5,6 @@ import InfoEditForm from './InfoEditForm';
 import PasswordInputModal from './PasswordInputModal';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { stringIsEmpty, trimUrl } from '~/helpers/stringHelpers';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import moment from 'moment';
@@ -18,6 +17,8 @@ import {
 } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const editLabel = localize('edit');
 const emailHasBeenSentLabel = localize('emailHasBeenSent');
@@ -67,14 +68,50 @@ export default function BasicInfos({
   const myUsername = useKeyContext((v) => v.myState.username);
   const banned = useKeyContext((v) => v.myState.banned);
 
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    link: { color: linkColor },
-    verifyEmail: { color: verifyEmailColor }
-  } = useMemo(
-    () => returnTheme(selectedTheme || profileTheme || 'logoBlue'),
+  const themeName = useMemo<ThemeName>(
+    () => ((selectedTheme || profileTheme || 'logoBlue') as ThemeName),
     [profileTheme, selectedTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+
+  const buttonColorKey = useMemo(
+    () => themeRoles.button?.color || themeName,
+    [themeName, themeRoles]
+  );
+  const buttonHoverColorKey = useMemo(
+    () => themeRoles.buttonHovered?.color || buttonColorKey,
+    [buttonColorKey, themeRoles]
+  );
+
+  const resolveColorValue = (
+    role: { color?: string; opacity?: number } | undefined,
+    fallbackKey: string,
+    fallbackOpacity = 1
+  ) => {
+    const key = role?.color || fallbackKey;
+    const opacity = role?.opacity ?? fallbackOpacity;
+    const colorFn = Color[key as keyof typeof Color];
+    if (colorFn) {
+      return typeof opacity === 'number' ? colorFn(opacity) : colorFn();
+    }
+    return key;
+  };
+
+  const linkColorVar = useMemo(
+    () =>
+      `var(--role-link-color, ${resolveColorValue(
+        themeRoles.link,
+        'blue'
+      )})`,
+    [themeRoles]
+  );
+  const verifyEmailColorVar = useMemo(
+    () =>
+      `var(--role-verifyEmail-color, ${resolveColorValue(
+        themeRoles.verifyEmail,
+        buttonColorKey
+      )})`,
+    [buttonColorKey, themeRoles]
   );
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const uploadProfileInfo = useAppContext(
@@ -124,7 +161,12 @@ export default function BasicInfos({
   }, [online, username]);
 
   return (
-    <div className={className} style={style}>
+    <ScopedTheme
+      theme={themeName}
+      roles={['button', 'buttonHovered', 'link', 'verifyEmail']}
+      className={className}
+      style={style}
+    >
       <div style={{ marginBottom: '0.5rem' }}>
         {memberSinceLabel} {displayedTime}
       </div>
@@ -165,7 +207,7 @@ export default function BasicInfos({
                   >
                     <a
                       href={`mailto:${email}`}
-                      style={{ color: Color[linkColor]() }}
+                      style={{ color: linkColorVar }}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -191,7 +233,7 @@ export default function BasicInfos({
                           : 'pointer',
                       color:
                         emailVerified || emailCheckHighlighted
-                          ? Color[verifyEmailColor]()
+                          ? verifyEmailColorVar
                           : Color.lighterGray()
                     }}
                     icon="check-circle"
@@ -215,7 +257,7 @@ export default function BasicInfos({
                           : undefined,
                         cursor: 'pointer',
                         fontSize: '1.2rem',
-                        color: Color[verifyEmailColor]()
+                        color: verifyEmailColorVar
                       }}
                       onClick={
                         verificationEmailSent ? goToEmail : onVerifyEmail
@@ -242,7 +284,7 @@ export default function BasicInfos({
               >
                 <span>{youtubeLabel}: </span>
                 <a
-                  style={{ color: Color[linkColor]() }}
+                  style={{ color: linkColorVar }}
                   href={youtubeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -255,7 +297,7 @@ export default function BasicInfos({
               <div style={{ marginTop: '0.5rem' }}>
                 <span>{websiteLabel}: </span>
                 <a
-                  style={{ color: Color[linkColor]() }}
+                  style={{ color: linkColorVar }}
                   href={website}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -320,8 +362,8 @@ export default function BasicInfos({
             width: 'auto'
           }}
           skeuomorphic
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={buttonColorKey}
+          hoverColor={buttonHoverColorKey}
           onClick={handleTalkButtonClick}
         >
           <Icon icon="comments" />
@@ -337,7 +379,7 @@ export default function BasicInfos({
           }}
         />
       )}
-    </div>
+    </ScopedTheme>
   );
 
   async function handleTalkButtonClick() {

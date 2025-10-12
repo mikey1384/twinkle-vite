@@ -11,7 +11,6 @@ export default function Searched({
   parent,
   pinnedCommentId,
   rootContent,
-  loadMoreButtonColor,
   poster,
   subject,
   theme
@@ -20,10 +19,9 @@ export default function Searched({
   parent: Content;
   pinnedCommentId?: number;
   rootContent?: Content;
-  loadMoreButtonColor: string;
   poster: User;
   subject?: Subject;
-  theme: string;
+  theme?: string;
 }) {
   const loadCommentsByPoster = useAppContext(
     (v) => v.requestHelpers.loadCommentsByPoster
@@ -80,7 +78,7 @@ export default function Searched({
         {loadMoreShown && (
           <LoadMoreButton
             filled
-            color={loadMoreButtonColor}
+            theme={theme}
             loading={loadingMore}
             onClick={handleLoadMore}
             style={{
