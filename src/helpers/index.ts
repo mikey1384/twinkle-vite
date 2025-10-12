@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { Theme } from '~/constants/css';
+import { getThemeRoles } from '~/theme/themes';
 import { Card } from '~/types';
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
@@ -277,7 +277,7 @@ export function parseChannelPath(pathId: string | number) {
 }
 
 export function returnTheme(color?: string) {
-  return Theme(color || 'logoBlue');
+  return getThemeRoles((color || 'logoBlue') as any);
 }
 
 export function scrollElementToCenter(element: any, adjustment = -50): void {

@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { useAppContext, useChatContext } from '~/contexts';
-import { getThemeStyles } from './StyleHelpers';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 export default function TopicStartNotification({
   channelId,
@@ -24,7 +24,6 @@ export default function TopicStartNotification({
   const {
     topicText: { color: topicTextColor, shadow: topicShadowColor }
   } = useMemo(() => returnTheme(theme), [theme]);
-  const themeStyles = getThemeStyles(theme);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -40,64 +39,66 @@ export default function TopicStartNotification({
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicStartNotification">
-      <div
-        ref={containerRef}
-        className={css`
-          font-family: 'Roboto', sans-serif;
-          color: ${themeStyles.text};
-          background-color: ${themeStyles.titleBg};
-          border-top: 1px solid ${themeStyles.border};
-          border-bottom: 1px solid ${themeStyles.border};
-          cursor: pointer;
-          text-align: center;
-          padding: 1rem;
-          margin: 1rem 0;
-          transition: background 0.3s ease;
-          width: 100%;
-          &:hover {
-            background-color: ${themeStyles.hoverTitleBg};
-          }
-        `}
-        onClick={() => handleTopicClick(topicObj.id)}
-      >
+      <ScopedTheme theme={theme as any}>
         <div
+          ref={containerRef}
           className={css`
-            font-size: 1.6rem;
-            font-weight: bold;
+            font-family: 'Roboto', sans-serif;
+            color: var(--chat-text);
+            background-color: var(--chat-title-bg);
+            border-top: 1px solid var(--chat-border);
+            border-bottom: 1px solid var(--chat-border);
+            cursor: pointer;
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            transition: background 0.3s ease;
             width: 100%;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
+            &:hover {
+              background-color: var(--chat-hover-title-bg);
             }
           `}
+          onClick={() => handleTopicClick(topicObj.id)}
         >
           <div
             className={css`
+              font-size: 1.6rem;
+              font-weight: bold;
               width: 100%;
-            `}
-          >
-            {username} started a new topic
-          </div>
-          <div
-            ref={titleRef}
-            className={css`
-              width: 100%;
-              padding: 0 10rem;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              color: ${Color[topicTextColor]()};
-              text-shadow: ${topicShadowColor
-                ? `0.05rem 0.05rem 0.05rem ${Color[topicShadowColor]()}`
-                : 'none'};
               @media (max-width: ${mobileMaxWidth}) {
-                padding: 0 3rem;
+                font-size: 1.5rem;
               }
             `}
           >
-            {truncatedTitle}
+            <div
+              className={css`
+                width: 100%;
+              `}
+            >
+              {username} started a new topic
+            </div>
+            <div
+              ref={titleRef}
+              className={css`
+                width: 100%;
+                padding: 0 10rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                color: ${Color[topicTextColor]()};
+                text-shadow: ${topicShadowColor
+                  ? `0.05rem 0.05rem 0.05rem ${Color[topicShadowColor]()}`
+                  : 'none'};
+                @media (max-width: ${mobileMaxWidth}) {
+                  padding: 0 3rem;
+                }
+              `}
+            >
+              {truncatedTitle}
+            </div>
           </div>
         </div>
-      </div>
+      </ScopedTheme>
     </ErrorBoundary>
   );
 

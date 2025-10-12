@@ -67,6 +67,8 @@ export default function Button({
 
   const buttonCSS = useMemo(() => {
     const colorKey = (onHover ? hoverColor : color) || 'black';
+    const isThemeColor = colorKey === 'theme';
+    const isHoverTheme = (hoverColor || color) === 'theme';
     const appliedHoverColor = getHoverColor({
       isDisabled,
       filled,
@@ -97,18 +99,24 @@ export default function Button({
 
       color: ${!skeuomorphic && (filled || opacity)
         ? '#fff'
+        : isThemeColor
+        ? 'var(--theme-text)'
         : Color[colorKey](textOpacity)};
 
       background: ${skeuomorphic
         ? Color.white(opacity || 1)
+        : isThemeColor
+        ? `var(--theme-bg)`
         : Color[colorKey](
             isDisabled ? backgroundDisabledOpacity : backgroundOpacity
           )};
 
       border: 1px solid
-        ${Color[colorKey](
-          isDisabled ? backgroundDisabledOpacity : backgroundOpacity
-        )};
+        ${isThemeColor
+          ? `var(--theme-border)`
+          : Color[colorKey](
+              isDisabled ? backgroundDisabledOpacity : backgroundOpacity
+            )};
 
       ${skeuomorphic && filled
         ? `border-color: ${Color[colorKey](
@@ -136,15 +144,21 @@ export default function Button({
         &:hover {
           background: ${skeuomorphic
             ? '#fff'
+            : isHoverTheme
+            ? `var(--theme-hover-bg)`
             : Color[hoverColor || color](
                 isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
               )};
 
-          ${isDisabled ? '' : `color: ${appliedHoverColor};`}
+          ${isDisabled
+            ? ''
+            : `color: ${isHoverTheme ? 'var(--theme-text)' : appliedHoverColor};`}
 
-          border-color: ${Color[hoverColor || color](
-            isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
-          )};
+          border-color: ${isHoverTheme
+            ? `var(--theme-hover-bg)`
+            : Color[hoverColor || color](
+                isDisabled ? backgroundDisabledOpacity : backgroundHoverOpacity
+              )};
 
           ${skeuomorphic
             ? isDisabled

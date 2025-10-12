@@ -1,18 +1,14 @@
 import React, { useRef } from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
-import {
-  innerBorderRadius,
-  borderRadius,
-  getThemeStyles,
-  mobileMaxWidth
-} from '~/constants/css';
+import { innerBorderRadius, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import SearchInput from './SearchInput';
 import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
@@ -62,7 +58,6 @@ export default function ChatFilterBar({
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
-  const themeStyles = getThemeStyles(themeColor);
 
   outsideClickMethod([searchInputRef, searchButtonRef, topicButtonRef], () => {
     if (!stringIsEmpty(searchText)) {
@@ -75,8 +70,9 @@ export default function ChatFilterBar({
   });
 
   return (
-    <div
-      className={css`
+    <ScopedTheme theme={themeColor as any}>
+      <div
+        className={css`
         display: flex;
         flex-direction: column;
         height: 4rem;
@@ -106,12 +102,12 @@ export default function ChatFilterBar({
             cursor: pointer;
             box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
             ${selectedTab === 'all'
-              ? `background-color: ${themeStyles.bg};`
+              ? `background-color: var(--chat-bg);`
               : ''};
-            ${selectedTab === 'all' ? `color: ${themeStyles.text};` : ''};
+            ${selectedTab === 'all' ? `color: var(--chat-text);` : ''};
             &:hover {
-              color: ${themeStyles.text};
-              background-color: ${themeStyles.bg};
+              color: var(--chat-text);
+              background-color: var(--chat-bg);
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0;
@@ -169,12 +165,12 @@ export default function ChatFilterBar({
                 display: flex;
                 align-items: center;
                 ${selectedTab === 'topic'
-                  ? `background-color: ${themeStyles.bg};`
+                  ? `background-color: var(--chat-bg);`
                   : ''}
-                ${selectedTab === 'topic' ? `color: ${themeStyles.text};` : ''}
+                ${selectedTab === 'topic' ? `color: var(--chat-text);` : ''}
               &:hover {
-                  color: ${themeStyles.text};
-                  background-color: ${themeStyles.bg};
+                  color: var(--chat-text);
+                  background-color: var(--chat-bg);
                 }
                 max-width: 20vw;
                 @media (max-width: ${mobileMaxWidth}) {
@@ -279,8 +275,8 @@ export default function ChatFilterBar({
             background: #fff;
             cursor: pointer;
             box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
-            ${isSearchActive ? `background-color: ${themeStyles.bg};` : ''};
-            ${isSearchActive ? `color: ${themeStyles.text};` : ''};
+            ${isSearchActive ? `background-color: var(--chat-bg);` : ''};
+            ${isSearchActive ? `color: var(--chat-text);` : ''};
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: ${innerBorderRadius};
             }
@@ -300,7 +296,8 @@ export default function ChatFilterBar({
           <SearchInput searchText={searchText} onChange={onSearch} />
         </div>
       )}
-    </div>
+      </div>
+    </ScopedTheme>
   );
 
   function handleTabClick(tabName: string) {

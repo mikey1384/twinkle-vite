@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
-import { getThemeStyles } from './StyleHelpers';
 import Thumbnail from '~/components/Thumbnail';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
@@ -14,6 +13,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { returnTheme } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 export default function TopicMessagePreview({
   channelId,
@@ -46,7 +46,6 @@ export default function TopicMessagePreview({
   topicObj: { id: number; content: string };
   username: string;
 }) {
-  const themeStyles = getThemeStyles(theme);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -99,112 +98,114 @@ export default function TopicMessagePreview({
 
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
-      <div
-        ref={containerRef}
-        className={css`
-          font-family: 'Roboto', sans-serif;
-          font-size: ${contentPreviewShown ? '1.5rem' : '1.7rem'};
-          color: ${themeStyles.text};
-          background-color: ${themeStyles.bg};
-          border-top: 1px solid ${themeStyles.border};
-          border-bottom: 1px solid ${themeStyles.border};
-          cursor: pointer;
-          padding: 1rem 0;
-          margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
-          margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
-          transition: background 0.3s ease;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          min-height: ${appliedThumbUrl ? '8rem' : '6rem'};
-          &:hover {
-            background-color: ${themeStyles.hoverBg};
-          }
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 1rem 3rem;
-          }
-        `}
-        onClick={handleClick}
-      >
+      <ScopedTheme theme={theme as any}>
         <div
+          ref={containerRef}
           className={css`
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 35%;
-            max-width: 15rem;
-            height: 85%;
-            opacity: 0.25;
-            pointer-events: none;
-            overflow: hidden;
-          `}
-        >
-          <Thumbnail playButtonShown={isVideo} thumbUrl={appliedThumbUrl} />
-        </div>
-        <div
-          className={css`
-            z-index: 1;
-            font-size: ${contentPreviewShown ? '1.4rem' : '1.6rem'};
+            font-family: 'Roboto', sans-serif;
+            font-size: ${contentPreviewShown ? '1.5rem' : '1.7rem'};
+            color: var(--chat-text);
+            background-color: var(--chat-bg);
+            border-top: 1px solid var(--chat-border);
+            border-bottom: 1px solid var(--chat-border);
+            cursor: pointer;
+            padding: 1rem 0;
+            margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
+            margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
+            transition: background 0.3s ease;
             width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: center;
-            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: ${appliedThumbUrl ? '8rem' : '6rem'};
+            &:hover {
+              background-color: var(--chat-hover-bg);
+            }
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem;
+              padding: 1rem 3rem;
             }
           `}
+          onClick={handleClick}
         >
-          <div>
-            {!contentPreviewShown ? `${username} posted a message on ` : ''}
-            <b
-              ref={topicRef}
-              className={css`
-                color: ${Color[topicTextColor]()};
-                ${topicShadowColor
-                  ? `text-shadow: 0.05rem 0.05rem 0.05rem ${Color[
-                      topicShadowColor
-                    ]()};`
-                  : ''}
-              `}
-            >
-              {truncatedTopic}
-            </b>
+          <div
+            className={css`
+              position: absolute;
+              left: 50%;
+              top: 50%;
+              transform: translate(-50%, -50%);
+              width: 35%;
+              max-width: 15rem;
+              height: 85%;
+              opacity: 0.25;
+              pointer-events: none;
+              overflow: hidden;
+            `}
+          >
+            <Thumbnail playButtonShown={isVideo} thumbUrl={appliedThumbUrl} />
           </div>
-          {contentPreviewShown && (
-            <div
-              className={css`
-                color: ${Color.black()};
-                margin-top: 0.5rem;
-                width: 100%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                text-align: center;
-                white-space: nowrap;
-                font-size: 1.5rem;
-                position: relative;
-                z-index: 1;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.2rem;
-                }
-              `}
-            >
-              {username}:{' '}
-              <span
-                ref={contentRef}
+          <div
+            className={css`
+              z-index: 1;
+              font-size: ${contentPreviewShown ? '1.4rem' : '1.6rem'};
+              width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              text-align: center;
+              white-space: nowrap;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.3rem;
+              }
+            `}
+          >
+            <div>
+              {!contentPreviewShown ? `${username} posted a message on ` : ''}
+              <b
+                ref={topicRef}
                 className={css`
-                  font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
+                  color: ${Color[topicTextColor]()};
+                  ${topicShadowColor
+                    ? `text-shadow: 0.05rem 0.05rem 0.05rem ${Color[
+                        topicShadowColor
+                      ]()};`
+                    : ''}
                 `}
               >
-                {contentPreview}
-              </span>
+                {truncatedTopic}
+              </b>
             </div>
-          )}
+            {contentPreviewShown && (
+              <div
+                className={css`
+                  color: ${Color.black()};
+                  margin-top: 0.5rem;
+                  width: 100%;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  text-align: center;
+                  white-space: nowrap;
+                  font-size: 1.5rem;
+                  position: relative;
+                  z-index: 1;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.2rem;
+                  }
+                `}
+              >
+                {username}:{' '}
+                <span
+                  ref={contentRef}
+                  className={css`
+                    font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
+                  `}
+                >
+                  {contentPreview}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </ScopedTheme>
     </ErrorBoundary>
   );
 

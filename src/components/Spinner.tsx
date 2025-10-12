@@ -1,18 +1,20 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 export default function Spinner({ theme }: { theme?: string }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    spinner: { color: spinnerColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const scopedTheme = useMemo(
+    () => (theme || profileTheme) as any,
+    [theme, profileTheme]
+  );
 
   return (
-    <div
-      className={css`
+    <ScopedTheme theme={scopedTheme} roles={['spinner']}>
+      <div
+        className={css`
         display: flex;
         align-items: center;
         @keyframes loading-rotator {
@@ -51,7 +53,7 @@ export default function Spinner({ theme }: { theme?: string }) {
             stroke-dasharray: 187;
             stroke-dashoffset: 0;
             transform-origin: center;
-            stroke: ${Color[spinnerColor]()};
+            stroke: var(--role-spinner-color, ${Color.logoBlue()});
             animation: loading-dash 1.4s ease-in-out infinite;
           `}
           fill="none"
@@ -61,6 +63,7 @@ export default function Spinner({ theme }: { theme?: string }) {
           r={30}
         />
       </svg>
-    </div>
+      </div>
+    </ScopedTheme>
   );
 }

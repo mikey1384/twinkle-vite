@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnMaxRewards } from '~/constants/defaultValues';
@@ -9,6 +9,7 @@ import Comment from './Comment';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Starmarks from './Starmarks';
 import { useKeyContext } from '~/contexts';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 const INITIAL_LOAD_COUNT = 1;
 const LOAD_MORE_COUNT = 3;
@@ -38,10 +39,7 @@ function RewardStatus({
   const {
     info: { color: infoColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(theme || profileTheme),
-    [theme, profileTheme]
-  );
+  const scopedTheme = (theme || profileTheme) as any;
 
   const [numLoaded, setNumLoaded] = useState(INITIAL_LOAD_COUNT);
 
@@ -85,73 +83,77 @@ function RewardStatus({
 
   return (
     <ErrorBoundary componentPath="RewardStatus/index">
-      <div
-        style={style}
-        className={`${className} ${css`
-          font-size: 1.3rem;
-          padding: 0.8rem;
-          color: rgba(255, 255, 255, 0.92);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          min-height: 3.6rem;
-          background: ${themeStyles.rewardStatusBg};
-          position: relative;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-            sans-serif;
-          letter-spacing: 0.2px;
-          transform: translateY(-0.3px);
-          box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08),
-            0 1px 1px rgba(0, 0, 0, 0.12), 0 -1px 1px rgba(255, 255, 255, 0.02);
+      <ScopedTheme theme={scopedTheme}>
+        <div
+          style={style}
+          className={`${className} ${css`
+            font-size: 1.3rem;
+            padding: 0.8rem;
+            color: rgba(255, 255, 255, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 3.6rem;
+            background: var(--reward-status-bg);
+            position: relative;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+              sans-serif;
+            letter-spacing: 0.2px;
+            transform: translateY(-0.3px);
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08),
+              0 1px 1px rgba(0, 0, 0, 0.12),
+              0 -1px 1px rgba(255, 255, 255, 0.02);
 
-          &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-              180deg,
-              ${themeStyles.rewardStatusGradient} 0%,
-              transparent 50%
-            );
-            pointer-events: none;
-          }
+            &::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(
+                180deg,
+                var(--reward-status-gradient) 0%,
+                transparent 50%
+              );
+              pointer-events: none;
+            }
 
-          &::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 12%;
-            width: 76%;
-            height: 5px;
-            background: rgba(0, 0, 0, 0.08);
-            filter: blur(2px);
-            border-radius: 50%;
-            z-index: -1;
+            &::after {
+              content: '';
+              position: absolute;
+              bottom: -1px;
+              left: 12%;
+              width: 76%;
+              height: 5px;
+              background: rgba(0, 0, 0, 0.08);
+              filter: blur(2px);
+              border-radius: 50%;
+              z-index: -1;
+
+              @media (max-width: ${mobileMaxWidth}) {
+                height: 4px;
+                background: rgba(0, 0, 0, 0.06);
+                filter: blur(1.5px);
+                width: 70%;
+                left: 15%;
+              }
+            }
 
             @media (max-width: ${mobileMaxWidth}) {
-              height: 4px;
-              background: rgba(0, 0, 0, 0.06);
-              filter: blur(1.5px);
-              width: 70%;
-              left: 15%;
+              padding: 0.8rem;
+              font-size: 1.3rem;
+              transform: translateY(-0.2px);
+              box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06),
+                0 1px 1px rgba(0, 0, 0, 0.1),
+                0 -1px 1px rgba(255, 255, 255, 0.01);
             }
-          }
-
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.8rem;
-            font-size: 1.3rem;
-            transform: translateY(-0.2px);
-            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06),
-              0 1px 1px rgba(0, 0, 0, 0.1), 0 -1px 1px rgba(255, 255, 255, 0.01);
-          }
-        `}`}
-      >
-        <Starmarks stars={amountRewarded} theme={theme || profileTheme} />
-      </div>
+          `}`}
+        >
+          <Starmarks stars={amountRewarded} />
+        </div>
+      </ScopedTheme>
       {numLoaded < sortedRewards.length && (
         <LoadMoreButton
           color={infoColor}

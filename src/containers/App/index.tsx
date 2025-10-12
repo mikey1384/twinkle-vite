@@ -65,6 +65,7 @@ import AICallWindow from './AICallWindow';
 import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
+import { applyThemeVars } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -120,9 +121,11 @@ export default function App() {
     () => returnTheme(myState.profileTheme || DEFAULT_PROFILE_THEME),
     [myState.profileTheme]
   );
-  const {
-    background: { color: backgroundColor }
-  } = theme;
+  const backgroundColorName = theme.background?.color || 'whiteGray';
+  const backgroundColorFn = Color[backgroundColorName as keyof typeof Color];
+  const resolvedBackgroundColor = backgroundColorFn
+    ? backgroundColorFn()
+    : backgroundColorName;
   const {
     level,
     profilePicUrl,
@@ -178,6 +181,12 @@ export default function App() {
   const onUpdateFileUploadProgress = useHomeContext(
     (v) => v.actions.onUpdateFileUploadProgress
   );
+
+  useEffect(() => {
+    const active = (myState.profileTheme || DEFAULT_PROFILE_THEME) as any;
+    applyThemeVars(active);
+  }, [myState.profileTheme]);
+
   const onUpdateSecretAttachmentUploadProgress = useHomeContext(
     (v) => v.actions.onUpdateSecretAttachmentUploadProgress
   );
@@ -568,7 +577,8 @@ export default function App() {
       <Global
         styles={{
           body: {
-            background: Color[backgroundColor]()
+            // Prefer CSS variable, fall back to computed background color
+            background: `var(--page-bg, ${resolvedBackgroundColor})`
           }
         }}
       />

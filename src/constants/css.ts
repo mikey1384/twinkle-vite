@@ -1,3 +1,10 @@
+import {
+  ThemeName,
+  themeRegistry,
+  getThemeRoles,
+  RoleTokens
+} from '~/theme/themes';
+
 export const Color: {
   [key: string]: (opacity?: number) => string;
 } = {
@@ -86,504 +93,48 @@ export const Color: {
   yellow: (opacity = 1) => `rgba(255,255,55,${opacity})`
 };
 
-export const strongColors = ['rose', 'red', 'purple'];
-
-export function Theme(color = 'logoBlue'): {
-  [key: string]: {
-    color: string;
-    opacity?: number;
-    shadow?: string;
-  };
-} {
-  return {
-    abort: {
-      color: 'darkerGray'
-    },
-    action: {
-      color:
-        {
-          green: 'logoBlue',
-          orange: 'pinkOrange',
-          rose: 'cranberry',
-          purple: 'purple',
-          black: 'darkOceanBlue',
-          red: 'magenta',
-          darkBlue: 'armyGreen',
-          vantaBlack: 'armyGreen'
-        }[color] || 'green'
-    },
-    active: { color: { green: 'pinkOrange' }[color] || 'green' },
-    alert: {
-      color: 'gold'
-    },
-    alreadyPostedByOtherUser: { color: 'red' },
-    alreadyPostedByThisUser: { color: 'blue' },
-    background: {
-      color:
-        {
-          gold: 'whiteBlueGray'
-        }[color] || 'whiteGray'
-    },
-    button: {
-      color:
-        {
-          gold: 'brownOrange'
-        }[color] || color
-    },
-    buttonHovered: {
-      color:
-        {
-          gold: 'gold'
-        }[color] || color
-    },
-    byUserIndicator: {
-      color:
-        {
-          gold: 'darkGold'
-        }[color] || color,
-      opacity: strongColors.includes(color) ? 0.7 : 0.9
-    },
-    byUserIndicatorText: {
-      color: 'white',
-      shadow:
-        {
-          gold: 'orange'
-        }[color] || ''
-    },
-    carousel: { color },
-    carouselProgress: { color: 'logoBlue' },
-    carouselProgressComplete: { color: 'blue' },
-    chatFlatButton: {
-      color:
-        {
-          gold: 'brownOrange'
-        }[color] || color,
-      opacity:
-        {
-          gold: 1
-        }[color] || 0.8
-    },
-    chatFlatButtonHovered: {
-      color:
-        {
-          gold: 'gold'
-        }[color] || color
-    },
-    chatFlatButtonText: {
-      color: 'white',
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    chatGroup: {
-      color:
-        {
-          gold: 'pinkOrange'
-        }[color] || 'logoBlue'
-    },
-    chatInvitation: {
-      color:
-        {
-          gold: 'darkGold'
-        }[color] || color
-    },
-    chatTopic: {
-      color:
-        {
-          gold: 'brownOrange'
-        }[color] || color
-    },
-    chatUnread: {
-      color:
-        {
-          green: 'lightYellowGreen',
-          rose: 'cranberry',
-          red: 'redOrange',
-          black: 'darkerGray',
-          vantaBlack: 'black',
-          gold: 'logoBlue'
-        }[color] || color
-    },
-    content: {
-      color:
-        {
-          green: 'logoBlue',
-          orange: 'pinkOrange',
-          rose: 'cranberry',
-          pink: 'passionFruit',
-          purple: 'purple',
-          black: 'darkOceanBlue',
-          red: 'magenta',
-          darkBlue: 'armyGreen',
-          vantaBlack: 'armyGreen'
-        }[color] || 'green'
-    },
-    cover: { color },
-    coverText: {
-      color: 'white',
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    todayProgressText: {
-      color,
-      shadow:
-        {
-          gold: 'darkGold'
-        }[color] || ''
-    },
-    danger: {
-      color:
-        {
-          red: 'darkRed',
-          vantaBlack: 'black',
-          gold: 'magenta'
-        }[color] || 'rose'
-    },
-    done: { color: 'blue' },
-    draw: { color: 'logoBlue' },
-    fail: { color: 'black' },
-    filter: {
-      color:
-        {
-          gold: 'brownOrange'
-        }[color] || color,
-      opacity:
-        {
-          gold: 1
-        }[color] || 0.7
-    },
-    filterText: {
-      color: 'white',
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    invertedFilterActive: { color },
-    filterActive: {
-      color:
-        {
-          gold: 'darkGold'
-        }[color] || color
-    },
-    generalChat: {
-      color:
-        {
-          black: 'darkBlue',
-          vantaBlack: 'darkBlue',
-          gold: 'logoBlue'
-        }[color] || color
-    },
-    grammarGameScorePerfect: { color: 'brownOrange' },
-    grammarGameScoreS: { color: 'gold' },
-    grammarGameScoreA: { color: 'magenta' },
-    grammarGameScoreB: { color: 'orange' },
-    grammarGameScoreC: { color: 'pink' },
-    grammarGameScoreD: { color: 'logoBlue' },
-    grammarGameScoreF: { color: 'gray' },
-    header: {
-      color: 'white'
-    },
-    homeMenuItemActive: { color },
-    info: {
-      color:
-        {
-          green: 'yellowGreen',
-          orange: 'lightOrange',
-          rose: 'pastelPink',
-          pink: 'pink',
-          purple: 'lightPurple',
-          black: 'logoBlue',
-          red: 'lightRed',
-          darkBlue: 'oceanBlue',
-          vantaBlack: 'oceanBlue',
-          gold: 'lightOrange'
-        }[color] || 'lightOceanBlue'
-    },
-    itemSelected: { color, opacity: strongColors.includes(color) ? 0.7 : 0.8 },
-    level1: { color: 'logoBlue' },
-    level2: { color: 'pink' },
-    level3: { color: 'orange' },
-    level4: { color: 'magenta' },
-    level5: { color: 'gold' },
-    likeButton: {
-      color:
-        {
-          green: 'yellowGreen',
-          rose: 'skyBlue',
-          red: 'pinkOrange',
-          gold: 'lightOceanBlue'
-        }[color] || 'lightBlue'
-    },
-    likeButtonPressed: {
-      color:
-        {
-          green: 'darkYellowGreen',
-          rose: 'oceanBlue',
-          red: 'passionFruit'
-        }[color] || 'logoBlue'
-    },
-    link: {
-      color:
-        {
-          green: 'fernGreen',
-          orange: 'darkOceanBlue',
-          rose: 'darkOceanBlue',
-          pink: 'oceanBlue',
-          black: 'blueGray',
-          vantaBlack: 'darkerOceanBlue',
-          gold: 'oceanBlue'
-        }[color] || 'blue'
-    },
-    listItemMarker: {
-      color: 'darkerGray'
-    },
-    loadMoreButton: {
-      color:
-        {
-          green: 'lightYellowGreen',
-          orange: 'lighterOrange',
-          rose: 'passionFruit',
-          pink: 'pastelPink',
-          purple: 'lightPurple',
-          black: 'darkGray',
-          red: 'lightRed',
-          darkBlue: 'lightOceanBlue',
-          vantaBlack: 'black',
-          gold: 'lightOceanBlue'
-        }[color] || 'lightBlue'
-    },
-    login: { color: 'green' },
-    logoTwin: { color: 'logoBlue' },
-    logoKle: { color: { gold: 'darkGold' }[color] || 'logoGreen' },
-    mention: {
-      color: { pink: 'orange', gold: 'magenta' }[color] || 'passionFruit'
-    },
-    mission: { color: 'orange' },
-    myCollection: {
-      color,
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    profilePanel: { color },
-    progressBar: { color: { green: 'yellowGreen' }[color] || color },
-    reactionButton: { color, opacity: 0.2 },
-    recommendation: { color: { gold: 'passionFruit' }[color] || 'brownOrange' },
-    reward: {
-      color:
-        {
-          green: 'pinkOrange',
-          orange: 'pastelPink',
-          pink: 'strongPink',
-          red: 'strongPink',
-          rose: 'strongPink',
-          purple: 'strongPink',
-          darkBlue: 'strongPink'
-        }[color] || 'pink'
-    },
-    rewardLevelForm: { color, opacity: strongColors.includes(color) ? 0.9 : 1 },
-    rewardableRecommendation: { color, opacity: 0.1 },
-    search: {
-      color,
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    sectionPanel: { color },
-    sectionPanelText: {
-      color:
-        {
-          gold: 'darkGold'
-        }[color] || color,
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    showMeAnotherSubjectButton: { color: 'green' },
-    showMeAnotherPostButton: { color: 'green' },
-    skeuomorphicDisabled: { color, opacity: 0.2 },
-    spinner: { color },
-    statusMsgLink: {
-      color: { ivory: 'blue', orange: 'yellow', red: 'yellow' }[color] || 'gold'
-    },
-    statusMsgListItemMarker: {
-      color: { ivory: 'darkerGray' }[color] || 'white'
-    },
-    success: { color: 'green' },
-    switch: { color },
-    topicText: {
-      color,
-      shadow:
-        {
-          gold: 'darkBrownOrange'
-        }[color] || ''
-    },
-    tableHeader: { color },
-    userLink: {
-      color:
-        {
-          green: 'blueGreen',
-          orange: 'darkBrownOrange',
-          rose: 'passionFruit',
-          pink: 'strongPink',
-          gold: 'darkGold'
-        }[color] || color
-    },
-    verifyEmail: {
-      color:
-        {
-          green: 'green'
-        }[color] || color
-    },
-    victory: { color: 'brownOrange' },
-    warning: { color: 'redOrange' },
-    xpNumber: { color: 'logoGreen' }
-  };
+export function Theme(color = 'logoBlue'): RoleTokens {
+  return getThemeRoles((color || 'logoBlue') as ThemeName);
 }
 
 export const getThemeStyles = (theme: string, opacity: number = 1) => {
-  const themeColors: Record<string, any> = {
-    logoBlue: {
-      bg: `rgba(65, 140, 235, ${opacity})`,
-      disabledBg: `rgba(65, 140, 235, ${opacity * 0.5})`,
-      hoverBg: `rgba(53, 122, 189, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(40, 90, 156, ${opacity})`,
-      disabledBorder: `rgba(48, 102, 190, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(5, 75, 160, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(205, 210, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
-    },
-    green: {
-      bg: `rgba(40, 182, 44, ${opacity})`,
-      disabledBg: `rgba(40, 182, 44, ${opacity * 0.5})`,
-      hoverBg: `rgba(35, 138, 38, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(26, 109, 26, ${opacity})`,
-      disabledBorder: `rgba(31, 126, 29, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(35, 138, 38, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(205, 255, 210, 0.1)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
-    },
-    orange: {
-      bg: `rgba(255, 140, 0, ${opacity})`,
-      disabledBg: `rgba(255, 140, 0, ${opacity * 0.5})`,
-      hoverBg: `rgba(230, 126, 0, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(184, 96, 0, ${opacity})`,
-      disabledBorder: `rgba(204, 112, 0, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(204, 102, 0, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 235, 210, 0.12)`,
-      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
-    },
-    rose: {
-      bg: `rgba(255, 0, 127, ${opacity})`,
-      disabledBg: `rgba(255, 0, 127, ${opacity * 0.5})`,
-      hoverBg: `rgba(230, 0, 115, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(204, 0, 102, ${opacity})`,
-      disabledBorder: `rgba(230, 0, 115, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(230, 0, 115, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
-    },
-    pink: {
-      bg: `rgba(255, 105, 180, ${opacity})`,
-      disabledBg: `rgba(255, 105, 180, ${opacity * 0.5})`,
-      hoverBg: `rgba(255, 92, 161, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(255, 76, 139, ${opacity})`,
-      disabledBorder: `rgba(255, 92, 161, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(255, 92, 161, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
-    },
-    purple: {
-      bg: `rgba(128, 0, 128, ${opacity})`,
-      disabledBg: `rgba(128, 0, 128, ${opacity * 0.5})`,
-      hoverBg: `rgba(115, 0, 115, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(102, 0, 102, ${opacity})`,
-      disabledBorder: `rgba(115, 0, 115, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(115, 0, 115, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
-    },
-    black: {
-      bg: `rgba(0, 0, 0, ${opacity})`,
-      disabledBg: `rgba(0, 0, 0, ${opacity * 0.5})`,
-      hoverBg: `rgba(51, 51, 51, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(44, 44, 44, ${opacity})`,
-      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(51, 51, 51, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
-    },
-    red: {
-      bg: `rgba(240,100,70, ${opacity})`,
-      disabledBg: `rgba(240,100,70, ${opacity * 0.5})`,
-      hoverBg: `rgba(240, 50, 0, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(204, 0, 0, ${opacity})`,
-      disabledBorder: `rgba(229, 0, 0, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(204, 0, 0, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 255, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 236, 61, ${opacity})`
-    },
-    darkBlue: {
-      bg: `rgba(0, 0, 139, ${opacity})`,
-      disabledBg: `rgba(0, 0, 139, ${opacity * 0.5})`,
-      hoverBg: `rgba(0, 0, 119, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(0, 0, 102, ${opacity})`,
-      disabledBorder: `rgba(0, 0, 119, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(0, 51, 153, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(205, 225, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
-    },
-    vantaBlack: {
-      bg: `rgba(0, 0, 0, ${opacity})`,
-      disabledBg: `rgba(0, 0, 0, ${opacity * 0.5})`,
-      hoverBg: `rgba(51, 51, 51, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(44, 44, 44, ${opacity})`,
-      disabledBorder: `rgba(51, 51, 51, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(0, 0, 0, ${opacity * 0.6})`,
-      rewardStatusGradient: `rgba(255, 255, 255, 0.08)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
-    },
-    gold: {
-      bg: `rgba(255, 215, 0, ${opacity})`,
-      disabledBg: `rgba(255, 215, 0, ${opacity * 0.5})`,
-      hoverBg: `rgba(230, 195, 0, ${opacity})`,
-      text: `rgba(255, 255, 255, ${opacity})`,
-      border: `rgba(204, 163, 0, ${opacity})`,
-      disabledBorder: `rgba(230, 195, 0, ${opacity * 0.5})`,
-      rewardStatusBg: `rgba(204, 163, 0, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(255, 248, 220, 0.15)`,
-      perfectStarColor: `rgba(255, 240, 0, ${opacity})`
-    }
-  };
+  function setAlphaExact(rgba: string, a: number) {
+    const m = rgba.match(
+      /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+    );
+    if (!m) return rgba;
+    const [_, r, g, b] = m;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
 
-  return (
-    themeColors[theme] || {
-      bg: `rgba(153, 153, 153, ${opacity})`,
-      hoverBg: `rgba(128, 128, 128, ${opacity})`,
-      text: `rgba(0, 0, 0, ${opacity})`,
-      border: `rgba(112, 112, 112, ${opacity})`,
-      rewardStatusBg: `rgba(5, 75, 160, ${opacity * 0.5})`,
-      rewardStatusGradient: `rgba(205, 210, 255, 0.1)`,
-      perfectStarColor: `rgba(255, 215, 0, ${opacity})`
-    }
-  );
+  function getAlpha(rgba: string) {
+    const m = rgba.match(
+      /rgba\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([\d.]+)\s*\)/i
+    );
+    if (!m) return 1;
+    return Number(m[1]);
+  }
+
+  function setAlphaMult(rgba: string, mult: number) {
+    const a = getAlpha(rgba);
+    return setAlphaExact(rgba, Math.max(0, Math.min(1, a * mult)));
+  }
+
+  const t = themeRegistry[theme as ThemeName] || themeRegistry.logoBlue;
+  return {
+    bg: setAlphaExact(t.general.bg, opacity),
+    disabledBg: setAlphaExact(t.general.disabledBg, Math.min(1, 0.5 * opacity)),
+    hoverBg: setAlphaExact(t.general.hoverBg, opacity),
+    text: setAlphaExact(t.general.text, opacity),
+    border: setAlphaExact(t.general.border, opacity),
+    disabledBorder: setAlphaExact(
+      t.general.disabledBorder,
+      Math.min(1, 0.5 * opacity)
+    ),
+    rewardStatusBg: setAlphaMult(t.general.rewardStatusBg, opacity),
+    rewardStatusGradient: t.general.rewardStatusGradient,
+    perfectStarColor: setAlphaExact(t.general.perfectStarColor, opacity)
+  };
 };
 
 export const borderRadius = '4px';

@@ -1,16 +1,8 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { getThemeStyles } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 
-function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeStyles = useMemo(
-    () => getThemeStyles(theme || profileTheme),
-    [theme, profileTheme]
-  );
-
+function Starmarks({ stars }: { stars: number }) {
   const Marks = useMemo(() => {
     const starMarks = new Array(Math.min(stars, 10)).fill(null).map((_, i) => (
       <Icon
@@ -85,7 +77,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: themeStyles.perfectStarColor
+              color: 'var(--perfect-star-color)'
             }}
           />
         );
@@ -93,7 +85,7 @@ function Starmarks({ stars, theme }: { stars: number; theme?: string }) {
     }
 
     return starMarks;
-  }, [stars, themeStyles]);
+  }, [stars]);
 
   return (
     <div

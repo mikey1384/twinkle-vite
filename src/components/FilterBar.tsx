@@ -3,6 +3,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { returnTheme } from '~/helpers';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 export default function FilterBar({
   color,
@@ -24,17 +25,65 @@ export default function FilterBar({
   style?: React.CSSProperties;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    alert: { color: alertColor },
-    filter: { color: filterColor, opacity: filterOpacity },
-    invertedFilterActive: { color: invertedFilterActiveColor },
-    filterActive: { color: filterActiveColor },
-    filterText: { color: filterTextColor, shadow: filterTextShadowColor }
-  } = useMemo(() => returnTheme(color || profileTheme), [color, profileTheme]);
+  const themeName = (color || profileTheme) as string;
+  const themeRoles = useMemo(() => returnTheme(themeName), [themeName]);
+
+  const resolveColor = (
+    name?: string,
+    opacity?: number,
+    fallbackName?: string,
+    fallbackOpacity: number = 1
+  ) => {
+    const target = name ?? fallbackName;
+    if (!target) return undefined;
+    const fn = Color[target as keyof typeof Color];
+    return fn ? fn(opacity ?? fallbackOpacity) : target;
+  };
+
+  const filterColorValue =
+    resolveColor(
+      themeRoles.filter?.color,
+      themeRoles.filter?.opacity,
+      themeName,
+      themeRoles.filter?.opacity ?? 1
+    ) || Color.logoBlue();
+
+  const filterTextColorValue =
+    resolveColor(themeRoles.filterText?.color, undefined, 'gray') || Color.gray();
+
+  const filterTextShadowColor = themeRoles.filterText?.shadow
+    ? resolveColor(themeRoles.filterText?.shadow, undefined, '') || ''
+    : '';
+
+  const filterActiveColorValue =
+    resolveColor(
+      themeRoles.filterActive?.color,
+      undefined,
+      themeRoles.filter?.color ?? themeName
+    ) || filterColorValue;
+
+  const invertedFilterActiveColorValue =
+    resolveColor(
+      themeRoles.invertedFilterActive?.color,
+      undefined,
+      themeRoles.filter?.color ?? themeName
+    ) || filterColorValue;
+
+  const alertColorValue =
+    resolveColor(themeRoles.alert?.color, undefined, 'gold') || Color.gold();
+
+  const filterColorVar = `var(--role-filter-color, ${filterColorValue})`;
+  const filterTextColorVar = `var(--role-filterText-color, ${filterTextColorValue})`;
+  const filterTextShadowVar = `var(--role-filterText-shadow, ${
+    filterTextShadowColor || 'transparent'
+  })`;
+  const filterActiveColorVar = `var(--role-filterActive-color, ${filterActiveColorValue})`;
+  const invertedFilterActiveColorVar = `var(--role-invertedFilterActive-color, ${invertedFilterActiveColorValue})`;
+  const alertColorVar = `var(--role-alert-color, ${alertColorValue})`;
 
   const FilterBarStyle = useMemo(() => {
     return `${css`
-      background: ${inverted ? Color[filterColor](filterOpacity) : '#fff'};
+      background: ${inverted ? filterColorVar : '#fff'};
       height: 6rem;
       margin-bottom: 1rem;
       ${!inverted && bordered
@@ -74,42 +123,40 @@ export default function FilterBar({
           height: 100%;
           width: 100%;
           border-bottom: ${inverted ? '' : `1px solid ${Color.borderGray()}`};
-          color: ${inverted ? Color[filterTextColor]() : Color.gray()};
+          color: ${inverted ? filterTextColorVar : Color.gray()};
           > a {
-            color: ${inverted ? Color[filterTextColor]() : Color.gray()};
+            color: ${inverted ? filterTextColorVar : Color.gray()};
             text-decoration: none;
           }
           &.alert {
-            color: ${Color[alertColor]()}!important;
+            color: ${alertColorVar}!important;
           }
           &.super-alert {
             animation: colorChange 6s infinite alternate !important;
           }
         }
         > nav.active {
-          background: ${inverted ? Color[invertedFilterActiveColor]() : ''};
-          border-bottom: ${inverted
-            ? ''
-            : `3px solid ${Color[filterActiveColor]()}`};
-          color: ${inverted
-            ? Color[filterTextColor]()
-            : Color[filterActiveColor]()};
-          text-shadow: ${inverted && filterTextShadowColor
-            ? `0 1px ${Color[filterTextShadowColor]()}`
+          background: ${inverted
+            ? invertedFilterActiveColorVar
+            : 'transparent'};
+          border-bottom: ${inverted ? '' : `3px solid ${filterActiveColorVar}`};
+          color: ${inverted ? filterTextColorVar : filterActiveColorVar};
+          text-shadow: ${inverted
+            ? filterTextShadowColor
+              ? `0 1px ${filterTextShadowVar}`
+              : 'none'
             : 'none'};
           > a {
-            color: ${inverted
-              ? Color[filterTextColor]()
-              : Color[filterActiveColor]()};
+            color: ${inverted ? filterTextColorVar : filterActiveColorVar};
           }
           @media (max-width: ${mobileMaxWidth}) {
             border-bottom: ${inverted
               ? ''
-              : `2px solid ${Color[filterActiveColor]()}`};
+              : `2px solid ${filterActiveColorVar}`};
           }
         }
         > nav.active.alert {
-          border-bottom: 3px solid ${Color[alertColor]()}!important;
+          border-bottom: 3px solid ${alertColorVar}!important;
         }
         > nav.active.super-alert {
           animation: colorAndBorderChange 6s infinite alternate !important;
@@ -131,27 +178,27 @@ export default function FilterBar({
         }
         @media (hover: hover) and (pointer: fine) {
           > nav:hover {
-            background: ${inverted ? Color[invertedFilterActiveColor]() : ''};
-            color: ${inverted
-              ? Color[filterTextColor]()
-              : Color[filterActiveColor]()};
-            text-shadow: ${inverted && filterTextShadowColor
-              ? `0 1px ${Color[filterTextShadowColor]()}`
+            background: ${inverted
+              ? invertedFilterActiveColorVar
+              : 'transparent'};
+            color: ${inverted ? filterTextColorVar : filterActiveColorVar};
+            text-shadow: ${inverted
+              ? filterTextShadowColor
+                ? `0 1px ${filterTextShadowVar}`
+                : 'none'
               : 'none'};
             border-bottom: ${inverted
               ? ''
-              : `3px solid ${Color[filterActiveColor]()}`};
+              : `3px solid ${filterActiveColorVar}`};
             &.alert {
-              color: ${Color[alertColor]()}!important;
-              border-bottom: 3px solid ${Color[alertColor]()}!important;
+              color: ${alertColorVar}!important;
+              border-bottom: 3px solid ${alertColorVar}!important;
             }
             &.super-alert {
               animation: colorAndBorderChange 6s infinite alternate !important;
             }
             > a {
-              color: ${inverted
-                ? Color[filterTextColor]()
-                : Color[filterActiveColor]()};
+              color: ${inverted ? filterTextColorVar : filterActiveColorVar};
               font-weight: bold;
             }
           }
@@ -198,22 +245,35 @@ export default function FilterBar({
     `} ${className}`;
   }, [
     inverted,
-    filterColor,
-    filterOpacity,
     bordered,
     dropdownButton,
-    filterTextColor,
-    alertColor,
-    invertedFilterActiveColor,
-    filterActiveColor,
+    className,
+    filterColorVar,
+    filterTextColorVar,
     filterTextShadowColor,
-    className
+    filterTextShadowVar,
+    filterActiveColorVar,
+    invertedFilterActiveColorVar,
+    alertColorVar
   ]);
 
   return (
-    <div style={style} ref={innerRef} className={FilterBarStyle}>
-      <div className="nav-section">{children}</div>
-      {dropdownButton && <div className="filter-section">{dropdownButton}</div>}
-    </div>
+    <ScopedTheme
+      theme={themeName as any}
+      roles={[
+        'filter',
+        'filterText',
+        'filterActive',
+        'invertedFilterActive',
+        'alert'
+      ]}
+    >
+      <div style={style} ref={innerRef} className={FilterBarStyle}>
+        <div className="nav-section">{children}</div>
+        {dropdownButton && (
+          <div className="filter-section">{dropdownButton}</div>
+        )}
+      </div>
+    </ScopedTheme>
   );
 }

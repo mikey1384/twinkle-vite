@@ -144,7 +144,7 @@ export default function Profile() {
       <Global
         styles={{
           body: {
-            background: Color[backgroundColor]()
+            background: `var(--page-bg, ${Color[backgroundColor]()})`
           }
         }}
       />
