@@ -9,10 +9,11 @@ import XPVideo from './XPVideo';
 import RewardLevelDisplay from './RewardLevelDisplay';
 import ContentDisplay from './ContentDisplay';
 import BottomRewardLevelDisplay from './BottomRewardLevelDisplay';
-import { returnTheme, scrollElementToCenter } from '~/helpers';
+import { scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
 import { useKeyContext, useContentContext } from '~/contexts';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '~/types';
 
@@ -76,16 +77,27 @@ export default function MainContent({
   const onLoadTags = useContentContext((v) => v.actions.onLoadTags);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    byUserIndicator: {
-      color: byUserIndicatorColor,
-      opacity: byUserIndicatorOpacity
-    },
-    byUserIndicatorText: {
-      color: byUserIndicatorTextColor,
-      shadow: byUserIndicatorTextShadowColor
-    }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const byUserIndicatorColor = useMemo(
+    () => themeRoles.byUserIndicator?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const byUserIndicatorOpacity = useMemo(
+    () => themeRoles.byUserIndicator?.opacity ?? 0.8,
+    [themeRoles]
+  );
+  const byUserIndicatorTextColor = useMemo(
+    () => themeRoles.byUserIndicatorText?.color || 'white',
+    [themeRoles]
+  );
+  const byUserIndicatorTextShadowColor = useMemo(
+    () => themeRoles.byUserIndicatorText?.shadow || '',
+    [themeRoles]
+  );
   const { fileType } = useMemo(
     () => (fileName ? getFileInfoFromFileName(fileName) : { fileType: '' }),
     [fileName]

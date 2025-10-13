@@ -12,10 +12,10 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function Profile() {
   const params = useParams();
@@ -36,9 +36,16 @@ export default function Profile() {
   const [selectedTheme, setSelectedTheme] = useState(
     profile?.profileTheme || 'logoBlue'
   );
-  const {
-    background: { color: backgroundColor }
-  } = useMemo(() => returnTheme(selectedTheme), [selectedTheme]);
+  const themeName = useMemo<ThemeName>(
+    () => (selectedTheme as ThemeName),
+    [selectedTheme]
+  );
+  const backgroundColor = useMemo(() => {
+    const role = getThemeRoles(themeName).background;
+    const key = role?.color || 'whiteGray';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeName]);
 
   useEffect(() => {
     let retries = 0;
@@ -144,7 +151,7 @@ export default function Profile() {
       <Global
         styles={{
           body: {
-            background: `var(--page-bg, ${Color[backgroundColor]()})`
+            background: `var(--page-bg, ${backgroundColor})`
           }
         }}
       />

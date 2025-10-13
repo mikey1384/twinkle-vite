@@ -46,7 +46,6 @@ import { useMyState, useScrollPosition } from '~/helpers/hooks';
 import {
   getSectionFromPathname,
   isMobile,
-  returnTheme,
   returnImageFileFromUrl
 } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -65,7 +64,7 @@ import AICallWindow from './AICallWindow';
 import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
-import { applyThemeVars } from '~/theme/themes';
+import { applyThemeVars, getThemeRoles, ThemeName } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -117,11 +116,12 @@ export default function App() {
   );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const myState = useMyState();
-  const theme = useMemo(
-    () => returnTheme(myState.profileTheme || DEFAULT_PROFILE_THEME),
+  const themeName = useMemo<ThemeName>(
+    () => ((myState.profileTheme || DEFAULT_PROFILE_THEME) as ThemeName),
     [myState.profileTheme]
   );
-  const backgroundColorName = theme.background?.color || 'whiteGray';
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const backgroundColorName = themeRoles.background?.color || 'whiteGray';
   const backgroundColorFn = Color[backgroundColorName as keyof typeof Color];
   const resolvedBackgroundColor = backgroundColorFn
     ? backgroundColorFn()
@@ -456,7 +456,7 @@ export default function App() {
             loadingRankings,
             profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
           },
-          theme,
+          theme: themeRoles,
           helpers: { checkUserChange, setMobileMenuShown }
         }}
       >

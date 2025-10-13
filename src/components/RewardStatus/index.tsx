@@ -1,7 +1,6 @@
 import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnMaxRewards } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -10,6 +9,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Starmarks from './Starmarks';
 import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const INITIAL_LOAD_COUNT = 1;
 const LOAD_MORE_COUNT = 3;
@@ -36,10 +36,16 @@ function RewardStatus({
   theme?: any;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    info: { color: infoColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
-  const scopedTheme = (theme || profileTheme) as any;
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const infoColor = useMemo(
+    () => themeRoles.info?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const scopedTheme = themeName;
 
   const [numLoaded, setNumLoaded] = useState(INITIAL_LOAD_COUNT);
 

@@ -13,11 +13,11 @@ import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 type Color =
   | 'blue'
@@ -124,12 +124,45 @@ function RichText({
 }) {
   text = text || '';
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    statusMsgLink: { color: statusMsgLinkColor },
-    link: { color: linkColor },
-    listItemMarker: { color: listItemMarkerColor },
-    statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const statusMsgLinkColor = useMemo(() => {
+    const role = themeRoles.statusMsgLink;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeRoles]);
+  const linkColor = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeRoles]);
+  const listItemMarkerColor = useMemo(() => {
+    const role = themeRoles.listItemMarker;
+    const key = role?.color || 'darkerGray';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles]);
+  const statusMsgListItemMarkerColor = useMemo(() => {
+    const role = themeRoles.statusMsgListItemMarker;
+    const key = role?.color || 'white';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles]);
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
@@ -221,13 +254,13 @@ function RichText({
   }, [containerNode, fullTextShown, isOverflown, isParsed]);
 
   const appliedLinkColor = useMemo(
-    () => Color[isStatusMsg ? statusMsgLinkColor : linkColor](),
+    () => (isStatusMsg ? statusMsgLinkColor : linkColor),
     [isStatusMsg, linkColor, statusMsgLinkColor]
   );
 
   const markerColor = useMemo(
     () =>
-      Color[isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor](),
+      isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor,
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
 

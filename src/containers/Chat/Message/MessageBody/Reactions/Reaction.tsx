@@ -14,9 +14,10 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
-import { isMobile, returnTheme } from '~/helpers';
+import { isMobile } from '~/helpers';
 import { isEqual } from 'lodash';
 import localize from '~/constants/localize';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 const youLabel = localize('You');
@@ -52,12 +53,20 @@ function Reaction({
   const [userListModalShown, setUserListModalShown] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const {
-    reactionButton: {
-      color: reactionButtonColor,
-      opacity: reactionButtonOpacity
-    }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
+  const reactionRole = useMemo(
+    () => getThemeRoles(themeName).reactionButton,
+    [themeName]
+  );
+  const reactionButtonColorFn = useMemo(() => {
+    const key = reactionRole?.color || 'logoBlue';
+    return Color[key as keyof typeof Color] || (() => key);
+  }, [reactionRole]);
+  const reactionButtonColor = useMemo(
+    () => reactionButtonColorFn(),
+    [reactionButtonColorFn]
+  );
+  const reactionButtonOpacity = reactionRole?.opacity ?? 0.2;
   const userReacted = useMemo(
     () => reactedUserIds.includes(userId),
     [reactedUserIds, userId]
@@ -172,7 +181,7 @@ function Reaction({
         borderRadius,
         height: '2.3rem',
         border: `1px solid ${
-          userReacted ? Color[reactionButtonColor]() : Color.borderGray()
+          userReacted ? reactionButtonColor : Color.borderGray()
         }`,
         background: Color.targetGray(),
         marginRight: '0.5rem',
@@ -182,7 +191,7 @@ function Reaction({
       <div
         style={{
           ...(userReacted
-            ? { background: Color[reactionButtonColor](reactionButtonOpacity) }
+            ? { background: reactionButtonColorFn(reactionButtonOpacity) }
             : {}),
           borderRadius: innerBorderRadius,
           cursor: 'pointer',

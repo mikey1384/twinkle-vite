@@ -8,12 +8,13 @@ import Loading from '~/components/Loading';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { isMobile, returnTheme, textIsOverflown } from '~/helpers';
+import { isMobile, textIsOverflown } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useInterval } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 const maxTextLength = 65;
@@ -60,11 +61,25 @@ export default function LegacyTopic({
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    chatTopic: { color: chatTopicColor }
-  } = useMemo(() => returnTheme(displayedThemeColor), [displayedThemeColor]);
+  const themeName = useMemo<ThemeName>(
+    () => (displayedThemeColor as ThemeName),
+    [displayedThemeColor]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const buttonColor = useMemo(
+    () => themeRoles.button?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const buttonHoverColor = useMemo(
+    () => themeRoles.buttonHovered?.color || buttonColor,
+    [themeRoles, buttonColor]
+  );
+  const chatTopicColor = useMemo(() => {
+    const role = themeRoles.chatTopic;
+    const key = role?.color || themeName;
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles, themeName]);
   const reloadingChatSubject = useRef(false);
   const HeaderLabelRef: React.RefObject<any> = useRef(null);
   const [submitting, setSubmitting] = useState(false);
@@ -160,7 +175,7 @@ export default function LegacyTopic({
               className={css`
                 width: 100%;
                 cursor: default;
-                color: ${Color[chatTopicColor]()};
+                color: ${chatTopicColor};
                 display: inline-block;
                 white-space: nowrap;
                 text-overflow: ellipsis;

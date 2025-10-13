@@ -32,8 +32,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled,
-  returnTheme
+  determineXpButtonDisabled
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -43,6 +42,8 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import { Content, Comment as CommentType } from '~/types';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 function Comment({
   comment,
@@ -100,10 +101,27 @@ function Comment({
   const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const {
-    link: { color: linkColor },
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => (theme || profileTheme || 'logoBlue') as ThemeName,
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColorVar = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'blue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    const fallback = fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+    return `var(--role-link-color, ${fallback})`;
+  }, [themeRoles]);
+  const rewardColor = useMemo(
+    () => themeRoles.reward?.color || 'pink',
+    [themeRoles]
+  );
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
@@ -363,7 +381,7 @@ function Comment({
   }, [subjectId, subjectState.prevSecretViewerId, userId]);
 
   return (
-    <>
+    <ScopedTheme theme={themeName} roles={['link', 'reward']}>
       <div
         style={isPreview ? { cursor: 'pointer' } : {}}
         className={commentContainer}
@@ -409,7 +427,7 @@ function Comment({
               {comment.targetUserId &&
                 !!comment.replyId &&
                 comment.replyId !== parent.contentId && (
-                  <span className="to" style={{ color: Color[linkColor]() }}>
+                  <span className="to" style={{ color: linkColorVar }}>
                     to:{' '}
                     <UsernameText
                       user={{
@@ -647,7 +665,7 @@ function Comment({
           onConfirm={() => onDelete(comment.id)}
         />
       )}
-    </>
+    </ScopedTheme>
   );
 
   async function handleEditDone(editedComment: string) {

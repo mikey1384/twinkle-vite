@@ -11,7 +11,7 @@ import {
   isUnicodeArt,
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
-import { returnTheme } from '~/helpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 
@@ -50,9 +50,24 @@ export default function TopicMessagePreview({
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
-  const {
-    topicText: { color: topicTextColor, shadow: topicShadowColor }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const themeName = useMemo<ThemeName>(
+    () => (theme as ThemeName),
+    [theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const topicTextColor = useMemo(() => {
+    const role = themeRoles.topicText;
+    const key = role?.color || themeName;
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles, themeName]);
+  const topicShadowColor = useMemo(() => {
+    const role = themeRoles.topicText;
+    const key = role?.shadow;
+    if (!key) return '';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles]);
   const contentPreviewShown = useMemo(() => {
     return (
       !stringIsEmpty(content) &&
@@ -163,11 +178,9 @@ export default function TopicMessagePreview({
               <b
                 ref={topicRef}
                 className={css`
-                  color: ${Color[topicTextColor]()};
+                  color: ${topicTextColor};
                   ${topicShadowColor
-                    ? `text-shadow: 0.05rem 0.05rem 0.05rem ${Color[
-                        topicShadowColor
-                      ]()};`
+                    ? `text-shadow: 0.05rem 0.05rem 0.05rem ${topicShadowColor};`
                     : ''}
                 `}
               >

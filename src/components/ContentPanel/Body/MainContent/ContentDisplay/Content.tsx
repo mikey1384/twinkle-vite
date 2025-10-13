@@ -19,7 +19,7 @@ import AIStoryView from './AIStoryView';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
-import { returnTheme } from '~/helpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function Content({
   audioPath,
@@ -79,10 +79,28 @@ export default function Content({
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
-  const {
-    xpNumber: { color: xpNumberColor },
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColor = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeRoles]);
+  const xpNumberColor = useMemo(() => {
+    const role = themeRoles.xpNumber;
+    const key = role?.color || 'logoGreen';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles]);
   const { bonusQuestion, word, level, xpEarned, coinEarned } = useMemo(() => {
     if (contentType !== 'xpChange') {
       return {
@@ -205,12 +223,12 @@ export default function Content({
               onSelectChoice={setSelectedChoiceIndex}
             />
             <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+              <UsernameText user={uploader} color={linkColor} />{' '}
               correctly answered this bonus question and earned{' '}
               <b>
                 <span
                   style={{
-                    color: Color[xpNumberColor]()
+                    color: xpNumberColor
                   }}
                 >
                   {displayedXPEarned}

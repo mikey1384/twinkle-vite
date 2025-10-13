@@ -12,10 +12,11 @@ import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { returnTheme, isMobile } from '~/helpers';
+import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import localize from '~/constants/localize';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 const changeThemeMobileLabel = localize('changeThemeMobile');
@@ -58,11 +59,11 @@ export default function Cover({
 
   const coverStatusSize = 'medium';
 
-  const themeName = useMemo(
-    () => selectedTheme || profileTheme || 'logoBlue',
+  const themeName = useMemo<ThemeName>(
+    () => (selectedTheme || profileTheme || 'logoBlue') as ThemeName,
     [profileTheme, selectedTheme]
   );
-  const themeRoles = useMemo(() => returnTheme(themeName), [themeName]);
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
 
   const resolveColor = (name?: string, fallback?: string) => {
     const target = name ?? fallback;

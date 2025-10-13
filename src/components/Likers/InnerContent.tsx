@@ -2,9 +2,9 @@ import React, { useMemo, memo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 function InnerContent({
   likes = [],
@@ -24,9 +24,21 @@ function InnerContent({
   theme?: any;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const linkColor = useMemo(() => {
+    const role = getThemeRoles(themeName).link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeName]);
   const userLiked = useMemo(() => {
     for (const like of likes) {
       if (like?.id === userId) {
@@ -58,7 +70,7 @@ function InnerContent({
                 회원님과{' '}
                 <UsernameText
                   wordBreakEnabled={wordBreakEnabled}
-                  color={Color[linkColor]()}
+                  color={linkColor}
                   user={{
                     id: firstOtherLike.id,
                     username: firstOtherLike.username
@@ -75,7 +87,7 @@ function InnerContent({
               You and{' '}
               <UsernameText
                 wordBreakEnabled={wordBreakEnabled}
-                color={Color[linkColor]()}
+                color={linkColor}
                 user={{
                   id: firstOtherLike.id,
                   username: firstOtherLike.username
@@ -106,14 +118,14 @@ function InnerContent({
           <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/EN">
             <div key={`you-and-multi-total-likes-en-${totalLikes}`}>
               You and{' '}
-              <a
-                style={{
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  color: Color[linkColor]()
-                }}
-                onClick={() => onLinkClick()}
-              >
+            <a
+              style={{
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                color: linkColor
+              }}
+              onClick={() => onLinkClick()}
+            >
                 {totalLikes} others
               </a>{' '}
               like {`this${target ? ' ' + target : ''}.`}
@@ -147,7 +159,7 @@ function InnerContent({
             <div key={`one-total-like-kr-${totalLikes}`}>
               <UsernameText
                 wordBreakEnabled={wordBreakEnabled}
-                color={Color[linkColor]()}
+                color={linkColor}
                 user={firstLike}
               />
               님이 이 게시물을 좋아합니다.
@@ -160,7 +172,7 @@ function InnerContent({
           <div key={`one-total-like-en-${totalLikes}`}>
             <UsernameText
               wordBreakEnabled={wordBreakEnabled}
-              color={Color[linkColor]()}
+              color={linkColor}
               user={firstLike}
             />{' '}
             likes {`this${target ? ' ' + target : ''}.`}
@@ -172,14 +184,14 @@ function InnerContent({
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/KR">
             <div key={`multi-total-likes-kr-${totalLikes}`}>
-              <a
-                style={{
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  color: Color[linkColor]()
-                }}
-                onClick={() => onLinkClick()}
-              >
+            <a
+              style={{
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                color: linkColor
+              }}
+              onClick={() => onLinkClick()}
+            >
                 {totalLikes}
               </a>
               명의 회원님들이 이 게시물을 좋아합니다.
@@ -194,7 +206,7 @@ function InnerContent({
               style={{
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                color: Color[linkColor]()
+                color: linkColor
               }}
               onClick={() => onLinkClick()}
             >

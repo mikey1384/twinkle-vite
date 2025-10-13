@@ -6,8 +6,8 @@ import MediaPlayer from './MediaPlayer';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { returnTheme } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function FileAttachment({
   messageId,
@@ -27,9 +27,18 @@ export default function FileAttachment({
   const {
     actions: { onSetMediaStarted }
   } = useContext(LocalContext);
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
+  const linkColor = useMemo(() => {
+    const role = getThemeRoles(themeName).link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeName]);
   const isImageOrVideo = useMemo(
     () =>
       getFileInfoFromFileName(fileName)?.fileType === 'image' ||
@@ -105,7 +114,7 @@ export default function FileAttachment({
               style={{
                 width: '100%',
                 fontWeight: 'bold',
-                color: Color[linkColor](),
+                color: linkColor,
                 overflow: 'hidden',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,

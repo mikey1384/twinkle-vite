@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import MissionPass from './MissionPass';
 import AchievementItem from '~/components/AchievementItem';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import { Content, User } from '~/types';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function PassContent({
   uploader,
@@ -17,10 +17,19 @@ export default function PassContent({
   theme?: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor },
-    xpNumber: { color: xpNumberColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColor = useMemo(
+    () => themeRoles.link?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const xpNumberColor = useMemo(
+    () => themeRoles.xpNumber?.color || 'logoGreen',
+    [themeRoles]
+  );
 
   if (rootType === 'mission') {
     return (

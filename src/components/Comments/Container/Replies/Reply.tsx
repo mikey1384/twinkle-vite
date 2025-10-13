@@ -28,8 +28,7 @@ import { Link } from 'react-router-dom';
 import { borderRadius, Color } from '~/constants/css';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled,
-  returnTheme
+  determineXpButtonDisabled
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -41,6 +40,8 @@ import {
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
 import { Comment } from '~/types';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const commentWasDeletedLabel = localize('commentWasDeleted');
 const editLabel = localize('edit');
@@ -107,10 +108,27 @@ function Reply({
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const {
-    link: { color: linkColor },
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColorVar = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'blue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    const fallback = fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+    return `var(--role-link-color, ${fallback})`;
+  }, [themeRoles, themeName]);
+  const rewardColor = useMemo(
+    () => themeRoles.reward?.color || 'pink',
+    [themeRoles]
+  );
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
@@ -319,7 +337,8 @@ function Reply({
 
   return !(isDeleteNotification && !reply.numReplies) && !reply.isDeleted ? (
     <ErrorBoundary componentPath="Comments/Replies/Reply">
-      <div className={commentContainer} ref={innerRef}>
+      <ScopedTheme theme={themeName} roles={['link', 'reward']}>
+        <div className={commentContainer} ref={innerRef}>
         {pinnedCommentId === reply.id && (
           <div
             className={css`
@@ -383,7 +402,7 @@ function Reply({
                 !!reply.replyId &&
                 reply.replyId !== comment.id && (
                   <ErrorBoundary componentPath="Comments/Replies/Reply/to">
-                    <span className="to" style={{ color: Color[linkColor]() }}>
+                    <span className="to" style={{ color: linkColorVar }}>
                       to:{' '}
                       <UsernameText user={reply.targetObj.comment.uploader} />
                     </span>
@@ -696,7 +715,8 @@ function Reply({
             />
           </div>
         )}
-      </div>
+        </div>
+      </ScopedTheme>
     </ErrorBoundary>
   ) : null;
 

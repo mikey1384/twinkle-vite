@@ -32,7 +32,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
-import { returnTheme } from '~/helpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
@@ -89,15 +89,31 @@ function InputForm({
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
-  const {
-    skeuomorphicDisabled: {
-      color: skeuomorphicDisabledColor,
-      opacity: skeuomorphicDisabledOpacity
-    },
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    danger: { color: dangerColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const buttonColor = useMemo(
+    () => themeRoles.button?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const buttonHoverColor = useMemo(
+    () => themeRoles.buttonHovered?.color || buttonColor,
+    [themeRoles, buttonColor]
+  );
+  const skeuomorphicDisabledColor = useMemo(
+    () => themeRoles.skeuomorphicDisabled?.color || 'darkerGray',
+    [themeRoles]
+  );
+  const skeuomorphicDisabledOpacity = useMemo(
+    () => themeRoles.skeuomorphicDisabled?.opacity ?? 0.4,
+    [themeRoles]
+  );
+  const dangerColor = useMemo(
+    () => themeRoles.danger?.color || 'red',
+    [themeRoles]
+  );
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]

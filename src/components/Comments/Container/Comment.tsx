@@ -38,7 +38,6 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
-  returnTheme,
   scrollElementToCenter
 } from '~/helpers';
 import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
@@ -57,6 +56,8 @@ import {
 } from '~/constants/defaultValues';
 import { Content } from '~/types';
 import localize from '~/constants/localize';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 const commentWasDeletedLabel = localize('commentWasDeleted');
 const editLabel = localize('edit');
@@ -131,10 +132,27 @@ function Comment({
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
-  const {
-    link: { color: linkColor },
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColorVar = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'blue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    const fallback = fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+    return `var(--role-link-color, ${fallback})`;
+  }, [themeRoles, themeName]);
+  const rewardColor = useMemo(
+    () => themeRoles.reward?.color || 'pink',
+    [themeRoles]
+  );
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
@@ -537,14 +555,15 @@ function Comment({
   }, [inView, visible]);
 
   return isDisplayed ? (
-    <div ref={ComponentRef}>
-      <div
-        style={{
-          ...(isPreview ? { cursor: 'pointer' } : {})
-        }}
-        className={commentContainer}
-        ref={innerRef}
-      >
+    <ScopedTheme theme={themeName} roles={['link', 'reward']}>
+      <div ref={ComponentRef}>
+        <div
+          style={{
+            ...(isPreview ? { cursor: 'pointer' } : {})
+          }}
+          className={commentContainer}
+          ref={innerRef}
+        >
         {contentShown ? (
           <div ref={PanelRef}>
             {pinnedCommentId === comment.id && (
@@ -636,7 +655,7 @@ function Comment({
                     comment.replyId !== parent.contentId && (
                       <span
                         className="to"
-                        style={{ color: Color[linkColor]() }}
+                        style={{ color: linkColorVar }}
                       >
                         to:{' '}
                         <UsernameText
@@ -962,7 +981,7 @@ function Comment({
             />
           </div>
         )}
-      </div>
+        </div>
       {confirmModalShown && (
         <ConfirmModal
           onHide={() => setConfirmModalShown(false)}
@@ -973,7 +992,8 @@ function Comment({
           }}
         />
       )}
-    </div>
+      </div>
+    </ScopedTheme>
   ) : null;
 
   async function handleEditDone(editedComment: string) {

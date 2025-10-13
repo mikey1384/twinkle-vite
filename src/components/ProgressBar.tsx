@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function ProgressBar({
   className,
@@ -27,8 +27,11 @@ export default function ProgressBar({
   endLabel?: string | null;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = (theme || profileTheme) as string;
-  const themeRoles = useMemo(() => returnTheme(themeName), [themeName]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
 
   const resolveColor = (name?: string, fallback?: string) => {
     const target = name ?? fallback;

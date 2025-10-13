@@ -4,10 +4,10 @@ import TagModal from './TagModal';
 import { hashify } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const addVideoToPlaylistsLabel = localize('addVideoToPlaylists');
 
@@ -30,9 +30,21 @@ function TagStatus({
 }) {
   const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const linkColor = useMemo(() => {
+    const role = getThemeRoles(themeName).link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeName]);
   const fetchPlaylistsContaining = useAppContext(
     (v) => v.requestHelpers.fetchPlaylistsContaining
   );
@@ -62,7 +74,7 @@ function TagStatus({
           style={{
             marginRight: '0.5rem',
             fontSize: '1.5rem',
-            color: Color[linkColor]()
+            color: linkColor
           }}
           key={tag.id}
           onClick={() => {
@@ -107,7 +119,7 @@ function TagStatus({
           {canEditPlaylists && (
             <a
               style={{
-                color: tags?.length > 0 ? Color.orange() : Color[linkColor]()
+                color: tags?.length > 0 ? Color.orange() : linkColor
               }}
               onClick={() => setTagModalShown(true)}
             >

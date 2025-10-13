@@ -4,10 +4,10 @@ import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function ContentFileViewer({
   className,
@@ -45,9 +45,17 @@ export default function ContentFileViewer({
   videoHeight?: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const linkColor = useMemo(() => {
+    const role = getThemeRoles(themeName).link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity ?? 1;
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn(opacity) : key;
+  }, [themeName]);
   const isDisplayedOnHome = useMemo(
     () => contentType === 'subject' || contentType === 'comment',
     [contentType]
@@ -119,7 +127,7 @@ export default function ContentFileViewer({
                   <a
                     style={{
                       fontWeight: 'bold',
-                      color: Color[linkColor](),
+                      color: linkColor,
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical'
                     }}

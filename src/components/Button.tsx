@@ -194,6 +194,7 @@ export default function Button({
 
   return (
     <button
+      data-filled={filled ? 'true' : undefined}
       style={buttonStyle}
       className={`${buttonCSS} ${className} unselectable`}
       onClick={isDisabled ? undefined : onClick}

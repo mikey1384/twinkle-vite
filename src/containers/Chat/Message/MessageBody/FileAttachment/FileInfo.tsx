@@ -8,8 +8,8 @@ import {
   desktopMinWidth,
   mobileMaxWidth
 } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { renderFileSize } from '~/helpers/stringHelpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function FileInfo({
   fileName,
@@ -24,9 +24,18 @@ export default function FileInfo({
   src: string;
   theme?: string;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
+  const linkColor = useMemo(() => {
+    const role = getThemeRoles(themeName).link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeName]);
 
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
   return (
@@ -98,7 +107,7 @@ export default function FileInfo({
                 style={{
                   width: '100%',
                   fontWeight: 'bold',
-                  color: Color[linkColor](),
+                  color: linkColor,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: 'block',

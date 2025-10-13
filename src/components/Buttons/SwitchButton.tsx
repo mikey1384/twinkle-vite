@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function SwitchButton({
   color,
@@ -27,9 +27,14 @@ export default function SwitchButton({
   style?: React.CSSProperties;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    switch: { color: switchColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const switchColor = useMemo(
+    () => getThemeRoles(themeName).switch?.color || 'logoBlue',
+    [themeName]
+  );
 
   return (
     <ErrorBoundary

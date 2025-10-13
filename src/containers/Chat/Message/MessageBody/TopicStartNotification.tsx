@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { returnTheme } from '~/helpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { useAppContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 
@@ -21,9 +21,24 @@ export default function TopicStartNotification({
   theme: string;
   username: string;
 }) {
-  const {
-    topicText: { color: topicTextColor, shadow: topicShadowColor }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const themeName = useMemo<ThemeName>(
+    () => (theme as ThemeName),
+    [theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const topicTextColor = useMemo(() => {
+    const role = themeRoles.topicText;
+    const key = role?.color || themeName;
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles, themeName]);
+  const topicShadowColor = useMemo(() => {
+    const role = themeRoles.topicText;
+    const key = role?.shadow;
+    if (!key) return '';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles]);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -85,9 +100,9 @@ export default function TopicStartNotification({
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                color: ${Color[topicTextColor]()};
+                color: ${topicTextColor};
                 text-shadow: ${topicShadowColor
-                  ? `0.05rem 0.05rem 0.05rem ${Color[topicShadowColor]()}`
+                  ? `0.05rem 0.05rem 0.05rem ${topicShadowColor}`
                   : 'none'};
                 @media (max-width: ${mobileMaxWidth}) {
                   padding: 0 3rem;

@@ -4,7 +4,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
-import { returnTheme } from '~/helpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function HeadingText({
   action,
@@ -28,11 +28,31 @@ export default function HeadingText({
     uploader
   } = contentObj;
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor },
-    userLink: { color: userLinkColor },
-    content: { color: contentColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColorKey = useMemo(
+    () => themeRoles.link?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const userLinkColorKey = useMemo(
+    () => themeRoles.userLink?.color || linkColorKey,
+    [themeRoles, linkColorKey]
+  );
+  const contentColorKey = useMemo(
+    () => themeRoles.content?.color || 'logoBlue',
+    [themeRoles]
+  );
+  const linkColor = useMemo(() => {
+    const fn = Color[linkColorKey as keyof typeof Color];
+    return fn ? fn() : linkColorKey;
+  }, [linkColorKey]);
+  const userLinkColor = useMemo(() => {
+    const fn = Color[userLinkColorKey as keyof typeof Color];
+    return fn ? fn() : userLinkColorKey;
+  }, [userLinkColorKey]);
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'
@@ -48,12 +68,15 @@ export default function HeadingText({
   if (isSubjectComment) {
     contentLabel = 'subject';
   }
-  const contentLinkColor = Color[contentColor]();
+  const contentLinkColor = useMemo(() => {
+    const fn = Color[contentColorKey as keyof typeof Color];
+    return fn ? fn() : contentColorKey;
+  }, [contentColorKey]);
   switch (contentType) {
     case 'video':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> uploaded a
+          <UsernameText user={uploader} color={linkColor} /> uploaded a
           video:{' '}
           <ContentLink
             content={contentObj}
@@ -66,7 +89,7 @@ export default function HeadingText({
     case 'comment':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+          <UsernameText user={uploader} color={linkColor} />{' '}
           <ContentLink
             content={{ id }}
             contentType={contentType}
@@ -78,12 +101,12 @@ export default function HeadingText({
           {rootType !== 'user' ? (
             <>
               {contentLabel}:{' '}
-              <ContentLink
-                content={isSubjectComment ? targetObj?.subject : rootObj}
-                contentType={isSubjectComment ? 'subject' : rootType}
-                theme={theme}
-                label=""
-              />{' '}
+            <ContentLink
+              content={isSubjectComment ? targetObj?.subject : rootObj}
+              contentType={isSubjectComment ? 'subject' : rootType}
+              theme={theme}
+              label=""
+            />{' '}
             </>
           ) : null}
         </>
@@ -91,7 +114,7 @@ export default function HeadingText({
     case 'url':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
+          <UsernameText user={uploader} color={linkColor} /> shared a
           link:&nbsp;
           <ContentLink
             content={contentObj}
@@ -104,13 +127,13 @@ export default function HeadingText({
     case 'subject':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> started a{' '}
+          <UsernameText user={uploader} color={linkColor} /> started a{' '}
           <ContentLink
             content={{ id, title: 'subject ' }}
             contentType={contentType}
             theme={theme}
             style={{
-              color: byUser ? Color[userLinkColor]() : contentLinkColor
+              color: byUser ? userLinkColor : contentLinkColor
             }}
             label=""
           />
@@ -131,7 +154,7 @@ export default function HeadingText({
       if (contentObj.rootType === 'mission') {
         return (
           <>
-            <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+            <UsernameText user={uploader} color={linkColor} />{' '}
             completed a{' '}
             <ContentLink
               content={{
@@ -149,7 +172,7 @@ export default function HeadingText({
       } else {
         return (
           <>
-            <UsernameText user={uploader} color={Color[linkColor]()} /> unlocked
+            <UsernameText user={uploader} color={linkColor} /> unlocked
             an{' '}
             <ContentLink
               content={{
@@ -167,7 +190,7 @@ export default function HeadingText({
     case 'aiStory':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> cleared a{' '}
+          <UsernameText user={uploader} color={linkColor} /> cleared a{' '}
           <b
             style={{
               color: Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
@@ -187,7 +210,7 @@ export default function HeadingText({
     case 'xpChange': {
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> completed
+          <UsernameText user={uploader} color={linkColor} /> completed
           all 3 daily goals and correctly answered an{' '}
           <span
             style={{
@@ -211,7 +234,7 @@ export default function HeadingText({
           {' '}
           <UsernameText
             user={targetObj.comment.uploader}
-            color={Color[linkColor]()}
+            color={linkColor}
           />
           {"'s "}
           <ContentLink

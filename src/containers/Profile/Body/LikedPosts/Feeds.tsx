@@ -93,8 +93,9 @@ export default function Feeds({
     <ErrorBoundary componentPath="Profile/Body/LikedPosts/Feeds">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <FilterBar
+          bordered
           color={selectedTheme}
-          style={{ height: '5rem', marginTop: '-1rem', fontSize: '1.3rem' }}
+          style={{ height: '5rem', marginTop: 0, fontSize: '1.3rem', marginBottom: '1rem' }}
           className="mobile"
         >
           {[

@@ -4,7 +4,6 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import { Color } from '~/constants/css';
 import {
@@ -13,6 +12,7 @@ import {
 } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function CommentInputArea({
   autoFocus,
@@ -48,10 +48,11 @@ export default function CommentInputArea({
   theme?: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeObj = useMemo(
-    () => returnTheme(theme || profileTheme),
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
     [profileTheme, theme]
   );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
   const expectedContentLength = useMemo(() => {
     if (subjectRewardLevel) {
       return expectedResponseLength(subjectRewardLevel);
@@ -59,8 +60,16 @@ export default function CommentInputArea({
     return 0;
   }, [subjectRewardLevel]);
   const effortBarColor = useMemo(() => {
-    return Color[themeObj[`level${subjectRewardLevel || 1}`]?.color]();
-  }, [subjectRewardLevel, themeObj]);
+    const levelKey = `level${Math.min(Math.max(subjectRewardLevel || 1, 1), 5)}`;
+    const role = themeRoles[levelKey];
+    const colorKey = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[colorKey as keyof typeof Color];
+    if (fn) {
+      return typeof opacity === 'number' ? fn(opacity) : fn();
+    }
+    return colorKey;
+  }, [subjectRewardLevel, themeRoles]);
   const [uploading, setUploading] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const placeholderLabel = useMemo(() => {

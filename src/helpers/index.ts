@@ -276,10 +276,6 @@ export function parseChannelPath(pathId: string | number) {
   return Number(pathId) - Number(CHAT_ID_BASE_NUMBER);
 }
 
-export function returnTheme(color?: string) {
-  return getThemeRoles((color || 'logoBlue') as any);
-}
-
 export function scrollElementToCenter(element: any, adjustment = -50): void {
   if (!element) return;
   let offsetTop = 0;

@@ -26,8 +26,7 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
-  isMobile,
-  returnTheme
+  isMobile
 } from '~/helpers';
 import {
   getFileInfoFromFileName,
@@ -49,6 +48,8 @@ import {
 import { v1 as uuidv1 } from 'uuid';
 import localize from '~/constants/localize';
 import { Comment as CommentType, Subject } from '~/types';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
@@ -143,11 +144,37 @@ export default function TargetContent({
   const username = useKeyContext((v) => v.myState.username);
   const { canReward } = useMyLevel();
 
-  const {
-    link: { color: linkColor },
-    content: { color: contentColor },
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColorValue = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'blue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeRoles, themeName]);
+  const contentColorValue = useMemo(() => {
+    const role = themeRoles.content;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeRoles, themeName]);
+  const rewardColor = useMemo(
+    () => themeRoles.reward?.color || 'pink',
+    [themeRoles]
+  );
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
@@ -247,7 +274,7 @@ export default function TargetContent({
   );
 
   const DetailText = useMemo(() => {
-    const commentLinkColor = Color[contentColor]();
+    const commentLinkColor = contentColorValue;
     return (
       <div>
         {SELECTED_LANGUAGE === 'kr' ? renderKoreanText() : renderEnglishText()}
@@ -257,7 +284,7 @@ export default function TargetContent({
     function renderEnglishText() {
       return (
         <>
-          <UsernameText user={comment.uploader} color={Color[linkColor]()} />{' '}
+          <UsernameText user={comment.uploader} color={linkColorValue} />{' '}
           <ContentLink
             content={{
               id: comment.id
@@ -280,7 +307,7 @@ export default function TargetContent({
     function renderKoreanText() {
       return (
         <>
-          <UsernameText user={comment.uploader} color={Color[linkColor]()} />
+          <UsernameText user={comment.uploader} color={linkColorValue} />
           님이{' '}
           <ContentLink
             content={{
@@ -302,7 +329,14 @@ export default function TargetContent({
         </>
       );
     }
-  }, [comment.id, comment.uploader, contentColor, linkColor, rootType, type]);
+  }, [
+    comment.id,
+    comment.uploader,
+    contentColorValue,
+    linkColorValue,
+    rootType,
+    type
+  ]);
 
   useEffect(() => {
     onSetXpRewardInterfaceShown({
@@ -335,7 +369,8 @@ export default function TargetContent({
       className={`${className} ${targetContentCSS}`}
       style={style}
     >
-      <div>
+      <ScopedTheme theme={themeName} roles={['link', 'content', 'reward']}>
+        <div>
         {comment &&
           (!!comment.notFound || !!comment.isDeleted ? (
             <div
@@ -640,7 +675,8 @@ export default function TargetContent({
               )}
             </div>
           ))}
-      </div>
+        </div>
+      </ScopedTheme>
     </ErrorBoundary>
   );
 

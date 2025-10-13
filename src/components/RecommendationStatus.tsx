@@ -3,9 +3,10 @@ import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { returnTheme, isSupermod } from '~/helpers';
+import { isSupermod } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const recommendedByLabel = localize('recommendedBy');
 const youLabel = localize('you');
@@ -24,12 +25,19 @@ export default function RecommendationStatus({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    rewardableRecommendation: {
-      color: rewardableColor,
-      opacity: rewardableOpacity
-    }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const rewardableColorKey = useMemo(
+    () => themeRoles.rewardableRecommendation?.color || 'yellow',
+    [themeRoles]
+  );
+  const rewardableOpacity = useMemo(
+    () => themeRoles.rewardableRecommendation?.opacity ?? 0.25,
+    [themeRoles]
+  );
   const [userListModalShown, setUserListModalShown] = useState(false);
   const recommendationsByUsertype = useMemo(() => {
     const result = [...recommendations];
@@ -94,10 +102,13 @@ export default function RecommendationStatus({
     return ' and';
   }, [recommendationsByUsertypeExceptMe.length]);
 
-  const rewardableRecommendationColor = useMemo(
-    () => Color[rewardableColor](rewardableOpacity),
-    [rewardableColor, rewardableOpacity]
-  );
+  const rewardableRecommendationColor = useMemo(() => {
+    const fn = Color[rewardableColorKey as keyof typeof Color];
+    if (fn) {
+      return fn(rewardableOpacity);
+    }
+    return rewardableColorKey;
+  }, [rewardableColorKey, rewardableOpacity]);
 
   return recommendations.length > 0 ? (
     <div

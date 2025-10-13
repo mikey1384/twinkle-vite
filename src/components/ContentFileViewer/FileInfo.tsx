@@ -8,7 +8,7 @@ import {
   mobileMaxWidth
 } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
-import { returnTheme } from '~/helpers';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
 export default function FileInfo({
@@ -27,9 +27,17 @@ export default function FileInfo({
   theme?: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const themeName = useMemo<ThemeName>(
+    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme, theme]
+  );
+  const linkColor = useMemo(() => {
+    const role = getThemeRoles(themeName).link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity ?? 1;
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn(opacity) : key;
+  }, [themeName]);
   const displayedFileSize = useMemo(
     () => renderFileSize(Number(fileSize)),
     [fileSize]
@@ -103,7 +111,7 @@ export default function FileInfo({
                 style={{
                   width: '100%',
                   fontWeight: 'bold',
-                  color: Color[linkColor](),
+                  color: linkColor,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: 'block',

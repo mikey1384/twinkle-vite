@@ -95,24 +95,14 @@ export default function Body({
       `}
     >
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          width: '100%'
-        }}
+        className={css`
+          width: 100%;
+          border-bottom: 1px solid ${Color.borderGray()};
+          background: transparent;
+        `}
       >
-        <div
-          className={css`
-            width: 40%;
-            background: #fff;
-            border-bottom: 1px solid ${Color.borderGray()};
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 20rem;
-            }
-          `}
-        />
         <FilterBar
-          style={{ margin: 0 }}
+          style={{ margin: '0.6rem 0' }}
           color={selectedTheme}
           className={css`
             @media (max-width: ${mobileMaxWidth}) {
@@ -159,16 +149,6 @@ export default function Body({
             <a>{postsLabel}</a>
           </nav>
         </FilterBar>
-        <div
-          className={css`
-            width: 35rem;
-            background: #fff;
-            border-bottom: 1px solid ${Color.borderGray()};
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 0;
-            }
-          `}
-        />
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
         <div

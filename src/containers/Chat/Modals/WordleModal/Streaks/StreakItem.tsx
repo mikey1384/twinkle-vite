@@ -5,9 +5,9 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { returnTheme } from '~/helpers';
 import { User } from '~/types';
 import localize from '~/constants/localize';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const youLabel = localize('You');
 
@@ -24,10 +24,25 @@ export default function StreakItem({
   streakObj: any;
   theme: string;
 }) {
-  const {
-    link: { color: linkColor },
-    active: { color: activeColor }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const linkColor = useMemo(() => {
+    const role = themeRoles.link;
+    const key = role?.color || 'logoBlue';
+    const opacity = role?.opacity;
+    const fn = Color[key as keyof typeof Color];
+    return fn
+      ? typeof opacity === 'number'
+        ? fn(opacity)
+        : fn()
+      : key;
+  }, [themeRoles]);
+  const activeColor = useMemo(() => {
+    const role = themeRoles.active;
+    const key = role?.color || 'green';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles]);
 
   const [userListModalShown, setUserListModalShown] = useState(false);
   const rankColor = useMemo(() => {
@@ -114,9 +129,7 @@ export default function StreakItem({
             >
               <UsernameText
                 displayedName={myId === user.id ? youLabel : ''}
-                color={Color[
-                  userStreakIsOngoing ? activeColor : 'darkerGray'
-                ]()}
+                color={userStreakIsOngoing ? activeColor : Color.darkerGray()}
                 user={user}
               />
               {otherUserNumber === 0 &&
@@ -135,12 +148,12 @@ export default function StreakItem({
           <span>
             <a
               style={{
-                color: Color[linkColor](),
+                color: linkColor,
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
-              onClick={() => setUserListModalShown(true)}
-            >
+                onClick={() => setUserListModalShown(true)}
+              >
               and {otherUserNumber} other
               {otherUserNumber === 1 ? '' : 's'}
             </a>
@@ -182,7 +195,7 @@ export default function StreakItem({
           title="People who achieved this streak"
           users={streakObj[streak]}
           onHide={() => setUserListModalShown(false)}
-          descriptionColor={Color[activeColor]()}
+          descriptionColor={activeColor}
           descriptionShown={(user: User) => user.currentStreak === streak}
           description="(active)"
         />

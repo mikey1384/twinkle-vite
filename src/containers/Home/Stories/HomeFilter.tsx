@@ -62,7 +62,6 @@ export default function HomeFilter({
   return (
     <ErrorBoundary componentPath="Home/Stories/HomeFilter">
       <FilterBar
-        inverted
         bordered
         style={{
           height: '4rem',

@@ -161,8 +161,9 @@ export default function Feeds({
       >
         {section !== 'watched' && (
           <FilterBar
+            bordered
             color={selectedTheme}
-            style={{ height: '5rem', marginTop: '-1rem', fontSize: '1.3rem' }}
+            style={{ height: '5rem', marginTop: 0, fontSize: '1.3rem', marginBottom: '1rem' }}
             className="mobile"
           >
             {[
@@ -213,8 +214,8 @@ export default function Feeds({
                 color={selectedTheme}
                 style={{
                   height: '5rem',
-                  marginTop: '-1rem',
-                  marginBottom: '2rem'
+                  marginTop: 0,
+                  marginBottom: '1.2rem'
                 }}
               >
                 <nav

@@ -12,8 +12,8 @@ import { css } from '@emotion/css';
 import { useOutsideClick } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
-import { returnTheme } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const editLabel = localize('edit');
 
@@ -67,10 +67,11 @@ export default function SectionPanel({
   const [editedTitle, setEditedTitle] = useState(
     typeof title === 'string' ? title : ''
   );
-  const themeRoles = useMemo(
-    () => returnTheme(customColorTheme || profileTheme),
+  const themeName = useMemo<ThemeName>(
+    () => ((customColorTheme || profileTheme || 'logoBlue') as ThemeName),
     [customColorTheme, profileTheme]
   );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
   const resolveColor = (name?: string, fallback?: string) => {
     const target = name ?? fallback;
     if (!target) return undefined;
@@ -78,7 +79,7 @@ export default function SectionPanel({
     return fn ? fn() : target;
   };
 
-  const sectionPanelColor = themeRoles.sectionPanel?.color || profileTheme;
+  const sectionPanelColor = themeRoles.sectionPanel?.color || themeName;
   const sectionPanelTextColor =
     resolveColor(themeRoles.sectionPanelText?.color, 'darkerGray') ||
     Color.darkerGray();
@@ -111,10 +112,7 @@ export default function SectionPanel({
   }, [onSearch]);
 
   return (
-    <ScopedTheme
-      theme={(customColorTheme || profileTheme) as any}
-      roles={['sectionPanel', 'sectionPanelText']}
-    >
+    <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
       <div
         style={style}
         className={css`
