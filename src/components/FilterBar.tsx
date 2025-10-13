@@ -71,8 +71,8 @@ export default function FilterBar({
   const alertColorVar = `var(--role-alert-color, ${alertColorValue})`;
 
   const pageBgVar = `var(--page-bg, ${Color.whiteGray()})`;
-  // Simpler segmented style on the page background
-  const barBackground = pageBgVar;
+  // Flat, clean white bar surface regardless of page tint
+  const barBackground = '#ffffff';
   const barBorderColor = 'transparent';
   const navTextColor = Color.darkGray();
   const navHoverColor = Color.darkBlueGray();

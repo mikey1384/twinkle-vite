@@ -98,11 +98,12 @@ export default function Body({
         className={css`
           width: 100%;
           border-bottom: 1px solid ${Color.borderGray()};
-          background: transparent;
+          background: #fff;
+          padding: 0.6rem 0;
         `}
       >
         <FilterBar
-          style={{ margin: '0.6rem 0' }}
+          style={{ margin: 0 }}
           color={selectedTheme}
           className={css`
             @media (max-width: ${mobileMaxWidth}) {

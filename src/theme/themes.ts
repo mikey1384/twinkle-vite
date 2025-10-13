@@ -79,7 +79,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(179, 194, 255, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   green: {
     general: {
@@ -101,7 +101,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(183, 205, 183, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   orange: {
     general: {
@@ -123,7 +123,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(102, 60, 0, 1)',
       border: 'rgba(255, 220, 160, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   rose: {
     general: {
@@ -145,7 +145,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(70, 0, 20, 1)',
       border: 'rgba(255, 180, 200, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   pink: {
     general: {
@@ -167,7 +167,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(156, 39, 176, 1)',
       border: 'rgba(255, 215, 225, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   purple: {
     general: {
@@ -189,7 +189,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(74, 20, 140, 1)',
       border: 'rgba(217, 204, 255, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   black: {
     general: {
@@ -211,7 +211,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(38, 38, 38, 1)',
       border: 'rgba(192, 192, 192, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   red: {
     general: {
@@ -233,7 +233,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(255, 164, 164, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   darkBlue: {
     general: {
@@ -255,7 +255,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(184, 192, 255, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   vantaBlack: {
     general: {
@@ -277,7 +277,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(38, 38, 38, 1)',
       border: 'rgba(192, 192, 192, 1)'
     },
-    page: { bg: 'rgba(250, 250, 250, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   },
   gold: {
     general: {
@@ -299,7 +299,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(178, 134, 0, 1)',
       border: 'rgba(209, 170, 0, 1)'
     },
-    page: { bg: 'rgba(248, 248, 255, 1)' }
+    page: { bg: 'rgba(255, 255, 255, 1)' }
   }
 };
 
@@ -625,6 +625,8 @@ export function applyThemeVars(theme: ThemeName) {
 
   // Page pack
   root.style.setProperty('--page-bg', tokens.page.bg);
+  // App bg mirrors page bg for simplicity
+  root.style.setProperty('--app-bg', tokens.page.bg);
 }
 
 export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
@@ -645,6 +647,7 @@ export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
     ['--chat-hover-title-bg']: t.chat.hoverTitleBg,
     ['--chat-text']: t.chat.text,
     ['--chat-border']: t.chat.border,
-    ['--page-bg']: t.page.bg
+    ['--page-bg']: t.page.bg,
+    ['--app-bg']: t.page.bg
   };
 }

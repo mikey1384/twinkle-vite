@@ -9,7 +9,7 @@ body {
   line-height: 1.5;
   font-size: 10px;
   font-family: 'Inter', Helvetica, sans-serif, Arial;
-  background-color: rgb(250, 250, 250);
+  background-color: var(--app-bg, #fff);
   margin: 0px;
   top: 0;
   bottom: 0;
@@ -19,7 +19,8 @@ body {
 
 :root {
   /* Default CSS variables for theme; will be overridden at runtime */
-  --page-bg: rgb(250, 250, 250);
+  --page-bg: rgb(255, 255, 255);
+  --app-bg: var(--page-bg);
   --theme-bg: rgba(65, 140, 235, 1);
   --theme-hover-bg: rgba(53, 122, 189, 1);
   --theme-text: rgba(255, 255, 255, 1);
