@@ -13,14 +13,16 @@ export default function Options({
   return (
     <div>
       <Button
-        skeuomorphic={selectedOption === 'want'}
+        variant={selectedOption === 'want' ? 'soft' : 'solid'}
+        tone={selectedOption === 'want' ? 'raised' : undefined}
         color="logoBlue"
         onClick={() => onSelectOption('want')}
       >
         I want to see what {partnerName} has (Trade)
       </Button>
       <Button
-        skeuomorphic={selectedOption === 'offer'}
+        variant={selectedOption === 'offer' ? 'soft' : 'solid'}
+        tone={selectedOption === 'offer' ? 'raised' : undefined}
         style={{ marginTop: '1rem' }}
         color="pink"
         onClick={() => onSelectOption('offer')}
@@ -28,7 +30,8 @@ export default function Options({
         {`I want to show ${partnerName} what I have`}
       </Button>
       <Button
-        skeuomorphic={selectedOption === 'send'}
+        variant={selectedOption === 'send' ? 'soft' : 'solid'}
+        tone={selectedOption === 'send' ? 'raised' : undefined}
         style={{ marginTop: '1rem' }}
         color="green"
         onClick={() => onSelectOption('send')}

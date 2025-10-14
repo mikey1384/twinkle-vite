@@ -231,7 +231,8 @@ export default function Description({
     <div style={{ position: 'relative', padding: '2rem 1rem 0 1rem' }}>
       {editButtonShown && !isEditing && (
         <DropdownButton
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           icon="chevron-down"
           color="darkerGray"
           opacity={0.8}

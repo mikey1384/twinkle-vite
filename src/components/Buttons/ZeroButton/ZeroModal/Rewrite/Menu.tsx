@@ -64,7 +64,8 @@ export default function Menu({
   return (
     <div style={style}>
       <Button
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         color="strongPink"
         disabled={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
@@ -155,7 +156,8 @@ export default function Menu({
         </div>
         <div>
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color="green"
             disabled={loadingType === 'rewrite'}
             style={{ marginLeft: '1rem' }}
@@ -167,7 +169,8 @@ export default function Menu({
         </div>
       </div>
       <Button
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         color="logoBlue"
         disabled={loadingType === 'grammar'}
         style={{ marginTop: '2rem' }}

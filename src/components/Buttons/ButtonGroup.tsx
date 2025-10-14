@@ -23,12 +23,18 @@ export default function ButtonGroup({
       style={{ ...style, display: 'flex' }}
     >
       {buttons.map((button, index) => {
+        const { skeuomorphic, filled, ...rest } = button as any;
+        const mappedProps: any = {
+          variant: filled ? 'solid' : skeuomorphic ? 'soft' : 'solid',
+          tone: skeuomorphic ? 'raised' : undefined,
+          hoverColor: button.hoverColor || button.color,
+          ...rest
+        };
         return (
           <Button
             key={index}
             style={{ marginLeft: index !== 0 ? '1rem' : 0 }}
-            {...button}
-            hoverColor={button.hoverColor || button.color}
+            {...mappedProps}
           >
             {button.label}
           </Button>

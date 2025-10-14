@@ -43,7 +43,8 @@ export default function AccountTypes({ canManage }: { canManage: boolean }) {
           canManage ? (
             <Button
               color="darkerGray"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               onClick={() => setAddAccountTypeModalShown(true)}
             >
               <Icon icon="plus" />

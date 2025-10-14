@@ -7,12 +7,9 @@ import Thumbnail from '../Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import {
-  borderRadius,
-  Color,
-  mobileMaxWidth,
-  desktopMinWidth
-} from '~/constants/css';
+import { Color, mobileMaxWidth, desktopMinWidth, wideBorderRadius } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
@@ -29,7 +26,7 @@ const rootContentCSS = css`
   gap: 0.7rem;
   padding: 1rem;
   cursor: pointer;
-  border-radius: ${borderRadius};
+  border-radius: ${wideBorderRadius};
 
   .title {
     grid-area: title;
@@ -112,9 +109,9 @@ const rootContentCSS = css`
   .reward-bar {
     grid-area: reward;
     font-size: 1.3rem;
-    margin-left: CALC(-1rem - 1px);
-    margin-right: CALC(-1rem - 1px);
-    align-self: end;
+    margin-left: 0;
+    margin-right: 0;
+    align-self: start;
     @media (max-width: ${mobileMaxWidth}) {
       font-size: 1rem;
     }
@@ -122,7 +119,7 @@ const rootContentCSS = css`
 
   transition: background 0.5s, border 0.5s;
 
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid ${Color.borderGray(0.5)};
 
   &.expandable {
     background: ${Color.whiteGray()};
@@ -199,8 +196,6 @@ const rootContentCSS = css`
       .title {
         color: ${Color.black()};
       }
-      background: ${Color.highlightGray()};
-      border: 1px solid ${Color.darkerBorderGray()};
     }
   }
 `;
@@ -270,6 +265,53 @@ export default function RootContent({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+
+  const resolveColor = (
+    name?: string,
+    opacity?: number,
+    fallbackName?: string,
+    fallbackOpacity: number = 1
+  ) => {
+    const target = name ?? fallbackName;
+    if (!target) return undefined;
+    const fn = Color[target as keyof typeof Color];
+    return fn ? fn(opacity ?? fallbackOpacity) : target;
+  };
+
+  const hoverBg =
+    resolveColor(themeRoles.filter?.color, 0.1, themeName, 0.1) ||
+    Color.logoBlue(0.1);
+  const activeBg =
+    resolveColor(themeRoles.filter?.color, 0.18, themeName, 0.18) ||
+    Color.logoBlue(0.18);
+  const hoverBorder =
+    resolveColor(themeRoles.filter?.color, 0.28, themeName, 0.28) ||
+    Color.logoBlue(0.28);
+  const activeBorder =
+    resolveColor(themeRoles.filter?.color, 0.4, themeName, 0.4) ||
+    Color.logoBlue(0.4);
+
+  const cardThemeCSS = css`
+    border-radius: ${wideBorderRadius};
+    border: 1px solid ${Color.borderGray(0.5)};
+    background: #fff;
+    @media (min-width: ${desktopMinWidth}) {
+      &:hover {
+        background: ${hoverBg};
+        border-color: ${hoverBorder};
+      }
+    }
+    &.selected {
+      background: ${activeBg};
+      border-color: ${activeBorder};
+    }
+  `;
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(fileName || ''),
     [fileName]
@@ -297,12 +339,7 @@ export default function RootContent({
   return (
     <div
       onClick={handleClick}
-      style={{
-        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : undefined,
-        border: selected ? `0.5rem solid ${borderColor}` : undefined,
-        background: selected ? Color.highlightGray() : ''
-      }}
-      className={`${rootContentCSS} ${
+      className={`${rootContentCSS} ${cardThemeCSS} ${selected ? 'selected ' : ''}${
         contentType === 'video' ? 'is-video' : ''
       }${isRewardBarShown ? '' : ' no-reward'}${hasThumb ? '' : ' no-thumb'}${
         hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''

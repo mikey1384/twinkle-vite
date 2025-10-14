@@ -61,7 +61,8 @@ export default function AddButtons({
     >
       {isTwoPeopleChannel && isTradeButtonShown && !isAIChannel && (
         <Button
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           filled={transactionButtonIsGlowing}
           disabled={disabled}
           onClick={onSetTransactionModalShown}
@@ -85,7 +86,8 @@ export default function AddButtons({
       />
       {!isAIChannel && (
         <Button
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           disabled={disabled}
           color={buttonColor}
           hoverColor={buttonHoverColor}

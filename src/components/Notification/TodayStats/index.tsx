@@ -165,7 +165,8 @@ export default function TodayStats({
                     fontSize: myTodayRank ? '1.5rem' : 'inherit',
                     fontWeight: myTodayRank ? 'bold' : 'normal'
                   }}
-                  skeuomorphic
+                  variant={todayStats.showXPRankings ? 'solid' : 'soft'}
+                  tone={!todayStats.showXPRankings ? 'raised' : undefined}
                 >
                   {myTodayRank ? (
                     myTodayRank <= 3 ? (

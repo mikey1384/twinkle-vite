@@ -172,7 +172,8 @@ export default function MainMenu({
       }}
     >
       <DropdownButton
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         color="darkerGray"
         icon="caret-down"
         text={levelHash[difficulty]}

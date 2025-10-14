@@ -69,7 +69,8 @@ export default function GoBackField({
         <div style={{ padding: '1rem 1.5rem 1rem 0' }}>
           <Button
             onClick={() => setIconSelectionModalShown(true)}
-            skeuomorphic
+            variant={button.icon ? 'solid' : 'soft'}
+            tone={!button.icon ? 'raised' : undefined}
             color={button.icon ? 'black' : 'orange'}
           >
             {button.icon ? <Icon icon={button.icon} /> : <Icon icon="plus" />}

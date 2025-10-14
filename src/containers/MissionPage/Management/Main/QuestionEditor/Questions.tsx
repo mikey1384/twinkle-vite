@@ -92,7 +92,8 @@ export default function Questions({
                   <Button
                     color="green"
                     disabled={isApproving}
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     opacity={0.5}
                     onClick={() => handleApprove(question.id)}
                   >
@@ -101,7 +102,8 @@ export default function Questions({
                   <Button
                     color="cranberry"
                     disabled={isDeleting}
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     opacity={0.5}
                     style={{ marginLeft: '1rem' }}
                     onClick={() => handleDelete(question.id)}
@@ -121,7 +123,8 @@ export default function Questions({
                   <Button
                     color="cranberry"
                     disabled={isDisapproving}
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     opacity={0.5}
                     onClick={() => handleDisApprove(question.id)}
                   >

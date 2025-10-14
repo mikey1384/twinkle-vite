@@ -255,7 +255,8 @@ export default function Slide({
         {!!canEdit && !isEditing && !isDeleted && (
           <div className="dropdown-wrapper">
             <DropdownButton
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="darkerGray"
               listStyle={{ width: '25ch' }}
               style={{
@@ -324,7 +325,8 @@ export default function Slide({
               color="darkBlue"
               loading={publishing}
               onClick={handlePublishSlide}
-              skeuomorphic
+              variant="soft"
+              tone="raised"
             >
               <Icon icon="upload" />
               <span style={{ marginLeft: '0.7rem' }}>Publish</span>

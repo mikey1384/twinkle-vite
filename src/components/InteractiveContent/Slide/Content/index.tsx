@@ -216,7 +216,8 @@ export default function Content({
                 onClick={() => onPortalButtonClick(portalButton.destination)}
                 color={buttonColor}
                 hoverColor={buttonHoverColor}
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 style={{ fontSize: '1.7rem' }}
               >
                 <Icon icon={portalButton.icon} />

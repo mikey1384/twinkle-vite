@@ -235,7 +235,8 @@ export default function QuestionEditForm({
           style={{ marginLeft: '1rem' }}
           loading={submitting}
           color="logoBlue"
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           disabled={submitDisabled}
           onClick={handleSubmit}
         >

@@ -122,7 +122,8 @@ export default function StartScreen({
           }}
         >
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             style={{
               fontSize: deviceIsMobile ? '1.2rem' : '2rem',
               padding: deviceIsMobile ? '0.75rem 1rem' : undefined
@@ -136,7 +137,8 @@ export default function StartScreen({
             </span>
           </Button>
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             style={{
               fontSize: deviceIsMobile ? '1.2rem' : '2rem',
               marginLeft: deviceIsMobile ? '0.75rem' : '1rem',

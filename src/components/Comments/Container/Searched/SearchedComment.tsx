@@ -463,7 +463,8 @@ export default function SearchedComment({
           {dropdownButtonShown && !isEditing && (
             <div className="dropdown-wrapper">
               <DropdownButton
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 icon="chevron-down"
                 color="darkerGray"
                 opacity={0.8}

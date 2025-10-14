@@ -94,7 +94,8 @@ export default function StartScreen({
           }}
         >
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             style={{ fontSize: '3.5rem', padding: '1.5rem' }}
             color="pink"
             onClick={() => navigateTo('archive')}

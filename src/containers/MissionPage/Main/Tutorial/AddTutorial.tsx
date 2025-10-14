@@ -27,7 +27,7 @@ export default function AddTutorial({
         marginBottom: '5rem'
       }}
     >
-      <Button skeuomorphic onClick={handleAttachTutorial}>
+      <Button variant="soft" tone="raised" onClick={handleAttachTutorial}>
         <Icon icon="plus" />
         <span style={{ marginLeft: '0.7rem' }}>Attach a Tutorial</span>
       </Button>

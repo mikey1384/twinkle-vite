@@ -361,7 +361,8 @@ export default function BasicInfos({
             marginTop: '1.5rem',
             width: 'auto'
           }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           color={buttonColorKey}
           hoverColor={buttonHoverColorKey}
           onClick={handleTalkButtonClick}

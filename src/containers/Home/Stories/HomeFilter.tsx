@@ -110,7 +110,8 @@ export default function HomeFilter({
                 }}
                 dropdownButton={
                   <DropdownButton
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     className={css`
                       @media (max-width: ${mobileMaxWidth}) {
                         font-size: 1.2rem !important;

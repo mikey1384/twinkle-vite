@@ -79,6 +79,9 @@ export default function LoadMoreButton({
             loading={!!loading}
             color={buttonColorKey}
             onClick={onClick}
+            variant="soft"
+            shape="pill"
+            uppercase={false}
             {...props}
           >
             {loading ? loadingLabel : label || loadMoreLabel}

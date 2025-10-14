@@ -55,7 +55,6 @@ export default function SideButtons({
           }}
         >
           <StarButton
-            skeuomorphic
             byUser={!!byUser}
             contentId={Number(videoId)}
             style={{ position: 'absolute', top: 0, left: 0 }}

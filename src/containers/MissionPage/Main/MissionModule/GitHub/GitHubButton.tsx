@@ -17,7 +17,8 @@ export default function GitHubButton({
         color: 'black',
         ...style
       }}
-      skeuomorphic
+      variant="soft"
+      tone="raised"
       onClick={handleGitHubButtonClick}
     >
       <Icon style={{ marginRight: '0.7rem' }} icon={['fab', 'github']} />

@@ -38,7 +38,8 @@ export default function ZeroButton({ style }: { style?: React.CSSProperties }) {
               : {}),
             ...style
           }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={handleClick}
         >
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

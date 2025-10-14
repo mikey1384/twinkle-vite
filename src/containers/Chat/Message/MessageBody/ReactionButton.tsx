@@ -106,7 +106,7 @@ export default function ReactionButton({
           }}
           color="darkerGray"
           opacity={0.5}
-          skeuomorphic
+          tone="raised"
           filled={reactionsMenuShown}
           onClick={() => (deviceIsMobile ? handleReactionBarShown() : {})}
         >

@@ -88,7 +88,8 @@ export default function QuestionListItem({
               width: '50%',
               fontSize: '1.7rem'
             }}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color="darkerGray"
             onClick={() => onSetIsEditing(true)}
           >
@@ -97,7 +98,8 @@ export default function QuestionListItem({
           </Button>
           <Button
             style={{ width: '50%', fontSize: '1.7rem', marginTop: '1rem' }}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color={!question.isApproved ? 'darkBlue' : 'rose'}
             onClick={handleApprove}
           >
@@ -107,7 +109,8 @@ export default function QuestionListItem({
             <Button
               style={{ width: '50%', fontSize: '1.7rem', marginTop: '5rem' }}
               color="rose"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               onClick={handleDelete}
             >
               <Icon icon="trash-alt" />

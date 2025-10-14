@@ -138,7 +138,8 @@ export default function StarButton({
       >
         <Button
           style={otherStyles}
-          skeuomorphic={!(!!rewardLevel || byUser || filled) && skeuomorphic}
+          variant={!!rewardLevel || byUser || filled ? 'solid' : 'soft'}
+          tone={!(!rewardLevel && !byUser && !filled) ? undefined : 'raised'}
           color={
             !!rewardLevel && byUser ? 'gold' : byUser ? 'orange' : 'brownOrange'
           }

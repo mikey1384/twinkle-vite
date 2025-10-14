@@ -22,16 +22,10 @@ export default function RewardLevelDisplay({
 
   return (
     <RewardLevelBar
-      className={css`
-        margin-left: -1px;
-        margin-right: -1px;
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-left: 0px;
-          margin-right: 0px;
-        }
-      `}
+      className={css``}
       style={{
-        marginBottom: rootType === 'url' ? '-0.5rem' : 0
+        width: 'calc(100% - 1.2rem)',
+        margin: '0.6rem 0.6rem 0.2rem 0.6rem'
       }}
       rewardLevel={rewardLevel}
     />

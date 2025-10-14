@@ -12,17 +12,19 @@ export default function RewardButton({
   contentId,
   contentType,
   disableReason,
-  skeuomorphic,
   style,
-  theme
+  theme,
+  variant = 'soft',
+  tone = 'raised'
 }: {
   className?: string;
   contentId: number;
   contentType: string;
   disableReason?: string | boolean;
-  skeuomorphic?: boolean;
   style?: React.CSSProperties;
   theme?: string;
+  variant?: 'solid' | 'soft' | 'outline' | 'ghost';
+  tone?: 'flat' | 'raised';
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const onSetXpRewardInterfaceShown = useContentContext(
@@ -39,7 +41,8 @@ export default function RewardButton({
 
   return (
     <Button
-      skeuomorphic={skeuomorphic}
+      variant={variant}
+      tone={tone}
       className={className}
       color={rewardColor}
       style={style}

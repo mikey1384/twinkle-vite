@@ -60,7 +60,8 @@ export default function BottomInterface({
           <Button
             onClick={handlePublish}
             color="darkBlue"
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             loading={publishing}
             style={{ marginLeft: '1rem' }}
           >

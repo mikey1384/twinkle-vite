@@ -60,7 +60,8 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
           canManage ? (
             <Button
               color="darkerGray"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               onClick={() => setAddSupermodModalShown(true)}
             >
               <Icon icon="plus" />

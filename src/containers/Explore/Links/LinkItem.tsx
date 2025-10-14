@@ -295,7 +295,8 @@ export default function LinkItem({
       {!onEdit && editButtonShown && (
         <div>
           <DropdownButton
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             icon="chevron-down"
             color="darkerGray"
             menuProps={editMenuItems}

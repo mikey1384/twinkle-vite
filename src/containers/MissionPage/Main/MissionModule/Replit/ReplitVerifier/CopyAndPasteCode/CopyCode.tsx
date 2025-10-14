@@ -46,14 +46,15 @@ export default function CopyCode({
           }
           @media (max-width: ${mobileMaxWidth}) {
             margin-left: 0;
-          }
-        `}
-      >
-        <Button
-          skeuomorphic
-          onClick={() => {
-            setCopiedShown(true);
-            handleCopyToClipboard();
+      }
+    `}
+  >
+    <Button
+      variant="soft"
+      tone="raised"
+      onClick={() => {
+        setCopiedShown(true);
+        handleCopyToClipboard();
             setTimeout(() => setCopiedShown(false), 700);
           }}
         >

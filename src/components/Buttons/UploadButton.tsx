@@ -16,7 +16,6 @@ export default function UploadButton({
   hoverColor,
   style,
   className,
-  skeuomorphic = true,
   transparent = false,
   filled = false,
   mobilePadding,
@@ -44,7 +43,6 @@ export default function UploadButton({
   className?: string;
 
   // Button variants
-  skeuomorphic?: boolean;
   transparent?: boolean;
   filled?: boolean;
 
@@ -72,13 +70,20 @@ export default function UploadButton({
 
   const appliedColor = color || defaultButtonColor;
   const appliedHoverColor = hoverColor || appliedColor;
+  const { variant: overrideVariant, tone: overrideTone, ...restButtonProps } =
+    buttonProps;
+  const resolvedVariant =
+    overrideVariant ??
+    (filled ? 'solid' : transparent ? 'ghost' : 'soft');
+  const resolvedTone =
+    overrideTone ??
+    (resolvedVariant === 'soft' ? 'raised' : undefined);
 
   return (
     <>
       <Button
-        skeuomorphic={skeuomorphic}
-        transparent={transparent}
-        filled={filled}
+        variant={resolvedVariant}
+        tone={resolvedTone}
         disabled={disabled}
         onClick={handleButtonClick}
         color={appliedColor}
@@ -89,7 +94,7 @@ export default function UploadButton({
         aria-label={ariaLabel || title || 'Upload file'}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        {...buttonProps}
+        {...restButtonProps}
       >
         <Icon size={iconSize} icon={icon} />
         {text && <span style={{ marginLeft: '0.7rem' }}>{text}</span>}

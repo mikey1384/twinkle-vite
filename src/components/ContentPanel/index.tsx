@@ -9,7 +9,7 @@ import TargetContent from './TargetContent';
 import Embedly from '~/components/Embedly';
 import Profile from './Profile';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -19,35 +19,25 @@ import localize from '~/constants/localize';
 
 const urlCss = css`
   padding: 1rem;
-  background: ${Color.whiteGray()};
-  border: 1px solid ${Color.borderGray()};
-  border-radius: ${borderRadius};
-  margin-top: -1rem;
-  transition: background 0.5s;
-  &:hover {
-    background: #fff;
-  }
+  background: #fff;
+  border: 1px solid ${Color.borderGray(0.5)};
+  border-radius: ${wideBorderRadius};
+  margin-top: 0.8rem;
   @media (max-width: ${mobileMaxWidth}) {
-    margin-top: -0.5rem;
     border-left: 0;
     border-right: 0;
   }
 `;
 const userCommentCss = css`
   cursor: pointer;
-  background: ${Color.whiteGray()};
-  border: 1px solid ${Color.borderGray()};
-  border-radius: ${borderRadius};
-  margin-top: -1rem;
-  transition: background 0.5s;
-  padding-bottom: 1rem;
-  &:hover {
-    background: #fff;
-  }
+  background: #fff;
+  border: 1px solid ${Color.borderGray(0.5)};
+  border-radius: ${wideBorderRadius};
+  margin-top: 0.8rem;
+  padding: 1rem;
   @media (max-width: ${mobileMaxWidth}) {
     border-left: 0;
     border-right: 0;
-    margin-top: -0.5rem;
   }
 `;
 
@@ -223,8 +213,8 @@ export default function ContentPanel({
     () => css`
       background: #fff;
       width: 100%;
-      border: 1px solid ${Color.borderGray()};
-      border-radius: ${borderRadius};
+      border: 1px solid ${Color.borderGray(0.5)};
+      border-radius: ${wideBorderRadius};
       &:last-child {
         margin-bottom: 0;
       }

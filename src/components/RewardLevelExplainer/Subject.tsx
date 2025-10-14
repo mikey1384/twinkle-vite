@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
+import { Color, wideBorderRadius } from '~/constants/css';
+import { css } from '@emotion/css';
 
 const forEveryStarYouAddLabel = localize('forEveryStarYouAddSubject');
 
@@ -56,14 +57,30 @@ export default function Subject({
     );
   }, [effortColor, rewardLevelExpectation]);
 
+  const containerCss = css`
+    background: #fff;
+    border: 1px solid ${Color.borderGray(0.5)};
+    border-radius: ${wideBorderRadius};
+    width: calc(100% - 1.2rem);
+    margin: 0.6rem;
+    padding: 0.8rem 1rem;
+    color: ${Color.darkBlueGray()};
+    line-height: 1.4;
+  `;
+
   return (
     <ErrorBoundary componentPath="RewardLevelExplainer/Subject" style={style}>
-      {rewardLevelExpectation && (
-        <div style={{ fontSize: '1.7rem', fontWeight: 'bold' }}>
-          {rewardLevelDescription}
+      <div className={containerCss}>
+        {rewardLevelExpectation && (
+          <div style={{ fontSize: '1.6rem', fontWeight: 700 }}>
+            <span style={{ opacity: 0.8 }}>Level {rewardLevel}:</span>{' '}
+            {rewardLevelDescription}
+          </div>
+        )}
+        <div style={{ fontSize: '1.3rem', marginTop: '0.4rem' }}>
+          {forEveryStarYouAddLabel}
         </div>
-      )}
-      <div style={{ fontSize: '1.5rem' }}>{forEveryStarYouAddLabel}</div>
+      </div>
     </ErrorBoundary>
   );
 }

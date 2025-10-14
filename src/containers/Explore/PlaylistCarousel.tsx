@@ -117,7 +117,8 @@ export default function PlaylistCarousel({
         )}
         {!onEdit && (userIsUploader || canEditPlaylists) && (
           <DropdownButton
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             icon="chevron-down"
             color="darkerGray"
             listStyle={{ minWidth: '15rem' }}

@@ -52,7 +52,8 @@ export default function FeaturedSubjects({
           myId === userId ? (
             <div style={{ display: 'flex' }}>
               <Button
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 color="darkerGray"
                 style={{ marginLeft: 'auto' }}
                 onClick={() => setSelectModalShown(true)}
@@ -60,7 +61,8 @@ export default function FeaturedSubjects({
                 {selectLabel}
               </Button>
               <Button
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 color="darkerGray"
                 style={{ marginLeft: '1rem' }}
                 onClick={() => setReorderModalShown(true)}

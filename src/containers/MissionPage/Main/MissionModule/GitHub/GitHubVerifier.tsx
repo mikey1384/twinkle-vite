@@ -57,7 +57,8 @@ export default function GitHubVerifier({
               {
                 label: 'I created a github account',
                 color: 'logoBlue',
-                skeuomorphic: true
+                variant: 'soft',
+                tone: 'raised'
               }
             ]}
             onOpenTutorial={() =>

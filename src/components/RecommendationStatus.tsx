@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';
-import { Color } from '~/constants/css';
+import { Color, wideBorderRadius } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { css } from '@emotion/css';
 
 const recommendedByLabel = localize('recommendedBy');
 const youLabel = localize('you');
@@ -110,28 +111,39 @@ export default function RecommendationStatus({
     return rewardableColorKey;
   }, [rewardableColorKey, rewardableOpacity]);
 
+  const rewardableBorderColor = useMemo(() => {
+    const fn = Color[rewardableColorKey as keyof typeof Color];
+    if (fn) return fn(Math.min(1, (rewardableOpacity || 0.25) + 0.14));
+    return rewardableColorKey;
+  }, [rewardableColorKey, rewardableOpacity]);
+
+  const containerCss = useMemo(
+    () => css`
+      padding: 0.6rem 1rem;
+      width: calc(100% - 1.2rem);
+      margin: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.4rem;
+      font-size: 1.4rem;
+      background: ${isRewardable ? rewardableRecommendationColor : '#fff'};
+      border: 1px solid ${
+        isRewardable ? rewardableBorderColor : Color.borderGray(0.5)
+      };
+      border-radius: ${wideBorderRadius};
+      color: ${isRewardable ? Color.black() : Color.darkBlueGray()};
+    `,
+    [isRewardable, rewardableRecommendationColor, rewardableBorderColor]
+  );
+
   return recommendations.length > 0 ? (
-    <div
-      style={{
-        padding: '0.5rem',
-        ...(isRewardable ? { background: rewardableRecommendationColor } : {}),
-        borderTop: `1px solid ${Color.borderGray()}`,
-        borderBottom: `1px solid ${Color.borderGray()}`,
-        marginBottom: '1rem',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: '1.5rem',
-        ...style
-      }}
-    >
+    <div className={containerCss} style={style}>
       <div>
         {recommendedByLabel}{' '}
         {myRecommendation && (
           <b
-            style={{
-              color: isRewardable ? '#000' : Color.black()
-            }}
+            style={{ color: isRewardable ? Color.black() : Color.darkBlueGray() }}
           >
             {youLabel}
           </b>
@@ -143,7 +155,7 @@ export default function RecommendationStatus({
                 ? ', '
                 : `${andLabel} `)}
             <UsernameText
-              color={isRewardable ? '#000' : Color.black()}
+              color={isRewardable ? 'black' : 'darkBlueGray'}
               user={{
                 username: mostRecentRecommenderOtherThanMe.username,
                 id: mostRecentRecommenderOtherThanMe.userId
@@ -155,7 +167,7 @@ export default function RecommendationStatus({
           <>
             {andLabel}{' '}
             <UsernameText
-              color={isRewardable ? '#000' : Color.black()}
+              color={isRewardable ? 'black' : 'darkBlueGray'}
               user={{
                 username: recommendationsByUsertypeExceptMe[1].username,
                 id: recommendationsByUsertypeExceptMe[1].userId
@@ -167,7 +179,11 @@ export default function RecommendationStatus({
           <>
             {andLabel}{' '}
             <a
-              style={{ cursor: 'pointer', fontWeight: 'bold', color: '#000' }}
+              style={{
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                color: isRewardable ? Color.black() : Color.darkBlueGray()
+              }}
               onClick={() => setUserListModalShown(true)}
             >
               {recommendationsByUsertypeExceptMe.length - 1}

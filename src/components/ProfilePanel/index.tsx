@@ -565,7 +565,7 @@ function ProfilePanel({
                       >
                         <div style={{ display: 'flex' }}>
                           <UploadButton
-                            skeuomorphic={false}
+                            variant="solid"
                             onFileSelect={handlePicture}
                             accept="image/*"
                             icon="upload"

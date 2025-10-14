@@ -434,7 +434,8 @@ function RichText({
           }}
         >
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={handleCopyMessage}
             style={{
               padding: '0.5rem 0.7rem',

@@ -202,7 +202,8 @@ export default function ItemPanel({
                   <Button
                     disabled={unlockProgress < 100}
                     loading={unlocking || loading}
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     color="green"
                     onClick={async () => {
                       await onUnlock();

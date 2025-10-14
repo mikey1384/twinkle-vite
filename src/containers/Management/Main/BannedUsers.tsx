@@ -48,7 +48,8 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
           canManage ? (
             <Button
               color="darkerGray"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               onClick={() => setNewBanModalShown(true)}
             >
               <Icon icon="plus" />

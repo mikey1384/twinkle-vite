@@ -2,7 +2,15 @@ import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
-function Starmarks({ stars }: { stars: number }) {
+function Starmarks({
+  stars,
+  color = 'rgb(38, 55, 75)',
+  fullWidth = true
+}: {
+  stars: number;
+  color?: string;
+  fullWidth?: boolean;
+}) {
   const Marks = useMemo(() => {
     const starMarks = new Array(Math.min(stars, 10)).fill(null).map((_, i) => (
       <Icon
@@ -11,7 +19,7 @@ function Starmarks({ stars }: { stars: number }) {
         style={{
           marginLeft: i !== 0 ? '0.15rem' : undefined,
           fontSize: '1.3rem',
-          color: 'rgb(255, 255, 255)'
+          color
         }}
       />
     ));
@@ -26,7 +34,7 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'rgb(255, 255, 255)'
+              color
             }}
           />
         );
@@ -43,7 +51,7 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'rgb(255, 255, 255)'
+              color
             }}
           />
         );
@@ -60,7 +68,7 @@ function Starmarks({ stars }: { stars: number }) {
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'rgb(255, 255, 255)'
+              color
             }}
           />
         );
@@ -90,7 +98,7 @@ function Starmarks({ stars }: { stars: number }) {
   return (
     <div
       style={{
-        width: '100%',
+        width: fullWidth ? '100%' : 'auto',
         textAlign: 'center',
         lineHeight: 1.2
       }}

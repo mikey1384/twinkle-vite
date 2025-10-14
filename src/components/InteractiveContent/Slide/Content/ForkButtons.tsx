@@ -34,7 +34,8 @@ export default function ForkButtons({
         return (
           <Button
             key={buttonId}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             style={{ marginTop: index === 0 ? 0 : '1rem', lineHeight: 1.5 }}
             onClick={() => onForkButtonClick(buttonId)}
           >

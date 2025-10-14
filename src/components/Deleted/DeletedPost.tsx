@@ -446,7 +446,8 @@ export default function DeletedPost({
                     <Button
                       onClick={() => setConfirmModalShown(true)}
                       color="red"
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                     >
                       {deletePermanentlyLabel}
                     </Button>
@@ -455,7 +456,8 @@ export default function DeletedPost({
                     onClick={() => handleUndoDelete({ redo: isRecovered })}
                     color="darkerGray"
                     style={{ marginLeft: '1rem' }}
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                   >
                     {isRecovered ? deleteLabel : undoLabel}
                   </Button>

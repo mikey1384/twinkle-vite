@@ -69,7 +69,8 @@ export default function StartNewSubjectPanel({
         ) : (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="black"
               style={{ fontSize: '2rem' }}
               onClick={() =>

@@ -81,7 +81,8 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <Button
                 color="darkerGray"
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 onClick={() => setAddModeratorModalShown(true)}
               >
                 <Icon icon="plus" />
@@ -89,7 +90,8 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
               </Button>
               <Button
                 color="darkerGray"
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 onClick={handleDownloadCSV}
               >
                 <Icon icon="file-csv" />

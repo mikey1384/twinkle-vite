@@ -33,7 +33,8 @@ export default function ZeroButton({
             }
           }
         `}
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         onClick={() => setModalShown(true)}
       >
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

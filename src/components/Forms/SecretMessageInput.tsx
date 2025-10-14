@@ -140,7 +140,8 @@ export default function SecretMessageInput({
           ) : (
             <div>
               <Button
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 color={buttonColor}
                 hoverColor={buttonHoverColor}
                 onClick={() => (disabled ? null : FileInputRef.current.click())}

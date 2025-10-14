@@ -109,7 +109,8 @@ export default function StatusInput({
             }}
           >
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="darkerGray"
               onClick={onCancel}
               style={{ fontSize: '1rem' }}

@@ -55,7 +55,8 @@ export default function UploadModalContent({
             }}
           >
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="logoBlue"
               onClick={onFileUploadSelect}
               style={{
@@ -101,7 +102,8 @@ export default function UploadModalContent({
             </Button>
 
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="pink"
               onClick={onAIGenerateSelect}
               style={{

@@ -997,7 +997,8 @@ export default function Chess({
               color="darkerGray"
               icon="palette"
               text={`Theme: ${currentThemeLabel}`}
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               menuProps={themeMenuProps}
             />
           </div>
@@ -1032,14 +1033,16 @@ export default function Chess({
                     }`
                   : 'Theme'
               }
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               menuProps={getThemeMenu()}
             />
           ) : null}
           {gameDropdownButtonShown ? (
             !(isFromModal && !deviceIsMobile) ? (
               <DropdownButton
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 buttonStyle={{
                   fontSize: '1rem',
                   lineHeight: 1

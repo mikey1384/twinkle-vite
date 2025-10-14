@@ -200,7 +200,8 @@ export default function AICards() {
             {isFilterSet && userId && isSell && !filters.isBuyNow && (
               <Button
                 color="darkerGray"
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 onClick={() => setSelectAICardModalShown(true)}
                 style={{ marginLeft: '1rem' }}
               >

@@ -97,7 +97,8 @@ export default function LeftButtons({
         <>
           <Button
             disabled={loading || isChessBanned || isRestrictedChannel}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             filled={chessButtonIsGlowing}
             onClick={onChessButtonClick}
             color={chessButtonIsGlowing ? alertColor : buttonColor}
@@ -108,7 +109,8 @@ export default function LeftButtons({
           <Button
             disabled={loading || isChessBanned || isRestrictedChannel}
             style={{ marginLeft: '0.5rem' }}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             filled={omokButtonIsGlowing}
             onClick={onOmokButtonClick}
             color={omokButtonIsGlowing ? alertColor : buttonColor}
@@ -120,7 +122,8 @@ export default function LeftButtons({
       ) : hasWordleButton ? (
         <Button
           loading={loading || !nextDayTimeStamp}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={onWordleButtonClick}
           color={buttonColor}
           hoverColor={buttonHoverColor}
@@ -134,7 +137,8 @@ export default function LeftButtons({
           style={{
             marginLeft: isTwoPeopleChannel || hasWordleButton ? '0.5rem' : 0
           }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={onTopicButtonClick}
           color={buttonColor}
           hoverColor={buttonHoverColor}

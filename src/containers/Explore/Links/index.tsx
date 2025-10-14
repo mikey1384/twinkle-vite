@@ -159,7 +159,8 @@ export default function Links() {
           style={{ marginTop: '2.5rem' }}
           button={
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="darkerGray"
               onClick={() => setAddLinkModalShown(true)}
             >

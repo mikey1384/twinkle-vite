@@ -22,7 +22,8 @@ export default function ZeroButtons({
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <Button
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         onClick={() => setInfoModalShown(true)}
         color={buttonColor}
         mobilePadding="0.5rem"

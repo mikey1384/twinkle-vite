@@ -126,7 +126,8 @@ export default function MyWant({
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Button
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                       style={{
                         fontSize: '3.5rem',
                         padding: '1.5rem'
@@ -160,7 +161,8 @@ export default function MyWant({
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Button
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                       style={{
                         fontSize: '3.5rem',
                         padding: '1.5rem'
@@ -195,7 +197,8 @@ export default function MyWant({
                   AI Cards
                 </div>
                 <Button
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   style={{
                     fontSize: '3.5rem',
                     padding: '1.5rem'
@@ -225,7 +228,8 @@ export default function MyWant({
                   Groups
                 </div>
                 <Button
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   style={{
                     fontSize: '3.5rem',
                     padding: '1.5rem'

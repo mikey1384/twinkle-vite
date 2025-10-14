@@ -26,20 +26,13 @@ export default function BottomRewardLevelDisplay({
 
   return (
     <RewardLevelBar
-      className={css`
-        margin-left: -1px;
-        margin-right: -1px;
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-left: 0px;
-          margin-right: 0px;
-        }
-      `}
+      className={css``}
       style={{
-        marginBottom: isEditing
-          ? '1rem'
-          : rootType === 'url' && !secretHidden
-          ? '-0.5rem'
-          : 0
+        width: 'calc(100% - 1.2rem)',
+        marginTop: '0.6rem',
+        marginLeft: '0.6rem',
+        marginRight: '0.6rem',
+        marginBottom: isEditing ? '1rem' : 0
       }}
       rewardLevel={rewardLevel}
     />

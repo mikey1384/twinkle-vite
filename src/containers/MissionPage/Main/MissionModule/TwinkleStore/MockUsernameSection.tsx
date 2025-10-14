@@ -74,7 +74,8 @@ export default function ItemPanel({
         >
           <Button
             disabled={unlockProgress < 100}
-            skeuomorphic
+            variant={unlockProgress < 100 ? 'soft' : 'solid'}
+            tone={unlockProgress < 100 ? 'raised' : undefined}
             color="green"
             onClick={() => null}
           >

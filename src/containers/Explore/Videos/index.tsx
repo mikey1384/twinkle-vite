@@ -101,7 +101,8 @@ export default function Videos() {
                 {
                   label: `+ ${addPlaylistLabel}`,
                   onClick: onOpenAddPlaylistModal,
-                  skeuomorphic: true,
+                  variant: 'soft',
+                  tone: 'raised',
                   color: 'darkerGray',
                   disabled: !canEditPlaylists
                 }

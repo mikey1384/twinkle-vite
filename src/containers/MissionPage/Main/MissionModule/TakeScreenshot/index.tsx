@@ -72,7 +72,8 @@ export default function TakeScreenshot({
             Are you ready?
           </div>
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color="logoBlue"
             style={{ fontSize: '2rem' }}
             onClick={() => setIsReady(true)}
@@ -137,7 +138,8 @@ export default function TakeScreenshot({
         >
           {!attachment?.preview && (
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="logoBlue"
               style={{ fontSize: '2rem' }}
               onClick={() => FileInputRef.current.click()}

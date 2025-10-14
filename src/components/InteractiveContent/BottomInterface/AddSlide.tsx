@@ -75,7 +75,7 @@ export default function AddSlide({
           <div
             style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
           >
-            <Button onClick={handleAddNewSlide} skeuomorphic>
+            <Button onClick={handleAddNewSlide} variant="soft" tone="raised">
               <Icon icon="plus" />
               <span style={{ marginLeft: '0.7rem' }}>Insert a New Slide</span>
             </Button>
@@ -95,7 +95,8 @@ export default function AddSlide({
                 <Button
                   style={{ marginTop: '1rem' }}
                   onClick={() => setSelectArchivedSlideModalShown(true)}
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                 >
                   <Icon icon="archive" />
                   <span style={{ marginLeft: '0.7rem' }}>

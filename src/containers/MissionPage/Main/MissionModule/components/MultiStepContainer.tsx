@@ -44,24 +44,39 @@ export default function MultiStepContainer({
   }, [childrenArray, selectedIndex]);
 
   const NextButton = useMemo(() => {
+    async function handleGoNext() {
+      await handleUpdateSelectedIndex(selectedIndex + 1);
+    }
+
     const DefaultButton = (
-      <Button skeuomorphic filled color="green" onClick={handleGoNext}>
+      <Button variant="solid" tone="raised" color="green" onClick={handleGoNext}>
         <span>Next</span>
         <Icon style={{ marginLeft: '0.7rem' }} icon="arrow-right" />
       </Button>
     );
-    const CustomButton = buttons
+
+    const customButton = buttons
       .filter(
         (buttonObj, index) =>
           index === selectedIndex && index < childrenArray.length - 1
       )
-      .map((buttonObj: any, index) =>
-        buttonObj ? (
+      .map((buttonObj: any, index) => {
+        if (!buttonObj) return null;
+        const variant =
+          buttonObj.variant ??
+          (buttonObj.filled
+            ? 'solid'
+            : buttonObj.skeuomorphic
+            ? 'soft'
+            : 'solid');
+        const tone =
+          buttonObj.tone ?? (buttonObj.skeuomorphic ? 'raised' : undefined);
+        return (
           <Button
             key={index}
             color={buttonObj.color || 'logoBlue'}
-            skeuomorphic={buttonObj.skeuomorphic}
-            filled={buttonObj.filled}
+            variant={variant}
+            tone={tone}
             disabled={buttonObj.disabled}
             onClick={
               buttonObj.onClick
@@ -74,20 +89,16 @@ export default function MultiStepContainer({
               <Icon style={{ marginLeft: '0.7rem' }} icon="arrow-right" />
             )}
           </Button>
-        ) : (
-          DefaultButton
-        )
-      )?.[0];
-    if (CustomButton) {
-      return CustomButton;
+        );
+      })?.[0];
+
+    if (customButton) {
+      return customButton;
     }
     if (selectedIndex < childrenArray.length - 1) {
       return DefaultButton;
     }
-
-    async function handleGoNext() {
-      await handleUpdateSelectedIndex(selectedIndex + 1);
-    }
+    return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buttons, selectedIndex, childrenArray.length, taskId]);
 
@@ -113,7 +124,8 @@ export default function MultiStepContainer({
         {NextButton}
         {selectedIndex > 0 && (
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             style={{ marginTop: NextButton ? '7rem' : '3rem' }}
             color="black"
             onClick={() =>
@@ -132,7 +144,7 @@ export default function MultiStepContainer({
             marginTop: '5rem'
           }}
         >
-          <Button skeuomorphic color={warningColor} onClick={onOpenTutorial}>
+          <Button variant="soft" tone="raised" color={warningColor} onClick={onOpenTutorial}>
             {`I don't understand what I am supposed to do`}
           </Button>
         </div>

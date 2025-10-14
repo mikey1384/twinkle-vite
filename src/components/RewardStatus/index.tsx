@@ -1,6 +1,8 @@
 import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, Color, wideBorderRadius } from '~/constants/css';
+import Icon from '~/components/Icon';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnMaxRewards } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -44,6 +46,28 @@ function RewardStatus({
   const infoColor = useMemo(
     () => themeRoles.info?.color || 'logoBlue',
     [themeRoles]
+  );
+  const rewardHue = useMemo(
+    () => themeRoles.reward?.color || 'orange',
+    [themeRoles]
+  );
+  const starHue = useMemo(
+    () => themeRoles.recommendation?.color || 'gold',
+    [themeRoles]
+  );
+  const containerBg = useMemo(
+    () =>
+      (Color[rewardHue as keyof typeof Color]
+        ? Color[rewardHue as keyof typeof Color](0.1)
+        : Color.logoBlue(0.1)),
+    [rewardHue]
+  );
+  const containerBorder = useMemo(
+    () =>
+      (Color[rewardHue as keyof typeof Color]
+        ? Color[rewardHue as keyof typeof Color](0.28)
+        : Color.logoBlue(0.28)),
+    [rewardHue]
   );
   const scopedTheme = themeName;
 
@@ -92,72 +116,81 @@ function RewardStatus({
       <ScopedTheme theme={scopedTheme}>
         <div
           style={style}
-          className={`${className} ${css`
+          className={`${className || ''} ${css`
             font-size: 1.3rem;
-            padding: 0.8rem;
-            color: rgba(255, 255, 255, 0.92);
-            display: flex;
-            flex-direction: column;
+            padding: 0.6rem 1rem;
+            width: calc(100% - 1.2rem);
+            margin: 0.6rem;
+            color: ${Color.darkBlueGray()};
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            justify-content: center;
             min-height: 3.6rem;
-            background: var(--reward-status-bg);
-            position: relative;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-              sans-serif;
-            letter-spacing: 0.2px;
-            transform: translateY(-0.3px);
-            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08),
-              0 1px 1px rgba(0, 0, 0, 0.12),
-              0 -1px 1px rgba(255, 255, 255, 0.02);
-
-            &::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              background: linear-gradient(
-                180deg,
-                var(--reward-status-gradient) 0%,
-                transparent 50%
-              );
-              pointer-events: none;
-            }
-
-            &::after {
-              content: '';
-              position: absolute;
-              bottom: -1px;
-              left: 12%;
-              width: 76%;
-              height: 5px;
-              background: rgba(0, 0, 0, 0.08);
-              filter: blur(2px);
-              border-radius: 50%;
-              z-index: -1;
-
-              @media (max-width: ${mobileMaxWidth}) {
-                height: 4px;
-                background: rgba(0, 0, 0, 0.06);
-                filter: blur(1.5px);
-                width: 70%;
-                left: 15%;
-              }
-            }
-
+            background: ${containerBg};
+            border: 1px solid ${containerBorder};
+            border-radius: ${wideBorderRadius};
             @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.8rem;
-              font-size: 1.3rem;
-              transform: translateY(-0.2px);
-              box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06),
-                0 1px 1px rgba(0, 0, 0, 0.1),
-                0 -1px 1px rgba(255, 255, 255, 0.01);
+              grid-template-columns: 1fr;
+              row-gap: 0.4rem;
+              justify-items: center;
             }
           `}`}
         >
-          <Starmarks stars={amountRewarded} />
+          <div
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              background: linear-gradient(
+                135deg,
+                ${Color[rewardHue as keyof typeof Color](0.9)} 0%,
+                ${Color[rewardHue as keyof typeof Color]()} 100%
+              );
+              color: #fff;
+              border-radius: 999px;
+              padding: 0.3rem 0.8rem;
+              font-weight: 700;
+              letter-spacing: 0.2px;
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+              background-size: 200% 200%;
+              animation: shimmer 6s ease infinite;
+              grid-column: 1;
+              justify-self: start;
+
+              @keyframes shimmer {
+                0% {
+                  background-position: 0% 50%;
+                }
+                50% {
+                  background-position: 100% 50%;
+                }
+                100% {
+                  background-position: 0% 50%;
+                }
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                justify-self: center;
+              }
+            `}
+          >
+            <Icon icon={['far', 'badge-dollar']} />
+            <span>
+              {addCommasToNumber(amountRewarded)} Twinkle
+              {amountRewarded === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div
+            className={css`
+              grid-column: 2;
+              justify-self: center;
+            `}
+          >
+            <Starmarks
+              stars={amountRewarded}
+              color={Color[starHue as keyof typeof Color]()}
+              fullWidth={false}
+            />
+          </div>
         </div>
       </ScopedTheme>
       {numLoaded < sortedRewards.length && (

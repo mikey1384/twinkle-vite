@@ -98,7 +98,8 @@ export default function ConnectReplToGitHub({
                   <div style={{ textAlign: 'center', marginTop: '3rem' }}>
                     <Button
                       color="logoBlue"
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                       onClick={() => handleUpdateSelectedIndex(0)}
                     >
                       Start from the beginning
@@ -108,7 +109,8 @@ export default function ConnectReplToGitHub({
               ) : (
                 <Button
                   style={{ marginTop: '5.5rem' }}
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   color="darkerGray"
                   onClick={() => setNoPressed(true)}
                 >{`No, something's not working`}</Button>

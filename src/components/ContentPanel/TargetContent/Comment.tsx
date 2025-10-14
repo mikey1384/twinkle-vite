@@ -66,7 +66,8 @@ function Comment({
           `}
         >
           <DropdownButton
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color="darkerGray"
             style={{ position: 'absolute' }}
             opacity={0.8}

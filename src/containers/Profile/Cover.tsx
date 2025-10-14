@@ -257,7 +257,8 @@ export default function Cover({
                   >
                     <Button
                       style={{ fontSize: '1.2rem', marginRight: '1rem' }}
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                       color="darkerGray"
                       onClick={handleColorSelectCancel}
                     >

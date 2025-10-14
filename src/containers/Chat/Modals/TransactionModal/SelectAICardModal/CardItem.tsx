@@ -61,7 +61,7 @@ export default function CardItem({
         <Button
           color={selected ? successColor : 'black'}
           opacity={0.8}
-          skeuomorphic
+          tone="raised"
           mobilePadding="0.5rem"
           onClick={selected ? onDeselect : onSelect}
         >

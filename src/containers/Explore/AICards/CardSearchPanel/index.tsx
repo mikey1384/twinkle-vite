@@ -88,7 +88,8 @@ export default function CardSearchPanel({
           <Button
             mobilePadding="0.5rem 1rem"
             color={filters.owner ? 'logoBlue' : 'darkerGray'}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={() => onSetSelectedFilter('owner')}
           >
             <Icon icon="caret-down" />
@@ -118,7 +119,8 @@ export default function CardSearchPanel({
           <Button
             mobilePadding="0.5rem 1rem"
             color="darkerGray"
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={() => onSetSelectedFilter('style')}
           >
             <Icon icon="caret-down" />
@@ -143,7 +145,8 @@ export default function CardSearchPanel({
                   : filters.color
                 : 'darkerGray'
             }
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={() => onSetSelectedFilter('color')}
           >
             <Icon icon="caret-down" />
@@ -172,7 +175,8 @@ export default function CardSearchPanel({
                 ? 'gold'
                 : 'darkerGray'
             }
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={() => onSetSelectedFilter('quality')}
           >
             <Icon icon="caret-down" />

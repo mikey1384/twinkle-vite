@@ -116,7 +116,8 @@ export default function IconMenu({
               marginBottom: '1rem'
             }}
             key={icon}
-            skeuomorphic
+            variant={isEqual(selectedIcon, icon) ? 'solid' : 'soft'}
+            tone={isEqual(selectedIcon, icon) ? undefined : 'raised'}
             onClick={() => onSelectIcon(icon)}
             color={buttonColor}
             filled={isEqual(selectedIcon, icon)}

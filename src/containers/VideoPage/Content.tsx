@@ -141,7 +141,8 @@ export default function Content({
               {userCanEditThis && (
                 <Button
                   style={{ marginTop: '2rem', fontSize: '2rem' }}
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   color="darkerGray"
                   onClick={() => setQuestionsBuilderShown(true)}
                 >

@@ -115,7 +115,7 @@ export default function StatusMessage({
               justifyContent: 'center'
             }}
           >
-            <Button onClick={onBackToStart} skeuomorphic color="logoBlue">
+            <Button onClick={onBackToStart} variant="soft" tone="raised" color="logoBlue">
               Back to Start Screen
             </Button>
           </div>
@@ -154,7 +154,7 @@ export default function StatusMessage({
                 justifyContent: 'center'
               }}
             >
-              <Button onClick={onBackToStart} skeuomorphic color="rose">
+              <Button onClick={onBackToStart} variant="soft" tone="raised" color="rose">
                 Back to Start Screen
               </Button>
             </div>

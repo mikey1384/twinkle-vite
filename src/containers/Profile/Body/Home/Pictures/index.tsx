@@ -66,7 +66,8 @@ export default function Pictures({
           Cancel
         </Button>
         <Button
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           disabled={saveDisabled}
           style={{ marginLeft: '1rem' }}
           onClick={handleConfirm}
@@ -79,7 +80,8 @@ export default function Pictures({
         <Button
           disabled={addPictureButtonDisabled}
           color="darkerGray"
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={() => setAddPictureModalShown(true)}
         >
           <Icon icon="plus" />

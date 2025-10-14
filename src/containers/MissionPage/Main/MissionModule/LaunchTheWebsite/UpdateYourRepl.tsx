@@ -71,7 +71,8 @@ export default function UpdateYourRepl({
           `}
         >
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={() => {
               setCopiedShown(true);
               handleCopyToClipboard();

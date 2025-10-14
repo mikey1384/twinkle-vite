@@ -368,7 +368,8 @@ function SubjectInput({
                   />
                 ) : (
                   <Button
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     color={buttonColor}
                     hoverColor={buttonHoverColor}
                     onClick={() => setAttachContentModalShown(true)}

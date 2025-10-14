@@ -256,7 +256,8 @@ export default function SubjectPanel({
             <div>
               {editButtonShown && !onEdit && (
                 <DropdownButton
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   icon="chevron-down"
                   style={{ marginLeft: '1rem' }}
                   color="darkerGray"
@@ -392,7 +393,8 @@ export default function SubjectPanel({
                 }}
               >
                 <Button
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   color="black"
                   style={{ fontSize: '2rem' }}
                   onClick={handleExpand}
@@ -413,7 +415,6 @@ export default function SubjectPanel({
                 </Button>
                 {rewardButtonShown && (
                   <RewardButton
-                    skeuomorphic
                     contentId={subjectId}
                     contentType="subject"
                     disableReason={determineXpButtonDisabled({
@@ -428,7 +429,7 @@ export default function SubjectPanel({
                 <Button
                   color={rewardColor}
                   style={{ fontSize: '2rem', marginLeft: '1rem' }}
-                  skeuomorphic
+                  tone="raised"
                   filled={isRecommendedByUser}
                   disabled={recommendationInterfaceShown}
                   onClick={() => setRecommendationInterfaceShown(true)}

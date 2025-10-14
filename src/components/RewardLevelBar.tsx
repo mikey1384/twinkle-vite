@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
+import { Color, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
@@ -19,9 +19,31 @@ export default function RewardLevelBar({
   style?: React.CSSProperties;
 }) {
   const barColor = useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color);
+  const themedBg = useMemo(
+    () => (Color[barColor as keyof typeof Color]
+      ? Color[barColor as keyof typeof Color](0.12)
+      : Color.logoBlue(0.12)),
+    [barColor]
+  );
+  const themedBorder = useMemo(
+    () => (Color[barColor as keyof typeof Color]
+      ? Color[barColor as keyof typeof Color](0.28)
+      : Color.logoBlue(0.28)),
+    [barColor]
+  );
+  const themedStrong = useMemo(
+    () => (Color[barColor as keyof typeof Color]
+      ? Color[barColor as keyof typeof Color]()
+      : Color.logoBlue()),
+    [barColor]
+  );
   const stars = useMemo(() => {
     return Array.from({ length: rewardLevel }, (_, i) => (
-      <Icon key={i} icon="star" style={{ marginLeft: '0.2rem' }} />
+      <Icon
+        key={i}
+        icon="star"
+        style={{ marginLeft: '0.2rem', color: themedStrong }}
+      />
     ));
   }, [rewardLevel]);
 
@@ -34,13 +56,18 @@ export default function RewardLevelBar({
 
   return (
     <div
-      className={`${className} ${css`
-        background: ${Color[barColor]()};
-        color: #fff;
-        padding: 0.5rem 1rem;
+      className={`${className || ''} ${css`
+        background: ${themedBg};
+        color: ${Color.darkBlueGray()};
+        padding: 0.6rem 1rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        border: 1px solid ${themedBorder};
+        border-radius: ${wideBorderRadius};
+        font-weight: 600;
+        width: auto;
+        max-width: 100%;
       `}`}
       style={style}
     >

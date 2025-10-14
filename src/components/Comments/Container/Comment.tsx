@@ -974,7 +974,8 @@ function Comment({
         {dropdownButtonShown && !isEditing && (
           <div className="dropdown-wrapper">
             <DropdownButton
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               icon="chevron-down"
               opacity={0.8}
               menuProps={dropdownMenuItems}

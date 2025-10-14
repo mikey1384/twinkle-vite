@@ -202,7 +202,8 @@ export default function RecommendationInterface({
               disabled={disabled}
               onClick={handleRecommend}
               color="darkBlue"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
             >
               {yesLabel}
             </Button>
@@ -210,7 +211,8 @@ export default function RecommendationInterface({
               onClick={onHide}
               style={{ marginLeft: '0.7rem' }}
               color="rose"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
             >
               {noLabel}
             </Button>

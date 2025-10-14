@@ -24,6 +24,7 @@ export default function DropdownButton({
   innerRef,
   transparent,
   xAdjustment,
+  skeuomorphic,
   ...props
 }: {
   buttonStyle?: any;
@@ -45,6 +46,8 @@ export default function DropdownButton({
   transparent?: boolean;
   xAdjustment?: number;
   skeuomorphic?: boolean;
+  variant?: 'solid' | 'soft' | 'outline' | 'ghost';
+  tone?: 'flat' | 'raised';
 }) {
   const [dropdownContext, setDropdownContext] = useState(null);
   const coolDownRef: React.RefObject<any> = useRef(null);
@@ -74,6 +77,8 @@ export default function DropdownButton({
           filled={!!dropdownContext && !transparent}
           transparent={transparent}
           opacity={transparent ? 0 : dropdownContext ? 1 : opacity}
+          variant={props.variant || (skeuomorphic ? 'soft' : undefined)}
+          tone={props.tone || (skeuomorphic ? 'raised' : undefined)}
           className={`${className ? `${className} ` : ''}${css`
             &:hover {
               opacity: 1;

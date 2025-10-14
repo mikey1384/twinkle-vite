@@ -418,7 +418,8 @@ export default function Details({
               <div style={{ display: 'flex', marginTop: '1rem' }}>
                 {editButtonShown && !isEditing && (
                   <DropdownButton
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     icon="pencil-alt"
                     color="darkerGray"
                     style={{ marginRight: '1rem' }}
@@ -438,7 +439,6 @@ export default function Details({
               <div style={{ display: 'flex' }}>
                 {rewardButtonShown && (
                   <RewardButton
-                    skeuomorphic
                     contentId={videoId}
                     contentType="video"
                     disableReason={xpButtonDisabled}
@@ -447,7 +447,8 @@ export default function Details({
                 <Button
                   color={rewardColor}
                   style={{ marginLeft: '1rem' }}
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   filled={isRecommendedByUser}
                   disabled={recommendationInterfaceShown}
                   onClick={() => setRecommendationInterfaceShown(true)}

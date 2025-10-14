@@ -74,7 +74,8 @@ export default function FileUploadOption({
       </div>
 
       <Button
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         color={buttonColor}
         onClick={handleSelectFile}
         style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
