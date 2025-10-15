@@ -22,11 +22,20 @@ export default function RecentGroupItem({
       className={css`
         display: flex;
         align-items: center;
-        padding: 0.5rem 1rem 0.5rem 3rem;
+        padding: 0.6rem 1.4rem 0.6rem 3rem;
+        margin: 0.2rem 1rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        box-shadow: 0 14px 26px -22px rgba(15, 23, 42, 0.38);
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background 0.2s ease, box-shadow 0.2s ease,
+          border-color 0.2s ease, transform 0.15s ease;
         &:hover {
-          background-color: ${Color.highlightGray()};
+          background: ${Color.highlightGray()};
+          border-color: ${Color.borderGray()};
+          box-shadow: 0 18px 30px -24px rgba(15, 23, 42, 0.42);
+          transform: translateX(4px);
         }
       `}
       onClick={() => {
@@ -46,6 +55,7 @@ export default function RecentGroupItem({
           align-items: center;
           justify-content: center;
           overflow: hidden;
+          border: 1px solid rgba(148, 163, 184, 0.35);
         `}
       >
         {thumbPath ? (
@@ -74,7 +84,7 @@ export default function RecentGroupItem({
       </div>
       <span
         className={css`
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           color: ${Color.darkerGray()};
           flex-grow: 1;
           white-space: nowrap;

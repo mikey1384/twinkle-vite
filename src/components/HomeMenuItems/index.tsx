@@ -43,10 +43,40 @@ export default function HomeMenuItems({
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
   );
-  const homeMenuItemActiveColor = useMemo(
-    () => Color[homeMenuItemActive](),
-    [homeMenuItemActive]
-  );
+  const activeColorFn = useMemo(() => {
+    const candidate = Color[homeMenuItemActive];
+    return typeof candidate === 'function'
+      ? (candidate as (opacity?: number) => string)
+      : null;
+  }, [homeMenuItemActive]);
+  const homeMenuItemActiveColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn();
+    return Color.logoBlue();
+  }, [activeColorFn]);
+  const activeRgb = useMemo<[number, number, number] | null>(() => {
+    if (!activeColorFn) return null;
+    const colorString = activeColorFn();
+    const match = colorString.match(
+      /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/
+    );
+    if (!match) return null;
+    return [Number(match[1]), Number(match[2]), Number(match[3])];
+  }, [activeColorFn]);
+  const activeTextColor = useMemo(() => {
+    if (!activeRgb) return Color.darkerGray();
+    const normalize = (value: number) => {
+      const channel = value / 255;
+      return channel <= 0.03928
+        ? channel / 12.92
+        : Math.pow((channel + 0.055) / 1.055, 2.4);
+    };
+    const [r, g, b] = activeRgb;
+    const luminance =
+      0.2126 * normalize(r) +
+      0.7152 * normalize(g) +
+      0.0722 * normalize(b);
+    return luminance >= 0.6 ? Color.darkerGray() : Color.white();
+  }, [activeRgb]);
   const year = useMemo(() => {
     return new Date(standardTimeStamp || Date.now()).getFullYear();
   }, [standardTimeStamp]);
@@ -59,7 +89,7 @@ export default function HomeMenuItems({
           flex: 1 1 auto;
           min-height: 0;
           overflow-y: auto;
-          background: #fff;
+          background: ${Color.whiteGray()};
           display: flex;
           flex-direction: column;
           font-size: 1.7rem;
@@ -68,15 +98,17 @@ export default function HomeMenuItems({
           border-left: 0;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
-          padding-top: 1rem;
+          padding: 1rem 0 1.2rem;
+          box-shadow: 0 18px 36px -28px rgba(15, 23, 42, 0.32);
           > nav {
-            height: 4rem;
+            height: 4.2rem;
             width: 100%;
             cursor: pointer;
             display: flex;
             align-items: center;
             color: ${Color.gray()};
             justify-content: center;
+            transition: transform 0.18s ease;
             > a {
               width: 100%;
               height: 100%;
@@ -91,52 +123,86 @@ export default function HomeMenuItems({
               width: 100%;
               height: 100%;
               display: grid;
-              grid-template-columns: 2px 4rem 1fr;
+              grid-template-columns: 4px 4rem 1fr;
               grid-template-rows: 100%;
               grid-template-areas: 'selection icon label';
+              margin: 0 1rem;
+              border-radius: 1.2rem;
+              background: rgba(255, 255, 255, 0.9);
+              border: 1px solid rgba(148, 163, 184, 0.35);
+              box-shadow: 0 12px 22px -20px rgba(15, 23, 42, 0.35);
+              transition: background 0.22s ease, box-shadow 0.22s ease,
+                border-color 0.22s ease, color 0.22s ease;
               > .selection {
                 grid-area: selection;
                 margin-left: -1px;
+                border-radius: 1rem;
+                align-self: center;
+                width: 4px;
+                height: 70%;
               }
               > .icon {
                 grid-area: icon;
-                padding-left: 1rem;
+                padding-left: 0.5rem;
                 justify-self: center;
                 align-self: center;
+                color: ${Color.darkerGray()};
               }
               > .label {
                 grid-area: label;
-                padding-left: 2rem;
+                padding-left: 1.6rem;
                 justify-self: start;
                 align-self: center;
+                font-weight: 600;
               }
             }
           }
           > nav:hover {
-            background: ${Color.highlightGray()};
-            color: ${Color.black()};
+            transform: translateX(4px);
+            .homemenu__item {
+              background: rgba(255, 255, 255, 0.98);
+              border-color: ${Color.borderGray()};
+              box-shadow: 0 18px 28px -24px rgba(15, 23, 42, 0.42);
+              > .icon,
+              > .label {
+                color: ${Color.logoBlue()};
+              }
+            }
             a {
               color: ${Color.black()};
             }
           }
           > nav.active {
             .homemenu__item {
+              background: ${activeColorFn
+                ? activeColorFn(0.18)
+                : Color.highlightGray()};
               > .selection {
                 background: ${homeMenuItemActiveColor};
                 border: 1px solid ${homeMenuItemActiveColor};
                 box-shadow: 0 0 1px ${homeMenuItemActiveColor};
               }
+              > .icon,
+              > .label {
+                color: ${activeTextColor};
+              }
+              border-color: ${activeColorFn
+                ? activeColorFn(0.45)
+                : Color.borderGray()};
+              box-shadow: 0 20px 36px -24px
+                ${activeColorFn ? activeColorFn(0.45) : Color.borderGray()};
             }
             font-weight: bold;
-            color: ${Color.black()};
+            color: ${activeTextColor};
             a {
-              color: ${Color.black()};
+              color: ${activeTextColor};
             }
           }
           @media (max-width: ${tabletMaxWidth}) {
             font-size: 1.5rem;
             > nav {
               .homemenu__item {
+                margin: 0 0.6rem;
                 > .icon {
                   padding-left: 0;
                 }
@@ -159,17 +225,20 @@ export default function HomeMenuItems({
                 padding: 0;
               }
               .homemenu__item {
+                margin: 0 0.4rem;
+                border-radius: 1.4rem;
                 > .icon {
-                  padding-left: 1rem;
+                  padding-left: 0.5rem;
                 }
                 > .label {
-                  padding-left: 2rem;
+                  padding-left: 1.6rem;
                 }
               }
             }
             > nav:hover {
               background: none;
               color: ${Color.darkGray()};
+              transform: none;
               a {
                 color: ${Color.darkGray()};
               }

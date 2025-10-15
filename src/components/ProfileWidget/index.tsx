@@ -14,9 +14,15 @@ const container = css`
   width: 100%;
   z-index: 400;
   border: none;
+  background: ${Color.whiteGray()};
+  border-radius: ${borderRadius};
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  box-shadow: 0 20px 42px -32px rgba(15, 23, 42, 0.35);
 
   .heading {
-    padding: 1rem;
+    padding: 1.2rem 1.4rem;
     border: 1px solid ${Color.borderGray()};
     border-bottom: none;
     border-radius: ${borderRadius};
@@ -25,17 +31,20 @@ const container = css`
     border-bottom-right-radius: 0;
     border-left: 0;
     display: flex;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.96);
     width: 100%;
     align-items: center;
     justify-content: flex-start;
     cursor: pointer;
+    transition: background 0.25s ease, box-shadow 0.25s ease;
     &:hover {
-      transition: background 0.5s;
-      background: ${Color.highlightGray()};
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: inset 0 0 0 1px ${Color.borderGray()};
     }
     .widget__profile-pic {
       width: 8rem;
+      border-radius: 50%;
+      box-shadow: 0 12px 28px -20px rgba(15, 23, 42, 0.45);
     }
     .names {
       width: CALC(100% - 8rem);
@@ -44,12 +53,12 @@ const container = css`
       text-overflow: ellipsis;
       a {
         color: ${Color.darkerGray()};
-        font-weight: bold;
+        font-weight: 700;
         font-size: 2.2rem;
         text-decoration: none;
       }
       span {
-        color: ${Color.darkerGray()};
+        color: ${Color.gray()};
         font-size: 1.2rem;
       }
     }
@@ -61,8 +70,9 @@ const container = css`
     border-left: 0;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: ${borderRadius};
-    background: #fff;
-    padding: 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 1.2rem 1.4rem;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
     .login-message {
       font-size: 2rem;
       color: ${Color.darkerGray()};
@@ -75,7 +85,7 @@ const container = css`
   }
 
   .navigation {
-    padding: 1rem 0;
+    padding: 1.1rem 0;
     font-family: 'Poppins', sans-serif;
     font-size: 1.5rem;
     display: flex;
@@ -83,25 +93,41 @@ const container = css`
     align-items: center;
     justify-content: center;
     width: 100%;
-    gap: 0.7rem;
+    gap: 0.8rem;
   }
   .navigation-item {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    transition: background-color 0.3s ease;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.9rem;
+    width: 100%;
+    justify-content: center;
+    max-width: 22rem;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.35);
+    transition: background 0.2s ease, box-shadow 0.2s ease,
+      border-color 0.2s ease, transform 0.15s ease;
     > span {
       margin-left: 0.5rem;
+      font-weight: 600;
+      color: ${Color.darkerGray()};
     }
     &:hover {
-      background-color: ${Color.highlightGray()};
+      background: rgba(255, 255, 255, 0.98);
+      border-color: ${Color.borderGray()};
+      box-shadow: 0 20px 34px -26px rgba(15, 23, 42, 0.42);
+      transform: translateY(-2px);
+      .navigation-icon {
+        color: ${Color.logoBlue()};
+      }
     }
   }
   .navigation-icon {
     color: ${Color.darkerGray()};
     margin-right: 0.5rem;
+    transition: color 0.2s ease;
   }
 
   @media (max-width: ${mobileMaxWidth}) {
