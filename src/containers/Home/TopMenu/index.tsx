@@ -20,7 +20,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth, getThemeStyles, wideBorderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
@@ -80,6 +80,7 @@ export default function TopMenu({
   const [loadingOmok, setLoadingOmok] = useState(false);
   const [chessModalShown, setChessModalShown] = useState(false);
   const username = useKeyContext((v) => v.myState.username);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
@@ -158,13 +159,18 @@ export default function TopMenu({
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div
-        style={{ marginBottom: '1rem', ...style }}
+        style={{
+          marginBottom: '1rem',
+          ['--topmenu-bg' as any]: getThemeStyles((profileTheme || 'logoBlue') as string, 0.06).bg,
+          ...style
+        }}
         className={css`
-          background: #fff;
+          background: var(--topmenu-bg);
           font-size: 1.7rem;
           padding: 1rem;
           border: 1px solid ${Color.borderGray()};
-          border-radius: ${borderRadius};
+          border-radius: ${wideBorderRadius};
+          box-shadow: 0 8px 18px -14px rgba(15, 23, 42, 0.25);
           p {
             font-size: 2rem;
             font-weight: bold;

@@ -4,7 +4,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
 import { Color, borderRadius, mobileMaxWidth, getThemeStyles } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';

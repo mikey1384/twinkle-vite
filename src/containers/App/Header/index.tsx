@@ -187,7 +187,7 @@ export default function Header({
           font-size: 1.7rem;
           background: ${Color[headerColor]()};
           display: flex;
-          box-shadow: 0 3px 3px -3px ${Color.black(0.6)};
+          box-shadow: 0 6px 18px -12px rgba(15, 23, 42, 0.24);
           align-items: center;
           width: 100%;
           margin-bottom: 0px;
