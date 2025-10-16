@@ -8,12 +8,200 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { checkMicrophoneAccess } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 import Countdown from 'react-countdown';
+
+interface RGBA {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function parseColorString(input: string): RGBA | null {
+  const match = input
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
+  if (!match) return null;
+  const [, r, g, b, a] = match;
+  return {
+    r: clamp(Number(r), 0, 255),
+    g: clamp(Number(g), 0, 255),
+    b: clamp(Number(b), 0, 255),
+    a: a !== undefined ? clamp(Number(a), 0, 1) : 1
+  };
+}
+
+function toRgbaString({ r, g, b, a }: RGBA) {
+  const alpha = Number.isFinite(a) ? Number(a.toFixed(3)) : 1;
+  return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha})`;
+}
+
+function mixWithColor(base: RGBA, target: RGBA, amount: number) {
+  const ratio = clamp(amount, 0, 1);
+  return {
+    r: base.r + (target.r - base.r) * ratio,
+    g: base.g + (target.g - base.g) * ratio,
+    b: base.b + (target.b - base.b) * ratio,
+    a: base.a
+  };
+}
+
+function lightenColor(color: string, amount: number) {
+  const parsed = parseColorString(color);
+  if (!parsed) return color;
+  return toRgbaString(
+    mixWithColor(parsed, { r: 255, g: 255, b: 255, a: parsed.a }, amount)
+  );
+}
+
+function darkenColor(color: string, amount: number) {
+  const parsed = parseColorString(color);
+  if (!parsed) return color;
+  return toRgbaString(
+    mixWithColor(parsed, { r: 0, g: 0, b: 0, a: parsed.a }, amount)
+  );
+}
+
+function setAlpha(color: string, alpha: number) {
+  const parsed = parseColorString(color);
+  if (!parsed) return color;
+  return toRgbaString({
+    ...parsed,
+    a: clamp(alpha, 0, 1)
+  });
+}
+
+function getReadableTextColor(color: string) {
+  const parsed = parseColorString(color);
+  if (!parsed) return Color.white();
+  const normalize = (channel: number) => {
+    const value = channel / 255;
+    return value <= 0.03928
+      ? value / 12.92
+      : Math.pow((value + 0.055) / 1.055, 2.4);
+  };
+  const luminance =
+    0.2126 * normalize(parsed.r) +
+    0.7152 * normalize(parsed.g) +
+    0.0722 * normalize(parsed.b);
+  return luminance >= 0.6 ? Color.darkBlueGray() : Color.white();
+}
+
+const callButtonClass = css`
+  position: absolute;
+  top: 50%;
+  right: 1.6rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+  padding: 1.9rem 1.2rem;
+  width: 5.2rem;
+  min-height: 20rem;
+  border-radius: 12px;
+  border: 1px solid var(--call-button-border, transparent);
+  background: var(--call-button-bg);
+  color: var(--call-button-text, ${Color.white()});
+  box-shadow: var(--call-button-shadow);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease,
+    border-color 0.25s ease, filter 0.25s ease;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+  z-index: 3;
+  backdrop-filter: blur(4px);
+  isolation: isolate;
+  overflow: hidden;
+
+  .call-button__icon {
+    width: 3.4rem;
+    height: 3.4rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--call-button-icon-bg, rgba(255, 255, 255, 0.25));
+    color: var(--call-button-text, ${Color.white()});
+    font-size: 1.7rem;
+    box-shadow: var(--call-button-icon-shadow, none);
+  }
+
+  .call-button__label {
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: inherit;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: var(--call-button-bg-hover, var(--call-button-bg));
+    border-color: var(--call-button-border-hover, var(--call-button-border));
+    box-shadow: var(--call-button-shadow-hover, var(--call-button-shadow));
+    transform: translateY(calc(-50% - 4px));
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--call-button-outline, ${Color.logoBlue(0.5)});
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: linear-gradient(
+      135deg,
+      ${Color.borderGray(0.4)} 0%,
+      ${Color.borderGray()} 100%
+    );
+    border-color: ${Color.borderGray()};
+    box-shadow: none;
+    color: ${Color.gray()};
+    transform: translateY(-50%);
+  }
+
+  &:disabled .call-button__icon {
+    background: rgba(255, 255, 255, 0.35);
+    color: ${Color.gray()};
+    box-shadow: none;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    width: calc(100% - 2.8rem);
+    min-height: 4.6rem;
+    margin: 1.2rem auto 0;
+    padding: 1.3rem 1.6rem;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+
+    .call-button__label {
+      writing-mode: horizontal-tb;
+      text-orientation: mixed;
+      font-size: 1.4rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+  }
+`;
 
 export default function CallZero({
   callButtonHovered,
@@ -42,6 +230,11 @@ export default function CallZero({
     (v) => v.state.todayStats
   );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const actionColorName = useKeyContext((v) => v.theme.action.color);
+  const actionColorFn = useMemo<((opacity?: number) => string) | null>(() => {
+    const candidate = Color[actionColorName as keyof typeof Color];
+    return typeof candidate === 'function' ? candidate : null;
+  }, [actionColorName]);
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
@@ -65,20 +258,102 @@ export default function CallZero({
     return batteryLevel <= 0;
   }, [aiCallOngoing, batteryLevel, isAdmin, userId, zeroChannelId]);
 
-  const buttonColor = useMemo(
-    () => (aiCallOngoing ? Color.rose(0.9) : Color.darkBlue(0.9)),
-    [aiCallOngoing]
-  );
-
-  const buttonHoverColor = useMemo(
-    () => (aiCallOngoing ? Color.rose(1) : Color.darkBlue(1)),
-    [aiCallOngoing]
-  );
-
   const getCallQuotaMessage = useMemo(() => {
     if (!isCallButtonDisabled) return '';
     return "You've reached your daily AI call limit. Come back tomorrow for more conversations with Zero!";
   }, [isCallButtonDisabled]);
+
+  const accentBaseColor = useMemo(() => {
+    if (aiCallOngoing) return Color.rose();
+    if (actionColorFn) return actionColorFn();
+    return Color.logoBlue();
+  }, [actionColorFn, aiCallOngoing]);
+
+  const gradientStart = useMemo(
+    () => lightenColor(accentBaseColor, 0.25),
+    [accentBaseColor]
+  );
+  const gradientEnd = useMemo(
+    () => darkenColor(accentBaseColor, 0.04),
+    [accentBaseColor]
+  );
+  const gradientHoverStart = useMemo(
+    () => lightenColor(accentBaseColor, 0.15),
+    [accentBaseColor]
+  );
+  const gradientHoverEnd = useMemo(
+    () => darkenColor(accentBaseColor, 0.12),
+    [accentBaseColor]
+  );
+
+  const callButtonGradient = useMemo(
+    () => `linear-gradient(135deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
+    [gradientEnd, gradientStart]
+  );
+  const callButtonHoverGradient = useMemo(
+    () =>
+      `linear-gradient(135deg, ${gradientHoverStart} 0%, ${gradientHoverEnd} 100%)`,
+    [gradientHoverEnd, gradientHoverStart]
+  );
+  const callButtonBorderColor = useMemo(
+    () => setAlpha(darkenColor(accentBaseColor, 0.06), 0.9),
+    [accentBaseColor]
+  );
+  const callButtonHoverBorderColor = useMemo(
+    () => setAlpha(darkenColor(accentBaseColor, 0.12), 0.95),
+    [accentBaseColor]
+  );
+  const callButtonShadow = useMemo(
+    () => `0 18px 34px -16px ${setAlpha(accentBaseColor, 0.45)}`,
+    [accentBaseColor]
+  );
+  const callButtonShadowHover = useMemo(
+    () => `0 20px 40px -15px ${setAlpha(accentBaseColor, 0.6)}`,
+    [accentBaseColor]
+  );
+  const callButtonTextColor = useMemo(
+    () => getReadableTextColor(accentBaseColor),
+    [accentBaseColor]
+  );
+  const callButtonOutlineColor = useMemo(
+    () => setAlpha(accentBaseColor, 0.45),
+    [accentBaseColor]
+  );
+  const iconBackgroundColor = useMemo(
+    () => setAlpha(lightenColor(accentBaseColor, 0.4), 0.35),
+    [accentBaseColor]
+  );
+  const iconShadow = useMemo(
+    () => `0 12px 18px -14px ${setAlpha(accentBaseColor, 0.55)}`,
+    [accentBaseColor]
+  );
+
+  const callButtonStyle = useMemo<React.CSSProperties>(
+    () => ({
+      ['--call-button-bg' as any]: callButtonGradient,
+      ['--call-button-bg-hover' as any]: callButtonHoverGradient,
+      ['--call-button-border' as any]: callButtonBorderColor,
+      ['--call-button-border-hover' as any]: callButtonHoverBorderColor,
+      ['--call-button-shadow' as any]: callButtonShadow,
+      ['--call-button-shadow-hover' as any]: callButtonShadowHover,
+      ['--call-button-text' as any]: callButtonTextColor,
+      ['--call-button-outline' as any]: callButtonOutlineColor,
+      ['--call-button-icon-bg' as any]: iconBackgroundColor,
+      ['--call-button-icon-shadow' as any]: iconShadow
+    }),
+    [
+      callButtonBorderColor,
+      callButtonGradient,
+      callButtonHoverBorderColor,
+      callButtonHoverGradient,
+      callButtonOutlineColor,
+      callButtonShadow,
+      callButtonShadowHover,
+      callButtonTextColor,
+      iconBackgroundColor,
+      iconShadow
+    ]
+  );
 
   const initiateCall = useCallback(() => {
     onSetAICall(zeroChannelId);
@@ -105,7 +380,27 @@ export default function CallZero({
       setMicrophoneModalShown(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCallOngoing, userId, onSetCallButtonHovered, initiateCall]);
+  }, [aiCallOngoing, userId, initiateCall]);
+
+  const callButtonLabel = useMemo(() => {
+    if (aiCallOngoing) {
+      return 'Hang Up';
+    }
+    if (isCallButtonDisabled) {
+      return 'Call Locked';
+    }
+    return 'Call Zero';
+  }, [aiCallOngoing, isCallButtonDisabled]);
+  const callButtonIcon = useMemo(
+    () => (aiCallOngoing ? 'phone-slash' : 'phone-volume'),
+    [aiCallOngoing]
+  );
+  const callButtonAriaLabel = useMemo(() => {
+    if (aiCallOngoing) return 'Hang up the call with Zero';
+    if (isCallButtonDisabled)
+      return 'AI call limit reached. Zero will be available again tomorrow.';
+    return 'Call Zero for voice assistance';
+  }, [aiCallOngoing, isCallButtonDisabled]);
 
   return (
     <div
@@ -237,7 +532,7 @@ export default function CallZero({
             position: absolute;
             top: 0;
             left: 0;
-            right: 40px;
+            right: 0;
             bottom: 0;
             display: flex;
             align-items: center;
@@ -287,48 +582,24 @@ export default function CallZero({
           </div>
         </div>
       )}
-      <div
-        className={css`
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 40px;
-          background-color: ${buttonColor};
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          cursor: ${isCallButtonDisabled ? 'not-allowed' : 'pointer'};
-          transition: background-color 0.3s ease;
-
-          &:hover {
-            background-color: ${isCallButtonDisabled
-              ? Color.gray(0.6)
-              : buttonHoverColor};
-          }
-        `}
-        onClick={isCallButtonDisabled ? undefined : handleCallButtonClick}
+      <button
+        type="button"
+        className={callButtonClass}
+        style={callButtonStyle}
+        disabled={isCallButtonDisabled}
+        onClick={handleCallButtonClick}
         onMouseEnter={() => onSetCallButtonHovered(true)}
+        onMouseLeave={() => onSetCallButtonHovered(false)}
+        onFocus={() => onSetCallButtonHovered(true)}
+        onBlur={() => onSetCallButtonHovered(false)}
+        aria-label={callButtonAriaLabel}
+        title={callButtonAriaLabel}
       >
-        <span
-          className={css`
-            transform: rotate(-270deg);
-            white-space: nowrap;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: ${isCallButtonDisabled ? 0.7 : 1};
-          `}
-        >
-          <Icon icon="phone-volume" />
-          <span style={{ marginLeft: '0.7rem' }}>
-            {aiCallOngoing ? 'Hang Up' : 'Call'}
-          </span>
+        <span className="call-button__icon">
+          <Icon icon={callButtonIcon} />
         </span>
-      </div>
+        <span className="call-button__label">{callButtonLabel}</span>
+      </button>
       <MicrophoneAccessModal
         isShown={microphoneModalShown}
         onHide={() => setMicrophoneModalShown(false)}

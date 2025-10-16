@@ -154,7 +154,11 @@ function XPBar({
                     font-size: 1.3rem;
                     font-weight: bold;
                     padding: 0 1rem;
-                    background: ${Color[xpLevelColor](isMaxReached ? 0.3 : 1)};
+                    background: ${Color[xpLevelColor](isMaxReached ? 0.18 : 0.14)};
+                    border: 1px solid ${Color[xpLevelColor](isMaxReached ? 0.35 : 0.28)};
+                    border-top-left-radius: 9999px;
+                    border-bottom-left-radius: 9999px;
+                    /* flattened: no shadow on white containers */
                     cursor: default;
                     @media (max-width: ${mobileMaxWidth}) {
                       padding: 0;
@@ -186,7 +190,11 @@ function XPBar({
                       font-size: ${numCoinsEarned > 0 && !isMaxReached
                         ? '1.3rem'
                         : '1.5rem'};
-                      background: ${Color.brownOrange(isMaxReached ? 0.3 : 1)};
+                      background: ${Color.brownOrange(isMaxReached ? 0.18 : 0.14)};
+                      border: 1px solid ${Color.brownOrange(isMaxReached ? 0.35 : 0.28)};
+                      border-top-right-radius: 9999px;
+                      border-bottom-right-radius: 9999px;
+                      /* flattened: no shadow on white containers */
                       @media (max-width: ${mobileMaxWidth}) {
                         flex: 0 0 auto;
                         min-width: 3.5rem;

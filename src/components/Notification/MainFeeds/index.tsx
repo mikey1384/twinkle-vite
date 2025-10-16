@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import RoundList from '~/components/RoundList';
 import Banner from '~/components/Banner';
 import GradientButton from '~/components/Buttons/GradientButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Rankings from './Rankings';
 import NotiItem from './NotiItem';
+import SectionHeader from './SectionHeader';
 import RewardItem from './RewardItem';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -125,19 +125,47 @@ export default function MainFeeds({
   }, [activeTab, totalRewardAmount]);
 
   const NotificationsItems = useMemo(() => {
-    return notifications.map((notification) => (
-      <NotiItem
-        actionColor={actionColor}
-        infoColor={infoColor}
-        linkColor={linkColor}
-        mentionColor={mentionColor}
-        missionColor={missionColor}
-        recommendationColor={recommendationColor}
-        rewardColor={rewardColor}
-        userId={userId}
-        key={notification.id}
-        notification={notification}
-      />
+    // Group notifications by day label (Today, Yesterday, or date)
+    const sections: { label: string; items: any[] }[] = [];
+    const now = new Date();
+    const todayKey = now.toDateString();
+    const yesterdayKey = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString();
+
+    const bySection: Record<string, { label: string; items: any[] }> = {};
+
+    for (const n of notifications) {
+      const d = new Date(Number(n.timeStamp) * 1000);
+      const key = d.toDateString();
+      let label = d.toLocaleDateString();
+      if (key === todayKey) label = 'Today';
+      else if (key === yesterdayKey) label = 'Yesterday';
+      if (!bySection[label]) bySection[label] = { label, items: [] };
+      bySection[label].items.push(n);
+    }
+
+    // Preserve original order of notifications; build sections in insertion order
+    for (const label of Object.keys(bySection)) {
+      sections.push(bySection[label]);
+    }
+
+    return sections.map((section) => (
+      <div key={`sec-${section.label}`}>
+        <SectionHeader label={section.label} />
+        {section.items.map((notification) => (
+          <NotiItem
+            actionColor={actionColor}
+            infoColor={infoColor}
+            linkColor={linkColor}
+            mentionColor={mentionColor}
+            missionColor={missionColor}
+            recommendationColor={recommendationColor}
+            rewardColor={rewardColor}
+            userId={userId}
+            key={notification.id}
+            notification={notification}
+          />
+        ))}
+      </div>
     ));
   }, [
     actionColor,
@@ -251,11 +279,11 @@ export default function MainFeeds({
         <MyRank myId={userId} rank={myAllTimeRank} twinkleXP={twinkleXP} />
       )}
       {userId && activeTab === 'notification' && notifications.length > 0 && (
-        <RoundList style={{ marginTop: 0 }}>{NotificationsItems}</RoundList>
+        <div style={{ marginTop: 0 }}>{NotificationsItems}</div>
       )}
       {activeTab === 'rankings' && <Rankings loadingFeeds={loadingNewFeeds} />}
       {activeTab === 'reward' && rewards.length > 0 && (
-        <RoundList style={{ marginTop: 0 }}>{RewardListItems}</RoundList>
+        <div style={{ marginTop: 0 }}>{RewardListItems}</div>
       )}
       {!loadingNotifications &&
         ((activeTab === 'notification' && loadMoreNotificationsButton) ||

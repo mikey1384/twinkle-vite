@@ -115,6 +115,10 @@ export default function LeftButtons({
             onClick={onOmokButtonClick}
             color={omokButtonIsGlowing ? alertColor : buttonColor}
             hoverColor={omokButtonIsGlowing ? alertColor : buttonHoverColor}
+            
+            // Avoid extra spacing between split label children (O + mok)
+            // by zeroing out Button's internal gap
+            style={{ marginLeft: '0.5rem', gap: 0 }}
           >
             O<span className="desktop">mok</span>
           </Button>
@@ -127,6 +131,9 @@ export default function LeftButtons({
           onClick={onWordleButtonClick}
           color={buttonColor}
           hoverColor={buttonHoverColor}
+          // Avoid extra spacing between split label children (W + ordle)
+          // by zeroing out Button's internal gap
+          style={{ gap: 0 }}
         >
           W<span className="desktop">ordle</span>
         </Button>

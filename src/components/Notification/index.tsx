@@ -4,7 +4,8 @@ import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
-import { container } from './Styles';
+import { container, notiFilterBar } from './Styles';
+import { getThemeStyles } from '~/constants/css';
 import {
   useAppContext,
   useNotiContext,
@@ -40,6 +41,7 @@ export default function Notification({
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
   const userId = useKeyContext((v) => v.myState.userId);
   const notiObj = useNotiContext((v) => v.state.notiObj);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
@@ -231,7 +233,10 @@ export default function Notification({
       <div
         ref={ContainerRef}
         onScroll={handleScroll}
-        style={style}
+        style={{
+          ...(style || {}),
+          ['--noti-bg' as any]: getThemeStyles((profileTheme || 'logoBlue') as string, 0.04).bg
+        }}
         className={`${container} ${className}`}
       >
         <section
@@ -260,6 +265,7 @@ export default function Notification({
           <div style={{ position: 'relative' }}>
             {userId && (numNewNotis > 0 || !!(notifications.length > 0)) && (
               <FilterBar
+                className={notiFilterBar}
                 bordered
                 style={{
                   fontSize: '1.6rem',

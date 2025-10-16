@@ -74,7 +74,7 @@ function NotiItem({
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/NotiItem/index">
-      <nav style={{ background: '#fff' }} className={notiFeedListItem} key={id}>
+      <nav className={notiFeedListItem} key={id}>
         <div>
           {userLabel}
           <NotiMessage

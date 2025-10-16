@@ -80,6 +80,14 @@ export default function HomeMenuItems({
       0.0722 * normalize(b);
     return luminance >= 0.6 ? Color.darkerGray() : Color.white();
   }, [activeRgb]);
+  const hoverAccentColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn();
+    return Color.logoBlue();
+  }, [activeColorFn]);
+  const hoverBorderColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn(0.35);
+    return Color.borderGray();
+  }, [activeColorFn]);
   const themeBg = useMemo(() => {
     const themeName = (profileTheme || 'logoBlue') as string;
     // Subtle theme-tinted background for the container
@@ -110,7 +118,7 @@ export default function HomeMenuItems({
           box-shadow: 0 8px 18px -14px rgba(15, 23, 42, 0.25);
           > nav {
             height: 4.4rem;
-            margin: 0.45rem 0;
+            margin: 0.7rem 0;
             width: 100%;
             cursor: pointer;
             display: flex;
@@ -171,16 +179,16 @@ export default function HomeMenuItems({
             transform: translateX(4px);
             .homemenu__item {
               background: rgba(255, 255, 255, 0.98);
-              border-color: ${Color.borderGray()};
+              border-color: ${hoverBorderColor};
               box-shadow: 0 10px 20px -12px rgba(15, 23, 42, 0.28),
                 0 2px 6px rgba(15, 23, 42, 0.08);
               > .icon,
               > .label {
-                color: ${Color.logoBlue()};
+                color: ${hoverAccentColor};
               }
             }
             a {
-              color: ${Color.black()};
+              color: ${hoverAccentColor};
             }
           }
           > nav.active {

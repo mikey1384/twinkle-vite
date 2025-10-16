@@ -117,11 +117,17 @@ const container = css`
     }
     &:hover {
       background: rgba(255, 255, 255, 0.98);
-      border-color: ${Color.borderGray()};
+      border-color: var(
+        --profile-widget-accent-border,
+        ${Color.borderGray()}
+      );
       box-shadow: 0 20px 34px -26px rgba(15, 23, 42, 0.42);
       transform: translateY(-2px);
       .navigation-icon {
-        color: ${Color.logoBlue()};
+        color: var(--profile-widget-accent, ${Color.logoBlue()});
+      }
+      > span {
+        color: var(--profile-widget-accent, ${Color.logoBlue()});
       }
     }
   }
@@ -182,10 +188,34 @@ export default function ProfileWidget() {
     const themeName = (profileTheme || 'logoBlue') as string;
     return getThemeStyles(themeName, 0.06).bg;
   }, [profileTheme]);
+  const homeMenuItemActive = useKeyContext(
+    (v) => v.theme.homeMenuItemActive.color
+  );
+  const accentColorFn = React.useMemo(() => {
+    const candidate = Color[homeMenuItemActive as keyof typeof Color];
+    return typeof candidate === 'function'
+      ? (candidate as (opacity?: number) => string)
+      : null;
+  }, [homeMenuItemActive]);
+  const accentColor = React.useMemo(() => {
+    if (accentColorFn) return accentColorFn();
+    return Color.logoBlue();
+  }, [accentColorFn]);
+  const accentBorderColor = React.useMemo(() => {
+    if (accentColorFn) return accentColorFn(0.4);
+    return Color.borderGray();
+  }, [accentColorFn]);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">
-      <div className={container} style={{ ['--profile-widget-bg' as any]: themeBg }}>
+      <div
+        className={container}
+        style={{
+          ['--profile-widget-bg' as any]: themeBg,
+          ['--profile-widget-accent' as any]: accentColor,
+          ['--profile-widget-accent-border' as any]: accentBorderColor
+        }}
+      >
         {username ? (
           <div
             className="heading"

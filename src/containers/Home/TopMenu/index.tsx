@@ -20,12 +20,16 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth, getThemeStyles, wideBorderRadius } from '~/constants/css';
+import {
+  Color,
+  mobileMaxWidth,
+  getThemeStyles,
+  wideBorderRadius
+} from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import Icon from '~/components/Icon';
-import TopButton from './TopButton';
 import ChessOptionsModal from './ChessOptionsModal';
 import NewTopButton from './NewTopButton';
 
@@ -161,7 +165,10 @@ export default function TopMenu({
       <div
         style={{
           marginBottom: '1rem',
-          ['--topmenu-bg' as any]: getThemeStyles((profileTheme || 'logoBlue') as string, 0.06).bg,
+          ['--topmenu-bg' as any]: getThemeStyles(
+            (profileTheme || 'logoBlue') as string,
+            0.06
+          ).bg,
           ...style
         }}
         className={css`
@@ -205,16 +212,14 @@ export default function TopMenu({
         >
           <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
-              <TopButton
+              <NewTopButton
                 key="aiStoriesButton"
-                isAchieved={isAchieved('A')}
-                colorLeft={Color.blue()}
-                colorMiddle={Color.logoBlue()}
-                colorRight={Color.blue()}
                 onClick={onPlayAIStories}
+                variant="logoBlue"
+                isChecked={isAchieved('A')}
               >
                 A{allGoalsAchieved ? '' : '.I Stories'}
-              </TopButton>
+              </NewTopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
               <NewTopButton
@@ -227,17 +232,13 @@ export default function TopMenu({
               </NewTopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
-              <TopButton
+              <NewTopButton
                 key="wordleButton"
-                isAchieved={isAchieved('W')}
-                loading={loadingWordle}
-                colorLeft={Color.goldOrange()}
-                colorMiddle={Color.brightGold()}
-                colorRight={Color.orange()}
+                variant="gold"
                 onClick={handleWordleButtonClick}
               >
                 W{allGoalsAchieved ? '' : 'ordle'}
-              </TopButton>
+              </NewTopButton>
             </ErrorBoundary>
             {allGoalsAchieved && (
               <div
@@ -259,19 +260,14 @@ export default function TopMenu({
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
-              <TopButton
+              <NewTopButton
                 key="postPicsButton"
-                colorLeft={Color.fernGreen()}
-                colorMiddle={Color.lightYellowGreen()}
-                colorRight={Color.fernGreen()}
-                style={{
-                  paddingLeft: '1.3rem',
-                  paddingRight: '1.3rem'
-                }}
+                variant="green"
+                style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
                 onClick={() => onInputModalButtonClick('file')}
               >
                 <Icon icon="upload" />
-              </TopButton>
+              </NewTopButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
               <NewTopButton
@@ -391,7 +387,10 @@ export default function TopMenu({
     if (!isMountedRef.current) return;
     setLoadingOmok(true);
     if (!chatLoadedRef.current) {
-      omokTimerIdRef.current = setTimeout(() => handleNavigateToOmokMessage(), 500);
+      omokTimerIdRef.current = setTimeout(
+        () => handleNavigateToOmokMessage(),
+        500
+      );
       return;
     }
     onUpdateSelectedChannelId(todayStats.unansweredOmokMsgChannelId);
@@ -400,7 +399,8 @@ export default function TopMenu({
       if (!isMountedRef.current) return;
       navigate(
         `/chat/${
-          Number(CHAT_ID_BASE_NUMBER) + Number(todayStats.unansweredOmokMsgChannelId)
+          Number(CHAT_ID_BASE_NUMBER) +
+          Number(todayStats.unansweredOmokMsgChannelId)
         }`
       );
       setTimeout(() => {

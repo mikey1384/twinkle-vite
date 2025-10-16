@@ -468,7 +468,11 @@ function XPVideoPlayer({
               onClick={onOpenSigninModal}
               style={{ marginTop: '1rem' }}
               color={loginColor}
-              filled
+              variant="soft"
+              tone="raised"
+              shape="pill"
+              size="md"
+              uppercase={false}
             >
               Log In
             </Button>

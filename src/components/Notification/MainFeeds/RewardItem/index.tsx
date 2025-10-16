@@ -38,7 +38,7 @@ function RewardItem({
 }) {
   const timeStampLabel = useMemo(() => timeSince(timeStamp), [timeStamp]);
   return (
-    <nav style={{ background: '#fff' }} className={notiFeedListItem} key={id}>
+    <nav className={notiFeedListItem} key={id}>
       <RewardText
         actionColor={actionColor}
         contentId={contentId}

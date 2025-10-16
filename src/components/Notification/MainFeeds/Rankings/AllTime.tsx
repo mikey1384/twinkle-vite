@@ -8,6 +8,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { notiFilterBar } from '../../Styles';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -40,6 +41,7 @@ export default function AllTime({
     <ErrorBoundary componentPath="Notification/MainFeeds/Rankings/AllTime">
       {loggedIn && (
         <FilterBar
+          className={notiFilterBar}
           bordered
           style={{
             height: '4.5rem',
