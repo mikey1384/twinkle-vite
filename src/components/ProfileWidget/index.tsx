@@ -3,55 +3,58 @@ import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
-import { Color, borderRadius, mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import {
+  Color,
+  getThemeStyles,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 const container = css`
-  display: flex;
-  flex-direction: column;
   width: 100%;
   margin-top: 1rem;
-  z-index: 400;
-  border: none;
-  background: var(--profile-widget-bg);
-  border-radius: ${borderRadius};
-  border-left: 0;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  box-shadow: 0 20px 42px -32px rgba(15, 23, 42, 0.35);
+  border-radius: ${wideBorderRadius};
+  border: 1px solid ${Color.borderGray(0.65)};
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    var(--profile-widget-bg, #f6f7fd) 100%
+  );
+  box-shadow: inset 0 1px 0 ${Color.white(0.85)},
+    0 10px 24px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 
   .heading {
-    padding: 1.2rem 1.4rem;
-    border: 1px solid ${Color.borderGray()};
-    border-bottom: none;
-    border-radius: ${borderRadius};
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-left: 0;
+    padding: 1.6rem 2rem;
     display: flex;
-    background: rgba(255, 255, 255, 0.96);
-    width: 100%;
+    gap: 1.6rem;
     align-items: center;
-    justify-content: flex-start;
+    background: rgba(255, 255, 255, 0.96);
     cursor: pointer;
-    transition: background 0.25s ease, box-shadow 0.25s ease;
+    transition: background 0.25s ease, transform 0.2s ease;
     &:hover {
-      background: rgba(255, 255, 255, 0.98);
-      box-shadow: inset 0 0 0 1px ${Color.borderGray()};
+      background: rgba(255, 255, 255, 0.99);
+      transform: translateY(-1px);
     }
     .widget__profile-pic {
-      width: 8rem;
-      border-radius: 50%;
-      box-shadow: 0 12px 28px -20px rgba(15, 23, 42, 0.45);
+      width: 7.4rem;
+      border-radius: 2rem;
+      box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.36);
     }
     .names {
-      width: CALC(100% - 8rem);
-      text-align: center;
+      flex: 1 1 auto;
+      text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
       a {
         color: ${Color.darkerGray()};
         font-weight: 700;
@@ -66,112 +69,89 @@ const container = css`
   }
 
   .details {
-    font-size: 1.3rem;
-    border: 1px solid ${Color.borderGray()};
-    border-left: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: ${borderRadius};
-    background: rgba(255, 255, 255, 0.96);
-    padding: 1.2rem 1.4rem;
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
+    padding: 1.6rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1.4rem;
     .login-message {
-      font-size: 2rem;
+      font-size: 2.1rem;
       color: ${Color.darkerGray()};
       font-weight: bold;
     }
   }
 
-  .details.no-user {
-    border-top-right-radius: ${borderRadius};
+  .navigation {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+    width: 100%;
   }
 
-  .navigation {
-    padding: 1.1rem 0;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 0.8rem;
-  }
   .navigation-item {
     display: flex;
     align-items: center;
-    cursor: pointer;
-    padding: 0.7rem 1.2rem;
-    border-radius: 0.9rem;
-    width: 100%;
     justify-content: center;
-    max-width: 22rem;
+    padding: 0.85rem 1.4rem;
+    border-radius: 1.1rem;
+    background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(148, 163, 184, 0.4);
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.35);
-    transition: background 0.2s ease, box-shadow 0.2s ease,
-      border-color 0.2s ease, transform 0.15s ease;
-    > span {
-      margin-left: 0.5rem;
-      font-weight: 600;
+    box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.28);
+    font-weight: 600;
+    color: ${Color.darkerGray()};
+    gap: 0.6rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+      border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    .navigation-icon {
       color: ${Color.darkerGray()};
+      transition: color 0.2s ease;
     }
     &:hover {
-      background: rgba(255, 255, 255, 0.98);
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.99);
       border-color: var(
         --profile-widget-accent-border,
         ${Color.borderGray()}
       );
-      box-shadow: 0 20px 34px -26px rgba(15, 23, 42, 0.42);
-      transform: translateY(-2px);
+      box-shadow: 0 18px 32px -20px rgba(15, 23, 42, 0.34);
+      color: var(--profile-widget-accent, ${Color.logoBlue()});
       .navigation-icon {
         color: var(--profile-widget-accent, ${Color.logoBlue()});
       }
-      > span {
-        color: var(--profile-widget-accent, ${Color.logoBlue()});
-      }
     }
-  }
-  .navigation-icon {
-    color: ${Color.darkerGray()};
-    margin-right: 0.5rem;
-    transition: color 0.2s ease;
   }
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    box-shadow: none;
     .heading {
-      border: 0;
-      border-radius: 0;
-      justify-content: space-around;
+      padding: 1.4rem 1.6rem;
+      .widget__profile-pic {
+        width: 8rem;
+      }
       .names {
-        text-align: center;
         a {
           font-size: 2.5rem;
         }
         span {
-          font-size: 1.5rem;
+          font-size: 1.4rem;
         }
-        width: 50%;
       }
     }
     .details {
-      border: 0;
-      border-top: 1px solid ${Color.borderGray()};
-      border-bottom: 1px solid ${Color.borderGray()};
-      border-radius: 0;
+      padding: 1.5rem 1.4rem 1.8rem;
       text-align: center;
-      font-size: 3rem;
       .login-message {
-        font-size: 3rem;
-      }
-      button {
-        font-size: 2rem;
+        font-size: 2.6rem;
       }
     }
-  }
-
-  @media (min-width: 2304px) {
-    border-left: 1px solid ${Color.borderGray()};
+    .navigation {
+      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    }
   }
 `;
 
@@ -186,7 +166,7 @@ export default function ProfileWidget() {
   );
   const themeBg = React.useMemo(() => {
     const themeName = (profileTheme || 'logoBlue') as string;
-    return getThemeStyles(themeName, 0.06).bg;
+    return getThemeStyles(themeName, 0.08).hoverBg;
   }, [profileTheme]);
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
@@ -239,7 +219,7 @@ export default function ProfileWidget() {
             </div>
           </div>
         ) : null}
-        <div className={`details${!username ? ' no-user' : ''}`}>
+        <div className="details">
           {userId ? (
             <div className="navigation">
               <div

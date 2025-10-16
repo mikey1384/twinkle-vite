@@ -174,10 +174,12 @@ export default function TopMenu({
         className={css`
           background: var(--topmenu-bg);
           font-size: 1.7rem;
-          padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
+          padding: 1.2rem;
+          border: 1px solid ${Color.borderGray(0.65)};
           border-radius: ${wideBorderRadius};
-          box-shadow: 0 8px 18px -14px rgba(15, 23, 42, 0.25);
+          box-shadow: inset 0 1px 0 ${Color.white(0.85)},
+            0 10px 24px rgba(15, 23, 42, 0.14);
+          backdrop-filter: blur(6px);
           p {
             font-size: 2rem;
             font-weight: bold;

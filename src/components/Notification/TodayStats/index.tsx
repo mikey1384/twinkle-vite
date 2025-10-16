@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  getThemeStyles,
+  liftedBoxShadow,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext, useNotiContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -11,17 +17,41 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 
+function blendWithWhite(color: string, weight: number) {
+  const match = color
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
+  if (!match) return '#f8f9ff';
+  const [, r, g, b, a] = match;
+  const w = Math.max(0, Math.min(1, weight));
+  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+  const alpha = a ? Number(a) : 1;
+  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
+    Number(b)
+  )}, ${alpha.toFixed(3)})`;
+}
+
 const container = css`
   position: relative;
-  padding: 1.5rem 0;
+  padding: 1.6rem 2rem;
   text-align: center;
-  border-radius: ${borderRadius};
-  border: 1px solid ${Color.borderGray()};
+  border-radius: ${wideBorderRadius};
+  border: 1px solid ${Color.borderGray(0.65)};
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    var(--today-stats-bg, #f8f9ff) 100%
+  );
+  box-shadow: inset 0 1px 0 ${Color.white(0.85)},
+    0 10px 24px rgba(15, 23, 42, 0.14);
+  overflow: hidden;
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
     border-left: 0;
     border-right: 0;
+    box-shadow: none;
+    padding: 1.4rem 1.2rem;
   }
 `;
 
@@ -45,6 +75,7 @@ export default function TodayStats({
   );
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -52,6 +83,14 @@ export default function TodayStats({
   const loadTodayRankings = useAppContext(
     (v) => v.requestHelpers.loadTodayRankings
   );
+
+  const panelBg = useMemo(() => {
+    const accent =
+      Color[todayProgressTextColor as keyof typeof Color]?.(0.24) ||
+      getThemeStyles((profileTheme || 'logoBlue') as string, 0.06).hoverBg ||
+      '#f0f4ff';
+    return blendWithWhite(accent, 0.93);
+  }, [profileTheme, todayProgressTextColor]);
 
   useEffect(() => {
     async function fetchTodayRank() {
@@ -76,7 +115,11 @@ export default function TodayStats({
     <ErrorBoundary componentPath="Notification/TodayStats">
       <div
         className={container}
-        style={{ marginBottom: '1rem', width: '100%', padding: '1rem' }}
+        style={{
+          marginBottom: '1rem',
+          width: '100%',
+          ['--today-stats-bg' as any]: panelBg
+        }}
       >
         {todayStats?.loaded ? (
           <div>

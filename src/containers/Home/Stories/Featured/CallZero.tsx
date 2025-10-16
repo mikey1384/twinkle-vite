@@ -586,7 +586,7 @@ export default function CallZero({
         type="button"
         className={callButtonClass}
         style={callButtonStyle}
-        disabled={isCallButtonDisabled}
+        aria-disabled={isCallButtonDisabled}
         onClick={handleCallButtonClick}
         onMouseEnter={() => onSetCallButtonHovered(true)}
         onMouseLeave={() => onSetCallButtonHovered(false)}

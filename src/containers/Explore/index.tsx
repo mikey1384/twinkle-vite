@@ -44,7 +44,7 @@ export default function Explore({ category }: { category: string }) {
           }
         `}
       >
-        <SideMenu>
+        <SideMenu variant="card">
           <NavLink
             to="/ai-cards"
             className={(navData) => (navData.isActive ? 'active' : '')}

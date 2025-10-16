@@ -154,8 +154,8 @@ function XPBar({
                     font-size: 1.3rem;
                     font-weight: bold;
                     padding: 0 1rem;
-                    background: ${Color[xpLevelColor](isMaxReached ? 0.18 : 0.14)};
-                    border: 1px solid ${Color[xpLevelColor](isMaxReached ? 0.35 : 0.28)};
+                    background: ${Color[xpLevelColor](isMaxReached ? 0.7 : 0.6)};
+                    border: 1px solid ${Color[xpLevelColor](isMaxReached ? 0.85 : 0.75)};
                     border-top-left-radius: 9999px;
                     border-bottom-left-radius: 9999px;
                     /* flattened: no shadow on white containers */
@@ -190,8 +190,8 @@ function XPBar({
                       font-size: ${numCoinsEarned > 0 && !isMaxReached
                         ? '1.3rem'
                         : '1.5rem'};
-                      background: ${Color.brownOrange(isMaxReached ? 0.18 : 0.14)};
-                      border: 1px solid ${Color.brownOrange(isMaxReached ? 0.35 : 0.28)};
+                      background: ${Color.brownOrange(isMaxReached ? 0.7 : 0.6)};
+                      border: 1px solid ${Color.brownOrange(isMaxReached ? 0.85 : 0.75)};
                       border-top-right-radius: 9999px;
                       border-bottom-right-radius: 9999px;
                       /* flattened: no shadow on white containers */

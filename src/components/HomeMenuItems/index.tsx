@@ -56,30 +56,10 @@ export default function HomeMenuItems({
     if (activeColorFn) return activeColorFn();
     return Color.logoBlue();
   }, [activeColorFn]);
-  const activeRgb = useMemo<[number, number, number] | null>(() => {
-    if (!activeColorFn) return null;
-    const colorString = activeColorFn();
-    const match = colorString.match(
-      /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/
-    );
-    if (!match) return null;
-    return [Number(match[1]), Number(match[2]), Number(match[3])];
+  const activeContentColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn();
+    return Color.logoBlue();
   }, [activeColorFn]);
-  const activeTextColor = useMemo(() => {
-    if (!activeRgb) return Color.darkerGray();
-    const normalize = (value: number) => {
-      const channel = value / 255;
-      return channel <= 0.03928
-        ? channel / 12.92
-        : Math.pow((channel + 0.055) / 1.055, 2.4);
-    };
-    const [r, g, b] = activeRgb;
-    const luminance =
-      0.2126 * normalize(r) +
-      0.7152 * normalize(g) +
-      0.0722 * normalize(b);
-    return luminance >= 0.6 ? Color.darkerGray() : Color.white();
-  }, [activeRgb]);
   const hoverAccentColor = useMemo(() => {
     if (activeColorFn) return activeColorFn();
     return Color.logoBlue();
@@ -88,11 +68,15 @@ export default function HomeMenuItems({
     if (activeColorFn) return activeColorFn(0.35);
     return Color.borderGray();
   }, [activeColorFn]);
-  const themeBg = useMemo(() => {
-    const themeName = (profileTheme || 'logoBlue') as string;
-    // Subtle theme-tinted background for the container
-    return getThemeStyles(themeName, 0.06).bg;
-  }, [profileTheme]);
+  const themeName = (profileTheme || 'logoBlue') as string;
+  const themeBg = useMemo(
+    () => getThemeStyles(themeName, 0.06).bg,
+    [themeName]
+  );
+  const themeShadow = useMemo(
+    () => getThemeStyles(themeName, 0.18).border,
+    [themeName]
+  );
   const year = useMemo(() => {
     return new Date(standardTimeStamp || Date.now()).getFullYear();
   }, [standardTimeStamp]);
@@ -109,13 +93,13 @@ export default function HomeMenuItems({
           display: flex;
           flex-direction: column;
           font-size: 1.7rem;
-          border: 1px solid ${Color.borderGray()};
-          border-radius: ${borderRadius};
+          border: none;
+          border-radius: ${wideBorderRadius};
           border-left: 0;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
           padding: 1rem 0 1.2rem;
-          box-shadow: 0 8px 18px -14px rgba(15, 23, 42, 0.25);
+          box-shadow: 0 20px 38px -28px rgba(15, 23, 42, 0.2);
           > nav {
             height: 4.4rem;
             margin: 0.7rem 0;
@@ -194,7 +178,7 @@ export default function HomeMenuItems({
           > nav.active {
             .homemenu__item {
               background: ${activeColorFn
-                ? activeColorFn(0.16)
+                ? activeColorFn(0.22)
                 : Color.highlightGray()};
               > .selection {
                 background: ${homeMenuItemActiveColor};
@@ -203,18 +187,18 @@ export default function HomeMenuItems({
               }
               > .icon,
               > .label {
-                color: ${activeTextColor};
+                color: ${activeContentColor};
               }
               border-color: ${activeColorFn
-                ? activeColorFn(0.35)
+                ? activeColorFn(0.4)
                 : Color.borderGray()};
               box-shadow: 0 8px 22px -16px
                 ${activeColorFn ? activeColorFn(0.45) : Color.borderGray()};
             }
             font-weight: bold;
-            color: ${activeTextColor};
+            color: ${activeContentColor};
             a {
-              color: ${activeTextColor};
+              color: ${activeContentColor};
             }
           }
           @media (max-width: ${tabletMaxWidth}) {

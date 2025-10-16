@@ -7,7 +7,13 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  getThemeStyles,
+  liftedBoxShadow,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { css } from '@emotion/css';
 import { useOutsideClick } from '~/helpers/hooks';
 import { useKeyContext } from '~/contexts';
@@ -16,6 +22,21 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const editLabel = localize('edit');
+
+function blendWithWhite(color: string | undefined, weight: number) {
+  if (!color) return '#f8f9fc';
+  const match = color
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([-\d.]+),([-\d.]+),([-\d.]+)(?:,([-\d.]+))?\)/i);
+  if (!match) return '#f8f9fc';
+  const [, r, g, b, a] = match;
+  const w = Math.max(0, Math.min(1, weight));
+  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+  const alpha = a ? Number(a) : 1;
+  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
+    Number(b)
+  )}, ${alpha.toFixed(3)})`;
+}
 
 export default function SectionPanel({
   button,
@@ -95,6 +116,24 @@ export default function SectionPanel({
     themeRoles.success?.color && Color[themeRoles.success?.color]
       ? themeRoles.success?.color
       : 'green';
+  const panelBg = '#ffffff';
+  const panelHeaderBg = '#ffffff';
+  const panelBodyBg = useMemo(() => {
+    const baseAccent = resolveColor(sectionPanelColor, themeName);
+    const blended = blendWithWhite(baseAccent, 0.97);
+    return blended || '#fbfcff';
+  }, [sectionPanelColor, themeName]);
+  const panelBorderColor = useMemo(() => {
+    const styles = getThemeStyles(themeName, 0.12);
+    return styles.border;
+  }, [themeName]);
+  const panelAccent = useMemo(() => {
+    return (
+      resolveColor(themeRoles.sectionPanel?.accent, sectionPanelColor) ||
+      resolveColor(sectionPanelColor, themeName) ||
+      Color.logoBlue()
+    );
+  }, [sectionPanelColor, themeRoles.sectionPanel?.accent, themeName]);
 
   const TitleInputRef = useRef(null);
 
@@ -107,65 +146,94 @@ export default function SectionPanel({
     return inverted ? '1.7rem' : '1rem';
   }, [inverted]);
 
-  const searchWidth = useMemo(() => {
-    return onSearch ? '40%' : 'auto';
-  }, [onSearch]);
+  const styleVars = useMemo(() => {
+    return {
+      ['--section-panel-bg' as any]: panelBg,
+      ['--section-panel-header-bg' as any]: panelHeaderBg || panelBg,
+      ['--section-panel-body-bg' as any]: panelBodyBg,
+      ['--section-panel-border-color' as any]: panelBorderColor,
+      ['--section-panel-accent' as any]: panelAccent
+    } as React.CSSProperties;
+  }, [panelAccent, panelBg, panelBodyBg, panelBorderColor, panelHeaderBg]);
 
   return (
     <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
       <div
-        style={style}
+        style={{ ...(style || {}), ...styleVars }}
         className={css`
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid rgba(148, 163, 184, 0.18);
           width: 100%;
-          background: #fff;
-          border-radius: ${borderRadius};
-          margin-bottom: 1rem;
+          background: var(--section-panel-bg, #fff);
+          border-radius: ${wideBorderRadius};
+          box-shadow:
+            0 22px 38px -28px rgba(15, 23, 42, 0.24),
+            0 1px 3px rgba(15, 23, 42, 0.12);
+          overflow: hidden;
+          margin-bottom: 1.6rem;
+          display: flex;
+          flex-direction: column;
           > header {
-            display: grid;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.2rem;
             width: 100%;
-            grid-template-areas: 'title search buttons';
-            grid-template-columns: auto ${searchWidth} auto;
-            background: #fff;
+            background: var(--section-panel-header-bg, #fff);
             color: var(--role-sectionPanelText-color, ${headerTextColor});
             text-shadow: var(
               --role-sectionPanelText-shadow,
               ${headerTextShadow}
             );
-            border-top-left-radius: ${borderRadius};
-            border-top-right-radius: ${borderRadius};
-            padding: 1rem;
+            border-bottom: 1px solid
+              var(--section-panel-border-color, ${panelBorderColor});
+            padding: 1.2rem 1.8rem;
             padding-top: ${paddingTop};
-            font-weight: bold;
-            font-size: 2.5rem;
-            align-items: center;
+            font-weight: 700;
+            font-size: 2.3rem;
           }
           > main {
             position: relative;
             display: flex;
             flex-direction: column;
-            padding: 1rem;
+            padding: 1.6rem 1.8rem;
             width: 100%;
             justify-content: center;
             min-height: 15rem;
+            background: linear-gradient(
+              180deg,
+              #ffffff 0%,
+              rgba(255, 255, 255, 0.992) 55%,
+              var(--section-panel-body-bg, #fbfcff) 100%
+            );
           }
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 0;
-            border-left: 0;
-            border-right: 0;
+            box-shadow: none;
+            border-top-width: 3px;
             > header {
               font-size: 2rem;
-              border-radius: 0;
+              padding: 1.1rem 1.4rem;
+              gap: 0.8rem;
+            }
+            > main {
+              padding: 1.2rem 1.4rem;
             }
           }
         `}
       >
-        <header ref={innerRef}>
+        <header
+          ref={innerRef}
+          className={css`
+            width: 100%;
+          `}
+        >
           <div
             className={css`
-              grid-area: title;
-              margin-right: 1rem;
               display: flex;
+              flex-direction: column;
+              width: 100%;
+              min-width: 18rem;
+              flex: 1 1 260px;
             `}
           >
             <div
@@ -177,7 +245,6 @@ export default function SectionPanel({
             >
               {onEdit ? (
                 <div
-                  ref={TitleInputRef}
                   className={css`
                     width: 100%;
                     display: flex;
@@ -185,6 +252,7 @@ export default function SectionPanel({
                   `}
                 >
                   <Input
+                    ref={TitleInputRef as any}
                     style={{ width: '100%' }}
                     maxLength={100}
                     placeholder={placeholder}
@@ -262,11 +330,16 @@ export default function SectionPanel({
               addonColor={sectionPanelColor}
               borderColor={sectionPanelColor}
               style={{
-                color: '#fff',
-                gridArea: 'search',
+                color: Color.darkerGray(),
+                flex: '1 1 240px',
+                minWidth: '220px',
+                maxWidth: '360px',
                 width: '100%',
-                justifySelf: 'center',
-                zIndex: 0
+                alignSelf: 'stretch',
+                zIndex: 0,
+                background: 'rgba(255,255,255,0.95)',
+                boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.35)',
+                borderRadius: '12px'
               }}
               onChange={onSearch}
               placeholder={searchPlaceholder}
@@ -275,8 +348,11 @@ export default function SectionPanel({
           )}
           <div
             className={css`
-              grid-area: buttons;
-              justify-self: end;
+              display: flex;
+              align-items: center;
+              justify-content: flex-end;
+              margin-left: auto;
+              gap: 0.8rem;
               @media (max-width: ${mobileMaxWidth}) {
                 button {
                   font-size: 1.3rem;
