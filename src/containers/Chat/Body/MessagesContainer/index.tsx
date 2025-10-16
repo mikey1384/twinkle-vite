@@ -221,6 +221,7 @@ export default function MessagesContainer({
   const MessageToScrollToFromAll = useRef(null);
   const MessageToScrollToFromTopic = useRef(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
+  const messageInputSetTextRef = useRef<((text: string) => void) | null>(null);
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const [searchText, setSearchText] = useState('');
@@ -313,6 +314,13 @@ export default function MessagesContainer({
   const selectedChannelIsOnAICall = useMemo(
     () => selectedChannelId === aiCallChannelId,
     [aiCallChannelId, selectedChannelId]
+  );
+
+  const handleRegisterMessageInputSetText = useCallback(
+    (handler: ((text: string) => void) | null) => {
+      messageInputSetTextRef.current = handler;
+    },
+    []
   );
 
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
@@ -1528,6 +1536,7 @@ export default function MessagesContainer({
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
           onSetTransactionModalShown={setTransactionModalShown}
+          onRegisterSetText={handleRegisterMessageInputSetText}
           recipientId={partner?.id}
           recipientUsername={partner?.username}
           chessTarget={chessTarget}
@@ -1654,14 +1663,16 @@ export default function MessagesContainer({
       {selectVideoModalShown && (
         <SelectVideoModal
           onHide={() => setSelectVideoModalShown(false)}
-          onDone={(videoId) => {
+          onDone={({ videoId }) => {
+            const newText = !stringIsEmpty(textForThisChannel)
+              ? `${textForThisChannel.trim()} https://www.twin-kle.com/videos/${videoId}`
+              : `https://www.twin-kle.com/videos/${videoId}`;
+            messageInputSetTextRef.current?.(newText);
             onEnterComment({
               contentType: 'chat',
               contentId: selectedChannelId,
               targetKey: subchannelId,
-              text: !stringIsEmpty(textForThisChannel)
-                ? `${textForThisChannel.trim()} https://www.twin-kle.com/videos/${videoId}`
-                : `https://www.twin-kle.com/videos/${videoId}`
+              text: newText
             });
             setSelectVideoModalShown(false);
           }}

@@ -69,7 +69,8 @@ export default function MessageInput({
   selectedTab,
   socketConnected,
   subchannelId,
-  legacyTopicObj
+  legacyTopicObj,
+  onRegisterSetText = () => null
 }: {
   currentTransactionId: number;
   currentTopic: any;
@@ -109,6 +110,7 @@ export default function MessageInput({
   subchannelId: number;
   topicId: number;
   legacyTopicObj: any;
+  onRegisterSetText?: (handler: ((text: string) => void) | null) => void;
 }) {
   const banned = useKeyContext((v) => v.myState.banned);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
@@ -186,6 +188,11 @@ export default function MessageInput({
   const [alertModalContent, setAlertModalContent] = useState('');
   const [fileObj, setFileObj] = useState(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
+  useEffect(() => {
+    onRegisterSetText(handleSetText);
+    return () => onRegisterSetText(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterSetText, selectedChannelId, subchannelId]);
 
   useEffect(() => {
     if (

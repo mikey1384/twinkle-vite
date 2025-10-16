@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import SelectUploadsForm from '~/components/Forms/SelectUploadsForm';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -9,9 +9,11 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 
 export default function SelectVideoModal({
+  isOpen = true,
   onDone,
   onHide
 }: {
+  isOpen?: boolean;
   onDone: (arg0: { videoId: number }) => void;
   onHide: () => void;
 }) {
@@ -56,15 +58,41 @@ export default function SelectVideoModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <Modal large onHide={onHide}>
-      <header>Attach a Video</header>
-      <main>
+    <NewModal
+      isOpen={isOpen}
+      onClose={onHide}
+      title="Attach a Video"
+      size="lg"
+      footer={
+        <>
+          <Button transparent onClick={onHide}>
+            Cancel
+          </Button>
+          <Button
+            disabled={selectedUpload.length === 0}
+            color={doneColor}
+            onClick={handleDoneClick}
+          >
+            Done
+          </Button>
+        </>
+      }
+    >
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '2rem'
+        }}
+      >
         <SearchInput
           placeholder="Search..."
           autoFocus
           style={{
-            marginBottom: '2em',
-            width: '50%'
+            marginBottom: 0,
+            width: '100%',
+            maxWidth: '420px'
           }}
           value={searchText}
           onChange={handleSearch}
@@ -87,21 +115,8 @@ export default function SelectVideoModal({
           }}
           loadMoreUploads={loadMoreUploads}
         />
-      </main>
-      <footer>
-        <Button transparent onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          disabled={selectedUpload.length === 0}
-          color={doneColor}
-          style={{ marginLeft: '0.7rem' }}
-          onClick={() => onDone(selectedUpload?.[0])}
-        >
-          Done
-        </Button>
-      </footer>
-    </Modal>
+      </div>
+    </NewModal>
   );
 
   async function loadMoreUploads() {
@@ -163,5 +178,12 @@ export default function SelectVideoModal({
       searchedUploads.map((upload: { id: number }) => upload.id)
     );
     setSearchLoadMoreButton(loadMoreButton);
+  }
+
+  function handleDoneClick() {
+    const videoId = selectedUpload?.[0];
+    if (!videoId) return;
+    onDone({ videoId });
+    onHide();
   }
 }
