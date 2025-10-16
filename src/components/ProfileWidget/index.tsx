@@ -3,7 +3,8 @@ import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -15,7 +16,7 @@ const container = css`
   margin-top: 1rem;
   z-index: 400;
   border: none;
-  background: ${Color.whiteGray()};
+  background: var(--profile-widget-bg);
   border-radius: ${borderRadius};
   border-left: 0;
   border-top-left-radius: 0;
@@ -174,13 +175,18 @@ export default function ProfileWidget() {
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { profilePicUrl, realName, userId, username } = useKeyContext(
     (v) => v.myState
   );
+  const themeBg = React.useMemo(() => {
+    const themeName = (profileTheme || 'logoBlue') as string;
+    return getThemeStyles(themeName, 0.06).bg;
+  }, [profileTheme]);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">
-      <div className={container}>
+      <div className={container} style={{ ['--profile-widget-bg' as any]: themeBg }}>
         {username ? (
           <div
             className="heading"

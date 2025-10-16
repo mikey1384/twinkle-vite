@@ -5,7 +5,8 @@ import {
   Color,
   mobileMaxWidth,
   tabletMaxWidth,
-  wideBorderRadius
+  wideBorderRadius,
+  getThemeStyles
 } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import {
@@ -33,6 +34,7 @@ export default function HomeMenuItems({
   style?: React.CSSProperties;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
@@ -78,6 +80,11 @@ export default function HomeMenuItems({
       0.0722 * normalize(b);
     return luminance >= 0.6 ? Color.darkerGray() : Color.white();
   }, [activeRgb]);
+  const themeBg = useMemo(() => {
+    const themeName = (profileTheme || 'logoBlue') as string;
+    // Subtle theme-tinted background for the container
+    return getThemeStyles(themeName, 0.06).bg;
+  }, [profileTheme]);
   const year = useMemo(() => {
     return new Date(standardTimeStamp || Date.now()).getFullYear();
   }, [standardTimeStamp]);
@@ -90,7 +97,7 @@ export default function HomeMenuItems({
           flex: 1 1 auto;
           min-height: 0;
           overflow-y: auto;
-          background: ${Color.whiteGray()};
+          background: ${themeBg};
           display: flex;
           flex-direction: column;
           font-size: 1.7rem;
