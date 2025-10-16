@@ -6,8 +6,16 @@ import localize from '~/constants/localize';
 import moment from 'moment';
 import Loading from '~/components/Loading';
 import { panel } from '../../Styles';
-import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
+import {
+  useAppContext,
+  useHomeContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { SELECTED_LANGUAGE, months } from '~/constants/defaultValues';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { Color, getThemeStyles } from '~/constants/css';
 
 const leaderboardLabel = localize('leaderboard');
 
@@ -31,6 +39,54 @@ export default function YearItem({
   const onSetLeaderboardsExpanded = useHomeContext(
     (v) => v.actions.onSetLeaderboardsExpanded
   );
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const themeStyles = useMemo(
+    () => getThemeStyles(themeName, 0.12),
+    [themeName]
+  );
+  const headingColorKey = themeRoles.sectionPanelText?.color as
+    | keyof typeof Color
+    | undefined;
+  const headingColorFn =
+    headingColorKey && (Color[headingColorKey] as
+      | ((opacity?: number) => string)
+      | undefined);
+  const headingColor = headingColorFn
+    ? headingColorFn()
+    : Color.darkerGray();
+  const accentColorKey = themeRoles.sectionPanel?.color as
+    | keyof typeof Color
+    | undefined;
+  const accentColorFn =
+    accentColorKey && (Color[accentColorKey] as
+      | ((opacity?: number) => string)
+      | undefined);
+  const accentColor = accentColorFn ? accentColorFn() : Color.logoBlue();
+  const accentTint = accentColorFn
+    ? accentColorFn(0.14)
+    : Color.logoBlue(0.14);
+  const panelVars = useMemo(
+    () =>
+      ({
+        ['--earn-panel-bg' as const]: '#ffffff',
+        ['--earn-panel-tint' as const]:
+          themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+        ['--earn-panel-border' as const]: themeStyles.border,
+        ['--earn-panel-heading' as const]: headingColor,
+        ['--earn-panel-accent' as const]: accentColor,
+        ['--earn-card-border' as const]: themeStyles.border
+      }) as React.CSSProperties,
+    [accentColor, accentTint, headingColor, themeStyles.border, themeStyles.hoverBg]
+  );
+  const combinedStyle = useMemo(() => {
+    if (!style) return panelVars;
+    return { ...panelVars, ...style };
+  }, [panelVars, style]);
 
   const currentMonth = useMemo(
     () => Number(moment.utc(standardTimeStamp || Date.now()).format('M')),
@@ -73,7 +129,12 @@ export default function YearItem({
   }, [leaderboards?.length, leaderboardsObj, year]);
 
   return (
-    <div style={style} className={panel}>
+    <ScopedTheme
+      theme={themeName}
+      roles={['sectionPanel', 'sectionPanelText']}
+      className={panel}
+      style={combinedStyle}
+    >
       <p>
         {year}
         {SELECTED_LANGUAGE === 'kr' ? '년' : ''} {leaderboardLabel}
@@ -107,6 +168,6 @@ export default function YearItem({
       ) : (
         <Loading />
       )}
-    </div>
+    </ScopedTheme>
   );
 }

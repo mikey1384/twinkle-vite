@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { Color, wideBorderRadius } from '~/constants/css';
 
 export default function StartMenu() {
   const onSetTopMenuSectionSection = useHomeContext(
@@ -12,54 +13,125 @@ export default function StartMenu() {
 
   return (
     <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/StartMenu">
-      <div
-        className={css`
-          > section {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-          }
-        `}
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <section>
-          <p>Earn XP</p>
-          <Button
-            onClick={() => onSetTopMenuSectionSection('subject')}
-            style={{ marginTop: '0.7rem' }}
-            filled
-            color="logoBlue"
-          >
-            <Icon icon="bolt" />
-            <span style={{ marginLeft: '0.7rem' }}>Answer Subjects</span>
-          </Button>
-        </section>
-        <section style={{ marginTop: '2rem' }}>
-          <p>Earn Karma Points</p>
-          <Button
-            onClick={() => onSetTopMenuSectionSection('recommend')}
-            style={{ marginTop: '0.7rem' }}
-            filled
-            color="brownOrange"
-          >
-            <Icon icon="heart" />
-            <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
-          </Button>
-          <Button
-            onClick={() => onSetTopMenuSectionSection('reward')}
-            style={{ marginTop: '0.7rem' }}
-            filled
-            color="pink"
-          >
-            <Icon icon="certificate" />
-            <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
-          </Button>
-        </section>
+      <div className={startMenuContainer}>
+        <div className={sectionCard}>
+          <div className={sectionHeader}>
+            <div>
+              <div className={sectionLabel}>Earn XP</div>
+              <h3 className={sectionTitle}>Make progress by answering subjects</h3>
+            </div>
+          </div>
+          <p className={sectionDescription}>
+            Sharpen your skills and climb the leaderboard by tackling curated subjects.
+          </p>
+          <div className={actionStack}>
+            <Button
+              onClick={() => onSetTopMenuSectionSection('subject')}
+              color="logoBlue"
+              variant="solid"
+              tone="raised"
+              size="lg"
+              shape="pill"
+              stretch
+            >
+              <Icon icon="bolt" />
+              <span>Answer Subjects</span>
+            </Button>
+          </div>
+        </div>
+        <div className={sectionCard}>
+          <div className={sectionHeader}>
+            <div>
+              <div className={sectionLabel}>Earn Karma Points</div>
+              <h3 className={sectionTitle}>Support the community with good vibes</h3>
+            </div>
+          </div>
+          <p className={sectionDescription}>
+            Discover great posts, spread encouragement, and reward creators you appreciate.
+          </p>
+          <div className={actionStack}>
+            <Button
+              onClick={() => onSetTopMenuSectionSection('recommend')}
+              color="brownOrange"
+              variant="soft"
+              tone="raised"
+              size="md"
+              stretch
+            >
+              <Icon icon="heart" />
+              <span>Recommend Posts</span>
+            </Button>
+            <Button
+              onClick={() => onSetTopMenuSectionSection('reward')}
+              color="pink"
+              variant="soft"
+              tone="raised"
+              size="md"
+              stretch
+            >
+              <Icon icon="certificate" />
+              <span>Reward Posts</span>
+            </Button>
+          </div>
+        </div>
       </div>
     </ErrorBoundary>
   );
 }
+
+const startMenuContainer = css`
+  display: grid;
+  gap: 1.8rem;
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+`;
+
+const sectionCard = css`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.8rem 2rem;
+  border-radius: ${wideBorderRadius};
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--earn-card-border, rgba(148, 163, 184, 0.35));
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.08),
+    0 14px 28px -20px rgba(15, 23, 42, 0.28);
+  min-height: 18rem;
+`;
+
+const sectionHeader = css`
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+`;
+
+const sectionLabel = css`
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.66);
+`;
+
+const sectionTitle = css`
+  margin: 0.4rem 0 0;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--earn-panel-heading, ${Color.darkerGray()});
+`;
+
+const sectionDescription = css`
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1.6;
+  color: rgba(15, 23, 42, 0.72);
+`;
+
+const actionStack = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: auto;
+`;

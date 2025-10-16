@@ -6,6 +6,8 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import localize from '~/constants/localize';
 import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
+import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
@@ -30,33 +32,17 @@ export default function EarnXPFromSubjects() {
 
   return (
     <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/EarnXPFromSubjects">
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <p>Earn XP by Responding to Subjects</p>
-        <div style={{ marginTop: '1.5rem' }}>
+      <div className={sectionContainer}>
+        <h3 className={sectionHeading}>Earn XP by Responding to Subjects</h3>
+        <div className={listContainer}>
           {loading ? (
             <Loading />
           ) : (
-            <>
-              {subjects.map((subject: { id: number; contentType: string }) => (
-                <ContentListItem key={subject.id} contentObj={subject} />
-              ))}
-            </>
+            subjects.map((subject: { id: number; contentType: string }) => (
+              <ContentListItem key={subject.id} contentObj={subject} />
+            ))
           )}
-          <div
-            style={{
-              marginTop: '1.5rem',
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '3rem'
-            }}
-          >
+          <div className={primaryActionRow}>
             <Button
               filled
               color={showMeAnotherSubjectButtonColor}
@@ -69,30 +55,26 @@ export default function EarnXPFromSubjects() {
               </span>
             </Button>
           </div>
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
+          <div className={secondaryActionRow}>
             <Button
               onClick={() => handleSetTopMenuSection('recommend')}
-              style={{ width: '50%' }}
-              filled
               color="brownOrange"
+              variant="soft"
+              tone="raised"
+              stretch
             >
               <Icon icon="heart" />
-              <span style={{ marginLeft: '0.7rem' }}>Recommend posts</span>
+              <span>Recommend Posts</span>
             </Button>
             <Button
               onClick={() => handleSetTopMenuSection('reward')}
-              style={{ marginLeft: '1rem', width: '50%' }}
-              filled
               color="pink"
+              variant="soft"
+              tone="raised"
+              stretch
             >
               <Icon icon="certificate" />
-              <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
+              <span>Reward Posts</span>
             </Button>
           </div>
         </div>
@@ -125,3 +107,36 @@ export default function EarnXPFromSubjects() {
     setLoading(false);
   }
 }
+
+const sectionContainer = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  width: 100%;
+`;
+
+const sectionHeading = css`
+  margin: 0;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--earn-panel-heading, ${Color.darkerGray()});
+`;
+
+const listContainer = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+`;
+
+const primaryActionRow = css`
+  display: flex;
+  justify-content: center;
+  margin-top: 1.6rem;
+`;
+
+const secondaryActionRow = css`
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 1.4rem;
+`;
