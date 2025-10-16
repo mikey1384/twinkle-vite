@@ -12,6 +12,7 @@ const container = css`
   display: flex;
   flex-direction: column;
   width: 100%;
+  margin-top: 1rem;
   z-index: 400;
   border: none;
   background: ${Color.whiteGray()};

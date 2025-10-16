@@ -4,7 +4,8 @@ import {
   borderRadius,
   Color,
   mobileMaxWidth,
-  tabletMaxWidth
+  tabletMaxWidth,
+  wideBorderRadius
 } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import {
@@ -99,9 +100,10 @@ export default function HomeMenuItems({
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
           padding: 1rem 0 1.2rem;
-          box-shadow: 0 18px 36px -28px rgba(15, 23, 42, 0.32);
+          box-shadow: 0 8px 18px -14px rgba(15, 23, 42, 0.25);
           > nav {
-            height: 4.2rem;
+            height: 4.4rem;
+            margin: 0.45rem 0;
             width: 100%;
             cursor: pointer;
             display: flex;
@@ -126,13 +128,14 @@ export default function HomeMenuItems({
               grid-template-columns: 4px 4rem 1fr;
               grid-template-rows: 100%;
               grid-template-areas: 'selection icon label';
-              margin: 0 1rem;
-              border-radius: 1.2rem;
-              background: rgba(255, 255, 255, 0.9);
+              margin: 0.6rem 1rem;
+              border-radius: ${wideBorderRadius};
+              background: rgba(255, 255, 255, 0.92);
               border: 1px solid rgba(148, 163, 184, 0.35);
-              box-shadow: 0 12px 22px -20px rgba(15, 23, 42, 0.35);
-              transition: background 0.22s ease, box-shadow 0.22s ease,
-                border-color 0.22s ease, color 0.22s ease;
+              box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08),
+                0 8px 16px rgba(15, 23, 42, 0.08);
+              transition: background 0.18s ease, box-shadow 0.18s ease,
+                border-color 0.18s ease, color 0.18s ease, transform 0.06s ease;
               > .selection {
                 grid-area: selection;
                 margin-left: -1px;
@@ -162,7 +165,8 @@ export default function HomeMenuItems({
             .homemenu__item {
               background: rgba(255, 255, 255, 0.98);
               border-color: ${Color.borderGray()};
-              box-shadow: 0 18px 28px -24px rgba(15, 23, 42, 0.42);
+              box-shadow: 0 10px 20px -12px rgba(15, 23, 42, 0.28),
+                0 2px 6px rgba(15, 23, 42, 0.08);
               > .icon,
               > .label {
                 color: ${Color.logoBlue()};
@@ -175,7 +179,7 @@ export default function HomeMenuItems({
           > nav.active {
             .homemenu__item {
               background: ${activeColorFn
-                ? activeColorFn(0.18)
+                ? activeColorFn(0.16)
                 : Color.highlightGray()};
               > .selection {
                 background: ${homeMenuItemActiveColor};
@@ -187,9 +191,9 @@ export default function HomeMenuItems({
                 color: ${activeTextColor};
               }
               border-color: ${activeColorFn
-                ? activeColorFn(0.45)
+                ? activeColorFn(0.35)
                 : Color.borderGray()};
-              box-shadow: 0 20px 36px -24px
+              box-shadow: 0 8px 22px -16px
                 ${activeColorFn ? activeColorFn(0.45) : Color.borderGray()};
             }
             font-weight: bold;
@@ -220,13 +224,14 @@ export default function HomeMenuItems({
             border-right: 0;
             > nav {
               height: 5rem;
+              margin: 0.6rem 0;
               a {
                 justify-content: center;
                 padding: 0;
               }
               .homemenu__item {
-                margin: 0 0.4rem;
-                border-radius: 1.4rem;
+                margin: 0.45rem 0.4rem;
+                border-radius: ${wideBorderRadius};
                 > .icon {
                   padding-left: 0.5rem;
                 }
