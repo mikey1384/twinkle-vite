@@ -61,6 +61,7 @@ export default function SideMenu({
         width: 19rem;
         display: flex;
         position: fixed;
+        z-index: 20;
         justify-content: ${isCardVariant ? 'flex-start' : 'center'};
         flex-direction: column;
         font-size: 2rem;

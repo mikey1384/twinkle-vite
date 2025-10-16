@@ -13,6 +13,7 @@ import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import localize from '~/constants/localize';
+import { css } from '@emotion/css';
 
 const changePasswordLabel = localize('changePassword');
 const changePasswordDescriptionLabel = localize('changePasswordDescription');
@@ -88,7 +89,14 @@ export default function Store() {
   }, [pageVisible, userId]);
 
   return (
-    <div style={{ paddingBottom: '15rem' }}>
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        gap: 3rem;
+        padding: 1rem 0 15rem;
+      `}
+    >
       <KarmaStatus
         karmaPoints={karmaPoints}
         level={level}
@@ -104,7 +112,6 @@ export default function Store() {
       <ItemPanel
         itemKey="changePassword"
         itemName={changePasswordLabel}
-        style={{ marginTop: userId ? '4rem' : 0 }}
         itemDescription={changePasswordDescriptionLabel}
         loading={loading}
       >
@@ -122,16 +129,14 @@ export default function Store() {
             itemDescription={changeUsernameDescriptionLabel}
             onUnlock={handleUnlockUsernameChange}
             unlocking={unlockingUsernameChange}
-            style={{ marginTop: '3rem' }}
             loading={loading}
           >
             <ChangeUsername style={{ marginTop: '1rem' }} />
           </ItemPanel>
-          <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
-          <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
-          <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
+          <RewardBoostItem loading={loading} />
+          <FileSizeItem loading={loading} />
+          <ProfilePictureItem loading={loading} />
           <AICardItem
-            style={{ marginTop: '3rem' }}
             userId={userId}
             canGenerateAICard={!!canGenerateAICard}
             karmaPoints={karmaPoints}
@@ -142,14 +147,12 @@ export default function Store() {
             loading={loading}
             canDonate={canDonate}
             donatedCoins={donatedCoins || 0}
-            style={{ marginTop: '3rem' }}
           />
           <ItemPanel
             karmaPoints={karmaPoints}
             locked
             itemKey="moreToCome"
             itemName={`${moreToComeLabel}...`}
-            style={{ marginTop: '3rem' }}
             loading={loading}
           />
         </>

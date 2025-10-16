@@ -5,11 +5,30 @@ import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  getThemeStyles,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 
 const freeLabel = localize('free');
+
+function blendWithWhite(color: string, weight: number) {
+  const match = color
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([-\d.]+),([-\d.]+),([-\d.]+)(?:,([-\d.]+))?\)/i);
+  if (!match) return '#f7f9ff';
+  const [, r, g, b, a] = match;
+  const w = Math.max(0, Math.min(1, weight));
+  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+  const alpha = a ? Number(a) : 1;
+  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
+    Number(b)
+  )}, ${alpha.toFixed(3)})`;
+}
 
 export default function ItemPanel({
   children,
@@ -44,6 +63,22 @@ export default function ItemPanel({
 }) {
   const [highlighted, setHighlighted] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const homeMenuItemActive = useKeyContext(
+    (v) => v.theme.homeMenuItemActive.color
+  );
+  const accentColorFn = Color[homeMenuItemActive as keyof typeof Color];
+  const accentColor = useMemo(() => {
+    if (typeof accentColorFn === 'function') {
+      return accentColorFn();
+    }
+    return Color.logoBlue();
+  }, [accentColorFn]);
+  const cardBg = useMemo(() => {
+    const themeName = (profileTheme || 'logoBlue') as string;
+    const baseTint = getThemeStyles(themeName, 0.08).hoverBg;
+    return blendWithWhite(baseTint || accentColor, 0.94);
+  }, [accentColor, profileTheme]);
   const requiredKarmaPoints = useMemo(() => {
     if (!isLeveled) {
       return karmaPointTable[itemKey];
@@ -114,40 +149,79 @@ export default function ItemPanel({
   return (
     <div
       className={css`
-        border-radius: ${borderRadius};
+        border-radius: ${wideBorderRadius};
+        border: 1px solid ${Color.borderGray(0.65)};
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.98) 0%,
+          var(--store-card-bg, #f7f9ff) 100%
+        );
+        box-shadow: inset 0 1px 0 ${Color.white(0.85)},
+          0 10px 24px rgba(15, 23, 42, 0.14);
+        backdrop-filter: blur(6px);
+        padding: 2.2rem 2.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.4rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease,
+          border-color 0.2s ease;
+        &:hover {
+          transform: translateY(-2px);
+          border-color: var(--store-card-accent, ${accentColor});
+          box-shadow: 0 18px 30px -20px rgba(15, 23, 42, 0.32);
+        }
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
+          border-left: 0;
+          border-right: 0;
+          box-shadow: none;
+          padding: 1.8rem 1.6rem;
         }
       `}
       style={{
-        ...(highlighted
-          ? {
-              boxShadow: `0 0 10px ${Color.gold(0.8)}`,
-              border: `1px solid ${Color.gold(0.8)}`
-            }
-          : { border: `1px solid ${Color.borderGray()}` }),
-        background: '#fff',
-        transition: 'border 0.2s, box-shadow 0.2s',
-        padding: '1rem',
+        ['--store-card-bg' as any]: cardBg,
+        ['--store-card-accent' as any]: accentColor,
+        border: highlighted
+          ? `1px solid ${accentColor}`
+          : locked
+          ? `1px solid ${Color.borderGray(0.75)}`
+          : `1px solid ${Color.borderGray(0.65)}`,
+        boxShadow: highlighted
+          ? `0 0 0 3px ${Color.gold(0.16)}, 0 10px 26px -18px ${Color.gold(0.32)}`
+          : undefined,
         ...style
       }}
     >
       <div
-        style={{ fontWeight: 'bold', fontSize: '2rem', color: Color.black() }}
+        className={css`
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          font-weight: 700;
+          font-size: 2.1rem;
+          color: ${Color.darkerGray()};
+        `}
       >
-        {itemName}
+        <span>{itemName}</span>
+        {locked && requiredKarmaPoints ? (
+          <span
+            className={css`
+              font-size: 1.4rem;
+              padding: 0.35rem 1rem;
+              border-radius: 9999px;
+              border: 1px solid rgba(148, 163, 184, 0.4);
+              background: rgba(255, 255, 255, 0.9);
+              color: var(--store-card-accent, ${accentColor});
+              font-weight: 600;
+            `}
+          >
+            {requirementLabel}
+          </span>
+        ) : null}
       </div>
       {locked && (
         <>
-          <p
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              color: Color.darkGray()
-            }}
-          >
-            {requirementLabel}
-          </p>
           {itemDescription && (
             <div style={{ fontSize: '1.5rem', marginTop: '1rem' }}>
               {itemDescription}
