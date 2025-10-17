@@ -14,7 +14,10 @@ export default function MessagesButton({
   variant = 'button',
   className,
   iconColor,
-  textColor
+  textColor,
+  buttonColor,
+  buttonVariant,
+  buttonTone
 }: {
   commentsShown: boolean;
   loading: boolean;
@@ -27,6 +30,9 @@ export default function MessagesButton({
   className?: string;
   iconColor?: string;
   textColor?: string;
+  buttonColor?: string;
+  buttonVariant?: 'solid' | 'soft' | 'outline' | 'ghost';
+  buttonTone?: 'flat' | 'raised';
 }) {
   const leaveMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -90,8 +96,12 @@ export default function MessagesButton({
       loading={loading}
       style={style}
       disabled={commentsShown && profileId === myId}
-      color="logoBlue"
+      color={buttonColor || 'logoBlue'}
+      variant={buttonVariant}
+      tone={buttonTone}
+      uppercase={false}
       onClick={onMessagesButtonClick}
+      className={className}
     >
       <Icon icon="comment-alt" color={iconTint} />
       <span style={buttonLabelStyle}>

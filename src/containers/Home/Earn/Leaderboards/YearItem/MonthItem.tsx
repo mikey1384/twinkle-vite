@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
 import Top30Modal from './Top30Modal';
 import { themedCardBase } from '~/theme/themedCard';
@@ -29,10 +29,12 @@ export default function MonthItem({
   return (
     <div
       className={container}
-      style={{
-        ['--themed-card-bg' as const]: 'var(--earn-panel-bg, #f8f9ff)',
-        ...(style || {})
-      }}
+      style={
+        {
+          ['--themed-card-bg' as const]: 'var(--earn-panel-bg, #f8f9ff)',
+          ...(style || {})
+        } as React.CSSProperties
+      }
     >
       <p
         className={css`

@@ -1,12 +1,44 @@
 import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';
+import {
+  borderRadius,
+  mobileMaxWidth,
+  Color,
+  getThemeStyles
+} from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import Icon from '~/components/Icon';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const rankLabel = localize('rank');
+
+function blendWithWhite(color: string, weight: number) {
+  const hexMatch = color?.trim().match(/^#?([0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const [, value] = hexMatch;
+    const r = parseInt(value.slice(0, 2), 16);
+    const g = parseInt(value.slice(2, 4), 16);
+    const b = parseInt(value.slice(4, 6), 16);
+    const w = Math.max(0, Math.min(1, weight));
+    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
+  }
+  const match = color
+    ?.replace(/\s+/g, '')
+    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
+  if (!match) return '#f3f6ff';
+  const [, r, g, b, a] = match;
+  const w = Math.max(0, Math.min(1, weight));
+  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+  const alpha = a ? Number(a) : 1;
+  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
+    Number(b)
+  )}, ${alpha.toFixed(3)})`;
+}
 
 export default function RankBar({
   className,
@@ -18,131 +50,215 @@ export default function RankBar({
   style?: any;
 }) {
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
-  const rankColor = useMemo(
-    () =>
-      profile.rank === 1
-        ? Color.gold()
-        : profile.rank === 2
-        ? '#fff'
-        : profile.rank === 3
-        ? Color.bronze()
-        : undefined,
-    [profile.rank]
+  const rankValue = Number(profile?.rank ?? 0);
+  const rankColor = useMemo(() => {
+    if (rankValue === 1) return Color.gold();
+    if (rankValue === 2) return Color.white(0.95);
+    if (rankValue === 3) return Color.bronze();
+    return undefined;
+  }, [rankValue]);
+  const themeName = useMemo<ThemeName>(
+    () => (profile?.profileTheme || 'logoBlue') as ThemeName,
+    [profile?.profileTheme]
   );
-  const rankNumberLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${profile.rank}위`;
-    }
-    return `#${profile.rank}`;
-  }, [profile.rank]);
-  const xpNumberLabel = useMemo(() => {
-    const innerComponent = (
-      <>
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color[xpNumberColor]() : Color.darkGray())
-          }}
-        >
-          {addCommasToNumber(profile.twinkleXP)}
-        </span>{' '}
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color.gold() : Color.darkGray())
-          }}
-        >
-          XP
-        </span>
-      </>
-    );
-    return SELECTED_LANGUAGE === 'kr' ? (
-      <>
-        <span style={{ color: profile.rank > 3 ? Color.darkGray() : '' }}>
-          (
-        </span>
-        {innerComponent}
-        <span style={{ color: profile.rank > 3 ? Color.darkGray() : '' }}>
-          )
-        </span>
-      </>
-    ) : (
-      innerComponent
-    );
-  }, [profile.rank, profile.twinkleXP, rankColor, xpNumberColor]);
-
-  return (
-    <div
-      style={style}
-      className={`${css`
-        padding: 1.5rem 0;
-        font-size: 2rem;
-        color: ${rankColor};
-        font-weight: bold;
-        text-align: center;
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const themeStyles = useMemo(
+    () => getThemeStyles(themeName, 0.18),
+    [themeName]
+  );
+  const isTopThree = rankValue <= 3;
+  const accentColor = useMemo(() => {
+    const colorKey =
+      (themeRoles.profilePanel?.color as keyof typeof Color | undefined) ||
+      (themeRoles.sectionPanel?.color as keyof typeof Color | undefined);
+    const colorFn =
+      colorKey &&
+      (Color[colorKey] as ((opacity?: number) => string) | undefined);
+    return colorFn ? colorFn() : Color.logoBlue();
+  }, [themeRoles.profilePanel?.color, themeRoles.sectionPanel?.color]);
+  const borderColorVar = useMemo(() => {
+    const fallback = themeStyles.border || Color.borderGray(0.45);
+    return `var(--themed-card-border, ${fallback})`;
+  }, [themeStyles.border]);
+  const accentBlendStart = useMemo(
+    () => blendWithWhite(accentColor, 0.72),
+    [accentColor]
+  );
+  const accentBlendEnd = useMemo(
+    () => blendWithWhite(accentColor, 0.92),
+    [accentColor]
+  );
+  const baseTextColor = useMemo(
+    () => (isTopThree ? 'rgba(255, 255, 255, 0.92)' : Color.darkerGray()),
+    [isTopThree]
+  );
+  const borderCss = useMemo(() => {
+    if (isTopThree) return 'none';
+    return `1px solid ${borderColorVar}`;
+  }, [borderColorVar, isTopThree]);
+  const xpValueColor = useMemo(() => {
+    if (rankColor) return rankColor;
+    const fn = Color[xpNumberColor as keyof typeof Color] as
+      | ((opacity?: number) => string)
+      | undefined;
+    return fn ? fn() : Color.logoBlue();
+  }, [rankColor, xpNumberColor]);
+  const trophyColor = rankColor || accentColor;
+  const xpUnitColor = useMemo(
+    () => (rankColor ? rankColor : Color.gold()),
+    [rankColor]
+  );
+  const xpMonthColor = useMemo(
+    () => (rankColor ? rankColor : Color.pink()),
+    [rankColor]
+  );
+  const rankCardClass = useMemo(
+    () =>
+      css`
+        margin-top: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.2rem;
+        padding: 1.4rem 1.9rem;
+        border: ${borderCss};
+        border-image: ${isTopThree
+          ? 'none'
+          : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(148, 163, 184, 0.25)) 1'};
+        border-top: none;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
         border-bottom-left-radius: ${borderRadius};
         border-bottom-right-radius: ${borderRadius};
-        ${profile.rank > 3 ? `border: 1px solid ${Color.borderGray()};` : ''}
-        background: ${profile.rank < 4 ? Color.black() : '#fff'};
+        background: linear-gradient(
+          135deg,
+          ${isTopThree ? 'rgba(12, 16, 25, 0.99)' : accentBlendStart} 0%,
+          ${isTopThree ? 'rgba(26, 32, 46, 0.97)' : accentBlendEnd} 100%
+        );
+        box-shadow: ${isTopThree
+          ? 'none'
+          : 'inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 18px 32px -26px rgba(15, 23, 42, 0.24)'};
+        color: ${baseTextColor};
         @media (max-width: ${mobileMaxWidth}) {
-          margin-left: 0;
-          margin-right: 0;
           border-radius: 0;
           border-left: none;
           border-right: none;
+          padding: 1.3rem 1.4rem;
         }
-      `} ${className}`}
-    >
-      <span>
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color.logoBlue() : Color.darkGray())
-          }}
-        >
-          {rankLabel}
-        </span>{' '}
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color.logoBlue() : Color.darkGray())
-          }}
-        >
-          {rankNumberLabel}
-        </span>{' '}
-        {SELECTED_LANGUAGE === 'en' ? (
-          <span
-            style={{
-              color:
-                rankColor ||
-                (profile.rank <= 10 ? Color.logoBlue() : Color.darkGray())
-            }}
-          >
-            with
+      `,
+    [accentBlendEnd, accentBlendStart, baseTextColor, borderCss, isTopThree]
+  );
+  const badgeClass = useMemo(
+    () =>
+      css`
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.45rem 1.1rem;
+        border-radius: 999px;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: ${rankColor || accentColor};
+        background: ${isTopThree
+          ? 'rgba(255, 255, 255, 0.14)'
+          : 'rgba(255, 255, 255, 0.45)'};
+        box-shadow: ${isTopThree
+          ? 'inset 0 1px 0 rgba(255, 255, 255, 0.28)'
+          : 'inset 0 1px 0 rgba(255, 255, 255, 0.8)'};
+      `,
+    [accentColor, isTopThree, rankColor]
+  );
+  const xpInfoClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        text-align: right;
+        @media (max-width: ${mobileMaxWidth}) {
+          align-items: flex-start;
+          text-align: left;
+          width: 100%;
+        }
+        .xp-amount {
+          font-size: 1.65rem;
+          font-weight: 700;
+          color: ${xpValueColor};
+          text-shadow: ${isTopThree
+            ? '0 1px 3px rgba(0, 0, 0, 0.45)'
+            : '0 1px 1px rgba(255, 255, 255, 0.55)'};
+          display: inline-flex;
+          align-items: baseline;
+        }
+        .xp-value {
+          color: ${xpValueColor};
+        }
+        .xp-unit {
+          margin-left: 0.35rem;
+          color: ${xpUnitColor};
+          font-size: 1.45rem;
+          font-weight: 600;
+        }
+        .xp-paren {
+          color: ${rankColor ? rankColor : Color.darkerGray(0.8)};
+        }
+        .xp-month {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: ${xpMonthColor};
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+      `,
+    [isTopThree, rankColor, xpMonthColor, xpUnitColor, xpValueColor]
+  );
+  const rankLabelText =
+    SELECTED_LANGUAGE === 'kr' ? `${rankValue}위` : `#${rankValue}`;
+  const xpAmount = addCommasToNumber(profile.twinkleXP || 0);
+  const monthGainLabel =
+    profile.xpThisMonth && SELECTED_LANGUAGE === 'kr'
+      ? `+${addCommasToNumber(profile.xpThisMonth)} 이번 달`
+      : profile.xpThisMonth
+      ? `+${addCommasToNumber(profile.xpThisMonth)} this month`
+      : null;
+  if (!rankValue) {
+    return null;
+  }
+
+  return (
+    <ScopedTheme theme={themeName} roles={['profilePanel']}>
+      <div style={style} className={`${rankCardClass} ${className || ''}`}>
+        <div className={badgeClass}>
+          <Icon
+            icon={rankValue <= 3 ? 'trophy' : 'award'}
+            color={trophyColor}
+          />
+          <span>
+            {rankLabel} {rankLabelText}
           </span>
-        ) : null}
-      </span>{' '}
-      <span>
-        {xpNumberLabel}
-        {!!profile.xpThisMonth && (
-          <span
-            style={{
-              fontSize: '1.7rem',
-              color:
-                rankColor ||
-                (profile.xpThisMonth >= 1000 ? Color.pink() : Color.darkGray())
-            }}
-          >
-            {' '}
-            (↑
-            {addCommasToNumber(profile.xpThisMonth)} this month)
+        </div>
+        <div className={xpInfoClass}>
+          <span className="xp-amount">
+            {SELECTED_LANGUAGE === 'kr' ? (
+              <span className="xp-paren">(</span>
+            ) : null}
+            <span className="xp-value">{xpAmount}</span>
+            <span className="xp-unit">XP</span>
+            {SELECTED_LANGUAGE === 'kr' ? (
+              <span className="xp-paren">)</span>
+            ) : null}
           </span>
-        )}
-      </span>
-    </div>
+          {monthGainLabel ? (
+            <span className="xp-month">
+              <Icon icon="arrow-up" color={trophyColor} />
+              {monthGainLabel}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </ScopedTheme>
   );
 }

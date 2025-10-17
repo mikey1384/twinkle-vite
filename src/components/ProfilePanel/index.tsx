@@ -15,7 +15,13 @@ import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  getThemeStyles,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -32,6 +38,7 @@ import localize from '~/constants/localize';
 import MessagesButton from './MessagesButton';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { themedCardBase } from '~/theme/themedCard';
 
 const chatLabel = localize('chat2');
 const changePicLabel = localize('changePic');
@@ -41,6 +48,30 @@ const lastOnlineLabel = localize('lastOnline');
 const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
 const profileLabel = localize('Profile');
 const cardsLabel = 'Cards';
+
+function blendWithWhite(color: string, weight: number) {
+  const hex = color.trim().match(/^#?([0-9a-f]{6})$/i);
+  if (hex) {
+    const value = hex[1];
+    const r = parseInt(value.slice(0, 2), 16);
+    const g = parseInt(value.slice(2, 4), 16);
+    const b = parseInt(value.slice(4, 6), 16);
+    const w = Math.max(0, Math.min(1, weight));
+    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
+  }
+  const match = color
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
+  if (!match) return '#f2f5ff';
+  const [, r, g, b, a] = match;
+  const w = Math.max(0, Math.min(1, weight));
+  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+  const alpha = a ? Number(a) : 1;
+  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
+    Number(b)
+  )}, ${alpha.toFixed(3)})`;
+}
 
 const actionButtonClass = css`
   display: flex;
@@ -147,6 +178,119 @@ const messageButtonClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     grid-area: message;
   }
+`;
+
+const panelContainerClass = css`
+  ${themedCardBase};
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 2rem 2.3rem;
+  border-radius: ${wideBorderRadius};
+  content-visibility: auto;
+  contain-intrinsic-size: 600px;
+  font-size: 1.5rem;
+  line-height: 2.3rem;
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    var(--themed-card-bg, #f7f9ff) 100%
+  );
+  @media (max-width: ${mobileMaxWidth}) {
+    border-radius: 0;
+    padding: 1.6rem 1.4rem;
+  }
+`;
+
+const heroSectionClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.4rem;
+  border-radius: calc(${wideBorderRadius} - 0.6rem);
+  background: var(
+    --profile-panel-hero-bg,
+    linear-gradient(135deg, rgba(59, 130, 246, 0.65), rgba(59, 130, 246, 0.28))
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 10px 32px -20px rgba(15, 23, 42, 0.55);
+  @media (max-width: ${mobileMaxWidth}) {
+    border-radius: ${borderRadius};
+  }
+`;
+
+const heroBadgesClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 2.5rem;
+`;
+
+const profileContentClass = css`
+  display: flex;
+  gap: 2.4rem;
+  flex-wrap: wrap;
+  width: 100%;
+  align-items: flex-start;
+`;
+
+const leftColumnClass = css`
+  flex: 0 0 20rem;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    flex: 1 1 100%;
+    max-width: unset;
+  }
+`;
+
+const quickLinksClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  align-items: center;
+  font-weight: 600;
+`;
+
+const quickLinkClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  transition: transform 0.25s ease, filter 0.25s ease;
+  text-decoration: none;
+  &:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+  &:active {
+    transform: translateY(0);
+    filter: brightness(0.96);
+  }
+`;
+
+const detailsColumnClass = css`
+  flex: 1 1 24rem;
+  min-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  position: relative;
+`;
+
+const actionsContainerClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
 `;
 
 function ProfilePanel({
@@ -275,9 +419,33 @@ function ProfilePanel({
     }
     return role.color;
   }, [themeRoles]);
-  const profilePanelColorVar = useMemo(
-    () => `var(--role-profilePanel-color, ${profilePanelFallbackColor})`,
-    [profilePanelFallbackColor]
+  const themeStyles = useMemo(
+    () => getThemeStyles(themeName, 0.16),
+    [themeName]
+  );
+  const panelAccentColor = profilePanelFallbackColor;
+  const panelBgTint = useMemo(
+    () => blendWithWhite(panelAccentColor, 0.92),
+    [panelAccentColor]
+  );
+  const heroBackground = useMemo(
+    () =>
+      `linear-gradient(135deg, ${panelAccentColor} 0%, ${blendWithWhite(
+        panelAccentColor,
+        0.55
+      )} 100%)`,
+    [panelAccentColor]
+  );
+  const panelStyleVars = useMemo(
+    () =>
+      ({
+        ['--themed-card-bg' as const]: panelBgTint,
+        ['--themed-card-border' as const]:
+          themeStyles.border || Color.borderGray(0.45),
+        ['--profile-panel-hero-bg' as const]: heroBackground,
+        ['--profile-panel-accent' as const]: panelAccentColor
+      } as React.CSSProperties),
+    [heroBackground, panelAccentColor, panelBgTint, themeStyles.border]
   );
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
@@ -359,87 +527,38 @@ function ProfilePanel({
         }}
       >
         {contentShown ? (
-          <ScopedTheme theme={themeName} roles={['profilePanel']}>
-            <div
-              ref={PanelRef}
-              className={css`
-                content-visibility: auto;
-                contain-intrinsic-size: 600px;
-                background: #fff;
-                width: 100%;
-                line-height: 2.3rem;
-                font-size: 1.5rem;
-                position: relative;
-              `}
-            >
-            <div
-              className={`unselectable ${css`
-                background: ${profilePanelColorVar};
-                border-top-right-radius: ${borderRadius};
-                border-top-left-radius: ${borderRadius};
-                border-bottom: none;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                @media (max-width: ${mobileMaxWidth}) {
-                  border-radius: 0;
-                  border-left: none;
-                  border-right: none;
-                }
-              `}`}
-              style={{ minHeight: '2.5rem', padding: '0.7rem' }}
-            >
-              <AchievementBadges
-                thumbSize="2.5rem"
-                unlockedAchievementIds={profile.unlockedAchievementIds}
-              />
-            </div>
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                padding: 1rem;
-                border: ${Color.borderGray()} 1px solid;
-                ${twinkleXP
-                  ? 'border-bottom: none;'
-                  : `
-                  border-bottom-left-radius: ${borderRadius};
-                  border-bottom-right-radius: ${borderRadius};
-                `};
-                border-top: none;
-                @media (max-width: ${mobileMaxWidth}) {
-                  border-radius: 0;
-                  border-left: none;
-                  border-right: none;
-                }
-              `}
-            >
-              {profileLoaded ? (
+          <>
+            <ScopedTheme theme={themeName} roles={['profilePanel']}>
+              <div
+                style={{
+                  position: 'relative',
+                  zIndex: 2,
+                  overflow: 'visible'
+                }}
+              >
                 <div
-                  style={{
-                    display: 'flex',
-                    height: '100%',
-                    marginTop: '1rem'
-                  }}
+                  ref={PanelRef}
+                  className={panelContainerClass}
+                  style={panelStyleVars}
                 >
-                  <div
-                    style={{
-                      width: '20rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexDirection: 'column'
-                    }}
-                  >
-                    <div
-                      className="unselectable"
-                      style={{ width: 'CALC(100% - 2rem)' }}
-                    >
-                      <Link
-                        onClick={handleReloadProfile}
-                        to={`/users/${profileName}`}
-                      >
-                        <div>
+              <div className={`unselectable ${heroSectionClass}`}>
+                <div className={heroBadgesClass}>
+                  <AchievementBadges
+                    thumbSize="2.5rem"
+                    unlockedAchievementIds={profile.unlockedAchievementIds}
+                  />
+                </div>
+              </div>
+              {profileLoaded ? (
+                <>
+                  <div className={profileContentClass}>
+                    <div className={leftColumnClass}>
+                      <div className="unselectable" style={{ width: '100%' }}>
+                        <Link
+                          onClick={handleReloadProfile}
+                          to={`/users/${profileName}`}
+                          style={{ display: 'block', width: '100%' }}
+                        >
                           <ProfilePic
                             style={{
                               width: '100%',
@@ -454,246 +573,221 @@ function ProfilePanel({
                             large
                             statusSize="medium"
                           />
-                        </div>
-                      </Link>
-                    </div>
-                    <div
-                      className={css`
-                        font-family: 'Poppins', sans-serif;
-                        font-weight: bold;
-                        gap: 0.5rem;
-                        display: flex;
-                        justify-content: center;
-                        flex-direction: column;
-                        align-items: center;
-                        margin-top: 2rem;
-                      `}
-                    >
-                      <div
-                        className={css`
-                          color: #2c8cdb;
-                          cursor: pointer;
-                          transition: transform 0.3s ease;
-
-                          &:hover {
-                            transform: translateY(-2px);
-                          }
-                        `}
-                        onClick={() =>
-                          navigate(
-                            `/ai-cards/?search[owner]=${profile.username}`
-                          )
-                        }
-                      >
-                        <Icon icon="cards-blank" />
-                        <span style={{ marginLeft: '0.7rem' }}>AI Cards</span>
+                        </Link>
                       </div>
-                      {website && (
+                      <div className={quickLinksClass}>
                         <div
-                          className={css`
-                            color: ${Color.green()};
-                            cursor: pointer;
-                            transition: transform 0.3s ease;
-
-                            &:hover {
-                              transform: translateY(-2px);
-                            }
-                          `}
-                          onClick={() => window.open(website)}
+                          className={quickLinkClass}
+                          style={{
+                            color: panelAccentColor,
+                            opacity: profileUsername ? 1 : 0.55,
+                            pointerEvents: profileUsername ? 'auto' : 'none'
+                          }}
+                          onClick={() =>
+                            profileUsername
+                              ? navigate(
+                                  `/ai-cards/?search[owner]=${profile.username}`
+                                )
+                              : null
+                          }
                         >
-                          <Icon icon="globe" />
-                          <span style={{ marginLeft: '0.7rem' }}>Website</span>
+                          <Icon icon="cards-blank" />
+                          <span>AI Cards</span>
                         </div>
-                      )}
-                      {youtubeUrl && (
-                        <div
-                          className={css`
-                            color: #e64959;
-                            cursor: pointer;
-                            transition: transform 0.3s ease;
-
-                            &:hover {
-                              transform: translateY(-2px);
-                            }
-                          `}
-                          onClick={() => window.open(youtubeUrl)}
-                        >
-                          <Icon icon={['fab', 'youtube']} />
-                          <span style={{ marginLeft: '0.7rem' }}>YouTube</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      marginLeft: '2rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      position: 'relative',
-                      width: 'CALC(100% - 19rem)'
-                    }}
-                  >
-                    <UserDetails
-                      profile={profile}
-                      removeStatusMsg={(userId: number) =>
-                        onSetUserState({
-                          userId,
-                          newState: { statusMsg: '', statusColor: '' }
-                        })
-                      }
-                      updateStatusMsg={(data: any) => {
-                        if (banned?.posting) {
-                          return;
-                        }
-                        onSetUserState({
-                          userId: data.userId,
-                          newState: data
-                        });
-                      }}
-                      onSetBioEditModalShown={setBioEditModalShown}
-                      userId={userId}
-                    />
-                    {canEdit && (
-                      <div
-                        style={{
-                          marginTop: '1rem',
-                          zIndex: 1,
-                          display: 'flex',
-                          flexDirection: 'column'
-                        }}
-                      >
-                        <div style={{ display: 'flex' }}>
-                          <UploadButton
-                            onFileSelect={handlePicture}
-                            accept="image/*"
-                            icon="upload"
-                            color="black"
-                            transparent
-                            text={changePicLabel}
-                            buttonProps={{ variant: 'solid', tone: 'raised' }}
-                          />
-                          <Button
-                            transparent
-                            onClick={() => {
-                              if (banned?.posting) {
-                                return;
-                              }
-                              setBioEditModalShown(true);
-                            }}
-                            style={{ marginLeft: '0.5rem' }}
+                        {website && (
+                          <div
+                            className={quickLinkClass}
+                            style={{ color: Color.green() }}
+                            onClick={() => window.open(website)}
                           >
-                            {editBioLabel}
-                          </Button>
-                          {profileId === userId && (
-                            <MessagesButton
-                              commentsShown={commentsShown}
-                              loading={loadingComments}
-                              profileId={profileId}
-                              myId={userId}
-                              onMessagesButtonClick={onMessagesButtonClick}
-                              numMessages={numMessages}
-                              style={{ marginLeft: '1rem' }}
-                            />
-                          )}
-                        </div>
+                            <Icon icon="globe" />
+                            <span>Website</span>
+                          </div>
+                        )}
+                        {youtubeUrl && (
+                          <div
+                            className={quickLinkClass}
+                            style={{ color: '#e64959' }}
+                            onClick={() => window.open(youtubeUrl)}
+                          >
+                            <Icon icon={['fab', 'youtube']} />
+                            <span>YouTube</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {expandable && userId !== profileId && (
-                      <div
-                        className={actionButtonsLayoutClass}
-                        style={{ marginTop: noBio ? '2rem' : '1rem' }}
-                      >
-                        <Link
-                          className={`${actionButtonClass} ${profileButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            pointerEvents: profileUsername ? 'auto' : 'none',
-                            opacity: profileUsername ? 1 : 0.55,
-                            background: `linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.skyBlue()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.logoBlue(0.65)}`
-                          }}
-                          to={
-                            profileUsername
-                              ? `/users/${profileUsername}`
-                              : '#'
+                    </div>
+                    <div className={detailsColumnClass}>
+                      <UserDetails
+                        profile={profile}
+                        removeStatusMsg={(userId: number) =>
+                          onSetUserState({
+                            userId,
+                            newState: { statusMsg: '', statusColor: '' }
+                          })
+                        }
+                        updateStatusMsg={(data: any) => {
+                          if (banned?.posting) {
+                            return;
                           }
-                        >
-                          <Icon icon="user" color="rgba(255,255,255,0.92)" />
-                          <span>{profileLabel}</span>
-                        </Link>
-                        <Link
-                          className={`${actionButtonClass} ${cardsButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            pointerEvents: profileUsername ? 'auto' : 'none',
-                            opacity: profileUsername ? 1 : 0.55,
-                            background: `linear-gradient(135deg, ${Color.purple()} 0%, ${Color.lightPurple()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.purple(0.6)}`
-                          }}
-                          to={
-                            profileUsername
-                              ? `/ai-cards/?search[owner]=${profileUsername}`
-                              : '#'
-                          }
-                        >
-                          <Icon
-                            icon="cards-blank"
-                            color="rgba(255,255,255,0.92)"
-                          />
-                          <span>{cardsLabel}</span>
-                        </Link>
-                        <button
-                          type="button"
-                          className={`${actionButtonClass} ${chatButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            background: `linear-gradient(135deg, ${Color.green()} 0%, ${Color.limeGreen()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.green(0.55)}`
-                          }}
-                          onClick={handleTalkClick}
-                          disabled={chatLoading || !profileUsername}
-                        >
-                          {chatLoading ? (
-                            <Icon
-                              icon="spinner"
-                              pulse
-                              color="rgba(255,255,255,0.9)"
+                          onSetUserState({
+                            userId: data.userId,
+                            newState: data
+                          });
+                        }}
+                        onSetBioEditModalShown={setBioEditModalShown}
+                        userId={userId}
+                      />
+                      {canEdit && (
+                        <div className={actionsContainerClass}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '0.6rem',
+                              justifyContent: 'flex-start'
+                            }}
+                          >
+                            <UploadButton
+                              onFileSelect={handlePicture}
+                              accept="image/*"
+                              icon="upload"
+                              text={changePicLabel}
+                              className={actionButtonClass}
+                              style={{ flex: '1 1 13rem' }}
+                              color="logoBlue"
+                              buttonProps={{
+                                variant: 'solid',
+                                tone: 'raised',
+                                uppercase: false
+                              }}
                             />
-                          ) : (
+                            <Button
+                              onClick={() => {
+                                if (banned?.posting) {
+                                  return;
+                                }
+                                setBioEditModalShown(true);
+                              }}
+                              className={actionButtonClass}
+                              variant="solid"
+                              tone="raised"
+                              color="purple"
+                              uppercase={false}
+                              style={{ flex: '1 1 9rem' }}
+                            >
+                              {editBioLabel}
+                            </Button>
+                            {profileId === userId && (
+                              <MessagesButton
+                                commentsShown={commentsShown}
+                                loading={loadingComments}
+                                profileId={profileId}
+                                myId={userId}
+                                onMessagesButtonClick={onMessagesButtonClick}
+                                numMessages={numMessages}
+                                className={`${actionButtonClass} ${messageButtonClass}`}
+                                style={{
+                                  flex: '1 0 100%',
+                                  minWidth: '18rem'
+                                }}
+                                iconColor="rgba(255,255,255,0.92)"
+                                textColor="rgba(255,255,255,0.95)"
+                                buttonColor="orange"
+                                buttonVariant="solid"
+                                buttonTone="raised"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {expandable && userId !== profileId && (
+                        <div
+                          className={actionButtonsLayoutClass}
+                          style={{ marginTop: noBio ? '2rem' : '1rem' }}
+                        >
+                          <Button
+                            className={`${actionButtonClass} ${profileButtonClass}`}
+                            variant="solid"
+                            tone="raised"
+                            color="logoBlue"
+                            uppercase={false}
+                            style={{ flex: '1 1 9rem' }}
+                            disabled={!profileUsername}
+                            onClick={() =>
+                              profileUsername
+                                ? navigate(`/users/${profileUsername}`)
+                                : null
+                            }
+                          >
+                            <Icon icon="user" color="rgba(255,255,255,0.92)" />
+                            <span style={{ marginLeft: '0.7rem' }}>
+                              {profileLabel}
+                            </span>
+                          </Button>
+                          <Button
+                            className={`${actionButtonClass} ${cardsButtonClass}`}
+                            variant="solid"
+                            tone="raised"
+                            color="purple"
+                            uppercase={false}
+                            style={{ flex: '1 1 9rem' }}
+                            disabled={!profileUsername}
+                            onClick={() =>
+                              profileUsername
+                                ? navigate(
+                                    `/ai-cards/?search[owner]=${profileUsername}`
+                                  )
+                                : null
+                            }
+                          >
+                            <Icon
+                              icon="cards-blank"
+                              color="rgba(255,255,255,0.92)"
+                            />
+                            <span style={{ marginLeft: '0.7rem' }}>
+                              {cardsLabel}
+                            </span>
+                          </Button>
+                          <Button
+                            className={`${actionButtonClass} ${chatButtonClass}`}
+                            variant="solid"
+                            tone="raised"
+                            color="green"
+                            uppercase={false}
+                            style={{ flex: '1 1 9rem' }}
+                            loading={chatLoading}
+                            disabled={chatLoading || !profileUsername}
+                            onClick={handleTalkClick}
+                          >
                             <Icon
                               icon="comments"
                               color="rgba(255,255,255,0.92)"
                             />
-                          )}
-                          <span>{chatLabel}</span>
-                        </button>
-                        <MessagesButton
-                          variant="action"
-                          className={`${actionButtonClass} ${messageButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            background: `linear-gradient(135deg, ${Color.orange()} 0%, ${Color.lightOrange()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.orange(0.5)}`
-                          }}
-                          loading={loadingComments}
-                          commentsShown={commentsShown}
-                          profileId={profileId}
-                          myId={userId}
-                          onMessagesButtonClick={onMessagesButtonClick}
-                          numMessages={numMessages}
-                          iconColor="rgba(255,255,255,0.92)"
-                          textColor="rgba(255,255,255,0.95)"
-                        />
-                      </div>
-                    )}
-                    {lastActive &&
-                      !isOnline &&
-                      profileId !== userId && (
+                            <span style={{ marginLeft: '0.7rem' }}>
+                              {chatLabel}
+                            </span>
+                          </Button>
+                          <MessagesButton
+                            className={`${actionButtonClass} ${messageButtonClass}`}
+                            style={{
+                              flex: '1 0 100%',
+                              minWidth: '18rem'
+                            }}
+                            commentsShown={commentsShown}
+                            loading={loadingComments}
+                            profileId={profileId}
+                            myId={userId}
+                            onMessagesButtonClick={onMessagesButtonClick}
+                            numMessages={numMessages}
+                            iconColor="rgba(255,255,255,0.92)"
+                            textColor="rgba(255,255,255,0.95)"
+                            buttonColor="orange"
+                            buttonVariant="solid"
+                            buttonTone="raised"
+                          />
+                        </div>
+                      )}
+                      {lastActive && !isOnline && profileId !== userId && (
                         <div
                           style={{
                             marginTop: '1rem',
@@ -706,6 +800,7 @@ function ProfilePanel({
                           </p>
                         </div>
                       )}
+                    </div>
                   </div>
                   {bioEditModalShown && (
                     <BioEditModal
@@ -727,9 +822,18 @@ function ProfilePanel({
                       }}
                     />
                   )}
-                </div>
+                </>
               ) : (
-                <Loading />
+                <div
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '2rem 0'
+                  }}
+                >
+                  <Loading />
+                </div>
               )}
               {profileLoaded && (
                 <Comments
@@ -758,21 +862,33 @@ function ProfilePanel({
                     ...profilePanelState,
                     contentType: 'user'
                   }}
-                  style={{ marginTop: '1rem' }}
+                  style={{ marginTop: '0.6rem' }}
                   userId={userId}
                 />
               )}
             </div>
-            {!!twinkleXP && profileLoaded && <RankBar profile={profile} />}
-            {alertModalShown && (
-              <AlertModal
-                title={imageTooLarge10MBLabel}
-                content={pleaseSelectSmallerImageLabel}
-                onHide={() => setAlertModalShown(false)}
-              />
-            )}
           </div>
+          {alertModalShown && (
+            <AlertModal
+              title={imageTooLarge10MBLabel}
+              content={pleaseSelectSmallerImageLabel}
+              onHide={() => setAlertModalShown(false)}
+            />
+          )}
         </ScopedTheme>
+        {!!twinkleXP && profileLoaded && (
+          <div
+            style={{
+              marginTop: '-1.6rem',
+              width: '100%',
+              position: 'relative',
+              zIndex: 0
+            }}
+          >
+            <RankBar profile={profile} />
+          </div>
+        )}
+          </>
         ) : (
           <div
             style={{
