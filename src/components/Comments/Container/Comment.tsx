@@ -148,7 +148,7 @@ function Comment({
         : fn()
       : key;
     return `var(--role-link-color, ${fallback})`;
-  }, [themeRoles, themeName]);
+  }, [themeRoles]);
   const rewardColor = useMemo(
     () => themeRoles.reward?.color || 'pink',
     [themeRoles]

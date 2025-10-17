@@ -78,7 +78,7 @@ export default function MainContent({
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    () => (theme || profileTheme || 'logoBlue') as ThemeName,
     [profileTheme, theme]
   );
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
@@ -200,7 +200,6 @@ export default function MainContent({
             rootObj={rootObj}
             byUser={!!byUser}
             rewardLevel={rewardLevel}
-            rootType={rootType}
           />
         </ErrorBoundary>
         <ContentDisplay
@@ -245,8 +244,6 @@ export default function MainContent({
             rootObj={rootObj}
             byUser={!!byUser}
             isEditing={isEditing}
-            rootType={rootType}
-            secretHidden={secretHidden}
           />
         </ErrorBoundary>
       </div>

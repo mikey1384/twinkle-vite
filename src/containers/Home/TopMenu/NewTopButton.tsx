@@ -1,3 +1,4 @@
+import React, { type CSSProperties, type ReactNode } from 'react';
 import Button from '~/components/Button';
 import { useKeyContext } from '~/contexts';
 
@@ -11,9 +12,9 @@ export default function NewTopButton({
 }: {
   onClick: () => void;
   loading?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
   variant?: 'slate' | 'magenta' | 'purple' | 'orange' | 'green' | 'gold' | 'logoBlue';
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   isChecked?: boolean;
 }) {
   useKeyContext(() => null); // keep hook consistency if needed later

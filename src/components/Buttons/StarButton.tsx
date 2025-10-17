@@ -28,7 +28,6 @@ export default function StarButton({
   onSetRewardLevel,
   onToggleByUser,
   uploader,
-  skeuomorphic,
   style = {}
 }: {
   byUser?: boolean;
@@ -41,7 +40,6 @@ export default function StarButton({
   onSetRewardLevel?: (v: any) => void;
   onToggleByUser: (v: any) => void;
   uploader: User;
-  skeuomorphic?: boolean;
   style?: React.CSSProperties;
 }) {
   const { canReward, canEditRewardLevel, userId } = useKeyContext(

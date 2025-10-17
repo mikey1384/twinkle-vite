@@ -10,7 +10,6 @@ import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   Color,
   getThemeStyles,
-  liftedBoxShadow,
   mobileMaxWidth,
   wideBorderRadius
 } from '~/constants/css';

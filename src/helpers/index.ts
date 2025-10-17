@@ -1,5 +1,4 @@
 import { Buffer } from 'buffer';
-import { getThemeRoles } from '~/theme/themes';
 import { Card } from '~/types';
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';

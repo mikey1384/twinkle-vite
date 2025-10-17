@@ -5,7 +5,7 @@ import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
 
-type FilterBarProps = {
+interface FilterBarProps {
   color?: string;
   bordered?: boolean;
   className?: string;
@@ -13,7 +13,7 @@ type FilterBarProps = {
   innerRef?: React.Ref<HTMLDivElement>;
   dropdownButton?: React.ReactNode;
   style?: React.CSSProperties;
-};
+}
 
 export default function FilterBar({
   color,
@@ -43,34 +43,11 @@ export default function FilterBar({
     return fn ? fn(opacity ?? fallbackOpacity) : target;
   };
 
-  const filterColorValue =
-    resolveColor(
-      themeRoles.filter?.color,
-      themeRoles.filter?.opacity,
-      themeName,
-      themeRoles.filter?.opacity ?? 1
-    ) || Color.logoBlue();
-
-  const filterTextColorValue =
-    resolveColor(themeRoles.filterText?.color, undefined, 'gray') ||
-    Color.gray();
-
-  const filterActiveColorValue =
-    resolveColor(
-      themeRoles.filterActive?.color,
-      undefined,
-      themeRoles.filter?.color ?? themeName
-    ) || filterColorValue;
-
   const alertColorValue =
     resolveColor(themeRoles.alert?.color, undefined, 'gold') || Color.gold();
 
-  const filterColorVar = `var(--role-filter-color, ${filterColorValue})`;
-  const filterTextColorVar = `var(--role-filterText-color, ${filterTextColorValue})`;
-  const filterActiveColorVar = `var(--role-filterActive-color, ${filterActiveColorValue})`;
   const alertColorVar = `var(--role-alert-color, ${alertColorValue})`;
 
-  const pageBgVar = `var(--page-bg, ${Color.whiteGray()})`;
   // Flat, clean white bar surface regardless of page tint
   const barBackground = '#ffffff';
   const barBorderColor = 'transparent';
@@ -94,7 +71,6 @@ export default function FilterBar({
 
   // Unselected tabs match the bar background; hover/active use theme tints
   const tabBaseSurface = barBackground;
-  const tabBaseBorder = 'transparent';
   const tabHoverSurface = themeHoverBgValue;
   const tabHoverBorder = themeHoverBorderValue;
   const tabActiveSurface = themeActiveBgValue;
@@ -102,19 +78,11 @@ export default function FilterBar({
 
   // Neumorphic tokens (light mode)
   // No neumorphic shadows; keep it simple
-  const lightOutset = '0 0 0 rgba(0,0,0,0)';
-  const lightOutsetHover = '0 0 0 rgba(0,0,0,0)';
-  const lightOutsetStrong = '0 0 0 rgba(0,0,0,0)';
   const raiseHover = 'none';
   const raiseActive = 'none';
 
   // Neumorphic shadows (inverted/dark-ish surfaces)
-  const darkOutset = '4px 4px 8px rgba(0,0,0,0.3), -4px -4px 8px rgba(255,255,255,0.16)';
-  const darkOutsetHover = '6px 6px 12px rgba(0,0,0,0.35), -6px -6px 12px rgba(255,255,255,0.18)';
-  const darkOutsetStrong = '8px 8px 16px rgba(0,0,0,0.4), -8px -8px 16px rgba(255,255,255,0.2)';
-
   const containerShadow = 'none';
-  const containerShadowHover = 'none';
   // Flat by default; hovered/active use compact vertical drop shadow
   const tabBaseShadow = 'none';
   const tabHoverShadow = raiseHover;

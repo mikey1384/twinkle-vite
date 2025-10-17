@@ -159,7 +159,7 @@ export default function TargetContent({
         ? fn(opacity)
         : fn()
       : key;
-  }, [themeRoles, themeName]);
+  }, [themeRoles]);
   const contentColorValue = useMemo(() => {
     const role = themeRoles.content;
     const key = role?.color || 'logoBlue';
@@ -170,7 +170,7 @@ export default function TargetContent({
         ? fn(opacity)
         : fn()
       : key;
-  }, [themeRoles, themeName]);
+  }, [themeRoles]);
   const rewardColor = useMemo(
     () => themeRoles.reward?.color || 'pink',
     [themeRoles]

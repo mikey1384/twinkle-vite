@@ -3,7 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from '~/assets/zero.png';
 import { css } from '@emotion/css';
-import { desktopMinWidth, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
 import ZeroModal from './ZeroModal';

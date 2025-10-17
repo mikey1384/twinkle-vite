@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  borderRadius,
   Color,
   mobileMaxWidth,
   tabletMaxWidth,
@@ -71,10 +70,6 @@ export default function HomeMenuItems({
   const themeName = (profileTheme || 'logoBlue') as string;
   const themeBg = useMemo(
     () => getThemeStyles(themeName, 0.06).bg,
-    [themeName]
-  );
-  const themeShadow = useMemo(
-    () => getThemeStyles(themeName, 0.18).border,
     [themeName]
   );
   const year = useMemo(() => {

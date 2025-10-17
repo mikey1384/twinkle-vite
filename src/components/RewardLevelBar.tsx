@@ -45,7 +45,7 @@ export default function RewardLevelBar({
         style={{ marginLeft: '0.2rem', color: themedStrong }}
       />
     ));
-  }, [rewardLevel]);
+  }, [rewardLevel, themedStrong]);
 
   const earnUpToLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {

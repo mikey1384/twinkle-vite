@@ -93,7 +93,7 @@ function Starmarks({
     }
 
     return starMarks;
-  }, [stars]);
+  }, [color, stars]);
 
   return (
     <div

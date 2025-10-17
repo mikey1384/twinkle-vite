@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
 import SideMenu from '~/components/SideMenu';

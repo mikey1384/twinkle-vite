@@ -20,7 +20,7 @@ export default function FileViewer({
   style,
   thumbUrl,
   showImageModalOnClick,
-  isOnModal
+  isOnModal: _isOnModal
 }: {
   fileSize?: number;
   onThumbnailLoad?: (thumbUrl: string) => void;
