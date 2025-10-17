@@ -1,34 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import {
-  Color,
-  getThemeStyles,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, getThemeStyles } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { homePanelClass } from '~/theme/homePanels';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const freeLabel = localize('free');
-
-function blendWithWhite(color: string, weight: number) {
-  const match = color
-    .replace(/\s+/g, '')
-    .match(/rgba?\(([-\d.]+),([-\d.]+),([-\d.]+)(?:,([-\d.]+))?\)/i);
-  if (!match) return '#f7f9ff';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
 
 export default function ItemPanel({
   children,
@@ -61,24 +44,38 @@ export default function ItemPanel({
   unlocking?: boolean;
   upgradeIcon?: React.ReactNode;
 }) {
-  const [highlighted, setHighlighted] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const homeMenuItemActive = useKeyContext(
-    (v) => v.theme.homeMenuItemActive.color
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
   );
-  const accentColorFn = Color[homeMenuItemActive as keyof typeof Color];
-  const accentColor = useMemo(() => {
-    if (typeof accentColorFn === 'function') {
-      return accentColorFn();
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const themeStyles = useMemo(
+    () => getThemeStyles(themeName, 0.12),
+    [themeName]
+  );
+  const accentColorInfo = useMemo(() => {
+    const key = themeRoles.sectionPanel?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      key && (Color[key] as ((opacity?: number) => string) | undefined);
+    if (fn) {
+      return { color: fn(), tint: fn(0.14) };
     }
-    return Color.logoBlue();
-  }, [accentColorFn]);
-  const cardBg = useMemo(() => {
-    const themeName = (profileTheme || 'logoBlue') as string;
-    const baseTint = getThemeStyles(themeName, 0.08).hoverBg;
-    return blendWithWhite(baseTint || accentColor, 0.94);
-  }, [accentColor, profileTheme]);
+    return { color: Color.logoBlue(), tint: Color.logoBlue(0.14) };
+  }, [themeRoles.sectionPanel?.color]);
+  const accentColor = accentColorInfo.color;
+  const accentTint = accentColorInfo.tint;
+  const headingColor = useMemo(() => {
+    const headingKey = themeRoles.sectionPanelText?.color as
+      | keyof typeof Color
+      | undefined;
+    const headingFn =
+      headingKey && (Color[headingKey] as ((opacity?: number) => string) | undefined);
+    return headingFn ? headingFn() : Color.darkerGray();
+  }, [themeRoles.sectionPanelText?.color]);
   const requiredKarmaPoints = useMemo(() => {
     if (!isLeveled) {
       return karmaPointTable[itemKey];
@@ -145,52 +142,38 @@ export default function ItemPanel({
       </>
     );
   }, [karmaPoints, notUpgraded, displayedRequiredKarmaPoints]);
+  const baseBorderColor = useMemo(() => {
+    if (themeStyles.border) {
+      return themeStyles.border;
+    }
+    if (locked) return Color.borderGray(0.75);
+    return Color.borderGray(0.65);
+  }, [locked, themeStyles.border]);
+
+  const panelStyle = useMemo(
+    () =>
+      ({
+        ['--home-panel-bg' as const]: '#ffffff',
+        ['--home-panel-tint' as const]:
+          themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+        ['--home-panel-border' as const]: baseBorderColor,
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-accent' as const]: accentColor,
+        ['--home-panel-color' as const]: Color.darkerGray(),
+        ['--home-panel-gap' as const]: '1.4rem',
+        ['--home-panel-padding' as const]: '2.2rem 2.4rem',
+        ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem',
+        ['--home-panel-card-border' as const]:
+          themeStyles.border || Color.borderGray(0.65),
+        ...style
+      }) as React.CSSProperties,
+    [accentColor, accentTint, baseBorderColor, headingColor, style, themeStyles.border, themeStyles.hoverBg]
+  );
 
   return (
     <div
-      className={css`
-        border-radius: ${wideBorderRadius};
-        border: 1px solid ${Color.borderGray(0.65)};
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.98) 0%,
-          var(--store-card-bg, #f7f9ff) 100%
-        );
-        box-shadow: inset 0 1px 0 ${Color.white(0.85)},
-          0 10px 24px rgba(15, 23, 42, 0.14);
-        backdrop-filter: blur(6px);
-        padding: 2.2rem 2.4rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.4rem;
-        transition: transform 0.2s ease, box-shadow 0.2s ease,
-          border-color 0.2s ease;
-        &:hover {
-          transform: translateY(-2px);
-          border-color: var(--store-card-accent, ${accentColor});
-          box-shadow: 0 18px 30px -20px rgba(15, 23, 42, 0.32);
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          border-left: 0;
-          border-right: 0;
-          box-shadow: none;
-          padding: 1.8rem 1.6rem;
-        }
-      `}
-      style={{
-        ['--store-card-bg' as any]: cardBg,
-        ['--store-card-accent' as any]: accentColor,
-        border: highlighted
-          ? `1px solid ${accentColor}`
-          : locked
-          ? `1px solid ${Color.borderGray(0.75)}`
-          : `1px solid ${Color.borderGray(0.65)}`,
-        boxShadow: highlighted
-          ? `0 0 0 3px ${Color.gold(0.16)}, 0 10px 26px -18px ${Color.gold(0.32)}`
-          : undefined,
-        ...style
-      }}
+      className={homePanelClass}
+      style={panelStyle}
     >
       <div
         className={css`
@@ -212,7 +195,7 @@ export default function ItemPanel({
               border-radius: 9999px;
               border: 1px solid rgba(148, 163, 184, 0.4);
               background: rgba(255, 255, 255, 0.9);
-              color: var(--store-card-accent, ${accentColor});
+              color: var(--home-panel-accent, ${accentColor});
               font-weight: 600;
             `}
           >
@@ -281,8 +264,6 @@ export default function ItemPanel({
                     color="green"
                     onClick={async () => {
                       await onUnlock();
-                      setHighlighted(true);
-                      setTimeout(() => setHighlighted(false), 1000);
                     }}
                   >
                     <Icon icon={notUpgraded ? 'level-up' : 'unlock'} />

@@ -119,7 +119,7 @@ const sectionHeading = css`
   margin: 0;
   font-size: 2.1rem;
   font-weight: 700;
-  color: var(--earn-panel-heading, ${Color.darkerGray()});
+  color: var(--home-panel-heading, ${Color.darkerGray()});
 `;
 
 const listContainer = css`

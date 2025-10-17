@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import ProgressBar from '~/components/ProgressBar';
-import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { homePanelClass } from '~/theme/homePanels';
 
 export default function UserLevelStatus({
   style
@@ -39,17 +39,12 @@ export default function UserLevelStatus({
 
   return (
     <div
-      className={css`
-        background: #fff;
-        padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}
+      className={cx(
+        homePanelClass,
+        css`
+          padding: 1.6rem 2rem;
+        `
+      )}
       style={style}
     >
       <p

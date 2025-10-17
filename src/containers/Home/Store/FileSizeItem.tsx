@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
@@ -73,6 +73,14 @@ export default function FileSizeItem({
   const upgradeFileUploadSize = useAppContext(
     (v) => v.requestHelpers.upgradeFileUploadSize
   );
+  const panelStyle = useMemo(
+    () =>
+      ({
+        ['--home-panel-gap' as const]: '2rem',
+        ...style
+      }) as React.CSSProperties,
+    [style]
+  );
   return (
     <ItemPanel
       isLeveled
@@ -85,7 +93,7 @@ export default function FileSizeItem({
       itemKey="file"
       itemName={item.name[fileUploadLvl]}
       itemDescription={item.description[fileUploadLvl]}
-      style={style}
+      style={panelStyle}
       upgradeIcon={<Icon size="3x" icon="upload" />}
     >
       <MaxLevelItemInfo

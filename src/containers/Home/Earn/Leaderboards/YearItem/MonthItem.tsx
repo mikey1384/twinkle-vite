@@ -31,7 +31,7 @@ export default function MonthItem({
       className={container}
       style={
         {
-          ['--themed-card-bg' as const]: 'var(--earn-panel-bg, #f8f9ff)',
+          ['--themed-card-bg' as const]: 'var(--home-panel-bg, #f8f9ff)',
           ...(style || {})
         } as React.CSSProperties
       }

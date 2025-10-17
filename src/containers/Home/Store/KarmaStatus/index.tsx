@@ -1,16 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { css } from '@emotion/css';
-import {
-  Color,
-  getThemeStyles,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { css, cx } from '@emotion/css';
+import { Color, getThemeStyles } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
 import { useKeyContext } from '~/contexts';
+import { homePanelClass } from '~/theme/homePanels';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 function blendWithWhite(color: string, weight: number) {
   const match = color
@@ -51,6 +48,11 @@ export default function KarmaStatus({
 }) {
   const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
   );
@@ -61,11 +63,21 @@ export default function KarmaStatus({
     }
     return Color.logoBlue();
   }, [accentColorFn]);
+  const themeStyles = useMemo(
+    () => getThemeStyles(themeName, 0.12),
+    [themeName]
+  );
   const panelBg = useMemo(() => {
-    const themeName = (profileTheme || 'logoBlue') as string;
-    const themeTint = getThemeStyles(themeName, 0.08).hoverBg;
-    return blendWithWhite(themeTint || accentColor, 0.94);
-  }, [accentColor, profileTheme]);
+    return blendWithWhite(themeStyles.hoverBg || accentColor, 0.94);
+  }, [accentColor, themeStyles.hoverBg]);
+  const headingColor = useMemo(() => {
+    const headingKey = themeRoles.sectionPanelText?.color as
+      | keyof typeof Color
+      | undefined;
+    const headingFn =
+      headingKey && (Color[headingKey] as ((opacity?: number) => string) | undefined);
+    return headingFn ? headingFn() : Color.darkerGray();
+  }, [themeRoles.sectionPanelText?.color]);
 
   const displayedKarmaPoints = useMemo(() => {
     if (karmaPoints) {
@@ -84,32 +96,24 @@ export default function KarmaStatus({
 
   return (
     <div
-      className={css`
-        border-radius: ${wideBorderRadius};
-        border: 1px solid ${Color.borderGray(0.65)};
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.98) 0%,
-          var(--karma-panel-bg, #f7f9ff) 100%
-        );
-        box-shadow: inset 0 1px 0 ${Color.white(0.85)},
-          0 10px 24px rgba(15, 23, 42, 0.14);
-        backdrop-filter: blur(6px);
-        padding: 2.2rem 2.4rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.6rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          border-left: 0;
-          border-right: 0;
-          box-shadow: none;
-          padding: 1.8rem 1.6rem;
-        }
-      `}
+      className={cx(
+        homePanelClass,
+        css`
+          gap: 1.6rem;
+        `
+      )}
       style={{
-        ['--karma-panel-bg' as any]: panelBg,
-        ['--karma-accent' as any]: accentColor
+        ['--home-panel-bg' as const]: panelBg,
+        ['--home-panel-tint' as const]:
+          themeStyles.hoverBg ||
+          (accentColorFn ? accentColorFn(0.14) : Color.logoBlue(0.14)),
+        ['--home-panel-border' as const]: themeStyles.border || Color.borderGray(0.65),
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-accent' as const]: accentColor,
+        ['--home-panel-color' as const]: Color.darkerGray(),
+        ['--home-panel-gap' as const]: '1.6rem',
+        ['--home-panel-padding' as const]: '2.2rem 2.4rem',
+        ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem'
       }}
     >
       {loading ? (
@@ -136,7 +140,7 @@ export default function KarmaStatus({
                 padding: 0.6rem 1.2rem;
                 font-size: 1.4rem;
                 font-weight: 600;
-                color: var(--karma-accent, ${accentColor});
+                color: var(--home-panel-accent, ${accentColor});
                 cursor: pointer;
                 display: inline-flex;
                 align-items: center;
@@ -145,7 +149,7 @@ export default function KarmaStatus({
                   border-color 0.2s ease, background 0.2s ease;
                 &:hover {
                   transform: translateY(-1px);
-                  border-color: var(--karma-accent, ${accentColor});
+                  border-color: var(--home-panel-accent, ${accentColor});
                   box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.2);
                   background: rgba(255, 255, 255, 0.98);
                 }

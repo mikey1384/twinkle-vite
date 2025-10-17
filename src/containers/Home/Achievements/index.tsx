@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
+import { Color } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
+import { homePanelClass } from '~/theme/homePanels';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function Achievements() {
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
@@ -37,6 +39,20 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const headingColor = useMemo(() => {
+    const colorKey = themeRoles.sectionPanelText?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      colorKey && (Color[colorKey] as ((opacity?: number) => string) | undefined);
+    return fn ? fn() : Color.darkerGray();
+  }, [themeRoles.sectionPanelText?.color]);
 
   useEffect(() => {
     if (userId) init();
@@ -79,19 +95,21 @@ export default function Achievements() {
   return (
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
       <div
-        className={css`
-          margin-bottom: 2rem;
-          background: #fff;
-          padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
-          border-radius: ${borderRadius};
-          @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 0;
-            border-top: 0;
-            border-left: 0;
-            border-right: 0;
-          }
-        `}
+        className={cx(
+          homePanelClass,
+          css`
+            margin-bottom: 2rem;
+            padding: 1.6rem 2rem;
+          `
+        )}
+        style={{
+          ['--home-panel-bg' as const]: '#ffffff',
+          ['--home-panel-tint' as const]: Color.logoBlue(0.08),
+          ['--home-panel-border' as const]: Color.borderGray(0.65),
+          ['--home-panel-heading' as const]: headingColor,
+          ['--home-panel-padding' as const]: '1.6rem 2rem',
+          ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
+        }}
       >
         <p
           className={css`

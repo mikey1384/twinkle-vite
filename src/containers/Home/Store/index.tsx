@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import KarmaStatus from './KarmaStatus';
 import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';
@@ -13,7 +13,10 @@ import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import localize from '~/constants/localize';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { Color } from '~/constants/css';
+import { homePanelClass } from '~/theme/homePanels';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const changePasswordLabel = localize('changePassword');
 const changePasswordDescriptionLabel = localize('changePasswordDescription');
@@ -23,6 +26,33 @@ const changeUsernameDescriptionLabel =
     ? `본 아이템을 잠금 해제 하시면 ${priceTable.username} 트윈클 코인 가격에 언제든 유저명을 바꾸실 수 있게 됩니다`
     : `Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`;
 const moreToComeLabel = localize('moreToCome');
+const settingsLabel = localize('settings');
+
+const contentWrapperClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  padding: 1rem 0;
+`;
+
+const headingPanelExtraClass = css`
+  margin-bottom: 2rem;
+  padding: 1.6rem 2rem;
+`;
+
+const headingLabelClass = css`
+  font-size: 2rem;
+  font-weight: bold;
+  line-height: 1.5;
+`;
+
+const loginPromptClass = css`
+  text-align: center;
+  font-size: 2.3rem;
+  font-weight: bold;
+  color: ${Color.black()};
+  margin-top: 17vh;
+`;
 
 export default function Store() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
@@ -39,6 +69,33 @@ export default function Store() {
   const donatedCoins = useKeyContext((v) => v.myState.donatedCoins);
   const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const headingColor = useMemo(() => {
+    const colorKey = themeRoles.sectionPanelText?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      colorKey && (Color[colorKey] as ((opacity?: number) => string) | undefined);
+    return fn ? fn() : Color.darkerGray();
+  }, [themeRoles.sectionPanelText?.color]);
+  const headingPanelStyle = useMemo(
+    () =>
+      ({
+        ['--home-panel-bg' as const]: '#ffffff',
+        ['--home-panel-tint' as const]: Color.logoBlue(0.08),
+        ['--home-panel-border' as const]: Color.borderGray(0.65),
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-padding' as const]: '1.6rem 2rem',
+        ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
+      }) as React.CSSProperties,
+    [headingColor]
+  );
 
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
@@ -89,73 +146,83 @@ export default function Store() {
   }, [pageVisible, userId]);
 
   return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        gap: 3rem;
-        padding: 1rem 0 15rem;
-      `}
-    >
-      <KarmaStatus
-        karmaPoints={karmaPoints}
-        level={level}
-        loading={loading}
-        numApprovedRecommendations={numApprovedRecommendations}
-        numPostsRewarded={numPostsRewarded}
-        numRecommended={numRecommended}
-        numTwinklesRewarded={numTwinklesRewarded}
-        title={title}
-        userId={userId}
-        userType={userType}
-      />
-      <ItemPanel
-        itemKey="changePassword"
-        itemName={changePasswordLabel}
-        itemDescription={changePasswordDescriptionLabel}
-        loading={loading}
+    <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
+      <div
+        className={cx(homePanelClass, headingPanelExtraClass)}
+        style={headingPanelStyle}
       >
-        <ChangePassword style={{ marginTop: '1rem' }} />
-      </ItemPanel>
-      {loading ? (
-        <Loading />
+        <p
+          className={headingLabelClass}
+          style={{ fontWeight: 'bold', fontSize: '2.5rem' }}
+        >
+          {settingsLabel}
+        </p>
+      </div>
+      {!userId ? (
+        <div className={loginPromptClass}>Please log in to view this page</div>
       ) : (
-        <>
-          <ItemPanel
+        <div className={contentWrapperClass}>
+          <KarmaStatus
             karmaPoints={karmaPoints}
-            locked={!canChangeUsername}
-            itemKey="username"
-            itemName={changeUsernameLabel}
-            itemDescription={changeUsernameDescriptionLabel}
-            onUnlock={handleUnlockUsernameChange}
-            unlocking={unlockingUsernameChange}
+            level={level}
+            loading={loading}
+            numApprovedRecommendations={numApprovedRecommendations}
+            numPostsRewarded={numPostsRewarded}
+            numRecommended={numRecommended}
+            numTwinklesRewarded={numTwinklesRewarded}
+            title={title}
+            userId={userId}
+            userType={userType}
+          />
+          <ItemPanel
+            itemKey="changePassword"
+            itemName={changePasswordLabel}
+            itemDescription={changePasswordDescriptionLabel}
             loading={loading}
           >
-            <ChangeUsername style={{ marginTop: '1rem' }} />
+            <ChangePassword style={{ marginTop: '1rem' }} />
           </ItemPanel>
-          <RewardBoostItem loading={loading} />
-          <FileSizeItem loading={loading} />
-          <ProfilePictureItem loading={loading} />
-          <AICardItem
-            userId={userId}
-            canGenerateAICard={!!canGenerateAICard}
-            karmaPoints={karmaPoints}
-            loading={loading}
-          />
-          <DonorLicenseItem
-            karmaPoints={karmaPoints}
-            loading={loading}
-            canDonate={canDonate}
-            donatedCoins={donatedCoins || 0}
-          />
-          <ItemPanel
-            karmaPoints={karmaPoints}
-            locked
-            itemKey="moreToCome"
-            itemName={`${moreToComeLabel}...`}
-            loading={loading}
-          />
-        </>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              <ItemPanel
+                karmaPoints={karmaPoints}
+                locked={!canChangeUsername}
+                itemKey="username"
+                itemName={changeUsernameLabel}
+                itemDescription={changeUsernameDescriptionLabel}
+                onUnlock={handleUnlockUsernameChange}
+                unlocking={unlockingUsernameChange}
+                loading={loading}
+              >
+                <ChangeUsername style={{ marginTop: '1rem' }} />
+              </ItemPanel>
+              <RewardBoostItem loading={loading} />
+              <FileSizeItem loading={loading} />
+              <ProfilePictureItem loading={loading} />
+              <AICardItem
+                userId={userId}
+                canGenerateAICard={!!canGenerateAICard}
+                karmaPoints={karmaPoints}
+                loading={loading}
+              />
+              <DonorLicenseItem
+                karmaPoints={karmaPoints}
+                loading={loading}
+                canDonate={canDonate}
+                donatedCoins={donatedCoins || 0}
+              />
+              <ItemPanel
+                karmaPoints={karmaPoints}
+                locked
+                itemKey="moreToCome"
+                itemName={`${moreToComeLabel}...`}
+                loading={loading}
+              />
+            </>
+          )}
+        </div>
       )}
     </div>
   );

@@ -4,12 +4,14 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import Link from '~/components/Link';
 import ProgressBar from '~/components/ProgressBar';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { DONOR_ACHIEVEMENT_THRESHOLD } from '~/constants/defaultValues';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ItemPanel from './ItemPanel';
+import { homePanelClass } from '~/theme/homePanels';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 export default function DonorLicenseItem({
   karmaPoints,
@@ -56,6 +58,42 @@ export default function DonorLicenseItem({
     return donatedCoins >= DONOR_ACHIEVEMENT_THRESHOLD;
   }, [donatedCoins]);
 
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const headingColor = useMemo(() => {
+    const key = themeRoles.sectionPanelText?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      key && (Color[key] as ((opacity?: number) => string) | undefined);
+    return fn ? fn() : Color.darkerGray();
+  }, [themeRoles.sectionPanelText?.color]);
+  const accentColor = useMemo(() => {
+    const key = themeRoles.sectionPanel?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      key && (Color[key] as ((opacity?: number) => string) | undefined);
+    return fn ? fn() : Color.logoBlue();
+  }, [themeRoles.sectionPanel?.color]);
+  const panelVars = useMemo(
+    () =>
+      ({
+        ['--home-panel-bg' as const]: '#ffffff',
+        ['--home-panel-tint' as const]: Color.logoBlue(0.08),
+        ['--home-panel-border' as const]: Color.borderGray(0.65),
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-accent' as const]: accentColor,
+        ['--home-panel-gap' as const]: '2rem',
+        ...style
+      }) as React.CSSProperties,
+    [accentColor, headingColor, style]
+  );
+
   if (!canDonate) {
     return (
       <ItemPanel
@@ -85,18 +123,17 @@ export default function DonorLicenseItem({
 
   return (
     <div
-      className={css`
-        border-radius: ${borderRadius};
-        background: #fff;
-        border: 1px solid ${Color.borderGray()};
-        padding: 2rem;
-
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          padding: 1.5rem;
-        }
-      `}
-      style={style}
+      className={cx(
+        homePanelClass,
+        css`
+          padding: 2rem;
+          gap: 2rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.5rem;
+          }
+        `
+      )}
+      style={panelVars}
     >
       <div
         className={css`

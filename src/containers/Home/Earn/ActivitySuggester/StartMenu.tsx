@@ -98,7 +98,7 @@ const sectionCard = css`
   padding: 1.8rem 2rem;
   border-radius: ${wideBorderRadius};
   background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--earn-card-border, rgba(148, 163, 184, 0.35));
+  border: 1px solid var(--home-panel-card-border, rgba(148, 163, 184, 0.35));
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08),
     0 14px 28px -20px rgba(15, 23, 42, 0.28);
   min-height: 18rem;
@@ -122,7 +122,7 @@ const sectionTitle = css`
   margin: 0.4rem 0 0;
   font-size: 2.1rem;
   font-weight: 700;
-  color: var(--earn-panel-heading, ${Color.darkerGray()});
+  color: var(--home-panel-heading, ${Color.darkerGray()});
 `;
 
 const sectionDescription = css`

@@ -10,11 +10,13 @@ import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
 import UserListModal from '~/components/Modals/UserListModal';
-import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
+import { Color, borderRadius, mobileMaxWidth, getThemeStyles } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
+import { homePanelClass } from '~/theme/homePanels';
+import { getThemeRoles, ThemeName } from '~/theme/themes';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -88,6 +90,47 @@ export default function ItemPanel({
   const anyMilestoneCompleted =
     milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = useMemo<ThemeName>(
+    () => ((profileTheme || 'logoBlue') as ThemeName),
+    [profileTheme]
+  );
+  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const themeStyles = useMemo(
+    () => getThemeStyles(themeName, 0.12),
+    [themeName]
+  );
+  const headingColor = useMemo(() => {
+    const key = themeRoles.sectionPanelText?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      key && (Color[key] as ((opacity?: number) => string) | undefined);
+    return fn ? fn() : Color.darkerGray();
+  }, [themeRoles.sectionPanelText?.color]);
+  const { accentColor, accentTint } = useMemo(() => {
+    const key = themeRoles.sectionPanel?.color as
+      | keyof typeof Color
+      | undefined;
+    const fn =
+      key && (Color[key] as ((opacity?: number) => string) | undefined);
+    if (fn) {
+      return { accentColor: fn(), accentTint: fn(0.14) };
+    }
+    return { accentColor: Color.logoBlue(), accentTint: Color.logoBlue(0.14) };
+  }, [themeRoles.sectionPanel?.color]);
+  const panelStyle = useMemo(() => {
+    const vars = {
+      ['--home-panel-bg' as const]: '#ffffff',
+      ['--home-panel-tint' as const]:
+        themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+      ['--home-panel-border' as const]:
+        themeStyles.border || Color.borderGray(0.65),
+      ['--home-panel-heading' as const]: headingColor,
+      ['--home-panel-accent' as const]: accentColor
+    } as React.CSSProperties;
+    return style ? { ...vars, ...style } : vars;
+  }, [accentColor, accentTint, headingColor, style, themeStyles.border, themeStyles.hoverBg]);
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
@@ -190,39 +233,36 @@ export default function ItemPanel({
 
   return (
     <div
-      className={css`
-        display: grid;
-        grid-template-columns: auto 1fr 1fr;
-        grid-template-areas:
-          'badge title title'
-          'badge description description'
-          'badge ${shouldHideRequirements
-            ? 'milestones milestones'
-            : milestonesShown
-            ? 'requirements milestones'
-            : 'requirements requirements'}'
-          'accomplishers accomplishers accomplishers';
-        gap: 2rem;
-        align-items: start;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        padding: 1rem;
-        background: #fff;
-        @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 1fr;
+      className={cx(
+        homePanelClass,
+        css`
+          display: grid;
+          grid-template-columns: auto 1fr 1fr;
           grid-template-areas:
-            'title'
-            'badge'
-            'description'
-            ${shouldHideRequirements ? '' : "'requirements'"}
-            ${milestonesShown ? "'milestones'" : ''}
-            'accomplishers';
-          border-radius: 0;
-          border-right: 0;
-          border-left: 0;
-        }
-      `}
-      style={style}
+            'badge title title'
+            'badge description description'
+            'badge ${shouldHideRequirements
+              ? 'milestones milestones'
+              : milestonesShown
+              ? 'requirements milestones'
+              : 'requirements requirements'}'
+            'accomplishers accomplishers accomplishers';
+          gap: 2rem;
+          align-items: start;
+          padding: 1.6rem 2rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            grid-template-columns: 1fr;
+            grid-template-areas:
+              'title'
+              'badge'
+              'description'
+              ${shouldHideRequirements ? '' : "'requirements'"}
+              ${milestonesShown ? "'milestones'" : ''}
+              'accomplishers';
+          }
+        `
+      )}
+      style={panelStyle}
     >
       {badgeSrc && (
         <img

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { panel } from '../Styles';
 import { useHomeContext, useKeyContext } from '~/contexts';
 import EarnXPFromSubjects from './EarnXPFromSubjects';
 import RecommendPosts from './RecommendPosts';
@@ -8,6 +7,7 @@ import StartMenu from './StartMenu';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { Color, getThemeStyles } from '~/constants/css';
+import { homePanelClass } from '~/theme/homePanels';
 
 export default function ActivitySuggester({
   style
@@ -49,13 +49,13 @@ export default function ActivitySuggester({
   const panelVars = useMemo(
     () =>
       ({
-        ['--earn-panel-bg' as const]: '#ffffff',
-        ['--earn-panel-tint' as const]:
+        ['--home-panel-bg' as const]: '#ffffff',
+        ['--home-panel-tint' as const]:
           themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
-        ['--earn-panel-border' as const]: themeStyles.border,
-        ['--earn-panel-heading' as const]: headingColor,
-        ['--earn-panel-accent' as const]: accentColor,
-        ['--earn-card-border' as const]: themeStyles.border
+        ['--home-panel-border' as const]: themeStyles.border,
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-accent' as const]: accentColor,
+        ['--home-panel-card-border' as const]: themeStyles.border
       }) as React.CSSProperties,
     [accentColor, accentTint, headingColor, themeStyles.border, themeStyles.hoverBg]
   );
@@ -68,7 +68,7 @@ export default function ActivitySuggester({
     <ScopedTheme
       theme={themeName}
       roles={['sectionPanel', 'sectionPanelText']}
-      className={panel}
+      className={homePanelClass}
       style={combinedStyle}
     >
       {topMenuSection === 'start' ? (
