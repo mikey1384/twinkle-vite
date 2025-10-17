@@ -12,12 +12,14 @@ export default function SideMenu({
   children,
   className,
   style,
-  variant = 'default'
+  variant = 'default',
+  placement = 'left'
 }: {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   variant?: 'default' | 'card';
+  placement?: 'left' | 'right';
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const activeColorName = useKeyContext(
@@ -25,6 +27,7 @@ export default function SideMenu({
   );
   const themeName = (profileTheme || 'logoBlue') as string;
   const isCardVariant = variant === 'card';
+  const isRight = placement === 'right';
 
   const themeBg = useMemo(
     () => getThemeStyles(themeName, 0.06).bg,
@@ -51,6 +54,7 @@ export default function SideMenu({
     typeof activeColorFn === 'function'
       ? (activeColorFn as (opacity?: number) => string)(0.4)
       : Color.borderGray();
+  const hoverTranslate = isRight ? '-4px' : '4px';
 
   return (
     <div
@@ -62,7 +66,17 @@ export default function SideMenu({
         display: flex;
         position: fixed;
         z-index: 20;
-        justify-content: ${isCardVariant ? 'flex-start' : 'center'};
+        ${isRight ? 'right: 2rem;' : 'left: 2rem;'}
+        justify-content: ${isCardVariant
+          ? isRight
+            ? 'flex-end'
+            : 'flex-start'
+          : 'center'};
+        align-items: ${isCardVariant
+          ? isRight
+            ? 'flex-end'
+            : 'flex-start'
+          : 'center'};
         flex-direction: column;
         font-size: 2rem;
         background: ${isCardVariant ? themeBg : 'transparent'};
@@ -90,9 +104,11 @@ export default function SideMenu({
           cursor: pointer;
           display: flex;
           align-items: center;
-          text-align: center;
+          text-align: ${isRight ? 'right' : 'center'};
           width: 100%;
-          justify-content: center;
+          justify-content: ${isRight ? 'flex-end' : 'center'};
+          flex-direction: row;
+          padding-inline: ${isCardVariant ? '1.6rem' : '1.5rem'};
           color: ${Color.darkGray()};
           text-decoration: none;
           gap: 0.8rem;
@@ -107,7 +123,7 @@ export default function SideMenu({
           border-color: ${hoverAccent};
           color: ${hoverAccent};
           box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
-          transform: translateX(4px);
+          transform: translateX(${hoverTranslate});
           `
             : `
           font-weight: bold;
@@ -161,7 +177,7 @@ export default function SideMenu({
           border-color: ${hoverAccent};
           color: ${hoverAccent};
           box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
-          transform: translateX(4px);
+          transform: translateX(${hoverTranslate});
           `
             : `
           font-weight: bold;

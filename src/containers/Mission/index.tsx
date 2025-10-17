@@ -94,7 +94,7 @@ export default function Mission() {
         <div style={{ width: '100%', display: 'flex' }}>
           <div
             className={css`
-              width: ${isAdmin ? 'CALC(100% - 15rem)' : '100%'};
+              width: ${isAdmin ? 'calc(100% - 23rem)' : '100%'};
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }
@@ -159,7 +159,7 @@ export default function Mission() {
           {isAdmin && (
             <RightMenu
               className="desktop"
-              style={{ marginTop: '3rem', width: '12rem', marginRight: '3rem' }}
+              style={{ right: '3rem' }}
               selectedTab={selectedMissionsTab}
               onSelectTab={onSetSelectedMissionsTab}
             />
