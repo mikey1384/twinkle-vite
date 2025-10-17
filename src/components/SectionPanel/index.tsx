@@ -129,11 +129,9 @@ export default function SectionPanel({
   }, [themeName]);
   const panelAccent = useMemo(() => {
     return (
-      resolveColor(themeRoles.sectionPanel?.accent, sectionPanelColor) ||
-      resolveColor(sectionPanelColor, themeName) ||
-      Color.logoBlue()
+      resolveColor(sectionPanelColor, themeName) || Color.logoBlue()
     );
-  }, [sectionPanelColor, themeRoles.sectionPanel?.accent, themeName]);
+  }, [sectionPanelColor, themeName]);
 
   const TitleInputRef = useRef(null);
 

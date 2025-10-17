@@ -50,10 +50,7 @@ export default function TopicMessagePreview({
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
-  const themeName = useMemo<ThemeName>(
-    () => (theme as ThemeName),
-    [theme]
-  );
+  const themeName = useMemo<ThemeName>(() => theme as ThemeName, [theme]);
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
   const topicTextColor = useMemo(() => {
     const role = themeRoles.topicText;
@@ -233,7 +230,7 @@ export default function TopicMessagePreview({
 
   function truncateText(
     text: string,
-    elementRef: React.RefObject<HTMLSpanElement>
+    elementRef: React.RefObject<HTMLSpanElement | null>
   ) {
     if (!elementRef.current || !containerRef.current) return text;
 

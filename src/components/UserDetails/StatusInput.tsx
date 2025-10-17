@@ -59,7 +59,7 @@ export default function StatusInput({
         innerRef={innerRef}
         minRows={1}
         value={editedStatusMsg}
-        onChange={onTextChange}
+        onChange={(event) => onTextChange(event.target.value)}
         placeholder={statusMsgPlaceholder}
       />
       <p

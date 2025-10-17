@@ -8,7 +8,7 @@ interface DrawingToolsUIProps {
   tool: ToolType;
   setTool: (tool: ToolType) => void;
   color: string;
-  handleColorChange: (color: string) => void;
+  handleColorChange: (color: string, commit?: boolean) => void;
   lineWidth: number;
   setLineWidth: (w: number) => void;
   fontSize: number;
@@ -45,6 +45,8 @@ export default function DrawingToolsUI({
   addTextToCanvas,
   cancelTextInput
 }: DrawingToolsUIProps) {
+  const pickerActiveRef = useRef(false);
+
   return (
     <>
       <div

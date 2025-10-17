@@ -62,6 +62,7 @@ function NotiMessage({
     achievementTitle: string;
     missionTitle: string;
     missionType: string;
+    rootMissionType?: string;
     passType: string;
     userId: number;
     user: User;

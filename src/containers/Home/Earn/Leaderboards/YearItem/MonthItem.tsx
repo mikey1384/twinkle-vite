@@ -1,8 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
 import Top30Modal from './Top30Modal';
+import { themedCardBase } from '~/theme/themedCard';
+
+const container = css`
+  ${themedCardBase};
+  padding: 1.5rem 1.8rem;
+`;
 
 export default function MonthItem({
   monthLabel,
@@ -22,13 +28,11 @@ export default function MonthItem({
 
   return (
     <div
-      className={css`
-        background: #fff;
-        padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-      `}
-      style={style}
+      className={container}
+      style={{
+        ['--themed-card-bg' as const]: 'var(--earn-panel-bg, #f8f9ff)',
+        ...(style || {})
+      }}
     >
       <p
         className={css`

@@ -565,13 +565,13 @@ function ProfilePanel({
                       >
                         <div style={{ display: 'flex' }}>
                           <UploadButton
-                            variant="solid"
                             onFileSelect={handlePicture}
                             accept="image/*"
                             icon="upload"
                             color="black"
                             transparent
                             text={changePicLabel}
+                            buttonProps={{ variant: 'solid', tone: 'raised' }}
                           />
                           <Button
                             transparent

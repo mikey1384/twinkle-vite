@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import {
-  Color,
-  getThemeStyles,
-  liftedBoxShadow,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, getThemeStyles } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext, useNotiContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -16,6 +10,7 @@ import TodayXPRankings from './TodayXPRankings';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
+import { themedCardBase } from '~/theme/themedCard';
 
 function blendWithWhite(color: string, weight: number) {
   const match = color
@@ -32,27 +27,11 @@ function blendWithWhite(color: string, weight: number) {
 }
 
 const container = css`
+  ${themedCardBase};
   position: relative;
   padding: 1.6rem 2rem;
   text-align: center;
-  border-radius: ${wideBorderRadius};
-  border: 1px solid ${Color.borderGray(0.65)};
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    var(--today-stats-bg, #f8f9ff) 100%
-  );
-  box-shadow: inset 0 1px 0 ${Color.white(0.85)},
-    0 10px 24px rgba(15, 23, 42, 0.14);
   overflow: hidden;
-
-  @media (max-width: ${mobileMaxWidth}) {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    box-shadow: none;
-    padding: 1.4rem 1.2rem;
-  }
 `;
 
 export default function TodayStats({
@@ -118,7 +97,8 @@ export default function TodayStats({
         style={{
           marginBottom: '1rem',
           width: '100%',
-          ['--today-stats-bg' as any]: panelBg
+          ['--themed-card-bg' as any]: panelBg,
+          ['--themed-card-border' as any]: Color.borderGray(0.65)
         }}
       >
         {todayStats?.loaded ? (

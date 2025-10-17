@@ -7,7 +7,12 @@ import Thumbnail from '../Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { Color, mobileMaxWidth, desktopMinWidth, wideBorderRadius } from '~/constants/css';
+import {
+  Color,
+  mobileMaxWidth,
+  desktopMinWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { css } from '@emotion/css';
@@ -211,10 +216,7 @@ export default function RootContent({
   filePath,
   fileSize,
   hideSideBordersOnMobile,
-  itemSelectedColor,
-  itemSelectedOpacity,
   isListening,
-  modalOverModal,
   navigate,
   onClick,
   rewardLevel,
@@ -245,8 +247,6 @@ export default function RootContent({
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
   isListening?: boolean;
-  itemSelectedColor: string;
-  itemSelectedOpacity: number;
   modalOverModal?: boolean;
   navigate: (path: string) => void;
   onClick?: () => void;
@@ -267,7 +267,7 @@ export default function RootContent({
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
+    () => (profileTheme || 'logoBlue') as ThemeName,
     [profileTheme]
   );
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
@@ -312,16 +312,16 @@ export default function RootContent({
       border-color: ${activeBorder};
     }
   `;
+
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(fileName || ''),
     [fileName]
   );
-  const boxShadowColor = useMemo(() => {
-    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+
   const isRewardBarShown = useMemo(() => {
     return !!rewardLevel && contentType === 'subject';
   }, [contentType, rewardLevel]);
+
   const hasThumb = useMemo(() => {
     return (
       (contentType === 'subject' && rootId) ||
@@ -330,18 +330,14 @@ export default function RootContent({
     );
   }, [contentType, filePath, rootId, userId]);
 
-  const borderColor = useMemo(() => {
-    return selected
-      ? Color[itemSelectedColor](itemSelectedOpacity)
-      : Color.borderGray();
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-
   return (
     <div
       onClick={handleClick}
-      className={`${rootContentCSS} ${cardThemeCSS} ${selected ? 'selected ' : ''}${
-        contentType === 'video' ? 'is-video' : ''
-      }${isRewardBarShown ? '' : ' no-reward'}${hasThumb ? '' : ' no-thumb'}${
+      className={`${rootContentCSS} ${cardThemeCSS} ${
+        selected ? 'selected ' : ''
+      }${contentType === 'video' ? 'is-video' : ''}${
+        isRewardBarShown ? '' : ' no-reward'
+      }${hasThumb ? '' : ' no-thumb'}${
         hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
       }`}
     >
@@ -407,7 +403,6 @@ export default function RootContent({
               fileName={fileName}
               filePath={filePath}
               fileSize={fileSize}
-              modalOverModal={modalOverModal}
               thumbUrl={thumbUrl}
               videoHeight="100%"
               isThumb

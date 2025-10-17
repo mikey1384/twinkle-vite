@@ -48,6 +48,8 @@ const getButtonColors = (difficulty: number) => {
   return buttonColors[difficulty] || buttonColors.default;
 };
 
+const AnimatedButton = animated.button as any;
+
 export default function AIStoryView({
   audioPath,
   difficulty = 0,
@@ -193,7 +195,7 @@ export default function AIStoryView({
             padding: '5rem 0'
           }}
         >
-          <animated.button
+          <AnimatedButton
             className={css`
               border: none;
               color: white;
@@ -229,7 +231,7 @@ export default function AIStoryView({
             <span style={{ marginLeft: '0.7rem' }}>
               {isPlaying ? 'Stop' : 'Listen'}
             </span>
-          </animated.button>
+          </AnimatedButton>
         </div>
       ) : (
         <div

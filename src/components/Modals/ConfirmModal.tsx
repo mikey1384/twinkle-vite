@@ -17,7 +17,8 @@ export default function ConfirmModal({
   onConfirm,
   confirmButtonColor = '',
   confirmButtonLabel = confirmLabel,
-  isReverseButtonOrder
+  isReverseButtonOrder,
+  modalOverModal = false
 }: {
   disabled?: boolean;
   description?: any;
@@ -28,6 +29,7 @@ export default function ConfirmModal({
   confirmButtonColor?: string;
   confirmButtonLabel?: string;
   isReverseButtonOrder?: boolean;
+  modalOverModal?: boolean;
 }) {
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +40,8 @@ export default function ConfirmModal({
       hasHeader
       title={title}
       size="md"
+      modalLevel={modalOverModal ? 2 : undefined}
+      priority={modalOverModal}
       closeOnBackdropClick
       footer={
         isReverseButtonOrder ? (

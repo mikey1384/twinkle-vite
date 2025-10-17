@@ -19,7 +19,8 @@ export default function FileViewer({
   src,
   style,
   thumbUrl,
-  showImageModalOnClick
+  showImageModalOnClick,
+  isOnModal
 }: {
   fileSize?: number;
   onThumbnailLoad?: (thumbUrl: string) => void;
@@ -28,6 +29,7 @@ export default function FileViewer({
   style?: React.CSSProperties;
   thumbUrl?: string;
   showImageModalOnClick?: boolean;
+  isOnModal?: boolean;
 }) {
   useLazyLoadForImage('.lazy-background', 'visible');
   const [imageModalShown, setImageModalShown] = useState(false);

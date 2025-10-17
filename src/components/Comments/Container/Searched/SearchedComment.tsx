@@ -91,7 +91,7 @@ export default function SearchedComment({
     contentType?: string;
   };
   subject: any;
-  theme: string;
+  theme?: string;
 }) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
@@ -152,7 +152,7 @@ export default function SearchedComment({
   const { canDelete, canEdit, canReward } = useMyLevel();
 
   const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    () => (theme || profileTheme || 'logoBlue') as ThemeName,
     [profileTheme, theme]
   );
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
@@ -167,7 +167,7 @@ export default function SearchedComment({
         : fn()
       : key;
     return `var(--role-link-color, ${fallback})`;
-  }, [themeRoles, themeName]);
+  }, [themeRoles]);
   const rewardColor = useMemo(
     () => themeRoles.reward?.color || 'pink',
     [themeRoles]

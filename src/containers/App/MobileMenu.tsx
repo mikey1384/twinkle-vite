@@ -6,7 +6,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation } from 'react-router-dom';
-import { useSpring, animated } from 'react-spring';
+import { useSpring, animated } from '@react-spring/web';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';

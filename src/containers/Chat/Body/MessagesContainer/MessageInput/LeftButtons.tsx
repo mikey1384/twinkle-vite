@@ -108,7 +108,6 @@ export default function LeftButtons({
           </Button>
           <Button
             disabled={loading || isChessBanned || isRestrictedChannel}
-            style={{ marginLeft: '0.5rem' }}
             variant="soft"
             tone="raised"
             filled={omokButtonIsGlowing}
