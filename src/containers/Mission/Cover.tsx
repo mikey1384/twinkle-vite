@@ -98,12 +98,11 @@ export default function Cover({
         <div>
           <ProfilePic
             className={css`
-              width: 9rem;
+              --profile-pic-size: 9rem;
               font-size: 2rem;
               z-index: 10;
               @media (max-width: ${mobileMaxWidth}) {
-                width: 5rem;
-                height: 5rem;
+                --profile-pic-size: 5rem;
               }
             `}
             userId={userId}

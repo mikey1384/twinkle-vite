@@ -297,32 +297,31 @@ export default function Cover({
           `}
         >
           <ProfilePic
-          isProfilePage
-          className={css`
-            width: 22rem;
-            font-size: 2rem;
-            z-index: 10;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 10rem;
-              height: 10rem;
+            isProfilePage
+            className={css`
+              --profile-pic-size: 22rem;
+              font-size: 2rem;
+              z-index: 10;
+              @media (max-width: ${mobileMaxWidth}) {
+                --profile-pic-size: 10rem;
+              }
+            `}
+            userId={profile.id}
+            onClick={
+              userId === profile.id
+                ? () => FileInputRef.current.click()
+                : profilePicUrl
+                ? () => setImageModalShown(true)
+                : undefined
             }
-          `}
-          userId={profile.id}
-          onClick={
-            userId === profile.id
-              ? () => FileInputRef.current.click()
-              : profilePicUrl
-              ? () => setImageModalShown(true)
-              : undefined
-          }
-          profilePicUrl={profilePicUrl}
-          online={chatStatus[profile.id]?.isOnline}
-          isBusy={chatStatus[profile.id]?.isBusy}
-          isAway={chatStatus[profile.id]?.isAway}
-          large
-          statusShown
-          statusSize={coverStatusSize}
-        />
+            profilePicUrl={profilePicUrl}
+            online={chatStatus[profile.id]?.isOnline}
+            isBusy={chatStatus[profile.id]?.isBusy}
+            isAway={chatStatus[profile.id]?.isAway}
+            large
+            statusShown
+            statusSize={coverStatusSize}
+          />
       </div>
       {imageModalShown && (
         <ImageModal

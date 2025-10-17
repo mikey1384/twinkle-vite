@@ -541,353 +541,368 @@ function ProfilePanel({
                   className={panelContainerClass}
                   style={panelStyleVars}
                 >
-              <div className={`unselectable ${heroSectionClass}`}>
-                <div className={heroBadgesClass}>
-                  <AchievementBadges
-                    thumbSize="2.5rem"
-                    unlockedAchievementIds={profile.unlockedAchievementIds}
-                  />
-                </div>
-              </div>
-              {profileLoaded ? (
-                <>
-                  <div className={profileContentClass}>
-                    <div className={leftColumnClass}>
-                      <div className="unselectable" style={{ width: '100%' }}>
-                        <Link
-                          onClick={handleReloadProfile}
-                          to={`/users/${profileName}`}
-                          style={{ display: 'block', width: '100%' }}
-                        >
-                          <ProfilePic
-                            style={{
-                              width: '100%',
-                              cursor: 'pointer'
-                            }}
-                            userId={profileId}
-                            profilePicUrl={profilePicUrl}
-                            online={isOnline}
-                            isBusy={isBusy}
-                            isAway={isAway}
-                            statusShown
-                            large
-                            statusSize="medium"
-                          />
-                        </Link>
-                      </div>
-                      <div className={quickLinksClass}>
-                        <div
-                          className={quickLinkClass}
-                          style={{
-                            color: panelAccentColor,
-                            opacity: profileUsername ? 1 : 0.55,
-                            pointerEvents: profileUsername ? 'auto' : 'none'
-                          }}
-                          onClick={() =>
-                            profileUsername
-                              ? navigate(
-                                  `/ai-cards/?search[owner]=${profile.username}`
-                                )
-                              : null
-                          }
-                        >
-                          <Icon icon="cards-blank" />
-                          <span>AI Cards</span>
-                        </div>
-                        {website && (
-                          <div
-                            className={quickLinkClass}
-                            style={{ color: Color.green() }}
-                            onClick={() => window.open(website)}
-                          >
-                            <Icon icon="globe" />
-                            <span>Website</span>
-                          </div>
-                        )}
-                        {youtubeUrl && (
-                          <div
-                            className={quickLinkClass}
-                            style={{ color: '#e64959' }}
-                            onClick={() => window.open(youtubeUrl)}
-                          >
-                            <Icon icon={['fab', 'youtube']} />
-                            <span>YouTube</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className={detailsColumnClass}>
-                      <UserDetails
-                        profile={profile}
-                        removeStatusMsg={(userId: number) =>
-                          onSetUserState({
-                            userId,
-                            newState: { statusMsg: '', statusColor: '' }
-                          })
-                        }
-                        updateStatusMsg={(data: any) => {
-                          if (banned?.posting) {
-                            return;
-                          }
-                          onSetUserState({
-                            userId: data.userId,
-                            newState: data
-                          });
-                        }}
-                        onSetBioEditModalShown={setBioEditModalShown}
-                        userId={userId}
+                  <div className={`unselectable ${heroSectionClass}`}>
+                    <div className={heroBadgesClass}>
+                      <AchievementBadges
+                        thumbSize="2.5rem"
+                        unlockedAchievementIds={profile.unlockedAchievementIds}
                       />
-                      {canEdit && (
-                        <div className={actionsContainerClass}>
+                    </div>
+                  </div>
+                  {profileLoaded ? (
+                    <>
+                      <div className={profileContentClass}>
+                        <div className={leftColumnClass}>
                           <div
-                            style={{
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              gap: '0.6rem',
-                              justifyContent: 'flex-start'
-                            }}
+                            className="unselectable"
+                            style={{ width: '100%' }}
                           >
-                            <UploadButton
-                              onFileSelect={handlePicture}
-                              accept="image/*"
-                              icon="upload"
-                              text={changePicLabel}
-                              className={actionButtonClass}
-                              style={{ flex: '1 1 13rem' }}
-                              color="logoBlue"
-                              buttonProps={{
-                                variant: 'solid',
-                                tone: 'raised',
-                                uppercase: false
-                              }}
-                            />
-                            <Button
-                              onClick={() => {
-                                if (banned?.posting) {
-                                  return;
-                                }
-                                setBioEditModalShown(true);
-                              }}
-                              className={actionButtonClass}
-                              variant="solid"
-                              tone="raised"
-                              color="purple"
-                              uppercase={false}
-                              style={{ flex: '1 1 9rem' }}
+                            <Link
+                              onClick={handleReloadProfile}
+                              to={`/users/${profileName}`}
+                              style={{ display: 'block', width: '100%' }}
                             >
-                              {editBioLabel}
-                            </Button>
-                            {profileId === userId && (
+                          <ProfilePic
+                            style={{ cursor: 'pointer' }}
+                            className={css`
+                              margin: 0 auto;
+                              display: block;
+                              --profile-pic-size: min(16rem, 58vw);
+                              @media (max-width: ${mobileMaxWidth}) {
+                                --profile-pic-size: min(13rem, 72vw);
+                              }
+                            `}
+                                userId={profileId}
+                                profilePicUrl={profilePicUrl}
+                                online={isOnline}
+                                isBusy={isBusy}
+                                isAway={isAway}
+                                statusShown
+                                large
+                                statusSize="medium"
+                              />
+                            </Link>
+                          </div>
+                          <div className={quickLinksClass}>
+                            <div
+                              className={quickLinkClass}
+                              style={{
+                                color: panelAccentColor,
+                                opacity: profileUsername ? 1 : 0.55,
+                                pointerEvents: profileUsername ? 'auto' : 'none'
+                              }}
+                              onClick={() =>
+                                profileUsername
+                                  ? navigate(
+                                      `/ai-cards/?search[owner]=${profile.username}`
+                                    )
+                                  : null
+                              }
+                            >
+                              <Icon icon="cards-blank" />
+                              <span>AI Cards</span>
+                            </div>
+                            {website && (
+                              <div
+                                className={quickLinkClass}
+                                style={{ color: Color.green() }}
+                                onClick={() => window.open(website)}
+                              >
+                                <Icon icon="globe" />
+                                <span>Website</span>
+                              </div>
+                            )}
+                            {youtubeUrl && (
+                              <div
+                                className={quickLinkClass}
+                                style={{ color: '#e64959' }}
+                                onClick={() => window.open(youtubeUrl)}
+                              >
+                                <Icon icon={['fab', 'youtube']} />
+                                <span>YouTube</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className={detailsColumnClass}>
+                          <UserDetails
+                            profile={profile}
+                            removeStatusMsg={(userId: number) =>
+                              onSetUserState({
+                                userId,
+                                newState: { statusMsg: '', statusColor: '' }
+                              })
+                            }
+                            updateStatusMsg={(data: any) => {
+                              if (banned?.posting) {
+                                return;
+                              }
+                              onSetUserState({
+                                userId: data.userId,
+                                newState: data
+                              });
+                            }}
+                            onSetBioEditModalShown={setBioEditModalShown}
+                            userId={userId}
+                          />
+                          {canEdit && (
+                            <div className={actionsContainerClass}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                  gap: '0.6rem',
+                                  justifyContent: 'flex-start'
+                                }}
+                              >
+                                <UploadButton
+                                  onFileSelect={handlePicture}
+                                  accept="image/*"
+                                  icon="upload"
+                                  text={changePicLabel}
+                                  className={actionButtonClass}
+                                  style={{ flex: '1 1 13rem' }}
+                                  color="logoBlue"
+                                  buttonProps={{
+                                    variant: 'solid',
+                                    tone: 'raised',
+                                    uppercase: false
+                                  }}
+                                />
+                                <Button
+                                  onClick={() => {
+                                    if (banned?.posting) {
+                                      return;
+                                    }
+                                    setBioEditModalShown(true);
+                                  }}
+                                  className={actionButtonClass}
+                                  variant="solid"
+                                  tone="raised"
+                                  color="purple"
+                                  uppercase={false}
+                                  style={{ flex: '1 1 9rem' }}
+                                >
+                                  {editBioLabel}
+                                </Button>
+                                {profileId === userId && (
+                                  <MessagesButton
+                                    commentsShown={commentsShown}
+                                    loading={loadingComments}
+                                    profileId={profileId}
+                                    myId={userId}
+                                    onMessagesButtonClick={
+                                      onMessagesButtonClick
+                                    }
+                                    numMessages={numMessages}
+                                    className={`${actionButtonClass} ${messageButtonClass}`}
+                                    style={{
+                                      flex: '1 0 100%',
+                                      minWidth: '18rem'
+                                    }}
+                                    iconColor="rgba(255,255,255,0.92)"
+                                    textColor="rgba(255,255,255,0.95)"
+                                    buttonColor="orange"
+                                    buttonVariant="solid"
+                                    buttonTone="raised"
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {expandable && userId !== profileId && (
+                            <div
+                              className={actionButtonsLayoutClass}
+                              style={{ marginTop: noBio ? '2rem' : '1rem' }}
+                            >
+                              <Button
+                                className={`${actionButtonClass} ${profileButtonClass}`}
+                                variant="solid"
+                                tone="raised"
+                                color="logoBlue"
+                                uppercase={false}
+                                style={{ flex: '1 1 9rem' }}
+                                disabled={!profileUsername}
+                                onClick={() =>
+                                  profileUsername
+                                    ? navigate(`/users/${profileUsername}`)
+                                    : null
+                                }
+                              >
+                                <Icon
+                                  icon="user"
+                                  color="rgba(255,255,255,0.92)"
+                                />
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {profileLabel}
+                                </span>
+                              </Button>
+                              <Button
+                                className={`${actionButtonClass} ${cardsButtonClass}`}
+                                variant="solid"
+                                tone="raised"
+                                color="purple"
+                                uppercase={false}
+                                style={{ flex: '1 1 9rem' }}
+                                disabled={!profileUsername}
+                                onClick={() =>
+                                  profileUsername
+                                    ? navigate(
+                                        `/ai-cards/?search[owner]=${profileUsername}`
+                                      )
+                                    : null
+                                }
+                              >
+                                <Icon
+                                  icon="cards-blank"
+                                  color="rgba(255,255,255,0.92)"
+                                />
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {cardsLabel}
+                                </span>
+                              </Button>
+                              <Button
+                                className={`${actionButtonClass} ${chatButtonClass}`}
+                                variant="solid"
+                                tone="raised"
+                                color="green"
+                                uppercase={false}
+                                style={{ flex: '1 1 9rem' }}
+                                loading={chatLoading}
+                                disabled={chatLoading || !profileUsername}
+                                onClick={handleTalkClick}
+                              >
+                                <Icon
+                                  icon="comments"
+                                  color="rgba(255,255,255,0.92)"
+                                />
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {chatLabel}
+                                </span>
+                              </Button>
                               <MessagesButton
+                                className={`${actionButtonClass} ${messageButtonClass}`}
+                                style={{
+                                  flex: '1 0 100%',
+                                  minWidth: '18rem'
+                                }}
                                 commentsShown={commentsShown}
                                 loading={loadingComments}
                                 profileId={profileId}
                                 myId={userId}
                                 onMessagesButtonClick={onMessagesButtonClick}
                                 numMessages={numMessages}
-                                className={`${actionButtonClass} ${messageButtonClass}`}
-                                style={{
-                                  flex: '1 0 100%',
-                                  minWidth: '18rem'
-                                }}
                                 iconColor="rgba(255,255,255,0.92)"
                                 textColor="rgba(255,255,255,0.95)"
                                 buttonColor="orange"
                                 buttonVariant="solid"
                                 buttonTone="raised"
                               />
-                            )}
-                          </div>
+                            </div>
+                          )}
+                          {lastActive && !isOnline && profileId !== userId && (
+                            <div
+                              style={{
+                                marginTop: '1rem',
+                                fontSize: '1.5rem',
+                                color: Color.gray()
+                              }}
+                            >
+                              <p>
+                                {lastOnlineLabel} {timeSince(lastActive)}
+                              </p>
+                            </div>
+                          )}
                         </div>
+                      </div>
+                      {bioEditModalShown && (
+                        <BioEditModal
+                          firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
+                          secondLine={replaceFakeAtSymbol(
+                            profileSecondRow || ''
+                          )}
+                          thirdLine={replaceFakeAtSymbol(profileThirdRow || '')}
+                          onSubmit={handleUploadBio}
+                          onHide={() => setBioEditModalShown(false)}
+                        />
                       )}
-                      {expandable && userId !== profileId && (
-                        <div
-                          className={actionButtonsLayoutClass}
-                          style={{ marginTop: noBio ? '2rem' : '1rem' }}
-                        >
-                          <Button
-                            className={`${actionButtonClass} ${profileButtonClass}`}
-                            variant="solid"
-                            tone="raised"
-                            color="logoBlue"
-                            uppercase={false}
-                            style={{ flex: '1 1 9rem' }}
-                            disabled={!profileUsername}
-                            onClick={() =>
-                              profileUsername
-                                ? navigate(`/users/${profileUsername}`)
-                                : null
-                            }
-                          >
-                            <Icon icon="user" color="rgba(255,255,255,0.92)" />
-                            <span style={{ marginLeft: '0.7rem' }}>
-                              {profileLabel}
-                            </span>
-                          </Button>
-                          <Button
-                            className={`${actionButtonClass} ${cardsButtonClass}`}
-                            variant="solid"
-                            tone="raised"
-                            color="purple"
-                            uppercase={false}
-                            style={{ flex: '1 1 9rem' }}
-                            disabled={!profileUsername}
-                            onClick={() =>
-                              profileUsername
-                                ? navigate(
-                                    `/ai-cards/?search[owner]=${profileUsername}`
-                                  )
-                                : null
-                            }
-                          >
-                            <Icon
-                              icon="cards-blank"
-                              color="rgba(255,255,255,0.92)"
-                            />
-                            <span style={{ marginLeft: '0.7rem' }}>
-                              {cardsLabel}
-                            </span>
-                          </Button>
-                          <Button
-                            className={`${actionButtonClass} ${chatButtonClass}`}
-                            variant="solid"
-                            tone="raised"
-                            color="green"
-                            uppercase={false}
-                            style={{ flex: '1 1 9rem' }}
-                            loading={chatLoading}
-                            disabled={chatLoading || !profileUsername}
-                            onClick={handleTalkClick}
-                          >
-                            <Icon
-                              icon="comments"
-                              color="rgba(255,255,255,0.92)"
-                            />
-                            <span style={{ marginLeft: '0.7rem' }}>
-                              {chatLabel}
-                            </span>
-                          </Button>
-                          <MessagesButton
-                            className={`${actionButtonClass} ${messageButtonClass}`}
-                            style={{
-                              flex: '1 0 100%',
-                              minWidth: '18rem'
-                            }}
-                            commentsShown={commentsShown}
-                            loading={loadingComments}
-                            profileId={profileId}
-                            myId={userId}
-                            onMessagesButtonClick={onMessagesButtonClick}
-                            numMessages={numMessages}
-                            iconColor="rgba(255,255,255,0.92)"
-                            textColor="rgba(255,255,255,0.95)"
-                            buttonColor="orange"
-                            buttonVariant="solid"
-                            buttonTone="raised"
-                          />
-                        </div>
-                      )}
-                      {lastActive && !isOnline && profileId !== userId && (
-                        <div
-                          style={{
-                            marginTop: '1rem',
-                            fontSize: '1.5rem',
-                            color: Color.gray()
+                      {imageEditModalShown && (
+                        <ImageEditModal
+                          isProfilePic
+                          imageUri={imageUri}
+                          onEditDone={handleImageEditDone}
+                          onHide={() => {
+                            setImageUri(null);
+                            setImageEditModalShown(false);
                           }}
-                        >
-                          <p>
-                            {lastOnlineLabel} {timeSince(lastActive)}
-                          </p>
-                        </div>
+                        />
                       )}
-                    </div>
-                  </div>
-                  {bioEditModalShown && (
-                    <BioEditModal
-                      firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
-                      secondLine={replaceFakeAtSymbol(profileSecondRow || '')}
-                      thirdLine={replaceFakeAtSymbol(profileThirdRow || '')}
-                      onSubmit={handleUploadBio}
-                      onHide={() => setBioEditModalShown(false)}
-                    />
-                  )}
-                  {imageEditModalShown && (
-                    <ImageEditModal
-                      isProfilePic
-                      imageUri={imageUri}
-                      onEditDone={handleImageEditDone}
-                      onHide={() => {
-                        setImageUri(null);
-                        setImageEditModalShown(false);
+                    </>
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        padding: '2rem 0'
                       }}
+                    >
+                      <Loading />
+                    </div>
+                  )}
+                  {profileLoaded && (
+                    <Comments
+                      comments={comments}
+                      commentsLoadLimit={5}
+                      commentsShown={commentsShown}
+                      inputAreaInnerRef={CommentInputAreaRef}
+                      inputTypeLabel={`message${
+                        userId === profileId ? '' : ` to ${profileName}`
+                      }`}
+                      isLoading={loadingComments}
+                      loadMoreButton={commentsLoadMoreButton}
+                      numPreviews={1}
+                      onCommentSubmit={onUploadComment}
+                      onDelete={onDeleteComment}
+                      onEditDone={onEditComment}
+                      onLikeClick={onLikeComment}
+                      onLoadMoreComments={onLoadMoreComments}
+                      onLoadMoreReplies={onLoadMoreReplies}
+                      onLoadRepliesOfReply={onLoadRepliesOfReply}
+                      onPreviewClick={onExpandComments}
+                      onReplySubmit={onUploadReply}
+                      onRewardCommentEdit={onEditRewardComment}
+                      parent={{
+                        ...profile,
+                        ...profilePanelState,
+                        contentType: 'user'
+                      }}
+                      style={{ marginTop: '0.6rem' }}
+                      userId={userId}
                     />
                   )}
-                </>
-              ) : (
-                <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: '2rem 0'
-                  }}
-                >
-                  <Loading />
                 </div>
-              )}
-              {profileLoaded && (
-                <Comments
-                  comments={comments}
-                  commentsLoadLimit={5}
-                  commentsShown={commentsShown}
-                  inputAreaInnerRef={CommentInputAreaRef}
-                  inputTypeLabel={`message${
-                    userId === profileId ? '' : ` to ${profileName}`
-                  }`}
-                  isLoading={loadingComments}
-                  loadMoreButton={commentsLoadMoreButton}
-                  numPreviews={1}
-                  onCommentSubmit={onUploadComment}
-                  onDelete={onDeleteComment}
-                  onEditDone={onEditComment}
-                  onLikeClick={onLikeComment}
-                  onLoadMoreComments={onLoadMoreComments}
-                  onLoadMoreReplies={onLoadMoreReplies}
-                  onLoadRepliesOfReply={onLoadRepliesOfReply}
-                  onPreviewClick={onExpandComments}
-                  onReplySubmit={onUploadReply}
-                  onRewardCommentEdit={onEditRewardComment}
-                  parent={{
-                    ...profile,
-                    ...profilePanelState,
-                    contentType: 'user'
-                  }}
-                  style={{ marginTop: '0.6rem' }}
-                  userId={userId}
+              </div>
+              {alertModalShown && (
+                <AlertModal
+                  title={imageTooLarge10MBLabel}
+                  content={pleaseSelectSmallerImageLabel}
+                  onHide={() => setAlertModalShown(false)}
                 />
               )}
-            </div>
-          </div>
-          {alertModalShown && (
-            <AlertModal
-              title={imageTooLarge10MBLabel}
-              content={pleaseSelectSmallerImageLabel}
-              onHide={() => setAlertModalShown(false)}
-            />
-          )}
-        </ScopedTheme>
-        {!!twinkleXP && profileLoaded && (
-          <div
-            style={{
-              marginTop: '-1.6rem',
-              width: '100%',
-              position: 'relative',
-              zIndex: 0
-            }}
-          >
-            <RankBar profile={profile} />
-          </div>
-        )}
+            </ScopedTheme>
+            {!!twinkleXP && profileLoaded && (
+              <div
+                style={{
+                  marginTop: '-1.6rem',
+                  width: '100%',
+                  position: 'relative',
+                  zIndex: 0
+                }}
+              >
+                <RankBar profile={profile} />
+              </div>
+            )}
           </>
         ) : (
           <div

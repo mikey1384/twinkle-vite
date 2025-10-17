@@ -43,7 +43,7 @@ const container = css`
       transform: translateY(-1px);
     }
     .widget__profile-pic {
-      width: 7.4rem;
+      --profile-pic-size: 7.4rem;
       border-radius: 2rem;
       box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.36);
     }
@@ -131,7 +131,7 @@ const container = css`
     .heading {
       padding: 1.4rem 1.6rem;
       .widget__profile-pic {
-        width: 8rem;
+        --profile-pic-size: 8rem;
       }
       .names {
         a {
