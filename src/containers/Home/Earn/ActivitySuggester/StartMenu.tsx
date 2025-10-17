@@ -18,11 +18,13 @@ export default function StartMenu() {
           <div className={sectionHeader}>
             <div>
               <div className={sectionLabel}>Earn XP</div>
-              <h3 className={sectionTitle}>Make progress by answering subjects</h3>
+              <h3 className={sectionTitle}>
+                Climb the XP leaderboard by answering subjects
+              </h3>
             </div>
           </div>
           <p className={sectionDescription}>
-            Sharpen your skills and climb the leaderboard by tackling curated subjects.
+            Post thoughtful comments on subjects to earn XP.
           </p>
           <div className={actionStack}>
             <Button
@@ -43,11 +45,13 @@ export default function StartMenu() {
           <div className={sectionHeader}>
             <div>
               <div className={sectionLabel}>Earn Karma Points</div>
-              <h3 className={sectionTitle}>Support the community with good vibes</h3>
+              <h3 className={sectionTitle}>
+                Support the community with good vibes
+              </h3>
             </div>
           </div>
           <p className={sectionDescription}>
-            Discover great posts, spread encouragement, and reward creators you appreciate.
+            Recommend and reward great posts.
           </p>
           <div className={actionStack}>
             <Button
@@ -95,8 +99,7 @@ const sectionCard = css`
   border-radius: ${wideBorderRadius};
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--earn-card-border, rgba(148, 163, 184, 0.35));
-  box-shadow:
-    0 1px 3px rgba(15, 23, 42, 0.08),
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08),
     0 14px 28px -20px rgba(15, 23, 42, 0.28);
   min-height: 18rem;
 `;
