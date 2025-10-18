@@ -7,8 +7,7 @@ import {
   desktopMinWidth,
   mobileMaxWidth
 } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { renderFileSize } from '~/helpers/stringHelpers';
 
 export default function FileInfo({
@@ -26,18 +25,10 @@ export default function FileInfo({
   src: string;
   theme?: string;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const linkColor = useMemo(() => {
-    const role = getThemeRoles(themeName).link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity ?? 1;
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn(opacity) : key;
-  }, [themeName]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const displayedFileSize = useMemo(
     () => renderFileSize(Number(fileSize)),
     [fileSize]

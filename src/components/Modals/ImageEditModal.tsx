@@ -11,6 +11,8 @@ import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { exceedsCharLimit, finalizeEmoji } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ImageEditModal({
   aspectFixed = true,
@@ -38,7 +40,9 @@ export default function ImageEditModal({
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadUserPic = useAppContext((v) => v.requestHelpers.uploadUserPic);
   const userId = useKeyContext((v) => v.myState.userId);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [crop, setCrop] = useState<{
@@ -101,7 +105,9 @@ export default function ImageEditModal({
             </Button>
             <Button
               disabled={!!captionExceedChatLimit}
-              color={doneColor}
+              color={
+                doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+              }
               onClick={handleSubmit}
               loading={uploading}
             >

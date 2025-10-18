@@ -25,6 +25,8 @@ export default function MissionPass({
   xpNumberColor: string;
   style?: React.CSSProperties;
 }) {
+  const resolvedLinkColor = linkColor || Color.logoBlue();
+  const resolvedXpNumberColor = xpNumberColor || Color.logoGreen();
   const rewardDetails = useMemo(() => {
     return mission.xpReward || mission.coinReward ? (
       <div
@@ -40,13 +42,13 @@ export default function MissionPass({
     function renderEnglish() {
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> was
+          <UsernameText user={uploader} color={resolvedLinkColor} /> was
           rewarded{' '}
           {mission.xpReward ? (
             <>
               <span
                 className={css`
-                  color: ${Color[xpNumberColor]()};
+                  color: ${resolvedXpNumberColor};
                   font-weight: bold;
                 `}
               >
@@ -86,13 +88,13 @@ export default function MissionPass({
       const missionXPRewardLabel = addCommasToNumber(mission.xpReward);
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} />
+          <UsernameText user={uploader} color={resolvedLinkColor} />
           님에게{' '}
           {mission.xpReward ? (
             <>
               <span
                 className={css`
-                  color: ${Color[xpNumberColor]()};
+                  color: ${resolvedXpNumberColor};
                   font-weight: bold;
                 `}
               >

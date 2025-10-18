@@ -21,7 +21,7 @@ import { isMobile, parseChannelPath } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
@@ -170,18 +170,15 @@ export default function DisplayedMessages({
     searchedMessageIds = [],
     twoPeople
   } = currentChannel;
-  const loadMoreThemeName = useMemo<ThemeName>(
+  const loadMoreThemeName = useMemo(
     () =>
-      (
-        (twoPeople ? profileTheme : displayedThemeColor || profileTheme) as
-          ThemeName
-      ),
+      twoPeople ? profileTheme : displayedThemeColor || profileTheme,
     [displayedThemeColor, profileTheme, twoPeople]
   );
-  const loadMoreButtonColor = useMemo(() => {
-    const role = getThemeRoles(loadMoreThemeName).loadMoreButton;
-    return role?.color || 'lightBlue';
-  }, [loadMoreThemeName]);
+  const { colorKey: loadMoreButtonColor } = useRoleColor('loadMoreButton', {
+    themeName: loadMoreThemeName,
+    fallback: 'lightBlue'
+  });
 
   const visibleMessageIndexRef = useRef(10);
   useEffect(() => {

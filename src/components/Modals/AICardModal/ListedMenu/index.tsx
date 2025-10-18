@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ListedMenu({
   burnXP,
@@ -26,7 +26,13 @@ export default function ListedMenu({
   userIsOwner: boolean;
   askPrice: number;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { colorKey: xpNumberColorKey } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
+  const xpNumberColor =
+    xpNumberColorKey && xpNumberColorKey in Color
+      ? xpNumberColorKey
+      : 'logoGreen';
 
   return (
     <div

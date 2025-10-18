@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -6,11 +6,12 @@ import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import AchievementBadges from '~/components/AchievementBadges';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -21,7 +22,8 @@ export default function AwardUserAchievementModal({
   achievementType: string;
   onHide: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const grantAchievements = useAppContext(
     (v) => v.requestHelpers.grantAchievements
   );

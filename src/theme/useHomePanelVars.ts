@@ -1,7 +1,7 @@
 import { useMemo, type CSSProperties } from 'react';
 import { useKeyContext } from '~/contexts';
 import { Color, getThemeStyles } from '~/constants/css';
-import { getThemeRoles, ThemeName } from './themes';
+import { getThemeRoles, ThemeName } from '.';
 
 interface HomePanelVars extends CSSProperties {
   ['--home-panel-bg']?: string;

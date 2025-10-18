@@ -1,7 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import VerificationInput from './VerificationInput';
 
@@ -14,7 +14,8 @@ export default function Verifier({
   onSetEmailSent: (value: boolean) => void;
   onSetVerifiedEmail: (value: string) => void;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = linkRole.getColor() || Color.logoBlue();
 
   return (
     <ErrorBoundary componentPath="Signin/SignUpForm/MainForm/NameAndEmail/Verifier">
@@ -34,7 +35,7 @@ export default function Verifier({
             An email with a 6-digit number was sent to{' '}
             <span
               onClick={handleEmailClick}
-              style={{ color: Color[linkColor](), cursor: 'pointer' }}
+              style={{ color: linkColor, cursor: 'pointer' }}
               className={css`
                 &:hover {
                   text-decoration: underline;

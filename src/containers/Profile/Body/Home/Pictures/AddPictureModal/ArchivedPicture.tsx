@@ -4,7 +4,8 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const width = 25;
 
@@ -21,10 +22,11 @@ export default function ArchivedPicture({
   style?: React.CSSProperties;
   onDeleteArchivedPicture: (id: number) => any;
 }) {
-  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
-  const itemSelectedOpacity = useKeyContext(
-    (v) => v.theme.itemSelected.opacity
-  );
+  const itemSelectedRole = useRoleColor('itemSelected', {
+    fallback: 'logoBlue'
+  });
+  const itemSelectedColor = itemSelectedRole.colorKey || 'logoBlue';
+  const itemSelectedOpacity = itemSelectedRole.defaultOpacity ?? 0.8;
   const deleteArchivedPicture = useAppContext(
     (v) => v.requestHelpers.deleteArchivedPicture
   );

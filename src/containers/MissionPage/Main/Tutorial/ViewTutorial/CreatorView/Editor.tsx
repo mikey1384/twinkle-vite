@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { addEmoji } from '~/helpers/stringHelpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Editor({
   missionId,
@@ -19,7 +20,8 @@ export default function Editor({
   tutorialPrompt?: string;
   tutorialButtonLabel?: string;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const updateTutorialPrompt = useAppContext(
     (v) => v.requestHelpers.updateTutorialPrompt
   );

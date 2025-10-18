@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import IconMenu from './IconMenu';
 import { isEqual } from 'lodash';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function IconSelectionModal({
   onHide,
@@ -14,7 +15,11 @@ export default function IconSelectionModal({
   onSelectIcon: (arg0: any) => void;
   selectedIcon: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const [selectedIcon, setSelectedIcon] = useState(prevSelectedIcon);
   return (
     <Modal onHide={onHide}>

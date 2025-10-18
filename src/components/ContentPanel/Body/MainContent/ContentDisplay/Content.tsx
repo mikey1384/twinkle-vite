@@ -19,7 +19,7 @@ import AIStoryView from './AIStoryView';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Content({
   audioPath,
@@ -76,31 +76,16 @@ export default function Content({
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const linkColor = useMemo(() => {
-    const role = themeRoles.link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeRoles]);
-  const xpNumberColor = useMemo(() => {
-    const role = themeRoles.xpNumber;
-    const key = role?.color || 'logoGreen';
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn() : key;
-  }, [themeRoles]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { color: xpNumberColor } = useRoleColor('xpNumber', {
+    themeName: theme,
+    fallback: 'logoGreen'
+  });
   const { bonusQuestion, word, level, xpEarned, coinEarned } = useMemo(() => {
     if (contentType !== 'xpChange') {
       return {

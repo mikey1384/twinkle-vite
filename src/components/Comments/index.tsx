@@ -22,7 +22,7 @@ import {
 } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { ThemeName } from '~/theme/themes';
+import { ThemeName } from '~/theme';
 
 function Comments({
   autoFocus,
@@ -99,7 +99,7 @@ function Comments({
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
+    () => (theme || profileTheme || 'logoBlue') as ThemeName,
     [profileTheme, theme]
   );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);

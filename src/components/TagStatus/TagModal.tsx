@@ -4,7 +4,9 @@ import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
 import { capitalize, hashify } from '~/helpers/stringHelpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 function TagModal({
   currentPlaylists,
@@ -21,7 +23,8 @@ function TagModal({
   onAddPlaylist: (playlist: any) => any;
   onSubmit: (playlists: any[]) => any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const addVideoToPlaylists = useAppContext(
     (v) => v.requestHelpers.addVideoToPlaylists
   );

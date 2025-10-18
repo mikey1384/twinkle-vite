@@ -11,12 +11,15 @@ import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isEqual } from 'lodash';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 const searchUsersLabel = localize('searchUsers');
 
 export default function AddBanModal({ onHide }: { onHide: () => void }) {
   const level = useKeyContext((v) => v.myState.level);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const [submitting, setSubmitting] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchedUsers, setSearchedUsers] = useState([]);

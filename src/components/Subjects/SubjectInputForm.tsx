@@ -15,14 +15,15 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import {
   useAppContext,
   useContentContext,
-  useInputContext,
-  useKeyContext
+  useInputContext
 } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import localize from '~/constants/localize';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 const cancelLabel = localize('cancel');
 const submitLabel = localize('submit3');
@@ -54,7 +55,8 @@ export default function SubjectInputForm({
   descriptionPlaceholder?: string;
   onSubmit: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const { fileUploadProgress, uploadingFile } = useContentState({
     contentType,
     contentId

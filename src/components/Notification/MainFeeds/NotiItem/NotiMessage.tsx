@@ -4,6 +4,7 @@ import { Color } from '~/constants/css';
 import { Link } from 'react-router-dom';
 import { User } from '~/types';
 import ContentLink from '~/components/ContentLink';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiMessage({
   actionObj,
@@ -133,9 +134,34 @@ function NotiMessage({
     targetSubject.content
   ]);
 
-  const contentLinkColor = useMemo(() => Color[actionColor](), [actionColor]);
-  const targetLinkColor = useMemo(() => Color[linkColor](), [linkColor]);
-  const missionLinkColor = useMemo(() => Color[missionColor](), [missionColor]);
+  const contentLinkColor = useMemo(
+    () => resolveColorValue(actionColor) || Color.logoBlue(),
+    [actionColor]
+  );
+  const targetLinkColor = useMemo(
+    () => resolveColorValue(linkColor) || Color.logoBlue(),
+    [linkColor]
+  );
+  const missionLinkColor = useMemo(
+    () => resolveColorValue(missionColor) || Color.logoBlue(),
+    [missionColor]
+  );
+  const infoColorValue = useMemo(
+    () => resolveColorValue(infoColor) || Color.logoBlue(),
+    [infoColor]
+  );
+  const mentionColorValue = useMemo(
+    () => resolveColorValue(mentionColor) || Color.pink(),
+    [mentionColor]
+  );
+  const recommendationColorValue = useMemo(
+    () => resolveColorValue(recommendationColor) || Color.logoBlue(),
+    [recommendationColor]
+  );
+  const rewardColorValue = useMemo(
+    () => resolveColorValue(rewardColor) || Color.pink(),
+    [rewardColor]
+  );
   const twinkleColor = useMemo(
     () =>
       actionObj.amount >= 10
@@ -144,7 +170,7 @@ function NotiMessage({
         ? Color.orange()
         : actionObj.amount >= 3
         ? Color.pink()
-        : Color[infoColor](),
+        : infoColorValue,
     [actionObj.amount, infoColor]
   );
   const contentIsEmpty = useMemo(
@@ -187,7 +213,7 @@ function NotiMessage({
     case 'like':
       return (
         <>
-          <span style={{ color: Color[infoColor](), fontWeight: 'bold' }}>
+          <span style={{ color: infoColorValue, fontWeight: 'bold' }}>
             likes
           </span>{' '}
           <span>your</span>{' '}
@@ -204,7 +230,7 @@ function NotiMessage({
     case 'mention':
       return (
         <>
-          <span style={{ color: Color[mentionColor](), fontWeight: 'bold' }}>
+          <span style={{ color: mentionColorValue, fontWeight: 'bold' }}>
             mentioned you
           </span>{' '}
           in{' '}
@@ -250,7 +276,7 @@ function NotiMessage({
       return (
         <>
           <span
-            style={{ color: Color[recommendationColor](), fontWeight: 'bold' }}
+            style={{ color: recommendationColorValue, fontWeight: 'bold' }}
           >
             recommended
           </span>{' '}
@@ -324,7 +350,7 @@ function NotiMessage({
 
         return (
           <>
-            <b style={{ color: Color[rewardColor]() }}>also recommended</b>{' '}
+            <b style={{ color: rewardColorValue }}>also recommended</b>{' '}
             {rewardRootType === 'xpChange' ? (
               <b
                 style={{ color: missionLinkColor }}
@@ -553,7 +579,7 @@ function NotiMessage({
               missionType: rootMissionType || targetObj.missionType,
               title: `(${truncatedTargetObjectText})`
             }}
-            style={{ color: Color[linkColor]() }}
+            style={{ color: targetLinkColor }}
             label=""
           />
         </>
@@ -570,7 +596,7 @@ function NotiMessage({
               missionType: targetObj.missionType,
               title: `(${truncatedTargetObjectText})`
             }}
-            style={{ color: Color[linkColor]() }}
+            style={{ color: targetLinkColor }}
             label=""
           />
         </>

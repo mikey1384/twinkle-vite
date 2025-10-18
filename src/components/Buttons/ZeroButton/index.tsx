@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import zero from '~/assets/zero.png';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 import ZeroModal from './ZeroModal';
 
 export default function ZeroButton({
@@ -20,15 +19,9 @@ export default function ZeroButton({
   style?: React.CSSProperties;
 }) {
   const [modalShown, setModalShown] = useState(false);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
-  );
-  const zeroAccent = useMemo(
-    () => getThemeRoles(themeName).logoTwin?.color || 'logoBlue',
-    [themeName]
-  );
+  const { colorKey: zeroAccent } = useRoleColor('logoTwin', {
+    fallback: 'logoBlue'
+  });
 
   return (
     <ErrorBoundary componentPath="Buttons/ZeroButton">

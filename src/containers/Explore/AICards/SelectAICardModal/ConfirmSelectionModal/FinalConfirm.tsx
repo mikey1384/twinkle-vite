@@ -5,6 +5,7 @@ import localize from '~/constants/localize';
 import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -30,7 +31,9 @@ export default function ConfirmSelectionModal({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onListAICard = useChatContext((v) => v.actions.onListAICard);
   const userId = useKeyContext((v) => v.myState.userId);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const [confirming, setConfirming] = useState(false);
   const batchSellAICards = useAppContext(
     (v) => v.requestHelpers.batchSellAICards

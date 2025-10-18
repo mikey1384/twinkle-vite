@@ -1,7 +1,8 @@
 import { useMemo, type CSSProperties } from 'react';
 import { useKeyContext } from '~/contexts';
 import { Color, getThemeStyles } from '~/constants/css';
-import { getThemeRoles, ThemeName } from './themes';
+import { getThemeRoles, ThemeName } from '.';
+import { resolveColorValue } from './resolveColor';
 
 interface ThemedCardOptions {
   role?: string;
@@ -11,18 +12,6 @@ interface ThemedCardOptions {
   blendWeight?: number;
   borderFallback?: string;
   themeName?: ThemeName | string;
-}
-
-function resolveColor(value?: string, opacity?: number): string | undefined {
-  if (!value) return undefined;
-  const candidate = Color[value as keyof typeof Color];
-  if (typeof candidate === 'function') {
-    return candidate(opacity);
-  }
-  if (typeof candidate === 'string') {
-    return candidate;
-  }
-  return value;
 }
 
 function blendWithWhite(color: string | undefined, weight: number): string {
@@ -75,11 +64,11 @@ export function useThemedCardVars(options: ThemedCardOptions = {}) {
   const roleToken = role ? themeRoles[role] : undefined;
 
   const accentColor = useMemo(() => {
-    const override = resolveColor(accentOverride);
+    const override = resolveColorValue(accentOverride);
     if (override) return override;
-    const fromRole = resolveColor(roleToken?.color, roleToken?.opacity);
+    const fromRole = resolveColorValue(roleToken?.color, roleToken?.opacity);
     if (fromRole) return fromRole;
-    const fallback = resolveColor(fallbackColor);
+    const fallback = resolveColorValue(fallbackColor);
     if (fallback) return fallback;
     return Color.logoBlue();
   }, [accentOverride, fallbackColor, roleToken?.color, roleToken?.opacity]);

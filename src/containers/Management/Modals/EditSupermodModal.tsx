@@ -13,7 +13,8 @@ import {
   roles
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function EditSupermodModal({
   onHide,
@@ -22,7 +23,8 @@ export default function EditSupermodModal({
   onHide: () => void;
   target: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeSupermodRole

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SlideListItem from './SlideListItem';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function SelectArchivedSlideModal({
   interactiveId,
@@ -15,7 +16,11 @@ export default function SelectArchivedSlideModal({
   onHide: () => void;
   archivedSlides: any[];
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 
   return (

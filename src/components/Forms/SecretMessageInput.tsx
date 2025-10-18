@@ -21,6 +21,7 @@ import AlertModal from '~/components/Modals/AlertModal';
 import Attachment from '~/components/Attachment';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const secretMessageLabel = localize('secretMessage');
 const enterSecretMessageLabel = localize('enterSecretMessage');
@@ -50,14 +51,19 @@ export default function SecretMessageInput({
   const { fileUploadLvl, level, twinkleXP, userId } = useKeyContext(
     (v) => v.myState
   );
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
-  const skeuomorphicDisabledColor = useKeyContext(
-    (v) => v.theme.skeuomorphicDisabled.color
-  );
-  const skeuomorphicDisabledOpacity = useKeyContext(
-    (v) => v.theme.skeuomorphicDisabled.opacity
-  );
+  const { colorKey: buttonColorKey } = useRoleColor('button', {
+    fallback: 'logoBlue'
+  });
+  const { colorKey: buttonHoverColorKey } = useRoleColor('buttonHovered', {
+    fallback: buttonColorKey || 'logoBlue'
+  });
+  const {
+    defaultOpacity: skeuomorphicDisabledOpacity = 0.4,
+    getColor: getSkeuomorphicDisabledColor
+  } = useRoleColor('skeuomorphicDisabled', {
+    fallback: 'darkerGray',
+    opacity: 0.4
+  });
 
   const secretAnswerExceedsCharLimit = useMemo(
     () =>
@@ -142,8 +148,18 @@ export default function SecretMessageInput({
               <Button
                 variant="soft"
                 tone="raised"
-                color={buttonColor}
-                hoverColor={buttonHoverColor}
+                color={
+                  buttonColorKey &&
+                  Color[buttonColorKey as keyof typeof Color]
+                    ? buttonColorKey
+                    : 'logoBlue'
+                }
+                hoverColor={
+                  buttonHoverColorKey &&
+                  Color[buttonHoverColorKey as keyof typeof Color]
+                    ? buttonHoverColorKey
+                    : buttonColorKey || 'logoBlue'
+                }
                 onClick={() => (disabled ? null : FileInputRef.current.click())}
                 onMouseEnter={() => setOnHover(true)}
                 onMouseLeave={() => setOnHover(false)}
@@ -152,9 +168,7 @@ export default function SecretMessageInput({
                   cursor: disabled ? 'default' : 'pointer',
                   boxShadow: disabled ? 'none' : '',
                   borderColor: disabled
-                    ? Color[skeuomorphicDisabledColor](
-                        skeuomorphicDisabledOpacity
-                      )
+                    ? getSkeuomorphicDisabledColor(skeuomorphicDisabledOpacity)
                     : ''
                 }}
               >

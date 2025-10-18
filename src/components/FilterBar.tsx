@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface FilterBarProps {
   color?: string;
@@ -24,29 +23,19 @@ export default function FilterBar({
   dropdownButton,
   style
 }: FilterBarProps) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((color || profileTheme || 'logoBlue') as ThemeName),
-    [color, profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const {
+    color: alertRoleColor,
+    themeName: resolvedThemeName
+  } = useRoleColor('alert', {
+    themeName: color,
+    fallback: 'gold'
+  });
+  const { getColor: getFilterColor } = useRoleColor('filter', {
+    themeName: color,
+    fallback: 'logoBlue'
+  });
 
-  const resolveColor = (
-    name?: string,
-    opacity?: number,
-    fallbackName?: string,
-    fallbackOpacity: number = 1
-  ) => {
-    const target = name ?? fallbackName;
-    if (!target) return undefined;
-    const fn = Color[target as keyof typeof Color];
-    return fn ? fn(opacity ?? fallbackOpacity) : target;
-  };
-
-  const alertColorValue =
-    resolveColor(themeRoles.alert?.color, undefined, 'gold') || Color.gold();
-
-  const alertColorVar = `var(--role-alert-color, ${alertColorValue})`;
+  const alertColorVar = `var(--role-alert-color, ${alertRoleColor})`;
 
   // Flat, clean white bar surface regardless of page tint
   const barBackground = '#ffffff';
@@ -56,18 +45,10 @@ export default function FilterBar({
   const navActiveTextColor = Color.darkBlueGray();
 
   // Theme-aware fills for hover/active
-  const themeHoverBgValue =
-    resolveColor(themeRoles.filter?.color, 0.08, themeName, 0.08) ||
-    Color.logoBlue(0.08);
-  const themeActiveBgValue =
-    resolveColor(themeRoles.filter?.color, 0.16, themeName, 0.16) ||
-    Color.logoBlue(0.16);
-  const themeHoverBorderValue =
-    resolveColor(themeRoles.filter?.color, 0.28, themeName, 0.28) ||
-    Color.logoBlue(0.28);
-  const themeActiveBorderValue =
-    resolveColor(themeRoles.filter?.color, 0.4, themeName, 0.4) ||
-    Color.logoBlue(0.4);
+  const themeHoverBgValue = getFilterColor(0.08) || Color.logoBlue(0.08);
+  const themeActiveBgValue = getFilterColor(0.16) || Color.logoBlue(0.16);
+  const themeHoverBorderValue = getFilterColor(0.28) || Color.logoBlue(0.28);
+  const themeActiveBorderValue = getFilterColor(0.4) || Color.logoBlue(0.4);
 
   // Unselected tabs match the bar background; hover/active use theme tints
   const tabBaseSurface = barBackground;
@@ -346,7 +327,7 @@ export default function FilterBar({
 
   return (
     <ScopedTheme
-      theme={themeName as any}
+      theme={resolvedThemeName as any}
       roles={['filter', 'filterText', 'filterActive', 'alert']}
       className={wrapperClass}
       style={scopedThemeStyle}

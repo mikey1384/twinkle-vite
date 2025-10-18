@@ -5,9 +5,8 @@ import MediaPlayer from './MediaPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ContentFileViewer({
   className,
@@ -44,18 +43,10 @@ export default function ContentFileViewer({
   thumbUrl?: string;
   videoHeight?: string;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const linkColor = useMemo(() => {
-    const role = getThemeRoles(themeName).link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity ?? 1;
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn(opacity) : key;
-  }, [themeName]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const isDisplayedOnHome = useMemo(
     () => contentType === 'subject' || contentType === 'comment',
     [contentType]

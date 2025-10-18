@@ -49,7 +49,7 @@ import { v1 as uuidv1 } from 'uuid';
 import localize from '~/constants/localize';
 import { Comment as CommentType, Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const commentRemovedLabel = localize('commentRemoved');
 const replyLabel = localize('reply');
@@ -144,37 +144,22 @@ export default function TargetContent({
   const username = useKeyContext((v) => v.myState.username);
   const { canReward } = useMyLevel();
 
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const linkColorValue = useMemo(() => {
-    const role = themeRoles.link;
-    const key = role?.color || 'blue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeRoles]);
-  const contentColorValue = useMemo(() => {
-    const role = themeRoles.content;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeRoles]);
-  const rewardColor = useMemo(
-    () => themeRoles.reward?.color || 'pink',
-    [themeRoles]
-  );
+  const linkRole = useRoleColor('link', {
+    themeName: theme || profileTheme,
+    fallback: 'blue'
+  });
+  const contentRole = useRoleColor('content', {
+    themeName: linkRole.themeName,
+    fallback: 'logoBlue'
+  });
+  const rewardRole = useRoleColor('reward', {
+    themeName: linkRole.themeName,
+    fallback: 'pink'
+  });
+  const themeName = linkRole.themeName;
+  const linkColorValue = linkRole.color;
+  const contentColorValue = contentRole.color;
+  const rewardColor = rewardRole.colorKey || 'pink';
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );

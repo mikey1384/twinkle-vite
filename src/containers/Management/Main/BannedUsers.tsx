@@ -7,8 +7,9 @@ import EditBanStatusModal from '../Modals/EditBanStatusModal';
 import AddBanModal from '../Modals/AddBanModal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useManagementContext, useKeyContext } from '~/contexts';
+import { useManagementContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const chatLabel = localize('chat');
 const chessLabel = localize('chess');
@@ -23,7 +24,8 @@ export default function BannedUsers({ canManage }: { canManage: boolean }) {
   const bannedUsersLoaded = useManagementContext(
     (v) => v.state.bannedUsersLoaded
   );
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = tableHeaderRole.colorKey || 'logoBlue';
   const [newBanModalShown, setNewBanModalShown] = useState(false);
   const [banStatusModalTarget, setEditBanStatusModalTarget] = useState<{
     id: number;

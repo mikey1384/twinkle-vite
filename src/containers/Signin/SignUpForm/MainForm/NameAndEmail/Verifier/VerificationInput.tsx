@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Input from '~/components/Texts/Input';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function VerificationInput({
   onRetry,
@@ -14,7 +15,11 @@ export default function VerificationInput({
   onRetry: () => void;
   onSetVerifiedEmail: (value: string) => void;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -66,7 +71,7 @@ export default function VerificationInput({
         style={{
           marginTop: '0.5rem',
           cursor: 'pointer',
-          color: Color[linkColor]()
+          color: linkColor
         }}
         className={css`
           font-size: 1.3rem;

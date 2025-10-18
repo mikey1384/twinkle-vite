@@ -5,6 +5,7 @@ import CheckYourEmail from '~/components/CheckYourEmail';
 import SelectEmail from '~/components/SelectEmail';
 import AskForHelp from '~/components/AskForHelp';
 import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function VerificationEmailSendModal({
   onHide
@@ -14,7 +15,8 @@ export default function VerificationEmailSendModal({
   const email = useKeyContext((v) => v.myState.email);
   const verifiedEmail = useKeyContext((v) => v.myState.verifiedEmail);
   const userId = useKeyContext((v) => v.myState.userId);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColorKey = doneRole.colorKey;
   const emailExists = useMemo(
     () => email || verifiedEmail,
     [email, verifiedEmail]
@@ -49,7 +51,7 @@ export default function VerificationEmailSendModal({
       <footer>
         <Button
           style={{ marginLeft: '1rem' }}
-          color={doneColor}
+          color={doneColorKey}
           onClick={onHide}
         >
           OK

@@ -18,6 +18,7 @@ import {
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const nowLabel = localize('now');
 const onlineLabel = localize('online');
@@ -25,7 +26,8 @@ const userLabel = localize('user');
 
 export default function Supermods({ canManage }: { canManage: boolean }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = tableHeaderRole.colorKey || 'logoBlue';
   const supermods = useManagementContext((v) => v.state.supermods);
   const supermodsLoaded = useManagementContext((v) => v.state.supermodsLoaded);
   const numSupermodsShown = useManagementContext(

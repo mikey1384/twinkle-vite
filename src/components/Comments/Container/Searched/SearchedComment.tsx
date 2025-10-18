@@ -36,7 +36,7 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const pinLabel = localize('pin');
 const unpinLabel = localize('unpin');
@@ -151,27 +151,21 @@ export default function SearchedComment({
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const themeName = useMemo<ThemeName>(
-    () => (theme || profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme, theme]
+  const {
+    color: linkColorFallback,
+    themeName
+  } = useRoleColor('link', {
+    themeName: theme || profileTheme,
+    fallback: 'blue'
+  });
+  const linkColorVar = useMemo(
+    () => `var(--role-link-color, ${linkColorFallback})`,
+    [linkColorFallback]
   );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const linkColorVar = useMemo(() => {
-    const role = themeRoles.link;
-    const key = role?.color || 'blue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    const fallback = fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-    return `var(--role-link-color, ${fallback})`;
-  }, [themeRoles]);
-  const rewardColor = useMemo(
-    () => themeRoles.reward?.color || 'pink',
-    [themeRoles]
-  );
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    themeName,
+    fallback: 'pink'
+  });
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );

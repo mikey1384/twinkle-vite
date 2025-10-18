@@ -12,6 +12,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 
 const byLabel = localize('by');
@@ -45,7 +46,9 @@ export default function PlaylistCarousel({
     (v) => v.requestHelpers.editPlaylistTitle
   );
   const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
-  const carouselColor = useKeyContext((v) => v.theme.carousel.color);
+  const { color: carouselColor } = useRoleColor('carousel', {
+    fallback: 'logoBlue'
+  });
   const onDeletePlaylist = useExploreContext((v) => v.actions.onDeletePlaylist);
   const onEditPlaylistTitle = useExploreContext(
     (v) => v.actions.onEditPlaylistTitle
@@ -84,7 +87,7 @@ export default function PlaylistCarousel({
               text-decoration: none;
               &:hover {
                 transition: color 0.3s;
-                color: ${Color[carouselColor]()};
+                color: ${carouselColor};
               }
             }
           }

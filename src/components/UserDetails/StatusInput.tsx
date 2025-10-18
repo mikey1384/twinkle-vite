@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 
 export default function StatusInput({
@@ -30,7 +30,8 @@ export default function StatusInput({
   onTextChange: (text: string) => void;
   setColor: (color: string) => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const statusExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({

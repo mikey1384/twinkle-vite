@@ -5,10 +5,11 @@ import {
   returnCardBurnXP,
   qualityProps
 } from '~/constants/defaultValues';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import Simple from './Simple';
 import Detailed from './Detailed';
 import { Card } from '~/types';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function CardThumb({
   card,
@@ -23,7 +24,11 @@ export default function CardThumb({
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColor = useMemo(
+    () => xpNumberRole.getColor() || Color.logoGreen(),
+    [xpNumberRole]
+  );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [loading, setLoading] = useState(false);
   const cardState = cardObj[card.id];

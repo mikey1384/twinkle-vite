@@ -3,8 +3,8 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function RankingsListItem({
   myId,
@@ -23,7 +23,9 @@ export default function RankingsListItem({
   onUsermenuShownChange?: (v: boolean) => void;
   activityContext?: string;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
   const userRank = useMemo(() => Number(user.rank), [user.rank]);
   const rankColor = useMemo(() => {
     return userRank === 1
@@ -148,7 +150,7 @@ export default function RankingsListItem({
           }
         `}
       >
-        <span style={{ color: Color[xpNumberColor]() }}>
+        <span style={{ color: getXpNumberColor() }}>
           {addCommasToNumber(user[target] || 0)}
         </span>{' '}
         <span style={{ color: Color.gold() }}>XP</span>

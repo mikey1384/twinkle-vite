@@ -34,6 +34,8 @@ import {
 } from '~/contexts';
 import { useLocation, useParams } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function LinkPage() {
   const location = useLocation();
@@ -48,21 +50,30 @@ export default function LinkPage() {
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const byUserIndicatorColor = useKeyContext(
-    (v) => v.theme.byUserIndicator.color
+  const byUserIndicatorRole = useRoleColor('byUserIndicator', {
+    themeName: profileTheme,
+    fallback: (profileTheme as string) || 'logoBlue',
+    opacity: 0.8
+  });
+  const byUserIndicatorColor = byUserIndicatorRole.getColor(
+    byUserIndicatorRole.defaultOpacity ?? 0.8
   );
-  const byUserIndicatorOpacity = useKeyContext(
-    (v) => v.theme.byUserIndicator.opacity
-  );
-  const byUserIndicatorTextColor = useKeyContext(
-    (v) => v.theme.byUserIndicatorText.color
-  );
-  const byUserIndicatorTextShadowColor = useKeyContext(
-    (v) => v.theme.byUserIndicatorText.shadow
-  );
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const byUserIndicatorTextRole = useRoleColor('byUserIndicatorText', {
+    themeName: profileTheme,
+    fallback: 'white'
+  });
+  const byUserIndicatorTextColor = byUserIndicatorTextRole.getColor();
+  const byUserIndicatorTextShadowColor =
+    byUserIndicatorTextRole.token?.shadow
+      ? resolveColorValue(byUserIndicatorTextRole.token.shadow) ||
+        byUserIndicatorTextRole.token.shadow
+      : '';
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    fallback: 'pink'
+  });
 
   const onEditLinkPage = useExploreContext((v) => v.actions.onEditLinkPage);
   const onLikeLink = useExploreContext((v) => v.actions.onLikeLink);
@@ -319,10 +330,10 @@ export default function LinkPage() {
           <div
             style={{
               padding: '0.7rem',
-              background: Color[byUserIndicatorColor](byUserIndicatorOpacity),
-              color: Color[byUserIndicatorTextColor](),
+              background: byUserIndicatorColor,
+              color: byUserIndicatorTextColor,
               textShadow: byUserIndicatorTextShadowColor
-                ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
+                ? `0 0 1px ${byUserIndicatorTextShadowColor}`
                 : 'none',
               display: 'flex',
               justifyContent: 'center',

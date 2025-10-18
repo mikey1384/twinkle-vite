@@ -1,7 +1,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import Marble from '../../Marble';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { priceTable } from '~/constants/defaultValues';
 import { scoreTable, perfectScoreBonus } from '../../constants';
@@ -9,6 +8,7 @@ import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
 import ResultLevelRow from './ResultLevelRow';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const xpFontSize = '1.7rem';
 const mobileXpFontSize = '1.5rem';
@@ -20,9 +20,11 @@ export default function TodayResult({ results }: { results: any[] }) {
   const [showAllPerfect, setShowAllPerfect] = useState(false);
   const deviceIsMobile = isMobile(navigator);
   const [activeRowIdx, setActiveRowIdx] = useState<number | null>(null);
-  const colorPerfect = useKeyContext(
-    (v) => v.theme.grammarGameScorePerfect.color
-  );
+  const perfectRole = useRoleColor('grammarGameScorePerfect', {
+    fallback: 'brownOrange'
+  });
+  const perfectColor = (opacity?: number) =>
+    perfectRole.getColor(opacity) || Color.brownOrange(opacity ?? 1);
   const funFont =
     "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
   const titleCls = css`
@@ -318,9 +320,9 @@ export default function TodayResult({ results }: { results: any[] }) {
               font-weight: bold;
               background-image: linear-gradient(
                 to left,
-                ${Color[colorPerfect](1)} 0%,
-                ${Color[colorPerfect](0.5)} 30%,
-                ${Color[colorPerfect](1)} 100%
+      ${perfectColor(1)} 0%,
+      ${perfectColor(0.5)} 30%,
+      ${perfectColor(1)} 100%
               );
               background-clip: text;
               color: transparent;

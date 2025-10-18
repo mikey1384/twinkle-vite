@@ -1,56 +1,56 @@
 import React, { useMemo } from 'react';
-import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function ReactionText({ difficulty }: { difficulty: number }) {
-  const colorPerfect = useKeyContext(
-    (v) => v.theme.grammarGameScorePerfect.color
-  );
-  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
-  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
-  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
-  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
+  const perfectRole = useRoleColor('grammarGameScorePerfect', {
+    fallback: 'brownOrange'
+  });
+  const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
+  const roleB = useRoleColor('grammarGameScoreB', { fallback: 'orange' });
+  const roleC = useRoleColor('grammarGameScoreC', { fallback: 'pink' });
+  const roleD = useRoleColor('grammarGameScoreD', { fallback: 'logoBlue' });
 
   const reactionObj = useMemo(() => {
     if (difficulty === 5)
       return {
-        color: colorPerfect,
+        role: perfectRole,
         fontSize: '5rem',
         text: 'LEVEL 5 CLEARED',
         bling: true
       };
     if (difficulty === 4)
       return {
-        color: colorA,
+        role: roleA,
         fontSize: '3.5rem',
         text: 'LEVEL 4 CLEARED',
         bling: true
       };
     if (difficulty === 3)
       return {
-        color: colorB,
+        role: roleB,
         fontSize: '3rem',
         text: 'LEVEL 3 CLEARED',
         bling: true
       };
     if (difficulty === 2)
       return {
-        color: colorC,
+        role: roleC,
         fontSize: '2.5rem',
         text: 'LEVEL 2 CLEARED',
         bling: false
       };
     if (difficulty === 1)
       return {
-        color: colorD,
+        role: roleD,
         fontSize: '2rem',
         text: `LEVEL 1 CLEARED`,
         bling: false
       };
     return {};
-  }, [difficulty, colorPerfect, colorA, colorB, colorC, colorD]);
+  }, [difficulty, perfectRole, roleA, roleB, roleC, roleD]);
   const effectRef = useSpringRef();
   const opacityRef = useSpringRef();
   const styles = useSpring({
@@ -58,7 +58,10 @@ export default function ReactionText({ difficulty }: { difficulty: number }) {
     from: { opacity: 0 },
     to: { opacity: 1 }
   });
-  const { color, fontSize, text, bling } = reactionObj;
+  const { role, fontSize, text, bling } = reactionObj;
+  const baseColor = role?.getColor() || Color.logoBlue();
+  const gradientStart = role?.getColor(1) || baseColor;
+  const gradientMid = role?.getColor(0.5) || Color.logoBlue(0.5);
 
   useChain([opacityRef, effectRef]);
 
@@ -83,9 +86,9 @@ export default function ReactionText({ difficulty }: { difficulty: number }) {
               ? css`
                   background-image: linear-gradient(
                     to left,
-                    ${Color[color](1)} 0%,
-                    ${Color[color](0.5)} 30%,
-                    ${Color[color](1)} 100%
+                    ${gradientStart} 0%,
+                    ${gradientMid} 30%,
+                    ${gradientStart} 100%
                   );
                   background-clip: text;
                   color: transparent;
@@ -107,7 +110,7 @@ export default function ReactionText({ difficulty }: { difficulty: number }) {
                   }
                 `
               : css`
-                  color: ${Color[color]()};
+                  color: ${baseColor};
                 `
           }
           style={{

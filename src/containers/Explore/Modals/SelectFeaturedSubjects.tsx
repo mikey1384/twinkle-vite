@@ -6,7 +6,8 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import FilterBar from '~/components/FilterBar';
 import SearchInput from '~/components/Texts/SearchInput';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { useSearch } from '~/helpers/hooks';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
@@ -22,7 +23,9 @@ export default function SelectFeaturedSubjectsModal({
   onHide: () => void;
   onSubmit: (arg0: any[]) => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);

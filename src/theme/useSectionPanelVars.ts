@@ -1,27 +1,13 @@
 import { useMemo, type CSSProperties } from 'react';
 import { useKeyContext } from '~/contexts';
 import { Color, getThemeStyles } from '~/constants/css';
-import { getThemeRoles, ThemeName } from './themes';
+import { getThemeRoles, ThemeName } from '.';
+import { resolveColorValue } from './resolveColor';
 
 interface SectionPanelOptions {
   customThemeName?: string | ThemeName;
   intensity?: number;
   bodyBlendWeight?: number;
-}
-
-function resolveColorValue(
-  value?: string,
-  opacity?: number
-): string | undefined {
-  if (!value) return undefined;
-  const candidate = Color[value as keyof typeof Color];
-  if (typeof candidate === 'function') {
-    return candidate(opacity);
-  }
-  if (typeof candidate === 'string') {
-    return candidate;
-  }
-  return value;
 }
 
 function blendWithWhite(color: string | undefined, weight: number): string {

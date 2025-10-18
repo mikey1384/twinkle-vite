@@ -10,7 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Starmarks from './Starmarks';
 import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const INITIAL_LOAD_COUNT = 1;
 const LOAD_MORE_COUNT = 3;
@@ -37,38 +37,26 @@ function RewardStatus({
   theme?: any;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const infoColor = useMemo(
-    () => themeRoles.info?.color || 'logoBlue',
-    [themeRoles]
-  );
-  const rewardHue = useMemo(
-    () => themeRoles.reward?.color || 'orange',
-    [themeRoles]
-  );
-  const starHue = useMemo(
-    () => themeRoles.recommendation?.color || 'gold',
-    [themeRoles]
-  );
-  const containerBg = useMemo(
-    () =>
-      (Color[rewardHue as keyof typeof Color]
-        ? Color[rewardHue as keyof typeof Color](0.1)
-        : Color.logoBlue(0.1)),
-    [rewardHue]
-  );
-  const containerBorder = useMemo(
-    () =>
-      (Color[rewardHue as keyof typeof Color]
-        ? Color[rewardHue as keyof typeof Color](0.28)
-        : Color.logoBlue(0.28)),
-    [rewardHue]
-  );
-  const scopedTheme = themeName;
+  const infoRole = useRoleColor('info', {
+    themeName: theme || profileTheme,
+    fallback: 'logoBlue'
+  });
+  const rewardRole = useRoleColor('reward', {
+    themeName: infoRole.themeName,
+    fallback: 'orange'
+  });
+  const recommendationRole = useRoleColor('recommendation', {
+    themeName: rewardRole.themeName,
+    fallback: 'gold'
+  });
+  const infoColor = infoRole.colorKey || 'logoBlue';
+  const rewardBaseColor = rewardRole.getColor() || Color.orange();
+  const containerBg = rewardRole.getColor(0.1) || Color.logoBlue(0.1);
+  const containerBorder = rewardRole.getColor(0.28) || Color.logoBlue(0.28);
+  const rewardGradientStart = rewardRole.getColor(0.9) || rewardBaseColor;
+  const rewardGradientEnd = rewardBaseColor;
+  const starColor = recommendationRole.getColor() || Color.gold();
+  const scopedTheme = rewardRole.themeName;
 
   const [numLoaded, setNumLoaded] = useState(INITIAL_LOAD_COUNT);
 
@@ -140,11 +128,7 @@ function RewardStatus({
               display: inline-flex;
               align-items: center;
               gap: 0.5rem;
-              background: linear-gradient(
-                135deg,
-                ${Color[rewardHue as keyof typeof Color](0.9)} 0%,
-                ${Color[rewardHue as keyof typeof Color]()} 100%
-              );
+              background: linear-gradient(135deg, ${rewardGradientStart} 0%, ${rewardGradientEnd} 100%);
               color: #fff;
               border-radius: 999px;
               padding: 0.3rem 0.8rem;
@@ -184,11 +168,7 @@ function RewardStatus({
               justify-self: center;
             `}
           >
-            <Starmarks
-              stars={amountRewarded}
-              color={Color[starHue as keyof typeof Color]()}
-              fullWidth={false}
-            />
+              <Starmarks stars={amountRewarded} color={starColor} fullWidth={false} />
           </div>
         </div>
       </ScopedTheme>

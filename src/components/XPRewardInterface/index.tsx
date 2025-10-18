@@ -25,6 +25,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const clearLabel = localize('clear');
 const rewardLabel = localize('reward');
@@ -56,7 +57,9 @@ export default function XPRewardInterface({
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const banned = useKeyContext((v) => v.myState.banned);
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    fallback: 'pink'
+  });
   const rewardFormState =
     useInputContext((v) => v.state['reward' + contentType + contentId]) || {};
   const onSetRewardForm = useInputContext((v) => v.actions.onSetRewardForm);

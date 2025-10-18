@@ -11,7 +11,7 @@ import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ItemPanel from './ItemPanel';
 import { homePanelClass } from '~/theme/homePanels';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 export default function DonorLicenseItem({
   karmaPoints,
@@ -58,40 +58,15 @@ export default function DonorLicenseItem({
     return donatedCoins >= DONOR_ACHIEVEMENT_THRESHOLD;
   }, [donatedCoins]);
 
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const headingColor = useMemo(() => {
-    const key = themeRoles.sectionPanelText?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      key && (Color[key] as ((opacity?: number) => string) | undefined);
-    return fn ? fn() : Color.darkerGray();
-  }, [themeRoles.sectionPanelText?.color]);
-  const accentColor = useMemo(() => {
-    const key = themeRoles.sectionPanel?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      key && (Color[key] as ((opacity?: number) => string) | undefined);
-    return fn ? fn() : Color.logoBlue();
-  }, [themeRoles.sectionPanel?.color]);
+  const { panelVars: basePanelVars } = useHomePanelVars();
   const panelVars = useMemo(
     () =>
       ({
-        ['--home-panel-bg' as const]: '#ffffff',
-        ['--home-panel-tint' as const]: Color.logoBlue(0.08),
-        ['--home-panel-border' as const]: Color.borderGray(0.65),
-        ['--home-panel-heading' as const]: headingColor,
-        ['--home-panel-accent' as const]: accentColor,
+        ...basePanelVars,
         ['--home-panel-gap' as const]: '2rem',
         ...style
       }) as React.CSSProperties,
-    [accentColor, headingColor, style]
+    [basePanelVars, style]
   );
 
   if (!canDonate) {

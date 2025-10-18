@@ -1,9 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function SwitchButton({
   color,
@@ -26,15 +24,11 @@ export default function SwitchButton({
   labelStyle?: React.CSSProperties;
   style?: React.CSSProperties;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const switchColor = useMemo(
-    () => getThemeRoles(themeName).switch?.color || 'logoBlue',
-    [themeName]
-  );
+  const { color: switchRoleColor } = useRoleColor('switch', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const activeColor = color || switchRoleColor;
 
   return (
     <ErrorBoundary
@@ -71,7 +65,7 @@ export default function SwitchButton({
         <input
           className={css`
             &:checked + span {
-              background-color: ${color || Color[switchColor]()};
+              background-color: ${activeColor};
             }
             &:checked + span:before {
               transform: translateX(${small ? 16 : 26}px);

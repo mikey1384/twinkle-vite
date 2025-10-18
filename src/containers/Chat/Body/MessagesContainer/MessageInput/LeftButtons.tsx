@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useChatContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
 
 export default function LeftButtons({
@@ -35,7 +36,8 @@ export default function LeftButtons({
   onWordleButtonClick: () => void;
   topicId: number;
 }) {
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const alertColorKey = alertRole.colorKey || 'gold';
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const channelState = useChatContext(
     (v) => v.state.channelsObj[selectedChannelId]
@@ -101,8 +103,10 @@ export default function LeftButtons({
             tone="raised"
             filled={chessButtonIsGlowing}
             onClick={onChessButtonClick}
-            color={chessButtonIsGlowing ? alertColor : buttonColor}
-            hoverColor={chessButtonIsGlowing ? alertColor : buttonHoverColor}
+            color={chessButtonIsGlowing ? alertColorKey : buttonColor}
+            hoverColor={
+              chessButtonIsGlowing ? alertColorKey : buttonHoverColor
+            }
           >
             <Icon size="lg" icon={['fas', 'chess']} />
           </Button>
@@ -112,8 +116,10 @@ export default function LeftButtons({
             tone="raised"
             filled={omokButtonIsGlowing}
             onClick={onOmokButtonClick}
-            color={omokButtonIsGlowing ? alertColor : buttonColor}
-            hoverColor={omokButtonIsGlowing ? alertColor : buttonHoverColor}
+            color={omokButtonIsGlowing ? alertColorKey : buttonColor}
+            hoverColor={
+              omokButtonIsGlowing ? alertColorKey : buttonHoverColor
+            }
             
             // Avoid extra spacing between split label children (O + mok)
             // by zeroing out Button's internal gap

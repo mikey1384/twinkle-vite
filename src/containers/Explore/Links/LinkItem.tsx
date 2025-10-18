@@ -17,6 +17,7 @@ import {
   useExploreContext,
   useKeyContext
 } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
@@ -48,7 +49,9 @@ export default function LinkItem({
   const level = useKeyContext((v) => v.myState.level);
   const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit } = useMyLevel();
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const { color: linkColor } = useRoleColor('link', {
+    fallback: 'logoBlue'
+  });
   const onEditLinkTitle = useExploreContext((v) => v.actions.onEditLinkTitle);
   const onDeleteContent = useContentContext((v) => v.actions.onDeleteContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
@@ -245,7 +248,7 @@ export default function LinkItem({
                     textOverflow: 'ellipsis',
                     overflow: 'hidden',
                     cursor: 'pointer',
-                    color: Color[linkColor](),
+                    color: linkColor,
                     fontWeight: 'bold'
                   }}
                   className={css`

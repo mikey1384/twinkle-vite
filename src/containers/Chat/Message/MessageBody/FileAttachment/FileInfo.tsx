@@ -9,7 +9,7 @@ import {
   mobileMaxWidth
 } from '~/constants/css';
 import { renderFileSize } from '~/helpers/stringHelpers';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function FileInfo({
   fileName,
@@ -24,18 +24,10 @@ export default function FileInfo({
   src: string;
   theme?: string;
 }) {
-  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
-  const linkColor = useMemo(() => {
-    const role = getThemeRoles(themeName).link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeName]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
 
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
   return (

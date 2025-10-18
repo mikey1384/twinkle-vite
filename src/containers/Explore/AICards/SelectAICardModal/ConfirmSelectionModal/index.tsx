@@ -4,7 +4,8 @@ import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Details from './Details';
 import FinalConfirm from './FinalConfirm';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const cancelLabel = localize('cancel');
 
@@ -21,7 +22,9 @@ export default function ConfirmSelectionModal({
   selectedCardIds: number[];
   onConfirm: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const getHigherAICardBids = useAppContext(
     (v) => v.requestHelpers.getHigherAICardBids
   );

@@ -1,9 +1,10 @@
 import React from 'react';
 import OwnerMenu from './OwnerMenu';
 import NonOwnerMenu from './NonOwnerMenu';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function UnlistedMenu({
   burnXP,
@@ -32,7 +33,13 @@ export default function UnlistedMenu({
   onSetWithdrawOfferModalShown: (v: boolean) => void;
   onSetOfferModalShown: (v: boolean) => void;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { colorKey: xpNumberColorKey } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
+  const xpNumberColor =
+    xpNumberColorKey && xpNumberColorKey in Color
+      ? xpNumberColorKey
+      : 'logoGreen';
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);

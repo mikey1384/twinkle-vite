@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import UploadButton from '~/components/Buttons/UploadButton';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function AddButtons({
   channelId,
@@ -29,9 +30,15 @@ export default function AddButtons({
 }) {
   const [transactionButtonIsGlowing, setTransactionButtonIsGlowing] =
     useState(false);
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const alertColorKey = alertRole.colorKey || 'gold';
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const buttonColorKey = buttonRole.colorKey;
+  const buttonHoverRole = useRoleColor('buttonHovered', {
+    fallback: buttonColorKey
+  });
+  const buttonHoverColorKey =
+    buttonHoverRole.colorKey || buttonColorKey;
 
   const loadPendingTransaction = useAppContext(
     (v) => v.requestHelpers.loadPendingTransaction
@@ -66,9 +73,11 @@ export default function AddButtons({
           filled={transactionButtonIsGlowing}
           disabled={disabled}
           onClick={onSetTransactionModalShown}
-          color={transactionButtonIsGlowing ? alertColor : buttonColor}
+          color={transactionButtonIsGlowing ? alertColorKey : buttonColorKey}
           mobilePadding="0.5rem"
-          hoverColor={transactionButtonIsGlowing ? alertColor : buttonColor}
+          hoverColor={
+            transactionButtonIsGlowing ? alertColorKey : buttonColorKey
+          }
         >
           <Icon size="lg" icon={['far', 'badge-dollar']} />
         </Button>
@@ -77,8 +86,8 @@ export default function AddButtons({
         icon="upload"
         disabled={disabled}
         onFileSelect={onFileSelect}
-        color={buttonColor}
-        hoverColor={buttonHoverColor}
+        color={buttonColorKey}
+        hoverColor={buttonHoverColorKey}
         mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
         style={{
           marginLeft: isTwoPeopleChannel && !isAIChannel ? '0.5rem' : 0
@@ -89,8 +98,8 @@ export default function AddButtons({
           variant="soft"
           tone="raised"
           disabled={disabled}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={buttonColorKey}
+          hoverColor={buttonHoverColorKey}
           onClick={onSelectVideoButtonClick}
           mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
           style={{ marginLeft: '0.5rem' }}

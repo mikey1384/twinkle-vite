@@ -31,6 +31,7 @@ import {
 import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext, useChessContext } from '~/contexts';
 import { getLevelCategory } from '../../Home/ChessPuzzleModal/helpers';
+import { mapThemeToColors } from './helpers/theme';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -100,6 +101,7 @@ export default function Chess({
   const onBumpChessThemeVersion = useChatContext(
     (v) => v.actions.onBumpChessThemeVersion
   );
+  const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
   const banned = useKeyContext((v) => v.myState.banned);
   const creatingNewDMChannel = useChatContext(
     (v) => v.state.creatingNewDMChannel
@@ -120,16 +122,13 @@ export default function Chess({
   const [promotionData, setPromotionData] = useState<any>(null);
   const [themeModalShown, setThemeModalShown] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<string | null>(null);
-  const [localSquareColors, setLocalSquareColors] = useState<
-    { light?: string; dark?: string } | undefined
-  >(undefined);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(`tw-chat-chess-theme-${userId}`);
-      if (saved) setCurrentTheme(saved);
+      setCurrentTheme(saved || null);
     } catch {}
-  }, [userId]);
+  }, [userId, chessThemeVersion]);
 
   const maxLevelUnlocked: number =
     useChessContext((v) => v.state.stats?.maxLevelUnlocked) ?? 1;
@@ -179,21 +178,6 @@ export default function Chess({
       try {
         localStorage.setItem(`tw-chat-chess-theme-${userId}`, value);
       } catch {}
-      const mapped =
-        value === 'INTERMEDIATE'
-          ? { light: '#dbeafe', dark: '#93c5fd' }
-          : value === 'ADVANCED'
-          ? { light: '#e2e8f0', dark: '#94a3b8' }
-          : value === 'EXPERT'
-          ? { light: '#ede9fe', dark: '#c4b5fd' }
-          : value === 'LEGENDARY'
-          ? { light: '#fee2e2', dark: '#fca5a5' }
-          : value === 'GENIUS'
-          ? { light: '#fef3c7', dark: '#fbbf24' }
-          : value === 'LEVEL_42'
-          ? { light: '#e0e7ff', dark: '#556377' }
-          : undefined;
-      setLocalSquareColors(mapped);
       // Notify chat to re-render other messages to pick up new theme
       onBumpChessThemeVersion();
     },
@@ -233,6 +217,33 @@ export default function Chess({
 
   const currentThemeLabel =
     themeOptions.find((o) => o.value === currentTheme)?.label || 'Default';
+
+  const overrideSquareColors = useMemo(() => {
+    if (!currentTheme) return undefined;
+    const mapped = mapThemeToColors(currentTheme);
+    if (currentTheme === 'DEFAULT') {
+      return null;
+    }
+    return mapped || null;
+  }, [currentTheme]);
+
+  const appliedSquareColors = useMemo(() => {
+    if (overrideSquareColors === undefined) {
+      return squareColors;
+    }
+    return overrideSquareColors || undefined;
+  }, [overrideSquareColors, squareColors]);
+
+  const boardColorVars = useMemo<React.CSSProperties>(() => {
+    const vars: Record<string, string> = {};
+    if (appliedSquareColors?.light) {
+      vars['--chat-chess-light'] = appliedSquareColors.light;
+    }
+    if (appliedSquareColors?.dark) {
+      vars['--chat-chess-dark'] = appliedSquareColors.dark;
+    }
+    return vars as React.CSSProperties;
+  }, [appliedSquareColors]);
 
   const fallenPieces: React.RefObject<any> = useRef({
     white: [],
@@ -1267,12 +1278,7 @@ export default function Chess({
               background-color: red;
             }
           `}
-          style={
-            {
-              '--chat-chess-light': (localSquareColors || squareColors)?.light,
-              '--chat-chess-dark': (localSquareColors || squareColors)?.dark
-            } as React.CSSProperties
-          }
+          style={boardColorVars}
         >
           <Game
             loading={!loaded || (!isDiscussion && !opponentId)}

@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 import { useContentContext, useKeyContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const rewardLabel = localize('reward');
 
@@ -30,14 +30,10 @@ export default function RewardButton({
   const onSetXpRewardInterfaceShown = useContentContext(
     (v) => v.actions.onSetXpRewardInterfaceShown
   );
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const rewardColor = useMemo(
-    () => getThemeRoles(themeName).reward?.color || 'pink',
-    [themeName]
-  );
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    themeName: theme || profileTheme,
+    fallback: 'pink'
+  });
 
   return (
     <Button

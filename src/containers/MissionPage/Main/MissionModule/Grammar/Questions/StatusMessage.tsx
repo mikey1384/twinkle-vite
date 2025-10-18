@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
-import { useKeyContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function StatusMessage({
   mission,
@@ -21,7 +21,11 @@ export default function StatusMessage({
   failMessage: string;
   onBackToStart: () => any;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColor = useMemo(
+    () => xpNumberRole.getColor() || Color.logoGreen(),
+    [xpNumberRole]
+  );
 
   const rewardDetails = useMemo(() => {
     return (
@@ -36,7 +40,7 @@ export default function StatusMessage({
           {mission.repeatXpReward ? (
             <span
               style={{
-                color: Color[xpNumberColor](),
+                color: xpNumberColor,
                 fontWeight: 'bold'
               }}
             >
@@ -115,7 +119,12 @@ export default function StatusMessage({
               justifyContent: 'center'
             }}
           >
-            <Button onClick={onBackToStart} variant="soft" tone="raised" color="logoBlue">
+            <Button
+              onClick={onBackToStart}
+              variant="soft"
+              tone="raised"
+              color="logoBlue"
+            >
               Back to Start Screen
             </Button>
           </div>
@@ -154,7 +163,12 @@ export default function StatusMessage({
                 justifyContent: 'center'
               }}
             >
-              <Button onClick={onBackToStart} variant="soft" tone="raised" color="rose">
+              <Button
+                onClick={onBackToStart}
+                variant="soft"
+                tone="raised"
+                color="rose"
+              >
                 Back to Start Screen
               </Button>
             </div>

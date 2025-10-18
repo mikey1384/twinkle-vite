@@ -4,7 +4,7 @@ import RichText from '~/components/Texts/RichText';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { edit } from '~/constants/placeholders';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 
 const cancelLabel = localize('cancel');
@@ -32,7 +32,7 @@ export default function Description({
   onEditCancel: () => void;
   onEditFinish: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
   const [isEditing, setIsEditing] = useState(false);
   return (
     <div style={{ width: '100%', fontSize: '1.6rem' }}>

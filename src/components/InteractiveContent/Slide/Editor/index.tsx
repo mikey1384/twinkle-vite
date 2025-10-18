@@ -28,6 +28,8 @@ import { edit } from '~/constants/placeholders';
 import { isEqual } from 'lodash';
 import { v1 as uuidv1 } from 'uuid';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function Editor({
   attachment,
@@ -66,7 +68,11 @@ export default function Editor({
   isLastSlide: boolean;
   uploadingFile: boolean;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const checkUserChange = useKeyContext((v) => v.helpers.checkUserChange);
   const userId = useKeyContext((v) => v.myState.userId);
 

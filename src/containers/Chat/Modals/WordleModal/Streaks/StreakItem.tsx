@@ -7,7 +7,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { User } from '~/types';
 import localize from '~/constants/localize';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const youLabel = localize('You');
 
@@ -24,25 +24,14 @@ export default function StreakItem({
   streakObj: any;
   theme: string;
 }) {
-  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const linkColor = useMemo(() => {
-    const role = themeRoles.link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeRoles]);
-  const activeColor = useMemo(() => {
-    const role = themeRoles.active;
-    const key = role?.color || 'green';
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn() : key;
-  }, [themeRoles]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { color: activeColor } = useRoleColor('active', {
+    themeName: theme,
+    fallback: 'green'
+  });
 
   const [userListModalShown, setUserListModalShown] = useState(false);
   const rankColor = useMemo(() => {

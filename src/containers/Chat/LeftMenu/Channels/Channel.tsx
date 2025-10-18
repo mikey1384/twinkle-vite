@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deletedLabel = localize('deleted');
 
@@ -59,11 +60,23 @@ export default function Channel({
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
-  const chatUnreadColor = useKeyContext((v) => v.theme.chatUnread.color);
+  const chatUnreadRole = useRoleColor('chatUnread', {
+    fallback: 'logoBlue'
+  });
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const generalChatColor = useKeyContext((v) => v.theme.generalChat.color);
+  const generalChatRole = useRoleColor('generalChat', {
+    fallback: 'logoBlue'
+  });
+  const chatUnreadColor = useMemo(
+    () => chatUnreadRole.getColor() || Color.logoBlue(),
+    [chatUnreadRole]
+  );
+  const generalChatColor = useMemo(
+    () => generalChatRole.getColor() || Color.logoBlue(),
+    [generalChatRole]
+  );
   const effectiveChannelName = useMemo(
     () => customChannelNames[channelId] || channelName,
     [channelName, customChannelNames, channelId]
@@ -354,7 +367,7 @@ export default function Channel({
                 style={{
                   color:
                     channelId === 2
-                      ? Color[generalChatColor]()
+                      ? generalChatColor
                       : !effectiveChannelName && !otherMember
                       ? Color.lighterGray()
                       : undefined,
@@ -392,7 +405,7 @@ export default function Channel({
           {badgeShown && (
             <div
               style={{
-                background: Color[chatUnreadColor]?.(),
+                background: chatUnreadColor,
                 display: 'flex',
                 color: '#fff',
                 fontWeight: 'bold',

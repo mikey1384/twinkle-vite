@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
 import SortableListGroup from '~/components/SortableListGroup';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
 import { isEqual } from 'lodash';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { isMobile } from '~/helpers';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
@@ -23,7 +24,11 @@ export default function ReorderButtonsModal({
   forkButtonIds: number[];
   onSubmit: (arg: any) => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const [forkButtonIds, setForkButtonIds] = useState(initialButtonIds);
   return (
     <ErrorBoundary componentPath="ForkButtonsField/ReorderButtonsModal">

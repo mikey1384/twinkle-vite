@@ -452,7 +452,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     level1: { color: 'logoBlue' },
     level2: { color: 'pink' },
     level3: { color: 'orange' },
-    level4: { color: 'magenta' },
+    level4: { color: 'fuchsia' },
     level5: { color: 'gold' },
     likeButton: {
       color: pickColor(
@@ -531,6 +531,23 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           darkBlue: 'strongPink'
         },
         'pink'
+      )
+    },
+    dailyAchievementRing: {
+      color: pickColor(
+        {
+          green: 'yellowGreen',
+          orange: 'orange',
+          rose: 'pinkOrange',
+          pink: 'pastelPink',
+          purple: 'lightPurple',
+          black: 'lightBlueGray',
+          red: 'passionFruit',
+          darkBlue: 'lightOceanBlue',
+          vantaBlack: 'lightBluerGray',
+          gold: 'goldOrange'
+        },
+        'logoBlue'
       )
     },
     rewardLevelForm: { color, opacity: isStrongColor(color) ? 0.9 : 1 },

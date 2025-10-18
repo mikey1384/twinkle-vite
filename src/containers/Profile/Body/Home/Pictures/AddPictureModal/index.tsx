@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectFromArchive from './SelectFromArchive';
-import { useKeyContext } from '~/contexts';
 import NewModal from '~/components/NewModal';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function AddPictureModal({
   currentPictures,
@@ -18,7 +19,8 @@ export default function AddPictureModal({
   onHide: () => any;
   profileId: number;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const [section, setSection] = useState('start');
   const [selectedPictureIds, setSelectedPictureIds] = useState([]);
 

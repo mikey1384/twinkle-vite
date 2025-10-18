@@ -5,17 +5,21 @@ import ContentListItem from '~/components/ContentListItem';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import localize from '~/constants/localize';
-import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
 export default function EarnXPFromSubjects() {
-  const showMeAnotherSubjectButtonColor = useKeyContext(
-    (v) => v.theme.showMeAnotherSubjectButton.color
+  const showMeAnotherSubjectRole = useRoleColor(
+    'showMeAnotherSubjectButton',
+    { fallback: 'green' }
   );
+  const showMeAnotherSubjectButtonColor =
+    showMeAnotherSubjectRole.colorKey;
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );

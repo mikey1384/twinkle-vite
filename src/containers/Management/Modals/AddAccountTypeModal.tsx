@@ -6,14 +6,17 @@ import Check from '../Check';
 import Table from '../Table';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function AddAccountTypeModal({
   onHide
 }: {
   onHide: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const addAccountType = useAppContext((v) => v.requestHelpers.addAccountType);
   const onAddAccountType = useManagementContext(
     (v) => v.actions.onAddAccountType

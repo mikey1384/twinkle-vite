@@ -59,15 +59,23 @@ export default function Badge({
   const chatLoaded = useChatContext((v) => v.state.loaded);
   const timerIdRef = useRef<any>(null);
   const [loadingWordle, setLoadingWordle] = useState(false);
+  const achievedGradient = useMemo(
+    () => gradientMap[children]?.achieved,
+    [children]
+  );
+  const inactiveGradient = useMemo(
+    () => gradientMap[children]?.notAchieved || 'var(--color-not-achieved)',
+    [children]
+  );
 
   const background = useMemo(() => {
     if (isAmped) {
-      return gradientMap[children]?.achieved;
+      return achievedGradient || inactiveGradient;
     }
     return isAchieved && !loadingWordle
-      ? gradientMap[children]?.achieved
-      : gradientMap[children]?.notAchieved || 'var(--color-not-achieved)';
-  }, [children, isAchieved, isAmped, loadingWordle]);
+      ? achievedGradient || inactiveGradient
+      : inactiveGradient;
+  }, [achievedGradient, inactiveGradient, isAchieved, isAmped, loadingWordle]);
 
   useEffect(() => {
     chatLoadedRef.current = chatLoaded;
@@ -96,7 +104,7 @@ export default function Badge({
         border-radius: 50%;
         color: white;
         font-weight: bold;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         cursor: ${loadingWordle ? 'default' : 'pointer'};
         transition: background-color 0.3s ease, transform 0.3s ease;
         transform: ${isAmped ? 'scale(1.1)' : 'scale(1)'};
@@ -104,9 +112,9 @@ export default function Badge({
 
         &:hover {
           transform: scale(1.1);
-          ${isAchieved || isAmped
-            ? ''
-            : `background: ${gradientMap[children]?.notAchieved}`};
+          ${!isAchieved && !isAmped && !loadingWordle && inactiveGradient
+            ? `background: ${inactiveGradient};`
+            : ''}
         }
       `}
     >

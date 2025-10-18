@@ -19,6 +19,8 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 const intervalLength = 2000;
 const deviceIsMobile = isMobile(navigator);
@@ -76,19 +78,30 @@ function XPVideoPlayer({
   const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
-  const loginColor = useKeyContext((v) => v.theme.login.color);
-  const byUserIndicatorColor = useKeyContext(
-    (v) => v.theme.byUserIndicator.color
+  const loginRole = useRoleColor('login', { fallback: 'green' });
+  const byUserIndicatorRole = useRoleColor('byUserIndicator', {
+    fallback: 'logoBlue'
+  });
+  const byUserIndicatorTextRole = useRoleColor('byUserIndicatorText', {
+    fallback: 'white'
+  });
+  const loginColor = loginRole.colorKey;
+  const byUserIndicatorColor = useMemo(
+    () =>
+      byUserIndicatorRole.getColor(
+        byUserIndicatorRole.defaultOpacity || 0.9
+      ) || Color.logoBlue(0.9),
+    [byUserIndicatorRole]
   );
-  const byUserIndicatorOpacity = useKeyContext(
-    (v) => v.theme.byUserIndicator.opacity
+  const byUserIndicatorTextColor = useMemo(
+    () => byUserIndicatorTextRole.getColor() || '#fff',
+    [byUserIndicatorTextRole]
   );
-  const byUserIndicatorTextColor = useKeyContext(
-    (v) => v.theme.byUserIndicatorText.color
-  );
-  const byUserIndicatorTextShadowColor = useKeyContext(
-    (v) => v.theme.byUserIndicatorText.shadow
-  );
+  const byUserIndicatorTextShadowColor = useMemo(() => {
+    const raw = byUserIndicatorTextRole.token?.shadow;
+    if (!raw) return '';
+    return resolveColorValue(raw) || raw;
+  }, [byUserIndicatorTextRole.token?.shadow]);
 
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
@@ -280,16 +293,14 @@ function XPVideoPlayer({
         {byUser && !isChat && (
           <div
             className={css`
-              background: ${Color[byUserIndicatorColor](
-                byUserIndicatorOpacity
-              )};
+              background: ${byUserIndicatorColor};
               display: flex;
               align-items: center;
               font-weight: bold;
               font-size: 1.5rem;
-              color: ${Color[byUserIndicatorTextColor]()};
+              color: ${byUserIndicatorTextColor};
               text-shadow: ${byUserIndicatorTextShadowColor
-                ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
+                ? `0 0 1px ${byUserIndicatorTextShadowColor}`
                 : 'none'};
               justify-content: center;
               padding: 0.5rem;

@@ -7,13 +7,14 @@ import PeopleFilterBar from './PeopleFilterBar';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
+import { useAppContext, useInputContext } from '~/contexts';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
 } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -40,7 +41,8 @@ function People() {
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
 
-  const searchColor = useKeyContext((v) => v.theme.search.color);
+  const searchRole = useRoleColor('search', { fallback: 'logoBlue' });
+  const searchColor = searchRole.color;
   const [loading, setLoading] = useState(false);
   const searchTextRef = useRef(userSearchText);
   const [searchText, setSearchText] = useState(userSearchText);

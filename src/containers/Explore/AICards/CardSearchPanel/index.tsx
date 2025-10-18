@@ -290,8 +290,7 @@ export default function CardSearchPanel({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useKeyContext((v) => v.theme);
-  const userId = useKeyContext((v) => v.myState.userId);
+    const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
@@ -335,17 +334,11 @@ export default function CardSearchPanel({
     const successKey = themeRoles.success?.color as
       | keyof typeof Color
       | undefined;
-    if (successKey && Color[successKey]) {
-      return typeof successKey === 'string'
-        ? successKey
-        : String(successKey);
-    }
-    const themeSuccessColor = theme?.success?.color;
-    if (typeof themeSuccessColor === 'string') {
-      return themeSuccessColor;
+    if (successKey && successKey in Color) {
+      return successKey;
     }
     return 'green';
-  }, [theme?.success?.color, themeRoles.success?.color]);
+  }, [themeRoles.success?.color]);
   const ownerFilterLabel =
     typeof filters.owner === 'string' ? filters.owner : '';
   const colorFilterKey =

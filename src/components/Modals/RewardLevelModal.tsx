@@ -5,9 +5,11 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import RewardLevelForm from '~/components/Forms/RewardLevelForm';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import AlertModal from '~/components/Modals/AlertModal';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const cancelLabel = localize('cancel');
 const setLabel = localize('set');
@@ -27,7 +29,9 @@ export default function RewardLevelModal({
   onSubmit: (params: object) => void;
   onHide: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const updateRewardLevel = useAppContext(
     (v) => v.requestHelpers.updateRewardLevel
   );
@@ -76,7 +80,13 @@ export default function RewardLevelModal({
           >
             {cancelLabel}
           </Button>
-          <Button loading={posting} color={doneColor} onClick={submit}>
+          <Button
+            loading={posting}
+            color={
+              doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+            }
+            onClick={submit}
+          >
             {setLabel}
           </Button>
         </footer>

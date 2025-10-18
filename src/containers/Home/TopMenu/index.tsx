@@ -3,7 +3,8 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
+  type CSSProperties
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
@@ -20,18 +21,15 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import {
-  Color,
-  mobileMaxWidth,
-  getThemeStyles,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import Icon from '~/components/Icon';
 import ChessOptionsModal from './ChessOptionsModal';
 import NewTopButton from './NewTopButton';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -84,10 +82,44 @@ export default function TopMenu({
   const [loadingOmok, setLoadingOmok] = useState(false);
   const [chessModalShown, setChessModalShown] = useState(false);
   const username = useKeyContext((v) => v.myState.username);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
+  const { themeRoles, themeStyles } = useThemeTokens({
+    intensity: 0.06
+  });
+  const topMenuVars = useMemo<CSSProperties>(() => {
+    const headingColor =
+      resolveColorValue(
+        themeRoles.sectionPanelText?.color,
+        themeRoles.sectionPanelText?.opacity
+      ) ||
+      resolveColorValue(
+        themeRoles.sectionPanel?.color,
+        themeRoles.sectionPanel?.opacity
+      ) ||
+      Color.darkerGray();
+    const textColor =
+      resolveColorValue(
+        themeRoles.sectionPanel?.color,
+        themeRoles.sectionPanel?.opacity
+      ) || headingColor;
+    const headingShadowColor = resolveColorValue(
+      themeRoles.sectionPanelText?.shadow
+    );
+    const borderColor = themeStyles.border || Color.borderGray(0.65);
+    const backgroundColor = themeStyles.bg || Color.whiteGray();
+    const vars: Record<string, string> = {
+      '--topmenu-bg': backgroundColor,
+      '--topmenu-border': borderColor,
+      '--topmenu-heading': headingColor,
+      '--topmenu-text': textColor
+    };
+    if (headingShadowColor) {
+      vars['--topmenu-heading-shadow'] = `0 1px 0 ${headingShadowColor}`;
+    }
+    return vars as CSSProperties;
+  }, [themeRoles, themeStyles]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -165,17 +197,15 @@ export default function TopMenu({
       <div
         style={{
           marginBottom: '1rem',
-          ['--topmenu-bg' as any]: getThemeStyles(
-            (profileTheme || 'logoBlue') as string,
-            0.06
-          ).bg,
+          ...topMenuVars,
           ...style
         }}
         className={css`
-          background: var(--topmenu-bg);
+          background: var(--topmenu-bg, ${Color.whiteGray()});
+          color: var(--topmenu-text, ${Color.darkerGray()});
           font-size: 1.7rem;
           padding: 1.2rem;
-          border: 1px solid ${Color.borderGray(0.65)};
+          border: 1px solid var(--topmenu-border, ${Color.borderGray(0.65)});
           border-radius: ${wideBorderRadius};
           box-shadow: inset 0 1px 0 ${Color.white(0.85)},
             0 10px 24px rgba(15, 23, 42, 0.14);
@@ -183,6 +213,8 @@ export default function TopMenu({
           p {
             font-size: 2rem;
             font-weight: bold;
+            color: var(--topmenu-heading, ${Color.darkerGray()});
+            text-shadow: var(--topmenu-heading-shadow, none);
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.7rem;
             }
@@ -195,11 +227,7 @@ export default function TopMenu({
           }
         `}
       >
-        <p
-          className={css`
-            color: ${Color.darkerGray()};
-          `}
-        >
+        <p>
           Hi, {username}! What do you want to do today?
         </p>
         <InputPanel onInputModalButtonClick={onInputModalButtonClick} />

@@ -2,10 +2,10 @@ import React from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
 import UsernameText from '~/components/Texts/UsernameText';
 import MakeOffer from '../MakeOffer';
 import MyOffer from '../MyOffer';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function NonOwnerMenu({
   burnXP,
@@ -26,7 +26,13 @@ export default function NonOwnerMenu({
   myId: number;
   myOffer: any;
 }) {
-  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const { colorKey: userLinkColorKey } = useRoleColor('userLink', {
+    fallback: 'logoBlue'
+  });
+  const userLinkColor =
+    userLinkColorKey && userLinkColorKey in Color
+      ? userLinkColorKey
+      : 'logoBlue';
 
   return (
     <div

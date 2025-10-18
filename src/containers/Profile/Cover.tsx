@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
 import Button from '~/components/Button';
@@ -16,7 +16,7 @@ import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import localize from '~/constants/localize';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
 
 const deviceIsMobile = isMobile(navigator);
 const changeThemeMobileLabel = localize('changeThemeMobile');
@@ -59,11 +59,9 @@ export default function Cover({
 
   const coverStatusSize = 'medium';
 
-  const themeName = useMemo<ThemeName>(
-    () => (selectedTheme || profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme, selectedTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeName, themeRoles } = useThemeTokens({
+    themeName: selectedTheme || profileTheme
+  });
 
   const resolveColor = (name?: string, fallback?: string) => {
     const target = name ?? fallback;

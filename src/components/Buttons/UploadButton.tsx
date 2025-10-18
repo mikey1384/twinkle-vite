@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import UploadModal from '../Modals/UploadModal';
 
@@ -63,13 +63,18 @@ export default function UploadButton({
   // New: Enable AI generation option
   enableAIGeneration?: boolean;
 }) {
-  const defaultButtonColor = useKeyContext((v) => v.theme.button.color);
+  const { colorKey: defaultButtonColor } = useRoleColor('button', {
+    fallback: 'logoBlue'
+  });
+  const { colorKey: defaultHoverColor } = useRoleColor('buttonHovered', {
+    fallback: defaultButtonColor || 'logoBlue'
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalShown, setModalShown] = useState(false);
 
   const appliedColor = color || defaultButtonColor;
-  const appliedHoverColor = hoverColor || appliedColor;
+  const appliedHoverColor = hoverColor || defaultHoverColor || appliedColor;
   const { variant: overrideVariant, tone: overrideTone, ...restButtonProps } =
     buttonProps;
   const resolvedVariant =

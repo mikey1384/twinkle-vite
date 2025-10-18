@@ -17,6 +17,7 @@ import {
   returnCardBurnXP
 } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const colors: {
   [key: number]: string;
@@ -45,7 +46,13 @@ export default function DailyBonusModal({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { colorKey: xpNumberColorKey } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
+  const xpNumberColor =
+    xpNumberColorKey && xpNumberColorKey in Color
+      ? xpNumberColorKey
+      : 'logoGreen';
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
   const postDailyBonus = useAppContext((v) => v.requestHelpers.postDailyBonus);

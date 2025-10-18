@@ -14,6 +14,7 @@ import { checkMicrophoneAccess } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 import Countdown from 'react-countdown';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface RGBA {
   r: number;
@@ -230,11 +231,7 @@ export default function CallZero({
     (v) => v.state.todayStats
   );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const actionColorName = useKeyContext((v) => v.theme.action.color);
-  const actionColorFn = useMemo<((opacity?: number) => string) | null>(() => {
-    const candidate = Color[actionColorName as keyof typeof Color];
-    return typeof candidate === 'function' ? candidate : null;
-  }, [actionColorName]);
+  const actionRole = useRoleColor('action', { fallback: 'green' });
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
@@ -265,9 +262,8 @@ export default function CallZero({
 
   const accentBaseColor = useMemo(() => {
     if (aiCallOngoing) return Color.rose();
-    if (actionColorFn) return actionColorFn();
-    return Color.logoBlue();
-  }, [actionColorFn, aiCallOngoing]);
+    return actionRole.getColor() || Color.green();
+  }, [actionRole, aiCallOngoing]);
 
   const gradientStart = useMemo(
     () => lightenColor(accentBaseColor, 0.25),

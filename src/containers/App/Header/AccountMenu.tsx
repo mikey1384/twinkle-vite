@@ -12,6 +12,7 @@ import { socket } from '~/constants/sockets/api';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const logInLabel = localize('logIn');
 const profileLabel = localize('Profile');
@@ -35,7 +36,8 @@ export default function AccountMenu({
     () => location.pathname === `/users/${username}`,
     [location, username]
   );
-  const loginColor = useKeyContext((v) => v.theme.login.color);
+  const loginRole = useRoleColor('login', { fallback: 'green' });
+  const loginColorKey = loginRole.colorKey;
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -123,7 +125,7 @@ export default function AccountMenu({
           className={className}
           onClick={onOpenSigninModal}
           style={{ marginLeft: '1rem', height: '3.5rem' }}
-          color={loginColor}
+          color={loginColorKey}
           filled
         >
           {logInLabel}

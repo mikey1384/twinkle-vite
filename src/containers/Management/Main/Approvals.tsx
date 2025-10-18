@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../Table';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useManagementContext, useKeyContext } from '~/contexts';
+import { useManagementContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ApproveModal from '../Modals/ApproveModal';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Approvals({ canManage }: { canManage: boolean }) {
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = useMemo(
+    () => tableHeaderRole.colorKey || 'logoBlue',
+    [tableHeaderRole.colorKey]
+  );
   const approvalItems = useManagementContext((v) => v.state.approvalItems);
   const approvalItemsLoaded = useManagementContext(
     (v) => v.state.approvalItemsLoaded

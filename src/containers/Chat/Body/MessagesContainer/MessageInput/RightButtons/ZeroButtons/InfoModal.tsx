@@ -7,13 +7,15 @@ import { useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { CIEL_PFP_URL, CIEL_TWINKLE_ID } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function InfoModal({ onHide }: { onHide: () => void }) {
   const [usermenuShown, setUsermenuShown] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColorKey = doneRole.colorKey || 'blue';
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ export default function InfoModal({ onHide }: { onHide: () => void }) {
         </div>
       </main>
       <footer>
-        <Button color={doneColor} onClick={onHide}>
+        <Button color={doneColorKey} onClick={onHide}>
           Okay
         </Button>
       </footer>

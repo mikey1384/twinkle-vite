@@ -9,6 +9,7 @@ import { css } from '@emotion/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
 import SearchInput from '~/components/Texts/SearchInput';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface GroupsProps {
   id: number;
@@ -27,7 +28,8 @@ export default function Groups() {
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
-  const searchColor = useKeyContext((v) => v.theme.search.color);
+  const searchRole = useRoleColor('search', { fallback: 'logoBlue' });
+  const searchColor = searchRole.color;
   const searchGroups = useAppContext((v) => v.requestHelpers.searchGroups);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);

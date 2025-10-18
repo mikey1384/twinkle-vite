@@ -6,7 +6,7 @@ import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
 import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function FilterModal({
   filters,
@@ -19,7 +19,9 @@ export default function FilterModal({
   onHide: () => void;
   onApply: (queryString: string) => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const [dropdownShown, setDropdownShown] = useState(false);
   const [selectedWord, setSelectedWord] = useState(filters.word || '');
   const [selectedOwner, setSelectedOwner] = useState(filters.owner);

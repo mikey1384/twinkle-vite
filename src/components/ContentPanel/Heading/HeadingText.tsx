@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function HeadingText({
   action,
@@ -27,32 +27,22 @@ export default function HeadingText({
     contentType,
     uploader
   } = contentObj;
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const linkColorKey = useMemo(
-    () => themeRoles.link?.color || 'logoBlue',
-    [themeRoles]
-  );
-  const userLinkColorKey = useMemo(
-    () => themeRoles.userLink?.color || linkColorKey,
-    [themeRoles, linkColorKey]
-  );
-  const contentColorKey = useMemo(
-    () => themeRoles.content?.color || 'logoBlue',
-    [themeRoles]
-  );
-  const linkColor = useMemo(() => {
-    const fn = Color[linkColorKey as keyof typeof Color];
-    return fn ? fn() : linkColorKey;
-  }, [linkColorKey]);
-  const userLinkColor = useMemo(() => {
-    const fn = Color[userLinkColorKey as keyof typeof Color];
-    return fn ? fn() : userLinkColorKey;
-  }, [userLinkColorKey]);
+  const {
+    color: linkColor,
+    colorKey: linkColorKey,
+    themeName
+  } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { color: userLinkColor } = useRoleColor('userLink', {
+    themeName,
+    fallback: linkColorKey || 'logoBlue'
+  });
+  const { color: contentLinkColor } = useRoleColor('content', {
+    themeName,
+    fallback: 'logoBlue'
+  });
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'
@@ -68,10 +58,6 @@ export default function HeadingText({
   if (isSubjectComment) {
     contentLabel = 'subject';
   }
-  const contentLinkColor = useMemo(() => {
-    const fn = Color[contentColorKey as keyof typeof Color];
-    return fn ? fn() : contentColorKey;
-  }, [contentColorKey]);
   switch (contentType) {
     case 'video':
       return (
@@ -188,12 +174,15 @@ export default function HeadingText({
       }
     }
     case 'aiStory':
+      const aiStoryColor =
+        resolveColorValue(cardLevelHash?.[contentObj?.difficulty]?.color) ||
+        Color.logoBlue();
       return (
         <>
           <UsernameText user={uploader} color={linkColor} /> cleared a{' '}
           <b
             style={{
-              color: Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
+              color: aiStoryColor
             }}
           >
             Level {contentObj.difficulty} AI Story
@@ -208,6 +197,9 @@ export default function HeadingText({
         </>
       );
     case 'xpChange': {
+      const vocabColor =
+        resolveColorValue(cardLevelHash?.[contentObj?.level]?.color) ||
+        Color.logoBlue();
       return (
         <>
           <UsernameText user={uploader} color={linkColor} /> completed
@@ -215,7 +207,7 @@ export default function HeadingText({
           <span
             style={{
               fontWeight: 'bold',
-              color: Color[cardLevelHash[contentObj?.level]?.color]()
+              color: vocabColor
             }}
           >
             {wordLevelHash[contentObj?.level]?.label} vocabulary question

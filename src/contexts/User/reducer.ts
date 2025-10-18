@@ -189,19 +189,30 @@ export default function UserReducer(
           isAchievementsLoaded: action.isAchievementsLoaded
         }
       };
-    case 'SET_USER_STATE':
+    case 'SET_USER_STATE': {
+      const updatedUser = {
+        ...(state.userObj[action.userId] || {}),
+        ...action.newState,
+        userId: action.userId,
+        contentId: action.userId
+      };
+      const isViewer = action.userId === state.myState.userId;
       return {
         ...state,
         userObj: {
           ...state.userObj,
-          [action.userId]: {
-            ...(state.userObj[action.userId] || {}),
-            ...action.newState,
-            userId: action.userId,
-            contentId: action.userId
-          }
-        }
+          [action.userId]: updatedUser
+        },
+        myState: isViewer
+          ? {
+              ...state.myState,
+              ...action.newState,
+              userId: action.userId,
+              contentId: action.userId
+            }
+          : state.myState
       };
+    }
     case 'TOGGLE_HIDE_WATCHED':
       return {
         ...state,

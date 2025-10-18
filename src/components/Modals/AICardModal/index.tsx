@@ -12,6 +12,7 @@ import Loading from '~/components/Loading';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Link, useLocation } from 'react-router-dom';
@@ -31,8 +32,18 @@ export default function AICardModal({
   onHide: () => any;
 }) {
   const location = useLocation();
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const { colorKey: linkColorKey } = useRoleColor('link', {
+    fallback: 'logoBlue'
+  });
+  const { colorKey: userLinkColorKey } = useRoleColor('userLink', {
+    fallback: linkColorKey || 'logoBlue'
+  });
+  const linkColor =
+    linkColorKey && linkColorKey in Color ? linkColorKey : 'logoBlue';
+  const userLinkColor =
+    userLinkColorKey && userLinkColorKey in Color
+      ? userLinkColorKey
+      : linkColor;
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);

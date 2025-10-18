@@ -38,6 +38,7 @@ import {
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deleteLabel = localize('delete');
 const editLabel = localize('edit');
@@ -87,7 +88,9 @@ export default function Details({
   videoId: number;
   videoViews: number;
 }) {
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    fallback: 'pink'
+  });
   const banned = useKeyContext((v) => v.myState.banned);
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);

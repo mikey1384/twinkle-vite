@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from '~/components/Link';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function AlreadyPosted({
   contentId,
@@ -22,11 +23,19 @@ export default function AlreadyPosted({
   url?: string;
   videoCode?: string;
 }) {
-  const alreadyPostedByThisUserColor = useKeyContext(
-    (v) => v.theme.alreadyPostedByThisUser.color
+  const { getColor: getByThisUserColor } = useRoleColor(
+    'alreadyPostedByThisUser',
+    {
+      fallback: 'orange',
+      opacity: 1
+    }
   );
-  const alreadyPostedByOtherUserColor = useKeyContext(
-    (v) => v.theme.alreadyPostedByOtherUser.color
+  const { getColor: getByOtherUserColor } = useRoleColor(
+    'alreadyPostedByOtherUser',
+    {
+      fallback: 'logoBlue',
+      opacity: 1
+    }
   );
   const checkContentUrl = useAppContext(
     (v) => v.requestHelpers.checkContentUrl
@@ -75,8 +84,8 @@ export default function AlreadyPosted({
         color: '#fff',
         backgroundColor:
           uploaderId !== existingContent.uploader
-            ? Color[alreadyPostedByOtherUserColor]()
-            : Color[alreadyPostedByThisUserColor](),
+            ? getByOtherUserColor() || Color.logoBlue()
+            : getByThisUserColor() || Color.orange(),
         ...style
       }}
       className={css`

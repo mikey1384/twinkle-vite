@@ -1,17 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import CategoryInput from './CategoryInput';
 import CategoryModal from './CategoryModal';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function GrammarCategories({
   style
 }: {
   style?: React.CSSProperties;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   const uploadGrammarCategory = useAppContext(
     (v) => v.requestHelpers.uploadGrammarCategory
   );
@@ -78,7 +83,7 @@ export default function GrammarCategories({
                 > li {
                   text-transform: capitalize;
                   font-size: 1.7rem;
-                  color: ${Color[linkColor]()};
+                  color: ${linkColor};
                   cursor: pointer;
                   &:hover {
                     text-decoration: underline;

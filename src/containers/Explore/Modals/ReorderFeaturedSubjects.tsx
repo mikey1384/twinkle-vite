@@ -4,7 +4,8 @@ import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
 import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useAppContext, useExploreContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ReorderFeaturedSubjects({
   onHide,
@@ -13,7 +14,9 @@ export default function ReorderFeaturedSubjects({
   onHide: () => void;
   subjectIds: number[];
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const uploadFeaturedSubjects = useAppContext(
     (v) => v.requestHelpers.uploadFeaturedSubjects

@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useAppContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 
@@ -21,24 +21,18 @@ export default function TopicStartNotification({
   theme: string;
   username: string;
 }) {
-  const themeName = useMemo<ThemeName>(
-    () => (theme as ThemeName),
-    [theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeName, themeRoles } = useThemeTokens({ themeName: theme });
   const topicTextColor = useMemo(() => {
-    const role = themeRoles.topicText;
-    const key = role?.color || themeName;
+    const key = themeRoles.topicText?.color || themeName;
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
-  }, [themeRoles, themeName]);
+  }, [themeRoles.topicText?.color, themeName]);
   const topicShadowColor = useMemo(() => {
-    const role = themeRoles.topicText;
-    const key = role?.shadow;
+    const key = themeRoles.topicText?.shadow;
     if (!key) return '';
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
-  }, [themeRoles]);
+  }, [themeRoles.topicText?.shadow]);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );

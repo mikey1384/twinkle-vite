@@ -1,4 +1,4 @@
-import { ThemeName, themeRegistry } from '~/theme/themes';
+import { ThemeName, themeRegistry } from '~/theme';
 
 export const getThemeStyles = (theme: string) => {
   const t = themeRegistry[theme as ThemeName] || themeRegistry.logoBlue;

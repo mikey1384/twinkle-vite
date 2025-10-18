@@ -4,7 +4,7 @@ import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, Color } from '~/constants/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -26,8 +26,16 @@ export default function StartScreen({
   onInitMission: () => any;
   onStartButtonClick: () => any;
 }) {
-  const successColor = useKeyContext((v) => v.theme.success.color);
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const successColor = useMemo(
+    () => successRole.getColor() || Color.green(),
+    [successRole]
+  );
+  const xpNumberColor = useMemo(
+    () => xpNumberRole.getColor() || Color.logoGreen(),
+    [xpNumberRole]
+  );
   useLayoutEffect(() => {
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;

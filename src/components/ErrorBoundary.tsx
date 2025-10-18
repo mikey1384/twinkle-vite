@@ -74,7 +74,11 @@ export default class ErrorBoundary extends Component<
             <p style={{ marginTop: '2rem' }}>
               Screenshot this <b style={{ color: Color.green() }}>whole page</b>
             </p>
-            <p style={{ marginTop: '0.5rem' }}>
+            <div
+              style={{
+                marginTop: '0.5rem'
+              }}
+            >
               and show it to{' '}
               <UsernameText
                 color={Color.logoBlue()}
@@ -84,7 +88,7 @@ export default class ErrorBoundary extends Component<
                 }}
               />{' '}
               for a lot of <b style={{ color: Color.orange() }}>XP</b>!
-            </p>
+            </div>
           </div>
           {componentPath ? (
             <div style={{ marginTop: '0.5rem', fontSize: '1.3rem' }}>

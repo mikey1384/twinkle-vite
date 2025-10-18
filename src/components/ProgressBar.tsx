@@ -1,9 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ProgressBar({
   className,
@@ -26,29 +25,26 @@ export default function ProgressBar({
   startLabel?: string | null;
   endLabel?: string | null;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-
-  const resolveColor = (name?: string, fallback?: string) => {
-    const target = name ?? fallback;
-    if (!target) return undefined;
-    const fn = Color[target as keyof typeof Color];
-    return fn ? fn() : target;
+  const {
+    color: roleColor,
+    themeName: resolvedThemeName
+  } = useRoleColor('progressBar', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const resolveExplicitColor = (value?: string) => {
+    if (!value) return undefined;
+    const fn = Color[value as keyof typeof Color];
+    return fn ? fn() : value;
   };
-
-  const roleColor = resolveColor(themeRoles.progressBar?.color, themeName) ||
-    Color.logoBlue();
-  const explicitColor = color ? resolveColor(color, color) : undefined;
+  const explicitColor = resolveExplicitColor(color);
+  const barBaseColor = explicitColor || roleColor;
   const barColorVar = explicitColor
-    ? explicitColor
-    : `var(--role-progressBar-color, ${roleColor})`;
+    ? barBaseColor
+    : `var(--role-progressBar-color, ${barBaseColor})`;
 
   return (
-    <ScopedTheme theme={themeName as any} roles={['progressBar']}>
+    <ScopedTheme theme={resolvedThemeName as any} roles={['progressBar']}>
       <div style={{ width: '100%', ...style }}>
         <div
           className={`${css`

@@ -15,7 +15,7 @@ import { useProfileState } from '~/helpers/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
 
 export default function Profile() {
   const params = useParams();
@@ -36,16 +36,15 @@ export default function Profile() {
   const [selectedTheme, setSelectedTheme] = useState(
     profile?.profileTheme || 'logoBlue'
   );
-  const themeName = useMemo<ThemeName>(
-    () => (selectedTheme as ThemeName),
-    [selectedTheme]
-  );
+  const { themeRoles } = useThemeTokens({
+    themeName: selectedTheme
+  });
   const backgroundColor = useMemo(() => {
-    const role = getThemeRoles(themeName).background;
+    const role = themeRoles.background;
     const key = role?.color || 'whiteGray';
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
-  }, [themeName]);
+  }, [themeRoles.background]);
 
   useEffect(() => {
     let retries = 0;

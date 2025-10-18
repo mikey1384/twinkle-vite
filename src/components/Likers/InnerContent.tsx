@@ -1,10 +1,8 @@
 import React, { useMemo, memo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 function InnerContent({
   likes = [],
@@ -23,22 +21,10 @@ function InnerContent({
   defaultText?: string;
   theme?: any;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const linkColor = useMemo(() => {
-    const role = getThemeRoles(themeName).link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeName]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const userLiked = useMemo(() => {
     for (const like of likes) {
       if (like?.id === userId) {

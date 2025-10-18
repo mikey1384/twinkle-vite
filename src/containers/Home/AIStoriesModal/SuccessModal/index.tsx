@@ -9,6 +9,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const colorHash: Record<
   number,
@@ -80,7 +81,8 @@ export default function SuccessModal({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColorKey = xpNumberRole.colorKey;
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
   );
@@ -189,7 +191,7 @@ export default function SuccessModal({
           }}
         >
           You earned{' '}
-          <b style={{ color: Color[xpNumberColor]() }}>
+          <b style={{ color: Color[xpNumberColorKey]() }}>
             {addCommasToNumber(
               rewardTable[difficulty].xp * (isListening ? 2 : 1)
             )}

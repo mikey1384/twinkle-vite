@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Chess from '../../Chess';
 import Icon from '~/components/Icon';
+import { useChatContext } from '~/contexts';
 import { getUserChatSquareColors } from '../../Chess/helpers/theme';
 
 export default function ChessTarget({
@@ -14,6 +15,12 @@ export default function ChessTarget({
   chessTarget: any;
   onClose: () => any;
 }) {
+  const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
+  const squareColors = useMemo(
+    () => getUserChatSquareColors(myId),
+    [myId, chessThemeVersion]
+  );
+
   return (
     <div
       style={{
@@ -38,12 +45,13 @@ export default function ChessTarget({
         onClick={onClose}
       />
       <Chess
+        key={chessThemeVersion}
         loaded
         myId={myId}
         channelId={channelId}
         initialState={chessTarget}
         style={{ width: '100%' }}
-        squareColors={getUserChatSquareColors(myId)}
+        squareColors={squareColors}
         displaySize="compact"
       />
     </div>

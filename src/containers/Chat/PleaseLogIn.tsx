@@ -1,21 +1,37 @@
 import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const logInLabel = localize('logIn');
 
 export default function PleaseLogIn() {
-  const {
-    login: { color: loginColor },
-    logoTwin: { color: twinColor },
-    logoKle: { color: kleColor }
-  } = useKeyContext((v) => v.theme);
-
+  const loginRole = useRoleColor('login', {
+    fallback: 'green'
+  });
+  const twinRole = useRoleColor('logoTwin', {
+    fallback: 'logoBlue'
+  });
+  const kleRole = useRoleColor('logoKle', {
+    fallback: 'logoGreen'
+  });
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
+  );
+  const loginColor = useMemo(
+    () => loginRole.getColor() || Color.green(),
+    [loginRole]
+  );
+  const twinColor = useMemo(
+    () => twinRole.getColor() || Color.logoBlue(),
+    [twinRole]
+  );
+  const kleColor = useMemo(
+    () => kleRole.getColor() || Color.logoGreen(),
+    [kleRole]
   );
 
   const doYouWantToChatAndPlayChessLabel = useMemo(() => {
@@ -45,10 +61,10 @@ export default function PleaseLogIn() {
           vocabulary games & chess
         </span>{' '}
         with{' '}
-        <span style={{ color: Color[twinColor](), fontWeight: 'bold' }}>
+        <span style={{ color: twinColor, fontWeight: 'bold' }}>
           Twin
         </span>
-        <span style={{ color: Color[kleColor](), fontWeight: 'bold' }}>
+        <span style={{ color: kleColor, fontWeight: 'bold' }}>
           kle
         </span>{' '}
         students and teachers?

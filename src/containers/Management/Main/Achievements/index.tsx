@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { useKeyContext, useAppContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import SectionPanel from '~/components/SectionPanel';
 import Table from '../../Table';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AchievementListItem from './AchievementListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const achievementsLabel = localize('achievements');
 
@@ -19,7 +20,8 @@ interface Achievement {
 
 export default function Achievements() {
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = tableHeaderRole.colorKey || 'logoBlue';
   const [numAchievementsShown, setNumAchievementsShown] = useState(5);
 
   const achievementsList = useMemo(

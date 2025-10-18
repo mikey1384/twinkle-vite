@@ -7,6 +7,8 @@ import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import ProfilePic from '~/components/ProfilePic';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 const completedLabel = localize('completed');
 const grammarRankLabel = localize('grammarRank');
@@ -24,9 +26,33 @@ export default function Cover({
   const { profilePicUrl, userId, username, profileTheme } = useKeyContext(
     (v) => v.myState
   );
-  const coverColor = useKeyContext((v) => v.theme.cover.color);
-  const coverTextColor = useKeyContext((v) => v.theme.coverText.color);
-  const coverTextShadowColor = useKeyContext((v) => v.theme.coverText.shadow);
+  const {
+    color: coverColorValue,
+    colorKey: coverColorKey,
+    themeName: coverThemeName
+  } = useRoleColor('cover', {
+    themeName: profileTheme,
+    fallback: 'logoBlue'
+  });
+  const coverTextRole = useRoleColor('coverText', {
+    themeName: coverThemeName,
+    fallback: 'white'
+  });
+  const coverTextColorValue = coverTextRole.color;
+  const coverTextColorKey = coverTextRole.colorKey;
+  const coverTextShadowKey = coverTextRole.token?.shadow;
+  const coverColor =
+    coverColorValue ||
+    resolveColorValue(coverColorKey) ||
+    resolveColorValue('logoBlue') ||
+    Color.logoBlue();
+  const coverTextColor =
+    coverTextColorValue ||
+    resolveColorValue(coverTextColorKey) ||
+    resolveColorValue('#fff') ||
+    '#fff';
+  const coverTextShadowColor =
+    coverTextShadowKey && (resolveColorValue(coverTextShadowKey) || undefined);
   const loadMissionRankings = useAppContext(
     (v) => v.requestHelpers.loadMissionRankings
   );
@@ -85,7 +111,7 @@ export default function Cover({
         height: 15vh;
         display: flex;
         justify-content: space-between;
-        background: ${Color[coverColor]()};
+        background: ${coverColor};
         padding: 0 5%;
         @media (max-width: ${mobileMaxWidth}) {
           height: 8rem;
@@ -113,9 +139,9 @@ export default function Cover({
           className={css`
             margin-left: 3rem;
             font-size: 3rem;
-            color: ${Color[coverTextColor]()};
+            color: ${coverTextColor};
             ${coverTextShadowColor
-              ? `text-shadow: 1px 1px ${Color[coverTextShadowColor]()};`
+              ? `text-shadow: 1px 1px ${coverTextShadowColor};`
               : ''}
             font-weight: bold;
             @media (max-width: ${mobileMaxWidth}) {
@@ -132,9 +158,9 @@ export default function Cover({
           height: 100%;
           display: flex;
           align-items: center;
-          color: ${Color[coverTextColor]()};
+          color: ${coverTextColor};
           ${coverTextShadowColor
-            ? `text-shadow: 1px 1px ${Color[coverTextShadowColor]()};`
+            ? `text-shadow: 1px 1px ${coverTextShadowColor};`
             : ''}
           justify-content: center;
           flex-direction: column;

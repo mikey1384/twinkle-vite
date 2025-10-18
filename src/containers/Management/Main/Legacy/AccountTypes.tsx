@@ -7,8 +7,9 @@ import Check from '../../Check';
 import AddAccountTypeModal from '../../Modals/AddAccountTypeModal';
 import EditAccountTypeModal from '../../Modals/EditAccountTypeModal';
 import Icon from '~/components/Icon';
-import { useManagementContext, useKeyContext } from '~/contexts';
+import { useManagementContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const addAccountTypeLabel = localize('addAccountType');
 const authLevelLabel = localize('authLevel');
@@ -22,7 +23,8 @@ const rewardLabel = localize('reward');
 const noAccountTypesLabel = localize('noAccountTypes');
 
 export default function AccountTypes({ canManage }: { canManage: boolean }) {
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = tableHeaderRole.colorKey || 'logoBlue';
   const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const accountTypesLoaded = useManagementContext(
     (v) => v.state.accountTypesLoaded

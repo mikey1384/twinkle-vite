@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import Editor from './Editor';
 import { borderRadius, Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function CreatorView({
   missionId,
@@ -16,14 +16,18 @@ export default function CreatorView({
   tutorialPrompt?: string;
   tutorialButtonLabel?: string;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div style={{ width: '100%' }}>
       <div
         style={{
-          color: Color[linkColor](),
+          color: linkColor,
           fontSize: '1.5rem',
           marginTop: '-1.7rem',
           marginLeft: '-1rem',

@@ -8,10 +8,10 @@ import {
   useContentContext,
   useExploreContext,
   useHomeContext,
-  useKeyContext,
   useNotiContext,
   useProfileContext
 } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -37,7 +37,11 @@ function Nav({
   style?: React.CSSProperties;
 }) {
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const alertHue = useMemo(
+    () => alertRole.getColor() || Color.gold(),
+    [alertRole]
+  );
   const { pathname, search } = useLocation();
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const profileState = useProfileContext((v) => v.state || {});
@@ -55,8 +59,8 @@ function Nav({
     (v) => v.actions.onSetSubjectsLoaded
   );
   const highlightColor = useMemo(
-    () => (alert ? Color[alertColor]() : Color.darkGray()),
-    [alert, alertColor]
+    () => (alert ? alertHue : Color.darkGray()),
+    [alert, alertHue]
   );
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
@@ -195,7 +199,7 @@ function Nav({
         style={{
           display: 'flex',
           alignItems: 'center',
-          ...(alert ? { color: Color[alertColor]() } : {})
+          ...(alert ? { color: alertHue } : {})
         }}
         to={to}
       >

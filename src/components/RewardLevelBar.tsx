@@ -3,9 +3,9 @@ import Icon from '~/components/Icon';
 import { Color, wideBorderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const rewardLevelLabel = localize('rewardLevel');
 
@@ -18,34 +18,39 @@ export default function RewardLevelBar({
   rewardLevel: number;
   style?: React.CSSProperties;
 }) {
-  const barColor = useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color);
+  const levelRole = useRoleColor(`level${rewardLevel}`, {
+    fallback: 'logoBlue',
+    opacity: 0.12
+  });
   const themedBg = useMemo(
-    () => (Color[barColor as keyof typeof Color]
-      ? Color[barColor as keyof typeof Color](0.12)
-      : Color.logoBlue(0.12)),
-    [barColor]
+    () => levelRole.getColor(0.12) || Color.logoBlue(0.12),
+    [levelRole]
   );
   const themedBorder = useMemo(
-    () => (Color[barColor as keyof typeof Color]
-      ? Color[barColor as keyof typeof Color](0.28)
-      : Color.logoBlue(0.28)),
-    [barColor]
+    () => levelRole.getColor(0.28) || Color.logoBlue(0.28),
+    [levelRole]
   );
-  const themedStrong = useMemo(
-    () => (Color[barColor as keyof typeof Color]
-      ? Color[barColor as keyof typeof Color]()
-      : Color.logoBlue()),
-    [barColor]
+  const starGlow = useMemo(
+    () => levelRole.getColor(0.65) || Color.logoBlue(0.65),
+    [levelRole]
   );
+  const starColor = 'var(--perfect-star-color, #ffd700)';
   const stars = useMemo(() => {
     return Array.from({ length: rewardLevel }, (_, i) => (
       <Icon
         key={i}
         icon="star"
-        style={{ marginLeft: '0.2rem', color: themedStrong }}
+        style={{
+          marginLeft: '0.25rem',
+          fontSize: '1.6rem',
+          color: starColor,
+          filter: starGlow
+            ? `drop-shadow(0 0 4px ${starGlow})`
+            : `drop-shadow(0 0 2px ${starColor})`
+        }}
       />
     ));
-  }, [rewardLevel, themedStrong]);
+  }, [rewardLevel, starGlow, starColor]);
 
   const earnUpToLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {

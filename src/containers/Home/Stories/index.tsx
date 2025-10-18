@@ -19,6 +19,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const hiThereLabel = localize('hiThere');
 
@@ -49,7 +50,8 @@ export default function Stories() {
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const alertColorKey = alertRole.colorKey;
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
@@ -228,7 +230,7 @@ export default function Stories() {
             <>
               {numNewPosts > 0 ? (
                 <Banner
-                  color={alertColor}
+                  color={alertColorKey}
                   onClick={handleFetchNewFeeds}
                   style={{
                     marginBottom: '1rem',
@@ -244,7 +246,7 @@ export default function Stories() {
               ) : (
                 feedsOutdated && (
                   <Banner
-                    color={alertColor}
+                    color={alertColorKey}
                     onClick={() => window.location.reload()}
                     style={{
                       marginBottom: '1rem'

@@ -13,8 +13,8 @@ import {
   desktopMinWidth,
   wideBorderRadius
 } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
@@ -265,37 +265,16 @@ export default function RootContent({
   uploader: { id: number; username: string };
   userId?: number;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => (profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeName } = useThemeTokens();
+  const { getColor: getFilterColor } = useRoleColor('filter', {
+    themeName,
+    fallback: 'logoBlue'
+  });
 
-  const resolveColor = (
-    name?: string,
-    opacity?: number,
-    fallbackName?: string,
-    fallbackOpacity: number = 1
-  ) => {
-    const target = name ?? fallbackName;
-    if (!target) return undefined;
-    const fn = Color[target as keyof typeof Color];
-    return fn ? fn(opacity ?? fallbackOpacity) : target;
-  };
-
-  const hoverBg =
-    resolveColor(themeRoles.filter?.color, 0.1, themeName, 0.1) ||
-    Color.logoBlue(0.1);
-  const activeBg =
-    resolveColor(themeRoles.filter?.color, 0.18, themeName, 0.18) ||
-    Color.logoBlue(0.18);
-  const hoverBorder =
-    resolveColor(themeRoles.filter?.color, 0.28, themeName, 0.28) ||
-    Color.logoBlue(0.28);
-  const activeBorder =
-    resolveColor(themeRoles.filter?.color, 0.4, themeName, 0.4) ||
-    Color.logoBlue(0.4);
+  const hoverBg = getFilterColor(0.1) || Color.logoBlue(0.1);
+  const activeBg = getFilterColor(0.18) || Color.logoBlue(0.18);
+  const hoverBorder = getFilterColor(0.28) || Color.logoBlue(0.28);
+  const activeBorder = getFilterColor(0.4) || Color.logoBlue(0.4);
 
   const cardThemeCSS = css`
     border-radius: ${wideBorderRadius};

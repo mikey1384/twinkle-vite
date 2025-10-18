@@ -56,7 +56,8 @@ import {
 } from '~/constants/defaultValues';
 import { Content } from '~/types';
 import localize from '~/constants/localize';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useRoleColor } from '~/theme/useRoleColor';
 import ScopedTheme from '~/theme/ScopedTheme';
 
 const commentWasDeletedLabel = localize('commentWasDeleted');
@@ -130,29 +131,17 @@ function Comment({
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const linkColorVar = useMemo(() => {
-    const role = themeRoles.link;
-    const key = role?.color || 'blue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    const fallback = fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-    return `var(--role-link-color, ${fallback})`;
-  }, [themeRoles]);
-  const rewardColor = useMemo(
-    () => themeRoles.reward?.color || 'pink',
-    [themeRoles]
-  );
+  const { themeName } = useThemeTokens({ themeName: theme });
+  const { color: linkRoleColor } = useRoleColor('link', {
+    themeName,
+    fallback: 'logoBlue'
+  });
+  const linkColorVar = `var(--role-link-color, ${linkRoleColor})`;
+  const { color: rewardColor } = useRoleColor('reward', {
+    themeName,
+    fallback: 'pink'
+  });
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );

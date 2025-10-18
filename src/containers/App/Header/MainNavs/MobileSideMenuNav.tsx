@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function MobileSideMenuNav({
   alert,
@@ -11,10 +11,14 @@ export default function MobileSideMenuNav({
   alert: boolean;
   onClick: () => void;
 }) {
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const alertHue = useMemo(
+    () => alertRole.getColor() || Color.gold(),
+    [alertRole]
+  );
   const highlightColor = useMemo(
-    () => (alert ? Color[alertColor]() : Color.darkGray()),
-    [alert, alertColor]
+    () => (alert ? alertHue : Color.darkGray()),
+    [alert, alertHue]
   );
 
   return (
@@ -72,7 +76,7 @@ export default function MobileSideMenuNav({
         style={{
           display: 'flex',
           alignItems: 'center',
-          ...(alert ? { color: Color[alertColor]() } : {})
+          ...(alert ? { color: alertHue } : {})
         }}
       >
         <Icon icon="bars" />

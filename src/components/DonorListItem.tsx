@@ -3,7 +3,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
 import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 
 export default function DonorListItem({
@@ -24,7 +24,11 @@ export default function DonorListItem({
   };
   onUsermenuShownChange?: (v: boolean) => void;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColor = useMemo(
+    () => xpNumberRole.getColor() || Color.logoGreen(),
+    [xpNumberRole]
+  );
 
   const userRank = useMemo(() => Number(donor.rank), [donor.rank]);
   const rankColor = useMemo(() => {

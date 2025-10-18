@@ -21,6 +21,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const hideWatchedLabel = localize('hideWatched');
 const videosLabel = localize('videos');
@@ -66,9 +67,13 @@ export default function NavMenu({
   );
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
   const userId = useKeyContext((v) => v.myState.userId);
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
-  const spinnerColor = useKeyContext((v) => v.theme.spinner.color);
+  const { colorKey: linkColor } = useRoleColor('link');
+  const { colorKey: userLinkColor } = useRoleColor('userLink', {
+    fallback: linkColor
+  });
+  const { colorKey: spinnerColor } = useRoleColor('spinner', {
+    fallback: 'logoBlue'
+  });
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const notiObj = useNotiContext((v) => v.state.notiObj);
   const totalRewardedTwinkles = useMemo(

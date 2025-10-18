@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Chess from '../../../Chess';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
 export default function Rewind({
@@ -23,8 +23,14 @@ export default function Rewind({
   const fetchCurrentRewindRequest = useAppContext(
     (v) => v.requestHelpers.fetchCurrentRewindRequest
   );
+  const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
   const [rewindRequestMessage, setRewindRequestMessage] = useState<any>({});
   const [loaded, setLoaded] = useState(false);
+
+  const squareColors = useMemo(
+    () => getUserChatSquareColors(myId),
+    [myId, chessThemeVersion]
+  );
 
   useEffect(() => {
     init();
@@ -41,6 +47,7 @@ export default function Rewind({
 
   return (
     <Chess
+      key={chessThemeVersion}
       countdownNumber={countdownNumber}
       loaded={rewindRequestMessage.chessState && loaded}
       myId={myId}
@@ -54,7 +61,7 @@ export default function Rewind({
       senderId={rewindRequestMessage.userId}
       senderName={rewindRequestMessage.username}
       style={{ width: '100%' }}
-      squareColors={getUserChatSquareColors(myId)}
+      squareColors={squareColors}
     />
   );
 }

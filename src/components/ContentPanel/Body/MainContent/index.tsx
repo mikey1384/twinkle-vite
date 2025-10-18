@@ -12,8 +12,8 @@ import BottomRewardLevelDisplay from './BottomRewardLevelDisplay';
 import { scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
-import { useKeyContext, useContentContext } from '~/contexts';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useContentContext } from '~/contexts';
+import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '~/types';
 
@@ -76,12 +76,7 @@ export default function MainContent({
   );
   const onLoadTags = useContentContext((v) => v.actions.onLoadTags);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => (theme || profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeRoles } = useThemeTokens({ themeName: theme });
   const byUserIndicatorColor = useMemo(
     () => themeRoles.byUserIndicator?.color || 'logoBlue',
     [themeRoles]

@@ -7,7 +7,8 @@ import VerificationEmailSendModal from './VerificationEmailSendModal';
 import { css } from '@emotion/css';
 import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const currentPasswordLabel = localize('currentPassword');
 const enterCurrentPasswordLabel = localize('enterCurrentPassword');
@@ -24,8 +25,13 @@ export default function ChangePasswordModal({
 }: {
   onHide: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColorKey = doneRole.colorKey;
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   const changePasswordFromStore = useAppContext(
     (v) => v.requestHelpers.changePasswordFromStore
   );
@@ -167,7 +173,7 @@ export default function ChangePasswordModal({
                 style={{
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  color: Color[linkColor]()
+                  color: linkColor
                 }}
                 className={css`
                   &:hover {
@@ -240,7 +246,7 @@ export default function ChangePasswordModal({
         </Button>
         <Button
           style={{ marginLeft: '1rem' }}
-          color={success ? 'green' : doneColor}
+          color={success ? 'green' : doneColorKey}
           onClick={
             currentPasswordVerified ? handleSubmit : handleVerifyCurrentPassword
           }

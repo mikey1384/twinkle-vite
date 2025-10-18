@@ -1,4 +1,4 @@
-import React, { RefObject, useRef, useState } from 'react';
+import React, { RefObject, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Input from '../Input';
@@ -44,6 +44,20 @@ export default function SearchInput({
 }) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
+  const resolvedAddonColor = useMemo(() => {
+    if (!addonColor) return undefined;
+    const candidate = Color[addonColor as keyof typeof Color];
+    if (typeof candidate === 'function') return candidate();
+    if (typeof candidate === 'string') return candidate;
+    return addonColor;
+  }, [addonColor]);
+  const resolvedBorderColor = useMemo(() => {
+    if (!borderColor) return undefined;
+    const candidate = Color[borderColor as keyof typeof Color];
+    if (typeof candidate === 'function') return candidate();
+    if (typeof candidate === 'string') return candidate;
+    return borderColor;
+  }, [borderColor]);
 
   return (
     <div
@@ -57,7 +71,7 @@ export default function SearchInput({
         .addon {
           height: 100%;
           border: 1px solid
-            ${addonColor ? Color[addonColor]() : Color.darkerBorderGray()};
+            ${resolvedAddonColor || Color.darkerBorderGray()};
           padding: 0 1rem;
           display: flex;
           align-items: center;
@@ -66,7 +80,7 @@ export default function SearchInput({
         input {
           height: 100%;
           border: 1px solid
-            ${borderColor ? Color[borderColor]() : Color.darkerBorderGray()};
+            ${resolvedBorderColor || Color.darkerBorderGray()};
           border-left: none;
         }
       `} ${className}`}
@@ -81,7 +95,7 @@ export default function SearchInput({
           display: 'flex',
           justifyContent: 'center',
           backgroundColor: addonColor
-            ? Color[addonColor]()
+            ? resolvedAddonColor || Color.borderGray()
             : Color.borderGray(),
           color: addonColor ? '#fff' : ''
         }}

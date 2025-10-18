@@ -19,6 +19,7 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const addedByLabel = localize('addedBy');
 const editLabel = localize('edit');
@@ -55,7 +56,9 @@ export default function Description({
   const [submitting, setSubmitting] = useState(false);
   const canDelete = useKeyContext((v) => v.myState.canDelete);
   const canEdit = useKeyContext((v) => v.myState.canEdit);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const editState = useInputContext((v) => v.state['edit' + 'url' + linkId]);
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);

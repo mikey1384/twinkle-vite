@@ -4,10 +4,10 @@ import FileInfo from './FileInfo';
 import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function FileAttachment({
   messageId,
@@ -27,18 +27,10 @@ export default function FileAttachment({
   const {
     actions: { onSetMediaStarted }
   } = useContext(LocalContext);
-  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
-  const linkColor = useMemo(() => {
-    const role = getThemeRoles(themeName).link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeName]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const isImageOrVideo = useMemo(
     () =>
       getFileInfoFromFileName(fileName)?.fileType === 'image' ||

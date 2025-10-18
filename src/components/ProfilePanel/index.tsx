@@ -36,7 +36,7 @@ import {
 import localize from '~/constants/localize';
 import MessagesButton from './MessagesButton';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { ThemeName } from '~/theme/themes';
+import { ThemeName } from '~/theme';
 import { themedCardBase } from '~/theme/themedCard';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
@@ -405,7 +405,11 @@ function ProfilePanel({
     () => (profileTheme || 'logoBlue') as ThemeName,
     [profileTheme]
   );
-  const { accentColor: panelAccentColor, cardBg, cardVars } = useThemedCardVars({
+  const {
+    accentColor: panelAccentColor,
+    cardBg,
+    cardVars
+  } = useThemedCardVars({
     role: 'profilePanel',
     intensity: 0.16,
     blendWeight: 0.92,
@@ -546,16 +550,16 @@ function ProfilePanel({
                               to={`/users/${profileName}`}
                               style={{ display: 'block', width: '100%' }}
                             >
-                          <ProfilePic
-                            style={{ cursor: 'pointer' }}
-                            className={css`
-                              margin: 0 auto;
-                              display: block;
-                              --profile-pic-size: min(16rem, 58vw);
-                              @media (max-width: ${mobileMaxWidth}) {
-                                --profile-pic-size: min(13rem, 72vw);
-                              }
-                            `}
+                              <ProfilePic
+                                style={{ cursor: 'pointer' }}
+                                className={css`
+                                  margin: 0 auto;
+                                  display: block;
+                                  --profile-pic-size: min(16rem, 58vw);
+                                  @media (max-width: ${mobileMaxWidth}) {
+                                    --profile-pic-size: min(13rem, 72vw);
+                                  }
+                                `}
                                 userId={profileId}
                                 profilePicUrl={profilePicUrl}
                                 online={isOnline}

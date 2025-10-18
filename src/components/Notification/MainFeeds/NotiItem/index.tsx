@@ -6,6 +6,7 @@ import { notiFeedListItem } from '../../Styles';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import NotiMessage from './NotiMessage';
 import UsernameText from '~/components/Texts/UsernameText';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiItem({
   actionColor,
@@ -64,7 +65,10 @@ function NotiItem({
     if (actionObj.contentType !== 'pass' && actionObj.contentType !== 'fail') {
       return (
         <div style={{ display: 'inline' }}>
-          <UsernameText user={user} color={Color[linkColor]()} />
+          <UsernameText
+            user={user}
+            color={resolveColorValue(linkColor) || linkColor}
+          />
           {SELECTED_LANGUAGE === 'kr' ? '' : ' '}
         </div>
       );

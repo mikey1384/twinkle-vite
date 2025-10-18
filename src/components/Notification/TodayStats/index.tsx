@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext, useNotiContext, useAppContext } from '~/contexts';
+import { useNotiContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import DailyGoals from './DailyGoals';
 import AchievementProgress from './AchievementProgress';
@@ -12,6 +11,19 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { themedCardBase } from '~/theme/themedCard';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
+
+const DEFAULT_PROGRESS_COLOR = 'rgba(65, 140, 235, 1)';
+const DEFAULT_PROGRESS_SHADOW = 'rgba(65, 140, 235, 0.5)';
+const DEFAULT_PROGRESS_ACCENT = 'rgba(65, 140, 235, 0.24)';
+const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
+const DEFAULT_XP_NUMBER_SHADOW = 'rgba(97, 226, 101, 0.5)';
+const DEFAULT_REWARD_COLOR = 'rgba(255, 203, 50, 1)';
+const DEFAULT_REWARD_SHADOW = 'rgba(255, 203, 50, 0.5)';
+const DEFAULT_RECOMMENDATION_COLOR = 'rgba(245, 190, 70, 1)';
+const DEFAULT_RECOMMENDATION_SHADOW = 'rgba(245, 190, 70, 0.5)';
+const DEFAULT_CARD_BORDER = 'rgba(204, 204, 204, 0.65)';
 
 const container = css`
   ${themedCardBase};
@@ -33,14 +45,46 @@ export default function TodayStats({
   onSetMyAchievementsObj: (myAchievementsObj: any) => void;
 }) {
   const [myTodayRank, setMyTodayRank] = useState<number | null>(null);
-  const todayProgressTextColor = useKeyContext(
-    (v) => v.theme.todayProgressText.color
-  );
-  const todayProgressTextShadowColor = useKeyContext(
-    (v) => v.theme.todayProgressText.shadow
-  );
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const todayProgressRole = useRoleColor('todayProgressText', {
+    fallback: 'logoBlue'
+  });
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const rewardRole = useRoleColor('reward', { fallback: 'gold' });
+  const recommendationRole = useRoleColor('recommendation', {
+    fallback: 'brownOrange'
+  });
+
+  const todayProgressColor =
+    todayProgressRole.getColor() || DEFAULT_PROGRESS_COLOR;
+  const progressShadowFromToken = todayProgressRole.token?.shadow
+    ? resolveColorValue(
+        todayProgressRole.token?.shadow,
+        todayProgressRole.token?.opacity
+      ) ||
+      resolveColorValue(todayProgressRole.token?.shadow) ||
+      todayProgressRole.token?.shadow
+    : null;
+  const todayProgressShadow =
+    progressShadowFromToken ||
+    todayProgressRole.getColor(0.5) ||
+    DEFAULT_PROGRESS_SHADOW;
+
+  const xpNumberColor =
+    xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
+  const xpNumberShadow =
+    xpNumberRole.getColor(0.5) || DEFAULT_XP_NUMBER_SHADOW;
+
+  const rewardColor = rewardRole.getColor() || DEFAULT_REWARD_COLOR;
+  const rewardShadow =
+    rewardRole.getColor(0.5) || DEFAULT_REWARD_SHADOW;
+
+  const coinsColor =
+    recommendationRole.getColor() || DEFAULT_RECOMMENDATION_COLOR;
+  const coinsShadow =
+    recommendationRole.getColor(0.5) || DEFAULT_RECOMMENDATION_SHADOW;
+
+  const buttonColor = buttonRole.colorKey;
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -49,21 +93,13 @@ export default function TodayStats({
     (v) => v.requestHelpers.loadTodayRankings
   );
 
-  const progressAccent = useMemo(() => {
-    const candidate = Color[todayProgressTextColor as keyof typeof Color];
-    if (typeof candidate === 'function') {
-      return candidate(0.24);
-    }
-    if (typeof candidate === 'string') {
-      return candidate;
-    }
-    return Color.logoBlue(0.2);
-  }, [todayProgressTextColor]);
+  const progressAccent =
+    todayProgressRole.getColor(0.24) || DEFAULT_PROGRESS_ACCENT;
   const { cardVars } = useThemedCardVars({
     accentColor: progressAccent,
     intensity: 0.06,
     blendWeight: 0.93,
-    borderFallback: Color.borderGray(0.65)
+    borderFallback: DEFAULT_CARD_BORDER
   });
 
   useEffect(() => {
@@ -111,14 +147,8 @@ export default function TodayStats({
                 <b
                   style={{
                     fontSize: '1.7rem',
-                    color: Color[todayProgressTextColor](),
-                    textShadow: todayProgressTextShadowColor
-                      ? `0.05rem 0.05rem ${Color[
-                          todayProgressTextShadowColor
-                        ]()}`
-                      : `0.05rem 0.05rem 0.1rem ${Color[todayProgressTextColor](
-                          0.5
-                        )}`,
+                    color: todayProgressColor,
+                    textShadow: `0.05rem 0.05rem 0.1rem ${todayProgressShadow}`,
                     whiteSpace: 'nowrap'
                   }}
                 >{`Today's Progress`}</b>
@@ -126,14 +156,12 @@ export default function TodayStats({
                   <p
                     style={{
                       fontWeight: 'bold',
-                      color: Color[xpNumberColor]()
+                      color: xpNumberColor
                     }}
                   >
                     <span
                       style={{
-                        textShadow: `0.05rem 0.05rem 0.1rem ${Color[
-                          xpNumberColor
-                        ](0.5)}`
+                        textShadow: `0.05rem 0.05rem 0.1rem ${xpNumberShadow}`
                       }}
                     >
                       {todayStats.xpEarned > 0 ? '+' : ''}
@@ -141,8 +169,8 @@ export default function TodayStats({
                     </span>{' '}
                     <b
                       style={{
-                        color: Color.gold(),
-                        textShadow: `0.05rem 0.05rem 0.1rem ${Color.gold(0.5)}`
+                        color: rewardColor,
+                        textShadow: `0.05rem 0.05rem 0.1rem ${rewardShadow}`
                       }}
                     >
                       XP
@@ -151,10 +179,8 @@ export default function TodayStats({
                   <p
                     style={{
                       fontWeight: 'bold',
-                      color: Color.brownOrange(),
-                      textShadow: `0.05rem 0.05rem 0.1rem ${Color.brownOrange(
-                        0.5
-                      )}`
+                      color: coinsColor,
+                      textShadow: `0.05rem 0.05rem 0.1rem ${coinsShadow}`
                     }}
                   >
                     {todayStats.coinsEarned > 0 ? '+' : ''}

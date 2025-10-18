@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SlideListItem from '../../../SlideListItem';
 import GoBackToMissionItem from './GoBackToMissionItem';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function SelectDestinationModal({
   interactiveId,
@@ -18,7 +19,11 @@ export default function SelectDestinationModal({
   originForkId: number;
   slideObj: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const [forkIds, setForkIds] = useState<number[]>([]);
   const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 

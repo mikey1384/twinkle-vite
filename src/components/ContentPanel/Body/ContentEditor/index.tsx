@@ -20,6 +20,8 @@ import {
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 const cancelLabel = localize('cancel');
 const doneLabel = localize('done');
@@ -51,7 +53,8 @@ function ContentEditor({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const banned = useKeyContext((v) => v.myState.banned);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
 
   const defaultInputState = useMemo(
     () => ({

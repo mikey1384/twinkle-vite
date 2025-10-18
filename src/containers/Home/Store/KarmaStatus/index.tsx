@@ -5,9 +5,9 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
-import { useKeyContext } from '~/contexts';
 import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 function blendWithWhite(color: string, weight: number) {
   const match = color
@@ -47,16 +47,13 @@ export default function KarmaStatus({
   userType: string;
 }) {
   const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
-  const homeMenuItemActive = useKeyContext(
-    (v) => v.theme.homeMenuItemActive.color
+  const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {
+    fallback: 'logoBlue'
+  });
+  const accentColor = useMemo(
+    () => homeMenuItemActiveRole.getColor() || Color.logoBlue(),
+    [homeMenuItemActiveRole]
   );
-  const accentColorFn = Color[homeMenuItemActive as keyof typeof Color];
-  const accentColor = useMemo(() => {
-    if (typeof accentColorFn === 'function') {
-      return accentColorFn();
-    }
-    return Color.logoBlue();
-  }, [accentColorFn]);
   const { panelVars, themeStyles, headingColor } = useHomePanelVars();
   const panelBg = useMemo(() => {
     return blendWithWhite(themeStyles.hoverBg || accentColor, 0.94);
@@ -68,7 +65,8 @@ export default function KarmaStatus({
         ['--home-panel-bg' as const]: panelBg,
         ['--home-panel-tint' as const]:
           themeStyles.hoverBg ||
-          (accentColorFn ? accentColorFn(0.14) : Color.logoBlue(0.14)),
+          homeMenuItemActiveRole.getColor(0.14) ||
+          Color.logoBlue(0.14),
         ['--home-panel-border' as const]:
           themeStyles.border || Color.borderGray(0.65),
         ['--home-panel-heading' as const]: headingColor,
@@ -80,10 +78,10 @@ export default function KarmaStatus({
       }) as React.CSSProperties,
     [
       accentColor,
-      accentColorFn,
       headingColor,
       panelBg,
       panelVars,
+      homeMenuItemActiveRole,
       themeStyles.border,
       themeStyles.hoverBg
     ]

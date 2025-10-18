@@ -1,19 +1,19 @@
 import React, { useMemo } from 'react';
-import { Color } from '~/constants/css';
 import { useChain, useSpring, useSpringRef, animated } from 'react-spring';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { scoreTable, perfectScoreBonus } from '../../../constants';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function ReactionText({ questions }: { questions: any[] }) {
-  const colorPerfect = useKeyContext(
-    (v) => v.theme.grammarGameScorePerfect.color
-  );
-  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
-  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
-  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
-  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
-  const colorF = useKeyContext((v) => v.theme.grammarGameScoreF.color);
+  const perfectRole = useRoleColor('grammarGameScorePerfect', {
+    fallback: 'brownOrange'
+  });
+  const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
+  const roleB = useRoleColor('grammarGameScoreB', { fallback: 'orange' });
+  const roleC = useRoleColor('grammarGameScoreC', { fallback: 'pink' });
+  const roleD = useRoleColor('grammarGameScoreD', { fallback: 'logoBlue' });
+  const roleF = useRoleColor('grammarGameScoreF', { fallback: 'gray' });
   const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
   const totalScore = useMemo(() => {
     const sum = questions.reduce((acc, cur) => acc + scoreTable[cur.score], 0);
@@ -25,52 +25,52 @@ export default function ReactionText({ questions }: { questions: any[] }) {
   const reactionObj = useMemo(() => {
     if (totalScore === perfectScore)
       return {
-        color: colorPerfect,
+        role: perfectRole,
         fontSize: '5rem',
         text: 'PERFECT',
         bling: true
       };
     if (totalScore > scoreTable.A * 10)
       return {
-        color: colorA,
+        role: roleA,
         fontSize: '3.5rem',
         text: 'OUTSTANDING',
         bling: true
       };
     if (totalScore > scoreTable.B * 10)
       return {
-        color: colorB,
+        role: roleB,
         fontSize: '3rem',
         text: 'GREAT',
         bling: true
       };
     if (totalScore > scoreTable.C * 10)
       return {
-        color: colorC,
+        role: roleC,
         fontSize: '2.5rem',
         text: 'Good',
         bling: false
       };
     if (totalScore > scoreTable.D * 10)
       return {
-        color: colorD,
+        role: roleD,
         fontSize: '2rem',
         text: `It wasn't good but it wasn't terrible either`,
         bling: false
       };
     return {
-      color: colorF,
+      role: roleF,
       fontSize: '1.7rem',
       text: `You just need more practice, that's all`,
       bling: false
     };
   }, [
-    colorA,
-    colorB,
-    colorC,
-    colorD,
-    colorF,
-    colorPerfect,
+    perfectRole,
+    roleA,
+    roleB,
+    roleC,
+    roleD,
+    roleF,
     totalScore,
     perfectScore
   ]);
@@ -99,7 +99,10 @@ export default function ReactionText({ questions }: { questions: any[] }) {
     from: { opacity: 0 },
     to: { opacity: 1 }
   });
-  const { color, fontSize, text, bling } = reactionObj;
+  const { role, fontSize, text, bling } = reactionObj;
+  const baseColor = role?.getColor() || Color.logoBlue();
+  const gradientStart = role?.getColor(1) || baseColor;
+  const gradientMid = role?.getColor(0.5) || Color.logoBlue(0.5);
 
   useChain([opacityRef, effectRef]);
 
@@ -131,9 +134,9 @@ export default function ReactionText({ questions }: { questions: any[] }) {
               ? css`
                   background-image: linear-gradient(
                     to left,
-                    ${Color[color](1)} 0%,
-                    ${Color[color](0.5)} 30%,
-                    ${Color[color](1)} 100%
+                    ${gradientStart} 0%,
+                    ${gradientMid} 30%,
+                    ${gradientStart} 100%
                   );
                   background-clip: text;
                   color: transparent;
@@ -155,7 +158,7 @@ export default function ReactionText({ questions }: { questions: any[] }) {
                   }
                 `
               : css`
-                  color: ${Color[color]()};
+                  color: ${baseColor};
                 `
           }
           style={{

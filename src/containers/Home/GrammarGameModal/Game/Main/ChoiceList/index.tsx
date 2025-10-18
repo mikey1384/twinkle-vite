@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import {
   borderRadius,
   Color,
   innerBorderRadius,
   mobileMaxWidth
 } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ChoiceList({
   answerIndex,
@@ -32,7 +32,9 @@ export default function ChoiceList({
   selectedChoiceIndex: number;
   style: React.CSSProperties;
 }) {
-  const successColor = useKeyContext((v) => v.theme.success.color);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const successColor = (opacity?: number) =>
+    successRole.getColor(opacity) || Color.green(opacity ?? 1);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -102,9 +104,9 @@ export default function ChoiceList({
           border: 0;
           background: linear-gradient(
             to right,
-            ${Color[successColor](1)} 0%,
-            ${Color[successColor](0.6)} 50%,
-            ${Color[successColor](1)} 100%
+            ${successColor(1)} 0%,
+            ${successColor(0.6)} 50%,
+            ${successColor(1)} 100%
           );
           background-size: 200% auto;
           background-position: left top;
@@ -124,15 +126,15 @@ export default function ChoiceList({
         }
         @keyframes pulse {
           0% {
-            box-shadow: 0 0 0 0 ${Color[successColor](0.7)};
+            box-shadow: 0 0 0 0 ${successColor(0.7)};
             background-position: left top;
           }
           70% {
-            box-shadow: 0 0 0 10px ${Color[successColor](0)};
+            box-shadow: 0 0 0 10px ${successColor(0)};
             background-position: right center;
           }
           100% {
-            box-shadow: 0 0 0 0 ${Color[successColor](0)};
+            box-shadow: 0 0 0 0 ${successColor(0)};
             background-position: right center;
           }
         }

@@ -79,6 +79,7 @@ import { faEdit } from '@fortawesome/pro-solid-svg-icons/faEdit';
 import { faEllipsisH } from '@fortawesome/pro-solid-svg-icons/faEllipsisH';
 import { faExclamationCircle } from '@fortawesome/pro-solid-svg-icons/faExclamationCircle';
 import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclamationTriangle';
+import { faEyeSlash } from '@fortawesome/pro-solid-svg-icons/faEyeSlash';
 import { faExchangeAlt } from '@fortawesome/pro-solid-svg-icons/faExchangeAlt';
 import { faFilm } from '@fortawesome/pro-solid-svg-icons/faFilm';
 import { faFile } from '@fortawesome/pro-solid-svg-icons/faFile';
@@ -179,6 +180,7 @@ import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
 import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { faYoutube } from '@fortawesome/free-brands-svg-icons/faYoutube';
 import { AppContextProvider } from './contexts';
+import { RootThemeProvider } from './theme/RootThemeProvider';
 import App from './containers/App';
 import { install } from 'resize-observer';
 
@@ -267,6 +269,7 @@ library.add(
   faExchangeAlt,
   faExclamationCircle,
   faExclamationTriangle,
+  faEyeSlash,
   faFile,
   faFileArchive,
   faFileAudio,
@@ -378,7 +381,9 @@ library.add(
       <BrowserRouter>
         <ErrorBoundary componentPath="AppContext">
           <AppContextProvider>
-            <App />
+            <RootThemeProvider>
+              <App />
+            </RootThemeProvider>
           </AppContextProvider>
         </ErrorBoundary>
       </BrowserRouter>

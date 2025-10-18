@@ -17,7 +17,7 @@ import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { isEqual } from 'lodash';
 import localize from '~/constants/localize';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const youLabel = localize('You');
@@ -53,20 +53,15 @@ function Reaction({
   const [userListModalShown, setUserListModalShown] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const themeName = useMemo<ThemeName>(() => (theme as ThemeName), [theme]);
-  const reactionRole = useMemo(
-    () => getThemeRoles(themeName).reactionButton,
-    [themeName]
-  );
-  const reactionButtonColorFn = useMemo(() => {
-    const key = reactionRole?.color || 'logoBlue';
-    return Color[key as keyof typeof Color] || (() => key);
-  }, [reactionRole]);
-  const reactionButtonColor = useMemo(
-    () => reactionButtonColorFn(),
-    [reactionButtonColorFn]
-  );
-  const reactionButtonOpacity = reactionRole?.opacity ?? 0.2;
+  const {
+    color: reactionButtonColor,
+    getColor: getReactionButtonColor,
+    token: reactionButtonToken
+  } = useRoleColor('reactionButton', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const reactionButtonOpacity = reactionButtonToken?.opacity ?? 0.2;
   const userReacted = useMemo(
     () => reactedUserIds.includes(userId),
     [reactedUserIds, userId]
@@ -191,7 +186,7 @@ function Reaction({
       <div
         style={{
           ...(userReacted
-            ? { background: reactionButtonColorFn(reactionButtonOpacity) }
+            ? { background: getReactionButtonColor(reactionButtonOpacity) }
             : {}),
           borderRadius: innerBorderRadius,
           cursor: 'pointer',

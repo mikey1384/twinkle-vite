@@ -29,6 +29,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface HeaderProps {
   onInit: () => void;
@@ -50,7 +51,8 @@ export default function Header({
   const userId = useKeyContext((v) => v.myState.userId);
   const loggedIn = useKeyContext((v) => v.myState.loggedIn);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
-  const headerColor = useKeyContext((v) => v.theme.header.color);
+  const headerRole = useRoleColor('header', { fallback: 'white' });
+  const headerColor = headerRole.getColor() || Color.white();
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
@@ -185,7 +187,7 @@ export default function Header({
           position: relative;
           font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
           font-size: 1.7rem;
-          background: ${Color[headerColor]()};
+          background: ${headerColor};
           display: flex;
           box-shadow: 0 6px 18px -12px rgba(15, 23, 42, 0.24);
           align-items: center;

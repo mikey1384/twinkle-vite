@@ -4,10 +4,11 @@ import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
-import { useMissionContext, useKeyContext } from '~/contexts';
+import { useMissionContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ApprovedStatus({
   isTask,
@@ -24,11 +25,21 @@ export default function ApprovedStatus({
   myAttempt: any;
   style?: React.CSSProperties;
 }) {
-  const {
-    link: { color: linkColor },
-    success: { color: successColor },
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
+  const successColor = useMemo(
+    () => successRole.getColor() || Color.green(),
+    [successRole]
+  );
+  const xpNumberColor = useMemo(
+    () => xpNumberRole.getColor() || Color.logoGreen(),
+    [xpNumberRole]
+  );
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
@@ -42,7 +53,7 @@ export default function ApprovedStatus({
       >
         You were rewarded{' '}
         {xpReward ? (
-          <span style={{ color: Color[xpNumberColor](), fontWeight: 'bold' }}>
+          <span style={{ color: xpNumberColor, fontWeight: 'bold' }}>
             {addCommasToNumber(xpReward)}{' '}
             <span style={{ color: Color.gold(), fontWeight: 'bold' }}>XP</span>
           </span>
@@ -133,7 +144,7 @@ export default function ApprovedStatus({
             }}
           >
             <UsernameText
-              color={Color[linkColor]()}
+              color={linkColor}
               user={myAttempt.reviewer}
             />
             <span>{timeSince(myAttempt.reviewTimeStamp)}</span>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import InfoEditForm from './InfoEditForm';
@@ -18,7 +18,8 @@ import {
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 const editLabel = localize('edit');
 const emailHasBeenSentLabel = localize('emailHasBeenSent');
@@ -68,11 +69,9 @@ export default function BasicInfos({
   const myUsername = useKeyContext((v) => v.myState.username);
   const banned = useKeyContext((v) => v.myState.banned);
 
-  const themeName = useMemo<ThemeName>(
-    () => ((selectedTheme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, selectedTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeName, themeRoles } = useThemeTokens({
+    themeName: selectedTheme || profileTheme
+  });
 
   const buttonColorKey = useMemo(
     () => themeRoles.button?.color || themeName,
@@ -83,35 +82,33 @@ export default function BasicInfos({
     [buttonColorKey, themeRoles]
   );
 
-  const resolveColorValue = (
-    role: { color?: string; opacity?: number } | undefined,
-    fallbackKey: string,
-    fallbackOpacity = 1
-  ) => {
-    const key = role?.color || fallbackKey;
-    const opacity = role?.opacity ?? fallbackOpacity;
-    const colorFn = Color[key as keyof typeof Color];
-    if (colorFn) {
-      return typeof opacity === 'number' ? colorFn(opacity) : colorFn();
-    }
-    return key;
-  };
+  const resolveRoleColor = useCallback(
+    (
+      role: { color?: string; opacity?: number } | undefined,
+      fallbackKey: string,
+      fallbackOpacity = 1
+    ) =>
+      resolveColorValue(role?.color, role?.opacity) ||
+      resolveColorValue(fallbackKey, fallbackOpacity) ||
+      fallbackKey,
+    []
+  );
 
   const linkColorVar = useMemo(
     () =>
-      `var(--role-link-color, ${resolveColorValue(
+      `var(--role-link-color, ${resolveRoleColor(
         themeRoles.link,
         'blue'
       )})`,
-    [themeRoles]
+    [resolveRoleColor, themeRoles]
   );
   const verifyEmailColorVar = useMemo(
     () =>
-      `var(--role-verifyEmail-color, ${resolveColorValue(
+      `var(--role-verifyEmail-color, ${resolveRoleColor(
         themeRoles.verifyEmail,
         buttonColorKey
       )})`,
-    [buttonColorKey, themeRoles]
+    [buttonColorKey, resolveRoleColor, themeRoles]
   );
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const uploadProfileInfo = useAppContext(

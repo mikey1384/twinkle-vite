@@ -5,8 +5,12 @@ import AchievementModal from './AchievementModal';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
+const PROGRESS_FALLBACK = 'rgba(65, 140, 235, 0.85)';
+const PROGRESS_TRACK_FALLBACK = 'rgba(65, 140, 235, 0.25)';
+const PROGRESS_SHADOW_FALLBACK = 'rgba(65, 140, 235, 0.35)';
 
 export default function ItemThumb({
   isUnlocked,
@@ -50,6 +54,22 @@ export default function ItemThumb({
     () => Math.max(-circumference, -1 * (progress / 100) * circumference),
     [progress, circumference]
   );
+  const ringRole = useRoleColor('dailyAchievementRing', {
+    fallback: 'logoBlue'
+  });
+  const progressStroke =
+    ringRole.getColor(0.95) ||
+    ringRole.getColor() ||
+    PROGRESS_FALLBACK;
+  const progressTrack =
+    ringRole.getColor(0.25) ||
+    PROGRESS_TRACK_FALLBACK;
+  const progressShadow =
+    ringRole.getColor(0.35) ||
+    PROGRESS_SHADOW_FALLBACK;
+  const progressLabelColor =
+    ringRole.getColor(0.95) ||
+    '#ffffff';
 
   return (
     <div
@@ -99,7 +119,17 @@ export default function ItemThumb({
             cy={thumbRadius}
             r={thumbRadius}
             fill="transparent"
-            stroke="rgba(0, 0, 0, 0.7)"
+            stroke={progressTrack}
+            strokeWidth={thumbRadius * 2}
+            strokeDasharray={circumference}
+            strokeDashoffset={0}
+          />
+          <circle
+            cx={thumbRadius}
+            cy={thumbRadius}
+            r={thumbRadius}
+            fill="transparent"
+            stroke={progressStroke}
             strokeWidth={thumbRadius * 2}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset || 0}
@@ -113,7 +143,8 @@ export default function ItemThumb({
             bottom: 0px;
             right: 3px;
             z-index: 2;
-            color: white;
+            color: ${progressLabelColor};
+            text-shadow: 0 1px 4px ${progressShadow};
           `}
         >
           {isUnlocked ? <Icon icon="check" size="lg" /> : <>{progress || 0}%</>}

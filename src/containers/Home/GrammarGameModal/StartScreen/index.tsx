@@ -16,6 +16,7 @@ import { Color } from '~/constants/css';
 import { scoreTable, perfectScoreBonus } from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
+import { useRoleColor } from '~/theme/useRoleColor';
 // removed pre-play of correct sound to avoid iOS beeps on start screen
 
 const grammarGameLabel = localize('grammarGame');
@@ -42,7 +43,8 @@ export default function StartScreen({
 }) {
   const [results, setResults] = useState([]);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
-  const failColor = useKeyContext((v) => v.theme.fail.color);
+  const failRole = useRoleColor('fail', { fallback: 'black' });
+  const failColorKey = failRole.colorKey;
   const grammarLoadingStatus = useHomeContext(
     (v) => v.state.grammarLoadingStatus
   );
@@ -60,12 +62,18 @@ export default function StartScreen({
   );
   const userId = useKeyContext((v) => v.myState.userId);
 
-  const colorSKey = useKeyContext((v) => v.theme.grammarGameScoreS.color);
-  const colorAKey = useKeyContext((v) => v.theme.grammarGameScoreA.color);
-  const colorBKey = useKeyContext((v) => v.theme.grammarGameScoreB.color);
-  const colorCKey = useKeyContext((v) => v.theme.grammarGameScoreC.color);
-  const colorDKey = useKeyContext((v) => v.theme.grammarGameScoreD.color);
-  const titlePalette = [colorSKey, colorAKey, colorBKey, colorCKey, colorDKey];
+  const roleS = useRoleColor('grammarGameScoreS', { fallback: 'gold' });
+  const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
+  const roleB = useRoleColor('grammarGameScoreB', { fallback: 'orange' });
+  const roleC = useRoleColor('grammarGameScoreC', { fallback: 'pink' });
+  const roleD = useRoleColor('grammarGameScoreD', { fallback: 'logoBlue' });
+  const titlePalette = [
+    roleS.colorKey,
+    roleA.colorKey,
+    roleB.colorKey,
+    roleC.colorKey,
+    roleD.colorKey
+  ];
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
@@ -424,7 +432,7 @@ export default function StartScreen({
             `}
             style={{
               color: /limit|error|fail/i.test(grammarLoadingStatus)
-                ? Color[failColor]()
+                ? Color[failColorKey]()
                 : Color.logoBlue()
             }}
             aria-live="polite"

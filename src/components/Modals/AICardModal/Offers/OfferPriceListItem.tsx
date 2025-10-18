@@ -6,8 +6,8 @@ import OfferDetailModal from './OfferDetailModal';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -31,7 +31,13 @@ export default function OfferPriceListItem({
   userId: number;
 }) {
   const [offerDetailModalShown, setOfferDetailModalShown] = useState(false);
-  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const { colorKey: userLinkColorKey } = useRoleColor('userLink', {
+    fallback: 'logoBlue'
+  });
+  const userLinkColor =
+    userLinkColorKey && userLinkColorKey in Color
+      ? userLinkColorKey
+      : 'logoBlue';
 
   return (
     <ErrorBoundary componentPath="components/Modals/AICardModal/Offers/OfferListItem">

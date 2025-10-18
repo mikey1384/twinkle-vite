@@ -5,8 +5,8 @@ import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
-import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 const loadMoreLabel = localize('loadMore');
 const loadingLabel = localize('loading');
@@ -27,35 +27,35 @@ export default function LoadMoreButton({
   [key: string]: any;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const {
+    themeName,
+    color: themedColorValue,
+    colorKey: themedColorKey
+  } = useRoleColor('loadMoreButton', {
+    themeName: theme || profileTheme,
+    fallback: 'lightBlue'
+  });
   const { buttonColorKey, buttonColorValue } = useMemo(() => {
-    const fallbackKey = 'lightBlue';
-    const candidates = [
-      overrideColor,
-      themeRoles.loadMoreButton?.color,
-      fallbackKey
-    ];
-    for (const key of candidates) {
-      if (!key) continue;
-      const fn = Color[key as keyof typeof Color];
-      if (typeof fn === 'function') {
-        return {
-          buttonColorKey: key,
-          buttonColorValue: fn()
-        };
-      }
+    const overrideValue = overrideColor
+      ? resolveColorValue(overrideColor)
+      : undefined;
+    if (overrideColor && overrideValue) {
+      return {
+        buttonColorKey: overrideColor,
+        buttonColorValue: overrideValue
+      };
     }
-    const fallbackFn = Color[fallbackKey as keyof typeof Color];
+    const resolvedKey = themedColorKey || 'lightBlue';
+    const resolvedValue =
+      themedColorValue ||
+      resolveColorValue(resolvedKey) ||
+      resolveColorValue('lightBlue') ||
+      '#4aa3ff';
     return {
-      buttonColorKey: fallbackKey,
-      buttonColorValue:
-        typeof fallbackFn === 'function' ? fallbackFn() : '#4aa3ff'
+      buttonColorKey: overrideColor || resolvedKey,
+      buttonColorValue: overrideValue || resolvedValue
     };
-  }, [overrideColor, themeRoles]);
+  }, [overrideColor, themedColorKey, themedColorValue]);
   const scopedStyle = useMemo(
     () =>
       ({

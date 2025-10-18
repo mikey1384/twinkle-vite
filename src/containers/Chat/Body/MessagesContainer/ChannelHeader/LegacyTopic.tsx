@@ -9,12 +9,12 @@ import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { isMobile, textIsOverflown } from '~/helpers';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useInterval } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const maxTextLength = 65;
@@ -61,25 +61,18 @@ export default function LegacyTopic({
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const themeName = useMemo<ThemeName>(
-    () => (displayedThemeColor as ThemeName),
-    [displayedThemeColor]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const buttonColor = useMemo(
-    () => themeRoles.button?.color || 'logoBlue',
-    [themeRoles]
-  );
-  const buttonHoverColor = useMemo(
-    () => themeRoles.buttonHovered?.color || buttonColor,
-    [themeRoles, buttonColor]
-  );
-  const chatTopicColor = useMemo(() => {
-    const role = themeRoles.chatTopic;
-    const key = role?.color || themeName;
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn() : key;
-  }, [themeRoles, themeName]);
+  const { colorKey: buttonColor } = useRoleColor('button', {
+    themeName: displayedThemeColor,
+    fallback: 'logoBlue'
+  });
+  const { colorKey: buttonHoverColor } = useRoleColor('buttonHovered', {
+    themeName: displayedThemeColor,
+    fallback: buttonColor || 'logoBlue'
+  });
+  const { color: chatTopicColor } = useRoleColor('chatTopic', {
+    themeName: displayedThemeColor,
+    fallback: displayedThemeColor
+  });
   const reloadingChatSubject = useRef(false);
   const HeaderLabelRef: React.RefObject<any> = useRef(null);
   const [submitting, setSubmitting] = useState(false);

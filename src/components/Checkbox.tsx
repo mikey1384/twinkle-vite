@@ -1,7 +1,7 @@
 import React from 'react';
 import { innerBorderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Checkbox({
   backgroundColor = Color.inputGray(),
@@ -20,7 +20,8 @@ export default function Checkbox({
   style?: React.CSSProperties;
   textIsClickable?: boolean;
 }) {
-  const switchColor = useKeyContext((v) => v.theme.switch.color);
+  const switchRole = useRoleColor('switch', { fallback: 'logoBlue' });
+  const switchColor = switchRole.colorKey || 'logoBlue';
 
   return (
     <div

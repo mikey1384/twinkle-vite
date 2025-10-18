@@ -1,9 +1,4 @@
-import {
-  ThemeName,
-  themeRegistry,
-  getThemeRoles,
-  RoleTokens
-} from '~/theme/themes';
+import { ThemeName, themeRegistry, getThemeRoles, RoleTokens } from '~/theme';
 
 export const Color: {
   [key: string]: (opacity?: number) => string;
@@ -82,6 +77,7 @@ export const Color: {
   red: (opacity = 1) => `rgba(255,65,54,${opacity})`,
   darkRed: (opacity = 1) => `rgba(235,0,60,${opacity})`,
   magenta: (opacity = 1) => `rgba(223,50,150,${opacity})`,
+  fuchsia: (opacity = 1) => `rgba(190,0,255,${opacity})`,
   rose: (opacity = 1) => `rgba(223,0,102,${opacity})`,
   midnightBlack: (opacity = 1) => `rgba(10,15,50,${opacity})`,
   vantaBlack: (opacity = 1) => `rgba(0,0,0,${opacity})`,

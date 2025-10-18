@@ -4,6 +4,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 
@@ -22,7 +23,9 @@ export default function MyRank({
   style?: React.CSSProperties;
   twinkleXP: number;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
   const loadingRankings = useKeyContext((v) => v.myState.loadingRankings);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const rankedColor = useMemo(
@@ -105,7 +108,7 @@ export default function MyRank({
           <span
             style={{
               fontWeight: 'bold',
-              color: rankedColor || Color[xpNumberColor]()
+              color: rankedColor || getXpNumberColor()
             }}
           >
             {twinkleXP ? addCommasToNumber(twinkleXP) : 0}

@@ -31,6 +31,7 @@ import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobileOS = isMobile(navigator);
 
@@ -161,8 +162,13 @@ export default function MessageInput({
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const [coolingDown, setCoolingDown] = useState(false);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const buttonHoverRole = useRoleColor('buttonHovered', {
+    fallback: buttonRole.colorKey
+  });
+  const buttonColorKey = buttonRole.colorKey;
+  const buttonHoverColorKey =
+    buttonHoverRole.colorKey || buttonColorKey;
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
@@ -430,8 +436,8 @@ export default function MessageInput({
         {!isAIChannel &&
           (isTwoPeopleChannel || hasWordleButton || legacyTopicButtonShown) && (
             <LeftButtons
-              buttonColor={buttonColor}
-              buttonHoverColor={buttonHoverColor}
+              buttonColor={buttonColorKey}
+              buttonHoverColor={buttonHoverColorKey}
               hasWordleButton={hasWordleButton}
               nextDayTimeStamp={nextDayTimeStamp}
               isChessBanned={banned?.chess}
@@ -496,8 +502,8 @@ export default function MessageInput({
                 isExceedingCharLimit ||
                 hasInsufficientCoinsForThinkHard
               }
-              color={buttonColor}
-              hoverColor={buttonHoverColor}
+              color={buttonColorKey}
+              hoverColor={buttonHoverColorKey}
               onClick={handleSendMsg}
             >
               <Icon size="lg" icon="paper-plane" />
@@ -506,7 +512,7 @@ export default function MessageInput({
         )}
         {isRightButtonsShown && (
           <RightButtons
-            buttonColor={buttonColor}
+            buttonColor={buttonColorKey}
             currentTransactionId={currentTransactionId}
             inputText={inputText}
             currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}

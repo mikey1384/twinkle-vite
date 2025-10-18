@@ -44,6 +44,7 @@ import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
@@ -108,9 +109,15 @@ function SubjectInput({
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const banned = useKeyContext((v) => v.myState.banned);
-  const successColor = useKeyContext((v) => v.theme.success.color);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const buttonHoverRole = useRoleColor('buttonHovered', {
+    fallback: buttonRole.colorKey
+  });
+  const successColorKey = successRole.colorKey;
+  const buttonColorKey = buttonRole.colorKey;
+  const buttonHoverColorKey =
+    buttonHoverRole.colorKey || buttonColorKey;
   const fileUploadProgress = useHomeContext((v) => v.state.fileUploadProgress);
   const secretAttachmentUploadProgress = useHomeContext(
     (v) => v.state.secretAttachmentUploadProgress
@@ -370,8 +377,8 @@ function SubjectInput({
                   <Button
                     variant="soft"
                     tone="raised"
-                    color={buttonColor}
-                    hoverColor={buttonHoverColor}
+                    color={buttonColorKey}
+                    hoverColor={buttonHoverColorKey}
                     onClick={() => setAttachContentModalShown(true)}
                   >
                     <Icon size="lg" icon="plus" />
@@ -538,7 +545,7 @@ function SubjectInput({
                 />
                 <Button
                   filled
-                  color={successColor}
+                  color={successColorKey}
                   loading={submittingSubject}
                   disabled={buttonDisabled}
                   onClick={handleSubmit}

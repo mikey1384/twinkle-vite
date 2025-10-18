@@ -1,18 +1,13 @@
 import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import {
-  borderRadius,
-  mobileMaxWidth,
-  Color,
-  getThemeStyles
-} from '~/constants/css';
+import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const rankLabel = localize('rank');
 
@@ -49,7 +44,10 @@ export default function RankBar({
   profile: any;
   style?: any;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
+    themeName: profile?.profileTheme,
+    fallback: 'logoGreen'
+  });
   const rankValue = Number(profile?.rank ?? 0);
   const rankColor = useMemo(() => {
     if (rankValue === 1) return Color.gold();
@@ -57,15 +55,10 @@ export default function RankBar({
     if (rankValue === 3) return Color.bronze();
     return undefined;
   }, [rankValue]);
-  const themeName = useMemo<ThemeName>(
-    () => (profile?.profileTheme || 'logoBlue') as ThemeName,
-    [profile?.profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.18),
-    [themeName]
-  );
+  const { themeName, themeRoles, themeStyles } = useThemeTokens({
+    themeName: profile?.profileTheme,
+    intensity: 0.18
+  });
   const isTopThree = rankValue <= 3;
   const accentColor = useMemo(() => {
     const colorKey =
@@ -96,13 +89,7 @@ export default function RankBar({
     if (isTopThree) return 'none';
     return `1px solid ${borderColorVar}`;
   }, [borderColorVar, isTopThree]);
-  const xpValueColor = useMemo(() => {
-    if (rankColor) return rankColor;
-    const fn = Color[xpNumberColor as keyof typeof Color] as
-      | ((opacity?: number) => string)
-      | undefined;
-    return fn ? fn() : Color.logoBlue();
-  }, [rankColor, xpNumberColor]);
+  const xpValueColor = rankColor || getXpNumberColor();
   const trophyColor = rankColor || accentColor;
   const xpUnitColor = useMemo(
     () => (rankColor ? rankColor : Color.gold()),

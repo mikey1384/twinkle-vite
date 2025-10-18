@@ -9,7 +9,9 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function EditAccountTypeModal({
   onHide,
@@ -18,7 +20,8 @@ export default function EditAccountTypeModal({
   onHide: () => void;
   target: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const accountTypeObj = useMemo(() => {
     return target;
     // eslint-disable-next-line react-hooks/exhaustive-deps

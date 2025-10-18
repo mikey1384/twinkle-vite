@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import StepSlide from '../components/StepSlide';
 import Button from '~/components/Button';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ConnectReplToGitHub({
   index,
@@ -18,7 +19,11 @@ export default function ConnectReplToGitHub({
   onOpenTutorial: () => void;
   taskType: string;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );
@@ -44,7 +49,7 @@ export default function ConnectReplToGitHub({
           <a
             onClick={onOpenTutorial}
             style={{
-              color: Color[linkColor](),
+              color: linkColor,
               cursor: 'pointer',
               fontWeight: 'bold'
             }}

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
-import { useExploreContext, useKeyContext } from '~/contexts';
+import { useExploreContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 
@@ -15,7 +16,9 @@ export default function SearchBox({
   innerRef: React.RefObject<any>;
   style: React.CSSProperties;
 }) {
-  const searchColor = useKeyContext((v) => v.theme.search.color);
+  const { colorKey: searchColor } = useRoleColor('search', {
+    fallback: 'logoBlue'
+  });
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onChangeSearchInput = useExploreContext(
     (v) => v.actions.onChangeSearchInput

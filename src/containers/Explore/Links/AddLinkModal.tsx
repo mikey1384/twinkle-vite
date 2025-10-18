@@ -11,10 +11,13 @@ import {
   addEmoji,
   finalizeEmoji
 } from '~/helpers/stringHelpers';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useAppContext, useExploreContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function AddLinkModal({ onHide }: { onHide: () => void }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const onUploadLink = useExploreContext((v) => v.actions.onUploadLink);
   const [urlError, setUrlError] = useState('');

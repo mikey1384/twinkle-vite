@@ -23,6 +23,7 @@ import {
   useChatContext,
   useNotiContext
 } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const colors: {
   [key: number]: string;
@@ -54,8 +55,18 @@ export default function DailyRewardModal({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const { colorKey: xpNumberColorKey } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
+  const { colorKey: linkColorKey } = useRoleColor('link', {
+    fallback: 'logoBlue'
+  });
+  const xpNumberColor =
+    xpNumberColorKey && xpNumberColorKey in Color
+      ? xpNumberColorKey
+      : 'logoGreen';
+  const linkColor =
+    linkColorKey && linkColorKey in Color ? linkColorKey : 'logoBlue';
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const { timeDifference, nextDayTimeStamp } = useNotiContext(

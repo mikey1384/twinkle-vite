@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { scoreTable, perfectScoreBonus } from './constants';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const perfectScore = scoreTable.S * 10 * perfectScoreBonus;
 
@@ -18,20 +18,20 @@ export default function FinishScreen({
   onBackToStart: () => any;
   timesPlayedToday: number;
 }) {
-  const colorS = useKeyContext((v) => v.theme.grammarGameScoreS.color);
-  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
-  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
-  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
-  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
-  const colorF = useKeyContext((v) => v.theme.grammarGameScoreF.color);
+  const roleS = useRoleColor('grammarGameScoreS', { fallback: 'gold' });
+  const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
+  const roleB = useRoleColor('grammarGameScoreB', { fallback: 'orange' });
+  const roleC = useRoleColor('grammarGameScoreC', { fallback: 'pink' });
+  const roleD = useRoleColor('grammarGameScoreD', { fallback: 'logoBlue' });
+  const roleF = useRoleColor('grammarGameScoreF', { fallback: 'gray' });
 
   const letterColor: { [key: string]: string } = {
-    S: colorS,
-    A: colorA,
-    B: colorB,
-    C: colorC,
-    D: colorD,
-    F: colorF
+    S: roleS.colorKey,
+    A: roleA.colorKey,
+    B: roleB.colorKey,
+    C: roleC.colorKey,
+    D: roleD.colorKey,
+    F: roleF.colorKey
   };
 
   const score = useMemo(() => {

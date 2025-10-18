@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function ChatFlatButton({
   label = 'Button',
@@ -25,28 +26,76 @@ export default function ChatFlatButton({
   disabled?: boolean;
   style?: React.CSSProperties;
 }) {
-  const defaultButtonColor = useKeyContext((v) => v.theme.chatFlatButton.color);
-  const defaultButtonOpacity = useKeyContext(
-    (v) => v.theme.chatFlatButton.opacity
-  );
-  const defaultButtonHoveredColor = useKeyContext(
-    (v) => v.theme.chatFlatButtonHovered.color
-  );
-  const defaultTextColor = useKeyContext(
-    (v) => v.theme.chatFlatButtonText.color
-  );
-  const defaultTextShadowColor = useKeyContext(
-    (v) => v.theme.chatFlatButtonText.shadow
-  );
+  const buttonRole = useRoleColor('chatFlatButton', {
+    fallback: 'logoBlue'
+  });
+  const hoverRole = useRoleColor('chatFlatButtonHovered', {
+    fallback: buttonRole.colorKey
+  });
+  const textRole = useRoleColor('chatFlatButtonText', {
+    fallback: 'white'
+  });
+
+  const resolvedCustomButtonColor = useMemo(() => {
+    if (!buttonColor) return undefined;
+    const candidate = Color[buttonColor as keyof typeof Color];
+    if (typeof candidate === 'function') {
+      return candidate(buttonRole.defaultOpacity);
+    }
+    if (typeof candidate === 'string') return candidate;
+    return buttonColor;
+  }, [buttonColor, buttonRole.defaultOpacity]);
+
+  const resolvedCustomHoverColor = useMemo(() => {
+    if (!buttonHoverColor) return undefined;
+    const candidate = Color[buttonHoverColor as keyof typeof Color];
+    if (typeof candidate === 'function') {
+      return candidate();
+    }
+    if (typeof candidate === 'string') return candidate;
+    return buttonHoverColor;
+  }, [buttonHoverColor]);
+
+  const resolvedTextColor = useMemo(() => {
+    if (textColor) {
+      const candidate = Color[textColor as keyof typeof Color];
+      if (typeof candidate === 'function') return candidate();
+      if (typeof candidate === 'string') return candidate;
+      return textColor;
+    }
+    return textRole.getColor() || Color.white();
+  }, [textColor, textRole]);
+
+  const resolvedTextShadow = useMemo(() => {
+    if (textShadowColor) {
+      const candidate = Color[textShadowColor as keyof typeof Color];
+      if (typeof candidate === 'function') return candidate();
+      if (typeof candidate === 'string') return candidate;
+      return textShadowColor;
+    }
+    if (textRole.token?.shadow) {
+      return (
+        resolveColorValue(textRole.token.shadow) ||
+        Color.logoBlue()
+      );
+    }
+    return undefined;
+  }, [textShadowColor, textRole.token]);
 
   const buttonBackgroundColor = useMemo(
-    () => buttonColor || Color[defaultButtonColor](defaultButtonOpacity),
-    [buttonColor, defaultButtonColor, defaultButtonOpacity]
+    () =>
+      resolvedCustomButtonColor ||
+      buttonRole.getColor(buttonRole.defaultOpacity) ||
+      Color.logoBlue(),
+    [resolvedCustomButtonColor, buttonRole]
   );
 
   const buttonHoverBackgroundColor = useMemo(
-    () => buttonHoverColor || Color[defaultButtonHoveredColor](),
-    [buttonHoverColor, defaultButtonHoveredColor]
+    () =>
+      resolvedCustomHoverColor ||
+      hoverRole.getColor() ||
+      buttonBackgroundColor,
+    [resolvedCustomHoverColor, hoverRole, buttonBackgroundColor]
   );
 
   return (
@@ -55,11 +104,10 @@ export default function ChatFlatButton({
         width: 100%;
         padding: 0.75rem 1rem;
         background: ${buttonBackgroundColor};
-        color: ${Color[textColor || defaultTextColor]()};
-        ${textShadowColor || defaultTextShadowColor
-          ? `text-shadow: 0 0 1px ${Color[
-              textShadowColor || defaultTextShadowColor
-            ]()}`
+        color: ${resolvedTextColor};
+        ${
+          resolvedTextShadow
+            ? `text-shadow: 0 0 1px ${resolvedTextShadow}`
           : ''};
         display: flex;
         border: none;

@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface FileUploadOptionProps {
   onFileSelect: (file: File) => void;
@@ -15,7 +15,9 @@ export default function FileUploadOption({
 }: FileUploadOptionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const { colorKey: buttonColorKey } = useRoleColor('button', {
+    fallback: 'logoBlue'
+  });
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem', width: '100%' }}>
@@ -76,7 +78,9 @@ export default function FileUploadOption({
       <Button
         variant="soft"
         tone="raised"
-        color={buttonColor}
+        color={
+          buttonColorKey && buttonColorKey in Color ? buttonColorKey : 'logoBlue'
+        }
         onClick={handleSelectFile}
         style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
       >

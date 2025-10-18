@@ -11,7 +11,7 @@ import {
   isUnicodeArt,
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useThemeTokens } from '~/theme/useThemeTokens';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 
@@ -50,21 +50,18 @@ export default function TopicMessagePreview({
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
-  const themeName = useMemo<ThemeName>(() => theme as ThemeName, [theme]);
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeName, themeRoles } = useThemeTokens({ themeName: theme });
   const topicTextColor = useMemo(() => {
-    const role = themeRoles.topicText;
-    const key = role?.color || themeName;
+    const key = themeRoles.topicText?.color || themeName;
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
-  }, [themeRoles, themeName]);
+  }, [themeRoles.topicText?.color, themeName]);
   const topicShadowColor = useMemo(() => {
-    const role = themeRoles.topicText;
-    const key = role?.shadow;
+    const key = themeRoles.topicText?.shadow;
     if (!key) return '';
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
-  }, [themeRoles]);
+  }, [themeRoles.topicText?.shadow]);
   const contentPreviewShown = useMemo(() => {
     return (
       !stringIsEmpty(content) &&

@@ -7,7 +7,8 @@ import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { isEqual } from 'lodash';
-import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function EditBanStatusModal({
   onHide,
@@ -16,7 +17,8 @@ export default function EditBanStatusModal({
   onHide: () => void;
   target: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const updateBanStatus = useAppContext(
     (v) => v.requestHelpers.updateBanStatus
   );

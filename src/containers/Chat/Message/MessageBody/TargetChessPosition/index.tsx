@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Chess from '../../../Chess';
 import { borderRadius, Color } from '~/constants/css';
 import ProposeButton from './ProposeButton';
+import { useChatContext } from '~/contexts';
 import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
 export default function TargetChessPosition({
@@ -31,6 +32,12 @@ export default function TargetChessPosition({
   onDeclineRewind: () => void;
   onRequestRewind: (v: any) => void;
 }) {
+  const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
+  const squareColors = useMemo(
+    () => getUserChatSquareColors(myId),
+    [myId, chessThemeVersion]
+  );
+
   return (
     <div
       style={{
@@ -47,6 +54,7 @@ export default function TargetChessPosition({
       }}
     >
       <Chess
+        key={chessThemeVersion}
         loaded
         myId={myId}
         messageId={messageId}
@@ -59,7 +67,7 @@ export default function TargetChessPosition({
         senderId={userId}
         senderName={username}
         style={{ width: '100%' }}
-        squareColors={getUserChatSquareColors(myId)}
+        squareColors={squareColors}
       />
       <div
         style={{

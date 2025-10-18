@@ -4,8 +4,7 @@ import { css } from '@emotion/css';
 import {
   innerBorderRadius,
   borderRadius,
-  mobileMaxWidth,
-  Color
+  mobileMaxWidth
 } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
@@ -14,7 +13,7 @@ import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
@@ -59,27 +58,26 @@ export default function ChatFilterBar({
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
   const topicButtonRef = useRef(null);
-  const normalizedTheme = useMemo<ThemeName>(
-    () => (themeColor || 'logoBlue') as ThemeName,
+  const normalizedTheme = useMemo(
+    () => themeColor || 'logoBlue',
     [themeColor]
   );
-  const { chatTopicColorVar, chatTopicTextColorVar } = useMemo(() => {
-    const roles = getThemeRoles(normalizedTheme);
-    const topicColorKey = roles.chatTopic?.color || normalizedTheme;
-    const topicColorFn = Color[topicColorKey as keyof typeof Color];
-    const topicFallback = topicColorFn ? topicColorFn() : topicColorKey;
-    const topicColorVar = `var(--role-chatTopic-color, ${topicFallback})`;
-
-    const textColorKey = roles.chatTopicText?.color || 'white';
-    const textColorFn = Color[textColorKey as keyof typeof Color];
-    const textFallback = textColorFn ? textColorFn() : textColorKey;
-    const textColorVar = `var(--role-chatTopicText-color, ${textFallback})`;
-
-    return {
-      chatTopicColorVar: topicColorVar,
-      chatTopicTextColorVar: textColorVar
-    };
-  }, [normalizedTheme]);
+  const { color: chatTopicColor, themeName } = useRoleColor('chatTopic', {
+    themeName: normalizedTheme,
+    fallback: normalizedTheme
+  });
+  const { color: chatTopicTextColor } = useRoleColor('chatTopicText', {
+    themeName,
+    fallback: 'white'
+  });
+  const chatTopicColorVar = useMemo(
+    () => `var(--role-chatTopic-color, ${chatTopicColor})`,
+    [chatTopicColor]
+  );
+  const chatTopicTextColorVar = useMemo(
+    () => `var(--role-chatTopicText-color, ${chatTopicTextColor})`,
+    [chatTopicTextColor]
+  );
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -98,7 +96,7 @@ export default function ChatFilterBar({
 
   return (
     <ScopedTheme
-      theme={normalizedTheme}
+      theme={themeName}
       roles={['chatTopic', 'chatTopicText']}
     >
       <div

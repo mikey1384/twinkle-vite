@@ -7,7 +7,7 @@ import Button from '~/components/Button';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Content({
   centerRef,
@@ -48,8 +48,12 @@ export default function Content({
   slideId: number;
   selectedForkButtonId: number;
 }) {
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const buttonHoveredRole = useRoleColor('buttonHovered', {
+    fallback: 'logoBlue'
+  });
+  const buttonColor = buttonRole.colorKey;
+  const buttonHoverColor = buttonHoveredRole.colorKey;
   const descriptionShown = useMemo(
     () => !stringIsEmpty(description),
     [description]

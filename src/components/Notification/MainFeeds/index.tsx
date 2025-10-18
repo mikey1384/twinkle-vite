@@ -12,6 +12,7 @@ import { REWARD_VALUE, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const tapToCollectRewardsLabel = localize('tapToCollectRewards');
 const yourXPLabel = localize('yourXP');
@@ -40,15 +41,22 @@ export default function MainFeeds({
   selectNotiTab: () => void;
   style?: object;
 }) {
-  const actionColor = useKeyContext((v) => v.theme.action.color);
-  const infoColor = useKeyContext((v) => v.theme.info.color);
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const mentionColor = useKeyContext((v) => v.theme.mention.color);
-  const missionColor = useKeyContext((v) => v.theme.mission.color);
-  const recommendationColor = useKeyContext(
-    (v) => v.theme.recommendation.color
-  );
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const actionRole = useRoleColor('action', { fallback: 'green' });
+  const infoRole = useRoleColor('info', { fallback: 'logoBlue' });
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const mentionRole = useRoleColor('mention', { fallback: 'passionFruit' });
+  const missionRole = useRoleColor('mission', { fallback: 'orange' });
+  const recommendationRole = useRoleColor('recommendation', {
+    fallback: 'logoBlue'
+  });
+  const rewardRole = useRoleColor('reward', { fallback: 'pinkOrange' });
+  const actionColor = actionRole.colorKey;
+  const infoColor = infoRole.colorKey;
+  const linkColor = linkRole.colorKey;
+  const mentionColor = mentionRole.colorKey;
+  const missionColor = missionRole.colorKey;
+  const recommendationColor = recommendationRole.colorKey;
+  const rewardColor = rewardRole.colorKey;
 
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
@@ -67,10 +75,10 @@ export default function MainFeeds({
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const {
-    alert: { color: alertColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const alertColor = alertRole.colorKey;
+  const successColor = successRole.colorKey;
   const notiObj = useNotiContext((v) => v.state.notiObj);
   const totalRewardedTwinkles = useMemo(
     () => notiObj[userId]?.totalRewardedTwinkles || 0,

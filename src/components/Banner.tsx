@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { Color, wideBorderRadius, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Banner({
   children,
@@ -21,10 +21,10 @@ export default function Banner({
   spinnerDelay?: number;
   style?: React.CSSProperties;
 }) {
-  const warningColor = useKeyContext((v) => v.theme.warning.color);
+  const warningRole = useRoleColor('warning', { fallback: 'redOrange' });
   const timerRef: React.RefObject<any> = useRef(null);
   const [spinnerShown, setSpinnerShown] = useState(false);
-  const hue = color || warningColor;
+  const hue = color || warningRole.colorKey;
 
   function tint(key: string, a: number) {
     const fn = (Color as any)[key];

@@ -7,6 +7,7 @@ import {
 } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function SideMenu({
   children,
@@ -22,9 +23,6 @@ export default function SideMenu({
   placement?: 'left' | 'right';
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const activeColorName = useKeyContext(
-    (v) => v.theme.homeMenuItemActive.color
-  );
   const themeName = (profileTheme || 'logoBlue') as string;
   const isCardVariant = variant === 'card';
   const isRight = placement === 'right';
@@ -37,23 +35,18 @@ export default function SideMenu({
     () => getThemeStyles(themeName, 0.12).bg,
     [themeName]
   );
-  const activeColorFn = Color[activeColorName as keyof typeof Color];
+  const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {
+    themeName,
+    fallback: themeName || 'logoBlue'
+  });
   const activeAccent =
-    typeof activeColorFn === 'function'
-      ? (activeColorFn as (opacity?: number) => string)()
-      : Color.logoBlue();
+    homeMenuItemActiveRole.getColor() || Color.logoBlue();
   const activeBlockBg =
-    typeof activeColorFn === 'function'
-      ? (activeColorFn as (opacity?: number) => string)(0.22)
-      : Color.highlightGray();
+    homeMenuItemActiveRole.getColor(0.22) || Color.highlightGray();
   const hoverAccent =
-    typeof activeColorFn === 'function'
-      ? (activeColorFn as (opacity?: number) => string)()
-      : Color.logoBlue();
+    homeMenuItemActiveRole.getColor() || Color.logoBlue();
   const outlineAccent =
-    typeof activeColorFn === 'function'
-      ? (activeColorFn as (opacity?: number) => string)(0.4)
-      : Color.borderGray();
+    homeMenuItemActiveRole.getColor(0.4) || Color.borderGray();
   const hoverTranslate = isRight ? '-4px' : '4px';
 
   return (

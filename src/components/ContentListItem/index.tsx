@@ -4,6 +4,8 @@ import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 import { useInView } from 'react-intersection-observer';
 
 function ContentListItem({
@@ -32,10 +34,11 @@ function ContentListItem({
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const userId = useKeyContext((v) => v.myState.userId);
-  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
-  const itemSelectedOpacity = useKeyContext(
-    (v) => v.theme.itemSelected.opacity
-  );
+  const itemSelectedRole = useRoleColor('itemSelected', {
+    fallback: 'logoBlue'
+  });
+  const itemSelectedColor = itemSelectedRole.colorKey || 'logoBlue';
+  const itemSelectedOpacity = itemSelectedRole.defaultOpacity ?? 0.8;
 
   const [isVisible, setIsVisible] = useState(false);
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});

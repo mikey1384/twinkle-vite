@@ -9,7 +9,7 @@ import { Color } from '~/constants/css';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import URL from '~/constants/URL';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const API_URL = `${URL}/chat`;
 
@@ -25,14 +25,10 @@ export default function SubjectMsgsModal({
   subjectTitle: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((displayedThemeColor || profileTheme || 'logoBlue') as ThemeName),
-    [displayedThemeColor, profileTheme]
-  );
-  const loadMoreButtonColor = useMemo(() => {
-    const role = getThemeRoles(themeName).loadMoreButton;
-    return role?.color || 'lightBlue';
-  }, [themeName]);
+  const { colorKey: loadMoreButtonColor } = useRoleColor('loadMoreButton', {
+    themeName: displayedThemeColor || profileTheme,
+    fallback: 'lightBlue'
+  });
   const headerColor = useMemo(() => {
     const key = displayedThemeColor || profileTheme || 'logoBlue';
     const fn = Color[key as keyof typeof Color];

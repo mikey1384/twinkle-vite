@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
 import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
-import { useAppContext, useProfileContext, useKeyContext } from '~/contexts';
+import { useAppContext, useProfileContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function ReorderFeaturedSubjects({
   onHide,
@@ -17,7 +19,8 @@ export default function ReorderFeaturedSubjects({
   subjectIds: number[];
   username: string;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const featureSubjectsOnProfile = useAppContext(
     (v) => v.requestHelpers.featureSubjectsOnProfile

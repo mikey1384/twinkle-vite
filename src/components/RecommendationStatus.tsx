@@ -6,7 +6,7 @@ import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 
 const recommendedByLabel = localize('recommendedBy');
@@ -25,20 +25,13 @@ export default function RecommendationStatus({
   theme?: any;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const rewardableColorKey = useMemo(
-    () => themeRoles.rewardableRecommendation?.color || 'yellow',
-    [themeRoles]
-  );
-  const rewardableOpacity = useMemo(
-    () => themeRoles.rewardableRecommendation?.opacity ?? 0.25,
-    [themeRoles]
-  );
+  const { defaultOpacity: rewardableDefaultOpacity, getColor: getRewardableColor } =
+    useRoleColor('rewardableRecommendation', {
+      themeName: theme,
+      fallback: 'yellow'
+    });
+  const rewardableOpacity =
+    rewardableDefaultOpacity !== undefined ? rewardableDefaultOpacity : 0.25;
   const [userListModalShown, setUserListModalShown] = useState(false);
   const recommendationsByUsertype = useMemo(() => {
     const result = [...recommendations];
@@ -103,19 +96,14 @@ export default function RecommendationStatus({
     return ' and';
   }, [recommendationsByUsertypeExceptMe.length]);
 
-  const rewardableRecommendationColor = useMemo(() => {
-    const fn = Color[rewardableColorKey as keyof typeof Color];
-    if (fn) {
-      return fn(rewardableOpacity);
-    }
-    return rewardableColorKey;
-  }, [rewardableColorKey, rewardableOpacity]);
-
-  const rewardableBorderColor = useMemo(() => {
-    const fn = Color[rewardableColorKey as keyof typeof Color];
-    if (fn) return fn(Math.min(1, (rewardableOpacity || 0.25) + 0.14));
-    return rewardableColorKey;
-  }, [rewardableColorKey, rewardableOpacity]);
+  const rewardableRecommendationColor = useMemo(
+    () => getRewardableColor(),
+    [getRewardableColor]
+  );
+  const rewardableBorderColor = useMemo(
+    () => getRewardableColor(Math.min(1, rewardableOpacity + 0.14)),
+    [getRewardableColor, rewardableOpacity]
+  );
 
   const containerCss = useMemo(
     () => css`

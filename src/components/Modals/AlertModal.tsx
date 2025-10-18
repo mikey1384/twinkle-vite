@@ -1,7 +1,8 @@
 import React from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
-import { useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function AlertModal({
   isOpen = true,
@@ -16,7 +17,9 @@ export default function AlertModal({
   title: string;
   content: string | React.ReactNode;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
 
   return (
     <NewModal
@@ -26,7 +29,13 @@ export default function AlertModal({
       size="sm"
       modalLevel={modalLevel}
       footer={
-        <Button transparent color={doneColor} onClick={onHide}>
+        <Button
+          transparent
+          color={
+            doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+          }
+          onClick={onHide}
+        >
           OK
         </Button>
       }

@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectAttachmentScreen from './SelectAttachmentScreen';
 import localize from '~/constants/localize';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const attachContentToSubjectLabel = localize('attachContentToSubject');
 const backLabel = localize('back');
@@ -34,7 +34,8 @@ export default function AttachContentModal({
   onConfirm: (arg0?: Record<string, any>) => void;
   onHide: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColorKey = doneRole.colorKey;
   const [section, setSection] = useState('start');
   const [selected, setSelected] = useState<Record<string, any>>();
 
@@ -62,7 +63,7 @@ export default function AttachContentModal({
           {section !== 'start' && (
             <Button
               disabled={!selected}
-              color={doneColor}
+              color={doneColorKey}
               style={{ marginLeft: '0.7rem' }}
               onClick={() => onConfirm(selected)}
             >

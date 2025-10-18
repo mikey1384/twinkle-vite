@@ -7,7 +7,7 @@ import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const addVideoToPlaylistsLabel = localize('addVideoToPlaylists');
 
@@ -29,22 +29,10 @@ function TagStatus({
   tags: any[];
 }) {
   const canEditPlaylists = useKeyContext((v) => v.myState.canEditPlaylists);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((theme || profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme, theme]
-  );
-  const linkColor = useMemo(() => {
-    const role = getThemeRoles(themeName).link;
-    const key = role?.color || 'logoBlue';
-    const opacity = role?.opacity;
-    const fn = Color[key as keyof typeof Color];
-    return fn
-      ? typeof opacity === 'number'
-        ? fn(opacity)
-        : fn()
-      : key;
-  }, [themeName]);
+  const { color: linkRoleColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const fetchPlaylistsContaining = useAppContext(
     (v) => v.requestHelpers.fetchPlaylistsContaining
   );
@@ -74,7 +62,7 @@ function TagStatus({
           style={{
             marginRight: '0.5rem',
             fontSize: '1.5rem',
-            color: linkColor
+            color: linkRoleColor
           }}
           key={tag.id}
           onClick={() => {
@@ -85,7 +73,7 @@ function TagStatus({
           {hashify(tag.title)}
         </a>
       )),
-    [linkColor, tags]
+    [linkRoleColor, tags]
   );
 
   const addLabel = useMemo(() => {
@@ -119,7 +107,7 @@ function TagStatus({
           {canEditPlaylists && (
             <a
               style={{
-                color: tags?.length > 0 ? Color.orange() : linkColor
+                color: tags?.length > 0 ? Color.orange() : linkRoleColor
               }}
               onClick={() => setTagModalShown(true)}
             >

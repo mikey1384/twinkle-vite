@@ -14,7 +14,8 @@ import { TouchBackend } from 'react-dnd-touch-backend';
 import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile, objectify } from '~/helpers';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useAppContext, useExploreContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
@@ -29,7 +30,9 @@ export default function EditPlaylistModal({
   onHide: () => void;
   playlistId: number;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const editPlaylistVideos = useAppContext(
     (v) => v.requestHelpers.editPlaylistVideos
   );

@@ -3,7 +3,7 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 import { addEmoji, finalizeEmoji } from '~/helpers/stringHelpers';
 
@@ -20,7 +20,9 @@ export default function BioEditModal({
   secondLine?: string;
   thirdLine?: string;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstLine, setFirstLine] = useState(props.firstLine || '');
   const [secondLine, setSecondLine] = useState(props.secondLine || '');
@@ -115,7 +117,9 @@ export default function BioEditModal({
           Cancel
         </Button>
         <Button
-          color={doneColor}
+          color={
+            doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+          }
           loading={isSubmitting}
           onClick={() => {
             setIsSubmitting(true);

@@ -5,19 +5,17 @@ import Button from '~/components/Button';
 import ContentPreview from './ContentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import {
-  useAppContext,
-  useKeyContext,
-  useHomeContext
-} from '~/contexts';
+import { useAppContext, useHomeContext } from '~/contexts';
 import { Color, wideBorderRadius } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function RewardPosts() {
-  const showMeAnotherPostButtonColor = useKeyContext(
-    (v) => v.theme.showMeAnotherPostButton.color
-  );
+  const showAnotherPostRole = useRoleColor('showMeAnotherPostButton', {
+    fallback: 'green'
+  });
+  const showMeAnotherPostButtonColor = showAnotherPostRole.colorKey;
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );

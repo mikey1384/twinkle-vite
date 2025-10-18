@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const container = css`
   width: 100%;
@@ -161,23 +162,18 @@ export default function ProfileWidget() {
   );
   const { themeStyles, accentColor: defaultAccent } = useHomePanelVars(0.08);
   const themeBg = themeStyles.hoverBg || '#f6f7fd';
-  const homeMenuItemActive = useKeyContext(
-    (v) => v.theme.homeMenuItemActive.color
-  );
-  const accentColorFn = React.useMemo(() => {
-    const candidate = Color[homeMenuItemActive as keyof typeof Color];
-    return typeof candidate === 'function'
-      ? (candidate as (opacity?: number) => string)
-      : null;
-  }, [homeMenuItemActive]);
+  const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {
+    fallback: 'logoBlue'
+  });
   const accentColor = React.useMemo(() => {
-    if (accentColorFn) return accentColorFn();
-    return defaultAccent;
-  }, [accentColorFn, defaultAccent]);
+    return homeMenuItemActiveRole.getColor() || defaultAccent;
+  }, [homeMenuItemActiveRole, defaultAccent]);
   const accentBorderColor = React.useMemo(() => {
-    if (accentColorFn) return accentColorFn(0.4);
-    return defaultAccent ? Color.borderGray(0.65) : Color.borderGray();
-  }, [accentColorFn, defaultAccent]);
+    return (
+      homeMenuItemActiveRole.getColor(0.4) ||
+      (defaultAccent ? Color.borderGray(0.65) : Color.borderGray())
+    );
+  }, [homeMenuItemActiveRole, defaultAccent]);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">

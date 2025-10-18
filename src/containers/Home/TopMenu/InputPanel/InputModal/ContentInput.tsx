@@ -28,6 +28,7 @@ import {
 } from '~/contexts';
 import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
@@ -43,8 +44,10 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const banned = useKeyContext((v) => v.myState.banned);
-  const warningColor = useKeyContext((v) => v.theme.warning.color);
-  const successColor = useKeyContext((v) => v.theme.success.color);
+  const warningRole = useRoleColor('warning', { fallback: 'redOrange' });
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const warningColorKey = warningRole.colorKey;
+  const successColorKey = successRole.colorKey;
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const content = useInputContext((v) => v.state.content);
   const onResetContentInput = useInputContext(
@@ -207,7 +210,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
         {postContentLabel}
       </p>
       {urlError && (
-        <Banner color={warningColor} style={{ marginBottom: '1rem' }}>
+        <Banner color={warningColorKey} style={{ marginBottom: '1rem' }}>
           {urlError}
         </Banner>
       )}
@@ -351,7 +354,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
             <div className="button-container">
               <Button
                 filled
-                color={successColor}
+                color={successColorKey}
                 loading={submitting}
                 style={{ marginTop: '1rem' }}
                 disabled={buttonDisabled}

@@ -64,7 +64,7 @@ import AICallWindow from './AICallWindow';
 import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
-import { applyThemeVars, getThemeRoles, ThemeName } from '~/theme/themes';
+import { useRootTheme } from '~/theme/RootThemeProvider';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -116,11 +116,7 @@ export default function App() {
   );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const myState = useMyState();
-  const themeName = useMemo<ThemeName>(
-    () => ((myState.profileTheme || DEFAULT_PROFILE_THEME) as ThemeName),
-    [myState.profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeRoles } = useRootTheme();
   const backgroundColorName = themeRoles.background?.color || 'whiteGray';
   const backgroundColorFn = Color[backgroundColorName as keyof typeof Color];
   const resolvedBackgroundColor = backgroundColorFn
@@ -181,11 +177,6 @@ export default function App() {
   const onUpdateFileUploadProgress = useHomeContext(
     (v) => v.actions.onUpdateFileUploadProgress
   );
-
-  useEffect(() => {
-    const active = (myState.profileTheme || DEFAULT_PROFILE_THEME) as any;
-    applyThemeVars(active);
-  }, [myState.profileTheme]);
 
   const onUpdateSecretAttachmentUploadProgress = useHomeContext(
     (v) => v.actions.onUpdateSecretAttachmentUploadProgress

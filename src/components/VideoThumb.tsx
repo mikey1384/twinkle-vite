@@ -10,7 +10,7 @@ import { css } from '@emotion/css';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { useContentState } from '~/helpers/hooks';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 
 const deviceIsMobile = isMobile(navigator);
@@ -29,8 +29,14 @@ export default function VideoThumb({
   user: any;
   video: any;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const { getColor: getLinkColor } = useRoleColor('link', {
+    fallback: 'blue'
+  });
+  const { getColor: getUserLinkColor } = useRoleColor('userLink', {
+    fallback: 'logoBlue'
+  });
+  const linkColor = getLinkColor();
+  const userLinkColor = getUserLinkColor();
   const { isDeleted } = useContentState({
     contentType: 'video',
     contentId: video.id
@@ -123,11 +129,9 @@ export default function VideoThumb({
                     }}
                   >
                     <Link
-                      style={{
-                        display: 'inline',
-                        color: video.byUser
-                          ? Color[userLinkColor]()
-                          : Color[linkColor]()
+                       style={{
+                         display: 'inline',
+                        color: video.byUser ? userLinkColor : linkColor
                       }}
                       to={`/${to}`}
                     >
