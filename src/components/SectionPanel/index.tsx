@@ -7,35 +7,14 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
-import {
-  Color,
-  getThemeStyles,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useOutsideClick } from '~/helpers/hooks';
-import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
 const editLabel = localize('edit');
-
-function blendWithWhite(color: string | undefined, weight: number) {
-  if (!color) return '#f8f9fc';
-  const match = color
-    .replace(/\s+/g, '')
-    .match(/rgba?\(([-\d.]+),([-\d.]+),([-\d.]+)(?:,([-\d.]+))?\)/i);
-  if (!match) return '#f8f9fc';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
 
 export default function SectionPanel({
   button,
@@ -80,57 +59,23 @@ export default function SectionPanel({
   customColorTheme?: string;
   innerStyle?: React.CSSProperties;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [onEdit, setOnEdit] = useState(false);
   const [editedTitle, setEditedTitle] = useState(
     typeof title === 'string' ? title : ''
   );
-  const themeName = useMemo<ThemeName>(
-    () => ((customColorTheme || profileTheme || 'logoBlue') as ThemeName),
-    [customColorTheme, profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const resolveColor = (name?: string, fallback?: string) => {
-    const target = name ?? fallback;
-    if (!target) return undefined;
-    const fn = Color[target as keyof typeof Color];
-    return fn ? fn() : target;
-  };
-
-  const sectionPanelColor = themeRoles.sectionPanel?.color || themeName;
-  const sectionPanelTextColor =
-    resolveColor(themeRoles.sectionPanelText?.color, 'darkerGray') ||
-    Color.darkerGray();
-  const sectionPanelTextShadowColor = resolveColor(
-    themeRoles.sectionPanelText?.shadow,
-    ''
-  );
-  const headerTextColor = sectionPanelTextColor;
-  const headerTextShadow = sectionPanelTextShadowColor
-    ? `0 0.05rem ${sectionPanelTextShadowColor}`
-    : 'none';
-  const successColor =
-    themeRoles.success?.color && Color[themeRoles.success?.color]
-      ? themeRoles.success?.color
-      : 'green';
-  const panelBg = '#ffffff';
-  const panelHeaderBg = '#ffffff';
-  const panelBodyBg = useMemo(() => {
-    const baseAccent = resolveColor(sectionPanelColor, themeName);
-    const blended = blendWithWhite(baseAccent, 0.97);
-    return blended || '#fbfcff';
-  }, [sectionPanelColor, themeName]);
-  const panelBorderColor = useMemo(() => {
-    const styles = getThemeStyles(themeName, 0.12);
-    return styles.border;
-  }, [themeName]);
-  const panelAccent = useMemo(() => {
-    return (
-      resolveColor(sectionPanelColor, themeName) || Color.logoBlue()
-    );
-  }, [sectionPanelColor, themeName]);
+  const {
+    themeName,
+    accentColorKey: sectionPanelColorKey,
+    headerTextColor,
+    headerTextShadow,
+    successColor,
+    panelBorderColor,
+    styleVars
+  } = useSectionPanelVars({
+    customThemeName: customColorTheme
+  });
 
   const TitleInputRef = useRef(null);
 
@@ -142,16 +87,6 @@ export default function SectionPanel({
   const paddingTop = useMemo(() => {
     return inverted ? '1.7rem' : '1rem';
   }, [inverted]);
-
-  const styleVars = useMemo(() => {
-    return {
-      ['--section-panel-bg' as any]: panelBg,
-      ['--section-panel-header-bg' as any]: panelHeaderBg || panelBg,
-      ['--section-panel-body-bg' as any]: panelBodyBg,
-      ['--section-panel-border-color' as any]: panelBorderColor,
-      ['--section-panel-accent' as any]: panelAccent
-    } as React.CSSProperties;
-  }, [panelAccent, panelBg, panelBodyBg, panelBorderColor, panelHeaderBg]);
 
   return (
     <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
@@ -324,8 +259,8 @@ export default function SectionPanel({
           </div>
           {onSearch && (
             <SearchInput
-              addonColor={sectionPanelColor}
-              borderColor={sectionPanelColor}
+              addonColor={sectionPanelColorKey}
+              borderColor={sectionPanelColorKey}
               style={{
                 color: Color.darkerGray(),
                 flex: '1 1 240px',

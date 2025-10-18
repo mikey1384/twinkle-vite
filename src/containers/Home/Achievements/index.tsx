@@ -4,9 +4,10 @@ import { Color } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
+import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
 import { homePanelClass } from '~/theme/homePanels';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 export default function Achievements() {
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
@@ -39,20 +40,17 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
+  const { panelVars } = useHomePanelVars(0.08);
+  const headingPanelStyle = useMemo(
+    () =>
+      ({
+        ...panelVars,
+        ['--home-panel-border' as const]: Color.borderGray(0.65),
+        ['--home-panel-padding' as const]: '1.6rem 2rem',
+        ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
+      }) as React.CSSProperties,
+    [panelVars]
   );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const headingColor = useMemo(() => {
-    const colorKey = themeRoles.sectionPanelText?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      colorKey && (Color[colorKey] as ((opacity?: number) => string) | undefined);
-    return fn ? fn() : Color.darkerGray();
-  }, [themeRoles.sectionPanelText?.color]);
 
   useEffect(() => {
     if (userId) init();
@@ -102,14 +100,7 @@ export default function Achievements() {
             padding: 1.6rem 2rem;
           `
         )}
-        style={{
-          ['--home-panel-bg' as const]: '#ffffff',
-          ['--home-panel-tint' as const]: Color.logoBlue(0.08),
-          ['--home-panel-border' as const]: Color.borderGray(0.65),
-          ['--home-panel-heading' as const]: headingColor,
-          ['--home-panel-padding' as const]: '1.6rem 2rem',
-          ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
-        }}
+        style={headingPanelStyle}
       >
         <p
           className={css`
@@ -123,17 +114,7 @@ export default function Achievements() {
         </p>
       </div>
       {!userId ? (
-        <div
-          className={css`
-            text-align: center;
-            font-size: 2.3rem;
-            font-weight: bold;
-            color: ${Color.black()};
-            margin-top: 17vh;
-          `}
-        >
-          Please log in to view this page
-        </div>
+        <HomeLoginPrompt />
       ) : !isAchievementsLoaded ? (
         <Loading />
       ) : (

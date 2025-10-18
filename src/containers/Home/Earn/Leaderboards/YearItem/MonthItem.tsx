@@ -4,6 +4,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
 import Top30Modal from './Top30Modal';
 import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
 const container = css`
   ${themedCardBase};
@@ -25,13 +26,17 @@ export default function MonthItem({
   const top3 = useMemo(() => {
     return top30?.slice(0, 3);
   }, [top30]);
+  const { cardVars } = useThemedCardVars({
+    role: 'sectionPanel',
+    blendWeight: 0.94
+  });
 
   return (
     <div
       className={container}
       style={
         {
-          ['--themed-card-bg' as const]: 'var(--home-panel-bg, #f8f9ff)',
+          ...cardVars,
           ...(style || {})
         } as React.CSSProperties
       }

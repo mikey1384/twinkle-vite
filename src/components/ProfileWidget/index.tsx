@@ -3,15 +3,11 @@ import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
-import {
-  Color,
-  getThemeStyles,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const container = css`
   width: 100%;
@@ -160,14 +156,11 @@ export default function ProfileWidget() {
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { profilePicUrl, realName, userId, username } = useKeyContext(
     (v) => v.myState
   );
-  const themeBg = React.useMemo(() => {
-    const themeName = (profileTheme || 'logoBlue') as string;
-    return getThemeStyles(themeName, 0.08).hoverBg;
-  }, [profileTheme]);
+  const { themeStyles, accentColor: defaultAccent } = useHomePanelVars(0.08);
+  const themeBg = themeStyles.hoverBg || '#f6f7fd';
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
   );
@@ -179,12 +172,12 @@ export default function ProfileWidget() {
   }, [homeMenuItemActive]);
   const accentColor = React.useMemo(() => {
     if (accentColorFn) return accentColorFn();
-    return Color.logoBlue();
-  }, [accentColorFn]);
+    return defaultAccent;
+  }, [accentColorFn, defaultAccent]);
   const accentBorderColor = React.useMemo(() => {
     if (accentColorFn) return accentColorFn(0.4);
-    return Color.borderGray();
-  }, [accentColorFn]);
+    return defaultAccent ? Color.borderGray(0.65) : Color.borderGray();
+  }, [accentColorFn, defaultAccent]);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">

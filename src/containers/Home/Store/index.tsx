@@ -8,6 +8,7 @@ import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
 import DonorLicenseItem from './DonorLicenseItem';
 import Loading from '~/components/Loading';
+import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -16,7 +17,7 @@ import localize from '~/constants/localize';
 import { css, cx } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { homePanelClass } from '~/theme/homePanels';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const changePasswordLabel = localize('changePassword');
 const changePasswordDescriptionLabel = localize('changePasswordDescription');
@@ -46,14 +47,6 @@ const headingLabelClass = css`
   line-height: 1.5;
 `;
 
-const loginPromptClass = css`
-  text-align: center;
-  font-size: 2.3rem;
-  font-weight: bold;
-  color: ${Color.black()};
-  margin-top: 17vh;
-`;
-
 export default function Store() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
   const loadKarmaPoints = useAppContext(
@@ -69,32 +62,16 @@ export default function Store() {
   const donatedCoins = useKeyContext((v) => v.myState.donatedCoins);
   const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const headingColor = useMemo(() => {
-    const colorKey = themeRoles.sectionPanelText?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      colorKey && (Color[colorKey] as ((opacity?: number) => string) | undefined);
-    return fn ? fn() : Color.darkerGray();
-  }, [themeRoles.sectionPanelText?.color]);
+  const { panelVars } = useHomePanelVars(0.08);
   const headingPanelStyle = useMemo(
     () =>
       ({
-        ['--home-panel-bg' as const]: '#ffffff',
-        ['--home-panel-tint' as const]: Color.logoBlue(0.08),
+        ...panelVars,
         ['--home-panel-border' as const]: Color.borderGray(0.65),
-        ['--home-panel-heading' as const]: headingColor,
         ['--home-panel-padding' as const]: '1.6rem 2rem',
         ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
       }) as React.CSSProperties,
-    [headingColor]
+    [panelVars]
   );
 
   const unlockUsernameChange = useAppContext(
@@ -159,7 +136,7 @@ export default function Store() {
         </p>
       </div>
       {!userId ? (
-        <div className={loginPromptClass}>Please log in to view this page</div>
+        <HomeLoginPrompt />
       ) : (
         <div className={contentWrapperClass}>
           <KarmaStatus

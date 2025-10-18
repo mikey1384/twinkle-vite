@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import {
   Color,
-  getThemeStyles,
   mobileMaxWidth,
   tabletMaxWidth,
   wideBorderRadius
@@ -16,7 +15,7 @@ import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -292,20 +291,11 @@ export default function CardSearchPanel({
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useKeyContext((v) => v.theme);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
-  const themeName = useMemo<ThemeName>(
-    () => (profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.12),
-    [themeName]
-  );
+  const { themeName, themeRoles, themeStyles, accentColor } = useHomePanelVars();
   const borderColor = themeStyles.border;
   const panelVars = useMemo(() => {
     const searchRole = themeRoles.search || {};
@@ -316,14 +306,15 @@ export default function CardSearchPanel({
         ? (Color[themeName as keyof typeof Color] as (
             opacity?: number
           ) => string)
-        : undefined) || Color.logoBlue;
+        : undefined) ||
+      (accentColor ? (() => accentColor) : Color.logoBlue);
     const colorFn =
       (searchColorKey &&
         typeof Color[searchColorKey as keyof typeof Color] === 'function' &&
         (Color[searchColorKey as keyof typeof Color] as (
           opacity?: number
         ) => string)) ||
-      fallbackColorFn;
+      fallbackColorFn || (() => accentColor || Color.logoBlue());
     const rawShadow =
       typeof searchRole.shadow === 'string' ? searchRole.shadow : undefined;
     const shadowColor =
@@ -339,7 +330,7 @@ export default function CardSearchPanel({
       ['--search-panel-focus' as const]: colorFn(0.25),
       ['--search-panel-shadow' as const]: shadowColor || 'none'
     } as React.CSSProperties;
-  }, [themeName, themeRoles, borderColor]);
+  }, [accentColor, borderColor, themeName, themeRoles]);
   const successColor = useMemo<string>(() => {
     const successKey = themeRoles.success?.color as
       | keyof typeof Color

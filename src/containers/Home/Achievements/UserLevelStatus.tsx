@@ -5,6 +5,7 @@ import { useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { homePanelClass } from '~/theme/homePanels';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 export default function UserLevelStatus({
   style
@@ -13,6 +14,7 @@ export default function UserLevelStatus({
 }) {
   const achievementPoints = useKeyContext((v) => v.myState.achievementPoints);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const { panelVars } = useHomePanelVars();
   const { ap, level, nextLevelAp } = useMyLevel();
   const displayedAP = useMemo(
     () => addCommasToNumber(achievementPoints),
@@ -45,7 +47,7 @@ export default function UserLevelStatus({
           padding: 1.6rem 2rem;
         `
       )}
-      style={style}
+      style={{ ...panelVars, ...style }}
     >
       <p
         className={css`

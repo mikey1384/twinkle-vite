@@ -5,11 +5,11 @@ import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { Color, getThemeStyles } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import { homePanelClass } from '~/theme/homePanels';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const freeLabel = localize('free');
 
@@ -45,37 +45,7 @@ export default function ItemPanel({
   upgradeIcon?: React.ReactNode;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.12),
-    [themeName]
-  );
-  const accentColorInfo = useMemo(() => {
-    const key = themeRoles.sectionPanel?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      key && (Color[key] as ((opacity?: number) => string) | undefined);
-    if (fn) {
-      return { color: fn(), tint: fn(0.14) };
-    }
-    return { color: Color.logoBlue(), tint: Color.logoBlue(0.14) };
-  }, [themeRoles.sectionPanel?.color]);
-  const accentColor = accentColorInfo.color;
-  const accentTint = accentColorInfo.tint;
-  const headingColor = useMemo(() => {
-    const headingKey = themeRoles.sectionPanelText?.color as
-      | keyof typeof Color
-      | undefined;
-    const headingFn =
-      headingKey && (Color[headingKey] as ((opacity?: number) => string) | undefined);
-    return headingFn ? headingFn() : Color.darkerGray();
-  }, [themeRoles.sectionPanelText?.color]);
+  const { accentColor, accentTint, panelVars, themeStyles } = useHomePanelVars();
   const requiredKarmaPoints = useMemo(() => {
     if (!isLeveled) {
       return karmaPointTable[itemKey];
@@ -153,21 +123,19 @@ export default function ItemPanel({
   const panelStyle = useMemo(
     () =>
       ({
-        ['--home-panel-bg' as const]: '#ffffff',
-        ['--home-panel-tint' as const]:
-          themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+        ...panelVars,
         ['--home-panel-border' as const]: baseBorderColor,
-        ['--home-panel-heading' as const]: headingColor,
-        ['--home-panel-accent' as const]: accentColor,
         ['--home-panel-color' as const]: Color.darkerGray(),
         ['--home-panel-gap' as const]: '1.4rem',
         ['--home-panel-padding' as const]: '2.2rem 2.4rem',
         ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem',
         ['--home-panel-card-border' as const]:
           themeStyles.border || Color.borderGray(0.65),
+        ['--home-panel-tint' as const]:
+          themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
         ...style
       }) as React.CSSProperties,
-    [accentColor, accentTint, baseBorderColor, headingColor, style, themeStyles.border, themeStyles.hoverBg]
+    [accentTint, baseBorderColor, panelVars, style, themeStyles.border, themeStyles.hoverBg]
   );
 
   return (

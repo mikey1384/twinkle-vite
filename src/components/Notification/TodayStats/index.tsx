@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color, getThemeStyles } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext, useNotiContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -11,20 +11,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { themedCardBase } from '~/theme/themedCard';
-
-function blendWithWhite(color: string, weight: number) {
-  const match = color
-    .replace(/\s+/g, '')
-    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
-  if (!match) return '#f8f9ff';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
 const container = css`
   ${themedCardBase};
@@ -54,7 +41,6 @@ export default function TodayStats({
   );
   const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
   const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -63,13 +49,22 @@ export default function TodayStats({
     (v) => v.requestHelpers.loadTodayRankings
   );
 
-  const panelBg = useMemo(() => {
-    const accent =
-      Color[todayProgressTextColor as keyof typeof Color]?.(0.24) ||
-      getThemeStyles((profileTheme || 'logoBlue') as string, 0.06).hoverBg ||
-      '#f0f4ff';
-    return blendWithWhite(accent, 0.93);
-  }, [profileTheme, todayProgressTextColor]);
+  const progressAccent = useMemo(() => {
+    const candidate = Color[todayProgressTextColor as keyof typeof Color];
+    if (typeof candidate === 'function') {
+      return candidate(0.24);
+    }
+    if (typeof candidate === 'string') {
+      return candidate;
+    }
+    return Color.logoBlue(0.2);
+  }, [todayProgressTextColor]);
+  const { cardVars } = useThemedCardVars({
+    accentColor: progressAccent,
+    intensity: 0.06,
+    blendWeight: 0.93,
+    borderFallback: Color.borderGray(0.65)
+  });
 
   useEffect(() => {
     async function fetchTodayRank() {
@@ -97,8 +92,7 @@ export default function TodayStats({
         style={{
           marginBottom: '1rem',
           width: '100%',
-          ['--themed-card-bg' as any]: panelBg,
-          ['--themed-card-border' as any]: Color.borderGray(0.65)
+          ...cardVars
         }}
       >
         {todayStats?.loaded ? (

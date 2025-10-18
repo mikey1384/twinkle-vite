@@ -11,12 +11,12 @@ import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
 import UserListModal from '~/components/Modals/UserListModal';
 import { css, cx } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import { homePanelClass } from '~/theme/homePanels';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -90,38 +90,11 @@ export default function ItemPanel({
   const anyMilestoneCompleted =
     milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.12),
-    [themeName]
-  );
-  const headingColor = useMemo(() => {
-    const key = themeRoles.sectionPanelText?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      key && (Color[key] as ((opacity?: number) => string) | undefined);
-    return fn ? fn() : Color.darkerGray();
-  }, [themeRoles.sectionPanelText?.color]);
-  const { accentColor, accentTint } = useMemo(() => {
-    const key = themeRoles.sectionPanel?.color as
-      | keyof typeof Color
-      | undefined;
-    const fn =
-      key && (Color[key] as ((opacity?: number) => string) | undefined);
-    if (fn) {
-      return { accentColor: fn(), accentTint: fn(0.14) };
-    }
-    return { accentColor: Color.logoBlue(), accentTint: Color.logoBlue(0.14) };
-  }, [themeRoles.sectionPanel?.color]);
+  const { accentColor, accentTint, headingColor, panelVars, themeStyles } =
+    useHomePanelVars();
   const panelStyle = useMemo(() => {
     const vars = {
-      ['--home-panel-bg' as const]: '#ffffff',
+      ...panelVars,
       ['--home-panel-tint' as const]:
         themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
       ['--home-panel-border' as const]:
@@ -130,7 +103,15 @@ export default function ItemPanel({
       ['--home-panel-accent' as const]: accentColor
     } as React.CSSProperties;
     return style ? { ...vars, ...style } : vars;
-  }, [accentColor, accentTint, headingColor, style, themeStyles.border, themeStyles.hoverBg]);
+  }, [
+    accentColor,
+    accentTint,
+    headingColor,
+    panelVars,
+    style,
+    themeStyles.border,
+    themeStyles.hoverBg
+  ]);
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),

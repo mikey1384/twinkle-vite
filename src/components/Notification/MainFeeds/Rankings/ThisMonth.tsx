@@ -7,26 +7,11 @@ import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
-import { Color, getThemeStyles } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { notiFilterBar } from '../../Styles';
-import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
 import { themedCardBase } from '~/theme/themedCard';
-
-function blendWithWhite(color: string, weight: number) {
-  const match = color
-    .replace(/\s+/g, '')
-    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
-  if (!match) return '#f8f9ff';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -47,36 +32,17 @@ export default function ThisMonth({
   myMonthlyXP: number;
 }) {
   const [allSelected, setAllSelected] = useState(!!myId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => (profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.12),
-    [themeName]
-  );
-  const accentColorKey = themeRoles.sectionPanel?.color as
-    | keyof typeof Color
-    | undefined;
-  const accentColorFn =
-    accentColorKey &&
-    (Color[accentColorKey] as ((opacity?: number) => string) | undefined);
-  const accentColor = accentColorFn ? accentColorFn() : Color.logoBlue();
-  const accentTint = accentColorFn ? accentColorFn(0.14) : Color.logoBlue(0.14);
-  const emptyStateBg = useMemo(() => {
-    const baseTint =
-      themeStyles.hoverBg || accentTint || Color.logoBlue(0.12);
-    return blendWithWhite(baseTint, 0.9);
-  }, [accentTint, themeStyles.hoverBg]);
+  const { accentColor, cardVars, themeName } = useThemedCardVars({
+    role: 'sectionPanel',
+    blendWeight: 0.9
+  });
   const emptyStateVars = useMemo(
     () =>
       ({
-        ['--themed-card-bg' as const]: emptyStateBg,
+        ...cardVars,
         ['--rankings-empty-accent' as const]: accentColor
       } as React.CSSProperties),
-    [accentColor, emptyStateBg]
+    [accentColor, cardVars]
   );
   const emptyStateClass = useMemo(
     () =>

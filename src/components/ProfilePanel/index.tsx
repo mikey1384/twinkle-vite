@@ -18,7 +18,6 @@ import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import {
   borderRadius,
   Color,
-  getThemeStyles,
   mobileMaxWidth,
   wideBorderRadius
 } from '~/constants/css';
@@ -37,8 +36,9 @@ import {
 import localize from '~/constants/localize';
 import MessagesButton from './MessagesButton';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { ThemeName } from '~/theme/themes';
 import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
 const chatLabel = localize('chat2');
 const changePicLabel = localize('changePic');
@@ -405,29 +405,14 @@ function ProfilePanel({
     () => (profileTheme || 'logoBlue') as ThemeName,
     [profileTheme]
   );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const profilePanelFallbackColor = useMemo(() => {
-    const role = themeRoles.profilePanel;
-    if (!role?.color) {
-      return Color.logoBlue();
-    }
-    const colorFn = Color[role.color as keyof typeof Color];
-    if (colorFn) {
-      return typeof role.opacity === 'number'
-        ? colorFn(role.opacity)
-        : colorFn();
-    }
-    return role.color;
-  }, [themeRoles]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.16),
-    [themeName]
-  );
-  const panelAccentColor = profilePanelFallbackColor;
-  const panelBgTint = useMemo(
-    () => blendWithWhite(panelAccentColor, 0.92),
-    [panelAccentColor]
-  );
+  const { accentColor: panelAccentColor, cardBg, cardVars } = useThemedCardVars({
+    role: 'profilePanel',
+    intensity: 0.16,
+    blendWeight: 0.92,
+    themeName,
+    borderFallback: Color.borderGray(0.45),
+    fallbackColor: 'logoBlue'
+  });
   const heroBackground = useMemo(
     () =>
       `linear-gradient(135deg, ${panelAccentColor} 0%, ${blendWithWhite(
@@ -439,13 +424,12 @@ function ProfilePanel({
   const panelStyleVars = useMemo(
     () =>
       ({
-        ['--themed-card-bg' as const]: panelBgTint,
-        ['--themed-card-border' as const]:
-          themeStyles.border || Color.borderGray(0.45),
+        ...cardVars,
+        ['--themed-card-bg' as const]: cardBg,
         ['--profile-panel-hero-bg' as const]: heroBackground,
         ['--profile-panel-accent' as const]: panelAccentColor
       } as React.CSSProperties),
-    [heroBackground, panelAccentColor, panelBgTint, themeStyles.border]
+    [cardBg, cardVars, heroBackground, panelAccentColor]
   );
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);

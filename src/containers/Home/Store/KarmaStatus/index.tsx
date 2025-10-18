@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { Color, getThemeStyles } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
 import { useKeyContext } from '~/contexts';
 import { homePanelClass } from '~/theme/homePanels';
-import { getThemeRoles, ThemeName } from '~/theme/themes';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 function blendWithWhite(color: string, weight: number) {
   const match = color
@@ -47,12 +47,6 @@ export default function KarmaStatus({
   userType: string;
 }) {
   const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => ((profileTheme || 'logoBlue') as ThemeName),
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
   );
@@ -63,21 +57,37 @@ export default function KarmaStatus({
     }
     return Color.logoBlue();
   }, [accentColorFn]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, 0.12),
-    [themeName]
-  );
+  const { panelVars, themeStyles, headingColor } = useHomePanelVars();
   const panelBg = useMemo(() => {
     return blendWithWhite(themeStyles.hoverBg || accentColor, 0.94);
   }, [accentColor, themeStyles.hoverBg]);
-  const headingColor = useMemo(() => {
-    const headingKey = themeRoles.sectionPanelText?.color as
-      | keyof typeof Color
-      | undefined;
-    const headingFn =
-      headingKey && (Color[headingKey] as ((opacity?: number) => string) | undefined);
-    return headingFn ? headingFn() : Color.darkerGray();
-  }, [themeRoles.sectionPanelText?.color]);
+  const karmaPanelVars = useMemo(
+    () =>
+      ({
+        ...panelVars,
+        ['--home-panel-bg' as const]: panelBg,
+        ['--home-panel-tint' as const]:
+          themeStyles.hoverBg ||
+          (accentColorFn ? accentColorFn(0.14) : Color.logoBlue(0.14)),
+        ['--home-panel-border' as const]:
+          themeStyles.border || Color.borderGray(0.65),
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-accent' as const]: accentColor,
+        ['--home-panel-color' as const]: Color.darkerGray(),
+        ['--home-panel-gap' as const]: '1.6rem',
+        ['--home-panel-padding' as const]: '2.2rem 2.4rem',
+        ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem'
+      }) as React.CSSProperties,
+    [
+      accentColor,
+      accentColorFn,
+      headingColor,
+      panelBg,
+      panelVars,
+      themeStyles.border,
+      themeStyles.hoverBg
+    ]
+  );
 
   const displayedKarmaPoints = useMemo(() => {
     if (karmaPoints) {
@@ -102,19 +112,7 @@ export default function KarmaStatus({
           gap: 1.6rem;
         `
       )}
-      style={{
-        ['--home-panel-bg' as const]: panelBg,
-        ['--home-panel-tint' as const]:
-          themeStyles.hoverBg ||
-          (accentColorFn ? accentColorFn(0.14) : Color.logoBlue(0.14)),
-        ['--home-panel-border' as const]: themeStyles.border || Color.borderGray(0.65),
-        ['--home-panel-heading' as const]: headingColor,
-        ['--home-panel-accent' as const]: accentColor,
-        ['--home-panel-color' as const]: Color.darkerGray(),
-        ['--home-panel-gap' as const]: '1.6rem',
-        ['--home-panel-padding' as const]: '2.2rem 2.4rem',
-        ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem'
-      }}
+      style={karmaPanelVars}
     >
       {loading ? (
         <Loading style={{ height: '10rem' }} />
