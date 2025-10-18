@@ -533,23 +533,6 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
         'pink'
       )
     },
-    dailyAchievementRing: {
-      color: pickColor(
-        {
-          green: 'yellowGreen',
-          orange: 'orange',
-          rose: 'pinkOrange',
-          pink: 'pastelPink',
-          purple: 'lightPurple',
-          black: 'lightBlueGray',
-          red: 'passionFruit',
-          darkBlue: 'lightOceanBlue',
-          vantaBlack: 'lightBluerGray',
-          gold: 'goldOrange'
-        },
-        'logoBlue'
-      )
-    },
     rewardLevelForm: { color, opacity: isStrongColor(color) ? 0.9 : 1 },
     rewardableRecommendation: { color, opacity: 0.1 },
     search: { color, shadow: pickColor({ gold: 'darkBrownOrange' }, '') },

@@ -21,7 +21,7 @@ import {
   mobileMaxWidth,
   wideBorderRadius
 } from '~/constants/css';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { replaceFakeAtSymbol } from '~/helpers/stringHelpers';
@@ -49,6 +49,42 @@ const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
 const profileLabel = localize('Profile');
 const cardsLabel = 'Cards';
 
+const quickLinkThemes = {
+  aiCards: {
+    background: 'rgba(152, 28, 235, 0.08)',
+    text: Color.darkBluerGray(),
+    icon: Color.purple(),
+    fillBg: Color.purple(0.92),
+    fillFg: '#fff',
+    fillIcon: '#fff',
+    fillBorder: 'rgba(152, 28, 235, 0.45)',
+    border: 'rgba(152, 28, 235, 0.18)',
+    shadow: `0 8px 18px -16px ${Color.purple(0.28)}`
+  },
+  website: {
+    background: 'rgba(40, 182, 44, 0.08)',
+    text: Color.darkBlueGray(),
+    icon: Color.green(),
+    fillBg: Color.green(0.92),
+    fillFg: '#fff',
+    fillIcon: '#fff',
+    fillBorder: 'rgba(40, 182, 44, 0.45)',
+    border: 'rgba(40, 182, 44, 0.18)',
+    shadow: `0 8px 18px -16px ${Color.green(0.26)}`
+  },
+  youtube: {
+    background: 'rgba(255, 82, 82, 0.08)',
+    text: Color.darkBluerGray(),
+    icon: Color.red(),
+    fillBg: Color.red(0.92),
+    fillFg: '#fff',
+    fillIcon: '#fff',
+    fillBorder: 'rgba(255, 82, 82, 0.48)',
+    border: 'rgba(255, 82, 82, 0.2)',
+    shadow: `0 8px 18px -16px ${Color.red(0.26)}`
+  }
+} as const;
+
 function blendWithWhite(color: string, weight: number) {
   const hex = color.trim().match(/^#?([0-9a-f]{6})$/i);
   if (hex) {
@@ -74,65 +110,36 @@ function blendWithWhite(color: string, weight: number) {
 }
 
 const actionButtonClass = css`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.65rem 1rem;
-  min-width: 8rem;
-  border-radius: 2.2rem;
-  color: inherit;
   font-weight: 600;
   letter-spacing: 0.02em;
-  transition: box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 12px 26px -18px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   text-decoration: none;
-  font-size: 1.2rem;
   gap: 0.6rem;
-  background: transparent;
-  border: none;
-  span {
-    margin-left: 0.9rem;
-    white-space: nowrap;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1rem;
-    gap: 0.35rem;
-    padding: 0.5rem 0.7rem;
-    min-width: 0;
-    width: 100%;
-    span {
-      margin-left: 0.5rem;
-    }
-  }
   span {
     white-space: nowrap;
   }
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.05rem;
     gap: 0.45rem;
-    padding: 0.55rem 0.85rem;
-    min-width: 0;
     width: 100%;
   }
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      text-decoration: none;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35),
-        0 16px 30px -18px rgba(0, 0, 0, 0.6);
-      filter: brightness(1.06) saturate(1.03);
-    }
-  }
-  &:active {
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25),
-      0 12px 26px -20px rgba(0, 0, 0, 0.58);
-    filter: brightness(0.98);
-  }
-  &:disabled {
-    opacity: 0.55;
-    cursor: default;
-    box-shadow: none;
-    filter: none;
+`;
+
+const actionButtonFlexLargeClass = css`
+  flex: 1 1 13rem;
+`;
+
+const actionButtonFlexMediumClass = css`
+  flex: 1 1 9rem;
+`;
+
+const actionButtonFullWidthClass = css`
+  flex: 1 0 100%;
+  min-width: 18rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    min-width: 0;
   }
 `;
 
@@ -264,17 +271,46 @@ const quickLinksClass = css`
 const quickLinkClass = css`
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
   cursor: pointer;
-  transition: transform 0.25s ease, filter 0.25s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease, box-shadow 0.22s ease, transform 0.2s ease,
+    filter 0.2s ease;
   text-decoration: none;
-  &:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.05);
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.6rem;
+  justify-content: center;
+  min-width: 0;
+  width: fit-content;
+  font-size: 1.2rem;
+  background: var(--quick-link-bg, rgba(248, 249, 255, 0.94));
+  color: var(--quick-link-fg, ${Color.darkBlueGray()});
+  box-shadow: var(--quick-link-shadow, 0 8px 18px -16px rgba(15, 23, 42, 0.28));
+  border: 1px solid var(--quick-link-border, rgba(15, 23, 42, 0.08));
+  letter-spacing: 0.002em;
+  svg {
+    color: var(--quick-link-icon-color, currentColor);
+    transition: color 0.18s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: var(--quick-link-bg-hover, rgba(248, 249, 255, 0.98));
+      color: var(--quick-link-fg-hover, ${Color.darkBlueGray()});
+      border-color: var(--quick-link-border-hover, rgba(15, 23, 42, 0.14));
+      box-shadow: var(
+        --quick-link-shadow-hover,
+        0 12px 24px -16px rgba(15, 23, 42, 0.32)
+      );
+      transform: translateY(-2px);
+      filter: brightness(1.03);
+      svg {
+        color: var(--quick-link-icon-color-hover, currentColor);
+      }
+    }
   }
   &:active {
     transform: translateY(0);
-    filter: brightness(0.96);
+    filter: brightness(0.97);
   }
 `;
 
@@ -574,11 +610,32 @@ function ProfilePanel({
                           <div className={quickLinksClass}>
                             <div
                               className={quickLinkClass}
-                              style={{
-                                color: panelAccentColor,
-                                opacity: profileUsername ? 1 : 0.55,
-                                pointerEvents: profileUsername ? 'auto' : 'none'
-                              }}
+                              style={
+                                {
+                                  ['--quick-link-bg' as const]:
+                                    quickLinkThemes.aiCards.background,
+                                  ['--quick-link-fg' as const]:
+                                    quickLinkThemes.aiCards.text,
+                                  ['--quick-link-shadow' as const]:
+                                    quickLinkThemes.aiCards.shadow,
+                                  ['--quick-link-border' as const]:
+                                    quickLinkThemes.aiCards.border,
+                                  ['--quick-link-bg-hover' as const]:
+                                    quickLinkThemes.aiCards.fillBg,
+                                  ['--quick-link-fg-hover' as const]:
+                                    quickLinkThemes.aiCards.fillFg,
+                                  ['--quick-link-border-hover' as const]:
+                                    quickLinkThemes.aiCards.fillBorder,
+                                  ['--quick-link-icon-color' as const]:
+                                    quickLinkThemes.aiCards.icon,
+                                  ['--quick-link-icon-color-hover' as const]:
+                                    quickLinkThemes.aiCards.fillIcon,
+                                  opacity: profileUsername ? 1 : 0.55,
+                                  pointerEvents: profileUsername
+                                    ? 'auto'
+                                    : 'none'
+                                } as React.CSSProperties
+                              }
                               onClick={() =>
                                 profileUsername
                                   ? navigate(
@@ -593,7 +650,28 @@ function ProfilePanel({
                             {website && (
                               <div
                                 className={quickLinkClass}
-                                style={{ color: Color.green() }}
+                                style={
+                                  {
+                                    ['--quick-link-bg' as const]:
+                                      quickLinkThemes.website.background,
+                                    ['--quick-link-fg' as const]:
+                                      quickLinkThemes.website.text,
+                                    ['--quick-link-shadow' as const]:
+                                      quickLinkThemes.website.shadow,
+                                    ['--quick-link-border' as const]:
+                                      quickLinkThemes.website.border,
+                                    ['--quick-link-bg-hover' as const]:
+                                      quickLinkThemes.website.fillBg,
+                                    ['--quick-link-fg-hover' as const]:
+                                      quickLinkThemes.website.fillFg,
+                                    ['--quick-link-border-hover' as const]:
+                                      quickLinkThemes.website.fillBorder,
+                                    ['--quick-link-icon-color' as const]:
+                                      quickLinkThemes.website.icon,
+                                    ['--quick-link-icon-color-hover' as const]:
+                                      quickLinkThemes.website.fillIcon
+                                  } as React.CSSProperties
+                                }
                                 onClick={() => window.open(website)}
                               >
                                 <Icon icon="globe" />
@@ -603,7 +681,28 @@ function ProfilePanel({
                             {youtubeUrl && (
                               <div
                                 className={quickLinkClass}
-                                style={{ color: '#e64959' }}
+                                style={
+                                  {
+                                    ['--quick-link-bg' as const]:
+                                      quickLinkThemes.youtube.background,
+                                    ['--quick-link-fg' as const]:
+                                      quickLinkThemes.youtube.text,
+                                    ['--quick-link-shadow' as const]:
+                                      quickLinkThemes.youtube.shadow,
+                                    ['--quick-link-border' as const]:
+                                      quickLinkThemes.youtube.border,
+                                    ['--quick-link-bg-hover' as const]:
+                                      quickLinkThemes.youtube.fillBg,
+                                    ['--quick-link-fg-hover' as const]:
+                                      quickLinkThemes.youtube.fillFg,
+                                    ['--quick-link-border-hover' as const]:
+                                      quickLinkThemes.youtube.fillBorder,
+                                    ['--quick-link-icon-color' as const]:
+                                      quickLinkThemes.youtube.icon,
+                                    ['--quick-link-icon-color-hover' as const]:
+                                      quickLinkThemes.youtube.fillIcon
+                                  } as React.CSSProperties
+                                }
                                 onClick={() => window.open(youtubeUrl)}
                               >
                                 <Icon icon={['fab', 'youtube']} />
@@ -648,9 +747,12 @@ function ProfilePanel({
                                   accept="image/*"
                                   icon="upload"
                                   text={changePicLabel}
-                                  className={actionButtonClass}
-                                  style={{ flex: '1 1 13rem' }}
+                                  className={cx(
+                                    actionButtonClass,
+                                    actionButtonFlexLargeClass
+                                  )}
                                   color="logoBlue"
+                                  hoverColor="mediumBlue"
                                   buttonProps={{
                                     variant: 'solid',
                                     tone: 'raised',
@@ -664,12 +766,15 @@ function ProfilePanel({
                                     }
                                     setBioEditModalShown(true);
                                   }}
-                                  className={actionButtonClass}
+                                  className={cx(
+                                    actionButtonClass,
+                                    actionButtonFlexMediumClass
+                                  )}
                                   variant="solid"
                                   tone="raised"
                                   color="purple"
+                                  hoverColor="mediumPurple"
                                   uppercase={false}
-                                  style={{ flex: '1 1 9rem' }}
                                 >
                                   {editBioLabel}
                                 </Button>
@@ -683,14 +788,15 @@ function ProfilePanel({
                                       onMessagesButtonClick
                                     }
                                     numMessages={numMessages}
-                                    className={`${actionButtonClass} ${messageButtonClass}`}
-                                    style={{
-                                      flex: '1 0 100%',
-                                      minWidth: '18rem'
-                                    }}
+                                    className={cx(
+                                      actionButtonClass,
+                                      messageButtonClass,
+                                      actionButtonFullWidthClass
+                                    )}
                                     iconColor="rgba(255,255,255,0.92)"
                                     textColor="rgba(255,255,255,0.95)"
                                     buttonColor="orange"
+                                    buttonHoverColor="mediumOrange"
                                     buttonVariant="solid"
                                     buttonTone="raised"
                                   />
@@ -704,12 +810,16 @@ function ProfilePanel({
                               style={{ marginTop: noBio ? '2rem' : '1rem' }}
                             >
                               <Button
-                                className={`${actionButtonClass} ${profileButtonClass}`}
+                                className={cx(
+                                  actionButtonClass,
+                                  profileButtonClass,
+                                  actionButtonFlexMediumClass
+                                )}
                                 variant="solid"
                                 tone="raised"
                                 color="logoBlue"
+                                hoverColor="mediumBlue"
                                 uppercase={false}
-                                style={{ flex: '1 1 9rem' }}
                                 disabled={!profileUsername}
                                 onClick={() =>
                                   profileUsername
@@ -721,17 +831,19 @@ function ProfilePanel({
                                   icon="user"
                                   color="rgba(255,255,255,0.92)"
                                 />
-                                <span style={{ marginLeft: '0.7rem' }}>
-                                  {profileLabel}
-                                </span>
+                                <span>{profileLabel}</span>
                               </Button>
                               <Button
-                                className={`${actionButtonClass} ${cardsButtonClass}`}
+                                className={cx(
+                                  actionButtonClass,
+                                  cardsButtonClass,
+                                  actionButtonFlexMediumClass
+                                )}
                                 variant="solid"
                                 tone="raised"
                                 color="purple"
+                                hoverColor="mediumPurple"
                                 uppercase={false}
-                                style={{ flex: '1 1 9rem' }}
                                 disabled={!profileUsername}
                                 onClick={() =>
                                   profileUsername
@@ -745,17 +857,19 @@ function ProfilePanel({
                                   icon="cards-blank"
                                   color="rgba(255,255,255,0.92)"
                                 />
-                                <span style={{ marginLeft: '0.7rem' }}>
-                                  {cardsLabel}
-                                </span>
+                                <span>{cardsLabel}</span>
                               </Button>
                               <Button
-                                className={`${actionButtonClass} ${chatButtonClass}`}
+                                className={cx(
+                                  actionButtonClass,
+                                  chatButtonClass,
+                                  actionButtonFlexMediumClass
+                                )}
                                 variant="solid"
                                 tone="raised"
                                 color="green"
+                                hoverColor="lightGreen"
                                 uppercase={false}
-                                style={{ flex: '1 1 9rem' }}
                                 loading={chatLoading}
                                 disabled={chatLoading || !profileUsername}
                                 onClick={handleTalkClick}
@@ -764,16 +878,14 @@ function ProfilePanel({
                                   icon="comments"
                                   color="rgba(255,255,255,0.92)"
                                 />
-                                <span style={{ marginLeft: '0.7rem' }}>
-                                  {chatLabel}
-                                </span>
+                                <span>{chatLabel}</span>
                               </Button>
                               <MessagesButton
-                                className={`${actionButtonClass} ${messageButtonClass}`}
-                                style={{
-                                  flex: '1 0 100%',
-                                  minWidth: '18rem'
-                                }}
+                                className={cx(
+                                  actionButtonClass,
+                                  messageButtonClass,
+                                  actionButtonFullWidthClass
+                                )}
                                 commentsShown={commentsShown}
                                 loading={loadingComments}
                                 profileId={profileId}
@@ -783,6 +895,7 @@ function ProfilePanel({
                                 iconColor="rgba(255,255,255,0.92)"
                                 textColor="rgba(255,255,255,0.95)"
                                 buttonColor="orange"
+                                buttonHoverColor="mediumOrange"
                                 buttonVariant="solid"
                                 buttonTone="raised"
                               />

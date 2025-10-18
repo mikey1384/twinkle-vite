@@ -20,6 +20,7 @@ import {
 } from '~/contexts';
 import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const hiThereLabel = localize('hiThere');
 
@@ -184,11 +185,20 @@ export default function Stories() {
     };
   }, []);
 
+  const { panelVars } = useHomePanelVars();
+  const containerStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: '100%',
+      ...(panelVars as React.CSSProperties)
+    }),
+    [panelVars]
+  );
+
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
       <div
         key={`${category}-${subFilter}`}
-        style={{ width: '100%' }}
+        style={containerStyle}
         ref={ContainerRef}
       >
         {userId && (

@@ -16,6 +16,7 @@ export default function MessagesButton({
   iconColor,
   textColor,
   buttonColor,
+  buttonHoverColor,
   buttonVariant,
   buttonTone
 }: {
@@ -31,6 +32,7 @@ export default function MessagesButton({
   iconColor?: string;
   textColor?: string;
   buttonColor?: string;
+  buttonHoverColor?: string;
   buttonVariant?: 'solid' | 'soft' | 'outline' | 'ghost';
   buttonTone?: 'flat' | 'raised';
 }) {
@@ -53,14 +55,14 @@ export default function MessagesButton({
 
   const disabled = loading || (commentsShown && profileId === myId);
   const iconTint = iconColor || undefined;
-  const actionLabelStyle = {
+  const baseLabelStyle: React.CSSProperties = textColor
+    ? { color: textColor }
+    : {};
+  const actionLabelStyle: React.CSSProperties = {
     marginLeft: '0.6rem',
-    ...(textColor ? { color: textColor } : {})
-  } as React.CSSProperties;
-  const buttonLabelStyle = {
-    marginLeft: '0.6rem',
-    ...(textColor ? { color: textColor } : {})
-  } as React.CSSProperties;
+    ...baseLabelStyle
+  };
+  const buttonLabelStyle = baseLabelStyle;
 
   if (variant === 'action') {
     return (
@@ -97,6 +99,7 @@ export default function MessagesButton({
       style={style}
       disabled={commentsShown && profileId === myId}
       color={buttonColor || 'logoBlue'}
+      hoverColor={buttonHoverColor}
       variant={buttonVariant}
       tone={buttonTone}
       uppercase={false}

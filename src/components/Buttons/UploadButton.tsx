@@ -102,7 +102,7 @@ export default function UploadButton({
         {...restButtonProps}
       >
         <Icon size={iconSize} icon={icon} />
-        {text && <span style={{ marginLeft: '0.7rem' }}>{text}</span>}
+        {text && <span>{text}</span>}
       </Button>
 
       <UploadModal

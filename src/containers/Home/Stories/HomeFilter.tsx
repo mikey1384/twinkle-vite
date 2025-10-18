@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const allPostsLabel = localize('allPosts');
 const subjectsLabel = localize('subjects');
@@ -54,6 +56,67 @@ export default function HomeFilter({
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
   const userId = useKeyContext((v) => v.myState.userId);
   const [activeTab, setActiveTab] = useState('');
+  const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
+  const filterTextRole = useRoleColor('filterText', { fallback: 'darkGray' });
+
+  const videoContainerTone = useMemo(() => {
+    const base = filterRole.getColor(0.08) || 'rgba(241, 245, 249, 0.92)';
+    const border = filterRole.getColor(0.22) || Color.borderGray(0.5);
+    const hoverBorder = filterRole.getColor(0.32) || Color.borderGray(0.8);
+    const label = '#0f172a';
+    const helper = 'rgba(71, 85, 105, 0.9)';
+    const icon = filterRole.getColor() || Color.logoBlue();
+    const switchColor = filterRole.getColor() || Color.logoBlue();
+    const shadow = '0 18px 32px -20px rgba(15, 23, 42, 0.18)';
+    return {
+      base,
+      border,
+      hoverBorder,
+      label,
+      helper,
+      icon,
+      switchColor,
+      shadow
+    };
+  }, [filterRole]);
+
+  const videoContainerClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.4rem;
+        width: 100%;
+        padding: 1.2rem 1.6rem;
+        border-radius: 16px;
+        border: 1px solid ${videoContainerTone.border};
+        background: ${videoContainerTone.base};
+        box-shadow: ${videoContainerTone.shadow};
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        @media (max-width: ${mobileMaxWidth}) {
+          border-right: 0;
+          border-left: 0;
+        }
+      `,
+    [videoContainerTone]
+  );
+
+  const videoInfoClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        color: ${videoContainerTone.label};
+        .label {
+          font-weight: 700;
+          font-size: 1.4rem;
+        }
+      `,
+    [videoContainerTone]
+  );
 
   useEffect(() => {
     setActiveTab(category);
@@ -149,30 +212,17 @@ export default function HomeFilter({
               </FilterBar>
             )}
             {category === 'videos' && (
-              <div
-                className={css`
-                  border: 1px solid ${Color.borderGray()};
-                  @media (max-width: ${mobileMaxWidth}) {
-                    border-right: 0;
-                    border-left: 0;
-                  }
-                `}
-                style={{
-                  display: 'flex',
-                  background: '#fff',
-                  height: '100%',
-                  width: '100%',
-                  padding: '1rem',
-                  justifyContent: 'flex-end'
-                }}
-              >
+              <div className={videoContainerClass}>
                 {userId && (
-                  <SwitchButton
-                    checked={!!hideWatched}
-                    label={hideWatchedLabel}
-                    onChange={handleToggleHideWatched}
-                    labelStyle={{ fontSize: '1.6rem' }}
-                  />
+                  <div className={videoInfoClass}>
+                    <div className="label">{hideWatchedLabel}</div>
+                    <SwitchButton
+                      ariaLabel="Toggle hide watched videos"
+                      checked={!!hideWatched}
+                      onChange={handleToggleHideWatched}
+                      color={videoContainerTone.switchColor}
+                    />
+                  </div>
                 )}
               </div>
             )}

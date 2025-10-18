@@ -50,7 +50,6 @@ export default function TodayStats({
   });
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
-  const rewardRole = useRoleColor('reward', { fallback: 'gold' });
   const recommendationRole = useRoleColor('recommendation', {
     fallback: 'brownOrange'
   });
@@ -75,9 +74,8 @@ export default function TodayStats({
   const xpNumberShadow =
     xpNumberRole.getColor(0.5) || DEFAULT_XP_NUMBER_SHADOW;
 
-  const rewardColor = rewardRole.getColor() || DEFAULT_REWARD_COLOR;
-  const rewardShadow =
-    rewardRole.getColor(0.5) || DEFAULT_REWARD_SHADOW;
+  const rewardColor = DEFAULT_REWARD_COLOR;
+  const rewardShadow = DEFAULT_REWARD_SHADOW;
 
   const coinsColor =
     recommendationRole.getColor() || DEFAULT_RECOMMENDATION_COLOR;

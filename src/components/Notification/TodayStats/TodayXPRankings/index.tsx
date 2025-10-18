@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import TodayXPModal from './TodayXPModal';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function TodayXPRankings() {
   const myId = useKeyContext((v) => v.myState.userId);
-  const todayProgressTextColor = useKeyContext(
-    (v) => v.theme.todayProgressText.color
-  );
+  const progressRole = useRoleColor('todayProgressText', {
+    fallback: 'logoBlue'
+  });
   const loadTodayRankings = useAppContext(
     (v) => v.requestHelpers.loadTodayRankings
   );
@@ -44,6 +45,11 @@ export default function TodayXPRankings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStats?.xpEarned]);
 
+  const progressColor = useMemo(
+    () => progressRole.getColor() || Color.logoBlue(),
+    [progressRole]
+  );
+
   if (!todayStats?.todayXPRankingLoaded) {
     return <Loading style={{ height: '7rem' }} />;
   }
@@ -53,7 +59,7 @@ export default function TodayXPRankings() {
         style={{
           fontWeight: 'bold',
           fontSize: '1.4rem',
-          color: Color[todayProgressTextColor](),
+          color: progressColor,
           marginBottom: '1rem'
         }}
       >
@@ -96,7 +102,7 @@ export default function TodayXPRankings() {
             style={{
               fontWeight: 'bold',
               cursor: 'pointer',
-              color: Color[todayProgressTextColor]()
+              color: progressColor
             }}
             onClick={handleShowMore}
           >
