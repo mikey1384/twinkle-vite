@@ -90,28 +90,11 @@ export default function ItemPanel({
   const anyMilestoneCompleted =
     milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
-  const { accentColor, accentTint, headingColor, panelVars, themeStyles } =
-    useHomePanelVars();
+
+  const { panelVars } = useHomePanelVars();
   const panelStyle = useMemo(() => {
-    const vars = {
-      ...panelVars,
-      ['--home-panel-tint' as const]:
-        themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
-      ['--home-panel-border' as const]:
-        themeStyles.border || Color.borderGray(0.65),
-      ['--home-panel-heading' as const]: headingColor,
-      ['--home-panel-accent' as const]: accentColor
-    } as React.CSSProperties;
-    return style ? { ...vars, ...style } : vars;
-  }, [
-    accentColor,
-    accentTint,
-    headingColor,
-    panelVars,
-    style,
-    themeStyles.border,
-    themeStyles.hoverBg
-  ]);
+    return style ? { ...panelVars, ...style } : panelVars;
+  }, [panelVars, style]);
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
