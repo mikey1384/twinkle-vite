@@ -44,8 +44,10 @@ export default function RankBar({
   profile: any;
   style?: any;
 }) {
+  // Ensure default theme uses the profile's default (not viewer's)
+  const profileTheme = profile?.profileTheme || 'logoBlue';
   const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
-    themeName: profile?.profileTheme,
+    themeName: profileTheme,
     fallback: 'logoGreen'
   });
   const rankValue = Number(profile?.rank ?? 0);
@@ -56,7 +58,7 @@ export default function RankBar({
     return undefined;
   }, [rankValue]);
   const { themeName, themeRoles, themeStyles } = useThemeTokens({
-    themeName: profile?.profileTheme,
+    themeName: profileTheme,
     intensity: 0.18
   });
   const isTopThree = rankValue <= 3;
