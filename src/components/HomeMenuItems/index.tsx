@@ -69,7 +69,7 @@ export default function HomeMenuItems({
   }, [activeColorFn]);
   const themeName = (profileTheme || 'logoBlue') as string;
   const themeBg = useMemo(
-    () => getThemeStyles(themeName, 0.06).bg,
+    () => getThemeStyles(themeName, 0.03).bg,
     [themeName]
   );
   const year = useMemo(() => {
@@ -173,7 +173,7 @@ export default function HomeMenuItems({
           > nav.active {
             .homemenu__item {
               background: ${activeColorFn
-                ? activeColorFn(0.22)
+                ? activeColorFn(0.14)
                 : Color.highlightGray()};
               > .selection {
                 background: ${homeMenuItemActiveColor};
@@ -185,10 +185,10 @@ export default function HomeMenuItems({
                 color: ${activeContentColor};
               }
               border-color: ${activeColorFn
-                ? activeColorFn(0.4)
+                ? activeColorFn(0.3)
                 : Color.borderGray()};
               box-shadow: 0 8px 22px -16px
-                ${activeColorFn ? activeColorFn(0.45) : Color.borderGray()};
+                ${activeColorFn ? activeColorFn(0.32) : Color.borderGray()};
             }
             font-weight: bold;
             color: ${activeContentColor};

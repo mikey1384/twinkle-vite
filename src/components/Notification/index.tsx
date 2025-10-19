@@ -235,7 +235,7 @@ export default function Notification({
         onScroll={handleScroll}
         style={{
           ...(style || {}),
-          ['--noti-bg' as any]: getThemeStyles((profileTheme || 'logoBlue') as string, 0.04).bg
+          ['--noti-bg' as any]: getThemeStyles((profileTheme || 'logoBlue') as string, 0.02).bg
         }}
         className={`${container} ${className}`}
       >

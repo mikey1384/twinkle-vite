@@ -95,8 +95,8 @@ export default function TodayStats({
     todayProgressRole.getColor(0.24) || DEFAULT_PROGRESS_ACCENT;
   const { cardVars } = useThemedCardVars({
     accentColor: progressAccent,
-    intensity: 0.06,
-    blendWeight: 0.93,
+    intensity: 0.05,
+    blendWeight: 0.98,
     borderFallback: DEFAULT_CARD_BORDER
   });
 
