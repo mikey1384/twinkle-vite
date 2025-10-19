@@ -31,7 +31,7 @@ export default function StartMenu() {
               onClick={() => onSetTopMenuSectionSection('subject')}
               color="logoBlue"
               variant="solid"
-              tone="raised"
+              tone="flat"
               size="lg"
               shape="pill"
               stretch
@@ -58,7 +58,7 @@ export default function StartMenu() {
               onClick={() => onSetTopMenuSectionSection('recommend')}
               color="brownOrange"
               variant="soft"
-              tone="raised"
+              tone="flat"
               size="md"
               stretch
             >
@@ -69,7 +69,7 @@ export default function StartMenu() {
               onClick={() => onSetTopMenuSectionSection('reward')}
               color="pink"
               variant="soft"
-              tone="raised"
+              tone="flat"
               size="md"
               stretch
             >
@@ -99,8 +99,7 @@ const sectionCard = css`
   border-radius: ${wideBorderRadius};
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--home-panel-card-border, rgba(148, 163, 184, 0.35));
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08),
-    0 14px 28px -20px rgba(15, 23, 42, 0.28);
+  box-shadow: none;
   min-height: 18rem;
 `;
 

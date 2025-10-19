@@ -72,6 +72,10 @@ export default function HomeMenuItems({
     () => getThemeStyles(themeName, 0.03).bg,
     [themeName]
   );
+  const hoverBg = useMemo(
+    () => getThemeStyles(themeName, 0.08).bg,
+    [themeName]
+  );
   const year = useMemo(() => {
     return new Date(standardTimeStamp || Date.now()).getFullYear();
   }, [standardTimeStamp]);
@@ -83,8 +87,21 @@ export default function HomeMenuItems({
           width: 100%;
           flex: 1 1 auto;
           min-height: 0;
-          overflow-y: auto;
-          background: ${themeBg};
+          overflow-y: visible;
+          position: relative;
+          background: transparent;
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0.6rem;
+            bottom: 0.6rem;
+            left: 1.6rem;
+            right: 1.6rem;
+            background: ${themeBg};
+            border-radius: ${wideBorderRadius};
+            pointer-events: none;
+            z-index: 0;
+          }
           display: flex;
           flex-direction: column;
           font-size: 1.7rem;
@@ -93,11 +110,13 @@ export default function HomeMenuItems({
           border-left: 0;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
-          padding: 1rem 0 1.2rem;
-          box-shadow: 0 20px 38px -28px rgba(15, 23, 42, 0.2);
+          padding: 0.6rem 0 0.8rem;
+          box-shadow: none;
           > nav {
-            height: 4.4rem;
-            margin: 0.7rem 0;
+            position: relative;
+            z-index: 1;
+            height: 4.8rem;
+            margin: 0.6rem 0;
             width: 100%;
             cursor: pointer;
             display: flex;
@@ -108,48 +127,34 @@ export default function HomeMenuItems({
             > a {
               width: 100%;
               height: 100%;
-              text-align: center;
+              text-align: left;
               display: flex;
               align-items: center;
-              justify-content: center;
+              justify-content: flex-start;
               color: ${Color.darkGray()};
               text-decoration: none;
             }
             .homemenu__item {
               width: 100%;
               height: 100%;
-              display: grid;
-              grid-template-columns: 4px 4rem 1fr;
-              grid-template-rows: 100%;
-              grid-template-areas: 'selection icon label';
-              margin: 0.6rem 1rem;
+              margin: 0.4rem 1rem;
+              display: flex;
+              align-items: center;
+              gap: 1.1rem;
+              padding: 1.2rem 1.5rem;
               border-radius: ${wideBorderRadius};
               background: rgba(255, 255, 255, 0.92);
               border: 1px solid rgba(148, 163, 184, 0.35);
-              box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08),
-                0 8px 16px rgba(15, 23, 42, 0.08);
-              transition: background 0.18s ease, box-shadow 0.18s ease,
+              box-shadow: none;
+              transition: background 0.18s ease,
                 border-color 0.18s ease, color 0.18s ease, transform 0.06s ease;
-              > .selection {
-                grid-area: selection;
-                margin-left: -1px;
-                border-radius: 1rem;
-                align-self: center;
-                width: 4px;
-                height: 70%;
-              }
+              > .selection { display: none; }
               > .icon {
-                grid-area: icon;
-                padding-left: 0.5rem;
-                justify-self: center;
-                align-self: center;
+                padding-left: 0.2rem;
                 color: ${Color.darkerGray()};
               }
               > .label {
-                grid-area: label;
-                padding-left: 1.6rem;
-                justify-self: start;
-                align-self: center;
+                padding-left: 0.4rem;
                 font-weight: 600;
               }
             }
@@ -157,10 +162,9 @@ export default function HomeMenuItems({
           > nav:hover {
             transform: translateX(4px);
             .homemenu__item {
-              background: rgba(255, 255, 255, 0.98);
+              background: ${hoverBg};
               border-color: ${hoverBorderColor};
-              box-shadow: 0 10px 20px -12px rgba(15, 23, 42, 0.28),
-                0 2px 6px rgba(15, 23, 42, 0.08);
+              box-shadow: none;
               > .icon,
               > .label {
                 color: ${hoverAccentColor};
@@ -187,8 +191,7 @@ export default function HomeMenuItems({
               border-color: ${activeColorFn
                 ? activeColorFn(0.3)
                 : Color.borderGray()};
-              box-shadow: 0 8px 22px -16px
-                ${activeColorFn ? activeColorFn(0.32) : Color.borderGray()};
+              box-shadow: none;
             }
             font-weight: bold;
             color: ${activeContentColor};
@@ -213,6 +216,9 @@ export default function HomeMenuItems({
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 2rem;
             background: #fff;
+            &::before {
+              display: none;
+            }
             border-radius: 0;
             border-left: 0;
             border-right: 0;

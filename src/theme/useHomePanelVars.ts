@@ -12,7 +12,34 @@ interface HomePanelVars extends CSSProperties {
   ['--home-panel-card-border']?: string;
 }
 
-export function useHomePanelVars(intensity = 0.12) {
+function blendWithWhite(color: string | undefined, weight: number): string {
+  if (!color) return '#ffffff';
+  const trimmed = color.trim();
+  const hexMatch = trimmed.match(/^#?([0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const [r, g, b] = [
+      parseInt(hexMatch[1].slice(0, 2), 16),
+      parseInt(hexMatch[1].slice(2, 4), 16),
+      parseInt(hexMatch[1].slice(4, 6), 16)
+    ];
+    const w = Math.max(0, Math.min(1, weight));
+    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
+  }
+  const rgbaMatch = trimmed.match(
+    /rgba?\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)(?:,\s*([-\d.]+))?\)/i
+  );
+  if (rgbaMatch) {
+    const [, r, g, b] = rgbaMatch;
+    const w = Math.max(0, Math.min(1, weight));
+    const mix = (channel: string | number) =>
+      Math.round(Number(channel) * (1 - w) + 255 * w);
+    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
+  }
+  return color;
+}
+
+export function useHomePanelVars(intensity = 0.08) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeName = useMemo<ThemeName>(
     () => (profileTheme || 'logoBlue') as ThemeName,
@@ -52,11 +79,16 @@ export function useHomePanelVars(intensity = 0.12) {
     return Color.logoBlue(0.14);
   }, [themeRoles.sectionPanel?.color]);
   const panelVars = useMemo<HomePanelVars>(() => {
-    const border = themeStyles.border || Color.borderGray(0.65);
+    const border = Color.borderGray(0.65);
+    const surface = blendWithWhite(
+      themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+      0.96
+    );
     return {
       ['--home-panel-bg']: '#ffffff',
       ['--home-panel-tint']:
         themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+      ['--home-panel-surface']: surface,
       ['--home-panel-border']: border,
       ['--home-panel-heading']: headingColor,
       ['--home-panel-accent']: accentColor,
@@ -66,6 +98,7 @@ export function useHomePanelVars(intensity = 0.12) {
     accentColor,
     accentTint,
     headingColor,
+    themeStyles,
     themeStyles.border,
     themeStyles.hoverBg
   ]);

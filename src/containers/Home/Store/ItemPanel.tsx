@@ -113,12 +113,9 @@ export default function ItemPanel({
     );
   }, [karmaPoints, notUpgraded, displayedRequiredKarmaPoints]);
   const baseBorderColor = useMemo(() => {
-    if (themeStyles.border) {
-      return themeStyles.border;
-    }
     if (locked) return Color.borderGray(0.75);
     return Color.borderGray(0.65);
-  }, [locked, themeStyles.border]);
+  }, [locked]);
 
   const panelStyle = useMemo(
     () =>
@@ -129,8 +126,7 @@ export default function ItemPanel({
         ['--home-panel-gap' as const]: '1.4rem',
         ['--home-panel-padding' as const]: '2.2rem 2.4rem',
         ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem',
-        ['--home-panel-card-border' as const]:
-          themeStyles.border || Color.borderGray(0.65),
+        ['--home-panel-card-border' as const]: Color.borderGray(0.65),
         ['--home-panel-tint' as const]:
           themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
         ...style

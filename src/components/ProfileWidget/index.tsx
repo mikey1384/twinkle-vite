@@ -14,35 +14,29 @@ const container = css`
   width: 100%;
   margin-top: 1rem;
   border-radius: ${wideBorderRadius};
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
   border: 1px solid ${Color.borderGray(0.65)};
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.96) 0%,
-    var(--profile-widget-bg, #f6f7fd) 100%
-  );
-  box-shadow: inset 0 1px 0 ${Color.white(0.85)},
-    0 10px 24px rgba(15, 23, 42, 0.14);
+  background: var(--profile-widget-bg, #f6f7fd);
+  box-shadow: none;
   backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
   .heading {
-    padding: 1.6rem 2rem;
+    padding: 1.2rem 1.6rem;
     display: flex;
     gap: 1.6rem;
     align-items: center;
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.99);
+    border-bottom: 1px solid ${Color.borderGray(0.65)};
     cursor: pointer;
-    transition: background 0.25s ease, transform 0.2s ease;
-    &:hover {
-      background: rgba(255, 255, 255, 0.99);
-      transform: translateY(-1px);
-    }
+    transition: background 0.25s ease;
     .widget__profile-pic {
       --profile-pic-size: 7.4rem;
       border-radius: 2rem;
-      box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.36);
+      box-shadow: none;
     }
     .names {
       flex: 1 1 auto;
@@ -66,7 +60,7 @@ const container = css`
   }
 
   .details {
-    padding: 1.6rem 2rem 2rem;
+    padding: 1.2rem 1.6rem 1.4rem;
     display: flex;
     flex-direction: column;
     gap: 1.4rem;
@@ -90,16 +84,16 @@ const container = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.85rem 1.4rem;
+    padding: 0.7rem 1.2rem;
     border-radius: 1.1rem;
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(148, 163, 184, 0.4);
-    box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.28);
+    box-shadow: none;
     font-weight: 600;
     color: ${Color.darkerGray()};
     gap: 0.6rem;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease,
+    transition: transform 0.2s ease,
       border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
     .navigation-icon {
       color: ${Color.darkerGray()};
@@ -112,7 +106,7 @@ const container = css`
         --profile-widget-accent-border,
         ${Color.borderGray()}
       );
-      box-shadow: 0 18px 32px -20px rgba(15, 23, 42, 0.34);
+      box-shadow: none;
       color: var(--profile-widget-accent, ${Color.logoBlue()});
       .navigation-icon {
         color: var(--profile-widget-accent, ${Color.logoBlue()});

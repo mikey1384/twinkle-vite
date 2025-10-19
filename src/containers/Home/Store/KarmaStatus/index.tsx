@@ -67,8 +67,7 @@ export default function KarmaStatus({
           themeStyles.hoverBg ||
           homeMenuItemActiveRole.getColor(0.14) ||
           Color.logoBlue(0.14),
-        ['--home-panel-border' as const]:
-          themeStyles.border || Color.borderGray(0.65),
+        ['--home-panel-border' as const]: Color.borderGray(0.65),
         ['--home-panel-heading' as const]: headingColor,
         ['--home-panel-accent' as const]: accentColor,
         ['--home-panel-color' as const]: Color.darkerGray(),
@@ -76,15 +75,7 @@ export default function KarmaStatus({
         ['--home-panel-padding' as const]: '2.2rem 2.4rem',
         ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem'
       }) as React.CSSProperties,
-    [
-      accentColor,
-      headingColor,
-      panelBg,
-      panelVars,
-      homeMenuItemActiveRole,
-      themeStyles.border,
-      themeStyles.hoverBg
-    ]
+    [accentColor, headingColor, panelBg, panelVars, homeMenuItemActiveRole, themeStyles.hoverBg]
   );
 
   const displayedKarmaPoints = useMemo(() => {

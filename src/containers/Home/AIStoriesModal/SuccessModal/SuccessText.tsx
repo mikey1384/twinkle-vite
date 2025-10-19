@@ -65,6 +65,8 @@ export default function ReactionText({ difficulty }: { difficulty: number }) {
 
   useChain([opacityRef, effectRef]);
 
+  const AnimatedDiv = animated('div');
+
   return (
     <div
       style={{
@@ -75,7 +77,7 @@ export default function ReactionText({ difficulty }: { difficulty: number }) {
         textAlign: 'center'
       }}
     >
-      <animated.div
+      <AnimatedDiv
         style={{
           ...styles
         }}
@@ -120,7 +122,7 @@ export default function ReactionText({ difficulty }: { difficulty: number }) {
         >
           {text}
         </span>
-      </animated.div>
+      </AnimatedDiv>
     </div>
   );
 }

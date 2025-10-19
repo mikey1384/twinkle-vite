@@ -71,26 +71,19 @@ export default function RankBar({
       (Color[colorKey] as ((opacity?: number) => string) | undefined);
     return colorFn ? colorFn() : Color.logoBlue();
   }, [themeRoles.profilePanel?.color, themeRoles.sectionPanel?.color]);
-  const borderColorVar = useMemo(() => {
-    const fallback = themeStyles.border || Color.borderGray(0.45);
-    return `var(--themed-card-border, ${fallback})`;
-  }, [themeStyles.border]);
-  const accentBlendStart = useMemo(
-    () => blendWithWhite(accentColor, 0.94),
-    [accentColor]
-  );
-  const accentBlendEnd = useMemo(
-    () => blendWithWhite(accentColor, 0.985),
+  // Use a clear border: black for top-3, otherwise match ProfilePanel
+  const borderCss = isTopThree
+    ? `1px solid ${Color.black(0.85)}`
+    : `1px solid ${Color.borderGray(0.6)}`;
+  const surfaceColor = useMemo(
+    () => blendWithWhite(accentColor, 0.97),
     [accentColor]
   );
   const baseTextColor = useMemo(
     () => (isTopThree ? 'rgba(255, 255, 255, 0.92)' : Color.darkerGray()),
     [isTopThree]
   );
-  const borderCss = useMemo(() => {
-    if (isTopThree) return 'none';
-    return `1px solid ${borderColorVar}`;
-  }, [borderColorVar, isTopThree]);
+  // Always show a clear border to match ProfilePanel
   const xpValueColor = rankColor || getXpNumberColor();
   const trophyColor = rankColor || accentColor;
   const xpUnitColor = useMemo(
@@ -112,19 +105,13 @@ export default function RankBar({
         gap: 1.2rem;
         padding: 1.4rem 1.9rem;
         border: ${borderCss};
-        border-image: ${isTopThree
-          ? 'none'
-          : 'linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(148, 163, 184, 0.25)) 1'};
+        border-image: none;
         border-top: none;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
         border-bottom-left-radius: ${borderRadius};
         border-bottom-right-radius: ${borderRadius};
-        background: linear-gradient(
-          135deg,
-          ${isTopThree ? 'rgba(12, 16, 25, 0.99)' : accentBlendStart} 0%,
-          ${isTopThree ? 'rgba(26, 32, 46, 0.97)' : accentBlendEnd} 100%
-        );
+        background: ${isTopThree ? 'rgba(18, 24, 35, 0.98)' : surfaceColor};
         box-shadow: ${isTopThree
           ? 'none'
           : 'inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 18px 32px -26px rgba(15, 23, 42, 0.24)'};
@@ -136,7 +123,7 @@ export default function RankBar({
           padding: 1.3rem 1.4rem;
         }
       `,
-    [accentBlendEnd, accentBlendStart, baseTextColor, borderCss, isTopThree]
+    [surfaceColor, baseTextColor, borderCss, isTopThree]
   );
   const badgeClass = useMemo(
     () =>

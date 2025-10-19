@@ -15,7 +15,12 @@ import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { borderRadius, Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import {
+  borderRadius,
+  Color,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { css, cx } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -79,30 +84,6 @@ const quickLinkThemes = {
     shadow: `0 8px 18px -16px ${Color.red(0.26)}`
   }
 } as const;
-
-function blendWithWhite(color: string, weight: number) {
-  const hex = color.trim().match(/^#?([0-9a-f]{6})$/i);
-  if (hex) {
-    const value = hex[1];
-    const r = parseInt(value.slice(0, 2), 16);
-    const g = parseInt(value.slice(2, 4), 16);
-    const b = parseInt(value.slice(4, 6), 16);
-    const w = Math.max(0, Math.min(1, weight));
-    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
-  }
-  const match = color
-    .replace(/\s+/g, '')
-    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
-  if (!match) return '#f2f5ff';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
 
 const actionButtonClass = css`
   display: inline-flex;
@@ -195,11 +176,8 @@ const panelContainerClass = css`
   font-size: 1.5rem;
   line-height: 2.3rem;
   position: relative;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.99) 0%,
-    var(--themed-card-bg, #f7f9ff) 100%
-  );
+  background: var(--themed-card-bg, #f7f9ff);
+  box-shadow: none;
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
     padding: 1.6rem 1.4rem;
@@ -212,10 +190,7 @@ const heroSectionClass = css`
   justify-content: center;
   padding: 1rem 1.4rem;
   border-radius: calc(${wideBorderRadius} - 0.6rem);
-  background: var(
-    --profile-panel-hero-bg,
-    linear-gradient(135deg, rgba(59, 130, 246, 0.65), rgba(59, 130, 246, 0.28))
-  );
+  background: var(--profile-panel-hero-bg, rgba(59, 130, 246, 0.65));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
     0 10px 32px -20px rgba(15, 23, 42, 0.55);
   @media (max-width: ${mobileMaxWidth}) {
@@ -448,16 +423,13 @@ function ProfilePanel({
     borderFallback: Color.borderGray(0.45),
     fallbackColor: 'logoBlue'
   });
-  const heroBackground = useMemo(() => {
-    const start = blendWithWhite(panelAccentColor, 0.32);
-    const end = blendWithWhite(panelAccentColor, 0.56);
-    return `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
-  }, [panelAccentColor]);
+  const heroBackground = useMemo(() => panelAccentColor, [panelAccentColor]);
   const panelStyleVars = useMemo(
     () =>
       ({
         ...cardVars,
         ['--themed-card-bg' as const]: cardBg,
+        ['--themed-card-border' as const]: Color.borderGray(0.6),
         ['--profile-panel-hero-bg' as const]: heroBackground,
         ['--profile-panel-accent' as const]: panelAccentColor
       } as React.CSSProperties),

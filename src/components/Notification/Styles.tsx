@@ -1,10 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  Color,
-  liftedBoxShadow,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 
 export const container = css`
   padding-top: 1rem;
@@ -12,7 +7,7 @@ export const container = css`
   font-size: 1.5rem;
   background: var(--noti-bg, transparent);
   border: none;
-  box-shadow: ${liftedBoxShadow};
+  box-shadow: none;
   border-radius: ${wideBorderRadius};
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
@@ -25,23 +20,17 @@ export const container = css`
 `;
 
 export const notiFilterBar = css`
-  background: linear-gradient(
-      160deg,
-      ${Color.white(0.95)} 0%,
-      ${Color.whiteGray()} 100%
-    ) !important;
+  background: #ffffff !important;
   border: 1px solid ${Color.borderGray(0.65)} !important;
-  box-shadow: inset 0 1px 0 ${Color.white(0.85)},
-    0 10px 24px rgba(15, 23, 42, 0.14) !important;
-  backdrop-filter: blur(6px);
+  box-shadow: none !important;
+  backdrop-filter: none;
   border-radius: ${wideBorderRadius};
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
     border-left: 0;
     border-right: 0;
-    box-shadow: inset 0 1px 0 ${Color.white(0.75)},
-      0 6px 14px rgba(15, 23, 42, 0.12) !important;
+    box-shadow: none !important;
   }
 `;
 

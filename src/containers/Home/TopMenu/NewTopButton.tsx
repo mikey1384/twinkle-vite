@@ -40,7 +40,7 @@ export default function NewTopButton({
       style={style}
       color={color}
       variant="soft"
-      tone="raised"
+      tone="flat"
       shape="pill"
       size="md"
       uppercase={false}

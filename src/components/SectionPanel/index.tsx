@@ -131,12 +131,7 @@ export default function SectionPanel({
             width: 100%;
             justify-content: center;
             min-height: 15rem;
-            background: linear-gradient(
-              180deg,
-              #ffffff 0%,
-              rgba(255, 255, 255, 0.985) 60%,
-              var(--section-panel-body-bg, #fbfcff) 100%
-            );
+            background: var(--section-panel-body-bg, #fbfcff);
           }
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 0;

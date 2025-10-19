@@ -139,7 +139,6 @@ function RewardStatus({
               animation: shimmer 6s ease infinite;
               grid-column: 1;
               justify-self: start;
-
               @keyframes shimmer {
                 0% {
                   background-position: 0% 50%;

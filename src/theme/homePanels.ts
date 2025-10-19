@@ -5,16 +5,9 @@ export const homePanelClass = css`
   position: relative;
   width: 100%;
   border-radius: ${wideBorderRadius};
-  background: linear-gradient(
-    145deg,
-    var(--home-panel-bg, #ffffff) 0%,
-    rgba(255, 255, 255, 0.96) 50%,
-    var(--home-panel-tint, rgba(232, 240, 255, 0.28)) 100%
-  );
+  background: transparent;
   border: 1px solid var(--home-panel-border, ${Color.borderGray()});
-  box-shadow:
-    0 24px 42px -32px rgba(15, 23, 42, 0.28),
-    0 1px 3px rgba(15, 23, 42, 0.12);
+  box-shadow: none;
   padding: var(--home-panel-padding, 2.2rem 2.4rem);
   display: flex;
   flex-direction: column;
@@ -24,7 +17,7 @@ export const homePanelClass = css`
     --home-panel-color,
     ${Color.darkerGray()}
   );
-  backdrop-filter: blur(6px);
+  backdrop-filter: none;
 
   > :where(p, h2) {
     font-size: var(--home-panel-heading-size, 2.1rem);

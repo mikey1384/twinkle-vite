@@ -24,8 +24,9 @@ export default function SectionToScreenshot({
     }, 3200);
   }, [onSetButtonShown]);
 
+  const AnimatedDiv = animated('div');
   return (
-    <animated.div
+    <AnimatedDiv
       ref={SectionRef}
       className={css`
         border: 1px solid ${Color.borderGray()};
@@ -45,10 +46,10 @@ export default function SectionToScreenshot({
         justifyContent: 'center',
         ...styles
       }}
-    >
-      <div style={{ fontFamily: 'Verdana, Ariel, Tahoma' }}>
-        <QRCodeSVG value={code} />
-      </div>
-    </animated.div>
+      >
+        <div style={{ fontFamily: 'Verdana, Ariel, Tahoma' }}>
+          <QRCodeSVG value={code} />
+        </div>
+    </AnimatedDiv>
   );
 }

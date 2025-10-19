@@ -104,7 +104,7 @@ export default function Badge({
         border-radius: 50%;
         color: white;
         font-weight: bold;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        box-shadow: none;
         cursor: ${loadingWordle ? 'default' : 'pointer'};
         transition: background-color 0.3s ease, transform 0.3s ease;
         transform: ${isAmped ? 'scale(1.1)' : 'scale(1)'};

@@ -83,7 +83,7 @@ export default function RecommendPosts() {
             onClick={() => handleSetTopMenuSection('subject')}
             color="logoBlue"
             variant="soft"
-            tone="raised"
+            tone="flat"
             stretch
           >
             <Icon icon="certificate" />
@@ -93,7 +93,7 @@ export default function RecommendPosts() {
             onClick={() => handleSetTopMenuSection('reward')}
             color="pink"
             variant="soft"
-            tone="raised"
+            tone="flat"
             stretch
           >
             <Icon icon="certificate" />

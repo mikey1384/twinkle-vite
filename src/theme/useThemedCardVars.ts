@@ -79,8 +79,8 @@ export function useThemedCardVars(options: ThemedCardOptions = {}) {
   }, [accentColor, blendWeight, themeStyles.hoverBg]);
 
   const borderColor = useMemo(
-    () => themeStyles.border || borderFallback || Color.borderGray(0.65),
-    [borderFallback, themeStyles.border]
+    () => borderFallback || Color.borderGray(0.6),
+    [borderFallback]
   );
 
   const cardVars = useMemo(

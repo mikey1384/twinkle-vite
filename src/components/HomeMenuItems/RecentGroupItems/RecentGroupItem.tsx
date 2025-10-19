@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
-import { Color } from '~/constants/css';
+import { Color, getThemeStyles } from '~/constants/css';
 import { getColorFromName } from '~/helpers/stringHelpers';
 import { useHomeContext } from '~/contexts/hooks';
+import { useKeyContext } from '~/contexts';
 
 export default function RecentGroupItem({
   groupName,
@@ -16,26 +17,51 @@ export default function RecentGroupItem({
   const navigate = useNavigate();
   const bgColor = useMemo(() => getColorFromName(groupName), [groupName]);
   const onResetGroups = useHomeContext((v) => v.actions.onResetGroups);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = (profileTheme || 'logoBlue') as string;
+  const hoverBg = useMemo(
+    () => getThemeStyles(themeName, 0.08).bg,
+    [themeName]
+  );
+  const homeMenuItemActive = useKeyContext(
+    (v) => v.theme.homeMenuItemActive.color
+  );
+  const activeColorFn = useMemo(() => {
+    const candidate = Color[homeMenuItemActive as keyof typeof Color];
+    return typeof candidate === 'function'
+      ? (candidate as (opacity?: number) => string)
+      : null;
+  }, [homeMenuItemActive]);
+  const hoverAccentColor = useMemo(
+    () => (activeColorFn ? activeColorFn() : Color.logoBlue()),
+    [activeColorFn]
+  );
+  const hoverBorderColor = useMemo(
+    () => (activeColorFn ? activeColorFn(0.35) : Color.borderGray()),
+    [activeColorFn]
+  );
 
   return (
     <div
       className={css`
         display: flex;
         align-items: center;
-        padding: 0.6rem 1.4rem 0.6rem 3rem;
+        padding: 0.4rem 1rem 0.4rem 2.2rem;
         margin: 0.2rem 1rem;
-        border-radius: 1rem;
+        border-radius: 0.8rem;
         background: rgba(255, 255, 255, 0.92);
         border: 1px solid rgba(148, 163, 184, 0.35);
-        box-shadow: 0 14px 26px -22px rgba(15, 23, 42, 0.38);
+        box-shadow: none;
         cursor: pointer;
-        transition: background 0.2s ease, box-shadow 0.2s ease,
+        transition: background 0.2s ease,
           border-color 0.2s ease, transform 0.15s ease;
         &:hover {
-          background: ${Color.highlightGray()};
-          border-color: ${Color.borderGray()};
-          box-shadow: 0 18px 30px -24px rgba(15, 23, 42, 0.42);
-          transform: translateX(4px);
+          background: ${hoverBg};
+          border-color: ${hoverBorderColor};
+          box-shadow: none;
+          transform: translateX(3px);
+          > span { color: ${hoverAccentColor}; }
+          > div { border-color: ${hoverBorderColor}; }
         }
       `}
       onClick={() => {
@@ -45,10 +71,10 @@ export default function RecentGroupItem({
     >
       <div
         className={css`
-          width: 2rem;
-          height: 2rem;
+          width: 1.6rem;
+          height: 1.6rem;
           border-radius: 50%;
-          margin-right: 1rem;
+          margin-right: 0.8rem;
           flex-shrink: 0;
           background-color: ${thumbPath ? Color.lightGray() : bgColor};
           display: flex;
@@ -84,7 +110,7 @@ export default function RecentGroupItem({
       </div>
       <span
         className={css`
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           color: ${Color.darkerGray()};
           flex-grow: 1;
           white-space: nowrap;

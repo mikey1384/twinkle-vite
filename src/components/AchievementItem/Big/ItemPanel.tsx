@@ -246,9 +246,9 @@ export default function ItemPanel({
           className={css`
             grid-area: title;
             font-weight: bold;
-            color: ${Color.black()};
             font-size: 2rem;
           `}
+          style={{ color: Color.black() }}
         >
           {itemName}
           {displayedAP && (
@@ -274,6 +274,7 @@ export default function ItemPanel({
               />
             ) : (
               <Icon
+                color={Color.darkGray()}
                 className={css`
                   margin-left: 1rem;
                 `}

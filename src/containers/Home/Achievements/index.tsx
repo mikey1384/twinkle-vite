@@ -47,7 +47,10 @@ export default function Achievements() {
         ...panelVars,
         ['--home-panel-border' as const]: Color.borderGray(0.65),
         ['--home-panel-padding' as const]: '1.6rem 2rem',
-        ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
+        ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem',
+        // Force neutral text colors (theme-independent)
+        ['--home-panel-color' as const]: Color.darkerGray(),
+        ['--home-panel-heading' as const]: Color.black()
       }) as React.CSSProperties,
     [panelVars]
   );
@@ -122,7 +125,10 @@ export default function Achievements() {
           {userId && (
             <UserLevelStatus
               style={{
-                marginBottom: '4rem'
+                marginBottom: '4rem',
+                // Force neutral text colors (theme-independent)
+                ['--home-panel-color' as any]: Color.darkerGray(),
+                ['--home-panel-heading' as any]: Color.black()
               }}
             />
           )}

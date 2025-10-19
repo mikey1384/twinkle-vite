@@ -207,9 +207,8 @@ export default function TopMenu({
           padding: 1.2rem;
           border: 1px solid var(--topmenu-border, ${Color.borderGray(0.65)});
           border-radius: ${wideBorderRadius};
-          box-shadow: inset 0 1px 0 ${Color.white(0.85)},
-            0 10px 24px rgba(15, 23, 42, 0.14);
-          backdrop-filter: blur(6px);
+          box-shadow: none;
+          backdrop-filter: none;
           p {
             font-size: 2rem;
             font-weight: bold;

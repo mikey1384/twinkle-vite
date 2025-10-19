@@ -10,19 +10,15 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { themedCardBase } from '~/theme/themedCard';
+import { Color } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { resolveColorValue } from '~/theme/resolveColor';
 
 const DEFAULT_PROGRESS_COLOR = 'rgba(65, 140, 235, 1)';
-const DEFAULT_PROGRESS_SHADOW = 'rgba(65, 140, 235, 0.5)';
 const DEFAULT_PROGRESS_ACCENT = 'rgba(65, 140, 235, 0.24)';
 const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
-const DEFAULT_XP_NUMBER_SHADOW = 'rgba(97, 226, 101, 0.5)';
 const DEFAULT_REWARD_COLOR = 'rgba(255, 203, 50, 1)';
-const DEFAULT_REWARD_SHADOW = 'rgba(255, 203, 50, 0.5)';
 const DEFAULT_RECOMMENDATION_COLOR = 'rgba(245, 190, 70, 1)';
-const DEFAULT_RECOMMENDATION_SHADOW = 'rgba(245, 190, 70, 0.5)';
 const DEFAULT_CARD_BORDER = 'rgba(204, 204, 204, 0.65)';
 
 const container = css`
@@ -56,31 +52,12 @@ export default function TodayStats({
 
   const todayProgressColor =
     todayProgressRole.getColor() || DEFAULT_PROGRESS_COLOR;
-  const progressShadowFromToken = todayProgressRole.token?.shadow
-    ? resolveColorValue(
-        todayProgressRole.token?.shadow,
-        todayProgressRole.token?.opacity
-      ) ||
-      resolveColorValue(todayProgressRole.token?.shadow) ||
-      todayProgressRole.token?.shadow
-    : null;
-  const todayProgressShadow =
-    progressShadowFromToken ||
-    todayProgressRole.getColor(0.5) ||
-    DEFAULT_PROGRESS_SHADOW;
-
-  const xpNumberColor =
-    xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
-  const xpNumberShadow =
-    xpNumberRole.getColor(0.5) || DEFAULT_XP_NUMBER_SHADOW;
+  const xpNumberColor = xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
 
   const rewardColor = DEFAULT_REWARD_COLOR;
-  const rewardShadow = DEFAULT_REWARD_SHADOW;
 
   const coinsColor =
     recommendationRole.getColor() || DEFAULT_RECOMMENDATION_COLOR;
-  const coinsShadow =
-    recommendationRole.getColor(0.5) || DEFAULT_RECOMMENDATION_SHADOW;
 
   const buttonColor = buttonRole.colorKey;
   const todayStats = useNotiContext((v) => v.state.todayStats);
@@ -126,7 +103,9 @@ export default function TodayStats({
         style={{
           marginBottom: '1rem',
           width: '100%',
-          ...cardVars
+          ...cardVars,
+          ['--themed-card-bg' as any]: '#ffffff',
+          ['--themed-card-border' as any]: Color.borderGray(0.6)
         }}
       >
         {todayStats?.loaded ? (
@@ -146,39 +125,27 @@ export default function TodayStats({
                   style={{
                     fontSize: '1.7rem',
                     color: todayProgressColor,
-                    textShadow: `0.05rem 0.05rem 0.1rem ${todayProgressShadow}`,
+                    textShadow: 'none',
                     whiteSpace: 'nowrap'
                   }}
                 >{`Today's Progress`}</b>
                 <div style={{ marginTop: '0.3rem', width: '100%' }}>
-                  <p
-                    style={{
-                      fontWeight: 'bold',
-                      color: xpNumberColor
-                    }}
-                  >
+                  <p style={{ fontWeight: 'bold', color: xpNumberColor }}>
                     <span
                       style={{
-                        textShadow: `0.05rem 0.05rem 0.1rem ${xpNumberShadow}`
+                        textShadow: 'none'
                       }}
                     >
                       {todayStats.xpEarned > 0 ? '+' : ''}
                       {addCommasToNumber(todayStats.xpEarned)}
                     </span>{' '}
-                    <b
-                      style={{
-                        color: rewardColor,
-                        textShadow: `0.05rem 0.05rem 0.1rem ${rewardShadow}`
-                      }}
-                    >
-                      XP
-                    </b>
+                    <b style={{ color: rewardColor, textShadow: 'none' }}>XP</b>
                   </p>
                   <p
                     style={{
                       fontWeight: 'bold',
                       color: coinsColor,
-                      textShadow: `0.05rem 0.05rem 0.1rem ${coinsShadow}`
+                      textShadow: 'none'
                     }}
                   >
                     {todayStats.coinsEarned > 0 ? '+' : ''}

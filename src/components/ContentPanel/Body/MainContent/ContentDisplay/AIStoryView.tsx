@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSpring, animated } from '@react-spring/web';
+import { useSpring, animated } from 'react-spring';
 import RichText from '~/components/Texts/RichText';
 import Image from '~/components/Image';
 import { css } from '@emotion/css';

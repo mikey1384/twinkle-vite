@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import ProgressBar from '~/components/ProgressBar';
 import { css, cx } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
 import { useMyLevel } from '~/helpers/hooks';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { homePanelClass } from '~/theme/homePanels';
@@ -47,7 +48,13 @@ export default function UserLevelStatus({
           padding: 1.6rem 2rem;
         `
       )}
-      style={{ ...panelVars, ...style }}
+      style={{
+        ...panelVars,
+        // Force neutral text colors regardless of theme
+        ['--home-panel-color' as any]: Color.darkerGray(),
+        ['--home-panel-heading' as any]: Color.black(),
+        ...style
+      }}
     >
       <p
         className={css`

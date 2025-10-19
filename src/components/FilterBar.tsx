@@ -138,7 +138,8 @@ export default function FilterBar({
         letter-spacing: 0.01em;
         color: ${navTextColor};
         background: ${tabBaseSurface};
-        border: 1px solid rgba(15,23,42,0.06);
+        /* Use a neutral, flat border to avoid shadowy look */
+        border: 1px solid ${Color.borderGray(0.5)};
         cursor: pointer;
         transition: color 0.18s ease, filter 0.18s ease,
           background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
