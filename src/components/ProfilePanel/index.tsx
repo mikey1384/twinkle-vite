@@ -15,12 +15,7 @@ import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import {
-  borderRadius,
-  Color,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css, cx } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -202,7 +197,7 @@ const panelContainerClass = css`
   position: relative;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.99) 0%,
     var(--themed-card-bg, #f7f9ff) 100%
   );
   @media (max-width: ${mobileMaxWidth}) {
@@ -447,20 +442,17 @@ function ProfilePanel({
     cardVars
   } = useThemedCardVars({
     role: 'profilePanel',
-    intensity: 0.16,
-    blendWeight: 0.92,
+    intensity: 0.05,
+    blendWeight: 0.98,
     themeName,
     borderFallback: Color.borderGray(0.45),
     fallbackColor: 'logoBlue'
   });
-  const heroBackground = useMemo(
-    () =>
-      `linear-gradient(135deg, ${panelAccentColor} 0%, ${blendWithWhite(
-        panelAccentColor,
-        0.55
-      )} 100%)`,
-    [panelAccentColor]
-  );
+  const heroBackground = useMemo(() => {
+    const start = blendWithWhite(panelAccentColor, 0.32);
+    const end = blendWithWhite(panelAccentColor, 0.56);
+    return `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
+  }, [panelAccentColor]);
   const panelStyleVars = useMemo(
     () =>
       ({
@@ -956,6 +948,7 @@ function ProfilePanel({
                       comments={comments}
                       commentsLoadLimit={5}
                       commentsShown={commentsShown}
+                      theme={themeName}
                       inputAreaInnerRef={CommentInputAreaRef}
                       inputTypeLabel={`message${
                         userId === profileId ? '' : ` to ${profileName}`

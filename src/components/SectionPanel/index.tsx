@@ -134,7 +134,7 @@ export default function SectionPanel({
             background: linear-gradient(
               180deg,
               #ffffff 0%,
-              rgba(255, 255, 255, 0.992) 55%,
+              rgba(255, 255, 255, 0.985) 60%,
               var(--section-panel-body-bg, #fbfcff) 100%
             );
           }

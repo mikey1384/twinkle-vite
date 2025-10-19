@@ -59,7 +59,7 @@ export default function RankBar({
   }, [rankValue]);
   const { themeName, themeRoles, themeStyles } = useThemeTokens({
     themeName: profileTheme,
-    intensity: 0.18
+    intensity: 0.06
   });
   const isTopThree = rankValue <= 3;
   const accentColor = useMemo(() => {
@@ -76,11 +76,11 @@ export default function RankBar({
     return `var(--themed-card-border, ${fallback})`;
   }, [themeStyles.border]);
   const accentBlendStart = useMemo(
-    () => blendWithWhite(accentColor, 0.72),
+    () => blendWithWhite(accentColor, 0.94),
     [accentColor]
   );
   const accentBlendEnd = useMemo(
-    () => blendWithWhite(accentColor, 0.92),
+    () => blendWithWhite(accentColor, 0.985),
     [accentColor]
   );
   const baseTextColor = useMemo(

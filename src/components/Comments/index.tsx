@@ -12,7 +12,7 @@ import Container from './Container';
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth, getThemeStyles } from '~/constants/css';
 import { generateFileName } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -101,6 +101,14 @@ function Comments({
   const themeName = useMemo<ThemeName>(
     () => (theme || profileTheme || 'logoBlue') as ThemeName,
     [profileTheme, theme]
+  );
+  const previewHoverBg = useMemo(
+    () => getThemeStyles(themeName, 0.06).bg,
+    [themeName]
+  );
+  const previewHoverBgMobile = useMemo(
+    () => getThemeStyles(themeName, 0.03).bg,
+    [themeName]
   );
   const uploadThumb = useAppContext((v) => v.requestHelpers.uploadThumb);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
@@ -385,11 +393,11 @@ function Comments({
                     border-bottom-left-radius: ${borderRadius};
                     border-bottom-right-radius: ${borderRadius};
                     &:hover {
-                      background: ${Color.highlightGray()};
+                      background: ${previewHoverBg};
                     }
                     @media (max-width: ${mobileMaxWidth}) {
                       &:hover {
-                        background: #fff;
+                        background: ${previewHoverBgMobile};
                       }
                     }
                   `

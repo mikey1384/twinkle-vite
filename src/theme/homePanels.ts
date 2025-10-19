@@ -8,8 +8,8 @@ export const homePanelClass = css`
   background: linear-gradient(
     145deg,
     var(--home-panel-bg, #ffffff) 0%,
-    rgba(255, 255, 255, 0.98) 38%,
-    var(--home-panel-tint, rgba(232, 240, 255, 0.65)) 100%
+    rgba(255, 255, 255, 0.96) 50%,
+    var(--home-panel-tint, rgba(232, 240, 255, 0.28)) 100%
   );
   border: 1px solid var(--home-panel-border, ${Color.borderGray()});
   box-shadow:
