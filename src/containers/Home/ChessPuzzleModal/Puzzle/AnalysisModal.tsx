@@ -99,7 +99,7 @@ export default function AnalysisModal({
                         font-weight: 700;
                         color: #111827;
                         background: #e5e7eb;
-                        border: 1px solid #d1d5db;
+                        border: 1px solid var(--ui-border);
                         border-radius: 6px;
                         padding: 0.25rem 0.5rem;
                         cursor: pointer;
@@ -193,7 +193,7 @@ export default function AnalysisModal({
                             font-weight: 700;
                             color: #0f172a;
                             background: #e2e8f0;
-                            border: 1px solid #cbd5e1;
+                            border: 1px solid var(--ui-border);
                             border-radius: 6px;
                             padding: 0.2rem 0.5rem;
                             cursor: pointer;
@@ -262,7 +262,7 @@ const headerCSS = css`
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--ui-border);
 `;
 
 const titleCSS = css`
@@ -328,7 +328,7 @@ const moveHeaderCSS = css`
   align-items: center;
   justify-content: space-between;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--ui-border);
   font-weight: 600;
   color: #374151;
 `;
@@ -445,7 +445,7 @@ const evaluationValueCSS = (evaluation: number) => css`
 
 const footerCSS = css`
   padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--ui-border);
   display: flex;
   justify-content: center;
 `;

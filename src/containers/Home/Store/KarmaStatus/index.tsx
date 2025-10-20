@@ -54,7 +54,7 @@ export default function KarmaStatus({
     () => homeMenuItemActiveRole.getColor() || Color.logoBlue(),
     [homeMenuItemActiveRole]
   );
-  const { panelVars, themeStyles, headingColor } = useHomePanelVars();
+  const { panelVars, themeStyles, headingColor } = useHomePanelVars(0.08, { neutralSurface: true });
   const panelBg = useMemo(() => {
     return blendWithWhite(themeStyles.hoverBg || accentColor, 0.94);
   }, [accentColor, themeStyles.hoverBg]);
@@ -62,12 +62,14 @@ export default function KarmaStatus({
     () =>
       ({
         ...panelVars,
-        ['--home-panel-bg' as const]: panelBg,
+        // Drive the actual surface background used by homePanelClass
+        ['--home-panel-surface' as const]: panelBg,
+        // Keep tint for any decorative usages
         ['--home-panel-tint' as const]:
           themeStyles.hoverBg ||
           homeMenuItemActiveRole.getColor(0.14) ||
           Color.logoBlue(0.14),
-        ['--home-panel-border' as const]: Color.borderGray(0.65),
+        ['--home-panel-border' as const]: 'var(--ui-border)',
         ['--home-panel-heading' as const]: headingColor,
         ['--home-panel-accent' as const]: accentColor,
         ['--home-panel-color' as const]: Color.darkerGray(),
@@ -121,7 +123,7 @@ export default function KarmaStatus({
             <span>{youHaveKarmaPointsText}</span>
             <button
               className={css`
-                border: 1px solid ${Color.borderGray(0.5)};
+                border: 1px solid var(--ui-border-weak);
                 background: rgba(255, 255, 255, 0.92);
                 border-radius: 9999px;
                 padding: 0.6rem 1.2rem;

@@ -106,7 +106,7 @@ export default function RecommendationInterface({
       componentPath="RecommendationInterface"
       style={{
         position: 'relative',
-        border: `1px ${Color.borderGray()} solid`,
+        border: '1px solid var(--ui-border)',
         borderLeft: 'none',
         borderRight: 'none',
         marginBottom: '1rem',

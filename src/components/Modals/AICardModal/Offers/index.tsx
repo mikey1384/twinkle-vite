@@ -43,7 +43,7 @@ export default function Offers({
       <div
         className={css`
           height: 37vh;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           @media (max-width: ${mobileMaxWidth}) {
             height: 20vh;
           }

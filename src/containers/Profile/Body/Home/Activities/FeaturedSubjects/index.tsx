@@ -43,6 +43,7 @@ export default function FeaturedSubjects({
   return (
     <ErrorBoundary componentPath="Explore/Subjects/Featured">
       <SectionPanel
+        elevated
         title="Featured Subjects"
         loaded={!loading}
         loadMoreButtonShown={!isExpanded && subjects.length > 3}

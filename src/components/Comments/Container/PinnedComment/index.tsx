@@ -54,7 +54,7 @@ export default function PinnedComment({
         <div
           style={{
             marginTop: '0.5rem',
-            borderBottom: `1px solid ${Color.borderGray()}`,
+            borderBottom: '1px solid var(--ui-border)',
             paddingBottom: '0.5rem',
             marginBottom: '1rem'
           }}

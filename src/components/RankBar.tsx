@@ -74,7 +74,7 @@ export default function RankBar({
   // Use a clear border: black for top-3, otherwise match ProfilePanel
   const borderCss = isTopThree
     ? `1px solid ${Color.black(0.85)}`
-    : `1px solid ${Color.borderGray(0.6)}`;
+    : '1px solid var(--ui-border)';
   const surfaceColor = useMemo(
     () => blendWithWhite(accentColor, 0.97),
     [accentColor]

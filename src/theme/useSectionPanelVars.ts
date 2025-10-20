@@ -68,10 +68,7 @@ export function useSectionPanelVars(options: SectionPanelOptions = {}) {
     () => blendWithWhite(accentColor, bodyBlendWeight),
     [accentColor, bodyBlendWeight]
   );
-  const panelBorderColor = useMemo(
-    () => Color.borderGray(0.6),
-    []
-  );
+  const panelBorderColor = useMemo(() => 'var(--ui-border)', []);
 
   const headerTextColor =
     resolveColorValue(

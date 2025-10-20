@@ -77,7 +77,7 @@ export default function CreatorView({
               fontSize: '2rem',
               padding: '1rem',
               borderRadius,
-              border: `1px solid ${Color.borderGray()}`
+              border: '1px solid var(--ui-border)'
             }}
           >
             {tutorialButtonLabel || 'Show Tutorial'}

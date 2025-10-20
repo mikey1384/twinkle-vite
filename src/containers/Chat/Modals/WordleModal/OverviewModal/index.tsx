@@ -78,7 +78,7 @@ export default function OverviewModal({
                 padding: '0.3rem 1rem 1rem 1rem',
                 borderRadius,
                 boxShadow: `0 0 2px ${Color.borderGray()}`,
-                border: `1px solid ${Color.borderGray()}`,
+                border: '1px solid var(--ui-border)',
                 background: Color[wordLevelObj[wordLevel].backgroundColor]()
               }}
             >

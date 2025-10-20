@@ -71,7 +71,7 @@ export default function CardItem({
           alignItems: 'center',
           justifyContent: 'flex-start',
           borderBottom:
-            isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
+            isOverflown && isLast ? 'none' : '1px solid var(--ui-border)'
         }}
         onClick={() => (userMenuShown ? null : handleClick())}
         key={card.id}

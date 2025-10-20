@@ -68,7 +68,7 @@ export default function MissionItem({
         color: ${Color.black()};
         background: #fff;
         padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         transition: background 0.5s;
         cursor: ${locked ? 'default' : 'pointer'};

@@ -75,7 +75,7 @@ export default function Questions({
                 padding: '2rem',
                 fontSize: '1.7rem',
                 textAlign: 'center',
-                border: `1px solid ${Color.borderGray()}`
+                border: '1px solid var(--ui-border)'
               }}
               key={question.id}
             >

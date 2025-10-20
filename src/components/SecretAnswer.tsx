@@ -79,7 +79,7 @@ function SecretAnswer({
       return {
         cursor: spoilerShown ? '' : 'pointer',
         backgroundColor: spoilerShown ? Color.ivory() : Color.white(),
-        borderColor: spoilerShown ? Color.borderGray() : Color.black(),
+        borderColor: spoilerShown ? 'var(--ui-border)' : Color.black(),
         textAlignCenter: spoilerShown ? '' : 'text-align: center;'
       };
     }, [spoilerShown]);

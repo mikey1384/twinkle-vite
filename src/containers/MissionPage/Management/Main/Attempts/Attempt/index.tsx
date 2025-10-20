@@ -127,7 +127,7 @@ export default function Attempt({
               style={{
                 marginTop: '1rem',
                 padding: '1rem',
-                border: `1px solid ${Color.borderGray()}`,
+                border: '1px solid var(--ui-border)',
                 borderRadius
               }}
             >

@@ -63,7 +63,7 @@ export default function InsertSlide({
           padding: '0.5rem',
           background: '#fff',
           textAlign: 'center',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           cursor: insertingSlide ? 'default' : 'pointer',
           ...style
         }}
@@ -87,7 +87,7 @@ export default function InsertSlide({
             padding: '0.5rem',
             background: '#fff',
             textAlign: 'center',
-            border: `1px solid ${Color.borderGray()}`,
+            border: '1px solid var(--ui-border)',
             cursor: 'pointer',
             ...style
           }}

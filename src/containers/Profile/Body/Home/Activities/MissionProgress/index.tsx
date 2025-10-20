@@ -96,6 +96,7 @@ export default function MissionProgress({
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/MissionProgress/index">
       <SectionPanel
+        elevated
         customColorTheme={selectedTheme}
         title={missionProgressLabel}
         loaded={missionsLoaded}

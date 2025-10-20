@@ -259,13 +259,14 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
   },
   vantaBlack: {
     general: {
+      // Premium ultra‑black accents (not dark mode overall)
       bg: 'rgba(0, 0, 0, 1)',
       disabledBg: 'rgba(0, 0, 0, 0.5)',
-      hoverBg: 'rgba(51, 51, 51, 1)',
+      hoverBg: 'rgba(16, 16, 16, 1)',
       text: 'rgba(255, 255, 255, 1)',
-      border: 'rgba(44, 44, 44, 1)',
-      disabledBorder: 'rgba(51, 51, 51, 0.5)',
-      rewardStatusBg: 'rgba(0, 0, 0, 0.6)',
+      border: 'rgba(20, 20, 20, 1)',
+      disabledBorder: 'rgba(32, 32, 32, 0.5)',
+      rewardStatusBg: 'rgba(0, 0, 0, 0.7)',
       rewardStatusGradient: 'rgba(255, 255, 255, 0.08)',
       perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
@@ -321,7 +322,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           black: 'darkOceanBlue',
           red: 'magenta',
           darkBlue: 'armyGreen',
-          vantaBlack: 'armyGreen'
+          vantaBlack: 'vantaBlack'
         },
         'green'
       )
@@ -331,7 +332,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     alreadyPostedByOtherUser: { color: 'red' },
     alreadyPostedByThisUser: { color: 'blue' },
     background: { color: pickColor({ gold: 'whiteBlueGray' }, 'whiteGray') },
-    button: { color: pickColor({ gold: 'brownOrange' }, color) },
+    button: { color: pickColor({ gold: 'brownOrange', vantaBlack: 'vantaBlack' }, color) },
     buttonHovered: { color: pickColor({ gold: 'gold' }, color) },
     byUserIndicator: {
       color: pickColor({ gold: 'darkGold' }, color),
@@ -382,7 +383,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
           black: 'darkOceanBlue',
           red: 'magenta',
           darkBlue: 'armyGreen',
-          vantaBlack: 'armyGreen'
+          vantaBlack: 'vantaBlack'
         },
         'green'
       )
@@ -415,7 +416,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
       shadow: pickColor({ gold: 'darkBrownOrange' }, '')
     },
     invertedFilterActive: { color },
-    filterActive: { color: pickColor({ gold: 'darkGold' }, color) },
+    filterActive: { color: pickColor({ gold: 'darkGold', vantaBlack: 'vantaBlack' }, color) },
     generalChat: {
       color: pickColor({ black: 'darkBlue', vantaBlack: 'darkBlue', gold: 'logoBlue' }, color)
     },
@@ -427,7 +428,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     grammarGameScoreD: { color: 'logoBlue' },
     grammarGameScoreF: { color: 'gray' },
     header: { color: 'white' },
-    homeMenuItemActive: { color },
+    homeMenuItemActive: { color: pickColor({ vantaBlack: 'vantaBlack' }, color) },
     info: {
       color: pickColor(
         {
@@ -516,7 +517,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     mission: { color: 'orange' },
     myCollection: { color, shadow: pickColor({ gold: 'darkBrownOrange' }, '') },
     profilePanel: { color },
-    progressBar: { color: pickColor({ green: 'yellowGreen' }, color) },
+    progressBar: { color: pickColor({ green: 'yellowGreen', vantaBlack: 'vantaBlack' }, color) },
     reactionButton: { color, opacity: 0.2 },
     recommendation: { color: pickColor({ gold: 'passionFruit' }, 'brownOrange') },
     reward: {
@@ -595,11 +596,21 @@ export function getThemeRoles(color: ThemeName): RoleTokens {
 export function applyThemeVars(theme: ThemeName) {
   const tokens = themeRegistry[theme] || themeRegistry.logoBlue;
   const root = document.documentElement;
+  const setAlpha = (rgba: string, a: number) => {
+    const m = rgba.match(/rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i);
+    if (!m) return rgba;
+    const [_, r, g, b] = m;
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
+  };
   // General pack
   root.style.setProperty('--theme-bg', tokens.general.bg);
   root.style.setProperty('--theme-hover-bg', tokens.general.hoverBg);
   root.style.setProperty('--theme-text', tokens.general.text);
   root.style.setProperty('--theme-border', tokens.general.border);
+  // Central app borders derived from theme border
+  root.style.setProperty('--ui-border', tokens.general.border);
+  root.style.setProperty('--ui-border-weak', setAlpha(tokens.general.border, 0.35));
+  root.style.setProperty('--ui-border-strong', setAlpha(tokens.general.border, 0.8));
   root.style.setProperty('--theme-disabled-bg', tokens.general.disabledBg);
   root.style.setProperty(
     '--theme-disabled-border',
@@ -631,11 +642,20 @@ export function applyThemeVars(theme: ThemeName) {
 
 export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
   const t = themeRegistry[theme] || themeRegistry.logoBlue;
+  const setAlpha = (rgba: string, a: number) => {
+    const m = rgba.match(/rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i);
+    if (!m) return rgba;
+    const [_, r, g, b] = m;
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
+  };
   return {
     ['--theme-bg']: t.general.bg,
     ['--theme-hover-bg']: t.general.hoverBg,
     ['--theme-text']: t.general.text,
     ['--theme-border']: t.general.border,
+    ['--ui-border']: t.general.border,
+    ['--ui-border-weak']: setAlpha(t.general.border, 0.35),
+    ['--ui-border-strong']: setAlpha(t.general.border, 0.8),
     ['--theme-disabled-bg']: t.general.disabledBg,
     ['--theme-disabled-border']: t.general.disabledBorder,
     ['--reward-status-bg']: t.general.rewardStatusBg,

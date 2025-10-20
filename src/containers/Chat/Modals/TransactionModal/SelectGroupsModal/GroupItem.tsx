@@ -40,7 +40,7 @@ export default function GroupItem({
         cursor: pointer;
         border-radius: ${borderRadius};
         border: ${isSelected ? '2px' : '1px'} solid
-          ${isSelected ? Color[profileTheme]() : Color.borderGray()};
+          ${isSelected ? Color[profileTheme]() : 'var(--ui-border)'};
         transform: ${isSelected ? 'scale(1.02)' : 'scale(1)'};
         &:hover {
           ${!noHoverEffect &&

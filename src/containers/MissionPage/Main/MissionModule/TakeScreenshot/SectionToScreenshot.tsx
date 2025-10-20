@@ -29,7 +29,7 @@ export default function SectionToScreenshot({
     <AnimatedDiv
       ref={SectionRef}
       className={css`
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         text-align: center;
         padding: 1rem;

@@ -1484,7 +1484,7 @@ export default function MessagesContainer({
         style={{
           background: Color.inputGray(),
           padding: '1rem',
-          borderTop: `1px solid ${Color.borderGray()}`
+          borderTop: '1px solid var(--ui-border)'
         }}
       >
         <MessageInput

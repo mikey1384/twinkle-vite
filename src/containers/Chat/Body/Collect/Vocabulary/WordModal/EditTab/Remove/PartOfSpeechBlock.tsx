@@ -36,7 +36,7 @@ export default function PartOfSpeechBlock({
             display: flex;
             justify-content: space-between;
             margin-bottom: -1px;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
           }
           nav:first-of-type {
             border-top-left-radius: ${borderRadius};
@@ -56,7 +56,7 @@ export default function PartOfSpeechBlock({
               style={{
                 opacity: deletedDefIds.includes(id) ? 0.5 : 1,
                 cursor: 'pointer',
-                borderTop: index === 0 ? `1px solid ${Color.borderGray()}` : '',
+                borderTop: index === 0 ? '1px solid var(--ui-border)' : '',
                 color: Color.darkerGray()
               }}
             >

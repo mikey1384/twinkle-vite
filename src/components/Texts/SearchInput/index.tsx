@@ -71,7 +71,7 @@ export default function SearchInput({
         .addon {
           height: 100%;
           border: 1px solid
-            ${resolvedAddonColor || Color.darkerBorderGray()};
+            ${resolvedAddonColor || 'var(--ui-border)'};
           padding: 0 1rem;
           display: flex;
           align-items: center;
@@ -80,7 +80,7 @@ export default function SearchInput({
         input {
           height: 100%;
           border: 1px solid
-            ${resolvedBorderColor || Color.darkerBorderGray()};
+            ${resolvedBorderColor || 'var(--ui-border)'};
           border-left: none;
         }
       `} ${className}`}

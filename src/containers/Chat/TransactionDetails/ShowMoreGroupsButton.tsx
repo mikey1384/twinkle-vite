@@ -14,7 +14,7 @@ export default function ShowMoreGroupsButton({
       className={css`
         width: calc(50% - 0.5rem);
         background: none;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         display: flex;
         align-items: center;

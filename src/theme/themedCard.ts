@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 
 export const themedCardBase = css`
   border-radius: ${wideBorderRadius};
-  border: 1px solid var(--themed-card-border, ${Color.borderGray(0.6)});
+  border: 1px solid var(--themed-card-border, var(--ui-border));
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;

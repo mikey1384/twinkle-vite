@@ -44,7 +44,7 @@ export default function InputPanel({
             className={css`
               line-height: 2rem;
               padding: 1rem;
-              border: 1px solid ${Color.darkerBorderGray()};
+              border: 1px solid var(--ui-border);
               font-size: 1.7rem;
               &:hover {
                 outline: none;

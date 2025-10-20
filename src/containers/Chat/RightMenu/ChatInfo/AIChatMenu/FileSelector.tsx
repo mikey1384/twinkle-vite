@@ -103,7 +103,7 @@ export default function FileSelector({
   return (
     <div
       className={css`
-        border-top: 1px solid ${Color.borderGray()};
+        border-top: 1px solid var(--ui-border);
         padding: 1rem 0;
         width: 100%;
       `}
@@ -148,7 +148,7 @@ export default function FileSelector({
           ref={scrollContainerRef}
           className={css`
             background: #000;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             padding: 0.5rem;
             height: 100px;
             overflow-y: auto;

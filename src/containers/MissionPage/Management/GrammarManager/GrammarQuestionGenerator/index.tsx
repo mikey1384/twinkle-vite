@@ -99,7 +99,7 @@ export default function GrammarQuestionGenerator({
           flex-direction: column;
           background: #fff;
           padding: 1rem 1rem 1.5rem 1rem;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: ${borderRadius};
           @media (max-width: ${tabletMaxWidth}) {
             > h2 {

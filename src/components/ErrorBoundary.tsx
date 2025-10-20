@@ -65,7 +65,7 @@ export default class ErrorBoundary extends Component<
             style={{
               fontSize: '1.7rem',
               padding: '2rem',
-              border: `1px solid ${Color.borderGray()}`,
+              border: '1px solid var(--ui-border)',
               borderRadius,
               background: Color.wellGray()
             }}

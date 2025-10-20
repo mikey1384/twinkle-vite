@@ -74,8 +74,8 @@ export default function StatusMessage({
   return (
     <div
       style={{
-        borderTop: `1px solid ${Color.borderGray()}`,
-        borderBottom: `1px solid ${Color.borderGray()}`,
+        borderTop: '1px solid var(--ui-border)',
+        borderBottom: '1px solid var(--ui-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

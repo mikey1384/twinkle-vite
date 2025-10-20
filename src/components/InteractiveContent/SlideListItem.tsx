@@ -48,7 +48,7 @@ export default function SlideListItem({
         width: 100%;
         cursor: pointer;
         padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         background: #fff;
         .label {
@@ -57,7 +57,7 @@ export default function SlideListItem({
         }
         transition: background 0.5s, border 0.5s;
         &:hover {
-          border-color: ${Color.darkerBorderGray()};
+          border-color: var(--ui-border-strong);
           .label {
             color: ${Color.black()};
           }

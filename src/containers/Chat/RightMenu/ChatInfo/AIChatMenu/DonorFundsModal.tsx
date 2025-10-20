@@ -214,7 +214,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                   <div
                     className={css`
                       background: #fff;
-                      border: 1px solid ${Color.borderGray()};
+                      border: 1px solid var(--ui-border);
                       border-radius: 1rem;
                       padding: 1.5rem;
                       margin-bottom: 2rem;
@@ -297,7 +297,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                   <div
                     className={css`
                       background: #fff;
-                      border: 1px solid ${Color.borderGray()};
+                      border: 1px solid var(--ui-border);
                       border-radius: 1rem;
                       padding: 1.5rem;
                     `}

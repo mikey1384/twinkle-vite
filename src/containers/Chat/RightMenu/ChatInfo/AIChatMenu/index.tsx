@@ -83,7 +83,7 @@ function AIChatMenu({
           ? 'CALC(100% - 11.9rem)'
           : 'CALC(100% - 5.8rem)'};
         width: 100%;
-        border-top: 1px solid ${Color.borderGray()};
+        border-top: 1px solid var(--ui-border);
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
         font-family: 'Helvetica Neue', Arial, sans-serif;

@@ -39,7 +39,7 @@ export default function Frame({
       className={css`
         background: #fff;
         position: relative;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         width: ${frameWidth}%;
         height: CALC(${frameWidth}% - 2px);

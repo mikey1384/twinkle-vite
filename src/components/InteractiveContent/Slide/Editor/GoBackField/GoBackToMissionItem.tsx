@@ -32,7 +32,7 @@ export default function GoBackToMissionItem({
         border:
           selectedSlideId === 0
             ? `0.3rem solid ${highlightColor}`
-            : `1px solid ${Color.borderGray()}`
+            : '1px solid var(--ui-border)'
       }}
       className={css`
         width: 100%;
@@ -46,7 +46,7 @@ export default function GoBackToMissionItem({
         }
         transition: background 0.5s, border 0.5s, box-shadow 0.5s;
         &:hover {
-          border-color: ${Color.darkerBorderGray()};
+          border-color: var(--ui-border-strong);
           .label {
             color: ${Color.black()};
           }

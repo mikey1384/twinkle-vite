@@ -1,12 +1,14 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import ComponentSideMenu from '~/components/SideMenu';
+import Icon from '~/components/Icon';
 
 export default function SideMenu({
   onMenuClick,
   menuItems,
   selectedKey,
-  style
+  style,
+  className
 }: {
   className?: string;
   menuItems: { key: string; label: string }[];
@@ -15,50 +17,51 @@ export default function SideMenu({
   style?: React.CSSProperties;
 }) {
   return (
-    <div
-      className="desktop"
-      style={{
-        display: 'flex',
-        marginLeft: '1rem',
-        flexGrow: 1,
-        maxWidth: '13rem',
-        position: 'relative',
-        flexDirection: 'column',
-        ...style
-      }}
+    <ComponentSideMenu
+      variant="card"
+      placement="right"
+      positionMode="sticky"
+      topOffset="1rem"
+      style={{ ...style }}
+      className={`${className ? `${className} ` : ''}desktop`}
     >
-      <div
-        className={css`
-          position: -webkit-sticky;
-          > nav {
-            padding: 1rem;
-            font-size: 2rem;
-            font-weight: bold;
-            color: ${Color.gray()};
-            &:hover {
-              color: ${Color.black()};
-            }
-          }
-        `}
-        style={{
-          paddingLeft: '1rem',
-          position: 'sticky',
-          top: '1rem'
-        }}
-      >
-        {menuItems.map(({ key, label }) => (
-          <nav
-            key={key}
-            onClick={() => onMenuClick({ item: key })}
-            style={{
-              cursor: 'pointer',
-              color: selectedKey === key ? Color.black() : ''
-            }}
-          >
-            {label}
-          </nav>
-        ))}
-      </div>
-    </div>
+      {menuItems.map(({ key, label }) => (
+        <nav
+          key={key}
+          className={selectedKey === key ? 'active' : ''}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+            width: '100%'
+          }}
+          onClick={() => onMenuClick({ item: key })}
+        >
+          <Icon icon={getIconForKey(key)} />
+          <span style={{ marginLeft: '1.1rem' }}>{label}</span>
+        </nav>
+      ))}
+    </ComponentSideMenu>
   );
+}
+
+function getIconForKey(key: string) {
+  switch (key) {
+    case 'all':
+      return 'list';
+    case 'comment':
+      return 'comments';
+    case 'subject':
+      return 'bolt';
+    case 'aiStory':
+      return 'sparkles';
+    case 'video':
+      return 'film';
+    case 'url':
+      return 'link';
+    default:
+      return 'list';
+  }
 }

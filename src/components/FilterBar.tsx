@@ -36,19 +36,29 @@ export default function FilterBar({
   });
 
   const alertColorVar = `var(--role-alert-color, ${alertRoleColor})`;
+  const isVanta = resolvedThemeName === 'vantaBlack';
 
-  // Flat, clean white bar surface regardless of page tint
+  // Surface and text
+  // For vantaBlack, use white bar so selected (black) tab stands out
   const barBackground = '#ffffff';
   const barBorderColor = 'transparent';
   const navTextColor = Color.darkGray();
   const navHoverColor = Color.darkBlueGray();
-  const navActiveTextColor = Color.darkBlueGray();
+  const navActiveTextColor = isVanta ? '#ffffff' : Color.darkBlueGray();
 
   // Theme-aware fills for hover/active
-  const themeHoverBgValue = getFilterColor(0.08) || Color.logoBlue(0.08);
-  const themeActiveBgValue = getFilterColor(0.16) || Color.logoBlue(0.16);
-  const themeHoverBorderValue = getFilterColor(0.28) || Color.logoBlue(0.28);
-  const themeActiveBorderValue = getFilterColor(0.4) || Color.logoBlue(0.4);
+  const themeHoverBgValue = isVanta
+    ? 'rgba(0, 0, 0, 0.06)'
+    : getFilterColor(0.08) || Color.logoBlue(0.08);
+  const themeActiveBgValue = isVanta
+    ? 'rgba(0, 0, 0, 0.7)'
+    : getFilterColor(0.16) || Color.logoBlue(0.16);
+  const themeHoverBorderValue = isVanta
+    ? 'rgba(0, 0, 0, 0.18)'
+    : getFilterColor(0.28) || Color.logoBlue(0.28);
+  const themeActiveBorderValue = isVanta
+    ? 'var(--theme-border)'
+    : getFilterColor(0.4) || Color.logoBlue(0.4);
 
   // Unselected tabs match the bar background; hover/active use theme tints
   const tabBaseSurface = barBackground;
@@ -138,8 +148,7 @@ export default function FilterBar({
         letter-spacing: 0.01em;
         color: ${navTextColor};
         background: ${tabBaseSurface};
-        /* Use a neutral, flat border to avoid shadowy look */
-        border: 1px solid ${Color.borderGray(0.5)};
+        border: 1px solid var(--ui-border-weak);
         cursor: pointer;
         transition: color 0.18s ease, filter 0.18s ease,
           background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
@@ -212,7 +221,7 @@ export default function FilterBar({
         justify-content: flex-end;
         padding-left: 1.2rem;
         margin-left: 0.4rem;
-        border-left: ${dropdownButton ? `1px solid ${Color.borderGray(0.5)}` : 'none'};
+        border-left: ${dropdownButton ? '1px solid var(--ui-border-weak)' : 'none'};
         gap: 0.6rem;
         
         /* Filter button: match bar bg always; raise only on hover or when open */
@@ -265,7 +274,7 @@ export default function FilterBar({
           padding-left: 0;
           margin-left: 0;
           border-left: none;
-          border-top: ${dropdownButton ? `1px solid ${Color.borderGray(0.5)}` : 'none'};
+          border-top: ${dropdownButton ? '1px solid var(--ui-border-weak)' : 'none'};
           padding-top: ${dropdownButton ? '0.5rem' : 0};
         }
       }

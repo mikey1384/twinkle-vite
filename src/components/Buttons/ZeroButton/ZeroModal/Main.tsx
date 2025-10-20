@@ -83,7 +83,7 @@ export default function Main({
       <div
         className={css`
           background-color: #f5f5dc;
-          border: 1px solid #ccc;
+          border: 1px solid var(--ui-border);
           border-radius: 4px;
           padding: 2rem;
           margin-top: 2rem;

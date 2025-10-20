@@ -63,7 +63,7 @@ function Bookmarks({
           font-size: 1.4rem;
           margin-bottom: 0.5rem;
           color: #333;
-          border-bottom: 1px solid ${Color.borderGray()};
+          border-bottom: 1px solid var(--ui-border);
           padding-bottom: 0.5rem;
           white-space: normal;
         `}

@@ -83,7 +83,7 @@ export default function GoBackField({
             padding: '1rem 2rem',
             display: 'flex',
             flexGrow: 1,
-            border: `1px solid ${Color.borderGray()}`
+            border: '1px solid var(--ui-border)'
           }}
         >
           <Input

@@ -91,10 +91,20 @@ export default function ItemPanel({
     milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
 
-  const { panelVars } = useHomePanelVars();
+  const { panelVars, themeName } = useHomePanelVars();
   const panelStyle = useMemo(() => {
-    return style ? { ...panelVars, ...style } : panelVars;
-  }, [panelVars, style]);
+    const base = style ? { ...panelVars, ...style } : panelVars;
+    if (themeName === 'vantaBlack') {
+      return {
+        ...base,
+        ['--home-panel-surface' as const]: 'transparent'
+      } as React.CSSProperties;
+    }
+    return {
+      ...base,
+      ['--home-panel-surface' as const]: '#ffffff'
+    } as React.CSSProperties;
+  }, [panelVars, style, themeName]);
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
@@ -403,7 +413,7 @@ export default function ItemPanel({
                   align-items: center;
                   color: ${Color.darkerGray()};
                   font-size: 1.3rem;
-                  border-bottom: 1px solid ${Color.borderGray()};
+                  border-bottom: 1px solid var(--ui-border);
                   @media (max-width: ${mobileMaxWidth}) {
                     justify-content: center;
                   }

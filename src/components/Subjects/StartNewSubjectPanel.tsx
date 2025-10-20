@@ -33,7 +33,7 @@ export default function StartNewSubjectPanel({
     <div
       className={css`
         background: #fff;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         font-size: 1.5rem;
         margin-top: 1rem;
         @media (max-width: ${mobileMaxWidth}) {

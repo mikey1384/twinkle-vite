@@ -42,7 +42,7 @@ export default function Market() {
     <div
       style={{
         height: 'CALC(50% - 4.5rem)',
-        borderBottom: `1px solid ${Color.borderGray()}`
+        borderBottom: '1px solid var(--ui-border)'
       }}
     >
       <FilterBar

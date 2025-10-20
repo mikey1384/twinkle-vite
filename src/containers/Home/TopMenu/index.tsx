@@ -85,7 +85,7 @@ export default function TopMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
-  const { themeRoles, themeStyles } = useThemeTokens({
+  const { themeName, themeRoles, themeStyles } = useThemeTokens({
     intensity: 0.06
   });
   const topMenuVars = useMemo<CSSProperties>(() => {
@@ -107,8 +107,10 @@ export default function TopMenu({
     const headingShadowColor = resolveColorValue(
       themeRoles.sectionPanelText?.shadow
     );
-    const borderColor = themeStyles.border || Color.borderGray(0.65);
-    const backgroundColor = themeStyles.bg || Color.whiteGray();
+    // Centralized border color
+    const borderColor = 'var(--ui-border)';
+    // Do not theme this panel's background; keep it neutral
+    const backgroundColor = '#ffffff';
     const vars: Record<string, string> = {
       '--topmenu-bg': backgroundColor,
       '--topmenu-border': borderColor,
@@ -119,7 +121,7 @@ export default function TopMenu({
       vars['--topmenu-heading-shadow'] = `0 1px 0 ${headingShadowColor}`;
     }
     return vars as CSSProperties;
-  }, [themeRoles, themeStyles]);
+  }, [themeRoles]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -205,7 +207,7 @@ export default function TopMenu({
           color: var(--topmenu-text, ${Color.darkerGray()});
           font-size: 1.7rem;
           padding: 1.2rem;
-          border: 1px solid var(--topmenu-border, ${Color.borderGray(0.65)});
+          border: 1px solid var(--topmenu-border, var(--ui-border));
           border-radius: ${wideBorderRadius};
           box-shadow: none;
           backdrop-filter: none;

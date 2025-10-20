@@ -23,7 +23,7 @@ export default function PartOfSpeechesList({
           display: flex;
           justify-content: space-between;
           margin-bottom: -1px;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
         }
         nav:first-of-type {
           border-top-left-radius: ${borderRadius};

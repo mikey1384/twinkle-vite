@@ -60,7 +60,7 @@ export default function WantDetail({
         display: 'flex',
         flexDirection: 'column',
         borderRadius,
-        border: `1px solid ${Color.borderGray()}`
+        border: '1px solid var(--ui-border)'
       }}
     >
       <div
@@ -82,7 +82,7 @@ export default function WantDetail({
       <div
         style={{
           width: '100%',
-          borderTop: `1px solid ${Color.borderGray()}`,
+          borderTop: '1px solid var(--ui-border)',
           padding: '1rem',
           display: 'flex',
           justifyContent: 'center',

@@ -18,7 +18,7 @@ export default function SectionHeader({ label }: { label: string }) {
           font-weight: 700;
           color: ${Color.darkGray()};
           background: ${Color.white()};
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: 9999px;
           padding: 0.3rem 0.8rem;
         `}
@@ -29,11 +29,10 @@ export default function SectionHeader({ label }: { label: string }) {
         className={css`
           flex: 1;
           height: 1px;
-          background: ${Color.borderGray()};
+          background: var(--ui-border-weak);
           margin-left: 0.8rem;
         `}
       />
     </div>
   );
 }
-

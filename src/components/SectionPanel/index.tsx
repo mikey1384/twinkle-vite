@@ -36,7 +36,8 @@ export default function SectionPanel({
   searchQuery = '',
   style,
   innerStyle = {},
-  title
+  title,
+  elevated
 }: {
   canEdit?: boolean;
   title: React.ReactNode | string;
@@ -58,6 +59,7 @@ export default function SectionPanel({
   style?: React.CSSProperties;
   customColorTheme?: string;
   innerStyle?: React.CSSProperties;
+  elevated?: boolean;
 }) {
   const [savingEdit, setSavingEdit] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -93,13 +95,13 @@ export default function SectionPanel({
       <div
         style={{ ...(style || {}), ...styleVars }}
         className={css`
-          border: 1px solid rgba(148, 163, 184, 0.18);
+          border: 1px solid ${elevated ? 'rgba(148, 163, 184, 0.18)' : 'var(--ui-border)'};
           width: 100%;
           background: var(--section-panel-bg, #fff);
           border-radius: ${wideBorderRadius};
-          box-shadow:
-            0 22px 38px -28px rgba(15, 23, 42, 0.24),
-            0 1px 3px rgba(15, 23, 42, 0.12);
+          box-shadow: ${elevated
+            ? '0 22px 38px -28px rgba(15, 23, 42, 0.24), 0 1px 3px rgba(15, 23, 42, 0.12)'
+            : 'none'};
           overflow: hidden;
           margin-bottom: 1.6rem;
           display: flex;

@@ -14,7 +14,7 @@ export default function InvalidContent({
         font-weight: bold;
         text-align: center;
         padding: 1.5rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
       `}
     >

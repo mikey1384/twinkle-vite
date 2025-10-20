@@ -92,12 +92,12 @@ export default function ActivityItem({
         ...style
       }}
       className={css`
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         background: #fff;
         margin-top: 0;
         transition: background 0.5s, border 0.5s;
         &:hover {
-          border-color: ${Color.darkerBorderGray()};
+          border-color: var(--ui-border-strong);
           background: ${Color.highlightGray()};
         }
         @media (max-width: ${mobileMaxWidth}) {

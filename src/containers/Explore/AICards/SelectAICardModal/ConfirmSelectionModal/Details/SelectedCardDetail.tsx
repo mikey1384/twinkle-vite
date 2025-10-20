@@ -18,7 +18,7 @@ export default function SelectedCardDetail({
         display: 'flex',
         flexDirection: 'column',
         borderRadius,
-        border: `1px solid ${Color.borderGray()}`
+        border: '1px solid var(--ui-border)'
       }}
     >
       <div

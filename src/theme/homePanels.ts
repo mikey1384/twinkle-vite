@@ -5,8 +5,8 @@ export const homePanelClass = css`
   position: relative;
   width: 100%;
   border-radius: ${wideBorderRadius};
-  background: transparent;
-  border: 1px solid var(--home-panel-border, ${Color.borderGray()});
+  background: var(--home-panel-surface, transparent);
+  border: 1px solid var(--home-panel-border, var(--ui-border));
   box-shadow: none;
   padding: var(--home-panel-padding, 2.2rem 2.4rem);
   display: flex;

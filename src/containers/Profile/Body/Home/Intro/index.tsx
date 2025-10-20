@@ -115,6 +115,7 @@ export default function Intro({
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Intro">
       <SectionPanel
+        elevated
         loaded
         customColorTheme={selectedTheme}
         title={greeting || 'Welcome!'}

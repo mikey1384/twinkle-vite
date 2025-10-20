@@ -132,7 +132,7 @@ export default function ApprovedStatus({
             width: '100%',
             marginTop: '2.5rem',
             padding: '1rem',
-            border: `1px solid ${Color.borderGray()}`,
+            border: '1px solid var(--ui-border)',
             borderRadius
           }}
         >

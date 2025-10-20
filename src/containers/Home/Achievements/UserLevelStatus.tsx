@@ -15,7 +15,7 @@ export default function UserLevelStatus({
 }) {
   const achievementPoints = useKeyContext((v) => v.myState.achievementPoints);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const { panelVars } = useHomePanelVars();
+  const { panelVars } = useHomePanelVars(0.08, { neutralSurface: true });
   const { ap, level, nextLevelAp } = useMyLevel();
   const displayedAP = useMemo(
     () => addCommasToNumber(achievementPoints),

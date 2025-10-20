@@ -44,7 +44,7 @@ export default function Attempt({
         width: 60%;
         background: #fff;
         padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
@@ -142,7 +142,7 @@ export default function Attempt({
               style={{
                 marginTop: '1rem',
                 padding: '1rem',
-                border: `1px solid ${Color.borderGray()}`,
+                border: '1px solid var(--ui-border)',
                 borderRadius
               }}
             >

@@ -25,7 +25,7 @@ export default function RoundList({
         nav {
           width: 100%;
           padding: 1.5rem;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           margin-bottom: -1px;
           @media (max-width: ${mobileMaxWidth}) {
             border-left: 0;

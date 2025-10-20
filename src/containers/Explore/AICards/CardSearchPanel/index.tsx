@@ -25,7 +25,7 @@ const panelClass = css`
   padding: 1.6rem 2rem;
   border-radius: ${wideBorderRadius};
   background: var(--search-panel-bg, #ffffff);
-  border: 1px solid var(--search-panel-border, ${Color.borderGray()});
+  border: 1px solid var(--search-panel-border, var(--ui-border));
   box-shadow: var(--search-panel-shadow, none);
   color: ${Color.darkerGray()};
   display: flex;
@@ -162,7 +162,7 @@ const baseInputClass = css`
   min-width: 7rem;
   border-radius: ${wideBorderRadius};
   background: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--search-panel-border, ${Color.borderGray()});
+  border: 1px solid var(--search-panel-border, var(--ui-border));
   text-align: left;
   font-size: 1.4rem;
   color: ${Color.darkerGray()};

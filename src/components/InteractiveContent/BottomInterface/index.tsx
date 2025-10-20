@@ -48,7 +48,7 @@ export default function BottomInterface({
             align-items: center;
             justify-content: center;
             width: 100%;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: 0;
               margin-top: 2rem;

@@ -62,7 +62,7 @@ export default function DrawingToolsUI({
             gap: 0.5rem;
             padding: 0.75rem;
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
           `}
@@ -135,7 +135,7 @@ export default function DrawingToolsUI({
             flex-wrap: wrap;
             padding: 1rem;
             background: white;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
           `}
@@ -633,7 +633,7 @@ export default function DrawingToolsUI({
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            border: 2px solid ${Color.borderGray()};
+            border: 2px solid var(--ui-border);
             border-radius: 8px;
             padding: 1rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -659,7 +659,7 @@ export default function DrawingToolsUI({
             className={css`
               width: 100%;
               padding: 0.5rem;
-              border: 1px solid ${Color.borderGray()};
+              border: 1px solid var(--ui-border);
               border-radius: 4px;
               margin-bottom: 1rem;
               font-size: 1rem;
@@ -757,7 +757,7 @@ export default function DrawingToolsUI({
               className={css`
                 background: transparent;
                 color: ${Color.darkGray()};
-                border: 1px solid ${Color.borderGray()};
+                border: 1px solid var(--ui-border);
                 padding: 0.5rem 1rem;
                 border-radius: 4px;
                 cursor: pointer;

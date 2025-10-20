@@ -13,7 +13,7 @@ export default function Content() {
   });
   const [title, setTitle] = useState('');
   const border = useMemo(
-    () => (videos?.length && loaded ? `1px solid ${Color.borderGray()}` : ''),
+    () => (videos?.length && loaded ? '1px solid var(--ui-border)' : ''),
     [videos, loaded]
   );
   const background = useMemo(

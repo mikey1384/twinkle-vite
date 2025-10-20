@@ -67,7 +67,7 @@ export default function SelectedGroupItem({
         align-items: center;
         padding: 1rem;
         border-radius: ${borderRadius};
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         position: relative;
         width: calc(50% - 0.5rem);
         margin-bottom: 1rem;
@@ -76,7 +76,7 @@ export default function SelectedGroupItem({
         ${isLink
           ? `
             &:hover {
-              border-color: ${Color.darkGray()};
+              border-color: var(--ui-border-strong);
             }
           `
           : ''}

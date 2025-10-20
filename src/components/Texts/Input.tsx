@@ -67,7 +67,7 @@ export default function Input({
         width: 100%;
       `;
     return `${baseClass} ${css`
-      border: 1px solid ${Color.darkerBorderGray()};
+      border: 1px solid var(--ui-border);
       font-size: 1.7rem;
       &:focus {
         outline: none;

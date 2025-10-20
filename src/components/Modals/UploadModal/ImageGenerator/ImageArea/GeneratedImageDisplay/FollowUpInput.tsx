@@ -28,7 +28,7 @@ export default function FollowUpInput({
   return (
     <div
       className={css`
-        border-top: 1px solid ${Color.borderGray()};
+        border-top: 1px solid var(--ui-border);
         padding-top: 1.5rem;
         margin-bottom: -0.5rem;
       `}
@@ -69,7 +69,7 @@ export default function FollowUpInput({
           className={css`
             flex: 1;
             padding: 0.875rem 1rem;
-            border: 2px solid ${Color.borderGray()};
+            border: 2px solid var(--ui-border);
             border-radius: 10px;
             font-size: 0.95rem;
             outline: none;

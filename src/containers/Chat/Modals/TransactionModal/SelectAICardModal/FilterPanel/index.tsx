@@ -27,7 +27,7 @@ export default function FilterPanel({
         width: 70%;
         padding: 1rem;
         background: #fff;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         margin-bottom: 1rem;
         .label {
           font-family: 'Roboto', sans-serif;

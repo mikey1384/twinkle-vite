@@ -63,19 +63,23 @@ export default function HomeMenuItems({
     if (activeColorFn) return activeColorFn();
     return Color.logoBlue();
   }, [activeColorFn]);
-  const hoverBorderColor = useMemo(() => {
-    if (activeColorFn) return activeColorFn(0.35);
-    return Color.borderGray();
-  }, [activeColorFn]);
   const themeName = (profileTheme || 'logoBlue') as string;
+  const isVanta = themeName === 'vantaBlack';
   const themeBg = useMemo(
-    () => getThemeStyles(themeName, 0.03).bg,
+    () => getThemeStyles(themeName, 0.06).bg,
     [themeName]
   );
   const hoverBg = useMemo(
-    () => getThemeStyles(themeName, 0.08).bg,
+    () => getThemeStyles(themeName, 0.12).bg,
     [themeName]
   );
+  const outlineAccent = useMemo(() => {
+    return isVanta
+      ? 'rgba(0,0,0,0.9)'
+      : activeColorFn
+      ? activeColorFn(0.4)
+      : 'var(--ui-border)';
+  }, [activeColorFn, isVanta]);
   const year = useMemo(() => {
     return new Date(standardTimeStamp || Date.now()).getFullYear();
   }, [standardTimeStamp]);
@@ -163,21 +167,23 @@ export default function HomeMenuItems({
             transform: translateX(4px);
             .homemenu__item {
               background: ${hoverBg};
-              border-color: ${hoverBorderColor};
-              box-shadow: none;
+              border-color: ${isVanta ? 'rgba(0,0,0,0.18)' : hoverAccentColor};
+              box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
               > .icon,
               > .label {
-                color: ${hoverAccentColor};
+                color: ${isVanta ? Color.darkGray() : hoverAccentColor};
               }
             }
             a {
-              color: ${hoverAccentColor};
+              color: ${isVanta ? Color.darkGray() : hoverAccentColor};
             }
           }
           > nav.active {
             .homemenu__item {
-              background: ${activeColorFn
-                ? activeColorFn(0.14)
+              background: ${isVanta
+                ? 'rgba(0,0,0,0.7)'
+                : activeColorFn
+                ? activeColorFn(0.22)
                 : Color.highlightGray()};
               > .selection {
                 background: ${homeMenuItemActiveColor};
@@ -186,17 +192,19 @@ export default function HomeMenuItems({
               }
               > .icon,
               > .label {
-                color: ${activeContentColor};
+                color: ${isVanta ? '#ffffff' : activeContentColor};
               }
-              border-color: ${activeColorFn
-                ? activeColorFn(0.3)
-                : Color.borderGray()};
-              box-shadow: none;
+              border-color: ${isVanta
+                ? 'rgba(0,0,0,0.9)'
+                : activeColorFn
+                ? activeColorFn(0.4)
+                : 'var(--ui-border)'};
+              box-shadow: 0 16px 26px -18px ${outlineAccent};
             }
             font-weight: bold;
-            color: ${activeContentColor};
+            color: ${isVanta ? '#ffffff' : activeContentColor};
             a {
-              color: ${activeContentColor};
+              color: ${isVanta ? '#ffffff' : activeContentColor};
             }
           }
           @media (max-width: ${tabletMaxWidth}) {
@@ -257,7 +265,7 @@ export default function HomeMenuItems({
             }
           }
           @media (min-width: 2304px) {
-            border-left: 1px solid ${Color.borderGray()};
+            border-left: 1px solid var(--ui-border);
           }
         `}`}
         style={style}

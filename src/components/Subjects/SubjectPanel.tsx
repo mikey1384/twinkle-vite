@@ -210,7 +210,7 @@ export default function SubjectPanel({
     <div
       className={css`
         background: #fff;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         margin-top: 1rem;
         font-size: 1.5rem;
         @media (max-width: ${mobileMaxWidth}) {

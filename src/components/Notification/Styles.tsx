@@ -21,7 +21,7 @@ export const container = css`
 
 export const notiFilterBar = css`
   background: #ffffff !important;
-  border: 1px solid ${Color.borderGray(0.65)} !important;
+  border: 1px solid var(--ui-border) !important;
   box-shadow: none !important;
   backdrop-filter: none;
   border-radius: ${wideBorderRadius};
@@ -39,7 +39,7 @@ export const notiFeedListItem = css`
   overflow-wrap: break-word;
   word-break: break-word;
   background: #fff;
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   border-radius: ${wideBorderRadius};
   padding: 1rem 1.2rem;
   margin-bottom: 1.2rem;

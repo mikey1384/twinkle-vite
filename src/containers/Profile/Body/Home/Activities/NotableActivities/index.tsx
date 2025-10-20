@@ -41,6 +41,7 @@ export default function NotableActivities({
 
   return (
     <SectionPanel
+      elevated
       customColorTheme={selectedTheme}
       title={notableActivitiesLabel}
       loaded={!loading}

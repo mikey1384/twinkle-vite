@@ -139,7 +139,7 @@ export default function LeftMenu({
               display: flex;
               flex-direction: column;
               padding: 1rem;
-              border-bottom: 1px solid ${Color.borderGray()};
+              border-bottom: 1px solid var(--ui-border);
             `}
           >
             <ChatFlatButton label="New Group" onClick={onNewButtonClick} />

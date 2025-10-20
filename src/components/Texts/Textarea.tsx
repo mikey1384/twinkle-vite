@@ -195,7 +195,7 @@ export default function Textarea({
           position: relative;
           font-size: 1.7rem;
           padding: 1rem;
-          border: 1px solid ${Color.darkerBorderGray()};
+          border: 1px solid var(--ui-border);
           resize: none;
           touch-action: manipulation;
           &:focus {

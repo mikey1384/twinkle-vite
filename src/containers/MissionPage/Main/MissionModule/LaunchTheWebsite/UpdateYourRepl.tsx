@@ -93,7 +93,7 @@ export default function UpdateYourRepl({
               fontSize: '1.2rem',
               padding: '1rem',
               wordBreak: 'keep-all',
-              border: `1px solid ${Color.borderGray()}`
+              border: '1px solid var(--ui-border)'
             }}
           >
             {copiedLabel}

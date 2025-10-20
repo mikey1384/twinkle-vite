@@ -94,14 +94,14 @@ export default function Body({
         }
       `}
     >
-      <div
-        className={css`
-          width: 100%;
-          border-bottom: 1px solid ${Color.borderGray()};
-          background: #fff;
-          padding: 0.6rem 0;
-        `}
-      >
+        <div
+          className={css`
+            width: 100%;
+            border-bottom: 1px solid var(--ui-border);
+            background: #fff;
+            padding: 0.6rem 0;
+          `}
+        >
         <FilterBar
           style={{ margin: 0 }}
           color={selectedTheme}

@@ -241,7 +241,7 @@ export default function Slide({
           padding-bottom: 2rem;
           margin-top: ${canEdit ? '2rem' : index === 0 ? 0 : '5rem'};
           background: #fff;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: ${borderRadius};
           @media (max-width: ${mobileMaxWidth}) {
             margin-top: ${canEdit ? '1rem' : index === 0 ? 0 : '2rem'};

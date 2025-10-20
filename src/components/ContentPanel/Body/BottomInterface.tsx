@@ -410,7 +410,7 @@ export default function BottomInterface({
                     font-size: 1.2rem;
                     padding: 1rem;
                     word-break: keep-all;
-                    border: 1px solid ${Color.borderGray()};
+                    border: 1px solid var(--ui-border);
                   `}
                 >
                   {copiedLabel}

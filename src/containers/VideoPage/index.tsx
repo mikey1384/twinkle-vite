@@ -326,7 +326,7 @@ export default function VideoPage() {
                 flex-direction: column;
                 background: #fff;
                 margin-top: 1rem;
-                border: 1px solid ${Color.borderGray()};
+                border: 1px solid var(--ui-border);
                 width: 100%;
                 @media (max-width: ${tabletMaxWidth}) {
                   border-left: 0;
@@ -399,7 +399,7 @@ export default function VideoPage() {
             <div
               className={css`
                 background: #fff;
-                border: 1px solid ${Color.borderGray()};
+                border: 1px solid var(--ui-border);
                 padding: 1rem;
                 @media (max-width: ${tabletMaxWidth}) {
                   border-left: 0;

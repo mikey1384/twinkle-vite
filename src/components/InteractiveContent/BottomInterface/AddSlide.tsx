@@ -54,8 +54,7 @@ export default function AddSlide({
         align-items: center;
         justify-content: center;
         width: 100%;
-        border: 1px solid
-          ${forkOptionNotSelected ? Color.logoBlue() : Color.borderGray()};
+        border: 1px solid ${forkOptionNotSelected ? Color.logoBlue() : 'var(--ui-border)'};
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
           border-left: 0;

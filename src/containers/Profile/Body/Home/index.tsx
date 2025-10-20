@@ -97,6 +97,7 @@ export default function Home({
       )}
       <Activities selectedTheme={selectedTheme} profile={profile} />
       <SectionPanel
+        elevated
         customColorTheme={selectedTheme}
         loaded
         title={messageBoardLabel}

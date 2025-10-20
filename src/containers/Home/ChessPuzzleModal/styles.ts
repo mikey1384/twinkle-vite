@@ -217,7 +217,7 @@ export const primaryButton = css`
 export const secondaryButton = css`
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   color: #475569;
-  border: 2px solid #cbd5e1;
+  border: 2px solid var(--ui-border);
   padding: 1.25rem 2rem;
   border-radius: 12px;
   cursor: pointer;

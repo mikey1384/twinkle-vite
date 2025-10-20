@@ -54,7 +54,7 @@ export default function DropdownMenu({
     overflowY: 'scroll',
     WebkitOverflowScrolling: 'touch',
     background: '#ffffff',
-    border: '1px solid #e5e7eb',
+    border: '1px solid var(--ui-border)',
     borderRadius: 10,
     boxShadow: '0 10px 24px rgba(0,0,0,0.15)',
     padding: '0.25rem 0',

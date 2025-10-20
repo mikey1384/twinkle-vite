@@ -20,7 +20,7 @@ export const radiusSmall = '6px';
 // Shared card container style
 export const cardCls = css`
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-border);
   border-radius: ${radiusCard};
   padding: 1rem;
 
@@ -34,7 +34,7 @@ export const analysisBadgeCls = css`
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem 0.6rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ui-border);
   background: #f8fafc;
   color: #0f172a;
   border-radius: 9999px;
@@ -82,7 +82,7 @@ export const returnToStartBtnCls = css`
   font-weight: 700;
   color: #0f172a;
   background: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-border);
   border-radius: 6px;
   padding: 0.2rem 0.5rem;
   cursor: pointer;
@@ -117,7 +117,7 @@ export const containerCls = css`
   padding: 2rem;
   box-sizing: border-box;
   background: ${surface};
-  border: 1px solid ${borderSubtle};
+  border: 1px solid var(--ui-border);
   border-radius: ${radiusCard};
   box-shadow: ${shadowCard};
   transition: box-shadow 0.3s ease;

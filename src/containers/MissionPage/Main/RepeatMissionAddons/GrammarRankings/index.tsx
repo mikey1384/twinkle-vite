@@ -67,7 +67,7 @@ export default function GrammarRankings({
       )}
       <div
         className={css`
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: ${borderRadius};
           @media (max-width: ${mobileMaxWidth}) {
             border-left: 0;

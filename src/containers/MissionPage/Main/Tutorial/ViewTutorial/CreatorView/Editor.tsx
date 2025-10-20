@@ -59,7 +59,7 @@ export default function Editor({
       <div
         style={{
           marginTop: '2rem',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           borderRadius,
           padding: '1rem'
         }}

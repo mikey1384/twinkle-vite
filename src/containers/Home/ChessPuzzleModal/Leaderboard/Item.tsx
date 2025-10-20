@@ -44,7 +44,7 @@ const rowCss = (isMe: boolean) => css`
   justify-content: space-between;
   align-items: center;
   background: ${isMe ? '#eef2ff' : '#fff'};
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ui-border);
   border-radius: 10px;
   padding: 0.75rem 1rem;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);

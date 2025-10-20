@@ -362,7 +362,7 @@ const bottomBarCss = css`
   justify-content: center;
   padding: 1rem;
   background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-border);
   border-radius: 8px;
   min-height: 74px;
 

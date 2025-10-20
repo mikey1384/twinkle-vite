@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import KarmaStatus from './KarmaStatus';
 import ItemPanel from './ItemPanel';
 import ChangePassword from './ChangePassword';
@@ -14,10 +14,9 @@ import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import localize from '~/constants/localize';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import HomeSectionHeader from '~/components/HomeSectionHeader';
 
 const changePasswordLabel = localize('changePassword');
 const changePasswordDescriptionLabel = localize('changePasswordDescription');
@@ -36,16 +35,7 @@ const contentWrapperClass = css`
   padding: 1rem 0;
 `;
 
-const headingPanelExtraClass = css`
-  margin-bottom: 2rem;
-  padding: 1.6rem 2rem;
-`;
-
-const headingLabelClass = css`
-  font-size: 2rem;
-  font-weight: bold;
-  line-height: 1.5;
-`;
+const headingMargin = { marginBottom: '2rem' } as React.CSSProperties;
 
 export default function Store() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
@@ -62,17 +52,7 @@ export default function Store() {
   const donatedCoins = useKeyContext((v) => v.myState.donatedCoins);
   const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
   const userId = useKeyContext((v) => v.myState.userId);
-  const { panelVars } = useHomePanelVars(0.08);
-  const headingPanelStyle = useMemo(
-    () =>
-      ({
-        ...panelVars,
-        ['--home-panel-border' as const]: Color.borderGray(0.65),
-        ['--home-panel-padding' as const]: '1.6rem 2rem',
-        ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem'
-      }) as React.CSSProperties,
-    [panelVars]
-  );
+  
 
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
@@ -124,17 +104,7 @@ export default function Store() {
 
   return (
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
-      <div
-        className={cx(homePanelClass, headingPanelExtraClass)}
-        style={headingPanelStyle}
-      >
-        <p
-          className={headingLabelClass}
-          style={{ fontWeight: 'bold', fontSize: '2.5rem' }}
-        >
-          {settingsLabel}
-        </p>
-      </div>
+      <HomeSectionHeader title={settingsLabel} style={headingMargin} />
       {!userId ? (
         <HomeLoginPrompt />
       ) : (

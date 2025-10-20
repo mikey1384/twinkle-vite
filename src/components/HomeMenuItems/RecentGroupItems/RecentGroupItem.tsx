@@ -37,7 +37,7 @@ export default function RecentGroupItem({
     [activeColorFn]
   );
   const hoverBorderColor = useMemo(
-    () => (activeColorFn ? activeColorFn(0.35) : Color.borderGray()),
+    () => (activeColorFn ? activeColorFn(0.35) : 'var(--ui-border-weak)'),
     [activeColorFn]
   );
 

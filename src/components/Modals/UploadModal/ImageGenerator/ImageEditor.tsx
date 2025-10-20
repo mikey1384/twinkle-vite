@@ -348,7 +348,7 @@ export default function ImageEditor({
             align-items: center;
             gap: 1rem;
             padding-bottom: 1rem;
-            border-bottom: 1px solid ${Color.borderGray()};
+            border-bottom: 1px solid var(--ui-border);
           `}
         >
           <h3
@@ -396,7 +396,7 @@ export default function ImageEditor({
                 justify-content: flex-end;
                 padding: 1rem;
                 background: white;
-                border: 1px solid ${Color.borderGray()};
+                border: 1px solid var(--ui-border);
                 border-radius: 12px;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
               `}
@@ -459,7 +459,7 @@ export default function ImageEditor({
             className={css`
               background: white;
               cursor: ${getCursor()};
-              border: 2px solid ${Color.borderGray()};
+              border: 2px solid var(--ui-border);
               border-radius: 8px;
               max-width: 100%;
               max-height: 100%;
@@ -487,7 +487,7 @@ export default function ImageEditor({
                 className={css`
                   width: 24px;
                   height: 24px;
-                  border: 2px solid ${Color.borderGray()};
+                  border: 2px solid var(--ui-border);
                   border-top: 2px solid ${Color.logoBlue()};
                   border-radius: 50%;
                   animation: spin 0.8s linear infinite;
@@ -520,7 +520,7 @@ export default function ImageEditor({
             gap: 1rem;
             justify-content: flex-end;
             padding-top: 1rem;
-            border-top: 1px solid ${Color.borderGray()};
+            border-top: 1px solid var(--ui-border);
           `}
         >
           <button
@@ -528,7 +528,7 @@ export default function ImageEditor({
             className={css`
               background: transparent;
               color: ${Color.darkGray()};
-              border: 1px solid ${Color.borderGray()};
+              border: 1px solid var(--ui-border);
               padding: 0.75rem 1.5rem;
               border-radius: 8px;
               cursor: pointer;

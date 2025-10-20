@@ -129,7 +129,7 @@ export default function WantPanel({
         width: '100%',
         borderRadius,
         fontFamily: 'Roboto, monospace',
-        border: `1px solid ${Color.borderGray()}`,
+        border: '1px solid var(--ui-border)',
         ...style
       }}
     >
@@ -146,7 +146,7 @@ export default function WantPanel({
             fontWeight: 'bold',
             fontFamily: 'Roboto, monospace',
             textAlign: 'center',
-            borderBottom: `1px solid ${Color.borderGray()}`
+            borderBottom: '1px solid var(--ui-border)'
           }}
         >
           <span style={{ marginRight: '1rem' }}>in exchange for...</span>

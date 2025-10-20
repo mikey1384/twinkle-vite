@@ -17,7 +17,7 @@ export default function PeopleFilterBar({
   return (
     <div
       className={css`
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         @media (max-width: ${mobileMaxWidth}) {
           border-right: 0;
           border-left: 0;

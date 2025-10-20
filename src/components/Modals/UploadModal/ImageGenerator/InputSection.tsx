@@ -30,7 +30,7 @@ export default function InputSection({
         border-radius: 16px;
         padding: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid #e0e0e0;
+        border: 1px solid var(--ui-border);
 
         @media (min-width: 768px) {
           padding: 1.5rem;
@@ -94,7 +94,7 @@ export default function InputSection({
             className={css`
               width: 100%;
               padding: 0.875rem 1rem;
-              border: 2px solid #e0e0e0;
+              border: 2px solid var(--ui-border);
               border-radius: 12px;
               font-size: 0.95rem;
               outline: none;

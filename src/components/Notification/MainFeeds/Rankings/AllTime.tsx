@@ -78,7 +78,7 @@ export default function AllTime({
           <div
             className={css`
               border-radius: ${borderRadius};
-              border: 1px solid ${Color.borderGray()};
+              border: 1px solid var(--ui-border);
               background: #fff;
               padding: 1rem;
               @media (max-width: ${mobileMaxWidth}) {

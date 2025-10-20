@@ -201,7 +201,7 @@ export default function Header({
             bottom: 0;
             box-shadow: none;
             height: 7rem;
-            border-top: 1px solid ${Color.borderGray()};
+            border-top: 1px solid var(--ui-border);
           }
         `}`}
         style={{

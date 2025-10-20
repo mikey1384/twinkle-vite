@@ -37,7 +37,7 @@ export default function Code({
             style={{
               ...defaultStyle,
               marginTop: 0,
-              border: `1px solid ${Color.borderGray()}`,
+            border: '1px solid var(--ui-border)',
               ...style
             }}
             ref={codeRef}

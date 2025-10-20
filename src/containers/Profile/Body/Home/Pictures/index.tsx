@@ -196,6 +196,7 @@ export default function Pictures({
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/index">
       {pictures && pictures.length > 0 ? (
         <SectionPanel
+          elevated
           button={menuButtons}
           customColorTheme={selectedTheme}
           loaded

@@ -79,7 +79,7 @@ export default function MyOffer({
         style={{
           marginTop: '0.5rem',
           padding: '2rem',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',

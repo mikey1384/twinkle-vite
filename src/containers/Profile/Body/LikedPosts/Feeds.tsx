@@ -131,11 +131,17 @@ export default function Feeds({
             className={css`
               margin-top: 1rem;
               width: 50%;
+              margin-left: 21rem;
+              margin-right: 2rem;
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
+                margin-left: 0;
+                margin-right: 0;
               }
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
+                margin-left: 0;
+                margin-right: 0;
               }
             `}
           >
@@ -205,6 +211,8 @@ export default function Feeds({
             />
           </div>
           <SideMenu
+            className="desktop"
+            style={{ alignSelf: 'flex-start' }}
             menuItems={[
               { key: 'all', label: 'All' },
               { key: 'video', label: 'Videos' },

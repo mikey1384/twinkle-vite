@@ -50,7 +50,7 @@ export default function MyRank({
         marginBottom: myId ? '1rem' : 0,
         borderBottom:
           !(rank > 0 && rank < 4) && noBorderRadius
-            ? `1px solid ${Color.borderGray()}`
+            ? '1px solid var(--ui-border)'
             : '',
         background: myId
           ? rank > 0
@@ -68,7 +68,7 @@ export default function MyRank({
         padding: 1rem;
         border: ${(rank > 0 && rank < 4) || noBorderRadius
           ? ''
-          : `1px solid ${Color.borderGray()}`};
+          : '1px solid var(--ui-border)'};
         border-radius: ${!noBorderRadius ? borderRadius : ''};
         p {
           font-weight: bold;

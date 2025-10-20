@@ -169,7 +169,7 @@ const callButtonClass = css`
       ${Color.borderGray(0.4)} 0%,
       ${Color.borderGray()} 100%
     );
-    border-color: ${Color.borderGray()};
+    border-color: var(--ui-border);
     box-shadow: none;
     color: ${Color.gray()};
     transform: translateY(-50%);

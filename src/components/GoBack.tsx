@@ -36,7 +36,7 @@ export default function GoBack({
         transition: background 0.4s;
         line-height: 1.7;
         ${bordered
-          ? `border: 1px solid ${Color.borderGray()}; border-radius: ${borderRadius};`
+          ? `border: 1px solid var(--ui-border); border-radius: ${borderRadius};`
           : ''}
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.7rem;

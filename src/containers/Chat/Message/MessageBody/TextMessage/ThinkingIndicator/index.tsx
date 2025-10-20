@@ -36,7 +36,7 @@ export default function ThinkingIndicator({
           ${Color.wellGray(0.3)} 0%,
           ${Color.wellGray(0.1)} 100%
         );
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: 12px;
         display: flex;
         align-items: center;

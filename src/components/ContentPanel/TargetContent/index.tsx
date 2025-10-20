@@ -61,7 +61,7 @@ const targetContentCSS = css`
   overflow-wrap: break-word;
   word-break: break-word;
   border-radius: ${borderRadius};
-  border: 1px solid ${Color.darkerBorderGray()};
+  border: 1px solid var(--ui-border);
   padding: 2rem 0 0.5rem 0;
   background: ${Color.whiteGray()};
   margin-top: -1rem;

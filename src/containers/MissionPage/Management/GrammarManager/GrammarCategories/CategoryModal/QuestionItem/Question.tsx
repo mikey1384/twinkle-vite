@@ -7,7 +7,7 @@ export default function Question({ question }: { question: any }) {
     <div
       style={{
         padding: '1rem',
-        border: `1px solid ${Color.borderGray()}`
+        border: '1px solid var(--ui-border)'
       }}
     >
       {question.content}

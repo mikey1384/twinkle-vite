@@ -22,7 +22,7 @@ export default function ShowMoreCardsButton({
           marginLeft: '2rem',
           borderRadius,
           cursor: onClick ? 'pointer' : 'inherit',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           fontWeight: 'bold',
           color: Color.black(),
           marginBottom: '3rem',

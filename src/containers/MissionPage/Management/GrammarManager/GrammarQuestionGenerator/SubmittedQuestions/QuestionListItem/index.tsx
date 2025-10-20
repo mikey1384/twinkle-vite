@@ -45,7 +45,7 @@ export default function QuestionListItem({
         background: #fff;
         border-radius: ${borderRadius};
         padding: 1.5rem 1rem 1.5rem 1rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         @media (max-width: ${mobileMaxWidth}) {
           border-left: 0;
           border-right: 0;

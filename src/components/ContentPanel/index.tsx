@@ -20,7 +20,7 @@ import localize from '~/constants/localize';
 const urlCss = css`
   padding: 1rem;
   background: #fff;
-  border: 1px solid ${Color.borderGray(0.5)};
+  border: 1px solid var(--ui-border-weak);
   border-radius: ${wideBorderRadius};
   margin-top: 0.8rem;
   @media (max-width: ${mobileMaxWidth}) {
@@ -31,7 +31,7 @@ const urlCss = css`
 const userCommentCss = css`
   cursor: pointer;
   background: #fff;
-  border: 1px solid ${Color.borderGray(0.5)};
+  border: 1px solid var(--ui-border-weak);
   border-radius: ${wideBorderRadius};
   margin-top: 0.8rem;
   padding: 1rem;
@@ -213,7 +213,7 @@ export default function ContentPanel({
     () => css`
       background: #fff;
       width: 100%;
-      border: 1px solid ${Color.borderGray(0.5)};
+      border: 1px solid var(--ui-border-weak);
       border-radius: ${wideBorderRadius};
       &:last-child {
         margin-bottom: 0;

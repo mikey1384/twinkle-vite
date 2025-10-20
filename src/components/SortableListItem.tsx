@@ -52,7 +52,7 @@ export default function SortableListItem({
       ref={drag(drop(Draggable)) as any}
       style={{
         opacity,
-        borderTop: index === 0 ? `1px solid ${Color.borderGray()}` : '',
+        borderTop: index === 0 ? '1px solid var(--ui-border)' : '',
         color: Color.darkerGray()
       }}
     >

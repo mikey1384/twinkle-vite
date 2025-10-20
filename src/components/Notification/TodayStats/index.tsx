@@ -10,7 +10,6 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import { themedCardBase } from '~/theme/themedCard';
-import { Color } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { useRoleColor } from '~/theme/useRoleColor';
 
@@ -105,7 +104,7 @@ export default function TodayStats({
           width: '100%',
           ...cardVars,
           ['--themed-card-bg' as any]: '#ffffff',
-          ['--themed-card-border' as any]: Color.borderGray(0.6)
+          ['--themed-card-border' as any]: 'var(--ui-border)'
         }}
       >
         {todayStats?.loaded ? (

@@ -24,7 +24,7 @@ const Styles = {
     > nav {
       display: flex;
       width: 100%;
-      border: 1px solid ${Color.borderGray()};
+      border: 1px solid var(--ui-border);
       margin-bottom: -1px;
       > main {
         position: relative;

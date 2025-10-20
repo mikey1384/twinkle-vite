@@ -91,7 +91,7 @@ export default function AwardUserAchievementModal({
                       background-color: ${hasAchievement
                         ? Color.highlightGray()
                         : Color.whiteGray()};
-                      border: 1px solid #e0e0e0;
+                      border: 1px solid var(--ui-border);
                       border-radius: 4px;
                       transition: all 0.2s ease-in-out;
                       opacity: ${hasAchievement ? 0.7 : 1};

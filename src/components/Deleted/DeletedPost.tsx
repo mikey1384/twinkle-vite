@@ -96,7 +96,7 @@ export default function DeletedPost({
       }}
       className={css`
         border-radius: ${borderRadius};
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         background: '#fff';
         .label {
           color: ${Color.black()};
@@ -387,8 +387,8 @@ export default function DeletedPost({
               style={{
                 padding: '1rem',
                 background: Color.ivory(),
-                borderTop: `1px solid ${Color.borderGray()}`,
-                borderBottom: `1px solid ${Color.borderGray()}`
+                borderTop: '1px solid var(--ui-border)',
+                borderBottom: '1px solid var(--ui-border)'
               }}
             >
               {secretAnswer}

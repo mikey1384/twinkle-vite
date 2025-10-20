@@ -23,11 +23,11 @@ export default function ChoiceList({
         flex-direction: column;
         width: 100%;
         nav {
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-top: none;
         }
         nav:first-of-type {
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-top-left-radius: ${borderRadius};
           border-top-right-radius: ${borderRadius};
           section {

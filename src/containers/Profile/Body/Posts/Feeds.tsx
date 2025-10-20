@@ -200,11 +200,17 @@ export default function Feeds({
             className={css`
               margin-top: 1rem;
               width: ${section === 'watched' ? '55%' : '50%'};
+              margin-left: ${section === 'watched' ? '0' : '21rem'};
+              margin-right: ${section === 'watched' ? '0' : '2rem'};
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
+                margin-left: 0;
+                margin-right: 0;
               }
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
+                margin-left: 0;
+                margin-right: 0;
               }
             `}
           >
@@ -305,9 +311,8 @@ export default function Feeds({
           </div>
           {section !== 'watched' && (
             <SideMenu
-              className={`desktop ${css`
-                width: 10%;
-              `}`}
+              className={`desktop`}
+              style={{ alignSelf: 'flex-start' }}
               menuItems={[
                 { key: 'all', label: 'All' },
                 { key: 'comment', label: 'Comments' },

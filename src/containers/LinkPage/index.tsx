@@ -303,7 +303,7 @@ export default function LinkPage() {
         className={css`
           width: 60%;
           background-color: #fff;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           padding-bottom: 1rem;
           @media (max-width: ${mobileMaxWidth}) {
             border-top: 0;
@@ -542,7 +542,7 @@ export default function LinkPage() {
           pinnedCommentId
         }}
         className={css`
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           padding: 1rem;
           width: 60%;
           background: #fff;

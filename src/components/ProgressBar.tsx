@@ -48,7 +48,7 @@ export default function ProgressBar({
       <div style={{ width: '100%', ...style }}>
         <div
           className={`${css`
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             border-radius: ${borderRadius};
             height: 2.2rem;
             line-height: 1rem;

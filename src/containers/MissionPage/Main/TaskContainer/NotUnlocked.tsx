@@ -16,7 +16,7 @@ export default function NotUnlocked({
           text-align: center;
           padding: 5rem 1rem;
           background: #fff;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: ${borderRadius};
           font-size: 2rem;
           font-weight: bold;

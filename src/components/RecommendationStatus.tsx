@@ -117,7 +117,7 @@ export default function RecommendationStatus({
       font-size: 1.4rem;
       background: ${isRewardable ? rewardableRecommendationColor : '#fff'};
       border: 1px solid ${
-        isRewardable ? rewardableBorderColor : Color.borderGray(0.5)
+        isRewardable ? rewardableBorderColor : 'var(--ui-border-weak)'
       };
       border-radius: ${wideBorderRadius};
       color: ${isRewardable ? Color.black() : Color.darkBlueGray()};

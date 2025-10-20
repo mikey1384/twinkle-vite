@@ -108,7 +108,7 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
           top: ${position.y}px;
           left: ${position.x}px;
           background-color: #f5f7fa;
-          border: 1px solid #ccc;
+          border: 1px solid var(--ui-border);
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           height: 120px;

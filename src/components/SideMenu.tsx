@@ -14,16 +14,25 @@ export default function SideMenu({
   className,
   style,
   variant = 'default',
-  placement = 'left'
+  placement = 'left',
+  positionMode = 'fixed',
+  topOffset,
+  rightOffset,
+  leftOffset
 }: {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   variant?: 'default' | 'card';
   placement?: 'left' | 'right';
+  positionMode?: 'fixed' | 'sticky' | 'static';
+  topOffset?: string;
+  rightOffset?: string;
+  leftOffset?: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeName = (profileTheme || 'logoBlue') as string;
+  const isVanta = themeName === 'vantaBlack';
   const isCardVariant = variant === 'card';
   const isRight = placement === 'right';
 
@@ -40,34 +49,46 @@ export default function SideMenu({
     fallback: themeName || 'logoBlue'
   });
   const activeAccent =
-    homeMenuItemActiveRole.getColor() || Color.logoBlue();
-  const activeBlockBg =
-    homeMenuItemActiveRole.getColor(0.22) || Color.highlightGray();
+    isVanta ? '#ffffff' : homeMenuItemActiveRole.getColor() || Color.logoBlue();
+  const activeBlockBg = isVanta
+    ? 'rgba(0,0,0,0.7)'
+    : homeMenuItemActiveRole.getColor(0.22) || Color.highlightGray();
   const hoverAccent =
     homeMenuItemActiveRole.getColor() || Color.logoBlue();
-  const outlineAccent =
-    homeMenuItemActiveRole.getColor(0.4) || Color.borderGray();
+  const outlineAccent = isVanta
+    ? 'rgba(0,0,0,0.9)'
+    : homeMenuItemActiveRole.getColor(0.4) || 'var(--ui-border)';
   const hoverTranslate = isRight ? '-4px' : '4px';
 
   return (
     <div
       style={style}
       className={`${className ? `${className} ` : ''}${css`
-        top: CALC(50vh - 11rem);
+        ${positionMode === 'sticky'
+          ? `position: sticky; top: ${topOffset ?? '1rem'};`
+          : positionMode === 'static'
+          ? `position: static;`
+          : `position: fixed; top: ${topOffset ?? 'CALC(50vh - 11rem)'}; ${
+              isRight
+                ? `right: ${rightOffset ?? '2rem'};`
+                : `left: ${leftOffset ?? '2rem'};`
+            }`}
         height: auto;
         width: 19rem;
         display: flex;
-        position: fixed;
         z-index: 20;
-        ${isRight ? 'right: 2rem;' : 'left: 2rem;'}
         justify-content: ${isCardVariant
-          ? isRight
-            ? 'flex-end'
+          ? positionMode === 'fixed'
+            ? isRight
+              ? 'flex-end'
+              : 'flex-start'
             : 'flex-start'
           : 'center'};
         align-items: ${isCardVariant
-          ? isRight
-            ? 'flex-end'
+          ? positionMode === 'fixed'
+            ? isRight
+              ? 'flex-end'
+              : 'flex-start'
             : 'flex-start'
           : 'center'};
         flex-direction: column;
@@ -112,9 +133,9 @@ export default function SideMenu({
         > nav:hover {
           ${isCardVariant
             ? `
-          background: ${hoverBg};
-          border-color: ${hoverAccent};
-          color: ${hoverAccent};
+          background: ${isVanta ? 'rgba(0,0,0,0.06)' : hoverBg};
+          border-color: ${isVanta ? 'rgba(0,0,0,0.18)' : hoverAccent};
+          color: ${isVanta ? Color.darkGray() : hoverAccent};
           box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
           transform: translateX(${hoverTranslate});
           `
@@ -166,9 +187,9 @@ export default function SideMenu({
         > a:hover {
           ${isCardVariant
             ? `
-          background: ${hoverBg};
-          border-color: ${hoverAccent};
-          color: ${hoverAccent};
+          background: ${isVanta ? 'rgba(0,0,0,0.06)' : hoverBg};
+          border-color: ${isVanta ? 'rgba(0,0,0,0.18)' : hoverAccent};
+          color: ${isVanta ? Color.darkGray() : hoverAccent};
           box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
           transform: translateX(${hoverTranslate});
           `

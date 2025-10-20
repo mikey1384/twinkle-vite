@@ -50,7 +50,7 @@ export default function OfferPriceListItem({
           align-items: center;
           font-size: 1.6rem;
           cursor: pointer;
-          border-bottom: 1px solid ${Color.borderGray()};
+          border-bottom: 1px solid var(--ui-border);
           &:hover {
             background-color: ${Color.highlightGray()};
           }

@@ -22,7 +22,7 @@ export default function QuestionListItem({
           font-size: 1.7rem;
         }
         background: #fff;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         padding: 1rem;
         @media (max-width: ${mobileMaxWidth}) {

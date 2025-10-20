@@ -115,10 +115,10 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
               width: 80%;
               height: 50vh;
               overflow: scroll;
-              border: 1px solid ${Color.borderGray()};
+              border: 1px solid var(--ui-border);
               nav {
                 padding: 1.5rem;
-                border-bottom: 1px solid ${Color.borderGray()};
+                border-bottom: 1px solid var(--ui-border);
                 border-left: none;
                 border-right: none;
                 &:last-of-type {

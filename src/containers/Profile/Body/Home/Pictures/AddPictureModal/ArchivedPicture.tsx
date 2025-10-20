@@ -55,7 +55,7 @@ export default function ArchivedPicture({
           : '',
         border: isSelected
           ? `5px solid ${Color[itemSelectedColor](itemSelectedOpacity)}`
-          : `1px solid ${Color.borderGray()}`
+          : '1px solid var(--ui-border)'
       }}
     >
       <img

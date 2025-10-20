@@ -420,7 +420,7 @@ function ProfilePanel({
     intensity: 0.05,
     blendWeight: 0.98,
     themeName,
-    borderFallback: Color.borderGray(0.45),
+    borderFallback: 'var(--ui-border)',
     fallbackColor: 'logoBlue'
   });
   const heroBackground = useMemo(() => panelAccentColor, [panelAccentColor]);
@@ -429,7 +429,7 @@ function ProfilePanel({
       ({
         ...cardVars,
         ['--themed-card-bg' as const]: cardBg,
-        ['--themed-card-border' as const]: Color.borderGray(0.6),
+        ['--themed-card-border' as const]: 'var(--ui-border)',
         ['--profile-panel-hero-bg' as const]: heroBackground,
         ['--profile-panel-accent' as const]: panelAccentColor
       } as React.CSSProperties),

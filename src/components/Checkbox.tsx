@@ -50,7 +50,7 @@ export default function Checkbox({
         onClick={onClick}
         style={{
           borderRadius: innerBorderRadius,
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           width: '2rem',
           height: '2rem',
           display: 'flex',

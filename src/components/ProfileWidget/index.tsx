@@ -16,7 +16,7 @@ const container = css`
   border-radius: ${wideBorderRadius};
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border: 1px solid ${Color.borderGray(0.65)};
+  border: 1px solid var(--ui-border);
   background: var(--profile-widget-bg, #f6f7fd);
   box-shadow: none;
   backdrop-filter: blur(6px);
@@ -30,7 +30,7 @@ const container = css`
     gap: 1.6rem;
     align-items: center;
     background: rgba(255, 255, 255, 0.99);
-    border-bottom: 1px solid ${Color.borderGray(0.65)};
+    border-bottom: 1px solid var(--ui-border);
     cursor: pointer;
     transition: background 0.25s ease;
     .widget__profile-pic {
@@ -87,7 +87,7 @@ const container = css`
     padding: 0.7rem 1.2rem;
     border-radius: 1.1rem;
     background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(148, 163, 184, 0.4);
+    border: 1px solid var(--ui-border);
     box-shadow: none;
     font-weight: 600;
     color: ${Color.darkerGray()};
@@ -102,10 +102,7 @@ const container = css`
     &:hover {
       transform: translateY(-2px);
       background: rgba(255, 255, 255, 0.99);
-      border-color: var(
-        --profile-widget-accent-border,
-        ${Color.borderGray()}
-      );
+      border-color: var(--ui-border-strong);
       box-shadow: none;
       color: var(--profile-widget-accent, ${Color.logoBlue()});
       .navigation-icon {
@@ -163,10 +160,7 @@ export default function ProfileWidget() {
     return homeMenuItemActiveRole.getColor() || defaultAccent;
   }, [homeMenuItemActiveRole, defaultAccent]);
   const accentBorderColor = React.useMemo(() => {
-    return (
-      homeMenuItemActiveRole.getColor(0.4) ||
-      (defaultAccent ? Color.borderGray(0.65) : Color.borderGray())
-    );
+    return homeMenuItemActiveRole.getColor(0.4) || 'var(--ui-border)';
   }, [homeMenuItemActiveRole, defaultAccent]);
 
   return (

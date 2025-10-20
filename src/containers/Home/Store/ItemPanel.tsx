@@ -45,7 +45,7 @@ export default function ItemPanel({
   upgradeIcon?: React.ReactNode;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const { accentColor, accentTint, panelVars, themeStyles } = useHomePanelVars();
+  const { accentColor, accentTint, panelVars, themeStyles } = useHomePanelVars(0.08, { neutralSurface: true });
   const requiredKarmaPoints = useMemo(() => {
     if (!isLeveled) {
       return karmaPointTable[itemKey];
@@ -113,8 +113,8 @@ export default function ItemPanel({
     );
   }, [karmaPoints, notUpgraded, displayedRequiredKarmaPoints]);
   const baseBorderColor = useMemo(() => {
-    if (locked) return Color.borderGray(0.75);
-    return Color.borderGray(0.65);
+    if (locked) return 'var(--ui-border)';
+    return 'var(--ui-border)';
   }, [locked]);
 
   const panelStyle = useMemo(
@@ -126,7 +126,7 @@ export default function ItemPanel({
         ['--home-panel-gap' as const]: '1.4rem',
         ['--home-panel-padding' as const]: '2.2rem 2.4rem',
         ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem',
-        ['--home-panel-card-border' as const]: Color.borderGray(0.65),
+        ['--home-panel-card-border' as const]: 'var(--ui-border)',
         ['--home-panel-tint' as const]:
           themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
         ...style

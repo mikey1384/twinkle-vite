@@ -51,7 +51,7 @@ export default function Body({
         className={css`
           height: 100%;
           width: ${isUsingCollectSection ? '62vw' : '66vw'};
-          border-left: 1px solid ${Color.borderGray()};
+          border-left: 1px solid var(--ui-border);
           padding: 0;
           position: relative;
           background: #fff;

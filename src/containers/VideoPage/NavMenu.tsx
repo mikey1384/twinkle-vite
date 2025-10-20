@@ -176,7 +176,7 @@ export default function NavMenu({
         > section {
           padding: 1rem;
           background: #fff;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           margin-bottom: 1rem;
           p {
             margin-bottom: 1rem;
@@ -204,7 +204,7 @@ export default function NavMenu({
     >
       <FilterBar
         style={{
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           borderBottom: 0
         }}
         className="desktop"

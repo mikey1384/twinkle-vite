@@ -49,7 +49,7 @@ export default function Picture({
         opacity: ${isDragging ? 0.5 : 1};
         background: black;
         position: relative;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         width: ${width}%;
         padding-bottom: CALC(${width}% - 2px);

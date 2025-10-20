@@ -11,7 +11,7 @@ const loadingContainerClass = css`
   align-items: center;
   justify-content: center;
   background: ${Color.white(0.95)};
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
   box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
 `;
@@ -23,7 +23,7 @@ const alignGridClass = css`
   align-items: stretch;
   justify-items: stretch;
   background: ${Color.white(0.95)};
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
   box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
   position: relative;

@@ -182,7 +182,7 @@ export default function Vocabulary({
           height: '6.5rem',
           background: Color.inputGray(),
           padding: '1rem',
-          borderTop: `1px solid ${Color.borderGray()}`,
+          borderTop: '1px solid var(--ui-border)',
           paddingBottom: kbInset ? kbInset : undefined
         }}
       >

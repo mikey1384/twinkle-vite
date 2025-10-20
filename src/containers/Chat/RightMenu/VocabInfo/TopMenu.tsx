@@ -13,7 +13,7 @@ export default function TopMenu() {
     <div
       style={{
         height: '50%',
-        borderBottom: `1px solid ${Color.borderGray()}`,
+        borderBottom: '1px solid var(--ui-border)',
         overflow: 'scroll'
       }}
     >

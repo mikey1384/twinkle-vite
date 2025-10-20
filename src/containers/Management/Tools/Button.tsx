@@ -77,7 +77,7 @@ const buttonVariants = {
   secondary: css`
     background-color: #ffffff;
     color: #212529;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--ui-border);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 
     &:hover:not(:disabled) {

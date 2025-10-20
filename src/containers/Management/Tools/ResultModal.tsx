@@ -93,7 +93,7 @@ export default function ResultModal({
                 maxHeight: '50vh',
                 overflowY: 'auto',
                 background: '#f7f7f7',
-                border: '1px solid #ccc',
+                border: '1px solid var(--ui-border)',
                 padding: 10,
                 borderRadius: 4,
                 whiteSpace: 'pre-wrap',

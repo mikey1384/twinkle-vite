@@ -45,7 +45,7 @@ export default function GrammarCategories({
             font-size: 1.5rem;
             background: #fff;
             padding: 1rem 1rem 1.5rem 1rem;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             border-radius: ${borderRadius};
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: 0;

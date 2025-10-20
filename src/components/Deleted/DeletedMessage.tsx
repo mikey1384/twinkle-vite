@@ -86,7 +86,7 @@ export default function DeletedMessage({
       }}
       className={css`
         border-radius: ${borderRadius};
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         background: '#fff';
         .label {
           color: ${Color.black()};

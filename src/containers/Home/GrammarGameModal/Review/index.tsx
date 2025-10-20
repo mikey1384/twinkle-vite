@@ -266,7 +266,7 @@ const containerCls = css`
 
 const itemCls = css`
   background: ${Color.whiteGray()};
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;

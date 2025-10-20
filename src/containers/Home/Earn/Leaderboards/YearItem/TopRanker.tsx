@@ -37,7 +37,7 @@ export default function TopRanker({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           borderBottom: 0,
           borderTopLeftRadius: borderRadius,
           borderTopRightRadius: borderRadius,

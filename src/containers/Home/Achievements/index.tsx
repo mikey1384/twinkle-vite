@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { css, cx } from '@emotion/css';
 import { Color } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
 import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
-import { homePanelClass } from '~/theme/homePanels';
-import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import HomeSectionHeader from '~/components/HomeSectionHeader';
 
 export default function Achievements() {
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
@@ -40,20 +38,7 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
-  const { panelVars } = useHomePanelVars(0.08);
-  const headingPanelStyle = useMemo(
-    () =>
-      ({
-        ...panelVars,
-        ['--home-panel-border' as const]: Color.borderGray(0.65),
-        ['--home-panel-padding' as const]: '1.6rem 2rem',
-        ['--home-panel-mobile-padding' as const]: '1.4rem 1.6rem',
-        // Force neutral text colors (theme-independent)
-        ['--home-panel-color' as const]: Color.darkerGray(),
-        ['--home-panel-heading' as const]: Color.black()
-      }) as React.CSSProperties,
-    [panelVars]
-  );
+  
 
   useEffect(() => {
     if (userId) init();
@@ -95,27 +80,7 @@ export default function Achievements() {
 
   return (
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
-      <div
-        className={cx(
-          homePanelClass,
-          css`
-            margin-bottom: 2rem;
-            padding: 1.6rem 2rem;
-          `
-        )}
-        style={headingPanelStyle}
-      >
-        <p
-          className={css`
-            font-size: 2rem;
-            font-weight: bold;
-            line-height: 1.5;
-          `}
-          style={{ fontWeight: 'bold', fontSize: '2.5rem' }}
-        >
-          Achievements
-        </p>
-      </div>
+      <HomeSectionHeader title="Achievements" style={{ marginBottom: '2rem' }} />
       {!userId ? (
         <HomeLoginPrompt />
       ) : !isAchievementsLoaded ? (
@@ -128,7 +93,7 @@ export default function Achievements() {
                 marginBottom: '4rem',
                 // Force neutral text colors (theme-independent)
                 ['--home-panel-color' as any]: Color.darkerGray(),
-                ['--home-panel-heading' as any]: Color.black()
+                ['--home-panel-heading' as any]: Color.black(),
               }}
             />
           )}

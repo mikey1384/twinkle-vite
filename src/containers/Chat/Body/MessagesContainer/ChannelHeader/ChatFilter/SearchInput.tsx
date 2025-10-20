@@ -28,7 +28,7 @@ export default function SearchInput({
           width: 100%;
           padding: 0.8rem;
           border-radius: ${innerBorderRadius};
-          border: 1px solid #ccc;
+          border: 1px solid var(--ui-border);
           box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
           font-size: 1.2rem;
           @media (max-width: ${mobileMaxWidth}) {

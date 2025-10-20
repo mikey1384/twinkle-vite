@@ -59,7 +59,7 @@ function RightMenu({
           height: 100%;
           position: relative;
           background: #fff;
-          border-left: 1px solid ${Color.borderGray()};
+          border-left: 1px solid var(--ui-border);
           overflow-y: scroll;
           -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {

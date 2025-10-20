@@ -113,7 +113,7 @@ export default function AICards({
           height: 6.5rem;
           background: ${Color.inputGray()};
           padding: 1rem;
-          border-top: 1px solid ${Color.borderGray()};
+          border-top: 1px solid var(--ui-border);
         `}
       >
         <GenerateCardInterface

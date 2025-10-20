@@ -70,7 +70,7 @@ export default function Big({
         isThumb={isThumb}
         isNotification={isNotification}
         data={achievement}
-        style={{ width: '100%' }}
+        style={{ width: '100%', ...style }}
       />
     </div>
   );

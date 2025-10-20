@@ -61,8 +61,8 @@ export default function HomeFilter({
 
   const videoContainerTone = useMemo(() => {
     const base = filterRole.getColor(0.08) || 'rgba(241, 245, 249, 0.92)';
-    const border = filterRole.getColor(0.22) || Color.borderGray(0.5);
-    const hoverBorder = filterRole.getColor(0.32) || Color.borderGray(0.8);
+    const border = filterRole.getColor(0.22) || 'var(--ui-border-weak)';
+    const hoverBorder = filterRole.getColor(0.32) || 'var(--ui-border-strong)';
     const label = '#0f172a';
     const helper = 'rgba(71, 85, 105, 0.9)';
     const icon = filterRole.getColor() || Color.logoBlue();

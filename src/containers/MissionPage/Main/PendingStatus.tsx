@@ -16,7 +16,7 @@ export default function PendingStatus({
       <div
         style={{
           padding: '1rem',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           borderRadius,
           background: Color.ivory(),
           fontSize: '1.7rem',

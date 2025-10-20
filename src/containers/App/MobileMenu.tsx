@@ -66,7 +66,7 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
               <div
                 className={css`
                   font-weight: bold;
-                  border-top: 1px solid ${Color.borderGray()};
+                  border-top: 1px solid var(--ui-border);
                   background: #fff;
                   width: 100%;
                   text-align: center;

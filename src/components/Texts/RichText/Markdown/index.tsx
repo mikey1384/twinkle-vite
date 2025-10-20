@@ -350,7 +350,7 @@ function Markdown({
                           td {
                             text-align: center;
                             width: 33%;
-                            border: 1px solid ${Color.borderGray()};
+                            border: 1px solid var(--ui-border);
                             padding: 0.5rem;
                             white-space: nowrap;
                             &:first-child {
@@ -687,7 +687,7 @@ function Markdown({
                       td {
                         text-align: center;
                         width: 33%;
-                        border: 1px solid ${Color.borderGray()};
+                        border: 1px solid var(--ui-border);
                         padding: 0.5rem;
                         white-space: nowrap;
                         &:first-child {

@@ -71,7 +71,7 @@ export default function Content({
           background: #fff;
           margin-bottom: 1rem;
           padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           padding-top: 0;
           @media (max-width: ${mobileMaxWidth}) {
             border-top: 0;

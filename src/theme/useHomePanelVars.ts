@@ -39,7 +39,11 @@ function blendWithWhite(color: string | undefined, weight: number): string {
   return color;
 }
 
-export function useHomePanelVars(intensity = 0.08) {
+export function useHomePanelVars(
+  intensity = 0.08,
+  options: { neutralSurface?: boolean } = {}
+) {
+  const { neutralSurface = false } = options;
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeName = useMemo<ThemeName>(
     () => (profileTheme || 'logoBlue') as ThemeName,
@@ -79,8 +83,8 @@ export function useHomePanelVars(intensity = 0.08) {
     return Color.logoBlue(0.14);
   }, [themeRoles.sectionPanel?.color]);
   const panelVars = useMemo<HomePanelVars>(() => {
-    const border = Color.borderGray(0.65);
-    const surface = blendWithWhite(
+    const border = 'var(--ui-border)';
+    const surfaceTint = blendWithWhite(
       themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
       0.96
     );
@@ -88,19 +92,20 @@ export function useHomePanelVars(intensity = 0.08) {
       ['--home-panel-bg']: '#ffffff',
       ['--home-panel-tint']:
         themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
-      ['--home-panel-surface']: surface,
+      ['--home-panel-surface']: neutralSurface ? '#ffffff' : surfaceTint,
       ['--home-panel-border']: border,
       ['--home-panel-heading']: headingColor,
       ['--home-panel-accent']: accentColor,
       ['--home-panel-card-border']: border
-    };
+    } as HomePanelVars;
   }, [
     accentColor,
     accentTint,
     headingColor,
     themeStyles,
     themeStyles.border,
-    themeStyles.hoverBg
+    themeStyles.hoverBg,
+    neutralSurface
   ]);
 
   return {

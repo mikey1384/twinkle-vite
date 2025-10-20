@@ -32,7 +32,7 @@ export default function ItemPanel({
         }
       `} ${className}`}
       style={{
-        border: `1px solid ${Color.borderGray()}`,
+        border: '1px solid var(--ui-border)',
         background: '#fff',
         transition: 'border 0.2s, box-shadow 0.2s',
         padding: '1rem',
