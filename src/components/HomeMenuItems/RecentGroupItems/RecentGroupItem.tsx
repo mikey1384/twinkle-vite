@@ -23,6 +23,7 @@ export default function RecentGroupItem({
     () => getThemeStyles(themeName, 0.08).bg,
     [themeName]
   );
+  const isVanta = themeName === 'vantaBlack';
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
   );
@@ -36,9 +37,14 @@ export default function RecentGroupItem({
     () => (activeColorFn ? activeColorFn() : Color.logoBlue()),
     [activeColorFn]
   );
-  const hoverBorderColor = useMemo(
-    () => (activeColorFn ? activeColorFn(0.35) : 'var(--ui-border)'),
-    [activeColorFn]
+  const selectedBorderColor = useMemo(
+    () =>
+      isVanta
+        ? 'rgba(0,0,0,0.9)'
+        : activeColorFn
+        ? activeColorFn(0.4)
+        : 'var(--ui-border)',
+    [activeColorFn, isVanta]
   );
 
   return (
@@ -49,22 +55,22 @@ export default function RecentGroupItem({
         padding: 0.4rem 1rem 0.4rem 2.2rem;
         margin: 0.2rem 1rem;
         border-radius: 0.8rem;
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: transparent;
+        border: 1px solid transparent;
         box-shadow: none;
         cursor: pointer;
         transition: background 0.2s ease, border-color 0.2s ease,
           transform 0.15s ease;
         &:hover {
           background: ${hoverBg};
-          border-color: ${hoverBorderColor};
+          border-color: ${selectedBorderColor};
           box-shadow: none;
           transform: translateX(3px);
           > span {
             color: ${hoverAccentColor};
           }
           > div {
-            border-color: ${hoverBorderColor};
+            border-color: ${selectedBorderColor};
           }
         }
       `}

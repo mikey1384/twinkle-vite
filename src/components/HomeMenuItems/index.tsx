@@ -147,8 +147,8 @@ export default function HomeMenuItems({
               gap: 1.1rem;
               padding: 1.2rem 1.5rem;
               border-radius: ${wideBorderRadius};
-              background: rgba(255, 255, 255, 0.92);
-              border: 1px solid rgba(148, 163, 184, 0.35);
+              background: transparent;
+              border: 1px solid transparent;
               box-shadow: none;
               transition: background 0.18s ease,
                 border-color 0.18s ease, color 0.18s ease, transform 0.06s ease;
@@ -167,7 +167,12 @@ export default function HomeMenuItems({
             transform: translateX(4px);
             .homemenu__item {
               background: ${hoverBg};
-              border-color: ${isVanta ? 'rgba(0,0,0,0.18)' : hoverAccentColor};
+              border-color:
+                ${isVanta
+                  ? 'rgba(0,0,0,0.9)'
+                  : activeColorFn
+                  ? activeColorFn(0.4)
+                  : 'var(--ui-border)'};
               box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
               > .icon,
               > .label {
@@ -194,11 +199,12 @@ export default function HomeMenuItems({
               > .label {
                 color: ${isVanta ? '#ffffff' : activeContentColor};
               }
-              border-color: ${isVanta
-                ? 'rgba(0,0,0,0.9)'
-                : activeColorFn
-                ? activeColorFn(0.4)
-                : 'var(--ui-border)'};
+              border: 1px solid
+                ${isVanta
+                  ? 'rgba(0,0,0,0.9)'
+                  : activeColorFn
+                  ? activeColorFn(0.4)
+                  : 'var(--ui-border)'};
               box-shadow: 0 16px 26px -18px ${outlineAccent};
             }
             font-weight: bold;
