@@ -332,7 +332,9 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     alreadyPostedByOtherUser: { color: 'red' },
     alreadyPostedByThisUser: { color: 'blue' },
     background: { color: pickColor({ gold: 'whiteBlueGray' }, 'whiteGray') },
-    button: { color: pickColor({ gold: 'brownOrange', vantaBlack: 'vantaBlack' }, color) },
+    button: {
+      color: pickColor({ gold: 'brownOrange', vantaBlack: 'vantaBlack' }, color)
+    },
     buttonHovered: { color: pickColor({ gold: 'gold' }, color) },
     byUserIndicator: {
       color: pickColor({ gold: 'darkGold' }, color),
@@ -389,7 +391,10 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
       )
     },
     cover: { color },
-    coverText: { color: 'white', shadow: pickColor({ gold: 'darkBrownOrange' }, '') },
+    coverText: {
+      color: 'white',
+      shadow: pickColor({ gold: 'darkBrownOrange' }, '')
+    },
     todayProgressText: {
       color,
       shadow: pickColor({ gold: 'darkGold' }, '')
@@ -416,9 +421,14 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
       shadow: pickColor({ gold: 'darkBrownOrange' }, '')
     },
     invertedFilterActive: { color },
-    filterActive: { color: pickColor({ gold: 'darkGold', vantaBlack: 'vantaBlack' }, color) },
+    filterActive: {
+      color: pickColor({ gold: 'darkGold', vantaBlack: 'vantaBlack' }, color)
+    },
     generalChat: {
-      color: pickColor({ black: 'darkBlue', vantaBlack: 'darkBlue', gold: 'logoBlue' }, color)
+      color: pickColor(
+        { black: 'darkBlue', vantaBlack: 'darkBlue', gold: 'logoBlue' },
+        color
+      )
     },
     grammarGameScorePerfect: { color: 'brownOrange' },
     grammarGameScoreS: { color: 'gold' },
@@ -428,7 +438,9 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     grammarGameScoreD: { color: 'logoBlue' },
     grammarGameScoreF: { color: 'gray' },
     header: { color: 'white' },
-    homeMenuItemActive: { color: pickColor({ vantaBlack: 'vantaBlack' }, color) },
+    homeMenuItemActive: {
+      color: pickColor({ vantaBlack: 'vantaBlack' }, color)
+    },
     info: {
       color: pickColor(
         {
@@ -517,9 +529,16 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     mission: { color: 'orange' },
     myCollection: { color, shadow: pickColor({ gold: 'darkBrownOrange' }, '') },
     profilePanel: { color },
-    progressBar: { color: pickColor({ green: 'yellowGreen', vantaBlack: 'vantaBlack' }, color) },
+    progressBar: {
+      color: pickColor(
+        { green: 'yellowGreen', vantaBlack: 'vantaBlack' },
+        color
+      )
+    },
     reactionButton: { color, opacity: 0.2 },
-    recommendation: { color: pickColor({ gold: 'passionFruit' }, 'brownOrange') },
+    recommendation: {
+      color: pickColor({ gold: 'passionFruit' }, 'brownOrange')
+    },
     reward: {
       color: pickColor(
         {
@@ -547,10 +566,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     skeuomorphicDisabled: { color, opacity: 0.2 },
     spinner: { color },
     statusMsgLink: {
-      color: pickColor(
-        { orange: 'yellow', red: 'yellow' },
-        'gold'
-      )
+      color: pickColor({ orange: 'yellow', red: 'yellow' }, 'gold')
     },
     statusMsgListItemMarker: {
       color: pickColor({ ivory: 'darkerGray' }, 'white')
@@ -597,7 +613,9 @@ export function applyThemeVars(theme: ThemeName) {
   const tokens = themeRegistry[theme] || themeRegistry.logoBlue;
   const root = document.documentElement;
   const setAlpha = (rgba: string, a: number) => {
-    const m = rgba.match(/rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i);
+    const m = rgba.match(
+      /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+    );
     if (!m) return rgba;
     const [_, r, g, b] = m;
     return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
@@ -607,10 +625,11 @@ export function applyThemeVars(theme: ThemeName) {
   root.style.setProperty('--theme-hover-bg', tokens.general.hoverBg);
   root.style.setProperty('--theme-text', tokens.general.text);
   root.style.setProperty('--theme-border', tokens.general.border);
-  // Central app borders derived from theme border
-  root.style.setProperty('--ui-border', tokens.general.border);
-  root.style.setProperty('--ui-border-weak', setAlpha(tokens.general.border, 0.35));
-  root.style.setProperty('--ui-border-strong', setAlpha(tokens.general.border, 0.8));
+  root.style.setProperty('--ui-border', setAlpha(tokens.general.border, 0.35));
+  root.style.setProperty(
+    '--ui-border-strong',
+    setAlpha(tokens.general.border, 0.8)
+  );
   root.style.setProperty('--theme-disabled-bg', tokens.general.disabledBg);
   root.style.setProperty(
     '--theme-disabled-border',
@@ -643,7 +662,9 @@ export function applyThemeVars(theme: ThemeName) {
 export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
   const t = themeRegistry[theme] || themeRegistry.logoBlue;
   const setAlpha = (rgba: string, a: number) => {
-    const m = rgba.match(/rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i);
+    const m = rgba.match(
+      /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+    );
     if (!m) return rgba;
     const [_, r, g, b] = m;
     return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
@@ -653,8 +674,7 @@ export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
     ['--theme-hover-bg']: t.general.hoverBg,
     ['--theme-text']: t.general.text,
     ['--theme-border']: t.general.border,
-    ['--ui-border']: t.general.border,
-    ['--ui-border-weak']: setAlpha(t.general.border, 0.35),
+    ['--ui-border']: setAlpha(t.general.border, 0.35),
     ['--ui-border-strong']: setAlpha(t.general.border, 0.8),
     ['--theme-disabled-bg']: t.general.disabledBg,
     ['--theme-disabled-border']: t.general.disabledBorder,

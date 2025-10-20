@@ -22,10 +22,16 @@ const DEFAULT_CARD_BORDER = 'rgba(204, 204, 204, 0.65)';
 
 const container = css`
   ${themedCardBase};
-  position: relative;
   padding: 1.6rem 2rem;
-  text-align: center;
-  overflow: hidden;
+  background: #ffffff;
+`;
+
+const header = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 0.5rem;
 `;
 
 export default function TodayStats({
@@ -101,52 +107,31 @@ export default function TodayStats({
         className={container}
         style={{
           marginBottom: '1rem',
-          width: '100%',
           ...cardVars,
-          ['--themed-card-bg' as any]: '#ffffff',
           ['--themed-card-border' as any]: 'var(--ui-border)'
         }}
       >
         {todayStats?.loaded ? (
           <div>
-            <div
-              className={css`
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                width: 100%;
-                margin-bottom: 0.5rem;
-              `}
-            >
+            <div className={header}>
               <div style={{ flex: 1 }}></div>
               <div style={{ flex: 1, textAlign: 'center' }}>
                 <b
                   style={{
                     fontSize: '1.7rem',
                     color: todayProgressColor,
-                    textShadow: 'none',
                     whiteSpace: 'nowrap'
                   }}
                 >{`Today's Progress`}</b>
-                <div style={{ marginTop: '0.3rem', width: '100%' }}>
+                <div style={{ marginTop: '0.3rem' }}>
                   <p style={{ fontWeight: 'bold', color: xpNumberColor }}>
-                    <span
-                      style={{
-                        textShadow: 'none'
-                      }}
-                    >
+                    <span>
                       {todayStats.xpEarned > 0 ? '+' : ''}
                       {addCommasToNumber(todayStats.xpEarned)}
                     </span>{' '}
-                    <b style={{ color: rewardColor, textShadow: 'none' }}>XP</b>
+                    <b style={{ color: rewardColor }}>XP</b>
                   </p>
-                  <p
-                    style={{
-                      fontWeight: 'bold',
-                      color: coinsColor,
-                      textShadow: 'none'
-                    }}
-                  >
+                  <p style={{ fontWeight: 'bold', color: coinsColor }}>
                     {todayStats.coinsEarned > 0 ? '+' : ''}
                     {addCommasToNumber(todayStats.coinsEarned)} Coin
                     {todayStats.coinsEarned === 1 ? '' : 's'}

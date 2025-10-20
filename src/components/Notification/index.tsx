@@ -264,7 +264,6 @@ export default function Notification({
             {userId && (numNewNotis > 0 || !!(notifications.length > 0)) && (
               <FilterBar
                 className={notiFilterBar}
-                bordered
                 style={{
                   fontSize: '1.6rem',
                   height: '5rem',

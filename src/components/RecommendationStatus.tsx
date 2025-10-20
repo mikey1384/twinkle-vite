@@ -25,11 +25,13 @@ export default function RecommendationStatus({
   theme?: any;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const { defaultOpacity: rewardableDefaultOpacity, getColor: getRewardableColor } =
-    useRoleColor('rewardableRecommendation', {
-      themeName: theme,
-      fallback: 'yellow'
-    });
+  const {
+    defaultOpacity: rewardableDefaultOpacity,
+    getColor: getRewardableColor
+  } = useRoleColor('rewardableRecommendation', {
+    themeName: theme,
+    fallback: 'yellow'
+  });
   const rewardableOpacity =
     rewardableDefaultOpacity !== undefined ? rewardableDefaultOpacity : 0.25;
   const [userListModalShown, setUserListModalShown] = useState(false);
@@ -116,9 +118,8 @@ export default function RecommendationStatus({
       gap: 0.4rem;
       font-size: 1.4rem;
       background: ${isRewardable ? rewardableRecommendationColor : '#fff'};
-      border: 1px solid ${
-        isRewardable ? rewardableBorderColor : 'var(--ui-border-weak)'
-      };
+      border: 1px solid
+        ${isRewardable ? rewardableBorderColor : 'var(--ui-border)'};
       border-radius: ${wideBorderRadius};
       color: ${isRewardable ? Color.black() : Color.darkBlueGray()};
     `,
@@ -131,7 +132,9 @@ export default function RecommendationStatus({
         {recommendedByLabel}{' '}
         {myRecommendation && (
           <b
-            style={{ color: isRewardable ? Color.black() : Color.darkBlueGray() }}
+            style={{
+              color: isRewardable ? Color.black() : Color.darkBlueGray()
+            }}
           >
             {youLabel}
           </b>

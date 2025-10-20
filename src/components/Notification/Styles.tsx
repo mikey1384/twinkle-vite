@@ -20,11 +20,11 @@ export const container = css`
 `;
 
 export const notiFilterBar = css`
-  background: #ffffff !important;
-  border: 1px solid var(--ui-border) !important;
+  background: transparent !important;
+  border: 0 !important;
   box-shadow: none !important;
   backdrop-filter: none;
-  border-radius: ${wideBorderRadius};
+  border-radius: 0;
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;

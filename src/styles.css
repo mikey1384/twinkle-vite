@@ -27,8 +27,7 @@ body {
   --theme-border: rgba(40, 90, 156, 1);
   /* Base UI border fallbacks used across the app.
      These ensure borders render before JS applies theme vars (SSR/first paint). */
-  --ui-border: rgba(204, 204, 204, 1);
-  --ui-border-weak: rgba(204, 204, 204, 0.35);
+  --ui-border: rgba(204, 204, 204, 0.35);
   --ui-border-strong: rgba(204, 204, 204, 0.8);
   --theme-disabled-bg: rgba(65, 140, 235, 0.5);
   --theme-disabled-border: rgba(48, 102, 190, 0.5);

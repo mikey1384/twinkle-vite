@@ -54,7 +54,9 @@ export default function KarmaStatus({
     () => homeMenuItemActiveRole.getColor() || Color.logoBlue(),
     [homeMenuItemActiveRole]
   );
-  const { panelVars, themeStyles, headingColor } = useHomePanelVars(0.08, { neutralSurface: true });
+  const { panelVars, themeStyles, headingColor } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
   const panelBg = useMemo(() => {
     return blendWithWhite(themeStyles.hoverBg || accentColor, 0.94);
   }, [accentColor, themeStyles.hoverBg]);
@@ -76,8 +78,15 @@ export default function KarmaStatus({
         ['--home-panel-gap' as const]: '1.6rem',
         ['--home-panel-padding' as const]: '2.2rem 2.4rem',
         ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem'
-      }) as React.CSSProperties,
-    [accentColor, headingColor, panelBg, panelVars, homeMenuItemActiveRole, themeStyles.hoverBg]
+      } as React.CSSProperties),
+    [
+      accentColor,
+      headingColor,
+      panelBg,
+      panelVars,
+      homeMenuItemActiveRole,
+      themeStyles.hoverBg
+    ]
   );
 
   const displayedKarmaPoints = useMemo(() => {
@@ -123,7 +132,7 @@ export default function KarmaStatus({
             <span>{youHaveKarmaPointsText}</span>
             <button
               className={css`
-                border: 1px solid var(--ui-border-weak);
+                border: 1px solid var(--ui-border);
                 background: rgba(255, 255, 255, 0.92);
                 border-radius: 9999px;
                 padding: 0.6rem 1.2rem;

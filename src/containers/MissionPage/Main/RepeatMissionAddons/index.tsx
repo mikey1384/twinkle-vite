@@ -77,7 +77,7 @@ export default function RepeatMissionAddon({
       {(!mission.started || mission.failed) && (
         <ErrorBoundary componentPath="MissionPage/Main/RepeatMissionAddons/index">
           {missionAttemptExist && (
-            <FilterBar style={{ marginTop: '1.5rem' }} bordered>
+            <FilterBar style={{ marginTop: '1.5rem' }}>
               <nav
                 className={activeTab === 'grammarReview' ? 'active' : ''}
                 onClick={() =>

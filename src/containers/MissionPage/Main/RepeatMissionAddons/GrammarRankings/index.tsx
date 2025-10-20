@@ -50,7 +50,7 @@ export default function GrammarRankings({
   return (
     <div>
       {myAttempts[mission.id]?.status === 'pass' && (
-        <FilterBar bordered>
+        <FilterBar>
           <nav
             onClick={() => setAllSelected(true)}
             className={allSelected ? 'active' : ''}

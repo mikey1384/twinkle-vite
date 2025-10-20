@@ -29,7 +29,7 @@ export default function SectionHeader({ label }: { label: string }) {
         className={css`
           flex: 1;
           height: 1px;
-          background: var(--ui-border-weak);
+          background: var(--ui-border);
           margin-left: 0.8rem;
         `}
       />

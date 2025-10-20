@@ -290,12 +290,13 @@ export default function CardSearchPanel({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-    const userId = useKeyContext((v) => v.myState.userId);
+  const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
-  const { themeName, themeRoles, themeStyles, accentColor } = useHomePanelVars();
-  const borderColor = themeStyles.border;
+  const { themeName, themeRoles, accentColor } = useHomePanelVars();
+  // Use the standard UI border to avoid overly faint appearance
+  const borderColor = 'var(--ui-border)';
   const panelVars = useMemo(() => {
     const searchRole = themeRoles.search || {};
     const searchColorKey =
@@ -305,15 +306,15 @@ export default function CardSearchPanel({
         ? (Color[themeName as keyof typeof Color] as (
             opacity?: number
           ) => string)
-        : undefined) ||
-      (accentColor ? (() => accentColor) : Color.logoBlue);
+        : undefined) || (accentColor ? () => accentColor : Color.logoBlue);
     const colorFn =
       (searchColorKey &&
         typeof Color[searchColorKey as keyof typeof Color] === 'function' &&
         (Color[searchColorKey as keyof typeof Color] as (
           opacity?: number
         ) => string)) ||
-      fallbackColorFn || (() => accentColor || Color.logoBlue());
+      fallbackColorFn ||
+      (() => accentColor || Color.logoBlue());
     const rawShadow =
       typeof searchRole.shadow === 'string' ? searchRole.shadow : undefined;
     const shadowColor =
@@ -335,7 +336,7 @@ export default function CardSearchPanel({
       | keyof typeof Color
       | undefined;
     if (successKey && successKey in Color) {
-      return successKey;
+      return successKey as string;
     }
     return 'green';
   }, [themeRoles.success?.color]);

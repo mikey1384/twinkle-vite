@@ -61,7 +61,7 @@ export default function HomeFilter({
 
   const videoContainerTone = useMemo(() => {
     const base = filterRole.getColor(0.08) || 'rgba(241, 245, 249, 0.92)';
-    const border = filterRole.getColor(0.22) || 'var(--ui-border-weak)';
+    const border = filterRole.getColor(0.22) || 'var(--ui-border)';
     const hoverBorder = filterRole.getColor(0.32) || 'var(--ui-border-strong)';
     const label = '#0f172a';
     const helper = 'rgba(71, 85, 105, 0.9)';
@@ -125,7 +125,6 @@ export default function HomeFilter({
   return (
     <ErrorBoundary componentPath="Home/Stories/HomeFilter">
       <FilterBar
-        bordered
         style={{
           height: '4rem',
           fontSize: '1.6rem'
@@ -165,7 +164,6 @@ export default function HomeFilter({
           >
             {category === 'uploads' && (
               <FilterBar
-                bordered
                 style={{
                   height: '5rem',
                   fontSize: '1.6rem',

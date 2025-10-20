@@ -37,7 +37,7 @@ export default function RecentGroupItem({
     [activeColorFn]
   );
   const hoverBorderColor = useMemo(
-    () => (activeColorFn ? activeColorFn(0.35) : 'var(--ui-border-weak)'),
+    () => (activeColorFn ? activeColorFn(0.35) : 'var(--ui-border)'),
     [activeColorFn]
   );
 
@@ -53,15 +53,19 @@ export default function RecentGroupItem({
         border: 1px solid rgba(148, 163, 184, 0.35);
         box-shadow: none;
         cursor: pointer;
-        transition: background 0.2s ease,
-          border-color 0.2s ease, transform 0.15s ease;
+        transition: background 0.2s ease, border-color 0.2s ease,
+          transform 0.15s ease;
         &:hover {
           background: ${hoverBg};
           border-color: ${hoverBorderColor};
           box-shadow: none;
           transform: translateX(3px);
-          > span { color: ${hoverAccentColor}; }
-          > div { border-color: ${hoverBorderColor}; }
+          > span {
+            color: ${hoverAccentColor};
+          }
+          > div {
+            border-color: ${hoverBorderColor};
+          }
         }
       `}
       onClick={() => {

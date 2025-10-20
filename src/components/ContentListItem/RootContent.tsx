@@ -124,7 +124,7 @@ const rootContentCSS = css`
 
   transition: background 0.5s, border 0.5s;
 
-  border: 1px solid var(--ui-border-weak);
+  border: 1px solid var(--ui-border);
 
   &.expandable {
     background: ${Color.whiteGray()};
@@ -278,7 +278,7 @@ export default function RootContent({
 
   const cardThemeCSS = css`
     border-radius: ${wideBorderRadius};
-    border: 1px solid var(--ui-border-weak);
+    border: 1px solid var(--ui-border);
     background: #fff;
     @media (min-width: ${desktopMinWidth}) {
       &:hover {
