@@ -18,7 +18,7 @@ export default function SectionHeader({ label }: { label: string }) {
           font-weight: 700;
           color: ${Color.darkGray()};
           background: ${Color.white()};
-          border: 1px solid var(--ui-border);
+          border: none;
           border-radius: 9999px;
           padding: 0.3rem 0.8rem;
         `}

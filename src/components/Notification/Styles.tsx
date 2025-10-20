@@ -39,17 +39,19 @@ export const notiFeedListItem = css`
   overflow-wrap: break-word;
   word-break: break-word;
   background: #fff;
-  border: 1px solid var(--ui-border);
+  border: none;
   border-radius: ${wideBorderRadius};
   padding: 1rem 1.2rem;
   margin-bottom: 1.2rem;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: flex-start;
+  gap: 0.6rem;
   > small {
+    align-self: flex-end;
     color: ${Color.gray()};
-    flex: 0 0 auto;
     white-space: nowrap;
+    margin-top: 0.2rem;
   }
 `;

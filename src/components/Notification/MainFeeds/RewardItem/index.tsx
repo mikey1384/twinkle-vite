@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { notiFeedListItem } from '../../Styles';
 import RewardText from './RewardText';
@@ -36,7 +36,6 @@ function RewardItem({
   rewardColor: string;
   missionColor: string;
 }) {
-  const timeStampLabel = useMemo(() => timeSince(timeStamp), [timeStamp]);
   return (
     <nav className={notiFeedListItem} key={id}>
       <RewardText
@@ -58,7 +57,15 @@ function RewardItem({
         rootMissionType={rootMissionType}
         targetObj={targetObj}
       />
-      <small>{timeStampLabel}</small>
+      {useMemo(() => {
+        const d = new Date(Number(timeStamp) * 1000);
+        const now = new Date();
+        const isToday =
+          d.getFullYear() === now.getFullYear() &&
+          d.getMonth() === now.getMonth() &&
+          d.getDate() === now.getDate();
+        return isToday;
+      }, [timeStamp]) && <small>{timeSince(timeStamp)}</small>}
     </nav>
   );
 }

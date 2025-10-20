@@ -1,7 +1,6 @@
 import React, { useMemo, memo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { Color } from '~/constants/css';
 import { notiFeedListItem } from '../../Styles';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import NotiMessage from './NotiMessage';
@@ -104,7 +103,15 @@ function NotiItem({
             myId={userId || 0}
           />
         </div>
-        <small style={{ color: Color.gray() }}>{timeSince(timeStamp)}</small>
+        {useMemo(() => {
+          const d = new Date(Number(timeStamp) * 1000);
+          const now = new Date();
+          const isToday =
+            d.getFullYear() === now.getFullYear() &&
+            d.getMonth() === now.getMonth() &&
+            d.getDate() === now.getDate();
+          return isToday;
+        }, [timeStamp]) && <small>{timeSince(timeStamp)}</small>}
       </nav>
     </ErrorBoundary>
   );

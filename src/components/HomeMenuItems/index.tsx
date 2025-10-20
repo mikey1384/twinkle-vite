@@ -96,15 +96,7 @@ export default function HomeMenuItems({
           background: transparent;
           &::before {
             content: '';
-            position: absolute;
-            top: 0.6rem;
-            bottom: 0.6rem;
-            left: 1.6rem;
-            right: 1.6rem;
-            background: ${themeBg};
-            border-radius: ${wideBorderRadius};
-            pointer-events: none;
-            z-index: 0;
+            display: none;
           }
           display: flex;
           flex-direction: column;
@@ -229,7 +221,7 @@ export default function HomeMenuItems({
           }
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 2rem;
-            background: #fff;
+            background: transparent;
             &::before {
               display: none;
             }
