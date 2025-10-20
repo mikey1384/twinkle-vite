@@ -78,17 +78,13 @@ export default function SideMenu({
         display: flex;
         z-index: 20;
         justify-content: ${isCardVariant
-          ? positionMode === 'fixed'
-            ? isRight
-              ? 'flex-end'
-              : 'flex-start'
+          ? isRight
+            ? 'flex-end'
             : 'flex-start'
           : 'center'};
         align-items: ${isCardVariant
-          ? positionMode === 'fixed'
-            ? isRight
-              ? 'flex-end'
-              : 'flex-start'
+          ? isRight
+            ? 'flex-end'
             : 'flex-start'
           : 'center'};
         flex-direction: column;
@@ -107,10 +103,9 @@ export default function SideMenu({
           margin: 0.6rem 1rem;
           padding: 1rem 1.3rem;
           border-radius: ${wideBorderRadius};
-          background: rgba(255,255,255,0.92);
-          border: 1px solid rgba(148,163,184,0.35);
-          box-shadow: 0 1px 2px rgba(15,23,42,0.08),
-                      0 8px 16px rgba(15,23,42,0.08);
+          background: transparent;
+          border: 1px solid transparent;
+          box-shadow: none;
           `
             : `
           padding: 1.5rem;
@@ -134,7 +129,7 @@ export default function SideMenu({
           ${isCardVariant
             ? `
           background: ${isVanta ? 'rgba(0,0,0,0.06)' : hoverBg};
-          border-color: ${isVanta ? 'rgba(0,0,0,0.18)' : hoverAccent};
+          border-color: ${outlineAccent};
           color: ${isVanta ? Color.darkGray() : hoverAccent};
           box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
           transform: translateX(${hoverTranslate});
@@ -163,10 +158,9 @@ export default function SideMenu({
           margin: 0.6rem 1rem;
           padding: 1rem 1.3rem;
           border-radius: ${wideBorderRadius};
-          background: rgba(255,255,255,0.92);
-          border: 1px solid rgba(148,163,184,0.35);
-          box-shadow: 0 1px 2px rgba(15,23,42,0.08),
-                      0 8px 16px rgba(15,23,42,0.08);
+          background: transparent;
+          border: 1px solid transparent;
+          box-shadow: none;
           `
             : `
           padding: 1.5rem;
@@ -188,7 +182,7 @@ export default function SideMenu({
           ${isCardVariant
             ? `
           background: ${isVanta ? 'rgba(0,0,0,0.06)' : hoverBg};
-          border-color: ${isVanta ? 'rgba(0,0,0,0.18)' : hoverAccent};
+          border-color: ${outlineAccent};
           color: ${isVanta ? Color.darkGray() : hoverAccent};
           box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
           transform: translateX(${hoverTranslate});

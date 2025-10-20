@@ -97,9 +97,9 @@ export default function Body({
         <div
           className={css`
             width: 100%;
-            border-bottom: 1px solid var(--ui-border);
+            border-bottom: none;
             background: #fff;
-            padding: 0.6rem 0;
+            padding: 0.2rem 0;
           `}
         >
         <FilterBar

@@ -161,9 +161,10 @@ export default function Feeds({
       >
         {section !== 'watched' && (
           <FilterBar
-            bordered
             color={selectedTheme}
-            style={{ height: '5rem', marginTop: 0, fontSize: '1.3rem', marginBottom: '1rem' }}
+            style={{
+              fontSize: '1.3rem'
+            }}
             className="mobile"
           >
             {[
@@ -198,10 +199,10 @@ export default function Feeds({
         >
           <div
             className={css`
-              margin-top: 1rem;
               width: ${section === 'watched' ? '55%' : '50%'};
               margin-left: ${section === 'watched' ? '0' : '21rem'};
               margin-right: ${section === 'watched' ? '0' : '2rem'};
+              margin-top: ${section !== 'watched' ? '-2rem' : '0'};
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
                 margin-left: 0;
@@ -216,7 +217,6 @@ export default function Feeds({
           >
             {filterBarShown && (
               <FilterBar
-                bordered
                 color={selectedTheme}
                 style={{
                   height: '5rem',
@@ -258,7 +258,7 @@ export default function Feeds({
                       <ContentPanel
                         key={filterTable[section] + feed.feedId}
                         style={{
-                          marginTop: index === 0 ? '-1rem' : '',
+                          marginTop: '1rem',
                           marginBottom: '1rem',
                           zIndex: feeds.length - index
                         }}

@@ -93,9 +93,10 @@ export default function Feeds({
     <ErrorBoundary componentPath="Profile/Body/LikedPosts/Feeds">
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <FilterBar
-          bordered
           color={selectedTheme}
-          style={{ height: '5rem', marginTop: 0, fontSize: '1.3rem', marginBottom: '1rem' }}
+          style={{
+            fontSize: '1.3rem'
+          }}
           className="mobile"
         >
           {[
@@ -129,10 +130,10 @@ export default function Feeds({
         >
           <div
             className={css`
-              margin-top: 1rem;
               width: 50%;
               margin-left: 21rem;
               margin-right: 2rem;
+              margin-top: 0;
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
                 margin-left: 0;
@@ -162,7 +163,7 @@ export default function Feeds({
                       <ContentPanel
                         key={filterTable[section] + feed.feedId}
                         style={{
-                          marginTop: index === 0 ? '-1rem' : '',
+                          marginTop: '0',
                           marginBottom: '1rem',
                           zIndex: feeds.length - index
                         }}
