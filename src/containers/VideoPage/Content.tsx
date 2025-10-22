@@ -10,7 +10,7 @@ import ResultModal from './Modals/ResultModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 const addEditQuestionsLabel = localize('addEditQuestions');
 const addQuestionsLabel = localize('addQuestions');
@@ -68,16 +68,8 @@ export default function Content({
       <div
         className={css`
           width: 100%;
-          background: #fff;
           margin-bottom: 1rem;
-          padding: 1rem;
-          border: 1px solid var(--ui-border);
-          padding-top: 0;
-          @media (max-width: ${mobileMaxWidth}) {
-            border-top: 0;
-            border-left: 0;
-            border-right: 0;
-          }
+          padding: 0;
         `}
       >
         <PageTab
@@ -86,7 +78,21 @@ export default function Content({
           playlistId={playlistId}
           questions={questions}
         />
-        <div style={{ marginTop: '2rem' }}>
+        <div
+          style={{ marginTop: '2rem' }}
+          className={
+            !watchTabActive
+              ? css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    padding: 1rem;
+                  }
+                `
+              : ''
+          }
+        >
           {!questionsBuilderShown && (
             <XPVideoPlayer
               onPlay={() => onVideoPlay?.()}
@@ -160,13 +166,29 @@ export default function Content({
           />
         )}
         {questionsBuilderShown && (
-          <QuestionsBuilder
-            questions={questions}
-            title={title}
-            videoCode={content}
-            onSubmit={handleUploadQuestions}
-            onHide={() => setQuestionsBuilderShown(false)}
-          />
+          <div
+            className={
+              !watchTabActive
+                ? css`
+                    background: #fff;
+                    border-radius: ${borderRadius};
+                    padding: 1.25rem;
+                    margin-top: 1rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      padding: 1rem;
+                    }
+                  `
+                : ''
+            }
+          >
+            <QuestionsBuilder
+              questions={questions}
+              title={title}
+              videoCode={content}
+              onSubmit={handleUploadQuestions}
+              onHide={() => setQuestionsBuilderShown(false)}
+            />
+          </div>
         )}
       </div>
     </ErrorBoundary>

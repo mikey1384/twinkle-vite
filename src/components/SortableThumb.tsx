@@ -5,7 +5,7 @@ import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
@@ -66,8 +66,10 @@ export default function SortableThumb({
         opacity: isDragging ? 0.5 : 1,
         margin: '0.3%',
         cursor: 'pointer',
-        boxShadow: `0 0 5px ${Color.darkerGray()}`,
-        background: Color.whiteGray()
+        boxShadow: 'none',
+        background: 'transparent',
+        borderRadius,
+        overflow: 'hidden'
       }}
     >
       <div
@@ -87,9 +89,8 @@ export default function SortableThumb({
         </div>
         <div
           style={{
-            height: '8rem',
             width: '100%',
-            padding: '0 1rem'
+            padding: '0.4rem 0'
           }}
         >
           <div

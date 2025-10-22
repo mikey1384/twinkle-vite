@@ -299,9 +299,7 @@ function XPVideoPlayer({
               font-weight: bold;
               font-size: 1.5rem;
               color: ${byUserIndicatorTextColor};
-              text-shadow: ${byUserIndicatorTextShadowColor
-                ? `0 0 1px ${byUserIndicatorTextShadowColor}`
-                : 'none'};
+              text-shadow: none;
               justify-content: center;
               padding: 0.5rem;
               @media (max-width: ${mobileMaxWidth}) {
@@ -313,16 +311,27 @@ function XPVideoPlayer({
             <div>
               {uploader.youtubeUrl ? (
                 <a
-                  style={{
-                    color: '#fff',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
+                  className={css`
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    background: #fff;
+                    color: ${byUserIndicatorColor};
+                    border-radius: 9999px;
+                    padding: 0.35rem 0.8rem;
+                    font-weight: 700;
+                    text-decoration: none;
+                    transition: opacity 0.15s ease-in-out;
+                    &:hover {
+                      opacity: 0.9;
+                    }
+                  `}
                   target="_blank"
                   rel="noopener noreferrer"
                   href={uploader.youtubeUrl}
                 >
-                  {`Visit ${uploader.username}'s`} YouTube Channel
+                  <Icon icon="external-link-alt" />
+                  <span>{`Visit ${uploader.username}'s YouTube`}</span>
                 </a>
               ) : (
                 <span>{thisVideoWasMadeByLabel}</span>

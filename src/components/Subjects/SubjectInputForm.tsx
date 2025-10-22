@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   stringIsEmpty,
   addEmoji,
@@ -12,11 +12,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import RewardLevelForm from '~/components/Forms/RewardLevelForm';
 import SecretMessageInput from '~/components/Forms/SecretMessageInput';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
-import {
-  useAppContext,
-  useContentContext,
-  useInputContext
-} from '~/contexts';
+import { useAppContext, useContentContext, useInputContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -56,7 +52,10 @@ export default function SubjectInputForm({
   onSubmit: any;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const { fileUploadProgress, uploadingFile } = useContentState({
     contentType,
     contentId

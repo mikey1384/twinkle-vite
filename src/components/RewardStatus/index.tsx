@@ -155,7 +155,7 @@ function RewardStatus({
               }
             `}
           >
-            <Icon icon={['far', 'badge-dollar']} />
+            <Icon icon="sparkles" />
             <span>
               {addCommasToNumber(amountRewarded)} Twinkle
               {amountRewarded === 1 ? '' : 's'}
@@ -171,32 +171,40 @@ function RewardStatus({
           </div>
         </div>
       </ScopedTheme>
-      {numLoaded < sortedRewards.length && (
-        <LoadMoreButton
-          color={infoColor}
-          label={
-            sortedRewards.length - numLoaded === 1
-              ? 'Show more'
-              : `Show more (${sortedRewards.length - numLoaded})`
-          }
-          filled
-          style={{
-            fontSize: '1.3rem',
-            marginTop: '1rem'
-          }}
-          onClick={handleLoadMore}
-        />
-      )}
-      {sortedRewards.slice(-numLoaded).map((reward) => (
-        <Comment
-          key={reward.id}
-          contentType={contentType}
-          contentId={contentId}
-          noMarginForEditButton={noMarginForEditButton}
-          reward={reward}
-          onEditDone={onCommentEdit}
-        />
-      ))}
+      <div
+        className={css`
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--ui-border);
+        `}
+      >
+        {numLoaded < sortedRewards.length && (
+          <LoadMoreButton
+            color={infoColor}
+            label={
+              sortedRewards.length - numLoaded === 1
+                ? 'Show more'
+                : `Show more (${sortedRewards.length - numLoaded})`
+            }
+            filled
+            style={{
+              fontSize: '1.3rem',
+              marginBottom: '1rem'
+            }}
+            onClick={handleLoadMore}
+          />
+        )}
+        {sortedRewards.slice(-numLoaded).map((reward) => (
+          <Comment
+            key={reward.id}
+            contentType={contentType}
+            contentId={contentId}
+            noMarginForEditButton={noMarginForEditButton}
+            reward={reward}
+            onEditDone={onCommentEdit}
+          />
+        ))}
+      </div>
     </ErrorBoundary>
   );
 }

@@ -14,6 +14,7 @@ export default function SideButtons({
   byUser,
   changeByUserStatus,
   className,
+  compact,
   rewardLevel,
   likes = [],
   onLikeVideo,
@@ -26,6 +27,7 @@ export default function SideButtons({
   byUser: boolean;
   changeByUserStatus: (v: any) => void;
   className?: string;
+  compact?: boolean;
   rewardLevel: number;
   likes: any[];
   onLikeVideo: (v: any) => void;
@@ -36,6 +38,44 @@ export default function SideButtons({
   videoId: number;
 }) {
   const [userListModalShown, setUserListModalShown] = useState(false);
+  if (compact) {
+    return (
+      <div
+        className={className}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          gap: '0.75rem',
+          ...style
+        }}
+      >
+        <div
+          style={{ position: 'relative', width: '3.6rem', height: '3.6rem' }}
+        >
+          <StarButton
+            byUser={!!byUser}
+            contentId={Number(videoId)}
+            style={{ position: 'absolute', top: 0, left: 0 }}
+            contentType="video"
+            rewardLevel={rewardLevel}
+            onSetRewardLevel={onSetRewardLevel}
+            onToggleByUser={handleToggleByUser}
+            uploader={uploader}
+          />
+        </div>
+        <LikeButton
+          contentType="video"
+          contentId={Number(videoId)}
+          likes={likes}
+          filled
+          style={{ fontSize: '1.7rem' }}
+          onClick={onLikeVideo}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={className} style={style}>
       <div
@@ -69,8 +109,7 @@ export default function SideButtons({
           style={{
             display: 'flex',
             flexDirection: 'column',
-            minWidth: '50%',
-            maxWidth: '16vw'
+            width: '100%'
           }}
         >
           <LikeButton
@@ -78,9 +117,7 @@ export default function SideButtons({
             contentId={Number(videoId)}
             likes={likes}
             filled
-            style={{
-              fontSize: '2.5vw'
-            }}
+            style={{ fontSize: '2rem' }}
             onClick={onLikeVideo}
           />
           <Likers

@@ -6,7 +6,8 @@ import XPRewardInterface from '~/components/XPRewardInterface';
 import RewardButton from '~/components/Buttons/RewardButton';
 import AlreadyPosted from '~/components/AlreadyPosted';
 import BasicInfos from './BasicInfos';
-import SideButtons from './SideButtons';
+import LikeButton from '~/components/Buttons/LikeButton';
+import StarButton from '~/components/Buttons/StarButton';
 import Description from './Description';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
@@ -18,7 +19,7 @@ import {
   determineXpButtonDisabled,
   textIsOverflown
 } from '~/helpers';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import {
   addCommasToNumber,
   addEmoji,
@@ -199,8 +200,8 @@ export default function Details({
   );
 
   const rewardButtonShown = useMemo(() => {
-    return !isEditing && userCanRewardThis;
-  }, [isEditing, userCanRewardThis]);
+    return userCanRewardThis;
+  }, [userCanRewardThis]);
 
   const xpButtonDisabled = useMemo(
     () =>
@@ -294,33 +295,33 @@ export default function Details({
           tags={tags}
           contentId={Number(videoId)}
         />
-        <div
-          style={{
-            padding: '0 1rem 1rem 1rem',
-            width: '100%'
-          }}
-        >
+        <div style={{ width: '100%' }}>
           <div
-            style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            className={css`
+              display: grid;
+              grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+              grid-auto-rows: auto;
+              column-gap: 1.25rem;
+              row-gap: 1rem;
+              width: 100%;
+              margin-top: 1rem;
+              background: #fff;
+              border-radius: ${borderRadius};
+              padding: 1.25rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+              }
+            `}
           >
             <div
-              style={{
-                display: 'flex',
-                width: '100%',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '1.5rem'
-              }}
+              className={css`
+                grid-column: 1 / -1;
+              `}
             >
               <BasicInfos
-                className={css`
-                  width: CALC(100% - 25rem);
-                  @media (max-width: ${mobileMaxWidth}) {
-                    width: CALC(100% - ${canReward ? '15rem' : '12rem'});
-                  }
-                `}
                 style={{
-                  marginRight: '1rem',
+                  marginRight: 0,
                   display: 'flex',
                   flexDirection: 'column'
                 }}
@@ -349,45 +350,12 @@ export default function Details({
                 uploader={uploader}
                 urlExceedsCharLimit={urlExceedsCharLimit}
               />
-              <SideButtons
-                className={css`
-                  width: 25rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    width: ${canReward ? '15rem' : '12rem'};
-                  }
-                `}
-                style={{
-                  marginTop: canEditPlaylists ? 0 : '1rem',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-                byUser={byUser}
-                changeByUserStatus={changeByUserStatus}
-                rewardLevel={rewardLevel}
-                likes={likes}
-                onLikeVideo={handleLikeVideo}
-                onSetRewardLevel={onSetRewardLevel}
-                uploader={uploader}
-                userId={userId}
-                videoId={videoId}
-              />
             </div>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              width: '100%',
-              marginTop: '1rem',
-              position: 'relative'
-            }}
-          >
+            {/* Left column: Description */}
             <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%'
-              }}
+              className={css`
+                grid-column: 1;
+              `}
             >
               <Description
                 onChange={(event) =>
@@ -406,50 +374,45 @@ export default function Details({
                 descriptionExceedsCharLimit={descriptionExceedsCharLimit}
                 determineEditButtonDoneStatus={determineEditButtonDoneStatus}
               />
-              {!isEditing && videoViews > 10 && (
-                <div
-                  style={{
-                    padding: '1rem 0',
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: Color.darkerGray()
-                  }}
-                >
-                  {viewsLabel}
-                </div>
-              )}
-              <div style={{ display: 'flex', marginTop: '1rem' }}>
-                {editButtonShown && !isEditing && (
-                  <DropdownButton
-                    variant="soft"
-                    tone="raised"
-                    icon="pencil-alt"
-                    color="darkerGray"
-                    style={{ marginRight: '1rem' }}
-                    text={editOrDeleteLabel}
-                    menuProps={editMenuItems}
-                  />
+            </div>
+            {/* Right column: Actions stack */}
+            <aside
+              className={css`
+                grid-column: 2;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                row-gap: 0.75rem;
+                @media (max-width: ${mobileMaxWidth}) {
+                  align-items: flex-start;
+                }
+              `}
+            >
+              {/* Row 1: Like + Reward */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <LikeButton
+                  contentType="video"
+                  contentId={Number(videoId)}
+                  likes={likes}
+                  filled
+                  style={{ fontSize: '1.8rem' }}
+                  onClick={handleLikeVideo}
+                />
+                {rewardButtonShown && (
+                  <div style={{ marginLeft: '1rem' }}>
+                    <RewardButton
+                      contentId={videoId}
+                      contentType="video"
+                      disableReason={xpButtonDisabled}
+                    />
+                  </div>
                 )}
               </div>
-            </div>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0
-              }}
-            >
-              <div style={{ display: 'flex' }}>
-                {rewardButtonShown && (
-                  <RewardButton
-                    contentId={videoId}
-                    contentType="video"
-                    disableReason={xpButtonDisabled}
-                  />
-                )}
+              {/* Row 2: Star + Heart */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
                 <Button
                   color={rewardColor}
-                  style={{ marginLeft: '1rem' }}
+                  style={{}}
                   variant="soft"
                   tone="raised"
                   filled={isRecommendedByUser}
@@ -458,16 +421,61 @@ export default function Details({
                 >
                   <Icon icon="heart" />
                 </Button>
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '3.6rem',
+                    height: '3.6rem',
+                    marginLeft: '1rem'
+                  }}
+                >
+                  <StarButton
+                    byUser={!!byUser}
+                    contentId={Number(videoId)}
+                    style={{ position: 'absolute', top: 0, left: 0 }}
+                    contentType="video"
+                    rewardLevel={rewardLevel}
+                    onSetRewardLevel={onSetRewardLevel}
+                    onToggleByUser={handleToggleByUser}
+                    uploader={uploader}
+                  />
+                </div>
               </div>
-            </div>
+              {/* Row 3: Views */}
+              {videoViews > 10 && (
+                <div
+                  style={{
+                    paddingTop: '0.25rem',
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    color: Color.darkerGray(),
+                    textAlign: 'right'
+                  }}
+                >
+                  {viewsLabel}
+                </div>
+              )}
+              {/* Row 4: Edit/Delete */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {editButtonShown && !isEditing && (
+                  <DropdownButton
+                    variant="soft"
+                    tone="raised"
+                    icon="pencil-alt"
+                    color="darkerGray"
+                    style={{}}
+                    text={editOrDeleteLabel}
+                    menuProps={editMenuItems}
+                  />
+                )}
+              </div>
+            </aside>
           </div>
 
           <RecommendationStatus
             style={{
               marginTop: '1rem',
-              marginBottom: 0,
-              marginLeft: '-1rem',
-              marginRight: '-1rem'
+              marginBottom: 0
             }}
             contentType="video"
             recommendations={recommendations}
@@ -477,8 +485,6 @@ export default function Details({
               marginTop: '1rem',
               fontSize: '1.7rem',
               marginBottom: 0,
-              marginLeft: '-1rem',
-              marginRight: '-1rem',
               display: recommendationInterfaceShown ? 'block' : 'none'
             }}
           >
@@ -520,6 +526,10 @@ export default function Details({
       </div>
     </ErrorBoundary>
   );
+
+  function handleToggleByUser(byUser: boolean) {
+    changeByUserStatus({ byUser, contentId: videoId, contentType: 'video' });
+  }
 
   function determineEditButtonDoneStatus() {
     const urlIsInvalid = !isValidYoutubeUrl(editedUrl);

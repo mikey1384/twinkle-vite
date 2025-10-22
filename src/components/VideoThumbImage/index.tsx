@@ -106,12 +106,14 @@ function VideoThumbImage({
           <div
             className={css`
               top: 0;
+              left: 0;
               display: flex;
               justify-content: center;
               align-items: center;
-              min-width: 4rem;
               position: absolute;
-              padding: 0.5rem 0.5rem;
+              margin: 0.6rem;
+              padding: 0.3rem 0.6rem;
+              border-radius: 9999px;
               background: ${Color[tagColor]()};
               font-size: 1.5rem;
               font-weight: bold;

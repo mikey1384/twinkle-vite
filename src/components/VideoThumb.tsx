@@ -5,7 +5,7 @@ import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 import { textIsOverflown, isMobile } from '~/helpers';
@@ -79,19 +79,25 @@ export default function VideoThumb({
             display: flex;
             width: 100%;
             flex-direction: column;
-            align-items: flex-end;
+            align-items: stretch;
             position: relative;
             font-size: 1.5rem;
-            box-shadow: 0 0 5px ${Color.darkerGray()};
-            background: ${Color.whiteGray()};
-            border-radius: 1px;
+            gap: 0.6rem;
+            box-shadow: none;
+            background: transparent;
             p {
-              font-weight: bold;
+              font-weight: 700;
             }
           `}`}
         >
           <ErrorBoundary componentPath="VideoThumb/ImageContainer">
-            <div style={{ width: '100%' }}>
+            <div
+              style={{
+                width: '100%',
+                overflow: 'hidden',
+                borderRadius
+              }}
+            >
               <Link to={`/${to}`}>
                 <VideoThumbImage
                   videoId={video.id}
@@ -104,12 +110,10 @@ export default function VideoThumb({
           <ErrorBoundary componentPath="VideoThumb.InfoContainer">
             <div
               style={{
-                height: '8rem',
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-around',
-                padding: '0 1rem'
+                gap: '0.4rem'
               }}
             >
               <ErrorBoundary componentPath="VideoThumb/TitleContainer">
@@ -160,7 +164,7 @@ export default function VideoThumb({
                     {addedByLabel} <UsernameText user={user} />
                   </div>
                   {video.likes?.length > 0 && (
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ marginTop: '0.4rem' }}>
                       <Icon icon="thumbs-up" />
                       &nbsp;&times;&nbsp;
                       {video.likes.length}

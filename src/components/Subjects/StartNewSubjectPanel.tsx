@@ -6,7 +6,7 @@ import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const startNewSubjectLabel = localize('startNewSubject');
@@ -33,16 +33,13 @@ export default function StartNewSubjectPanel({
     <div
       className={css`
         background: #fff;
-        border: 1px solid var(--ui-border);
+        border: none;
+        border-radius: ${borderRadius};
         font-size: 1.5rem;
         margin-top: 1rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          border-left: 0;
-          border-right: 0;
-        }
       `}
     >
-      <div style={{ padding: '1rem' }}>
+      <div style={{ padding: '1.25rem' }}>
         {subjectFormShown ? (
           <div>
             <SubjectInputForm

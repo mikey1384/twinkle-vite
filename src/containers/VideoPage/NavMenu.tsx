@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from '~/components/Link';
-import { Color, tabletMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -171,13 +171,11 @@ export default function NavMenu({
     <ErrorBoundary
       componentPath="VideoPage/NavMenu"
       className={css`
-        width: 30%;
+        width: 100%;
         font-size: 2rem;
         > section {
-          padding: 1rem;
-          background: #fff;
-          border: 1px solid var(--ui-border);
-          margin-bottom: 1rem;
+          padding: 0;
+          margin-bottom: 1.5rem;
           p {
             margin-bottom: 1rem;
             font-size: 2.5rem;
@@ -195,20 +193,23 @@ export default function NavMenu({
           padding-bottom: 20rem;
           section {
             margin: 0;
-            border-left: 0;
-            border-right: 0;
             margin-bottom: 1rem;
           }
         }
       `}
     >
-      <FilterBar
-        style={{
-          border: '1px solid var(--ui-border)',
-          borderBottom: 0
-        }}
-        className="desktop"
+      <div
+        className={css`
+          background: #fff;
+          border-radius: ${borderRadius};
+          padding: 0.5rem 0.75rem;
+          margin-bottom: 1rem;
+          @media (max-width: ${tabletMaxWidth}) {
+            padding: 0.3rem 0.5rem;
+          }
+        `}
       >
+        <FilterBar className="desktop">
         <nav
           className={videoTabActive ? 'active' : ''}
           onClick={() => setVideoTabActive(true)}
@@ -223,31 +224,34 @@ export default function NavMenu({
         >
           {rewardsExist ? rewardsLabel : userId ? newsLabel : leaderboardLabel}
         </nav>
-      </FilterBar>
+        </FilterBar>
+      </div>
       {userId && videoTabActive && !!playlistId && (
-        <section
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end'
-          }}
-        >
-          {filtering && (
-            <Icon
-              style={{
-                marginRight: '1rem',
-                color: Color[spinnerColor]()
-              }}
-              icon="spinner"
-              pulse
+        <section>
+          <div
+            className={css`
+              background: #fff;
+              border-radius: ${borderRadius};
+              padding: 1rem;
+              display: flex;
+              align-items: center;
+              justify-content: flex-end;
+            `}
+          >
+            {filtering && (
+              <Icon
+                style={{ marginRight: '1rem', color: Color[spinnerColor]() }}
+                icon="spinner"
+                pulse
+              />
+            )}
+            <SwitchButton
+              checked={!!hideWatched}
+              label={hideWatchedLabel}
+              onChange={handleToggleHideWatched}
+              labelStyle={{ fontSize: '1.6rem' }}
             />
-          )}
-          <SwitchButton
-            checked={!!hideWatched}
-            label={hideWatchedLabel}
-            onChange={handleToggleHideWatched}
-            labelStyle={{ fontSize: '1.6rem' }}
-          />
+          </div>
         </section>
       )}
       {loading && noVideos && <Loading />}
@@ -255,72 +259,132 @@ export default function NavMenu({
         <>
           {nextVideos.length > 0 && (
             <section key={videoId + 'up next'}>
-              <p>{upNextLabel}</p>
-              {renderVideos({
-                videos: nextVideos,
-                arePlaylistVideos: !!playlistId && playlistVideos.length > 0
-              })}
+              <div
+                className={css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  @media (max-width: ${tabletMaxWidth}) {
+                    padding: 1rem;
+                  }
+                `}
+              >
+                <p>{upNextLabel}</p>
+                {renderVideos({
+                  videos: nextVideos,
+                  arePlaylistVideos: !!playlistId && playlistVideos.length > 0
+                })}
+              </div>
             </section>
           )}
           {continueWatchingVideos.length > 0 && (
             <section key={videoId + 'continue watching'}>
-              <p>{continueWatchingLabel}</p>
-              {renderVideos({
-                videos: continueWatchingVideos,
-                areContinueWatchingVideos: true
-              })}
+              <div
+                className={css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  @media (max-width: ${tabletMaxWidth}) {
+                    padding: 1rem;
+                  }
+                `}
+              >
+                <p>{continueWatchingLabel}</p>
+                {renderVideos({
+                  videos: continueWatchingVideos,
+                  areContinueWatchingVideos: true
+                })}
+              </div>
             </section>
           )}
           {!!playlistId && playlistVideos.length > 0 && (
             <section
               key={videoId + 'playlist videos'}
-              style={{
-                whiteSpace: 'pre-wrap',
-                overflowWrap: 'break-word',
-                wordBreak: 'break-word'
-              }}
             >
-              <div style={{ marginBottom: '1rem' }}>
-                <Link
-                  style={{
-                    fontSize: '2.5rem',
-                    textDecoration: 'none'
-                  }}
-                  to={`/playlists/${playlistId}`}
-                >
-                  {playlistTitle}
-                </Link>
+              <div
+                className={css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  white-space: pre-wrap;
+                  overflow-wrap: break-word;
+                  word-break: break-word;
+                  @media (max-width: ${tabletMaxWidth}) {
+                    padding: 1rem;
+                  }
+                `}
+              >
+                <div style={{ marginBottom: '1rem' }}>
+                  <Link
+                    style={{ fontSize: '2.5rem', textDecoration: 'none' }}
+                    to={`/playlists/${playlistId}`}
+                  >
+                    {playlistTitle}
+                  </Link>
+                </div>
+                {renderVideos({
+                  videos: playlistVideos,
+                  arePlaylistVideos: true
+                })}
+                {playlistVideosLoadMoreShown && (
+                  <LoadMoreButton
+                    loading={playlistVideosLoading}
+                    onClick={handleLoadMorePlaylistVideos}
+                    color="green"
+                    filled
+                    style={{ marginTop: '1.5rem', width: '100%' }}
+                  />
+                )}
               </div>
-              {renderVideos({
-                videos: playlistVideos,
-                arePlaylistVideos: true
-              })}
-              {playlistVideosLoadMoreShown && (
-                <LoadMoreButton
-                  loading={playlistVideosLoading}
-                  onClick={handleLoadMorePlaylistVideos}
-                  color="green"
-                  filled
-                  style={{ marginTop: '1.5rem', width: '100%' }}
-                />
-              )}
             </section>
           )}
           {relatedVideos.length > 0 && (
             <section key={videoId + 'related videos'}>
-              <p>{relatedVideosLabel}</p>
-              {renderVideos({ videos: relatedVideos })}
+              <div
+                className={css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  @media (max-width: ${tabletMaxWidth}) {
+                    padding: 1rem;
+                  }
+                `}
+              >
+                <p>{relatedVideosLabel}</p>
+                {renderVideos({ videos: relatedVideos })}
+              </div>
             </section>
           )}
           {otherVideos.length > 0 && (
             <section key={videoId + 'new videos'}>
-              <p>{newVideosLabel}</p>
-              {renderVideos({ videos: otherVideos })}
+              <div
+                className={css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  @media (max-width: ${tabletMaxWidth}) {
+                    padding: 1rem;
+                  }
+                `}
+              >
+                <p>{newVideosLabel}</p>
+                {renderVideos({ videos: otherVideos })}
+              </div>
             </section>
           )}
         </>
       )}
-      {!videoTabActive && <Notification style={{ paddingTop: 0 }} />}
+      {!videoTabActive && (
+        <div
+          className={css`
+            background: #fff;
+            border-radius: ${borderRadius};
+            padding: 0.75rem;
+          `}
+        >
+          <Notification style={{ paddingTop: 0 }} />
+        </div>
+      )}
       <div style={{ height: '1rem', marginTop: '-1rem' }} />
     </ErrorBoundary>
   );
@@ -395,21 +459,23 @@ export default function NavMenu({
         }}
       >
         <div style={{ width: '50%' }}>
-          <Link
-            to={`/videos/${video.videoId}${
-              arePlaylistVideos
-                ? `?playlist=${playlistId}`
-                : areContinueWatchingVideos
-                ? '?continue=true'
-                : ''
-            }`}
-          >
-            <VideoThumbImage
-              rewardLevel={video.rewardLevel}
-              videoId={video.videoId}
-              src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}
-            />
-          </Link>
+          <div style={{ overflow: 'hidden', borderRadius }}>
+            <Link
+              to={`/videos/${video.videoId}${
+                arePlaylistVideos
+                  ? `?playlist=${playlistId}`
+                  : areContinueWatchingVideos
+                  ? '?continue=true'
+                  : ''
+              }`}
+            >
+              <VideoThumbImage
+                rewardLevel={video.rewardLevel}
+                videoId={video.videoId}
+                src={`https://img.youtube.com/vi/${video.content}/mqdefault.jpg`}
+              />
+            </Link>
+          </div>
         </div>
         <div
           style={{

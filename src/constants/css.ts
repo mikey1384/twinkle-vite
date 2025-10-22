@@ -137,7 +137,7 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
   };
 };
 
-export const borderRadius = '4px';
+export const borderRadius = '12px';
 export const mediumBorderRadius = '8px';
 export const wideBorderRadius = '12px';
 export const liftedBoxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
@@ -147,7 +147,7 @@ export const liftedEffect = {
   boxShadow: liftedBoxShadow,
   borderRadius: wideBorderRadius
 };
-export const innerBorderRadius = '3px';
+export const innerBorderRadius = '11px';
 export const mobileMaxWidth = '767px';
 export const tabletMaxWidth = '820px';
 export const desktopMinWidth = '768px';

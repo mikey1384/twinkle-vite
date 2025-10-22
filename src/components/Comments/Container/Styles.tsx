@@ -7,6 +7,7 @@ export const commentContainer = css`
   flex-direction: column;
   position: relative;
   padding-top: 1rem;
+  margin-bottom: 1.25rem;
   font-size: 1.6rem;
   .dropdown-wrapper {
     right: 0;

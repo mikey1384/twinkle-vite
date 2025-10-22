@@ -36,11 +36,13 @@ function blendWithWhite(color: string, weight: number) {
 export default function RankBar({
   className,
   profile,
-  style
+  style,
+  variant = 'panel'
 }: {
   className?: string;
   profile: any;
   style?: any;
+  variant?: 'panel' | 'page';
 }) {
   // Non-themed: use static colors
   const { getColor: _unused } = useRoleColor('xpNumber', {
@@ -98,6 +100,101 @@ export default function RankBar({
         }
       `,
     [baseTextColor, borderCss, isTopThree]
+  );
+  const pageContainerClass = useMemo(
+    () =>
+      css`
+        margin-top: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        padding: 1.8rem 2.2rem;
+        max-width: 56rem;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+        border-radius: ${borderRadius};
+        background: ${isTopThree ? '#000' : '#fff'};
+        color: ${baseTextColor};
+        @media (max-width: ${mobileMaxWidth}) {
+          border: none;
+          padding: 1.3rem 1.4rem;
+          max-width: 100%;
+        }
+      `,
+    [baseTextColor, borderCss, isTopThree]
+  );
+  const medallionClass = useMemo(
+    () =>
+      css`
+        height: 6rem;
+        width: 6rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.2rem;
+        background: ${rankColor
+          ? blendWithWhite(rankColor, isTopThree ? 0.85 : 0.9)
+          : blendWithWhite(Color.logoBlue(), isTopThree ? 0.85 : 0.92)};
+        border: 1px solid ${rankColor || Color.logoBlue()};
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        @media (max-width: ${mobileMaxWidth}) {
+          height: 4.8rem;
+          width: 4.8rem;
+          font-size: 1.2rem;
+        }
+        .rank-num {
+          font-weight: 800;
+          color: ${rankTextColor};
+          font-size: 1.6rem;
+          line-height: 1;
+        }
+      `,
+    [rankColor, isTopThree, rankTextColor]
+  );
+  const pageDetailsClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        align-items: center;
+        text-align: center;
+        .title {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: ${rankTextColor};
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .xp-line {
+          font-size: 1.9rem;
+          font-weight: 800;
+          color: ${xpValueColor};
+          display: inline-flex;
+          align-items: baseline;
+        }
+        .xp-unit {
+          margin-left: 0.35rem;
+          font-size: 1.45rem;
+          font-weight: 600;
+          color: ${xpUnitColor};
+        }
+        .month {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: ${xpMonthColor};
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+      `,
+    [rankTextColor, xpValueColor, xpUnitColor, xpMonthColor]
   );
   const badgeClass = useMemo(
     () =>
@@ -176,35 +273,59 @@ export default function RankBar({
     return null;
   }
 
-  return (
-    <div style={style} className={`${rankCardClass} ${className || ''}`}>
-        <div className={badgeClass}>
-          <Icon
-            icon={rankValue <= 3 ? 'trophy' : 'award'}
-            color={trophyColor}
-          />
-          <span>
-            {rankLabel} {rankLabelText}
-          </span>
-        </div>
-        <div className={xpInfoClass}>
-          <span className="xp-amount">
-            {SELECTED_LANGUAGE === 'kr' ? (
-              <span className="xp-paren">(</span>
-            ) : null}
+  if (variant === 'page') {
+    return (
+      <div style={style} className={`${pageContainerClass} ${className || ''}`}>
+        <div className={pageDetailsClass}>
+          <div className="title">
+            {rankValue <= 3 ? (
+              <Icon icon="trophy" color={trophyColor} />
+            ) : (
+              <Icon icon="award" color={trophyColor} />
+            )}
+            <span>
+              {rankLabel} {rankLabelText}
+            </span>
+          </div>
+          <div className="xp-line">
+            {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">(</span> : null}
             <span className="xp-value">{xpAmount}</span>
             <span className="xp-unit">XP</span>
-            {SELECTED_LANGUAGE === 'kr' ? (
-              <span className="xp-paren">)</span>
-            ) : null}
-          </span>
+            {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">)</span> : null}
+          </div>
           {monthGainLabel ? (
-            <span className="xp-month">
+            <div className="month">
               <Icon icon="arrow-up" color={trophyColor} />
               {monthGainLabel}
-            </span>
+            </div>
           ) : null}
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div style={style} className={`${rankCardClass} ${className || ''}`}>
+      <div className={badgeClass}>
+        <Icon icon={rankValue <= 3 ? 'trophy' : 'award'} color={trophyColor} />
+        <span>
+          {rankLabel} {rankLabelText}
+        </span>
+      </div>
+      <div className={xpInfoClass}>
+        <span className="xp-amount">
+          {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">(</span> : null}
+          <span className="xp-value">{xpAmount}</span>
+          <span className="xp-unit">XP</span>
+          {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">)</span> : null}
+        </span>
+        {monthGainLabel ? (
+          <span className="xp-month">
+            <Icon icon="arrow-up" color={trophyColor} />
+            {monthGainLabel}
+          </span>
+        ) : null}
+      </div>
+    </div>
   );
 }

@@ -19,7 +19,7 @@ import XPRewardInterface from '~/components/XPRewardInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import {
   stringIsEmpty,
   addEmoji,
@@ -210,17 +210,14 @@ export default function SubjectPanel({
     <div
       className={css`
         background: #fff;
-        border: 1px solid var(--ui-border);
+        border: none;
+        border-radius: ${borderRadius};
         margin-top: 1rem;
         font-size: 1.5rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          border-left: 0;
-          border-right: 0;
-        }
       `}
     >
       {rewardLevel > 0 && <RewardLevelBar rewardLevel={rewardLevel} />}
-      <div style={{ padding: '1rem' }}>
+      <div style={{ padding: '1.25rem' }}>
         <div
           style={{
             display: 'flex',
@@ -232,7 +229,7 @@ export default function SubjectPanel({
             <Link
               to={`/subjects/${subjectId}`}
               style={{
-                fontSize: '2.5rem',
+                fontSize: '2.2rem',
                 color: Color[contentColor](),
                 fontWeight: 'bold'
               }}
