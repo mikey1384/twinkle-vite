@@ -24,7 +24,7 @@ export default function CollectedCards() {
           Listed
         </nav>
       </FilterBar>
-      <div style={{ height: '100%' }}>
+      <div style={{ height: 'calc(100% - 4.5rem)' }}>
         {activeTab === 'myCollection' ? <MyCollection /> : <Listed />}
       </div>
     </div>

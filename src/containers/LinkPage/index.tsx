@@ -35,7 +35,6 @@ import {
 import { useLocation, useParams } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function LinkPage() {
   const location = useLocation();
@@ -55,8 +54,7 @@ export default function LinkPage() {
 
   const byUserIndicatorRole = useRoleColor('byUserIndicator', {
     themeName: profileTheme,
-    fallback: (profileTheme as string) || 'logoBlue',
-    opacity: 0.8
+    fallback: (profileTheme as string) || 'logoBlue'
   });
   const byUserIndicatorColor = byUserIndicatorRole.getColor(
     byUserIndicatorRole.defaultOpacity ?? 0.8
@@ -66,11 +64,6 @@ export default function LinkPage() {
     fallback: 'white'
   });
   const byUserIndicatorTextColor = byUserIndicatorTextRole.getColor();
-  const byUserIndicatorTextShadowColor =
-    byUserIndicatorTextRole.token?.shadow
-      ? resolveColorValue(byUserIndicatorTextRole.token.shadow) ||
-        byUserIndicatorTextRole.token.shadow
-      : '';
   const { colorKey: rewardColor } = useRoleColor('reward', {
     fallback: 'pink'
   });
@@ -329,19 +322,18 @@ export default function LinkPage() {
         {!!byUser && (
           <div
             style={{
-              padding: '0.7rem',
+              padding: '0.6rem 0.8rem',
               background: byUserIndicatorColor,
               color: byUserIndicatorTextColor,
-              textShadow: byUserIndicatorTextShadowColor
-                ? `0 0 1px ${byUserIndicatorTextShadowColor}`
-                : 'none',
+              textShadow: 'none',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.7rem',
+              fontWeight: 700,
+              fontSize: '1.6rem',
               marginTop: '2rem',
-              marginBottom: '1rem'
+              marginBottom: '1rem',
+              border: '1px solid var(--ui-border)'
             }}
             className={css`
               margin-left: -1px;

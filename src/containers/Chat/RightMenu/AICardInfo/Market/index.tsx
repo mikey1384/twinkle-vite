@@ -41,7 +41,7 @@ export default function Market() {
   return (
     <div
       style={{
-        height: 'CALC(50% - 4.5rem)',
+        height: '50%',
         borderBottom: '1px solid var(--ui-border)'
       }}
     >
@@ -63,7 +63,7 @@ export default function Market() {
           Offers
         </nav>
       </FilterBar>
-      <div style={{ height: '100%' }}>
+      <div style={{ height: 'calc(100% - 4.5rem)' }}>
         {activeTab === 'buy' ? (
           <Listings />
         ) : (

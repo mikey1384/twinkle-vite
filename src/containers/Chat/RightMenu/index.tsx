@@ -60,8 +60,12 @@ function RightMenu({
           position: relative;
           background: #fff;
           border-left: 1px solid var(--ui-border);
-          overflow-y: scroll;
-          -webkit-overflow-scrolling: touch;
+          overflow-y: ${
+            chatType === AI_CARD_CHAT_TYPE ? 'hidden' : 'scroll'
+          };
+          -webkit-overflow-scrolling: ${
+            chatType === AI_CARD_CHAT_TYPE ? 'auto' : 'touch'
+          };
           @media (max-width: ${mobileMaxWidth}) {
             max-width: ${chatType === VOCAB_CHAT_TYPE ||
             chatType === AI_CARD_CHAT_TYPE

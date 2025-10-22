@@ -161,11 +161,9 @@ export default function Incoming() {
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers/Outgoing">
       <div
         className={css`
-          height: CALC(100% - 80px);
-          overflow: scroll;
-          @media (max-width: ${mobileMaxWidth}) {
-            height: CALC(100% - 71px);
-          }
+          height: calc(100% - 3.5rem - 1px);
+          overflow: auto;
+          padding: 0 0 2.4rem 0;
         `}
         ref={CardItemsRef}
       >

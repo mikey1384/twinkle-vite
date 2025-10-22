@@ -25,6 +25,37 @@ import { resolveColorValue } from '~/theme/resolveColor';
 const intervalLength = 2000;
 const deviceIsMobile = isMobile(navigator);
 
+// Simple helpers to derive readable text over a given RGBA color
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+function parseRgba(input: string) {
+  const m = input
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([^,]+),([^,]+),([^,]+)(?:,([^\)]+))?\)/i);
+  if (!m) return null;
+  const [, r, g, b, a] = m;
+  return {
+    r: clamp(Number(r), 0, 255),
+    g: clamp(Number(g), 0, 255),
+    b: clamp(Number(b), 0, 255),
+    a: a !== undefined ? clamp(Number(a), 0, 1) : 1
+  };
+}
+function getReadableTextColor(bg: string) {
+  const parsed = parseRgba(bg);
+  if (!parsed) return Color.white();
+  const normalize = (c: number) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  const luminance =
+    0.2126 * normalize(parsed.r) +
+    0.7152 * normalize(parsed.g) +
+    0.0722 * normalize(parsed.b);
+  return luminance >= 0.6 ? Color.darkBlueGray() : Color.white();
+}
+
 function XPVideoPlayer({
   isChat,
   isLink,
@@ -96,6 +127,11 @@ function XPVideoPlayer({
   const byUserIndicatorTextColor = useMemo(
     () => byUserIndicatorTextRole.getColor() || '#fff',
     [byUserIndicatorTextRole]
+  );
+  const youtubeLinkBg = byUserIndicatorTextColor;
+  const youtubeLinkTextColor = useMemo(
+    () => getReadableTextColor(youtubeLinkBg),
+    [youtubeLinkBg]
   );
   const byUserIndicatorTextShadowColor = useMemo(() => {
     const raw = byUserIndicatorTextRole.token?.shadow;
@@ -296,14 +332,14 @@ function XPVideoPlayer({
               background: ${byUserIndicatorColor};
               display: flex;
               align-items: center;
-              font-weight: bold;
+              font-weight: 700;
               font-size: 1.5rem;
               color: ${byUserIndicatorTextColor};
-              text-shadow: none;
               justify-content: center;
-              padding: 0.5rem;
+              padding: 0.5rem 0.7rem;
+              border: 1px solid var(--ui-border);
               @media (max-width: ${mobileMaxWidth}) {
-                padding: 0.3rem;
+                padding: 0.3rem 0.5rem;
                 font-size: ${isChat ? '1rem' : '1.5rem'};
               }
             `}
@@ -315,8 +351,8 @@ function XPVideoPlayer({
                     display: inline-flex;
                     align-items: center;
                     gap: 0.5rem;
-                    background: #fff;
-                    color: ${byUserIndicatorColor};
+                    background: ${youtubeLinkBg};
+                    color: ${youtubeLinkTextColor};
                     border-radius: 9999px;
                     padding: 0.35rem 0.8rem;
                     font-weight: 700;

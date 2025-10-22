@@ -338,11 +338,11 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     buttonHovered: { color: pickColor({ gold: 'gold' }, color) },
     byUserIndicator: {
       color: pickColor({ gold: 'darkGold' }, color),
-      opacity: isStrongColor(color) ? 0.7 : 0.9
+      opacity: 0.1
     },
     byUserIndicatorText: {
-      color: 'white',
-      shadow: pickColor({ gold: 'orange' }, '')
+      color: pickColor({ gold: 'darkGold' }, color),
+      shadow: ''
     },
     carousel: { color },
     carouselProgress: { color: 'logoBlue' },
