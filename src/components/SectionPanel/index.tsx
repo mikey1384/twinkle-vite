@@ -105,6 +105,7 @@ export default function SectionPanel({
           margin-bottom: 1.6rem;
           display: flex;
           flex-direction: column;
+          gap: 0.6rem;
           > header {
             display: flex;
             flex-wrap: wrap;
@@ -117,7 +118,7 @@ export default function SectionPanel({
               --role-sectionPanelText-shadow,
               ${headerTextShadow}
             );
-            border-bottom: 1px solid var(--section-panel-border-color);
+            border-bottom: none;
             padding: 1.2rem 1.8rem;
             padding-top: ${paddingTop};
             font-weight: 700;

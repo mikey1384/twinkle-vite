@@ -75,7 +75,11 @@ export function useSectionPanelVars(options: SectionPanelOptions = {}) {
 
   const panelBodyBg = useMemo(() => '#fff', []);
   const panelBorderColor = useMemo(
-    () => setAlphaExact(accentColor, 0.35),
+    () => setAlphaExact(accentColor, 0.28),
+    [accentColor]
+  );
+  const headerDividerColor = useMemo(
+    () => setAlphaExact(accentColor, 0.12),
     [accentColor]
   );
 
@@ -104,9 +108,10 @@ export function useSectionPanelVars(options: SectionPanelOptions = {}) {
         ['--section-panel-header-bg' as const]: '#fff',
         ['--section-panel-body-bg' as const]: panelBodyBg,
         ['--section-panel-border-color' as const]: panelBorderColor,
+        ['--section-panel-header-divider-color' as const]: headerDividerColor,
         ['--section-panel-accent' as const]: accentColor
       } as CSSProperties),
-    [accentColor, panelBodyBg, panelBorderColor]
+    [accentColor, panelBodyBg, panelBorderColor, headerDividerColor]
   );
 
   return {
