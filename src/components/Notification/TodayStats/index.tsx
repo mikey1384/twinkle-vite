@@ -23,7 +23,8 @@ const DEFAULT_CARD_BORDER = 'rgba(204, 204, 204, 0.65)';
 const container = css`
   ${themedCardBase};
   padding: 1.6rem 2rem;
-  background: #ffffff;
+  background: #fff;
+  border: 1px solid var(--ui-border);
 `;
 
 const header = css`
@@ -73,13 +74,10 @@ export default function TodayStats({
     (v) => v.requestHelpers.loadTodayRankings
   );
 
-  const progressAccent =
-    todayProgressRole.getColor(0.24) || DEFAULT_PROGRESS_ACCENT;
   const { cardVars } = useThemedCardVars({
-    accentColor: progressAccent,
+    role: 'sectionPanel',
     intensity: 0.05,
-    blendWeight: 0.98,
-    borderFallback: DEFAULT_CARD_BORDER
+    blendWeight: 0.98
   });
 
   useEffect(() => {
@@ -103,14 +101,7 @@ export default function TodayStats({
 
   return (
     <ErrorBoundary componentPath="Notification/TodayStats">
-      <div
-        className={container}
-        style={{
-          marginBottom: '1rem',
-          ...cardVars,
-          ['--themed-card-border' as any]: 'var(--ui-border)'
-        }}
-      >
+      <div className={container} style={{ marginBottom: '1rem', ...cardVars }}>
         {todayStats?.loaded ? (
           <div>
             <div className={header}>

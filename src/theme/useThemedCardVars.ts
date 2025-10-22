@@ -73,15 +73,24 @@ export function useThemedCardVars(options: ThemedCardOptions = {}) {
     return Color.logoBlue();
   }, [accentOverride, fallbackColor, roleToken?.color, roleToken?.opacity]);
 
-  const cardBg = useMemo(() => {
-    const base = themeStyles.hoverBg || accentColor;
-    return blendWithWhite(base, blendWeight);
-  }, [accentColor, blendWeight, themeStyles.hoverBg]);
+  function setAlphaExact(rgba: string, a: number) {
+    const m = rgba.match(
+      /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+    );
+    if (!m) return rgba;
+    const [_, r, g, b] = m;
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
+  }
 
-  const borderColor = useMemo(
-    () => borderFallback || 'var(--ui-border)',
-    [borderFallback]
-  );
+  const cardBg = useMemo(() => 'transparent', []);
+
+  const borderColor = useMemo(() => {
+    const fallback = borderFallback && resolveColorValue(borderFallback);
+    const resolved = resolveColorValue(accentColor);
+    if (fallback) return fallback;
+    if (resolved) return setAlphaExact(resolved, 0.35);
+    return 'var(--ui-border)';
+  }, [accentColor, borderFallback]);
 
   const cardVars = useMemo(
     () =>

@@ -19,19 +19,10 @@ export default function RewardLevelBar({
   style?: React.CSSProperties;
 }) {
   const levelRole = useRoleColor(`level${rewardLevel}`, {
-    fallback: 'logoBlue',
-    opacity: 0.12
+    fallback: 'logoBlue'
   });
   const themedBg = useMemo(
-    () => levelRole.getColor(0.12) || Color.logoBlue(0.12),
-    [levelRole]
-  );
-  const themedBorder = useMemo(
-    () => levelRole.getColor(0.28) || Color.logoBlue(0.28),
-    [levelRole]
-  );
-  const starGlow = useMemo(
-    () => levelRole.getColor(0.65) || Color.logoBlue(0.65),
+    () => levelRole.getColor() || Color.logoBlue(),
     [levelRole]
   );
   const starColor = 'var(--perfect-star-color, #ffd700)';
@@ -43,14 +34,11 @@ export default function RewardLevelBar({
         style={{
           marginLeft: '0.25rem',
           fontSize: '1.6rem',
-          color: starColor,
-          filter: starGlow
-            ? `drop-shadow(0 0 4px ${starGlow})`
-            : `drop-shadow(0 0 2px ${starColor})`
+          color: starColor
         }}
       />
     ));
-  }, [rewardLevel, starGlow, starColor]);
+  }, [rewardLevel, starColor]);
 
   const earnUpToLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -63,12 +51,12 @@ export default function RewardLevelBar({
     <div
       className={`${className || ''} ${css`
         background: ${themedBg};
-        color: ${Color.darkBlueGray()};
+        color: #fff;
         padding: 0.6rem 1rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border: 1px solid ${themedBorder};
+        border: none;
         border-radius: ${wideBorderRadius};
         font-weight: 600;
         width: auto;

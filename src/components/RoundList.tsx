@@ -23,28 +23,13 @@ export default function RoundList({
         width: ${width};
         font-size: 1.5rem;
         nav {
+          position: relative;
           width: 100%;
-          padding: 1.5rem;
-          border: 1px solid var(--ui-border);
-          margin-bottom: -1px;
-          @media (max-width: ${mobileMaxWidth}) {
-            border-left: 0;
-            border-right: 0;
-          }
-        }
-        nav:first-of-type {
-          border-top-left-radius: ${borderRadius};
-          border-top-right-radius: ${borderRadius};
-          @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 0;
-          }
-        }
-        nav:last-child {
-          border-bottom-left-radius: ${borderRadius};
-          border-bottom-right-radius: ${borderRadius};
-          @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 0;
-          }
+          padding: 1.2rem 1.5rem;
+          border: none;
+          background: #fff;
+          border-radius: ${borderRadius};
+          margin-bottom: 1rem;
         }
         @media (max-width: ${mobileMaxWidth}) {
           margin-top: 2rem;

@@ -49,6 +49,7 @@ export default function ThisMonth({
       css`
         ${themedCardBase};
         padding: 1.6rem 2rem;
+        background: #fff;
         display: flex;
         flex-direction: column;
         align-items: center;

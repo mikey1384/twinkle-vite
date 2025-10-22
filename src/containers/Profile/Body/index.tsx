@@ -106,8 +106,15 @@ export default function Body({
           style={{ margin: 0 }}
           color={selectedTheme}
           className={css`
+            /* On desktop, indent tabs so "Profile" starts under username column */
+            > .nav-section {
+              padding-left: 29rem;
+            }
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.3rem;
+              > .nav-section {
+                padding-left: 0;
+              }
             }
           `}
         >

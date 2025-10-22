@@ -54,7 +54,7 @@ function Home({
         <div className={container}>
           <div className={Left}>
             <ProfileWidget />
-            <HomeMenuItems style={{ marginTop: '0.4rem' }} />
+            <HomeMenuItems style={{ marginTop: '1rem' }} />
           </div>
           <div className={Center}>
             <div style={{ maxWidth: '700px', width: '100%' }}>

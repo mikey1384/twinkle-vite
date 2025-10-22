@@ -73,7 +73,6 @@ export default function SectionPanel({
     headerTextColor,
     headerTextShadow,
     successColor,
-    panelBorderColor,
     styleVars
   } = useSectionPanelVars({
     customThemeName: customColorTheme
@@ -95,9 +94,9 @@ export default function SectionPanel({
       <div
         style={{ ...(style || {}), ...styleVars }}
         className={css`
-          border: 1px solid ${elevated ? 'rgba(148, 163, 184, 0.18)' : 'var(--ui-border)'};
+          border: 1px solid var(--section-panel-border-color);
           width: 100%;
-          background: var(--section-panel-bg, #fff);
+          background: var(--section-panel-bg, transparent);
           border-radius: ${wideBorderRadius};
           box-shadow: ${elevated
             ? '0 22px 38px -28px rgba(15, 23, 42, 0.24), 0 1px 3px rgba(15, 23, 42, 0.12)'
@@ -112,14 +111,13 @@ export default function SectionPanel({
             align-items: center;
             gap: 1.2rem;
             width: 100%;
-            background: var(--section-panel-header-bg, #fff);
+            background: var(--section-panel-header-bg, transparent);
             color: var(--role-sectionPanelText-color, ${headerTextColor});
             text-shadow: var(
               --role-sectionPanelText-shadow,
               ${headerTextShadow}
             );
-            border-bottom: 1px solid
-              var(--section-panel-border-color, ${panelBorderColor});
+            border-bottom: 1px solid var(--section-panel-border-color);
             padding: 1.2rem 1.8rem;
             padding-top: ${paddingTop};
             font-weight: 700;
@@ -133,7 +131,7 @@ export default function SectionPanel({
             width: 100%;
             justify-content: center;
             min-height: 15rem;
-            background: var(--section-panel-body-bg, #fbfcff);
+            background: var(--section-panel-body-bg, transparent);
           }
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 0;
@@ -181,7 +179,7 @@ export default function SectionPanel({
                   `}
                 >
                   <Input
-                    ref={TitleInputRef as any}
+                    inputRef={TitleInputRef as any}
                     style={{ width: '100%' }}
                     maxLength={100}
                     placeholder={placeholder}

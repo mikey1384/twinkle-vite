@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -37,7 +37,7 @@ export default function FilterBar({
   const isVanta = resolvedThemeName === 'vantaBlack';
 
   // Surface and text (single design: underline tabs)
-  const barBackground = 'transparent';
+  const barBackground = '#fff';
   // no borders
   const navTextColor = Color.darkGray();
   const navHoverColor = Color.darkBlueGray();
@@ -58,7 +58,8 @@ export default function FilterBar({
     ? 'rgba(0, 0, 0, 0.9)'
     : getFilterColor(0.4) || Color.logoBlue(0.4);
 
-  const tabActiveBorder = themeActiveBorderValue;
+  // Make the selected tab underline opaque
+  const tabActiveBorder = getFilterColor() || Color.logoBlue();
 
   const formatCssValue = (
     value: React.CSSProperties[keyof React.CSSProperties] | undefined,
@@ -90,6 +91,7 @@ export default function FilterBar({
     font-size: ${resolvedFontSize};
     background: ${barBackground};
     overflow: visible;
+    border-radius: ${wideBorderRadius};
 
     > .nav-section {
       flex: 1 1 auto;
@@ -188,6 +190,7 @@ export default function FilterBar({
       align-items: stretch;
       gap: 0.8rem;
       padding: 0.8rem;
+      border-radius: 0;
 
       > .nav-section {
         width: 100%;

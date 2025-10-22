@@ -176,7 +176,8 @@ const panelContainerClass = css`
   font-size: 1.5rem;
   line-height: 2.3rem;
   position: relative;
-  background: var(--themed-card-bg, #f7f9ff);
+  background: #fff;
+  border-color: var(--themed-card-border, var(--ui-border));
   box-shadow: none;
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
@@ -966,7 +967,9 @@ function ProfilePanel({
                   zIndex: 0
                 }}
               >
-                <RankBar profile={profile} />
+                <ScopedTheme theme={themeName as any}>
+                  <RankBar profile={profile} />
+                </ScopedTheme>
               </div>
             )}
           </>

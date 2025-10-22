@@ -79,7 +79,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(179, 194, 255, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(248, 248, 255, 1)' }
   },
   green: {
     general: {
@@ -101,7 +101,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(183, 205, 183, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(246, 255, 248, 1)' }
   },
   orange: {
     general: {
@@ -123,7 +123,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(102, 60, 0, 1)',
       border: 'rgba(255, 220, 160, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(255, 250, 244, 1)' }
   },
   rose: {
     general: {
@@ -145,7 +145,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(70, 0, 20, 1)',
       border: 'rgba(255, 180, 200, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(255, 246, 250, 1)' }
   },
   pink: {
     general: {
@@ -167,7 +167,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(156, 39, 176, 1)',
       border: 'rgba(255, 215, 225, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(255, 246, 252, 1)' }
   },
   purple: {
     general: {
@@ -189,7 +189,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(74, 20, 140, 1)',
       border: 'rgba(217, 204, 255, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(248, 248, 248, 1)' }
   },
   black: {
     general: {
@@ -211,7 +211,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(38, 38, 38, 1)',
       border: 'rgba(192, 192, 192, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(255, 248, 248, 1)' }
   },
   red: {
     general: {
@@ -233,7 +233,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(255, 164, 164, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(245, 248, 255, 1)' }
   },
   darkBlue: {
     general: {
@@ -255,7 +255,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(184, 192, 255, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(248, 248, 248, 1)' }
   },
   vantaBlack: {
     general: {
@@ -278,7 +278,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(38, 38, 38, 1)',
       border: 'rgba(192, 192, 192, 1)'
     },
-    page: { bg: 'rgba(255, 255, 255, 1)' }
+    page: { bg: 'rgba(255, 252, 240, 1)' }
   },
   gold: {
     general: {
@@ -465,7 +465,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     level1: { color: 'logoBlue' },
     level2: { color: 'pink' },
     level3: { color: 'orange' },
-    level4: { color: 'fuchsia' },
+    level4: { color: 'magenta' },
     level5: { color: 'gold' },
     likeButton: {
       color: pickColor(

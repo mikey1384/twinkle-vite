@@ -5,8 +5,6 @@ import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
-import ScopedTheme from '~/theme/ScopedTheme';
-import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const rankLabel = localize('rank');
@@ -44,52 +42,30 @@ export default function RankBar({
   profile: any;
   style?: any;
 }) {
-  // Ensure default theme uses the profile's default (not viewer's)
-  const profileTheme = profile?.profileTheme || 'logoBlue';
-  const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
-    themeName: profileTheme,
+  // Non-themed: use static colors
+  const { getColor: _unused } = useRoleColor('xpNumber', {
+    themeName: 'logoBlue',
     fallback: 'logoGreen'
   });
   const rankValue = Number(profile?.rank ?? 0);
   const rankColor = useMemo(() => {
     if (rankValue === 1) return Color.gold();
-    if (rankValue === 2) return Color.white(0.95);
-    if (rankValue === 3) return Color.bronze();
+    if (rankValue === 2) return Color.lighterGray();
+    if (rankValue === 3) return Color.orange();
     return undefined;
   }, [rankValue]);
-  const { themeName, themeRoles, themeStyles } = useThemeTokens({
-    themeName: profileTheme,
-    intensity: 0.06
-  });
+  const rankTextColor = useMemo(() => {
+    if (rankValue === 1) return Color.gold();
+    if (rankValue === 2) return Color.lighterGray();
+    if (rankValue === 3) return Color.orange();
+    return rankValue <= 10 ? Color.logoBlue() : Color.darkGray();
+  }, [rankValue]);
+  const borderCss = '1px solid var(--ui-border)';
   const isTopThree = rankValue <= 3;
-  const accentColor = useMemo(() => {
-    const colorKey =
-      (themeRoles.profilePanel?.color as keyof typeof Color | undefined) ||
-      (themeRoles.sectionPanel?.color as keyof typeof Color | undefined);
-    const colorFn =
-      colorKey &&
-      (Color[colorKey] as ((opacity?: number) => string) | undefined);
-    return colorFn ? colorFn() : Color.logoBlue();
-  }, [themeRoles.profilePanel?.color, themeRoles.sectionPanel?.color]);
-  // Use a clear border: black for top-3, otherwise match ProfilePanel
-  const borderCss = isTopThree
-    ? `1px solid ${Color.black(0.85)}`
-    : '1px solid var(--ui-border)';
-  const surfaceColor = useMemo(
-    () => blendWithWhite(accentColor, 0.97),
-    [accentColor]
-  );
-  const baseTextColor = useMemo(
-    () => (isTopThree ? 'rgba(255, 255, 255, 0.92)' : Color.darkerGray()),
-    [isTopThree]
-  );
-  // Always show a clear border to match ProfilePanel
-  const xpValueColor = rankColor || getXpNumberColor();
-  const trophyColor = rankColor || accentColor;
-  const xpUnitColor = useMemo(
-    () => (rankColor ? rankColor : Color.gold()),
-    [rankColor]
-  );
+  const baseTextColor = isTopThree ? '#ffffff' : Color.darkerGray();
+  const xpValueColor = Color.logoGreen();
+  const trophyColor = rankTextColor;
+  const xpUnitColor = useMemo(() => Color.gold(), []);
   const xpMonthColor = useMemo(
     () => (rankColor ? rankColor : Color.pink()),
     [rankColor]
@@ -111,10 +87,8 @@ export default function RankBar({
         border-top-right-radius: 0;
         border-bottom-left-radius: ${borderRadius};
         border-bottom-right-radius: ${borderRadius};
-        background: ${isTopThree ? 'rgba(18, 24, 35, 0.98)' : surfaceColor};
-        box-shadow: ${isTopThree
-          ? 'none'
-          : 'inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 18px 32px -26px rgba(15, 23, 42, 0.24)'};
+        background: ${isTopThree ? '#000' : '#fff'};
+        box-shadow: none;
         color: ${baseTextColor};
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
@@ -123,7 +97,7 @@ export default function RankBar({
           padding: 1.3rem 1.4rem;
         }
       `,
-    [surfaceColor, baseTextColor, borderCss, isTopThree]
+    [baseTextColor, borderCss, isTopThree]
   );
   const badgeClass = useMemo(
     () =>
@@ -135,7 +109,7 @@ export default function RankBar({
         border-radius: 999px;
         font-size: 1.6rem;
         font-weight: 700;
-        color: ${rankColor || accentColor};
+        color: ${rankTextColor};
         background: ${isTopThree
           ? 'rgba(255, 255, 255, 0.14)'
           : 'rgba(255, 255, 255, 0.45)'};
@@ -143,7 +117,7 @@ export default function RankBar({
           ? 'inset 0 1px 0 rgba(255, 255, 255, 0.28)'
           : 'inset 0 1px 0 rgba(255, 255, 255, 0.8)'};
       `,
-    [accentColor, isTopThree, rankColor]
+    [rankTextColor, isTopThree]
   );
   const xpInfoClass = useMemo(
     () =>
@@ -162,9 +136,7 @@ export default function RankBar({
           font-size: 1.65rem;
           font-weight: 700;
           color: ${xpValueColor};
-          text-shadow: ${isTopThree
-            ? '0 1px 3px rgba(0, 0, 0, 0.45)'
-            : '0 1px 1px rgba(255, 255, 255, 0.55)'};
+          text-shadow: none;
           display: inline-flex;
           align-items: baseline;
         }
@@ -189,7 +161,7 @@ export default function RankBar({
           gap: 0.4rem;
         }
       `,
-    [isTopThree, rankColor, xpMonthColor, xpUnitColor, xpValueColor]
+    [rankColor, xpMonthColor, xpUnitColor, xpValueColor]
   );
   const rankLabelText =
     SELECTED_LANGUAGE === 'kr' ? `${rankValue}위` : `#${rankValue}`;
@@ -205,8 +177,7 @@ export default function RankBar({
   }
 
   return (
-    <ScopedTheme theme={themeName} roles={['profilePanel']}>
-      <div style={style} className={`${rankCardClass} ${className || ''}`}>
+    <div style={style} className={`${rankCardClass} ${className || ''}`}>
         <div className={badgeClass}>
           <Icon
             icon={rankValue <= 3 ? 'trophy' : 'award'}
@@ -235,6 +206,5 @@ export default function RankBar({
           ) : null}
         </div>
       </div>
-    </ScopedTheme>
   );
 }

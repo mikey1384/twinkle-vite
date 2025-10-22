@@ -95,6 +95,11 @@ export default function RewardLevelInfo({
             background: ${Color[
               playing && xpWarningShown ? warningColor : xpLevelColor
             ](isMaxReached ? 0.3 : 1)};
+            border-top-left-radius: 9999px;
+            border-bottom-left-radius: 9999px;
+            ${rewardLevel < 3
+              ? `border-top-right-radius: 9999px; border-bottom-right-radius: 9999px;`
+              : ''}
             cursor: default;
             @media (max-width: ${mobileMaxWidth}) {
               flex-grow: 0;

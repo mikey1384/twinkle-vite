@@ -14,6 +14,7 @@ import {
   wideBorderRadius
 } from '~/constants/css';
 import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 
@@ -122,12 +123,10 @@ const rootContentCSS = css`
     }
   }
 
-  transition: background 0.5s, border 0.5s;
-
-  border: 1px solid var(--ui-border);
+  transition: border-color 0.18s ease;
 
   &.expandable {
-    background: ${Color.whiteGray()};
+    background: transparent;
   }
 
   &.no-thumb {
@@ -266,6 +265,7 @@ export default function RootContent({
   userId?: number;
 }) {
   const { themeName } = useThemeTokens();
+  const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
   const { getColor: getFilterColor } = useRoleColor('filter', {
     themeName,
     fallback: 'logoBlue'
@@ -273,22 +273,21 @@ export default function RootContent({
 
   const hoverBg = getFilterColor(0.1) || Color.logoBlue(0.1);
   const activeBg = getFilterColor(0.18) || Color.logoBlue(0.18);
-  const hoverBorder = getFilterColor(0.28) || Color.logoBlue(0.28);
-  const activeBorder = getFilterColor(0.4) || Color.logoBlue(0.4);
+  // Use global UI border vars for consistency with ContentPanel
 
   const cardThemeCSS = css`
     border-radius: ${wideBorderRadius};
     border: 1px solid var(--ui-border);
     background: #fff;
+    transition: background 0.18s ease, border-color 0.18s ease;
     @media (min-width: ${desktopMinWidth}) {
       &:hover {
-        background: ${hoverBg};
-        border-color: ${hoverBorder};
+        border-color: var(--ui-border-strong);
       }
     }
     &.selected {
+      border-color: var(--ui-border-strong);
       background: ${activeBg};
-      border-color: ${activeBorder};
     }
   `;
 
@@ -319,6 +318,7 @@ export default function RootContent({
       }${hasThumb ? '' : ' no-thumb'}${
         hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
       }`}
+      style={cardVars}
     >
       <ContentDetails
         isListening={isListening}

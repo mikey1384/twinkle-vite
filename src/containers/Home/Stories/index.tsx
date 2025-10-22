@@ -96,6 +96,55 @@ export default function Stories() {
     [loadingCategorizedFeeds, loadingFeeds, loadingFilteredFeeds]
   );
 
+  // Themed card surface + separators for clearer panel boundaries
+  const { panelVars } = useHomePanelVars(0.08);
+  const feedListClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        width: 100%;
+
+        /* gradient separators between items */
+        > .feed-item {
+          position: relative;
+        }
+        > .feed-item + .feed-item::before {
+          content: '';
+          position: absolute;
+          top: -0.6rem;
+          left: 1.2rem;
+          right: 1.2rem;
+          height: 1px;
+          background: linear-gradient(
+            to right,
+            transparent,
+            var(--ui-border-strong),
+            transparent
+          );
+          pointer-events: none;
+        }
+
+        @media (max-width: ${mobileMaxWidth}) {
+          > .feed-item + .feed-item::before {
+            left: 0;
+            right: 0;
+          }
+        }
+      `,
+    []
+  );
+  const feedItemCustomClass = useMemo(
+    () =>
+      css`
+        /* spacing only; no background, no border */
+        padding: 1.2rem 1.2rem;
+        transition: background 0.15s ease;
+      `,
+    []
+  );
+
   useEffect(() => {
     subFilterRef.current = subFilter;
   }, [subFilter]);
@@ -185,7 +234,6 @@ export default function Stories() {
     };
   }, []);
 
-  const { panelVars } = useHomePanelVars();
   const containerStyle = useMemo<React.CSSProperties>(
     () => ({
       width: '100%',
@@ -237,7 +285,7 @@ export default function Stories() {
             </div>
           ) : null}
           {loaded && !loadingPosts && feeds?.length > 0 ? (
-            <>
+            <div className={feedListClass}>
               {numNewPosts > 0 ? (
                 <Banner
                   color={alertColorKey}
@@ -270,25 +318,27 @@ export default function Stories() {
                 (feed: { [key: string]: any } = {}, index: number) => {
                   const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
                   return feed.contentId ? (
-                    <ContentPanel
+                    <div
                       key={panelKey}
-                      style={{
-                        marginBottom: '1rem'
-                      }}
-                      feedId={feed.feedId}
-                      zIndex={feeds?.length - index}
-                      contentId={feed.contentId}
-                      contentType={feed.contentType}
-                      rootType={feed.rootType}
-                      commentsLoadLimit={5}
-                      numPreviewComments={1}
-                    />
+                      className={`feed-item ${feedItemCustomClass}`}
+                    >
+                      <ContentPanel
+                        feedId={feed.feedId}
+                        zIndex={feeds?.length - index}
+                        contentId={feed.contentId}
+                        contentType={feed.contentType}
+                        rootType={feed.rootType}
+                        commentsLoadLimit={5}
+                        numPreviewComments={1}
+                        style={{ margin: 0 }}
+                      />
+                    </div>
                   ) : null;
                 }
               )}
               {loadMoreButton ? (
                 <LoadMoreButton
-                  style={{ marginBottom: '1rem' }}
+                  style={{ marginTop: '0.6rem' }}
                   onClick={handleLoadMoreFeeds}
                   loading={loadingMore}
                   filled
@@ -304,7 +354,7 @@ export default function Stories() {
                   }
                 `}
               />
-            </>
+            </div>
           ) : null}
         </div>
       </div>

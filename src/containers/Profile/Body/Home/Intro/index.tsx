@@ -3,6 +3,7 @@ import SectionPanel from '~/components/SectionPanel';
 import StatusMsg from '~/components/UserDetails/StatusMsg';
 import StatusInput from '~/components/UserDetails/StatusInput';
 import RankBar from '~/components/RankBar';
+import ScopedTheme from '~/theme/ScopedTheme';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import DropDownButton from '~/components/Buttons/DropdownButton';
@@ -275,27 +276,29 @@ export default function Intro({
           )}
         </div>
         {profile.twinkleXP > 0 && (
-          <RankBar
-            profile={profile}
-            className={css`
-              margin-left: ${!!profile.rank && profile.rank < 4
-                ? '-11px'
-                : '-10px'};
-              margin-right: ${!!profile.rank && profile.rank < 4
-                ? '-11px'
-                : '-10px'};
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: -1rem !important;
-                margin-right: -1rem !important;
-              }
-            `}
-            style={{
-              display: 'block',
-              borderRadius: 0,
-              borderRight: 0,
-              borderLeft: 0
-            }}
-          />
+          <ScopedTheme theme={(selectedTheme as any) || 'logoBlue'}>
+            <RankBar
+              profile={profile}
+              className={css`
+                margin-left: ${!!profile.rank && profile.rank < 4
+                  ? '-11px'
+                  : '-10px'};
+                margin-right: ${!!profile.rank && profile.rank < 4
+                  ? '-11px'
+                  : '-10px'};
+                @media (max-width: ${mobileMaxWidth}) {
+                  margin-left: -1rem !important;
+                  margin-right: -1rem !important;
+                }
+              `}
+              style={{
+                display: 'block',
+                borderRadius: 0,
+                borderRight: 0,
+                borderLeft: 0
+              }}
+            />
+          </ScopedTheme>
         )}
         {!profile.twinkleXP && bioExists && (
           <hr

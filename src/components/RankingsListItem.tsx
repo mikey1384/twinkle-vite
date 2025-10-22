@@ -27,6 +27,7 @@ export default function RankingsListItem({
     fallback: 'logoGreen'
   });
   const userRank = useMemo(() => Number(user.rank), [user.rank]);
+  const isSelf = user.id === myId;
   const rankColor = useMemo(() => {
     return userRank === 1
       ? Color.gold()
@@ -71,85 +72,66 @@ export default function RankingsListItem({
     return small ? '3rem' : '5rem';
   }, [small]);
 
+  const containerClass = css`
+    display: grid;
+    grid-template-columns: 3.2rem 1fr auto;
+    align-items: center;
+    gap: 1.2rem;
+    background: ${isSelf && userRank > 3 ? Color.highlightGray() : '#fff'};
+  `;
+  const rankClass = css`
+    font-weight: bold;
+    font-size: ${rankFontSize};
+    width: 3.2rem;
+    text-align: center;
+    color: ${rankColor || (userRank <= 10 ? Color.logoBlue() : Color.darkGray())};
+    @media (max-width: ${tabletMaxWidth}) {
+      font-size: ${mobileRankFontSize};
+    }
+  `;
+  const userBlockClass = css`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+  `;
+  const usernameClass = css`
+    display: block;
+    max-width: 16rem;
+    font-size: ${usernameFontSize};
+    @media (max-width: ${tabletMaxWidth}) {
+      max-width: 9rem;
+      font-size: ${mobileUsernameFontSize};
+    }
+  `;
+  const xpBlockClass = css`
+    font-weight: bold;
+    font-size: ${xpFontSize};
+    white-space: nowrap;
+    @media (max-width: ${tabletMaxWidth}) {
+      font-size: ${mobileXpFontSize};
+    }
+  `;
+
   return (
-    <nav
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background:
-          user.id === myId && userRank > 3 ? Color.highlightGray() : '#fff',
-        ...style
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center'
-        }}
-      >
-        <span
-          className={css`
-            font-weight: bold;
-            font-size: ${rankFontSize};
-            width: 3rem;
-            margin-right: 1rem;
-            text-align: center;
-            color: ${rankColor ||
-            (userRank <= 10 ? Color.logoBlue() : Color.darkGray())};
-            @media (max-width: ${tabletMaxWidth}) {
-              font-size: ${mobileRankFontSize};
-            }
-          `}
-        >
-          {userRank ? `#${userRank}` : '--'}
-        </span>
-        <div
-          style={{
-            marginLeft: '1.3rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
-          <div>
-            <ProfilePic
-              style={{ width: profileSize }}
-              profilePicUrl={user.profilePicUrl}
-              userId={user.id}
-            />
-          </div>
-          <UsernameText
-            color={
-              rankColor ||
-              (userRank <= 10 ? Color.logoBlue() : Color.darkGray())
-            }
-            user={{ ...user, username: user.username }}
-            onMenuShownChange={onUsermenuShownChange}
-            className={css`
-              max-width: 15rem;
-              margin-top: 0.5rem;
-              text-align: center;
-              font-size: ${usernameFontSize};
-              @media (max-width: ${tabletMaxWidth}) {
-                max-width: 7rem;
-                font-size: ${mobileUsernameFontSize};
-              }
-            `}
-            activityContext={activityContext}
-            activityPoints={user[target] || 0}
-          />
-        </div>
+    <nav className={containerClass} style={style}>
+      <span className={rankClass}>{userRank ? `#${userRank}` : '--'}</span>
+      <div className={userBlockClass}>
+        <ProfilePic
+          style={{ width: profileSize }}
+          profilePicUrl={user.profilePicUrl}
+          userId={user.id}
+        />
+        <UsernameText
+          color={rankColor || (userRank <= 10 ? Color.logoBlue() : Color.darkGray())}
+          user={{ ...user, username: user.username }}
+          onMenuShownChange={onUsermenuShownChange}
+          className={usernameClass}
+          activityContext={activityContext}
+          activityPoints={user[target] || 0}
+        />
       </div>
-      <div
-        className={css`
-          font-weight: bold;
-          font-size: ${xpFontSize};
-          @media (max-width: ${tabletMaxWidth}) {
-            font-size: ${mobileXpFontSize};
-          }
-        `}
-      >
+      <div className={xpBlockClass}>
         <span style={{ color: getXpNumberColor() }}>
           {addCommasToNumber(user[target] || 0)}
         </span>{' '}

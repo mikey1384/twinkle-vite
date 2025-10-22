@@ -158,6 +158,9 @@ function XPBar({
                     border: 1px solid ${Color[xpLevelColor](isMaxReached ? 0.85 : 0.75)};
                     border-top-left-radius: 9999px;
                     border-bottom-left-radius: 9999px;
+                    ${!canEarnCoins
+                      ? `border-top-right-radius: 9999px; border-bottom-right-radius: 9999px;`
+                      : ''}
                     /* flattened: no shadow on white containers */
                     cursor: default;
                     @media (max-width: ${mobileMaxWidth}) {

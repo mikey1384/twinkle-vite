@@ -41,12 +41,13 @@ const userCommentCss = css`
   }
 `;
 
+// Wrapper removed: ContentListItem now renders its own themed border
+
 export default function ContentPanel({
   alwaysShow,
   autoExpand,
   className,
   commentsLoadLimit,
-  isContentPage,
   feedId,
   contentId,
   contentType,
@@ -62,7 +63,6 @@ export default function ContentPanel({
   className?: string;
   commentsLoadLimit?: number;
   feedId?: number;
-  isContentPage?: boolean;
   contentId: number;
   contentType: string;
   rootType?: string;
@@ -211,51 +211,55 @@ export default function ContentPanel({
 
   const container = useMemo(
     () => css`
-      background: #fff;
+      position: relative;
       width: 100%;
+      background: #fff;
       border: 1px solid var(--ui-border);
       border-radius: ${wideBorderRadius};
+      padding: 0.8rem 1rem 0.8rem 1.2rem;
       &:last-child {
         margin-bottom: 0;
       }
+
       .heading {
         user-select: none;
-        padding: 1rem;
         display: flex;
         align-items: center;
+        gap: 0.9rem;
+        padding: 0.2rem 0.2rem 0.6rem 0.2rem;
         width: 100%;
-        justify-content: space-between;
+        border-bottom: none;
       }
       .body {
         width: 100%;
-        font-size: 1.7rem;
+        font-size: 1.65rem;
         padding: 0;
         z-index: 10;
         .bottom-interface {
-          padding: 0 1rem 0 1rem;
+          padding: 0.6rem 0 0 0;
           display: flex;
           flex-direction: column;
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0 0.5rem 0 0.5rem;
-          }
         }
       }
+      /* container spacing only; separators handled by outer wrapper */
+      padding: 1rem 1rem 1rem 1.2rem;
       .content-panel__likes {
-        font-weight: bold;
+        font-weight: 600;
         color: ${Color.darkerGray()};
         font-size: 1.2rem;
         line-height: 1;
       }
       .subject {
-        font-size: 2rem;
-        font-weight: bold;
+        font-size: 1.9rem;
+        font-weight: 700;
         white-space: pre-wrap;
         overflow-wrap: break-word;
         word-break: break-word;
-        margin-bottom: 1.5rem;
+        margin: 0 0 1rem 0;
       }
       .title {
-        font-size: 1.7rem;
+        font-size: 1.6rem;
+        font-weight: 600;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: pre-wrap;
@@ -263,32 +267,19 @@ export default function ContentPanel({
         word-break: break-word;
       }
       .timestamp {
-        font-size: 1rem;
+        display: inline-block;
+        margin-top: 0.2rem;
+        font-size: 1.1rem;
         color: ${Color.gray()};
       }
       @media (max-width: ${mobileMaxWidth}) {
         border-radius: 0;
-        ${isContentPage ? 'border-top: none;' : ''}
-        border-left: none;
-        border-right: none;
         .body {
-          font-size: 1.8rem;
-        }
-        .heading {
-          > a,
-          > span {
-            font-size: 1.7rem;
-          }
-          > small {
-            font-size: 1.2rem;
-          }
-          > button {
-            font-size: 1.2rem;
-          }
+          font-size: 1.75rem;
         }
       }
     `,
-    [isContentPage]
+    []
   );
 
   // this block MUST always come before the return statement
@@ -330,7 +321,11 @@ export default function ContentPanel({
           <div
             className={css`
               width: 100%;
-              margin-bottom: 1rem;
+              margin: 0;
+              padding: 0.6rem 0 0.8rem 0;
+              &:not(:first-of-type) {
+                border-top: 1px solid var(--ui-border-strong);
+              }
             `}
           >
             {contentShown ? (
@@ -405,7 +400,8 @@ export default function ContentPanel({
                     hideSideBordersOnMobile
                     style={{
                       zIndex: 1,
-                      position: 'relative'
+                      position: 'relative',
+                      marginTop: '0.8rem'
                     }}
                     expandable
                     contentObj={{

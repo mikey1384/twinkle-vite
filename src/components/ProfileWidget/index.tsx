@@ -16,67 +16,73 @@ const container = css`
   border-radius: ${wideBorderRadius};
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border: 1px solid var(--ui-border);
-  background: var(--profile-widget-bg, #f6f7fd);
+  border: none;
+  background: #fff;
   box-shadow: none;
-  backdrop-filter: blur(6px);
+  backdrop-filter: none;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 
   .heading {
-    padding: 1.2rem 1.6rem;
+    padding: 0.8rem 1.2rem;
     display: flex;
-    gap: 1.6rem;
+    gap: 1.2rem;
     align-items: center;
-    background: rgba(255, 255, 255, 0.99);
-    border-bottom: 1px solid var(--ui-border);
+    background: transparent;
+    border-bottom: 0;
     cursor: pointer;
-    transition: background 0.25s ease;
+    transition: color 0.2s ease, transform 0.12s ease;
     .widget__profile-pic {
-      --profile-pic-size: 7.4rem;
-      border-radius: 2rem;
+      --profile-pic-size: 6.2rem;
       box-shadow: none;
     }
-    .names {
+    .titles {
       flex: 1 1 auto;
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
       display: flex;
       flex-direction: column;
-      gap: 0.3rem;
-      a {
+      gap: 0.2rem;
+      .real-name {
         color: ${Color.darkerGray()};
         font-weight: 700;
-        font-size: 2.2rem;
-        text-decoration: none;
+        font-size: 2rem;
       }
-      span {
+      .username {
         color: ${Color.gray()};
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+        font-weight: 600;
+      }
+      &.no-realname {
+        .username {
+          color: ${Color.darkerGray()};
+          font-size: 2rem;
+          font-weight: 700;
+        }
       }
     }
   }
 
   .details {
-    padding: 1.2rem 1.6rem 1.4rem;
+    padding: 0.8rem 1.2rem 1rem;
     display: flex;
     flex-direction: column;
-    gap: 1.4rem;
-    background: rgba(255, 255, 255, 0.9);
+    gap: 1rem;
+    background: transparent;
     font-size: 1.4rem;
     .login-message {
-      font-size: 2.1rem;
+      font-size: 2rem;
       color: ${Color.darkerGray()};
-      font-weight: bold;
+      font-weight: 700;
     }
   }
 
   .navigation {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.8rem;
     width: 100%;
   }
 
@@ -84,26 +90,25 @@ const container = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.7rem 1.2rem;
-    border-radius: 1.1rem;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid var(--ui-border);
+    padding: 0.6rem 1rem;
+    border-radius: 1rem;
+    background: transparent;
+    border: 1px solid transparent;
     box-shadow: none;
     font-weight: 600;
     color: ${Color.darkerGray()};
     gap: 0.6rem;
     cursor: pointer;
-    transition: transform 0.2s ease,
-      border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    transition: transform 0.12s ease, border-color 0.18s ease,
+      background 0.18s ease, color 0.18s ease;
     .navigation-icon {
       color: ${Color.darkerGray()};
-      transition: color 0.2s ease;
+      transition: color 0.18s ease;
     }
     &:hover {
-      transform: translateY(-2px);
-      background: rgba(255, 255, 255, 0.99);
-      border-color: var(--ui-border-strong);
-      box-shadow: none;
+      transform: translateX(4px);
+      background: var(--profile-widget-hover-bg, transparent);
+      border-color: var(--profile-widget-accent-border, var(--ui-border));
       color: var(--profile-widget-accent, ${Color.logoBlue()});
       .navigation-icon {
         color: var(--profile-widget-accent, ${Color.logoBlue()});
@@ -117,28 +122,33 @@ const container = css`
     border-right: 0;
     box-shadow: none;
     .heading {
-      padding: 1.4rem 1.6rem;
+      padding: 1.2rem 1.4rem;
       .widget__profile-pic {
-        --profile-pic-size: 8rem;
+        --profile-pic-size: 7.2rem;
       }
-      .names {
-        a {
-          font-size: 2.5rem;
+      .titles {
+        .real-name {
+          font-size: 2.3rem;
         }
-        span {
-          font-size: 1.4rem;
+        .username {
+          font-size: 1.5rem;
+        }
+        &.no-realname {
+          .username {
+            font-size: 2.3rem;
+          }
         }
       }
     }
     .details {
-      padding: 1.5rem 1.4rem 1.8rem;
+      padding: 1.2rem 1.2rem 1.6rem;
       text-align: center;
       .login-message {
-        font-size: 2.6rem;
+        font-size: 2.4rem;
       }
     }
     .navigation {
-      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
     }
   }
 `;
@@ -152,7 +162,7 @@ export default function ProfileWidget() {
     (v) => v.myState
   );
   const { themeStyles, accentColor: defaultAccent } = useHomePanelVars(0.08);
-  const themeBg = themeStyles.hoverBg || '#f6f7fd';
+  const themeBg = themeStyles.hoverBg || 'transparent';
   const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {
     fallback: 'logoBlue'
   });
@@ -169,6 +179,7 @@ export default function ProfileWidget() {
         className={container}
         style={{
           ['--profile-widget-bg' as any]: themeBg,
+          ['--profile-widget-hover-bg' as any]: themeBg,
           ['--profile-widget-accent' as any]: accentColor,
           ['--profile-widget-accent-border' as any]: accentBorderColor
         }}
@@ -186,13 +197,9 @@ export default function ProfileWidget() {
                 profilePicUrl={profilePicUrl}
               />
             </div>
-            <div className="names">
-              <a>{username}</a>
-              {realName && (
-                <div>
-                  <span>({realName})</span>
-                </div>
-              )}
+            <div className={`titles ${!realName ? 'no-realname' : ''}`}>
+              {realName ? <div className="real-name">{realName}</div> : null}
+              <div className="username">@{username}</div>
             </div>
           </div>
         ) : null}

@@ -64,11 +64,20 @@ export function useSectionPanelVars(options: SectionPanelOptions = {}) {
     return resolveColorValue(themeName) || Color.logoBlue();
   }, [sectionPanelRole?.color, sectionPanelRole?.opacity, themeName]);
 
-  const panelBodyBg = useMemo(
-    () => blendWithWhite(accentColor, bodyBlendWeight),
-    [accentColor, bodyBlendWeight]
+  function setAlphaExact(rgba: string, a: number) {
+    const m = rgba.match(
+      /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+    );
+    if (!m) return rgba;
+    const [_, r, g, b] = m;
+    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
+  }
+
+  const panelBodyBg = useMemo(() => '#fff', []);
+  const panelBorderColor = useMemo(
+    () => setAlphaExact(accentColor, 0.35),
+    [accentColor]
   );
-  const panelBorderColor = useMemo(() => 'var(--ui-border)', []);
 
   const headerTextColor =
     resolveColorValue(
@@ -91,8 +100,8 @@ export function useSectionPanelVars(options: SectionPanelOptions = {}) {
   const styleVars = useMemo(
     () =>
       ({
-        ['--section-panel-bg' as const]: '#ffffff',
-        ['--section-panel-header-bg' as const]: '#ffffff',
+        ['--section-panel-bg' as const]: '#fff',
+        ['--section-panel-header-bg' as const]: '#fff',
         ['--section-panel-body-bg' as const]: panelBodyBg,
         ['--section-panel-border-color' as const]: panelBorderColor,
         ['--section-panel-accent' as const]: accentColor

@@ -150,6 +150,52 @@ export default function Feeds({
     }
   }, [section, username]);
 
+  // Match Home feed separators between panels
+  const feedListClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        width: 100%;
+
+        > .feed-item {
+          position: relative;
+        }
+        > .feed-item + .feed-item::before {
+          content: '';
+          position: absolute;
+          top: -0.6rem;
+          left: 1.2rem;
+          right: 1.2rem;
+          height: 1px;
+          background: linear-gradient(
+            to right,
+            transparent,
+            var(--ui-border-strong),
+            transparent
+          );
+          pointer-events: none;
+        }
+
+        @media (max-width: ${mobileMaxWidth}) {
+          > .feed-item + .feed-item::before {
+            left: 0;
+            right: 0;
+          }
+        }
+      `,
+    []
+  );
+  const feedItemCustomClass = useMemo(
+    () =>
+      css`
+        padding: 1.2rem 1.2rem;
+        transition: background 0.15s ease;
+      `,
+    []
+  );
+
   return (
     <ErrorBoundary componentPath="Profile/Body/Posts/Feeds">
       <div
@@ -220,7 +266,7 @@ export default function Feeds({
                 color={selectedTheme}
                 style={{
                   height: '5rem',
-                  marginTop: 0,
+                  marginTop: '1rem',
                   marginBottom: '1.2rem'
                 }}
               >
@@ -251,28 +297,31 @@ export default function Feeds({
               />
             ) : (
               <>
-                {feeds.length > 0 &&
-                  feeds.map((feed, index) => {
-                    const { contentId, contentType, rootType } = feed;
-                    return (
-                      <ContentPanel
-                        key={filterTable[section] + feed.feedId}
-                        style={{
-                          marginTop: '1rem',
-                          marginBottom: '1rem',
-                          zIndex: feeds.length - index
-                        }}
-                        zIndex={feeds.length - index}
-                        feedId={feed.feedId}
-                        contentId={contentId}
-                        contentType={contentType}
-                        rootType={rootType}
-                        theme={selectedTheme}
-                        commentsLoadLimit={5}
-                        numPreviewComments={1}
-                      />
-                    );
-                  })}
+                {feeds.length > 0 && (
+                  <div className={feedListClass}>
+                    {feeds.map((feed, index) => {
+                      const { contentId, contentType, rootType } = feed;
+                      return (
+                        <div
+                          key={filterTable[section] + feed.feedId}
+                          className={`feed-item ${feedItemCustomClass}`}
+                        >
+                          <ContentPanel
+                            style={{ margin: 0, zIndex: feeds.length - index }}
+                            zIndex={feeds.length - index}
+                            feedId={feed.feedId}
+                            contentId={contentId}
+                            contentType={contentType}
+                            rootType={rootType}
+                            theme={selectedTheme}
+                            commentsLoadLimit={5}
+                            numPreviewComments={1}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 {feeds.length === 0 && (
                   <div
                     style={{

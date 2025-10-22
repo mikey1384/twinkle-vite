@@ -189,11 +189,21 @@ export default function Header({
           font-size: 1.7rem;
           background: ${headerColor};
           display: flex;
-          box-shadow: 0 6px 18px -12px rgba(15, 23, 42, 0.24);
+          box-shadow: none;
           align-items: center;
           width: 100%;
           margin-bottom: 0px;
           height: 4.5rem;
+          &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            pointer-events: none;
+            background: var(--ui-border);
+          }
           @media (min-width: ${desktopMinWidth}) {
             top: 0;
           }

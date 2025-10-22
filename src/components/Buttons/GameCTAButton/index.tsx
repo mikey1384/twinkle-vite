@@ -34,6 +34,9 @@ export default function GameCTAButton({
   toggled?: boolean;
   loading?: boolean;
 }) {
+  const hasLabel = !!(
+    children && !(typeof children === 'string' && children.trim().length === 0)
+  );
   const cls = getButtonCls({ variant, size, shiny, toggled });
   return (
     <button
@@ -44,7 +47,7 @@ export default function GameCTAButton({
       aria-busy={loading || undefined}
     >
       <Icon icon={loading ? 'spinner' : icon} pulse={loading} />
-      <span className={labelCls}>{children}</span>
+      {hasLabel ? <span className={labelCls}>{children}</span> : null}
     </button>
   );
 }

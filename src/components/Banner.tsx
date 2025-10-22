@@ -49,11 +49,11 @@ export default function Banner({
         opacity: ${loading ? 0.6 : 1};
         width: calc(100% - 1.2rem);
         margin: 0.6rem;
-        background: ${tint(hue, 0.22)};
-        color: ${Color.darkBlueGray()};
+        background: ${tint(hue, 1)};
+        color: #fff;
         padding: 1rem 1.2rem;
         font-size: 1.6rem;
-        border: 1px solid ${tint(hue, 0.42)};
+        border: 1px solid ${tint(hue, 1)};
         border-radius: ${wideBorderRadius};
         display: inline-flex;
         align-items: center;
@@ -64,7 +64,7 @@ export default function Banner({
         ${onClick && !loading ? 'cursor: pointer;' : 'cursor: default;'}
         &:hover {
           ${onClick && !loading
-            ? `background: ${tint(hue, 0.28)}; border-color: ${tint(hue, 0.5)};`
+            ? `background: ${tint(hue, 1)}; border-color: ${tint(hue, 1)};`
             : ''};
         }
         @media (max-width: ${mobileMaxWidth}) {

@@ -20,7 +20,7 @@ import SecretComment from '~/components/SecretComment';
 import Icon from '~/components/Icon';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import RewardButton from '~/components/Buttons/RewardButton';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { wideBorderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import {
@@ -60,10 +60,10 @@ const targetContentCSS = css`
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
-  border-radius: ${borderRadius};
+  border-radius: ${wideBorderRadius};
   border: 1px solid var(--ui-border);
   padding: 2rem 0 0.5rem 0;
-  background: ${Color.whiteGray()};
+  background: #fff;
   margin-top: -1rem;
   transition: background 0.5s;
   .left {
@@ -99,6 +99,7 @@ const targetContentCSS = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.7rem;
+    border-radius: 0;
     border-left: 0;
     border-right: 0;
   }

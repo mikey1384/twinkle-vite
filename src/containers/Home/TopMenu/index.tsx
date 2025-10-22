@@ -25,9 +25,8 @@ import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
-import Icon from '~/components/Icon';
 import ChessOptionsModal from './ChessOptionsModal';
-import NewTopButton from './NewTopButton';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
@@ -243,33 +242,40 @@ export default function TopMenu({
         >
           <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
-              <NewTopButton
-                key="aiStoriesButton"
-                onClick={onPlayAIStories}
+              <GameCTAButton
+                icon="wand-magic-sparkles"
                 variant="logoBlue"
-                isChecked={isAchieved('A')}
+                size="md"
+                shiny={false}
+                onClick={onPlayAIStories}
               >
                 A{allGoalsAchieved ? '' : '.I Stories'}
-              </NewTopButton>
+                {isAchieved('A') ? ' ✓' : ''}
+              </GameCTAButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
-              <NewTopButton
-                key="grammarGameButton"
-                onClick={handlePlayGrammarGame}
+              <GameCTAButton
+                icon="spell-check"
                 variant="magenta"
-                isChecked={isAchieved('G')}
+                size="md"
+                shiny={false}
+                onClick={handlePlayGrammarGame}
               >
                 G{allGoalsAchieved ? '' : 'rammarbles'}
-              </NewTopButton>
+                {isAchieved('G') ? ' ✓' : ''}
+              </GameCTAButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
-              <NewTopButton
-                key="wordleButton"
+              <GameCTAButton
+                icon="puzzle-piece"
                 variant="gold"
+                size="md"
+                shiny={false}
                 onClick={handleWordleButtonClick}
               >
                 W{allGoalsAchieved ? '' : 'ordle'}
-              </NewTopButton>
+                {isAchieved('W') ? ' ✓' : ''}
+              </GameCTAButton>
             </ErrorBoundary>
             {allGoalsAchieved && (
               <div
@@ -291,53 +297,42 @@ export default function TopMenu({
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
-              <NewTopButton
-                key="postPicsButton"
-                variant="green"
-                style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
+              <GameCTAButton
+                icon="upload"
+                variant="success"
+                size="md"
+                shiny={false}
                 onClick={() => onInputModalButtonClick('file')}
               >
-                <Icon icon="upload" />
-              </NewTopButton>
+                {''}
+              </GameCTAButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
-              <NewTopButton
-                key="chessButton"
+              <GameCTAButton
+                icon="chess"
+                variant={
+                  todayStats.unansweredChessMsgChannelId ? 'orange' : 'neutral'
+                }
+                size="md"
+                shiny={false}
                 loading={loadingChess}
                 onClick={handleChessButtonClick}
-                variant={
-                  todayStats.unansweredChessMsgChannelId ? 'orange' : 'slate'
-                }
-                style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
               >
-                {loadingChess && (
-                  <Icon
-                    style={{ marginRight: '0.7rem' }}
-                    icon="spinner"
-                    pulse
-                  />
-                )}
-                <Icon icon="chess" />
-              </NewTopButton>
+                {''}
+              </GameCTAButton>
             </ErrorBoundary>
             {todayStats.unansweredOmokMsgChannelId && (
               <ErrorBoundary componentPath="Home/Stories/TopMenu/OmokButton">
-                <NewTopButton
-                  key="omokButton"
+                <GameCTAButton
+                  icon="puzzle-piece"
+                  variant="orange"
+                  size="md"
+                  shiny={false}
                   loading={loadingOmok}
                   onClick={handleNavigateToOmokMessage}
-                  variant="orange"
-                  style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
                 >
-                  {loadingOmok && (
-                    <Icon
-                      style={{ marginRight: '0.7rem' }}
-                      icon="spinner"
-                      pulse
-                    />
-                  )}
-                  O
-                </NewTopButton>
+                  {''}
+                </GameCTAButton>
               </ErrorBoundary>
             )}
           </div>

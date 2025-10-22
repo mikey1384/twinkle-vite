@@ -93,7 +93,7 @@ export default function HomeMenuItems({
           min-height: 0;
           overflow-y: visible;
           position: relative;
-          background: transparent;
+          background: #fff;
           &::before {
             content: '';
             display: none;
@@ -221,7 +221,7 @@ export default function HomeMenuItems({
           }
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 2rem;
-            background: transparent;
+            background: #fff;
             &::before {
               display: none;
             }

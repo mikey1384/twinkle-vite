@@ -33,12 +33,14 @@ export default function SearchDropdown({
     <ErrorBoundary
       className={css`
         position: absolute;
-        top: 1rem;
+        top: calc(100% + 0.4rem);
         left: 0;
         right: 0;
         background: #fff;
-        box-shadow: 1px 1px 5px ${Color.black()};
-        top: CALC(4.3rem - 1px);
+        border: 1px solid var(--ui-border);
+        border-radius: 12px;
+        box-shadow: none;
+        overflow: hidden;
       `}
       componentPath="SearchDropdown"
       style={style}
@@ -49,18 +51,19 @@ export default function SearchDropdown({
           width: 100%;
           display: block;
           nav {
-            padding: 1rem;
+            padding: 1rem 1.2rem;
             color: ${Color.darkerGray()};
-            &:hover {
-              background: ${Color.highlightGray()};
-            }
-            a {
-              text-decoration: none;
-              color: ${Color.darkerGray()};
-            }
+            cursor: pointer;
           }
-        `}
-      >
+          nav:hover {
+            background: ${Color.highlightGray()};
+          }
+          nav a {
+            text-decoration: none;
+            color: ${Color.darkerGray()};
+          }
+      `}
+    >
         {searchResults.map((item, index) => {
           const itemStyle =
             index === indexToHighlight

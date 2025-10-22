@@ -1,6 +1,7 @@
 import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import RankBar from '~/components/RankBar';
+import ScopedTheme from '~/theme/ScopedTheme';
 import UserDetails from '~/components/UserDetails';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
@@ -66,19 +67,25 @@ export default function Profile({ profile }: { profile: User }) {
         />
       </div>
       {!!profile.twinkleXP && (
-        <RankBar
-          profile={profile}
-          className={rankBarCSS}
-          style={{
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderRadius: 0,
-            marginLeft:
-              !deviceIsMobile && profile.rank && profile.rank < 4 ? '-1px' : '',
-            marginRight:
-              !deviceIsMobile && profile.rank && profile.rank < 4 ? '-1px' : ''
-          }}
-        />
+        <ScopedTheme theme={(profile.profileTheme as any) || 'logoBlue'}>
+          <RankBar
+            profile={profile}
+            className={rankBarCSS}
+            style={{
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderRadius: 0,
+              marginLeft:
+                !deviceIsMobile && profile.rank && profile.rank < 4
+                  ? '-1px'
+                  : '',
+              marginRight:
+                !deviceIsMobile && profile.rank && profile.rank < 4
+                  ? '-1px'
+                  : ''
+            }}
+          />
+        </ScopedTheme>
       )}
     </div>
   );

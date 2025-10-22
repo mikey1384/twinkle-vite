@@ -232,8 +232,7 @@ export default function Notification({
         ref={ContainerRef}
         onScroll={handleScroll}
         style={{
-          ...(style || {}),
-          ['--noti-bg' as any]: '#ffffff'
+          ...(style || {})
         }}
         className={`${container} ${className}`}
       >

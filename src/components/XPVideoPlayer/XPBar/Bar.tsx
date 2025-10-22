@@ -75,7 +75,6 @@ export default function Bar({
       position: relative;
       z-index: 1;
       font-weight: 700;
-      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
       white-space: nowrap;
       padding: 0 0.75rem;
       font-size: ${isChat ? '1rem' : '1.2rem'};

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
 import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { cardLevelHash, wordLevelHash } from '~/constants/defaultValues';
-import { useRoleColor } from '~/theme/useRoleColor';
-import { resolveColorValue } from '~/theme/resolveColor';
+import { useKeyContext } from '~/contexts';
+import { returnTheme } from '~/helpers';
 
 export default function HeadingText({
   action,
@@ -27,22 +27,12 @@ export default function HeadingText({
     contentType,
     uploader
   } = contentObj;
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
-    color: linkColor,
-    colorKey: linkColorKey,
-    themeName
-  } = useRoleColor('link', {
-    themeName: theme,
-    fallback: 'logoBlue'
-  });
-  const { color: userLinkColor } = useRoleColor('userLink', {
-    themeName,
-    fallback: linkColorKey || 'logoBlue'
-  });
-  const { color: contentLinkColor } = useRoleColor('content', {
-    themeName,
-    fallback: 'logoBlue'
-  });
+    link: { color: linkColor },
+    userLink: { color: userLinkColor },
+    content: { color: contentColor }
+  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'
@@ -58,11 +48,12 @@ export default function HeadingText({
   if (isSubjectComment) {
     contentLabel = 'subject';
   }
+  const contentLinkColor = Color[contentColor]();
   switch (contentType) {
     case 'video':
       return (
         <>
-          <UsernameText user={uploader} color={linkColor} /> uploaded a
+          <UsernameText user={uploader} color={Color[linkColor]()} /> uploaded a
           video:{' '}
           <ContentLink
             content={contentObj}
@@ -75,7 +66,7 @@ export default function HeadingText({
     case 'comment':
       return (
         <>
-          <UsernameText user={uploader} color={linkColor} />{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
           <ContentLink
             content={{ id }}
             contentType={contentType}
@@ -87,12 +78,12 @@ export default function HeadingText({
           {rootType !== 'user' ? (
             <>
               {contentLabel}:{' '}
-            <ContentLink
-              content={isSubjectComment ? targetObj?.subject : rootObj}
-              contentType={isSubjectComment ? 'subject' : rootType}
-              theme={theme}
-              label=""
-            />{' '}
+              <ContentLink
+                content={isSubjectComment ? targetObj?.subject : rootObj}
+                contentType={isSubjectComment ? 'subject' : rootType}
+                theme={theme}
+                label=""
+              />{' '}
             </>
           ) : null}
         </>
@@ -100,7 +91,7 @@ export default function HeadingText({
     case 'url':
       return (
         <>
-          <UsernameText user={uploader} color={linkColor} /> shared a
+          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
           link:&nbsp;
           <ContentLink
             content={contentObj}
@@ -113,13 +104,13 @@ export default function HeadingText({
     case 'subject':
       return (
         <>
-          <UsernameText user={uploader} color={linkColor} /> started a{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> started a{' '}
           <ContentLink
             content={{ id, title: 'subject ' }}
             contentType={contentType}
             theme={theme}
             style={{
-              color: byUser ? userLinkColor : contentLinkColor
+              color: byUser ? Color[userLinkColor]() : contentLinkColor
             }}
             label=""
           />
@@ -140,7 +131,7 @@ export default function HeadingText({
       if (contentObj.rootType === 'mission') {
         return (
           <>
-            <UsernameText user={uploader} color={linkColor} />{' '}
+            <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
             completed a{' '}
             <ContentLink
               content={{
@@ -158,7 +149,7 @@ export default function HeadingText({
       } else {
         return (
           <>
-            <UsernameText user={uploader} color={linkColor} /> unlocked
+            <UsernameText user={uploader} color={Color[linkColor]()} /> unlocked
             an{' '}
             <ContentLink
               content={{
@@ -174,15 +165,12 @@ export default function HeadingText({
       }
     }
     case 'aiStory':
-      const aiStoryColor =
-        resolveColorValue(cardLevelHash?.[contentObj?.difficulty]?.color) ||
-        Color.logoBlue();
       return (
         <>
-          <UsernameText user={uploader} color={linkColor} /> cleared a{' '}
+          <UsernameText user={uploader} color={Color[linkColor]()} /> cleared a{' '}
           <b
             style={{
-              color: aiStoryColor
+              color: Color?.[cardLevelHash?.[contentObj?.difficulty]?.color]?.()
             }}
           >
             Level {contentObj.difficulty} AI Story
@@ -197,17 +185,14 @@ export default function HeadingText({
         </>
       );
     case 'xpChange': {
-      const vocabColor =
-        resolveColorValue(cardLevelHash?.[contentObj?.level]?.color) ||
-        Color.logoBlue();
       return (
         <>
-          <UsernameText user={uploader} color={linkColor} /> completed
+          <UsernameText user={uploader} color={Color[linkColor]()} /> completed
           all 3 daily goals and correctly answered an{' '}
           <span
             style={{
               fontWeight: 'bold',
-              color: vocabColor
+              color: Color[cardLevelHash[contentObj?.level]?.color]()
             }}
           >
             {wordLevelHash[contentObj?.level]?.label} vocabulary question
@@ -226,7 +211,7 @@ export default function HeadingText({
           {' '}
           <UsernameText
             user={targetObj.comment.uploader}
-            color={linkColor}
+            color={Color[linkColor]()}
           />
           {"'s "}
           <ContentLink

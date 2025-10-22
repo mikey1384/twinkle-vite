@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import { Card } from '~/types';
 import { userIdRef } from '~/constants/state';
 import { socket } from '~/constants/sockets/api';
+import { Theme } from '~/constants/css';
 
 import {
   returnCardBurnXP,
@@ -182,6 +183,20 @@ export function isSupermod(level = 0) {
 
 export function last(array: any[]) {
   return array[array.length - 1];
+}
+
+// Minimal theme adapter used by legacy components
+// Returns color keys for roles so callers can resolve via Color[role]()
+export function returnTheme(themeName?: string) {
+  const roles = Theme(themeName || 'logoBlue');
+  const linkColor = (roles.link?.color as string) || 'logoBlue';
+  const userLinkColor = (roles.userLink?.color as string) || linkColor;
+  const contentColor = (roles.content?.color as string) || 'logoBlue';
+  return {
+    link: { color: linkColor },
+    userLink: { color: userLinkColor },
+    content: { color: contentColor }
+  } as const;
 }
 
 /**

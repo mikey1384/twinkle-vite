@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Link, useLocation } from 'react-router-dom';
-import { Color, desktopMinWidth, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
   useAppContext,
@@ -58,9 +58,24 @@ function Nav({
   const onSetSubjectsLoaded = useExploreContext(
     (v) => v.actions.onSetSubjectsLoaded
   );
+  const { getColor: getFilterColor } = useRoleColor('filter', {
+    fallback: 'logoBlue'
+  });
+  const activeColor = useMemo(
+    () => getFilterColor() || Color.logoBlue(),
+    [getFilterColor]
+  );
+  const hoverBorder = useMemo(
+    () => getFilterColor(0.28) || Color.logoBlue(0.28),
+    [getFilterColor]
+  );
+  const activeBorder = useMemo(
+    () => getFilterColor() || Color.logoBlue(),
+    [getFilterColor]
+  );
   const highlightColor = useMemo(
-    () => (alert ? alertHue : Color.darkGray()),
-    [alert, alertHue]
+    () => (alert ? alertHue : activeColor),
+    [alert, alertHue, activeColor]
   );
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
@@ -113,26 +128,22 @@ function Nav({
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        .chat {
-          color: ${Color.lightGray()};
-        }
         a {
           text-decoration: none;
-          font-weight: bold;
-          color: ${Color.lightGray()};
+          font-weight: 600;
+          color: ${Color.darkGray()};
           align-items: center;
           line-height: 1;
-          padding: 0.6rem 1.1rem;
-          border-radius: ${wideBorderRadius};
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          background: rgba(255, 255, 255, 0.12);
-          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08),
-            0 8px 16px rgba(15, 23, 42, 0.08);
+          padding: 0.6rem 1rem 0.9rem;
+          border: none;
+          background: transparent;
+          box-shadow: none;
+          border-bottom: 2px solid transparent;
         }
         > a.active {
           color: ${highlightColor}!important;
-          background: rgba(255, 255, 255, 0.22) !important;
-          border-color: rgba(255, 255, 255, 0.28) !important;
+          background: transparent !important;
+          border-bottom-color: ${activeBorder} !important;
           > svg {
             color: ${highlightColor}!important;
           }
@@ -157,17 +168,16 @@ function Nav({
         }
         ${!isDailyTaskAlerted
           ? `@media (min-width: ${desktopMinWidth}) {
-          &:hover {
-            > a {
-              > svg {
-                color: ${highlightColor};
+              &:hover {
+                > a {
+                  > svg {
+                    color: ${highlightColor};
+                  }
+                  color: ${highlightColor};
+                  border-bottom-color: ${hoverBorder};
+                }
               }
-              color: ${highlightColor};
-              background: rgba(255, 255, 255, 0.18);
-              border-color: rgba(255, 255, 255, 0.24);
-            }
-          }
-        }`
+            }`
           : ''}
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
@@ -178,10 +188,9 @@ function Nav({
               display: none;
             }
             padding: 0.5rem 0.7rem;
-            border-radius: ${wideBorderRadius};
             background: transparent;
-            border-color: transparent;
             box-shadow: none;
+            border: none;
           }
           > a.active {
             > svg {
