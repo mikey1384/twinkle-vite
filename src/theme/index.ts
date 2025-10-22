@@ -113,7 +113,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       disabledBorder: 'rgba(204, 112, 0, 0.5)',
       rewardStatusBg: 'rgba(204, 102, 0, 0.5)',
       rewardStatusGradient: 'rgba(255, 235, 210, 0.12)',
-      perfectStarColor: 'rgba(255, 236, 61, 1)'
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
     chat: {
       bg: 'rgba(255, 243, 224, 0.1)',
@@ -135,7 +135,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       disabledBorder: 'rgba(230, 0, 115, 0.5)',
       rewardStatusBg: 'rgba(230, 0, 115, 0.5)',
       rewardStatusGradient: 'rgba(255, 255, 255, 0.1)',
-      perfectStarColor: 'rgba(255, 236, 61, 1)'
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
     chat: {
       bg: 'rgba(255, 230, 240, 0.1)',
@@ -157,7 +157,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       disabledBorder: 'rgba(255, 92, 161, 0.5)',
       rewardStatusBg: 'rgba(255, 92, 161, 0.5)',
       rewardStatusGradient: 'rgba(255, 255, 255, 0.1)',
-      perfectStarColor: 'rgba(255, 236, 61, 1)'
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
     chat: {
       bg: 'rgba(255, 235, 245, 0.1)',
@@ -179,7 +179,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       disabledBorder: 'rgba(115, 0, 115, 0.5)',
       rewardStatusBg: 'rgba(115, 0, 115, 0.5)',
       rewardStatusGradient: 'rgba(255, 255, 255, 0.1)',
-      perfectStarColor: 'rgba(255, 236, 61, 1)'
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
     chat: {
       bg: 'rgba(237, 224, 255, 0.1)',
@@ -223,7 +223,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       disabledBorder: 'rgba(229, 0, 0, 0.5)',
       rewardStatusBg: 'rgba(204, 0, 0, 0.5)',
       rewardStatusGradient: 'rgba(255, 255, 255, 0.1)',
-      perfectStarColor: 'rgba(255, 236, 61, 1)'
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
     chat: {
       bg: 'rgba(255, 204, 204, 0.1)',
@@ -290,7 +290,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       disabledBorder: 'rgba(230, 195, 0, 0.5)',
       rewardStatusBg: 'rgba(204, 163, 0, 0.5)',
       rewardStatusGradient: 'rgba(255, 248, 220, 0.15)',
-      perfectStarColor: 'rgba(255, 240, 0, 1)'
+      perfectStarColor: 'rgba(255, 215, 0, 1)'
     },
     chat: {
       bg: 'rgba(255, 248, 224, 0.1)',
@@ -537,7 +537,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     },
     reactionButton: { color, opacity: 0.2 },
     recommendation: {
-      color: pickColor({ gold: 'passionFruit' }, 'brownOrange')
+      color: 'orange'
     },
     reward: {
       color: pickColor(

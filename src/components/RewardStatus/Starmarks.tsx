@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { Color } from '~/constants/css';
 
 function Starmarks({
   stars,
@@ -19,7 +20,7 @@ function Starmarks({
         style={{
           marginLeft: i !== 0 ? '0.15rem' : undefined,
           fontSize: '1.3rem',
-          color
+          color: Color.orange()
         }}
       />
     ));
@@ -85,7 +86,7 @@ function Starmarks({
             style={{
               marginLeft: i !== 0 ? '0.15rem' : undefined,
               fontSize: '1.3rem',
-              color: 'var(--perfect-star-color)'
+              color: 'var(--perfect-star-color, #ffd700)'
             }}
           />
         );

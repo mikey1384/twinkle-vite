@@ -25,7 +25,10 @@ export default function RewardLevelBar({
     () => levelRole.getColor() || Color.logoBlue(),
     [levelRole]
   );
-  const starColor = 'var(--perfect-star-color, #ffd700)';
+
+  const starColor = useMemo(() => {
+    return rewardLevel >= 5 ? '#fff' : 'var(--perfect-star-color, #ffd700)';
+  }, [rewardLevel]);
   const stars = useMemo(() => {
     return Array.from({ length: rewardLevel }, (_, i) => (
       <Icon

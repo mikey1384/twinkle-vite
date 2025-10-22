@@ -51,7 +51,7 @@ function RewardStatus({
   });
   const infoColor = infoRole.colorKey || 'logoBlue';
   const rewardBaseColor = rewardRole.getColor() || Color.orange();
-  const containerBg = rewardRole.getColor(0.1) || Color.logoBlue(0.1);
+  const containerBg = rewardRole.getColor(0.06) || Color.logoBlue(0.06);
   const containerBorder = rewardRole.getColor(0.28) || Color.logoBlue(0.28);
   const rewardGradientStart = rewardRole.getColor(0.9) || rewardBaseColor;
   const rewardGradientEnd = rewardBaseColor;
