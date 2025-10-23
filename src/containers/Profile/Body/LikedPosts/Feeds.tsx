@@ -4,6 +4,7 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
@@ -178,17 +179,12 @@ export default function Feeds({
                     );
                   })}
                 {feeds.length === 0 && (
-                  <div
-                    style={{
-                      marginTop: '10rem',
-                      fontSize: '2.5rem',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
+                  <EmptyStateMessage
+                    theme={selectedTheme}
+                    style={{ marginTop: '8rem' }}
                   >
-                    <div style={{ textAlign: 'center' }}>{noFeedLabel}</div>
-                  </div>
+                    {noFeedLabel}
+                  </EmptyStateMessage>
                 )}
               </>
             )}

@@ -49,10 +49,17 @@ export default function AccountMenu({
     const result = [
       {
         label: (
-          <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem'
+            }}
+          >
             <Icon icon="user" />
-            <span style={{ marginLeft: '1rem' }}>{profileLabel}</span>
-          </>
+            <span>{profileLabel}</span>
+          </div>
         ),
         onClick: () => (isOnProfilePage ? null : navigate(`/users/${username}`))
       }
@@ -60,9 +67,16 @@ export default function AccountMenu({
     if (managementLevel > 0) {
       result.push({
         label: (
-          <div style={{ width: '13rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem'
+            }}
+          >
             <Icon icon="user-group-crown" />
-            <span style={{ marginLeft: '1rem' }}>{managementLabel}</span>
+            <span>{managementLabel}</span>
           </div>
         ),
         onClick: () => navigate('/management')
@@ -70,10 +84,17 @@ export default function AccountMenu({
     }
     result.push({
       label: (
-        <>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem'
+          }}
+        >
           <Icon icon="sign-out-alt" />
-          <span style={{ marginLeft: '1rem' }}>{logOutLabel}</span>
-        </>
+          <span>{logOutLabel}</span>
+        </div>
       ),
       onClick: handleLogout
     });

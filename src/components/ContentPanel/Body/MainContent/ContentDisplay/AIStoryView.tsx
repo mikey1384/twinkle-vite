@@ -4,49 +4,45 @@ import RichText from '~/components/Texts/RichText';
 import Image from '~/components/Image';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { cloudFrontURL } from '~/constants/defaultValues';
+import { cardLevelHash, cloudFrontURL } from '~/constants/defaultValues';
 import { audioRef } from '~/constants/state';
 import { useViewContext } from '~/contexts';
 import Icon from '~/components/Icon';
+import { useRoleColor } from '~/theme/useRoleColor';
 
-const aiStoryCSS = css`
+function adjustColor(color: string, amount: number) {
+  const match = color.match(
+    /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i
+  );
+  if (!match) return color;
+  const [, rStr, gStr, bStr, aStr] = match;
+  const clamp = (value: number) => Math.min(255, Math.max(0, value));
+  const r = clamp(Number(rStr) + amount);
+  const g = clamp(Number(gStr) + amount);
+  const b = clamp(Number(bStr) + amount);
+  const alpha = aStr !== undefined ? parseFloat(aStr) : 1;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+const readingContentClass = css`
   width: 100%;
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  padding: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.6rem;
-  transition: box-shadow 0.2s ease;
-  line-height: 1.7;
-
-  &:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-  }
-
+  margin: 0;
+  padding: 0;
   opacity: 0;
+  animation: fadein 0.85s ease forwards;
+  line-height: 1.65;
+
   @keyframes fadein {
     from {
       opacity: 0;
+      transform: translateY(6px);
     }
     to {
       opacity: 1;
+      transform: translateY(0);
     }
   }
 `;
-
-const getButtonColors = (difficulty: number) => {
-  const buttonColors: { [key: number | string]: [string, string] } = {
-    1: ['#6ea8ff', '#5a95e6'],
-    2: ['#ff6f91', '#ff8aab'],
-    3: ['#ffa726', '#ffb74d'],
-    4: ['#ab47bc', '#ba68c8'],
-    5: ['#ffd700', '#ffc107'],
-    default: ['#f0f8ff', '#e0e7ff']
-  };
-  return buttonColors[difficulty] || buttonColors.default;
-};
 
 const AnimatedButton = animated.button as any;
 
@@ -58,6 +54,8 @@ export default function AIStoryView({
   imagePath,
   imageStyle,
   isListening,
+  title,
+  topic,
   story,
   theme
 }: {
@@ -68,15 +66,82 @@ export default function AIStoryView({
   imagePath?: string;
   imageStyle?: string;
   isListening?: boolean;
+  title?: string;
+  topic?: string;
   story: string;
   theme?: string;
 }) {
-  const [fadeIn, setFadeIn] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const onSetAudioKey = useViewContext((v) => v.actions.onSetAudioKey);
   const audioKey = useViewContext((v) => v.state.audioKey);
   const contentKey = `${contentId}-${contentType}`;
+  const storyTitle = useMemo(() => {
+    const rawTitle = title || topic || 'AI Story';
+    const uppercaseSet = new Set(['AI', 'USA', 'UK', 'NASA', 'SAT', 'GRE']);
+
+    return rawTitle
+      .split(/\s+/)
+      .map((word) => {
+        if (!word) return word;
+        const candidate = word.toUpperCase();
+        if (uppercaseSet.has(candidate)) return candidate;
+
+        const lower = word.toLowerCase();
+        const match = lower.match(/[a-z]/i);
+        if (!match || match.index === undefined) return word;
+        const idx = match.index;
+        return (
+          lower.slice(0, idx) +
+          lower.charAt(idx).toUpperCase() +
+          lower.slice(idx + 1)
+        );
+      })
+      .join(' ');
+  }, [title, topic]);
+  const { getColor: getFilterColor } = useRoleColor('filter', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+
+  const filterColor = useMemo(
+    () => getFilterColor() || Color.logoBlue(),
+    [getFilterColor]
+  );
+  const filterSoft = useMemo(() => {
+    const match = filterColor.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
+    );
+    if (match) {
+      return `rgba(${match[1]}, ${match[2]}, ${match[3]}, 0.5)`;
+    }
+    return filterColor;
+  }, [filterColor]);
+
+  const filterStrong = useMemo(() => {
+    const match = filterColor.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
+    );
+    if (match) {
+      return `rgba(${match[1]}, ${match[2]}, ${match[3]}, 0.7)`;
+    }
+    return filterColor;
+  }, [filterColor]);
+
+  // Shadow color
+  const cardShadow = useMemo(() => Color.black(0.2), []);
+
+  const { buttonBaseColor, buttonHoverColor } = useMemo(() => {
+    const level = difficulty || 1;
+    const colorKey = cardLevelHash[level]?.color || 'logoBlue';
+    const colorFn = Color[colorKey] || Color.logoBlue;
+    const base = colorFn();
+    const hover = adjustColor(base, -35);
+    return {
+      buttonBaseColor: base,
+      buttonHoverColor: hover
+    };
+  }, [difficulty]);
 
   useEffect(() => {
     const isPlaying =
@@ -90,35 +155,111 @@ export default function AIStoryView({
     audioRef.key = audioKey;
   }, [audioKey, contentKey]);
 
-  const borderColor = useMemo(() => {
-    const colors: {
-      [key: number]: string;
-    } = {
-      1: '#B3D1E0',
-      2: '#F2C1C6',
-      3: '#E6B280',
-      4: '#E1BAE8',
-      5: '#E6C85F'
-    };
-    return colors[difficulty || 1] || '#a4b8c4';
-  }, [difficulty]);
+  const listeningCardClass = css`
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 3.2rem 2.8rem;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid ${filterSoft};
+    box-shadow: 0 24px 48px -34px ${cardShadow};
+    text-align: center;
+    color: ${Color.darkerGray()};
+  `;
 
-  const difficultyColor = useMemo(() => {
-    switch (difficulty) {
-      case 1:
-        return '#D0EBFF';
-      case 2:
-        return '#FCE4EC';
-      case 3:
-        return '#FAD7A0';
-      case 4:
-        return '#F4D7FA';
-      case 5:
-        return Color.gold(0.5);
-      default:
-        return '#f0f8ff';
+  const listeningTitleClass = css`
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: ${buttonBaseColor};
+  `;
+
+  const listeningDescriptionClass = css`
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0;
+    color: ${Color.darkGray()};
+    max-width: 36rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  `;
+
+  const listeningButtonClass = css`
+    border: none;
+    color: #fff;
+    padding: 1.1rem 2.6rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+    will-change: transform, box-shadow, background;
+
+    &:disabled {
+      background: linear-gradient(135deg, #cbd5f5, #a8b5f0);
+      cursor: not-allowed;
+      box-shadow: none;
     }
-  }, [difficulty]);
+  `;
+
+  const readingCardClass = css`
+    position: relative;
+    width: 100%;
+    background: #fff;
+    border: 1px solid ${filterSoft};
+    border-radius: 20px;
+    box-shadow: none;
+    padding: 2.4rem 2.6rem;
+    color: ${Color.darkerGray()};
+    transition: border-color 0.15s ease;
+
+    &:hover {
+      border-color: ${filterStrong};
+    }
+  `;
+
+  const readingHeaderClass = css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    margin-bottom: 1.8rem;
+    flex-wrap: wrap;
+  `;
+
+  const levelChipClass = css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 1.2rem;
+    border-radius: 999px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    background: ${buttonBaseColor};
+    color: #fff;
+  `;
+
+  const readingHintClass = css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: ${Color.darkGray(0.7)};
+  `;
 
   const appliedImageUrl = useMemo(() => {
     if (imagePath) {
@@ -134,19 +275,12 @@ export default function AIStoryView({
     return '';
   }, [audioPath]);
 
-  useEffect(() => {
-    setFadeIn(true);
-  }, []);
-
-  const buttonColors = getButtonColors(difficulty);
   const buttonSpring = useSpring({
-    background: hovered
-      ? `linear-gradient(135deg, ${buttonColors[1]}, ${buttonColors[0]})`
-      : `linear-gradient(135deg, ${buttonColors[0]}, ${buttonColors[1]})`,
-    transform: hovered ? 'translateY(-2px)' : 'translateY(0px)',
+    background: hovered ? buttonHoverColor : buttonBaseColor,
+    transform: hovered ? 'translateY(-1px)' : 'translateY(0px)',
     boxShadow: hovered
-      ? '0 6px 8px rgba(0, 0, 0, 0.15)'
-      : '0 4px 6px rgba(0, 0, 0, 0.1)',
+      ? `0 16px 28px -22px ${buttonHoverColor}`
+      : `0 12px 22px -24px ${buttonBaseColor}`,
     config: {
       duration: 100,
       easing: (t) => t * t
@@ -187,37 +321,11 @@ export default function AIStoryView({
         </div>
       )}
       {isListening ? (
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            padding: '5rem 0'
-          }}
-        >
+        <div className={listeningCardClass}>
+          <div className={listeningTitleClass}>Listen Mode</div>
+          <div className={listeningDescriptionClass}>{storyTitle}</div>
           <AnimatedButton
-            className={css`
-              border: none;
-              color: white;
-              padding: 15px 30px;
-              font-size: 1em;
-              font-weight: bold;
-              border-radius: 5px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-              cursor: pointer;
-              transition: transform 0.2s ease-in-out,
-                box-shadow 0.3s ease-in-out;
-
-              &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-              }
-
-              &:disabled {
-                background: linear-gradient(135deg, #ddd, #ccc);
-                cursor: not-allowed;
-              }
-            `}
+            className={listeningButtonClass}
             style={{
               background: buttonSpring.background,
               transform: buttonSpring.transform,
@@ -228,29 +336,39 @@ export default function AIStoryView({
             onMouseLeave={() => setHovered(false)}
           >
             <Icon icon={isPlaying ? 'stop' : 'volume'} />
-            <span style={{ marginLeft: '0.7rem' }}>
-              {isPlaying ? 'Stop' : 'Listen'}
-            </span>
+            <span>{isPlaying ? 'Stop Listening' : 'Listen Now'}</span>
           </AnimatedButton>
         </div>
       ) : (
-        <div
-          style={{
-            backgroundColor: difficultyColor,
-            border: `1px solid ${borderColor}`,
-            animation: fadeIn ? 'fadein 1s ease forwards' : 'none'
-          }}
-          className={aiStoryCSS}
-        >
-          <RichText
-            contentId={contentId}
-            contentType={contentType}
-            section="description"
-            theme={theme}
-            style={{ color: '#000' }}
+        <div className={readingCardClass}>
+          <div className={readingHeaderClass}>
+            <div className={readingHintClass}>
+              <Icon icon="book-open" />
+              Read the story
+            </div>
+            <div className={levelChipClass}>
+              <Icon icon="layer-group" />
+              Level {difficulty || 1}
+            </div>
+          </div>
+          <div
+            className={readingContentClass}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.68)',
+              borderRadius: 14,
+              padding: '1.6rem'
+            }}
           >
-            {story}
-          </RichText>
+            <RichText
+              contentId={contentId}
+              contentType={contentType}
+              section="description"
+              theme={theme}
+              style={{ color: Color.darkerGray() }}
+            >
+              {story}
+            </RichText>
+          </div>
         </div>
       )}
     </div>

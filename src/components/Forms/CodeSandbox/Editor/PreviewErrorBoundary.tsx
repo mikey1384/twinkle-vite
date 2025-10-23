@@ -37,31 +37,40 @@ export default class PreviewErrorBoundary extends Component<
       return (
         <div
           style={{
-            color: Color.darkerGray(),
-            fontWeight: 'bold',
             width: '100%',
-            height: '30%',
+            minHeight: '30%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
+            padding: '3rem 1.5rem',
             ...props.style
           }}
         >
           <div
             style={{
-              padding: '2rem',
-              border: '1px solid var(--ui-border)',
-              borderRadius,
-              background: Color.wellGray()
+              width: '100%',
+              maxWidth: '42rem',
+              padding: '2.2rem 2.4rem',
+              borderRadius: '16px',
+              border: '1px solid var(--ui-border-strong)',
+              background: '#fff',
+              boxShadow: '0 20px 40px -28px rgba(15, 23, 42, 0.2)',
+              color: Color.darkerGray(),
+              textAlign: 'center'
             }}
           >
-            <div>Uh oh, something went wrong...</div>
-            <div style={{ marginTop: '2rem' }}>
-              Screenshot this <b style={{ color: Color.green() }}>whole page</b>
+            <div
+              style={{
+                fontSize: '1.85rem',
+                fontWeight: 700,
+                marginBottom: '1rem'
+              }}
+            >
+              Uh oh, something went wrong
             </div>
-            <div>
-              and show it to{' '}
+            <div style={{ fontSize: '1.4rem', lineHeight: 1.6 }}>
+              Screenshot this preview and show it to{' '}
               <UsernameText
                 color={Color.logoBlue()}
                 user={{
@@ -69,16 +78,24 @@ export default class PreviewErrorBoundary extends Component<
                   id: 5
                 }}
               />{' '}
-              for a lot of <b style={{ color: Color.orange() }}>XP</b>!
+              for an <b style={{ color: Color.gold() }}>XP</b> reward.
+            </div>
+            <div style={{ marginTop: '1.6rem', fontSize: '1.3rem' }}>
+              Reload the preview once you’ve grabbed the screenshot.
             </div>
           </div>
           <Button
-            filled
-            color="logoBlue"
-            style={{ marginTop: '2rem' }}
+            style={{
+              marginTop: '2.2rem',
+              borderRadius: '999px',
+              padding: '1rem 2.4rem',
+              border: `1px solid ${Color.logoBlue()}`,
+              background: '#fff',
+              color: Color.logoBlue()
+            }}
             onClick={() => window.location.reload()}
           >
-            Click here after taking the screenshot
+            Reload Preview
           </Button>
         </div>
       );

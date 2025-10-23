@@ -50,36 +50,34 @@ export default class ErrorBoundary extends Component<
       return (
         <div
           style={{
-            color: Color.darkerGray(),
-            fontWeight: 'bold',
             width: '100%',
-            height: '30%',
+            minHeight: '30%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
+            padding: '3rem 1.5rem',
             ...props.style
           }}
         >
           <div
             style={{
-              fontSize: '1.7rem',
-              padding: '2rem',
-              border: '1px solid var(--ui-border)',
-              borderRadius,
-              background: Color.wellGray()
+              width: '100%',
+              maxWidth: '44rem',
+              padding: '2.4rem 2.8rem',
+              borderRadius: '16px',
+              border: '1px solid var(--ui-border-strong)',
+              background: '#fff',
+              boxShadow: '0 20px 40px -28px rgba(15, 23, 42, 0.2)',
+              color: Color.darkerGray(),
+              textAlign: 'center'
             }}
           >
-            <p>Uh oh, something went wrong...</p>
-            <p style={{ marginTop: '2rem' }}>
-              Screenshot this <b style={{ color: Color.green() }}>whole page</b>
+            <p style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: '1rem' }}>
+              Uh oh, something went wrong
             </p>
-            <div
-              style={{
-                marginTop: '0.5rem'
-              }}
-            >
-              and show it to{' '}
+            <p style={{ fontSize: '1.5rem', lineHeight: 1.6 }}>
+              Screenshot this page and show it to{' '}
               <UsernameText
                 color={Color.logoBlue()}
                 user={{
@@ -87,7 +85,10 @@ export default class ErrorBoundary extends Component<
                   id: 5
                 }}
               />{' '}
-              for a lot of <b style={{ color: Color.orange() }}>XP</b>!
+              for a big <b style={{ color: Color.gold() }}>XP</b> bonus!
+            </p>
+            <div style={{ marginTop: '1.8rem', fontSize: '1.35rem' }}>
+              Tap the button below once you’ve captured the screenshot.
             </div>
           </div>
           {componentPath ? (
@@ -95,22 +96,31 @@ export default class ErrorBoundary extends Component<
               {componentPath}
             </div>
           ) : null}
-          <div
+          <button
             className={css`
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              padding: 1rem 2.4rem;
+              border-radius: 999px;
+              border: 1px solid ${Color.logoBlue()};
+              font-size: 1.45rem;
+              font-weight: 600;
+              margin-top: 2.4rem;
+              background: #fff;
+              color: ${Color.logoBlue()};
+              cursor: pointer;
+              transition: transform 0.2s ease, box-shadow 0.2s ease;
+
               &:hover {
-                text-decoration: underline;
+                transform: translateY(-1px);
+                box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.25);
               }
             `}
-            style={{
-              cursor: 'pointer',
-              color: Color.logoBlue(),
-              fontSize: '1.5rem',
-              marginTop: '3rem'
-            }}
             onClick={() => window.location.reload()}
           >
-            Did you take the screenshot? Then tap here to reload the website
-          </div>
+            Reload the page
+          </button>
         </div>
       );
     }

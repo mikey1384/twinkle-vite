@@ -1,8 +1,7 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import GoBack from '~/components/GoBack';
-import { css } from '@emotion/css';
-import { borderRadius, Color } from '~/constants/css';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 
 export default function NotUnlocked({
   missionTitle
@@ -11,22 +10,12 @@ export default function NotUnlocked({
 }) {
   return (
     <div>
-      <div
-        className={css`
-          text-align: center;
-          padding: 5rem 1rem;
-          background: #fff;
-          border: 1px solid var(--ui-border);
-          border-radius: ${borderRadius};
-          font-size: 2rem;
-          font-weight: bold;
-        `}
+      <EmptyStateMessage
+        icon={<Icon icon="lock" />}
+        style={{ marginBottom: '3rem' }}
       >
-        <Icon icon="lock" />
-        <span style={{ marginLeft: '2rem' }}>
-          This task has not been unlocked, yet
-        </span>
-      </div>
+        This task has not been unlocked, yet
+      </EmptyStateMessage>
       <GoBack
         isAtTop={false}
         style={{ marginTop: '5rem' }}

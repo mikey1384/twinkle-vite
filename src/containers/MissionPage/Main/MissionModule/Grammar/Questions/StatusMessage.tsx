@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import MissionStatusCard from '~/components/MissionStatusCard';
 import RichText from '~/components/Texts/RichText';
-import { borderRadius, Color } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function StatusMessage({
   mission,
@@ -21,104 +21,32 @@ export default function StatusMessage({
   failMessage: string;
   onBackToStart: () => any;
 }) {
-  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
-  const xpNumberColor = useMemo(
-    () => xpNumberRole.getColor() || Color.logoGreen(),
-    [xpNumberRole]
-  );
 
-  const rewardDetails = useMemo(() => {
-    return (
-      (mission.repeatXpReward || mission.repeatCoinReward) && (
-        <div
-          style={{
-            marginTop: '0.5rem',
-            color: Color.black()
-          }}
-        >
-          You were rewarded{' '}
-          {mission.repeatXpReward ? (
-            <span
-              style={{
-                color: xpNumberColor,
-                fontWeight: 'bold'
-              }}
-            >
-              {addCommasToNumber(mission.repeatXpReward)}{' '}
-            </span>
-          ) : null}
-          {mission.repeatXpReward && mission.repeatCoinReward ? (
-            <>
-              <span style={{ color: Color.gold(), fontWeight: 'bold' }}>
-                XP
-              </span>{' '}
-              and{' '}
-            </>
-          ) : null}
-          {mission.repeatCoinReward ? (
-            <>
-              <Icon
-                style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
-                icon={['far', 'badge-dollar']}
-              />{' '}
-              <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
-                {mission.repeatCoinReward}
-              </span>
-            </>
-          ) : null}
-        </div>
-      )
-    );
-  }, [mission.repeatCoinReward, mission.repeatXpReward, xpNumberColor]);
+  const rewards = useMemo(() => {
+    return {
+      xp: mission.repeatXpReward,
+      coins: mission.repeatCoinReward
+    };
+  }, [mission.repeatCoinReward, mission.repeatXpReward]);
 
   return (
     <div
       style={{
-        borderTop: '1px solid var(--ui-border)',
-        borderBottom: '1px solid var(--ui-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: '2rem',
-        marginLeft: '-1rem',
-        marginRight: '-1rem',
         marginBottom: '-1rem',
-        fontSize: '1.5rem',
-        minHeight: '5rem',
-        padding: '1.5rem 0'
+        padding: '0 1rem'
       }}
     >
       {missionComplete ? (
-        <div>
-          <div
-            style={{
-              borderRadius,
-              width: 'auto',
-              boxShadow: `0 0 2px ${Color.brown()}`,
-              padding: '0.5rem 2rem',
-              fontWeight: 'bold',
-              fontSize: '2rem',
-              background: Color.brownOrange(),
-              color: '#fff'
-            }}
-          >
-            Mission Accomplished
-          </div>
-          <div
-            style={{
-              fontSize: '1.3rem',
-              textAlign: 'center'
-            }}
-          >
-            {rewardDetails}
-          </div>
-          <div
-            style={{
-              marginTop: '1.5rem',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
+        <MissionStatusCard
+          status="success"
+          title="Mission Accomplished"
+          message="Great work! You've cleared this run."
+          rewards={rewards}
+          footer={
             <Button
               onClick={onBackToStart}
               variant="soft"
@@ -127,42 +55,20 @@ export default function StatusMessage({
             >
               Back to Start Screen
             </Button>
-          </div>
-        </div>
+          }
+          style={{ margin: '0 auto' }}
+        />
       ) : (
-        <div style={{ marginLeft: '2rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            <Icon
-              size="2x"
-              style={{
-                color: status === 'pass' ? Color.green() : Color.rose()
-              }}
-              icon={status === 'pass' ? 'check' : 'times'}
-            />
-            <RichText
-              style={{
-                marginLeft: '1.5rem',
-                fontSize: '1.7rem'
-              }}
-            >
-              {status === 'pass' ? passMessage : failMessage}
-            </RichText>
-          </div>
-          {status === 'fail' && (
-            <div
-              style={{
-                marginTop: '1.5rem',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
+        <MissionStatusCard
+          status={status === 'pass' ? 'success' : 'fail'}
+          title={status === 'pass' ? 'Correct!' : 'Not Quite'}
+          message={
+            status === 'pass'
+              ? passMessage
+              : 'Review the explanation below and try again.'
+          }
+          footer={
+            status === 'fail' ? (
               <Button
                 onClick={onBackToStart}
                 variant="soft"
@@ -171,9 +77,21 @@ export default function StatusMessage({
               >
                 Back to Start Screen
               </Button>
-            </div>
-          )}
-        </div>
+            ) : null
+          }
+          style={{ margin: '0 auto' }}
+        >
+          {status === 'fail' ? (
+            <RichText style={{ fontSize: '1.6rem', color: Color.darkGray() }}>
+              {failMessage}
+            </RichText>
+          ) : null}
+          {status === 'pass' ? (
+            <RichText style={{ fontSize: '1.6rem', color: Color.darkGray() }}>
+              {passMessage}
+            </RichText>
+          ) : null}
+        </MissionStatusCard>
       )}
     </div>
   );

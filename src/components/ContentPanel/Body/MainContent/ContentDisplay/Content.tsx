@@ -172,6 +172,8 @@ export default function Content({
             difficulty={difficulty}
             imagePath={imagePath}
             imageStyle={imageStyle}
+            title={title}
+            topic={contentObj.topic}
             story={story}
             theme={theme}
           />

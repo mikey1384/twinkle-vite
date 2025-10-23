@@ -4,6 +4,7 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
@@ -149,6 +150,9 @@ export default function Feeds({
         return `${username} hasn't posted any video to show here`;
     }
   }, [section, username]);
+  const emptyMessage = useMemo(() => {
+    return filter === 'byuser' ? noFeedByUserLabel : noFeedLabel;
+  }, [filter, noFeedByUserLabel, noFeedLabel]);
 
   // Match Home feed separators between panels
   const feedListClass = useMemo(
@@ -323,19 +327,12 @@ export default function Feeds({
                   </div>
                 )}
                 {feeds.length === 0 && (
-                  <div
-                    style={{
-                      marginTop: '10rem',
-                      fontSize: '2.5rem',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
+                  <EmptyStateMessage
+                    theme={selectedTheme}
+                    style={{ marginTop: '8rem' }}
                   >
-                    <div style={{ textAlign: 'center' }}>
-                      {filter === 'byuser' ? noFeedByUserLabel : noFeedLabel}
-                    </div>
-                  </div>
+                    {emptyMessage}
+                  </EmptyStateMessage>
                 )}
               </>
             )}

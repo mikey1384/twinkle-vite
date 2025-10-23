@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import localize from '~/constants/localize';
 import FilterBar from '~/components/FilterBar';
@@ -9,6 +8,7 @@ import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { notiFilterBar } from '../../Styles';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -90,7 +90,12 @@ export default function AllTime({
           </div>
         )
       ) : (
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+        >
           {users?.map((user) => (
             <RankingsListItem
               key={user.id}
@@ -99,7 +104,7 @@ export default function AllTime({
               activityContext="allTimeXP"
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       )}
     </ErrorBoundary>
   );

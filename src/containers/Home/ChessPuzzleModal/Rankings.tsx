@@ -4,6 +4,7 @@ import localize from '~/constants/localize';
 import Loading from '~/components/Loading';
 import Leaderboard from './Leaderboard';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { css } from '@emotion/css';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -18,6 +19,30 @@ export default function Rankings({ isActive = true }: { isActive?: boolean }) {
   const [allRanks, setAllRanks] = useState<any[]>([]);
   const [top30s, setTop30s] = useState<any[]>([]);
   const [myRank, setMyRank] = useState<number | null>(null);
+  const wrapperClass = useMemo(
+    () =>
+      css`
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+      `,
+    []
+  );
+  const listHostClass = useMemo(
+    () =>
+      css`
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
+        padding-top: ${myRank ? '1.5rem' : '0.5rem'};
+      `,
+    [myRank]
+  );
 
   const users = useMemo(
     () => (rankingsTab === 'all' ? allRanks : top30s),
@@ -44,13 +69,9 @@ export default function Rankings({ isActive = true }: { isActive?: boolean }) {
 
   return (
     <div
+      className={wrapperClass}
       style={{
-        height: 'CALC(100vh - 32rem)',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'column',
-        overflow: 'hidden'
+        height: 'CALC(100vh - 32rem)'
       }}
     >
       {!!myRank && (
@@ -79,13 +100,7 @@ export default function Rankings({ isActive = true }: { isActive?: boolean }) {
         </FilterBar>
       )}
 
-      <div
-        style={{
-          height: '100%',
-          width: '100%',
-          paddingTop: myRank ? '1.5rem' : '0.5rem'
-        }}
-      >
+      <div className={listHostClass}>
         <Leaderboard users={users} myId={myId} />
       </div>
     </div>

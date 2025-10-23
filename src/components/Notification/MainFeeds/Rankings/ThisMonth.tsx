@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import localize from '~/constants/localize';
 import FilterBar from '~/components/FilterBar';
@@ -12,6 +11,7 @@ import { notiFilterBar } from '../../Styles';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { themedCardBase } from '~/theme/themedCard';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -126,7 +126,12 @@ export default function ThisMonth({
           </div>
         </ScopedTheme>
       ) : (
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+        >
           {users?.map((user) => (
             <RankingsListItem
               key={user.id}
@@ -135,7 +140,7 @@ export default function ThisMonth({
               activityContext="monthlyXP"
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       )}
     </ErrorBoundary>
   );

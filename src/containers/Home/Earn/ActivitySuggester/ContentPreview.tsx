@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import Icon from '~/components/Icon';
+import RichText from '~/components/Texts/RichText';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { truncateTopic } from '~/helpers/stringHelpers';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  mobileMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
+import {
+  cardLevelHash,
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID
+} from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { css } from '@emotion/css';
 
 export default function ContentPreview({
@@ -15,13 +27,15 @@ export default function ContentPreview({
     isListening,
     contentType,
     uploader,
-    content,
+    content = '',
     story,
     fileName = '',
     filePath,
     fileSize,
     topic,
-    thumbUrl
+    thumbUrl,
+    title,
+    difficulty
   },
   style
 }: {
@@ -34,192 +48,326 @@ export default function ContentPreview({
       username: string;
       profilePicUrl: string;
     };
-    content: string;
-    story: string;
+    content?: string;
+    story?: string;
     fileName?: string;
     filePath?: string;
     fileSize?: number;
     topic?: string;
     thumbUrl?: string;
+    title?: string;
+    difficulty?: number;
   };
   style?: React.CSSProperties;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
+  const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
+  const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
+  const hoverBg = filterRole.getColor
+    ? filterRole.getColor(Math.min((filterRole.defaultOpacity ?? 0.18) * 0.6, 0.18))
+    : Color.highlightGray();
+  const isAIMessage =
+    uploader?.id === Number(ZERO_TWINKLE_ID) ||
+    uploader?.id === Number(CIEL_TWINKLE_ID);
+  const aiVoice =
+    uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : undefined;
+  const formattedStoryTitle = useMemo(() => {
+    const raw = title || topic || '';
+    if (!raw) return '';
+    const uppercaseSet = new Set(['AI', 'USA', 'UK', 'NASA', 'SAT', 'GRE']);
+    const produced = raw
+      .split(/\s+/)
+      .map((word) => {
+        if (!word) return word;
+        const candidate = word.toUpperCase();
+        if (uppercaseSet.has(candidate)) return candidate;
+        const lower = word.toLowerCase();
+        const match = lower.match(/[a-z]/i);
+        if (!match || match.index === undefined) return word;
+        const idx = match.index;
+        return (
+          lower.slice(0, idx) +
+          lower.charAt(idx).toUpperCase() +
+          lower.slice(idx + 1)
+        );
+      })
+      .join(' ');
+    return truncateTopic(produced);
+  }, [title, topic]);
+
+  const difficultyColor = useMemo(() => {
+    const level =
+      typeof difficulty === 'number' && difficulty > 0 ? difficulty : 1;
+    const colorKey = cardLevelHash[level]?.color || 'logoBlue';
+    const colorFn = Color[colorKey] || Color.logoBlue;
+    return colorFn();
+  }, [difficulty]);
+
+  const listeningBadgeBg = useMemo(() => {
+    if (filterRole.getColor) {
+      const opacity = Math.min(
+        (filterRole.defaultOpacity ?? 0.18) * 0.8 + 0.08,
+        0.25
+      );
+      return filterRole.getColor(opacity);
+    }
+    return Color.logoBlue(0.12);
+  }, [filterRole]);
+
+  const listeningBadgeTextColor = useMemo(() => {
+    return filterRole.color || Color.darkGray();
+  }, [filterRole.color]);
+
+  const containerClass = useMemo(
+    () => css`
+      border: 1px solid var(--ui-border);
+      border-radius: ${wideBorderRadius};
+      background: #fff;
+      padding: 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      transition: border-color 0.18s ease, background-color 0.18s ease;
+      cursor: pointer;
+      &:hover {
+        border-color: var(--ui-border-strong);
+        background: ${hoverBg};
+      }
+      @media (max-width: ${mobileMaxWidth}) {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+      }
+    `,
+    [hoverBg]
+  );
+
+  const headerClass = css`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  `;
+
+  const metaClass = css`
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  `;
+
+  const uploaderLabelClass = css`
+    color: ${Color.gray()};
+    font-size: 1.2rem;
+    font-weight: 600;
+  `;
+
+  const storyTitleClass = css`
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: ${Color.darkGray()};
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  `;
+
+  const listeningBadgeClass = css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    background: ${listeningBadgeBg};
+    color: ${listeningBadgeTextColor};
+  `;
+
+  const difficultyChipClass = useMemo(
+    () => css`
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #fff;
+      background: ${difficultyColor};
+      box-shadow: 0 6px 18px -14px ${difficultyColor};
+    `,
+    [difficultyColor]
+  );
+
+  const attachmentWrapperClass = css`
+    width: 100%;
+    max-height: 28rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `;
+
+  const previewContentClass = css`
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  `;
+
+  const handleNavigate = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('a, button, video, audio')) return;
+      navigate(
+        `/${
+          contentType === 'aiStory' ? 'ai-storie' : contentType
+        }s/${contentId}`
+      );
+    },
+    [contentId, contentType, navigate]
+  );
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        navigate(
+          `/${
+            contentType === 'aiStory' ? 'ai-storie' : contentType
+          }s/${contentId}`
+        );
+      }
+    },
+    [contentId, contentType, navigate]
+  );
+
+  const renderStoryContent = () => {
+    if (!isListening) {
+      return (
+        <RichText
+          isPreview
+          maxLines={6}
+          contentId={contentId}
+          contentType={contentType}
+          section="preview"
+          style={{ color: Color.black() }}
+        >
+          {story || ''}
+        </RichText>
+      );
+    }
+    return (
+      <div className={css`
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.8rem;
+        color: ${Color.darkGray()};
+        font-size: 1.4rem;
+      `}>
+        <Icon icon="volume" />
+        <span>Listen to this story</span>
+      </div>
+    );
+  };
+
+  const renderContent = () => {
+    if (contentType === 'aiStory') {
+      return (
+        <div className={previewContentClass}>
+          {formattedStoryTitle && (
+            <div className={storyTitleClass}>{formattedStoryTitle}</div>
+          )}
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.6rem;
+              flex-wrap: wrap;
+            `}
+          >
+            {typeof difficulty === 'number' && difficulty > 0 && (
+              <div className={difficultyChipClass}>
+                <Icon icon="layer-group" />
+                <span>Level {difficulty}</span>
+              </div>
+            )}
+            {isListening && (
+              <div className={listeningBadgeClass}>Listening Mode</div>
+            )}
+          </div>
+          {renderStoryContent()}
+        </div>
+      );
+    }
+
+    return (
+      <RichText
+        isPreview
+        maxLines={10}
+        contentId={contentId}
+        contentType={contentType}
+        section="preview"
+        isAIMessage={isAIMessage}
+        voice={aiVoice}
+        style={{ color: Color.black() }}
+      >
+        {content || story || ''}
+      </RichText>
+    );
+  };
 
   return (
     <div
-      style={{
-        cursor: 'pointer',
-        borderRadius,
-        ...style
-      }}
-      className={css`
-        border: 1px solid var(--ui-border);
-        background: #fff;
-        margin-top: 0;
-        transition: background 0.5s, border 0.5s;
-        &:hover {
-          border-color: var(--ui-border-strong);
-          background: ${Color.highlightGray()};
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-top: -0.5rem;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}
+      style={{ ...cardVars, ...style }}
+      className={containerClass}
+      onClick={handleNavigate}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
     >
-      <div
-        onClick={() =>
-          navigate(
-            `/${
-              contentType === 'aiStory' ? 'ai-storie' : contentType
-            }s/${contentId}`
-          )
-        }
-      >
-        <div style={{ padding: '1rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              width: '100%',
-              fontSize: '1.5rem'
-            }}
-          >
-            <div
-              style={{
-                width: '100%',
-                paddingLeft: 0,
-                paddingRight: 0
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  width: '100%'
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    overflowWrap: 'break-word',
-                    paddingRight: '1rem',
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  <div style={{ width: '5rem' }}>
-                    <ProfilePic
-                      style={{ width: '100%' }}
-                      userId={uploader.id}
-                      profilePicUrl={uploader.profilePicUrl}
-                    />
-                  </div>
-                  {uploader.username && (
-                    <div
-                      style={{ color: Color.darkGray(), fontWeight: 'bold' }}
-                    >
-                      by {uploader.username}
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      marginTop: '2rem',
-                      width: '100%',
-                      textAlign: 'left',
-                      color: Color.black(),
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'break-word',
-                      wordBreak: 'break-word',
-                      display: '-webkit-box',
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      WebkitLineClamp: 15
-                    }}
-                  >
-                    {filePath && (
-                      <div>
-                        {userId ? (
-                          <div style={{ width: '100%', maxHeight: '30vh' }}>
-                            <ContentFileViewer
-                              isThumb
-                              contentId={contentId}
-                              contentType="comment"
-                              fileName={fileName}
-                              filePath={filePath}
-                              fileSize={Number(fileSize)}
-                              thumbUrl={thumbUrl}
-                              videoHeight="100%"
-                              thumbHeight="100%"
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                width: '100%',
-                                height: 'auto',
-                                maxHeight: '25vh',
-                                overflow: 'hidden',
-                                marginBottom: '1rem'
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <LoginToViewContent />
-                        )}
-                      </div>
-                    )}
-                    {topic ? (
-                      <div
-                        style={{ marginBottom: '1.5rem', fontSize: '1.6rem' }}
-                      >
-                        <b>{truncateTopic(topic)}</b>
-                      </div>
-                    ) : null}
-                    {isListening ? (
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <Icon
-                          style={{
-                            paddingTop: '2.5rem',
-                            paddingBottom: '2.5rem',
-                            color: Color.darkerGray()
-                          }}
-                          size="3x"
-                          icon="volume"
-                        />
-                      </div>
-                    ) : (
-                      <div
-                        className={css`
-                          width: 100%;
-                          text-align: left;
-                          color: ${Color.black()};
-                          white-space: pre-wrap;
-                          overflow-wrap: break-word;
-                          word-break: break-word;
-                          overflow: hidden;
-                          display: -webkit-box;
-                          -webkit-line-clamp: 10;
-                          -webkit-box-orient: vertical;
-                          @media (max-width: ${mobileMaxWidth}) {
-                            line-height: 1.4;
-                          }
-                        `}
-                      >
-                        {content || story}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className={headerClass}>
+        <div style={{ width: '3.8rem' }}>
+          <ProfilePic
+            style={{ width: '100%' }}
+            userId={uploader.id}
+            profilePicUrl={uploader.profilePicUrl}
+          />
+        </div>
+        <div className={metaClass}>
+          {uploader.username && (
+            <span className={uploaderLabelClass}>by {uploader.username}</span>
+          )}
+          {contentType !== 'aiStory' && topic && (
+            <strong style={{ color: Color.darkerGray() }}>
+              {truncateTopic(topic)}
+            </strong>
+          )}
         </div>
       </div>
+      {renderContent()}
+      {filePath && (
+        <div
+          className={attachmentWrapperClass}
+          onClick={(event) => event.stopPropagation()}
+        >
+          {userId ? (
+            <ContentFileViewer
+              isThumb
+              contentId={contentId}
+              contentType={contentType}
+              fileName={fileName}
+              filePath={filePath}
+              fileSize={Number(fileSize)}
+              thumbUrl={thumbUrl}
+              videoHeight="100%"
+              thumbHeight="100%"
+            />
+          ) : (
+            <LoginToViewContent />
+          )}
+        </div>
+      )}
     </div>
   );
 }

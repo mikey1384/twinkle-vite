@@ -3,6 +3,7 @@ import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import MissionStatusCard from '~/components/MissionStatusCard';
 import RichText from '~/components/Texts/RichText';
 import { useMissionContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
@@ -27,7 +28,6 @@ export default function ApprovedStatus({
 }) {
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
   const successRole = useRoleColor('success', { fallback: 'green' });
-  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const linkColor = useMemo(
     () => linkRole.getColor() || Color.logoBlue(),
     [linkRole]
@@ -36,43 +36,16 @@ export default function ApprovedStatus({
     () => successRole.getColor() || Color.green(),
     [successRole]
   );
-  const xpNumberColor = useMemo(
-    () => xpNumberRole.getColor() || Color.logoGreen(),
-    [xpNumberRole]
-  );
   const onUpdateMissionAttempt = useMissionContext(
     (v) => v.actions.onUpdateMissionAttempt
   );
-  const rewardDetails = useMemo(() => {
-    return (xpReward || coinReward) && myAttempt.status === 'pass' ? (
-      <div
-        style={{
-          marginTop: '0.5rem',
-          color: Color.black()
-        }}
-      >
-        You were rewarded{' '}
-        {xpReward ? (
-          <span style={{ color: xpNumberColor, fontWeight: 'bold' }}>
-            {addCommasToNumber(xpReward)}{' '}
-            <span style={{ color: Color.gold(), fontWeight: 'bold' }}>XP</span>
-          </span>
-        ) : null}
-        {xpReward && coinReward ? <> and </> : null}
-        {coinReward ? (
-          <>
-            <Icon
-              style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
-              icon={['far', 'badge-dollar']}
-            />{' '}
-            <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
-              {coinReward}
-            </span>
-          </>
-        ) : null}
-      </div>
-    ) : null;
-  }, [coinReward, myAttempt.status, xpNumberColor, xpReward]);
+  const rewards = useMemo(() => {
+    if (myAttempt.status !== 'pass') return undefined;
+    return {
+      xp: xpReward,
+      coins: coinReward
+    };
+  }, [coinReward, myAttempt.status, xpReward]);
 
   return (
     <div
@@ -83,39 +56,69 @@ export default function ApprovedStatus({
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        lineHeight: 2,
+        lineHeight: 1.8,
+        gap: '2.4rem',
         ...style
       }}
     >
-      <div
-        style={{
-          ...(myAttempt.status === 'pass' || myAttempt.status === 'fail'
-            ? {
-                borderRadius,
-                boxShadow: `0 0 2px ${
-                  myAttempt.status === 'pass' ? Color.brown() : Color.black()
-                }`,
-                padding: '0.5rem 2rem'
+      <MissionStatusCard
+        status={
+          myAttempt.status === 'pass'
+            ? 'success'
+            : myAttempt.status === 'fail'
+            ? 'fail'
+            : 'info'
+        }
+        title={
+          myAttempt.status === 'pass'
+            ? isTask
+              ? 'Task Complete'
+              : 'Mission Accomplished'
+            : myAttempt.status === 'fail'
+            ? 'Mission Failed'
+            : 'Awaiting Review'
+        }
+        message={
+          myAttempt.status === 'pass'
+            ? 'Great work! Your submission has been approved.'
+            : myAttempt.status === 'fail'
+            ? 'Take another look and give it another shot.'
+            : undefined
+        }
+        rewards={rewards}
+        footer={
+          myAttempt.status === 'fail' ? (
+            <Button
+              color={successColor}
+              onClick={() =>
+                onUpdateMissionAttempt({
+                  missionId,
+                  newState: { tryingAgain: true }
+                })
               }
-            : {}),
-          fontWeight: 'bold',
-          fontSize: '2rem',
-          background:
-            myAttempt.status === 'pass'
-              ? Color.brownOrange()
-              : myAttempt.status === 'fail'
-              ? Color.black()
-              : '',
-          color: '#fff'
-        }}
+              filled
+              style={{ fontSize: '1.6rem', padding: '1.1rem 2.2rem' }}
+            >
+              Try Again
+            </Button>
+          ) : null
+        }
       >
-        {myAttempt.status === 'pass'
-          ? isTask
-            ? 'Task Complete'
-            : 'Mission Accomplished'
-          : 'Mission Failed...'}
-      </div>
-      {rewardDetails}
+        {myAttempt.status === 'pass' && myAttempt.reviewer ? (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              fontSize: '1.4rem',
+              color: Color.darkGray()
+            }}
+          >
+            Reviewed by&nbsp;
+            <UsernameText color={linkColor} user={myAttempt.reviewer} />
+            &nbsp;•&nbsp;{timeSince(myAttempt.reviewTimeStamp)}
+          </div>
+        ) : null}
+      </MissionStatusCard>
       {myAttempt.filePath && (
         <FileViewer
           style={{ marginTop: '2rem' }}
@@ -124,13 +127,13 @@ export default function ApprovedStatus({
         />
       )}
       {myAttempt.content && myAttempt.status === 'fail' && (
-        <RichText style={{ marginTop: '3rem' }}>{myAttempt.content}</RichText>
+        <RichText style={{ marginTop: '1rem' }}>{myAttempt.content}</RichText>
       )}
-      {myAttempt.reviewer && (
+      {myAttempt.reviewer && myAttempt.status !== 'pass' && (
         <div
           style={{
             width: '100%',
-            marginTop: '2.5rem',
+            marginTop: '1.4rem',
             padding: '1rem',
             border: '1px solid var(--ui-border)',
             borderRadius
@@ -153,23 +156,6 @@ export default function ApprovedStatus({
             {myAttempt.feedback ||
               (myAttempt.status === 'pass' ? 'Great job!' : 'Please try again')}
           </RichText>
-        </div>
-      )}
-      {myAttempt.status === 'fail' && (
-        <div style={{ marginTop: '3rem' }}>
-          <Button
-            style={{ fontSize: '2.5rem' }}
-            color={successColor}
-            onClick={() =>
-              onUpdateMissionAttempt({
-                missionId,
-                newState: { tryingAgain: true }
-              })
-            }
-            filled
-          >
-            Try again
-          </Button>
         </div>
       )}
     </div>

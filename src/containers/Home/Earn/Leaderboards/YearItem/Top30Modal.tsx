@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import { useKeyContext } from '~/contexts';
+import LeaderboardList from '~/components/LeaderboardList';
 
 export default function Top30Modal({
   onHide,
@@ -23,7 +23,13 @@ export default function Top30Modal({
     <Modal small closeWhenClickedOutside={!usermenuShown} onHide={onHide}>
       <header>{`${month} ${year}`}</header>
       <main style={{ paddingTop: 0 }}>
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+          gap="0.75rem"
+        >
           {users.map((user) => (
             <RankingsListItem
               key={user.id}
@@ -32,7 +38,7 @@ export default function Top30Modal({
               onUsermenuShownChange={setUsermenuShown}
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       </main>
       <footer>
         <Button transparent onClick={onHide}>

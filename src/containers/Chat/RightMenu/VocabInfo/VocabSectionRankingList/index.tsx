@@ -4,6 +4,7 @@ import Collector from './Collector';
 import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const rankingsLabel = localize('rankings');
 const top30Label = localize('top30');
@@ -69,21 +70,27 @@ export default function VocabSectionRankingList({
             Be the first to join this leaderboard by collecting vocabulary
           </div>
         ) : (
-          filteredUsers.map((user) => {
-            return (
-              <Collector
-                key={user.username}
-                style={{ padding: '1rem' }}
-                collectedLabel={
-                  target === 'totalPoints'
-                    ? `pt${Number(user[target]) === 1 ? '' : 's'}`
-                    : 'discovered'
-                }
-                targetLabel={target}
-                user={user}
-              />
-            );
-          })
+          <LeaderboardList
+            scrollable={false}
+            padding="0"
+            mobilePadding="0"
+            bottomPadding="0"
+          >
+            {filteredUsers.map((user) => {
+              return (
+                <Collector
+                  key={user.username}
+                  collectedLabel={
+                    target === 'totalPoints'
+                      ? `pt${Number(user[target]) === 1 ? '' : 's'}`
+                      : 'discovered'
+                  }
+                  targetLabel={target}
+                  user={user}
+                />
+              );
+            })}
+          </LeaderboardList>
         )}
       </div>
     </ErrorBoundary>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Cover from './Cover';
 import Body from './Body';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -16,6 +16,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import { useThemeTokens } from '~/theme/useThemeTokens';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 export default function Profile() {
   const params = useParams();
@@ -34,8 +35,10 @@ export default function Profile() {
   const { notExist, profileId } = useProfileState(params.username || '');
   const profile = useAppContext((v) => v.user.state.userObj[profileId]) || {};
   const [selectedTheme, setSelectedTheme] = useState(
-    profile?.profileTheme || 'logoBlue'
+    profile?.profileTheme || DEFAULT_PROFILE_THEME
   );
+  const viewerTheme = useKeyContext((v) => v.myState.profileTheme);
+  const viewerThemeRef = useRef<string | null>(null);
   const { themeRoles } = useThemeTokens({
     themeName: selectedTheme
   });
@@ -99,7 +102,7 @@ export default function Profile() {
     if (params.username === 'undefined' && userId && profile?.unavailable) {
       navigate(`/${username}`);
     }
-    setSelectedTheme(profile?.profileTheme || 'logoBlue');
+    setSelectedTheme(profile?.profileTheme || DEFAULT_PROFILE_THEME);
   }, [
     navigate,
     params.username,
@@ -108,6 +111,32 @@ export default function Profile() {
     userId,
     username
   ]);
+
+  useEffect(() => {
+    if (!userId || !profile?.id) return;
+    const targetTheme = profile?.profileTheme || DEFAULT_PROFILE_THEME;
+    const isViewingOwnProfile = profile.id === userId;
+    if (isViewingOwnProfile) {
+      viewerThemeRef.current = viewerTheme;
+      return;
+    }
+    if (!viewerThemeRef.current) {
+      viewerThemeRef.current = viewerTheme || DEFAULT_PROFILE_THEME;
+    }
+    if (viewerTheme !== targetTheme) {
+      onSetUserState({
+        userId,
+        newState: { profileTheme: targetTheme }
+      });
+    }
+    return () => {
+      if (!userId) return;
+      const restoreTheme = viewerThemeRef.current || DEFAULT_PROFILE_THEME;
+      onSetUserState({ userId, newState: { profileTheme: restoreTheme } });
+      viewerThemeRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.profileTheme, profile?.id, userId]);
 
   return (
     <ErrorBoundary componentPath="Profile/index" style={{ minHeight: '10rem' }}>

@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import TodayXPModal from './TodayXPModal';
 import { useRoleColor } from '~/theme/useRoleColor';
+import LeaderboardList from '~/components/LeaderboardList';
 
 export default function TodayXPRankings() {
   const myId = useKeyContext((v) => v.myState.userId);
@@ -79,7 +79,13 @@ export default function TodayXPRankings() {
           No one has earned XP today yet. Be the first!
         </div>
       ) : (
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+          gap="0.75rem"
+        >
           {todayStats?.todayXPRanking?.map((user: any) => (
             <RankingsListItem
               key={user.id}
@@ -88,12 +94,9 @@ export default function TodayXPRankings() {
               target="xpEarned"
               activityContext="subjectPostXP"
               small
-              style={{
-                padding: user.id === myId ? '1rem' : '0.8rem'
-              }}
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       )}
 
       {todayStats?.todayXPRankingHasMore && (

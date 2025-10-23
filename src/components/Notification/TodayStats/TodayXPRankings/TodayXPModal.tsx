@@ -4,9 +4,9 @@ import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import Modal from '~/components/Modal';
 import RankingsListItem from '~/components/RankingsListItem';
-import RoundList from '~/components/RoundList';
 import localize from '~/constants/localize';
 import { useKeyContext, useAppContext } from '~/contexts';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -99,54 +99,42 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
                 </nav>
               </FilterBar>
             )}
-            <div
-              ref={scrollContainerRef}
-              style={{
-                height: '100%',
-                overflow: 'scroll',
-                width: '100%',
-                paddingTop: '2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              {allRankings.length > 0 || top30Rankings.length > 0 ? (
-                <RoundList
-                  style={{ marginTop: 0 }}
-                  width="35rem"
-                  mobileWidth="100%"
-                >
-                  {(myTodayRank && rankingsTab === 'all'
-                    ? allRankings
-                    : top30Rankings
-                  ).map((user: any) => (
-                    <RankingsListItem
-                      small
-                      key={user.id}
-                      user={user}
-                      myId={myId}
-                      target="xpEarned"
-                      activityContext="subjectPostXP"
-                    />
-                  ))}
-                </RoundList>
-              ) : (
-                <div
-                  style={{
-                    padding: '3rem',
-                    textAlign: 'center',
-                    color: '#999',
-                    fontStyle: 'italic'
-                  }}
-                >
-                  No XP has been earned by anyone today yet.
-                  <br />
-                  Be the first to start earning!
-                </div>
-              )}
-              <div style={{ width: '100%', padding: '1rem' }} />
-            </div>
+            {allRankings.length > 0 || top30Rankings.length > 0 ? (
+              <LeaderboardList
+                height="100%"
+                width="35rem"
+                listRef={scrollContainerRef}
+                padding="2rem 1rem 3.5rem"
+                mobilePadding="1.5rem 0.75rem 3rem"
+              >
+                {(myTodayRank && rankingsTab === 'all'
+                  ? allRankings
+                  : top30Rankings
+                ).map((user: any) => (
+                  <RankingsListItem
+                    small
+                    key={user.id}
+                    user={user}
+                    myId={myId}
+                    target="xpEarned"
+                    activityContext="subjectPostXP"
+                  />
+                ))}
+              </LeaderboardList>
+            ) : (
+              <div
+                style={{
+                  padding: '3rem',
+                  textAlign: 'center',
+                  color: '#999',
+                  fontStyle: 'italic'
+                }}
+              >
+                No XP has been earned by anyone today yet.
+                <br />
+                Be the first to start earning!
+              </div>
+            )}
           </div>
         )}
       </main>
