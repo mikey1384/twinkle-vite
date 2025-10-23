@@ -303,6 +303,15 @@ export default function ImageEditModal({
     loaded: number;
     total: number;
   }) {
-    setUploadProgress(loaded / total);
+    if (!total || !Number.isFinite(total) || total <= 0) {
+      setUploadProgress(0);
+      return;
+    }
+    const ratio = loaded / total;
+    if (!Number.isFinite(ratio)) {
+      setUploadProgress(0);
+      return;
+    }
+    setUploadProgress(Math.max(0, Math.min(1, ratio)));
   }
 }

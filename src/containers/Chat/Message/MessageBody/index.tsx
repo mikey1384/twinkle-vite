@@ -1237,7 +1237,8 @@ function MessageBody({
                 )}
                 {dropdownButtonShown && (
                   <DropdownButton
-                    skeuomorphic
+                    variant="solid"
+                    tone="raised"
                     buttonStyle={{
                       fontSize: '1rem',
                       lineHeight: 1
@@ -1246,7 +1247,6 @@ function MessageBody({
                     innerRef={DropdownButtonRef}
                     color="darkerGray"
                     icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-                    opacity={0.5}
                     menuProps={dropdownMenuItems}
                     onDropdownShown={setHighlighted}
                   />

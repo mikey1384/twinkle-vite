@@ -5,7 +5,7 @@ import ProgressBar from '~/components/ProgressBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import * as d3Ease from 'd3-ease';
 import { Animate } from 'react-move';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
@@ -285,7 +285,7 @@ export default function Carousel({
             <div key={1}>
               {showAllButton ? (
                 <Button
-                  variant="soft"
+                  variant="solid"
                   tone="raised"
                   color="darkerGray"
                   className={css`

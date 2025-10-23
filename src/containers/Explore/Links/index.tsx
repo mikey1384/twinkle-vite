@@ -159,7 +159,7 @@ export default function Links() {
           style={{ marginTop: '2.5rem' }}
           button={
             <Button
-              variant="soft"
+              variant="solid"
               tone="raised"
               color="darkerGray"
               onClick={() => setAddLinkModalShown(true)}

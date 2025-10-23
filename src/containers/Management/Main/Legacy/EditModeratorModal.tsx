@@ -73,7 +73,8 @@ export default function EditModeratorModal({
         <DropdownButton
           style={{ marginTop: '1rem' }}
           icon="chevron-down"
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           text={selectedAccountType || 'Not Selected'}
           color="darkerGray"
           menuProps={editMenuItems}

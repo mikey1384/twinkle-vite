@@ -181,7 +181,7 @@ export default function QuestionBlock({
           )}
           {deleted && (
             <Button
-              variant="soft"
+              variant="solid"
               tone="raised"
               color="darkerGray"
               onClick={() => onUndoRemove(questionId)}

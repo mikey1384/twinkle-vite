@@ -64,7 +64,7 @@ export default function StartScreen({
         {mission.xpReward ? (
           <span
             style={{
-              color: Color[xpNumberColor](),
+              color: xpNumberColor,
               fontWeight: 'bold'
             }}
           >

@@ -697,10 +697,10 @@ function Reply({
         {!!dropdownButtonShown && !isEditing && (
           <div className="dropdown-wrapper">
             <DropdownButton
-              variant="soft"
+              variant="solid"
               tone="raised"
               icon="chevron-down"
-              opacity={0.8}
+              color="darkerGray"
               menuProps={dropdownMenuItems}
             />
           </div>

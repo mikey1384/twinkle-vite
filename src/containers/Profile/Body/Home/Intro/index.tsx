@@ -313,13 +313,13 @@ export default function Intro({
             />
             {userId === profile.id && (
               <DropDownButton
-                opacity={0.7}
                 style={{
                   right: 0,
                   top: '1rem',
                   position: 'absolute'
                 }}
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 color="darkerGray"
                 menuProps={[
                   {

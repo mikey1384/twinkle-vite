@@ -255,7 +255,7 @@ export default function Slide({
         {!!canEdit && !isEditing && !isDeleted && (
           <div className="dropdown-wrapper">
             <DropdownButton
-              variant="soft"
+              variant="solid"
               tone="raised"
               color="darkerGray"
               listStyle={{ width: '25ch' }}
@@ -265,7 +265,6 @@ export default function Slide({
                 top: '1rem',
                 zIndex: 10
               }}
-              opacity={0.8}
               menuProps={dropdownMenuProps}
             />
           </div>
@@ -325,7 +324,7 @@ export default function Slide({
               color="darkBlue"
               loading={publishing}
               onClick={handlePublishSlide}
-              variant="soft"
+              variant="solid"
               tone="raised"
             >
               <Icon icon="upload" />

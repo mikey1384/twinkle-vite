@@ -99,7 +99,8 @@ export default function EditSupermodModal({
         <DropdownButton
           style={{ marginTop: '1rem' }}
           icon="chevron-down"
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           text={selectedRole || 'Not Selected'}
           color="darkerGray"
           menuProps={editMenuItems}

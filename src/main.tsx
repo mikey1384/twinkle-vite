@@ -82,6 +82,7 @@ import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclam
 import { faEye } from '@fortawesome/pro-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/pro-solid-svg-icons/faEyeSlash';
 import { faExchangeAlt } from '@fortawesome/pro-solid-svg-icons/faExchangeAlt';
+import { faExternalLinkAlt } from '@fortawesome/pro-solid-svg-icons/faExternalLinkAlt';
 import { faFilm } from '@fortawesome/pro-solid-svg-icons/faFilm';
 import { faFile } from '@fortawesome/pro-solid-svg-icons/faFile';
 import { faFileArchive } from '@fortawesome/pro-solid-svg-icons/faFileArchive';
@@ -269,6 +270,7 @@ library.add(
   faEdit,
   faEllipsisH,
   faExchangeAlt,
+  faExternalLinkAlt,
   faExclamationCircle,
   faExclamationTriangle,
   faEyeSlash,

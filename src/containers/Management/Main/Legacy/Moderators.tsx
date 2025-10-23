@@ -83,7 +83,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <Button
                 color="darkerGray"
-                variant="soft"
+                variant="solid"
                 tone="raised"
                 onClick={() => setAddModeratorModalShown(true)}
               >
@@ -92,7 +92,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
               </Button>
               <Button
                 color="darkerGray"
-                variant="soft"
+                variant="solid"
                 tone="raised"
                 onClick={handleDownloadCSV}
               >

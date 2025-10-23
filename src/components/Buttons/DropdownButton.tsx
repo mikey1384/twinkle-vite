@@ -11,7 +11,6 @@ export default function DropdownButton({
   color = 'darkerGray',
   isMenuShownWhenMounted,
   onDropdownShown,
-  opacity = 1,
   style,
   icon = 'ellipsis-h',
   iconSize = '1x',
@@ -24,7 +23,6 @@ export default function DropdownButton({
   innerRef,
   transparent,
   xAdjustment,
-  skeuomorphic,
   ...props
 }: {
   buttonStyle?: any;
@@ -32,7 +30,6 @@ export default function DropdownButton({
   className?: string;
   isMenuShownWhenMounted?: boolean;
   onDropdownShown?: (isShown: boolean) => void;
-  opacity?: number;
   style?: React.CSSProperties;
   icon?: string;
   iconSize?: string;
@@ -45,7 +42,6 @@ export default function DropdownButton({
   innerRef?: React.RefObject<any>;
   transparent?: boolean;
   xAdjustment?: number;
-  skeuomorphic?: boolean;
   variant?: 'solid' | 'soft' | 'outline' | 'ghost';
   tone?: 'flat' | 'raised';
 }) {
@@ -76,9 +72,8 @@ export default function DropdownButton({
           color={color}
           filled={!!dropdownContext && !transparent}
           transparent={transparent}
-          opacity={transparent ? 0 : dropdownContext ? 1 : opacity}
-          variant={props.variant || (skeuomorphic ? 'soft' : undefined)}
-          tone={props.tone || (skeuomorphic ? 'raised' : undefined)}
+          variant={props.variant || 'soft'}
+          tone={props.tone || 'raised'}
           className={`${className ? `${className} ` : ''}${css`
             &:hover {
               opacity: 1;

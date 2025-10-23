@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function ListItem({
   answerIndex,
@@ -16,53 +16,140 @@ export default function ListItem({
   index: number;
   onSelect: (index: number) => any;
 }) {
+  const isSelected = !!listItem.checked;
+  const isEvaluated = !!conditionPassStatus;
+  const isCorrect = index === answerIndex;
+  const isWrongSelection =
+    conditionPassStatus === 'fail' && isSelected && !isCorrect;
+
+  const { borderColor, backgroundColor, indicatorColor, indicatorIcon } =
+    useMemo(() => {
+      if (conditionPassStatus === 'pass' || conditionPassStatus === 'complete') {
+        return {
+          borderColor: isCorrect ? Color.green(0.6) : 'transparent',
+          backgroundColor: isCorrect ? Color.green(0.12) : '#fff',
+          indicatorColor: isCorrect ? Color.green() : undefined,
+          indicatorIcon: isCorrect ? 'check' : null
+        };
+      }
+      if (conditionPassStatus === 'fail') {
+        if (isCorrect) {
+          return {
+            borderColor: Color.green(0.6),
+            backgroundColor: Color.green(0.12),
+            indicatorColor: Color.green(),
+            indicatorIcon: 'check'
+          };
+        }
+        if (isWrongSelection) {
+          return {
+            borderColor: Color.rose(0.6),
+            backgroundColor: Color.rose(0.12),
+            indicatorColor: Color.rose(),
+            indicatorIcon: 'times'
+          };
+        }
+      }
+      if (isSelected) {
+        return {
+          borderColor: Color.logoBlue(0.6),
+          backgroundColor: Color.logoBlue(0.08),
+          indicatorColor: undefined,
+          indicatorIcon: null
+        };
+      }
+      return {
+        borderColor: 'rgba(148,163,184,0.12)',
+        backgroundColor: '#fff',
+        indicatorColor: undefined,
+        indicatorIcon: null
+      };
+    }, [
+      conditionPassStatus,
+      isCorrect,
+      isSelected,
+      isWrongSelection
+    ]);
+
+  const optionLabel = useMemo(
+    () => String.fromCharCode(65 + index),
+    [index]
+  );
+
   return (
-    <nav
+    <button
       className={css`
+        width: 100%;
+        border: 1.2px solid ${borderColor};
+        background: ${backgroundColor};
+        border-radius: 16px;
+        padding: 1.4rem 1.6rem;
         display: flex;
         align-items: center;
-        width: 100%;
-        cursor: pointer;
+        gap: 1.6rem;
+        cursor: ${isEvaluated && !isSelected ? 'default' : 'pointer'};
+        transition: transform 0.12s ease, box-shadow 0.18s ease,
+          border-color 0.18s ease, background 0.18s ease;
+        box-shadow: none;
         &:hover {
-          background: ${Color.highlightGray()};
+          ${isEvaluated
+            ? ''
+            : `border-color: ${Color.logoBlue(0.4)};
+               background: ${Color.logoBlue(0.08)};`}
+        }
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 1.1rem 1.3rem;
+          gap: 1rem;
         }
       `}
       onClick={handleSelect}
-      key={index}
+      aria-pressed={isSelected}
+      type="button"
     >
-      <section
+      <div
         className={css`
-          height: 4.3rem;
-          width: 4.3rem;
-          background: ${Color.checkboxAreaGray()};
+          width: 3.6rem;
+          height: 3.6rem;
+          border-radius: 12px;
+          background: ${isCorrect && conditionPassStatus
+            ? Color.green(0.18)
+            : isSelected
+            ? Color.logoBlue(0.15)
+            : 'rgba(148,163,184,0.18)'};
           display: flex;
           align-items: center;
           justify-content: center;
+          font-weight: 700;
+          color: ${isCorrect && conditionPassStatus
+            ? Color.green()
+            : isSelected
+            ? Color.logoBlue()
+            : Color.darkerGray()};
+          font-size: 1.5rem;
         `}
       >
-        <input
-          type="checkbox"
-          checked={listItem.checked}
-          onChange={handleSelect}
-        />
-      </section>
-      <div style={{ padding: '0 2rem', display: 'flex', alignItems: 'center' }}>
-        <div dangerouslySetInnerHTML={{ __html: listItem.label }} />
-        {(conditionPassStatus === 'fail' || conditionPassStatus === 'pass') &&
-          index === answerIndex && (
-            <Icon
-              style={{ color: Color.green(), marginLeft: '1rem' }}
-              icon="check"
-            />
-          )}
-        {conditionPassStatus === 'fail' && listItem.checked && (
-          <Icon
-            style={{ color: Color.rose(), marginLeft: '1rem' }}
-            icon="times"
-          />
-        )}
+        {optionLabel}
       </div>
-    </nav>
+      <div
+        className={css`
+          flex: 1;
+          text-align: left;
+          font-size: 1.6rem;
+          color: ${Color.darkerGray()};
+          line-height: 1.55;
+          @media (max-width: ${mobileMaxWidth}) {
+            font-size: 1.5rem;
+          }
+        `}
+        dangerouslySetInnerHTML={{ __html: listItem.label }}
+      />
+      {indicatorIcon ? (
+        <Icon
+          icon={indicatorIcon as any}
+          style={{ color: indicatorColor, fontSize: '1.8rem' }}
+        />
+      ) : null}
+    </button>
   );
 
   function handleSelect() {

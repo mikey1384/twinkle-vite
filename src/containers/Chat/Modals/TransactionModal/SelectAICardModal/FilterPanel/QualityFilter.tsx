@@ -61,7 +61,8 @@ export default function QualityFilter({
       <div className="label">Quality</div>
       <div style={{ marginTop: '0.5rem' }}>
         <DropdownButton
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           color={
             selectedQuality === 'superior'
               ? 'green'

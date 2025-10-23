@@ -255,7 +255,7 @@ export default function Cover({
                   >
                     <Button
                       style={{ fontSize: '1.2rem', marginRight: '1rem' }}
-                      variant="soft"
+                      variant="solid"
                       tone="raised"
                       color="darkerGray"
                       onClick={handleColorSelectCancel}

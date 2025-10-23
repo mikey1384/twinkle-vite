@@ -51,7 +51,7 @@ function AIAudioButton({
     <>
       <Button 
         loading={preparing} 
-        variant="soft"
+        variant="solid"
         tone="raised"
         onClick={handleAudioClick}
         style={{
@@ -70,7 +70,7 @@ function AIAudioButton({
             padding: '0.5rem 0.7rem',
             lineHeight: 1
           }}
-          variant="soft"
+          variant="solid"
           tone="raised"
           onClick={handleDownloadClick}
           color="darkerGray"

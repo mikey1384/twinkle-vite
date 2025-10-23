@@ -53,7 +53,7 @@ export default function FeaturedSubjects({
           myId === userId ? (
             <div style={{ display: 'flex' }}>
               <Button
-                variant="soft"
+                variant="solid"
                 tone="raised"
                 color="darkerGray"
                 style={{ marginLeft: 'auto' }}
@@ -62,7 +62,7 @@ export default function FeaturedSubjects({
                 {selectLabel}
               </Button>
               <Button
-                variant="soft"
+                variant="solid"
                 tone="raised"
                 color="darkerGray"
                 style={{ marginLeft: '1rem' }}

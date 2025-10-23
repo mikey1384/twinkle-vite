@@ -253,7 +253,7 @@ export default function SubjectPanel({
             <div>
               {editButtonShown && !onEdit && (
                 <DropdownButton
-                  variant="soft"
+                  variant="solid"
                   tone="raised"
                   icon="chevron-down"
                   style={{ marginLeft: '1rem' }}
@@ -390,7 +390,7 @@ export default function SubjectPanel({
                 }}
               >
                 <Button
-                  variant="soft"
+                  variant="solid"
                   tone="raised"
                   color="black"
                   style={{ fontSize: '2rem' }}

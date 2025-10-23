@@ -122,7 +122,8 @@ export default function Members({
             ) : (
               <DropdownButton
                 icon="ellipsis-h"
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 listStyle={{ minWidth: '30ch' }}
                 menuProps={[
                   {

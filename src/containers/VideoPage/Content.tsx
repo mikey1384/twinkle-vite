@@ -147,7 +147,7 @@ export default function Content({
               {userCanEditThis && (
                 <Button
                   style={{ marginTop: '2rem', fontSize: '2rem' }}
-                  variant="soft"
+                  variant="solid"
                   tone="raised"
                   color="darkerGray"
                   onClick={() => setQuestionsBuilderShown(true)}

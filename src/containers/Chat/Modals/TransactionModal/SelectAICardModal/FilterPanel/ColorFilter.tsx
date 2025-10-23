@@ -56,7 +56,8 @@ export default function ColorFilter({
       <div className="label">Color</div>
       <div style={{ marginTop: '0.5rem' }}>
         <DropdownButton
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           color={
             selectedColor === 'any'
               ? 'darkerGray'

@@ -342,6 +342,9 @@ export default function CardSearchPanel({
   }, [themeRoles.success?.color]);
   const ownerFilterLabel =
     typeof filters.owner === 'string' ? filters.owner : '';
+  const ownerButtonColor = filters.owner ? 'logoBlue' : 'darkerGray';
+  const ownerButtonVariant =
+    ownerButtonColor === 'darkerGray' ? 'solid' : 'soft';
   const colorFilterKey =
     typeof filters.color === 'string' ? filters.color : undefined;
   const qualityFilterKey =
@@ -349,6 +352,27 @@ export default function CardSearchPanel({
   const styleFilterLabel =
     typeof filters.style === 'string' ? filters.style : '';
   const wordFilterValue = typeof filters.word === 'string' ? filters.word : '';
+
+  const colorButtonColor = colorFilterKey
+    ? colorFilterKey === 'blue'
+      ? 'logoBlue'
+      : colorFilterKey
+    : 'darkerGray';
+  const colorButtonVariant =
+    colorButtonColor === 'darkerGray' ? 'solid' : 'soft';
+  const qualityButtonColor = qualityFilterKey
+    ? qualityFilterKey === 'superior'
+      ? 'green'
+      : qualityFilterKey === 'rare'
+      ? 'purple'
+      : qualityFilterKey === 'elite'
+      ? 'redOrange'
+      : qualityFilterKey === 'legendary'
+      ? 'gold'
+      : 'darkerGray'
+    : 'darkerGray';
+  const qualityButtonVariant =
+    qualityButtonColor === 'darkerGray' ? 'solid' : 'soft';
 
   return (
     <ScopedTheme
@@ -371,8 +395,8 @@ export default function CardSearchPanel({
           <Button
             className={filterButtonClass}
             mobilePadding="0.5rem 1rem"
-            color={filters.owner ? 'logoBlue' : 'darkerGray'}
-            variant="soft"
+            color={ownerButtonColor}
+            variant={ownerButtonVariant}
             tone="raised"
             onClick={() => onSetSelectedFilter('owner')}
           >
@@ -387,7 +411,7 @@ export default function CardSearchPanel({
             className={filterButtonClass}
             mobilePadding="0.5rem 1rem"
             color="darkerGray"
-            variant="soft"
+            variant="solid"
             tone="raised"
             onClick={() => onSetSelectedFilter('style')}
           >
@@ -399,14 +423,8 @@ export default function CardSearchPanel({
           <Button
             className={filterButtonClass}
             mobilePadding="0.5rem 1rem"
-            color={
-              colorFilterKey
-                ? colorFilterKey === 'blue'
-                  ? 'logoBlue'
-                  : colorFilterKey
-                : 'darkerGray'
-            }
-            variant="soft"
+            color={colorButtonColor}
+            variant={colorButtonVariant}
             tone="raised"
             onClick={() => onSetSelectedFilter('color')}
           >
@@ -418,18 +436,8 @@ export default function CardSearchPanel({
           <Button
             className={filterButtonClass}
             mobilePadding="0.5rem 1rem"
-            color={
-              qualityFilterKey === 'superior'
-                ? 'green'
-                : qualityFilterKey === 'rare'
-                ? 'purple'
-                : qualityFilterKey === 'elite'
-                ? 'redOrange'
-                : qualityFilterKey === 'legendary'
-                ? 'gold'
-                : 'darkerGray'
-            }
-            variant="soft"
+            color={qualityButtonColor}
+            variant={qualityButtonVariant}
             tone="raised"
             onClick={() => onSetSelectedFilter('quality')}
           >

@@ -172,7 +172,7 @@ export default function MainMenu({
       }}
     >
       <DropdownButton
-        variant="soft"
+        variant="solid"
         tone="raised"
         color="darkerGray"
         icon="caret-down"

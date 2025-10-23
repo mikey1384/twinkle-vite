@@ -1,6 +1,6 @@
 import React from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function PeopleFilterBar({
@@ -18,6 +18,7 @@ export default function PeopleFilterBar({
     <div
       className={css`
         border: 1px solid var(--ui-border);
+        border-radius: ${wideBorderRadius};
         @media (max-width: ${mobileMaxWidth}) {
           border-right: 0;
           border-left: 0;
@@ -34,7 +35,9 @@ export default function PeopleFilterBar({
       }}
     >
       <DropdownButton
-        skeuomorphic
+        variant="solid"
+        tone="flat"
+        color="darkerGray"
         icon="caret-down"
         text={orderByText}
         menuProps={[

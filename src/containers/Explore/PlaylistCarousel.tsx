@@ -120,7 +120,7 @@ export default function PlaylistCarousel({
         )}
         {!onEdit && (userIsUploader || canEditPlaylists) && (
           <DropdownButton
-            variant="soft"
+            variant="solid"
             tone="raised"
             icon="chevron-down"
             color="darkerGray"

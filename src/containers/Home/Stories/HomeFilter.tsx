@@ -4,7 +4,7 @@ import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
@@ -60,24 +60,15 @@ export default function HomeFilter({
   const filterTextRole = useRoleColor('filterText', { fallback: 'darkGray' });
 
   const videoContainerTone = useMemo(() => {
-    const base = filterRole.getColor(0.08) || 'rgba(241, 245, 249, 0.92)';
-    const border = filterRole.getColor(0.22) || 'var(--ui-border)';
-    const hoverBorder = filterRole.getColor(0.32) || 'var(--ui-border-strong)';
+    const base = '#fff';
+    const border = 'var(--ui-border)';
+    const hoverBorder = 'var(--ui-border-strong)';
     const label = '#0f172a';
     const helper = 'rgba(71, 85, 105, 0.9)';
     const icon = filterRole.getColor() || Color.logoBlue();
     const switchColor = filterRole.getColor() || Color.logoBlue();
-    const shadow = '0 18px 32px -20px rgba(15, 23, 42, 0.18)';
-    return {
-      base,
-      border,
-      hoverBorder,
-      label,
-      helper,
-      icon,
-      switchColor,
-      shadow
-    };
+    const shadow = 'none';
+    return { base, border, hoverBorder, label, helper, icon, switchColor, shadow };
   }, [filterRole]);
 
   const videoContainerClass = useMemo(
@@ -89,10 +80,10 @@ export default function HomeFilter({
         gap: 1.4rem;
         width: 100%;
         padding: 1.2rem 1.6rem;
-        border-radius: 16px;
+        border-radius: ${wideBorderRadius};
         border: 1px solid ${videoContainerTone.border};
         background: ${videoContainerTone.base};
-        box-shadow: ${videoContainerTone.shadow};
+        box-shadow: none;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
         @media (max-width: ${mobileMaxWidth}) {
           border-right: 0;

@@ -53,9 +53,14 @@ export default function Textarea({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const normalizedProgress = useMemo(() => {
+    if (!Number.isFinite(uploadProgress) || uploadProgress <= 0) return 0;
+    if (uploadProgress >= 1) return 1;
+    return uploadProgress;
+  }, [uploadProgress]);
   const progress = useMemo(
-    () => Math.ceil(100 * uploadProgress),
-    [uploadProgress]
+    () => Math.ceil(100 * normalizedProgress),
+    [normalizedProgress]
   );
 
   const autoResize = useCallback(() => {
@@ -356,6 +361,15 @@ export default function Textarea({
     loaded: number;
     total: number;
   }) {
-    setUploadProgress(loaded / total);
+    if (!total || !Number.isFinite(total) || total <= 0) {
+      setUploadProgress(0);
+      return;
+    }
+    const ratio = loaded / total;
+    if (!Number.isFinite(ratio)) {
+      setUploadProgress(0);
+      return;
+    }
+    setUploadProgress(Math.max(0, Math.min(1, ratio)));
   }
 }

@@ -1,7 +1,7 @@
 import React, {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
   type ReactNode
 } from 'react';
@@ -19,14 +19,22 @@ const RootThemeContext = createContext<RootThemeContextValue | null>(null);
 export function RootThemeProvider({ children }: { children: ReactNode }) {
   const profileTheme = useAppContext((v) => v.user.state.myState.profileTheme);
 
-  const themeName = useMemo<ThemeName>(
-    () => (profileTheme || DEFAULT_PROFILE_THEME) as ThemeName,
-    [profileTheme]
-  );
+  const themeName = useMemo<ThemeName>(() => {
+    if (profileTheme) {
+      return profileTheme as ThemeName;
+    }
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('profileTheme');
+      if (stored) {
+        return stored as ThemeName;
+      }
+    }
+    return DEFAULT_PROFILE_THEME as ThemeName;
+  }, [profileTheme]);
 
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof document !== 'undefined') {
       applyThemeVars(themeName);
     }

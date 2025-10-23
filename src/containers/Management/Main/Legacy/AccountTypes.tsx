@@ -45,7 +45,7 @@ export default function AccountTypes({ canManage }: { canManage: boolean }) {
           canManage ? (
             <Button
               color="darkerGray"
-              variant="soft"
+              variant="solid"
               tone="raised"
               onClick={() => setAddAccountTypeModalShown(true)}
             >

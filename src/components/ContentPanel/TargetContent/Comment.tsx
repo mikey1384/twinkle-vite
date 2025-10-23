@@ -66,11 +66,10 @@ function Comment({
           `}
         >
           <DropdownButton
-            variant="soft"
+            variant="solid"
             tone="raised"
             color="darkerGray"
             style={{ position: 'absolute' }}
-            opacity={0.8}
             menuProps={[
               {
                 label: 'Edit',

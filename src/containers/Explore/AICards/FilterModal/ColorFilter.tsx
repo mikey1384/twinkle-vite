@@ -48,6 +48,14 @@ export default function ColorFilter({
     }));
   }, [onSelectColor, selectedColor]);
 
+  const buttonColor =
+    selectedColor === 'any'
+      ? 'darkerGray'
+      : selectedColor === 'blue'
+      ? 'logoBlue'
+      : selectedColor;
+  const buttonVariant = buttonColor === 'darkerGray' ? 'solid' : 'soft';
+
   return (
     <div
       style={{
@@ -64,14 +72,9 @@ export default function ColorFilter({
       <div style={{ marginLeft: '1rem' }}>
         <DropdownButton
           isMenuShownWhenMounted={selectedFilter === 'color'}
-          skeuomorphic
-          color={
-            selectedColor === 'any'
-              ? 'darkerGray'
-              : selectedColor === 'blue'
-              ? 'logoBlue'
-              : selectedColor
-          }
+          variant={buttonVariant}
+          tone="raised"
+          color={buttonColor}
           icon="caret-down"
           text={selectedColor}
           onDropdownShown={onDropdownShown}

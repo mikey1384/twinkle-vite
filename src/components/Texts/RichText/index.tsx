@@ -401,7 +401,7 @@ function RichText({
           }}
         >
           <Button
-            variant="soft"
+            variant="solid"
             tone="raised"
             onClick={handleCopyMessage}
             style={{

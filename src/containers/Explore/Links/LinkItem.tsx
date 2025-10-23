@@ -298,7 +298,7 @@ export default function LinkItem({
       {!onEdit && editButtonShown && (
         <div>
           <DropdownButton
-            variant="soft"
+            variant="solid"
             tone="raised"
             icon="chevron-down"
             color="darkerGray"

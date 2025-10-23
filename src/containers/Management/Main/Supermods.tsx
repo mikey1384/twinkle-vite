@@ -62,7 +62,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
           canManage ? (
             <Button
               color="darkerGray"
-              variant="soft"
+              variant="solid"
               tone="raised"
               onClick={() => setAddSupermodModalShown(true)}
             >

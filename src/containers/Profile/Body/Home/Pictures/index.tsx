@@ -80,7 +80,7 @@ export default function Pictures({
         <Button
           disabled={addPictureButtonDisabled}
           color="darkerGray"
-          variant="soft"
+          variant="solid"
           tone="raised"
           onClick={() => setAddPictureModalShown(true)}
         >
@@ -90,7 +90,8 @@ export default function Pictures({
           </span>
         </Button>
         <DropdownButton
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           icon="ellipsis-h"
           color="darkerGray"
           style={{ marginLeft: '1rem' }}

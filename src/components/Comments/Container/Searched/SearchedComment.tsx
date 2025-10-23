@@ -455,17 +455,16 @@ export default function SearchedComment({
             </div>
           </div>
           {dropdownButtonShown && !isEditing && (
-            <div className="dropdown-wrapper">
-              <DropdownButton
-                variant="soft"
-                tone="raised"
-                icon="chevron-down"
-                color="darkerGray"
-                opacity={0.8}
-                menuProps={dropdownMenuItems}
-              />
-            </div>
-          )}
+          <div className="dropdown-wrapper">
+            <DropdownButton
+              variant="solid"
+              tone="raised"
+              icon="chevron-down"
+              color="darkerGray"
+              menuProps={dropdownMenuItems}
+            />
+          </div>
+        )}
           <section>
             <div>
               <UsernameText className="username" user={uploader} />{' '}

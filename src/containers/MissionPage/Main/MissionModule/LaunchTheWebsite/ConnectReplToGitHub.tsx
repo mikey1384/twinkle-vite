@@ -114,7 +114,7 @@ export default function ConnectReplToGitHub({
               ) : (
                 <Button
                   style={{ marginTop: '5.5rem' }}
-                  variant="soft"
+                  variant="solid"
                   tone="raised"
                   color="darkerGray"
                   onClick={() => setNoPressed(true)}

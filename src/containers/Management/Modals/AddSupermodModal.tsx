@@ -125,7 +125,8 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
               <DropdownButton
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 text={user.role || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}

@@ -88,7 +88,7 @@ export default function AttachmentField({
       >
         <p style={{ fontWeight: 'bold', fontSize: '1.7rem' }}>Attachment:</p>
         <DropdownButton
-          variant="soft"
+          variant="solid"
           tone="raised"
           color="darkerGray"
           icon="caret-down"

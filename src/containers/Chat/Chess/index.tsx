@@ -1008,7 +1008,7 @@ export default function Chess({
               color="darkerGray"
               icon="palette"
               text={`Theme: ${currentThemeLabel}`}
-              variant="soft"
+              variant="solid"
               tone="raised"
               menuProps={themeMenuProps}
             />
@@ -1044,7 +1044,7 @@ export default function Chess({
                     }`
                   : 'Theme'
               }
-              variant="soft"
+              variant="solid"
               tone="raised"
               menuProps={getThemeMenu()}
             />
@@ -1052,7 +1052,7 @@ export default function Chess({
           {gameDropdownButtonShown ? (
             !(isFromModal && !deviceIsMobile) ? (
               <DropdownButton
-                variant="soft"
+                variant="solid"
                 tone="raised"
                 buttonStyle={{
                   fontSize: '1rem',

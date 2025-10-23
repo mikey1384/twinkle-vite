@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const rewardLevelLabel = localize('rewardLevel');
+const rewardLevelLabel = localize('effortLevel');
 
 export default function RewardLevelBar({
   className,

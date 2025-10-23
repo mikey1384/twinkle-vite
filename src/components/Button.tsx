@@ -23,7 +23,7 @@ interface ButtonProps {
   mobilePadding?: string;
   mobileBorderRadius?: string;
   // New API
-  variant?: Variant; // defaults to 'solid' for compatibility
+  variant?: Variant; // supports 'solid' | 'soft' | 'outline'
   shape?: Shape; // defaults to 'rounded'
   size?: Size; // defaults to 'md'
   uppercase?: boolean; // defaults to true
@@ -75,13 +75,12 @@ export default function Button(props: ButtonProps) {
     [children]
   );
 
-  // Derive variant from legacy props for full compatibility
-  // Map legacy skeuomorphic to a theme-aware soft variant with raised tone by default
+  // Resolve variant: 'solid' | 'soft' | 'outline' (ghost when transparent)
   const resolvedVariant: Variant = useMemo(() => {
     if (transparent) return 'ghost';
     if (filled || opacity) return 'solid';
     if (skeuomorphic && !variant) return 'soft';
-    return (variant || 'solid') as Variant; // preserve old default
+    return (variant || 'solid') as Variant;
   }, [filled, opacity, skeuomorphic, transparent, variant]);
   const resolvedTone = useMemo(() => {
     if (tone) return tone;
@@ -125,6 +124,7 @@ export default function Button(props: ButtonProps) {
       : tint(hoverColorKey, 0.9);
     const solidHoverBorder = solidHoverBg;
 
+    // Soft tokens
     const softBg = baseIsTheme ? 'var(--theme-bg)' : tint(baseColorKey, 0.12);
     const softBorder = baseIsTheme
       ? 'var(--theme-border)'
@@ -165,7 +165,7 @@ export default function Button(props: ButtonProps) {
         : v === 'outline'
         ? outlineBg
         : ghostBg;
-    const border =
+    let border =
       v === 'solid'
         ? solidBorder
         : v === 'soft'
@@ -181,7 +181,7 @@ export default function Button(props: ButtonProps) {
         : v === 'outline'
         ? outlineHoverBg
         : ghostHoverBg;
-    const hoverBorder =
+    let hoverBorder =
       v === 'solid'
         ? solidHoverBorder
         : v === 'soft'
@@ -189,14 +189,32 @@ export default function Button(props: ButtonProps) {
         : v === 'outline'
         ? outlineHoverBorder
         : ghostHoverBorder;
+    const baseIsWhite = baseColorKey === 'white';
+    if (baseIsWhite && v !== 'ghost') {
+      // Ensure visible border when using white button color
+      border = tint('borderGray', 1);
+      hoverBorder = tint('darkerBorderGray', 1);
+    }
     const textColor =
       v === 'solid'
         ? baseIsTheme
           ? 'var(--theme-text)'
+          : baseIsWhite
+          ? tint('darkerGray', 1)
           : '#fff'
         : baseIsTheme
         ? 'var(--theme-text)'
+        : baseIsWhite
+        ? tint('darkerGray', 1)
         : tint(baseColorKey, 1);
+    const hoverTextColor =
+      v === 'solid'
+        ? textColor
+        : hoverIsTheme
+        ? 'var(--theme-text)'
+        : hoverColorKey === 'white'
+        ? tint('darkerGray', 1)
+        : tint(hoverColorKey, 1);
 
     const skeuoBox =
       resolvedTone === 'raised'
@@ -216,9 +234,7 @@ export default function Button(props: ButtonProps) {
       font-size: ${sizeFont};
       padding: ${padY} ${padX};
       color: ${textColor};
-      background: ${v === 'soft' && !baseIsTheme
-        ? tint(baseColorKey, 0.12)
-        : bg};
+      background: ${bg};
       border: 1px solid ${border};
       border-radius: ${radius};
       transition: background 0.18s ease, color 0.18s ease,
@@ -234,16 +250,12 @@ export default function Button(props: ButtonProps) {
       }
 
       @media (hover: hover) and (pointer: fine) {
-        &:hover {
-          background: ${hoverBg};
-          border-color: ${hoverBorder};
-          ${v !== 'solid'
-            ? hoverIsTheme
-              ? `color: var(--theme-text);`
-              : `color: ${tint(hoverColorKey, 1)};`
-            : ''}
-        }
+      &:hover {
+        background: ${hoverBg};
+        border-color: ${hoverBorder};
+        ${v !== 'solid' ? `color: ${hoverTextColor};` : ''}
       }
+    }
 
       @media (max-width: ${mobileMaxWidth}) {
         font-size: ${size === 'lg' ? '1.5rem' : '1.3rem'};

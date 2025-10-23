@@ -234,11 +234,10 @@ export default function Description({
     <div style={{ position: 'relative', padding: '2rem 1rem 0 1rem' }}>
       {editButtonShown && !isEditing && (
         <DropdownButton
-          variant="soft"
+          variant="solid"
           tone="raised"
           icon="chevron-down"
           color="darkerGray"
-          opacity={0.8}
           style={{ position: 'absolute', top: '1rem', right: '1rem' }}
           menuProps={editMenuItems}
         />

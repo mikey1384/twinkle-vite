@@ -99,6 +99,7 @@ export default function AccountMenu({
         <DropdownButton
           className={className}
           transparent
+          tone="flat"
           xAdjustment={-30}
           listStyle={{
             top: '4.5rem'

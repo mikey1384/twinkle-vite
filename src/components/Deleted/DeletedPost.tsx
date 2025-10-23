@@ -456,7 +456,7 @@ export default function DeletedPost({
                     onClick={() => handleUndoDelete({ redo: isRecovered })}
                     color="darkerGray"
                     style={{ marginLeft: '1rem' }}
-                    variant="soft"
+                    variant="solid"
                     tone="raised"
                   >
                     {isRecovered ? deleteLabel : undoLabel}

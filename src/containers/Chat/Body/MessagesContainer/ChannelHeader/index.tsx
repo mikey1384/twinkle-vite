@@ -365,8 +365,9 @@ export default function ChannelHeader({
           >
             {menuButtonShown && (
               <DropdownButton
-                skeuomorphic
-                opacity={0.7}
+                variant="solid"
+                tone="raised"
+                color="darkerGray"
                 listStyle={{
                   width: '15rem'
                 }}

@@ -29,7 +29,7 @@ export default function WealthData() {
         loaded={usersLoaded}
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
-          <Button color="darkerGray" variant="soft" tone="raised" onClick={handleDownloadCSV}>
+          <Button color="darkerGray" variant="solid" tone="raised" onClick={handleDownloadCSV}>
             <Icon icon="file-csv" />
           </Button>
         }

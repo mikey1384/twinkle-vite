@@ -459,7 +459,7 @@ export default function Details({
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 {editButtonShown && !isEditing && (
                   <DropdownButton
-                    variant="soft"
+                    variant="solid"
                     tone="raised"
                     icon="pencil-alt"
                     color="darkerGray"

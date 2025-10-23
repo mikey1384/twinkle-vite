@@ -70,14 +70,14 @@ export default function MissionItem({
         padding: 1rem;
         border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
-        transition: background 0.5s;
+        transition: background 0.18s ease, border-color 0.18s ease;
         cursor: ${locked ? 'default' : 'pointer'};
         opacity: ${locked ? 0.2 : 1};
         ${locked
           ? ''
-          : `&:hover {
-          background: ${Color.highlightGray()};
-        }`}
+          : `@media (hover: hover) and (pointer: fine) {
+               &:hover { border-color: var(--ui-border-strong); }
+             }`}
       `}${locked ? ' unselectable' : ''}`}
     >
       <p

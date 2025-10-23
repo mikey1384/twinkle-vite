@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import Icon from '~/components/Icon';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
@@ -46,17 +47,24 @@ export default function RewardLevelExpectation({
     if (rewardLevelExpectation === '') {
       return '';
     }
+    const accent = (Color as any)[rewardColor]?.() || Color.logoBlue();
     return (
       <div
         className={css`
+          display: flex;
+          gap: 0.8rem;
+          align-items: flex-start;
           font-size: 1.5rem;
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.2rem;
           }
         `}
       >
-        <b style={{ color: Color[rewardColor]() }}>Lvl {rewardLevel}:</b>{' '}
-        <span style={{ color: '#fff' }}>{rewardLevelExpectationLabel}</span>
+        <Icon icon="star" style={{ color: accent }} />
+        <div>
+          <div style={{ fontWeight: 700, color: accent }}>{`Effort Level ${rewardLevel}`}</div>
+          <div style={{ color: Color.darkBlueGray() }}>{rewardLevelExpectationLabel}</div>
+        </div>
       </div>
     );
   }, [
@@ -70,17 +78,12 @@ export default function RewardLevelExpectation({
   return (
     <div
       className={css`
-        padding: 1rem;
-        font-size: 1.5rem;
-        font-weight: bold;
-        background: ${rewardLevel === 5 ? Color.black() : Color.darkerGray()};
+        padding: 0.9rem 1.1rem;
+        background: #fff;
+        border: 1px solid var(--ui-border);
+        border-radius: ${wideBorderRadius};
         margin-bottom: 1rem;
-        margin-left: CALC(-1rem - 1px);
-        margin-right: CALC(-1rem - 1px);
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-left: -1rem;
-          margin-right: -1rem;
-        }
+        border-left: 4px solid ${(Color as any)[rewardColor]?.() || Color.logoBlue()};
       `}
     >
       {rewardLevelExplanation}

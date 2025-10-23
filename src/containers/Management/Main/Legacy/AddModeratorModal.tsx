@@ -93,7 +93,8 @@ export default function AddModeratorModal({
               <DropdownButton
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 text={user.userType || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}

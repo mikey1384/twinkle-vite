@@ -110,7 +110,7 @@ export default function StatusInput({
             }}
           >
             <Button
-              variant="soft"
+              variant="solid"
               tone="raised"
               color="darkerGray"
               onClick={onCancel}

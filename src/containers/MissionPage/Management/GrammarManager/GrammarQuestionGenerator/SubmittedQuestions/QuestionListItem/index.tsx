@@ -88,7 +88,7 @@ export default function QuestionListItem({
               width: '50%',
               fontSize: '1.7rem'
             }}
-            variant="soft"
+            variant="solid"
             tone="raised"
             color="darkerGray"
             onClick={() => onSetIsEditing(true)}

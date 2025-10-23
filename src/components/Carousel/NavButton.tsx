@@ -22,7 +22,7 @@ export default function NavButton({
           top: CALC(50% - 2rem);
           ${left ? 'left: -0.5rem;' : 'right: -0.5rem;'};
         `}
-        variant="soft"
+        variant="solid"
         tone="raised"
         color="darkerGray"
         onClick={handleClick}

@@ -88,7 +88,8 @@ export default function Menu({
             </div>
             <DropdownButton
               icon="chevron-down"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               text={styleLabelObj.label}
               listStyle={{ minWidth: '30ch' }}
               menuProps={[
@@ -131,7 +132,8 @@ export default function Menu({
             using
             <DropdownButton
               icon="chevron-down"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               text={wordLevel}
               listStyle={{ minWidth: '25ch' }}
               menuProps={[
