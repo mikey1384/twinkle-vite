@@ -392,7 +392,7 @@ export default function SubjectPanel({
                 <Button
                   variant="solid"
                   tone="raised"
-                  color="black"
+                  color="darkerGray"
                   style={{ fontSize: '2rem' }}
                   onClick={handleExpand}
                 >

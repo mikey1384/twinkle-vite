@@ -158,11 +158,9 @@ export default function Intro({
                   statusColor={editedStatusColor || statusColor}
                   editedStatusMsg={editedStatusMsg}
                   setColor={(color) => onSetEditedStatusColor(color)}
-                  onTextChange={(event: any) => {
-                    onSetEditedStatusMsg(
-                      addEmoji(renderText(event.target.value))
-                    );
-                    if (!event.target.value) {
+                  onTextChange={(text: string) => {
+                    onSetEditedStatusMsg(addEmoji(renderText(text)));
+                    if (!text) {
                       onSetEditedStatusColor('');
                     }
                   }}

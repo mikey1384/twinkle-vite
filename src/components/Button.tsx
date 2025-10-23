@@ -37,7 +37,7 @@ interface ButtonProps {
 export default function Button(props: ButtonProps) {
   const {
     className = '',
-    color = 'black',
+    color,
     disabled,
     disabledOpacity = 0.2,
     loading,
@@ -76,7 +76,13 @@ export default function Button(props: ButtonProps) {
     return 'flat';
   }, [tone]);
 
-  const baseColorKey = color || 'black';
+  const baseColorKey = useMemo(() => {
+    // Default text color for ghost buttons should be darkGray
+    if (!color) {
+      return resolvedVariant === 'ghost' ? 'darkerGray' : 'black';
+    }
+    return color;
+  }, [color, resolvedVariant]);
   const hoverColorKey = hoverColor || baseColorKey;
   const baseIsTheme = baseColorKey === 'theme';
   const hoverIsTheme = hoverColorKey === 'theme';

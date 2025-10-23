@@ -154,9 +154,9 @@ export default function UserDetails({
           statusColor={statusColor}
           editedStatusMsg={editedStatusMsg}
           setColor={onSetEditedStatusColor}
-          onTextChange={(event: any) => {
-            onSetEditedStatusMsg(addEmoji(renderText(event.target.value)));
-            if (!event.target.value) {
+          onTextChange={(text: string) => {
+            onSetEditedStatusMsg(addEmoji(renderText(text)));
+            if (!text) {
               onSetEditedStatusColor('');
             }
           }}
