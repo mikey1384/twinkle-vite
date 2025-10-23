@@ -228,7 +228,7 @@ export default function QuestionEditForm({
           display: 'flex'
         }}
       >
-        <Button transparent onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button

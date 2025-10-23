@@ -314,7 +314,7 @@ export default function AICardModal({
               ) : null}
             </div>
           </div>
-          <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
             Close
           </Button>
         </>

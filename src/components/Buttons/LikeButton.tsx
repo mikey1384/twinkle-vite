@@ -50,12 +50,9 @@ function LikeButton({
       <Button
         loading={loading}
         className={className}
-        color={
-          (filled && liked) || !filled
-            ? likeButtonPressedColor
-            : likeButtonColor
-        }
-        filled={filled || liked}
+        color={(filled && liked) || !filled ? likeButtonPressedColor : likeButtonColor}
+        variant={filled || liked ? 'solid' : 'soft'}
+        tone="raised"
         style={style}
         onClick={async () => {
           try {

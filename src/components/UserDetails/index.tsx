@@ -186,7 +186,7 @@ export default function UserDetails({
             }}
           >
             <Button
-              transparent
+              variant="ghost"
               onClick={() => {
                 onSetEditedStatusMsg(
                   replaceFakeAtSymbol(profile.statusMsg || '')
@@ -198,7 +198,7 @@ export default function UserDetails({
               <span style={{ marginLeft: '0.7rem' }}>Change</span>
             </Button>
             <Button
-              transparent
+              variant="ghost"
               style={{ marginLeft: '1rem' }}
               onClick={() => setConfirmModalShown(true)}
             >

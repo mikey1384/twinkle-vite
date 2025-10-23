@@ -117,14 +117,14 @@ export default function ImageModal({
             !stringIsEmpty(caption) &&
             userIsUploader &&
             !isEditing && (
-              <Button transparent onClick={() => setIsEditing(true)}>
+              <Button variant="ghost" onClick={() => setIsEditing(true)}>
                 <Icon icon="pencil-alt" />
                 <span style={{ marginLeft: '0.7rem' }}>Edit Caption</span>
               </Button>
             )}
           {hasCaption && isEditing && (
             <Button
-              transparent
+              variant="ghost"
               onClick={() => {
                 setIsEditing(false);
                 setEditedCaption(caption || '');

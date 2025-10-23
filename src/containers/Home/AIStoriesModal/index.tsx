@@ -201,7 +201,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
           )}
         </main>
         <footer style={{ justifyContent: 'center' }}>
-          <Button transparent onClick={onHide}>
+          <Button variant="ghost" onClick={onHide}>
             Close
           </Button>
         </footer>

@@ -87,7 +87,7 @@ export default function SubjectMsgsModal({
         ))}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       </footer>

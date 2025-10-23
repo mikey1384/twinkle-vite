@@ -72,7 +72,7 @@ export default function ConvertModal({
           margin-top: 1rem;
         `}
       >
-        <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
+        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button loading={submitting} color={doneColor} onClick={handleSubmit}>

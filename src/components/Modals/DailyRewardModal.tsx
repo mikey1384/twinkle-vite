@@ -587,7 +587,7 @@ export default function DailyRewardModal({
               justifyContent: 'center'
             }}
           >
-            <Button transparent onClick={handleHide}>
+            <Button variant="ghost" onClick={handleHide}>
               Close
             </Button>
           </div>

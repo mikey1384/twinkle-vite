@@ -103,7 +103,7 @@ export default function GameModalFooter({
           {offerDrawLabel}
         </Button>
       )}
-      <Button transparent onClick={onClose || noop}>
+      <Button variant="ghost" onClick={onClose || noop}>
         {closeLabel}
       </Button>
       {showCancelMove && (

@@ -220,7 +220,7 @@ export default function WordleModal({
                 justifyContent: 'center'
               }}
             >
-              <Button transparent onClick={onHide}>
+              <Button variant="ghost" onClick={onHide}>
                 Close
               </Button>
             </div>

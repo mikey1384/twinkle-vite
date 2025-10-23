@@ -114,7 +114,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
   const footer =
     gameState !== 'started' ? (
-      <Button transparent onClick={handleHide}>
+      <Button variant="ghost" onClick={handleHide}>
         Close
       </Button>
     ) : null;

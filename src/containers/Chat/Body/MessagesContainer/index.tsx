@@ -1482,9 +1482,10 @@ export default function MessagesContainer({
       )}
       <div
         style={{
-          background: Color.inputGray(),
+          background: 'var(--chat-bg)',
+          color: 'var(--chat-text)',
           padding: '1rem',
-          borderTop: '1px solid var(--ui-border)'
+          borderTop: '1px solid var(--chat-border)'
         }}
       >
         <MessageInput

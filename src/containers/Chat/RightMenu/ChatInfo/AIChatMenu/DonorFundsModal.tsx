@@ -487,7 +487,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
         )}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       </footer>

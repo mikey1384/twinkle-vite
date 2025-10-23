@@ -109,7 +109,10 @@ const filtersGroupClass = css`
     justify-content: flex-start;
   }
   @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.8rem;
+    gap: 0.6rem;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
   }
 `;
 
@@ -119,7 +122,8 @@ const filterButtonClass = css`
   justify-content: center;
   align-items: center;
   @media (max-width: ${mobileMaxWidth}) {
-    min-width: 9rem;
+    width: auto;
+    min-width: 8.6rem;
   }
 `;
 
@@ -141,7 +145,11 @@ const searchSectionClass = css`
   align-items: flex-start;
   justify-content: center;
   @media (max-width: ${mobileMaxWidth}) {
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
   }
 `;
 
@@ -181,7 +189,7 @@ const baseInputClass = css`
 const wordInputClass = css`
   width: 9rem;
   @media (max-width: ${mobileMaxWidth}) {
-    width: 6.2rem;
+    width: 5.4rem;
   }
 `;
 
@@ -189,7 +197,7 @@ const cardInputClass = css`
   width: 8.5rem;
   letter-spacing: 0.04em;
   @media (max-width: ${mobileMaxWidth}) {
-    width: 6.4rem;
+    width: 5.8rem;
   }
 `;
 
@@ -207,8 +215,11 @@ const cardInputRowClass = css`
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  flex-wrap: nowrap;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.6rem;
+    width: 100%;
+    flex-wrap: wrap;
   }
 `;
 

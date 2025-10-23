@@ -10,17 +10,20 @@ export default function RightMenu({
   className,
   selectedTab,
   onSelectTab,
-  style
+  style,
+  positionMode
 }: {
   className?: string;
   selectedTab: string;
   onSelectTab: (arg: string) => any;
   style?: React.CSSProperties;
+  positionMode?: 'fixed' | 'sticky' | 'static';
 }) {
   return (
     <SideMenu
       variant="card"
       placement="right"
+      positionMode={positionMode}
       className={className}
       style={style}
     >

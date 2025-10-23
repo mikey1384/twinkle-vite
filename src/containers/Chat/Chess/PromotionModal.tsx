@@ -121,7 +121,7 @@ export default function PromotionModal({
           }
         `}
       >
-        <Button style={{ marginRight: '0.7rem' }} transparent onClick={onHide}>
+        <Button style={{ marginRight: '0.7rem' }} variant="ghost" onClick={onHide}>
           Cancel
         </Button>
       </footer>

@@ -58,7 +58,7 @@ export default function UsernameHistoryModal({
       size="sm"
       priority
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }

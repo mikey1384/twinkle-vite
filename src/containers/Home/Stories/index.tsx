@@ -141,6 +141,10 @@ export default function Stories() {
         /* spacing only; no background, no border */
         padding: 1.2rem 1.2rem;
         transition: background 0.15s ease;
+        @media (max-width: ${mobileMaxWidth}) {
+          padding-left: 0;
+          padding-right: 0;
+        }
       `,
     []
   );

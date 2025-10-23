@@ -413,9 +413,8 @@ export default function Details({
                 <Button
                   color={rewardColor}
                   style={{}}
-                  variant="soft"
+                  variant={isRecommendedByUser ? 'solid' : 'soft'}
                   tone="raised"
-                  filled={isRecommendedByUser}
                   disabled={recommendationInterfaceShown}
                   onClick={() => setRecommendationInterfaceShown(true)}
                 >

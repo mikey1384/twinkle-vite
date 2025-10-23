@@ -88,7 +88,7 @@ export default function OfferModal({
         </div>
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       </footer>

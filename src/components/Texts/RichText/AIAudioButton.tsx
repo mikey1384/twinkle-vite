@@ -49,9 +49,9 @@ function AIAudioButton({
 
   return (
     <>
-      <Button 
-        loading={preparing} 
-        variant="solid"
+      <Button
+        loading={preparing}
+        variant="soft"
         tone="raised"
         onClick={handleAudioClick}
         style={{
@@ -59,22 +59,20 @@ function AIAudioButton({
           lineHeight: 1
         }}
         color="darkerGray"
-        opacity={0.5}
       >
         <Icon icon={isPlaying ? 'stop' : isLoaded ? 'volume' : 'volume-mute'} />
       </Button>
       {isDownloadButtonShown && (
         <Button
-          style={{ 
+          style={{
             marginLeft: '0.5rem',
             padding: '0.5rem 0.7rem',
             lineHeight: 1
           }}
-          variant="solid"
+          variant="soft"
           tone="raised"
           onClick={handleDownloadClick}
           color="darkerGray"
-          opacity={0.5}
         >
           <Icon icon="download" />
         </Button>

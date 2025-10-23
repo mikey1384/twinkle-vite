@@ -29,9 +29,6 @@ interface ButtonProps {
   uppercase?: boolean; // defaults to true
   // Legacy (kept for compatibility with existing call sites)
   filled?: boolean;
-  opacity?: number;
-  skeuomorphic?: boolean;
-  transparent?: boolean;
   onHover?: boolean; // ignored
   // New optional tone for slight elevation without shadows everywhere
   tone?: 'flat' | 'raised';
@@ -58,11 +55,6 @@ export default function Button(props: ButtonProps) {
     shape = 'rounded',
     size = 'md',
     uppercase = true,
-    // Legacy
-    filled,
-    opacity,
-    skeuomorphic,
-    transparent,
     tone
   } = props;
 
@@ -77,16 +69,12 @@ export default function Button(props: ButtonProps) {
 
   // Resolve variant: 'solid' | 'soft' | 'outline' (ghost when transparent)
   const resolvedVariant: Variant = useMemo(() => {
-    if (transparent) return 'ghost';
-    if (filled || opacity) return 'solid';
-    if (skeuomorphic && !variant) return 'soft';
     return (variant || 'solid') as Variant;
-  }, [filled, opacity, skeuomorphic, transparent, variant]);
+  }, [variant]);
   const resolvedTone = useMemo(() => {
     if (tone) return tone;
-    if (skeuomorphic) return 'raised';
     return 'flat';
-  }, [skeuomorphic, tone]);
+  }, [tone]);
 
   const baseColorKey = color || 'black';
   const hoverColorKey = hoverColor || baseColorKey;
@@ -106,19 +94,12 @@ export default function Button(props: ButtonProps) {
 
   const cssClass = useMemo(() => {
     const v = resolvedVariant;
-    const hasLegacyOpacity =
-      typeof opacity === 'number' && !Number.isNaN(opacity);
-    const normalizedOpacity = hasLegacyOpacity
-      ? Math.min(1, Math.max(0, opacity as number))
-      : undefined;
 
     // Tokens per variant
-    const solidBg = baseIsTheme
-      ? 'var(--theme-bg)'
-      : tint(baseColorKey, normalizedOpacity ?? 1);
+    const solidBg = baseIsTheme ? 'var(--theme-bg)' : tint(baseColorKey, 1);
     const solidBorder = baseIsTheme
       ? 'var(--theme-border)'
-      : tint(baseColorKey, normalizedOpacity ?? 1);
+      : tint(baseColorKey, 1);
     const solidHoverBg = hoverIsTheme
       ? 'var(--theme-hover-bg)'
       : tint(hoverColorKey, 0.9);
@@ -238,7 +219,7 @@ export default function Button(props: ButtonProps) {
       border: 1px solid ${border};
       border-radius: ${radius};
       transition: background 0.18s ease, color 0.18s ease,
-        border-color 0.18s ease, box-shadow 0.18s ease, transform 0.06s ease;
+        border-color 0.18s ease, box-shadow 0.18s ease;
       ${stretch ? 'width: 100%;' : ''}
       ${isDisabled ? `opacity: ${disabledOpacity}; pointer-events: none;` : ''}
       ${skeuoBox}
@@ -250,12 +231,12 @@ export default function Button(props: ButtonProps) {
       }
 
       @media (hover: hover) and (pointer: fine) {
-      &:hover {
-        background: ${hoverBg};
-        border-color: ${hoverBorder};
-        ${v !== 'solid' ? `color: ${hoverTextColor};` : ''}
+        &:hover {
+          background: ${hoverBg};
+          border-color: ${hoverBorder};
+          ${v !== 'solid' ? `color: ${hoverTextColor};` : ''}
+        }
       }
-    }
 
       @media (max-width: ${mobileMaxWidth}) {
         font-size: ${size === 'lg' ? '1.5rem' : '1.3rem'};
@@ -281,8 +262,7 @@ export default function Button(props: ButtonProps) {
     disabledOpacity,
     size,
     mobilePadding,
-    mobileBorderRadius,
-    opacity
+    mobileBorderRadius
   ]);
 
   return (

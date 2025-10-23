@@ -85,7 +85,7 @@ export default function BookmarkModal({
             <Icon icon="comment-alt" />
             <span style={{ marginLeft: '1rem' }}>Reply</span>
           </Button>
-          <Button style={{ marginLeft: '0.7rem' }} transparent onClick={onHide}>
+          <Button style={{ marginLeft: '0.7rem' }} variant="ghost" onClick={onHide}>
             Close
           </Button>
         </div>

@@ -137,11 +137,10 @@ export default function StarButton({
         <Button
           style={otherStyles}
           variant={!!rewardLevel || byUser || filled ? 'solid' : 'soft'}
-          tone={!(!rewardLevel && !byUser && !filled) ? undefined : 'raised'}
+          tone="raised"
           color={
             !!rewardLevel && byUser ? 'gold' : byUser ? 'orange' : 'brownOrange'
           }
-          filled={!!rewardLevel || byUser || filled}
           onClick={onClick}
         >
           <Icon icon="star" />

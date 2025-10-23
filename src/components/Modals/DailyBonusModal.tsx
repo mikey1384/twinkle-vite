@@ -398,7 +398,7 @@ export default function DailyBonusModal({
         )}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       </footer>

@@ -107,7 +107,7 @@ function Comment({
     fallback: 'logoBlue'
   });
   const linkColorVar = `var(--role-link-color, ${linkRoleColor})`;
-  const { color: rewardColor } = useRoleColor('reward', {
+  const { colorKey: rewardColor } = useRoleColor('reward', {
     themeName,
     fallback: 'pink'
   });
@@ -519,7 +519,8 @@ function Comment({
                             likes={likes}
                           />
                           <Button
-                            transparent
+                            color="darkerGray"
+                            variant="ghost"
                             style={{ marginLeft: '1rem' }}
                             onClick={() => navigate(`/comments/${comment.id}`)}
                           >
@@ -533,23 +534,25 @@ function Comment({
                             </span>
                           </Button>
                           {userCanRewardThis && (
-                            <Button
-                              color={rewardColor}
-                              style={{ marginLeft: '0.7rem' }}
-                              onClick={() =>
-                                onSetXpRewardInterfaceShown({
-                                  contentId: commentId,
-                                  contentType: 'comment',
-                                  shown: true
-                                })
-                              }
-                              disabled={!!xpButtonDisabled}
-                            >
-                              <Icon icon="certificate" />
-                              <span style={{ marginLeft: '0.7rem' }}>
-                                {xpButtonDisabled || 'Reward'}
-                              </span>
-                            </Button>
+                        <Button
+                          color={rewardColor}
+                          style={{ marginLeft: '0.7rem' }}
+                          variant={xpButtonDisabled ? 'soft' : 'soft'}
+                          tone="raised"
+                          onClick={() =>
+                            onSetXpRewardInterfaceShown({
+                              contentId: commentId,
+                              contentType: 'comment',
+                              shown: true
+                            })
+                          }
+                          disabled={!!xpButtonDisabled}
+                        >
+                          <Icon icon="certificate" />
+                          <span style={{ marginLeft: '0.7rem' }}>
+                            {xpButtonDisabled || 'Reward'}
+                          </span>
+                        </Button>
                           )}
                         </div>
                         <Likers
@@ -563,7 +566,8 @@ function Comment({
                       <div>
                         <Button
                           color={rewardColor}
-                          filled={isRecommendedByUser}
+                          variant={isRecommendedByUser ? 'solid' : 'soft'}
+                          tone="raised"
                           disabled={recommendationInterfaceShown}
                           onClick={() => setRecommendationInterfaceShown(true)}
                         >

@@ -47,7 +47,7 @@ export default function PasswordInputModal({
         ) : null}
       </main>
       <footer>
-        <Button onClick={onHide} transparent>
+        <Button onClick={onHide} variant="ghost">
           Cancel
         </Button>
         <Button

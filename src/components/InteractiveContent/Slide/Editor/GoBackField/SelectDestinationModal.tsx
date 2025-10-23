@@ -60,7 +60,7 @@ export default function SelectDestinationModal({
         ))}
       </main>
       <footer>
-        <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
+        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button

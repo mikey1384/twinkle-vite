@@ -46,7 +46,7 @@ export default function InputModal({
         closeOnBackdropClick={false}
         modalLevel={0}
         footer={
-          <Button transparent onClick={handleClose}>
+          <Button variant="ghost" onClick={handleClose}>
             Close
           </Button>
         }

@@ -181,27 +181,7 @@ const callButtonClass = css`
     box-shadow: none;
   }
 
-  @media (max-width: ${mobileMaxWidth}) {
-    position: relative;
-    top: auto;
-    right: auto;
-    transform: none;
-    width: calc(100% - 2.8rem);
-    min-height: 4.6rem;
-    margin: 1.2rem auto 0;
-    padding: 1.3rem 1.6rem;
-    flex-direction: row;
-    gap: 1rem;
-    justify-content: center;
-
-    .call-button__label {
-      writing-mode: horizontal-tb;
-      text-orientation: mixed;
-      font-size: 1.4rem;
-      letter-spacing: 0.06em;
-      white-space: nowrap;
-    }
-  }
+  /* Mobile uses the same design as desktop */
 `;
 
 export default function CallZero({

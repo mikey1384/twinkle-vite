@@ -106,7 +106,7 @@ export default function SelectScreen({
         </div>
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           {cancelLabel}
         </Button>
       </footer>

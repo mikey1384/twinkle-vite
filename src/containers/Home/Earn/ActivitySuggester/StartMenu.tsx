@@ -58,7 +58,7 @@ export default function StartMenu() {
               onClick={() => onSetTopMenuSectionSection('recommend')}
               color="brownOrange"
               variant="soft"
-              tone="flat"
+              tone="raised"
               size="md"
               stretch
             >
@@ -69,7 +69,7 @@ export default function StartMenu() {
               onClick={() => onSetTopMenuSectionSection('reward')}
               color="pink"
               variant="soft"
-              tone="flat"
+              tone="raised"
               size="md"
               stretch
             >

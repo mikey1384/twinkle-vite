@@ -76,9 +76,8 @@ export default function RankBar({
     () =>
       css`
         margin-top: 0.8rem;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: auto 1fr;
         align-items: center;
         gap: 1.2rem;
         padding: 1.4rem 1.9rem;
@@ -93,10 +92,13 @@ export default function RankBar({
         box-shadow: none;
         color: ${baseTextColor};
         @media (max-width: ${mobileMaxWidth}) {
+          margin-top: 0;
           border-radius: 0;
           border-left: none;
           border-right: none;
           padding: 1.3rem 1.4rem;
+          grid-template-columns: auto 1fr;
+          align-items: center;
         }
       `,
     [baseTextColor, borderCss, isTopThree]
@@ -224,10 +226,11 @@ export default function RankBar({
         align-items: flex-end;
         gap: 0.35rem;
         text-align: right;
+        justify-self: end;
         @media (max-width: ${mobileMaxWidth}) {
-          align-items: flex-start;
-          text-align: left;
-          width: 100%;
+          align-items: flex-end;
+          text-align: right;
+          justify-self: end;
         }
         .xp-amount {
           font-size: 1.65rem;

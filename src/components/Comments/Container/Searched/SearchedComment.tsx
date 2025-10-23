@@ -590,7 +590,8 @@ export default function SearchedComment({
                             likes={likes}
                           />
                           <Button
-                            transparent
+                            color="darkerGray"
+                            variant="ghost"
                             style={{ marginLeft: '1rem' }}
                             onClick={() => navigate(`/comments/${comment.id}`)}
                           >
@@ -634,7 +635,8 @@ export default function SearchedComment({
                       <div>
                         <Button
                           color={rewardColor}
-                          filled={isRecommendedByUser}
+                          variant={isRecommendedByUser ? 'solid' : 'soft'}
+                          tone="raised"
                           disabled={recommendationInterfaceShown}
                           onClick={() => setRecommendationInterfaceShown(true)}
                         >

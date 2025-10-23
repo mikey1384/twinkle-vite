@@ -274,6 +274,9 @@ export default function ContentPanel({
       }
       @media (max-width: ${mobileMaxWidth}) {
         border-radius: 0;
+        border-left: none;
+        border-right: none;
+        width: 100%;
         .body {
           font-size: 1.75rem;
         }

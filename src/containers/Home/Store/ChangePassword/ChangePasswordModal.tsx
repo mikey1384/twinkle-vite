@@ -241,7 +241,7 @@ export default function ChangePasswordModal({
         </div>
       </main>
       <footer>
-        <Button onClick={onHide} transparent>
+        <Button onClick={onHide} variant="ghost">
           Close
         </Button>
         <Button

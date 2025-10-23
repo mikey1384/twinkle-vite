@@ -128,7 +128,11 @@ export default function ChatFilterBar({
             align-items: center;
             background: #fff;
             cursor: pointer;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+            border: 1px solid var(--ui-border);
+            box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
+            transition: background 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease,
+              transform 0.06s ease;
             ${selectedTab === 'all'
               ? `background-color: ${chatTopicColorVar};`
               : ''};
@@ -138,6 +142,8 @@ export default function ChatFilterBar({
             &:hover {
               color: ${chatTopicTextColorVar};
               background-color: ${chatTopicColorVar};
+              box-shadow: 0 16px 26px -18px rgba(15, 23, 42, 0.22);
+              transform: translateY(-1px);
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0;
@@ -162,7 +168,9 @@ export default function ChatFilterBar({
             display: flex;
             align-items: center;
             background: #fff;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+            border: 1px solid var(--ui-border);
+            box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
+            transition: box-shadow 0.18s ease, transform 0.06s ease;
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: ${innerBorderRadius};
             }
@@ -306,7 +314,11 @@ export default function ChatFilterBar({
             align-items: center;
             background: #fff;
             cursor: pointer;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+            border: 1px solid var(--ui-border);
+            box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
+            transition: background 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease,
+              transform 0.06s ease;
             ${isSearchActive ? `background-color: var(--chat-bg);` : ''};
             ${isSearchActive ? `color: var(--chat-text);` : ''};
             @media (max-width: ${mobileMaxWidth}) {

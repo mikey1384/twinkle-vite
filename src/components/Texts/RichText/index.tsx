@@ -401,7 +401,7 @@ function RichText({
           }}
         >
           <Button
-            variant="solid"
+            variant="soft"
             tone="raised"
             onClick={handleCopyMessage}
             style={{
@@ -409,7 +409,6 @@ function RichText({
               lineHeight: 1
             }}
             color="darkerGray"
-            opacity={0.5}
           >
             <Icon icon={copySuccess ? 'check' : 'copy'} />
           </Button>

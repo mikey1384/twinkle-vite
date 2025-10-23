@@ -57,7 +57,7 @@ export default function AttachContentModal({
       modalLevel={1}
       footer={
         <>
-          <Button transparent onClick={handleClose}>
+          <Button variant="ghost" onClick={handleClose}>
             {section === 'start' ? cancelLabel : backLabel}
           </Button>
           {section !== 'start' && (

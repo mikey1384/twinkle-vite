@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
+import { css } from '@emotion/css';
 
 export default function ColorFilter({
   selectedColor = 'any',
@@ -53,26 +54,38 @@ export default function ColorFilter({
   const buttonVariant = buttonColor === 'darkerGray' ? 'solid' : 'soft';
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
+    <div className={containerClass}>
       <div className="label">Color</div>
-      <div style={{ marginTop: '0.5rem' }}>
+      <div className={controlClass}>
         <DropdownButton
           variant={buttonVariant}
           tone="raised"
           color={buttonColor}
-          text={selectedColor}
+          text={capitalize(selectedColor)}
           onDropdownShown={onDropdownShown}
           menuProps={menuProps}
           icon="caret-down"
+          stretch
         />
       </div>
     </div>
   );
 }
+
+const containerClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+  }
+`;
+
+const controlClass = css`
+  width: 100%;
+  display: flex;
+  align-items: center;
+`;

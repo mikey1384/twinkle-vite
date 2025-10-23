@@ -152,7 +152,7 @@ export default function CategoryModal({
         </div>
       }
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }

@@ -262,7 +262,7 @@ function MicrophoneAccessModal({
             <span style={{ marginLeft: '0.7rem' }}>Enable Microphone</span>
           </Button>
         ) : null}
-        <Button style={{ marginLeft: '0.7rem' }} transparent onClick={onHide}>
+        <Button style={{ marginLeft: '0.7rem' }} variant="ghost" onClick={onHide}>
           {showManualInstructions ? 'Close' : 'Cancel'}
         </Button>
       </footer>

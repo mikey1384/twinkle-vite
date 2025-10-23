@@ -191,7 +191,7 @@ function Comment({
           </div>
           {editButtonShown && !isEditing && (
             <DropdownButton
-              variant="soft"
+              variant="solid"
               tone="raised"
               icon="chevron-down"
               menuProps={editMenuItems}

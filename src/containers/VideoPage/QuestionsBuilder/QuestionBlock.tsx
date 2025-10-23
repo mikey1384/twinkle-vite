@@ -239,7 +239,7 @@ export default function QuestionBlock({
           </Button>
         ) : (
           <div style={{ display: 'flex' }}>
-            <Button transparent onClick={() => handleEditCancel(questionId)}>
+            <Button variant="ghost" onClick={() => handleEditCancel(questionId)}>
               {cancelLabel}
             </Button>
             <Button

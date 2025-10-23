@@ -147,7 +147,7 @@ export default function ConfirmTransactionModal({
         />
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
           {cancelLabel}
         </Button>
         <Button loading={submitting} color={doneColor} onClick={handleConfirm}>

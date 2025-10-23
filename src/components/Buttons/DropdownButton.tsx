@@ -21,7 +21,6 @@ export default function DropdownButton({
   text = '',
   stretch,
   innerRef,
-  transparent,
   xAdjustment,
   ...props
 }: {
@@ -40,7 +39,6 @@ export default function DropdownButton({
   text?: string | React.ReactNode;
   stretch?: boolean;
   innerRef?: React.RefObject<any>;
-  transparent?: boolean;
   xAdjustment?: number;
   variant?: 'solid' | 'soft' | 'outline' | 'ghost';
   tone?: 'flat' | 'raised';
@@ -70,9 +68,7 @@ export default function DropdownButton({
         <Button
           {...props}
           color={color}
-          filled={!!dropdownContext && !transparent}
-          transparent={transparent}
-          variant={props.variant || 'soft'}
+          variant={props.variant || (!!dropdownContext ? 'solid' : 'soft')}
           tone={props.tone || 'raised'}
           className={`${className ? `${className} ` : ''}${css`
             &:hover {

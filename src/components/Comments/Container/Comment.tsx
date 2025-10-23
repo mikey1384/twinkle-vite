@@ -138,7 +138,7 @@ function Comment({
     fallback: 'logoBlue'
   });
   const linkColorVar = `var(--role-link-color, ${linkRoleColor})`;
-  const { color: rewardColor } = useRoleColor('reward', {
+  const { colorKey: rewardColor } = useRoleColor('reward', {
     themeName,
     fallback: 'pink'
   });
@@ -553,435 +553,444 @@ function Comment({
           className={commentContainer}
           ref={innerRef}
         >
-        {contentShown ? (
-          <div ref={PanelRef}>
-            {pinnedCommentId === comment.id && (
-              <div
-                className={css`
-                  line-height: 1;
-                  font-size: 1.3rem;
-                  font-weight: bold;
-                  color: ${Color.darkerGray()};
-                  margin-bottom: 0.2rem;
-                `}
-              >
-                <Icon icon={['fas', 'thumbtack']} />
-                <span
-                  className={css`
-                    margin-left: 0.7rem;
-                  `}
-                >
-                  {pinnedLabel}
-                </span>
-              </div>
-            )}
-            <div className="content-wrapper">
-              {(!isDeleteNotification ||
-                isCommentForASubjectWithSecretMessage) && (
+          {contentShown ? (
+            <div ref={PanelRef}>
+              {pinnedCommentId === comment.id && (
                 <div
                   className={css`
-                    display: flex;
-                    width: 7rem;
-                    margin-top: 1rem;
-                    justify-content: center;
+                    line-height: 1;
+                    font-size: 1.3rem;
+                    font-weight: bold;
+                    color: ${Color.darkerGray()};
+                    margin-bottom: 0.2rem;
                   `}
                 >
-                  <div
+                  <Icon icon={['fas', 'thumbtack']} />
+                  <span
                     className={css`
-                      width: 5rem;
+                      margin-left: 0.7rem;
                     `}
                   >
-                    <ProfilePic
-                      style={{ width: '100%' }}
-                      userId={uploader?.id}
-                      profilePicUrl={uploader?.profilePicUrl}
-                    />
-                  </div>
+                    {pinnedLabel}
+                  </span>
                 </div>
               )}
-              <section>
-                <div
-                  style={{
-                    height: innerContainerHeight
-                  }}
-                >
-                  {(!isDeleteNotification ||
-                    isCommentForASubjectWithSecretMessage) && (
-                    <UsernameText className="username" user={uploader} />
-                  )}{' '}
-                  {(!isDeleteNotification ||
-                    isCommentForASubjectWithSecretMessage) && (
-                    <small className="timestamp">
-                      <a
-                        className={css`
-                          &:hover {
-                            text-decoration: ${isNotification ||
-                            isDeleteNotification
-                              ? 'none'
-                              : 'underline'};
-                          }
-                        `}
-                        style={{
-                          cursor:
-                            isNotification || isDeleteNotification
-                              ? 'default'
-                              : 'pointer'
-                        }}
-                        onClick={() =>
-                          isNotification || isDeleteNotification
-                            ? null
-                            : navigate(`/comments/${comment.id}`)
-                        }
-                      >
-                        {timeSincePost}
-                      </a>
-                    </small>
-                  )}
-                </div>
-                <div style={{ width: '100%' }}>
-                  {comment.targetUserId &&
-                    !!comment.replyId &&
-                    comment.replyId !== parent.contentId && (
-                      <span
-                        className="to"
-                        style={{ color: linkColorVar }}
-                      >
-                        to:{' '}
-                        <UsernameText
-                          user={{
-                            username: comment.targetUserName,
-                            id: comment.targetUserId
-                          }}
-                        />
-                      </span>
-                    )}
-                  {isCommentForContentSubject && !isDeleteNotification && (
-                    <SubjectLink theme={theme} subject={subject} />
-                  )}
-                  {filePath &&
-                    !isDeleteNotification &&
-                    (userId ? (
-                      <div style={{ width: '100%', paddingTop: '2rem' }}>
-                        <ContentFileViewer
-                          theme={theme}
-                          contentId={comment.id}
-                          contentType="comment"
-                          fileName={fileName}
-                          filePath={filePath}
-                          fileSize={Number(fileSize)}
-                          thumbUrl={thumbUrl}
-                          videoHeight="100%"
-                          userIsUploader={userId === uploader?.id}
+              <div className="content-wrapper">
+                {(!isDeleteNotification ||
+                  isCommentForASubjectWithSecretMessage) && (
+                  <div
+                    className={css`
+                      display: flex;
+                      width: 7rem;
+                      margin-top: 1rem;
+                      justify-content: center;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        width: 5rem;
+                      `}
+                    >
+                      <ProfilePic
+                        style={{ width: '100%' }}
+                        userId={uploader?.id}
+                        profilePicUrl={uploader?.profilePicUrl}
+                      />
+                    </div>
+                  </div>
+                )}
+                <section>
+                  <div
+                    style={{
+                      height: innerContainerHeight
+                    }}
+                  >
+                    {(!isDeleteNotification ||
+                      isCommentForASubjectWithSecretMessage) && (
+                      <UsernameText className="username" user={uploader} />
+                    )}{' '}
+                    {(!isDeleteNotification ||
+                      isCommentForASubjectWithSecretMessage) && (
+                      <small className="timestamp">
+                        <a
+                          className={css`
+                            &:hover {
+                              text-decoration: ${isNotification ||
+                              isDeleteNotification
+                                ? 'none'
+                                : 'underline'};
+                            }
+                          `}
                           style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            marginBottom: commentIsEmpty
-                              ? fileType === 'audio'
-                                ? '2rem'
-                                : '1rem'
-                              : fileType === 'audio'
-                              ? '1rem'
-                              : 0
+                            cursor:
+                              isNotification || isDeleteNotification
+                                ? 'default'
+                                : 'pointer'
                           }}
-                        />
-                      </div>
-                    ) : (
-                      <LoginToViewContent />
-                    ))}
-                  {isEditing ? (
-                    <EditTextArea
-                      allowEmptyText={!!filePath}
-                      style={{ marginBottom: '1rem' }}
-                      contentType="comment"
-                      contentId={comment.id}
-                      text={comment.content}
-                      onCancel={() =>
-                        onSetIsEditing({
-                          contentId: comment.id,
-                          contentType: 'comment',
-                          isEditing: false
-                        })
-                      }
-                      onEditDone={handleEditDone}
-                    />
-                  ) : (
-                    <div style={{ width: '100%' }}>
-                      {isHidden ? (
-                        <SecretComment
-                          onClick={() => navigate(`/subjects/${subject?.id}`)}
-                        />
-                      ) : isNotification || isDeleteNotification ? (
-                        <div
-                          className={css`
-                            color: ${Color.gray()};
-                            font-weight: bold;
-                            margin: 1rem 0;
-                            border-radius: ${borderRadius};
-                            padding: 0.5rem 0;
-                          `}
+                          onClick={() =>
+                            isNotification || isDeleteNotification
+                              ? null
+                              : navigate(`/comments/${comment.id}`)
+                          }
                         >
-                          {isNotification
-                            ? viewedTheSecretMessageLabel
-                            : commentWasDeletedLabel}
+                          {timeSincePost}
+                        </a>
+                      </small>
+                    )}
+                  </div>
+                  <div style={{ width: '100%' }}>
+                    {comment.targetUserId &&
+                      !!comment.replyId &&
+                      comment.replyId !== parent.contentId && (
+                        <span className="to" style={{ color: linkColorVar }}>
+                          to:{' '}
+                          <UsernameText
+                            user={{
+                              username: comment.targetUserName,
+                              id: comment.targetUserId
+                            }}
+                          />
+                        </span>
+                      )}
+                    {isCommentForContentSubject && !isDeleteNotification && (
+                      <SubjectLink theme={theme} subject={subject} />
+                    )}
+                    {filePath &&
+                      !isDeleteNotification &&
+                      (userId ? (
+                        <div style={{ width: '100%', paddingTop: '2rem' }}>
+                          <ContentFileViewer
+                            theme={theme}
+                            contentId={comment.id}
+                            contentType="comment"
+                            fileName={fileName}
+                            filePath={filePath}
+                            fileSize={Number(fileSize)}
+                            thumbUrl={thumbUrl}
+                            videoHeight="100%"
+                            userIsUploader={userId === uploader?.id}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                              marginBottom: commentIsEmpty
+                                ? fileType === 'audio'
+                                  ? '2rem'
+                                  : '1rem'
+                                : fileType === 'audio'
+                                ? '1rem'
+                                : 0
+                            }}
+                          />
                         </div>
-                      ) : !commentIsEmpty ? (
-                        <RichText
-                          isAIMessage={
-                            uploader?.id === Number(ZERO_TWINKLE_ID) ||
-                            uploader?.id === Number(CIEL_TWINKLE_ID)
-                          }
-                          voice={
-                            uploader?.id === Number(CIEL_TWINKLE_ID)
-                              ? 'nova'
-                              : ''
-                          }
-                          theme={theme}
-                          contentId={commentId}
-                          contentType="comment"
-                          section="comment"
-                          maxLines={maxLines}
-                          className="comment__content"
-                          isPreview={isPreview}
-                        >
-                          {(comment.content || '').trimEnd()}
-                        </RichText>
-                      ) : null}
-                      <div style={{ height: '1em' }} />
-                      {!isPreview && !isHidden && !isNotification && (
-                        <div
-                          className={css`
-                            display: flex;
-                            justify-content: space-between;
-                          `}
-                        >
-                          <div>
-                            <div className="comment__buttons">
+                      ) : (
+                        <LoginToViewContent />
+                      ))}
+                    {isEditing ? (
+                      <EditTextArea
+                        allowEmptyText={!!filePath}
+                        style={{ marginBottom: '1rem' }}
+                        contentType="comment"
+                        contentId={comment.id}
+                        text={comment.content}
+                        onCancel={() =>
+                          onSetIsEditing({
+                            contentId: comment.id,
+                            contentType: 'comment',
+                            isEditing: false
+                          })
+                        }
+                        onEditDone={handleEditDone}
+                      />
+                    ) : (
+                      <div style={{ width: '100%' }}>
+                        {isHidden ? (
+                          <SecretComment
+                            onClick={() => navigate(`/subjects/${subject?.id}`)}
+                          />
+                        ) : isNotification || isDeleteNotification ? (
+                          <div
+                            className={css`
+                              color: ${Color.gray()};
+                              font-weight: bold;
+                              margin: 1rem 0;
+                              border-radius: ${borderRadius};
+                              padding: 0.5rem 0;
+                            `}
+                          >
+                            {isNotification
+                              ? viewedTheSecretMessageLabel
+                              : commentWasDeletedLabel}
+                          </div>
+                        ) : !commentIsEmpty ? (
+                          <RichText
+                            isAIMessage={
+                              uploader?.id === Number(ZERO_TWINKLE_ID) ||
+                              uploader?.id === Number(CIEL_TWINKLE_ID)
+                            }
+                            voice={
+                              uploader?.id === Number(CIEL_TWINKLE_ID)
+                                ? 'nova'
+                                : ''
+                            }
+                            theme={theme}
+                            contentId={commentId}
+                            contentType="comment"
+                            section="comment"
+                            maxLines={maxLines}
+                            className="comment__content"
+                            isPreview={isPreview}
+                          >
+                            {(comment.content || '').trimEnd()}
+                          </RichText>
+                        ) : null}
+                        <div style={{ height: '1em' }} />
+                        {!isPreview && !isHidden && !isNotification && (
+                          <div
+                            className={css`
+                              display: flex;
+                              justify-content: space-between;
+                            `}
+                          >
+                            <div>
+                              <div className="comment__buttons">
+                                {isDeleteNotification ? null : (
+                                  <LikeButton
+                                    contentType="comment"
+                                    contentId={comment.id}
+                                    onClick={handleLikeClick}
+                                    likes={likes}
+                                    theme={theme}
+                                  />
+                                )}
+                                {isDeleteNotification &&
+                                (numReplies === 0 || replies.length > 0) ? (
+                                  <div
+                                    className={css`
+                                      height: 1rem;
+                                    `}
+                                  />
+                                ) : (
+                                  <Button
+                                    color="darkerGray"
+                                    disabled={loadingReplies}
+                                    variant="ghost"
+                                    style={{
+                                      marginLeft: isDeleteNotification ? 0 : '1rem'
+                                    }}
+                                    onClick={handleReplyButtonClick}
+                                  >
+                                    <Icon icon="comment-alt" />
+                                    <span style={{ marginLeft: '1rem' }}>
+                                      {numReplies > 1 &&
+                                      parent.contentType === 'comment'
+                                        ? repliesLabel
+                                        : replyLabel}
+                                      {loadingReplies ? (
+                                        <Icon
+                                          style={{ marginLeft: '0.7rem' }}
+                                          icon="spinner"
+                                          pulse
+                                        />
+                                      ) : numReplies > 0 &&
+                                        parent.contentType === 'comment' ? (
+                                        ` (${numReplies})`
+                                      ) : (
+                                        ''
+                                      )}
+                                    </span>
+                                  </Button>
+                                )}
+                                {userCanRewardThis && !isDeleteNotification && (
+                                  <RewardButton
+                                    contentId={commentId}
+                                    contentType="comment"
+                                    disableReason={xpButtonDisabled}
+                                    style={{ marginLeft: '0.7rem' }}
+                                    theme={theme}
+                                  />
+                                )}
+                              </div>
                               {isDeleteNotification ? null : (
-                                <LikeButton
-                                  contentType="comment"
-                                  contentId={comment.id}
-                                  onClick={handleLikeClick}
+                                <Likers
+                                  theme={theme}
+                                  className="comment__likes"
+                                  userId={userId}
                                   likes={likes}
-                                  theme={theme}
-                                />
-                              )}
-                              {isDeleteNotification &&
-                              (numReplies === 0 || replies.length > 0) ? (
-                                <div
-                                  className={css`
-                                    height: 1rem;
-                                  `}
-                                />
-                              ) : (
-                                <Button
-                                  disabled={loadingReplies}
-                                  transparent
-                                  style={{
-                                    marginLeft: isDeleteNotification
-                                      ? 0
-                                      : '1rem'
-                                  }}
-                                  onClick={handleReplyButtonClick}
-                                >
-                                  <Icon icon="comment-alt" />
-                                  <span style={{ marginLeft: '1rem' }}>
-                                    {numReplies > 1 &&
-                                    parent.contentType === 'comment'
-                                      ? repliesLabel
-                                      : replyLabel}
-                                    {loadingReplies ? (
-                                      <Icon
-                                        style={{ marginLeft: '0.7rem' }}
-                                        icon="spinner"
-                                        pulse
-                                      />
-                                    ) : numReplies > 0 &&
-                                      parent.contentType === 'comment' ? (
-                                      ` (${numReplies})`
-                                    ) : (
-                                      ''
-                                    )}
-                                  </span>
-                                </Button>
-                              )}
-                              {userCanRewardThis && !isDeleteNotification && (
-                                <RewardButton
-                                  contentId={commentId}
-                                  contentType="comment"
-                                  disableReason={xpButtonDisabled}
-                                  style={{ marginLeft: '0.7rem' }}
-                                  theme={theme}
+                                  onLinkClick={() =>
+                                    setUserListModalShown(true)
+                                  }
                                 />
                               )}
                             </div>
                             {isDeleteNotification ? null : (
-                              <Likers
-                                theme={theme}
-                                className="comment__likes"
-                                userId={userId}
-                                likes={likes}
-                                onLinkClick={() => setUserListModalShown(true)}
-                              />
+                              <div
+                                className={css`
+                                  display: flex;
+                                  justify-content: center;
+                                  align-items: center;
+                                `}
+                              >
+                                <Button
+                                  color={rewardColor}
+                                  variant={
+                                    isRecommendedByUser ? 'solid' : 'soft'
+                                  }
+                                  tone="raised"
+                                  disabled={recommendationInterfaceShown}
+                                  onClick={() =>
+                                    setRecommendationInterfaceShown(true)
+                                  }
+                                >
+                                  <Icon icon="heart" />
+                                </Button>
+                                {!!userId && !commentIsEmpty && (
+                                  <ZeroButton
+                                    contentId={commentId}
+                                    contentType="comment"
+                                    content={comment.content}
+                                    style={{ marginLeft: '1rem' }}
+                                  />
+                                )}
+                              </div>
                             )}
                           </div>
-                          {isDeleteNotification ? null : (
-                            <div
-                              className={css`
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                              `}
-                            >
-                              <Button
-                                color={rewardColor}
-                                filled={isRecommendedByUser}
-                                disabled={recommendationInterfaceShown}
-                                onClick={() =>
-                                  setRecommendationInterfaceShown(true)
-                                }
-                              >
-                                <Icon icon="heart" />
-                              </Button>
-                              {!!userId && !commentIsEmpty && (
-                                <ZeroButton
-                                  contentId={commentId}
-                                  contentType="comment"
-                                  content={comment.content}
-                                  style={{ marginLeft: '1rem' }}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {!isPreview && !isDeleteNotification && (
-                  <RecommendationStatus
-                    style={{ marginTop: likes.length > 0 ? '0.5rem' : '1rem' }}
-                    contentType="comment"
-                    recommendations={recommendations}
-                    theme={theme}
-                  />
-                )}
-                {!isPreview && recommendationInterfaceShown && (
-                  <RecommendationInterface
-                    style={{ marginTop: likes.length > 0 ? '0.5rem' : '1rem' }}
-                    contentId={commentId}
-                    contentType="comment"
-                    onHide={() => setRecommendationInterfaceShown(false)}
-                    recommendations={recommendations}
-                    content={comment.content}
-                    rewardLevel={rewardLevel}
-                    theme={theme}
-                    uploaderId={uploader?.id}
-                  />
-                )}
-                {!isPreview && xpRewardInterfaceShown && (
-                  <XPRewardInterface
-                    innerRef={RewardInterfaceRef}
-                    rewardLevel={rewardLevel}
-                    rewards={rewards}
-                    contentType="comment"
-                    contentId={comment.id}
-                    onReward={() =>
-                      setRecommendationInterfaceShown(
-                        !isRecommendedByUser && twinkleCoins > 0
-                      )
-                    }
-                    uploaderLevel={uploader?.level}
-                    uploaderId={uploader?.id}
-                  />
-                )}
-                {!isPreview && !isDeleteNotification && (
-                  <RewardStatus
-                    contentType="comment"
-                    contentId={comment.id}
-                    rewardLevel={rewardLevel}
-                    noMarginForEditButton
-                    onCommentEdit={onRewardCommentEdit}
-                    style={{
-                      fontSize: '1.5rem',
-                      marginTop: likes?.length > 0 ? '0.5rem' : '1rem'
-                    }}
-                    theme={theme}
-                    rewards={rewards}
-                  />
-                )}
-                {!isPreview && !isNotification && !isHidden && (
-                  <div style={{ position: 'relative' }}>
-                    {isDeleteNotification ? null : (
-                      <ReplyInputArea
-                        disableReason={disableReason}
-                        innerRef={ReplyInputAreaRef}
-                        onSubmit={handleSubmitReply}
-                        onSubmitWithAttachment={handleSubmitWithAttachment}
-                        parent={parent}
-                        rootCommentId={comment.commentId}
-                        style={{
-                          marginTop: '0.5rem'
-                        }}
-                        theme={theme}
-                        targetCommentPoster={uploader}
-                        targetCommentId={comment.id}
-                      />
+                        )}
+                      </div>
                     )}
-                    {isPostingReply && (
-                      <Loading
-                        style={{ position: 'absolute', top: '7rem', height: 0 }}
-                      />
-                    )}
-                    <Replies
-                      disableReason={disableReason}
-                      isSubjectPannelComment={isSubjectPannelComment}
-                      pinnedCommentId={pinnedCommentId}
-                      subject={subject || {}}
-                      replies={replies}
-                      comment={comment}
-                      parent={parent}
-                      rootContent={rootContent}
-                      onPinReply={handlePinComment}
-                      ReplyRefs={ReplyRefs}
+                  </div>
+                  {!isPreview && !isDeleteNotification && (
+                    <RecommendationStatus
+                      style={{
+                        marginTop: likes.length > 0 ? '0.5rem' : '1rem'
+                      }}
+                      contentType="comment"
+                      recommendations={recommendations}
                       theme={theme}
                     />
-                  </div>
-                )}
-              </section>
+                  )}
+                  {!isPreview && recommendationInterfaceShown && (
+                    <RecommendationInterface
+                      style={{
+                        marginTop: likes.length > 0 ? '0.5rem' : '1rem'
+                      }}
+                      contentId={commentId}
+                      contentType="comment"
+                      onHide={() => setRecommendationInterfaceShown(false)}
+                      recommendations={recommendations}
+                      content={comment.content}
+                      rewardLevel={rewardLevel}
+                      theme={theme}
+                      uploaderId={uploader?.id}
+                    />
+                  )}
+                  {!isPreview && xpRewardInterfaceShown && (
+                    <XPRewardInterface
+                      innerRef={RewardInterfaceRef}
+                      rewardLevel={rewardLevel}
+                      rewards={rewards}
+                      contentType="comment"
+                      contentId={comment.id}
+                      onReward={() =>
+                        setRecommendationInterfaceShown(
+                          !isRecommendedByUser && twinkleCoins > 0
+                        )
+                      }
+                      uploaderLevel={uploader?.level}
+                      uploaderId={uploader?.id}
+                    />
+                  )}
+                  {!isPreview && !isDeleteNotification && (
+                    <RewardStatus
+                      contentType="comment"
+                      contentId={comment.id}
+                      rewardLevel={rewardLevel}
+                      noMarginForEditButton
+                      onCommentEdit={onRewardCommentEdit}
+                      style={{
+                        fontSize: '1.5rem',
+                        marginTop: likes?.length > 0 ? '0.5rem' : '1rem'
+                      }}
+                      theme={theme}
+                      rewards={rewards}
+                    />
+                  )}
+                  {!isPreview && !isNotification && !isHidden && (
+                    <div style={{ position: 'relative' }}>
+                      {isDeleteNotification ? null : (
+                        <ReplyInputArea
+                          disableReason={disableReason}
+                          innerRef={ReplyInputAreaRef}
+                          onSubmit={handleSubmitReply}
+                          onSubmitWithAttachment={handleSubmitWithAttachment}
+                          parent={parent}
+                          rootCommentId={comment.commentId}
+                          style={{
+                            marginTop: '0.5rem'
+                          }}
+                          theme={theme}
+                          targetCommentPoster={uploader}
+                          targetCommentId={comment.id}
+                        />
+                      )}
+                      {isPostingReply && (
+                        <Loading
+                          style={{
+                            position: 'absolute',
+                            top: '7rem',
+                            height: 0
+                          }}
+                        />
+                      )}
+                      <Replies
+                        disableReason={disableReason}
+                        isSubjectPannelComment={isSubjectPannelComment}
+                        pinnedCommentId={pinnedCommentId}
+                        subject={subject || {}}
+                        replies={replies}
+                        comment={comment}
+                        parent={parent}
+                        rootContent={rootContent}
+                        onPinReply={handlePinComment}
+                        ReplyRefs={ReplyRefs}
+                        theme={theme}
+                      />
+                    </div>
+                  )}
+                </section>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div style={{ width: '100%', height: commentHeight }} />
-        )}
-        {userListModalShown && (
-          <UserListModal
-            onHide={() => setUserListModalShown(false)}
-            title={peopleWhoLikeThisCommentLabel}
-            users={likes}
+          ) : (
+            <div style={{ width: '100%', height: commentHeight }} />
+          )}
+          {userListModalShown && (
+            <UserListModal
+              onHide={() => setUserListModalShown(false)}
+              title={peopleWhoLikeThisCommentLabel}
+              users={likes}
+            />
+          )}
+          {dropdownButtonShown && !isEditing && (
+            <div className="dropdown-wrapper">
+              <DropdownButton
+                variant="solid"
+                tone="raised"
+                icon="chevron-down"
+                color="darkerGray"
+                menuProps={dropdownMenuItems}
+              />
+            </div>
+          )}
+        </div>
+        {confirmModalShown && (
+          <ConfirmModal
+            onHide={() => setConfirmModalShown(false)}
+            title={removeCommentLabel}
+            onConfirm={async () => {
+              await onDelete(comment.id);
+              setConfirmModalShown(false);
+            }}
           />
         )}
-        {dropdownButtonShown && !isEditing && (
-          <div className="dropdown-wrapper">
-            <DropdownButton
-              variant="solid"
-              tone="raised"
-              icon="chevron-down"
-              color="darkerGray"
-              menuProps={dropdownMenuItems}
-            />
-          </div>
-        )}
-        </div>
-      {confirmModalShown && (
-        <ConfirmModal
-          onHide={() => setConfirmModalShown(false)}
-          title={removeCommentLabel}
-          onConfirm={async () => {
-            await onDelete(comment.id);
-            setConfirmModalShown(false);
-          }}
-        />
-      )}
       </div>
     </ScopedTheme>
   ) : null;

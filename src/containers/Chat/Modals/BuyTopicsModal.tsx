@@ -49,7 +49,7 @@ export default function BuyTopicsModal({
       title={`Purchase "Topics" Feature`}
       size="md"
       footer={
-        <Button transparent onClick={handleClose}>
+        <Button variant="ghost" onClick={handleClose}>
           Close
         </Button>
       }

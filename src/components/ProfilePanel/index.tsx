@@ -163,6 +163,16 @@ const messageButtonClass = css`
   }
 `;
 
+const rankBarWrapperClass = css`
+  margin-top: -1.6rem;
+  width: 100%;
+  position: relative;
+  z-index: 0;
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-top: 0;
+  }
+`;
+
 const panelContainerClass = css`
   ${themedCardBase};
   width: 100%;
@@ -227,6 +237,10 @@ const leftColumnClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     flex: 1 1 100%;
     max-width: unset;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
   }
 `;
 
@@ -237,6 +251,14 @@ const quickLinksClass = css`
   width: 100%;
   align-items: center;
   font-weight: 600;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: auto;
+    align-items: flex-end;
+    gap: 0.6rem;
+    grid-column: 3;
+    justify-self: end;
+    text-align: right;
+  }
 `;
 
 const quickLinkClass = css`
@@ -272,7 +294,6 @@ const quickLinkClass = css`
         --quick-link-shadow-hover,
         0 12px 24px -16px rgba(15, 23, 42, 0.32)
       );
-      transform: translateY(-2px);
       filter: brightness(1.03);
       svg {
         color: var(--quick-link-icon-color-hover, currentColor);
@@ -292,6 +313,15 @@ const detailsColumnClass = css`
   flex-direction: column;
   gap: 1.2rem;
   position: relative;
+`;
+
+const profilePicWrapperClass = css`
+  width: 100%;
+  @media (max-width: ${mobileMaxWidth}) {
+    width: auto;
+    grid-column: 2;
+    justify-self: center;
+  }
 `;
 
 const actionsContainerClass = css`
@@ -542,10 +572,7 @@ function ProfilePanel({
                     <>
                       <div className={profileContentClass}>
                         <div className={leftColumnClass}>
-                          <div
-                            className="unselectable"
-                            style={{ width: '100%' }}
-                          >
+                          <div className={`unselectable ${profilePicWrapperClass}`}>
                             <Link
                               onClick={handleReloadProfile}
                               to={`/users/${profileName}`}
@@ -959,14 +986,7 @@ function ProfilePanel({
               )}
             </ScopedTheme>
             {!!twinkleXP && profileLoaded && (
-              <div
-                style={{
-                  marginTop: '-1.6rem',
-                  width: '100%',
-                  position: 'relative',
-                  zIndex: 0
-                }}
-              >
+              <div className={rankBarWrapperClass}>
                 <ScopedTheme theme={themeName as any}>
                   <RankBar profile={profile} />
                 </ScopedTheme>

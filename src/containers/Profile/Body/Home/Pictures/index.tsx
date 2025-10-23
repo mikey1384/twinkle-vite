@@ -62,7 +62,7 @@ export default function Pictures({
     if (userId !== profileId || !pictures) return null;
     return deleteMode || reorderMode ? (
       <div style={{ display: 'flex' }}>
-        <Button color="vantaBlack" transparent onClick={handleCancel}>
+        <Button color="vantaBlack" variant="ghost" onClick={handleCancel}>
           Cancel
         </Button>
         <Button

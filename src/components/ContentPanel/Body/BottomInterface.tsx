@@ -9,7 +9,7 @@ import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineXpButtonDisabled,
@@ -335,7 +335,6 @@ export default function BottomInterface({
             )}
             {!secretHidden && (
               <Button
-                transparent
                 key="commentButton"
                 className={css`
                   margin-left: 1rem;
@@ -343,6 +342,7 @@ export default function BottomInterface({
                     margin-left: 0.5rem;
                   }
                 `}
+                variant="ghost"
                 onClick={handleCommentButtonClick}
               >
                 <Icon icon="comment-alt" />
@@ -391,12 +391,12 @@ export default function BottomInterface({
                 style={{ position: 'relative' }}
               >
                 <Button
-                  transparent
                   onClick={() => {
                     setCopiedShown(true);
                     handleCopyToClipboard();
                     setTimeout(() => setCopiedShown(false), 700);
                   }}
+                  variant="ghost"
                 >
                   <Icon icon="copy" />
                 </Button>
@@ -419,7 +419,9 @@ export default function BottomInterface({
             )}
             {editButtonShown ? (
               <DropdownButton
-                transparent
+                variant="solid"
+                tone="raised"
+                color="darkerGray"
                 style={{
                   marginLeft: secretHidden ? 0 : '1rem',
                   display: 'inline-block'
@@ -438,7 +440,8 @@ export default function BottomInterface({
           >
             <Button
               color={rewardColor}
-              filled={isRecommendedByUser}
+              variant={isRecommendedByUser ? 'solid' : 'soft'}
+              tone="raised"
               disabled={recommendationInterfaceShown}
               onClick={() => onSetRecommendationInterfaceShown(true)}
             >

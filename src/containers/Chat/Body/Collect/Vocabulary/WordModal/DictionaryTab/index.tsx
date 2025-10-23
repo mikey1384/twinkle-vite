@@ -67,7 +67,7 @@ export default function DictionaryTab({
         </div>
       </main>
       <footer>
-        <Button transparent onClick={handleClose}>
+        <Button variant="ghost" onClick={handleClose}>
           Close
         </Button>
       </footer>

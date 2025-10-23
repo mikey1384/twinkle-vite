@@ -200,7 +200,7 @@ export default function AwardUserAchievementModal({
           )}
         </main>
         <footer>
-          <Button onClick={onHide} transparent>
+          <Button onClick={onHide} variant="ghost">
             Close
           </Button>
           <Button

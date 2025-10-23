@@ -127,7 +127,7 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
         )}
       </main>
       <footer>
-        <Button onClick={onHide} transparent style={{ marginRight: '0.7rem' }}>
+        <Button onClick={onHide} variant="ghost" style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button

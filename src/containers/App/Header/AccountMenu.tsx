@@ -119,7 +119,7 @@ export default function AccountMenu({
       {userId ? (
         <DropdownButton
           className={className}
-          transparent
+          variant="ghost"
           tone="flat"
           xAdjustment={-30}
           listStyle={{

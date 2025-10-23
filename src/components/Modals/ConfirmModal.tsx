@@ -61,14 +61,14 @@ export default function ConfirmModal({
             >
               {confirmButtonLabel}
             </Button>
-            <Button transparent onClick={onHide}>
+            <Button variant="ghost" onClick={onHide}>
               {cancelLabel}
             </Button>
           </>
         ) : (
           <>
             <Button
-              transparent
+              variant="ghost"
               style={{ marginRight: '0.7rem' }}
               onClick={onHide}
             >

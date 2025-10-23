@@ -38,7 +38,7 @@ export default function MoreAICardsModal({
         </div>
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Close
         </Button>
       </footer>

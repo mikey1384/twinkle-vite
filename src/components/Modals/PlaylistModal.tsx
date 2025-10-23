@@ -28,7 +28,7 @@ export default function PlaylistModal({
           <Playlist onLinkClick={onLinkClick} playlistId={playlistId} />
         </main>
         <footer>
-          <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
             Close
           </Button>
         </footer>

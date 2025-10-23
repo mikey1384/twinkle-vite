@@ -59,12 +59,11 @@ export default function GrammarManager({
           </nav>
         </FilterBar>
         <SideMenu
-          className={css`
-            left: 0;
-            @media (max-width: ${mobileMaxWidth}) {
-              display: none;
-            }
-          `}
+          variant="card"
+          placement="left"
+          positionMode="fixed"
+          topOffset="CALC(50vh - 8rem)"
+          leftOffset="2rem"
         >
           <nav
             className={activeTab !== 'categories' ? 'active' : ''}
@@ -74,6 +73,14 @@ export default function GrammarManager({
                 newState: { managementTab: 'pending' }
               })
             }
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              width: '100%'
+            }}
           >
             <Icon icon="bolt" />
             <span style={{ marginLeft: '1.1rem' }}>Questions</span>
@@ -86,6 +93,14 @@ export default function GrammarManager({
                 newState: { managementTab: 'categories' }
               })
             }
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              width: '100%'
+            }}
           >
             <Icon icon="list" />
             <span style={{ marginLeft: '1.1rem' }}>Categories</span>
@@ -93,7 +108,7 @@ export default function GrammarManager({
         </SideMenu>
         <div
           className={css`
-            width: CALC(100% - 20rem);
+            width: CALC(100% - 21rem);
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
             }

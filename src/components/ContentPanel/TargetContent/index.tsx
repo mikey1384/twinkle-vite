@@ -535,7 +535,8 @@ export default function TargetContent({
                     >
                       <Button
                         color={rewardColor}
-                        filled={isRecommendedByUser}
+                        variant={isRecommendedByUser ? 'solid' : 'soft'}
+                        tone="raised"
                         disabled={recommendationInterfaceShown}
                         onClick={() => setRecommendationInterfaceShown(true)}
                       >

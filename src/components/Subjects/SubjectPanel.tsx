@@ -426,6 +426,7 @@ export default function SubjectPanel({
                 <Button
                   color={rewardColor}
                   style={{ fontSize: '2rem', marginLeft: '1rem' }}
+                  variant="soft"
                   tone="raised"
                   filled={isRecommendedByUser}
                   disabled={recommendationInterfaceShown}

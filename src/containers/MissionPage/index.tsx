@@ -150,8 +150,10 @@ export default function MissionPage() {
         <div
           className={css`
             padding-top: 1rem;
+            padding-right: ${isAdmin ? '23rem' : 0};
             @media (max-width: ${mobileMaxWidth}) {
               padding-top: ${isAdmin ? '0.5rem' : 0};
+              padding-right: 0;
             }
           `}
           style={{
@@ -205,14 +207,7 @@ export default function MissionPage() {
             </Routes>
           </div>
           {isAdmin && (
-            <RightMenu
-              className="desktop"
-              missionType={missionType}
-              style={{
-                width: '25rem',
-                marginTop: '3rem'
-              }}
-            />
+            <RightMenu className="desktop" missionType={missionType} />
           )}
         </div>
       </ErrorBoundary>

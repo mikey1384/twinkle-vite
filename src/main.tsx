@@ -184,6 +184,8 @@ import { faYoutube } from '@fortawesome/free-brands-svg-icons/faYoutube';
 import { AppContextProvider } from './contexts';
 import { RootThemeProvider } from './theme/RootThemeProvider';
 import App from './containers/App';
+import { applyThemeVars, type ThemeName } from './theme';
+import { DEFAULT_PROFILE_THEME } from './constants/defaultValues';
 import { install } from 'resize-observer';
 
 if (!window.ResizeObserver) install();
@@ -375,6 +377,14 @@ library.add(
 );
 
 (async () => {
+  // Apply theme variables ASAP to avoid initial blue flash before React mounts
+  try {
+    const storedTheme = (localStorage.getItem('profileTheme') ||
+      DEFAULT_PROFILE_THEME) as ThemeName;
+    applyThemeVars(storedTheme);
+  } catch (err) {
+    // ignore
+  }
   await loadPolyfills();
 
   const rootElement = document.getElementById('react-view');

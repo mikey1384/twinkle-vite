@@ -506,7 +506,7 @@ export default function Omok({
                   <Icon icon="check" />
                   <span style={{ marginLeft: '0.5rem' }}>Confirm move</span>
                 </Button>
-                <Button transparent onClick={handleCancelMove}>
+                <Button variant="ghost" onClick={handleCancelMove}>
                   <Icon icon="undo" />
                   <span style={{ marginLeft: '0.5rem' }}>Cancel</span>
                 </Button>

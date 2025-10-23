@@ -22,7 +22,7 @@ export default function ResultModal({
         {perfect && <p>Perfect :)</p>}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       </footer>

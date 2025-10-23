@@ -65,7 +65,7 @@ export default function SelectVideoModal({
       size="lg"
       footer={
         <>
-          <Button transparent onClick={onHide}>
+          <Button variant="ghost" onClick={onHide}>
             Cancel
           </Button>
           <Button
