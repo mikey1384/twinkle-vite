@@ -231,7 +231,9 @@ export default function RootContent({
   title,
   topic,
   uploader,
-  userId
+  userId,
+  itemSelectedColor,
+  itemSelectedOpacity
 }: {
   actualTitle?: string;
   actualDescription?: string;
@@ -263,6 +265,8 @@ export default function RootContent({
   topic?: string;
   uploader: { id: number; username: string };
   userId?: number;
+  itemSelectedColor?: string;
+  itemSelectedOpacity?: number;
 }) {
   const { themeName } = useThemeTokens();
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
@@ -271,9 +275,30 @@ export default function RootContent({
     fallback: 'logoBlue'
   });
 
-  const hoverBg = getFilterColor(0.1) || Color.logoBlue(0.1);
   const activeBg = getFilterColor(0.18) || Color.logoBlue(0.18);
   // Use global UI border vars for consistency with ContentPanel
+
+  const selectedBg = useMemo(() => {
+    if (!itemSelectedColor) return activeBg;
+    const colorFn = (Color as any)[itemSelectedColor];
+    if (typeof colorFn === 'function') {
+      return colorFn(itemSelectedOpacity ?? 0.18);
+    }
+    return itemSelectedColor;
+  }, [activeBg, itemSelectedColor, itemSelectedOpacity]);
+
+  const selectedBorder = useMemo(() => {
+    if (!itemSelectedColor) return 'var(--ui-border-strong)';
+    const colorFn = (Color as any)[itemSelectedColor];
+    if (typeof colorFn === 'function') {
+      const borderOpacity =
+        itemSelectedOpacity !== undefined
+          ? Math.min(1, itemSelectedOpacity + 0.1)
+          : 0.32;
+      return colorFn(borderOpacity);
+    }
+    return itemSelectedColor;
+  }, [itemSelectedColor, itemSelectedOpacity]);
 
   const cardThemeCSS = css`
     border-radius: ${wideBorderRadius};
@@ -286,8 +311,8 @@ export default function RootContent({
       }
     }
     &.selected {
-      border-color: var(--ui-border-strong);
-      background: ${activeBg};
+      border-color: ${selectedBorder};
+      background: ${selectedBg};
     }
   `;
 

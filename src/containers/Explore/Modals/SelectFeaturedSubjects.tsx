@@ -204,14 +204,18 @@ export default function SelectFeaturedSubjectsModal({
         {!searching && displayedLoadMoreButton && selectTabActive && (
           <LoadMoreButton
             style={{ fontSize: '2rem' }}
-            transparent
+            variant="ghost"
             loading={loadingMore}
             onClick={handleLoadMore}
           />
         )}
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button

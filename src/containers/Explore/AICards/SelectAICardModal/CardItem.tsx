@@ -18,7 +18,7 @@ export default function CardItem({
   isBuy: boolean;
   onSetAICardModalCardId: (v: any) => void;
   onDeselect: () => void;
-  onSelect: (v: any) => void;
+  onSelect: () => void;
   selected: boolean;
   successColor: string;
 }) {

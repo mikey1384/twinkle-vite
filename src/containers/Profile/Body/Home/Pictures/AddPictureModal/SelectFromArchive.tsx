@@ -86,7 +86,7 @@ export default function SelectFromArchive({
       {pictures.length > 0 && loadMoreButtonShown && (
         <LoadMoreButton
           style={{ marginTop: '2rem', width: '100%', fontSize: '2rem' }}
-          transparent
+          variant="ghost"
           onClick={handleLoadMore}
           loading={loadingMore}
         />

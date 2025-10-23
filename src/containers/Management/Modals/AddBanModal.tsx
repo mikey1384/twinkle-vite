@@ -149,7 +149,7 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
         </main>
         <footer>
           <Button
-            transparent
+            variant="ghost"
             onClick={onHide}
             style={{ marginRight: '0.7rem' }}
           >

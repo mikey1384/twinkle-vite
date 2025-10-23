@@ -75,7 +75,7 @@ export default function TwinkleVideoModal({
         </main>
         <footer>
           <Button
-            transparent
+            variant="ghost"
             style={{ marginRight: '0.7rem' }}
             onClick={onHide}
           >

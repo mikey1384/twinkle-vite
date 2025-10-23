@@ -70,8 +70,8 @@ export default function FeaturedPlaylistsPanel() {
       {
         label: selectLabel,
         onClick: handleOpenSelectPlaylistsToPinModal,
-        variant: 'soft',
-        tone: 'raised',
+        variant: 'soft' as const,
+        tone: 'raised' as const,
         color: 'darkerGray'
       }
     ];
@@ -79,8 +79,8 @@ export default function FeaturedPlaylistsPanel() {
       buttons.push({
         label: reorderLabel,
         onClick: onOpenReorderFeaturedPlaylists,
-        variant: 'soft',
-        tone: 'raised',
+        variant: 'soft' as const,
+        tone: 'raised' as const,
         color: 'darkerGray'
       });
     }

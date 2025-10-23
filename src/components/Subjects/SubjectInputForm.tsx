@@ -212,7 +212,7 @@ export default function SubjectInputForm({
             }}
           >
             <Button
-              transparent
+              variant="ghost"
               style={{ fontSize: '1.7rem', marginRight: '1rem' }}
               onClick={handleCancel}
             >

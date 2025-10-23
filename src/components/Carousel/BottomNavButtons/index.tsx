@@ -46,7 +46,7 @@ export default function BottomNavButtons({
           <Button
             style={{ marginRight: '0.5rem', fontSize: '1.7rem' }}
             onClick={onPrev}
-            transparent
+            variant="ghost"
             disabled={currentSlide === 0}
           >
             {prevLabel}

@@ -262,7 +262,7 @@ export default function EditPlaylistModal({
                       >
                         <LoadMoreButton
                           style={{ fontSize: '2rem', marginTop: '1rem' }}
-                          transparent
+                          variant="ghost"
                           loading={loadingMore}
                           onClick={handleLoadMoreVideos}
                         />
@@ -317,7 +317,7 @@ export default function EditPlaylistModal({
           <footer>
             <Button
               style={{ marginRight: '0.7rem' }}
-              transparent
+              variant="ghost"
               onClick={onHide}
             >
               Cancel

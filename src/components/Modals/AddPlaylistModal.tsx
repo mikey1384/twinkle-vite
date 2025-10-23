@@ -40,7 +40,10 @@ export default function AddPlaylistModal({
   title?: string;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const uploadPlaylist = useAppContext((v) => v.requestHelpers.uploadPlaylist);
@@ -244,7 +247,7 @@ export default function AddPlaylistModal({
           {section === 0 ? (
             <Button
               style={{ marginRight: '0.7rem' }}
-              transparent
+              variant="ghost"
               onClick={onHide}
             >
               Cancel
@@ -252,7 +255,7 @@ export default function AddPlaylistModal({
           ) : (
             <Button
               style={{ marginRight: '0.7rem' }}
-              transparent
+              variant="ghost"
               onClick={handlePrev}
             >
               Prev

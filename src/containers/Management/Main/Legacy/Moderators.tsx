@@ -181,7 +181,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             }}
           >
             <LoadMoreButton
-              transparent
+              variant="ghost"
               style={{ fontSize: '2rem' }}
               onClick={onLoadMoreModerators}
             />

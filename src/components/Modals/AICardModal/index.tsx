@@ -263,7 +263,7 @@ export default function AICardModal({
               handleCopyToClipboard();
               setTimeout(() => setCopied(false), 1000);
             }}
-            transparent
+            variant="ghost"
           >
             {copied ? null : <Icon icon="copy" />}
             <span style={{ marginLeft: copied ? 0 : '1rem' }}>

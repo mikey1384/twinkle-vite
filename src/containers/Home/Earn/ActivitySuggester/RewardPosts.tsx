@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import ContentPreview from './ContentPreview';
+import ContentPreview from '../../../../components/ContentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { useAppContext, useHomeContext } from '~/contexts';
@@ -37,9 +37,7 @@ export default function RewardPosts() {
   return (
     <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/RewardPosts">
       <div className={sectionContainer}>
-        <h3 className={sectionHeading}>
-          Earn Karma Points by Rewarding Posts
-        </h3>
+        <h3 className={sectionHeading}>Earn Karma Points by Rewarding Posts</h3>
         <div className={listContainer}>
           {loading ? (
             <Loading style={{ height: '20rem' }} />
@@ -72,9 +70,7 @@ export default function RewardPosts() {
               disabled={skipping || loading}
             >
               <Icon icon="redo" />
-              <span style={{ marginLeft: '0.7rem' }}>
-                Show me another post
-              </span>
+              <span style={{ marginLeft: '0.7rem' }}>Show me another post</span>
             </Button>
           </div>
         )}

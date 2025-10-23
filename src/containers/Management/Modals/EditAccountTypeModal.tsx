@@ -91,7 +91,7 @@ export default function EditAccountTypeModal({
           >
             <div>
               <Button
-                transparent
+                variant="ghost"
                 color="red"
                 onClick={() => setDeleteModalShown(true)}
                 style={{ marginRight: '0.7rem' }}
@@ -102,7 +102,7 @@ export default function EditAccountTypeModal({
             </div>
             <div style={{ display: 'flex' }}>
               <Button
-                transparent
+                variant="ghost"
                 onClick={onHide}
                 style={{ marginRight: '0.7rem' }}
               >

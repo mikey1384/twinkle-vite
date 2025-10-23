@@ -85,7 +85,10 @@ export default class ChessErrorBoundary extends Component<Props, State> {
             <Button onClick={this.handleRetry} color="logoBlue">
               Try Again
             </Button>
-            <Button onClick={() => window.location.reload()} transparent>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="ghost"
+            >
               Refresh Page
             </Button>
           </div>

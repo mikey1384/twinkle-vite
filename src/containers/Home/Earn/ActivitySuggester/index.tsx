@@ -14,7 +14,9 @@ export default function ActivitySuggester({
   style?: React.CSSProperties;
 }) {
   const topMenuSection = useHomeContext((v) => v.state.topMenuSection);
-  const { panelVars, themeName } = useHomePanelVars();
+  const { panelVars, themeName } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
   const combinedStyle = useMemo(() => {
     if (!style) return panelVars;
     return { ...panelVars, ...style };

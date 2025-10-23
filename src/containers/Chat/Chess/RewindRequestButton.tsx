@@ -47,7 +47,7 @@ export default function RewindRequestButton({
               }}
               loading={isCanceling}
               style={{ paddingBottom: '0.5rem' }}
-              transparent
+              variant="ghost"
               color="red"
             >
               Cancel
@@ -62,7 +62,7 @@ export default function RewindRequestButton({
               }}
               loading={isAccepting}
               style={{ paddingBottom: '0.5rem' }}
-              transparent
+              variant="ghost"
               color="green"
             >
               <Icon icon="check" />
@@ -75,7 +75,7 @@ export default function RewindRequestButton({
               }}
               loading={isDeclining}
               style={{ paddingBottom: '0.5rem' }}
-              transparent
+              variant="ghost"
               color="red"
             >
               <Icon icon="xmark" />

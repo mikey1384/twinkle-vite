@@ -107,7 +107,7 @@ export default function LoginForm({
             }
           `}
           color="blue"
-          transparent
+          variant="ghost"
           onClick={onShowForgotPasswordForm}
         >
           {iForgotMyPasswordLabel}
@@ -121,7 +121,7 @@ export default function LoginForm({
             }
           `}
           color="orange"
-          transparent
+          variant="ghost"
           onClick={onShowSignupForm}
         >
           {iDontHaveAnAccountLabel}

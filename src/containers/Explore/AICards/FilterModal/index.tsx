@@ -122,7 +122,7 @@ export default function FilterModal({
       <footer>
         <Button
           style={{ marginRight: '0.7rem' }}
-          transparent
+          variant="ghost"
           onClick={handleHide}
         >
           Close

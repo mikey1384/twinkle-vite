@@ -117,7 +117,7 @@ export default function WealthData() {
           }}
         >
           <Button
-            transparent
+            variant="ghost"
             color={tableHeaderColor}
             onClick={handleDownloadCSV}
           >

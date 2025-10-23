@@ -164,7 +164,7 @@ export default function AIChatTopicMenu({
               hasError={!!commentExceedsCharLimit}
               minRows={3}
               value={newCustomInstructions}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 onSetCustomInstructions(event.target.value)
               }
               onKeyUp={handleKeyUp}
@@ -204,9 +204,9 @@ export default function AIChatTopicMenu({
     }
   }
 
-  function handleKeyUp(event: { key: string; target: { value: string } }) {
+  function handleKeyUp(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === ' ') {
-      onSetCustomInstructions(addEmoji(event.target.value));
+      onSetCustomInstructions(addEmoji(event.currentTarget.value));
     }
   }
 }

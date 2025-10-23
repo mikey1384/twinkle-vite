@@ -96,10 +96,7 @@ export default function BasicInfos({
 
   const linkColorVar = useMemo(
     () =>
-      `var(--role-link-color, ${resolveRoleColor(
-        themeRoles.link,
-        'blue'
-      )})`,
+      `var(--role-link-color, ${resolveRoleColor(themeRoles.link, 'blue')})`,
     [resolveRoleColor, themeRoles]
   );
   const verifyEmailColorVar = useMemo(
@@ -327,7 +324,7 @@ export default function BasicInfos({
               marginTop: !email || !youtubeUrl || !website ? 0 : '1rem',
               marginBottom: '0.5rem'
             }}
-            transparent
+            variant="ghost"
             onClick={() => setPasswordInputModalShown(true)}
           >
             <Icon icon="pencil-alt" />

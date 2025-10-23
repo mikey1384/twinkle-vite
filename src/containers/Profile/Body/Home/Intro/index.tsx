@@ -202,7 +202,7 @@ export default function Intro({
                     }}
                   >
                     <Button
-                      transparent
+                      variant="ghost"
                       onClick={() => {
                         onSetEditedStatusMsg(
                           replaceFakeAtSymbol(statusMsg || '')
@@ -214,7 +214,7 @@ export default function Intro({
                       <span style={{ marginLeft: '0.7rem' }}>{editLabel}</span>
                     </Button>
                     <Button
-                      transparent
+                      variant="ghost"
                       style={{ marginLeft: '0.5rem' }}
                       onClick={() => setConfirmModalShown(true)}
                     >
@@ -368,7 +368,7 @@ export default function Intro({
           >
             <Button
               style={{ fontSize: '2rem' }}
-              transparent
+              variant="ghost"
               onClick={() => setBioEditModalShown(true)}
             >
               Add a Bio

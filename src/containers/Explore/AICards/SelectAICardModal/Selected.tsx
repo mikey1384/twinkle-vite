@@ -11,7 +11,8 @@ export default function Selected({
   quality,
   onSetSelectedCardIds,
   onSetAICardModalCardId,
-  successColor
+  successColor,
+  isBuy
 }: {
   cardIds: number[];
   cardObj: { [key: number]: any };
@@ -20,6 +21,7 @@ export default function Selected({
   onSetSelectedCardIds: (v: any) => any;
   onSetAICardModalCardId: (v: any) => any;
   successColor: string;
+  isBuy: boolean;
 }) {
   const appliedColor = color === 'blue' ? 'logoBlue' : color;
   const cards = cardIds
@@ -64,6 +66,7 @@ export default function Selected({
           <CardItem
             key={card.id}
             card={card}
+            isBuy={isBuy}
             selected
             onSelect={() =>
               onSetSelectedCardIds((prevIds: number[]) => [...prevIds, card.id])

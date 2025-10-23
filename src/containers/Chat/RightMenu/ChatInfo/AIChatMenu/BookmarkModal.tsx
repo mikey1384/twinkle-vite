@@ -60,7 +60,7 @@ export default function BookmarkModal({
             <Button
               loading={removingBookmark}
               color="red"
-              transparent
+              variant="ghost"
               onClick={handleRemoveBookmark}
             >
               <Icon icon={['far', 'bookmark']} />
@@ -73,7 +73,7 @@ export default function BookmarkModal({
             <Button
               style={{ marginRight: '0.7rem' }}
               loading={addingBookmark}
-              transparent
+              variant="ghost"
               color={doneColor}
               onClick={handleAddBookmark}
             >
@@ -85,7 +85,11 @@ export default function BookmarkModal({
             <Icon icon="comment-alt" />
             <span style={{ marginLeft: '1rem' }}>Reply</span>
           </Button>
-          <Button style={{ marginLeft: '0.7rem' }} variant="ghost" onClick={onHide}>
+          <Button
+            style={{ marginLeft: '0.7rem' }}
+            variant="ghost"
+            onClick={onHide}
+          >
             Close
           </Button>
         </div>

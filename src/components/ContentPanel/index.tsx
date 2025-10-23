@@ -56,7 +56,8 @@ export default function ContentPanel({
   style = {},
   showActualDate,
   theme,
-  zIndex = 1
+  zIndex = 1,
+  isContentPage
 }: {
   alwaysShow?: boolean;
   autoExpand?: boolean;
@@ -71,6 +72,7 @@ export default function ContentPanel({
   showActualDate?: boolean;
   theme?: string;
   zIndex?: number;
+  isContentPage?: boolean;
 }) {
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`${contentType}-${contentId}`],
@@ -320,7 +322,12 @@ export default function ContentPanel({
           onUploadTargetComment
         }}
       >
-        <div style={style} className={className} ref={ComponentRef}>
+        <div
+          style={style}
+          className={className}
+          ref={ComponentRef}
+          data-content-page={isContentPage ? 'true' : undefined}
+        >
           <div
             className={css`
               width: 100%;

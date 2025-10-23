@@ -35,7 +35,7 @@ export default function AddPictureModal({
       footer={
         <>
           <Button
-            transparent
+            variant="ghost"
             onClick={
               section === 'start'
                 ? onHide

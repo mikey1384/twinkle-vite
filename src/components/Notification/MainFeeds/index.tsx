@@ -187,19 +187,53 @@ export default function MainFeeds({
     userId
   ]);
 
-  const RewardListItems = useMemo(() => {
-    return rewards.map((reward) => (
-      <RewardItem
-        key={reward.id}
-        actionColor={actionColor}
-        infoColor={infoColor}
-        linkColor={linkColor}
-        missionColor={missionColor}
-        rewardColor={rewardColor}
-        reward={reward}
-      />
+  const RewardSections = useMemo(() => {
+    // Group rewards by day label (Today, Yesterday, or date)
+    const sections: { label: string; items: any[] }[] = [];
+    const now = new Date();
+    const todayKey = now.toDateString();
+    const yesterdayKey = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString();
+
+    const bySection: Record<string, { label: string; items: any[] }> = {};
+
+    for (const r of rewards) {
+      const d = new Date(Number(r.timeStamp) * 1000);
+      const key = d.toDateString();
+      let label = d.toLocaleDateString();
+      if (key === todayKey) label = 'Today';
+      else if (key === yesterdayKey) label = 'Yesterday';
+      if (!bySection[label]) bySection[label] = { label, items: [] };
+      bySection[label].items.push(r);
+    }
+
+    for (const label of Object.keys(bySection)) {
+      sections.push(bySection[label]);
+    }
+
+    return sections.map((section) => (
+      <div key={`reward-sec-${section.label}`}>
+        <SectionHeader label={section.label} />
+        {section.items.map((reward) => (
+          <RewardItem
+            key={reward.id}
+            actionColor={actionColor}
+            infoColor={infoColor}
+            linkColor={linkColor}
+            missionColor={missionColor}
+            rewardColor={rewardColor}
+            reward={reward}
+          />
+        ))}
+      </div>
     ));
-  }, [actionColor, infoColor, linkColor, missionColor, rewardColor, rewards]);
+  }, [
+    actionColor,
+    infoColor,
+    linkColor,
+    missionColor,
+    rewardColor,
+    rewards
+  ]);
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/index" style={style}>
@@ -291,7 +325,7 @@ export default function MainFeeds({
       )}
       {activeTab === 'rankings' && <Rankings loadingFeeds={loadingNewFeeds} />}
       {activeTab === 'reward' && rewards.length > 0 && (
-        <div style={{ marginTop: 0 }}>{RewardListItems}</div>
+        <div style={{ marginTop: 0 }}>{RewardSections}</div>
       )}
       {!loadingNotifications &&
         ((activeTab === 'notification' && loadMoreNotificationsButton) ||

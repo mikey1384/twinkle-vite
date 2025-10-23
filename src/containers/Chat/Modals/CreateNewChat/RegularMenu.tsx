@@ -80,7 +80,7 @@ export default function RegularMenu({
       <footer>
         <Button
           style={{ marginRight: '0.7rem' }}
-          transparent
+          variant="ghost"
           onClick={onBackClick || onHide}
         >
           {onBackClick ? backLabel : cancelLabel}

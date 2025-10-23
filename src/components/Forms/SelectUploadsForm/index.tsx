@@ -76,7 +76,7 @@ export default function SelectUploadsForm({
         >
           <LoadMoreButton
             style={{ fontSize: '2rem', marginTop: '1rem' }}
-            transparent
+            variant="ghost"
             loading={loadingMore}
             onClick={loadMoreUploads}
           />

@@ -329,7 +329,7 @@ export default function SectionPanel({
               `}
             >
               <LoadMoreButton
-                transparent
+                variant="ghost"
                 theme={customColorTheme}
                 loading={loading}
                 onClick={handleLoadMore}

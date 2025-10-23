@@ -357,311 +357,311 @@ export default function TargetContent({
     >
       <ScopedTheme theme={themeName} roles={['link', 'content', 'reward']}>
         <div>
-        {comment &&
-          (!!comment.notFound || !!comment.isDeleted ? (
-            <div
-              className={css`
-                text-align: center;
-                padding: 2rem 0;
-              `}
-            >
-              <span>{commentRemovedLabel}</span>
-            </div>
-          ) : (
-            <div
-              className={css`
-                margin-top: 0;
-              `}
-            >
+          {comment &&
+            (!!comment.notFound || !!comment.isDeleted ? (
               <div
                 className={css`
-                  padding: 0 1rem;
+                  text-align: center;
+                  padding: 2rem 0;
+                `}
+              >
+                <span>{commentRemovedLabel}</span>
+              </div>
+            ) : (
+              <div
+                className={css`
+                  margin-top: 0;
                 `}
               >
                 <div
                   className={css`
-                    display: flex;
-                    flex-direction: column;
+                    padding: 0 1rem;
                   `}
                 >
-                  <div className="detail-block">
-                    {DetailText}
-                    <div>
-                      <span
-                        className={`timestamp ${css`
-                          cursor: pointer;
-                          &:hover {
-                            text-decoration: underline;
-                          }
-                        `}`}
-                        onClick={() => navigate(`/comments/${comment.id}`)}
-                      >
-                        ({timeSinceLabel})
-                      </span>
-                    </div>
-                  </div>
                   <div
                     className={css`
-                      margin-top: 1rem;
-                    `}
-                  >
-                    {comment &&
-                      comment.filePath &&
-                      !contentHidden &&
-                      (userId ? (
-                        <ContentFileViewer
-                          theme={theme}
-                          contentId={comment.id}
-                          contentType="comment"
-                          fileName={comment.fileName}
-                          filePath={comment.filePath}
-                          fileSize={comment.fileSize}
-                          thumbUrl={comment.thumbUrl}
-                          videoHeight="100%"
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            marginTop: '1rem',
-                            marginBottom: comment.content ? '2.5rem' : 0,
-                            ...(fileType === 'audio'
-                              ? {
-                                  padding: '1rem'
-                                }
-                              : {})
-                          }}
-                        />
-                      ) : (
-                        <LoginToViewContent />
-                      ))}
-                    {contentHidden ? (
-                      <SecretComment
-                        style={{ marginBottom: '1rem' }}
-                        onClick={() => navigate(`/subjects/${subject.id}`)}
-                      />
-                    ) : (
-                      <RichText
-                        theme={theme}
-                        isAIMessage={
-                          comment.uploader.id === Number(ZERO_TWINKLE_ID) ||
-                          comment.uploader.id === Number(CIEL_TWINKLE_ID)
-                        }
-                        voice={
-                          comment.uploader.id === Number(CIEL_TWINKLE_ID)
-                            ? 'nova'
-                            : ''
-                        }
-                        contentId={contentId}
-                        contentType={contentType}
-                        section="target"
-                      >
-                        {comment.content}
-                      </RichText>
-                    )}
-                  </div>
-                </div>
-                {!contentHidden && (
-                  <ErrorBoundary
-                    componentPath="ContentPanel/TargetContent/index/bottom-menu"
-                    className={css`
                       display: flex;
-                      justify-content: space-between;
-                      margin-top: 1.5rem;
-                      padding-top: 1rem;
+                      flex-direction: column;
                     `}
                   >
-                    <div
-                      className={`left ${css`
-                        display: flex;
-                        flex-direction: column;
-                        padding-bottom: ${comment.likes.length === 0
-                          ? '1rem'
-                          : ''};
-                      `}`}
-                    >
-                      <div
-                        className={css`
-                          display: flex;
-                        `}
-                      >
-                        <LikeButton
-                          theme={theme}
-                          contentType="comment"
-                          contentId={comment.id}
-                          onClick={handleLikeClick}
-                          likes={comment.likes}
-                        />
-                        <Button
-                          style={{ marginLeft: '1rem' }}
-                          transparent
-                          onClick={handleReplyClick}
+                    <div className="detail-block">
+                      {DetailText}
+                      <div>
+                        <span
+                          className={`timestamp ${css`
+                            cursor: pointer;
+                            &:hover {
+                              text-decoration: underline;
+                            }
+                          `}`}
+                          onClick={() => navigate(`/comments/${comment.id}`)}
                         >
-                          <Icon icon="comment-alt" />
-                          <span
-                            className={css`
-                              margin-left: 0.7rem;
-                            `}
-                          >
-                            {replyLabel}
-                          </span>
-                        </Button>
-                        {userCanRewardThis && (
-                          <RewardButton
-                            style={{ marginLeft: '1rem' }}
+                          ({timeSinceLabel})
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={css`
+                        margin-top: 1rem;
+                      `}
+                    >
+                      {comment &&
+                        comment.filePath &&
+                        !contentHidden &&
+                        (userId ? (
+                          <ContentFileViewer
+                            theme={theme}
                             contentId={comment.id}
                             contentType="comment"
-                            disableReason={xpButtonDisabled}
-                            theme={theme}
+                            fileName={comment.fileName}
+                            filePath={comment.filePath}
+                            fileSize={comment.fileSize}
+                            thumbUrl={comment.thumbUrl}
+                            videoHeight="100%"
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                              marginTop: '1rem',
+                              marginBottom: comment.content ? '2.5rem' : 0,
+                              ...(fileType === 'audio'
+                                ? {
+                                    padding: '1rem'
+                                  }
+                                : {})
+                            }}
                           />
-                        )}
-                      </div>
-                      <Likers
-                        theme={theme}
-                        className={css`
-                          font-weight: bold;
-                          color: ${Color.darkerGray()};
-                          font-size: 1.2rem;
-                          line-height: 2;
-                        `}
-                        userId={userId}
-                        likes={comment.likes}
-                        onLinkClick={() => setUserListModalShown(true)}
-                      />
+                        ) : (
+                          <LoginToViewContent />
+                        ))}
+                      {contentHidden ? (
+                        <SecretComment
+                          style={{ marginBottom: '1rem' }}
+                          onClick={() => navigate(`/subjects/${subject.id}`)}
+                        />
+                      ) : (
+                        <RichText
+                          theme={theme}
+                          isAIMessage={
+                            comment.uploader.id === Number(ZERO_TWINKLE_ID) ||
+                            comment.uploader.id === Number(CIEL_TWINKLE_ID)
+                          }
+                          voice={
+                            comment.uploader.id === Number(CIEL_TWINKLE_ID)
+                              ? 'nova'
+                              : ''
+                          }
+                          contentId={contentId}
+                          contentType={contentType}
+                          section="target"
+                        >
+                          {comment.content}
+                        </RichText>
+                      )}
                     </div>
-                    <div
-                      className={`right ${css`
+                  </div>
+                  {!contentHidden && (
+                    <ErrorBoundary
+                      componentPath="ContentPanel/TargetContent/index/bottom-menu"
+                      className={css`
                         display: flex;
-                        align-items: center;
-                      `}`}
+                        justify-content: space-between;
+                        margin-top: 1.5rem;
+                        padding-top: 1rem;
+                      `}
                     >
-                      <Button
-                        color={rewardColor}
-                        variant={isRecommendedByUser ? 'solid' : 'soft'}
-                        tone="raised"
-                        disabled={recommendationInterfaceShown}
-                        onClick={() => setRecommendationInterfaceShown(true)}
+                      <div
+                        className={`left ${css`
+                          display: flex;
+                          flex-direction: column;
+                          padding-bottom: ${comment.likes.length === 0
+                            ? '1rem'
+                            : ''};
+                        `}`}
                       >
-                        <Icon icon="heart" />
-                      </Button>
-                    </div>
-                  </ErrorBoundary>
+                        <div
+                          className={css`
+                            display: flex;
+                          `}
+                        >
+                          <LikeButton
+                            theme={theme}
+                            contentType="comment"
+                            contentId={comment.id}
+                            onClick={handleLikeClick}
+                            likes={comment.likes}
+                          />
+                          <Button
+                            variant="ghost"
+                            style={{ marginLeft: '1rem' }}
+                            onClick={handleReplyClick}
+                          >
+                            <Icon icon="comment-alt" />
+                            <span
+                              className={css`
+                                margin-left: 0.7rem;
+                              `}
+                            >
+                              {replyLabel}
+                            </span>
+                          </Button>
+                          {userCanRewardThis && (
+                            <RewardButton
+                              style={{ marginLeft: '1rem' }}
+                              contentId={comment.id}
+                              contentType="comment"
+                              disableReason={xpButtonDisabled}
+                              theme={theme}
+                            />
+                          )}
+                        </div>
+                        <Likers
+                          theme={theme}
+                          className={css`
+                            font-weight: bold;
+                            color: ${Color.darkerGray()};
+                            font-size: 1.2rem;
+                            line-height: 2;
+                          `}
+                          userId={userId}
+                          likes={comment.likes}
+                          onLinkClick={() => setUserListModalShown(true)}
+                        />
+                      </div>
+                      <div
+                        className={`right ${css`
+                          display: flex;
+                          align-items: center;
+                        `}`}
+                      >
+                        <Button
+                          color={rewardColor}
+                          variant={isRecommendedByUser ? 'solid' : 'soft'}
+                          tone="raised"
+                          disabled={recommendationInterfaceShown}
+                          onClick={() => setRecommendationInterfaceShown(true)}
+                        >
+                          <Icon icon="heart" />
+                        </Button>
+                      </div>
+                    </ErrorBoundary>
+                  )}
+                </div>
+                {comment && (
+                  <RecommendationStatus
+                    style={{
+                      marginTop: 0,
+                      marginBottom: '1rem'
+                    }}
+                    contentType="comment"
+                    recommendations={comment.recommendations}
+                    theme={theme}
+                  />
                 )}
-              </div>
-              {comment && (
-                <RecommendationStatus
-                  style={{
-                    marginTop: 0,
-                    marginBottom: '1rem'
-                  }}
+                {recommendationInterfaceShown && (
+                  <RecommendationInterface
+                    style={{
+                      marginTop: '0.5rem'
+                    }}
+                    contentId={comment.id}
+                    contentType="comment"
+                    onHide={() => setRecommendationInterfaceShown(false)}
+                    recommendations={comment.recommendations}
+                    rewardLevel={finalRewardLevel}
+                    content={comment.content}
+                    theme={theme}
+                    uploaderId={comment.uploader.id}
+                  />
+                )}
+                {xpRewardInterfaceShown && (
+                  <XPRewardInterface
+                    innerRef={RewardInterfaceRef}
+                    contentType={'comment'}
+                    contentId={comment.id}
+                    rewardLevel={finalRewardLevel}
+                    uploaderLevel={comment.uploader.level || 1}
+                    uploaderId={comment.uploader.id}
+                    onReward={() =>
+                      setRecommendationInterfaceShown(
+                        !isRecommendedByUser && twinkleCoins > 0
+                      )
+                    }
+                    rewards={comment.rewards}
+                  />
+                )}
+                <RewardStatus
                   contentType="comment"
-                  recommendations={comment.recommendations}
+                  contentId={comment.id}
                   theme={theme}
-                />
-              )}
-              {recommendationInterfaceShown && (
-                <RecommendationInterface
+                  className={css`
+                    margin-left: -1px;
+                    margin-right: -1px;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      margin-left: 0px;
+                      margin-right: 0px;
+                    }
+                  `}
                   style={{
-                    marginTop: '0.5rem'
+                    marginTop: 0
                   }}
-                  contentId={comment.id}
-                  contentType="comment"
-                  onHide={() => setRecommendationInterfaceShown(false)}
-                  recommendations={comment.recommendations}
                   rewardLevel={finalRewardLevel}
-                  content={comment.content}
-                  theme={theme}
-                  uploaderId={comment.uploader.id}
-                />
-              )}
-              {xpRewardInterfaceShown && (
-                <XPRewardInterface
-                  innerRef={RewardInterfaceRef}
-                  contentType={'comment'}
-                  contentId={comment.id}
-                  rewardLevel={finalRewardLevel}
-                  uploaderLevel={comment.uploader.level || 1}
-                  uploaderId={comment.uploader.id}
-                  onReward={() =>
-                    setRecommendationInterfaceShown(
-                      !isRecommendedByUser && twinkleCoins > 0
-                    )
-                  }
+                  onCommentEdit={onEditRewardComment}
                   rewards={comment.rewards}
                 />
-              )}
-              <RewardStatus
-                contentType="comment"
-                contentId={comment.id}
-                theme={theme}
-                className={css`
-                  margin-left: -1px;
-                  margin-right: -1px;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    margin-left: 0px;
-                    margin-right: 0px;
-                  }
-                `}
-                style={{
-                  marginTop: 0
-                }}
-                rewardLevel={finalRewardLevel}
-                onCommentEdit={onEditRewardComment}
-                rewards={comment.rewards}
-              />
-              {replyInputShown && !contentHidden && !uploadingFile && (
-                <InputForm
-                  innerRef={InputFormRef}
-                  style={{
-                    padding: '0 1rem'
-                  }}
-                  onSubmit={handleSubmit}
-                  parent={{ contentType: 'comment', contentId: comment.id }}
-                  rows={4}
-                  placeholder={`Write a reply...`}
-                />
-              )}
-              {uploadingFile && (
-                <FileUploadStatusIndicator
-                  theme={theme}
-                  style={{
-                    fontSize: '1.7rem',
-                    fontWeight: 'bold',
-                    marginTop: 0,
-                    marginLeft: '1rem',
-                    marginRight: '1rem'
-                  }}
-                  fileName={attachment?.file?.name}
-                  uploadProgress={fileUploadProgress}
-                />
-              )}
-              {comments.length > 0 && (
-                <div>
-                  {comments
-                    .filter(
-                      (comment: { isDeleted: boolean }) => !comment.isDeleted
-                    )
-                    .map((comment: CommentType) => (
-                      <Comment
-                        key={comment.id}
-                        comment={comment}
-                        username={username}
-                        userId={userId}
-                        profilePicUrl={profilePicUrl}
-                        onDelete={onDeleteComment}
-                        onEditDone={onEditComment}
-                        theme={theme}
-                      />
-                    ))}
-                </div>
-              )}
-              {userListModalShown && (
-                <UserListModal
-                  onHide={() => setUserListModalShown(false)}
-                  title="People who liked this comment"
-                  users={comment.likes}
-                />
-              )}
-            </div>
-          ))}
+                {replyInputShown && !contentHidden && !uploadingFile && (
+                  <InputForm
+                    innerRef={InputFormRef}
+                    style={{
+                      padding: '0 1rem'
+                    }}
+                    onSubmit={handleSubmit}
+                    parent={{ contentType: 'comment', contentId: comment.id }}
+                    rows={4}
+                    placeholder={`Write a reply...`}
+                  />
+                )}
+                {uploadingFile && (
+                  <FileUploadStatusIndicator
+                    theme={theme}
+                    style={{
+                      fontSize: '1.7rem',
+                      fontWeight: 'bold',
+                      marginTop: 0,
+                      marginLeft: '1rem',
+                      marginRight: '1rem'
+                    }}
+                    fileName={attachment?.file?.name}
+                    uploadProgress={fileUploadProgress}
+                  />
+                )}
+                {comments.length > 0 && (
+                  <div>
+                    {comments
+                      .filter(
+                        (comment: { isDeleted: boolean }) => !comment.isDeleted
+                      )
+                      .map((comment: CommentType) => (
+                        <Comment
+                          key={comment.id}
+                          comment={comment}
+                          username={username}
+                          userId={userId}
+                          profilePicUrl={profilePicUrl}
+                          onDelete={onDeleteComment}
+                          onEditDone={onEditComment}
+                          theme={theme}
+                        />
+                      ))}
+                  </div>
+                )}
+                {userListModalShown && (
+                  <UserListModal
+                    onHide={() => setUserListModalShown(false)}
+                    title="People who liked this comment"
+                    users={comment.likes}
+                  />
+                )}
+              </div>
+            ))}
         </div>
       </ScopedTheme>
     </ErrorBoundary>

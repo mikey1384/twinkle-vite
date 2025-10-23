@@ -229,7 +229,7 @@ export default function QuestionBlock({
       >
         {!onEdit ? (
           <Button
-            transparent
+            variant="ghost"
             onClick={() => onEditStart(questionId)}
             style={{ opacity: deleted ? 0.2 : 1, fontSize: '2rem' }}
             disabled={deleted && true}

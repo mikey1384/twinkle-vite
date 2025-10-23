@@ -81,7 +81,7 @@ export default function Achievements() {
             }}
           >
             <LoadMoreButton
-              transparent
+              variant="ghost"
               style={{ fontSize: '2rem' }}
               onClick={onLoadMoreAchievements}
             />

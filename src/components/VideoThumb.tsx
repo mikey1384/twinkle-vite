@@ -5,7 +5,7 @@ import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import Icon from '~/components/Icon';
-import { Color, borderRadius } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 import { textIsOverflown, isMobile } from '~/helpers';
@@ -133,8 +133,8 @@ export default function VideoThumb({
                     }}
                   >
                     <Link
-                       style={{
-                         display: 'inline',
+                      style={{
+                        display: 'inline',
                         color: video.byUser ? userLinkColor : linkColor
                       }}
                       to={`/${to}`}

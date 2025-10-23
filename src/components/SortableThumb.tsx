@@ -5,7 +5,7 @@ import FullTextReveal from '~/components/Texts/FullTextRevealFromOuterLayer';
 import VideoThumbImage from '~/components/VideoThumbImage';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
-import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);

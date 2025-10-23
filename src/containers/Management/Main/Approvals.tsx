@@ -133,7 +133,7 @@ export default function Approvals({ canManage }: { canManage: boolean }) {
             `}
           >
             <LoadMoreButton
-              transparent
+              variant="ghost"
               style={{ fontSize: '2rem' }}
               onClick={onLoadMoreApprovalItems}
             />

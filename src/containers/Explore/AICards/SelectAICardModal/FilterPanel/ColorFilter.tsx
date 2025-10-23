@@ -78,7 +78,7 @@ const containerClass = css`
   align-items: stretch;
   gap: 0.6rem;
   width: 100%;
-  text-align: left;
+  text-align: center;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.5rem;
   }
@@ -87,5 +87,6 @@ const containerClass = css`
 const controlClass = css`
   width: 100%;
   display: flex;
+  justify-content: center;
   align-items: center;
 `;

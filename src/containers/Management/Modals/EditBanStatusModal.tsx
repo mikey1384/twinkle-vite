@@ -94,7 +94,7 @@ export default function EditBanStatusModal({
         </main>
         <footer>
           <Button
-            transparent
+            variant="ghost"
             onClick={onHide}
             style={{ marginRight: '0.7rem' }}
           >

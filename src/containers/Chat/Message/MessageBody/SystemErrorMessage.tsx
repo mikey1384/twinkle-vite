@@ -57,7 +57,7 @@ export default function SystemErrorMessage({
       {canDelete && onDelete && (
         <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}>
           <Button
-            transparent
+            variant="ghost"
             onClick={onDelete}
             style={{
               fontSize: '1.2rem',

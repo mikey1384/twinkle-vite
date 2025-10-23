@@ -24,7 +24,8 @@ export default function ContentFileViewer({
   theme,
   thumbHeight,
   thumbUrl,
-  videoHeight
+  videoHeight,
+  modalOverModal
 }: {
   className?: string;
   contentId?: number;
@@ -42,6 +43,7 @@ export default function ContentFileViewer({
   thumbHeight?: string;
   thumbUrl?: string;
   videoHeight?: string;
+  modalOverModal?: boolean;
 }) {
   const { color: linkColor } = useRoleColor('link', {
     themeName: theme,
@@ -77,6 +79,7 @@ export default function ContentFileViewer({
           backgroundColor: isThumb ? Color.whiteGray() : '',
           ...style
         }}
+        data-modal-over-modal={modalOverModal ? 'true' : undefined}
       >
         {fileType === 'image' ? (
           <ErrorBoundary componentPath="ContentFileViewer/ImagePreview">

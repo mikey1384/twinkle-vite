@@ -7,11 +7,7 @@ import RichText from '~/components/Texts/RichText';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { truncateTopic } from '~/helpers/stringHelpers';
-import {
-  Color,
-  mobileMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import {
   cardLevelHash,
   CIEL_TWINKLE_ID,
@@ -24,7 +20,7 @@ import { css } from '@emotion/css';
 export default function ContentPreview({
   contentObj: {
     id: contentId,
-    isListening,
+    isListening = false,
     contentType,
     uploader,
     content = '',
@@ -37,7 +33,8 @@ export default function ContentPreview({
     title,
     difficulty
   },
-  style
+  style,
+  hideUploader
 }: {
   contentObj: {
     id: number;
@@ -59,19 +56,16 @@ export default function ContentPreview({
     difficulty?: number;
   };
   style?: React.CSSProperties;
+  hideUploader?: boolean;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const navigate = useNavigate();
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
   const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
-  const hoverBg = filterRole.getColor
-    ? filterRole.getColor(Math.min((filterRole.defaultOpacity ?? 0.18) * 0.6, 0.18))
-    : Color.highlightGray();
   const isAIMessage =
     uploader?.id === Number(ZERO_TWINKLE_ID) ||
     uploader?.id === Number(CIEL_TWINKLE_ID);
-  const aiVoice =
-    uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : undefined;
+  const aiVoice = uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : undefined;
   const formattedStoryTitle = useMemo(() => {
     const raw = title || topic || '';
     if (!raw) return '';
@@ -128,11 +122,10 @@ export default function ContentPreview({
       display: flex;
       flex-direction: column;
       gap: 1.2rem;
-      transition: border-color 0.18s ease, background-color 0.18s ease;
+      transition: border-color 0.18s ease;
       cursor: pointer;
       &:hover {
         border-color: var(--ui-border-strong);
-        background: ${hoverBg};
       }
       @media (max-width: ${mobileMaxWidth}) {
         border-left: 0;
@@ -140,7 +133,7 @@ export default function ContentPreview({
         border-radius: 0;
       }
     `,
-    [hoverBg]
+    []
   );
 
   const headerClass = css`
@@ -153,12 +146,19 @@ export default function ContentPreview({
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    /* meta holds two rows: uploader row and optional topic row */
   `;
 
   const uploaderLabelClass = css`
-    color: ${Color.gray()};
-    font-size: 1.2rem;
+    color: ${Color.darkGray()};
+    font-size: 1.3rem;
     font-weight: 600;
+  `;
+
+  const uploaderRowClass = css`
+    min-height: 3.8rem;
+    display: flex;
+    align-items: center;
   `;
 
   const storyTitleClass = css`
@@ -170,6 +170,11 @@ export default function ContentPreview({
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
+  `;
+
+  const topicLabelClass = css`
+    color: ${Color.darkerGray()};
+    font-size: 1.5rem;
   `;
 
   const listeningBadgeClass = css`
@@ -206,6 +211,7 @@ export default function ContentPreview({
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
   `;
 
   const previewContentClass = css`
@@ -257,14 +263,16 @@ export default function ContentPreview({
       );
     }
     return (
-      <div className={css`
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 0.8rem;
-        color: ${Color.darkGray()};
-        font-size: 1.4rem;
-      `}>
+      <div
+        className={css`
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 0.8rem;
+          color: ${Color.darkGray()};
+          font-size: 1.4rem;
+        `}
+      >
         <Icon icon="volume" />
         <span>Listen to this story</span>
       </div>
@@ -292,7 +300,7 @@ export default function ContentPreview({
                 <span>Level {difficulty}</span>
               </div>
             )}
-            {isListening && (
+            {!!isListening && (
               <div className={listeningBadgeClass}>Listening Mode</div>
             )}
           </div>
@@ -326,25 +334,27 @@ export default function ContentPreview({
       role="button"
       tabIndex={0}
     >
-      <div className={headerClass}>
-        <div style={{ width: '3.8rem' }}>
-          <ProfilePic
-            style={{ width: '100%' }}
-            userId={uploader.id}
-            profilePicUrl={uploader.profilePicUrl}
-          />
+      {!hideUploader && (
+        <div className={headerClass}>
+          <div style={{ width: '3.8rem', display: 'flex', alignItems: 'center' }}>
+            <ProfilePic
+              style={{ width: '100%' }}
+              userId={uploader.id}
+              profilePicUrl={uploader.profilePicUrl}
+            />
+          </div>
+          <div className={metaClass}>
+            {uploader.username && (
+              <div className={uploaderRowClass}>
+                <span className={uploaderLabelClass}>by {uploader.username}</span>
+              </div>
+            )}
+          </div>
         </div>
-        <div className={metaClass}>
-          {uploader.username && (
-            <span className={uploaderLabelClass}>by {uploader.username}</span>
-          )}
-          {contentType !== 'aiStory' && topic && (
-            <strong style={{ color: Color.darkerGray() }}>
-              {truncateTopic(topic)}
-            </strong>
-          )}
-        </div>
-      </div>
+      )}
+      {contentType !== 'aiStory' && topic && (
+        <strong className={topicLabelClass}>{truncateTopic(topic)}</strong>
+      )}
       {renderContent()}
       {filePath && (
         <div

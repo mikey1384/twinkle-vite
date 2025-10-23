@@ -122,7 +122,7 @@ export default function TopicStartNotification({
 
   function truncateText(
     text: string,
-    elementRef: React.RefObject<HTMLDivElement>
+    elementRef: React.RefObject<HTMLDivElement | null>
   ) {
     if (!elementRef.current || !containerRef.current) return text;
 

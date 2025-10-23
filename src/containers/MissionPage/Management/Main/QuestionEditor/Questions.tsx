@@ -94,7 +94,7 @@ export default function Questions({
                     disabled={isApproving}
                     variant="soft"
                     tone="raised"
-                    opacity={0.5}
+                    style={{ opacity: 0.5 }}
                     onClick={() => handleApprove(question.id)}
                   >
                     <Icon icon="check" />
@@ -104,8 +104,7 @@ export default function Questions({
                     disabled={isDeleting}
                     variant="soft"
                     tone="raised"
-                    opacity={0.5}
-                    style={{ marginLeft: '1rem' }}
+                    style={{ marginLeft: '1rem', opacity: 0.5 }}
                     onClick={() => handleDelete(question.id)}
                   >
                     <Icon icon="trash-alt" />
@@ -125,7 +124,7 @@ export default function Questions({
                     disabled={isDisapproving}
                     variant="soft"
                     tone="raised"
-                    opacity={0.5}
+                    style={{ opacity: 0.5 }}
                     onClick={() => handleDisApprove(question.id)}
                   >
                     <Icon icon="ban" />

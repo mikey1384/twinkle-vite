@@ -23,7 +23,10 @@ export default function SelectFeaturedSubjectsModal({
   onSubmit: (arg0: any[]) => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
@@ -202,14 +205,18 @@ export default function SelectFeaturedSubjectsModal({
         {!searching && displayedLoadMoreButton && selectTabActive && (
           <LoadMoreButton
             style={{ fontSize: '2rem' }}
-            transparent
+            variant="ghost"
             loading={loadingMore}
             onClick={handleLoadMore}
           />
         )}
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button

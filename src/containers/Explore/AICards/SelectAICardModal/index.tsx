@@ -140,6 +140,7 @@ export default function SelectAICardModal({
             color={filters.color}
             quality={filters.quality}
             successColor={successColor}
+            isBuy={isBuy}
           />
         ) : (
           <Main

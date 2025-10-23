@@ -54,7 +54,10 @@ function ContentEditor({
   const [isEditing, setIsEditing] = useState(false);
   const banned = useKeyContext((v) => v.myState.banned);
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
 
   const defaultInputState = useMemo(
     () => ({
@@ -353,7 +356,7 @@ function ContentEditor({
           {doneLabel}
         </Button>
         <Button
-          transparent
+          variant="ghost"
           style={{ marginRight: '1rem' }}
           onClick={handleDismiss}
         >

@@ -351,7 +351,7 @@ export default function SubjectPanel({
               }}
             >
               <Button
-                transparent
+                variant="ghost"
                 style={{
                   fontSize: '1.7rem',
                   marginRight: '1rem'

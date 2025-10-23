@@ -31,7 +31,7 @@ export default function NoPictures({
         >
           <Button
             onClick={onAddButtonClick}
-            transparent
+            variant="ghost"
             style={{ fontSize: '2rem' }}
           >
             <Icon icon="plus" />

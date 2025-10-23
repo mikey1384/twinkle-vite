@@ -11,18 +11,24 @@ export default function Options({
   selectedOption: string;
 }) {
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
+    >
       <Button
-        variant={selectedOption === 'want' ? 'soft' : 'solid'}
-        tone={selectedOption === 'want' ? 'raised' : undefined}
+        variant={selectedOption === 'want' ? 'solid' : 'soft'}
+        tone="raised"
         color="logoBlue"
         onClick={() => onSelectOption('want')}
       >
         I want to see what {partnerName} has (Trade)
       </Button>
       <Button
-        variant={selectedOption === 'offer' ? 'soft' : 'solid'}
-        tone={selectedOption === 'offer' ? 'raised' : undefined}
+        variant={selectedOption === 'offer' ? 'solid' : 'soft'}
+        tone="raised"
         style={{ marginTop: '1rem' }}
         color="pink"
         onClick={() => onSelectOption('offer')}
@@ -30,8 +36,8 @@ export default function Options({
         {`I want to show ${partnerName} what I have`}
       </Button>
       <Button
-        variant={selectedOption === 'send' ? 'soft' : 'solid'}
-        tone={selectedOption === 'send' ? 'raised' : undefined}
+        variant={selectedOption === 'send' ? 'solid' : 'soft'}
+        tone="raised"
         style={{ marginTop: '1rem' }}
         color="green"
         onClick={() => onSelectOption('send')}

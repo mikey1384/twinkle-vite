@@ -153,7 +153,7 @@ export default function Supermods({ canManage }: { canManage: boolean }) {
             }}
           >
             <LoadMoreButton
-              transparent
+              variant="ghost"
               style={{ fontSize: '2rem' }}
               onClick={onLoadMoreSupermods}
             />

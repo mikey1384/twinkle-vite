@@ -91,7 +91,7 @@ export default function StartScreen({
               padding: deviceIsMobile ? '1rem' : '1.5rem'
             }}
             color="blue"
-            skeuomorphic
+            buttonProps={{ variant: 'soft', tone: 'raised' }}
           />
         </div>
       </div>

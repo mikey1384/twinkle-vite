@@ -532,7 +532,7 @@ export default function Editor({
             Done
           </Button>
           <Button
-            transparent
+            variant="ghost"
             disabled={uploadingFile}
             style={{ marginRight: '1rem' }}
             onClick={() => {

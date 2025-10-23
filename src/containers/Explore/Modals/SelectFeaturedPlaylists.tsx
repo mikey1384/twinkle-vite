@@ -142,7 +142,7 @@ export default function SelectFeaturedPlaylists({
               {displayedLoadMoreButton && !searching && (
                 <LoadMoreButton
                   style={{ marginTop: '2rem', width: '100%' }}
-                  transparent
+                  variant="ghost"
                   onClick={() => handleLoadMore(lastPlaylistId)}
                   loading={loadingMore}
                 />
@@ -192,7 +192,11 @@ export default function SelectFeaturedPlaylists({
         </div>
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button

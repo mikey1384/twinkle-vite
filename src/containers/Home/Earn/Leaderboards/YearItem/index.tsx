@@ -6,11 +6,7 @@ import localize from '~/constants/localize';
 import moment from 'moment';
 import Loading from '~/components/Loading';
 import { homePanelClass } from '~/theme/homePanels';
-import {
-  useAppContext,
-  useHomeContext,
-  useNotiContext
-} from '~/contexts';
+import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
 import { SELECTED_LANGUAGE, months } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
@@ -37,7 +33,9 @@ export default function YearItem({
   const onSetLeaderboardsExpanded = useHomeContext(
     (v) => v.actions.onSetLeaderboardsExpanded
   );
-  const { panelVars, themeName } = useHomePanelVars();
+  const { panelVars, themeName } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
   const combinedStyle = useMemo(() => {
     if (!style) return panelVars;
     return { ...panelVars, ...style };
@@ -113,7 +111,7 @@ export default function YearItem({
             <LoadMoreButton
               style={{ fontSize: '2rem', marginTop: '1rem' }}
               label="Show All"
-              transparent
+              variant="ghost"
               onClick={() =>
                 onSetLeaderboardsExpanded({ expanded: true, year })
               }

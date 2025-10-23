@@ -29,10 +29,7 @@ export default function FilterPanel({
   const { cardVars } = useThemedCardVars({ role: 'filter' });
 
   return (
-    <div
-      style={cardVars}
-      className={panelClass}
-    >
+    <div style={cardVars} className={panelClass}>
       <div className={filtersGridClass}>
         <ColorFilter
           selectedColor={filters.color}
@@ -57,9 +54,7 @@ export default function FilterPanel({
           onDropdownShown={onDropdownShown}
         />
       </div>
-      <div
-        className={switchRowClass}
-      >
+      <div className={switchRowClass}>
         <SwitchButton
           checked={!!filters.isDalle3}
           label="DALL-E 3"
@@ -158,11 +153,11 @@ const filtersGridClass = css`
 const switchRowClass = css`
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   padding-top: 0.4rem;
   @media (max-width: ${mobileMaxWidth}) {
-    justify-content: flex-start;
-    padding-top: 0;
+    justify-content: center;
+    padding-top: 0.2rem;
   }
 `;

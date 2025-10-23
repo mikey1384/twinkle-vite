@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 
@@ -12,7 +12,7 @@ const levelHash: Record<string, string> = {
 
 const difficultyExplanation: Record<
   string,
-  { reading: (JSX.Element | string)[]; listening: (JSX.Element | string)[] }
+  { reading: ReactNode[]; listening: ReactNode[] }
 > = {
   '1': {
     reading: [
@@ -76,23 +76,27 @@ const difficultyExplanation: Record<
   }
 };
 
-const Explanation = ({ level }: { level: number }) => (
-  <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-    <div
-      style={{
-        marginTop: '1rem',
-        fontSize: '1rem',
-        textAlign: 'left',
-        width: '80%'
-      }}
-    >
-      <strong>Reading:</strong> {difficultyExplanation[level].reading}
-      <br />
-      <strong>Listening (2x rewards):</strong>{' '}
-      {difficultyExplanation[level].listening}
+const Explanation = ({ level }: { level: number }) => {
+  const entry =
+    difficultyExplanation[String(level)] ||
+    difficultyExplanation['1'];
+  return (
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <div
+        style={{
+          marginTop: '1rem',
+          fontSize: '1rem',
+          textAlign: 'left',
+          width: '80%'
+        }}
+      >
+        <strong>Reading:</strong> {entry.reading}
+        <br />
+        <strong>Listening (2x rewards):</strong> {entry.listening}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function MainMenu({
   difficulty,

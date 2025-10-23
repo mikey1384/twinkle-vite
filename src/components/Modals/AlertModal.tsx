@@ -30,10 +30,8 @@ export default function AlertModal({
       modalLevel={modalLevel}
       footer={
         <Button
-          transparent
-          color={
-            doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
-          }
+          variant="ghost"
+          color={doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'}
           onClick={onHide}
         >
           OK

@@ -82,7 +82,7 @@ export default function Editor({
         </Button>
         <Button
           style={{ fontSize: '1.7rem', marginLeft: '1rem' }}
-          transparent
+          variant="ghost"
           onClick={onClose}
         >
           Cancel

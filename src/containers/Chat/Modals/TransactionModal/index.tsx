@@ -190,7 +190,7 @@ export default function TransactionModal({
         footer={
           <>
             <Button
-              transparent
+              variant="ghost"
               style={{ marginRight: '0.7rem' }}
               onClick={isAICardModalShown ? () => null : onHide}
             >

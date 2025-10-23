@@ -344,7 +344,7 @@ export default function Description({
               }}
             >
               <Button
-                transparent
+                variant="ghost"
                 style={{ marginRight: '1rem' }}
                 onClick={onEditCancel}
               >

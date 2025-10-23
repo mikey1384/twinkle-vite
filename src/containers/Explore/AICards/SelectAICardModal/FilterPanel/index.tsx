@@ -27,12 +27,16 @@ export default function FilterPanel({
   onSetFilters: (filters: any) => void;
 }) {
   const { cardVars } = useThemedCardVars({ role: 'filter' });
+  const dallESwitchStyle = deviceIsMobile
+    ? ({
+        transform: 'scale(0.9)',
+        transformOrigin: 'center',
+        gap: '0.4rem'
+      } as React.CSSProperties)
+    : undefined;
 
   return (
-    <div
-      style={cardVars}
-      className={panelClass}
-    >
+    <div style={cardVars} className={panelClass}>
       <div className={filtersGridClass}>
         <ColorFilter
           selectedColor={filters.color}
@@ -57,14 +61,13 @@ export default function FilterPanel({
           onDropdownShown={onDropdownShown}
         />
       </div>
-      <div
-        className={switchRowClass}
-      >
+      <div className={switchRowClass}>
         <SwitchButton
           checked={!!filters.isDalle3}
           label="DALL-E 3"
           onChange={handleDALLE3SwitchClick}
           small={deviceIsMobile}
+          style={dallESwitchStyle}
         />
       </div>
     </div>
@@ -148,7 +151,7 @@ const filtersGridClass = css`
   display: grid;
   gap: 1.2rem;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  align-items: start;
+  align-items: end;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -158,11 +161,11 @@ const filtersGridClass = css`
 const switchRowClass = css`
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   padding-top: 0.4rem;
   @media (max-width: ${mobileMaxWidth}) {
-    justify-content: flex-start;
-    padding-top: 0;
+    justify-content: center;
+    padding-top: 0.2rem;
   }
 `;

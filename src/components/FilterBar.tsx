@@ -11,6 +11,7 @@ interface FilterBarProps {
   innerRef?: React.Ref<HTMLDivElement>;
   dropdownButton?: React.ReactNode;
   style?: React.CSSProperties;
+  bordered?: boolean;
 }
 
 export default function FilterBar({
@@ -19,7 +20,8 @@ export default function FilterBar({
   children,
   innerRef,
   dropdownButton,
-  style
+  style,
+  bordered = false
 }: FilterBarProps) {
   const { color: alertRoleColor, themeName: resolvedThemeName } = useRoleColor(
     'alert',
@@ -92,6 +94,7 @@ export default function FilterBar({
     background: ${barBackground};
     overflow: visible;
     border-radius: ${wideBorderRadius};
+    border: ${bordered ? '1px solid var(--ui-border)' : 'none'};
 
     > .nav-section {
       flex: 1 1 auto;
@@ -155,6 +158,7 @@ export default function FilterBar({
 
     > .nav-section > nav.active.super-alert {
       animation: colorAndBorderChange 6s infinite alternate;
+      box-shadow: none !important; /* prevent weird left shadow glow */
     }
 
     > .filter-section {
@@ -230,27 +234,22 @@ export default function FilterBar({
       0% {
         color: #7f5af0;
         border-color: #7f5af0;
-        box-shadow: 0 14px 32px rgba(127, 90, 240, 0.35);
       }
       25% {
         color: #2cb1ff;
         border-color: #2cb1ff;
-        box-shadow: 0 14px 32px rgba(44, 177, 255, 0.35);
       }
       50% {
         color: #3ddc97;
         border-color: #3ddc97;
-        box-shadow: 0 14px 32px rgba(61, 220, 151, 0.35);
       }
       75% {
         color: #ffb400;
         border-color: #ffb400;
-        box-shadow: 0 14px 32px rgba(255, 180, 0, 0.35);
       }
       100% {
         color: #ff4f8b;
         border-color: #ff4f8b;
-        box-shadow: 0 14px 32px rgba(255, 79, 139, 0.35);
       }
     }
   `;

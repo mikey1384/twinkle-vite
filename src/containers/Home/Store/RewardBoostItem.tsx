@@ -55,33 +55,37 @@ const item = {
             position: 'relative'
           }}
         >
-          {rewardLevels.map((rewardLevel, index) => (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                width: '80%',
-                justifyContent: 'space-between',
-                marginTop: index === 0 ? 0 : '1rem'
-              }}
-            >
+          {rewardLevels.map((rewardLevel, index) => {
+            const levelToken = Theme()[`level${rewardLevel}`];
+            const levelColorKey =
+              (levelToken && levelToken.color) || 'logoBlue';
+            const levelColorFn = Color[levelColorKey] || Color.logoBlue;
+            const levelColor = levelColorFn();
+            return (
               <div
+                key={index}
                 style={{
                   display: 'flex',
-                  width: `8rem`,
-                  justifyContent: 'center'
+                  width: '80%',
+                  justifyContent: 'space-between',
+                  marginTop: index === 0 ? 0 : '1rem'
                 }}
               >
                 <div
-                  className={css`
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-width: 4rem;
-                    padding: 0.5rem 0.5rem;
-                    background: ${Color[
-                      Theme()[`level${rewardLevel}`].color
-                    ]()};
+                  style={{
+                    display: 'flex',
+                    width: `8rem`,
+                    justifyContent: 'center'
+                  }}
+                >
+                  <div
+                    className={css`
+                      display: flex;
+                      justify-content: center;
+                      align-items: center;
+                      min-width: 4rem;
+                      padding: 0.5rem 0.5rem;
+                    background: ${levelColor};
                     font-size: 1.5rem;
                     font-weight: bold;
                     color: #fff;
@@ -156,7 +160,8 @@ const item = {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

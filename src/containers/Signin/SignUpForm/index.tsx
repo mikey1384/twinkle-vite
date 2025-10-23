@@ -139,7 +139,7 @@ export default function SignUpForm({
       </main>
       <footer>
         <Button
-          transparent
+          variant="ghost"
           color="orange"
           style={{
             fontSize: '1.5rem',
