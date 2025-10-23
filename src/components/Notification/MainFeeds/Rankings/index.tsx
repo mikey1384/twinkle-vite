@@ -37,7 +37,6 @@ export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
       {userId && (
         <FilterBar
           className={notiFilterBar}
-          bordered
           style={{
             height: '4.5rem',
             fontSize: '1.6rem'

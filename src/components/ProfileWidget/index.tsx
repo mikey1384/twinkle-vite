@@ -171,7 +171,7 @@ export default function ProfileWidget() {
   }, [homeMenuItemActiveRole, defaultAccent]);
   const accentBorderColor = React.useMemo(() => {
     return homeMenuItemActiveRole.getColor(0.4) || 'var(--ui-border)';
-  }, [homeMenuItemActiveRole, defaultAccent]);
+  }, [homeMenuItemActiveRole]);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">

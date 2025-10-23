@@ -18,19 +18,20 @@ const RootThemeContext = createContext<RootThemeContextValue | null>(null);
 
 export function RootThemeProvider({ children }: { children: ReactNode }) {
   const profileTheme = useAppContext((v) => v.user.state.myState.profileTheme);
+  const userLoaded = useAppContext((v) => v.user.state.loaded);
 
   const themeName = useMemo<ThemeName>(() => {
-    if (profileTheme) {
-      return profileTheme as ThemeName;
-    }
+    let stored: string | null = null;
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('profileTheme');
-      if (stored) {
-        return stored as ThemeName;
-      }
+      stored = localStorage.getItem('profileTheme');
     }
-    return DEFAULT_PROFILE_THEME as ThemeName;
-  }, [profileTheme]);
+    // Before user is loaded, prefer stored theme over initial default
+    if (!userLoaded) {
+      return (stored || profileTheme || DEFAULT_PROFILE_THEME) as ThemeName;
+    }
+    // After user loads, prefer user theme; fall back to stored, then default
+    return (profileTheme || stored || DEFAULT_PROFILE_THEME) as ThemeName;
+  }, [profileTheme, userLoaded]);
 
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
 

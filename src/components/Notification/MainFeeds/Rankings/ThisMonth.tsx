@@ -77,7 +77,6 @@ export default function ThisMonth({
       {loggedIn && (
         <FilterBar
           className={notiFilterBar}
-          bordered
           style={{
             height: '4.5rem',
             fontSize: '1.6rem'
