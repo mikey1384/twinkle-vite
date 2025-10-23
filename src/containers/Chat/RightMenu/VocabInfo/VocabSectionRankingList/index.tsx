@@ -58,7 +58,7 @@ export default function VocabSectionRankingList({
           </nav>
         </FilterBar>
       )}
-      <div style={{ marginTop: '1rem' }}>
+      <div style={{ marginTop: '1rem', padding: '0 1rem 1.2rem' }}>
         {filteredUsers.length === 0 ? (
           <div
             className={css`
@@ -70,12 +70,7 @@ export default function VocabSectionRankingList({
             Be the first to join this leaderboard by collecting vocabulary
           </div>
         ) : (
-          <LeaderboardList
-            scrollable={false}
-            padding="0"
-            mobilePadding="0"
-            bottomPadding="0"
-          >
+          <LeaderboardList scrollable={false} padding="0" mobilePadding="0" bottomPadding="0">
             {filteredUsers.map((user) => {
               return (
                 <Collector

@@ -3,10 +3,11 @@ import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, getThemeStyles, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
+import { useKeyContext } from '~/contexts';
 
 function RightMenu({
   channelName,
@@ -33,6 +34,9 @@ function RightMenu({
     state: { chatType }
   } = useContext(LocalContext);
   const MenuRef: React.RefObject<any> = useRef(null);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const themeName = (profileTheme || 'logoBlue') as string;
+  const themeBg = useMemo(() => getThemeStyles(themeName, 0.06).bg, [themeName]);
 
   useEffect(() => {
     (MenuRef.current || {}).scrollTop = 0;
@@ -60,11 +64,21 @@ function RightMenu({
           position: relative;
           background: #fff;
           border-left: 1px solid var(--ui-border);
+          display: flex;
+          flex-direction: column;
+          max-height: 100vh;
           overflow-y: ${
-            chatType === AI_CARD_CHAT_TYPE ? 'hidden' : 'scroll'
+            chatType === AI_CARD_CHAT_TYPE
+              ? 'hidden'
+              : chatType === VOCAB_CHAT_TYPE
+              ? 'hidden'
+              : 'auto'
           };
+          overscroll-behavior: contain;
           -webkit-overflow-scrolling: ${
-            chatType === AI_CARD_CHAT_TYPE ? 'auto' : 'touch'
+            chatType === AI_CARD_CHAT_TYPE || chatType === VOCAB_CHAT_TYPE
+              ? 'auto'
+              : 'touch'
           };
           @media (max-width: ${mobileMaxWidth}) {
             max-width: ${chatType === VOCAB_CHAT_TYPE ||
@@ -79,7 +93,22 @@ function RightMenu({
         `}
       >
         {chatType === AI_CARD_CHAT_TYPE ? <AICardInfo /> : null}
-        {chatType === VOCAB_CHAT_TYPE ? <VocabInfo /> : null}
+        {chatType === VOCAB_CHAT_TYPE ? (
+          <div
+            className={css`
+              margin: 0;
+              background: #fff;
+              border-radius: 0;
+              box-shadow: 0 20px 38px -28px rgba(15, 23, 42, 0.2);
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+            `}
+          >
+            <VocabInfo />
+          </div>
+        ) : null}
         {!chatType && (
           <ChatInfo
             isClass={currentChannel?.isClass}

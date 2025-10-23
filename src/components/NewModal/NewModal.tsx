@@ -364,7 +364,7 @@ export const NewModal = forwardRef<
                   align-items: center;
                   justify-content: space-between;
                   padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
-                  border-bottom: 1px solid var(--ui-border);
+                  border-bottom: none;
                   background-color: white;
                   ${size === 'fullscreen'
                     ? ''
@@ -494,7 +494,7 @@ export const NewModal = forwardRef<
               <div
                 className={css`
                   padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
-                  border-top: 1px solid var(--ui-border);
+                  border-top: none;
                   background-color: ${Color.wellGray(0.3)};
                   ${size === 'fullscreen'
                     ? ''

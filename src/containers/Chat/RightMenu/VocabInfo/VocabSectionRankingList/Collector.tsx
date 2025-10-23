@@ -46,6 +46,11 @@ export default function Collector({
     [rankColor, user.rank]
   );
 
+  const rankBadgeTextColor = useMemo(() => {
+    if (user.rank === 2) return '#ffffff';
+    return textColor;
+  }, [textColor, user.rank]);
+
   const containerClass = css`
     display: flex;
     align-items: center;
@@ -104,10 +109,6 @@ export default function Collector({
       min-width: 2.8rem;
     }
   `;
-  const rankBadgeTextColor = useMemo(() => {
-    if (user.rank === 2) return '#ffffff';
-    return textColor;
-  }, [textColor, user.rank]);
   const highlightBackground = useMemo(() => {
     return getHighlightColor(0.22) || Color.highlightGray();
   }, [getHighlightColor]);
@@ -145,9 +146,7 @@ export default function Collector({
     ...(style || {})
   };
   const rankBadgeTextShadow =
-    user.rank === 2
-      ? '0 0 0.2rem rgba(37, 99, 235, 0.62)'
-      : 'none';
+    user.rank === 2 ? '0 0 0.2rem rgba(37, 99, 235, 0.62)' : 'none';
 
   return (
     <div className={containerClass} style={containerStyle}>
@@ -162,7 +161,7 @@ export default function Collector({
         </span>
         <div className={profileWrapperClass}>
           <ProfilePic
-          style={{ width: '100%' }}
+            style={{ width: '100%' }}
             profilePicUrl={user.profilePicUrl}
             userId={user.id}
           />

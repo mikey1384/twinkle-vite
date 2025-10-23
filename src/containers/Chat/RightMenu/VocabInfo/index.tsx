@@ -12,7 +12,14 @@ export default function VocabInfo() {
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const userId = useKeyContext((v) => v.myState.userId);
   return (
-    <div style={{ height: '100%' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0
+      }}
+    >
       <TopMenu />
       <BottomMenu
         rank={myAllTimeRank}

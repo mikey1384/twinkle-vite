@@ -19,7 +19,7 @@ export default function BottomMenu({
   const currentYear = useChatContext((v) => v.state.currentYear);
   const [selected, setSelected] = useState('league');
   return (
-    <div style={{ height: '50%' }}>
+    <div style={{ height: '50%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <FilterBar
         style={{ fontSize: '1.5rem', height: '4rem', marginBottom: 0 }}
       >
@@ -36,7 +36,14 @@ export default function BottomMenu({
           XP
         </nav>
       </FilterBar>
-      <div style={{ overflow: 'scroll', height: 'calc(100% - 4rem )' }}>
+      <div
+        style={{
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          height: 'calc(100% - 4rem)'
+        }}
+      >
         {selected === 'xp' ? (
           <XPRankings
             userId={userId}
