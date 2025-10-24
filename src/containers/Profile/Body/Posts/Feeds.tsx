@@ -196,6 +196,11 @@ export default function Feeds({
       css`
         padding: 1.2rem 1.2rem;
         transition: background 0.15s ease;
+        @media (max-width: ${mobileMaxWidth}) {
+          &:first-of-type {
+            padding-top: 0;
+          }
+        }
       `,
     []
   );

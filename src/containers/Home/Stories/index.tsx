@@ -141,6 +141,9 @@ export default function Stories() {
         /* spacing only; no background, no border */
         padding: 1.2rem 1.2rem;
         transition: background 0.15s ease;
+        &:first-of-type {
+          padding-top: 0;
+        }
         @media (max-width: ${mobileMaxWidth}) {
           padding-left: 0;
           padding-right: 0;
@@ -290,7 +293,7 @@ export default function Stories() {
             </div>
           ) : null}
           {loaded && !loadingPosts && feeds?.length > 0 ? (
-            <div className={feedListClass}>
+            <>
               {numNewPosts > 0 ? (
                 <Banner
                   color={alertColorKey}
@@ -319,6 +322,7 @@ export default function Stories() {
                   </Banner>
                 )
               )}
+              <div className={feedListClass}>
               {(feeds || []).map(
                 (feed: { [key: string]: any } = {}, index: number) => {
                   const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
@@ -359,7 +363,8 @@ export default function Stories() {
                   }
                 `}
               />
-            </div>
+              </div>
+            </>
           ) : null}
         </div>
       </div>

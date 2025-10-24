@@ -7,10 +7,10 @@ import { returnMaxRewards } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Comment from './Comment';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Starmarks from './Starmarks';
 import { useKeyContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
+import RewardProgressBar from './RewardProgressBar';
 
 const INITIAL_LOAD_COUNT = 1;
 const LOAD_MORE_COUNT = 3;
@@ -45,20 +45,14 @@ function RewardStatus({
     themeName: infoRole.themeName,
     fallback: 'orange'
   });
-  const recommendationRole = useRoleColor('recommendation', {
-    themeName: rewardRole.themeName,
-    fallback: 'gold'
-  });
   const infoColor = infoRole.colorKey || 'logoBlue';
-  const rewardBaseColor = rewardRole.getColor() || Color.orange();
-  const containerBg = rewardRole.getColor(0.06) || Color.logoBlue(0.06);
-  const containerBorder = rewardRole.getColor(0.28) || Color.logoBlue(0.28);
-  const rewardGradientStart = rewardRole.getColor(0.9) || rewardBaseColor;
-  const rewardGradientEnd = rewardBaseColor;
-  const starColor = recommendationRole.getColor() || Color.gold();
-  const scopedTheme = rewardRole.themeName;
-
+  const levelRole = useRoleColor(`level${rewardLevel}`, {
+    themeName: rewardRole.themeName,
+    fallback: 'logoBlue'
+  });
+  // Container background only tinted when full; otherwise neutral
   const [numLoaded, setNumLoaded] = useState(INITIAL_LOAD_COUNT);
+  const scopedTheme = rewardRole.themeName;
 
   const sortedRewards = useMemo(() => {
     if (!Array.isArray(rewards)) return [];
@@ -83,6 +77,16 @@ function RewardStatus({
     return Math.min(total, maxRewards);
   }, [maxRewards, rewards]);
 
+  const isComplete = useMemo(
+    () => maxRewards > 0 && amountRewarded >= maxRewards,
+    [amountRewarded, maxRewards]
+  );
+
+  const containerBg = isComplete
+    ? levelRole.getColor(0.12) || Color.logoBlue(0.12)
+    : '#fff';
+  const containerBorder = levelRole.getColor(0.4) || Color.logoBlue(0.4);
+
   const handleLoadMore = useCallback(() => {
     setNumLoaded((prev) => prev + LOAD_MORE_COUNT);
   }, []);
@@ -104,22 +108,25 @@ function RewardStatus({
         <div
           style={style}
           className={`${className || ''} ${css`
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             padding: 0.6rem 1rem;
-            width: calc(100% - 1.2rem);
-            margin: 0.6rem;
+            width: 100%;
+            margin: 0.6rem 0;
             color: ${Color.darkBlueGray()};
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
             min-height: 3.6rem;
             background: ${containerBg};
             border: 1px solid ${containerBorder};
             border-radius: ${wideBorderRadius};
             @media (max-width: ${mobileMaxWidth}) {
-              grid-template-columns: 1fr;
-              row-gap: 0.4rem;
-              justify-items: center;
+              font-size: 1.05rem;
+              padding: 0.8rem 0.9rem;
+              gap: 0.6rem;
+              justify-content: center;
             }
           `}`}
         >
@@ -127,47 +134,48 @@ function RewardStatus({
             className={css`
               display: inline-flex;
               align-items: center;
-              gap: 0.5rem;
-              background: linear-gradient(135deg, ${rewardGradientStart} 0%, ${rewardGradientEnd} 100%);
-              color: #fff;
+              gap: 0.45rem;
+              background: #fff;
+              color: ${Color.darkBlueGray()};
               border-radius: 999px;
-              padding: 0.3rem 0.8rem;
+              padding: 0.35rem 0.85rem;
               font-weight: 700;
-              letter-spacing: 0.2px;
-              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-              background-size: 200% 200%;
-              animation: shimmer 6s ease infinite;
-              grid-column: 1;
-              justify-self: start;
-              @keyframes shimmer {
-                0% {
-                  background-position: 0% 50%;
-                }
-                50% {
-                  background-position: 100% 50%;
-                }
-                100% {
-                  background-position: 0% 50%;
-                }
-              }
+              letter-spacing: 0.18px;
+              border: 1px solid ${levelRole.getColor() || Color.logoBlue()};
+              box-shadow: none;
+              font-size: 0.95em;
+              flex-shrink: 0;
               @media (max-width: ${mobileMaxWidth}) {
-                justify-self: center;
+                font-size: 0.92em;
+                padding: 0.3rem 0.75rem;
               }
             `}
           >
-            <Icon icon="sparkles" />
+            <Icon
+              icon="sparkles"
+              style={{
+                fontSize: '1em',
+                color: levelRole.getColor() || Color.logoBlue()
+              }}
+            />
             <span>
-              {addCommasToNumber(amountRewarded)} Twinkle
-              {amountRewarded === 1 ? '' : 's'}
+              {addCommasToNumber(amountRewarded)} /{' '}
+              {addCommasToNumber(maxRewards)}
             </span>
           </div>
           <div
             className={css`
-              grid-column: 2;
-              justify-self: center;
+              flex: 1 1 auto;
+              min-width: 0;
+              display: flex;
+              align-items: center;
             `}
           >
-              <Starmarks stars={amountRewarded} color={starColor} fullWidth={false} />
+            <RewardProgressBar
+              amount={amountRewarded}
+              max={maxRewards}
+              color={levelRole.getColor() || Color.logoBlue()}
+            />
           </div>
         </div>
       </ScopedTheme>

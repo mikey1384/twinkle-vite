@@ -110,8 +110,8 @@ export default function RecommendationStatus({
   const containerCss = useMemo(
     () => css`
       padding: 0.6rem 1rem;
-      width: calc(100% - 1.2rem);
-      margin: 0.6rem;
+      width: 100%;
+      margin: 0.6rem 0;
       display: flex;
       align-items: center;
       justify-content: flex-start;

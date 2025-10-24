@@ -551,7 +551,10 @@ export default function TargetContent({
                   <RecommendationStatus
                     style={{
                       marginTop: 0,
-                      marginBottom: '1rem'
+                      marginBottom: '1rem',
+                      marginLeft: '1rem',
+                      marginRight: '1rem',
+                      width: 'calc(100% - 2rem)'
                     }}
                     contentType="comment"
                     recommendations={comment.recommendations}
@@ -594,7 +597,10 @@ export default function TargetContent({
                   contentId={comment.id}
                   theme={theme}
                   style={{
-                    marginTop: 0
+                    marginTop: 0,
+                    marginLeft: '1rem',
+                    marginRight: '1rem',
+                    width: 'calc(100% - 2rem)'
                   }}
                   rewardLevel={finalRewardLevel}
                   onCommentEdit={onEditRewardComment}

@@ -588,7 +588,6 @@ function Reply({
                               contentType="comment"
                               content={reply.content}
                               style={{ marginLeft: '1rem' }}
-                              hideLabel
                             />
                           )}
                         </div>

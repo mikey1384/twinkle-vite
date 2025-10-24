@@ -469,7 +469,6 @@ export default function BottomInterface({
                   contentId={contentId}
                   contentType={contentType}
                   style={{ marginLeft: '1rem' }}
-                  hideLabel
                 />
               )}
           </div>

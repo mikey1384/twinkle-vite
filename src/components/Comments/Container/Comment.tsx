@@ -775,7 +775,9 @@ function Comment({
                                     disabled={loadingReplies}
                                     variant="ghost"
                                     style={{
-                                      marginLeft: isDeleteNotification ? 0 : '1rem'
+                                      marginLeft: isDeleteNotification
+                                        ? 0
+                                        : '1rem'
                                     }}
                                     onClick={handleReplyButtonClick}
                                   >
@@ -849,7 +851,6 @@ function Comment({
                                     contentType="comment"
                                     content={comment.content}
                                     style={{ marginLeft: '1rem' }}
-                                    hideLabel
                                   />
                                 )}
                               </div>
