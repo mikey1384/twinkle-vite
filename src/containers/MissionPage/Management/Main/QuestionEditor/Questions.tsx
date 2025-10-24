@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';

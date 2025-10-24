@@ -344,7 +344,7 @@ export default function AIStoryView({
           <div className={readingHeaderClass}>
             <div className={readingHintClass}>
               <Icon icon="book-open" />
-              Read the story
+              Reading
             </div>
             <div className={levelChipClass}>
               <Icon icon="layer-group" />

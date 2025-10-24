@@ -8,7 +8,7 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { checkMicrophoneAccess } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';

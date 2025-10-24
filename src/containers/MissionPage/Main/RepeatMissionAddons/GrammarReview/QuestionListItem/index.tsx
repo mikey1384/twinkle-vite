@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ChoiceList from './ChoiceList';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export default function QuestionListItem({
   question: { question, choices: choiceLabels, answerIndex } = {},

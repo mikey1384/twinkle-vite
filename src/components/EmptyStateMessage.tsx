@@ -24,11 +24,6 @@ export default function EmptyStateMessage({
     themeName: theme,
     fallback: 'logoBlue'
   });
-  const { getColor: getTextColor } = useRoleColor('info', {
-    themeName: theme,
-    fallback: 'logoBlue'
-  });
-
   const accentColor = getAccentColor(0.68) || Color.logoBlue(0.65);
   const accentBorder = getAccentColor(0.9) || Color.logoBlue(0.82);
   const textColor = '#ffffff';

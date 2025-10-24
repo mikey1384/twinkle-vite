@@ -1,7 +1,6 @@
 import React, { memo, useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 

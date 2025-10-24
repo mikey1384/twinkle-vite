@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import BookmarkModal from './BookmarkModal';
 import Bookmarks from './Bookmarks';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import FileSelector from './FileSelector';
 import ThinkHardToggle from './ThinkHardToggle';

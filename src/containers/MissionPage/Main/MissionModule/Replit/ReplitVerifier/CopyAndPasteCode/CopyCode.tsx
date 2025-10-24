@@ -3,7 +3,7 @@ import Code from '~/components/Texts/Code';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const copiedLabel = localize('copied');

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import AddSlide from './AddSlide';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 

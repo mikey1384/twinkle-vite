@@ -131,7 +131,7 @@ export default function ItemPanel({
           themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
         ...style
       }) as React.CSSProperties,
-    [accentTint, baseBorderColor, panelVars, style, themeStyles.border, themeStyles.hoverBg]
+    [accentTint, baseBorderColor, panelVars, style, themeStyles.hoverBg]
   );
 
   return (

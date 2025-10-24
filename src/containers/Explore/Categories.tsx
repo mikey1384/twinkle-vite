@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Checkbox from '~/components/Checkbox';
 import Link from '~/components/Link';
 import Icon from '~/components/Icon';
@@ -7,7 +7,6 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { resolveColorValue } from '~/theme/resolveColor';
 import { isTablet } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -35,11 +34,6 @@ export default function Categories({
     fallback: 'logoBlue'
   });
   const searchColor = searchRole.color;
-  const searchShadowColor = useMemo(() => {
-    const raw = searchRole.token?.shadow;
-    if (!raw) return '';
-    return resolveColorValue(raw, searchRole.token?.opacity) || raw;
-  }, [searchRole.token?.opacity, searchRole.token?.shadow]);
   const [changingDefaultFilter, setChangingDefaultFilter] = useState(false);
 
   useEffect(() => {

@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { FileData } from '~/types';
 import LocalContext from '~/containers/Chat/Context';

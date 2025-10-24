@@ -98,15 +98,7 @@ export function useHomePanelVars(
       ['--home-panel-accent']: accentColor,
       ['--home-panel-card-border']: border
     } as HomePanelVars;
-  }, [
-    accentColor,
-    accentTint,
-    headingColor,
-    themeStyles,
-    themeStyles.border,
-    themeStyles.hoverBg,
-    neutralSurface
-  ]);
+  }, [accentColor, accentTint, headingColor, themeStyles.hoverBg, neutralSurface]);
 
   return {
     accentColor,

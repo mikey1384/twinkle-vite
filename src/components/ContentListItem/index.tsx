@@ -5,7 +5,6 @@ import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { Color } from '~/constants/css';
 import { useInView } from 'react-intersection-observer';
 
 function ContentListItem({

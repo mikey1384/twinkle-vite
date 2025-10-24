@@ -4,7 +4,7 @@ import {
   useInteractiveContext,
   useKeyContext
 } from '~/contexts';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import Content from './Content';
 import Deleted from './Deleted';

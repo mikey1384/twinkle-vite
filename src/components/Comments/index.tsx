@@ -12,7 +12,7 @@ import Container from './Container';
 import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl, scrollElementToCenter } from '~/helpers';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth, getThemeStyles } from '~/constants/css';
+import { borderRadius, mobileMaxWidth, getThemeStyles } from '~/constants/css';
 import { generateFileName } from '~/helpers/stringHelpers';
 import {
   useAppContext,

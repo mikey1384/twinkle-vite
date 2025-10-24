@@ -3,7 +3,7 @@ import MessagesContainer from './MessagesContainer';
 import Collect from './Collect';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../Context';
-import { mobileMaxWidth, Color } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { User } from '~/types';

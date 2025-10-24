@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Highlight, themes } from 'prism-react-renderer';
-import { Color } from '~/constants/css';
 
 export default function Code({
   children,

@@ -11,7 +11,6 @@ import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
 import EmbeddedComponent from './EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
   applyTextEffects,

@@ -20,7 +20,6 @@ import { isMobile } from '~/helpers';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { resolveColorValue } from '~/theme/resolveColor';
 
 const intervalLength = 2000;
 const deviceIsMobile = isMobile(navigator);
@@ -133,12 +132,6 @@ function XPVideoPlayer({
     () => getReadableTextColor(youtubeLinkBg),
     [youtubeLinkBg]
   );
-  const byUserIndicatorTextShadowColor = useMemo(() => {
-    const raw = byUserIndicatorTextRole.token?.shadow;
-    if (!raw) return '';
-    return resolveColorValue(raw) || raw;
-  }, [byUserIndicatorTextRole.token?.shadow]);
-
   const coinRewardAmount = useMemo(
     () => videoRewardHash?.[rewardBoostLvl]?.coin || 2,
     [rewardBoostLvl]

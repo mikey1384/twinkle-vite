@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ScopedTheme from '~/theme/ScopedTheme';

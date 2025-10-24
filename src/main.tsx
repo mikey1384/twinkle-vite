@@ -382,7 +382,7 @@ library.add(
     const storedTheme = (localStorage.getItem('profileTheme') ||
       DEFAULT_PROFILE_THEME) as ThemeName;
     applyThemeVars(storedTheme);
-  } catch (err) {
+  } catch (_err) {
     // ignore
   }
   await loadPolyfills();

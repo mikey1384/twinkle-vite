@@ -1,10 +1,8 @@
 import React, { useMemo } from 'react';
-import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import MissionStatusCard from '~/components/MissionStatusCard';
 import RichText from '~/components/Texts/RichText';
 import { Color } from '~/constants/css';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 
 export default function StatusMessage({
   mission,
@@ -21,7 +19,6 @@ export default function StatusMessage({
   failMessage: string;
   onBackToStart: () => any;
 }) {
-
   const rewards = useMemo(() => {
     return {
       xp: mission.repeatXpReward,

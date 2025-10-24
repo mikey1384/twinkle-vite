@@ -180,6 +180,7 @@ export default function MainMenu({
         tone="raised"
         color="darkerGray"
         icon="caret-down"
+        listStyle={{ minWidth: '18rem', whiteSpace: 'nowrap' }}
         text={levelHash[difficulty]}
         onDropdownShown={onSetDropdownShown}
         menuProps={Object.keys(levelHash).map((level: string) => ({

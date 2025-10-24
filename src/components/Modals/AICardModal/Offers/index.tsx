@@ -6,7 +6,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function Offers({
   cardId,

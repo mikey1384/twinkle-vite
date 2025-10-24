@@ -4,7 +4,6 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import IconSelectionModal from '../IconSelectionModal';
 import SlideListItem from '../../../SlideListItem';
-import { Color } from '~/constants/css';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import SelectDestinationModal from './SelectDestinationModal';
 import GoBackToMissionItem from './GoBackToMissionItem';

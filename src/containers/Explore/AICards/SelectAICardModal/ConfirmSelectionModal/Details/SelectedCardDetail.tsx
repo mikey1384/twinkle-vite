@@ -1,6 +1,6 @@
 import React from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 
 export default function SelectedCardDetail({
   isAICardModalShown,

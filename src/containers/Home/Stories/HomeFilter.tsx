@@ -3,7 +3,6 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Icon from '~/components/Icon';
 import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -57,7 +56,6 @@ export default function HomeFilter({
   const userId = useKeyContext((v) => v.myState.userId);
   const [activeTab, setActiveTab] = useState('');
   const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
-  const filterTextRole = useRoleColor('filterText', { fallback: 'darkGray' });
 
   const videoContainerTone = useMemo(() => {
     const base = '#fff';

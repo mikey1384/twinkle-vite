@@ -6,7 +6,7 @@ import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { notiFilterBar } from '../../Styles';
 import LeaderboardList from '~/components/LeaderboardList';
 

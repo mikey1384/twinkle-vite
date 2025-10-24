@@ -33,7 +33,6 @@ import {
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
 import { isMobile, parseChannelPath } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';

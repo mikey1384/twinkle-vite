@@ -1,5 +1,5 @@
 import React from 'react';
-import ChoiceList from './ChoiceList';
+import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -67,12 +67,15 @@ export default function QuestionSlide({
             </div>
           )}
           <h3>{question}</h3>
-          <ChoiceList
+          <MultipleChoiceQuestion
             style={{ marginTop: '2rem', fontSize: '1.6rem' }}
-            answerIndex={answerIndex}
-            conditionPassStatus={conditionPassStatus}
-            onSelect={onSelectChoice}
+            question={null}
             listItems={choices}
+            isGraded={!!conditionPassStatus}
+            selectedChoiceIndex={choices.findIndex((c: any) => c.checked)}
+            answerIndex={answerIndex}
+            onSelectChoice={onSelectChoice}
+            conditionPassStatus={conditionPassStatus}
           />
         </div>
       </div>

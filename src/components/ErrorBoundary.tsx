@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import URL from '~/constants/URL';
 import request from 'axios';
 import { getStoredItem } from '~/helpers/userDataHelpers';
-import { Color, borderRadius } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { install } from 'source-map-support';
 
 install();
@@ -73,7 +73,13 @@ export default class ErrorBoundary extends Component<
               textAlign: 'center'
             }}
           >
-            <p style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: '1rem' }}>
+            <p
+              style={{
+                fontSize: '1.9rem',
+                fontWeight: 700,
+                marginBottom: '1rem'
+              }}
+            >
               Uh oh, something went wrong
             </p>
             <p style={{ fontSize: '1.5rem', lineHeight: 1.6 }}>

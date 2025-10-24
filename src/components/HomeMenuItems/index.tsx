@@ -65,10 +65,6 @@ export default function HomeMenuItems({
   }, [activeColorFn]);
   const themeName = (profileTheme || 'logoBlue') as string;
   const isVanta = themeName === 'vantaBlack';
-  const themeBg = useMemo(
-    () => getThemeStyles(themeName, 0.06).bg,
-    [themeName]
-  );
   const hoverBg = useMemo(
     () => getThemeStyles(themeName, 0.12).bg,
     [themeName]
@@ -142,9 +138,11 @@ export default function HomeMenuItems({
               background: transparent;
               border: 1px solid transparent;
               box-shadow: none;
-              transition: background 0.18s ease,
-                border-color 0.18s ease, color 0.18s ease, transform 0.06s ease;
-              > .selection { display: none; }
+              transition: background 0.18s ease, border-color 0.18s ease,
+                color 0.18s ease, transform 0.06s ease;
+              > .selection {
+                display: none;
+              }
               > .icon {
                 padding-left: 0.2rem;
                 color: ${Color.darkerGray()};
@@ -159,13 +157,12 @@ export default function HomeMenuItems({
             transform: translateX(4px);
             .homemenu__item {
               background: ${hoverBg};
-              border-color:
-                ${isVanta
-                  ? 'rgba(0,0,0,0.9)'
-                  : activeColorFn
-                  ? activeColorFn(0.4)
-                  : 'var(--ui-border)'};
-              box-shadow: 0 12px 20px -14px rgba(15,23,42,0.22);
+              border-color: ${isVanta
+                ? 'rgba(0,0,0,0.9)'
+                : activeColorFn
+                ? activeColorFn(0.4)
+                : 'var(--ui-border)'};
+              box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22);
               > .icon,
               > .label {
                 color: ${isVanta ? Color.darkGray() : hoverAccentColor};

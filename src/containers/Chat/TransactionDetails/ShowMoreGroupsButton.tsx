@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, borderRadius } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 
 export default function ShowMoreGroupsButton({
   onClick,

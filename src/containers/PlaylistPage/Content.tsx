@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import Playlist from '~/components/Playlist';
 import { useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
 
 export default function Content() {

@@ -27,10 +27,10 @@ export default function Rewind({
   const [rewindRequestMessage, setRewindRequestMessage] = useState<any>({});
   const [loaded, setLoaded] = useState(false);
 
-  const squareColors = useMemo(
-    () => getUserChatSquareColors(myId),
-    [myId, chessThemeVersion]
-  );
+  const squareColors = useMemo(() => {
+    void chessThemeVersion;
+    return getUserChatSquareColors(myId);
+  }, [myId, chessThemeVersion]);
 
   useEffect(() => {
     init();

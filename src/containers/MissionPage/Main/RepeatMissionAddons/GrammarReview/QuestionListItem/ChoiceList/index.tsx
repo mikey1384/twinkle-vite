@@ -1,7 +1,7 @@
 import React from 'react';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
-import { borderRadius, Color, innerBorderRadius } from '~/constants/css';
+import { borderRadius, innerBorderRadius } from '~/constants/css';
 
 export default function ChoiceList({
   answerIndex,

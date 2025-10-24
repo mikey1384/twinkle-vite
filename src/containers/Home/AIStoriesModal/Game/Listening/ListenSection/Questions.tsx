@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Question from '~/components/Question';
+import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
@@ -101,7 +101,7 @@ export default function Questions({
             `}
           >
             {questions.map((question, index) => (
-              <Question
+              <MultipleChoiceQuestion
                 key={question.id}
                 isGraded={solveObj.isGraded}
                 style={{
@@ -114,10 +114,10 @@ export default function Questions({
                 choices={question.choices}
                 selectedChoiceIndex={userChoiceObj[question.id]}
                 answerIndex={question.answerIndex}
-                onSelectChoice={(index) =>
+                onSelectChoice={(choiceIndex) =>
                   onSetUserChoiceObj((obj: any) => ({
                     ...obj,
-                    [question.id]: index
+                    [question.id]: choiceIndex
                   }))
                 }
               />

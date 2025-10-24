@@ -1,54 +1,21 @@
 import { useMemo, type CSSProperties } from 'react';
 import { useKeyContext } from '~/contexts';
-import { Color, getThemeStyles } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { getThemeRoles, ThemeName } from '.';
 import { resolveColorValue } from './resolveColor';
 
 interface SectionPanelOptions {
   customThemeName?: string | ThemeName;
-  intensity?: number;
-  bodyBlendWeight?: number;
-}
-
-function blendWithWhite(color: string | undefined, weight: number): string {
-  if (!color) return '#fbfcff';
-  const trimmed = color.trim();
-  const hexMatch = trimmed.match(/^#?([0-9a-f]{6})$/i);
-  if (hexMatch) {
-    const [r, g, b] = [
-      parseInt(hexMatch[1].slice(0, 2), 16),
-      parseInt(hexMatch[1].slice(2, 4), 16),
-      parseInt(hexMatch[1].slice(4, 6), 16)
-    ];
-    const w = Math.max(0, Math.min(1, weight));
-    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
-  }
-  const rgbaMatch = trimmed.match(
-    /rgba?\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)(?:,\s*([-\d.]+))?\)/i
-  );
-  if (rgbaMatch) {
-    const [, r, g, b] = rgbaMatch;
-    const w = Math.max(0, Math.min(1, weight));
-    const mix = (channel: string | number) =>
-      Math.round(Number(channel) * (1 - w) + 255 * w);
-    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
-  }
-  return color;
 }
 
 export function useSectionPanelVars(options: SectionPanelOptions = {}) {
-  const { customThemeName, intensity = 0.12, bodyBlendWeight = 0.97 } = options;
+  const { customThemeName } = options;
   const viewerTheme = useKeyContext((v) => v.myState.profileTheme);
   const themeName = useMemo<ThemeName>(
     () => (customThemeName || viewerTheme || 'logoBlue') as ThemeName,
     [customThemeName, viewerTheme]
   );
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
-  const themeStyles = useMemo(
-    () => getThemeStyles(themeName, intensity),
-    [themeName, intensity]
-  );
   const sectionPanelRole = themeRoles.sectionPanel;
   const sectionPanelTextRole = themeRoles.sectionPanelText;
 

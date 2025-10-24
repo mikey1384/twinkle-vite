@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export const panel = css`
   width: 60%;

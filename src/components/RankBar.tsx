@@ -9,30 +9,6 @@ import { useRoleColor } from '~/theme/useRoleColor';
 
 const rankLabel = localize('rank');
 
-function blendWithWhite(color: string, weight: number) {
-  const hexMatch = color?.trim().match(/^#?([0-9a-f]{6})$/i);
-  if (hexMatch) {
-    const [, value] = hexMatch;
-    const r = parseInt(value.slice(0, 2), 16);
-    const g = parseInt(value.slice(2, 4), 16);
-    const b = parseInt(value.slice(4, 6), 16);
-    const w = Math.max(0, Math.min(1, weight));
-    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
-  }
-  const match = color
-    ?.replace(/\s+/g, '')
-    .match(/rgba?\(([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?\)/i);
-  if (!match) return '#f3f6ff';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
-
 export default function RankBar({
   className,
   profile,
@@ -101,7 +77,7 @@ export default function RankBar({
           align-items: center;
         }
       `,
-    [baseTextColor, borderCss, isTopThree]
+    [baseTextColor, isTopThree]
   );
   const pageContainerClass = useMemo(
     () =>
@@ -126,37 +102,7 @@ export default function RankBar({
           max-width: 100%;
         }
       `,
-    [baseTextColor, borderCss, isTopThree]
-  );
-  const medallionClass = useMemo(
-    () =>
-      css`
-        height: 6rem;
-        width: 6rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 0.2rem;
-        background: ${rankColor
-          ? blendWithWhite(rankColor, isTopThree ? 0.85 : 0.9)
-          : blendWithWhite(Color.logoBlue(), isTopThree ? 0.85 : 0.92)};
-        border: 1px solid ${rankColor || Color.logoBlue()};
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-        @media (max-width: ${mobileMaxWidth}) {
-          height: 4.8rem;
-          width: 4.8rem;
-          font-size: 1.2rem;
-        }
-        .rank-num {
-          font-weight: 800;
-          color: ${rankTextColor};
-          font-size: 1.6rem;
-          line-height: 1;
-        }
-      `,
-    [rankColor, isTopThree, rankTextColor]
+    [baseTextColor, isTopThree]
   );
   const pageDetailsClass = useMemo(
     () =>

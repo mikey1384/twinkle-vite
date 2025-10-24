@@ -14,11 +14,9 @@ import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const DEFAULT_PROGRESS_COLOR = 'rgba(65, 140, 235, 1)';
-const DEFAULT_PROGRESS_ACCENT = 'rgba(65, 140, 235, 0.24)';
 const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
 const DEFAULT_REWARD_COLOR = 'rgba(255, 203, 50, 1)';
 const DEFAULT_RECOMMENDATION_COLOR = 'rgba(245, 190, 70, 1)';
-const DEFAULT_CARD_BORDER = 'rgba(204, 204, 204, 0.65)';
 
 const container = css`
   ${themedCardBase};

@@ -6,7 +6,7 @@ import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const startNewSubjectLabel = localize('startNewSubject');

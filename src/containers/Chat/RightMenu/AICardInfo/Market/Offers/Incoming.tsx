@@ -6,7 +6,7 @@ import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import {
   useAppContext,
   useChatContext,

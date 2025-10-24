@@ -2,13 +2,11 @@ import React, { useMemo } from 'react';
 import FileViewer from '~/components/FileViewer';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import MissionStatusCard from '~/components/MissionStatusCard';
 import RichText from '~/components/Texts/RichText';
 import { useMissionContext } from '~/contexts';
 import { borderRadius, Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ApprovedStatus({

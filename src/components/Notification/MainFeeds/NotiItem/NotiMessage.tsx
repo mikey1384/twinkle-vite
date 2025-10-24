@@ -171,7 +171,7 @@ function NotiMessage({
         : actionObj.amount >= 3
         ? Color.pink()
         : infoColorValue,
-    [actionObj.amount, infoColor]
+    [actionObj.amount, infoColorValue]
   );
   const contentIsEmpty = useMemo(
     () => stringIsEmpty(actionObj.content),
@@ -275,9 +275,7 @@ function NotiMessage({
       }
       return (
         <>
-          <span
-            style={{ color: recommendationColorValue, fontWeight: 'bold' }}
-          >
+          <span style={{ color: recommendationColorValue, fontWeight: 'bold' }}>
             recommended
           </span>{' '}
           <span>your</span>{' '}
@@ -394,37 +392,40 @@ function NotiMessage({
         const threadContentType = targetSubject?.id
           ? 'subject'
           : targetObj.contentType;
-        const threadLabelBase = threadContentType === 'aiStory'
-          ? 'AI Story'
-          : threadContentType === 'user'
-          ? 'profile'
-          : threadContentType === 'url'
-          ? 'link'
-          : threadContentType;
-        const threadLabelSuffix = threadContentType === 'subject'
-          ? stringIsEmpty(targetSubject?.content)
+        const threadLabelBase =
+          threadContentType === 'aiStory'
+            ? 'AI Story'
+            : threadContentType === 'user'
+            ? 'profile'
+            : threadContentType === 'url'
+            ? 'link'
+            : threadContentType;
+        const threadLabelSuffix =
+          threadContentType === 'subject'
+            ? stringIsEmpty(targetSubject?.content)
+              ? ''
+              : ` (${truncatedTargetSubjectText})`
+            : stringIsEmpty(targetObj.content)
             ? ''
-            : ` (${truncatedTargetSubjectText})`
-          : stringIsEmpty(targetObj.content)
-          ? ''
-          : ` (${truncatedTargetObjectText})`;
+            : ` (${truncatedTargetObjectText})`;
         const threadLabel = `${threadLabelBase}${threadLabelSuffix}`;
-        const threadContent = threadContentType === 'subject'
-          ? {
-              id: targetSubject?.id,
-              title: targetSubject?.content
-            }
-          : threadContentType === 'user'
-          ? {
-              id: targetObj.id,
-              username: targetObj.content
-            }
-          : {
-              id: targetObj.id,
-              title: targetObj.content,
-              missionType: targetObj.missionType,
-              rootMissionType: targetObj.rootMissionType
-            };
+        const threadContent =
+          threadContentType === 'subject'
+            ? {
+                id: targetSubject?.id,
+                title: targetSubject?.content
+              }
+            : threadContentType === 'user'
+            ? {
+                id: targetObj.id,
+                username: targetObj.content
+              }
+            : {
+                id: targetObj.id,
+                title: targetObj.content,
+                missionType: targetObj.missionType,
+                rootMissionType: targetObj.rootMissionType
+              };
         return (
           <>
             replied to a comment in your thread on{' '}

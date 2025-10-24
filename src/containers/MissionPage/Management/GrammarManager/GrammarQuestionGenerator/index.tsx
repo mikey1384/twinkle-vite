@@ -3,12 +3,7 @@ import Input from '~/components/Texts/Input';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { capitalize, stringIsEmpty } from '~/helpers/stringHelpers';
-import {
-  Color,
-  borderRadius,
-  mobileMaxWidth,
-  tabletMaxWidth
-} from '~/constants/css';
+import { borderRadius, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import SubmittedQuestions from './SubmittedQuestions';
 

@@ -5,7 +5,7 @@ import CardItem from '../../CardItem';
 import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 
 export default function Outgoing() {

@@ -9,36 +9,8 @@ interface ThemedCardOptions {
   intensity?: number;
   accentColor?: string;
   fallbackColor?: string;
-  blendWeight?: number;
   borderFallback?: string;
   themeName?: ThemeName | string;
-}
-
-function blendWithWhite(color: string | undefined, weight: number): string {
-  if (!color) return '#f7f9ff';
-  const trimmed = color.trim();
-  const hexMatch = trimmed.match(/^#?([0-9a-f]{6})$/i);
-  if (hexMatch) {
-    const [r, g, b] = [
-      parseInt(hexMatch[1].slice(0, 2), 16),
-      parseInt(hexMatch[1].slice(2, 4), 16),
-      parseInt(hexMatch[1].slice(4, 6), 16)
-    ];
-    const w = Math.max(0, Math.min(1, weight));
-    const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
-  }
-  const rgbaMatch = trimmed.match(
-    /rgba?\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)(?:,\s*([-\d.]+))?\)/i
-  );
-  if (rgbaMatch) {
-    const [, r, g, b] = rgbaMatch;
-    const w = Math.max(0, Math.min(1, weight));
-    const mix = (channel: string | number) =>
-      Math.round(Number(channel) * (1 - w) + 255 * w);
-    return `rgba(${mix(r)}, ${mix(g)}, ${mix(b)}, 1)`;
-  }
-  return color;
 }
 
 export function useThemedCardVars(options: ThemedCardOptions = {}) {
@@ -47,7 +19,6 @@ export function useThemedCardVars(options: ThemedCardOptions = {}) {
     intensity = 0.12,
     accentColor: accentOverride,
     fallbackColor,
-    blendWeight = 0.92,
     borderFallback,
     themeName: themeNameOverride
   } = options;

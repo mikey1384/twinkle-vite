@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Home from './Home';

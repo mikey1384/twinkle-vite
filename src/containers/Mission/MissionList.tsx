@@ -85,7 +85,6 @@ export default function MissionList({
               }
             `}
             style={{ marginTop: '1rem' }}
-            bordered
           >
             <nav
               className={selectedMissionListTab === 'ongoing' ? 'active' : ''}

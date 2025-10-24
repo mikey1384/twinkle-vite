@@ -3,11 +3,10 @@ import ChatInfo from './ChatInfo';
 import VocabInfo from './VocabInfo';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color, getThemeStyles, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
 import LocalContext from '../Context';
 import AICardInfo from './AICardInfo';
-import { useKeyContext } from '~/contexts';
 
 function RightMenu({
   channelName,
@@ -34,9 +33,6 @@ function RightMenu({
     state: { chatType }
   } = useContext(LocalContext);
   const MenuRef: React.RefObject<any> = useRef(null);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = (profileTheme || 'logoBlue') as string;
-  const themeBg = useMemo(() => getThemeStyles(themeName, 0.06).bg, [themeName]);
 
   useEffect(() => {
     (MenuRef.current || {}).scrollTop = 0;

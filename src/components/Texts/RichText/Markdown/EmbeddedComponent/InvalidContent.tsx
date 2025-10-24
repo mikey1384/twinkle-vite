@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, borderRadius } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function InvalidContent({

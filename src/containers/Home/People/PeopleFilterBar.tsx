@@ -1,6 +1,6 @@
 import React from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function PeopleFilterBar({

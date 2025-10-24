@@ -262,6 +262,8 @@ export default function MissionStatusCard({
         <footer
           className={css`
             margin-top: 0.4rem;
+            display: flex;
+            justify-content: center;
           `}
         >
           {footer}

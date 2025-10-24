@@ -18,7 +18,7 @@ import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Description from './Description';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
-import { Color, borderRadius } from '~/constants/css';
+import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 
 interface State {

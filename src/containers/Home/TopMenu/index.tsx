@@ -84,7 +84,7 @@ export default function TopMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
-  const { themeName, themeRoles, themeStyles } = useThemeTokens({
+  const { themeRoles } = useThemeTokens({
     intensity: 0.06
   });
   const topMenuVars = useMemo<CSSProperties>(() => {

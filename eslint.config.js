@@ -50,7 +50,8 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
       'jsx-quotes': ['error', 'prefer-double'],
       'no-dupe-keys': 'error',
-      'no-undef': 'error',
+      // TypeScript handles undefined vars; avoid false positives
+      'no-undef': 'off',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',

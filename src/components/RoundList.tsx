@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export default function RoundList({
   children,

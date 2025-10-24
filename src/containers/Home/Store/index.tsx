@@ -15,7 +15,6 @@ import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import localize from '~/constants/localize';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
 import HomeSectionHeader from '~/components/HomeSectionHeader';
 
 const changePasswordLabel = localize('changePassword');

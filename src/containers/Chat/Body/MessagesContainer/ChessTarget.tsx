@@ -16,10 +16,10 @@ export default function ChessTarget({
   onClose: () => any;
 }) {
   const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
-  const squareColors = useMemo(
-    () => getUserChatSquareColors(myId),
-    [myId, chessThemeVersion]
-  );
+  const squareColors = useMemo(() => {
+    void chessThemeVersion;
+    return getUserChatSquareColors(myId);
+  }, [myId, chessThemeVersion]);
 
   return (
     <div

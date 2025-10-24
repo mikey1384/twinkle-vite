@@ -1,7 +1,7 @@
 import React from 'react';
 import SortableListItem from '~/components/SortableListItem';
 import { css } from '@emotion/css';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 
 export default function PartOfSpeechesList({
   onListItemMove,
