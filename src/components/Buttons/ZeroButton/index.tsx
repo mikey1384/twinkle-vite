@@ -11,12 +11,14 @@ export default function ZeroButton({
   contentId,
   contentType,
   content,
-  style
+  style,
+  hideLabel
 }: {
   contentId: number;
   contentType: string;
   content?: string;
   style?: React.CSSProperties;
+  hideLabel?: boolean;
 }) {
   const [modalShown, setModalShown] = useState(false);
   const { colorKey: zeroAccent } = useRoleColor('logoTwin', {
@@ -59,17 +61,19 @@ export default function ZeroButton({
               pointer-events: none;
             `}
           />
-          <span
-            className={css`
-              font-weight: 700;
-              letter-spacing: 0.02em;
-              @media (max-width: ${mobileMaxWidth}) {
-                display: none;
-              }
-            `}
-          >
-            Ask Zero
-          </span>
+          {!hideLabel && (
+            <span
+              className={css`
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                @media (max-width: ${mobileMaxWidth}) {
+                  display: none;
+                }
+              `}
+            >
+              Ask Zero
+            </span>
+          )}
         </span>
       </Button>
       {modalShown && (

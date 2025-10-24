@@ -65,6 +65,7 @@ import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
 import { useRootTheme } from '~/theme/RootThemeProvider';
+import { applyThemeVars } from '~/theme';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -122,6 +123,19 @@ export default function App() {
   const resolvedBackgroundColor = backgroundColorFn
     ? backgroundColorFn()
     : backgroundColorName;
+
+  useEffect(() => {
+    const path = location?.pathname || '';
+    if (!path.startsWith('/users/')) {
+      try {
+        localStorage.removeItem('routeProfileTheme');
+        const restoreTheme = (myState.profileTheme ||
+          DEFAULT_PROFILE_THEME) as any;
+        applyThemeVars(restoreTheme);
+      } catch (_err) {}
+    }
+  }, [location?.pathname, myState.profileTheme]);
+
   const {
     level,
     profilePicUrl,
@@ -464,9 +478,12 @@ export default function App() {
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
             margin-top: 4.5rem;
             height: 100%;
+            min-height: 100%;
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 0;
               padding-top: 0;
+              height: calc(100vh - var(--mobile-nav-total-height));
+              min-height: calc(100vh - var(--mobile-nav-total-height));
             }
           `}`}
         >

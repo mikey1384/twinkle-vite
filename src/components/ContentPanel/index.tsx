@@ -423,6 +423,7 @@ export default function ContentPanel({
                 {contentType === 'comment' && appliedRootType === 'video' && (
                   <ContentListItem
                     hideSideBordersOnMobile
+                    noTopBorderRadius
                     style={{
                       position: 'relative'
                     }}

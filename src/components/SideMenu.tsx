@@ -13,6 +13,7 @@ export default function SideMenu({
   children,
   className,
   style,
+  theme,
   variant = 'default',
   placement = 'left',
   positionMode = 'fixed',
@@ -23,6 +24,7 @@ export default function SideMenu({
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  theme?: string;
   variant?: 'default' | 'card';
   placement?: 'left' | 'right';
   positionMode?: 'fixed' | 'sticky' | 'static';
@@ -31,7 +33,16 @@ export default function SideMenu({
   leftOffset?: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = (profileTheme || 'logoBlue') as string;
+  // Allow explicit theme override (e.g., viewing another user's profile)
+  // On profile routes, prefer a route-specific override on reloads
+  let routeTheme: string | null = null;
+  try {
+    const path = window.location?.pathname || '';
+    if (path.startsWith('/users/')) {
+      routeTheme = localStorage.getItem('routeProfileTheme');
+    }
+  } catch (_err) {}
+  const themeName = (theme || routeTheme || profileTheme || 'logoBlue') as string;
   const isVanta = themeName === 'vantaBlack';
   const isCardVariant = variant === 'card';
   const isRight = placement === 'right';

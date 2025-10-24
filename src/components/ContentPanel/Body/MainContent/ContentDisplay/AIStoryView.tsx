@@ -322,7 +322,7 @@ export default function AIStoryView({
       )}
       {isListening ? (
         <div className={listeningCardClass}>
-          <div className={listeningTitleClass}>Listen Mode</div>
+          <div className={listeningTitleClass}>Listening</div>
           <div className={listeningDescriptionClass}>{storyTitle}</div>
           <AnimatedButton
             className={listeningButtonClass}

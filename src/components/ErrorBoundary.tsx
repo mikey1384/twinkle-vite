@@ -82,7 +82,7 @@ export default class ErrorBoundary extends Component<
             >
               Uh oh, something went wrong
             </p>
-            <p style={{ fontSize: '1.5rem', lineHeight: 1.6 }}>
+            <div style={{ fontSize: '1.5rem', lineHeight: 1.6 }}>
               Screenshot this page and show it to{' '}
               <UsernameText
                 color={Color.logoBlue()}
@@ -92,7 +92,7 @@ export default class ErrorBoundary extends Component<
                 }}
               />{' '}
               for a big <b style={{ color: Color.gold() }}>XP</b> bonus!
-            </p>
+            </div>
             <div style={{ marginTop: '1.8rem', fontSize: '1.35rem' }}>
               Tap the button below once you’ve captured the screenshot.
             </div>

@@ -849,6 +849,7 @@ function Comment({
                                     contentType="comment"
                                     content={comment.content}
                                     style={{ marginLeft: '1rem' }}
+                                    hideLabel
                                   />
                                 )}
                               </div>

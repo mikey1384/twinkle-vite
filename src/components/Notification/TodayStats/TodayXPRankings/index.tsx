@@ -57,6 +57,7 @@ export default function TodayXPRankings() {
     <div style={{ marginTop: '1rem' }}>
       <div
         style={{
+          textAlign: 'center',
           fontWeight: 'bold',
           fontSize: '1.4rem',
           color: progressColor,

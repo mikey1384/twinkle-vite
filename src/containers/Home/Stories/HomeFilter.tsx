@@ -158,6 +158,7 @@ export default function HomeFilter({
                   fontSize: '1.6rem',
                   marginBottom: 0
                 }}
+                mobileNoStack
                 dropdownButton={
                   <DropdownButton
                     variant="soft"

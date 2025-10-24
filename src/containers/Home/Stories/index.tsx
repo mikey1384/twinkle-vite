@@ -241,6 +241,7 @@ export default function Stories() {
   const containerStyle = useMemo<React.CSSProperties>(
     () => ({
       width: '100%',
+      paddingBottom: '1rem',
       ...(panelVars as React.CSSProperties)
     }),
     [panelVars]

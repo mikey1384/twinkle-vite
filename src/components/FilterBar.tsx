@@ -12,6 +12,8 @@ interface FilterBarProps {
   dropdownButton?: React.ReactNode;
   style?: React.CSSProperties;
   bordered?: boolean;
+  // Keep navs and dropdown in the same row on mobile when true
+  mobileNoStack?: boolean;
 }
 
 export default function FilterBar({
@@ -21,7 +23,8 @@ export default function FilterBar({
   innerRef,
   dropdownButton,
   style,
-  bordered = false
+  bordered = false,
+  mobileNoStack = false
 }: FilterBarProps) {
   const { color: alertRoleColor, themeName: resolvedThemeName } = useRoleColor(
     'alert',
@@ -190,14 +193,23 @@ export default function FilterBar({
     }
 
     @media (max-width: ${mobileMaxWidth}) {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.8rem;
-      padding: 0.8rem;
-      border-radius: 0;
+      ${mobileNoStack
+        ? `
+        flex-direction: row;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.8rem;
+      `
+        : `
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.8rem;
+        padding: 0.8rem;
+        border-radius: 0;
+      `}
 
       > .nav-section {
-        width: 100%;
+        ${mobileNoStack ? 'flex: 1 1 auto; width: auto;' : 'width: 100%;'}
       }
 
       > .nav-section > nav {
@@ -206,9 +218,9 @@ export default function FilterBar({
       }
 
       > .filter-section {
-        width: 100%;
-        justify-content: flex-start;
-        margin-left: 0;
+        ${mobileNoStack
+          ? 'width: auto; margin-left: auto; justify-content: flex-end;'
+          : 'width: 100%; justify-content: flex-start; margin-left: 0;'}
       }
     }
 

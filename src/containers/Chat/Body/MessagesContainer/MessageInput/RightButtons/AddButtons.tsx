@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import UploadButton from '~/components/Buttons/UploadButton';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function AddButtons({
   channelId,
@@ -31,14 +32,30 @@ export default function AddButtons({
   const [transactionButtonIsGlowing, setTransactionButtonIsGlowing] =
     useState(false);
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
-  const alertColorKey = alertRole.colorKey || 'gold';
+  const isGoldTheme = alertRole.themeName === 'gold';
   const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
   const buttonColorKey = buttonRole.colorKey;
   const buttonHoverRole = useRoleColor('buttonHovered', {
     fallback: buttonColorKey
   });
-  const buttonHoverColorKey =
-    buttonHoverRole.colorKey || buttonColorKey;
+  const buttonHoverColorKey = buttonHoverRole.colorKey || buttonColorKey;
+
+  // Re-introduce bluish base for gold theme buttons
+  const baseButtonColorKey = isGoldTheme ? 'bluerGray' : buttonColorKey;
+  const baseHoverColorKey = isGoldTheme ? 'darkBluerGray' : buttonHoverColorKey;
+
+  // Helper to tint Color keys
+  const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
+    const fn = (Color as any)[key];
+    if (typeof fn === 'function') return fn(alpha);
+    const fallbackFn = (Color as any)[fallbackKey];
+    return typeof fallbackFn === 'function' ? fallbackFn(alpha) : fallbackKey;
+  };
+  // For alerted look: if gold theme, match gold-hovered from previous gold buttons
+  const glowHoverKey = isGoldTheme ? 'gold' : baseHoverColorKey;
+  const hoveredSoftBg = getTint(glowHoverKey, 0.18);
+  const hoveredSoftBorder = getTint(glowHoverKey, 0.32);
+  const hoveredText = getTint(glowHoverKey, 1);
 
   const loadPendingTransaction = useAppContext(
     (v) => v.requestHelpers.loadPendingTransaction
@@ -70,13 +87,19 @@ export default function AddButtons({
         <Button
           variant="soft"
           tone="raised"
-          filled={transactionButtonIsGlowing}
           disabled={disabled}
           onClick={onSetTransactionModalShown}
-          color={transactionButtonIsGlowing ? alertColorKey : buttonColorKey}
+          color={baseButtonColorKey}
           mobilePadding="0.5rem"
-          hoverColor={
-            transactionButtonIsGlowing ? alertColorKey : buttonColorKey
+          hoverColor={baseHoverColorKey}
+          style={
+            transactionButtonIsGlowing
+              ? {
+                  background: hoveredSoftBg,
+                  borderColor: hoveredSoftBorder,
+                  color: hoveredText
+                }
+              : undefined
           }
         >
           <Icon size="lg" icon={['far', 'badge-dollar']} />
@@ -86,8 +109,8 @@ export default function AddButtons({
         icon="upload"
         disabled={disabled}
         onFileSelect={onFileSelect}
-        color={buttonColorKey}
-        hoverColor={buttonHoverColorKey}
+        color={baseButtonColorKey}
+        hoverColor={baseHoverColorKey}
         mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
         style={{
           marginLeft: isTwoPeopleChannel && !isAIChannel ? '0.5rem' : 0
@@ -98,8 +121,8 @@ export default function AddButtons({
           variant="soft"
           tone="raised"
           disabled={disabled}
-          color={buttonColorKey}
-          hoverColor={buttonHoverColorKey}
+          color={baseButtonColorKey}
+          hoverColor={baseHoverColorKey}
           onClick={onSelectVideoButtonClick}
           mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
           style={{ marginLeft: '0.5rem' }}

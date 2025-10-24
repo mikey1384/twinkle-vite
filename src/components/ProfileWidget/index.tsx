@@ -148,7 +148,8 @@ const container = css`
       }
     }
     .navigation {
-      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+      /* Stack navigation items in a single column on mobile */
+      grid-template-columns: 1fr;
     }
   }
 `;

@@ -377,11 +377,14 @@ library.add(
 );
 
 (async () => {
-  // Apply theme variables ASAP to avoid initial blue flash before React mounts
   try {
+    const path = window.location?.pathname || '';
+    const routeTheme = path.startsWith('/users/')
+      ? (localStorage.getItem('routeProfileTheme') as ThemeName | null)
+      : null;
     const storedTheme = (localStorage.getItem('profileTheme') ||
       DEFAULT_PROFILE_THEME) as ThemeName;
-    applyThemeVars(storedTheme);
+    applyThemeVars((routeTheme || storedTheme) as ThemeName);
   } catch (_err) {
     // ignore
   }

@@ -1,11 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import {
-  Color,
-  liftedBoxShadow,
-  liftedBoxShadowDarker,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, wideBorderRadius } from '~/constants/css';
 import Details from './Details';
 import Link from '~/components/Link';
 import { useKeyContext } from '~/contexts';
@@ -23,11 +18,11 @@ export default function Container({
     <div
       className={css`
         border-radius: ${wideBorderRadius};
-        box-shadow: ${liftedBoxShadow};
-        background: ${Color.whiteGray()};
+        border: 1px solid var(--ui-border);
+        background: #fff;
+        transition: background 0.18s ease, border-color 0.18s ease;
         &:hover {
-          background: ${Color.highlightGray()};
-          box-shadow: ${liftedBoxShadowDarker};
+          border-color: var(--ui-border-strong);
         }
       `}
       style={{

@@ -17,10 +17,10 @@ export default function StartMenu() {
         <div className={sectionCard}>
           <div className={sectionHeader}>
             <div>
-              <div className={sectionLabel}>Earn XP</div>
-              <h3 className={sectionTitle}>
+              <div className={sectionLabel}>
                 Climb the XP leaderboard by answering subjects
-              </h3>
+              </div>
+              <h3 className={sectionTitle}>Earn XP</h3>
             </div>
           </div>
           <p className={sectionDescription}>
@@ -44,10 +44,10 @@ export default function StartMenu() {
         <div className={sectionCard}>
           <div className={sectionHeader}>
             <div>
-              <div className={sectionLabel}>Earn Karma Points</div>
-              <h3 className={sectionTitle}>
+              <div className={sectionLabel}>
                 Support the community with good vibes
-              </h3>
+              </div>
+              <h3 className={sectionTitle}>Earn Karma Points</h3>
             </div>
           </div>
           <p className={sectionDescription}>

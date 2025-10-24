@@ -60,7 +60,8 @@ const targetContentCSS = css`
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
-  border-radius: ${wideBorderRadius};
+  /* Match ContentListItem: no rounding on top corners */
+  border-radius: 0 0 ${wideBorderRadius} ${wideBorderRadius};
   border: 1px solid var(--ui-border);
   padding: 2rem 0 0.5rem 0;
   background: #fff;
@@ -592,14 +593,6 @@ export default function TargetContent({
                   contentType="comment"
                   contentId={comment.id}
                   theme={theme}
-                  className={css`
-                    margin-left: -1px;
-                    margin-right: -1px;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      margin-left: 0px;
-                      margin-right: 0px;
-                    }
-                  `}
                   style={{
                     marginTop: 0
                   }}

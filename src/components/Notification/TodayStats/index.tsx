@@ -23,6 +23,10 @@ const container = css`
   padding: 1.6rem 2rem;
   background: #fff;
   border: 1px solid var(--ui-border);
+  @media (max-width: 767px) {
+    border: 0;
+    border-radius: 0;
+  }
 `;
 
 const header = css`
@@ -74,8 +78,7 @@ export default function TodayStats({
 
   const { cardVars } = useThemedCardVars({
     role: 'sectionPanel',
-    intensity: 0.05,
-    blendWeight: 0.98
+    intensity: 0.05
   });
 
   useEffect(() => {

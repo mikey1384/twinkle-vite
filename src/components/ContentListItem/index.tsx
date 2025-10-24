@@ -17,7 +17,8 @@ function ContentListItem({
   selectable,
   selected,
   style,
-  hideSideBordersOnMobile
+  hideSideBordersOnMobile,
+  noTopBorderRadius
 }: {
   onClick?: () => void;
   contentObj: any;
@@ -28,6 +29,7 @@ function ContentListItem({
   selected?: boolean;
   style?: React.CSSProperties;
   hideSideBordersOnMobile?: boolean;
+  noTopBorderRadius?: boolean;
 }) {
   const [ComponentRef, inView] = useInView();
   const navigate = useNavigate();
@@ -144,6 +146,7 @@ function ContentListItem({
               expandable={expandable}
               selected={selected}
               hideSideBordersOnMobile={hideSideBordersOnMobile}
+              noTopBorderRadius={noTopBorderRadius}
               itemSelectedColor={itemSelectedColor}
               itemSelectedOpacity={itemSelectedOpacity}
               isListening={isListening}

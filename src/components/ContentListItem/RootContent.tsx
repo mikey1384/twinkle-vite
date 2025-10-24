@@ -215,6 +215,7 @@ export default function RootContent({
   filePath,
   fileSize,
   hideSideBordersOnMobile,
+  noTopBorderRadius,
   isListening,
   navigate,
   onClick,
@@ -267,6 +268,7 @@ export default function RootContent({
   userId?: number;
   itemSelectedColor?: string;
   itemSelectedOpacity?: number;
+  noTopBorderRadius?: boolean;
 }) {
   const { themeName } = useThemeTokens();
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
@@ -343,7 +345,12 @@ export default function RootContent({
       }${hasThumb ? '' : ' no-thumb'}${
         hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
       }`}
-      style={cardVars}
+      style={{
+        ...cardVars,
+        ...(noTopBorderRadius
+          ? { borderTopLeftRadius: 0, borderTopRightRadius: 0 }
+          : null)
+      }}
     >
       <ContentDetails
         isListening={isListening}

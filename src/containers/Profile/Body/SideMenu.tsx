@@ -7,19 +7,22 @@ export default function SideMenu({
   menuItems,
   selectedKey,
   style,
-  className
+  className,
+  theme
 }: {
   className?: string;
   menuItems: { key: string; label: string }[];
   onMenuClick: (item: { item: string }) => void;
   selectedKey: string;
   style?: React.CSSProperties;
+  theme?: string;
 }) {
   return (
     <ComponentSideMenu
       variant="card"
       placement="right"
       positionMode="sticky"
+      theme={theme}
       topOffset="1rem"
       style={{ ...style }}
       className={`${className ? `${className} ` : ''}desktop`}

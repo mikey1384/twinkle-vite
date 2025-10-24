@@ -61,7 +61,6 @@ export default function Attempts({
   return (
     <div style={{ width: '100%' }}>
       <FilterBar
-        bordered
         style={{
           fontSize: '1.6rem',
           height: '5rem'

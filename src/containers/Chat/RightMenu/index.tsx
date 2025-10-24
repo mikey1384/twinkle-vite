@@ -85,6 +85,7 @@ function RightMenu({
             chatType === AI_CARD_CHAT_TYPE
               ? '48vw'
               : '40vw'};
+            max-height: none;
           }
         `}
       >

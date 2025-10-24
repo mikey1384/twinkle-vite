@@ -3,6 +3,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
 
 export default function LeftButtons({
@@ -37,7 +38,23 @@ export default function LeftButtons({
   topicId: number;
 }) {
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
-  const alertColorKey = alertRole.colorKey || 'gold';
+  const isGoldTheme = alertRole.themeName === 'gold';
+  // Gold theme base buttons should be bluish to contrast with gold alerts
+  const baseButtonColorKey = isGoldTheme ? 'bluerGray' : buttonColor;
+  const baseHoverColorKey = isGoldTheme ? 'darkBluerGray' : buttonHoverColor;
+
+  // Helper to tint Color keys
+  const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
+    const fn = (Color as any)[key];
+    if (typeof fn === 'function') return fn(alpha);
+    const fallbackFn = (Color as any)[fallbackKey];
+    return typeof fallbackFn === 'function' ? fallbackFn(alpha) : fallbackKey;
+  };
+  // For alerted look: if gold theme, match gold-hovered from previous gold buttons
+  const glowHoverKey = isGoldTheme ? 'gold' : baseHoverColorKey;
+  const hoveredSoftBg = getTint(glowHoverKey, 0.18);
+  const hoveredSoftBorder = getTint(glowHoverKey, 0.32);
+  const hoveredText = getTint(glowHoverKey, 1);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const channelState = useChatContext(
     (v) => v.state.channelsObj[selectedChannelId]
@@ -101,11 +118,17 @@ export default function LeftButtons({
             disabled={loading || isChessBanned || isRestrictedChannel}
             variant="soft"
             tone="raised"
-            filled={chessButtonIsGlowing}
             onClick={onChessButtonClick}
-            color={chessButtonIsGlowing ? alertColorKey : buttonColor}
-            hoverColor={
-              chessButtonIsGlowing ? alertColorKey : buttonHoverColor
+            color={baseButtonColorKey}
+            hoverColor={baseHoverColorKey}
+            style={
+              chessButtonIsGlowing
+                ? {
+                    background: hoveredSoftBg,
+                    borderColor: hoveredSoftBorder,
+                    color: hoveredText
+                  }
+                : undefined
             }
           >
             <Icon size="lg" icon={['fas', 'chess']} />
@@ -114,16 +137,23 @@ export default function LeftButtons({
             disabled={loading || isChessBanned || isRestrictedChannel}
             variant="soft"
             tone="raised"
-            filled={omokButtonIsGlowing}
             onClick={onOmokButtonClick}
-            color={omokButtonIsGlowing ? alertColorKey : buttonColor}
-            hoverColor={
-              omokButtonIsGlowing ? alertColorKey : buttonHoverColor
-            }
+            color={baseButtonColorKey}
+            hoverColor={baseHoverColorKey}
             
             // Avoid extra spacing between split label children (O + mok)
             // by zeroing out Button's internal gap
-            style={{ marginLeft: '0.5rem', gap: 0 }}
+            style={{
+              marginLeft: '0.5rem',
+              gap: 0,
+              ...(omokButtonIsGlowing
+                ? {
+                    background: hoveredSoftBg,
+                    borderColor: hoveredSoftBorder,
+                    color: hoveredText
+                  }
+                : {})
+            }}
           >
             O<span className="desktop">mok</span>
           </Button>
@@ -134,8 +164,8 @@ export default function LeftButtons({
           variant="soft"
           tone="raised"
           onClick={onWordleButtonClick}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={baseButtonColorKey}
+          hoverColor={baseHoverColorKey}
           // Avoid extra spacing between split label children (W + ordle)
           // by zeroing out Button's internal gap
           style={{ gap: 0 }}
@@ -152,8 +182,8 @@ export default function LeftButtons({
           variant="soft"
           tone="raised"
           onClick={onTopicButtonClick}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={baseButtonColorKey}
+          hoverColor={baseHoverColorKey}
         >
           <Icon
             size={isTwoPeopleChannel || hasWordleButton ? '' : 'lg'}

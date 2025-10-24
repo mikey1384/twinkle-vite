@@ -282,7 +282,17 @@ export default function Description({
               )}
             </>
           ) : (
-            <h2>{title}</h2>
+            <h2
+              className={css`
+                margin: 0 0 0.5rem 0;
+                font-size: 2.2rem;
+                line-height: 1.25;
+                text-align: center;
+                word-break: break-word;
+              `}
+            >
+              {title}
+            </h2>
           )}
         </div>
         <div>

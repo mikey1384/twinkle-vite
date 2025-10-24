@@ -8,6 +8,7 @@ import React, {
 import { useAppContext } from '~/contexts';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import { applyThemeVars, getThemeRoles, ThemeName, type RoleTokens } from '.';
+import { useLocation } from 'react-router-dom';
 
 interface RootThemeContextValue {
   themeName: ThemeName;
@@ -19,19 +20,32 @@ const RootThemeContext = createContext<RootThemeContextValue | null>(null);
 export function RootThemeProvider({ children }: { children: ReactNode }) {
   const profileTheme = useAppContext((v) => v.user.state.myState.profileTheme);
   const userLoaded = useAppContext((v) => v.user.state.loaded);
+  const location = useLocation();
 
   const themeName = useMemo<ThemeName>(() => {
     let stored: string | null = null;
+    let routeTheme: string | null = null;
     if (typeof window !== 'undefined') {
       stored = localStorage.getItem('profileTheme');
+      const path = location?.pathname || window.location?.pathname || '';
+      if (path.startsWith('/users/')) {
+        routeTheme = localStorage.getItem('routeProfileTheme');
+      }
     }
-    // Before user is loaded, prefer stored theme over initial default
+    // Before user is loaded, prefer route override (if on profile page), then stored
     if (!userLoaded) {
-      return (stored || profileTheme || DEFAULT_PROFILE_THEME) as ThemeName;
+      return (
+        (routeTheme as ThemeName) ||
+        (stored as ThemeName) ||
+        (profileTheme as ThemeName) ||
+        DEFAULT_PROFILE_THEME
+      );
     }
-    // After user loads, prefer user theme; fall back to stored, then default
+    // After user loads, if route override exists (visiting someone else's profile), prefer it
+    if (routeTheme) return routeTheme as ThemeName;
+    // Otherwise prefer user theme; fall back to stored, then default
     return (profileTheme || stored || DEFAULT_PROFILE_THEME) as ThemeName;
-  }, [profileTheme, userLoaded]);
+  }, [profileTheme, userLoaded, location?.pathname]);
 
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
 
