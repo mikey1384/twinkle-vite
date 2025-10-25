@@ -24,7 +24,8 @@ function RewardStatus({
   onCommentEdit,
   rewards = [],
   style,
-  theme
+  theme,
+  compact = false
 }: {
   contentType: string;
   contentId: number;
@@ -35,6 +36,7 @@ function RewardStatus({
   rewards?: any[];
   style?: React.CSSProperties;
   theme?: any;
+  compact?: boolean;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const infoRole = useRoleColor('info', {
@@ -87,9 +89,89 @@ function RewardStatus({
     : '#fff';
   const containerBorder = levelRole.getColor(0.4) || Color.logoBlue(0.4);
 
+  const baseFontSize = compact ? '1.1rem' : '1.2rem';
+  const basePadding = compact ? '0.55rem 0.85rem' : '0.6rem 1rem';
+  const baseGap = compact ? '0.8rem' : '1rem';
+  const baseJustify = compact ? 'flex-start' : 'space-between';
+  const mobileFontSize = compact ? '0.95rem' : '1.05rem';
+  const mobilePadding = compact ? '0.65rem 0.75rem' : '0.8rem 0.9rem';
+  const mobileGap = compact ? '0.55rem' : '0.6rem';
+  const mobileJustify = compact ? 'flex-start' : 'center';
+  const loadMoreFontSize = compact ? '1.15rem' : '1.3rem';
+  const badgePadding = compact ? '0.3rem 0.75rem' : '0.35rem 0.85rem';
+  const badgeFontSize = compact ? '0.9em' : '0.95em';
+  const badgeMobilePadding = compact ? '0.27rem 0.68rem' : '0.3rem 0.75rem';
+  const badgeMobileFontSize = compact ? '0.86em' : '0.92em';
+
   const handleLoadMore = useCallback(() => {
     setNumLoaded((prev) => prev + LOAD_MORE_COUNT);
   }, []);
+
+  const containerClass = useMemo(
+    () => css`
+      font-size: ${baseFontSize};
+      padding: ${basePadding};
+      width: 100%;
+      margin: 0.6rem 0;
+      color: ${Color.darkBlueGray()};
+      display: flex;
+      align-items: center;
+      justify-content: ${baseJustify};
+      gap: ${baseGap};
+      flex-wrap: wrap;
+      min-height: 3.6rem;
+      background: ${containerBg};
+      border: 1px solid ${containerBorder};
+      border-radius: ${wideBorderRadius};
+      @media (max-width: ${mobileMaxWidth}) {
+        font-size: ${mobileFontSize};
+        padding: ${mobilePadding};
+        gap: ${mobileGap};
+        justify-content: ${mobileJustify};
+      }
+    `,
+    [
+      baseFontSize,
+      baseGap,
+      baseJustify,
+      basePadding,
+      containerBg,
+      containerBorder,
+      mobileFontSize,
+      mobileGap,
+      mobileJustify,
+      mobilePadding
+    ]
+  );
+
+  const badgeClass = useMemo(
+    () => css`
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: #fff;
+      color: ${Color.darkBlueGray()};
+      border-radius: 999px;
+      padding: ${badgePadding};
+      font-weight: 700;
+      letter-spacing: 0.18px;
+      border: 1px solid ${levelRole.getColor() || Color.logoBlue()};
+      box-shadow: none;
+      font-size: ${badgeFontSize};
+      flex-shrink: 0;
+      @media (max-width: ${mobileMaxWidth}) {
+        font-size: ${badgeMobileFontSize};
+        padding: ${badgeMobilePadding};
+      }
+    `,
+    [
+      badgeFontSize,
+      badgeMobileFontSize,
+      badgeMobilePadding,
+      badgePadding,
+      levelRole
+    ]
+  );
 
   useEffect(() => {
     const rewardsWithComment = sortedRewards.filter(
@@ -105,52 +187,8 @@ function RewardStatus({
   return (
     <ErrorBoundary componentPath="RewardStatus/index">
       <ScopedTheme theme={scopedTheme}>
-        <div
-          style={style}
-          className={`${className || ''} ${css`
-            font-size: 1.2rem;
-            padding: 0.6rem 1rem;
-            width: 100%;
-            margin: 0.6rem 0;
-            color: ${Color.darkBlueGray()};
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
-            min-height: 3.6rem;
-            background: ${containerBg};
-            border: 1px solid ${containerBorder};
-            border-radius: ${wideBorderRadius};
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.05rem;
-              padding: 0.8rem 0.9rem;
-              gap: 0.6rem;
-              justify-content: center;
-            }
-          `}`}
-        >
-          <div
-            className={css`
-              display: inline-flex;
-              align-items: center;
-              gap: 0.45rem;
-              background: #fff;
-              color: ${Color.darkBlueGray()};
-              border-radius: 999px;
-              padding: 0.35rem 0.85rem;
-              font-weight: 700;
-              letter-spacing: 0.18px;
-              border: 1px solid ${levelRole.getColor() || Color.logoBlue()};
-              box-shadow: none;
-              font-size: 0.95em;
-              flex-shrink: 0;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.92em;
-                padding: 0.3rem 0.75rem;
-              }
-            `}
-          >
+        <div style={style} className={`${className || ''} ${containerClass}`}>
+          <div className={badgeClass}>
             <Icon
               icon="sparkles"
               style={{
@@ -184,6 +222,10 @@ function RewardStatus({
           margin-top: 1rem;
           padding-top: 1rem;
           border-top: 1px solid var(--ui-border);
+          @media (max-width: ${mobileMaxWidth}) {
+            border-top: none;
+            padding-top: 0.6rem;
+          }
         `}
       >
         {numLoaded < sortedRewards.length && (
@@ -196,7 +238,7 @@ function RewardStatus({
             }
             filled
             style={{
-              fontSize: '1.3rem',
+              fontSize: loadMoreFontSize,
               marginBottom: '1rem'
             }}
             onClick={handleLoadMore}

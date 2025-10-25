@@ -112,6 +112,7 @@ export default function Body({
             }
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.3rem;
+              padding-left: calc(10rem + 1.8rem);
               > .nav-section {
                 padding-left: 0;
               }

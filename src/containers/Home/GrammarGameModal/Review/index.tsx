@@ -4,7 +4,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import MissionChoiceList from '~/containers/MissionPage/Main/MissionModule/Grammar/Questions/ChoiceList';
+import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ChallengeModal from './ChallengeModal';
@@ -75,10 +75,6 @@ export default function Review() {
           selectedIndex: null,
           status: '' as ''
         };
-        const listItems = it.choices.map((label, idx) => ({
-          label,
-          checked: current.selectedIndex === idx
-        }));
         return (
           <div key={it.id} className={itemCls}>
             <div className={qHeaderCls}>
@@ -93,7 +89,6 @@ export default function Review() {
                 )}
               </div>
             </div>
-            <div className={questionCls}>{it.question}</div>
             {it.explanation &&
               it.isChecked &&
               (typeof answerState[it.id]?.selectedIndex === 'number' ||
@@ -113,12 +108,18 @@ export default function Review() {
                   {it.explanation}
                 </div>
               )}
-            <MissionChoiceList
+            <MultipleChoiceQuestion
               key={it.id}
+              question={
+                <div className={questionCls} style={{ marginBottom: '0.5rem' }}>
+                  {it.question}
+                </div>
+              }
+              choices={it.choices}
+              isGraded
+              selectedChoiceIndex={current.selectedIndex}
               answerIndex={it.answerIndex}
-              conditionPassStatus={current.status}
-              listItems={listItems}
-              onSelect={(selectedIndex: number) => {
+              onSelectChoice={(selectedIndex: number) => {
                 const status =
                   selectedIndex === it.answerIndex ? 'pass' : 'fail';
                 setAnswerState((prev) => ({
@@ -126,7 +127,9 @@ export default function Review() {
                   [it.id]: { selectedIndex, status }
                 }));
               }}
-              style={{ marginTop: '1rem' }}
+              conditionPassStatus={current.status}
+              allowReselect={false}
+              style={{ marginTop: '0.5rem' }}
             />
             {!it.isChecked && (
               <div

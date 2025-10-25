@@ -24,8 +24,10 @@ const urlCss = css`
   border-radius: ${wideBorderRadius};
   margin-top: 0.8rem;
   @media (max-width: ${mobileMaxWidth}) {
-    border-left: 0;
-    border-right: 0;
+    border: none;
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
   }
 `;
 const userCommentCss = css`
@@ -36,8 +38,10 @@ const userCommentCss = css`
   margin-top: 0.8rem;
   padding: 1rem;
   @media (max-width: ${mobileMaxWidth}) {
-    border-left: 0;
-    border-right: 0;
+    border: none;
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
   }
 `;
 
@@ -276,8 +280,7 @@ export default function ContentPanel({
       }
       @media (max-width: ${mobileMaxWidth}) {
         border-radius: 0;
-        border-left: none;
-        border-right: none;
+        border: none;
         width: 100%;
         .body {
           font-size: 1.75rem;

@@ -110,15 +110,17 @@ function RichText({
   text = text || '';
   const {
     color: linkColor,
+    colorKey: linkColorKey,
     themeName
   } = useRoleColor('link', {
     themeName: theme,
     fallback: 'logoBlue'
   });
-  const { color: statusMsgLinkColor } = useRoleColor('statusMsgLink', {
-    themeName,
-    fallback: linkColor
-  });
+  const { color: statusMsgLinkColor, colorKey: statusMsgLinkColorKey } =
+    useRoleColor('statusMsgLink', {
+      themeName,
+      fallback: linkColor
+    });
   const { color: listItemMarkerColor } = useRoleColor('listItemMarker', {
     themeName,
     fallback: 'darkerGray'
@@ -230,6 +232,12 @@ function RichText({
       isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor,
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
+
+  const showMoreButtonColorKey = useMemo(() => {
+    if (readMoreColor) return 'logoBlue';
+    if (isStatusMsg) return statusMsgLinkColorKey || 'white';
+    return linkColorKey || 'logoBlue';
+  }, [isStatusMsg, linkColorKey, readMoreColor, statusMsgLinkColorKey]);
 
   useEffect(() => {
     let resizeObserver: any;
@@ -368,25 +376,27 @@ function RichText({
         `}
       >
         {isOverflown && !isPreview && (
-          <a
+          <Button
+            variant="soft"
+            tone="raised"
+            shape="pill"
+            size="sm"
+            uppercase={false}
+            color={showMoreButtonColorKey}
             style={{
-              color: readMoreColor || appliedLinkColor,
-              ...(showMoreButtonStyle || {})
+              marginTop: '1rem',
+              ...(showMoreButtonStyle || {}),
+              ...(readMoreColor ? { color: readMoreColor } : {})
             }}
-            className={`unselectable ${css`
-              font-weight: bold;
-              cursor: pointer;
-              display: inline;
-              padding-top: 1rem;
-            `}`}
             onClick={() => {
               setMinHeight(fullTextShown ? 0 : minHeight);
               setFullTextShown((shown) => !shown);
               fullTextShownRef.current = !fullTextShownRef.current;
             }}
           >
-            {fullTextShown ? 'Show Less' : 'Show More'}
-          </a>
+            <Icon icon={fullTextShown ? 'chevron-up' : 'chevron-down'} />
+            <span>{fullTextShown ? 'Show Less' : 'Show More'}</span>
+          </Button>
         )}
       </div>
       {isAIMessage && !hideDictation && (

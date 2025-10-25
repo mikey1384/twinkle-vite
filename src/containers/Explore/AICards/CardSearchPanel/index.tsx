@@ -34,7 +34,9 @@ const panelClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1.2rem 1.4rem;
     font-size: 1.4rem;
-    border-radius: 14px;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 `;
 
@@ -180,9 +182,17 @@ const baseInputClass = css`
     border-color: var(--search-panel-accent, ${Color.logoBlue()});
     box-shadow: 0 0 0 3px var(--search-panel-focus, ${Color.logoBlue(0.25)});
   }
+  &::placeholder {
+    color: ${Color.gray()};
+    opacity: 0.8;
+    font-size: inherit;
+  }
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.2rem;
     min-width: 6rem;
+    &::placeholder {
+      font-size: 1.1rem;
+    }
   }
 `;
 
@@ -190,6 +200,10 @@ const wordInputClass = css`
   width: 9rem;
   @media (max-width: ${mobileMaxWidth}) {
     width: 5.4rem;
+    font-size: 1rem;
+    &::placeholder {
+      font-size: 1rem;
+    }
   }
 `;
 
@@ -198,6 +212,11 @@ const cardInputClass = css`
   letter-spacing: 0.04em;
   @media (max-width: ${mobileMaxWidth}) {
     width: 5.8rem;
+    font-size: 1rem;
+    &::placeholder {
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
   }
 `;
 

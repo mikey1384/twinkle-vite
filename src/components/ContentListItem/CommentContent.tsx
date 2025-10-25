@@ -71,6 +71,8 @@ const commentContentCSS = css`
   transition: background 0.5s, border 0.5s;
   border: 1px solid var(--ui-border);
   @media (max-width: ${mobileMaxWidth}) {
+    border: none;
+    border-radius: 0;
     .content {
       font-size: 1.2rem;
       -webkit-line-clamp: 3;

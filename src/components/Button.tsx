@@ -248,7 +248,6 @@ export default function Button(props: ButtonProps) {
         font-size: ${size === 'lg' ? '1.5rem' : '1.3rem'};
         padding: ${mobilePadding ?? `${padY} ${padX}`};
         border-radius: ${mobileBorderRadius || radius};
-        ${stretch ? 'border-radius: 0;' : ''}
       }
     `;
   }, [

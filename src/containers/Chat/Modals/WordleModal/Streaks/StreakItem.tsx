@@ -16,13 +16,15 @@ export default function StreakItem({
   streak,
   rank,
   streakObj,
-  theme
+  theme,
+  bordered = false
 }: {
   myId: number;
   rank: number;
   streak: number;
   streakObj: any;
   theme: string;
+  bordered?: boolean;
 }) {
   const { color: linkColor } = useRoleColor('link', {
     themeName: theme,
@@ -90,11 +92,11 @@ export default function StreakItem({
     justify-content: space-between;
     gap: 1rem;
     width: 100%;
-    border: 1px solid var(--ui-border);
+    border: ${bordered ? '1px solid var(--ui-border)' : 'none'};
     border-radius: 12px;
     padding: 0.85rem 1.1rem;
     background: #fff;
-    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+    box-shadow: ${bordered ? '0 1px 0 rgba(15, 23, 42, 0.08)' : 'none'};
     @media (max-width: ${mobileMaxWidth}) {
       padding: 0.7rem 0.85rem;
       gap: 0.75rem;

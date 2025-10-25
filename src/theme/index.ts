@@ -1,3 +1,36 @@
+const MOBILE_MAX_WIDTH_PX = 767;
+const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
+const GOLD_MOBILE_PAGE_BG = 'rgba(235, 240, 248, 1)';
+const MOBILE_BG_AMPLIFY = 2;
+
+let pageBgMediaCleanup: (() => void) | null = null;
+
+function parseRgba(rgba: string) {
+  const match = rgba.match(
+    /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+  );
+  if (!match) return null;
+  const [, r, g, b, a] = match;
+  return {
+    r: Number(r),
+    g: Number(g),
+    b: Number(b),
+    a: Number(a)
+  };
+}
+
+function amplifyBackground(base: string, factor: number) {
+  const color = parseRgba(base);
+  if (!color) return base;
+  const adjust = (channel: number) => {
+    const delta = 255 - channel;
+    return Math.max(0, Math.min(255, Math.round(255 - delta * factor)));
+  };
+  return `rgba(${adjust(color.r)}, ${adjust(color.g)}, ${adjust(color.b)}, ${
+    color.a
+  })`;
+}
+
 export type ThemeName =
   | 'logoBlue'
   | 'green'
@@ -654,10 +687,45 @@ export function applyThemeVars(theme: ThemeName) {
   root.style.setProperty('--chat-text', tokens.chat.text);
   root.style.setProperty('--chat-border', tokens.chat.border);
 
-  // Page pack
-  root.style.setProperty('--page-bg', tokens.page.bg);
-  // App bg mirrors page bg for simplicity
-  root.style.setProperty('--app-bg', tokens.page.bg);
+  const basePageBg = tokens.page.bg;
+  const mobilePageBg =
+    theme === 'gold'
+      ? GOLD_MOBILE_PAGE_BG
+      : amplifyBackground(tokens.page.bg, MOBILE_BG_AMPLIFY);
+  const mediaQuery =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia(MOBILE_MEDIA_QUERY)
+      : null;
+
+  const setPageBackground = () => {
+    const useMobile = mediaQuery ? mediaQuery.matches : false;
+    const appliedBg = useMobile ? mobilePageBg : basePageBg;
+    root.style.setProperty('--page-bg', appliedBg);
+    root.style.setProperty('--app-bg', appliedBg);
+  };
+
+  root.style.setProperty('--page-bg-desktop', basePageBg);
+  root.style.setProperty('--page-bg-mobile', mobilePageBg);
+  setPageBackground();
+
+  if (pageBgMediaCleanup) {
+    pageBgMediaCleanup();
+    pageBgMediaCleanup = null;
+  }
+
+  if (mediaQuery) {
+    const listener = () => setPageBackground();
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', listener);
+      pageBgMediaCleanup = () =>
+        mediaQuery.removeEventListener('change', listener);
+    } else {
+      mediaQuery.onchange = listener;
+      pageBgMediaCleanup = () => {
+        mediaQuery.onchange = null;
+      };
+    }
+  }
 }
 
 export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
@@ -688,6 +756,11 @@ export function getScopedThemeVars(theme: ThemeName): Record<string, string> {
     ['--chat-hover-title-bg']: t.chat.hoverTitleBg,
     ['--chat-text']: t.chat.text,
     ['--chat-border']: t.chat.border,
+    ['--page-bg-desktop']: t.page.bg,
+    ['--page-bg-mobile']:
+      theme === 'gold'
+        ? GOLD_MOBILE_PAGE_BG
+        : amplifyBackground(t.page.bg, MOBILE_BG_AMPLIFY),
     ['--page-bg']: t.page.bg,
     ['--app-bg']: t.page.bg
   };

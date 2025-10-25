@@ -307,6 +307,11 @@ export default function RootContent({
     border: 1px solid var(--ui-border);
     background: #fff;
     transition: background 0.18s ease, border-color 0.18s ease;
+    @media (max-width: ${mobileMaxWidth}) {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
     @media (min-width: ${desktopMinWidth}) {
       &:hover {
         border-color: var(--ui-border-strong);

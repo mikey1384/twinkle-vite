@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, wideBorderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -17,12 +17,16 @@ export default function RecommendationStatus({
   contentType,
   recommendations = [],
   style,
-  theme
+  theme,
+  className,
+  compact = false
 }: {
   contentType: string;
   recommendations: any[];
   style?: React.CSSProperties;
   theme?: any;
+  className?: string;
+  compact?: boolean;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const {
@@ -107,27 +111,52 @@ export default function RecommendationStatus({
     [getRewardableColor, rewardableOpacity]
   );
 
+  const baseFontSize = compact ? '1.2rem' : '1.4rem';
+  const basePadding = compact ? '0.5rem 0.9rem' : '0.6rem 1rem';
+  const baseGap = compact ? '0.35rem' : '0.4rem';
+  const mobileFontSize = compact ? '1.05rem' : '1.2rem';
+  const mobilePadding = compact ? '0.45rem 0.8rem' : '0.55rem 0.9rem';
+  const mobileGap = compact ? '0.3rem' : '0.35rem';
+
   const containerCss = useMemo(
     () => css`
-      padding: 0.6rem 1rem;
+      padding: ${basePadding};
       width: 100%;
       margin: 0.6rem 0;
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 0.4rem;
-      font-size: 1.4rem;
+      gap: ${baseGap};
+      font-size: ${baseFontSize};
       background: ${isRewardable ? rewardableRecommendationColor : '#fff'};
       border: 1px solid
         ${isRewardable ? rewardableBorderColor : 'var(--ui-border)'};
       border-radius: ${wideBorderRadius};
       color: ${isRewardable ? Color.black() : Color.darkBlueGray()};
+      @media (max-width: ${mobileMaxWidth}) {
+        padding: ${mobilePadding};
+        gap: ${mobileGap};
+        font-size: ${mobileFontSize};
+      }
     `,
-    [isRewardable, rewardableRecommendationColor, rewardableBorderColor]
+    [
+      baseFontSize,
+      baseGap,
+      basePadding,
+      isRewardable,
+      mobileFontSize,
+      mobileGap,
+      mobilePadding,
+      rewardableBorderColor,
+      rewardableRecommendationColor
+    ]
   );
 
   return recommendations.length > 0 ? (
-    <div className={containerCss} style={style}>
+    <div
+      className={`${containerCss} ${className ? className : ''}`}
+      style={style}
+    >
       <div>
         {recommendedByLabel}{' '}
         {myRecommendation && (

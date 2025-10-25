@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ChoiceList from './ChoiceList';
+import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
@@ -11,49 +11,51 @@ export default function QuestionListItem({
   style?: React.CSSProperties;
 }) {
   const [passStatus, setPassStatus] = useState('');
-  const [choices, setChoices] = useState(
-    choiceLabels.map((label: string) => ({ label, checked: false }))
-  );
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   return (
     <div
       style={style}
       className={css`
-        > h3 {
-          font-size: 1.7rem;
-        }
         background: #fff;
         border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         padding: 1rem;
         @media (max-width: ${mobileMaxWidth}) {
-          > h3 {
-            font-size: 1.5rem;
-          }
           border-left: 0;
           border-right: 0;
           border-radius: 0;
         }
       `}
     >
-      <h3>{question}</h3>
-      <ChoiceList
-        style={{ marginTop: '2rem', fontSize: '1.5rem' }}
+      <MultipleChoiceQuestion
+        question={
+          <div
+            className={css`
+              font-size: 1.7rem;
+              font-weight: 600;
+              margin-bottom: 0.5rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.5rem;
+              }
+            `}
+          >
+            {question}
+          </div>
+        }
+        choices={choiceLabels}
+        isGraded
+        selectedChoiceIndex={selectedIndex}
         answerIndex={answerIndex}
+        onSelectChoice={handleSelect}
         conditionPassStatus={passStatus}
-        onSelect={handleSelect}
-        listItems={choices}
+        allowReselect={false}
+        style={{ marginTop: '0.5rem' }}
       />
     </div>
   );
 
   function handleSelect(selectedIndex: number) {
-    setChoices((choices: any[]) =>
-      choices.map((choice, index) =>
-        index === selectedIndex
-          ? { ...choice, checked: true }
-          : { ...choice, checked: false }
-      )
-    );
+    setSelectedIndex(selectedIndex);
     setPassStatus(selectedIndex === answerIndex ? 'pass' : 'fail');
   }
 }

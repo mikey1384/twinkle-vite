@@ -7,13 +7,15 @@ export default function ChoiceList({
   conditionPassStatus,
   listItems,
   onSelect,
-  style
+  style,
+  allowReselect = false
 }: {
   answerIndex: number;
   conditionPassStatus: string;
   listItems: any[];
   onSelect: (index: number) => any;
   style?: React.CSSProperties;
+  allowReselect?: boolean;
 }) {
   return (
     <div
@@ -34,6 +36,7 @@ export default function ChoiceList({
             listItem={listItem}
             onSelect={onSelect}
             index={index}
+            allowReselect={allowReselect}
           />
         );
       })}

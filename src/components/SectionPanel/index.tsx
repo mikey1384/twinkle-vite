@@ -137,11 +137,11 @@ export default function SectionPanel({
           @media (max-width: ${mobileMaxWidth}) {
             border-radius: 0;
             box-shadow: none;
-            /* Mobile: remove side/bottom borders, keep a subtle top divider */
+
             border-left: 0;
             border-right: 0;
             border-bottom: 0;
-            border-top: 1px solid var(--section-panel-border-color);
+            border-top: 0;
             > header {
               font-size: 2rem;
               padding: 1.1rem 1.4rem;

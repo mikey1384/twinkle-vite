@@ -8,13 +8,15 @@ export default function ListItem({
   conditionPassStatus,
   listItem,
   onSelect,
-  index
+  index,
+  allowReselect = false
 }: {
   answerIndex: number;
   conditionPassStatus: string;
   listItem: any;
   index: number;
   onSelect: (index: number) => any;
+  allowReselect?: boolean;
 }) {
   const isSelected = !!listItem.checked;
   const isEvaluated = !!conditionPassStatus;
@@ -24,7 +26,10 @@ export default function ListItem({
 
   const { borderColor, backgroundColor, indicatorColor, indicatorIcon } =
     useMemo(() => {
-      if (conditionPassStatus === 'pass' || conditionPassStatus === 'complete') {
+      if (
+        conditionPassStatus === 'pass' ||
+        conditionPassStatus === 'complete'
+      ) {
         return {
           borderColor: isCorrect ? Color.green(0.6) : 'transparent',
           backgroundColor: isCorrect ? Color.green(0.12) : '#fff',
@@ -33,20 +38,20 @@ export default function ListItem({
         };
       }
       if (conditionPassStatus === 'fail') {
-        if (isCorrect) {
-          return {
-            borderColor: Color.green(0.6),
-            backgroundColor: Color.green(0.12),
-            indicatorColor: Color.green(),
-            indicatorIcon: 'check'
-          };
-        }
         if (isWrongSelection) {
           return {
             borderColor: Color.rose(0.6),
             backgroundColor: Color.rose(0.12),
             indicatorColor: Color.rose(),
             indicatorIcon: 'times'
+          };
+        }
+        if (!allowReselect && isCorrect) {
+          return {
+            borderColor: Color.green(0.6),
+            backgroundColor: Color.green(0.12),
+            indicatorColor: Color.green(),
+            indicatorIcon: 'check'
           };
         }
       }
@@ -65,16 +70,14 @@ export default function ListItem({
         indicatorIcon: null
       };
     }, [
+      allowReselect,
       conditionPassStatus,
       isCorrect,
       isSelected,
       isWrongSelection
     ]);
 
-  const optionLabel = useMemo(
-    () => String.fromCharCode(65 + index),
-    [index]
-  );
+  const optionLabel = useMemo(() => String.fromCharCode(65 + index), [index]);
 
   return (
     <button
@@ -87,15 +90,23 @@ export default function ListItem({
         display: flex;
         align-items: center;
         gap: 1.6rem;
-        cursor: ${isEvaluated && !isSelected ? 'default' : 'pointer'};
+        cursor: ${!isEvaluated || allowReselect ? 'pointer' : 'default'};
         transition: transform 0.12s ease, box-shadow 0.18s ease,
           border-color 0.18s ease, background 0.18s ease;
         box-shadow: none;
-        &:hover {
-          ${isEvaluated
-            ? ''
-            : `border-color: ${Color.logoBlue(0.4)};
-               background: ${Color.logoBlue(0.08)};`}
+        ${
+          // If this is the user's wrong selection, keep hover highlight red
+          isWrongSelection
+            ? `&:hover { 
+                 border-color: ${Color.rose(0.4)}; 
+                 background: ${Color.rose(0.12)}; 
+               }`
+            : !isEvaluated || allowReselect
+            ? `&:hover {
+                 border-color: ${Color.logoBlue(0.4)};
+                 background: ${Color.logoBlue(0.08)};
+               }`
+            : ''
         }
         @media (max-width: ${mobileMaxWidth}) {
           padding: 1.1rem 1.3rem;
@@ -111,7 +122,10 @@ export default function ListItem({
           width: 3.6rem;
           height: 3.6rem;
           border-radius: 12px;
-          background: ${isCorrect && conditionPassStatus
+          background: ${isCorrect &&
+          (conditionPassStatus === 'pass' ||
+            conditionPassStatus === 'complete' ||
+            (conditionPassStatus === 'fail' && !allowReselect))
             ? Color.green(0.18)
             : isSelected
             ? Color.logoBlue(0.15)
@@ -120,7 +134,10 @@ export default function ListItem({
           align-items: center;
           justify-content: center;
           font-weight: 700;
-          color: ${isCorrect && conditionPassStatus
+          color: ${isCorrect &&
+          (conditionPassStatus === 'pass' ||
+            conditionPassStatus === 'complete' ||
+            (conditionPassStatus === 'fail' && !allowReselect))
             ? Color.green()
             : isSelected
             ? Color.logoBlue()
@@ -153,7 +170,7 @@ export default function ListItem({
   );
 
   function handleSelect() {
-    if (conditionPassStatus && conditionPassStatus !== '') {
+    if (!allowReselect && conditionPassStatus && conditionPassStatus !== '') {
       return;
     }
     onSelect(index);

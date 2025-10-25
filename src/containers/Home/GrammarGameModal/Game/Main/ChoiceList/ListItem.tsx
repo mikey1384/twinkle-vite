@@ -30,27 +30,37 @@ export default function ListItem({
             : 'wrong '
           : ''
       }unselectable ${css`
-        padding: 1rem;
+        padding: 1.1rem 1.25rem;
         width: 100%;
         cursor: ${isCompleted ? 'default' : 'pointer'};
+        min-height: 48px;
+        border-radius: 12px;
+        /* Default surface for neutral state (no borders) */
+        &:not(.correct):not(.wrong) {
+          background: ${Color.inputGray()};
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.045);
+        }
+        transition: background 0.15s ease, transform 0.08s ease,
+          box-shadow 0.15s ease;
         /* Improve mobile tap behavior */
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         /* Apply hover effects only on devices that actually support hover */
         @media (hover: hover) and (pointer: fine) {
-          &:hover {
-            &.wrong {
-              color: #fff;
-              border: 1px solid ${Color.red()};
-              background: ${Color.red()};
-            }
+          &:not(.correct):hover {
             background: ${Color.highlightGray()};
+          }
+          &.wrong:hover {
+            color: #fff;
+            border: 0;
+            background: ${Color.red()};
           }
         }
         /* Provide active feedback on touch devices */
         @media (hover: none) {
-          &:active {
+          &:not(.correct):active {
             background: ${Color.highlightGray()};
+            transform: scale(0.995);
           }
         }
       `}`}

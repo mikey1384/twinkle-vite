@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import ChoiceList from '~/containers/MissionPage/Main/MissionModule/Grammar/Questions/ChoiceList';
+import ChoiceList from '~/components/ChoiceList';
 import { css } from '@emotion/css';
 
 export default function MultipleChoiceQuestion({
@@ -11,7 +11,8 @@ export default function MultipleChoiceQuestion({
   answerIndex,
   onSelectChoice,
   style,
-  conditionPassStatus: conditionPassStatusProp
+  conditionPassStatus: conditionPassStatusProp,
+  allowReselect = false
 }: {
   question: React.ReactNode;
   choices?: string[];
@@ -22,6 +23,7 @@ export default function MultipleChoiceQuestion({
   answerIndex: number;
   style?: React.CSSProperties;
   conditionPassStatus?: string;
+  allowReselect?: boolean;
 }) {
   const listItems = useMemo(() => {
     if (listItemsProp && Array.isArray(listItemsProp)) return listItemsProp;
@@ -40,15 +42,15 @@ export default function MultipleChoiceQuestion({
     if (!isGraded) return '';
     if (typeof selectedChoiceIndex !== 'number') return 'fail';
     return selectedChoiceIndex === answerIndex ? 'pass' : 'fail';
-  }, [
-    conditionPassStatusProp,
-    isGraded,
-    selectedChoiceIndex,
-    answerIndex
-  ]);
+  }, [conditionPassStatusProp, isGraded, selectedChoiceIndex, answerIndex]);
 
   return (
-    <div className={css`width: 100%;`} style={style}>
+    <div
+      className={css`
+        width: 100%;
+      `}
+      style={style}
+    >
       <div>
         <div>
           <div>{question}</div>
@@ -58,6 +60,7 @@ export default function MultipleChoiceQuestion({
           conditionPassStatus={conditionPassStatus}
           listItems={listItems}
           onSelect={onSelectChoice}
+          allowReselect={allowReselect}
           style={{ marginTop: '1.5rem', paddingRight: '1rem' }}
         />
       </div>

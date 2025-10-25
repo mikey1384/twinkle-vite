@@ -72,20 +72,6 @@ const targetContentCSS = css`
     display: flex;
     width: 100%;
     justify-content: space-between;
-    @media (max-width: ${mobileMaxWidth}) {
-      button,
-      span {
-        font-size: 1rem;
-      }
-    }
-  }
-  .right {
-    @media (max-width: ${mobileMaxWidth}) {
-      button,
-      span {
-        font-size: 1rem;
-      }
-    }
   }
   .detail-block {
     display: flex;
@@ -99,10 +85,48 @@ const targetContentCSS = css`
     background: #fff;
   }
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.7rem;
+    font-size: 1.45rem;
+    border: none;
     border-radius: 0;
-    border-left: 0;
-    border-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 1.2rem 1.4rem 1rem;
+    margin-top: -0.4rem;
+    .detail-block {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+    .timestamp {
+      font-size: 1rem;
+    }
+    .left {
+      margin-top: 1.2rem;
+      gap: 0.8rem;
+      > div:first-of-type {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+      button {
+        padding: 0.45rem 1rem;
+        font-size: 1.15rem;
+        min-height: 0;
+      }
+      span {
+        font-size: 1.15rem;
+      }
+    }
+    .right {
+      button {
+        padding: 0.5rem 1.1rem;
+        font-size: 1.2rem;
+      }
+    }
+    .left button svg,
+    .right button svg {
+      font-size: 1.2rem;
+    }
   }
 `;
 
@@ -515,15 +539,19 @@ export default function TargetContent({
                             />
                           )}
                         </div>
-                        <Likers
-                          theme={theme}
-                          className={css`
-                            font-weight: bold;
-                            color: ${Color.darkerGray()};
-                            font-size: 1.2rem;
-                            line-height: 2;
-                          `}
-                          userId={userId}
+                      <Likers
+                        theme={theme}
+                        className={css`
+                          font-weight: bold;
+                          color: ${Color.darkerGray()};
+                          font-size: 1.2rem;
+                          line-height: 2;
+                          @media (max-width: ${mobileMaxWidth}) {
+                            font-size: 1.05rem;
+                            line-height: 1.6;
+                          }
+                        `}
+                        userId={userId}
                           likes={comment.likes}
                           onLinkClick={() => setUserListModalShown(true)}
                         />
@@ -559,6 +587,7 @@ export default function TargetContent({
                     contentType="comment"
                     recommendations={comment.recommendations}
                     theme={theme}
+                    compact={deviceIsMobile}
                   />
                 )}
                 {recommendationInterfaceShown && (
@@ -596,6 +625,7 @@ export default function TargetContent({
                   contentType="comment"
                   contentId={comment.id}
                   theme={theme}
+                  compact={deviceIsMobile}
                   style={{
                     marginTop: 0,
                     marginLeft: '1rem',

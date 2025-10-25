@@ -15,7 +15,8 @@ export default function Collector({
   style,
   user,
   collectedLabel,
-  targetLabel
+  targetLabel,
+  bordered = false
 }: {
   style?: React.CSSProperties;
   user: {
@@ -27,6 +28,7 @@ export default function Collector({
   };
   collectedLabel?: string;
   targetLabel?: string;
+  bordered?: boolean;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
   const { getColor: getHighlightColor } = useRoleColor('filter', {
@@ -57,11 +59,11 @@ export default function Collector({
     justify-content: space-between;
     gap: 1rem;
     width: 100%;
-    border: 1px solid var(--ui-border);
+    border: ${bordered ? '1px solid var(--ui-border)' : 'none'};
     border-radius: 12px;
     padding: 0.8rem 1rem;
     background: #fff;
-    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+    box-shadow: ${bordered ? '0 1px 0 rgba(15, 23, 42, 0.08)' : 'none'};
     @media (max-width: ${mobileMaxWidth}) {
       padding: 0.65rem 0.75rem;
       gap: 0.75rem;

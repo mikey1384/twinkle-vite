@@ -13,7 +13,8 @@ export default function RankingsListItem({
   target = 'twinkleXP',
   user,
   onUsermenuShownChange = () => null,
-  activityContext
+  activityContext,
+  bordered = false
 }: {
   myId: number;
   small?: boolean;
@@ -22,6 +23,7 @@ export default function RankingsListItem({
   user: any;
   onUsermenuShownChange?: (v: boolean) => void;
   activityContext?: string;
+  bordered?: boolean;
 }) {
   const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
     fallback: 'logoGreen'
@@ -83,17 +85,17 @@ export default function RankingsListItem({
         justify-content: space-between;
         gap: ${small ? '0.8rem' : '1.2rem'};
         width: 100%;
-        border: 1px solid var(--ui-border);
+        border: ${bordered ? '1px solid var(--ui-border)' : 'none'};
         border-radius: 12px;
         padding: ${small ? '0.75rem 1rem' : '1rem 1.4rem'};
         background: #fff;
-        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        box-shadow: ${bordered ? '0 1px 0 rgba(15, 23, 42, 0.08)' : 'none'};
         @media (max-width: ${tabletMaxWidth}) {
           padding: ${small ? '0.6rem 0.75rem' : '0.85rem 1rem'};
           gap: ${small ? '0.6rem' : '0.9rem'};
         }
       `,
-    [small]
+    [bordered, small]
   );
   const rankBadgeClass = useMemo(
     () =>
