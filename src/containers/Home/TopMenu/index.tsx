@@ -77,6 +77,9 @@ export default function TopMenu({
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
   );
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const [loadingChess, setLoadingChess] = useState(false);
   const [loadingOmok, setLoadingOmok] = useState(false);
   const [chessModalShown, setChessModalShown] = useState(false);
@@ -167,6 +170,7 @@ export default function TopMenu({
   );
 
   useEffect(() => {
+    if (!userId) return;
     handleCheckUnansweredChess();
     handleCheckUnansweredOmok();
 
@@ -228,7 +232,8 @@ export default function TopMenu({
         `}
       >
         <p>
-          Hi, {username}! What do you want to do today?
+          {username ? `Hi, ${username}!` : 'Hi there!'} What do you want to do
+          today?
         </p>
         <InputPanel onInputModalButtonClick={onInputModalButtonClick} />
         <div
@@ -247,7 +252,7 @@ export default function TopMenu({
                 variant="logoBlue"
                 size="md"
                 shiny={false}
-                onClick={onPlayAIStories}
+                onClick={handleAIStoriesClick}
               >
                 A{allGoalsAchieved ? '' : '.I Stories'}
                 {isAchieved('A') ? ' ✓' : ''}
@@ -302,7 +307,10 @@ export default function TopMenu({
                 variant="success"
                 size="md"
                 shiny={false}
-                onClick={() => onInputModalButtonClick('file')}
+                onClick={() => {
+                  if (!userId) return onOpenSigninModal();
+                  onInputModalButtonClick('file');
+                }}
               >
                 {''}
               </GameCTAButton>
@@ -350,6 +358,10 @@ export default function TopMenu({
   );
 
   function handlePlayGrammarGame() {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     clearTimeout(wordleTimerIdRef.current);
     wordleTimerIdRef.current = null;
     setLoadingWordle(false);
@@ -360,6 +372,10 @@ export default function TopMenu({
   }
 
   function handleWordleButtonClick({ isRetry = false } = {}) {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     if (!isMountedRef.current) return;
 
     if (!isRetry && loadingWordle) return;
@@ -378,8 +394,20 @@ export default function TopMenu({
   }
 
   function handleChessButtonClick(): any {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     if (!isMountedRef.current) return;
     setChessModalShown(true);
+  }
+
+  function handleAIStoriesClick() {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    onPlayAIStories();
   }
 
   function handleNavigateToChessMessage(): any {

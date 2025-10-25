@@ -98,6 +98,9 @@ export default function contentRequestHelpers({
       rootId?: number;
     }) {
       try {
+        if (!auth()?.headers?.authorization) {
+          return [] as any;
+        }
         const { data } = await request.get(
           `${URL}/content/draft?type=${contentType}${
             rootType ? `&rootType=${rootType}` : ''

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import InputModal from './InputModal';
 import CielButton from './CielButton';
 import ZeroButton from './ZeroButton';
@@ -12,6 +12,10 @@ export default function InputPanel({
 }: {
   onInputModalButtonClick: (v?: string) => void;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const inputModalShown = useHomeContext((v) => v.state.inputModalShown);
   const onSetInputModalShown = useHomeContext(
     (v) => v.actions.onSetInputModalShown
@@ -35,10 +39,17 @@ export default function InputPanel({
             onChange={() => setInputValue('')}
             onFocus={(event) => {
               event.currentTarget.blur();
+              if (!userId) {
+                return;
+              }
               onInputModalButtonClick();
             }}
             onClick={(event) => {
               event.currentTarget.blur();
+              if (!userId) {
+                onOpenSigninModal();
+                return;
+              }
               onInputModalButtonClick();
             }}
             className={css`
@@ -62,9 +73,9 @@ export default function InputPanel({
           <CielButton />
           <ZeroButton />
         </div>
-        <InputModal 
+        <InputModal
           isOpen={inputModalShown}
-          onHide={() => onSetInputModalShown({ shown: false })} 
+          onHide={() => onSetInputModalShown({ shown: false })}
         />
       </div>
     </ErrorBoundary>

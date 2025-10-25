@@ -5,16 +5,17 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useAppContext, useInputContext } from '~/contexts';
+import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
 
-export default function InputModal({ 
-  isOpen, 
-  onHide 
-}: { 
+export default function InputModal({
+  isOpen,
+  onHide
+}: {
   isOpen: boolean;
   onHide: () => void;
 }) {
   const subject = useInputContext((v) => v.state.subject);
+  const userId = useKeyContext((v) => v.myState.userId);
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
   const onSetSubjectTitle = useInputContext((v) => v.actions.onSetSubjectTitle);
@@ -28,13 +29,14 @@ export default function InputModal({
   const draftIdRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (!isOpen || !userId) return;
     fetchDrafts();
     async function fetchDrafts() {
       const data = await checkDrafts({ contentType: 'subject' });
       setDrafts(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isOpen, userId]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">

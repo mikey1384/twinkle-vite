@@ -49,7 +49,6 @@ export default function Stories() {
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
-  const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
   const alertColorKey = alertRole.colorKey;
@@ -240,15 +239,13 @@ export default function Stories() {
         style={containerStyle}
         ref={ContainerRef}
       >
-        {userId && (
-          <TopMenu
-            onInputModalButtonClick={(modalType) =>
-              onSetInputModalShown({ shown: true, modalType })
-            }
-            onPlayAIStories={() => onSetAIStoriesModalShown(true)}
-            onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
-          />
-        )}
+        <TopMenu
+          onInputModalButtonClick={(modalType) =>
+            onSetInputModalShown({ shown: true, modalType })
+          }
+          onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+          onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+        />
         <Featured />
         <HomeFilter
           category={category}

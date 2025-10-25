@@ -14,11 +14,17 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
   const [chatLoading, setChatLoading] = useState(false);
+  function openSigninDeferred() {
+    setTimeout(() => onOpenSigninModal(), 0);
+  }
 
   return (
     <ErrorBoundary componentPath="TopMenu/InputPanel/CielButton">
@@ -59,6 +65,10 @@ export default function CielButton({ style }: { style?: React.CSSProperties }) {
   );
 
   async function handleClick() {
+    if (!userId) {
+      openSigninDeferred();
+      return;
+    }
     setChatLoading(true);
     const { channelId, pathId } = await loadDMChannel({
       recipient: { id: CIEL_TWINKLE_ID }

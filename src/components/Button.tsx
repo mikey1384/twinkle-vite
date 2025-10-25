@@ -88,8 +88,6 @@ export default function Button(props: ButtonProps) {
     () => (hoverColor === 'theme' || !hoverColor ? baseColorKey : hoverColor),
     [hoverColor, baseColorKey]
   );
-  const baseIsTheme = false;
-  const hoverIsTheme = false;
 
   const sizeFont =
     size === 'sm' ? '1.3rem' : size === 'lg' ? '1.7rem' : '1.5rem';
@@ -229,9 +227,7 @@ export default function Button(props: ButtonProps) {
     `;
   }, [
     resolvedVariant,
-    baseIsTheme,
     baseColorKey,
-    hoverIsTheme,
     hoverColorKey,
     resolvedTone,
     isDisabled,
