@@ -32,6 +32,8 @@ export default function Main({
       >
         <Button
           color="logoBlue"
+          variant="soft"
+          tone="raised"
           style={{ display: 'block', fontSize: '2.7rem', padding: '1rem' }}
           onClick={onShowLoginForm}
         >
@@ -39,6 +41,8 @@ export default function Main({
         </Button>
         <Button
           color="pink"
+          variant="soft"
+          tone="raised"
           style={{ marginTop: '1rem', fontSize: '2.5rem', padding: '1rem' }}
           onClick={onShowSignUpForm}
         >
@@ -46,6 +50,8 @@ export default function Main({
         </Button>
         <Button
           color="purple"
+          variant="soft"
+          tone="raised"
           style={{
             marginTop: '1.5rem',
             fontSize: '2rem',
