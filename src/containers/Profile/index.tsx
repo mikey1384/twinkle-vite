@@ -27,6 +27,7 @@ export default function Profile() {
   );
   const setTheme = useAppContext((v) => v.requestHelpers.setTheme);
   const userId = useKeyContext((v) => v.myState.userId);
+  const viewerTheme = useKeyContext((v) => v.myState.profileTheme);
   const username = useKeyContext((v) => v.myState.username);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
@@ -111,10 +112,10 @@ export default function Profile() {
     username
   ]);
 
-  // Ensure reload on someone else's profile applies their theme pre-/post-mount
+  // Ensure viewing a profile applies that user's theme (even when logged out)
   useEffect(() => {
-    if (!profile?.id || !userId) return;
-    const isViewingOwnProfile = profile.id === userId;
+    if (!profile?.id) return;
+    const isViewingOwnProfile = userId ? profile.id === userId : false;
     if (isViewingOwnProfile) {
       // Clear any lingering route override when viewing own profile
       try {
@@ -134,11 +135,14 @@ export default function Profile() {
       try {
         localStorage.removeItem('routeProfileTheme');
         // Restore viewer theme variables immediately
-        const restore = DEFAULT_PROFILE_THEME as any;
+        const stored = (localStorage.getItem('profileTheme') ||
+          viewerTheme ||
+          DEFAULT_PROFILE_THEME) as any;
+        const restore = stored as any;
         applyThemeVars(restore);
       } catch (_err) {}
     };
-  }, [profile?.id, profile?.profileTheme, userId]);
+  }, [profile?.id, profile?.profileTheme, userId, viewerTheme]);
 
   return (
     <ErrorBoundary componentPath="Profile/index" style={{ minHeight: '10rem' }}>
