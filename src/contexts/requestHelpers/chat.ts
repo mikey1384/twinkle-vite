@@ -881,7 +881,10 @@ export default function chatRequestHelpers({
           `${URL}/chat?channelId=${channelId}${
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }`,
-          auth()
+          {
+            ...auth(),
+            meta: { allowExtendedTimeout: true }
+          }
         );
         return data;
       } catch (error) {
@@ -906,7 +909,10 @@ export default function chatRequestHelpers({
           }${skipUpdateChannelId ? '&skipUpdateChannelId=1' : ''}${
             isForInvitation ? '&isForInvitation=1' : ''
           }`,
-          auth()
+          {
+            ...auth(),
+            meta: { allowExtendedTimeout: true }
+          }
         );
         return data;
       } catch (error) {
@@ -1140,7 +1146,10 @@ export default function chatRequestHelpers({
               ? `&messageIdToScrollTo=${messageIdToScrollTo}`
               : ''
           }`,
-          auth()
+          {
+            ...auth(),
+            meta: { allowExtendedTimeout: true }
+          }
         );
         return { topicObj, messages, loadMoreShown, loadMoreShownAtBottom };
       } catch (error) {
@@ -1161,7 +1170,10 @@ export default function chatRequestHelpers({
           data: { messages, loadMoreShownAtBottom }
         } = await request.get(
           `${URL}/chat/topic/messages/more/recent?channelId=${channelId}&topicId=${topicId}&lastMessageId=${lastMessageId}`,
-          auth()
+          {
+            ...auth(),
+            meta: { allowExtendedTimeout: true }
+          }
         );
         return { messages, loadMoreShownAtBottom };
       } catch (error) {

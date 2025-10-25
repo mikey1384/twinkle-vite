@@ -200,12 +200,6 @@ class RequestChannel {
     applyCacheBuster(config, attempt);
 
     let clearTimeoutFn: (() => void) | undefined;
-    if (timeoutMs > 0) {
-      const timer = setTimeout(() => {
-        controller.abort(new CanceledError('timeout'));
-      }, timeoutMs);
-      clearTimeoutFn = () => clearTimeout(timer);
-    }
 
     let removeGuard: (() => void) | undefined;
     const enableGuard = context.enableProgressGuard;
@@ -219,6 +213,12 @@ class RequestChannel {
 
     try {
       const response = await this.limiter(async () => {
+        if (timeoutMs > 0) {
+          const timer = setTimeout(() => {
+            controller.abort(new CanceledError('timeout'));
+          }, timeoutMs);
+          clearTimeoutFn = () => clearTimeout(timer);
+        }
         const httpStartTime = Date.now();
 
         try {
