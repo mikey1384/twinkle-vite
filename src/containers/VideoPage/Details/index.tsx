@@ -94,6 +94,8 @@ export default function Details({
   });
   const banned = useKeyContext((v) => v.myState.banned);
   const level = useKeyContext((v) => v.myState.level);
+  const { canEditRewardLevel: keyCanEditRewardLevel, canReward: keyCanReward, userId: myUserId } =
+    useKeyContext((v) => v.myState);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   const { canDelete, canEdit, canReward } = useMyLevel();
@@ -115,6 +117,13 @@ export default function Details({
     useState(false);
 
   const [titleHovered, setTitleHovered] = useState(false);
+  const starButtonShown = useMemo(() => {
+    const hasUploader = !!uploader;
+    return (
+      !!keyCanEditRewardLevel ||
+      (hasUploader && (uploader?.id === myUserId || !!keyCanReward))
+    );
+  }, [keyCanEditRewardLevel, keyCanReward, myUserId, uploader]);
 
   const TitleRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
@@ -409,7 +418,13 @@ export default function Details({
                 )}
               </div>
               {/* Row 2: Star + Heart */}
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end'
+                }}
+              >
                 <Button
                   color={rewardColor}
                   style={{}}
@@ -420,25 +435,27 @@ export default function Details({
                 >
                   <Icon icon="heart" />
                 </Button>
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '3.6rem',
-                    height: '3.6rem',
-                    marginLeft: '1rem'
-                  }}
-                >
-                  <StarButton
-                    byUser={!!byUser}
-                    contentId={Number(videoId)}
-                    style={{ position: 'absolute', top: 0, left: 0 }}
-                    contentType="video"
-                    rewardLevel={rewardLevel}
-                    onSetRewardLevel={onSetRewardLevel}
-                    onToggleByUser={handleToggleByUser}
-                    uploader={uploader}
-                  />
-                </div>
+                {starButtonShown && (
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '3.6rem',
+                      height: '3.6rem',
+                      marginLeft: '1rem'
+                    }}
+                  >
+                    <StarButton
+                      byUser={!!byUser}
+                      contentId={Number(videoId)}
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                      contentType="video"
+                      rewardLevel={rewardLevel}
+                      onSetRewardLevel={onSetRewardLevel}
+                      onToggleByUser={handleToggleByUser}
+                      uploader={uploader}
+                    />
+                  </div>
+                )}
               </div>
               {/* Row 3: Views */}
               {videoViews > 10 && (

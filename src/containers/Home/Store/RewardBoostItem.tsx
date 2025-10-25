@@ -61,6 +61,7 @@ const item = {
               (levelToken && levelToken.color) || 'logoBlue';
             const levelColorFn = Color[levelColorKey] || Color.logoBlue;
             const levelColor = levelColorFn();
+            const levelBorder = levelColorFn();
             return (
               <div
                 key={index}
@@ -68,98 +69,117 @@ const item = {
                   display: 'flex',
                   width: '80%',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginTop: index === 0 ? 0 : '1rem'
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    width: `8rem`,
-                    justifyContent: 'center'
+                    width: '9rem',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                   }}
                 >
                   <div
                     className={css`
-                      display: flex;
-                      justify-content: center;
+                      height: 2.4rem;
+                      display: inline-flex;
                       align-items: center;
-                      min-width: 4rem;
-                      padding: 0.5rem 0.5rem;
-                    background: ${levelColor};
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    color: #fff;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1rem;
-                    }
-                  `}
-                >
-                  <div style={{ fontSize: '1rem', lineHeight: 1 }}>
-                    {[...Array(rewardLevel)].map((elem, index) => (
-                      <Icon
-                        key={index}
-                        style={{ verticalAlign: 0 }}
-                        icon="star"
-                      />
-                    ))}
+                      justify-content: center;
+                      padding: 0 0.8rem;
+                      border-radius: 9999px;
+                      background: ${levelColor};
+                      border: 1px solid ${levelBorder};
+                      color: #fff;
+                    `}
+                  >
+                    <div style={{ fontSize: '1rem', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                      {[...Array(rewardLevel)].map((_, i) => (
+                        <Icon key={i} style={{ verticalAlign: 0 }} icon="star" />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  marginLeft: '3rem',
-                  flexGrow: 1
-                }}
-              >
                 <div
                   style={{
                     display: 'flex',
-                    width: '95%',
-                    justifyContent: 'space-around'
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginLeft: '3rem',
+                    flexGrow: 1
                   }}
                 >
-                  <div>
-                    {(videoRewardHash[keyNumber]?.xp || 0) * rewardLevel} XP
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: '95%',
+                      alignItems: 'center'
+                    }}
+                  >
+                  <div
+                      style={{ width: '45%', textAlign: 'right' }}
+                    >
+                    <span style={{ color: Color.logoGreen() }}>
+                      {(videoRewardHash[keyNumber]?.xp || 0) * rewardLevel}
+                    </span>{' '}
+                    <span style={{ color: Color.gold() }}>
+                      XP
+                    </span>
                     {rewardLevel > 2 ? (
                       <span>
                         {`, `}
-                        <span style={{ marginLeft: '0.5rem' }}>
+                        <span
+                          style={{
+                            marginLeft: '0.5rem',
+                            color: Color.brownOrange()
+                          }}
+                        >
                           <Icon icon={['far', 'badge-dollar']} />{' '}
                           {videoRewardHash[keyNumber]?.coin}
                         </span>
                       </span>
-                    ) : (
-                      ''
-                    )}
+                    ) : null}
                   </div>
-                  <div style={{ color: Color.green() }}>
-                    <Icon icon="arrow-right" />
-                  </div>
-                  <div
-                    style={{
-                      fontWeight: 'bold',
-                      color: Color.brownOrange()
-                    }}
-                  >
-                    {videoRewardHash[keyNumber + 1]?.xp * rewardLevel} XP
+                    <div
+                      style={{
+                        width: '10%',
+                        textAlign: 'center',
+                        color: Color.green()
+                      }}
+                    >
+                      <Icon icon="arrow-right" />
+                    </div>
+                    <div
+                      style={{
+                      width: '45%',
+                      fontWeight: 700,
+                      textAlign: 'left'
+                      }}
+                    >
+                    <span style={{ color: Color.logoGreen() }}>
+                      {videoRewardHash[keyNumber + 1]?.xp * rewardLevel}
+                    </span>{' '}
+                    <span style={{ color: Color.gold() }}>XP</span>
                     {rewardLevel > 2 ? (
                       <span>
                         {`, `}
-                        <span style={{ marginLeft: '0.5rem' }}>
+                        <span
+                          style={{
+                            marginLeft: '0.5rem',
+                            color: Color.brownOrange(),
+                            fontWeight: 700
+                          }}
+                        >
                           <Icon icon={['far', 'badge-dollar']} />{' '}
                           {videoRewardHash[keyNumber + 1]?.coin}
                         </span>
                       </span>
-                    ) : (
-                      ''
-                    )}
+                    ) : null}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             );
           })}
         </div>

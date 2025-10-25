@@ -77,15 +77,19 @@ export default function Button(props: ButtonProps) {
   }, [tone]);
 
   const baseColorKey = useMemo(() => {
-    // Default text color for ghost buttons should be darkGray
-    if (!color) {
+    // Treat 'theme' as unsupported: fall back to defaults
+    const normalized = color === 'theme' ? undefined : color;
+    if (!normalized) {
       return resolvedVariant === 'ghost' ? 'darkerGray' : 'black';
     }
-    return color;
+    return normalized;
   }, [color, resolvedVariant]);
-  const hoverColorKey = hoverColor || baseColorKey;
-  const baseIsTheme = baseColorKey === 'theme';
-  const hoverIsTheme = hoverColorKey === 'theme';
+  const hoverColorKey = useMemo(
+    () => (hoverColor === 'theme' || !hoverColor ? baseColorKey : hoverColor),
+    [hoverColor, baseColorKey]
+  );
+  const baseIsTheme = false;
+  const hoverIsTheme = false;
 
   const sizeFont =
     size === 'sm' ? '1.3rem' : size === 'lg' ? '1.7rem' : '1.5rem';
@@ -102,46 +106,26 @@ export default function Button(props: ButtonProps) {
     const v = resolvedVariant;
 
     // Tokens per variant
-    const solidBg = baseIsTheme ? 'var(--theme-bg)' : tint(baseColorKey, 1);
-    const solidBorder = baseIsTheme
-      ? 'var(--theme-border)'
-      : tint(baseColorKey, 1);
-    const solidHoverBg = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.9);
+    const solidBg = tint(baseColorKey, 1);
+    const solidBorder = tint(baseColorKey, 1);
+    const solidHoverBg = tint(hoverColorKey, 0.9);
     const solidHoverBorder = solidHoverBg;
 
     // Soft tokens
-    const softBg = baseIsTheme ? 'var(--theme-bg)' : tint(baseColorKey, 0.12);
-    const softBorder = baseIsTheme
-      ? 'var(--theme-border)'
-      : tint(baseColorKey, 0.28);
-    const softHoverBg = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.18);
-    const softHoverBorder = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.32);
+    const softBg = tint(baseColorKey, 0.12);
+    const softBorder = tint(baseColorKey, 0.28);
+    const softHoverBg = tint(hoverColorKey, 0.18);
+    const softHoverBorder = tint(hoverColorKey, 0.32);
 
     const outlineBg = 'transparent';
-    const outlineBorder = baseIsTheme
-      ? 'var(--theme-border)'
-      : tint(baseColorKey, 0.5);
-    const outlineHoverBg = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.08);
-    const outlineHoverBorder = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.6);
+    const outlineBorder = tint(baseColorKey, 0.5);
+    const outlineHoverBg = tint(hoverColorKey, 0.08);
+    const outlineHoverBorder = tint(hoverColorKey, 0.6);
 
     const ghostBg = 'transparent';
     const ghostBorder = 'transparent';
-    const ghostHoverBg = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.08);
-    const ghostHoverBorder = hoverIsTheme
-      ? 'var(--theme-hover-bg)'
-      : tint(hoverColorKey, 0.28);
+    const ghostHoverBg = tint(hoverColorKey, 0.08);
+    const ghostHoverBorder = tint(hoverColorKey, 0.28);
 
     // Background / Border / Text
     const bg =
@@ -184,21 +168,15 @@ export default function Button(props: ButtonProps) {
     }
     const textColor =
       v === 'solid'
-        ? baseIsTheme
-          ? 'var(--theme-text)'
-          : baseIsWhite
+        ? baseIsWhite
           ? tint('darkerGray', 1)
           : '#fff'
-        : baseIsTheme
-        ? 'var(--theme-text)'
         : baseIsWhite
         ? tint('darkerGray', 1)
         : tint(baseColorKey, 1);
     const hoverTextColor =
       v === 'solid'
         ? textColor
-        : hoverIsTheme
-        ? 'var(--theme-text)'
         : hoverColorKey === 'white'
         ? tint('darkerGray', 1)
         : tint(hoverColorKey, 1);
@@ -232,8 +210,7 @@ export default function Button(props: ButtonProps) {
 
       &:focus-visible {
         outline: 0;
-        box-shadow: 0 0 0 3px
-          ${baseIsTheme ? 'var(--theme-hover-bg)' : tint(baseColorKey, 0.32)};
+        box-shadow: 0 0 0 3px ${tint(baseColorKey, 0.32)};
       }
 
       @media (hover: hover) and (pointer: fine) {

@@ -37,7 +37,7 @@ export default function ListItem({
         border-radius: 12px;
         /* Default surface for neutral state (no borders) */
         &:not(.correct):not(.wrong) {
-          background: ${Color.inputGray()};
+          background: ${Color.whiteGray()};
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.045);
         }
         transition: background 0.15s ease, transform 0.08s ease,

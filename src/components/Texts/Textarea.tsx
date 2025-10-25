@@ -30,6 +30,7 @@ export default function Textarea({
   onDrop,
   style,
   theme,
+  disableFocusGlow,
   ...rest
 }: Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onDrop' | 'ref'> & {
   draggedFile?: File;
@@ -39,6 +40,7 @@ export default function Textarea({
   maxRows?: number;
   onDrop?: (filePath: string) => void;
   theme?: string;
+  disableFocusGlow?: boolean;
 }) {
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -197,16 +199,21 @@ export default function Textarea({
           opacity: ${uploading ? 0.2 : 1};
           font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
           width: 100%;
+          box-sizing: border-box;
           position: relative;
           font-size: 1.7rem;
           padding: 1rem;
           border: 1px solid var(--ui-border);
           resize: none;
           touch-action: manipulation;
+          border-radius: inherit;
           &:focus {
             outline: none;
-            border: 1px solid ${Color.logoBlue()};
-            box-shadow: 0px 0px 3px ${Color.logoBlue(0.8)};
+            ${disableFocusGlow
+              ? `border: none; box-shadow: none;`
+              : `border: 1px solid ${Color.logoBlue()}; box-shadow: 0px 0px 3px ${Color.logoBlue(
+                  0.8
+                )};`}
             ::placeholder {
               color: ${Color.lighterGray()};
             }

@@ -218,17 +218,24 @@ export default function UserDetails({
       )}
       {noProfile &&
         (userId === profile.id && !unEditable ? (
-          <div style={{ padding: '4rem 1rem 3rem 1rem' }}>
-            <a
-              style={{
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                fontSize: '2rem'
-              }}
+          <div
+            style={{
+              padding: '2rem 1rem 1.5rem 1rem',
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Button
+              variant="soft"
+              size="lg"
+              tone="raised"
+              color={profile.profileTheme || 'logoBlue'}
               onClick={() => onSetBioEditModalShown?.(true)}
+              style={{ fontWeight: 700 }}
             >
-              Introduce yourself!
-            </a>
+              <Icon icon="user-edit" />
+              <span style={{ marginLeft: '0.6rem' }}>Introduce yourself!</span>
+            </Button>
           </div>
         ) : (
           <div

@@ -14,6 +14,8 @@ import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { getColorFromName } from '~/helpers/stringHelpers';
+import Button from '~/components/Button';
+import { themedCardBase } from '~/theme/themedCard';
 
 export default function GroupItem({
   groupId,
@@ -65,17 +67,16 @@ export default function GroupItem({
     <ErrorBoundary componentPath="Home/Groups/GroupItem">
       <div
         className={css`
+          ${themedCardBase};
           display: grid;
           grid-template-columns: auto 1fr;
           grid-template-rows: auto auto auto 1fr;
           gap: 1rem;
           background: #fff;
-          padding: 1.5rem;
+          padding: 1.4rem 1.6rem;
           margin: 1rem 0;
-          border: 1px solid var(--ui-border);
-          border-radius: 1rem;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          font-family: 'Roboto', sans-serif;
+          border-color: var(--ui-border);
+          box-shadow: none;
         `}
       >
         <div
@@ -137,7 +138,7 @@ export default function GroupItem({
               className={css`
                 margin: 0;
                 font-size: 1.7rem;
-                font-weight: bold;
+                font-weight: 700;
               `}
             >
               {groupName}
@@ -145,13 +146,14 @@ export default function GroupItem({
             {isOwner && (
               <span
                 className={css`
-                  margin-left: 1rem;
-                  padding: 0.3rem 0.6rem;
-                  background-color: #f1c40f;
-                  color: #fff;
-                  border-radius: 0.5rem;
-                  font-size: 1rem;
-                  font-weight: bold;
+                  margin-left: 0.6rem;
+                  padding: 0.2rem 0.5rem;
+                  background: ${Color.brightGold(0.18)};
+                  color: ${Color.darkBrownOrange()};
+                  border: 1px solid ${Color.brightGold(0.45)};
+                  border-radius: 6px;
+                  font-size: 1.1rem;
+                  font-weight: 700;
                 `}
               >
                 Owner
@@ -160,13 +162,14 @@ export default function GroupItem({
             {isMember && !isOwner && (
               <span
                 className={css`
-                  margin-left: 1rem;
-                  padding: 0.3rem 0.6rem;
-                  background-color: #3498db;
-                  color: #fff;
-                  border-radius: 0.5rem;
-                  font-size: 1rem;
-                  font-weight: bold;
+                  margin-left: 0.6rem;
+                  padding: 0.2rem 0.5rem;
+                  background: ${Color.logoBlue(0.12)};
+                  color: ${Color.logoBlue()};
+                  border: 1px solid ${Color.logoBlue(0.35)};
+                  border-radius: 6px;
+                  font-size: 1.1rem;
+                  font-weight: 700;
                 `}
               >
                 Member
@@ -219,42 +222,36 @@ export default function GroupItem({
         >
           {description}
         </p>
-        <button
+        <div
           className={css`
             grid-row: 4 / 5;
             grid-column: 2 / 3;
-            opacity: ${joining ? 0.5 : 1};
-            background: ${isMember || isOwner
-              ? Color.logoBlue()
-              : Color.green()};
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            padding: 1rem 2rem;
-            cursor: pointer;
-            font-size: 1.5rem;
-            margin-top: 2rem;
-            font-weight: bold;
-            font-family: 'Montserrat', sans-serif;
+            margin-top: 1.2rem;
             display: flex;
-            align-items: center;
             justify-content: center;
-            ${joining ? '' : '&:hover { filter: brightness(110%); }'}
           `}
-          disabled={joining}
-          onClick={
-            isMember ? () => navigate(`/chat/${pathId}`) : handleJoinGroup
-          }
         >
-          <Icon
-            icon={isMember ? 'right-from-bracket' : 'user-plus'}
-            style={{ marginRight: '0.7rem' }}
-          />
-          <span>{isMember || isOwner ? 'Go' : 'Join Group'}</span>
-          {joining && (
-            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-          )}
-        </button>
+          <Button
+            onClick={
+              isMember || isOwner
+                ? () => navigate(`/chat/${pathId}`)
+                : handleJoinGroup
+            }
+            loading={joining}
+            color={isMember || isOwner ? 'logoBlue' : 'green'}
+            variant="solid"
+            size="md"
+            tone="flat"
+            style={{ fontWeight: 700, minWidth: '20rem', justifyContent: 'center' }}
+          >
+            <Icon
+              icon={isMember || isOwner ? 'right-from-bracket' : 'user-plus'}
+            />
+            <span style={{ marginLeft: '0.7rem' }}>
+              {isMember || isOwner ? 'Go' : 'Join Group'}
+            </span>
+          </Button>
+        </div>
       </div>
     </ErrorBoundary>
   );

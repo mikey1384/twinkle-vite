@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
@@ -28,116 +28,224 @@ export default function BioEditModal({
   const [secondLine, setSecondLine] = useState(props.secondLine || '');
   const [thirdLine, setThirdLine] = useState(props.thirdLine || '');
 
+  const footer = (
+    <div>
+      <Button
+        variant="ghost"
+        onClick={onHide}
+        style={{ marginRight: '0.7rem' }}
+      >
+        Cancel
+      </Button>
+      <Button
+        color={doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'}
+        loading={isSubmitting}
+        onClick={() => {
+          setIsSubmitting(true);
+          onSubmit({
+            firstLine: finalizeEmoji(firstLine),
+            secondLine: finalizeEmoji(secondLine),
+            thirdLine: finalizeEmoji(thirdLine)
+          });
+        }}
+        disabled={
+          firstLine.length > MAX_CHAR ||
+          secondLine.length > MAX_CHAR ||
+          thirdLine.length > MAX_CHAR
+        }
+      >
+        Submit
+      </Button>
+    </div>
+  );
+
   return (
-    <Modal
-      onHide={onHide}
-      closeWhenClickedOutside={false}
+    <NewModal
+      isOpen={true}
+      onClose={onHide}
+      title="Edit Your Bio"
+      size="md"
+      footer={footer}
       className={css`
         b {
           color: ${Color.green()};
         }
-        p {
-          color: ${Color.darkerGray()};
-          margin-top: 1rem;
-          margin-bottom: 1rem;
-        }
         label {
-          font-weight: bold;
+          font-weight: 600;
+          color: ${Color.darkerGray()};
         }
         input {
           margin-top: 0.5rem;
         }
         small {
-          font-size: 1.3rem;
+          font-size: 1.2rem;
           color: ${Color.darkGray()};
         }
       `}
     >
-      <header>Edit Your Bio</header>
-      <main style={{ width: '100%', justifyContent: 'flex-start' }}>
+      <div
+        className={css`
+          width: 100%;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.2rem;
+        `}
+      >
         <div>
-          <label>
-            {`Write`} <b>anything you want</b>{' '}
-            {`about yourself. If can't think of anything to write then read the questions below, but you don't have to answer them`}
-          </label>
+          <div
+            className={css`
+              margin-bottom: 0.4rem;
+            `}
+          >
+            <div
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: ${Color.darkerGray()};
+                line-height: 1.45;
+              `}
+            >
+              {`Write anything you want about yourself.`}
+            </div>
+            <div
+              className={css`
+                font-size: 1.25rem;
+                color: ${Color.gray()};
+                line-height: 1.55;
+                margin-top: 0.15rem;
+              `}
+            >
+              {`If you can't think of anything to write, use the questions below as prompts — you don't have to answer them.`}
+            </div>
+          </div>
           <Input
             autoFocus
             value={firstLine}
             onChange={(text) => setFirstLine(addEmoji(text))}
-            placeholder="Write something"
+            placeholder="Write anything you want about yourself"
           />
-          <small
-            style={{ color: firstLine.length > MAX_CHAR ? 'red' : '' }}
-          >{`(${firstLine.length}/${MAX_CHAR} characters)`}</small>
-          <p>
-            {
-              "If you are a Twinkle student, which class are you in Twinkle? If you are a non-Twinkle student, which english academy do you go to? What's your teacher's name? If you are not a student, what is your occupation?"
-            }
-          </p>
+          <div
+            className={css`
+              display: flex;
+              justify-content: flex-end;
+            `}
+          >
+            <small style={{ color: firstLine.length > MAX_CHAR ? 'red' : '' }}>
+              {`(${firstLine.length}/${MAX_CHAR} characters)`}
+            </small>
+          </div>
+          <div
+            className={css`
+              margin-top: 0.6rem;
+              background: ${Color.whiteGray()};
+              border-left: 3px solid var(--ui-border);
+              padding: 0.8rem 1rem;
+              border-radius: 8px;
+              color: ${Color.darkGray()};
+              font-size: 1.35rem;
+              line-height: 1.6;
+            `}
+          >
+            <ul
+              className={css`
+                margin: 0;
+                padding-left: 1.2rem;
+                list-style-type: disc;
+              `}
+            >
+              <li>{`If you're a Twinkle student: which class are you in?`}</li>
+              <li>{`If you're not a Twinkle student: which English academy do you attend?`}</li>
+              <li>{`What's your teacher's name?`}</li>
+              <li>{`If you're not a student: what's your occupation?`}</li>
+            </ul>
+          </div>
         </div>
         <div>
-          <label>
-            {`Write`} <b>anything you want</b>{' '}
-            {`about yourself. If can't think of anything to write then read the questions below, but you don't have to answer them`}
-          </label>
           <Input
             value={secondLine}
             onChange={(text) => setSecondLine(addEmoji(text))}
-            placeholder="Write something"
+            placeholder="Write anything you want about yourself"
           />
-          <small
-            style={{ color: secondLine.length > MAX_CHAR ? 'red' : '' }}
-          >{`(${secondLine.length}/${MAX_CHAR} characters)`}</small>
-          <p>
-            {`What do you love doing? What do you normally do when you play with your friends? What would you do all day if your parents allowed you to do anything you want? Don't like these questions? Then feel free to write anything you want (ideally about your favorite activity)`}
-          </p>
+          <div
+            className={css`
+              display: flex;
+              justify-content: flex-end;
+            `}
+          >
+            <small style={{ color: secondLine.length > MAX_CHAR ? 'red' : '' }}>
+              {`(${secondLine.length}/${MAX_CHAR} characters)`}
+            </small>
+          </div>
+          <div
+            className={css`
+              margin-top: 0.6rem;
+              background: ${Color.whiteGray()};
+              border-left: 3px solid var(--ui-border);
+              padding: 0.8rem 1rem;
+              border-radius: 8px;
+              color: ${Color.darkGray()};
+              font-size: 1.35rem;
+              line-height: 1.6;
+            `}
+          >
+            <ul
+              className={css`
+                margin: 0;
+                padding-left: 1.2rem;
+                list-style-type: disc;
+              `}
+            >
+              <li>{`What do you love doing?`}</li>
+              <li>{`What do you usually do when you play with friends?`}</li>
+              <li>{`If you could do anything all day, what would it be?`}</li>
+              <li>{`Don't like these questions? Write anything you want (ideally your favorite activity).`}</li>
+            </ul>
+          </div>
         </div>
         <div>
-          <label>
-            {`Write`} <b>anything you want</b>{' '}
-            {`about yourself. If can't think of anything to write then read the questions below, but you don't have to answer them`}
-          </label>
           <Input
             value={thirdLine}
             onChange={(text) => setThirdLine(addEmoji(text))}
-            placeholder="Write something"
+            placeholder="Write anything you want about yourself"
           />
-          <small
-            style={{ color: thirdLine.length > MAX_CHAR ? 'red' : '' }}
-          >{`(${thirdLine.length}/${MAX_CHAR} characters)`}</small>
-          <p>
-            {
-              "Which school do you go to? (Example: Daechi elementary school) What grade are you in? If you've finished school, which was the last school you've attended? What is your favorite school subject? Or, write anything you wish"
-            }
-          </p>
+          <div
+            className={css`
+              display: flex;
+              justify-content: flex-end;
+            `}
+          >
+            <small style={{ color: thirdLine.length > MAX_CHAR ? 'red' : '' }}>
+              {`(${thirdLine.length}/${MAX_CHAR} characters)`}
+            </small>
+          </div>
+          <div
+            className={css`
+              margin-top: 0.6rem;
+              background: ${Color.whiteGray()};
+              border-left: 3px solid var(--ui-border);
+              padding: 0.8rem 1rem;
+              border-radius: 8px;
+              color: ${Color.darkGray()};
+              font-size: 1.35rem;
+              line-height: 1.6;
+            `}
+          >
+            <ul
+              className={css`
+                margin: 0;
+                padding-left: 1.2rem;
+                list-style-type: disc;
+              `}
+            >
+              <li>{`Which school do you attend? (e.g., Daechi Elementary School)`}</li>
+              <li>{`What grade are you in?`}</li>
+              <li>{`If you've finished school: what was the last school you attended?`}</li>
+              <li>{`What's your favorite school subject?`}</li>
+              <li>{`Or write anything you wish.`}</li>
+            </ul>
+          </div>
         </div>
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Cancel
-        </Button>
-        <Button
-          color={
-            doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
-          }
-          loading={isSubmitting}
-          onClick={() => {
-            setIsSubmitting(true);
-            onSubmit({
-              firstLine: finalizeEmoji(firstLine),
-              secondLine: finalizeEmoji(secondLine),
-              thirdLine: finalizeEmoji(thirdLine)
-            });
-          }}
-          disabled={
-            firstLine.length > MAX_CHAR ||
-            secondLine.length > MAX_CHAR ||
-            thirdLine.length > MAX_CHAR
-          }
-        >
-          Submit
-        </Button>
-      </footer>
-    </Modal>
+      </div>
+    </NewModal>
   );
 }

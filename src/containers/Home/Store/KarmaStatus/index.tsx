@@ -58,8 +58,9 @@ export default function KarmaStatus({
     neutralSurface: true
   });
   const panelBg = useMemo(() => {
-    return blendWithWhite(themeStyles.hoverBg || accentColor, 0.94);
-  }, [accentColor, themeStyles.hoverBg]);
+    // Settings page requires a clean white surface for this panel
+    return '#ffffff';
+  }, []);
   const karmaPanelVars = useMemo(
     () =>
       ({
