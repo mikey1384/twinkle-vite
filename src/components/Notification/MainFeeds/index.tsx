@@ -318,7 +318,12 @@ export default function MainFeeds({
           </ErrorBoundary>
         )}
       {activeTab === 'reward' && !!userId && typeof twinkleXP === 'number' && (
-        <MyRank myId={userId} rank={myAllTimeRank} twinkleXP={twinkleXP} />
+        <MyRank
+          myId={userId}
+          rank={myAllTimeRank}
+          twinkleXP={twinkleXP}
+          isNotification
+        />
       )}
       {userId && activeTab === 'notification' && notifications.length > 0 && (
         <div style={{ marginTop: 0 }}>{NotificationsItems}</div>

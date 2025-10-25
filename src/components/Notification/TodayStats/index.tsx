@@ -36,6 +36,17 @@ const header = css`
   width: 100%;
   margin-bottom: 0.5rem;
 `;
+const buttonRankTextClass = css`
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-left: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+`;
+const buttonRankTextOnlyClass = css`
+  font-size: 1.2rem;
+  font-weight: 700;
+`;
 
 export default function TodayStats({
   isDailyRewardChecked,
@@ -156,12 +167,14 @@ export default function TodayStats({
                     myTodayRank <= 3 ? (
                       <>
                         <Icon icon="trophy" />
-                        <span style={{ marginLeft: '0.3rem' }}>
+                        <span className={buttonRankTextClass}>
                           #{myTodayRank}
                         </span>
                       </>
                     ) : (
-                      <span>#{myTodayRank}</span>
+                      <span className={buttonRankTextOnlyClass}>
+                        #{myTodayRank}
+                      </span>
                     )
                   ) : (
                     <Icon icon="trophy" />

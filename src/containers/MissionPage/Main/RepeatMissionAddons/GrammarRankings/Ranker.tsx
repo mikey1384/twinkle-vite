@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
+import RankBadge from '~/components/RankBadge';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
@@ -36,26 +37,21 @@ export default function Ranker({
         justifyContent: 'space-between',
         alignItems: 'center',
         background:
-          user.id === myId && user.rank > 3 ? Color.highlightGray() : '#fff',
+          user.id === myId && user.rank > 3 ? '#eef2ff' : '#fff',
         padding: '1rem',
         ...style
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span
+        <RankBadge
+          rank={user.rank}
           style={{
-            fontWeight: 'bold',
-            fontSize: '1.5rem',
-            width: '3rem',
             marginRight: '1rem',
-            textAlign: 'center',
-            color:
-              rankColor ||
-              (user.rank <= 10 ? Color.logoBlue() : Color.darkGray())
+            fontSize: '1.5rem',
+            minWidth: '3rem',
+            height: '2.4rem'
           }}
-        >
-          {user.rank ? `#${user.rank}` : '--'}
-        </span>
+        />
         <div
           style={{
             display: 'flex',

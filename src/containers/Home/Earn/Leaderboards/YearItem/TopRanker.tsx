@@ -4,6 +4,7 @@ import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Link from '~/components/Link';
+import RankBadge from '~/components/RankBadge';
 
 export default function TopRanker({
   userId,
@@ -63,14 +64,10 @@ export default function TopRanker({
           background: Color.black()
         }}
       >
-        <div
-          style={{
-            color: rankColor,
-            fontWeight: 'bold'
-          }}
-        >
-          #{rank}
-        </div>
+        <RankBadge
+          rank={rank}
+          style={{ margin: '0 auto 0.5rem' }}
+        />
         <Link
           style={{
             width: '100%',

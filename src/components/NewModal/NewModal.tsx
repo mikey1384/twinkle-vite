@@ -76,6 +76,13 @@ export interface NewModalProps {
   preventBodyScroll?: boolean;
   animationDuration?: number;
   portalTarget?: HTMLElement;
+  // When true, allow the modal to naturally exceed viewport height
+  // so the backdrop scrolls (instead of constraining to 95vh and
+  // forcing an inner scroll region).
+  allowOverflow?: boolean;
+  // Optional padding for the modal body content area.
+  // When provided, overrides the default responsive padding.
+  bodyPadding?: string | number;
   'aria-label'?: string;
   'aria-labelledby'?: string;
 }
@@ -122,6 +129,8 @@ export const NewModal = forwardRef<
       preventBodyScroll = true,
       animationDuration = 200,
       portalTarget,
+      allowOverflow = false,
+      bodyPadding,
       'aria-label': ariaLabel,
       'aria-labelledby': ariaLabelledby,
       children
@@ -204,7 +213,8 @@ export const NewModal = forwardRef<
       if (!bodyElement) return;
 
       if (isOpen) {
-        const originalStyle = targetWindow.getComputedStyle(bodyElement).overflow;
+        const originalStyle =
+          targetWindow.getComputedStyle(bodyElement).overflow;
         bodyElement.style.overflow = 'hidden';
         return () => {
           bodyElement.style.overflow = originalStyle;
@@ -234,12 +244,16 @@ export const NewModal = forwardRef<
 
         setTimeout(() => {
           modalRef.current?.focus();
+          // Ensure overflow-enabled modals start at the top of the backdrop
+          if (allowOverflow && backdropRef.current) {
+            backdropRef.current.scrollTop = 0;
+          }
         }, 50);
       } else if (previousActiveElement.current) {
         previousActiveElement.current.focus();
         previousActiveElement.current = null;
       }
-    }, [isOpen]);
+    }, [isOpen, allowOverflow]);
 
     useEffect(() => {
       if (isOpen) {
@@ -307,16 +321,21 @@ export const NewModal = forwardRef<
             z-index: ${zIndex};
             display: flex;
             width: 100%;
-            align-items: center;
+            align-items: ${allowOverflow ? 'flex-start' : 'center'};
             justify-content: center;
             background-color: rgba(0, 0, 0, 0.5);
             animation: ${!isAnimating ? fadeIn : fadeOut} ${animationDuration}ms
               ease-out;
-            padding: ${deviceIsMobile
-              ? '0.5rem'
-              : deviceIsTablet
-              ? '1rem'
-              : '2rem'};
+            padding: ${deviceIsMobile ? '0' : deviceIsTablet ? '1rem' : '2rem'};
+            ${allowOverflow
+              ? `padding-top: ${
+                  deviceIsMobile
+                    ? '0.75rem'
+                    : deviceIsTablet
+                    ? '1.25rem'
+                    : '2rem'
+                };`
+              : ''}
             overflow-y: auto;
           `}
           onClick={handleBackdropClick}
@@ -329,7 +348,11 @@ export const NewModal = forwardRef<
               width: ${width};
               max-width: ${maxWidth};
               ${height !== 'auto' ? `height: ${height};` : ''}
-              max-height: ${size === 'fullscreen' ? '100vh' : '95vh'};
+              ${size === 'fullscreen'
+                ? 'max-height: 100vh;'
+                : allowOverflow
+                ? ''
+                : 'max-height: 95vh;'}
               background-color: white;
               border-radius: ${size === 'fullscreen'
                 ? '0'
@@ -463,11 +486,17 @@ export const NewModal = forwardRef<
             <div
               className={css`
                 flex: 1;
-                overflow-y: auto;
+                overflow-y: ${allowOverflow ? 'visible' : 'auto'};
                 width: 100%;
                 display: flex;
                 justify-content: center;
-                padding: ${deviceIsMobile ? '0.75rem' : '1.25rem'};
+                padding: ${bodyPadding !== undefined
+                  ? typeof bodyPadding === 'number'
+                    ? `${bodyPadding}px`
+                    : bodyPadding
+                  : deviceIsMobile
+                  ? '0.75rem'
+                  : '1.25rem'};
                 position: relative;
                 font-size: 1.5rem;
               `}

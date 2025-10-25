@@ -7,6 +7,7 @@ import { useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
+import RankBadge from '~/components/RankBadge';
 
 const unrankedLabel = localize('unranked');
 
@@ -15,13 +16,15 @@ export default function MyRank({
   noBorderRadius,
   rank,
   style,
-  twinkleXP
+  twinkleXP,
+  isNotification
 }: {
   myId: number;
   noBorderRadius?: boolean;
   rank: number;
   style?: React.CSSProperties;
   twinkleXP: number;
+  isNotification?: boolean;
 }) {
   const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
     fallback: 'logoGreen'
@@ -39,9 +42,34 @@ export default function MyRank({
         : null,
     [rank]
   );
-  const rankLabel = useMemo(() => {
-    return SELECTED_LANGUAGE === 'kr' ? `랭킹 ${rank}위` : `Rank #${rank}`;
-  }, [rank]);
+  const isKorean = SELECTED_LANGUAGE === 'kr';
+  const rankLabel = localize('rank');
+  const baseBadgeFontSize = twinkleXP > 1_000_000 ? '1.3rem' : '1.5rem';
+  const mobileBadgeFontSize = twinkleXP > 1_000_000 ? '1rem' : '1.2rem';
+  const badgeScale = 1.12;
+  const badgeMinWidth = '3.4rem';
+  const badgeHeight = '2.6rem';
+  const badgeMinWidthMobile = '3.1rem';
+  const badgeHeightMobile = '2.5rem';
+  const rankBadgeClass = useMemo(
+    () =>
+      css`
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.5rem;
+        font-size: calc(${baseBadgeFontSize} * ${badgeScale});
+        min-width: ${badgeMinWidth};
+        height: ${badgeHeight};
+        @media (max-width: ${mobileMaxWidth}) {
+          margin-left: 0.4rem;
+          font-size: calc(${mobileBadgeFontSize} * ${badgeScale});
+          min-width: ${badgeMinWidthMobile};
+          height: ${badgeHeightMobile};
+        }
+      `,
+    [baseBadgeFontSize, badgeScale, badgeMinWidth, badgeHeight, mobileBadgeFontSize, badgeMinWidthMobile, badgeHeightMobile]
+  );
 
   return (
     <div
@@ -77,6 +105,32 @@ export default function MyRank({
         span.rank {
           font-size: ${twinkleXP > 1_000_000 ? '1.7rem' : '2rem'};
         }
+        .rank-prefix,
+        .rank-suffix {
+          display: inline-flex;
+          align-items: center;
+        }
+        ${isNotification
+          ? css`
+              .rank-prefix {
+                font-size: 2.1rem;
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                .rank-prefix {
+                  font-size: 1.8rem;
+                }
+              }
+            `
+          : ''}
+        .rank {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+        .rank-suffix {
+          margin-left: 0.5rem;
+        }
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
           span {
@@ -84,6 +138,12 @@ export default function MyRank({
           }
           span.rank {
             font-size: ${twinkleXP > 1_000_000 ? '1.3rem' : '1.6rem'};
+          }
+          .rank {
+            gap: 0.4rem;
+          }
+          .rank-suffix {
+            margin-left: 0.4rem;
           }
         }
       `}
@@ -140,7 +200,15 @@ export default function MyRank({
                 (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray())
             }}
           >
-            {rank && twinkleXP ? rankLabel : unrankedLabel}
+            {rank && twinkleXP ? (
+              <>
+                <span className="rank-prefix">{rankLabel}</span>
+                <RankBadge rank={rank} className={rankBadgeClass} />
+                {isKorean ? <span className="rank-suffix">위</span> : null}
+              </>
+            ) : (
+              unrankedLabel
+            )}
           </p>
         )}
       </div>

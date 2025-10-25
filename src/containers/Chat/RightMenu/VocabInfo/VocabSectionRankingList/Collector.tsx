@@ -7,7 +7,7 @@ import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import Icon from '~/components/Icon';
-import { useRoleColor } from '~/theme/useRoleColor';
+import RankBadge from '~/components/RankBadge';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -31,9 +31,6 @@ export default function Collector({
   bordered?: boolean;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
-  const { getColor: getHighlightColor } = useRoleColor('filter', {
-    fallback: 'logoBlue'
-  });
   const rankColor = useMemo(() => {
     return user.rank === 1
       ? Color.gold()
@@ -47,11 +44,6 @@ export default function Collector({
     () => rankColor || (user.rank <= 10 ? Color.logoBlue() : Color.darkGray()),
     [rankColor, user.rank]
   );
-
-  const rankBadgeTextColor = useMemo(() => {
-    if (user.rank === 2) return '#ffffff';
-    return textColor;
-  }, [textColor, user.rank]);
 
   const containerClass = css`
     display: flex;
@@ -72,20 +64,7 @@ export default function Collector({
   const rankBadgeClass = css`
     min-width: 3rem;
     height: 2.4rem;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
     font-size: 1.35rem;
-    background: ${user.rank === 1
-      ? '#fef3c7'
-      : user.rank === 2
-      ? '#e2e8f0'
-      : user.rank === 3
-      ? '#ffedd5'
-      : '#f1f5f9'};
-    color: ${rankBadgeTextColor};
     @media (max-width: ${mobileMaxWidth}) {
       font-size: 1.1rem;
       min-width: 2.6rem;
@@ -111,9 +90,7 @@ export default function Collector({
       min-width: 2.8rem;
     }
   `;
-  const highlightBackground = useMemo(() => {
-    return getHighlightColor(0.22) || Color.highlightGray();
-  }, [getHighlightColor]);
+  const highlightBackground = useMemo(() => '#eef2ff', []);
   const usernameClass = css`
     max-width: 16rem;
     font-size: 1.25rem;
@@ -153,14 +130,11 @@ export default function Collector({
   return (
     <div className={containerClass} style={containerStyle}>
       <div className={leftGroupClass}>
-        <span
+        <RankBadge
+          rank={user.rank}
           className={rankBadgeClass}
-          style={{
-            textShadow: rankBadgeTextShadow
-          }}
-        >
-          {user.rank ? `#${user.rank}` : '--'}
-        </span>
+          style={{ textShadow: rankBadgeTextShadow }}
+        />
         <div className={profileWrapperClass}>
           <ProfilePic
             style={{ width: '100%' }}

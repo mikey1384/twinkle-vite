@@ -54,6 +54,9 @@ export default function Questions({
         className={css`
           width: 50%;
           height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           @media (max-width: ${tabletMaxWidth}) {
             width: 70%;
           }
@@ -85,7 +88,14 @@ export default function Questions({
             </GradientButton>
           </div>
         ) : !questionsLoaded ? (
-          <div>
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+            `}
+          >
             <Loading text="Generating Questions..." />
             <ProgressBar progress={loadingProgress} />
           </div>

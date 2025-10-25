@@ -2,7 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
-import { tabletMaxWidth } from '~/constants/css';
+import RankBadge from '~/components/RankBadge';
 
 export default function Item({ user, myId }: { user: any; myId: number }) {
   const isMe = user.id === myId;
@@ -12,7 +12,7 @@ export default function Item({ user, myId }: { user: any; myId: number }) {
   return (
     <div className={rowCss(isMe)}>
       <div className={leftCss}>
-        <div className={badgeCss(rank)}>{rank ? `#${rank}` : '--'}</div>
+        <RankBadge rank={rank} />
         <div className={avatarWrapCss}>
           <ProfilePic
             style={{ width: '100%' }}
@@ -44,10 +44,10 @@ const rowCss = (isMe: boolean) => css`
   justify-content: space-between;
   align-items: center;
   background: ${isMe ? '#eef2ff' : '#fff'};
-  border: 1px solid var(--ui-border);
+  border: none;
   border-radius: 10px;
   padding: 0.75rem 1rem;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 `;
 
 const leftCss = css`
@@ -62,36 +62,6 @@ const avatarWrapCss = css`
   flex: 0 0 auto;
 `;
 
-const badgeCss = (rank: number) => css`
-  min-width: 2.8rem;
-  height: 2.1rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1rem;
-  color: ${rank === 1
-    ? '#b45309'
-    : rank === 2
-    ? '#334155'
-    : rank === 3
-    ? '#9a3412'
-    : '#475569'};
-  background: ${rank === 1
-    ? '#fef3c7'
-    : rank === 2
-    ? '#e2e8f0'
-    : rank === 3
-    ? '#ffedd5'
-    : '#f1f5f9'};
-
-  @media (max-width: ${tabletMaxWidth}) {
-    font-size: 0.9rem;
-    min-width: 2.4rem;
-    height: 1.9rem;
-  }
-`;
 
 const userBoxCss = css`
   display: flex;

@@ -8,6 +8,7 @@ import { css } from '@emotion/css';
 import { User } from '~/types';
 import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
+import RankBadge from '~/components/RankBadge';
 
 const youLabel = localize('You');
 
@@ -34,10 +35,6 @@ export default function StreakItem({
     themeName: theme,
     fallback: 'green'
   });
-  const { getColor: getHighlightColor } = useRoleColor('filter', {
-    themeName: theme,
-    fallback: 'logoBlue'
-  });
 
   const [userListModalShown, setUserListModalShown] = useState(false);
   const rankColor = useMemo(() => {
@@ -59,6 +56,20 @@ export default function StreakItem({
   const mobileRankFontSize = useMemo(() => {
     return rank <= 5 ? '1.2rem' : '1rem';
   }, [rank]);
+  const rankBadgeClass = useMemo(
+    () =>
+      css`
+        min-width: 3rem;
+        height: 2.4rem;
+        font-size: ${rankFontSize};
+        @media (max-width: ${mobileMaxWidth}) {
+          min-width: 2.6rem;
+          height: 2.1rem;
+          font-size: ${mobileRankFontSize};
+        }
+      `,
+    [mobileRankFontSize, rankFontSize]
+  );
   const imIncluded = useMemo(() => {
     for (const { id } of streakObj[streak]) {
       if (id === myId) {
@@ -114,29 +125,6 @@ export default function StreakItem({
       gap: 0.6rem;
     }
   `;
-  const rankBadgeClass = css`
-    min-width: 3rem;
-    height: 2.4rem;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: ${rankFontSize};
-    color: ${rankColor || (rank <= 10 ? Color.logoBlue() : '#475569')};
-    background: ${rank === 1
-      ? '#fef3c7'
-      : rank === 2
-      ? '#e2e8f0'
-      : rank === 3
-      ? '#ffedd5'
-      : '#f1f5f9'};
-    @media (max-width: ${mobileMaxWidth}) {
-      font-size: ${mobileRankFontSize};
-      min-width: 2.6rem;
-      height: 2.1rem;
-    }
-  `;
   const namesListClass = css`
     display: inline-flex;
     align-items: center;
@@ -162,9 +150,7 @@ export default function StreakItem({
       gap: 0.45rem;
     }
   `;
-  const highlightBackground = useMemo(() => {
-    return getHighlightColor(0.22) || Color.highlightGray();
-  }, [getHighlightColor]);
+  const highlightBackground = useMemo(() => '#eef2ff', []);
   const containerStyle = {
     background: imIncluded && rank > 3 ? highlightBackground : '#fff'
   };
@@ -172,16 +158,7 @@ export default function StreakItem({
   return (
     <div className={containerClass} style={containerStyle}>
       <div className={leftGroupClass}>
-        <span
-          className={rankBadgeClass}
-          style={{
-            color: rank === 2 ? '#ffffff' : undefined,
-            textShadow:
-              rank === 2 ? '0 0 0.2rem rgba(37, 99, 235, 0.62)' : 'none'
-          }}
-        >
-          {rank ? `#${rank}` : '--'}
-        </span>
+        <RankBadge rank={rank} className={rankBadgeClass} />
         <div className={namesListClass}>
           {displayedUsers.map((user, index) => {
             const userStreakIsOngoing = user.currentStreak === streak;

@@ -66,7 +66,12 @@ export default function AllTime({
         </FilterBar>
       )}
       {loggedIn && allSelected && (
-        <MyRank myId={myId} rank={myAllTimeRank} twinkleXP={myAllTimeXP} />
+        <MyRank
+          myId={myId}
+          rank={myAllTimeRank}
+          twinkleXP={myAllTimeXP}
+          isNotification
+        />
       )}
       {users?.length === 0 || (allSelected && loggedIn && myAllTimeXP === 0) ? (
         !myId ? (

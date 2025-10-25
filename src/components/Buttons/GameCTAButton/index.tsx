@@ -137,7 +137,7 @@ function getButtonCls({
     sm: { fs: '0.9rem', pad: '0.625rem 1rem' },
     md: { fs: '1rem', pad: '0.75rem 1.25rem' },
     lg: { fs: '1.25rem', pad: '1rem 1.5rem' },
-    xl: { fs: '1.5rem', pad: '1.25rem 1.75rem' }
+    xl: { fs: '1.6rem', pad: '1.3rem 2rem' }
   } as const;
   const c = colorMap[variant];
   const s = sz[size];

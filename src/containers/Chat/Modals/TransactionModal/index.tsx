@@ -186,6 +186,7 @@ export default function TransactionModal({
         onClose={isAICardModalShown || dropdownShown ? () => {} : onHide}
         title={title}
         size="md"
+        allowOverflow
         closeOnBackdropClick={!isAICardModalShown && !dropdownShown}
         footer={
           <>

@@ -5,6 +5,7 @@ import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
+import RankBadge from '~/components/RankBadge';
 
 export default function DonorListItem({
   myId,
@@ -24,11 +25,11 @@ export default function DonorListItem({
   };
   onUsermenuShownChange?: (v: boolean) => void;
 }) {
-  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
-  const xpNumberColor = useMemo(
-    () => xpNumberRole.getColor() || Color.logoGreen(),
-    [xpNumberRole]
-  );
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoBlue' });
+  const xpNumberColor = useMemo(() => {
+    const key = xpNumberRole.colorKey;
+    return key && key in Color ? key : 'logoGreen';
+  }, [xpNumberRole]);
 
   const userRank = useMemo(() => Number(donor.rank), [donor.rank]);
   const rankColor = useMemo(() => {
@@ -54,6 +55,21 @@ export default function DonorListItem({
   const donationFontSize = '1.3rem';
   const mobileDonationFontSize = '1.1rem';
   const profileSize = '3rem';
+  const rankBadgeClass = useMemo(
+    () =>
+      css`
+        margin-right: 1rem;
+        font-size: ${rankFontSize};
+        min-width: 3rem;
+        height: 2.4rem;
+        @media (max-width: ${tabletMaxWidth}) {
+          font-size: ${mobileRankFontSize};
+          min-width: 2.6rem;
+          height: 2.1rem;
+        }
+      `,
+    [mobileRankFontSize, rankFontSize]
+  );
 
   return (
     <nav
@@ -62,7 +78,7 @@ export default function DonorListItem({
         justifyContent: 'space-between',
         alignItems: 'center',
         background:
-          donor.id === myId && userRank > 3 ? Color.highlightGray() : '#fff'
+          donor.id === myId && userRank > 3 ? '#eef2ff' : '#fff'
       }}
     >
       <div
@@ -71,22 +87,7 @@ export default function DonorListItem({
           alignItems: 'center'
         }}
       >
-        <span
-          className={css`
-            font-weight: bold;
-            font-size: ${rankFontSize};
-            width: 3rem;
-            margin-right: 1rem;
-            text-align: center;
-            color: ${rankColor ||
-            (userRank <= 10 ? Color.logoBlue() : Color.darkGray())};
-            @media (max-width: ${tabletMaxWidth}) {
-              font-size: ${mobileRankFontSize};
-            }
-          `}
-        >
-          {userRank ? `#${userRank}` : '--'}
-        </span>
+        <RankBadge rank={userRank} className={rankBadgeClass} />
         <div
           style={{
             marginLeft: '1.3rem',

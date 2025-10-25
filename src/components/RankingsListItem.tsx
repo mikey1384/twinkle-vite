@@ -5,6 +5,7 @@ import { Color, tabletMaxWidth } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/useRoleColor';
+import RankBadge from '~/components/RankBadge';
 
 export default function RankingsListItem({
   myId,
@@ -28,9 +29,6 @@ export default function RankingsListItem({
   const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
     fallback: 'logoGreen'
   });
-  const { getColor: getHighlightColor } = useRoleColor('filter', {
-    fallback: 'logoBlue'
-  });
   const userRank = useMemo(() => Number(user.rank), [user.rank]);
   const isSelf = user.id === myId;
   const rankColor = useMemo(() => {
@@ -44,16 +42,7 @@ export default function RankingsListItem({
   }, [userRank]);
 
   const rankFontSize = useMemo(() => {
-    if (small) {
-      return userRank < 100 ? '1.5rem' : '1rem';
-    }
-    return userRank < 100 ? '2rem' : '1.5rem';
-  }, [small, userRank]);
-
-  const mobileRankFontSize = useMemo(() => {
-    if (small) {
-      return userRank < 100 ? '1.2rem' : '1rem';
-    }
+    if (small) return userRank < 100 ? '1.2rem' : '1rem';
     return userRank < 100 ? '1.5rem' : '1.2rem';
   }, [small, userRank]);
 
@@ -97,22 +86,13 @@ export default function RankingsListItem({
       `,
     [bordered, small]
   );
-  const rankBadgeClass = useMemo(
-    () =>
-      css`
-        min-width: ${small ? '2.8rem' : '3.2rem'};
-        height: ${small ? '2.2rem' : '2.4rem'};
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: ${rankFontSize};
-        @media (max-width: ${tabletMaxWidth}) {
-          font-size: ${mobileRankFontSize};
-        }
-      `,
-    [mobileRankFontSize, rankFontSize, small]
+  const rankBadgeStyle = useMemo<React.CSSProperties>(
+    () => ({
+      minWidth: small ? '2.8rem' : '3.2rem',
+      height: small ? '2.2rem' : '2.4rem',
+      fontSize: rankFontSize
+    }),
+    [rankFontSize, small]
   );
   const leftGroupClass = useMemo(
     () =>
@@ -173,26 +153,7 @@ export default function RankingsListItem({
       `,
     [mobileXpFontSize, xpFontSize]
   );
-  const rankBadgeBackground = useMemo(() => {
-    if (userRank === 1) return '#fef3c7';
-    if (userRank === 2) return '#e2e8f0';
-    if (userRank === 3) return '#ffedd5';
-    return '#f1f5f9';
-  }, [userRank]);
-  const rankBadgeTextColor = useMemo(() => {
-    if (userRank === 2) return '#ffffff';
-    if (rankColor) return rankColor;
-    return userRank <= 10 ? Color.logoBlue() : '#475569';
-  }, [rankColor, userRank]);
-  const rankBadgeTextShadow = useMemo(() => {
-    if (userRank === 2) {
-      return '0 0 0.2rem rgba(37, 99, 235, 0.62)';
-    }
-    return 'none';
-  }, [userRank]);
-  const highlightBackground = useMemo(() => {
-    return getHighlightColor(0.22) || Color.highlightGray();
-  }, [getHighlightColor]);
+  const highlightBackground = useMemo(() => '#eef2ff', []);
   const containerStyle = useMemo(() => {
     const background =
       isSelf && userRank > 3 ? highlightBackground : '#fff';
@@ -202,16 +163,7 @@ export default function RankingsListItem({
   return (
     <div className={containerClass} style={containerStyle}>
       <div className={leftGroupClass}>
-        <span
-          className={rankBadgeClass}
-          style={{
-            background: rankBadgeBackground,
-            color: rankBadgeTextColor,
-            textShadow: rankBadgeTextShadow
-          }}
-        >
-          {userRank ? `#${userRank}` : '--'}
-        </span>
+        <RankBadge rank={userRank} style={rankBadgeStyle} />
         <div className={profileWrapperClass}>
           <ProfilePic
             style={{ width: '100%' }}

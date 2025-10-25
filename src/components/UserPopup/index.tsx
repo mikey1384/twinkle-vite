@@ -15,9 +15,22 @@ import { getSectionFromPathname } from '~/helpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
+import RankBadge from '~/components/RankBadge';
 
 const chatLabel = localize('chat2');
 const profileLabel = localize('Profile');
+const xpRankBadgeWrapperClass = css`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  gap: 0.25rem;
+  font-weight: 600;
+`;
+const xpRankBadgeClass = css`
+  font-size: 0.75rem;
+  min-width: 2.1rem;
+  height: 1.6rem;
+`;
 
 export default function UserPopup({
   isLoading,
@@ -142,28 +155,21 @@ export default function UserPopup({
     }
     return addCommasToNumber(twinkleXP || user.twinkleXP);
   }, [twinkleXP, user.twinkleXP]);
+
   const userXPThisMonth = useMemo(() => {
     if (!user.xpThisMonth && !xpThisMonth) {
       return null;
     }
-    return addCommasToNumber(user.xpThisMonth || xpThisMonth);
-  }, [user.xpThisMonth, xpThisMonth]);
-  // Status is derived above (online, isAway, isBusy)
+    return addCommasToNumber(xpThisMonth);
+  }, [xpThisMonth, user.xpThisMonth]);
 
   const xpContent = useMemo(() => {
     const renderBadge = (rank: number | undefined) => {
       if (!rank || rank >= 4) return null;
 
       return (
-        <span
-          style={{
-            fontWeight: 'bold',
-            marginLeft: '0.5rem',
-            color:
-              rank === 1 ? Color.gold() : rank === 2 ? '#fff' : Color.orange()
-          }}
-        >
-          (#{rank})
+        <span className={xpRankBadgeWrapperClass}>
+          <RankBadge rank={rank} className={xpRankBadgeClass} />
         </span>
       );
     };

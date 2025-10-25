@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
@@ -106,19 +106,22 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Home/AIStoriesModal">
-      <Modal
-        closeWhenClickedOutside={
+      <NewModal
+        isOpen
+        onClose={handleHide}
+        size="xl"
+        closeOnBackdropClick={
           !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
         }
-        modalStyle={{
-          height: '80vh'
+        bodyPadding={0}
+        showCloseButton={false}
+        style={{
+          height: '80vh',
+          display: 'flex',
+          flexDirection: 'column'
         }}
-        wrapped
-        large
-        onHide={handleHide}
-      >
-        {!isGameStarted && (
-          <header style={{ padding: 0 }}>
+        header={
+          !isGameStarted ? (
             <FilterBar
               style={{
                 height: '6rem',
@@ -138,15 +141,26 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
                 Rankings
               </nav>
             </FilterBar>
-          </header>
-        )}
-        <main
+          ) : undefined
+        }
+        footer={
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <Button variant="ghost" onClick={onHide}>
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <div
           style={{
             height: '100%',
+            width: '100%',
             padding: 0,
             overflow: 'scroll',
             justifyContent: 'flex-start',
-            alignItems: 'center'
+            alignItems: 'center',
+            display: 'flex',
+            flexDirection: 'column'
           }}
           ref={MainRef}
         >
@@ -199,12 +213,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               />
             </div>
           )}
-        </main>
-        <footer style={{ justifyContent: 'center' }}>
-          <Button variant="ghost" onClick={onHide}>
-            Close
-          </Button>
-        </footer>
+        </div>
         {successModalShown && (
           <SuccessModal
             imageGeneratedCount={imageGeneratedCount}
@@ -229,7 +238,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             isReverseButtonOrder
           />
         )}
-      </Modal>
+      </NewModal>
     </ErrorBoundary>
   );
 

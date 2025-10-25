@@ -2,12 +2,9 @@ import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
+import RankBadge from '~/components/RankBadge';
 import { useRoleColor } from '~/theme/useRoleColor';
-
-const rankLabel = localize('rank');
 
 export default function RankBar({
   className,
@@ -164,6 +161,34 @@ export default function RankBar({
       `,
     [rankTextColor, isTopThree]
   );
+  const panelRankBadgeClass = useMemo(
+    () =>
+      css`
+        min-width: 3.1rem;
+        height: 2.4rem;
+        font-size: 1.15rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          min-width: 2.9rem;
+          height: 2.2rem;
+          font-size: 1.05rem;
+        }
+      `,
+    []
+  );
+  const pageRankBadgeClass = useMemo(
+    () =>
+      css`
+        min-width: 3.5rem;
+        height: 2.7rem;
+        font-size: 1.35rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          min-width: 3.2rem;
+          height: 2.5rem;
+          font-size: 1.2rem;
+        }
+      `,
+    []
+  );
   const xpInfoClass = useMemo(
     () =>
       css`
@@ -209,15 +234,22 @@ export default function RankBar({
       `,
     [rankColor, xpMonthColor, xpUnitColor, xpValueColor]
   );
-  const rankLabelText =
-    SELECTED_LANGUAGE === 'kr' ? `${rankValue}위` : `#${rankValue}`;
   const xpAmount = addCommasToNumber(profile.twinkleXP || 0);
+  const xpThisMonthValue = useMemo(() => {
+    const rawValue = profile?.xpThisMonth;
+    if (rawValue === null || rawValue === undefined) return 0;
+    const numericValue =
+      typeof rawValue === 'string'
+        ? Number(rawValue)
+        : typeof rawValue === 'number'
+        ? rawValue
+        : Number(rawValue);
+    return Number.isNaN(numericValue) ? 0 : numericValue;
+  }, [profile?.xpThisMonth]);
   const monthGainLabel =
-    profile.xpThisMonth && SELECTED_LANGUAGE === 'kr'
-      ? `+${addCommasToNumber(profile.xpThisMonth)} 이번 달`
-      : profile.xpThisMonth
-      ? `+${addCommasToNumber(profile.xpThisMonth)} this month`
-      : null;
+    xpThisMonthValue > 0
+      ? `+${addCommasToNumber(xpThisMonthValue)} this month`
+      : '';
   if (!rankValue) {
     return null;
   }
@@ -232,15 +264,11 @@ export default function RankBar({
             ) : (
               <Icon icon="award" color={trophyColor} />
             )}
-            <span>
-              {rankLabel} {rankLabelText}
-            </span>
+            <RankBadge rank={rankValue} className={pageRankBadgeClass} />
           </div>
           <div className="xp-line">
-            {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">(</span> : null}
             <span className="xp-value">{xpAmount}</span>
             <span className="xp-unit">XP</span>
-            {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">)</span> : null}
           </div>
           {monthGainLabel ? (
             <div className="month">
@@ -257,16 +285,12 @@ export default function RankBar({
     <div style={style} className={`${rankCardClass} ${className || ''}`}>
       <div className={badgeClass}>
         <Icon icon={rankValue <= 3 ? 'trophy' : 'award'} color={trophyColor} />
-        <span>
-          {rankLabel} {rankLabelText}
-        </span>
+        <RankBadge rank={rankValue} className={panelRankBadgeClass} />
       </div>
       <div className={xpInfoClass}>
         <span className="xp-amount">
-          {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">(</span> : null}
           <span className="xp-value">{xpAmount}</span>
           <span className="xp-unit">XP</span>
-          {SELECTED_LANGUAGE === 'kr' ? <span className="xp-paren">)</span> : null}
         </span>
         {monthGainLabel ? (
           <span className="xp-month">

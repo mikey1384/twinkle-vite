@@ -101,7 +101,12 @@ export default function ThisMonth({
         </FilterBar>
       )}
       {loggedIn && allSelected && !!myMonthlyXP && (
-        <MyRank myId={myId} rank={myMonthlyRank} twinkleXP={myMonthlyXP} />
+        <MyRank
+          myId={myId}
+          rank={myMonthlyRank}
+          twinkleXP={myMonthlyXP}
+          isNotification
+        />
       )}
       {!myId ? (
         loading ? (

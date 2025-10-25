@@ -207,9 +207,13 @@ export default function ListenSection({
         <div
           className={css`
             width: 100%;
+            height: 100%;
             font-size: 1.2em;
             color: #333;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           `}
         >
           {isPlaying ? (

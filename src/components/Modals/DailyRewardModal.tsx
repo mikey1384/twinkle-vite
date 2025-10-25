@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
-import GradientButton from '~/components/Buttons/GradientButton';
+import NewModal from '~/components/NewModal';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
@@ -10,12 +10,14 @@ import DailyBonusModal from './DailyBonusModal';
 import {
   cardLevelHash,
   qualityProps,
-  returnCardBurnXP
+  returnCardBurnXP,
+  cloudFrontURL
 } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { isMobile } from '~/helpers';
 import { Card } from '~/types';
 import {
   useAppContext,
@@ -24,16 +26,6 @@ import {
   useNotiContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-
-const colors: {
-  [key: number]: string;
-} = {
-  1: 'blue',
-  2: 'pink',
-  3: 'orange',
-  4: 'magenta',
-  5: 'gold'
-};
 
 export default function DailyRewardModal({
   onHide,
@@ -95,17 +87,66 @@ export default function DailyRewardModal({
   const [bonusAttempted, setBonusAttempted] = useState(false);
   const [bonusAchieved, setBonusAchieved] = useState(false);
   const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
+  const [imagesPreloaded, setImagesPreloaded] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
   const isCoinReceivedRef = useRef(false);
   const isAlreadyCheckedRef = useRef(false);
   const newCoinsRef = useRef(0);
+  const isComponentMounted = useRef(true);
+  const deviceIsMobile = isMobile(navigator);
+
+  useEffect(() => {
+    return () => {
+      isComponentMounted.current = false;
+    };
+  }, []);
+
+  const preloadCardImages = async (cardsToLoad: Card[]) => {
+    const uniqueImagePaths = Array.from(
+      new Set(
+        cardsToLoad
+          .map((card) => card.imagePath)
+          .filter((path): path is string => !!path)
+      )
+    );
+
+    if (uniqueImagePaths.length === 0) {
+      if (isComponentMounted.current) {
+        setImagesPreloaded(true);
+      }
+      return;
+    }
+
+    await Promise.all(
+      uniqueImagePaths.map(
+        (path) =>
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.src = `${cloudFrontURL}${path}`;
+
+            if (img.complete) {
+              resolve();
+              return;
+            }
+
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          })
+      )
+    );
+
+    if (isComponentMounted.current) {
+      setImagesPreloaded(true);
+    }
+  };
 
   useEffect(() => {
     init();
     async function init() {
       setLoading(true);
       try {
+        setImagesPreloaded(false);
         const {
           cards,
           chosenCardId,
@@ -142,6 +183,7 @@ export default function DailyRewardModal({
             newState: card
           });
         }
+        await preloadCardImages(cards);
         onUpdateTodayStats({
           newStats: {
             nextDayTimeStamp: newNextDayTimeStamp
@@ -184,8 +226,9 @@ export default function DailyRewardModal({
   }, [cardObj, chosenCardId]);
 
   const chosenCardColorDescription = useMemo(() => {
-    return chosenCard ? colors[chosenCard?.level] : '';
-  }, [chosenCard]);
+    if (!chosenCard?.level) return '';
+    return cardLevelHash[chosenCard.level]?.label || '';
+  }, [chosenCard?.level]);
 
   const cardOwnStatusText = useMemo(() => {
     const currentIsCardOwned = chosenCard?.ownerId === userId;
@@ -213,6 +256,11 @@ export default function DailyRewardModal({
     return addCommasToNumber(coinEarned);
   }, [coinEarned]);
 
+  const coinDigitCount = useMemo(() => {
+    const absolute = Math.abs(Math.trunc(coinEarned || 0));
+    return String(absolute || 0).length;
+  }, [coinEarned]);
+
   const displayedBurnValue = useMemo(() => {
     return addCommasToNumber(burnValue);
   }, [burnValue]);
@@ -220,6 +268,30 @@ export default function DailyRewardModal({
   const numCoinsAdjustedToCardOwnership = useMemo(() => {
     return addCommasToNumber(isCardOwned ? burnValue * 5 : burnValue / 2);
   }, [burnValue, isCardOwned]);
+
+  const xpDigitCount = useMemo(() => {
+    const absolute = Math.abs(Math.trunc(xpEarned || 0));
+    return String(absolute || 0).length;
+  }, [xpEarned]);
+
+  const levelColorHex = useMemo(() => {
+    if (!chosenCard?.level) return Color.logoBlue();
+    const colorToken = cardLevelHash[chosenCard.level]?.color;
+    const resolved =
+      colorToken && typeof Color[colorToken] === 'function'
+        ? Color[colorToken]()
+        : null;
+    return resolved || Color.logoBlue();
+  }, [chosenCard?.level]);
+
+  const coinFontSize = useMemo(
+    () => getRewardFontSize(coinDigitCount),
+    [coinDigitCount]
+  );
+  const xpFontSize = useMemo(
+    () => getRewardFontSize(xpDigitCount),
+    [xpDigitCount]
+  );
 
   const fourthSentenceText = useMemo(() => {
     const defaultCoinEarned = isCardOwned ? burnValue * 5 : burnValue / 2;
@@ -232,293 +304,536 @@ export default function DailyRewardModal({
     return '...rounded to the nearest thousand';
   }, [burnValue, isCardOwned]);
 
-  return (
-    <Modal
-      closeWhenClickedOutside={false}
-      className={css`
-        @keyframes flashEffect {
-          0% {
-            background-color: transparent;
-          }
-          50% {
-            background-color: ${Color?.[
-              cardLevelHash?.[chosenCard?.level]?.color
-            ]?.(0.7) || 'transparent'};
-          }
-          100% {
-            background-color: transparent;
-          }
-        }
+  const modalClass = css`
+    @keyframes flashEffect {
+      0% {
+        background-color: transparent;
+      }
+      50% {
+        background-color: ${Color?.[
+          cardLevelHash?.[chosenCard?.level]?.color
+        ]?.(0.7) || 'transparent'};
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
 
-        .flashBackground {
-          animation: flashEffect 0.6s ease-out;
-        }
-      `}
-      wrapped
-      onHide={handleHide}
-    >
-      <header>Daily Reward</header>
-      <main className={animateReveal ? 'flashBackground' : ''}>
-        {loading ? (
-          <Loading />
-        ) : (
-          <div
-            style={{
-              minHeight: '30vh',
-              display: 'flex',
-              height: '100%',
-              width: '100%',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column'
-            }}
-            className={css`
-              .fadeIn {
-                animation: fadeInEffect 1s ease-in;
-              }
+    .flashBackground {
+      animation: flashEffect 0.6s ease-out;
+    }
 
-              @keyframes fadeInEffect {
-                from {
-                  opacity: 0;
-                }
-                to {
-                  opacity: 1;
-                }
-              }
+    /* Remove modal drop shadow for a cleaner look */
+    box-shadow: none !important;
+  `;
 
-              @keyframes popEffect {
-                0% {
-                  transform: scale(0.9);
-                  opacity: 0.7;
-                }
-                50% {
-                  transform: scale(1.2);
-                  opacity: 1;
-                }
-                100% {
-                  transform: scale(1);
-                  opacity: 1;
-                }
-              }
+  const contentClass = css`
+    width: 100%;
 
-              .chosenCardWrapper {
-                animation: popEffect 0.6s ease-out;
-              }
-            `}
-          >
-            {!isRevealPressed && !alreadyChecked && (
-              <GradientButton
-                theme="gold"
-                onClick={handleReveal}
-                fontSize="1.5rem"
-                mobileFontSize="1.1rem"
-              >
-                Roll it!
-              </GradientButton>
-            )}
-            {currentCard && (
-              <div
-                className={
-                  currentCardId === chosenCardId &&
-                  isRevealPressed &&
-                  animateReveal
-                    ? 'chosenCardWrapper'
-                    : ''
-                }
-              >
-                <AICard
-                  key={currentCard.id}
-                  card={currentCard}
-                  onClick={
-                    animateReveal || alreadyChecked
-                      ? () => {
-                          setCardModalShown(true);
-                        }
-                      : undefined
-                  }
-                  detailShown
+    .fadeIn {
+      animation: fadeInEffect 1s ease-in;
+    }
+
+    @keyframes fadeInEffect {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes popEffect {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .chosenCardWrapper {
+      animation: popEffect 0.6s ease-out;
+    }
+  `;
+
+  // Pure grid container for the modal content body
+  const contentGridClass = css`
+    display: grid;
+    grid-auto-rows: max-content;
+    row-gap: 1.6rem;
+    width: 100%;
+    min-height: 30vh;
+    justify-items: center;
+    align-items: start;
+
+    &.revealed {
+      align-items: start;
+    }
+  `;
+
+  const summaryContainerClass = css`
+    margin-top: 2.5rem;
+    width: 100%;
+    max-width: 52rem;
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-auto-rows: max-content;
+    row-gap: 1.6rem;
+  `;
+
+  const summaryHeadlineClass = css`
+    font-size: 3rem;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    @media (max-width: 480px) {
+      font-size: 2.25rem;
+    }
+  `;
+
+  const summaryRowClass = css`
+    display: grid;
+    grid-template-columns: 2.5fr auto 1fr;
+    align-items: center;
+    column-gap: 1rem;
+    width: 100%;
+  `;
+
+  const summaryColLeft = css`
+    font-size: 1.55rem;
+    line-height: 1.4;
+    color: #111827;
+    white-space: nowrap;
+    @media (max-width: 480px) {
+      font-size: 1.45rem;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      min-width: 0;
+    }
+  `;
+
+  const summaryColCenter = css`
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: ${Color.purple()};
+    display: grid;
+    grid-auto-flow: column;
+    align-items: center;
+    justify-content: center;
+    column-gap: 0.75rem;
+    min-width: 11rem;
+    @media (max-width: 480px) {
+      font-size: 1.45rem;
+      column-gap: 0.5rem;
+      min-width: 0;
+      justify-content: start;
+      justify-items: start;
+      text-align: left;
+    }
+  `;
+
+  const summaryColRight = css`
+    text-align: right;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.4;
+    min-width: 11rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: max-content max-content;
+    justify-content: end;
+    align-items: center;
+    column-gap: 0.5rem;
+    @media (max-width: 480px) {
+      font-size: 1.45rem;
+      min-width: 0;
+    }
+  `;
+
+  const rewardHighlightClass = css`
+    display: grid;
+    grid-auto-rows: max-content;
+    row-gap: 0.8rem;
+    align-items: center;
+    justify-items: center;
+    padding: 1.4rem 2rem;
+    text-align: center;
+    @media (max-width: 480px) {
+      padding: 1rem 1.2rem;
+    }
+  `;
+
+  const rewardAmountClass = css`
+    font-size: 3.1rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    @media (max-width: 480px) {
+      font-size: 2.2rem;
+    }
+  `;
+
+  const bonusMessageClass = css`
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 1.1rem 1.6rem;
+    @media (max-width: 480px) {
+      font-size: 1.45rem;
+      padding: 0.9rem 1.2rem;
+      gap: 0.6rem;
+    }
+  `;
+
+  const bonusFailClass = css`
+    color: ${Color.rose()};
+  `;
+
+  const coinsNumberClass = css`
+    display: inline-block;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    @media (max-width: 480px) {
+      /* Let numbers shrink naturally on small screens */
+      width: auto !important;
+    }
+  `;
+
+  function getRewardFontSize(digitCount: number) {
+    if (digitCount >= 7) return '2.6rem';
+    if (digitCount === 6) return '2.2rem';
+    if (digitCount === 5) return '2rem';
+    if (digitCount === 4) return '1.8rem';
+    return '1.6rem';
+  }
+
+  const footerClass = css`
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    width: 100%;
+    gap: 1.5rem;
+
+    .countdown-wrapper {
+      display: grid;
+      place-content: center;
+      grid-column: 2;
+    }
+
+    .countdown-block {
+      display: grid;
+      grid-auto-flow: column;
+      align-items: center;
+      justify-content: center;
+      column-gap: 1.2rem;
+      padding: 0.9rem 1.4rem;
+      text-align: center;
+    }
+
+    .countdown-label {
+      display: grid;
+      grid-auto-rows: max-content;
+      row-gap: 0.35rem;
+      font-size: 1.45rem;
+      color: ${Color.black(0.75)};
+      line-height: 1.2;
+      text-align: left;
+    }
+
+    .countdown-timer {
+      font-family: 'Fira Code', 'Roboto Mono', monospace;
+      font-size: 2.1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: ${Color.logoBlue()};
+    }
+
+    .button-wrapper {
+      display: grid;
+      justify-content: end;
+      grid-column: 3;
+    }
+  `;
+
+  const footerContent = (
+    <div className={footerClass}>
+      <div className="countdown-wrapper">
+        <div className="countdown-block">
+          {!loading && showFifthSentence && (
+            <>
+              <Icon
+                icon="sparkles"
+                style={{ color: Color.gold(), fontSize: '1.8rem' }}
+              />
+              <span className="countdown-label">
+                <span>Next Daily Reward</span>
+                <Countdown
+                  key={nextDayTimeStamp}
+                  className="countdown-timer"
+                  date={nextDayTimeStamp}
+                  now={() => {
+                    const now = Date.now() + timeDifference;
+                    return now;
+                  }}
+                  daysInHours={true}
+                  onComplete={handleCountdownComplete}
                 />
-              </div>
-            )}
-            {(animateReveal || alreadyChecked) && chosenCard && (
-              <div
-                style={{
-                  marginTop: '5rem',
-                  width: '80%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center'
-                }}
-              >
-                {showFirstSentence && (
-                  <div
-                    style={{
-                      fontWeight: 'bold',
-                      width: '100%',
-                      textAlign: 'center'
-                    }}
-                    className="fadeIn"
-                  >
-                    Congratulations!
-                  </div>
-                )}
-                {showSecondSentence && (
-                  <div
-                    className="fadeIn"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr',
-                      marginTop: '2rem',
-                      width: '100%'
-                    }}
-                  >
-                    <div>
-                      You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
-                      <span style={qualityProps[chosenCard.quality]}>
-                        {chosenCard.quality}
-                      </span>{' '}
-                      <span
-                        style={{
-                          fontWeight: 'bold',
-                          color:
-                            Color[
-                              colors[chosenCard.level] === 'blue'
-                                ? 'logoBlue'
-                                : colors[chosenCard.level]
-                            ]()
-                        }}
-                      >
-                        {chosenCardColorDescription}
-                      </span>{' '}
-                      card!
-                    </div>
-                    <div>{burnValue} burn value</div>
-                    <div
-                      style={{
-                        fontWeight: showThirdSentence ? 'normal' : 'bold',
-                        textAlign: 'right'
-                      }}
-                    >
-                      {displayedBurnValue} coins
-                    </div>
-                  </div>
-                )}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="button-wrapper">
+        <Button variant="ghost" onClick={handleHide}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
 
-                {showThirdSentence && (
-                  <div
-                    className="fadeIn"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr',
-                      marginTop: '1.5rem',
-                      width: '100%'
-                    }}
-                  >
-                    <div>{cardOwnStatusText}</div>
-                    <div>
-                      <Icon icon="times" /> {isCardOwned ? '5' : '1/2'}
-                    </div>
+  return (
+    <>
+      <NewModal
+        isOpen
+        onClose={handleHide}
+        title="Daily Reward"
+        closeOnBackdropClick={false}
+        size="lg"
+        allowOverflow
+        className={modalClass}
+        footer={footerContent}
+      >
+        <div
+          className={animateReveal ? 'flashBackground' : ''}
+          style={{ width: '100%' }}
+        >
+          {loading ? (
+            <div
+              className={css`
+                display: grid;
+                place-items: center;
+                min-height: 30vh;
+                width: 100%;
+              `}
+            >
+              <Loading />
+            </div>
+          ) : (
+            <div
+              className={`${contentGridClass} ${contentClass} ${
+                animateReveal || alreadyChecked ? 'revealed' : ''
+              }`}
+            >
+              {!isRevealPressed && !alreadyChecked && (
+                <GameCTAButton
+                  icon="sparkles"
+                  variant="gold"
+                  size="xl"
+                  shiny
+                  style={{ marginBottom: '2rem', justifySelf: 'center' }}
+                  loading={!imagesPreloaded}
+                  disabled={!imagesPreloaded}
+                  onClick={handleReveal}
+                >
+                  Roll it!
+                </GameCTAButton>
+              )}
+              {currentCard && (
+                <div
+                  className={
+                    currentCardId === chosenCardId &&
+                    isRevealPressed &&
+                    animateReveal
+                      ? 'chosenCardWrapper'
+                      : ''
+                  }
+                >
+                  <AICard
+                    key={currentCard.id}
+                    card={currentCard}
+                    onClick={
+                      animateReveal || alreadyChecked
+                        ? () => {
+                            setCardModalShown(true);
+                          }
+                        : undefined
+                    }
+                    detailShown
+                  />
+                </div>
+              )}
+              {(animateReveal || alreadyChecked) && chosenCard && (
+                <div className={summaryContainerClass}>
+                  {showFirstSentence && (
                     <div
-                      style={{
-                        fontWeight: showFourthSentence ? 'normal' : 'bold',
-                        textAlign: 'right'
-                      }}
+                      className={`fadeIn ${summaryHeadlineClass}`}
+                      style={{ color: levelColorHex }}
                     >
-                      {numCoinsAdjustedToCardOwnership} coins
+                      Congratulations!
                     </div>
-                  </div>
-                )}
-
-                {showFourthSentence && (
-                  <div
-                    className="fadeIn"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr',
-                      marginTop: '1.5rem',
-                      width: '100%'
-                    }}
-                  >
-                    <div>{fourthSentenceText}</div>
-                    <div />
-                    <div
-                      style={{
-                        fontWeight: 'bold',
-                        textAlign: 'right'
-                      }}
-                    >
-                      {displayedCoinEarned} coins
-                    </div>
-                  </div>
-                )}
-
-                {showFifthSentence && (
-                  <div
-                    className="fadeIn"
-                    style={{ marginTop: '2rem', textAlign: 'center' }}
-                  >
-                    You earned{' '}
-                    <Icon
-                      icon={['far', 'badge-dollar']}
-                      style={{
-                        color: Color.brownOrange()
-                      }}
-                    />
-                    <span
-                      style={{
-                        color: Color.brownOrange(),
-                        fontWeight: 'bold',
-                        marginLeft: '0.2rem'
-                      }}
-                    >
-                      {displayedCoinEarned}
-                    </span>{' '}
-                  </div>
-                )}
-                {showBonusSentence ? (
-                  bonusAchieved ? (
-                    <div
-                      className="fadeIn"
-                      style={{ marginTop: '0.5rem', textAlign: 'center' }}
-                    >
-                      ...and{' '}
+                  )}
+                  {showSecondSentence && (
+                    <div className={`fadeIn ${summaryRowClass}`}>
+                      <div className={summaryColLeft}>
+                        You rolled {chosenCard.quality === 'elite' ? 'an' : 'a'}{' '}
+                        <span style={qualityProps[chosenCard.quality]}>
+                          {chosenCard.quality}
+                        </span>{' '}
+                        <strong style={{ color: levelColorHex }}>
+                          {chosenCardColorDescription}
+                        </strong>{' '}
+                        card!
+                      </div>
                       <div
-                        style={{
-                          display: 'inline',
-                          fontWeight: 'bold'
-                        }}
+                        className={summaryColCenter}
+                        style={{ color: Color.redOrange() }}
                       >
-                        <span
+                        {burnValue} {deviceIsMobile ? 'bv' : 'burn value'}
+                      </div>
+                      <div className={summaryColRight}>
+                        <Icon
+                          icon={['far', 'badge-dollar']}
                           style={{
-                            color: Color[xpNumberColor]()
+                            color: Color.brownOrange(),
+                            fontSize: '1em'
+                          }}
+                        />
+                        <span
+                          className={coinsNumberClass}
+                          style={{
+                            color: Color.black(),
+                            whiteSpace: 'nowrap'
                           }}
                         >
-                          {addCommasToNumber(xpEarned)}
-                        </span>{' '}
-                        <span style={{ color: Color.gold() }}>XP</span>
-                      </div>{' '}
-                      for correctly answering the{' '}
-                      <span
-                        className={css`
-                          font-weight: bold;
-                          cursor: pointer;
-                          color: ${Color[linkColor]()};
-                          &:hover {
-                            text-decoration: underline;
-                          }
-                        `}
-                        onClick={() => setDailyBonusModalShown(true)}
-                      >
-                        bonus question
-                      </span>
+                          {displayedBurnValue}
+                        </span>
+                      </div>
                     </div>
-                  ) : (
-                    <div
-                      className="fadeIn"
-                      style={{ marginTop: '0.5rem', textAlign: 'center' }}
-                    >
-                      <span>
-                        ...but you got the{' '}
+                  )}
+                  {showThirdSentence && (
+                    <div className={`fadeIn ${summaryRowClass}`}>
+                      <div className={summaryColLeft}>{cardOwnStatusText}</div>
+                      <div className={summaryColCenter}>
+                        <Icon icon="times" /> {isCardOwned ? '5' : '1/2'}
+                      </div>
+                      <div className={summaryColRight}>
+                        <Icon
+                          icon={['far', 'badge-dollar']}
+                          style={{
+                            color: Color.brownOrange(),
+                            fontSize: '1em'
+                          }}
+                        />
+                        <span
+                          className={coinsNumberClass}
+                          style={{
+                            color: Color.black(),
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {numCoinsAdjustedToCardOwnership}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {showFourthSentence && (
+                    <div className={`fadeIn ${summaryRowClass}`}>
+                      <div className={summaryColLeft}>{fourthSentenceText}</div>
+                      <div className={summaryColCenter} />
+                      <div className={summaryColRight}>
+                        <Icon
+                          icon={['far', 'badge-dollar']}
+                          style={{
+                            color: Color.brownOrange(),
+                            fontSize: '1em'
+                          }}
+                        />
+                        <span
+                          className={coinsNumberClass}
+                          style={{
+                            color: Color.black(),
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {displayedCoinEarned}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {showFifthSentence && (
+                    <div className={`fadeIn ${rewardHighlightClass}`}>
+                      <div
+                        style={{
+                          fontSize: '1.3rem',
+                          fontWeight: 600,
+                          color: Color.black(0.65),
+                          marginBottom: '0.35rem'
+                        }}
+                      >
+                        You earned
+                      </div>
+                      <div
+                        className={rewardAmountClass}
+                        style={{
+                          fontSize: coinFontSize,
+                          display: 'grid',
+                          gridAutoFlow: 'column',
+                          alignItems: 'center',
+                          columnGap: '0.6rem'
+                        }}
+                      >
+                        <Icon
+                          icon={['far', 'badge-dollar']}
+                          style={{
+                            fontSize: coinFontSize,
+                            color: Color.brownOrange()
+                          }}
+                        />
+                        {displayedCoinEarned}
+                      </div>
+                    </div>
+                  )}
+                  {showBonusSentence ? (
+                    bonusAchieved ? (
+                      <div className={`fadeIn ${bonusMessageClass}`}>
+                        ...and{' '}
+                        <div
+                          style={{
+                            display: 'inline',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          <span
+                            style={{
+                              color: Color[xpNumberColor](),
+                              fontSize: xpFontSize
+                            }}
+                          >
+                            {addCommasToNumber(xpEarned)}
+                          </span>{' '}
+                          <span
+                            style={{
+                              color: Color.gold(),
+                              fontSize: xpFontSize
+                            }}
+                          >
+                            XP
+                          </span>
+                        </div>{' '}
+                        for correctly answering the{' '}
                         <span
                           className={css`
                             font-weight: bold;
@@ -531,68 +846,38 @@ export default function DailyRewardModal({
                           onClick={() => setDailyBonusModalShown(true)}
                         >
                           bonus question
-                        </span>{' '}
-                        wrong
-                      </span>
-                    </div>
-                  )
-                ) : null}
-              </div>
-            )}
-          </div>
-        )}
-      </main>
-      <footer>
-        <div
-          style={{
-            width: '100%',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr'
-          }}
-        >
-          <div />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'column'
-            }}
-          >
-            {!loading && showFifthSentence && (
-              <>
-                <p style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-                  Next Daily Reward
-                </p>
-                <Countdown
-                  key={nextDayTimeStamp}
-                  className={css`
-                    font-size: 1.3rem;
-                  `}
-                  date={nextDayTimeStamp}
-                  now={() => {
-                    const now = Date.now() + timeDifference;
-                    return now;
-                  }}
-                  daysInHours={true}
-                  onComplete={handleCountdownComplete}
-                />
-              </>
-            )}
-          </div>
-          <div
-            style={{
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Button variant="ghost" onClick={handleHide}>
-              Close
-            </Button>
-          </div>
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className={`fadeIn ${bonusMessageClass} ${bonusFailClass}`}
+                      >
+                        <span>
+                          ...but you got the{' '}
+                          <span
+                            className={css`
+                              font-weight: bold;
+                              cursor: pointer;
+                              color: ${Color[linkColor]()};
+                              &:hover {
+                                text-decoration: underline;
+                              }
+                            `}
+                            onClick={() => setDailyBonusModalShown(true)}
+                          >
+                            bonus question
+                          </span>{' '}
+                          wrong
+                        </span>
+                      </div>
+                    )
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </footer>
+      </NewModal>
       {cardModalShown && (
         <AICardModal
           cardId={chosenCardId}
@@ -608,7 +893,7 @@ export default function DailyRewardModal({
           onHide={() => setDailyBonusModalShown(false)}
         />
       )}
-    </Modal>
+    </>
   );
 
   function handleCountdownComplete() {
