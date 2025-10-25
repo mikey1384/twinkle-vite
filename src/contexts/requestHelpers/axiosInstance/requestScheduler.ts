@@ -56,12 +56,12 @@ interface RequestSchedulerOptions {
 const DEFAULT_POLICIES: Record<ChannelName, RequestPolicy> = {
   ui: {
     concurrency: 6,
-    minTimeout: 8000,
-    maxTimeout: 30000,
-    maxRetries: 1,
-    backoffBase: 500,
+    minTimeout: 15000,
+    maxTimeout: 60000,
+    maxRetries: 2,
+    backoffBase: 1000,
     backoffMultiplier: 2,
-    backoffJitter: 300,
+    backoffJitter: 500,
     collapseGet: true,
     enableProgressGuard: false,
     allowExtendedTimeout: true,
@@ -69,26 +69,28 @@ const DEFAULT_POLICIES: Record<ChannelName, RequestPolicy> = {
   },
   normal: {
     concurrency: 4,
-    minTimeout: 8000,
-    maxTimeout: 35000,
+    minTimeout: 15000,
+    maxTimeout: 60000,
     maxRetries: 3,
-    backoffBase: 800,
+    backoffBase: 1500,
     backoffMultiplier: 2,
-    backoffJitter: 400,
+    backoffJitter: 600,
     collapseGet: true,
-    enableProgressGuard: false
+    enableProgressGuard: false,
+    allowExtendedTimeout: true,
+    extendedTimeoutCap: 180000
   },
   bulk: {
     concurrency: 2,
-    minTimeout: 10000,
-    maxTimeout: 60000,
+    minTimeout: 20000,
+    maxTimeout: 90000,
     maxRetries: 4,
-    backoffBase: 1200,
+    backoffBase: 2000,
     backoffMultiplier: 2.5,
-    backoffJitter: 600,
+    backoffJitter: 1000,
     collapseGet: false,
     enableProgressGuard: true,
-    stallTimeoutMs: 20000,
+    stallTimeoutMs: 30000,
     allowExtendedTimeout: true,
     extendedTimeoutCap: 180000
   }
@@ -97,25 +99,27 @@ const DEFAULT_POLICIES: Record<ChannelName, RequestPolicy> = {
 class RequestChannel {
   private limiter: ReturnType<typeof pLimit>;
   private inflight = new Map<string, Promise<AxiosResponse>>();
-  // Per-channel circuit breaker
   private breakerState: 'closed' | 'open' | 'half' = 'closed';
   private openedAt = 0;
   private lastProbeAt = 0;
   private recentErrors: number[] = [];
   private pauseUntil = 0;
+  private onLatencyMeasured?: (latency: number) => void;
 
   private static readonly BREAKER = {
-    ERROR_WINDOW_MS: 10_000,
-    ERROR_THRESHOLD: 5,
-    OPEN_MS: 30_000,
-    PROBE_EVERY_MS: 5_000
+    ERROR_WINDOW_MS: 30_000,
+    ERROR_THRESHOLD: 10,
+    OPEN_MS: 15_000,
+    PROBE_EVERY_MS: 3_000
   } as const;
 
   constructor(
     public readonly name: ChannelName,
-    private policy: RequestPolicy
+    private policy: RequestPolicy,
+    onLatencyMeasured?: (latency: number) => void
   ) {
     this.limiter = pLimit(Math.max(1, policy.concurrency));
+    this.onLatencyMeasured = onLatencyMeasured;
   }
 
   updatePolicy(policy: RequestPolicy) {
@@ -214,7 +218,28 @@ class RequestChannel {
     }
 
     try {
-      const response = await this.limiter(() => axios.request<T>(config));
+      const response = await this.limiter(async () => {
+        const httpStartTime = Date.now();
+
+        try {
+          const result = await axios.request<T>(config);
+
+          if (this.onLatencyMeasured) {
+            this.onLatencyMeasured(Date.now() - httpStartTime);
+          }
+
+          return result;
+        } catch (err) {
+          if (
+            this.onLatencyMeasured &&
+            isTimeoutCancellation(err as AxiosError)
+          ) {
+            this.onLatencyMeasured(Date.now() - httpStartTime);
+          }
+          throw err;
+        }
+      });
+
       this.onSuccessfulProbe();
       return response;
     } catch (error) {
@@ -225,7 +250,9 @@ class RequestChannel {
 
       const retryAfterMs = parseRetryAfter(error as AxiosError);
       const delayMs =
-        typeof retryAfterMs === 'number' ? retryAfterMs : computeBackoff(policy, attempt);
+        typeof retryAfterMs === 'number'
+          ? retryAfterMs
+          : computeBackoff(policy, attempt);
       await sleep(delayMs);
       return this.executeWithRetries(baseConfig, context, attempt + 1);
     } finally {
@@ -242,10 +269,7 @@ class RequestChannel {
     const windowMs = RequestChannel.BREAKER.ERROR_WINDOW_MS;
     this.recentErrors = this.recentErrors.filter((t) => now - t <= windowMs);
     if (this.breakerState === 'closed') {
-      if (
-        this.recentErrors.length >=
-        RequestChannel.BREAKER.ERROR_THRESHOLD
-      ) {
+      if (this.recentErrors.length >= RequestChannel.BREAKER.ERROR_THRESHOLD) {
         this.breakerState = 'open';
         this.openedAt = now;
       }
@@ -301,7 +325,13 @@ class RequestChannel {
 export class RequestScheduler {
   private channels = new Map<ChannelName, RequestChannel>();
   private policies: Record<ChannelName, RequestPolicy>;
+  private baselinePolicies: Record<ChannelName, RequestPolicy>;
   private defaultChannel: ChannelName;
+  private networkQuality: 'good' | 'moderate' | 'poor' = 'good';
+  private latencyHistory: number[] = [];
+  private readonly LATENCY_WINDOW = 10;
+  private readonly POOR_LATENCY_THRESHOLD = 3000;
+  private readonly MODERATE_LATENCY_THRESHOLD = 1500;
 
   constructor(options?: Partial<RequestSchedulerOptions>) {
     const mergedPolicies: Record<ChannelName, RequestPolicy> = {
@@ -320,9 +350,17 @@ export class RequestScheduler {
     } as Record<ChannelName, RequestPolicy>;
 
     this.policies = mergedPolicies;
+    this.baselinePolicies = JSON.parse(JSON.stringify(mergedPolicies));
     this.defaultChannel = options?.defaultChannel ?? 'normal';
+
+    // Create channels with latency measurement callback
+    const measureLatency = (latency: number) =>
+      this.updateNetworkQuality(latency);
     (Object.keys(this.policies) as ChannelName[]).forEach((name) => {
-      this.channels.set(name, new RequestChannel(name, this.policies[name]));
+      this.channels.set(
+        name,
+        new RequestChannel(name, this.policies[name], measureLatency)
+      );
     });
 
     // iOS long-sleep resume cleanup
@@ -365,11 +403,102 @@ export class RequestScheduler {
     return channel.request(config, context) as Promise<R>;
   }
 
+  private updateNetworkQuality(latency: number) {
+    this.latencyHistory.push(latency);
+    if (this.latencyHistory.length > this.LATENCY_WINDOW) {
+      this.latencyHistory.shift();
+    }
+
+    const avgLatency =
+      this.latencyHistory.reduce((a, b) => a + b, 0) /
+      this.latencyHistory.length;
+
+    const previousQuality = this.networkQuality;
+    if (avgLatency > this.POOR_LATENCY_THRESHOLD) {
+      this.networkQuality = 'poor';
+    } else if (avgLatency > this.MODERATE_LATENCY_THRESHOLD) {
+      this.networkQuality = 'moderate';
+    } else {
+      this.networkQuality = 'good';
+    }
+
+    // If network quality has degraded, adjust policies
+    if (previousQuality !== this.networkQuality) {
+      this.adjustPoliciesForNetworkQuality();
+    }
+  }
+
+  private adjustPoliciesForNetworkQuality() {
+    const multiplier =
+      this.networkQuality === 'poor'
+        ? 2
+        : this.networkQuality === 'moderate'
+        ? 1.5
+        : 1;
+
+    for (const [channelName, baselinePolicy] of Object.entries(
+      this.baselinePolicies
+    )) {
+      const adjustedPolicy = {
+        ...baselinePolicy,
+        minTimeout: Math.round(baselinePolicy.minTimeout * multiplier),
+        maxTimeout: Math.round(baselinePolicy.maxTimeout * multiplier),
+        stallTimeoutMs: baselinePolicy.stallTimeoutMs
+          ? Math.round(baselinePolicy.stallTimeoutMs * multiplier)
+          : undefined,
+        extendedTimeoutCap: baselinePolicy.extendedTimeoutCap
+          ? Math.round(baselinePolicy.extendedTimeoutCap * multiplier)
+          : undefined
+      };
+
+      this.policies[channelName as ChannelName] = adjustedPolicy;
+      this.channels
+        .get(channelName as ChannelName)
+        ?.updatePolicy(adjustedPolicy);
+    }
+
+    if (this.networkQuality === 'poor') {
+      logForAdmin({
+        message: `Network quality detected as poor. Timeouts scaled by 2x from baseline`
+      });
+    } else if (this.networkQuality === 'moderate') {
+      logForAdmin({
+        message: `Network quality detected as moderate. Timeouts scaled by 1.5x from baseline`
+      });
+    } else {
+      logForAdmin({
+        message: `Network quality returned to good. Timeouts restored to baseline`
+      });
+    }
+  }
+
   updatePolicy(channel: ChannelName, policy: Partial<RequestPolicy>) {
-    const current = this.policies[channel];
-    const next = { ...current, ...policy } as RequestPolicy;
-    this.policies[channel] = next;
-    this.channels.get(channel)?.updatePolicy(next);
+    const baseline = this.baselinePolicies[channel];
+    const updatedBaseline = { ...baseline, ...policy } as RequestPolicy;
+
+    this.baselinePolicies[channel] = updatedBaseline;
+
+    const multiplier =
+      this.networkQuality === 'poor'
+        ? 2
+        : this.networkQuality === 'moderate'
+        ? 1.5
+        : 1;
+
+    const scaledPolicy = {
+      ...updatedBaseline,
+      minTimeout: Math.round(updatedBaseline.minTimeout * multiplier),
+      maxTimeout: Math.round(updatedBaseline.maxTimeout * multiplier),
+      stallTimeoutMs: updatedBaseline.stallTimeoutMs
+        ? Math.round(updatedBaseline.stallTimeoutMs * multiplier)
+        : undefined,
+      extendedTimeoutCap: updatedBaseline.extendedTimeoutCap
+        ? Math.round(updatedBaseline.extendedTimeoutCap * multiplier)
+        : undefined
+    };
+
+    this.policies[channel] = scaledPolicy;
+    this.channels.get(channel)?.updatePolicy(scaledPolicy);
   }
 
   private resolveChannel<T>(
@@ -411,8 +540,13 @@ export class RequestScheduler {
     const enableProgressGuard =
       config.meta?.enableProgressGuard ?? policy.enableProgressGuard;
     const stallTimeoutMs = config.meta?.stallTimeoutMs ?? policy.stallTimeoutMs;
+
+    const url = (config.url || '').toLowerCase();
+    const isChatEndpoint = url.includes('/chat') || url.includes('/message');
     const allowExtendedTimeout =
-      config.meta?.allowExtendedTimeout ?? policy.allowExtendedTimeout;
+      config.meta?.allowExtendedTimeout ??
+      policy.allowExtendedTimeout ??
+      (isChatEndpoint && this.networkQuality === 'poor');
 
     return {
       channel,
@@ -429,8 +563,8 @@ function computeTimeout(
   attempt: number,
   allowExtended: boolean
 ) {
-  const cappedMax = allowExtended && policy.allowExtendedTimeout
-    ? policy.extendedTimeoutCap || Math.max(policy.maxTimeout, policy.minTimeout)
+  const cappedMax = allowExtended
+    ? policy.extendedTimeoutCap || 180000
     : policy.maxTimeout;
   const timeout =
     policy.minTimeout * Math.pow(policy.backoffMultiplier, attempt);
