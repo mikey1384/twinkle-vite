@@ -14,6 +14,7 @@ import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import XPRewardInterface from '~/components/XPRewardInterface';
 import Icon from '~/components/Icon';
+import MadeByBar from '~/components/MadeByBar';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Description from './Description';
@@ -34,7 +35,6 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useLocation, useParams } from 'react-router-dom';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function LinkPage() {
@@ -50,21 +50,9 @@ export default function LinkPage() {
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const byUserIndicatorRole = useRoleColor('byUserIndicator', {
-    themeName: profileTheme,
-    fallback: (profileTheme as string) || 'logoBlue'
-  });
-  const byUserIndicatorColor = byUserIndicatorRole.getColor(
-    byUserIndicatorRole.defaultOpacity ?? 0.8
-  );
-  const byUserIndicatorTextRole = useRoleColor('byUserIndicatorText', {
-    themeName: profileTheme,
-    fallback: 'white'
-  });
-  const byUserIndicatorTextColor = byUserIndicatorTextRole.getColor();
   const { colorKey: rewardColor } = useRoleColor('reward', {
     fallback: 'pink'
   });
@@ -268,18 +256,11 @@ export default function LinkPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const madeByLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{uploader?.username}님이 직접 제작한 콘텐츠입니다</>;
-    }
-    return <>This was made by {uploader?.username}</>;
-  }, [uploader?.username]);
-
   return loaded && !isDeleted ? (
     <div
       className={css`
         width: CALC(100% - 2rem);
-        height: 100%;
+        min-height: 100%;
         margin-top: 1rem;
         margin-bottom: 1rem;
         @media (max-width: ${tabletMaxWidth}) {
@@ -293,13 +274,19 @@ export default function LinkPage() {
       <div
         className={css`
           width: 100%;
-          height: 100%;
+          height: auto;
           margin-left: 1rem;
           display: grid;
           grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr);
           column-gap: 1.5rem;
           row-gap: 1.5rem;
           align-items: start;
+          &::after {
+            content: '';
+            display: block;
+            height: 1rem;
+            grid-column: 1 / -1;
+          }
           @media (max-width: ${tabletMaxWidth}) {
             grid-template-columns: 1fr;
             width: 100%;
@@ -328,28 +315,12 @@ export default function LinkPage() {
               onEditDone={handleEditLinkPage}
               userIsUploader={userIsUploader}
             />
-            {!!byUser && (
-              <div
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: byUserIndicatorColor,
-                  color: byUserIndicatorTextColor,
-                  textShadow: 'none',
-                  display: 'inline-flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  fontWeight: 700,
-                  fontSize: '1.4rem',
-                  marginTop: '1.25rem',
-                  marginLeft: '1rem',
-                  borderRadius: '999px'
-                }}
-                aria-label="content-made-by-uploader"
-              >
-                <Icon icon="check-circle" style={{ marginRight: '0.5rem' }} />
-                {madeByLabel}
-              </div>
-            )}
+            <MadeByBar
+              byUser={!!byUser}
+              username={uploader?.username}
+              contentType="url"
+              style={{ marginTop: '1.25rem' }}
+            />
             <Embedly
               key={'link' + linkId}
               style={{ marginTop: '1.5rem' }}
@@ -577,7 +548,6 @@ export default function LinkPage() {
           </Card>
         </div>
       </div>
-      {/* Mobile spacer to ensure content clears bottom nav */}
       <div
         className={css`
           display: none;

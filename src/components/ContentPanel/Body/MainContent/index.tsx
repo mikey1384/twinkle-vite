@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import Embedly from '~/components/Embedly';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import XPVideoAdditionalInfo from './XPVideoAdditionalInfo';
-import ByUserIndicator from './ByUserIndicator';
+import MadeByBar from '~/components/MadeByBar';
 import PassContent from '../PassContent';
 import FileViewer from './FileViewer';
 import XPVideo from './XPVideo';
@@ -13,7 +13,6 @@ import { scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext } from '~/contexts';
-import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '~/types';
 
@@ -76,23 +75,6 @@ export default function MainContent({
   );
   const onLoadTags = useContentContext((v) => v.actions.onLoadTags);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
-  const { themeRoles } = useThemeTokens({ themeName: theme });
-  const byUserIndicatorColor = useMemo(
-    () => themeRoles.byUserIndicator?.color || 'logoBlue',
-    [themeRoles]
-  );
-  const byUserIndicatorOpacity = useMemo(
-    () => themeRoles.byUserIndicator?.opacity ?? 0.8,
-    [themeRoles]
-  );
-  const byUserIndicatorTextColor = useMemo(
-    () => themeRoles.byUserIndicatorText?.color || 'white',
-    [themeRoles]
-  );
-  const byUserIndicatorTextShadowColor = useMemo(
-    () => themeRoles.byUserIndicatorText?.shadow || '',
-    [themeRoles]
-  );
   const { fileType } = useMemo(
     () => (fileName ? getFileInfoFromFileName(fileName) : { fileType: '' }),
     [fileName]
@@ -156,20 +138,20 @@ export default function MainContent({
           tags={tags}
           theme={theme}
         />
-        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/ByUserIndicator">
-          <ByUserIndicator
-            contentType={contentType}
-            byUser={!!byUser}
-            subjectIsAttachedToVideo={subjectIsAttachedToVideo}
-            byUserIndicatorColor={byUserIndicatorColor}
-            byUserIndicatorOpacity={byUserIndicatorOpacity || 1}
-            byUserIndicatorTextColor={byUserIndicatorTextColor}
-            byUserIndicatorTextShadowColor={
-              byUserIndicatorTextShadowColor || ''
-            }
-            uploader={uploader}
-            filePath={filePath}
-          />
+        <ErrorBoundary componentPath="ContentPanel/Body/MainContent/MadeByBar">
+          {(contentType === 'url' || contentType === 'subject') && (
+            <MadeByBar
+              byUser={!!byUser}
+              username={uploader?.username}
+              theme={theme}
+              contentType={contentType}
+              filePath={filePath}
+              style={{
+                marginTop: subjectIsAttachedToVideo ? '0.5rem' : 0,
+                fontSize: '1.6rem'
+              }}
+            />
+          )}
         </ErrorBoundary>
         <ErrorBoundary componentPath="ContentPanel/Body/MainContent/FileViewer">
           <FileViewer
