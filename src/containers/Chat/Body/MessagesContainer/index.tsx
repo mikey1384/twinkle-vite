@@ -1482,7 +1482,6 @@ export default function MessagesContainer({
       <div
         style={{
           background: 'var(--chat-bg)',
-          color: 'var(--chat-text)',
           padding: '1rem',
           borderTop: '1px solid var(--ui-border)'
         }}

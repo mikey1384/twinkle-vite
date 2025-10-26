@@ -23,7 +23,7 @@ export default function XPRankings({
           myId={userId}
           rank={rank}
           twinkleXP={twinkleXP}
-          style={{ marginTop: 0 }}
+          style={{ marginTop: 0, fontSize: '1.5rem' }}
         />
         <LeaderboardList
           scrollable={false}

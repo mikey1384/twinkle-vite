@@ -36,7 +36,7 @@ export default function TargetSubjectPreview({
           padding: '1rem',
           height: '100%',
           width: '100%',
-          background: Color.targetGray(),
+          background: Color.wellGray(),
           borderRadius,
           overflow: 'scroll',
           display: 'flex',
@@ -44,7 +44,12 @@ export default function TargetSubjectPreview({
         }}
       >
         <div>
-          <div style={{ marginTop: '0.5rem', paddingBottom: '1rem' }}>
+          <div
+            style={{
+              marginTop: '0.5rem',
+              paddingBottom: '1rem'
+            }}
+          >
             {legacyTopicObj?.content || defaultChatSubject}
           </div>
         </div>

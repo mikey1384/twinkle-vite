@@ -153,7 +153,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(255, 243, 224, 0.5)',
       hoverBg: 'rgba(255, 243, 224, 0.2)',
       hoverTitleBg: 'rgba(255, 243, 224, 1)',
-      text: 'rgba(102, 60, 0, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(255, 220, 160, 1)'
     },
     page: { bg: 'rgba(255, 250, 244, 1)' }
@@ -175,7 +175,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(255, 230, 240, 0.5)',
       hoverBg: 'rgba(255, 230, 240, 0.2)',
       hoverTitleBg: 'rgba(255, 230, 240, 1)',
-      text: 'rgba(70, 0, 20, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(255, 180, 200, 1)'
     },
     page: { bg: 'rgba(255, 246, 250, 1)' }
@@ -197,7 +197,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(255, 235, 245, 0.5)',
       hoverBg: 'rgba(255, 235, 245, 0.2)',
       hoverTitleBg: 'rgba(255, 235, 245, 1)',
-      text: 'rgba(156, 39, 176, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(255, 215, 225, 1)'
     },
     page: { bg: 'rgba(255, 246, 252, 1)' }
@@ -219,7 +219,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(237, 224, 255, 0.5)',
       hoverBg: 'rgba(237, 224, 255, 0.2)',
       hoverTitleBg: 'rgba(237, 224, 255, 1)',
-      text: 'rgba(74, 20, 140, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(217, 204, 255, 1)'
     },
     page: { bg: 'rgba(248, 248, 248, 1)' }
@@ -241,7 +241,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(232, 232, 232, 0.5)',
       hoverBg: 'rgba(232, 232, 232, 0.2)',
       hoverTitleBg: 'rgba(232, 232, 232, 1)',
-      text: 'rgba(38, 38, 38, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(192, 192, 192, 1)'
     },
     page: { bg: 'rgba(255, 248, 248, 1)' }
@@ -308,7 +308,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(232, 232, 232, 0.5)',
       hoverBg: 'rgba(232, 232, 232, 0.2)',
       hoverTitleBg: 'rgba(232, 232, 232, 1)',
-      text: 'rgba(38, 38, 38, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(192, 192, 192, 1)'
     },
     page: { bg: 'rgba(255, 252, 240, 1)' }
@@ -330,7 +330,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       titleBg: 'rgba(255, 248, 224, 0.5)',
       hoverBg: 'rgba(255, 248, 224, 0.2)',
       hoverTitleBg: 'rgba(255, 248, 224, 1)',
-      text: 'rgba(178, 134, 0, 1)',
+      text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(209, 170, 0, 1)'
     },
     // Revert to pure white background
