@@ -9,7 +9,6 @@ import ProfilePic from '~/components/ProfilePic';
 import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
-import RankBadge from '~/components/RankBadge';
 
 const completedLabel = localize('completed');
 const grammarRankLabel = localize('grammarRank');
@@ -202,11 +201,7 @@ export default function Cover({
                   : '#fff'
             }}
           >
-            <span>{grammarRankLabel}</span>
-            <RankBadge
-              rank={myGrammarRank}
-              style={{ marginLeft: '0.6rem', fontSize: '1.2rem', height: '2.2rem' }}
-            />
+            <span>{`${grammarRankLabel} #${myGrammarRank}`}</span>
           </div>
         )}
       </div>

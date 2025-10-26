@@ -17,6 +17,7 @@ import Icon from '~/components/Icon';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Description from './Description';
+import Card from './Card';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import {
@@ -313,24 +314,7 @@ export default function LinkPage() {
             grid-column: 1;
           `}
         >
-          <div
-            className={css`
-              width: 100%;
-              background-color: #fff;
-              border: 1px solid var(--ui-border);
-              border-radius: ${borderRadius};
-              padding-bottom: 1rem;
-              box-shadow: var(--card-shadow, ${''}0 4px 8px rgba(0, 0, 0, 0.08));
-              @media (max-width: ${mobileMaxWidth}) {
-                border-top: 0;
-                border-left: 0;
-                border-right: 0;
-                border-radius: 0;
-                box-shadow: none;
-                width: 100%;
-              }
-            `}
-          >
+          <Card edgeToEdgeOnMobile style={{ paddingBottom: '1rem' }}>
             <Description
               key={'description' + linkId}
               uploader={uploader}
@@ -431,7 +415,11 @@ export default function LinkPage() {
                 </div>
               </div>
               <Button
-                style={{ right: '1rem', bottom: '0.5rem', position: 'absolute' }}
+                style={{
+                  right: '1rem',
+                  bottom: '0.5rem',
+                  position: 'absolute'
+                }}
                 color={rewardColor}
                 variant={isRecommendedByUser ? 'solid' : 'soft'}
                 tone="raised"
@@ -475,14 +463,22 @@ export default function LinkPage() {
                 />
               </div>
             )}
-            <RecommendationStatus
-              style={{
-                marginTop: likes.length > 0 ? '0.5rem' : '1rem',
-                marginBottom: recommendationInterfaceShown ? '1rem' : 0
-              }}
-              contentType="url"
-              recommendations={recommendations}
-            />
+            <div
+              className={css`
+                margin: 1rem;
+                border-radius: ${borderRadius};
+                padding: 0 0.25rem;
+              `}
+            >
+              <RecommendationStatus
+                style={{
+                  marginTop: likes.length > 0 ? '0.5rem' : '1rem',
+                  marginBottom: recommendationInterfaceShown ? '1rem' : 0
+                }}
+                contentType="url"
+                recommendations={recommendations}
+              />
+            </div>
             {Array.isArray(rewards) && rewards.length > 0 && (
               <div
                 className={css`
@@ -493,9 +489,7 @@ export default function LinkPage() {
                   border: 1px solid var(--ui-border);
                   @media (max-width: ${mobileMaxWidth}) {
                     margin: 1rem 0 0 0;
-                    border-left: 0;
-                    border-right: 0;
-                    border-radius: 0;
+                    border: 0;
                   }
                 `}
               >
@@ -509,7 +503,7 @@ export default function LinkPage() {
                 />
               </div>
             )}
-          </div>
+          </Card>
         </div>
         <div
           className={css`
@@ -519,19 +513,9 @@ export default function LinkPage() {
             }
           `}
         >
-          <div
-            className={css`
-              background: #fff;
-              border: 1px solid var(--ui-border);
-              border-radius: ${borderRadius};
-              padding: 1rem;
-              margin-bottom: 1rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                border-left: 0;
-                border-right: 0;
-                border-radius: 0;
-              }
-            `}
+          <Card
+            edgeToEdgeOnMobile
+            style={{ padding: '1rem', marginBottom: '1rem' }}
           >
             <Subjects
               contentId={linkId}
@@ -561,14 +545,10 @@ export default function LinkPage() {
                 onUploadReply: handleUploadReply
               }}
             />
-          </div>
-          <div
-            className={css`
-              @media (max-width: ${mobileMaxWidth}) {
-                padding: 0 1rem;
-                margin-bottom: 2rem;
-              }
-            `}
+          </Card>
+          <Card
+            edgeToEdgeOnMobile
+            style={{ padding: '1rem', marginBottom: '2rem' }}
           >
             <Comments
               autoExpand
@@ -592,10 +572,9 @@ export default function LinkPage() {
                 uploader,
                 pinnedCommentId
               }}
-              style={{ paddingTop: '0.75rem' }}
               userId={userId}
             />
-          </div>
+          </Card>
         </div>
       </div>
       {/* Mobile spacer to ensure content clears bottom nav */}
@@ -604,7 +583,9 @@ export default function LinkPage() {
           display: none;
           @media (max-width: ${mobileMaxWidth}) {
             display: block;
-            height: calc(var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px));
+            height: calc(
+              var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px)
+            );
           }
         `}
       />

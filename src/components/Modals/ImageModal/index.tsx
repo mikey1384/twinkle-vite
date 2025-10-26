@@ -88,7 +88,8 @@ export default function ImageModal({
         <>
           {downloadable && (
             <Button color="orange" onClick={() => window.open(src)}>
-              Download
+              <Icon icon="download" />
+              <span style={{ marginLeft: '0.5rem' }}>Download</span>
             </Button>
           )}
           {isReplaceable &&

@@ -3,8 +3,10 @@ import MissionItem from '~/components/MissionItem';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
+import Icon from '~/components/Icon';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import { useMissionContext, useKeyContext } from '~/contexts';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, Color } from '~/constants/css';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
@@ -103,25 +105,25 @@ export default function MissionList({
         <div>
           <div style={{ marginTop: '1rem' }}>
             {displayedMissions.length === 0 ? (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  height: '18rem',
-                  fontWeight: 'bold',
-                  fontSize: '2rem'
-                }}
-              >
-                {selectedMissionListTab === 'ongoing' ? (
-                  'You have completed every available mission'
-                ) : selectedMissionListTab === 'complete' ? (
-                  `You haven't completed any mission, yet`
-                ) : (
-                  <Loading />
-                )}
-              </div>
+              selectedMissionListTab === 'ongoing' ||
+              selectedMissionListTab === 'complete' ? (
+                <EmptyStateMessage
+                  style={{ width: '100%', marginTop: '1rem' }}
+                  icon={
+                    selectedMissionListTab === 'ongoing' ? (
+                      <Icon icon="trophy" style={{ color: Color.gold() }} />
+                    ) : (
+                      <Icon icon="tasks" />
+                    )
+                  }
+                >
+                  {selectedMissionListTab === 'ongoing'
+                    ? 'You have completed every available mission'
+                    : `You haven't completed any mission, yet`}
+                </EmptyStateMessage>
+              ) : (
+                <Loading />
+              )
             ) : (
               displayedMissions.map((missionId, index) => {
                 const mission = missionObj[missionId];

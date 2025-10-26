@@ -4,13 +4,13 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
-import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import { useAppContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 
 const appElement = document.getElementById('App');
 const BodyRef = document.scrollingElement || document.documentElement;

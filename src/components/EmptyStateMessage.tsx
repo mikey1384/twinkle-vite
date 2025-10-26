@@ -20,14 +20,13 @@ export default function EmptyStateMessage({
   style,
   theme
 }: EmptyStateMessageProps) {
-  const { getColor: getAccentColor } = useRoleColor('filter', {
+  const { getColor: getBorderColor } = useRoleColor('filter', {
     themeName: theme,
     fallback: 'logoBlue'
   });
-  const accentColor = getAccentColor(0.68) || Color.logoBlue(0.65);
-  const accentBorder = getAccentColor(0.9) || Color.logoBlue(0.82);
-  const textColor = '#ffffff';
-  const captionColor = Color.lighterGray();
+  const accentBorder = getBorderColor(0.9) || Color.logoBlue(0.82);
+  const accentText = Color.darkerGray();
+  const captionColor = Color.darkGray();
 
   const containerClass = css`
     width: 100%;
@@ -39,16 +38,16 @@ export default function EmptyStateMessage({
     gap: 0.75rem;
     border-radius: 14px;
     border: 1px dashed ${accentBorder};
-    background: ${accentColor};
-    color: ${textColor};
+    background: #ffffff;
+    color: ${accentText};
     font-size: 1.9rem;
     font-weight: 600;
-    padding: 2.8rem 2rem;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    padding: 2.6rem 2rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 
     @media (max-width: 768px) {
       font-size: 1.7rem;
-      padding: 2.4rem 1.6rem;
+      padding: 2.2rem 1.6rem;
     }
   `;
 
@@ -57,7 +56,10 @@ export default function EmptyStateMessage({
     align-items: center;
     justify-content: center;
     font-size: 2.2rem;
+    color: ${accentText};
   `;
+
+  const textClass = css``;
 
   const captionClass = css`
     font-size: 1.45rem;
@@ -68,7 +70,7 @@ export default function EmptyStateMessage({
   return (
     <div className={cx(containerClass, className)} style={style}>
       {icon && <div className={iconWrapperClass}>{icon}</div>}
-      <div>{children}</div>
+      <div className={textClass}>{children}</div>
       {caption && <div className={captionClass}>{caption}</div>}
     </div>
   );
