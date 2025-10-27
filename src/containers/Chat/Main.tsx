@@ -1000,9 +1000,7 @@ export default function Main({
                 position: relative;
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
-                  height: calc(
-                    100% - var(--mobile-nav-total-height) - 3.5rem - 1px
-                  );
+                  height: calc(100% - var(--mobile-nav-total-height) - 3.5rem);
                 }
               `}
             >
