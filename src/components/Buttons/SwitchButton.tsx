@@ -3,6 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
+import { isMobile } from '~/helpers';
 
 interface SwitchButtonProps {
   ariaLabel?: string;
@@ -29,6 +30,8 @@ export default function SwitchButton({
   style,
   theme
 }: SwitchButtonProps) {
+  const deviceIsMobile = isMobile(navigator);
+  const isSmall = typeof small === 'boolean' ? small : deviceIsMobile;
   const { color: switchRoleColor } = useRoleColor('switch', {
     themeName: theme,
     fallback: 'logoBlue'
@@ -36,18 +39,18 @@ export default function SwitchButton({
   const activeColor = color || switchRoleColor || Color.logoBlue();
   const [isFocused, setIsFocused] = useState(false);
   const mergedLabelStyle = {
-    fontSize: small ? '1.1rem' : '1.3rem',
+    fontSize: isSmall ? '1.1rem' : '1.3rem',
     ...labelStyle
   };
 
   const metrics = useMemo(() => {
-    const trackWidth = small ? 48 : 60;
-    const trackHeight = small ? 26 : 34;
-    const knobSize = small ? 20 : 28;
-    const knobTranslate = trackWidth - knobSize - (small ? 6 : 8);
+    const trackWidth = isSmall ? 48 : 60;
+    const trackHeight = isSmall ? 26 : 34;
+    const knobSize = isSmall ? 20 : 28;
+    const knobTranslate = trackWidth - knobSize - (isSmall ? 6 : 8);
     const focusOffset = trackHeight >= 32 ? 3 : 2;
     return { trackWidth, trackHeight, knobSize, knobTranslate, focusOffset };
-  }, [small]);
+  }, [isSmall]);
 
   const palette = useMemo(() => createPalette(activeColor), [activeColor]);
 
@@ -73,7 +76,7 @@ export default function SwitchButton({
   const knobClass = css`
     position: absolute;
     top: 50%;
-    left: ${small ? 4 : 5}px;
+    left: ${isSmall ? 4 : 5}px;
     width: ${metrics.knobSize}px;
     height: ${metrics.knobSize}px;
     border-radius: 50%;
@@ -88,9 +91,9 @@ export default function SwitchButton({
       componentPath="SwitchButton"
       style={{
         display: 'flex',
-        flexDirection: small ? 'column' : 'row',
+        flexDirection: isSmall ? 'column' : 'row',
         alignItems: 'center',
-        gap: small ? '0.6rem' : '1.2rem',
+        gap: isSmall ? '0.6rem' : '1.2rem',
         ...style,
         ...(disabled ? { opacity: 0.35 } : {})
       }}
@@ -98,7 +101,7 @@ export default function SwitchButton({
       {label && (
         <div
           style={{
-            marginRight: small ? 0 : '1rem',
+            marginRight: isSmall ? 0 : '1rem',
             fontWeight: 600,
             ...mergedLabelStyle
           }}
