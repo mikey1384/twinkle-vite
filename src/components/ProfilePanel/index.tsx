@@ -449,7 +449,6 @@ function ProfilePanel({
   } = useThemedCardVars({
     role: 'profilePanel',
     intensity: 0.05,
-    blendWeight: 0.98,
     themeName,
     borderFallback: 'var(--ui-border)',
     fallbackColor: 'logoBlue'
@@ -572,7 +571,9 @@ function ProfilePanel({
                     <>
                       <div className={profileContentClass}>
                         <div className={leftColumnClass}>
-                          <div className={`unselectable ${profilePicWrapperClass}`}>
+                          <div
+                            className={`unselectable ${profilePicWrapperClass}`}
+                          >
                             <Link
                               onClick={handleReloadProfile}
                               to={`/users/${profileName}`}

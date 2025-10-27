@@ -13,7 +13,7 @@ export default function CardThumb({
   cardColor,
   style,
   onClick,
-  xpNumberColor
+  xpNumberColor = 'logoBlue'
 }: {
   card: Card;
   displayedBurnXP: string | number;
@@ -81,7 +81,7 @@ export default function CardThumb({
               font-size: 1.3rem;
             `}
           >
-            <b style={{ color: Color[xpNumberColor]() }}>{displayedBurnXP}</b>
+            <b style={{ color: Color[xpNumberColor]?.() }}>{displayedBurnXP}</b>
             <b style={{ color: Color.gold(), marginLeft: '2px' }}>XP</b>
           </div>
         )}
