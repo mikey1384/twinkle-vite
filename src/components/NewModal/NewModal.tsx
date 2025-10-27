@@ -171,6 +171,10 @@ export const NewModal = forwardRef<
       };
     }, [isOpen, modalId]);
 
+    // For width behavior only: treat tablet-landscape like desktop
+    const isLandscape =
+      typeof window !== 'undefined' && window.innerWidth > window.innerHeight;
+
     const { width, maxWidth, height } = useMemo(() => {
       const baseSize = sizeMap[size];
 
@@ -182,6 +186,20 @@ export const NewModal = forwardRef<
         };
       }
 
+      if (deviceIsTablet) {
+        if (isLandscape) {
+          return {
+            ...baseSize,
+            height: 'auto'
+          };
+        }
+        return {
+          width: '85vw',
+          maxWidth: baseSize.maxWidth,
+          height: 'auto'
+        };
+      }
+
       if (deviceIsMobile) {
         return {
           width: '100vw',
@@ -190,19 +208,11 @@ export const NewModal = forwardRef<
         };
       }
 
-      if (deviceIsTablet) {
-        return {
-          width: '85vw',
-          maxWidth: baseSize.maxWidth,
-          height: 'auto'
-        };
-      }
-
       return {
         ...baseSize,
         height: 'auto'
       };
-    }, [size]);
+    }, [size, isLandscape]);
 
     useEffect(() => {
       if (!preventBodyScroll || currentLevel > 0) return;
