@@ -1001,7 +1001,6 @@ export default function Main({
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
                   height: calc(100% - var(--mobile-nav-total-height));
-                  min-height: calc(100% - var(--mobile-nav-total-height));
                 }
               `}
             >
