@@ -999,7 +999,7 @@ export default function Main({
                 font-size: 1.6rem;
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
-                  height: calc(100vh - 7.2rem);
+                  height: CALC(100% - 7.2rem);
                 }
               `}
             >
