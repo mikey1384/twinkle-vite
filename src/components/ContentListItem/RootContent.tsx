@@ -14,9 +14,7 @@ import {
   desktopMinWidth,
   wideBorderRadius
 } from '~/constants/css';
-import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
-import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
@@ -274,24 +272,8 @@ export default function RootContent({
   itemSelectedOpacity?: number;
   noTopBorderRadius?: boolean;
 }) {
-  const { themeName } = useThemeTokens();
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
-  const { getColor: getFilterColor } = useRoleColor('filter', {
-    themeName,
-    fallback: 'logoBlue'
-  });
-
-  const activeBg = getFilterColor(0.18) || Color.logoBlue(0.18);
   // Use global UI border vars for consistency with ContentPanel
-
-  const selectedBg = useMemo(() => {
-    if (!itemSelectedColor) return activeBg;
-    const colorFn = (Color as any)[itemSelectedColor];
-    if (typeof colorFn === 'function') {
-      return colorFn(itemSelectedOpacity ?? 0.18);
-    }
-    return itemSelectedColor;
-  }, [activeBg, itemSelectedColor, itemSelectedOpacity]);
 
   const selectedBorder = useMemo(() => {
     if (!itemSelectedColor) return 'var(--ui-border-strong)';
@@ -310,11 +292,16 @@ export default function RootContent({
     border-radius: ${wideBorderRadius};
     border: 1px solid var(--ui-border);
     background: #fff;
-    transition: background 0.18s ease, border-color 0.18s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
     @media (max-width: ${mobileMaxWidth}) {
       border: none;
       border-radius: 0;
       box-shadow: none;
+      &.selected {
+        /* Ensure selection is visible on mobile where border is otherwise removed */
+        border: 2px solid ${selectedBorder};
+        box-shadow: inset 0 0 0 2px ${selectedBorder};
+      }
     }
     @media (min-width: ${desktopMinWidth}) {
       &:hover {
@@ -323,7 +310,8 @@ export default function RootContent({
     }
     &.selected {
       border-color: ${selectedBorder};
-      background: ${selectedBg};
+      border-width: 2px;
+      box-shadow: inset 0 0 0 2px ${selectedBorder};
     }
   `;
 
