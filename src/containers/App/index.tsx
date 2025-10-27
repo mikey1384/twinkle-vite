@@ -482,8 +482,6 @@ export default function App() {
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 0;
               padding-top: 0;
-              height: calc(100vh - var(--mobile-nav-total-height));
-              min-height: calc(100vh - var(--mobile-nav-total-height));
             }
           `}`}
         >
