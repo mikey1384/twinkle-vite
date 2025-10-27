@@ -159,12 +159,20 @@ export default function SearchView({
         </div>
       )}
       {filteredLoadMoreShown && !loading && (
-        <LoadMoreButton
-          loading={loadingMore}
-          style={{ marginTop: '5rem' }}
-          filled
-          onClick={handleLoadMoreAICards}
-        />
+        <div
+          style={{
+            flex: '0 0 100%',
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '5rem'
+          }}
+        >
+          <LoadMoreButton
+            loading={loadingMore}
+            filled
+            onClick={handleLoadMoreAICards}
+          />
+        </div>
       )}
     </div>
   );
