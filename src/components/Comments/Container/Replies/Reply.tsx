@@ -28,7 +28,9 @@ import { Link } from 'react-router-dom';
 import { borderRadius, Color } from '~/constants/css';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled
+  determineXpButtonDisabled,
+  isTablet,
+  isMobile
 } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
@@ -499,6 +501,7 @@ function Reply({
                               onClick={handleLikeClick}
                               likes={likes}
                               theme={theme}
+                              hideLabel={isTablet(navigator)}
                             />
                           )}
                           {isDeleteNotification &&
@@ -519,26 +522,28 @@ function Reply({
                               disabled={loadingReplies}
                             >
                               <Icon icon="comment-alt" />
-                              <span
-                                style={{
-                                  marginLeft: '0.7rem'
-                                }}
-                              >
-                                {!isExpanded && reply.numReplies > 1
-                                  ? repliesLabel
-                                  : replyLabel}
-                                {loadingReplies ? (
-                                  <Icon
-                                    style={{ marginLeft: '0.7rem' }}
-                                    icon="spinner"
-                                    pulse
-                                  />
-                                ) : !isExpanded && reply.numReplies > 0 ? (
-                                  ` (${reply.numReplies})`
-                                ) : (
-                                  ''
-                                )}
-                              </span>
+                              {!isTablet(navigator) && (
+                                <span
+                                  style={{
+                                    marginLeft: '0.7rem'
+                                  }}
+                                >
+                                  {!isExpanded && reply.numReplies > 1
+                                    ? repliesLabel
+                                    : replyLabel}
+                                  {loadingReplies ? (
+                                    <Icon
+                                      style={{ marginLeft: '0.7rem' }}
+                                      icon="spinner"
+                                      pulse
+                                    />
+                                  ) : !isExpanded && reply.numReplies > 0 ? (
+                                    ` (${reply.numReplies})`
+                                  ) : (
+                                    ''
+                                  )}
+                                </span>
+                              )}
                             </Button>
                           )}
                           {userCanRewardThis && !isDeleteNotification && (
@@ -548,6 +553,7 @@ function Reply({
                               contentType="comment"
                               disableReason={xpButtonDisabled}
                               theme={theme}
+                              hideLabel={isTablet(navigator)}
                             />
                           )}
                         </div>
@@ -588,6 +594,7 @@ function Reply({
                               contentType="comment"
                               content={reply.content}
                               style={{ marginLeft: '1rem' }}
+                              hideLabel={isMobile(navigator) || isTablet(navigator)}
                             />
                           )}
                         </div>

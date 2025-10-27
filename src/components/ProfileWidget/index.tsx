@@ -3,7 +3,12 @@ import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import {
+  Color,
+  mobileMaxWidth,
+  tabletMaxWidth,
+  wideBorderRadius
+} from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -39,6 +44,7 @@ const container = css`
     }
     .titles {
       flex: 1 1 auto;
+      min-width: 0;
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -60,6 +66,29 @@ const container = css`
           color: ${Color.darkerGray()};
           font-size: 2rem;
           font-weight: 700;
+        }
+      }
+    }
+  }
+
+  /* Tablet: stack name under avatar to avoid overflow */
+  @media (max-width: ${tabletMaxWidth}) {
+    .heading {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      .widget__profile-pic {
+        --profile-pic-size: 5.6rem;
+      }
+      .titles {
+        text-align: center;
+        width: 100%;
+        min-width: 0;
+        .real-name,
+        .username {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     }

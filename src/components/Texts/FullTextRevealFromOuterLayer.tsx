@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { createPortal } from 'react-dom';
+import { css } from '@emotion/css';
 
 export default function FullTextRevealFromOuterLayer({
   textContext,
@@ -16,6 +17,34 @@ export default function FullTextRevealFromOuterLayer({
 }) {
   const { x, y, width, height } = textContext;
 
+  const bubbleClass = useMemo(
+    () =>
+      css`
+        position: absolute;
+        z-index: 1000;
+        padding: 0.8rem 1rem;
+        font-size: 1.3rem;
+        background: #fff;
+        color: ${Color.black()};
+        border: 1px solid var(--ui-border);
+        border-radius: ${wideBorderRadius};
+        box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22),
+          0 1px 2px rgba(15, 23, 42, 0.06);
+        min-width: 14rem;
+        max-width: min(90vw, 36rem);
+        line-height: 1.5;
+        word-break: keep-all;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        pointer-events: none;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1.2rem;
+          max-width: min(94vw, 36rem);
+        }
+      `,
+    []
+  );
+
   return createPortal(
     <ErrorBoundary
       componentPath="FullTextRevealFromOuterLayer"
@@ -26,22 +55,11 @@ export default function FullTextRevealFromOuterLayer({
       }}
     >
       <div
-        className={className}
+        className={`${bubbleClass} ${className || ''}`}
         style={{
-          position: 'absolute',
           width: `${width}px`,
           left: `${x}px`,
           top: `CALC(${y}px + ${height}px)`,
-          zIndex: 10,
-          padding: '0.5rem',
-          minWidth: '10rem',
-          background: '#fff',
-          boxShadow: `0 0 1px ${Color.black(0.9)}`,
-          fontWeight: 'normal',
-          lineHeight: 1.5,
-          wordBreak: 'keep-all',
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'break-word',
           ...style
         }}
       >

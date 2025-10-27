@@ -35,6 +35,21 @@ const header = css`
   align-items: flex-start;
   width: 100%;
   margin-bottom: 0.5rem;
+  @media (max-width: 1024px) {
+    /* Stack title and button on tablets and below */
+    flex-direction: column;
+    align-items: center;
+    /* Hide the left spacer to remove empty row */
+    > div:first-child {
+      display: none !important;
+    }
+    /* Center the trophy button under the title */
+    > div:last-child {
+      justify-content: center !important;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+  }
 `;
 const buttonRankTextClass = css`
   font-size: 1.2rem;

@@ -2,7 +2,7 @@ import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
-import XPVideoPlayer from './XPVideoPlayer';
+import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -62,7 +62,7 @@ export default function TwinkleVideoModal({
                 <div>Video Not Found</div>
               ) : (
                 <XPVideoPlayer
-                  loaded={loaded}
+                  isChat
                   style={{ width: '100%', height: '100%' }}
                   rewardLevel={rewardLevel}
                   videoCode={content}

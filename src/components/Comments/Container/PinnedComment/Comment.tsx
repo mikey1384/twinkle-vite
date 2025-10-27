@@ -32,7 +32,8 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled
+  determineXpButtonDisabled,
+  isTablet
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -517,6 +518,7 @@ function Comment({
                             contentId={comment.id}
                             onClick={handleLikeClick}
                             likes={likes}
+                            hideLabel={isTablet(navigator)}
                           />
                           <Button
                             color="darkerGray"
@@ -525,34 +527,38 @@ function Comment({
                             onClick={() => navigate(`/comments/${comment.id}`)}
                           >
                             <Icon icon="comment-alt" />
-                            <span style={{ marginLeft: '1rem' }}>
-                              {numReplies > 1 &&
-                              parent.contentType === 'comment'
-                                ? 'Replies'
-                                : 'Reply'}
-                              {numReplies > 0 ? ` (${numReplies})` : ''}
-                            </span>
+                            {!isTablet(navigator) && (
+                              <span style={{ marginLeft: '1rem' }}>
+                                {numReplies > 1 &&
+                                parent.contentType === 'comment'
+                                  ? 'Replies'
+                                  : 'Reply'}
+                                {numReplies > 0 ? ` (${numReplies})` : ''}
+                              </span>
+                            )}
                           </Button>
                           {userCanRewardThis && (
-                        <Button
-                          color={rewardColor}
-                          style={{ marginLeft: '0.7rem' }}
-                          variant={xpButtonDisabled ? 'soft' : 'soft'}
-                          tone="raised"
-                          onClick={() =>
-                            onSetXpRewardInterfaceShown({
-                              contentId: commentId,
-                              contentType: 'comment',
-                              shown: true
-                            })
-                          }
-                          disabled={!!xpButtonDisabled}
-                        >
-                          <Icon icon="certificate" />
-                          <span style={{ marginLeft: '0.7rem' }}>
-                            {xpButtonDisabled || 'Reward'}
-                          </span>
-                        </Button>
+                            <Button
+                              color={rewardColor}
+                              style={{ marginLeft: '0.7rem' }}
+                              variant={xpButtonDisabled ? 'soft' : 'soft'}
+                              tone="raised"
+                              onClick={() =>
+                                onSetXpRewardInterfaceShown({
+                                  contentId: commentId,
+                                  contentType: 'comment',
+                                  shown: true
+                                })
+                              }
+                              disabled={!!xpButtonDisabled}
+                            >
+                              <Icon icon="certificate" />
+                              {!isTablet(navigator) && (
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {xpButtonDisabled || 'Reward'}
+                                </span>
+                              )}
+                            </Button>
                           )}
                         </div>
                         <Likers

@@ -38,7 +38,9 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
-  scrollElementToCenter
+  scrollElementToCenter,
+  isTablet,
+  isMobile
 } from '~/helpers';
 import { useContentState, useLazyLoad, useMyLevel } from '~/helpers/hooks';
 import { borderRadius, Color } from '~/constants/css';
@@ -118,6 +120,8 @@ function Comment({
   const subjectUploaderId = subject.uploader?.id || subject.userId;
   const { fileType } = getFileInfoFromFileName(fileName);
   const navigate = useNavigate();
+  const deviceIsTablet = isTablet(navigator);
+  const deviceIsMobile = isMobile(navigator);
   const checkIfUserResponded = useAppContext(
     (v) => v.requestHelpers.checkIfUserResponded
   );
@@ -760,6 +764,7 @@ function Comment({
                                     onClick={handleLikeClick}
                                     likes={likes}
                                     theme={theme}
+                                    hideLabel={deviceIsTablet}
                                   />
                                 )}
                                 {isDeleteNotification &&
@@ -782,24 +787,26 @@ function Comment({
                                     onClick={handleReplyButtonClick}
                                   >
                                     <Icon icon="comment-alt" />
-                                    <span style={{ marginLeft: '1rem' }}>
-                                      {numReplies > 1 &&
-                                      parent.contentType === 'comment'
-                                        ? repliesLabel
-                                        : replyLabel}
-                                      {loadingReplies ? (
-                                        <Icon
-                                          style={{ marginLeft: '0.7rem' }}
-                                          icon="spinner"
-                                          pulse
-                                        />
-                                      ) : numReplies > 0 &&
-                                        parent.contentType === 'comment' ? (
-                                        ` (${numReplies})`
-                                      ) : (
-                                        ''
-                                      )}
-                                    </span>
+                                    {!deviceIsTablet && (
+                                      <span style={{ marginLeft: '1rem' }}>
+                                        {numReplies > 1 &&
+                                        parent.contentType === 'comment'
+                                          ? repliesLabel
+                                          : replyLabel}
+                                        {loadingReplies ? (
+                                          <Icon
+                                            style={{ marginLeft: '0.7rem' }}
+                                            icon="spinner"
+                                            pulse
+                                          />
+                                        ) : numReplies > 0 &&
+                                          parent.contentType === 'comment' ? (
+                                          ` (${numReplies})`
+                                        ) : (
+                                          ''
+                                        )}
+                                      </span>
+                                    )}
                                   </Button>
                                 )}
                                 {userCanRewardThis && !isDeleteNotification && (
@@ -809,6 +816,7 @@ function Comment({
                                     disableReason={xpButtonDisabled}
                                     style={{ marginLeft: '0.7rem' }}
                                     theme={theme}
+                                    hideLabel={deviceIsTablet}
                                   />
                                 )}
                               </div>
@@ -851,6 +859,7 @@ function Comment({
                                     contentType="comment"
                                     content={comment.content}
                                     style={{ marginLeft: '1rem' }}
+                                    hideLabel={deviceIsMobile || deviceIsTablet}
                                   />
                                 )}
                               </div>

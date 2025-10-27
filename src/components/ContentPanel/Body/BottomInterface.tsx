@@ -9,12 +9,13 @@ import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, tabletMaxWidth, desktopMinWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineXpButtonDisabled,
   scrollElementToCenter,
-  isMobile
+  isMobile,
+  isTablet
 } from '~/helpers';
 import localize from '~/constants/localize';
 
@@ -33,11 +34,13 @@ const bottomInterfaceCSS = css`
   .left {
     display: flex;
     align-items: center;
+    gap: 0.8rem;
     button,
     span {
       font-size: 1.4rem;
     }
     @media (max-width: ${mobileMaxWidth}) {
+      gap: 0.5rem;
       button,
       span {
         font-size: 1rem;
@@ -49,10 +52,24 @@ const bottomInterfaceCSS = css`
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    gap: 1rem;
     @media (max-width: ${mobileMaxWidth}) {
+      gap: 0.4rem;
       button {
         font-size: 1rem;
       }
+    }
+  }
+  /* Hide Like/Comment labels on tablet and smaller */
+  @media (max-width: ${tabletMaxWidth}) {
+    .left .button-label {
+      display: none;
+    }
+  }
+  /* Hide Reward label on tablet (both orientations) */
+  @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+    .left .reward-button-label {
+      display: none;
     }
   }
 `;
@@ -310,6 +327,8 @@ export default function BottomInterface({
     return null;
   }
 
+  const deviceIsTablet = isTablet(navigator);
+
   return (
     <div
       className="bottom-interface"
@@ -331,28 +350,26 @@ export default function BottomInterface({
                 key="likeButton"
                 onClick={handleLikeClick}
                 theme={theme}
+                labelClassName="button-label"
+                hideLabel={deviceIsTablet}
               />
             )}
             {!secretHidden && (
               <Button
                 key="commentButton"
-                className={css`
-                  margin-left: 1rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    margin-left: 0.5rem;
-                  }
-                `}
                 variant="ghost"
                 onClick={handleCommentButtonClick}
               >
                 <Icon icon="comment-alt" />
-                <span style={{ marginLeft: '0.7rem' }}>
-                  {contentType === 'video' || contentType === 'url'
-                    ? commentLabel
-                    : contentType === 'subject'
-                    ? respondLabel
-                    : replyLabel}
-                </span>
+                {!deviceIsTablet && (
+                  <span className="button-label" style={{ marginLeft: '0.7rem' }}>
+                    {contentType === 'video' || contentType === 'url'
+                      ? commentLabel
+                      : contentType === 'subject'
+                      ? respondLabel
+                      : replyLabel}
+                  </span>
+                )}
                 {numCommentsShown ? (
                   <span
                     className={css`
@@ -368,12 +385,8 @@ export default function BottomInterface({
               !secretHidden &&
               contentType !== 'aiStory' && (
                 <RewardButton
-                  className={css`
-                    margin-left: 1rem;
-                    @media (max-width: ${mobileMaxWidth}) {
-                      margin-left: 0.5rem;
-                    }
-                  `}
+                  labelClassName="reward-button-label"
+                  hideLabel={deviceIsTablet}
                   contentId={contentId}
                   contentType={contentType}
                   disableReason={xpButtonDisabled}
@@ -381,15 +394,7 @@ export default function BottomInterface({
                 />
               )}
             {!secretHidden && (
-              <div
-                className={css`
-                  margin-left: 0.5rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    margin-left: 0;
-                  }
-                `}
-                style={{ position: 'relative' }}
-              >
+              <div style={{ position: 'relative' }}>
                 <Button
                   onClick={() => {
                     setCopiedShown(true);
@@ -422,10 +427,7 @@ export default function BottomInterface({
                 variant="solid"
                 tone="raised"
                 color="darkerGray"
-                style={{
-                  marginLeft: secretHidden ? 0 : '1rem',
-                  display: 'inline-block'
-                }}
+                style={{ display: 'inline-block' }}
                 menuProps={editMenuItems}
               />
             ) : null}
@@ -451,7 +453,6 @@ export default function BottomInterface({
               contentType === 'video' ||
               contentType === 'url') && (
               <StarButton
-                style={{ marginLeft: '1rem' }}
                 byUser={!!contentObj.byUser}
                 contentId={contentObj.id}
                 filePath={filePath}
@@ -465,11 +466,7 @@ export default function BottomInterface({
             {!!userId &&
               contentType === 'comment' &&
               !stringIsEmpty(contentObj.content) && (
-                <ZeroButton
-                  contentId={contentId}
-                  contentType={contentType}
-                  style={{ marginLeft: '1rem' }}
-                />
+                <ZeroButton contentId={contentId} contentType={contentType} />
               )}
           </div>
         )}

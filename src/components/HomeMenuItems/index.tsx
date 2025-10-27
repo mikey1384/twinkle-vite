@@ -119,6 +119,7 @@ export default function HomeMenuItems({
             > a {
               width: 100%;
               height: 100%;
+              min-width: 0;
               text-align: left;
               display: flex;
               align-items: center;
@@ -138,6 +139,8 @@ export default function HomeMenuItems({
               background: transparent;
               border: 1px solid transparent;
               box-shadow: none;
+              min-width: 0;
+              overflow: hidden;
               transition: background 0.18s ease, border-color 0.18s ease,
                 color 0.18s ease, transform 0.06s ease;
               > .selection {
@@ -146,10 +149,16 @@ export default function HomeMenuItems({
               > .icon {
                 padding-left: 0.2rem;
                 color: ${Color.darkerGray()};
+                flex: 0 0 auto;
               }
               > .label {
                 padding-left: 0.4rem;
                 font-weight: 600;
+                flex: 1 1 auto;
+                min-width: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
               }
             }
           }

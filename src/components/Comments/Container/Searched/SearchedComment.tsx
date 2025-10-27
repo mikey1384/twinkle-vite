@@ -25,7 +25,8 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
-  determineXpButtonDisabled
+  determineXpButtonDisabled,
+  isTablet
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -588,6 +589,7 @@ export default function SearchedComment({
                             contentId={comment.id}
                             onClick={handleLikeClick}
                             likes={likes}
+                            hideLabel={isTablet(navigator)}
                           />
                           <Button
                             color="darkerGray"
@@ -596,13 +598,15 @@ export default function SearchedComment({
                             onClick={() => navigate(`/comments/${comment.id}`)}
                           >
                             <Icon icon="comment-alt" />
-                            <span style={{ marginLeft: '1rem' }}>
-                              {numReplies > 1 &&
-                              parent.contentType === 'comment'
-                                ? 'Replies'
-                                : 'Reply'}
-                              {numReplies > 0 ? ` (${numReplies})` : ''}
-                            </span>
+                            {!isTablet(navigator) && (
+                              <span style={{ marginLeft: '1rem' }}>
+                                {numReplies > 1 &&
+                                parent.contentType === 'comment'
+                                  ? 'Replies'
+                                  : 'Reply'}
+                                {numReplies > 0 ? ` (${numReplies})` : ''}
+                              </span>
+                            )}
                           </Button>
                           {userCanRewardThis && (
                             <Button
@@ -618,9 +622,11 @@ export default function SearchedComment({
                               disabled={!!xpButtonDisabled}
                             >
                               <Icon icon="certificate" />
-                              <span style={{ marginLeft: '0.7rem' }}>
-                                {xpButtonDisabled || 'Reward'}
-                              </span>
+                              {!isTablet(navigator) && (
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {xpButtonDisabled || 'Reward'}
+                                </span>
+                              )}
                             </Button>
                           )}
                         </div>

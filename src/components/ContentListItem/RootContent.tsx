@@ -10,6 +10,7 @@ import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import {
   Color,
   mobileMaxWidth,
+  tabletMaxWidth,
   desktopMinWidth,
   wideBorderRadius
 } from '~/constants/css';
@@ -118,6 +119,9 @@ const rootContentCSS = css`
     margin-left: 0;
     margin-right: 0;
     align-self: start;
+    @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+      font-size: 1.1rem;
+    }
     @media (max-width: ${mobileMaxWidth}) {
       font-size: 1rem;
     }
