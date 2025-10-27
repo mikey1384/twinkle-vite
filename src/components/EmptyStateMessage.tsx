@@ -59,8 +59,6 @@ export default function EmptyStateMessage({
     color: ${accentText};
   `;
 
-  const textClass = css``;
-
   const captionClass = css`
     font-size: 1.45rem;
     font-weight: 500;
@@ -70,7 +68,7 @@ export default function EmptyStateMessage({
   return (
     <div className={cx(containerClass, className)} style={style}>
       {icon && <div className={iconWrapperClass}>{icon}</div>}
-      <div className={textClass}>{children}</div>
+      <div>{children}</div>
       {caption && <div className={captionClass}>{caption}</div>}
     </div>
   );

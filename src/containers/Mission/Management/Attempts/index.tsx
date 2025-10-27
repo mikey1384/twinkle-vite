@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Attempt from './Attempt';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext } from '~/contexts';
 import localize from '~/constants/localize';
@@ -91,14 +92,14 @@ export default function Attempts({
         managementObj[selectedTab].length === 0 ? (
         <div
           style={{
-            marginTop: '15rem',
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            width: '100%',
-            textAlign: 'center'
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '15rem'
           }}
         >
-          {`There are no ${displayedStatus[selectedTab]} attempts`}
+          <EmptyStateMessage style={{ width: '70rem', maxWidth: '100%' }}>
+            {`There are no ${displayedStatus[selectedTab]} attempts`}
+          </EmptyStateMessage>
         </div>
       ) : (
         <>

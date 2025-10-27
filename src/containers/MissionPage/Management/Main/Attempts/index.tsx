@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Attempt from './Attempt';
 import Loading from '~/components/Loading';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 
@@ -58,51 +59,49 @@ export default function Attempts({
 
   return (
     <ErrorBoundary componentPath="MissionPage/Management/Main/Attempts">
-      <div>
-        {loading ? (
-          <Loading />
-        ) : !mission[`${activeTab}AttemptIds`] ||
-          mission[`${activeTab}AttemptIds`].length === 0 ? (
-          <div
-            style={{
-              marginTop: '15rem',
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              width: '100%',
-              textAlign: 'center'
-            }}
-          >
+      {loading ? (
+        <Loading />
+      ) : !mission[`${activeTab}AttemptIds`] ||
+        mission[`${activeTab}AttemptIds`].length === 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '15rem'
+          }}
+        >
+          <EmptyStateMessage style={{ width: '70rem', maxWidth: '100%' }}>
             {`There are no ${displayedStatus[activeTab]} attempts`}
-          </div>
-        ) : (
-          <>
-            {mission[`${activeTab}AttemptIds`]?.map(
-              (attemptId: number, index: number) => {
-                const attempt = mission.attemptObj[attemptId];
-                return (
-                  <Attempt
-                    key={attempt.id}
-                    activeTab={activeTab}
-                    attempt={attempt}
-                    style={{ marginTop: index > 0 ? '1rem' : 0 }}
-                    onSetMissionState={onSetMissionState}
-                    mission={mission}
-                  />
-                );
-              }
-            )}
-          </>
-        )}
-        {mission.loadMoreButton && !loading && (
-          <LoadMoreButton
-            style={{ marginTop: '2rem', fontSize: '1.7rem' }}
-            filled
-            color="green"
-            loading={loadingMore}
-            onClick={handleLoadMoreAttempts}
-          />
-        )}
-      </div>
+          </EmptyStateMessage>
+        </div>
+      ) : (
+        <>
+          {mission[`${activeTab}AttemptIds`]?.map(
+            (attemptId: number, index: number) => {
+              const attempt = mission.attemptObj[attemptId];
+              return (
+                <Attempt
+                  key={attempt.id}
+                  activeTab={activeTab}
+                  attempt={attempt}
+                  style={{ marginTop: index > 0 ? '1rem' : 0 }}
+                  onSetMissionState={onSetMissionState}
+                  mission={mission}
+                />
+              );
+            }
+          )}
+        </>
+      )}
+      {mission.loadMoreButton && !loading && (
+        <LoadMoreButton
+          style={{ marginTop: '2rem', fontSize: '1.7rem' }}
+          filled
+          color="green"
+          loading={loadingMore}
+          onClick={handleLoadMoreAttempts}
+        />
+      )}
     </ErrorBoundary>
   );
 
