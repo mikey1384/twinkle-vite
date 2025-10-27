@@ -35,7 +35,7 @@ body {
   --reward-status-gradient: rgba(205, 210, 255, 0.1);
   --perfect-star-color: rgba(255, 215, 0, 1);
   /* Mobile navigation bar height variable */
-  --mobile-nav-height: 7rem;
+  --mobile-nav-height: 10.5rem;
   /* Total mobile nav footprint including safe area */
   --mobile-nav-total-height: calc(
     var(--mobile-nav-height, 10.5rem) + env(safe-area-inset-bottom, 0px)
