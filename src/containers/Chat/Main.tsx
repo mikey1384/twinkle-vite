@@ -997,9 +997,11 @@ export default function Main({
                 height: 100%;
                 display: flex;
                 font-size: 1.6rem;
+                position: relative;
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
-                  height: CALC(100% - 7.2rem);
+                  height: calc(100% - var(--mobile-nav-total-height));
+                  min-height: calc(100% - var(--mobile-nav-total-height));
                 }
               `}
             >
