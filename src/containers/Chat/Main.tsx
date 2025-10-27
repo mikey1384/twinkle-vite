@@ -997,7 +997,6 @@ export default function Main({
                 height: 100%;
                 display: flex;
                 font-size: 1.6rem;
-                position: relative;
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
                   height: calc(100vh - 7.2rem);
