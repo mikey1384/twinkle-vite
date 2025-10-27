@@ -38,7 +38,7 @@ body {
   --mobile-nav-height: 7rem;
   /* Total mobile nav footprint including safe area */
   --mobile-nav-total-height: calc(
-    var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px)
+    var(--mobile-nav-height, 10.5rem) + env(safe-area-inset-bottom, 0px)
   );
 
   --chat-bg: rgba(229, 239, 255, 0.1);
