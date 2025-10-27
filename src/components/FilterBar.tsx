@@ -9,11 +9,8 @@ interface FilterBarProps {
   className?: string;
   children?: React.ReactNode;
   innerRef?: React.Ref<HTMLDivElement>;
-  dropdownButton?: React.ReactNode;
   style?: React.CSSProperties;
   bordered?: boolean;
-  // Keep navs and dropdown in the same row on mobile when true
-  mobileNoStack?: boolean;
 }
 
 export default function FilterBar({
@@ -21,10 +18,8 @@ export default function FilterBar({
   className,
   children,
   innerRef,
-  dropdownButton,
   style,
-  bordered = false,
-  mobileNoStack = false
+  bordered = false
 }: FilterBarProps) {
   const { color: alertRoleColor, themeName: resolvedThemeName } = useRoleColor(
     'alert',
@@ -47,21 +42,10 @@ export default function FilterBar({
   const navTextColor = Color.darkGray();
   const navHoverColor = Color.darkBlueGray();
   const activeTextColor = getFilterColor() || Color.logoBlue();
-  const filledTextColor = isVanta ? '#ffffff' : Color.darkBlueGray();
 
-  // Theme-aware fills for hover/active
-  const themeHoverBgValue = isVanta
-    ? 'rgba(0, 0, 0, 0.06)'
-    : getFilterColor(0.08) || Color.logoBlue(0.08);
-  const themeActiveBgValue = isVanta
-    ? 'rgba(0, 0, 0, 0.7)'
-    : getFilterColor(0.16) || Color.logoBlue(0.16);
   const themeHoverBorderValue = isVanta
     ? 'rgba(0, 0, 0, 0.18)'
     : getFilterColor(0.28) || Color.logoBlue(0.28);
-  const themeActiveBorderValue = isVanta
-    ? 'rgba(0, 0, 0, 0.9)'
-    : getFilterColor(0.4) || Color.logoBlue(0.4);
 
   // Make the selected tab underline opaque
   const tabActiveBorder = getFilterColor() || Color.logoBlue();
@@ -164,63 +148,20 @@ export default function FilterBar({
       box-shadow: none !important; /* prevent weird left shadow glow */
     }
 
-    > .filter-section {
-      flex: 0 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      margin-left: auto;
-
-      button {
-        background: transparent !important;
-        border: 1px solid ${Color.borderGray()} !important;
-        box-shadow: none !important;
-        color: ${navTextColor} !important;
-        transition: all 0.2s ease !important;
-      }
-
-      button:hover {
-        background: ${themeHoverBgValue} !important;
-        border-color: ${themeHoverBorderValue} !important;
-        color: ${navHoverColor} !important;
-      }
-
-      button[data-filled='true'] {
-        background: ${themeActiveBgValue} !important;
-        border-color: ${themeActiveBorderValue} !important;
-        color: ${filledTextColor} !important;
-      }
-    }
-
     @media (max-width: ${mobileMaxWidth}) {
-      ${mobileNoStack
-        ? `
-        flex-direction: row;
-        align-items: center;
-        gap: 0.6rem;
-        padding: 0.8rem;
-      `
-        : `
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.8rem;
-        padding: 0.8rem;
-        border-radius: 0;
-      `}
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.8rem;
+      padding: 0.8rem;
+      border-radius: 0;
 
       > .nav-section {
-        ${mobileNoStack ? 'flex: 1 1 auto; width: auto;' : 'width: 100%;'}
+        width: 100%;
       }
 
       > .nav-section > nav {
         flex: 1;
         padding: 1rem;
-      }
-
-      > .filter-section {
-        ${mobileNoStack
-          ? 'width: auto; margin-left: auto; justify-content: flex-end;'
-          : 'width: 100%; justify-content: flex-start; margin-left: 0;'}
       }
     }
 
@@ -284,9 +225,6 @@ export default function FilterBar({
     >
       <div ref={innerRef as any} className={innerClassName}>
         <div className="nav-section">{children}</div>
-        {dropdownButton ? (
-          <div className="filter-section">{dropdownButton}</div>
-        ) : null}
       </div>
     </ScopedTheme>
   );

@@ -66,7 +66,16 @@ export default function HomeFilter({
     const icon = filterRole.getColor() || Color.logoBlue();
     const switchColor = filterRole.getColor() || Color.logoBlue();
     const shadow = 'none';
-    return { base, border, hoverBorder, label, helper, icon, switchColor, shadow };
+    return {
+      base,
+      border,
+      hoverBorder,
+      label,
+      helper,
+      icon,
+      switchColor,
+      shadow
+    };
   }, [filterRole]);
 
   const videoContainerClass = useMemo(
@@ -84,8 +93,8 @@ export default function HomeFilter({
         box-shadow: none;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
         @media (max-width: ${mobileMaxWidth}) {
-          border-right: 0;
-          border-left: 0;
+          border-radius: 0;
+          border: 0;
         }
       `,
     [videoContainerTone]
@@ -158,29 +167,6 @@ export default function HomeFilter({
                   fontSize: '1.6rem',
                   marginBottom: 0
                 }}
-                mobileNoStack
-                dropdownButton={
-                  <DropdownButton
-                    variant="soft"
-                    tone="raised"
-                    className={css`
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1.2rem !important;
-                      }
-                    `}
-                    icon="caret-down"
-                    text={categoryObj.uploads[displayOrder]}
-                    menuProps={[
-                      {
-                        label:
-                          displayOrder === 'desc'
-                            ? categoryObj.uploads['asc']
-                            : categoryObj.uploads['desc'],
-                        onClick: setDisplayOrder
-                      }
-                    ]}
-                  />
-                }
               >
                 {['all', 'subject'].map((type) => {
                   const displayLabel =
@@ -197,6 +183,28 @@ export default function HomeFilter({
                     </nav>
                   );
                 })}
+                <DropdownButton
+                  variant="solid"
+                  tone="raised"
+                  color="darkerGray"
+                  className={css`
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.2rem !important;
+                    }
+                  `}
+                  style={{ marginLeft: 'auto' }}
+                  icon="caret-down"
+                  text={categoryObj.uploads[displayOrder]}
+                  menuProps={[
+                    {
+                      label:
+                        displayOrder === 'desc'
+                          ? categoryObj.uploads['asc']
+                          : categoryObj.uploads['desc'],
+                      onClick: setDisplayOrder
+                    }
+                  ]}
+                />
               </FilterBar>
             )}
             {category === 'videos' && (
