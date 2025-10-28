@@ -447,7 +447,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     draw: { color: 'logoBlue' },
     fail: { color: 'black' },
     filter: {
-      color: pickColor({ gold: 'brownOrange' }, color),
+      color: pickColor({ gold: 'darkerGray' }, color),
       opacity: pickNumber({ gold: 1 }, 0.7)
     },
     filterText: {
@@ -456,7 +456,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     },
     invertedFilterActive: { color },
     filterActive: {
-      color: pickColor({ gold: 'darkGold', vantaBlack: 'vantaBlack' }, color)
+      color: pickColor({ gold: 'darkerGray', vantaBlack: 'vantaBlack' }, color)
     },
     generalChat: {
       color: pickColor(
