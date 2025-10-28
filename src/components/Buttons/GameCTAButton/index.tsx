@@ -6,7 +6,7 @@ import Icon from '~/components/Icon';
 export default function GameCTAButton({
   onClick,
   children,
-  icon = 'question-circle',
+  icon = '',
   style,
   disabled,
   variant = 'primary',

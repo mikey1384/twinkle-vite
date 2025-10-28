@@ -332,14 +332,13 @@ export default function TopMenu({
             {todayStats.unansweredOmokMsgChannelId && (
               <ErrorBoundary componentPath="Home/Stories/TopMenu/OmokButton">
                 <GameCTAButton
-                  icon="puzzle-piece"
                   variant="orange"
                   size="md"
                   shiny={false}
                   loading={loadingOmok}
                   onClick={handleNavigateToOmokMessage}
                 >
-                  {''}
+                  O
                 </GameCTAButton>
               </ErrorBoundary>
             )}
