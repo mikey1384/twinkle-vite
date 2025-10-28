@@ -154,39 +154,15 @@ export default function Feeds({
     return filter === 'byuser' ? noFeedByUserLabel : noFeedLabel;
   }, [filter, noFeedByUserLabel, noFeedLabel]);
 
-  // Match Home feed separators between panels
   const feedListClass = useMemo(
     () =>
       css`
         display: flex;
         flex-direction: column;
-        gap: 1.2rem;
         width: 100%;
-
+        /* Match Likes tab spacing: no dividers, 1rem vertical gap */
         > .feed-item {
-          position: relative;
-        }
-        > .feed-item + .feed-item::before {
-          content: '';
-          position: absolute;
-          top: -0.6rem;
-          left: 1.2rem;
-          right: 1.2rem;
-          height: 1px;
-          background: linear-gradient(
-            to right,
-            transparent,
-            var(--ui-border-strong),
-            transparent
-          );
-          pointer-events: none;
-        }
-
-        @media (max-width: ${mobileMaxWidth}) {
-          > .feed-item + .feed-item::before {
-            left: 0;
-            right: 0;
-          }
+          margin: 0 0 1rem 0;
         }
       `,
     []
@@ -194,13 +170,8 @@ export default function Feeds({
   const feedItemCustomClass = useMemo(
     () =>
       css`
-        padding: 1.2rem 1.2rem;
-        transition: background 0.15s ease;
-        @media (max-width: ${mobileMaxWidth}) {
-          &:first-of-type {
-            padding-top: 0;
-          }
-        }
+        /* Remove inner padding so posts can be full-bleed on mobile */
+        padding: 0;
       `,
     []
   );
@@ -248,7 +219,7 @@ export default function Feeds({
             display: flex;
             justify-content: center;
             @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
+              width: 100vw;
             }
           `}
         >
@@ -267,7 +238,6 @@ export default function Feeds({
                 width: 100%;
                 margin-left: 0;
                 margin-right: 0;
-                padding: 0 1.4rem;
               }
             `}
           >
