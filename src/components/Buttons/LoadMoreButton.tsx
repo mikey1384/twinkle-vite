@@ -75,8 +75,6 @@ export default function LoadMoreButton({
           display: flex;
           align-items: center;
           justify-content: center;
-          /* Make sure this element (the flex item) spans a full row */
-          flex: 0 0 100%;
         `}
       >
         <Button
