@@ -94,14 +94,14 @@ export default function Body({
         }
       `}
     >
-        <div
-          className={css`
-            width: 100%;
-            border-bottom: none;
-            background: #fff;
-            padding: 0.2rem 0;
-          `}
-        >
+      <div
+        className={css`
+          width: 100%;
+          border-bottom: none;
+          background: #fff;
+          padding: 0.2rem 0;
+        `}
+      >
         <FilterBar
           style={{ margin: 0 }}
           color={selectedTheme}
@@ -111,10 +111,19 @@ export default function Body({
               padding-left: 29rem;
             }
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem;
-              padding-left: calc(10rem + 1.8rem);
+              font-size: 1.15rem;
               > .nav-section {
-                padding-left: 0;
+                padding-left: 15rem;
+                gap: 0.3rem;
+              }
+              > .nav-section > nav {
+                padding: 0.6rem 0.8rem;
+              }
+              > .nav-section > nav > a {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
               }
             }
           `}

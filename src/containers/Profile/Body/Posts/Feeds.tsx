@@ -303,12 +303,11 @@ export default function Feeds({
                   </div>
                 )}
                 {feeds.length === 0 && (
-                  <EmptyStateMessage
-                    theme={selectedTheme}
-                    style={{ marginTop: '8rem' }}
-                  >
-                    {emptyMessage}
-                  </EmptyStateMessage>
+                  <div style={{ marginTop: '8rem', padding: '0 1rem' }}>
+                    <EmptyStateMessage theme={selectedTheme}>
+                      {emptyMessage}
+                    </EmptyStateMessage>
+                  </div>
                 )}
               </>
             )}
