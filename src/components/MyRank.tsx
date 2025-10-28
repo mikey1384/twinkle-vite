@@ -8,6 +8,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 import RankBadge from '~/components/RankBadge';
+import { getRankDigitCount, getRankFontScale } from '~/helpers/rankHelpers';
 
 const unrankedLabel = localize('unranked');
 
@@ -44,6 +45,11 @@ export default function MyRank({
   );
   const isKorean = SELECTED_LANGUAGE === 'kr';
   const rankLabel = localize('rank');
+  const rankDigitCount = useMemo(() => getRankDigitCount(rank), [rank]);
+  const rankFontScale = useMemo(
+    () => getRankFontScale(rankDigitCount),
+    [rankDigitCount]
+  );
 
   return (
     <div
@@ -74,10 +80,10 @@ export default function MyRank({
           font-weight: bold;
         }
         span {
-          font-size: ${twinkleXP > 1_000_000 ? '2.8rem' : '3rem'};
+          font-size: 3rem;
         }
         span.rank {
-          font-size: ${twinkleXP > 1_000_000 ? '1.7rem' : '2rem'};
+          font-size: 2rem;
         }
         .rank-prefix,
         .rank-suffix {
@@ -176,9 +182,17 @@ export default function MyRank({
           >
             {rank && twinkleXP ? (
               <>
-                <span className="rank-prefix">{rankLabel}</span>
+                <span className="rank-prefix">
+                  <span style={{ fontSize: `${rankFontScale}em` }}>
+                    {rankLabel}
+                  </span>
+                </span>
                 <RankBadge rank={rank} />
-                {isKorean ? <span className="rank-suffix">위</span> : null}
+                {isKorean ? (
+                  <span className="rank-suffix">
+                    <span style={{ fontSize: `${rankFontScale}em` }}>위</span>
+                  </span>
+                ) : null}
               </>
             ) : (
               unrankedLabel

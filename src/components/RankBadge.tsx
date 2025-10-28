@@ -1,5 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
+import { getRankFontScale } from '~/helpers/rankHelpers';
 
 export default function RankBadge({
   rank,
@@ -14,7 +15,7 @@ export default function RankBadge({
   const resolvedRank = Number.isFinite(numericRank) ? numericRank : 0;
   const digitCount =
     resolvedRank > 0 ? String(Math.floor(Math.abs(resolvedRank))).length : 0;
-  const fontScale = getFontScale(digitCount);
+  const fontScale = getRankFontScale(digitCount);
 
   return (
     <span
@@ -68,14 +69,3 @@ const rankTextCss = css`
   white-space: nowrap;
   transition: font-size 0.15s ease-in-out;
 `;
-
-function getFontScale(digitCount: number) {
-  if (digitCount <= 0) return 1;
-  if (digitCount === 1) return 1.12;
-  if (digitCount === 2) return 1.05;
-  if (digitCount === 3) return 1;
-  if (digitCount === 4) return 0.93;
-  if (digitCount === 5) return 0.88;
-  if (digitCount === 6) return 0.84;
-  return 0.8;
-}
