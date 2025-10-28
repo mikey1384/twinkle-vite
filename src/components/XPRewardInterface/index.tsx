@@ -285,7 +285,7 @@ export default function XPRewardInterface({
         >
           <Button
             color={selectedAmount > 4 ? rewardColor : 'logoBlue'}
-            filled
+            variant="solid"
             loading={rewarding}
             disabled={
               !!rewardCommentExceedsCharLimit ||
