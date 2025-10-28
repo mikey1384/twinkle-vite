@@ -61,7 +61,7 @@ export default function Simple({
             font-size: 0.7rem;
           `}
         >
-          <b style={{ color: Color[xpNumberColor]?.() }}>{displayedBurnXP}</b>
+          <b style={{ color: xpNumberColor }}>{displayedBurnXP}</b>
           <b style={{ color: Color.gold(), marginLeft: '2px' }}>XP</b>
         </div>
       )}
