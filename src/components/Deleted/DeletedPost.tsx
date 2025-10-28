@@ -76,13 +76,13 @@ export default function DeletedPost({
     title?: string;
     thumbUrl?: string;
     uploader?: any;
-  } = useMemo(() => contentObj, [contentObj]);
+  } = useMemo(() => contentObj || {}, [contentObj]);
   useEffect(() => {
     init();
     async function init() {
       setLoading(true);
       const data = await loadDeletedContent({ contentId, contentType });
-      setContentObj(data);
+      setContentObj(data || {});
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -507,7 +507,7 @@ export default function DeletedPost({
         }
       });
       setContentObj((prevContentObj) => ({
-        ...prevContentObj,
+        ...(prevContentObj || {}),
         isRecovered
       }));
     }

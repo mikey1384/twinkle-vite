@@ -59,7 +59,7 @@ export default function DeletedMessage({
     isRecovered?: boolean;
     thumbUrl?: string;
     uploader?: any;
-  } = useMemo(() => messageObj, [messageObj]);
+  } = useMemo(() => messageObj || {}, [messageObj]);
 
   useEffect(() => {
     init();
@@ -68,7 +68,7 @@ export default function DeletedMessage({
       setLoading(true);
       try {
         const data = await loadDeletedMessage(messageId);
-        setMessageObj(data);
+        setMessageObj(data || {});
       } catch (error) {
         console.error(error);
       } finally {
@@ -252,7 +252,7 @@ export default function DeletedMessage({
     });
     if (success) {
       setMessageObj((prevMessageObj: any) => ({
-        ...prevMessageObj,
+        ...(prevMessageObj || {}),
         isRecovered
       }));
     }
