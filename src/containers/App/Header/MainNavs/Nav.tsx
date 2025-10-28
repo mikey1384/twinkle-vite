@@ -131,7 +131,7 @@ function Nav({
         a {
           text-decoration: none;
           font-weight: 600;
-          color: ${Color.darkGray()};
+          color: ${Color.gray()};
           align-items: center;
           line-height: 1;
           padding: 0.6rem 1rem 0.9rem;

@@ -29,7 +29,6 @@ export default function GrammarManager({
         `}
       >
         <FilterBar
-          bordered
           className="mobile"
           style={{
             height: '5rem'

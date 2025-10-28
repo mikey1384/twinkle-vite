@@ -105,7 +105,6 @@ export default function MissionProgress({
       >
         <FilterBar
           color={selectedTheme}
-          bordered
           style={{ fontSize: '1.5rem', height: '5rem' }}
         >
           <nav

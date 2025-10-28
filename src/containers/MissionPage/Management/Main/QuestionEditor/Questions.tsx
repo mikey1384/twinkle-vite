@@ -38,7 +38,6 @@ export default function Questions({
         Registered questions
       </p>
       <FilterBar
-        bordered
         style={{
           marginTop: '2rem',
           fontSize: '1.6rem',
