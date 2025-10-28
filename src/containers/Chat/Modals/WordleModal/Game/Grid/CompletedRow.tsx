@@ -7,12 +7,14 @@ export default function CompletedRow({
   guess,
   isRevealing,
   isWaving,
-  solution
+  solution,
+  uiScale = 1
 }: {
   guess: string;
   isRevealing: boolean;
   isWaving: boolean;
   solution: string;
+  uiScale?: number;
 }) {
   const statuses = getGuessStatuses({ guess, solution });
   const splitGuess = unicodeSplit(guess);
@@ -22,7 +24,7 @@ export default function CompletedRow({
       style={{
         display: 'flex',
         justifyContent: 'center',
-        marginBottom: '0.5rem'
+        marginBottom: `${0.5 * uiScale}rem`
       }}
     >
       {splitGuess.map((letter, i) => (
@@ -34,6 +36,7 @@ export default function CompletedRow({
           isWaving={isWaving}
           isRevealing={isRevealing}
           isCompleted
+          uiScale={uiScale}
         />
       ))}
     </div>

@@ -14,7 +14,8 @@ export default function Keyboard({
   isRevealing,
   maxWordLength,
   solution,
-  style
+  style,
+  uiScale = 1
 }: {
   isChecking: boolean;
   isDeleteReady: boolean;
@@ -27,6 +28,7 @@ export default function Keyboard({
   maxWordLength: number;
   solution: string;
   style: React.CSSProperties;
+  uiScale?: number;
 }) {
   const charStatuses = getStatuses({ guesses, solution });
 
@@ -68,7 +70,7 @@ export default function Keyboard({
         style={{
           display: 'flex',
           justifyContent: 'center',
-          marginBottom: '2px'
+          marginBottom: `${2 * uiScale}px`
         }}
       >
         {['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((key) => (
@@ -78,6 +80,7 @@ export default function Keyboard({
             onClick={onClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
+            uiScale={uiScale}
             isChecking={isChecking}
           />
         ))}
@@ -86,7 +89,7 @@ export default function Keyboard({
         style={{
           display: 'flex',
           justifyContent: 'center',
-          marginBottom: '2px'
+          marginBottom: `${2 * uiScale}px`
         }}
       >
         {['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'].map((key) => (
@@ -97,6 +100,7 @@ export default function Keyboard({
             status={charStatuses[key]}
             isRevealing={isRevealing}
             maxWordLength={maxWordLength}
+            uiScale={uiScale}
             isChecking={isChecking}
           />
         ))}
@@ -107,6 +111,7 @@ export default function Keyboard({
           width={65.4}
           onClick={onClick}
           value="ENTER"
+          uiScale={uiScale}
           isChecking={isChecking}
         >
           {ENTER_TEXT}
@@ -118,6 +123,7 @@ export default function Keyboard({
             onClick={onClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
+            uiScale={uiScale}
             isChecking={isChecking}
           />
         ))}
@@ -126,6 +132,7 @@ export default function Keyboard({
           width={65.4}
           onClick={onClick}
           value="DELETE"
+          uiScale={uiScale}
           isChecking={isChecking}
         >
           {DELETE_TEXT}

@@ -1,7 +1,13 @@
 import React from 'react';
 import Cell from './Cell';
 
-export default function EmptyRow({ maxWordLength }: { maxWordLength: number }) {
+export default function EmptyRow({
+  maxWordLength,
+  uiScale = 1
+}: {
+  maxWordLength: number;
+  uiScale?: number;
+}) {
   const emptyCells = Array.from(Array(maxWordLength));
 
   return (
@@ -9,11 +15,11 @@ export default function EmptyRow({ maxWordLength }: { maxWordLength: number }) {
       style={{
         display: 'flex',
         justifyContent: 'center',
-        marginBottom: '0.5rem'
+        marginBottom: `${0.5 * uiScale}rem`
       }}
     >
       {emptyCells.map((_, i) => (
-        <Cell key={i} />
+        <Cell key={i} uiScale={uiScale} />
       ))}
     </div>
   );

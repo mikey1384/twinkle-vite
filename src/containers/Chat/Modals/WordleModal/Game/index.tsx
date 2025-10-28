@@ -38,7 +38,8 @@ export default function Game({
   isStrictMode,
   nextDayTimeStamp,
   onSetIsRevealing,
-  socketConnected
+  socketConnected,
+  uiScale = 1
 }: {
   channelId: number;
   channelName?: string;
@@ -53,6 +54,7 @@ export default function Game({
   onSetOverviewModalShown: (isShown: boolean) => void;
   socketConnected: boolean;
   solution: string;
+  uiScale?: number;
 }) {
   const isProcessingGameResult = useRef(false);
   const onToggleWordleStrictMode = useAppContext(
@@ -133,7 +135,10 @@ export default function Game({
     <ErrorBoundary componentPath="WordleModal/Game">
       {alertMessage.shown && (
         <Banner
-          style={{ marginTop: '1rem', marginBottom: '1rem' }}
+          style={{
+            marginTop: `${1 * uiScale}rem`,
+            marginBottom: `${1 * uiScale}rem`
+          }}
           color={alertMessageColor}
         >
           {alertMessage.message}
@@ -151,7 +156,9 @@ export default function Game({
           disabled={strictModeSwitchDisabled}
           labelStyle={{
             display: 'inline',
-            fontSize: deviceIsMobile ? '1.2rem' : '1.3rem',
+            fontSize: deviceIsMobile
+              ? `${1.2 * uiScale}rem`
+              : `${1.3 * uiScale}rem`,
             fontWeight: deviceIsMobile ? 'normal' : 'bold',
             marginRight: deviceIsMobile ? '0.5rem' : '1rem'
           }}
@@ -167,8 +174,8 @@ export default function Game({
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          marginTop: '3rem',
-          marginBottom: '2.5rem',
+          marginTop: `${3 * uiScale}rem`,
+          marginBottom: `${2.5 * uiScale}rem`,
           paddingLeft: '2rem',
           paddingRight: '2rem'
         }}
@@ -182,6 +189,7 @@ export default function Game({
             currentRowClassName={currentRowClass}
             maxWordLength={MAX_WORD_LENGTH}
             solution={solution}
+            uiScale={uiScale}
           />
         </ErrorBoundary>
         <Keyboard
@@ -195,7 +203,8 @@ export default function Game({
           solution={solution}
           isDeleteReady={isDeleteReady}
           isEnterReady={isEnterReady}
-          style={{ marginTop: '2rem' }}
+          uiScale={uiScale}
+          style={{ marginTop: `${2 * uiScale}rem` }}
         />
       </div>
     </ErrorBoundary>

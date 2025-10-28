@@ -1,6 +1,6 @@
 import React from 'react';
 import StatBar from './StatBar';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import AttemptResult from './AttemptResult';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -58,10 +58,22 @@ export default function OverviewModal({
   wordleStats: any;
   onHide: () => void;
 }) {
+  const footer = (
+    <Button variant="ghost" onClick={onHide}>
+      Close
+    </Button>
+  );
+
   return (
-    <Modal small modalOverModal onHide={onHide}>
+    <NewModal
+      isOpen={true}
+      onClose={onHide}
+      size="sm"
+      hasHeader
+      title={isGameOver ? 'Overview' : 'Your Statistics'}
+      footer={footer}
+    >
       <ErrorBoundary componentPath="Chat/Modals/WordleModal/OverviewModal">
-        <header>{isGameOver ? 'Overview' : 'Your Statistics'}</header>
         <main
           style={{
             display: 'flex',
@@ -123,12 +135,7 @@ export default function OverviewModal({
             stats={wordleStats}
           />
         </main>
-        <footer>
-          <Button variant="ghost" onClick={onHide}>
-            Close
-          </Button>
-        </footer>
       </ErrorBoundary>
-    </Modal>
+    </NewModal>
   );
 }

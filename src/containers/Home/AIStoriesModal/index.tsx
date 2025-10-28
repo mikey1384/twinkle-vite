@@ -110,18 +110,37 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         isOpen
         onClose={handleHide}
         size="xl"
+        hasHeader={false}
         closeOnBackdropClick={
           !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
         }
         bodyPadding={0}
-        showCloseButton={false}
+        showCloseButton={
+          activeTab === 'rankings' ||
+          (activeTab === 'game' && (!isGameStarted || solveObj.isGraded))
+        }
         style={{
           height: '80vh',
           display: 'flex',
           flexDirection: 'column'
         }}
-        header={
-          !isGameStarted ? (
+        footer={
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <Button variant="ghost" onClick={onHide}>
+              Close
+            </Button>
+          </div>
+        }
+      >
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          {!isGameStarted ? (
             <FilterBar
               style={{
                 height: '6rem',
@@ -141,29 +160,22 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
                 Rankings
               </nav>
             </FilterBar>
-          ) : undefined
-        }
-        footer={
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <Button variant="ghost" onClick={onHide}>
-              Close
-            </Button>
-          </div>
-        }
-      >
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            padding: 0,
-            overflow: 'scroll',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-          ref={MainRef}
-        >
+          ) : null}
+          <div
+            style={{
+              width: '100%',
+              padding: 0,
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              ...(activeTab === 'rankings'
+                ? { overflow: 'hidden' }
+                : { overflow: 'auto' })
+            }}
+            ref={MainRef}
+          >
           {activeTab === 'game' && (
             <Game
               attemptId={attemptId}
@@ -213,6 +225,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               />
             </div>
           )}
+          </div>
         </div>
         {successModalShown && (
           <SuccessModal

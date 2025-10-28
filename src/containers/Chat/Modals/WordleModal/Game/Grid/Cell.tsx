@@ -9,7 +9,8 @@ export default function Cell({
   status,
   value,
   isWaving,
-  position = 0
+  position = 0,
+  uiScale = 1
 }: {
   isCompleted?: boolean;
   isRevealing?: boolean;
@@ -17,6 +18,7 @@ export default function Cell({
   value?: string;
   isWaving?: boolean;
   position?: number;
+  uiScale?: number;
 }) {
   const shouldWave = isWaving && isCompleted;
   const shouldReveal = isRevealing && isCompleted;
@@ -36,18 +38,24 @@ export default function Cell({
       }`}
       style={{
         borderRadius,
-        width: '3.7rem',
-        height: '3.7rem',
+        width: `${3.7 * uiScale}rem`,
+        height: `${3.7 * uiScale}rem`,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         fontWeight: 'bold',
         color: '#fff',
-        marginRight: '0.5rem',
+        marginRight: `${0.5 * uiScale}rem`,
         animationDelay
       }}
     >
-      <div className="letter-container" style={{ animationDelay }}>
+      <div
+        className="letter-container"
+        style={{
+          animationDelay,
+          fontSize: `${1.5 * uiScale}rem`
+        }}
+      >
         {value}
       </div>
     </div>

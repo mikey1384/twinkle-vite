@@ -12,7 +12,8 @@ export default function Grid({
   isWaving,
   currentRowClassName,
   maxWordLength,
-  solution
+  solution,
+  uiScale = 1
 }: {
   guesses: string[];
   currentGuess: string;
@@ -21,6 +22,7 @@ export default function Grid({
   currentRowClassName: string;
   maxWordLength: number;
   solution: string;
+  uiScale?: number;
 }) {
   const empties = useMemo(() => {
     const guessLength = guesses?.length || 0;
@@ -39,6 +41,7 @@ export default function Grid({
           isRevealing={isRevealing && guesses.length - 1 === i}
           isWaving={isWaving && guesses.length - 1 === i}
           solution={solution}
+          uiScale={uiScale}
         />
       ))}
       {guesses.length < MAX_GUESSES && (
@@ -46,10 +49,11 @@ export default function Grid({
           guess={currentGuess}
           className={currentRowClassName}
           maxWordLength={maxWordLength}
+          uiScale={uiScale}
         />
       )}
       {empties.map((_, i) => (
-        <EmptyRow key={i} maxWordLength={maxWordLength} />
+        <EmptyRow key={i} maxWordLength={maxWordLength} uiScale={uiScale} />
       ))}
     </div>
   );

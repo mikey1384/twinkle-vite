@@ -50,11 +50,12 @@ export default function Rankings({
   ) : (
     <div
       style={{
-        height: '100%',
         width: '100%',
+        height: '100%',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        flexDirection: 'column'
+        minHeight: 0
       }}
     >
       {!!myRank && (
@@ -80,24 +81,34 @@ export default function Rankings({
           </nav>
         </FilterBar>
       )}
-      <LeaderboardList
-        height="100%"
-        width="35rem"
-        padding={`${desktopPaddingTop} 1rem 3.5rem`}
-        mobilePadding={`${mobilePaddingTop} 0.75rem 3rem`}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          flex: 1,
+          minHeight: 0
+        }}
       >
-        {users.map((user: User) => (
-          <RankingsListItem
-            small
-            key={user.id}
-            user={user}
-            myId={myId}
-            onUsermenuShownChange={onSetUsermenuShown}
-            target="xpEarned"
-            activityContext="aiStories"
-          />
-        ))}
-      </LeaderboardList>
+        <LeaderboardList
+          height="100%"
+          width="35rem"
+          padding={`${desktopPaddingTop} 1rem 3.5rem`}
+          mobilePadding={`${mobilePaddingTop} 0.75rem 3rem`}
+        >
+          {users.map((user: User) => (
+            <RankingsListItem
+              small
+              key={user.id}
+              user={user}
+              myId={myId}
+              onUsermenuShownChange={onSetUsermenuShown}
+              target="xpEarned"
+              activityContext="aiStories"
+            />
+          ))}
+        </LeaderboardList>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,8 @@ export default function Key({
   onClick,
   isRevealing,
   maxWordLength = 0,
-  status = ''
+  status = '',
+  uiScale = 1
 }: {
   children?: React.ReactNode;
   isChecking?: boolean;
@@ -20,6 +21,7 @@ export default function Key({
   isRevealing?: boolean;
   maxWordLength?: number;
   status?: string;
+  uiScale?: number;
 }) {
   const keyDelayMs = REVEAL_TIME_MS * maxWordLength;
   const prevBackgroundColor = useRef('');
@@ -49,13 +51,14 @@ export default function Key({
         borderRadius,
         color: '#fff',
         cursor: isChecking ? 'default' : 'pointer',
-        marginRight: '2px',
+        marginRight: `${2 * uiScale}px`,
         border: 0,
         fontWeight:
           status === 'ready' || status === 'canDelete' ? 'bold' : 'normal',
         transitionDelay: isRevealing ? `${keyDelayMs}ms` : 'unset',
-        width: `${width}px`,
-        height: '5.5rem',
+        width: `${width * uiScale}px`,
+        height: `${5.5 * uiScale}rem`,
+        fontSize: `${1.2 * uiScale}rem`,
         backgroundColor
       }}
       onClick={handleClick}
