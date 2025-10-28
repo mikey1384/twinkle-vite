@@ -79,12 +79,6 @@ export default function MyRank({
           font-size: 1.5rem;
           font-weight: bold;
         }
-        span {
-          font-size: 3rem;
-        }
-        span.rank {
-          font-size: 2rem;
-        }
         .rank-prefix,
         .rank-suffix {
           display: inline-flex;
@@ -113,17 +107,8 @@ export default function MyRank({
         }
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
-          span {
-            font-size: 2rem;
-          }
           span.rank {
-            font-size: ${twinkleXP > 1_000_000 ? '1.3rem' : '1.6rem'};
-          }
-          .rank {
-            gap: 0.4rem;
-          }
-          .rank-suffix {
-            margin-left: 0.4rem;
+            font-size: 1.6rem;
           }
         }
       `}
@@ -140,6 +125,12 @@ export default function MyRank({
           }}
         >
           <span
+            className={css`
+              font-size: 3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 2rem;
+              }
+            `}
             style={{
               fontWeight: 'bold',
               color: rankedColor || getXpNumberColor()
@@ -148,6 +139,12 @@ export default function MyRank({
             {twinkleXP ? addCommasToNumber(twinkleXP) : 0}
           </span>{' '}
           <span
+            className={css`
+              font-size: 3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 2rem;
+              }
+            `}
             style={{
               fontWeight: 'bold',
               color: rankedColor || Color.gold()
@@ -173,7 +170,13 @@ export default function MyRank({
         </div>
         {typeof twinkleCoins === 'number' && (
           <p
-            className="rank"
+            className={css`
+              font-size: 2.5rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+            `}
             style={{
               color:
                 rankedColor ||
@@ -182,11 +185,11 @@ export default function MyRank({
           >
             {rank && twinkleXP ? (
               <>
-                <span className="rank-prefix">
+                <div className="rank-prefix">
                   <span style={{ fontSize: `${rankFontScale}em` }}>
                     {rankLabel}
                   </span>
-                </span>
+                </div>
                 <RankBadge rank={rank} />
                 {isKorean ? (
                   <span className="rank-suffix">

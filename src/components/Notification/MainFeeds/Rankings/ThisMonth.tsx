@@ -33,8 +33,7 @@ export default function ThisMonth({
 }) {
   const [allSelected, setAllSelected] = useState(!!myId);
   const { accentColor, cardVars, themeName } = useThemedCardVars({
-    role: 'sectionPanel',
-    blendWeight: 0.9
+    role: 'sectionPanel'
   });
   const emptyStateVars = useMemo(
     () =>

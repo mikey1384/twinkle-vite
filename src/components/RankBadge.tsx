@@ -23,7 +23,6 @@ export default function RankBadge({
       style={style}
     >
       <span
-        className={rankTextCss}
         style={{
           fontSize: `${fontScale}em`
         }}
@@ -59,13 +58,4 @@ const badgeCss = (rank: number) => css`
     : rank === 3
     ? '#ffedd5'
     : '#f1f5f9'};
-
-  /* Keep proportions consistent across breakpoints by inheriting font-size */
-`;
-
-const rankTextCss = css`
-  display: inline-block;
-  line-height: 1;
-  white-space: nowrap;
-  transition: font-size 0.15s ease-in-out;
 `;
