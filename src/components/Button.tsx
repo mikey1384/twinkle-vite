@@ -27,8 +27,6 @@ interface ButtonProps {
   shape?: Shape; // defaults to 'rounded'
   size?: Size; // defaults to 'md'
   uppercase?: boolean; // defaults to true
-  // Legacy (kept for compatibility with existing call sites)
-  filled?: boolean;
   onHover?: boolean; // ignored
   // New optional tone for slight elevation without shadows everywhere
   tone?: 'flat' | 'raised';

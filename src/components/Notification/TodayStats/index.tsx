@@ -166,7 +166,6 @@ export default function TodayStats({
                     })
                   }
                   color={buttonColor}
-                  filled={todayStats.showXPRankings}
                   style={{
                     minWidth: '3.5rem',
                     height: 'fit-content',

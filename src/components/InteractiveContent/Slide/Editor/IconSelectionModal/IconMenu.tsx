@@ -120,7 +120,6 @@ export default function IconMenu({
             tone={isEqual(selectedIcon, icon) ? undefined : 'raised'}
             onClick={() => onSelectIcon(icon)}
             color={buttonColor}
-            filled={isEqual(selectedIcon, icon)}
           >
             <Icon icon={icon} />
           </Button>
