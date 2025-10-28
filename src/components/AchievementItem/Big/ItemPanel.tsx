@@ -91,20 +91,14 @@ export default function ItemPanel({
     milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
 
-  const { panelVars, themeName } = useHomePanelVars();
+  const { panelVars } = useHomePanelVars();
   const panelStyle = useMemo(() => {
     const base = style ? { ...panelVars, ...style } : panelVars;
-    if (themeName === 'vantaBlack') {
-      return {
-        ...base,
-        ['--home-panel-surface' as const]: 'transparent'
-      } as React.CSSProperties;
-    }
     return {
       ...base,
       ['--home-panel-surface' as const]: '#ffffff'
     } as React.CSSProperties;
-  }, [panelVars, style, themeName]);
+  }, [panelVars, style]);
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),

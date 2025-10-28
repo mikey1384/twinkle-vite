@@ -58,7 +58,9 @@ export default function DonorLicenseItem({
     return donatedCoins >= DONOR_ACHIEVEMENT_THRESHOLD;
   }, [donatedCoins]);
 
-  const { panelVars: basePanelVars } = useHomePanelVars();
+  const { panelVars: basePanelVars } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
   const panelVars = useMemo(
     () =>
       ({
