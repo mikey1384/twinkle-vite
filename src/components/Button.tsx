@@ -197,7 +197,7 @@ export default function Button(props: ButtonProps) {
       color: ${textColor};
       background: ${bg};
       border: 1px solid ${border};
-      border-radius: ${radius};
+      ${stretch ? '' : `border-radius: ${radius}`};
       transition: background 0.18s ease, color 0.18s ease,
         border-color 0.18s ease, box-shadow 0.18s ease;
       ${stretch ? 'width: 100%;' : ''}
@@ -220,7 +220,7 @@ export default function Button(props: ButtonProps) {
       @media (max-width: ${mobileMaxWidth}) {
         font-size: ${size === 'lg' ? '1.5rem' : '1.3rem'};
         padding: ${mobilePadding ?? `${padY} ${padX}`};
-        border-radius: ${mobileBorderRadius || radius};
+        ${stretch ? '' : `border-radius: ${mobileBorderRadius || radius}`};
       }
     `;
   }, [

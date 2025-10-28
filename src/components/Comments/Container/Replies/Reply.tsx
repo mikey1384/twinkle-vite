@@ -501,7 +501,9 @@ function Reply({
                               onClick={handleLikeClick}
                               likes={likes}
                               theme={theme}
-                              hideLabel={isTablet(navigator)}
+                              hideLabel={
+                                isTablet(navigator) || isMobile(navigator)
+                              }
                             />
                           )}
                           {isDeleteNotification &&
@@ -522,7 +524,9 @@ function Reply({
                               disabled={loadingReplies}
                             >
                               <Icon icon="comment-alt" />
-                              {!isTablet(navigator) && (
+                              {!(
+                                isTablet(navigator) || isMobile(navigator)
+                              ) && (
                                 <span
                                   style={{
                                     marginLeft: '0.7rem'
@@ -594,7 +598,9 @@ function Reply({
                               contentType="comment"
                               content={reply.content}
                               style={{ marginLeft: '1rem' }}
-                              hideLabel={isMobile(navigator) || isTablet(navigator)}
+                              hideLabel={
+                                isMobile(navigator) || isTablet(navigator)
+                              }
                             />
                           )}
                         </div>

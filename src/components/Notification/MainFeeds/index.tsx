@@ -137,7 +137,9 @@ export default function MainFeeds({
     const sections: { label: string; items: any[] }[] = [];
     const now = new Date();
     const todayKey = now.toDateString();
-    const yesterdayKey = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString();
+    const yesterdayKey = new Date(
+      now.getTime() - 24 * 60 * 60 * 1000
+    ).toDateString();
 
     const bySection: Record<string, { label: string; items: any[] }> = {};
 
@@ -192,7 +194,9 @@ export default function MainFeeds({
     const sections: { label: string; items: any[] }[] = [];
     const now = new Date();
     const todayKey = now.toDateString();
-    const yesterdayKey = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString();
+    const yesterdayKey = new Date(
+      now.getTime() - 24 * 60 * 60 * 1000
+    ).toDateString();
 
     const bySection: Record<string, { label: string; items: any[] }> = {};
 
@@ -226,14 +230,7 @@ export default function MainFeeds({
         ))}
       </div>
     ));
-  }, [
-    actionColor,
-    infoColor,
-    linkColor,
-    missionColor,
-    rewardColor,
-    rewards
-  ]);
+  }, [actionColor, infoColor, linkColor, missionColor, rewardColor, rewards]);
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/index" style={style}>
