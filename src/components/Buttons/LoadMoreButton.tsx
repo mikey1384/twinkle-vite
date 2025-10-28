@@ -66,27 +66,30 @@ export default function LoadMoreButton({
 
   return (
     <ErrorBoundary componentPath="LoadMoreButton">
-      <ScopedTheme theme={themeName} roles={['loadMoreButton']} style={scopedStyle}>
-        <div
-          className={css`
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          `}
+      <ScopedTheme
+        theme={themeName}
+        roles={['loadMoreButton']}
+        style={scopedStyle}
+        className={css`
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          /* Make sure this element (the flex item) spans a full row */
+          flex: 0 0 100%;
+        `}
+      >
+        <Button
+          loading={!!loading}
+          color={buttonColorKey}
+          onClick={onClick}
+          variant="soft"
+          shape="pill"
+          uppercase={false}
+          {...props}
         >
-          <Button
-            loading={!!loading}
-            color={buttonColorKey}
-            onClick={onClick}
-            variant="soft"
-            shape="pill"
-            uppercase={false}
-            {...props}
-          >
-            {loading ? loadingLabel : label || loadMoreLabel}
-          </Button>
-        </div>
+          {loading ? loadingLabel : label || loadMoreLabel}
+        </Button>
       </ScopedTheme>
     </ErrorBoundary>
   );
