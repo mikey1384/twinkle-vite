@@ -1956,6 +1956,12 @@ export default function contentRequestHelpers({
         console.error('AI image generation error:', error);
         let errorMessage = 'Failed to generate image';
 
+        const coins =
+          typeof error?.response?.data?.coins === 'number'
+            ? error.response.data.coins
+            : undefined;
+        const reason = error?.response?.data?.reason;
+
         if (error?.response?.data?.error) {
           const apiError = error.response.data.error;
           if (typeof apiError === 'string') {
@@ -1983,7 +1989,9 @@ export default function contentRequestHelpers({
 
         return {
           success: false,
-          error: errorMessage
+          error: errorMessage,
+          coins,
+          reason
         };
       }
     }

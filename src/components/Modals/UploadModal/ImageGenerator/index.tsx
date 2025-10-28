@@ -199,6 +199,13 @@ export default function ImageGenerator({
             convertPartialImageToReference(latestPartialImage);
           }
 
+          if (typeof status.coins === 'number' && userId) {
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: status.coins }
+            });
+          }
+
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
@@ -492,6 +499,12 @@ export default function ImageGenerator({
         const rawError = result.error || 'Failed to generate image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
+        if (typeof result.coins === 'number' && userId) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.coins }
+          });
+        }
         setIsGenerating(false);
         setProgressStage('not_started');
         onError?.(errorMessage);
@@ -567,6 +580,12 @@ export default function ImageGenerator({
         const rawError = result.error || 'Failed to generate follow-up image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
+        if (typeof result.coins === 'number' && userId) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.coins }
+          });
+        }
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
