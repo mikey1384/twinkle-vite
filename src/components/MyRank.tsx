@@ -44,32 +44,6 @@ export default function MyRank({
   );
   const isKorean = SELECTED_LANGUAGE === 'kr';
   const rankLabel = localize('rank');
-  const baseBadgeFontSize = twinkleXP > 1_000_000 ? '1.3rem' : '1.5rem';
-  const mobileBadgeFontSize = twinkleXP > 1_000_000 ? '1rem' : '1.2rem';
-  const badgeScale = 1.12;
-  const badgeMinWidth = '3.4rem';
-  const badgeHeight = '2.6rem';
-  const badgeMinWidthMobile = '3.1rem';
-  const badgeHeightMobile = '2.5rem';
-  const rankBadgeClass = useMemo(
-    () =>
-      css`
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: 0.5rem;
-        font-size: calc(${baseBadgeFontSize} * ${badgeScale});
-        min-width: ${badgeMinWidth};
-        height: ${badgeHeight};
-        @media (max-width: ${mobileMaxWidth}) {
-          margin-left: 0.4rem;
-          font-size: calc(${mobileBadgeFontSize} * ${badgeScale});
-          min-width: ${badgeMinWidthMobile};
-          height: ${badgeHeightMobile};
-        }
-      `,
-    [baseBadgeFontSize, badgeScale, badgeMinWidth, badgeHeight, mobileBadgeFontSize, badgeMinWidthMobile, badgeHeightMobile]
-  );
 
   return (
     <div
@@ -203,7 +177,7 @@ export default function MyRank({
             {rank && twinkleXP ? (
               <>
                 <span className="rank-prefix">{rankLabel}</span>
-                <RankBadge rank={rank} className={rankBadgeClass} />
+                <RankBadge rank={rank} />
                 {isKorean ? <span className="rank-suffix">위</span> : null}
               </>
             ) : (

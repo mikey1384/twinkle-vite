@@ -125,7 +125,7 @@ export default function Feeds({
             display: flex;
             justify-content: center;
             @media (max-width: ${mobileMaxWidth}) {
-              width: 100vw;
+              width: 100%;
             }
           `}
         >

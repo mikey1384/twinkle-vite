@@ -1,6 +1,5 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { tabletMaxWidth } from '~/constants/css';
 
 export default function RankBadge({
   rank,
@@ -18,7 +17,10 @@ export default function RankBadge({
   const fontScale = getFontScale(digitCount);
 
   return (
-    <div className={`${badgeCss(resolvedRank)} ${className || ''}`} style={style}>
+    <span
+      className={`${badgeCss(resolvedRank)} ${className || ''}`}
+      style={style}
+    >
       <span
         className={rankTextCss}
         style={{
@@ -27,40 +29,37 @@ export default function RankBadge({
       >
         {rank ? `#${rank}` : '--'}
       </span>
-    </div>
+    </span>
   );
 }
 
 const badgeCss = (rank: number) => css`
-  min-width: 2.8rem;
-  height: 2.1rem;
+  min-width: 2.35em;
+  height: 1.6em;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   vertical-align: middle;
   font-weight: 800;
-  font-size: 1rem;
+  /* inherit so external font-size scales the badge */
+  font-size: inherit;
   color: ${rank === 1
     ? '#b45309'
     : rank === 2
-    ? '#334155'
+    ? '#fff'
     : rank === 3
     ? '#9a3412'
     : '#475569'};
   background: ${rank === 1
     ? '#fef3c7'
     : rank === 2
-    ? '#e2e8f0'
+    ? '#737373'
     : rank === 3
     ? '#ffedd5'
     : '#f1f5f9'};
 
-  @media (max-width: ${tabletMaxWidth}) {
-    font-size: 0.9rem;
-    min-width: 2.4rem;
-    height: 1.9rem;
-  }
+  /* Keep proportions consistent across breakpoints by inheriting font-size */
 `;
 
 const rankTextCss = css`

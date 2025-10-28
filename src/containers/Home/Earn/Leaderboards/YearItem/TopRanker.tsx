@@ -61,12 +61,16 @@ export default function TopRanker({
           borderBottomRightRadius: borderRadius,
           padding: '1rem',
           textAlign: 'center',
-          background: Color.black()
+          background: Color.black(),
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.35rem'
         }}
       >
         <RankBadge
           rank={rank}
-          style={{ margin: '0 auto 0.5rem' }}
+          style={{ margin: '0 auto' }}
         />
         <Link
           style={{

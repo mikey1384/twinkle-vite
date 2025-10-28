@@ -82,7 +82,7 @@ export default function Home({
       className={css`
         width: 70vw;
         @media (max-width: ${mobileMaxWidth}) {
-          width: 100vw;
+          width: 100%;
         }
       `}
     >
