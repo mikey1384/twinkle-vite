@@ -52,7 +52,6 @@ export default function ModActivities() {
       `}
     >
       <FilterBar
-        bordered
         className={css`
           font-size: 1.5rem !important;
           height: 4.5rem !important;
