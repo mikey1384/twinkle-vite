@@ -43,6 +43,7 @@ export default function DeletedPost({
   );
   const [loading, setLoading] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [videoPlayerShown, setVideoPlayerShown] = useState(false);
   const [contentObj, setContentObj] = useState({});
   const {
     id,
@@ -77,6 +78,13 @@ export default function DeletedPost({
     thumbUrl?: string;
     uploader?: any;
   } = useMemo(() => contentObj || {}, [contentObj]);
+  const videoPreviewImage = useMemo(() => {
+    if (thumbUrl) return thumbUrl;
+    if (contentType === 'video' && typeof content === 'string' && content) {
+      return `https://img.youtube.com/vi/${content}/hqdefault.jpg`;
+    }
+    return '';
+  }, [thumbUrl, contentType, content]);
   useEffect(() => {
     init();
     async function init() {
@@ -87,6 +95,9 @@ export default function DeletedPost({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    setVideoPlayerShown(false);
+  }, [contentId, contentType]);
 
   return (
     <div
@@ -182,23 +193,77 @@ export default function DeletedPost({
                       position: 'relative'
                     }}
                   >
-                    <VideoPlayer
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0
-                      }}
-                      width="100%"
-                      height="100%"
-                      fileType="youtube"
-                      src={content || ''}
-                      onPlay={() => {}}
-                      onPause={() => {}}
-                      onProgress={() => {}}
-                      initialTime={0}
-                    />
+                    {videoPlayerShown ? (
+                      <VideoPlayer
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0
+                        }}
+                        width="100%"
+                        height="100%"
+                        fileType="youtube"
+                        src={content || ''}
+                        onPlay={() => {}}
+                        onPause={() => {}}
+                        onProgress={() => {}}
+                        initialTime={0}
+                      />
+                    ) : (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Load video preview"
+                        className={css`
+                          position: absolute;
+                          inset: 0;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: #000;
+                          cursor: pointer;
+                          border-radius: ${borderRadius};
+                          overflow: hidden;
+                        `}
+                        onClick={() => setVideoPlayerShown(true)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setVideoPlayerShown(true);
+                          }
+                        }}
+                      >
+                        {videoPreviewImage ? (
+                          <img
+                            src={videoPreviewImage}
+                            alt="Video preview"
+                            className={css`
+                              position: absolute;
+                              width: 100%;
+                              height: 100%;
+                              object-fit: cover;
+                              opacity: 0.85;
+                            `}
+                          />
+                        ) : null}
+                        <div
+                          className={css`
+                            position: relative;
+                            padding: 0.8rem 1.6rem;
+                            border-radius: 9999px;
+                            background: rgba(0, 0, 0, 0.65);
+                            color: #fff;
+                            font-weight: bold;
+                            font-size: 1.4rem;
+                            letter-spacing: 0.02em;
+                          `}
+                        >
+                          Click to load video
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
