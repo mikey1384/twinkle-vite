@@ -331,20 +331,44 @@ export function useSearch({
   onSetSearchText: (text: string) => void;
 }) {
   const [searching, setSearching] = useState(false);
-  const timerRef: React.RefObject<any> = useRef(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   function handleSearch(text: string) {
-    clearTimeout(timerRef.current);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     onSetSearchText(text);
     onClear?.();
     if (stringIsEmpty(text)) {
       onEmptyQuery?.();
-      return setSearching(false);
+      if (isMountedRef.current) {
+        setSearching(false);
+      }
+      return;
     }
     setSearching(true);
     timerRef.current = setTimeout(async () => {
-      await onSearch(text);
-      setSearching(false);
+      try {
+        await onSearch(text);
+      } finally {
+        if (isMountedRef.current) {
+          setSearching(false);
+        }
+        timerRef.current = null;
+      }
     }, 500);
   }
 
