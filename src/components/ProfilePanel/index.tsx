@@ -544,223 +544,291 @@ function ProfilePanel({
           width: '100%'
         }}
       >
-        {contentShown ? (
-          <>
-            <ScopedTheme theme={themeName} roles={['profilePanel']}>
-              <div
-                style={{
-                  position: 'relative',
-                  zIndex: 2,
-                  overflow: 'visible'
-                }}
-              >
+        <div ref={PanelRef}>
+          {contentShown ? (
+            <>
+              <ScopedTheme theme={themeName} roles={['profilePanel']}>
                 <div
-                  ref={PanelRef}
-                  className={panelContainerClass}
-                  style={panelStyleVars}
+                  style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    overflow: 'visible'
+                  }}
                 >
-                  <div className={`unselectable ${heroSectionClass}`}>
-                    <div className={heroBadgesClass}>
-                      <AchievementBadges
-                        thumbSize="2.5rem"
-                        unlockedAchievementIds={profile.unlockedAchievementIds}
-                      />
+                  <div className={panelContainerClass} style={panelStyleVars}>
+                    <div className={`unselectable ${heroSectionClass}`}>
+                      <div className={heroBadgesClass}>
+                        <AchievementBadges
+                          thumbSize="2.5rem"
+                          unlockedAchievementIds={
+                            profile.unlockedAchievementIds
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
-                  {profileLoaded ? (
-                    <>
-                      <div className={profileContentClass}>
-                        <div className={leftColumnClass}>
-                          <div
-                            className={`unselectable ${profilePicWrapperClass}`}
-                          >
-                            <Link
-                              onClick={handleReloadProfile}
-                              to={`/users/${profileName}`}
-                              style={{ display: 'block', width: '100%' }}
-                            >
-                              <ProfilePic
-                                style={{ cursor: 'pointer' }}
-                                className={css`
-                                  margin: 0 auto;
-                                  display: block;
-                                  --profile-pic-size: min(16rem, 58vw);
-                                  @media (max-width: ${mobileMaxWidth}) {
-                                    --profile-pic-size: min(13rem, 72vw);
-                                  }
-                                `}
-                                userId={profileId}
-                                profilePicUrl={profilePicUrl}
-                                online={isOnline}
-                                isBusy={isBusy}
-                                isAway={isAway}
-                                statusShown
-                                large
-                                statusSize="medium"
-                              />
-                            </Link>
-                          </div>
-                          <div className={quickLinksClass}>
+                    {profileLoaded ? (
+                      <>
+                        <div className={profileContentClass}>
+                          <div className={leftColumnClass}>
                             <div
-                              className={quickLinkClass}
-                              style={
-                                {
-                                  ['--quick-link-bg' as const]:
-                                    quickLinkThemes.aiCards.background,
-                                  ['--quick-link-fg' as const]:
-                                    quickLinkThemes.aiCards.text,
-                                  ['--quick-link-shadow' as const]:
-                                    quickLinkThemes.aiCards.shadow,
-                                  ['--quick-link-border' as const]:
-                                    quickLinkThemes.aiCards.border,
-                                  ['--quick-link-bg-hover' as const]:
-                                    quickLinkThemes.aiCards.fillBg,
-                                  ['--quick-link-fg-hover' as const]:
-                                    quickLinkThemes.aiCards.fillFg,
-                                  ['--quick-link-border-hover' as const]:
-                                    quickLinkThemes.aiCards.fillBorder,
-                                  ['--quick-link-icon-color' as const]:
-                                    quickLinkThemes.aiCards.icon,
-                                  ['--quick-link-icon-color-hover' as const]:
-                                    quickLinkThemes.aiCards.fillIcon,
-                                  opacity: profileUsername ? 1 : 0.55,
-                                  pointerEvents: profileUsername
-                                    ? 'auto'
-                                    : 'none'
-                                } as React.CSSProperties
-                              }
-                              onClick={() =>
-                                profileUsername
-                                  ? navigate(
-                                      `/ai-cards/?search[owner]=${profile.username}`
-                                    )
-                                  : null
-                              }
+                              className={`unselectable ${profilePicWrapperClass}`}
                             >
-                              <Icon icon="cards-blank" />
-                              <span>AI Cards</span>
+                              <Link
+                                onClick={handleReloadProfile}
+                                to={`/users/${profileName}`}
+                                style={{ display: 'block', width: '100%' }}
+                              >
+                                <ProfilePic
+                                  style={{ cursor: 'pointer' }}
+                                  className={css`
+                                    margin: 0 auto;
+                                    display: block;
+                                    --profile-pic-size: min(16rem, 58vw);
+                                    @media (max-width: ${mobileMaxWidth}) {
+                                      --profile-pic-size: min(13rem, 72vw);
+                                    }
+                                  `}
+                                  userId={profileId}
+                                  profilePicUrl={profilePicUrl}
+                                  online={isOnline}
+                                  isBusy={isBusy}
+                                  isAway={isAway}
+                                  statusShown
+                                  large
+                                  statusSize="medium"
+                                />
+                              </Link>
                             </div>
-                            {website && (
+                            <div className={quickLinksClass}>
                               <div
                                 className={quickLinkClass}
                                 style={
                                   {
                                     ['--quick-link-bg' as const]:
-                                      quickLinkThemes.website.background,
+                                      quickLinkThemes.aiCards.background,
                                     ['--quick-link-fg' as const]:
-                                      quickLinkThemes.website.text,
+                                      quickLinkThemes.aiCards.text,
                                     ['--quick-link-shadow' as const]:
-                                      quickLinkThemes.website.shadow,
+                                      quickLinkThemes.aiCards.shadow,
                                     ['--quick-link-border' as const]:
-                                      quickLinkThemes.website.border,
+                                      quickLinkThemes.aiCards.border,
                                     ['--quick-link-bg-hover' as const]:
-                                      quickLinkThemes.website.fillBg,
+                                      quickLinkThemes.aiCards.fillBg,
                                     ['--quick-link-fg-hover' as const]:
-                                      quickLinkThemes.website.fillFg,
+                                      quickLinkThemes.aiCards.fillFg,
                                     ['--quick-link-border-hover' as const]:
-                                      quickLinkThemes.website.fillBorder,
+                                      quickLinkThemes.aiCards.fillBorder,
                                     ['--quick-link-icon-color' as const]:
-                                      quickLinkThemes.website.icon,
+                                      quickLinkThemes.aiCards.icon,
                                     ['--quick-link-icon-color-hover' as const]:
-                                      quickLinkThemes.website.fillIcon
+                                      quickLinkThemes.aiCards.fillIcon,
+                                    opacity: profileUsername ? 1 : 0.55,
+                                    pointerEvents: profileUsername
+                                      ? 'auto'
+                                      : 'none'
                                   } as React.CSSProperties
                                 }
-                                onClick={() => window.open(website)}
-                              >
-                                <Icon icon="globe" />
-                                <span>Website</span>
-                              </div>
-                            )}
-                            {youtubeUrl && (
-                              <div
-                                className={quickLinkClass}
-                                style={
-                                  {
-                                    ['--quick-link-bg' as const]:
-                                      quickLinkThemes.youtube.background,
-                                    ['--quick-link-fg' as const]:
-                                      quickLinkThemes.youtube.text,
-                                    ['--quick-link-shadow' as const]:
-                                      quickLinkThemes.youtube.shadow,
-                                    ['--quick-link-border' as const]:
-                                      quickLinkThemes.youtube.border,
-                                    ['--quick-link-bg-hover' as const]:
-                                      quickLinkThemes.youtube.fillBg,
-                                    ['--quick-link-fg-hover' as const]:
-                                      quickLinkThemes.youtube.fillFg,
-                                    ['--quick-link-border-hover' as const]:
-                                      quickLinkThemes.youtube.fillBorder,
-                                    ['--quick-link-icon-color' as const]:
-                                      quickLinkThemes.youtube.icon,
-                                    ['--quick-link-icon-color-hover' as const]:
-                                      quickLinkThemes.youtube.fillIcon
-                                  } as React.CSSProperties
+                                onClick={() =>
+                                  profileUsername
+                                    ? navigate(
+                                        `/ai-cards/?search[owner]=${profile.username}`
+                                      )
+                                    : null
                                 }
-                                onClick={() => window.open(youtubeUrl)}
                               >
-                                <Icon icon={['fab', 'youtube']} />
-                                <span>YouTube</span>
+                                <Icon icon="cards-blank" />
+                                <span>AI Cards</span>
                               </div>
-                            )}
+                              {website && (
+                                <div
+                                  className={quickLinkClass}
+                                  style={
+                                    {
+                                      ['--quick-link-bg' as const]:
+                                        quickLinkThemes.website.background,
+                                      ['--quick-link-fg' as const]:
+                                        quickLinkThemes.website.text,
+                                      ['--quick-link-shadow' as const]:
+                                        quickLinkThemes.website.shadow,
+                                      ['--quick-link-border' as const]:
+                                        quickLinkThemes.website.border,
+                                      ['--quick-link-bg-hover' as const]:
+                                        quickLinkThemes.website.fillBg,
+                                      ['--quick-link-fg-hover' as const]:
+                                        quickLinkThemes.website.fillFg,
+                                      ['--quick-link-border-hover' as const]:
+                                        quickLinkThemes.website.fillBorder,
+                                      ['--quick-link-icon-color' as const]:
+                                        quickLinkThemes.website.icon,
+                                      ['--quick-link-icon-color-hover' as const]:
+                                        quickLinkThemes.website.fillIcon
+                                    } as React.CSSProperties
+                                  }
+                                  onClick={() => window.open(website)}
+                                >
+                                  <Icon icon="globe" />
+                                  <span>Website</span>
+                                </div>
+                              )}
+                              {youtubeUrl && (
+                                <div
+                                  className={quickLinkClass}
+                                  style={
+                                    {
+                                      ['--quick-link-bg' as const]:
+                                        quickLinkThemes.youtube.background,
+                                      ['--quick-link-fg' as const]:
+                                        quickLinkThemes.youtube.text,
+                                      ['--quick-link-shadow' as const]:
+                                        quickLinkThemes.youtube.shadow,
+                                      ['--quick-link-border' as const]:
+                                        quickLinkThemes.youtube.border,
+                                      ['--quick-link-bg-hover' as const]:
+                                        quickLinkThemes.youtube.fillBg,
+                                      ['--quick-link-fg-hover' as const]:
+                                        quickLinkThemes.youtube.fillFg,
+                                      ['--quick-link-border-hover' as const]:
+                                        quickLinkThemes.youtube.fillBorder,
+                                      ['--quick-link-icon-color' as const]:
+                                        quickLinkThemes.youtube.icon,
+                                      ['--quick-link-icon-color-hover' as const]:
+                                        quickLinkThemes.youtube.fillIcon
+                                    } as React.CSSProperties
+                                  }
+                                  onClick={() => window.open(youtubeUrl)}
+                                >
+                                  <Icon icon={['fab', 'youtube']} />
+                                  <span>YouTube</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className={detailsColumnClass}>
-                          <UserDetails
-                            profile={profile}
-                            removeStatusMsg={(userId: number) =>
-                              onSetUserState({
-                                userId,
-                                newState: { statusMsg: '', statusColor: '' }
-                              })
-                            }
-                            updateStatusMsg={(data: any) => {
-                              if (banned?.posting) {
-                                return;
+                          <div className={detailsColumnClass}>
+                            <UserDetails
+                              profile={profile}
+                              removeStatusMsg={(userId: number) =>
+                                onSetUserState({
+                                  userId,
+                                  newState: { statusMsg: '', statusColor: '' }
+                                })
                               }
-                              onSetUserState({
-                                userId: data.userId,
-                                newState: data
-                              });
-                            }}
-                            onSetBioEditModalShown={setBioEditModalShown}
-                            userId={userId}
-                          />
-                          {canEdit && (
-                            <div className={actionsContainerClass}>
+                              updateStatusMsg={(data: any) => {
+                                if (banned?.posting) {
+                                  return;
+                                }
+                                onSetUserState({
+                                  userId: data.userId,
+                                  newState: data
+                                });
+                              }}
+                              onSetBioEditModalShown={setBioEditModalShown}
+                              userId={userId}
+                            />
+                            {canEdit && (
+                              <div className={actionsContainerClass}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '0.6rem',
+                                    justifyContent: 'flex-start'
+                                  }}
+                                >
+                                  <UploadButton
+                                    onFileSelect={handlePicture}
+                                    accept="image/*"
+                                    icon="upload"
+                                    text={changePicLabel}
+                                    className={cx(
+                                      actionButtonClass,
+                                      actionButtonFlexLargeClass
+                                    )}
+                                    color="logoBlue"
+                                    hoverColor="mediumBlue"
+                                    buttonProps={{
+                                      variant: 'solid',
+                                      tone: 'raised',
+                                      uppercase: false
+                                    }}
+                                  />
+                                  <Button
+                                    onClick={() => {
+                                      if (banned?.posting) {
+                                        return;
+                                      }
+                                      setBioEditModalShown(true);
+                                    }}
+                                    className={cx(
+                                      actionButtonClass,
+                                      actionButtonFlexMediumClass
+                                    )}
+                                    variant="solid"
+                                    tone="raised"
+                                    color="purple"
+                                    hoverColor="mediumPurple"
+                                    uppercase={false}
+                                  >
+                                    {editBioLabel}
+                                  </Button>
+                                  {profileId === userId && (
+                                    <MessagesButton
+                                      commentsShown={commentsShown}
+                                      loading={loadingComments}
+                                      profileId={profileId}
+                                      myId={userId}
+                                      onMessagesButtonClick={
+                                        onMessagesButtonClick
+                                      }
+                                      numMessages={numMessages}
+                                      className={cx(
+                                        actionButtonClass,
+                                        messageButtonClass,
+                                        actionButtonFullWidthClass
+                                      )}
+                                      iconColor="rgba(255,255,255,0.92)"
+                                      textColor="rgba(255,255,255,0.95)"
+                                      buttonColor="orange"
+                                      buttonHoverColor="mediumOrange"
+                                      buttonVariant="solid"
+                                      buttonTone="raised"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            {expandable && userId !== profileId && (
                               <div
-                                style={{
-                                  display: 'flex',
-                                  flexWrap: 'wrap',
-                                  gap: '0.6rem',
-                                  justifyContent: 'flex-start'
-                                }}
+                                className={actionButtonsLayoutClass}
+                                style={{ marginTop: noBio ? '2rem' : '1rem' }}
                               >
-                                <UploadButton
-                                  onFileSelect={handlePicture}
-                                  accept="image/*"
-                                  icon="upload"
-                                  text={changePicLabel}
+                                <Button
                                   className={cx(
                                     actionButtonClass,
-                                    actionButtonFlexLargeClass
+                                    profileButtonClass,
+                                    actionButtonFlexMediumClass
                                   )}
+                                  variant="solid"
+                                  tone="raised"
                                   color="logoBlue"
                                   hoverColor="mediumBlue"
-                                  buttonProps={{
-                                    variant: 'solid',
-                                    tone: 'raised',
-                                    uppercase: false
-                                  }}
-                                />
+                                  uppercase={false}
+                                  disabled={!profileUsername}
+                                  onClick={() =>
+                                    profileUsername
+                                      ? navigate(`/users/${profileUsername}`)
+                                      : null
+                                  }
+                                >
+                                  <Icon
+                                    icon="user"
+                                    color="rgba(255,255,255,0.92)"
+                                  />
+                                  <span>{profileLabel}</span>
+                                </Button>
                                 <Button
-                                  onClick={() => {
-                                    if (banned?.posting) {
-                                      return;
-                                    }
-                                    setBioEditModalShown(true);
-                                  }}
                                   className={cx(
                                     actionButtonClass,
+                                    cardsButtonClass,
                                     actionButtonFlexMediumClass
                                   )}
                                   variant="solid"
@@ -768,240 +836,178 @@ function ProfilePanel({
                                   color="purple"
                                   hoverColor="mediumPurple"
                                   uppercase={false}
+                                  disabled={!profileUsername}
+                                  onClick={() =>
+                                    profileUsername
+                                      ? navigate(
+                                          `/ai-cards/?search[owner]=${profileUsername}`
+                                        )
+                                      : null
+                                  }
                                 >
-                                  {editBioLabel}
-                                </Button>
-                                {profileId === userId && (
-                                  <MessagesButton
-                                    commentsShown={commentsShown}
-                                    loading={loadingComments}
-                                    profileId={profileId}
-                                    myId={userId}
-                                    onMessagesButtonClick={
-                                      onMessagesButtonClick
-                                    }
-                                    numMessages={numMessages}
-                                    className={cx(
-                                      actionButtonClass,
-                                      messageButtonClass,
-                                      actionButtonFullWidthClass
-                                    )}
-                                    iconColor="rgba(255,255,255,0.92)"
-                                    textColor="rgba(255,255,255,0.95)"
-                                    buttonColor="orange"
-                                    buttonHoverColor="mediumOrange"
-                                    buttonVariant="solid"
-                                    buttonTone="raised"
+                                  <Icon
+                                    icon="cards-blank"
+                                    color="rgba(255,255,255,0.92)"
                                   />
-                                )}
+                                  <span>{cardsLabel}</span>
+                                </Button>
+                                <Button
+                                  className={cx(
+                                    actionButtonClass,
+                                    chatButtonClass,
+                                    actionButtonFlexMediumClass
+                                  )}
+                                  variant="solid"
+                                  tone="raised"
+                                  color="green"
+                                  hoverColor="lightGreen"
+                                  uppercase={false}
+                                  loading={chatLoading}
+                                  disabled={chatLoading || !profileUsername}
+                                  onClick={handleTalkClick}
+                                >
+                                  <Icon
+                                    icon="comments"
+                                    color="rgba(255,255,255,0.92)"
+                                  />
+                                  <span>{chatLabel}</span>
+                                </Button>
+                                <MessagesButton
+                                  className={cx(
+                                    actionButtonClass,
+                                    messageButtonClass,
+                                    actionButtonFullWidthClass
+                                  )}
+                                  commentsShown={commentsShown}
+                                  loading={loadingComments}
+                                  profileId={profileId}
+                                  myId={userId}
+                                  onMessagesButtonClick={onMessagesButtonClick}
+                                  numMessages={numMessages}
+                                  iconColor="rgba(255,255,255,0.92)"
+                                  textColor="rgba(255,255,255,0.95)"
+                                  buttonColor="orange"
+                                  buttonHoverColor="mediumOrange"
+                                  buttonVariant="solid"
+                                  buttonTone="raised"
+                                />
                               </div>
-                            </div>
-                          )}
-                          {expandable && userId !== profileId && (
-                            <div
-                              className={actionButtonsLayoutClass}
-                              style={{ marginTop: noBio ? '2rem' : '1rem' }}
-                            >
-                              <Button
-                                className={cx(
-                                  actionButtonClass,
-                                  profileButtonClass,
-                                  actionButtonFlexMediumClass
-                                )}
-                                variant="solid"
-                                tone="raised"
-                                color="logoBlue"
-                                hoverColor="mediumBlue"
-                                uppercase={false}
-                                disabled={!profileUsername}
-                                onClick={() =>
-                                  profileUsername
-                                    ? navigate(`/users/${profileUsername}`)
-                                    : null
-                                }
-                              >
-                                <Icon
-                                  icon="user"
-                                  color="rgba(255,255,255,0.92)"
-                                />
-                                <span>{profileLabel}</span>
-                              </Button>
-                              <Button
-                                className={cx(
-                                  actionButtonClass,
-                                  cardsButtonClass,
-                                  actionButtonFlexMediumClass
-                                )}
-                                variant="solid"
-                                tone="raised"
-                                color="purple"
-                                hoverColor="mediumPurple"
-                                uppercase={false}
-                                disabled={!profileUsername}
-                                onClick={() =>
-                                  profileUsername
-                                    ? navigate(
-                                        `/ai-cards/?search[owner]=${profileUsername}`
-                                      )
-                                    : null
-                                }
-                              >
-                                <Icon
-                                  icon="cards-blank"
-                                  color="rgba(255,255,255,0.92)"
-                                />
-                                <span>{cardsLabel}</span>
-                              </Button>
-                              <Button
-                                className={cx(
-                                  actionButtonClass,
-                                  chatButtonClass,
-                                  actionButtonFlexMediumClass
-                                )}
-                                variant="solid"
-                                tone="raised"
-                                color="green"
-                                hoverColor="lightGreen"
-                                uppercase={false}
-                                loading={chatLoading}
-                                disabled={chatLoading || !profileUsername}
-                                onClick={handleTalkClick}
-                              >
-                                <Icon
-                                  icon="comments"
-                                  color="rgba(255,255,255,0.92)"
-                                />
-                                <span>{chatLabel}</span>
-                              </Button>
-                              <MessagesButton
-                                className={cx(
-                                  actionButtonClass,
-                                  messageButtonClass,
-                                  actionButtonFullWidthClass
-                                )}
-                                commentsShown={commentsShown}
-                                loading={loadingComments}
-                                profileId={profileId}
-                                myId={userId}
-                                onMessagesButtonClick={onMessagesButtonClick}
-                                numMessages={numMessages}
-                                iconColor="rgba(255,255,255,0.92)"
-                                textColor="rgba(255,255,255,0.95)"
-                                buttonColor="orange"
-                                buttonHoverColor="mediumOrange"
-                                buttonVariant="solid"
-                                buttonTone="raised"
-                              />
-                            </div>
-                          )}
-                          {lastActive && !isOnline && profileId !== userId && (
-                            <div
-                              style={{
-                                marginTop: '1rem',
-                                fontSize: '1.5rem',
-                                color: Color.gray()
-                              }}
-                            >
-                              <p>
-                                {lastOnlineLabel} {timeSince(lastActive)}
-                              </p>
-                            </div>
-                          )}
+                            )}
+                            {lastActive &&
+                              !isOnline &&
+                              profileId !== userId && (
+                                <div
+                                  style={{
+                                    marginTop: '1rem',
+                                    fontSize: '1.5rem',
+                                    color: Color.gray()
+                                  }}
+                                >
+                                  <p>
+                                    {lastOnlineLabel} {timeSince(lastActive)}
+                                  </p>
+                                </div>
+                              )}
+                          </div>
                         </div>
+                        {bioEditModalShown && (
+                          <BioEditModal
+                            firstLine={replaceFakeAtSymbol(
+                              profileFirstRow || ''
+                            )}
+                            secondLine={replaceFakeAtSymbol(
+                              profileSecondRow || ''
+                            )}
+                            thirdLine={replaceFakeAtSymbol(
+                              profileThirdRow || ''
+                            )}
+                            onSubmit={handleUploadBio}
+                            onHide={() => setBioEditModalShown(false)}
+                          />
+                        )}
+                        {imageEditModalShown && (
+                          <ImageEditModal
+                            isProfilePic
+                            imageUri={imageUri}
+                            onEditDone={handleImageEditDone}
+                            onHide={() => {
+                              setImageUri(null);
+                              setImageEditModalShown(false);
+                            }}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          padding: '2rem 0'
+                        }}
+                      >
+                        <Loading />
                       </div>
-                      {bioEditModalShown && (
-                        <BioEditModal
-                          firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
-                          secondLine={replaceFakeAtSymbol(
-                            profileSecondRow || ''
-                          )}
-                          thirdLine={replaceFakeAtSymbol(profileThirdRow || '')}
-                          onSubmit={handleUploadBio}
-                          onHide={() => setBioEditModalShown(false)}
-                        />
-                      )}
-                      {imageEditModalShown && (
-                        <ImageEditModal
-                          isProfilePic
-                          imageUri={imageUri}
-                          onEditDone={handleImageEditDone}
-                          onHide={() => {
-                            setImageUri(null);
-                            setImageEditModalShown(false);
-                          }}
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <div
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        padding: '2rem 0'
-                      }}
-                    >
-                      <Loading />
-                    </div>
-                  )}
-                  {profileLoaded && (
-                    <Comments
-                      comments={comments}
-                      commentsLoadLimit={5}
-                      commentsShown={commentsShown}
-                      theme={themeName}
-                      inputAreaInnerRef={CommentInputAreaRef}
-                      inputTypeLabel={`message${
-                        userId === profileId ? '' : ` to ${profileName}`
-                      }`}
-                      isLoading={loadingComments}
-                      loadMoreButton={commentsLoadMoreButton}
-                      numPreviews={1}
-                      onCommentSubmit={onUploadComment}
-                      onDelete={onDeleteComment}
-                      onEditDone={onEditComment}
-                      onLikeClick={onLikeComment}
-                      onLoadMoreComments={onLoadMoreComments}
-                      onLoadMoreReplies={onLoadMoreReplies}
-                      onLoadRepliesOfReply={onLoadRepliesOfReply}
-                      onPreviewClick={onExpandComments}
-                      onReplySubmit={onUploadReply}
-                      onRewardCommentEdit={onEditRewardComment}
-                      parent={{
-                        ...profile,
-                        ...profilePanelState,
-                        contentType: 'user'
-                      }}
-                      style={{ marginTop: '0.6rem' }}
-                      userId={userId}
-                    />
-                  )}
+                    )}
+                    {profileLoaded && (
+                      <Comments
+                        comments={comments}
+                        commentsLoadLimit={5}
+                        commentsShown={commentsShown}
+                        theme={themeName}
+                        inputAreaInnerRef={CommentInputAreaRef}
+                        inputTypeLabel={`message${
+                          userId === profileId ? '' : ` to ${profileName}`
+                        }`}
+                        isLoading={loadingComments}
+                        loadMoreButton={commentsLoadMoreButton}
+                        numPreviews={1}
+                        onCommentSubmit={onUploadComment}
+                        onDelete={onDeleteComment}
+                        onEditDone={onEditComment}
+                        onLikeClick={onLikeComment}
+                        onLoadMoreComments={onLoadMoreComments}
+                        onLoadMoreReplies={onLoadMoreReplies}
+                        onLoadRepliesOfReply={onLoadRepliesOfReply}
+                        onPreviewClick={onExpandComments}
+                        onReplySubmit={onUploadReply}
+                        onRewardCommentEdit={onEditRewardComment}
+                        parent={{
+                          ...profile,
+                          ...profilePanelState,
+                          contentType: 'user'
+                        }}
+                        style={{ marginTop: '0.6rem' }}
+                        userId={userId}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-              {alertModalShown && (
-                <AlertModal
-                  title={imageTooLarge10MBLabel}
-                  content={pleaseSelectSmallerImageLabel}
-                  onHide={() => setAlertModalShown(false)}
-                />
+                {alertModalShown && (
+                  <AlertModal
+                    title={imageTooLarge10MBLabel}
+                    content={pleaseSelectSmallerImageLabel}
+                    onHide={() => setAlertModalShown(false)}
+                  />
+                )}
+              </ScopedTheme>
+              {!!twinkleXP && profileLoaded && (
+                <div className={rankBarWrapperClass}>
+                  <ScopedTheme theme={themeName as any}>
+                    <RankBar profile={profile} />
+                  </ScopedTheme>
+                </div>
               )}
-            </ScopedTheme>
-            {!!twinkleXP && profileLoaded && (
-              <div className={rankBarWrapperClass}>
-                <ScopedTheme theme={themeName as any}>
-                  <RankBar profile={profile} />
-                </ScopedTheme>
-              </div>
-            )}
-          </>
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              height: componentHeight
-            }}
-          />
-        )}
+            </>
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: componentHeight
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
