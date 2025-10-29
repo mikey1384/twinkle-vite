@@ -248,12 +248,15 @@ export default function UserDetails({
           </div>
         ) : (
           <div
-            style={{
-              height: '6rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start'
-            }}
+            className={css`
+              height: 6rem;
+              display: flex;
+              align-items: center;
+              justify-content: flex-start;
+              @media (max-width: ${mobileMaxWidth}) {
+                justify-content: center;
+              }
+            `}
           >
             <span>
               {profile.username}
