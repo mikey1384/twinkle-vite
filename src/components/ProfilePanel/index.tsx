@@ -544,7 +544,7 @@ function ProfilePanel({
           width: '100%'
         }}
       >
-        <div ref={PanelRef}>
+        <div style={{ width: '100%' }} ref={PanelRef}>
           {contentShown ? (
             <>
               <ScopedTheme theme={themeName} roles={['profilePanel']}>

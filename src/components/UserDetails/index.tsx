@@ -10,7 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import StatusMsg from './StatusMsg';
 import Bio from '~/components/Texts/Bio';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   addEmoji,
   finalizeEmoji,
@@ -94,58 +94,67 @@ export default function UserDetails({
         ...style
       }}
     >
-      <Link
-        to={noLink ? '' : `/users/${profile.username}`}
-        onClick={handleReloadProfile}
-        style={{
-          width: 'auto',
-          fontSize: small ? '3rem' : '3.5rem',
-          fontWeight: 'bold',
-          color: Color.darkerGray(),
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          lineHeight: 1.3,
-          textDecoration: 'none'
-        }}
-        className={
-          noLink
-            ? ''
-            : css`
-                transition: color 0.2s;
-                &:hover {
-                  color: ${Color[
-                    profile.profileTheme || 'logoBlue'
-                  ]()}!important;
-                }
-              `
-        }
-      >
-        {profile.username}
-      </Link>
       <div
-        style={{
-          fontSize: small ? '1.3rem' : '1.5rem'
-        }}
+        className={css`
+          width: 100%;
+          @media (max-width: ${mobileMaxWidth}) {
+            text-align: center;
+          }
+        `}
       >
-        <UserTitle
-          user={profile}
-          className={`unselectable ${css`
-            font-size: ${small ? '1.3rem' : '1.5rem'};
-            font-weight: bold;
-            display: inline;
-            margin-right: 0.7rem;
-            color: ${Color.darkGray()};
-            font-size: 1.5rem;
-          `}`}
-        />
-        <span
-          className={css`
-            color: ${Color.gray()};
-          `}
+        <Link
+          to={noLink ? '' : `/users/${profile.username}`}
+          onClick={handleReloadProfile}
+          style={{
+            width: 'auto',
+            fontSize: small ? '3rem' : '3.5rem',
+            fontWeight: 'bold',
+            color: Color.darkerGray(),
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            lineHeight: 1.3,
+            textDecoration: 'none'
+          }}
+          className={
+            noLink
+              ? ''
+              : css`
+                  transition: color 0.2s;
+                  &:hover {
+                    color: ${Color[
+                      profile.profileTheme || 'logoBlue'
+                    ]()}!important;
+                  }
+                `
+          }
         >
-          {profile.realName}
-        </span>
+          {profile.username}
+        </Link>
+        <div
+          style={{
+            fontSize: small ? '1.3rem' : '1.5rem'
+          }}
+        >
+          <UserTitle
+            user={profile}
+            className={`unselectable ${css`
+              font-size: ${small ? '1.3rem' : '1.5rem'};
+              font-weight: bold;
+              display: inline;
+              margin-right: 0.7rem;
+              color: ${Color.darkGray()};
+              font-size: 1.5rem;
+            `}`}
+          />
+          <span
+            className={css`
+              color: ${Color.gray()};
+            `}
+          >
+            {profile.realName}
+          </span>
+        </div>
       </div>
       {userId === profile.id && !unEditable && (
         <StatusInput
