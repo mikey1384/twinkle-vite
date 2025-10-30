@@ -23,11 +23,18 @@ const urlCss = css`
   border: 1px solid var(--ui-border);
   border-radius: ${wideBorderRadius};
   margin-top: 0.8rem;
+  transition: border-color 0.18s ease;
+  &:hover {
+    border-color: var(--ui-border-strong);
+  }
   @media (max-width: ${mobileMaxWidth}) {
     border: none;
     border-radius: 0;
     margin-left: 0;
     margin-right: 0;
+    &:hover {
+      border-color: var(--ui-border);
+    }
   }
 `;
 const userCommentCss = css`
@@ -214,6 +221,9 @@ export default function ContentPanel({
   const contentHeight = useMemo(() => {
     return !loaded ? '15rem' : '';
   }, [loaded]);
+
+  const targetTuckMargin = 'calc(-1rem - 1px)';
+  const alignTopWithTarget = targetObj?.comment ? targetTuckMargin : undefined;
 
   const container = useMemo(
     () => css`
@@ -411,10 +421,11 @@ export default function ContentPanel({
                 {contentState.loaded && targetObj?.subject?.id && (
                   <ContentListItem
                     hideSideBordersOnMobile
+                    noTopBorderRadius
                     style={{
                       zIndex: 1,
                       position: 'relative',
-                      marginTop: '0.8rem'
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
                     }}
                     expandable
                     contentObj={{
@@ -428,7 +439,8 @@ export default function ContentPanel({
                     hideSideBordersOnMobile
                     noTopBorderRadius
                     style={{
-                      position: 'relative'
+                      position: 'relative',
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
                     }}
                     expandable
                     contentObj={rootObj}
@@ -437,8 +449,10 @@ export default function ContentPanel({
                 {contentType === 'comment' && appliedRootType === 'aiStory' && (
                   <ContentListItem
                     hideSideBordersOnMobile
+                    noTopBorderRadius
                     style={{
-                      position: 'relative'
+                      position: 'relative',
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
                     }}
                     expandable
                     contentObj={rootObj}
@@ -448,7 +462,14 @@ export default function ContentPanel({
                   appliedRootType === 'url' &&
                   !contentState.rootObj?.notFound &&
                   !rootObj.notFound && (
-                    <div className={urlCss}>
+                    <div
+                      className={urlCss}
+                      style={{
+                        marginTop: alignTopWithTarget ?? targetTuckMargin,
+                        borderTopLeftRadius: 0,
+                        borderTopRightRadius: 0
+                      }}
+                    >
                       {rootObj.loaded ? (
                         <Embedly small contentId={contentState.rootId} />
                       ) : (
