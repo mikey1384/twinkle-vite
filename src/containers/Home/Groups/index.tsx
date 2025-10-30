@@ -160,7 +160,8 @@ export default function Groups() {
       <SearchInput
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 1rem;
+            margin: 1rem 1.2rem 0;
+            width: calc(100% - 2.4rem);
           }
         `}
         style={{ zIndex: 0 }}
@@ -176,6 +177,9 @@ export default function Groups() {
           flex-direction: column;
           width: 100%;
           padding: 16px;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1rem 0;
+          }
         `}
       >
         {isLoading ? (

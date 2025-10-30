@@ -10,7 +10,7 @@ import {
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
-import { Color } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import UsernameText from '~/components/Texts/UsernameText';
 import { getColorFromName } from '~/helpers/stringHelpers';
@@ -77,6 +77,12 @@ export default function GroupItem({
           margin: 1rem 0;
           border-color: var(--ui-border);
           box-shadow: none;
+          @media (max-width: ${mobileMaxWidth}) {
+            margin: 0.6rem 0;
+            padding: 1.4rem 1.5rem;
+            border: none;
+            border-radius: 0;
+          }
         `}
       >
         <div
@@ -218,6 +224,8 @@ export default function GroupItem({
             margin: 0;
             font-size: 1.5rem;
             color: #666;
+            overflow-wrap: anywhere;
+            word-break: break-word;
           `}
         >
           {description}
@@ -242,7 +250,11 @@ export default function GroupItem({
             variant="solid"
             size="md"
             tone="flat"
-            style={{ fontWeight: 700, minWidth: '20rem', justifyContent: 'center' }}
+            style={{
+              fontWeight: 700,
+              minWidth: '20rem',
+              justifyContent: 'center'
+            }}
           >
             <Icon
               icon={isMember || isOwner ? 'right-from-bracket' : 'user-plus'}

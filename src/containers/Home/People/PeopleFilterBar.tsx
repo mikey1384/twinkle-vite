@@ -22,6 +22,7 @@ export default function PeopleFilterBar({
         @media (max-width: ${mobileMaxWidth}) {
           border-right: 0;
           border-left: 0;
+          border-radius: 0;
         }
       `}
       style={{

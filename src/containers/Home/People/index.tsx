@@ -97,7 +97,8 @@ function People() {
       <SearchInput
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 1rem;
+            margin: 1rem 1.2rem 0;
+            width: calc(100% - 2.4rem);
           }
         `}
         style={{ zIndex: 0 }}
