@@ -88,12 +88,11 @@ function InputForm({
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
-  const {
-    colorKey: buttonColor
-  } = useRoleColor('button', { themeName: theme, fallback: 'logoBlue' });
-  const {
-    colorKey: buttonHoverColor
-  } = useRoleColor('buttonHovered', {
+  const { colorKey: buttonColor } = useRoleColor('button', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { colorKey: buttonHoverColor } = useRoleColor('buttonHovered', {
     themeName: theme,
     fallback: buttonColor || 'logoBlue'
   });
@@ -105,9 +104,10 @@ function InputForm({
       opacity: 0.4
     }
   );
-  const {
-    colorKey: dangerColor
-  } = useRoleColor('danger', { themeName: theme, fallback: 'red' });
+  const { colorKey: dangerColor } = useRoleColor('danger', {
+    themeName: theme,
+    fallback: 'red'
+  });
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -391,7 +391,8 @@ function InputForm({
           >
             {isComment && <DraftSaveIndicator savingState={savingState} />}
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               color="green"
               disabled={submitDisabled}
               onClick={handleSubmit}
@@ -410,7 +411,8 @@ function InputForm({
             <Button
               style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
               color={dangerColor}
-              filled
+              variant="soft"
+              tone="raised"
               loading={secretViewMessageSubmitting}
               onClick={() => {
                 level >= MOD_LEVEL
