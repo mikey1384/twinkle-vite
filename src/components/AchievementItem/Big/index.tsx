@@ -56,7 +56,7 @@ export default function Big({
   return (
     <div
       style={{
-        padding: '1rem',
+        padding: isNotification ? '1rem' : '1rem 0',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
