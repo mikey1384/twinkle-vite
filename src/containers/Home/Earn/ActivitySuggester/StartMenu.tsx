@@ -34,7 +34,6 @@ export default function StartMenu() {
               tone="flat"
               size="lg"
               shape="pill"
-              stretch
             >
               <Icon icon="bolt" />
               <span>Answer Subjects</span>
@@ -60,7 +59,6 @@ export default function StartMenu() {
               variant="soft"
               tone="raised"
               size="md"
-              stretch
             >
               <Icon icon="heart" />
               <span>Recommend Posts</span>
@@ -71,7 +69,6 @@ export default function StartMenu() {
               variant="soft"
               tone="raised"
               size="md"
-              stretch
             >
               <Icon icon="certificate" />
               <span>Reward Posts</span>
