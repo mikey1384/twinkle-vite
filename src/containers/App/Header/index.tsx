@@ -18,7 +18,8 @@ import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
   VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE
+  AI_CARD_CHAT_TYPE,
+  DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
 
 import { User } from '~/types';
@@ -51,7 +52,12 @@ export default function Header({
   const userId = useKeyContext((v) => v.myState.userId);
   const loggedIn = useKeyContext((v) => v.myState.loggedIn);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
-  const headerRole = useRoleColor('header', { fallback: 'white' });
+  const viewerTheme =
+    useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
+  const headerRole = useRoleColor('header', {
+    fallback: 'white',
+    themeName: viewerTheme
+  });
   const headerColor = headerRole.getColor() || Color.white();
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);

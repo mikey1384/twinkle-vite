@@ -9,9 +9,11 @@ import {
   useExploreContext,
   useHomeContext,
   useNotiContext,
-  useProfileContext
+  useProfileContext,
+  useKeyContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -37,7 +39,12 @@ function Nav({
   style?: React.CSSProperties;
 }) {
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const viewerTheme =
+    useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
+  const alertRole = useRoleColor('alert', {
+    fallback: 'gold',
+    themeName: viewerTheme
+  });
   const alertHue = useMemo(
     () => alertRole.getColor() || Color.gold(),
     [alertRole]
@@ -59,7 +66,8 @@ function Nav({
     (v) => v.actions.onSetSubjectsLoaded
   );
   const { getColor: getFilterColor } = useRoleColor('filter', {
-    fallback: 'logoBlue'
+    fallback: 'logoBlue',
+    themeName: viewerTheme
   });
   const activeColor = useMemo(
     () => getFilterColor() || Color.logoBlue(),

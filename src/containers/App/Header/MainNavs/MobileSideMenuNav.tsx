@@ -3,6 +3,8 @@ import Icon from '~/components/Icon';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { useKeyContext } from '~/contexts';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 export default function MobileSideMenuNav({
   alert,
@@ -11,7 +13,12 @@ export default function MobileSideMenuNav({
   alert: boolean;
   onClick: () => void;
 }) {
-  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const viewerTheme =
+    useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
+  const alertRole = useRoleColor('alert', {
+    fallback: 'gold',
+    themeName: viewerTheme
+  });
   const alertHue = useMemo(
     () => alertRole.getColor() || Color.gold(),
     [alertRole]
