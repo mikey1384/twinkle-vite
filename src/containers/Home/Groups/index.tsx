@@ -157,20 +157,22 @@ export default function Groups() {
 
   return (
     <ErrorBoundary componentPath="Home/Groups">
-      <SearchInput
+      <div
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
-            margin: 1rem 1.2rem 0;
-            width: calc(100% - 2.4rem);
+            padding: 1rem 1.2rem 0;
           }
         `}
-        style={{ zIndex: 0 }}
-        addonColor={searchColor}
-        borderColor={searchColor}
-        placeholder="Search Groups..."
-        onChange={handleSearch}
-        value={searchText}
-      />
+      >
+        <SearchInput
+          style={{ zIndex: 0 }}
+          addonColor={searchColor}
+          borderColor={searchColor}
+          placeholder="Search Groups..."
+          onChange={handleSearch}
+          value={searchText}
+        />
+      </div>
       <div
         className={css`
           display: flex;

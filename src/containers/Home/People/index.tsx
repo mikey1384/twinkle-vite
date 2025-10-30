@@ -94,20 +94,22 @@ function People() {
 
   return (
     <div style={{ height: '100%' }}>
-      <SearchInput
+      <div
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
-            margin: 1rem 1.2rem 0;
-            width: calc(100% - 2.4rem);
+            padding: 1rem 1.2rem 0;
           }
         `}
-        style={{ zIndex: 0 }}
-        addonColor={searchColor}
-        borderColor={searchColor}
-        placeholder={`${searchUsersLabel}...`}
-        onChange={handleSearch}
-        value={searchText}
-      />
+      >
+        <SearchInput
+          style={{ zIndex: 0 }}
+          addonColor={searchColor}
+          borderColor={searchColor}
+          placeholder={`${searchUsersLabel}...`}
+          onChange={handleSearch}
+          value={searchText}
+        />
+      </div>
       <div
         style={{
           marginTop: '1rem',
