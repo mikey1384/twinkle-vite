@@ -447,8 +447,8 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     draw: { color: 'logoBlue' },
     fail: { color: 'black' },
     filter: {
-      color: pickColor({ gold: 'darkerGray', orange: 'black' }, color),
-      opacity: pickNumber({ gold: 1 }, 0.7)
+      color: pickColor({ gold: 'darkerGray', orange: 'darkerGray' }, color),
+      opacity: pickNumber({ gold: 1, orange: 1 }, 0.7)
     },
     filterText: {
       color: 'white',
