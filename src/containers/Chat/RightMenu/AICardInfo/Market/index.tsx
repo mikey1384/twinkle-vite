@@ -40,8 +40,7 @@ export default function Market() {
   return (
     <div
       style={{
-        height: '50%',
-        borderBottom: '1px solid var(--ui-border)'
+        height: '50%'
       }}
     >
       <FilterBar
