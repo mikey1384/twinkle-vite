@@ -162,23 +162,25 @@ export default function HomeMenuItems({
               }
             }
           }
-          > nav:hover {
-            transform: translateX(4px);
-            .homemenu__item {
-              background: ${hoverBg};
-              border-color: ${isVanta
-                ? 'rgba(0,0,0,0.9)'
-                : activeColorFn
-                ? activeColorFn(0.4)
-                : 'var(--ui-border)'};
-              box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22);
-              > .icon,
-              > .label {
+          @media (hover: hover) and (pointer: fine) {
+            > nav:hover {
+              transform: translateX(4px);
+              .homemenu__item {
+                background: ${hoverBg};
+                border-color: ${isVanta
+                  ? 'rgba(0,0,0,0.9)'
+                  : activeColorFn
+                  ? activeColorFn(0.4)
+                  : 'var(--ui-border)'};
+                box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22);
+                > .icon,
+                > .label {
+                  color: ${isVanta ? Color.darkGray() : hoverAccentColor};
+                }
+              }
+              a {
                 color: ${isVanta ? Color.darkGray() : hoverAccentColor};
               }
-            }
-            a {
-              color: ${isVanta ? Color.darkGray() : hoverAccentColor};
             }
           }
           > nav.active {
@@ -250,14 +252,6 @@ export default function HomeMenuItems({
                 > .label {
                   padding-left: 1.6rem;
                 }
-              }
-            }
-            > nav:hover {
-              background: none;
-              color: ${Color.darkGray()};
-              transform: none;
-              a {
-                color: ${Color.darkGray()};
               }
             }
             > nav.active {
