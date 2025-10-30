@@ -78,9 +78,10 @@ export default function SectionPanel({
     customThemeName: customColorTheme
   });
 
-  const TitleInputRef = useRef(null);
+  const TitleInputContainerRef = useRef<HTMLDivElement | null>(null);
+  const TitleInputRef = useRef<HTMLInputElement | null>(null);
 
-  useOutsideClick(TitleInputRef, () => {
+  useOutsideClick([TitleInputRef, TitleInputContainerRef], () => {
     setOnEdit(false);
     setEditedTitle(typeof title === 'string' ? title : '');
   });
@@ -177,6 +178,7 @@ export default function SectionPanel({
             >
               {onEdit ? (
                 <div
+                  ref={TitleInputContainerRef}
                   className={css`
                     width: 100%;
                     display: flex;
