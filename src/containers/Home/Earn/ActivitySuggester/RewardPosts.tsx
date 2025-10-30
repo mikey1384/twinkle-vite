@@ -64,7 +64,8 @@ export default function RewardPosts() {
         {posts.length > 0 && (
           <div className={primaryActionRow}>
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               color={showMeAnotherPostButtonColor}
               onClick={handleLoadAnotherPostClick}
               disabled={skipping || loading}
@@ -80,7 +81,6 @@ export default function RewardPosts() {
             color="logoBlue"
             variant="soft"
             tone="raised"
-            stretch
           >
             <Icon icon="certificate" />
             <span>Answer Subjects</span>
@@ -90,7 +90,6 @@ export default function RewardPosts() {
             color="brownOrange"
             variant="soft"
             tone="raised"
-            stretch
           >
             <Icon icon="heart" />
             <span>Recommend Posts</span>

@@ -14,12 +14,10 @@ const BodyRef = document.scrollingElement || document.documentElement;
 const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
 
 export default function EarnXPFromSubjects() {
-  const showMeAnotherSubjectRole = useRoleColor(
-    'showMeAnotherSubjectButton',
-    { fallback: 'green' }
-  );
-  const showMeAnotherSubjectButtonColor =
-    showMeAnotherSubjectRole.colorKey;
+  const showMeAnotherSubjectRole = useRoleColor('showMeAnotherSubjectButton', {
+    fallback: 'green'
+  });
+  const showMeAnotherSubjectButtonColor = showMeAnotherSubjectRole.colorKey;
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );
@@ -48,7 +46,8 @@ export default function EarnXPFromSubjects() {
           )}
           <div className={primaryActionRow}>
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               color={showMeAnotherSubjectButtonColor}
               onClick={handleLoadAnotherSubjectClick}
               disabled={loading}
@@ -65,7 +64,6 @@ export default function EarnXPFromSubjects() {
               color="brownOrange"
               variant="soft"
               tone="raised"
-              stretch
             >
               <Icon icon="heart" />
               <span>Recommend Posts</span>
@@ -75,7 +73,6 @@ export default function EarnXPFromSubjects() {
               color="pink"
               variant="soft"
               tone="raised"
-              stretch
             >
               <Icon icon="certificate" />
               <span>Reward Posts</span>

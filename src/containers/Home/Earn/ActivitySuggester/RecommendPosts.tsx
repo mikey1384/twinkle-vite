@@ -66,7 +66,8 @@ export default function RecommendPosts() {
         {posts.length > 0 && (
           <div className={primaryActionRow}>
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               color={showMeAnotherPostButtonColor}
               onClick={handleLoadAnotherPostClick}
               disabled={skipping || loading}
@@ -82,7 +83,6 @@ export default function RecommendPosts() {
             color="logoBlue"
             variant="soft"
             tone="flat"
-            stretch
           >
             <Icon icon="certificate" />
             <span>Answer Subjects</span>
@@ -92,7 +92,6 @@ export default function RecommendPosts() {
             color="pink"
             variant="soft"
             tone="flat"
-            stretch
           >
             <Icon icon="certificate" />
             <span>Reward Posts</span>
