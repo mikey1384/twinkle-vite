@@ -47,7 +47,8 @@ export default function UploadModal({
       <>
         {canUseGeneratedImage && (
           <Button
-            filled
+            variant="soft"
+            tone="raised"
             color="green"
             onClick={handleUseThisImageClick}
             style={useThisImageButtonStyle as React.CSSProperties}

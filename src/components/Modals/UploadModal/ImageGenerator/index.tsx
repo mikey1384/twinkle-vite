@@ -3,7 +3,6 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 
-import Header from './Header';
 import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
@@ -289,31 +288,6 @@ export default function ImageGenerator({
         min-height: 600px;
       `}
     >
-      <Header />
-
-      <div
-        className={css`
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-        `}
-      >
-        <TabButton
-          onClick={() => handleModeChange('text')}
-          active={mode === 'text'}
-          disabled={isShowingLoadingState}
-        >
-          Text Prompt
-        </TabButton>
-        <TabButton
-          onClick={() => handleModeChange('draw')}
-          active={mode === 'draw'}
-          disabled={isShowingLoadingState}
-        >
-          Draw
-        </TabButton>
-      </div>
-
       {mode === 'text' && (
         <div
           className={css`
@@ -393,6 +367,29 @@ export default function ImageGenerator({
           </label>
         </div>
       )}
+
+      <div
+        className={css`
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        `}
+      >
+        <TabButton
+          onClick={() => handleModeChange('text')}
+          active={mode === 'text'}
+          disabled={isShowingLoadingState}
+        >
+          Text Prompt
+        </TabButton>
+        <TabButton
+          onClick={() => handleModeChange('draw')}
+          active={mode === 'draw'}
+          disabled={isShowingLoadingState}
+        >
+          Draw
+        </TabButton>
+      </div>
 
       {mode === 'draw' && (
         <ImageEditor
