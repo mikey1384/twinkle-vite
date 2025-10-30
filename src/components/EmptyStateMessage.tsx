@@ -4,6 +4,7 @@ import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 interface EmptyStateMessageProps {
+  autoWidth?: boolean;
   children: React.ReactNode;
   caption?: React.ReactNode;
   className?: string;
@@ -13,6 +14,7 @@ interface EmptyStateMessageProps {
 }
 
 export default function EmptyStateMessage({
+  autoWidth,
   children,
   caption,
   className,
@@ -29,7 +31,8 @@ export default function EmptyStateMessage({
   const captionColor = Color.darkGray();
 
   const containerClass = css`
-    width: 100%;
+    width: ${autoWidth ? 'fit-content' : '100%'};
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -44,6 +47,7 @@ export default function EmptyStateMessage({
     font-weight: 600;
     padding: 2.6rem 2rem;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    ${autoWidth ? 'margin-left: auto; margin-right: auto;' : ''}
 
     @media (max-width: 768px) {
       font-size: 1.7rem;

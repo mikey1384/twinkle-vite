@@ -897,11 +897,14 @@ function ProfilePanel({
                               !isOnline &&
                               profileId !== userId && (
                                 <div
-                                  style={{
-                                    marginTop: '1rem',
-                                    fontSize: '1.5rem',
-                                    color: Color.gray()
-                                  }}
+                                  className={css`
+                                    margin-top: 1rem;
+                                    font-size: 1.5rem;
+                                    color: ${Color.gray()};
+                                    @media (max-width: ${mobileMaxWidth}) {
+                                      text-align: center;
+                                    }
+                                  `}
                                 >
                                   <p>
                                     {lastOnlineLabel} {timeSince(lastActive)}
