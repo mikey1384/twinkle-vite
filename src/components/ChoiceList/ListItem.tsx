@@ -94,20 +94,24 @@ export default function ListItem({
         transition: transform 0.12s ease, box-shadow 0.18s ease,
           border-color 0.18s ease, background 0.18s ease;
         box-shadow: none;
-        ${
-          // If this is the user's wrong selection, keep hover highlight red
-          isWrongSelection
-            ? `&:hover { 
-                 border-color: ${Color.rose(0.4)}; 
-                 background: ${Color.rose(0.12)}; 
+
+        ${isWrongSelection
+          ? `@media (hover: hover) and (pointer: fine) { 
+                 &:hover { 
+                   border-color: ${Color.rose(0.4)}; 
+                   background: ${Color.rose(0.12)}; 
+                 }
                }`
-            : !isEvaluated || allowReselect
-            ? `&:hover {
-                 border-color: ${Color.logoBlue(0.4)};
-                 background: ${Color.logoBlue(0.08)};
+          : !isEvaluated || allowReselect
+          ? `@media (hover: hover) and (pointer: fine) { 
+                 &:hover { 
+                   border-color: ${Color.logoBlue(0.4)}; 
+                   background: ${Color.logoBlue(0.08)}; 
+                 }
                }`
-            : ''
-        }
+          : ''}
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
         @media (max-width: ${mobileMaxWidth}) {
           padding: 1.1rem 1.3rem;
           gap: 1rem;
