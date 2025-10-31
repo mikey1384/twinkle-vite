@@ -326,7 +326,8 @@ export default function Details({
           <div
             className={css`
               display: grid;
-              grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+              /* Left fills remaining space; right sizes to content */
+              grid-template-columns: minmax(0, 1fr) auto;
               grid-auto-rows: auto;
               column-gap: 1.25rem;
               row-gap: 1rem;
