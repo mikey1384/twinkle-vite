@@ -337,7 +337,6 @@ export default function Details({
               padding: 1.25rem;
               @media (max-width: ${tabletMaxWidth}) {
                 border-radius: 0;
-                grid-template-columns: 1fr;
                 padding: 1rem;
               }
             `}
@@ -385,10 +384,7 @@ export default function Details({
             <div
               className={css`
                 grid-column: 1;
-                min-width: 0; /* prevent grid child from forcing overflow */
-                @media (max-width: ${tabletMaxWidth}) {
-                  grid-column: 1 / -1;
-                }
+                min-width: 0;
               `}
             >
               <Description
@@ -409,7 +405,6 @@ export default function Details({
                 determineEditButtonDoneStatus={determineEditButtonDoneStatus}
               />
             </div>
-            {/* Right column: Actions stack */}
             <aside
               className={css`
                 grid-column: 2;
@@ -417,11 +412,7 @@ export default function Details({
                 flex-direction: column;
                 align-items: flex-end;
                 row-gap: 0.75rem;
-                min-width: 0; /* prevent overflow due to grid min-content sizing */
-                @media (max-width: ${tabletMaxWidth}) {
-                  align-items: flex-end;
-                  grid-column: 1 / -1;
-                }
+                min-width: 0;
               `}
             >
               {/* Row 1: Like + Reward */}

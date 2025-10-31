@@ -35,7 +35,7 @@ export default function Description({
   const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
   const [isEditing, setIsEditing] = useState(false);
   return (
-    <div style={{ width: '100%', fontSize: '1.6rem' }}>
+    <div style={{ fontSize: '1.6rem' }}>
       {onEdit ? (
         <>
           <Textarea
