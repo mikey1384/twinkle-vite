@@ -30,6 +30,7 @@ const rankBarCSS = css`
   @media (max-width: ${mobileMaxWidth}) {
     margin-left: 0;
     margin-right: 0;
+    border-radius: 0;
   }
 `;
 

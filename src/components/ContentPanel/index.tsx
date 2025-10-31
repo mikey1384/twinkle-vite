@@ -37,13 +37,15 @@ const urlCss = css`
     }
   }
 `;
-const userCommentCss = css`
+
+
+// Tucked profile target container to visually attach under main panel
+const profileTargetCss = css`
   cursor: pointer;
   background: #fff;
   border: 1px solid var(--ui-border);
-  border-radius: ${wideBorderRadius};
-  margin-top: 0.8rem;
-  padding: 1rem;
+  border-radius: 0 0 ${wideBorderRadius} ${wideBorderRadius};
+  /* No outer padding: inner Profile provides its own padding */
   @media (max-width: ${mobileMaxWidth}) {
     border: none;
     border-radius: 0;
@@ -479,7 +481,12 @@ export default function ContentPanel({
                   )}
                 {contentType === 'comment' && appliedRootType === 'user' ? (
                   <div
-                    className={userCommentCss}
+                    className={profileTargetCss}
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
+                    }}
                     onClick={() => navigate(`/users/${rootObj.username}`)}
                   >
                     {rootObj.id ? (
