@@ -18,7 +18,7 @@ import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import {
   borderRadius,
   Color,
-  mobileMaxWidth,
+  tabletMaxWidth,
   wideBorderRadius
 } from '~/constants/css';
 import { css, cx } from '@emotion/css';
@@ -97,7 +97,7 @@ const actionButtonClass = css`
   span {
     white-space: nowrap;
   }
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     gap: 0.45rem;
     width: 100%;
   }
@@ -114,7 +114,7 @@ const actionButtonFlexMediumClass = css`
 const actionButtonFullWidthClass = css`
   flex: 1 0 100%;
   min-width: 18rem;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     min-width: 0;
   }
 `;
@@ -129,7 +129,7 @@ const actionButtonsLayoutClass = css`
   margin-left: auto;
   margin-right: auto;
 
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-areas:
@@ -140,25 +140,25 @@ const actionButtonsLayoutClass = css`
 `;
 
 const profileButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: profile;
   }
 `;
 
 const cardsButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: cards;
   }
 `;
 
 const chatButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: chat;
   }
 `;
 
 const messageButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: message;
   }
 `;
@@ -168,7 +168,7 @@ const rankBarWrapperClass = css`
   width: 100%;
   position: relative;
   z-index: 0;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     margin-top: 0;
   }
 `;
@@ -189,7 +189,7 @@ const panelContainerClass = css`
   background: #fff;
   border-color: var(--themed-card-border, var(--ui-border));
   box-shadow: none;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     border-radius: 0;
     padding: 1.6rem 1.4rem;
   }
@@ -204,7 +204,7 @@ const heroSectionClass = css`
   background: var(--profile-panel-hero-bg, rgba(59, 130, 246, 0.65));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
     0 10px 32px -20px rgba(15, 23, 42, 0.55);
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     border-radius: ${borderRadius};
   }
 `;
@@ -234,7 +234,7 @@ const leftColumnClass = css`
   flex-direction: column;
   align-items: center;
   gap: 1.4rem;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     flex: 1 1 100%;
     max-width: unset;
     display: grid;
@@ -251,7 +251,7 @@ const quickLinksClass = css`
   width: 100%;
   align-items: center;
   font-weight: 600;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     width: auto;
     align-items: flex-end;
     gap: 0.6rem;
@@ -317,7 +317,7 @@ const detailsColumnClass = css`
 
 const profilePicWrapperClass = css`
   width: 100%;
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     width: auto;
     grid-column: 2;
     justify-self: center;
@@ -584,7 +584,7 @@ function ProfilePanel({
                                     margin: 0 auto;
                                     display: block;
                                     --profile-pic-size: min(16rem, 58vw);
-                                    @media (max-width: ${mobileMaxWidth}) {
+                                    @media (max-width: ${tabletMaxWidth}) {
                                       --profile-pic-size: min(13rem, 72vw);
                                     }
                                   `}
@@ -901,7 +901,7 @@ function ProfilePanel({
                                     margin-top: 1rem;
                                     font-size: 1.5rem;
                                     color: ${Color.gray()};
-                                    @media (max-width: ${mobileMaxWidth}) {
+                                    @media (max-width: ${tabletMaxWidth}) {
                                       text-align: center;
                                     }
                                   `}

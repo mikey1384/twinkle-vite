@@ -10,7 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import StatusMsg from './StatusMsg';
 import Bio from '~/components/Texts/Bio';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth } from '~/constants/css';
 import {
   addEmoji,
   finalizeEmoji,
@@ -97,7 +97,7 @@ export default function UserDetails({
       <div
         className={css`
           width: 100%;
-          @media (max-width: ${mobileMaxWidth}) {
+          @media (max-width: ${tabletMaxWidth}) {
             text-align: center;
           }
         `}
@@ -253,7 +253,7 @@ export default function UserDetails({
               display: flex;
               align-items: center;
               justify-content: flex-start;
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
                 justify-content: center;
               }
             `}
