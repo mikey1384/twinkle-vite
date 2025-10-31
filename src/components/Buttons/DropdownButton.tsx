@@ -71,8 +71,10 @@ export default function DropdownButton({
           variant={props.variant || (!!dropdownContext ? 'solid' : 'soft')}
           tone={props.tone || 'raised'}
           className={`${className ? `${className} ` : ''}${css`
-            &:hover {
-              opacity: 1;
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                opacity: 1;
+              }
             }
           `}`}
           style={{
@@ -143,8 +145,10 @@ export default function DropdownButton({
           className={`${css`
             opacity: ${prop.disabled && 0.3};
             cursor: ${prop.disabled ? 'default' : 'pointer'};
-            &:hover {
-              background: ${prop.disabled ? '#fff !important' : ''};
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                background: ${prop.disabled ? '#fff !important' : ''};
+              }
             }
           `} ${prop.className}
           `}

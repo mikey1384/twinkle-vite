@@ -435,9 +435,11 @@ export const NewModal = forwardRef<
                       transition: all 0.2s ease;
                       flex-shrink: 0;
 
-                      &:hover {
-                        background-color: ${Color.borderGray()};
-                        color: ${Color.black()};
+                      @media (hover: hover) and (pointer: fine) {
+                        &:hover {
+                          background-color: ${Color.borderGray()};
+                          color: ${Color.black()};
+                        }
                       }
 
                       &:focus-visible {
@@ -474,9 +476,11 @@ export const NewModal = forwardRef<
                   transition: all 0.2s ease;
                   z-index: 1;
 
-                  &:hover {
-                    background-color: ${Color.borderGray()};
-                    color: ${Color.black()};
+                  @media (hover: hover) and (pointer: fine) {
+                    &:hover {
+                      background-color: ${Color.borderGray()};
+                      color: ${Color.black()};
+                    }
                   }
 
                   &:focus-visible {

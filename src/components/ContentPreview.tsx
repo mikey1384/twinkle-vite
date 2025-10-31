@@ -124,8 +124,10 @@ export default function ContentPreview({
       gap: 1.2rem;
       transition: border-color 0.18s ease;
       cursor: pointer;
-      &:hover {
-        border-color: var(--ui-border-strong);
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          border-color: var(--ui-border-strong);
+        }
       }
       @media (max-width: ${mobileMaxWidth}) {
         border-left: 0;

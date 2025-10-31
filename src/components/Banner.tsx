@@ -62,11 +62,15 @@ export default function Banner({
         transition: background 0.18s ease, border-color 0.18s ease,
           transform 0.06s ease, opacity 0.18s ease;
         ${onClick && !loading ? 'cursor: pointer;' : 'cursor: default;'}
-        &:hover {
-          ${onClick && !loading
-            ? `background: ${tint(hue, 1)}; border-color: ${tint(hue, 1)};`
-            : ''};
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            ${onClick && !loading
+              ? `background: ${tint(hue, 1)}; border-color: ${tint(hue, 1)};`
+              : ''};
+          }
         }
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.4rem;
           padding: 0.9rem 1rem;

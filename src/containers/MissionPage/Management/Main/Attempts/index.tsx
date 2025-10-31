@@ -67,7 +67,8 @@ export default function Attempts({
           style={{
             display: 'flex',
             justifyContent: 'center',
-            marginTop: '15rem'
+            marginTop: '15rem',
+            padding: '0 1rem'
           }}
         >
           <EmptyStateMessage style={{ width: '70rem', maxWidth: '100%' }}>

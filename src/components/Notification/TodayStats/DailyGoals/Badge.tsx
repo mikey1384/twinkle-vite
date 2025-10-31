@@ -110,12 +110,16 @@ export default function Badge({
         transform: ${isAmped ? 'scale(1.1)' : 'scale(1)'};
         background: ${background};
 
-        &:hover {
-          transform: scale(1.1);
-          ${!isAchieved && !isAmped && !loadingWordle && inactiveGradient
-            ? `background: ${inactiveGradient};`
-            : ''}
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            transform: scale(1.1);
+            ${!isAchieved && !isAmped && !loadingWordle && inactiveGradient
+              ? `background: ${inactiveGradient};`
+              : ''}
+          }
         }
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       `}
     >
       {loadingWordle ? <Icon icon="spinner" pulse /> : children}

@@ -136,6 +136,7 @@ export default function SideMenu({
             border-color 0.18s ease, box-shadow 0.18s ease,
             transform 0.06s ease;
         }
+        @media (hover: hover) and (pointer: fine) {
         > nav:hover {
           ${isCardVariant
             ? `
@@ -149,6 +150,7 @@ export default function SideMenu({
           font-weight: bold;
           color: ${Color.black()};
           `}
+        }
         }
         > nav.active {
           ${isCardVariant
@@ -189,6 +191,7 @@ export default function SideMenu({
             border-color 0.18s ease, box-shadow 0.18s ease,
             transform 0.06s ease;
         }
+        @media (hover: hover) and (pointer: fine) {
         > a:hover {
           ${isCardVariant
             ? `
@@ -202,6 +205,7 @@ export default function SideMenu({
           font-weight: bold;
           color: ${Color.black()};
           `}
+        }
         }
         > a.active {
           ${isCardVariant

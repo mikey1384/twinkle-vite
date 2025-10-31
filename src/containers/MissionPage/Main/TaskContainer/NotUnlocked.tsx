@@ -9,7 +9,7 @@ export default function NotUnlocked({
   missionTitle: string;
 }) {
   return (
-    <div>
+    <div style={{ padding: '0 1rem' }}>
       <EmptyStateMessage
         icon={<Icon icon="lock" />}
         style={{ marginBottom: '3rem' }}

@@ -179,12 +179,11 @@ export default function Feeds({
                     );
                   })}
                 {feeds.length === 0 && (
-                  <EmptyStateMessage
-                    theme={selectedTheme}
-                    style={{ marginTop: '8rem' }}
-                  >
-                    {noFeedLabel}
-                  </EmptyStateMessage>
+                  <div style={{ marginTop: '8rem', padding: '0 1rem' }}>
+                    <EmptyStateMessage theme={selectedTheme}>
+                      {noFeedLabel}
+                    </EmptyStateMessage>
+                  </div>
                 )}
               </>
             )}

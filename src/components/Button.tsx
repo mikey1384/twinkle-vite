@@ -204,6 +204,10 @@ export default function Button(props: ButtonProps) {
       ${isDisabled ? `opacity: ${disabledOpacity}; pointer-events: none;` : ''}
       ${skeuoBox}
 
+      /* Better tap feel on mobile */
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+
       &:focus-visible {
         outline: 0;
         box-shadow: 0 0 0 3px ${tint(baseColorKey, 0.32)};

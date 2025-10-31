@@ -46,9 +46,11 @@ export default function GoBack({
           ${isAtTop ? `border-top: 0;` : ''}
           border-left: 0;
           border-right: 0;
-          &:hover {
-            background: #fff;
-            color: #000;
+          @media (hover: hover) and (pointer: fine) {
+            &:hover {
+              background: #fff;
+              color: #000;
+            }
           }
         }
       `}`}

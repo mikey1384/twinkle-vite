@@ -140,7 +140,7 @@ export default function SearchView({
       ) : (
         <div
           style={{
-            padding: '5rem 0',
+            padding: '5rem 1rem',
             width: '100%',
             display: 'flex',
             justifyContent: 'center',

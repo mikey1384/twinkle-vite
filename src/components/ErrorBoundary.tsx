@@ -118,10 +118,14 @@ export default class ErrorBoundary extends Component<
               cursor: pointer;
               transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-              &:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.25);
+              @media (hover: hover) and (pointer: fine) {
+                &:hover {
+                  transform: translateY(-1px);
+                  box-shadow: 0 14px 28px -22px rgba(15, 23, 42, 0.25);
+                }
               }
+              -webkit-tap-highlight-color: transparent;
+              touch-action: manipulation;
             `}
             onClick={() => window.location.reload()}
           >

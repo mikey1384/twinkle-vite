@@ -55,8 +55,10 @@ export default function SearchDropdown({
             color: ${Color.darkerGray()};
             cursor: pointer;
           }
-          nav:hover {
-            background: ${Color.highlightGray()};
+          @media (hover: hover) and (pointer: fine) {
+            nav:hover {
+              background: ${Color.highlightGray()};
+            }
           }
           nav a {
             text-decoration: none;

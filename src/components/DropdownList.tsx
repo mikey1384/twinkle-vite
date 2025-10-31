@@ -115,10 +115,12 @@ export default function DropdownList({
               align-items: center;
               justify-content: center;
               gap: 0.75rem;
-              &:hover {
-                background: ${highlightBg};
-                color: ${Color.black()};
-                box-shadow: inset 0 0 0 1px ${highlightBorder};
+              @media (hover: hover) and (pointer: fine) {
+                &:hover {
+                  background: ${highlightBg};
+                  color: ${Color.black()};
+                  box-shadow: inset 0 0 0 1px ${highlightBorder};
+                }
               }
               a {
                 text-decoration: none;
