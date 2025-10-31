@@ -193,17 +193,22 @@ function XPBar({
                       font-size: ${numCoinsEarned > 0 && !isMaxReached
                         ? '1.3rem'
                         : '1.5rem'};
-                      background: ${Color.brownOrange(isMaxReached ? 0.7 : 0.6)};
-                      border: 1px solid ${Color.brownOrange(isMaxReached ? 0.85 : 0.75)};
+                      background: ${Color.brownOrange(
+                        isMaxReached ? 0.7 : 0.6
+                      )};
+                      border: 1px solid
+                        ${Color.brownOrange(isMaxReached ? 0.85 : 0.75)};
                       border-top-right-radius: 9999px;
                       border-bottom-right-radius: 9999px;
-                      /* flattened: no shadow on white containers */
                       @media (max-width: ${mobileMaxWidth}) {
                         flex: 0 0 auto;
                         min-width: 3.5rem;
                         font-size: ${numCoinsEarned > 0 && !isMaxReached
                           ? '0.7rem'
                           : '1.2rem'};
+                        border-top-right-radius: 0;
+                        border-bottom-right-radius: 0;
+                        border-right: 0;
                       }
                     `}
                   >

@@ -10,7 +10,7 @@ import ResultModal from './Modals/ResultModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth, borderRadius } from '~/constants/css';
+import { borderRadius, tabletMaxWidth } from '~/constants/css';
 
 const addEditQuestionsLabel = localize('addEditQuestions');
 const addQuestionsLabel = localize('addQuestions');
@@ -79,19 +79,9 @@ export default function Content({
           questions={questions}
         />
         <div
-          style={{ marginTop: '2rem' }}
-          className={
-            !watchTabActive
-              ? css`
-                  background: #fff;
-                  border-radius: ${borderRadius};
-                  padding: 1.25rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    padding: 1rem;
-                  }
-                `
-              : ''
-          }
+          className={css`
+            width: 100%;
+          `}
         >
           {!questionsBuilderShown && (
             <XPVideoPlayer
@@ -107,7 +97,12 @@ export default function Content({
             />
           )}
           {userCanEditThis && !watchTabActive && (
-            <div style={{ marginTop: rewardLevel ? '1rem' : 0 }}>
+            <div
+              className={css`
+                margin-top: ${rewardLevel ? '1rem' : 0};
+                padding: 0 1rem;
+              `}
+            >
               <a
                 style={{
                   cursor: 'pointer',
@@ -134,14 +129,20 @@ export default function Content({
           )}
           {!watchTabActive && questions.length === 0 && (
             <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontSize: '2rem',
-                height: '15rem'
-              }}
+              className={css`
+                margin-top: 1rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                font-size: 2rem;
+                height: 15rem;
+                background: #fff;
+                border-radius: ${borderRadius};
+                @media (max-width: ${tabletMaxWidth}) {
+                  border-radius: 0;
+                }
+              `}
             >
               <p>{thereAreNoQuestionsLabel}.</p>
               {userCanEditThis && (
@@ -174,7 +175,7 @@ export default function Content({
                     border-radius: ${borderRadius};
                     padding: 1.25rem;
                     margin-top: 1rem;
-                    @media (max-width: ${mobileMaxWidth}) {
+                    @media (max-width: ${tabletMaxWidth}) {
                       padding: 1rem;
                     }
                   `

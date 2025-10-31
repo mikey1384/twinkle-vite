@@ -51,6 +51,9 @@ export default function Bar({
       @media (max-width: ${mobileMaxWidth}) {
         height: ${isChat ? '2rem' : '2.7rem'};
         font-size: ${isChat ? '0.9rem' : '1.1rem'};
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: 0;
       }
     `,
     [isChat, xpLevelColor]

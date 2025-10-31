@@ -118,9 +118,8 @@ function XPVideoPlayer({
   const loginColor = loginRole.colorKey;
   const byUserIndicatorColor = useMemo(
     () =>
-      byUserIndicatorRole.getColor(
-        byUserIndicatorRole.defaultOpacity || 0.9
-      ) || Color.logoBlue(0.9),
+      byUserIndicatorRole.getColor(byUserIndicatorRole.defaultOpacity || 0.9) ||
+      Color.logoBlue(0.9),
     [byUserIndicatorRole]
   );
   const byUserIndicatorTextColor = useMemo(
@@ -318,216 +317,214 @@ function XPVideoPlayer({
 
   return (
     <ErrorBoundary componentPath="XPVideoPlayer/index" style={style}>
-      <div style={style}>
-        {byUser && !isChat && (
-          <div
-            className={css`
-              background: ${byUserIndicatorColor};
-              display: flex;
-              align-items: center;
-              font-weight: 700;
-              font-size: 1.5rem;
-              color: ${byUserIndicatorTextColor};
-              justify-content: center;
-              padding: 0.5rem 0.7rem;
-              border: 1px solid var(--ui-border);
-              @media (max-width: ${mobileMaxWidth}) {
-                padding: 0.3rem 0.5rem;
-                font-size: ${isChat ? '1rem' : '1.5rem'};
-              }
-            `}
-          >
-            <div>
-              {uploader.youtubeUrl ? (
-                <a
-                  className={css`
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    background: ${youtubeLinkBg};
-                    color: ${youtubeLinkTextColor};
-                    border-radius: 9999px;
-                    padding: 0.35rem 0.8rem;
-                    font-weight: 700;
-                    text-decoration: none;
-                    transition: opacity 0.15s ease-in-out;
-                    &:hover {
-                      opacity: 0.9;
-                    }
-                  `}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={uploader.youtubeUrl}
-                >
-                  <Icon icon="external-link-alt" />
-                  <span>{`Visit ${uploader.username}'s YouTube`}</span>
-                </a>
-              ) : (
-                <span>{thisVideoWasMadeByLabel}</span>
-              )}
-            </div>
+      {byUser && !isChat && (
+        <div
+          className={css`
+            background: ${byUserIndicatorColor};
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: ${byUserIndicatorTextColor};
+            justify-content: center;
+            padding: 0.5rem 0.7rem;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0.3rem 0.5rem;
+              font-size: ${isChat ? '1rem' : '1.5rem'};
+            }
+          `}
+        >
+          <div>
+            {uploader?.youtubeUrl ? (
+              <a
+                className={css`
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                  background: ${youtubeLinkBg};
+                  color: ${youtubeLinkTextColor};
+                  border-radius: 9999px;
+                  padding: 0.35rem 0.8rem;
+                  font-weight: 700;
+                  text-decoration: none;
+                  transition: opacity 0.15s ease-in-out;
+                  &:hover {
+                    opacity: 0.9;
+                  }
+                `}
+                target="_blank"
+                rel="noopener noreferrer"
+                href={uploader?.youtubeUrl}
+              >
+                <Icon icon="external-link-alt" />
+                <span>{`Visit ${uploader?.username}'s YouTube`}</span>
+              </a>
+            ) : (
+              <span>{thisVideoWasMadeByLabel}</span>
+            )}
           </div>
-        )}
-        {userId ? (
-          <>
-            <div
-              className={`${css`
-                user-select: none;
-                position: relative;
-                padding-top: 56.25%;
-              `}${minimized ? ' desktop' : ''}`}
-              style={{
-                display: minimized && !started ? 'none' : '',
-                width: started && minimized ? '39rem' : '100%',
-                paddingTop: started && minimized ? '22rem' : '56.25%',
-                position: started && minimized ? 'absolute' : 'relative',
-                bottom: started && minimized ? '1rem' : undefined,
-                right: started && minimized ? '1rem' : undefined,
-                cursor: !isEditing && !started ? 'pointer' : '',
-                zIndex: minimized ? 1000 : 0
-              }}
-            >
-              {isLink && (
-                <Link to={`/videos/${videoId}`}>
-                  <div
-                    className={css`
-                      position: absolute;
-                      display: flex;
-                      justify-content: center;
-                      align-items: center;
-                      top: 0;
-                      left: 0;
-                      z-index: 1;
-                      width: 100%;
-                      height: 100%;
-                      background: url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg)
-                        no-repeat center;
-                      background-size: 100% auto;
-                    `}
-                  >
-                    <img
-                      loading="lazy"
-                      style={{ width: '45px', height: '45px' }}
-                      src={playButtonImg}
-                      alt="play button"
-                    />
-                  </div>
-                </Link>
-              )}
-              {!isLink && currentInitialTime !== null && videoCode && (
-                <VideoPlayer
-                  ref={(ref: any) => {
-                    if (ref) {
-                      playerStateRef.current = ref;
-                    }
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    zIndex: 1,
-                    display: isEditing ? 'none' : 'block' // Hide instead of unmount
-                  }}
-                  width="100%"
-                  height="100%"
-                  src={videoCode || ''}
-                  fileType="youtube"
-                  playing={playing && !isEditing}
-                  initialTime={currentInitialTime}
-                  onPlay={() => {
-                    onPlay?.();
-                    handleVideoPlay({ userId: userIdRef.current });
-                  }}
-                  onPause={handleVideoStop}
-                  onPlayerReady={handlePlayerInit}
-                  onEnded={() => {
-                    handleVideoStop();
-                    onVideoEnd?.();
-                    if (userIdRef.current) {
-                      finishWatchingVideo(videoId);
-                    }
-                  }}
-                />
-              )}
-            </div>
-            {(!!rewardLevel || (startingPosition > 0 && !started)) && (
-              <XPBar
-                isChat={isChat}
-                reachedMaxWatchDuration={reachedMaxWatchDuration}
-                reachedDailyLimit={reachedDailyLimit}
-                rewardLevel={rewardLevel}
-                started={started}
-                startingPosition={startingPosition}
-                userId={userId}
-                videoId={videoId}
+        </div>
+      )}
+      {userId ? (
+        <>
+          <div
+            className={`${css`
+              user-select: none;
+              position: relative;
+              padding-top: 56.25%;
+            `}${minimized ? ' desktop' : ''}`}
+            style={{
+              display: minimized && !started ? 'none' : '',
+              width: started && minimized ? '39rem' : '100%',
+              paddingTop: started && minimized ? '22rem' : '56.25%',
+              position: started && minimized ? 'absolute' : 'relative',
+              bottom: started && minimized ? '1rem' : undefined,
+              right: started && minimized ? '1rem' : undefined,
+              cursor: !isEditing && !started ? 'pointer' : '',
+              zIndex: minimized ? 1000 : 0
+            }}
+          >
+            {isLink && (
+              <Link to={`/videos/${videoId}`}>
+                <div
+                  className={css`
+                    position: absolute;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    top: 0;
+                    left: 0;
+                    z-index: 1;
+                    width: 100%;
+                    height: 100%;
+                    background: url(https://img.youtube.com/vi/${videoCode}/mqdefault.jpg)
+                      no-repeat center;
+                    background-size: 100% auto;
+                  `}
+                >
+                  <img
+                    loading="lazy"
+                    style={{ width: '45px', height: '45px' }}
+                    src={playButtonImg}
+                    alt="play button"
+                  />
+                </div>
+              </Link>
+            )}
+            {!isLink && currentInitialTime !== null && videoCode && (
+              <VideoPlayer
+                ref={(ref: any) => {
+                  if (ref) {
+                    playerStateRef.current = ref;
+                  }
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 1,
+                  display: isEditing ? 'none' : 'block' // Hide instead of unmount
+                }}
+                width="100%"
+                height="100%"
+                src={videoCode || ''}
+                fileType="youtube"
+                playing={playing && !isEditing}
+                initialTime={currentInitialTime}
+                onPlay={() => {
+                  onPlay?.();
+                  handleVideoPlay({ userId: userIdRef.current });
+                }}
+                onPause={handleVideoStop}
+                onPlayerReady={handlePlayerInit}
+                onEnded={() => {
+                  handleVideoStop();
+                  onVideoEnd?.();
+                  if (userIdRef.current) {
+                    finishWatchingVideo(videoId);
+                  }
+                }}
               />
             )}
-          </>
-        ) : (
-          <div
+          </div>
+          {(!!rewardLevel || (startingPosition > 0 && !started)) && (
+            <XPBar
+              isChat={isChat}
+              reachedMaxWatchDuration={reachedMaxWatchDuration}
+              reachedDailyLimit={reachedDailyLimit}
+              rewardLevel={rewardLevel}
+              started={started}
+              startingPosition={startingPosition}
+              userId={userId}
+              videoId={videoId}
+            />
+          )}
+        </>
+      ) : (
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 30rem;
+            padding: 2rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              height: 20rem;
+              padding: 1rem;
+            }
+          `}
+        >
+          <Icon
+            icon="lock"
+            size="3x"
+            style={{
+              color: Color.blue(),
+              marginBottom: '1rem'
+            }}
+          />
+          <h2
             className={css`
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 30rem;
-              padding: 2rem;
+              font-size: 2rem;
+              font-weight: bold;
+              text-align: center;
+              margin-bottom: 0.5rem;
+              color: ${Color.darkerGray()};
               @media (max-width: ${mobileMaxWidth}) {
-                height: 20rem;
-                padding: 1rem;
+                font-size: 1.5rem;
               }
             `}
           >
-            <Icon
-              icon="lock"
-              size="3x"
-              style={{
-                color: Color.blue(),
-                marginBottom: '1rem'
-              }}
-            />
-            <h2
-              className={css`
-                font-size: 2rem;
-                font-weight: bold;
-                text-align: center;
-                margin-bottom: 0.5rem;
-                color: ${Color.darkerGray()};
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.5rem;
-                }
-              `}
-            >
-              Video Available for Members
-            </h2>
-            <p
-              className={css`
-                font-size: 1.3rem;
-                text-align: center;
-                color: ${Color.gray()};
-                margin-bottom: 1rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.1rem;
-                }
-              `}
-            >
-              Please sign in to view this content and earn XP
-            </p>
-            <Button
-              onClick={onOpenSigninModal}
-              style={{ marginTop: '1rem' }}
-              color={loginColor}
-              variant="soft"
-              tone="raised"
-              shape="pill"
-              size="md"
-              uppercase={false}
-            >
-              Log In
-            </Button>
-          </div>
-        )}
-      </div>
+            Video Available for Members
+          </h2>
+          <p
+            className={css`
+              font-size: 1.3rem;
+              text-align: center;
+              color: ${Color.gray()};
+              margin-bottom: 1rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 1.1rem;
+              }
+            `}
+          >
+            Please sign in to view this content and earn XP
+          </p>
+          <Button
+            onClick={onOpenSigninModal}
+            style={{ marginTop: '1rem' }}
+            color={loginColor}
+            variant="soft"
+            tone="raised"
+            shape="pill"
+            size="md"
+            uppercase={false}
+          >
+            Log In
+          </Button>
+        </div>
+      )}
     </ErrorBoundary>
   );
 

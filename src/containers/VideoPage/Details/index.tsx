@@ -7,6 +7,8 @@ import RewardButton from '~/components/Buttons/RewardButton';
 import AlreadyPosted from '~/components/AlreadyPosted';
 import BasicInfos from './BasicInfos';
 import LikeButton from '~/components/Buttons/LikeButton';
+import Likers from '~/components/Likers';
+import UserListModal from '~/components/Modals/UserListModal';
 import StarButton from '~/components/Buttons/StarButton';
 import Description from './Description';
 import RecommendationInterface from '~/components/RecommendationInterface';
@@ -19,7 +21,7 @@ import {
   determineXpButtonDisabled,
   textIsOverflown
 } from '~/helpers';
-import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import {
   addCommasToNumber,
   addEmoji,
@@ -44,6 +46,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 const deleteLabel = localize('delete');
 const editLabel = localize('edit');
 const editOrDeleteLabel = localize('editOrDelete');
+const peopleWhoLikeThisVideoLabel = localize('peopleWhoLikeThisVideo');
 const deviceIsMobile = isMobile(navigator);
 
 export default function Details({
@@ -94,8 +97,11 @@ export default function Details({
   });
   const banned = useKeyContext((v) => v.myState.banned);
   const level = useKeyContext((v) => v.myState.level);
-  const { canEditRewardLevel: keyCanEditRewardLevel, canReward: keyCanReward, userId: myUserId } =
-    useKeyContext((v) => v.myState);
+  const {
+    canEditRewardLevel: keyCanEditRewardLevel,
+    canReward: keyCanReward,
+    userId: myUserId
+  } = useKeyContext((v) => v.myState);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   const { canDelete, canEdit, canReward } = useMyLevel();
@@ -115,6 +121,7 @@ export default function Details({
 
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
+  const [likesModalShown, setLikesModalShown] = useState(false);
 
   const [titleHovered, setTitleHovered] = useState(false);
   const starButtonShown = useMemo(() => {
@@ -288,22 +295,33 @@ export default function Details({
 
   return (
     <ErrorBoundary componentPath="VideoPage/Details">
-      <div style={{ width: '100%' }}>
-        <AlreadyPosted
-          changingPage={changingPage}
-          style={{ marginBottom: '1rem' }}
-          contentId={Number(videoId)}
-          contentType="video"
-          url={content}
-          uploaderId={uploader?.id}
-          videoCode={content}
-        />
-        <TagStatus
-          style={{ fontSize: '1.5rem' }}
-          onAddTags={addTags}
-          tags={tags}
-          contentId={Number(videoId)}
-        />
+      <div
+        className={css`
+          width: 100%;
+          background: #fff;
+          border-radius: ${borderRadius};
+          @media (max-width: ${tabletMaxWidth}) {
+            border-radius: 0;
+          }
+        `}
+      >
+        <div style={{ width: '100%', padding: '1rem' }}>
+          <AlreadyPosted
+            changingPage={changingPage}
+            style={{ marginBottom: '1rem' }}
+            contentId={Number(videoId)}
+            contentType="video"
+            url={content}
+            uploaderId={uploader?.id}
+            videoCode={content}
+          />
+          <TagStatus
+            style={{ fontSize: '1.5rem' }}
+            onAddTags={addTags}
+            tags={tags}
+            contentId={Number(videoId)}
+          />
+        </div>
         <div style={{ width: '100%' }}>
           <div
             className={css`
@@ -317,7 +335,8 @@ export default function Details({
               background: #fff;
               border-radius: ${borderRadius};
               padding: 1.25rem;
-              @media (max-width: ${mobileMaxWidth}) {
+              @media (max-width: ${tabletMaxWidth}) {
+                border-radius: 0;
                 grid-template-columns: 1fr;
                 padding: 1rem;
               }
@@ -326,6 +345,8 @@ export default function Details({
             <div
               className={css`
                 grid-column: 1 / -1;
+                min-width: 0; /* prevent grid child from forcing overflow */
+                overflow: hidden;
               `}
             >
               <BasicInfos
@@ -364,6 +385,10 @@ export default function Details({
             <div
               className={css`
                 grid-column: 1;
+                min-width: 0; /* prevent grid child from forcing overflow */
+                @media (max-width: ${tabletMaxWidth}) {
+                  grid-column: 1 / -1;
+                }
               `}
             >
               <Description
@@ -392,8 +417,10 @@ export default function Details({
                 flex-direction: column;
                 align-items: flex-end;
                 row-gap: 0.75rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  align-items: flex-start;
+                min-width: 0; /* prevent overflow due to grid min-content sizing */
+                @media (max-width: ${tabletMaxWidth}) {
+                  align-items: flex-end;
+                  grid-column: 1 / -1;
                 }
               `}
             >
@@ -417,6 +444,23 @@ export default function Details({
                   </div>
                 )}
               </div>
+              {/* Row 1.5: Likers (appears only when there are likes) */}
+              {likes?.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Likers
+                    userId={userId}
+                    likes={likes}
+                    onLinkClick={() => setLikesModalShown(true)}
+                    target="video"
+                    wordBreakEnabled
+                    style={{
+                      marginTop: '0.1rem',
+                      lineHeight: '1.7rem',
+                      textAlign: 'right'
+                    }}
+                  />
+                </div>
+              )}
               {/* Row 2: Star + Heart */}
               <div
                 style={{
@@ -488,32 +532,52 @@ export default function Details({
             </aside>
           </div>
 
-          <RecommendationStatus
-            style={{
-              marginTop: '1rem',
-              marginBottom: 0
-            }}
-            contentType="video"
-            recommendations={recommendations}
-          />
-          <div
-            style={{
-              marginTop: '1rem',
-              fontSize: '1.7rem',
-              marginBottom: 0,
-              display: recommendationInterfaceShown ? 'block' : 'none'
-            }}
-          >
-            <RecommendationInterface
-              key={`recommendation-interface-${videoId}`}
-              contentId={videoId}
-              contentType="video"
-              onHide={() => setRecommendationInterfaceShown(false)}
-              recommendations={recommendations}
-              rewardLevel={byUser ? 5 : 0}
-              content={description}
-              uploaderId={uploader?.id}
+          {likesModalShown && (
+            <UserListModal
+              onHide={() => setLikesModalShown(false)}
+              title={peopleWhoLikeThisVideoLabel}
+              users={likes}
             />
+          )}
+
+          <div
+            className={css`
+              background: #fff;
+              border-radius: ${borderRadius};
+              padding: 1.25rem;
+              margin-top: 1rem;
+              @media (max-width: ${tabletMaxWidth}) {
+                padding: 1rem;
+                border-radius: 0;
+              }
+            `}
+          >
+            <RecommendationStatus
+              style={{
+                marginBottom: 0
+              }}
+              contentType="video"
+              recommendations={recommendations}
+            />
+            <div
+              style={{
+                marginTop: '1rem',
+                fontSize: '1.7rem',
+                marginBottom: 0,
+                display: recommendationInterfaceShown ? 'block' : 'none'
+              }}
+            >
+              <RecommendationInterface
+                key={`recommendation-interface-${videoId}`}
+                contentId={videoId}
+                contentType="video"
+                onHide={() => setRecommendationInterfaceShown(false)}
+                recommendations={recommendations}
+                rewardLevel={byUser ? 5 : 0}
+                content={description}
+                uploaderId={uploader?.id}
+              />
+            </div>
           </div>
 
           <div

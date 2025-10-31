@@ -8,6 +8,7 @@ import Link from '~/components/Link';
 import Checkbox from '~/components/Checkbox';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
+import Icon from '~/components/Icon';
 import { PanelStyle } from './Styles';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -36,6 +37,22 @@ const enterTitleHereLabel = localize('enterTitleHere');
 const postContentLabel = localize('postContent');
 const copyAndPasteUrlLabel = localize('copyAndPasteUrl');
 const youtubeVideoLabel = localize('youtubeVideo');
+const alreadyPostedTextClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  line-height: 1.5;
+  align-items: flex-start;
+  text-align: left;
+  > strong {
+    font-size: 1.6rem;
+  }
+  a {
+    color: #fff;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+`;
 
 function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const checkContentUrl = useAppContext(
@@ -44,8 +61,17 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const banned = useKeyContext((v) => v.myState.banned);
+  const userId = useKeyContext((v) => v.myState.userId);
   const warningRole = useRoleColor('warning', { fallback: 'redOrange' });
   const successRole = useRoleColor('success', { fallback: 'green' });
+  const alreadyPostedByThisUserRole = useRoleColor('alreadyPostedByThisUser', {
+    fallback: 'orange',
+    opacity: 1
+  });
+  const alreadyPostedByOtherUserRole = useRoleColor(
+    'alreadyPostedByOtherUser',
+    { fallback: 'logoBlue', opacity: 1 }
+  );
   const warningColorKey = warningRole.colorKey;
   const successColorKey = successRole.colorKey;
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
@@ -118,6 +144,12 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const UrlFieldRef: React.RefObject<any> = useRef(null);
   const checkContentExistsTimerRef: React.RefObject<any> = useRef(null);
   const showHelperMessageTimerRef: React.RefObject<any> = useRef(null);
+  const alreadyPostedByDifferentUser =
+    !!alreadyPosted &&
+    typeof alreadyPosted === 'object' &&
+    alreadyPosted !== null &&
+    typeof alreadyPosted.uploader === 'number' &&
+    alreadyPosted.uploader !== userId;
 
   const loadingYTDetails = useMemo(() => {
     return contentIsVideo && !youTubeVideoDetails && !urlError;
@@ -222,18 +254,45 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
         onChange={handleUrlFieldChange}
         placeholder={copyAndPasteUrlLabel}
       />
-      {alreadyPosted && (
-        <div style={{ fontSize: '1.6rem', marginTop: '0.5rem' }}>
-          This content has{' '}
-          <Link
-            style={{ fontWeight: 'bold', color: Color.rose() }}
-            to={`/${alreadyPosted.contentType === 'url' ? 'link' : 'video'}s/${
-              alreadyPosted.id
-            }`}
-          >
-            already been posted before
-          </Link>
-        </div>
+      {alreadyPosted && typeof alreadyPosted === 'object' && (
+        <Banner
+          color={
+            alreadyPostedByDifferentUser
+              ? alreadyPostedByOtherUserRole.colorKey
+              : alreadyPostedByThisUserRole.colorKey
+          }
+          style={{
+            margin: '0.5rem 0 0',
+            width: '100%',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            gap: '0.9rem'
+          }}
+        >
+          <Icon
+            icon={alreadyPostedByDifferentUser ? 'clone' : 'history'}
+            style={{ fontSize: '2rem', marginTop: '0.1rem' }}
+          />
+          <div className={alreadyPostedTextClass}>
+            <strong>
+              {alreadyPostedByDifferentUser
+                ? 'Already shared on Twinkle'
+                : 'You already posted this'}
+            </strong>
+            <span>
+              This content has{' '}
+              <Link
+                to={`/${
+                  alreadyPosted.contentType === 'url' ? 'link' : 'video'
+                }s/${alreadyPosted.id}`}
+              >
+                already been posted before
+                {alreadyPostedByDifferentUser ? ' by someone else' : ''}
+              </Link>
+              .
+            </span>
+          </div>
+        </Banner>
       )}
       <Checkbox
         label={`${youtubeVideoLabel}:`}
@@ -353,7 +412,8 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
           {descriptionFieldShown && (
             <div className="button-container">
               <Button
-                filled
+                variant="soft"
+                tone="raised"
                 color={successColorKey}
                 loading={submitting}
                 style={{ marginTop: '1rem' }}

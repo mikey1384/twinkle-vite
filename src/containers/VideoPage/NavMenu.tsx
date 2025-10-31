@@ -206,24 +206,29 @@ export default function NavMenu({
           margin-bottom: 1rem;
           @media (max-width: ${tabletMaxWidth}) {
             padding: 0.3rem 0.5rem;
+            border-radius: 0;
           }
         `}
       >
-        <FilterBar className="desktop">
-        <nav
-          className={videoTabActive ? 'active' : ''}
-          onClick={() => setVideoTabActive(true)}
-        >
-          {videosLabel}
-        </nav>
-        <nav
-          className={`${!videoTabActive ? 'active' : ''} ${
-            rewardsExist || numNewNotis > 0 ? 'alert' : ''
-          }`}
-          onClick={() => setVideoTabActive(false)}
-        >
-          {rewardsExist ? rewardsLabel : userId ? newsLabel : leaderboardLabel}
-        </nav>
+        <FilterBar>
+          <nav
+            className={videoTabActive ? 'active' : ''}
+            onClick={() => setVideoTabActive(true)}
+          >
+            {videosLabel}
+          </nav>
+          <nav
+            className={`${!videoTabActive ? 'active' : ''} ${
+              rewardsExist || numNewNotis > 0 ? 'alert' : ''
+            }`}
+            onClick={() => setVideoTabActive(false)}
+          >
+            {rewardsExist
+              ? rewardsLabel
+              : userId
+              ? newsLabel
+              : leaderboardLabel}
+          </nav>
         </FilterBar>
       </div>
       {userId && videoTabActive && !!playlistId && (
@@ -236,6 +241,9 @@ export default function NavMenu({
               display: flex;
               align-items: center;
               justify-content: flex-end;
+              @media (max-width: ${tabletMaxWidth}) {
+                border-radius: 0;
+              }
             `}
           >
             {filtering && (
@@ -266,6 +274,7 @@ export default function NavMenu({
                   padding: 1.25rem;
                   @media (max-width: ${tabletMaxWidth}) {
                     padding: 1rem;
+                    border-radius: 0;
                   }
                 `}
               >
@@ -286,6 +295,7 @@ export default function NavMenu({
                   padding: 1.25rem;
                   @media (max-width: ${tabletMaxWidth}) {
                     padding: 1rem;
+                    border-radius: 0;
                   }
                 `}
               >
@@ -298,9 +308,7 @@ export default function NavMenu({
             </section>
           )}
           {!!playlistId && playlistVideos.length > 0 && (
-            <section
-              key={videoId + 'playlist videos'}
-            >
+            <section key={videoId + 'playlist videos'}>
               <div
                 className={css`
                   background: #fff;
@@ -311,6 +319,7 @@ export default function NavMenu({
                   word-break: break-word;
                   @media (max-width: ${tabletMaxWidth}) {
                     padding: 1rem;
+                    border-radius: 0;
                   }
                 `}
               >
@@ -347,6 +356,7 @@ export default function NavMenu({
                   padding: 1.25rem;
                   @media (max-width: ${tabletMaxWidth}) {
                     padding: 1rem;
+                    border-radius: 0;
                   }
                 `}
               >
@@ -364,6 +374,7 @@ export default function NavMenu({
                   padding: 1.25rem;
                   @media (max-width: ${tabletMaxWidth}) {
                     padding: 1rem;
+                    border-radius: 0;
                   }
                 `}
               >
@@ -459,7 +470,15 @@ export default function NavMenu({
         }}
       >
         <div style={{ width: '50%' }}>
-          <div style={{ overflow: 'hidden', borderRadius }}>
+          <div
+            className={css`
+              overflow: hidden;
+              border-radius: ${borderRadius};
+              @media (max-width: ${tabletMaxWidth}) {
+                border-radius: 0;
+              }
+            `}
+          >
             <Link
               to={`/videos/${video.videoId}${
                 arePlaylistVideos

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import Banner from '~/components/Banner';
+import Icon from '~/components/Icon';
 import Link from '~/components/Link';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
@@ -23,20 +24,14 @@ export default function AlreadyPosted({
   url?: string;
   videoCode?: string;
 }) {
-  const { getColor: getByThisUserColor } = useRoleColor(
-    'alreadyPostedByThisUser',
-    {
-      fallback: 'orange',
-      opacity: 1
-    }
-  );
-  const { getColor: getByOtherUserColor } = useRoleColor(
-    'alreadyPostedByOtherUser',
-    {
-      fallback: 'logoBlue',
-      opacity: 1
-    }
-  );
+  const byThisUserRole = useRoleColor('alreadyPostedByThisUser', {
+    fallback: 'orange',
+    opacity: 1
+  });
+  const byOtherUserRole = useRoleColor('alreadyPostedByOtherUser', {
+    fallback: 'logoBlue',
+    opacity: 1
+  });
   const checkContentUrl = useAppContext(
     (v) => v.requestHelpers.checkContentUrl
   );
@@ -76,35 +71,66 @@ export default function AlreadyPosted({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, uploaderId]);
 
+  const postedByDifferentUser =
+    typeof uploaderId === 'number' &&
+    typeof existingContent?.uploader === 'number' &&
+    uploaderId !== existingContent.uploader;
+  const bannerColorKey = postedByDifferentUser
+    ? byOtherUserRole.colorKey
+    : byThisUserRole.colorKey;
+
+  const textBlockClass = css`
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    line-height: 1.5;
+    flex: 1;
+    > strong {
+      font-size: 1.6rem;
+    }
+    a {
+      color: #fff;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+  `;
+
   return show ? (
-    <div
+    <Banner
+      color={bannerColorKey}
       style={{
-        fontSize: '1.6rem',
-        padding: '1rem',
-        color: '#fff',
-        backgroundColor:
-          uploaderId !== existingContent.uploader
-            ? getByOtherUserColor() || Color.logoBlue()
-            : getByThisUserColor() || Color.orange(),
+        textAlign: 'left',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        gap: '1rem',
+        margin: 0,
+        width: '100%',
         ...style
       }}
-      className={css`
-        > a {
-          color: #fff;
-          font-weight: bold;
-        }
-      `}
     >
-      This content has{' '}
-      <Link
-        style={{ fontWeight: 'bold' }}
-        to={`/${contentType === 'url' ? 'link' : 'video'}s/${
-          existingContent.id
-        }`}
-      >
-        already been posted before
-        {uploaderId !== existingContent.uploader ? ' by someone else' : ''}
-      </Link>
-    </div>
+      <Icon
+        icon={postedByDifferentUser ? 'clone' : 'history'}
+        style={{ fontSize: '2.1rem', marginTop: '0.1rem' }}
+      />
+      <div className={textBlockClass}>
+        <strong>
+          {postedByDifferentUser
+            ? 'Already shared on Twinkle'
+            : 'You already posted this'}
+        </strong>
+        <span>
+          This content has{' '}
+          <Link
+            to={`/${contentType === 'url' ? 'link' : 'video'}s/${
+              existingContent.id
+            }`}
+          >
+            already been posted before
+            {postedByDifferentUser ? ' by someone else' : ''}
+          </Link>
+          .
+        </span>
+      </div>
+    </Banner>
   ) : null;
 }

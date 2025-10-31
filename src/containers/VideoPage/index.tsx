@@ -349,63 +349,81 @@ export default function VideoPage() {
                 videoId={videoId}
                 videoViews={views}
               />
-              <div
-                className={css`
-                  background: #fff;
-                  border-radius: ${borderRadius};
-                  padding: 1.25rem;
-                  margin-top: 1rem;
-                  @media (max-width: ${tabletMaxWidth}) {
-                    padding: 1rem;
-                  }
-                `}
-              >
-                <RewardStatus
-                  contentType="video"
-                  contentId={videoId}
-                  rewardLevel={byUser ? 5 : 0}
-                  onCommentEdit={onEditRewardComment}
-                  style={{ fontSize: '1.4rem' }}
-                  rewards={rewards}
-                />
-              </div>
+              {rewards?.length > 0 && (
+                <div
+                  className={css`
+                    background: #fff;
+                    border-radius: ${borderRadius};
+                    padding: 1.25rem;
+                    margin-top: 1rem;
+                    @media (max-width: ${tabletMaxWidth}) {
+                      padding: 1rem;
+                      border-radius: 0;
+                    }
+                  `}
+                >
+                  <RewardStatus
+                    contentType="video"
+                    contentId={videoId}
+                    rewardLevel={byUser ? 5 : 0}
+                    onCommentEdit={onEditRewardComment}
+                    style={{ fontSize: '1.4rem' }}
+                    rewards={rewards}
+                  />
+                </div>
+              )}
             </div>
-            <Subjects
-              loadMoreButton={subjectsLoadMoreButton}
-              subjects={subjects}
-              onLoadMoreSubjects={onLoadMoreSubjects}
-              onLoadSubjectComments={onLoadSubjectComments}
-              onSubjectEditDone={onEditSubject}
-              onSubjectDelete={(subjectId: number) =>
-                onDeleteContent({
-                  contentType: 'subject',
-                  contentId: subjectId
-                })
-              }
-              onSetRewardLevel={onSetRewardLevel}
-              uploadSubject={onUploadSubject}
-              contentId={videoId}
-              contentType="video"
-              rootRewardLevel={rewardLevel}
-              commentActions={{
-                editRewardComment: onEditRewardComment,
-                onDelete: onDeleteComment,
-                onEditDone: onEditComment,
-                onLikeClick: onLikeComment,
-                onLoadMoreComments: onLoadMoreSubjectComments,
-                onLoadMoreReplies: onLoadMoreSubjectReplies,
-                onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
-                onUploadComment,
-                onUploadReply
-              }}
-            />
             <div
               className={css`
                 background: #fff;
                 border-radius: ${borderRadius};
                 padding: 1.25rem;
+                margin-top: 1rem;
                 @media (max-width: ${tabletMaxWidth}) {
                   padding: 1rem;
+                  border-radius: 0;
+                }
+              `}
+            >
+              <Subjects
+                loadMoreButton={subjectsLoadMoreButton}
+                subjects={subjects}
+                onLoadMoreSubjects={onLoadMoreSubjects}
+                onLoadSubjectComments={onLoadSubjectComments}
+                onSubjectEditDone={onEditSubject}
+                onSubjectDelete={(subjectId: number) =>
+                  onDeleteContent({
+                    contentType: 'subject',
+                    contentId: subjectId
+                  })
+                }
+                onSetRewardLevel={onSetRewardLevel}
+                uploadSubject={onUploadSubject}
+                contentId={videoId}
+                contentType="video"
+                rootRewardLevel={rewardLevel}
+                commentActions={{
+                  editRewardComment: onEditRewardComment,
+                  onDelete: onDeleteComment,
+                  onEditDone: onEditComment,
+                  onLikeClick: onLikeComment,
+                  onLoadMoreComments: onLoadMoreSubjectComments,
+                  onLoadMoreReplies: onLoadMoreSubjectReplies,
+                  onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
+                  onUploadComment,
+                  onUploadReply
+                }}
+              />
+            </div>
+            <div
+              className={css`
+                background: #fff;
+                border-radius: ${borderRadius};
+                padding: 1.25rem;
+                margin-top: 1rem;
+                @media (max-width: ${tabletMaxWidth}) {
+                  padding: 1rem;
+                  border-radius: 0;
                 }
               `}
             >

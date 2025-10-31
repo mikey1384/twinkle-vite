@@ -59,7 +59,10 @@ export default function FullTextReveal({
   );
 
   return (
-    <ErrorBoundary componentPath="FullTextReveal" style={{ position: 'relative' }}>
+    <ErrorBoundary
+      componentPath="FullTextReveal"
+      style={{ position: 'relative' }}
+    >
       <div className={`${bubbleClass} ${className || ''}`} style={style}>
         {text}
       </div>

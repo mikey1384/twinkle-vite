@@ -93,10 +93,10 @@ export default function Explore({ category }: { category: string }) {
         </SideMenu>
         <div
           className={css`
-            width: CALC(100vw - 51rem - 2rem);
+            width: CALC(100% - 51rem - 2rem);
             margin-left: 20rem;
             @media (max-width: ${tabletMaxWidth}) {
-              width: CALC(100vw - 21rem);
+              width: CALC(100% - 21rem);
             }
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
