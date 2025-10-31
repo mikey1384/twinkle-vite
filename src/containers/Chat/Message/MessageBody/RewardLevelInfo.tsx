@@ -154,8 +154,7 @@ export default function RewardLevelInfo({
             marginTop: '0.5rem',
             color: '#000',
             width: '30rem',
-            fontSize: '1.2rem',
-            position: 'absolute'
+            fontSize: '1.2rem'
           }}
           text={reasonForDisable || ''}
         />

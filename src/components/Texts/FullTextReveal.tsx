@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
 import { createPortal } from 'react-dom';
@@ -18,7 +25,10 @@ export default function FullTextReveal({
   text: string | React.ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [coords, setCoords] = useState<{ top: string; left?: string; right?: string } | null>(null);
+  const [coords, setCoords] = useState<
+    { top: string; left?: string; right?: string } | null
+  >(null);
+  const [computedWidth, setComputedWidth] = useState<string | undefined>(undefined);
 
   const bubbleClass = useMemo(
     () =>
@@ -64,11 +74,21 @@ export default function FullTextReveal({
     if (!el) return null;
     const rect = el.getBoundingClientRect();
     const top = `calc(${rect.top + rect.height}px + 0.5rem)`;
+    // If consumer provided width in %, compute relative to container to
+    // preserve prior contract from in-flow absolute positioning.
+    if (style && typeof style.width === 'string' && /%$/.test(style.width)) {
+      const pct = parseFloat(style.width);
+      if (!Number.isNaN(pct)) {
+        setComputedWidth(`${(rect.width * pct) / 100}px`);
+      }
+    } else {
+      setComputedWidth(undefined);
+    }
     if (direction === 'left') {
       return { top, left: `${rect.left}px` };
     }
     return { top, right: `${window.innerWidth - rect.right}px` };
-  }, [direction]);
+  }, [direction, style]);
 
   useLayoutEffect(() => {
     if (!show) return;
@@ -87,9 +107,17 @@ export default function FullTextReveal({
     };
   }, [show, computeCoords]);
 
-  const portalTarget = typeof document !== 'undefined'
-    ? (document.getElementById('outer-layer') as HTMLElement | null)
-    : null;
+  const portalTarget =
+    typeof document !== 'undefined'
+      ? ((document.getElementById('outer-layer') as HTMLElement | null) ?? null)
+      : null;
+
+  const sanitizedStyle = useMemo(() => {
+    if (!style) return undefined;
+    const { position, top, left, right, bottom, zIndex, width, ...rest } = style;
+    // width handled below if percentage
+    return rest as React.CSSProperties;
+  }, [style]);
 
   return (
     <ErrorBoundary
@@ -105,7 +133,8 @@ export default function FullTextReveal({
                 top: coords.top,
                 left: coords.left,
                 right: coords.right,
-                ...style
+                width: computedWidth ?? (style?.width as string | number | undefined),
+                ...sanitizedStyle
               }}
             >
               {text}

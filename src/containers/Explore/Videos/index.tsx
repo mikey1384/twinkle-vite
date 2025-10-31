@@ -89,7 +89,6 @@ export default function Videos() {
         <FeaturedPlaylistsPanel />
         <PlaylistsPanel
           key="allplaylists"
-          style={{ marginTop: '2.5rem' }}
           innerRef={AllPlaylistsPanelRef}
           buttonGroup={() => (
             <ButtonGroup
