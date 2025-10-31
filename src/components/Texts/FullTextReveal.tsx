@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
 
 export default function FullTextReveal({
@@ -16,14 +17,14 @@ export default function FullTextReveal({
   style?: React.CSSProperties;
   text: string | React.ReactNode;
 }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [coords, setCoords] = useState<{ top: string; left?: string; right?: string } | null>(null);
+
   const bubbleClass = useMemo(
     () =>
       css`
-        position: absolute;
-        top: calc(100% + 0.5rem);
-        ${direction === 'left' ? 'left: 0;' : 'right: 0;'}
-        z-index: 1000;
-        display: ${show ? 'block' : 'none'};
+        position: fixed;
+        z-index: 100000000; /* ensure always on top */
         padding: 0.8rem 1rem;
         font-size: 1.3rem;
         background: #fff;
@@ -55,17 +56,63 @@ export default function FullTextReveal({
           max-width: min(94vw, 36rem);
         }
       `,
-    [direction, show]
+    [direction]
   );
+
+  const computeCoords = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const top = `calc(${rect.top + rect.height}px + 0.5rem)`;
+    if (direction === 'left') {
+      return { top, left: `${rect.left}px` };
+    }
+    return { top, right: `${window.innerWidth - rect.right}px` };
+  }, [direction]);
+
+  useLayoutEffect(() => {
+    if (!show) return;
+    setCoords(computeCoords());
+  }, [show, computeCoords, text]);
+
+  useEffect(() => {
+    if (!show) return;
+    const onResize = () => setCoords(computeCoords());
+    const onScroll = () => setCoords(computeCoords());
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [show, computeCoords]);
+
+  const portalTarget = typeof document !== 'undefined'
+    ? (document.getElementById('outer-layer') as HTMLElement | null)
+    : null;
 
   return (
     <ErrorBoundary
       componentPath="FullTextReveal"
+      innerRef={containerRef}
       style={{ position: 'relative' }}
     >
-      <div className={`${bubbleClass} ${className || ''}`} style={style}>
-        {text}
-      </div>
+      {show && portalTarget && coords
+        ? createPortal(
+            <div
+              className={`${bubbleClass} ${className || ''}`}
+              style={{
+                top: coords.top,
+                left: coords.left,
+                right: coords.right,
+                ...style
+              }}
+            >
+              {text}
+            </div>,
+            portalTarget
+          )
+        : null}
     </ErrorBoundary>
   );
 }
