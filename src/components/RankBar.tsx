@@ -4,7 +4,6 @@ import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import RankBadge from '~/components/RankBadge';
-import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function RankBar({
   className,
@@ -17,11 +16,6 @@ export default function RankBar({
   style?: any;
   variant?: 'panel' | 'page';
 }) {
-  // Non-themed: use static colors
-  const { getColor: _unused } = useRoleColor('xpNumber', {
-    themeName: 'logoBlue',
-    fallback: 'logoGreen'
-  });
   const rankValue = Number(profile?.rank ?? 0);
   const rankColor = useMemo(() => {
     if (rankValue === 1) return Color.gold();
@@ -94,6 +88,7 @@ export default function RankBar({
         background: ${isTopThree ? '#000' : '#fff'};
         color: ${baseTextColor};
         @media (max-width: ${mobileMaxWidth}) {
+          border-radius: 0;
           border: none;
           padding: 1.3rem 1.4rem;
           max-width: 100%;

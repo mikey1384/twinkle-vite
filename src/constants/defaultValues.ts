@@ -462,7 +462,7 @@ export const karmaPointTable: any = {
   moreToCome: 30_000
 };
 export const MAX_NUM_SUMMONS = 3;
-export const maxSizes = [300, 400, 500, 650, 800, 1000, 1500, 2000];
+export const maxSizes = [500, 600, 700, 800, 900, 1000, 1500, 2000];
 export const returnMaxUploadSize = (fileUploadLvl: number): number => {
   return maxSizes[fileUploadLvl] * mb;
 };

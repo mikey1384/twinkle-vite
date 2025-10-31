@@ -254,7 +254,6 @@ export const NewModal = forwardRef<
 
         setTimeout(() => {
           modalRef.current?.focus();
-          // Ensure overflow-enabled modals start at the top of the backdrop
           if (allowOverflow && backdropRef.current) {
             backdropRef.current.scrollTop = 0;
           }
