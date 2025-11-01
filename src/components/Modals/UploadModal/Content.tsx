@@ -134,7 +134,7 @@ export default function UploadModalContent({
                   marginBottom: '0.5rem'
                 }}
               >
-                Draw Images
+                Make Images
               </div>
               <div
                 style={{

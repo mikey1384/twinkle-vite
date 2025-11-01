@@ -107,7 +107,7 @@ export default function UploadModal({
       case 'upload':
         return 'Upload File';
       case 'generate':
-        return 'Draw Images';
+        return 'Make Images';
       default:
         return 'Upload';
     }
