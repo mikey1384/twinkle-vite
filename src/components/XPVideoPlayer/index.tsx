@@ -312,7 +312,12 @@ function XPVideoPlayer({
     if (SELECTED_LANGUAGE === 'kr') {
       return <>{uploader?.username}님이 직접 제작한 동영상입니다</>;
     }
-    return <>This video was made by {uploader?.username}</>;
+    return (
+      <>
+        <Icon icon="check-circle" style={{ marginRight: '0.5rem' }} />
+        This video was made by {uploader?.username}
+      </>
+    );
   }, [uploader?.username]);
 
   return (
