@@ -20,7 +20,7 @@ import SecretComment from '~/components/SecretComment';
 import Icon from '~/components/Icon';
 import LoginToViewContent from '~/components/LoginToViewContent';
 import RewardButton from '~/components/Buttons/RewardButton';
-import { wideBorderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import {
@@ -61,7 +61,7 @@ const targetContentCSS = css`
   overflow-wrap: break-word;
   word-break: break-word;
   /* Match ContentListItem: no rounding on top corners */
-  border-radius: 0 0 ${wideBorderRadius} ${wideBorderRadius};
+  border-radius: 0 0 ${borderRadius} ${borderRadius};
   border: 1px solid var(--ui-border);
   padding: 2rem 0 0.5rem 0;
   background: #fff;
@@ -539,19 +539,19 @@ export default function TargetContent({
                             />
                           )}
                         </div>
-                      <Likers
-                        theme={theme}
-                        className={css`
-                          font-weight: bold;
-                          color: ${Color.darkerGray()};
-                          font-size: 1.2rem;
-                          line-height: 2;
-                          @media (max-width: ${mobileMaxWidth}) {
-                            font-size: 1.05rem;
-                            line-height: 1.6;
-                          }
-                        `}
-                        userId={userId}
+                        <Likers
+                          theme={theme}
+                          className={css`
+                            font-weight: bold;
+                            color: ${Color.darkerGray()};
+                            font-size: 1.2rem;
+                            line-height: 2;
+                            @media (max-width: ${mobileMaxWidth}) {
+                              font-size: 1.05rem;
+                              line-height: 1.6;
+                            }
+                          `}
+                          userId={userId}
                           likes={comment.likes}
                           onLinkClick={() => setUserListModalShown(true)}
                         />

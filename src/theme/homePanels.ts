@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 export const homePanelClass = css`
   position: relative;
   width: 100%;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   background: var(--home-panel-surface, transparent);
   border: 1px solid var(--home-panel-border, var(--ui-border));
   box-shadow: none;
@@ -13,10 +13,7 @@ export const homePanelClass = css`
   flex-direction: column;
   gap: var(--home-panel-gap, 2rem);
   font-size: var(--home-panel-font-size, 1.6rem);
-  color: var(
-    --home-panel-color,
-    ${Color.darkerGray()}
-  );
+  color: var(--home-panel-color, ${Color.darkerGray()});
   backdrop-filter: none;
 
   > :where(p, h2) {

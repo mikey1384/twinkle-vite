@@ -1,6 +1,6 @@
 import React from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function PeopleFilterBar({
@@ -18,7 +18,7 @@ export default function PeopleFilterBar({
     <div
       className={css`
         border: 1px solid var(--ui-border);
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         @media (max-width: ${mobileMaxWidth}) {
           border-right: 0;
           border-left: 0;

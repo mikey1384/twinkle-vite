@@ -7,7 +7,7 @@ import RichText from '~/components/Texts/RichText';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
 import { truncateTopic } from '~/helpers/stringHelpers';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import {
   cardLevelHash,
   CIEL_TWINKLE_ID,
@@ -116,7 +116,7 @@ export default function ContentPreview({
   const containerClass = useMemo(
     () => css`
       border: 1px solid var(--ui-border);
-      border-radius: ${wideBorderRadius};
+      border-radius: ${borderRadius};
       background: #fff;
       padding: 1.6rem;
       display: flex;
@@ -338,7 +338,9 @@ export default function ContentPreview({
     >
       {!hideUploader && (
         <div className={headerClass}>
-          <div style={{ width: '3.8rem', display: 'flex', alignItems: 'center' }}>
+          <div
+            style={{ width: '3.8rem', display: 'flex', alignItems: 'center' }}
+          >
             <ProfilePic
               style={{ width: '100%' }}
               userId={uploader.id}
@@ -348,7 +350,9 @@ export default function ContentPreview({
           <div className={metaClass}>
             {uploader.username && (
               <div className={uploaderRowClass}>
-                <span className={uploaderLabelClass}>by {uploader.username}</span>
+                <span className={uploaderLabelClass}>
+                  by {uploader.username}
+                </span>
               </div>
             )}
           </div>

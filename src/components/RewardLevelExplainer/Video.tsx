@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 
@@ -76,7 +76,7 @@ export default function Video({
   const containerCss = css`
     background: #fff;
     border: 1px solid var(--ui-border);
-    border-radius: ${wideBorderRadius};
+    border-radius: ${borderRadius};
     width: calc(100% - 1.2rem);
     margin: 0.6rem;
     padding: 0.8rem 1rem;

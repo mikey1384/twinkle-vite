@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color, wideBorderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Banner({
@@ -54,7 +54,7 @@ export default function Banner({
         padding: 1rem 1.2rem;
         font-size: 1.6rem;
         border: 1px solid ${tint(hue, 1)};
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         display: inline-flex;
         align-items: center;
         justify-content: center;

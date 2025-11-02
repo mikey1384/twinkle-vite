@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
 
@@ -27,7 +27,7 @@ export default function FullTextRevealFromOuterLayer({
         background: #fff;
         color: ${Color.black()};
         border: 1px solid var(--ui-border);
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22),
           0 1px 2px rgba(15, 23, 42, 0.06);
         min-width: 14rem;

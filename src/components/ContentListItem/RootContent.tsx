@@ -12,7 +12,7 @@ import {
   mobileMaxWidth,
   tabletMaxWidth,
   desktopMinWidth,
-  wideBorderRadius
+  borderRadius
 } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { css } from '@emotion/css';
@@ -31,7 +31,7 @@ const rootContentCSS = css`
   gap: 0.7rem;
   padding: 1rem;
   cursor: pointer;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
 
   .title {
     grid-area: title;
@@ -289,7 +289,7 @@ export default function RootContent({
   }, [itemSelectedColor, itemSelectedOpacity]);
 
   const cardThemeCSS = css`
-    border-radius: ${wideBorderRadius};
+    border-radius: ${borderRadius};
     border: 1px solid var(--ui-border);
     background: #fff;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
@@ -68,7 +68,7 @@ export default function RewardLevelBar({
         justify-content: space-between;
         gap: 0.6rem;
         border: none;
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         font-weight: 600;
         width: auto;
         max-width: 100%;

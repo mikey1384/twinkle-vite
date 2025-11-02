@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 export const container = css`
   padding-top: 1rem;
@@ -8,7 +8,7 @@ export const container = css`
   background: var(--noti-bg, transparent);
   border: none;
   box-shadow: none;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
     border-left: 0;
@@ -23,7 +23,7 @@ export const notiFilterBar = css`
   background: #fff !important;
   box-shadow: none !important;
   backdrop-filter: none;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
@@ -39,7 +39,7 @@ export const notiFeedListItem = css`
   word-break: break-word;
   background: #fff;
   border: none;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   padding: 1rem 1.2rem;
   margin-bottom: 1.2rem;
   display: flex;

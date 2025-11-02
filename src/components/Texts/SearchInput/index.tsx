@@ -1,6 +1,6 @@
 import React, { RefObject, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
@@ -71,7 +71,7 @@ export default function SearchInput({
           align-items: center;
           background: #fff;
           border: 1px solid ${resolvedBorderColor || 'var(--ui-border)'};
-          border-radius: ${wideBorderRadius};
+          border-radius: ${borderRadius};
           transition: border-color 0.18s ease;
           &:focus-within {
             border-color: var(--ui-border-strong);

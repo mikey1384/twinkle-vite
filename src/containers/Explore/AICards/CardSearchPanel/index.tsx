@@ -5,7 +5,7 @@ import {
   Color,
   mobileMaxWidth,
   tabletMaxWidth,
-  wideBorderRadius
+  borderRadius
 } from '~/constants/css';
 import Button from '~/components/Button';
 import Checkbox from '~/components/Checkbox';
@@ -23,7 +23,7 @@ const panelClass = css`
   width: 100%;
   font-size: 1.6rem;
   padding: 1.6rem 2rem;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   background: var(--search-panel-bg, #ffffff);
   border: 1px solid var(--search-panel-border, var(--ui-border));
   box-shadow: var(--search-panel-shadow, none);
@@ -170,7 +170,7 @@ const fieldLabelClass = css`
 
 const baseInputClass = css`
   min-width: 7rem;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--search-panel-border, var(--ui-border));
   text-align: left;
@@ -291,7 +291,7 @@ const iconButtonClass = css`
   justify-content: center;
   width: 3.6rem;
   height: 3.6rem;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   @media (max-width: ${mobileMaxWidth}) {
     width: 3.2rem;
     height: 3.2rem;

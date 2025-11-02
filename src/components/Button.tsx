@@ -1,6 +1,6 @@
 import React, { CSSProperties, ReactNode, useMemo } from 'react';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
 
 type Variant = 'solid' | 'soft' | 'outline' | 'ghost';
@@ -91,7 +91,7 @@ export default function Button(props: ButtonProps) {
     size === 'sm' ? '1.3rem' : size === 'lg' ? '1.7rem' : '1.5rem';
   const padY = size === 'sm' ? '0.7rem' : size === 'lg' ? '1.1rem' : '1rem';
   const padX = size === 'sm' ? '0.9rem' : size === 'lg' ? '1.3rem' : '1rem';
-  const radius = shape === 'pill' ? '9999px' : wideBorderRadius;
+  const radius = shape === 'pill' ? '9999px' : borderRadius;
 
   function tint(key: string, a: number) {
     const fn = (Color as any)[key];

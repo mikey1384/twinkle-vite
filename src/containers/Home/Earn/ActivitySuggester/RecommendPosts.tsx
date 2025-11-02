@@ -6,7 +6,7 @@ import ContentPreview from '~/components/ContentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { useAppContext, useHomeContext } from '~/contexts';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -163,7 +163,7 @@ const emptyState = css`
   align-items: center;
   justify-content: center;
   text-align: center;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   border: 1px dashed rgba(148, 163, 184, 0.45);
   color: rgba(15, 23, 42, 0.68);
   padding: 1.6rem;

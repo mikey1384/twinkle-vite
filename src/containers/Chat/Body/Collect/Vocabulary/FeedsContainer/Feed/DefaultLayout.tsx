@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import WordModal from '../../WordModal';
 import Icon from '~/components/Icon';
-import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { wordLevelHash } from '~/constants/defaultValues';
 import ProfilePic from '~/components/ProfilePic';
@@ -140,7 +140,7 @@ export default function DefaultLayout({
         padding: 1.2rem 1rem;
         background-color: ${backgroundColor};
         border-left: 8px solid ${borderColor};
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
         margin-bottom: 1.5rem;
         min-height: 160px;

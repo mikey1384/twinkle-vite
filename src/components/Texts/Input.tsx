@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { renderText } from '~/helpers/stringHelpers';
 
 const iosKeyboardAttributes = {
@@ -69,8 +69,13 @@ export default function Input({
     return `${baseClass} ${css`
       border: 1px solid var(--ui-border);
       font-size: 1.7rem;
+      background: #fff;
+      border-radius: ${borderRadius};
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
       &:focus {
         outline: none;
+        border-color: var(--ui-border-strong);
+        box-shadow: none;
         ::placeholder {
           color: ${Color.lighterGray()};
         }

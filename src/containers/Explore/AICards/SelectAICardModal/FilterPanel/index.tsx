@@ -9,7 +9,7 @@ import { css } from '@emotion/css';
 import {
   Color,
   mobileMaxWidth,
-  wideBorderRadius,
+  borderRadius,
   desktopMinWidth
 } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
@@ -123,7 +123,7 @@ const panelClass = css`
   padding: 1.6rem 1.8rem;
   background: #fff;
   border: 1px solid var(--ui-border);
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   margin: 0 auto 1.6rem;
   display: flex;
   flex-direction: column;

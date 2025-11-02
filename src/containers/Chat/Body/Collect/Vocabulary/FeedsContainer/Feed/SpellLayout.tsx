@@ -4,7 +4,7 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import AICard from '~/components/AICard';
 import { wordLevelHash } from '~/constants/defaultValues';
-import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import WordModal from '../../WordModal';
@@ -60,7 +60,7 @@ export default function SpellLayout({
         text-align: center;
         background-color: ${backgroundColor};
         border-left: 8px solid ${borderColor};
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
         padding: 1.2rem 1rem;
         margin-bottom: 1.5rem;

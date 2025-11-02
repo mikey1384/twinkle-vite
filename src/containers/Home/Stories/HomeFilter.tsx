@@ -3,7 +3,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
@@ -87,7 +87,7 @@ export default function HomeFilter({
         gap: 1.4rem;
         width: 100%;
         padding: 1.2rem 1.6rem;
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         border: 1px solid ${videoContainerTone.border};
         background: ${videoContainerTone.base};
         box-shadow: none;

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
@@ -62,8 +62,12 @@ export default function RewardLevelExpectation({
       >
         <Icon icon="star" style={{ color: accent }} />
         <div>
-          <div style={{ fontWeight: 700, color: accent }}>{`Effort Level ${rewardLevel}`}</div>
-          <div style={{ color: Color.darkBlueGray() }}>{rewardLevelExpectationLabel}</div>
+          <div
+            style={{ fontWeight: 700, color: accent }}
+          >{`Effort Level ${rewardLevel}`}</div>
+          <div style={{ color: Color.darkBlueGray() }}>
+            {rewardLevelExpectationLabel}
+          </div>
         </div>
       </div>
     );
@@ -81,9 +85,10 @@ export default function RewardLevelExpectation({
         padding: 0.9rem 1.1rem;
         background: #fff;
         border: 1px solid var(--ui-border);
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         margin-bottom: 1rem;
-        border-left: 4px solid ${(Color as any)[rewardColor]?.() || Color.logoBlue()};
+        border-left: 4px solid
+          ${(Color as any)[rewardColor]?.() || Color.logoBlue()};
       `}
     >
       {rewardLevelExplanation}

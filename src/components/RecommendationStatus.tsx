@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import UserListModal from '~/components/Modals/UserListModal';
-import { Color, wideBorderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -131,7 +131,7 @@ export default function RecommendationStatus({
       background: ${isRewardable ? rewardableRecommendationColor : '#fff'};
       border: 1px solid
         ${isRewardable ? rewardableBorderColor : 'var(--ui-border)'};
-      border-radius: ${wideBorderRadius};
+      border-radius: ${borderRadius};
       color: ${isRewardable ? Color.black() : Color.darkBlueGray()};
       @media (max-width: ${mobileMaxWidth}) {
         padding: ${mobilePadding};

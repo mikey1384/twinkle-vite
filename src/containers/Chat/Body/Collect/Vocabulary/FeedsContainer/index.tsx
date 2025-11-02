@@ -7,7 +7,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext } from '~/contexts';
 import { isMobile, isTablet } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
@@ -157,7 +157,7 @@ function FeedsContainer({
                 margin-top: 1rem;
                 margin-bottom: 1.5rem;
                 margin-right: 1rem;
-                border-radius: ${wideBorderRadius};
+                border-radius: ${borderRadius};
                 background: linear-gradient(
                   135deg,
                   rgba(62, 138, 230, 0.2) 0%,

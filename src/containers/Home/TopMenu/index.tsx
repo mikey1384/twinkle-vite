@@ -21,7 +21,7 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
@@ -211,7 +211,7 @@ export default function TopMenu({
           font-size: 1.7rem;
           padding: 1.2rem;
           border: 1px solid var(--topmenu-border, var(--ui-border));
-          border-radius: ${wideBorderRadius};
+          border-radius: ${borderRadius};
           box-shadow: none;
           backdrop-filter: none;
           p {

@@ -110,7 +110,15 @@ export default function InputArea({
   }, [inputDisabled]);
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
       <Textarea
         disabled={inputDisabled}
         innerRef={innerRef}

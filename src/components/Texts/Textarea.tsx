@@ -7,7 +7,7 @@ import React, {
   useEffect
 } from 'react';
 import ProgressBar from '~/components/ProgressBar';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
@@ -172,6 +172,7 @@ export default function Textarea({
         alignItems: 'center',
         flexDirection: 'column',
         justifyContent: 'center',
+        borderRadius,
         ...style
       }}
     >
@@ -215,23 +216,24 @@ export default function Textarea({
         }}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
-          font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
+          font-family: inherit;
           width: 100%;
           box-sizing: border-box;
           position: relative;
           font-size: 1.7rem;
           padding: 1rem;
           border: 1px solid var(--ui-border);
+          border-radius: inherit;
+          background: #fff;
           resize: none;
           touch-action: manipulation;
-          border-radius: inherit;
+          transition: border-color 0.18s ease, box-shadow 0.18s ease,
+            background 0.18s ease;
           &:focus {
             outline: none;
             ${disableFocusGlow
               ? `border: none; box-shadow: none;`
-              : `border: 1px solid ${Color.logoBlue()}; box-shadow: 0px 0px 3px ${Color.logoBlue(
-                  0.8
-                )};`}
+              : `border-color: var(--ui-border-strong); box-shadow: none;`}
             ::placeholder {
               color: ${Color.lighterGray()};
             }

@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useState, useMemo, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { mobileMaxWidth, Color, wideBorderRadius } from '~/constants/css';
+import { mobileMaxWidth, Color, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { returnMaxRewards } from '~/constants/defaultValues';
@@ -122,7 +122,7 @@ function RewardStatus({
       min-height: 3.6rem;
       background: ${containerBg};
       border: 1px solid ${containerBorder};
-      border-radius: ${wideBorderRadius};
+      border-radius: ${borderRadius};
       @media (max-width: ${mobileMaxWidth}) {
         font-size: ${mobileFontSize};
         padding: ${mobilePadding};

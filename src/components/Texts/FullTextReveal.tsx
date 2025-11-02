@@ -7,7 +7,7 @@ import React, {
   useState
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
 
@@ -25,10 +25,14 @@ export default function FullTextReveal({
   text: string | React.ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [coords, setCoords] = useState<
-    { top: string; left?: string; right?: string } | null
-  >(null);
-  const [computedWidth, setComputedWidth] = useState<string | undefined>(undefined);
+  const [coords, setCoords] = useState<{
+    top: string;
+    left?: string;
+    right?: string;
+  } | null>(null);
+  const [computedWidth, setComputedWidth] = useState<string | undefined>(
+    undefined
+  );
 
   const bubbleClass = useMemo(
     () =>
@@ -40,7 +44,7 @@ export default function FullTextReveal({
         background: #fff;
         color: ${Color.black()};
         border: 1px solid var(--ui-border);
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22),
           0 1px 2px rgba(15, 23, 42, 0.06);
         min-width: 14rem;
@@ -109,12 +113,14 @@ export default function FullTextReveal({
 
   const portalTarget =
     typeof document !== 'undefined'
-      ? ((document.getElementById('outer-layer') as HTMLElement | null) ?? null)
+      ? (document.getElementById('outer-layer') as HTMLElement | null) ?? null
       : null;
 
   const sanitizedStyle = useMemo(() => {
     if (!style) return undefined;
-    const { position, top, left, right, bottom, zIndex, width, ...rest } = style;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { position, top, left, right, bottom, zIndex, width, ...rest } =
+      style;
     // width handled below if percentage
     return rest as React.CSSProperties;
   }, [style]);
@@ -133,7 +139,9 @@ export default function FullTextReveal({
                 top: coords.top,
                 left: coords.left,
                 right: coords.right,
-                width: computedWidth ?? (style?.width as string | number | undefined),
+                width:
+                  computedWidth ??
+                  (style?.width as string | number | undefined),
                 ...sanitizedStyle
               }}
             >

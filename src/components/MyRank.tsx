@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { Color, wideBorderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
@@ -71,7 +71,7 @@ export default function MyRank({
         text-align: center;
         padding: 1rem;
         border: none;
-        border-radius: ${!noBorderRadius ? wideBorderRadius : 0};
+        border-radius: ${!noBorderRadius ? borderRadius : 0};
         p {
           font-weight: bold;
         }

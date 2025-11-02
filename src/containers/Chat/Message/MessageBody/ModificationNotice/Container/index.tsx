@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import Details from './Details';
 import Link from '~/components/Link';
 import { useKeyContext } from '~/contexts';
@@ -17,7 +17,7 @@ export default function Container({
   return (
     <div
       className={css`
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         border: 1px solid var(--ui-border);
         background: #fff;
         transition: background 0.18s ease, border-color 0.18s ease;

@@ -4,7 +4,7 @@ import {
   Color,
   liftedBoxShadow,
   liftedBoxShadowDarker,
-  wideBorderRadius
+  borderRadius
 } from '~/constants/css';
 import { useAppContext, useManagementContext } from '~/contexts';
 import ApprovalButtons from './ApprovalButtons';
@@ -43,7 +43,7 @@ export default function Container({
   return (
     <div
       className={css`
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         box-shadow: ${liftedBoxShadow};
         background: ${Color.whiteGray()};
         &:hover {

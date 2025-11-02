@@ -15,12 +15,7 @@ import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import {
-  borderRadius,
-  Color,
-  tabletMaxWidth,
-  wideBorderRadius
-} from '~/constants/css';
+import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import { css, cx } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
@@ -180,7 +175,7 @@ const panelContainerClass = css`
   flex-direction: column;
   gap: 1.6rem;
   padding: 2rem 2.3rem;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   content-visibility: auto;
   contain-intrinsic-size: 600px;
   font-size: 1.5rem;
@@ -200,7 +195,7 @@ const heroSectionClass = css`
   align-items: center;
   justify-content: center;
   padding: 1rem 1.4rem;
-  border-radius: calc(${wideBorderRadius} - 0.6rem);
+  border-radius: calc(${borderRadius} - 0.6rem);
   background: var(--profile-panel-hero-bg, rgba(59, 130, 246, 0.65));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
     0 10px 32px -20px rgba(15, 23, 42, 0.55);

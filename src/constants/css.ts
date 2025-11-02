@@ -139,13 +139,12 @@ export const getThemeStyles = (theme: string, opacity: number = 1) => {
 
 export const borderRadius = '12px';
 export const mediumBorderRadius = '8px';
-export const wideBorderRadius = '12px';
 export const liftedBoxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
 export const liftedBoxShadowDarker = '0 4px 8px rgba(0, 0, 0, 0.2)';
 export const liftedBoxShadowDarkest = '0 4px 8px rgba(0, 0, 0, 0.3)';
 export const liftedEffect = {
   boxShadow: liftedBoxShadow,
-  borderRadius: wideBorderRadius
+  borderRadius: borderRadius
 };
 export const innerBorderRadius = '11px';
 export const mobileMaxWidth = '767px';

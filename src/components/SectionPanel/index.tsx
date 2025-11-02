@@ -7,7 +7,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useOutsideClick } from '~/helpers/hooks';
 import localize from '~/constants/localize';
@@ -98,7 +98,7 @@ export default function SectionPanel({
           border: 1px solid var(--section-panel-border-color);
           width: 100%;
           background: var(--section-panel-bg, transparent);
-          border-radius: ${wideBorderRadius};
+          border-radius: ${borderRadius};
           box-shadow: ${elevated
             ? '0 22px 38px -28px rgba(15, 23, 42, 0.24), 0 1px 3px rgba(15, 23, 42, 0.12)'
             : 'none'};
@@ -205,7 +205,8 @@ export default function SectionPanel({
                   {!stringIsEmpty(editedTitle) && title !== editedTitle && (
                     <Button
                       style={{ marginLeft: '1rem', zIndex: 1000 }}
-                      filled
+                      variant="soft"
+                      tone="raised"
                       disabled={savingEdit}
                       color={successColor}
                       onClick={() => onChangeTitle(editedTitle)}

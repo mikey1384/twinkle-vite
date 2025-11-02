@@ -5,7 +5,7 @@ import ColorSelector from '~/components/ColorSelector';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
@@ -32,7 +32,10 @@ export default function StatusInput({
   setColor: (color: string) => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const statusExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -56,7 +59,7 @@ export default function StatusInput({
           margin-top: 1rem;
           background: #fff;
           border: 1px solid var(--ui-border);
-          border-radius: ${wideBorderRadius};
+          border-radius: ${borderRadius};
           overflow: hidden;
           transition: border-color 0.18s ease;
           &:focus-within {
@@ -147,7 +150,8 @@ export default function StatusInput({
             </Button>
             <Button
               color={doneColor}
-              filled
+              variant="soft"
+              tone="raised"
               disabled={
                 !!exceedsCharLimit({
                   contentType: 'statusMsg',

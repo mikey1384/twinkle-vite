@@ -7,7 +7,7 @@ import {
   Color,
   mobileMaxWidth,
   tabletMaxWidth,
-  wideBorderRadius
+  borderRadius
 } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
@@ -18,7 +18,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 const container = css`
   width: 100%;
   margin-top: 1rem;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   border: none;

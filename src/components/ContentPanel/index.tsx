@@ -9,7 +9,7 @@ import TargetContent from './TargetContent';
 import Embedly from '~/components/Embedly';
 import Profile from './Profile';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -21,7 +21,7 @@ const urlCss = css`
   padding: 1rem;
   background: #fff;
   border: 1px solid var(--ui-border);
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   margin-top: 0.8rem;
   transition: border-color 0.18s ease;
   &:hover {
@@ -38,13 +38,12 @@ const urlCss = css`
   }
 `;
 
-
 // Tucked profile target container to visually attach under main panel
 const profileTargetCss = css`
   cursor: pointer;
   background: #fff;
   border: 1px solid var(--ui-border);
-  border-radius: 0 0 ${wideBorderRadius} ${wideBorderRadius};
+  border-radius: 0 0 ${borderRadius} ${borderRadius};
   /* No outer padding: inner Profile provides its own padding */
   @media (max-width: ${mobileMaxWidth}) {
     border: none;
@@ -233,7 +232,7 @@ export default function ContentPanel({
       width: 100%;
       background: #fff;
       border: 1px solid var(--ui-border);
-      border-radius: ${wideBorderRadius};
+      border-radius: ${borderRadius};
       padding: 0.8rem 1rem 0.8rem 1.2rem;
       &:last-child {
         margin-bottom: 0;

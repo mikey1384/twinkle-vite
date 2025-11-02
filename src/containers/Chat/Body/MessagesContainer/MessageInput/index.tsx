@@ -162,13 +162,21 @@ export default function MessageInput({
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const [coolingDown, setCoolingDown] = useState(false);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
   const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
   const buttonHoverRole = useRoleColor('buttonHovered', {
     fallback: buttonRole.colorKey
   });
+  const successColorKey = successRole.colorKey;
+  const alertColorKey = alertRole.colorKey;
   const buttonColorKey = buttonRole.colorKey;
-  const buttonHoverColorKey =
-    buttonHoverRole.colorKey || buttonColorKey;
+  const buttonHoverColorKey = buttonHoverRole.colorKey || buttonColorKey;
+  const themeIsGreen = successRole.themeName === 'green';
+  const sendButtonColorKey = themeIsGreen ? alertColorKey : successColorKey;
+  const sendButtonHoverColorKey = themeIsGreen
+    ? alertColorKey
+    : successColorKey;
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
@@ -493,7 +501,8 @@ export default function MessageInput({
             }}
           >
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               disabled={
                 loading ||
                 !socketConnected ||
@@ -502,8 +511,8 @@ export default function MessageInput({
                 isExceedingCharLimit ||
                 hasInsufficientCoinsForThinkHard
               }
-              color={buttonColorKey}
-              hoverColor={buttonHoverColorKey}
+              color={sendButtonColorKey}
+              hoverColor={sendButtonHoverColorKey}
               onClick={handleSendMsg}
             >
               <Icon size="lg" icon="paper-plane" />

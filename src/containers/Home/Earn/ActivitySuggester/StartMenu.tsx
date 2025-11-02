@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, wideBorderRadius } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 
 export default function StartMenu() {
   const onSetTopMenuSectionSection = useHomeContext(
@@ -93,7 +93,7 @@ const sectionCard = css`
   flex-direction: column;
   gap: 1.4rem;
   padding: 1.8rem 2rem;
-  border-radius: ${wideBorderRadius};
+  border-radius: ${borderRadius};
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--home-panel-card-border, rgba(148, 163, 184, 0.35));
   box-shadow: none;

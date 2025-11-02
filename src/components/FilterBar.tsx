@@ -1,5 +1,5 @@
 import React from 'react';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -80,7 +80,7 @@ export default function FilterBar({
     font-size: ${resolvedFontSize};
     background: ${barBackground};
     overflow: visible;
-    border-radius: ${wideBorderRadius};
+    border-radius: ${borderRadius};
     border: ${bordered ? '1px solid var(--ui-border)' : 'none'};
 
     > .nav-section {

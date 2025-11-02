@@ -4,7 +4,7 @@ import {
   Color,
   mobileMaxWidth,
   tabletMaxWidth,
-  wideBorderRadius,
+  borderRadius,
   getThemeStyles
 } from '~/constants/css';
 import { isMobile } from '~/helpers';
@@ -98,7 +98,7 @@ export default function HomeMenuItems({
           flex-direction: column;
           font-size: 1.7rem;
           border: none;
-          border-radius: ${wideBorderRadius};
+          border-radius: ${borderRadius};
           border-left: 0;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
@@ -135,7 +135,7 @@ export default function HomeMenuItems({
               align-items: center;
               gap: 1.1rem;
               padding: 1.2rem 1.5rem;
-              border-radius: ${wideBorderRadius};
+              border-radius: ${borderRadius};
               background: transparent;
               border: 1px solid transparent;
               box-shadow: none;
@@ -245,7 +245,7 @@ export default function HomeMenuItems({
               }
               .homemenu__item {
                 margin: 0.45rem 0.4rem;
-                border-radius: ${wideBorderRadius};
+                border-radius: ${borderRadius};
                 > .icon {
                   padding-left: 0.5rem;
                 }
