@@ -333,7 +333,6 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(209, 170, 0, 1)'
     },
-    // Revert to pure white background
     page: { bg: 'rgba(255, 255, 255, 1)' }
   }
 };
