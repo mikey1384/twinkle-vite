@@ -35,7 +35,6 @@ export default function Editor({
   useEffect(() => {
     setError('');
     setErrorLineNumber(0);
-     
   }, [valueOnTextEditor]);
 
   useEffect(() => {
@@ -99,7 +98,7 @@ export default function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
-  const CompiledComponent = useMemo(() => {
+  const CompiledComponentType = useMemo(() => {
     const component = handleGenerateComponent(elementObj, (error: any) => {
       const errorString = error.toString();
       handleSetError({
@@ -107,7 +106,7 @@ export default function Editor({
         lineNumber: getErrorLineNumber(errorString)
       });
     });
-    return createElement(component, null);
+    return component;
 
     function handleGenerateComponent(code: any, errorCallback: any) {
       return errorBoundary(code, errorCallback);
@@ -118,8 +117,11 @@ export default function Editor({
             return errorCallback(error);
           }
           render() {
-            return typeof Element === 'function'
-              ? createElement(Element, null)
+            if (typeof Element === 'function') {
+              return createElement(Element, null);
+            }
+            return React.isValidElement(Element)
+              ? React.cloneElement(Element)
               : Element;
           }
         }
@@ -137,7 +139,9 @@ export default function Editor({
           evaling={evaling}
           style={{ marginBottom: '5rem' }}
         >
-          {CompiledComponent}
+          {CompiledComponentType
+            ? createElement(CompiledComponentType, { key: 'top-preview' })
+            : null}
         </Preview>
       ) : ast ? (
         <Loading />
@@ -182,7 +186,9 @@ export default function Editor({
           evaling={evaling}
           style={{ marginTop: '5rem' }}
         >
-          {CompiledComponent}
+          {CompiledComponentType
+            ? createElement(CompiledComponentType, { key: 'bottom-preview' })
+            : null}
         </Preview>
       ) : ast ? (
         <Loading />
