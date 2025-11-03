@@ -23,7 +23,10 @@ export default function AwardUserAchievementModal({
   onHide: () => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const grantAchievements = useAppContext(
     (v) => v.requestHelpers.grantAchievements
   );
@@ -207,6 +210,7 @@ export default function AwardUserAchievementModal({
             color={doneColor}
             onClick={handleSubmit}
             loading={posting}
+            style={{ marginLeft: '1rem' }}
             disabled={
               selectedUsers.filter(
                 (user) => !user.achievements[achievementType]?.isUnlocked
