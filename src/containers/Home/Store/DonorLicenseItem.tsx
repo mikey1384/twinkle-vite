@@ -67,7 +67,7 @@ export default function DonorLicenseItem({
         ...basePanelVars,
         ['--home-panel-gap' as const]: '2rem',
         ...style
-      }) as React.CSSProperties,
+      } as React.CSSProperties),
     [basePanelVars, style]
   );
 
@@ -247,7 +247,8 @@ export default function DonorLicenseItem({
         </div>
 
         <Button
-          filled
+          variant="soft"
+          tone="raised"
           disabled={!canMakeDonation}
           loading={donating}
           onClick={handleDonate}
