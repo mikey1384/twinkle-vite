@@ -76,7 +76,7 @@ function Heading({
     <ErrorBoundary componentPath="ContentPanel/Heading">
       <header className="heading">
         <ProfilePic
-          style={{ width: '3.8rem' }}
+          style={{ width: '3.8rem', flexShrink: 0 }}
           userId={uploader.id}
           profilePicUrl={uploader.profilePicUrl || ''}
         />
