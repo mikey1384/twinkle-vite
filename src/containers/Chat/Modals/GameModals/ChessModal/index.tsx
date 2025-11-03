@@ -263,7 +263,7 @@ export default function ChessModal({
             doneDisabled={
               !newChessState || !socketConnected || banned?.chess || submitting
             }
-            showSpinner={!socketConnected || submitting}
+            loading={!socketConnected || submitting}
             warningColor={warningColor}
             doneColor={doneColor}
             acceptDrawLabel={acceptDrawLabel}

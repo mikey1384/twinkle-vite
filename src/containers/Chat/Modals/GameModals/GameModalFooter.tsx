@@ -1,6 +1,5 @@
 import React from 'react';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 
 export default function GameModalFooter({
   // visibility flags
@@ -23,7 +22,7 @@ export default function GameModalFooter({
   onHowToPlay,
   // UI state
   doneDisabled,
-  showSpinner,
+  loading,
   // colors
   warningColor,
   doneColor,
@@ -55,7 +54,7 @@ export default function GameModalFooter({
   onDone?: () => void;
   onHowToPlay?: () => void;
   doneDisabled?: boolean;
-  showSpinner?: boolean;
+  loading?: boolean;
   warningColor?: string;
   doneColor?: string;
   howToPlayColor?: string;
@@ -74,6 +73,7 @@ export default function GameModalFooter({
     <>
       {showHowToPlay && (
         <Button
+          variant="ghost"
           style={{ marginRight: '1rem' }}
           color={howToPlayColor || 'magenta'}
           onClick={onHowToPlay || noop}
@@ -83,6 +83,7 @@ export default function GameModalFooter({
       )}
       {showGameEndButton && (
         <Button
+          variant="ghost"
           style={{ marginRight: '1rem' }}
           color={drawOfferPending || isAbortable ? 'orange' : 'red'}
           onClick={onOpenConfirmModal || noop}
@@ -96,6 +97,7 @@ export default function GameModalFooter({
       )}
       {showOfferDraw && (
         <Button
+          variant="ghost"
           style={{ marginRight: '1rem' }}
           color="orange"
           onClick={onOfferDraw || noop}
@@ -108,6 +110,7 @@ export default function GameModalFooter({
       </Button>
       {showCancelMove && (
         <Button
+          variant="ghost"
           style={{ marginLeft: '1rem' }}
           color={warningColor}
           onClick={onCancelMove || noop}
@@ -117,6 +120,7 @@ export default function GameModalFooter({
       )}
       {gameFinished ? (
         <Button
+          variant="ghost"
           style={{ marginLeft: '1rem' }}
           color="orange"
           onClick={onStartNewGame || noop}
@@ -125,15 +129,14 @@ export default function GameModalFooter({
         </Button>
       ) : showDoneButton ? (
         <Button
+          variant="ghost"
           color={doneColor}
+          loading={loading}
           style={{ marginLeft: '1rem' }}
           onClick={onDone || noop}
           disabled={doneDisabled}
         >
           {doneLabel}
-          {showSpinner && (
-            <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-          )}
         </Button>
       ) : null}
     </>
