@@ -22,7 +22,7 @@ export default function Streaks({
   return (
     <div
       style={{
-        height: 'CALC(100vh - 30rem)',
+        height: 'calc(100vh - 30rem)',
         width: '100%',
         display: 'flex',
         alignItems: 'center',
@@ -53,7 +53,7 @@ export default function Streaks({
       <div
         style={{
           height: '100%',
-          overflow: 'scroll',
+          overflow: 'hidden',
           width: '100%',
           paddingTop: '2rem',
           display: 'flex',

@@ -33,10 +33,10 @@ export default function DoubleStreaks({
   }, []);
 
   return loading ? (
-    <Loading style={{ height: 'CALC(100% - 6rem)' }} />
+    <Loading style={{ height: 'calc(100% - 6rem)' }} />
   ) : (
     <LeaderboardList
-      scrollable={false}
+      height="100%"
       padding="0"
       mobilePadding="0"
       bottomPadding="0"
