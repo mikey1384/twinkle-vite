@@ -11,6 +11,8 @@ import SummonerBadge from '~/assets/summoner.png';
 import GrammarBadge from '~/assets/grammar.png';
 import MentorBadge from '~/assets/mentor.png';
 import SageBadge from '~/assets/sage.png';
+import DonorBadge from '~/assets/donor.png';
+import ChessLegendBadge from '~/assets/chess-legend.png';
 
 type AchievementType =
   | 'adult'
@@ -22,7 +24,9 @@ type AchievementType =
   | 'summoner'
   | 'grammar'
   | 'mentor'
-  | 'sage';
+  | 'sage'
+  | 'donor'
+  | 'chess_legend';
 
 interface AchievementListItemProps {
   achievement: {
@@ -49,7 +53,9 @@ export default function AchievementListItem({
       summoner: SummonerBadge,
       grammar: GrammarBadge,
       mentor: MentorBadge,
-      sage: SageBadge
+      sage: SageBadge,
+      donor: DonorBadge,
+      chess_legend: ChessLegendBadge
     }),
     []
   );
