@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import RoundList from '~/components/RoundList';
 import Banner from '~/components/Banner';
 import GradientButton from '~/components/Buttons/GradientButton';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Rankings from './Rankings';
 import NotiItem from './NotiItem';
+import SectionHeader from './SectionHeader';
 import RewardItem from './RewardItem';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -12,6 +12,7 @@ import { REWARD_VALUE, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const tapToCollectRewardsLabel = localize('tapToCollectRewards');
 const yourXPLabel = localize('yourXP');
@@ -40,15 +41,22 @@ export default function MainFeeds({
   selectNotiTab: () => void;
   style?: object;
 }) {
-  const actionColor = useKeyContext((v) => v.theme.action.color);
-  const infoColor = useKeyContext((v) => v.theme.info.color);
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const mentionColor = useKeyContext((v) => v.theme.mention.color);
-  const missionColor = useKeyContext((v) => v.theme.mission.color);
-  const recommendationColor = useKeyContext(
-    (v) => v.theme.recommendation.color
-  );
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const actionRole = useRoleColor('action', { fallback: 'green' });
+  const infoRole = useRoleColor('info', { fallback: 'logoBlue' });
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const mentionRole = useRoleColor('mention', { fallback: 'passionFruit' });
+  const missionRole = useRoleColor('mission', { fallback: 'orange' });
+  const recommendationRole = useRoleColor('recommendation', {
+    fallback: 'logoBlue'
+  });
+  const rewardRole = useRoleColor('reward', { fallback: 'pinkOrange' });
+  const actionColor = actionRole.colorKey;
+  const infoColor = infoRole.colorKey;
+  const linkColor = linkRole.colorKey;
+  const mentionColor = mentionRole.colorKey;
+  const missionColor = missionRole.colorKey;
+  const recommendationColor = recommendationRole.colorKey;
+  const rewardColor = rewardRole.colorKey;
 
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
@@ -67,10 +75,10 @@ export default function MainFeeds({
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const {
-    alert: { color: alertColor },
-    success: { color: successColor }
-  } = useKeyContext((v) => v.theme);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const alertColor = alertRole.colorKey;
+  const successColor = successRole.colorKey;
   const notiObj = useNotiContext((v) => v.state.notiObj);
   const totalRewardedTwinkles = useMemo(
     () => notiObj[userId]?.totalRewardedTwinkles || 0,
@@ -125,19 +133,49 @@ export default function MainFeeds({
   }, [activeTab, totalRewardAmount]);
 
   const NotificationsItems = useMemo(() => {
-    return notifications.map((notification) => (
-      <NotiItem
-        actionColor={actionColor}
-        infoColor={infoColor}
-        linkColor={linkColor}
-        mentionColor={mentionColor}
-        missionColor={missionColor}
-        recommendationColor={recommendationColor}
-        rewardColor={rewardColor}
-        userId={userId}
-        key={notification.id}
-        notification={notification}
-      />
+    // Group notifications by day label (Today, Yesterday, or date)
+    const sections: { label: string; items: any[] }[] = [];
+    const now = new Date();
+    const todayKey = now.toDateString();
+    const yesterdayKey = new Date(
+      now.getTime() - 24 * 60 * 60 * 1000
+    ).toDateString();
+
+    const bySection: Record<string, { label: string; items: any[] }> = {};
+
+    for (const n of notifications) {
+      const d = new Date(Number(n.timeStamp) * 1000);
+      const key = d.toDateString();
+      let label = d.toLocaleDateString();
+      if (key === todayKey) label = 'Today';
+      else if (key === yesterdayKey) label = 'Yesterday';
+      if (!bySection[label]) bySection[label] = { label, items: [] };
+      bySection[label].items.push(n);
+    }
+
+    // Preserve original order of notifications; build sections in insertion order
+    for (const label of Object.keys(bySection)) {
+      sections.push(bySection[label]);
+    }
+
+    return sections.map((section) => (
+      <div key={`sec-${section.label}`}>
+        <SectionHeader label={section.label} />
+        {section.items.map((notification) => (
+          <NotiItem
+            actionColor={actionColor}
+            infoColor={infoColor}
+            linkColor={linkColor}
+            mentionColor={mentionColor}
+            missionColor={missionColor}
+            recommendationColor={recommendationColor}
+            rewardColor={rewardColor}
+            userId={userId}
+            key={notification.id}
+            notification={notification}
+          />
+        ))}
+      </div>
     ));
   }, [
     actionColor,
@@ -151,17 +189,46 @@ export default function MainFeeds({
     userId
   ]);
 
-  const RewardListItems = useMemo(() => {
-    return rewards.map((reward) => (
-      <RewardItem
-        key={reward.id}
-        actionColor={actionColor}
-        infoColor={infoColor}
-        linkColor={linkColor}
-        missionColor={missionColor}
-        rewardColor={rewardColor}
-        reward={reward}
-      />
+  const RewardSections = useMemo(() => {
+    // Group rewards by day label (Today, Yesterday, or date)
+    const sections: { label: string; items: any[] }[] = [];
+    const now = new Date();
+    const todayKey = now.toDateString();
+    const yesterdayKey = new Date(
+      now.getTime() - 24 * 60 * 60 * 1000
+    ).toDateString();
+
+    const bySection: Record<string, { label: string; items: any[] }> = {};
+
+    for (const r of rewards) {
+      const d = new Date(Number(r.timeStamp) * 1000);
+      const key = d.toDateString();
+      let label = d.toLocaleDateString();
+      if (key === todayKey) label = 'Today';
+      else if (key === yesterdayKey) label = 'Yesterday';
+      if (!bySection[label]) bySection[label] = { label, items: [] };
+      bySection[label].items.push(r);
+    }
+
+    for (const label of Object.keys(bySection)) {
+      sections.push(bySection[label]);
+    }
+
+    return sections.map((section) => (
+      <div key={`reward-sec-${section.label}`}>
+        <SectionHeader label={section.label} />
+        {section.items.map((reward) => (
+          <RewardItem
+            key={reward.id}
+            actionColor={actionColor}
+            infoColor={infoColor}
+            linkColor={linkColor}
+            missionColor={missionColor}
+            rewardColor={rewardColor}
+            reward={reward}
+          />
+        ))}
+      </div>
     ));
   }, [actionColor, infoColor, linkColor, missionColor, rewardColor, rewards]);
 
@@ -248,14 +315,19 @@ export default function MainFeeds({
           </ErrorBoundary>
         )}
       {activeTab === 'reward' && !!userId && typeof twinkleXP === 'number' && (
-        <MyRank myId={userId} rank={myAllTimeRank} twinkleXP={twinkleXP} />
+        <MyRank
+          myId={userId}
+          rank={myAllTimeRank}
+          twinkleXP={twinkleXP}
+          isNotification
+        />
       )}
       {userId && activeTab === 'notification' && notifications.length > 0 && (
-        <RoundList style={{ marginTop: 0 }}>{NotificationsItems}</RoundList>
+        <div style={{ marginTop: 0 }}>{NotificationsItems}</div>
       )}
       {activeTab === 'rankings' && <Rankings loadingFeeds={loadingNewFeeds} />}
       {activeTab === 'reward' && rewards.length > 0 && (
-        <RoundList style={{ marginTop: 0 }}>{RewardListItems}</RoundList>
+        <div style={{ marginTop: 0 }}>{RewardSections}</div>
       )}
       {!loadingNotifications &&
         ((activeTab === 'notification' && loadMoreNotificationsButton) ||

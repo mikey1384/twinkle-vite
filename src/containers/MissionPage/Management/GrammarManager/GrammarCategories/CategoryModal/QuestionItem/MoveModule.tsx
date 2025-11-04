@@ -26,7 +26,7 @@ export default function MoveModule({
         textAlign: 'center',
         padding: '1rem',
         opacity: moving ? 0.5 : 1,
-        border: `1px solid ${Color.borderGray()}`
+        border: '1px solid var(--ui-border)'
       }}
     >
       {categories.length === 0 && (

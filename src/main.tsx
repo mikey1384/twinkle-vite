@@ -71,6 +71,7 @@ import { faComment } from '@fortawesome/pro-solid-svg-icons/faComment';
 import { faCommentAlt } from '@fortawesome/pro-solid-svg-icons/faCommentAlt';
 import { faComments } from '@fortawesome/pro-solid-svg-icons/faComments';
 import { faCopy } from '@fortawesome/pro-solid-svg-icons/faCopy';
+import { faClone } from '@fortawesome/pro-solid-svg-icons/faClone';
 import { faCrown } from '@fortawesome/pro-solid-svg-icons/faCrown';
 import { faDharmachakra } from '@fortawesome/pro-solid-svg-icons/faDharmachakra';
 import { faDesktop } from '@fortawesome/pro-solid-svg-icons/faDesktop';
@@ -79,7 +80,10 @@ import { faEdit } from '@fortawesome/pro-solid-svg-icons/faEdit';
 import { faEllipsisH } from '@fortawesome/pro-solid-svg-icons/faEllipsisH';
 import { faExclamationCircle } from '@fortawesome/pro-solid-svg-icons/faExclamationCircle';
 import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclamationTriangle';
+import { faEye } from '@fortawesome/pro-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/pro-solid-svg-icons/faEyeSlash';
 import { faExchangeAlt } from '@fortawesome/pro-solid-svg-icons/faExchangeAlt';
+import { faExternalLinkAlt } from '@fortawesome/pro-solid-svg-icons/faExternalLinkAlt';
 import { faFilm } from '@fortawesome/pro-solid-svg-icons/faFilm';
 import { faFile } from '@fortawesome/pro-solid-svg-icons/faFile';
 import { faFileArchive } from '@fortawesome/pro-solid-svg-icons/faFileArchive';
@@ -95,6 +99,7 @@ import { faFire } from '@fortawesome/pro-solid-svg-icons/faFire';
 import { faFolderOpen } from '@fortawesome/pro-solid-svg-icons/faFolderOpen';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
+import { faLayerGroup } from '@fortawesome/pro-solid-svg-icons/faLayerGroup';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
 import { faHeart } from '@fortawesome/pro-solid-svg-icons/faHeart';
 import { faHandHolding } from '@fortawesome/pro-solid-svg-icons/faHandHolding';
@@ -179,7 +184,10 @@ import { faWindows } from '@fortawesome/free-brands-svg-icons/faWindows';
 import { faXmark } from '@fortawesome/pro-solid-svg-icons/faXmark';
 import { faYoutube } from '@fortawesome/free-brands-svg-icons/faYoutube';
 import { AppContextProvider } from './contexts';
+import { RootThemeProvider } from './theme/RootThemeProvider';
 import App from './containers/App';
+import { applyThemeVars, type ThemeName } from './theme';
+import { DEFAULT_PROFILE_THEME } from './constants/defaultValues';
 import { install } from 'resize-observer';
 
 if (!window.ResizeObserver) install();
@@ -257,16 +265,20 @@ library.add(
   faComment,
   faCommentAlt,
   faComments,
+  faClone,
   faCopy,
   faCrown,
+  faEye,
   faDharmachakra,
   faDesktop,
   faDownload,
   faEdit,
   faEllipsisH,
   faExchangeAlt,
+  faExternalLinkAlt,
   faExclamationCircle,
   faExclamationTriangle,
+  faEyeSlash,
   faFile,
   faFileArchive,
   faFileAudio,
@@ -292,6 +304,7 @@ library.add(
   faInfoCircle,
   faJs,
   faLevelUp,
+  faLayerGroup,
   faLeftToLine,
   faLightbulb,
   faLink,
@@ -368,6 +381,17 @@ library.add(
 );
 
 (async () => {
+  try {
+    const path = window.location?.pathname || '';
+    const routeTheme = path.startsWith('/users/')
+      ? (localStorage.getItem('routeProfileTheme') as ThemeName | null)
+      : null;
+    const storedTheme = (localStorage.getItem('profileTheme') ||
+      DEFAULT_PROFILE_THEME) as ThemeName;
+    applyThemeVars((routeTheme || storedTheme) as ThemeName);
+  } catch (_err) {
+    // ignore
+  }
   await loadPolyfills();
 
   const rootElement = document.getElementById('react-view');
@@ -378,7 +402,9 @@ library.add(
       <BrowserRouter>
         <ErrorBoundary componentPath="AppContext">
           <AppContextProvider>
-            <App />
+            <RootThemeProvider>
+              <App />
+            </RootThemeProvider>
           </AppContextProvider>
         </ErrorBoundary>
       </BrowserRouter>

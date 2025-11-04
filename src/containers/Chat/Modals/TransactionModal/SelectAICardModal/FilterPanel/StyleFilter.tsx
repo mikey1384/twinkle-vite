@@ -4,6 +4,8 @@ import SelectedWord from '~/components/Texts/SelectedWord';
 import Loading from '~/components/Loading';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function StyleFilter({
   selectedStyle = '',
@@ -24,22 +26,8 @@ export default function StyleFilter({
   });
 
   return (
-    <div
-      style={{
-        zIndex: 900,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
+    <div className={containerClass}>
+      <div className={headerRowClass}>
         <div className="label">Style:</div>
         <SelectedWord
           selectedWord={selectedStyle}
@@ -47,15 +35,10 @@ export default function StyleFilter({
           style={{ marginLeft: '0.7rem' }}
         />
       </div>
-      <div
-        style={{
-          marginTop: '0.5rem',
-          position: 'relative'
-        }}
-      >
+      <div className={inputWrapperClass}>
         <SearchInput
           placeholder="Search word..."
-          style={{ width: '15rem' }}
+          style={{ width: '100%' }}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedStyles}
@@ -82,3 +65,34 @@ export default function StyleFilter({
     setSearchedStyles(styles);
   }
 }
+
+const containerClass = css`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  z-index: 900;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 0.5rem;
+  }
+`;
+
+const headerRowClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+`;
+
+const inputWrapperClass = css`
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    max-width: 100%;
+  }
+`;

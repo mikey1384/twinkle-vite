@@ -2,147 +2,298 @@ import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { borderRadius, mobileMaxWidth, Color } from '~/constants/css';
 import { css } from '@emotion/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const rankLabel = localize('rank');
+import Icon from '~/components/Icon';
+import RankBadge from '~/components/RankBadge';
 
 export default function RankBar({
   className,
   profile,
-  style
+  style,
+  variant = 'panel'
 }: {
   className?: string;
   profile: any;
   style?: any;
+  variant?: 'panel' | 'page';
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
-  const rankColor = useMemo(
-    () =>
-      profile.rank === 1
-        ? Color.gold()
-        : profile.rank === 2
-        ? '#fff'
-        : profile.rank === 3
-        ? Color.bronze()
-        : undefined,
-    [profile.rank]
+  const rankValue = Number(profile?.rank ?? 0);
+  const rankColor = useMemo(() => {
+    if (rankValue === 1) return Color.gold();
+    if (rankValue === 2) return Color.lighterGray();
+    if (rankValue === 3) return Color.orange();
+    return undefined;
+  }, [rankValue]);
+  const rankTextColor = useMemo(() => {
+    if (rankValue === 1) return Color.gold();
+    if (rankValue === 2) return Color.lighterGray();
+    if (rankValue === 3) return Color.orange();
+    return rankValue <= 10 ? Color.logoBlue() : Color.darkGray();
+  }, [rankValue]);
+  const borderCss = '1px solid var(--ui-border)';
+  const isTopThree = rankValue <= 3;
+  const baseTextColor = isTopThree ? '#ffffff' : Color.darkerGray();
+  const xpValueColor = Color.logoGreen();
+  const trophyColor = rankTextColor;
+  const xpUnitColor = useMemo(() => Color.gold(), []);
+  const xpMonthColor = useMemo(
+    () => (rankColor ? rankColor : Color.pink()),
+    [rankColor]
   );
-  const rankNumberLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${profile.rank}위`;
-    }
-    return `#${profile.rank}`;
-  }, [profile.rank]);
-  const xpNumberLabel = useMemo(() => {
-    const innerComponent = (
-      <>
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color[xpNumberColor]() : Color.darkGray())
-          }}
-        >
-          {addCommasToNumber(profile.twinkleXP)}
-        </span>{' '}
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color.gold() : Color.darkGray())
-          }}
-        >
-          XP
-        </span>
-      </>
-    );
-    return SELECTED_LANGUAGE === 'kr' ? (
-      <>
-        <span style={{ color: profile.rank > 3 ? Color.darkGray() : '' }}>
-          (
-        </span>
-        {innerComponent}
-        <span style={{ color: profile.rank > 3 ? Color.darkGray() : '' }}>
-          )
-        </span>
-      </>
-    ) : (
-      innerComponent
-    );
-  }, [profile.rank, profile.twinkleXP, rankColor, xpNumberColor]);
-
-  return (
-    <div
-      style={style}
-      className={`${css`
-        padding: 1.5rem 0;
-        font-size: 2rem;
-        color: ${rankColor};
-        font-weight: bold;
-        text-align: center;
+  const rankCardClass = useMemo(
+    () =>
+      css`
+        margin-top: 0.8rem;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 1.2rem;
+        padding: 1.4rem 1.9rem;
+        border: ${borderCss};
+        border-image: none;
+        border-top: none;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
         border-bottom-left-radius: ${borderRadius};
         border-bottom-right-radius: ${borderRadius};
-        ${profile.rank > 3 ? `border: 1px solid ${Color.borderGray()};` : ''}
-        background: ${profile.rank < 4 ? Color.black() : '#fff'};
+        background: ${isTopThree ? '#000' : '#fff'};
+        box-shadow: none;
+        color: ${baseTextColor};
         @media (max-width: ${mobileMaxWidth}) {
-          margin-left: 0;
-          margin-right: 0;
+          margin-top: 0;
           border-radius: 0;
           border-left: none;
           border-right: none;
+          padding: 1.3rem 1.4rem;
+          grid-template-columns: auto 1fr;
+          align-items: center;
         }
-      `} ${className}`}
-    >
-      <span>
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color.logoBlue() : Color.darkGray())
-          }}
-        >
-          {rankLabel}
-        </span>{' '}
-        <span
-          style={{
-            color:
-              rankColor ||
-              (profile.rank <= 10 ? Color.logoBlue() : Color.darkGray())
-          }}
-        >
-          {rankNumberLabel}
-        </span>{' '}
-        {SELECTED_LANGUAGE === 'en' ? (
-          <span
-            style={{
-              color:
-                rankColor ||
-                (profile.rank <= 10 ? Color.logoBlue() : Color.darkGray())
-            }}
-          >
-            with
+      `,
+    [baseTextColor, isTopThree]
+  );
+  const pageContainerClass = useMemo(
+    () =>
+      css`
+        margin-top: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        padding: 1.8rem 2.2rem;
+        max-width: 56rem;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+        border-radius: ${borderRadius};
+        background: ${isTopThree ? '#000' : '#fff'};
+        color: ${baseTextColor};
+        @media (max-width: ${mobileMaxWidth}) {
+          border-radius: 0;
+          border: none;
+          padding: 1.3rem 1.4rem;
+          max-width: 100%;
+        }
+      `,
+    [baseTextColor, isTopThree]
+  );
+  const pageDetailsClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        align-items: center;
+        text-align: center;
+        .title {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: ${rankTextColor};
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .xp-line {
+          font-size: 1.9rem;
+          font-weight: 800;
+          color: ${xpValueColor};
+          display: inline-flex;
+          align-items: baseline;
+        }
+        .xp-unit {
+          margin-left: 0.35rem;
+          font-size: 1.45rem;
+          font-weight: 600;
+          color: ${xpUnitColor};
+        }
+        .month {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: ${xpMonthColor};
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+      `,
+    [rankTextColor, xpValueColor, xpUnitColor, xpMonthColor]
+  );
+  const badgeClass = useMemo(
+    () =>
+      css`
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.45rem 1.1rem;
+        border-radius: 999px;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: ${rankTextColor};
+        background: ${isTopThree
+          ? 'rgba(255, 255, 255, 0.14)'
+          : 'rgba(255, 255, 255, 0.45)'};
+        box-shadow: ${isTopThree
+          ? 'inset 0 1px 0 rgba(255, 255, 255, 0.28)'
+          : 'inset 0 1px 0 rgba(255, 255, 255, 0.8)'};
+      `,
+    [rankTextColor, isTopThree]
+  );
+  const panelRankBadgeClass = useMemo(
+    () =>
+      css`
+        min-width: 3.1rem;
+        height: 2.4rem;
+        font-size: 1.15rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          min-width: 2.9rem;
+          height: 2.2rem;
+          font-size: 1.05rem;
+        }
+      `,
+    []
+  );
+  const pageRankBadgeClass = useMemo(
+    () =>
+      css`
+        min-width: 3.5rem;
+        height: 2.7rem;
+        font-size: 1.35rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          min-width: 3.2rem;
+          height: 2.5rem;
+          font-size: 1.2rem;
+        }
+      `,
+    []
+  );
+  const xpInfoClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        text-align: right;
+        justify-self: end;
+        @media (max-width: ${mobileMaxWidth}) {
+          align-items: flex-end;
+          text-align: right;
+          justify-self: end;
+        }
+        .xp-amount {
+          font-size: 1.65rem;
+          font-weight: 700;
+          color: ${xpValueColor};
+          text-shadow: none;
+          display: inline-flex;
+          align-items: baseline;
+        }
+        .xp-value {
+          color: ${xpValueColor};
+        }
+        .xp-unit {
+          margin-left: 0.35rem;
+          color: ${xpUnitColor};
+          font-size: 1.45rem;
+          font-weight: 600;
+        }
+        .xp-paren {
+          color: ${rankColor ? rankColor : Color.darkerGray(0.8)};
+        }
+        .xp-month {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: ${xpMonthColor};
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+      `,
+    [rankColor, xpMonthColor, xpUnitColor, xpValueColor]
+  );
+  const xpAmount = addCommasToNumber(profile.twinkleXP || 0);
+  const xpThisMonthValue = useMemo(() => {
+    const rawValue = profile?.xpThisMonth;
+    if (rawValue === null || rawValue === undefined) return 0;
+    const numericValue =
+      typeof rawValue === 'string'
+        ? Number(rawValue)
+        : typeof rawValue === 'number'
+        ? rawValue
+        : Number(rawValue);
+    return Number.isNaN(numericValue) ? 0 : numericValue;
+  }, [profile?.xpThisMonth]);
+  const monthGainLabel =
+    xpThisMonthValue > 0
+      ? `+${addCommasToNumber(xpThisMonthValue)} this month`
+      : '';
+  if (!rankValue) {
+    return null;
+  }
+
+  if (variant === 'page') {
+    return (
+      <div style={style} className={`${pageContainerClass} ${className || ''}`}>
+        <div className={pageDetailsClass}>
+          <div className="title">
+            {rankValue <= 3 ? (
+              <Icon icon="trophy" color={trophyColor} />
+            ) : (
+              <Icon icon="award" color={trophyColor} />
+            )}
+            <RankBadge rank={rankValue} className={pageRankBadgeClass} />
+          </div>
+          <div className="xp-line">
+            <span className="xp-value">{xpAmount}</span>
+            <span className="xp-unit">XP</span>
+          </div>
+          {monthGainLabel ? (
+            <div className="month">
+              <Icon icon="arrow-up" color={trophyColor} />
+              {monthGainLabel}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={style} className={`${rankCardClass} ${className || ''}`}>
+      <div className={badgeClass}>
+        <Icon icon={rankValue <= 3 ? 'trophy' : 'award'} color={trophyColor} />
+        <RankBadge rank={rankValue} className={panelRankBadgeClass} />
+      </div>
+      <div className={xpInfoClass}>
+        <span className="xp-amount">
+          <span className="xp-value">{xpAmount}</span>
+          <span className="xp-unit">XP</span>
+        </span>
+        {monthGainLabel ? (
+          <span className="xp-month">
+            <Icon icon="arrow-up" color={trophyColor} />
+            {monthGainLabel}
           </span>
         ) : null}
-      </span>{' '}
-      <span>
-        {xpNumberLabel}
-        {!!profile.xpThisMonth && (
-          <span
-            style={{
-              fontSize: '1.7rem',
-              color:
-                rankColor ||
-                (profile.xpThisMonth >= 1000 ? Color.pink() : Color.darkGray())
-            }}
-          >
-            {' '}
-            (↑
-            {addCommasToNumber(profile.xpThisMonth)} this month)
-          </span>
-        )}
-      </span>
+      </div>
     </div>
   );
 }

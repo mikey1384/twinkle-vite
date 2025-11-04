@@ -7,6 +7,7 @@ import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import Icon from '~/components/Icon';
+import RankBadge from '~/components/RankBadge';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -14,9 +15,10 @@ export default function Collector({
   style,
   user,
   collectedLabel,
-  targetLabel
+  targetLabel,
+  bordered = false
 }: {
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
   user: {
     id: number;
     rank: number;
@@ -26,6 +28,7 @@ export default function Collector({
   };
   collectedLabel?: string;
   targetLabel?: string;
+  bordered?: boolean;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
   const rankColor = useMemo(() => {
@@ -42,61 +45,108 @@ export default function Collector({
     [rankColor, user.rank]
   );
 
+  const containerClass = css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    border: ${bordered ? '1px solid var(--ui-border)' : 'none'};
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    background: #fff;
+    box-shadow: ${bordered ? '0 1px 0 rgba(15, 23, 42, 0.08)' : 'none'};
+    @media (max-width: ${mobileMaxWidth}) {
+      padding: 0.65rem 0.75rem;
+      gap: 0.75rem;
+    }
+  `;
+  const rankBadgeClass = css`
+    min-width: 3rem;
+    height: 2.4rem;
+    font-size: 1.35rem;
+    @media (max-width: ${mobileMaxWidth}) {
+      font-size: 1.1rem;
+      min-width: 2.6rem;
+      height: 2.1rem;
+    }
+  `;
+  const leftGroupClass = css`
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+    flex: 1;
+    @media (max-width: ${mobileMaxWidth}) {
+      gap: 0.7rem;
+    }
+  `;
+  const profileWrapperClass = css`
+    width: 3.4rem;
+    min-width: 3.4rem;
+    flex: 0 0 auto;
+    @media (max-width: ${mobileMaxWidth}) {
+      width: 2.8rem;
+      min-width: 2.8rem;
+    }
+  `;
+  const highlightBackground = useMemo(() => '#eef2ff', []);
+  const usernameClass = css`
+    max-width: 16rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    @media (max-width: ${mobileMaxWidth}) {
+      max-width: 9rem;
+      font-size: 1.05rem;
+    }
+  `;
+  const infoGroupClass = css`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  `;
+  const statBlockClass = css`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: ${textColor};
+    font-size: 1.45rem;
+    font-weight: 700;
+    white-space: nowrap;
+    @media (max-width: ${mobileMaxWidth}) {
+      font-size: 1.1rem;
+      gap: 0.45rem;
+    }
+  `;
+  const containerStyle = {
+    background:
+      user.id === myId && user.rank > 3 ? highlightBackground : '#fff',
+    ...(style || {})
+  };
+  const rankBadgeTextShadow =
+    user.rank === 2 ? '0 0 0.2rem rgba(37, 99, 235, 0.62)' : 'none';
+
   return (
-    <nav
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background:
-          user.id === myId && user.rank > 3 ? Color.highlightGray() : '#fff',
-        ...style
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <span
-          className={css`
-            font-weight: bold;
-            font-size: 1.5rem;
-            width: 3rem;
-            margin-right: 1rem;
-            text-align: center;
-            color: ${rankColor ||
-            (user.rank <= 10 ? Color.logoBlue() : Color.darkGray())};
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.2rem;
-            }
-          `}
-        >
-          {user.rank ? `#${user.rank}` : '--'}
-        </span>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
-        >
-          <div>
-            <ProfilePic
-              style={{ width: '3rem' }}
-              profilePicUrl={user.profilePicUrl}
-              userId={user.id}
-            />
-          </div>
+    <div className={containerClass} style={containerStyle}>
+      <div className={leftGroupClass}>
+        <RankBadge
+          rank={user.rank}
+          className={rankBadgeClass}
+          style={{ textShadow: rankBadgeTextShadow }}
+        />
+        <div className={profileWrapperClass}>
+          <ProfilePic
+            style={{ width: '100%' }}
+            profilePicUrl={user.profilePicUrl}
+            userId={user.id}
+          />
+        </div>
+        <div className={infoGroupClass}>
           <UsernameText
             color={textColor}
             user={{ ...user, username: user.username }}
-            className={css`
-              max-width: 15rem;
-              margin-top: 0.5rem;
-              text-align: center;
-              font-size: 1.2rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                max-width: 7rem;
-                font-size: 1rem;
-              }
-            `}
+            className={usernameClass}
             wordMasterContext={true}
             wordMasterPoints={Number(user[targetLabel || 'numWords'])}
             wordMasterLabel={collectedLabel}
@@ -105,30 +155,11 @@ export default function Collector({
           />
         </div>
       </div>
-      <div>
+      <div className={statBlockClass}>
         {deviceIsMobile && !['pts', 'pt'].includes(collectedLabel || '') && (
-          <Icon
-            className={css`
-              color: ${textColor};
-              margin-right: 0.7rem;
-              font-size: 1.1rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
-              }
-            `}
-            icon="times"
-          />
+          <Icon style={{ color: textColor }} icon="times" />
         )}
-        <span
-          className={css`
-            color: ${textColor};
-            font-size: 1.5rem;
-            font-weight: bold;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.1rem;
-            }
-          `}
-        >
+        <span>
           {addCommasToNumber((user[targetLabel || 'numWords'] as number) || 0)}
           {(!deviceIsMobile ||
             ['pts', 'pt'].includes(collectedLabel || '')) && (
@@ -136,6 +167,6 @@ export default function Collector({
           )}
         </span>
       </div>
-    </nav>
+    </div>
   );
 }

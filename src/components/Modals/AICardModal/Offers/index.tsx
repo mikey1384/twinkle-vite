@@ -6,7 +6,7 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 export default function Offers({
   cardId,
@@ -43,7 +43,7 @@ export default function Offers({
       <div
         className={css`
           height: 37vh;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           @media (max-width: ${mobileMaxWidth}) {
             height: 20vh;
           }

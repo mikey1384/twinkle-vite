@@ -43,6 +43,7 @@ export default function DeletedPost({
   );
   const [loading, setLoading] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [videoPlayerShown, setVideoPlayerShown] = useState(false);
   const [contentObj, setContentObj] = useState({});
   const {
     id,
@@ -76,17 +77,27 @@ export default function DeletedPost({
     title?: string;
     thumbUrl?: string;
     uploader?: any;
-  } = useMemo(() => contentObj, [contentObj]);
+  } = useMemo(() => contentObj || {}, [contentObj]);
+  const videoPreviewImage = useMemo(() => {
+    if (thumbUrl) return thumbUrl;
+    if (contentType === 'video' && typeof content === 'string' && content) {
+      return `https://img.youtube.com/vi/${content}/hqdefault.jpg`;
+    }
+    return '';
+  }, [thumbUrl, contentType, content]);
   useEffect(() => {
     init();
     async function init() {
       setLoading(true);
       const data = await loadDeletedContent({ contentId, contentType });
-      setContentObj(data);
+      setContentObj(data || {});
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    setVideoPlayerShown(false);
+  }, [contentId, contentType]);
 
   return (
     <div
@@ -96,8 +107,8 @@ export default function DeletedPost({
       }}
       className={css`
         border-radius: ${borderRadius};
-        border: 1px solid ${Color.borderGray()};
-        background: '#fff';
+        border: 1px solid var(--ui-border);
+        background: #fff;
         .label {
           color: ${Color.black()};
         }
@@ -182,23 +193,77 @@ export default function DeletedPost({
                       position: 'relative'
                     }}
                   >
-                    <VideoPlayer
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0
-                      }}
-                      width="100%"
-                      height="100%"
-                      fileType="youtube"
-                      src={content || ''}
-                      onPlay={() => {}}
-                      onPause={() => {}}
-                      onProgress={() => {}}
-                      initialTime={0}
-                    />
+                    {videoPlayerShown ? (
+                      <VideoPlayer
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0
+                        }}
+                        width="100%"
+                        height="100%"
+                        fileType="youtube"
+                        src={content || ''}
+                        onPlay={() => {}}
+                        onPause={() => {}}
+                        onProgress={() => {}}
+                        initialTime={0}
+                      />
+                    ) : (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Load video preview"
+                        className={css`
+                          position: absolute;
+                          inset: 0;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          background: #000;
+                          cursor: pointer;
+                          border-radius: ${borderRadius};
+                          overflow: hidden;
+                        `}
+                        onClick={() => setVideoPlayerShown(true)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            setVideoPlayerShown(true);
+                          }
+                        }}
+                      >
+                        {videoPreviewImage ? (
+                          <img
+                            src={videoPreviewImage}
+                            alt="Video preview"
+                            className={css`
+                              position: absolute;
+                              width: 100%;
+                              height: 100%;
+                              object-fit: cover;
+                              opacity: 0.85;
+                            `}
+                          />
+                        ) : null}
+                        <div
+                          className={css`
+                            position: relative;
+                            padding: 0.8rem 1.6rem;
+                            border-radius: 9999px;
+                            background: rgba(0, 0, 0, 0.65);
+                            color: #fff;
+                            font-weight: bold;
+                            font-size: 1.4rem;
+                            letter-spacing: 0.02em;
+                          `}
+                        >
+                          Click to load video
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -387,8 +452,8 @@ export default function DeletedPost({
               style={{
                 padding: '1rem',
                 background: Color.ivory(),
-                borderTop: `1px solid ${Color.borderGray()}`,
-                borderBottom: `1px solid ${Color.borderGray()}`
+                borderTop: '1px solid var(--ui-border)',
+                borderBottom: '1px solid var(--ui-border)'
               }}
             >
               {secretAnswer}
@@ -446,7 +511,8 @@ export default function DeletedPost({
                     <Button
                       onClick={() => setConfirmModalShown(true)}
                       color="red"
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                     >
                       {deletePermanentlyLabel}
                     </Button>
@@ -455,7 +521,8 @@ export default function DeletedPost({
                     onClick={() => handleUndoDelete({ redo: isRecovered })}
                     color="darkerGray"
                     style={{ marginLeft: '1rem' }}
-                    skeuomorphic
+                    variant="solid"
+                    tone="raised"
                   >
                     {isRecovered ? deleteLabel : undoLabel}
                   </Button>
@@ -505,7 +572,7 @@ export default function DeletedPost({
         }
       });
       setContentObj((prevContentObj) => ({
-        ...prevContentObj,
+        ...(prevContentObj || {}),
         isRecovered
       }));
     }

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useInteractiveContext } from '~/contexts';
 import Icon from '~/components/Icon';
@@ -63,7 +62,7 @@ export default function InsertSlide({
           padding: '0.5rem',
           background: '#fff',
           textAlign: 'center',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           cursor: insertingSlide ? 'default' : 'pointer',
           ...style
         }}
@@ -87,7 +86,7 @@ export default function InsertSlide({
             padding: '0.5rem',
             background: '#fff',
             textAlign: 'center',
-            border: `1px solid ${Color.borderGray()}`,
+            border: '1px solid var(--ui-border)',
             cursor: 'pointer',
             ...style
           }}

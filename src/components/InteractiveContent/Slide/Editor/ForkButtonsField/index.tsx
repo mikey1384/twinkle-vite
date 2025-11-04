@@ -47,13 +47,14 @@ export default function ForkButtonsField({
           alignItems: 'center'
         }}
       >
-        <Button skeuomorphic onClick={handleAddButton}>
+        <Button variant="soft" tone="raised" onClick={handleAddButton}>
           <Icon icon="plus" />
           <span style={{ marginLeft: '0.7rem' }}>Add</span>
         </Button>
         <Button
           style={{ marginTop: '1rem' }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={() => setReorderButtonsModalShown(true)}
         >
           <Icon icon="bars" />

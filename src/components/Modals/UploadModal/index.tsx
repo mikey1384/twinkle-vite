@@ -38,7 +38,7 @@ export default function UploadModal({
 
   if (selectedOption === 'select') {
     footerContent = (
-      <Button transparent onClick={handleClose}>
+      <Button variant="ghost" onClick={handleClose}>
         Cancel
       </Button>
     );
@@ -47,7 +47,8 @@ export default function UploadModal({
       <>
         {canUseGeneratedImage && (
           <Button
-            filled
+            variant="soft"
+            tone="raised"
             color="green"
             onClick={handleUseThisImageClick}
             style={useThisImageButtonStyle as React.CSSProperties}
@@ -57,14 +58,14 @@ export default function UploadModal({
             Use This Image
           </Button>
         )}
-        <Button transparent onClick={() => handleChangeOption('select')}>
+        <Button variant="ghost" onClick={() => handleChangeOption('select')}>
           Back
         </Button>
       </>
     );
   } else if (selectedOption === 'upload') {
     footerContent = (
-      <Button transparent onClick={() => handleChangeOption('select')}>
+      <Button variant="ghost" onClick={() => handleChangeOption('select')}>
         Back
       </Button>
     );
@@ -106,7 +107,7 @@ export default function UploadModal({
       case 'upload':
         return 'Upload File';
       case 'generate':
-        return 'Draw Images';
+        return 'Make Images';
       default:
         return 'Upload';
     }

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Loading from '~/components/Loading';
-import XPVideoPlayer from '../../../XPVideoPlayer';
+import XPVideoPlayer from '~/components/XPVideoPlayer';
 import TwinkleVideoLink from './TwinkleVideoLink';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext } from '~/contexts';
@@ -57,7 +57,7 @@ export default function TwinkleVideo({
           />
         ) : (
           <XPVideoPlayer
-            loaded={loaded}
+            isChat
             style={{ width: '65rem', height: '100%' }}
             rewardLevel={rewardLevel}
             videoCode={content}

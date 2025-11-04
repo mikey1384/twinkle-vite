@@ -1310,6 +1310,10 @@ const languageObj: {
     en: 'Reward Level',
     kr: '보상 레벨'
   },
+  effortLevel: {
+    en: 'Effort Level',
+    kr: '노력 레벨'
+  },
   rewards: {
     en: 'Rewards',
     kr: '선물'
@@ -1355,8 +1359,8 @@ const languageObj: {
     kr: '설정'
   },
   setRewardLevel: {
-    en: 'Set Reward Level',
-    kr: '보상 레벨 설정'
+    en: 'Set Effort Level',
+    kr: '노력 레벨 설정'
   },
   settings: {
     en: 'Settings',

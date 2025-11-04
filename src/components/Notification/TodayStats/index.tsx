@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext, useNotiContext, useAppContext } from '~/contexts';
+import { useNotiContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import DailyGoals from './DailyGoals';
 import AchievementProgress from './AchievementProgress';
@@ -10,19 +9,58 @@ import TodayXPRankings from './TodayXPRankings';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
+import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import { useRoleColor } from '~/theme/useRoleColor';
+
+const DEFAULT_PROGRESS_COLOR = 'rgba(65, 140, 235, 1)';
+const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
+const DEFAULT_REWARD_COLOR = 'rgba(255, 203, 50, 1)';
+const DEFAULT_RECOMMENDATION_COLOR = 'rgba(245, 190, 70, 1)';
 
 const container = css`
-  position: relative;
-  padding: 1.5rem 0;
-  text-align: center;
-  border-radius: ${borderRadius};
-  border: 1px solid ${Color.borderGray()};
-
-  @media (max-width: ${mobileMaxWidth}) {
+  ${themedCardBase};
+  padding: 1.6rem 2rem;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  @media (max-width: 767px) {
+    border: 0;
     border-radius: 0;
-    border-left: 0;
-    border-right: 0;
   }
+`;
+
+const header = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  @media (max-width: 1024px) {
+    /* Stack title and button on tablets and below */
+    flex-direction: column;
+    align-items: center;
+    /* Hide the left spacer to remove empty row */
+    > div:first-child {
+      display: none !important;
+    }
+    /* Center the trophy button under the title */
+    > div:last-child {
+      justify-content: center !important;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+  }
+`;
+const buttonRankTextClass = css`
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-left: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+`;
+const buttonRankTextOnlyClass = css`
+  font-size: 1.2rem;
+  font-weight: 700;
 `;
 
 export default function TodayStats({
@@ -37,14 +75,25 @@ export default function TodayStats({
   onSetMyAchievementsObj: (myAchievementsObj: any) => void;
 }) {
   const [myTodayRank, setMyTodayRank] = useState<number | null>(null);
-  const todayProgressTextColor = useKeyContext(
-    (v) => v.theme.todayProgressText.color
-  );
-  const todayProgressTextShadowColor = useKeyContext(
-    (v) => v.theme.todayProgressText.shadow
-  );
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
+  const todayProgressRole = useRoleColor('todayProgressText', {
+    fallback: 'logoBlue'
+  });
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const recommendationRole = useRoleColor('recommendation', {
+    fallback: 'brownOrange'
+  });
+
+  const todayProgressColor =
+    todayProgressRole.getColor() || DEFAULT_PROGRESS_COLOR;
+  const xpNumberColor = xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
+
+  const rewardColor = DEFAULT_REWARD_COLOR;
+
+  const coinsColor =
+    recommendationRole.getColor() || DEFAULT_RECOMMENDATION_COLOR;
+
+  const buttonColor = buttonRole.colorKey;
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -52,6 +101,11 @@ export default function TodayStats({
   const loadTodayRankings = useAppContext(
     (v) => v.requestHelpers.loadTodayRankings
   );
+
+  const { cardVars } = useThemedCardVars({
+    role: 'sectionPanel',
+    intensity: 0.05
+  });
 
   useEffect(() => {
     async function fetchTodayRank() {
@@ -74,72 +128,28 @@ export default function TodayStats({
 
   return (
     <ErrorBoundary componentPath="Notification/TodayStats">
-      <div
-        className={container}
-        style={{ marginBottom: '1rem', width: '100%', padding: '1rem' }}
-      >
+      <div className={container} style={{ marginBottom: '1rem', ...cardVars }}>
         {todayStats?.loaded ? (
           <div>
-            <div
-              className={css`
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                width: 100%;
-                margin-bottom: 0.5rem;
-              `}
-            >
+            <div className={header}>
               <div style={{ flex: 1 }}></div>
               <div style={{ flex: 1, textAlign: 'center' }}>
                 <b
                   style={{
                     fontSize: '1.7rem',
-                    color: Color[todayProgressTextColor](),
-                    textShadow: todayProgressTextShadowColor
-                      ? `0.05rem 0.05rem ${Color[
-                          todayProgressTextShadowColor
-                        ]()}`
-                      : `0.05rem 0.05rem 0.1rem ${Color[todayProgressTextColor](
-                          0.5
-                        )}`,
+                    color: todayProgressColor,
                     whiteSpace: 'nowrap'
                   }}
                 >{`Today's Progress`}</b>
-                <div style={{ marginTop: '0.3rem', width: '100%' }}>
-                  <p
-                    style={{
-                      fontWeight: 'bold',
-                      color: Color[xpNumberColor]()
-                    }}
-                  >
-                    <span
-                      style={{
-                        textShadow: `0.05rem 0.05rem 0.1rem ${Color[
-                          xpNumberColor
-                        ](0.5)}`
-                      }}
-                    >
+                <div style={{ marginTop: '0.3rem' }}>
+                  <p style={{ fontWeight: 'bold', color: xpNumberColor }}>
+                    <span>
                       {todayStats.xpEarned > 0 ? '+' : ''}
                       {addCommasToNumber(todayStats.xpEarned)}
                     </span>{' '}
-                    <b
-                      style={{
-                        color: Color.gold(),
-                        textShadow: `0.05rem 0.05rem 0.1rem ${Color.gold(0.5)}`
-                      }}
-                    >
-                      XP
-                    </b>
+                    <b style={{ color: rewardColor }}>XP</b>
                   </p>
-                  <p
-                    style={{
-                      fontWeight: 'bold',
-                      color: Color.brownOrange(),
-                      textShadow: `0.05rem 0.05rem 0.1rem ${Color.brownOrange(
-                        0.5
-                      )}`
-                    }}
-                  >
+                  <p style={{ fontWeight: 'bold', color: coinsColor }}>
                     {todayStats.coinsEarned > 0 ? '+' : ''}
                     {addCommasToNumber(todayStats.coinsEarned)} Coin
                     {todayStats.coinsEarned === 1 ? '' : 's'}
@@ -156,7 +166,6 @@ export default function TodayStats({
                     })
                   }
                   color={buttonColor}
-                  filled={todayStats.showXPRankings}
                   style={{
                     minWidth: '3.5rem',
                     height: 'fit-content',
@@ -165,18 +174,21 @@ export default function TodayStats({
                     fontSize: myTodayRank ? '1.5rem' : 'inherit',
                     fontWeight: myTodayRank ? 'bold' : 'normal'
                   }}
-                  skeuomorphic
+                  variant={todayStats.showXPRankings ? 'solid' : 'soft'}
+                  tone={!todayStats.showXPRankings ? 'raised' : undefined}
                 >
                   {myTodayRank ? (
                     myTodayRank <= 3 ? (
                       <>
                         <Icon icon="trophy" />
-                        <span style={{ marginLeft: '0.3rem' }}>
+                        <span className={buttonRankTextClass}>
                           #{myTodayRank}
                         </span>
                       </>
                     ) : (
-                      <span>#{myTodayRank}</span>
+                      <span className={buttonRankTextOnlyClass}>
+                        #{myTodayRank}
+                      </span>
                     )
                   ) : (
                     <Icon icon="trophy" />

@@ -3,7 +3,8 @@ import React, {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
+  type CSSProperties
 } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InputPanel from './InputPanel';
@@ -20,14 +21,14 @@ import {
   useNotiContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
-import Icon from '~/components/Icon';
-import TopButton from './TopButton';
 import ChessOptionsModal from './ChessOptionsModal';
-import NewTopButton from './NewTopButton';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -76,6 +77,9 @@ export default function TopMenu({
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
   );
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
+  );
   const [loadingChess, setLoadingChess] = useState(false);
   const [loadingOmok, setLoadingOmok] = useState(false);
   const [chessModalShown, setChessModalShown] = useState(false);
@@ -83,6 +87,43 @@ export default function TopMenu({
   const userId = useKeyContext((v) => v.myState.userId);
   const isMountedRef = useRef(true);
   const [loadingWordle, setLoadingWordle] = useState(false);
+  const { themeRoles } = useThemeTokens({
+    intensity: 0.06
+  });
+  const topMenuVars = useMemo<CSSProperties>(() => {
+    const headingColor =
+      resolveColorValue(
+        themeRoles.sectionPanelText?.color,
+        themeRoles.sectionPanelText?.opacity
+      ) ||
+      resolveColorValue(
+        themeRoles.sectionPanel?.color,
+        themeRoles.sectionPanel?.opacity
+      ) ||
+      Color.darkerGray();
+    const textColor =
+      resolveColorValue(
+        themeRoles.sectionPanel?.color,
+        themeRoles.sectionPanel?.opacity
+      ) || headingColor;
+    const headingShadowColor = resolveColorValue(
+      themeRoles.sectionPanelText?.shadow
+    );
+    // Centralized border color
+    const borderColor = 'var(--ui-border)';
+    // Do not theme this panel's background; keep it neutral
+    const backgroundColor = '#ffffff';
+    const vars: Record<string, string> = {
+      '--topmenu-bg': backgroundColor,
+      '--topmenu-border': borderColor,
+      '--topmenu-heading': headingColor,
+      '--topmenu-text': textColor
+    };
+    if (headingShadowColor) {
+      vars['--topmenu-heading-shadow'] = `0 1px 0 ${headingShadowColor}`;
+    }
+    return vars as CSSProperties;
+  }, [themeRoles]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -129,6 +170,7 @@ export default function TopMenu({
   );
 
   useEffect(() => {
+    if (!userId) return;
     handleCheckUnansweredChess();
     handleCheckUnansweredOmok();
 
@@ -158,16 +200,25 @@ export default function TopMenu({
   return (
     <ErrorBoundary componentPath="Home/Stories/TopMenu">
       <div
-        style={{ marginBottom: '1rem', ...style }}
+        style={{
+          marginBottom: '1rem',
+          ...topMenuVars,
+          ...style
+        }}
         className={css`
-          background: #fff;
+          background: var(--topmenu-bg, ${Color.whiteGray()});
+          color: var(--topmenu-text, ${Color.darkerGray()});
           font-size: 1.7rem;
-          padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
+          padding: 1.2rem;
+          border: 1px solid var(--topmenu-border, var(--ui-border));
           border-radius: ${borderRadius};
+          box-shadow: none;
+          backdrop-filter: none;
           p {
             font-size: 2rem;
             font-weight: bold;
+            color: var(--topmenu-heading, ${Color.darkerGray()});
+            text-shadow: var(--topmenu-heading-shadow, none);
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.7rem;
             }
@@ -180,12 +231,9 @@ export default function TopMenu({
           }
         `}
       >
-        <p
-          className={css`
-            color: ${Color.darkerGray()};
-          `}
-        >
-          Hi, {username}! What do you want to do today?
+        <p>
+          {username ? `Hi, ${username}!` : 'Hi there!'} What do you want to do
+          today?
         </p>
         <InputPanel onInputModalButtonClick={onInputModalButtonClick} />
         <div
@@ -199,39 +247,40 @@ export default function TopMenu({
         >
           <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/AIStoriesButton">
-              <TopButton
-                key="aiStoriesButton"
-                isAchieved={isAchieved('A')}
-                colorLeft={Color.blue()}
-                colorMiddle={Color.logoBlue()}
-                colorRight={Color.blue()}
-                onClick={onPlayAIStories}
+              <GameCTAButton
+                icon="wand-magic-sparkles"
+                variant="logoBlue"
+                size="md"
+                shiny={false}
+                onClick={handleAIStoriesClick}
               >
                 A{allGoalsAchieved ? '' : '.I Stories'}
-              </TopButton>
+                {isAchieved('A') ? ' ✓' : ''}
+              </GameCTAButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/GrammarGameButton">
-              <NewTopButton
-                key="grammarGameButton"
-                onClick={handlePlayGrammarGame}
+              <GameCTAButton
+                icon="spell-check"
                 variant="magenta"
-                isChecked={isAchieved('G')}
+                size="md"
+                shiny={false}
+                onClick={handlePlayGrammarGame}
               >
                 G{allGoalsAchieved ? '' : 'rammarbles'}
-              </NewTopButton>
+                {isAchieved('G') ? ' ✓' : ''}
+              </GameCTAButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/WordleButton">
-              <TopButton
-                key="wordleButton"
-                isAchieved={isAchieved('W')}
-                loading={loadingWordle}
-                colorLeft={Color.goldOrange()}
-                colorMiddle={Color.brightGold()}
-                colorRight={Color.orange()}
+              <GameCTAButton
+                icon="puzzle-piece"
+                variant="gold"
+                size="md"
+                shiny={false}
                 onClick={handleWordleButtonClick}
               >
                 W{allGoalsAchieved ? '' : 'ordle'}
-              </TopButton>
+                {isAchieved('W') ? ' ✓' : ''}
+              </GameCTAButton>
             </ErrorBoundary>
             {allGoalsAchieved && (
               <div
@@ -253,58 +302,44 @@ export default function TopMenu({
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/PostPicsButton">
-              <TopButton
-                key="postPicsButton"
-                colorLeft={Color.fernGreen()}
-                colorMiddle={Color.lightYellowGreen()}
-                colorRight={Color.fernGreen()}
-                style={{
-                  paddingLeft: '1.3rem',
-                  paddingRight: '1.3rem'
+              <GameCTAButton
+                icon="upload"
+                variant="success"
+                size="md"
+                shiny={false}
+                onClick={() => {
+                  if (!userId) return onOpenSigninModal();
+                  onInputModalButtonClick('file');
                 }}
-                onClick={() => onInputModalButtonClick('file')}
               >
-                <Icon icon="upload" />
-              </TopButton>
+                {''}
+              </GameCTAButton>
             </ErrorBoundary>
             <ErrorBoundary componentPath="Home/Stories/TopMenu/ChessButton">
-              <NewTopButton
-                key="chessButton"
+              <GameCTAButton
+                icon="chess"
+                variant={
+                  todayStats.unansweredChessMsgChannelId ? 'orange' : 'neutral'
+                }
+                size="md"
+                shiny={false}
                 loading={loadingChess}
                 onClick={handleChessButtonClick}
-                variant={
-                  todayStats.unansweredChessMsgChannelId ? 'orange' : 'slate'
-                }
-                style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
               >
-                {loadingChess && (
-                  <Icon
-                    style={{ marginRight: '0.7rem' }}
-                    icon="spinner"
-                    pulse
-                  />
-                )}
-                <Icon icon="chess" />
-              </NewTopButton>
+                {''}
+              </GameCTAButton>
             </ErrorBoundary>
             {todayStats.unansweredOmokMsgChannelId && (
               <ErrorBoundary componentPath="Home/Stories/TopMenu/OmokButton">
-                <NewTopButton
-                  key="omokButton"
+                <GameCTAButton
+                  variant="orange"
+                  size="md"
+                  shiny={false}
                   loading={loadingOmok}
                   onClick={handleNavigateToOmokMessage}
-                  variant="orange"
-                  style={{ paddingLeft: '1.3rem', paddingRight: '1.3rem' }}
                 >
-                  {loadingOmok && (
-                    <Icon
-                      style={{ marginRight: '0.7rem' }}
-                      icon="spinner"
-                      pulse
-                    />
-                  )}
                   O
-                </NewTopButton>
+                </GameCTAButton>
               </ErrorBoundary>
             )}
           </div>
@@ -322,6 +357,10 @@ export default function TopMenu({
   );
 
   function handlePlayGrammarGame() {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     clearTimeout(wordleTimerIdRef.current);
     wordleTimerIdRef.current = null;
     setLoadingWordle(false);
@@ -332,6 +371,10 @@ export default function TopMenu({
   }
 
   function handleWordleButtonClick({ isRetry = false } = {}) {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     if (!isMountedRef.current) return;
 
     if (!isRetry && loadingWordle) return;
@@ -350,8 +393,20 @@ export default function TopMenu({
   }
 
   function handleChessButtonClick(): any {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
     if (!isMountedRef.current) return;
     setChessModalShown(true);
+  }
+
+  function handleAIStoriesClick() {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    onPlayAIStories();
   }
 
   function handleNavigateToChessMessage(): any {
@@ -385,7 +440,10 @@ export default function TopMenu({
     if (!isMountedRef.current) return;
     setLoadingOmok(true);
     if (!chatLoadedRef.current) {
-      omokTimerIdRef.current = setTimeout(() => handleNavigateToOmokMessage(), 500);
+      omokTimerIdRef.current = setTimeout(
+        () => handleNavigateToOmokMessage(),
+        500
+      );
       return;
     }
     onUpdateSelectedChannelId(todayStats.unansweredOmokMsgChannelId);
@@ -394,7 +452,8 @@ export default function TopMenu({
       if (!isMountedRef.current) return;
       navigate(
         `/chat/${
-          Number(CHAT_ID_BASE_NUMBER) + Number(todayStats.unansweredOmokMsgChannelId)
+          Number(CHAT_ID_BASE_NUMBER) +
+          Number(todayStats.unansweredOmokMsgChannelId)
         }`
       );
       setTimeout(() => {

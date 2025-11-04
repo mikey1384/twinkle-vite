@@ -80,13 +80,13 @@ export default function useAICard(card: any) {
              0 0 7px ${memoizedQualityProps.color},
              0 0 7px ${memoizedQualityProps.color},
              0 0 7px 2px rgba(255, 255, 255, 0.3),
-             0 55px 35px -20px rgba(0, 0, 0, 0.5)`
+             0 35px 28px -22px rgba(15, 23, 42, 0.35)`
           : `-5px -5px 5px -5px ${cardColor},
              3px 3px 3px -3px ${cardColor},
              -5px -5px 7px -3px transparent,
              5px 5px 7px -3px transparent,
              0 0 3px 0px rgba(255, 255, 255, 0),
-             0 30px 17px -10px rgba(0, 0, 0, 0.5)`};
+             0 24px 22px -18px rgba(15, 23, 42, 0.35)`};
         transition: transform 0.5s ease, box-shadow 0.2s ease;
         background-color: ${cardColor};
         transform-origin: center;
@@ -98,7 +98,7 @@ export default function useAICard(card: any) {
                  -7px -7px 10px -5px ${cardColor},
                  7px 7px 10px -5px ${cardColor},
                  0 0 13px 4px rgba(255, 255, 255, 0.3),
-                 0 55px 35px -20px rgba(0, 0, 0, 0.5);`
+                 0 35px 28px -22px rgba(15, 23, 42, 0.38);`
             : ''}
           ${memoizedCardQuality.includes('grad') && !card.isBurned
             ? `background-image: linear-gradient(

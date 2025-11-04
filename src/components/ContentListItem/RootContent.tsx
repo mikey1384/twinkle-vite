@@ -8,11 +8,13 @@ import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import {
-  borderRadius,
   Color,
   mobileMaxWidth,
-  desktopMinWidth
+  tabletMaxWidth,
+  desktopMinWidth,
+  borderRadius
 } from '~/constants/css';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { css } from '@emotion/css';
 
 const rootContentCSS = css`
@@ -112,20 +114,21 @@ const rootContentCSS = css`
   .reward-bar {
     grid-area: reward;
     font-size: 1.3rem;
-    margin-left: CALC(-1rem - 1px);
-    margin-right: CALC(-1rem - 1px);
-    align-self: end;
+    margin-left: 0;
+    margin-right: 0;
+    align-self: start;
+    @media (min-width: ${desktopMinWidth}) and (max-width: ${tabletMaxWidth}) {
+      font-size: 1.1rem;
+    }
     @media (max-width: ${mobileMaxWidth}) {
       font-size: 1rem;
     }
   }
 
-  transition: background 0.5s, border 0.5s;
-
-  border: 1px solid ${Color.borderGray()};
+  transition: border-color 0.18s ease;
 
   &.expandable {
-    background: ${Color.whiteGray()};
+    background: transparent;
   }
 
   &.no-thumb {
@@ -199,8 +202,6 @@ const rootContentCSS = css`
       .title {
         color: ${Color.black()};
       }
-      background: ${Color.highlightGray()};
-      border: 1px solid ${Color.darkerBorderGray()};
     }
   }
 `;
@@ -216,10 +217,8 @@ export default function RootContent({
   filePath,
   fileSize,
   hideSideBordersOnMobile,
-  itemSelectedColor,
-  itemSelectedOpacity,
+  noTopBorderRadius,
   isListening,
-  modalOverModal,
   navigate,
   onClick,
   rewardLevel,
@@ -235,7 +234,9 @@ export default function RootContent({
   title,
   topic,
   uploader,
-  userId
+  userId,
+  itemSelectedColor,
+  itemSelectedOpacity
 }: {
   actualTitle?: string;
   actualDescription?: string;
@@ -250,8 +251,6 @@ export default function RootContent({
   hideSideBordersOnMobile?: boolean;
   innerStyle?: React.CSSProperties;
   isListening?: boolean;
-  itemSelectedColor: string;
-  itemSelectedOpacity: number;
   modalOverModal?: boolean;
   navigate: (path: string) => void;
   onClick?: () => void;
@@ -269,17 +268,62 @@ export default function RootContent({
   topic?: string;
   uploader: { id: number; username: string };
   userId?: number;
+  itemSelectedColor?: string;
+  itemSelectedOpacity?: number;
+  noTopBorderRadius?: boolean;
 }) {
+  const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
+  // Use global UI border vars for consistency with ContentPanel
+
+  const selectedBorder = useMemo(() => {
+    if (!itemSelectedColor) return 'var(--ui-border-strong)';
+    const colorFn = (Color as any)[itemSelectedColor];
+    if (typeof colorFn === 'function') {
+      const borderOpacity =
+        itemSelectedOpacity !== undefined
+          ? Math.min(1, itemSelectedOpacity + 0.1)
+          : 0.32;
+      return colorFn(borderOpacity);
+    }
+    return itemSelectedColor;
+  }, [itemSelectedColor, itemSelectedOpacity]);
+
+  const cardThemeCSS = css`
+    border-radius: ${borderRadius};
+    border: 1px solid var(--ui-border);
+    background: #fff;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    @media (max-width: ${mobileMaxWidth}) {
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      &.selected {
+        /* Ensure selection is visible on mobile where border is otherwise removed */
+        border: 2px solid ${selectedBorder};
+        box-shadow: inset 0 0 0 2px ${selectedBorder};
+      }
+    }
+    @media (min-width: ${desktopMinWidth}) {
+      &:hover {
+        border-color: var(--ui-border-strong);
+      }
+    }
+    &.selected {
+      border-color: ${selectedBorder};
+      border-width: 2px;
+      box-shadow: inset 0 0 0 2px ${selectedBorder};
+    }
+  `;
+
   const { fileType } = useMemo(
     () => getFileInfoFromFileName(fileName || ''),
     [fileName]
   );
-  const boxShadowColor = useMemo(() => {
-    return selected ? Color[itemSelectedColor](itemSelectedOpacity) : '';
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
+
   const isRewardBarShown = useMemo(() => {
     return !!rewardLevel && contentType === 'subject';
   }, [contentType, rewardLevel]);
+
   const hasThumb = useMemo(() => {
     return (
       (contentType === 'subject' && rootId) ||
@@ -288,25 +332,22 @@ export default function RootContent({
     );
   }, [contentType, filePath, rootId, userId]);
 
-  const borderColor = useMemo(() => {
-    return selected
-      ? Color[itemSelectedColor](itemSelectedOpacity)
-      : Color.borderGray();
-  }, [selected, itemSelectedColor, itemSelectedOpacity]);
-
   return (
     <div
       onClick={handleClick}
-      style={{
-        boxShadow: selected ? `0 0 5px ${boxShadowColor}` : undefined,
-        border: selected ? `0.5rem solid ${borderColor}` : undefined,
-        background: selected ? Color.highlightGray() : ''
-      }}
-      className={`${rootContentCSS} ${
-        contentType === 'video' ? 'is-video' : ''
-      }${isRewardBarShown ? '' : ' no-reward'}${hasThumb ? '' : ' no-thumb'}${
+      className={`${rootContentCSS} ${cardThemeCSS} ${
+        selected ? 'selected ' : ''
+      }${contentType === 'video' ? 'is-video' : ''}${
+        isRewardBarShown ? '' : ' no-reward'
+      }${hasThumb ? '' : ' no-thumb'}${
         hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
       }`}
+      style={{
+        ...cardVars,
+        ...(noTopBorderRadius
+          ? { borderTopLeftRadius: 0, borderTopRightRadius: 0 }
+          : null)
+      }}
     >
       <ContentDetails
         isListening={isListening}
@@ -370,7 +411,6 @@ export default function RootContent({
               fileName={fileName}
               filePath={filePath}
               fileSize={fileSize}
-              modalOverModal={modalOverModal}
               thumbUrl={thumbUrl}
               videoHeight="100%"
               isThumb

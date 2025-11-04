@@ -69,8 +69,10 @@ const commentContentCSS = css`
     grid-area: fileViewer;
   }
   transition: background 0.5s, border 0.5s;
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   @media (max-width: ${mobileMaxWidth}) {
+    border: none;
+    border-radius: 0;
     .content {
       font-size: 1.2rem;
       -webkit-line-clamp: 3;
@@ -79,7 +81,7 @@ const commentContentCSS = css`
   @media (min-width: ${desktopMinWidth}) {
     &:hover {
       background: ${Color.highlightGray()};
-      border: 1px solid ${Color.darkerBorderGray()};
+      border: 1px solid var(--ui-border-strong);
     }
   }
 `;

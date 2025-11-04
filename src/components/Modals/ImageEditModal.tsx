@@ -11,6 +11,8 @@ import { v1 as uuidv1 } from 'uuid';
 import { returnImageFileFromUrl } from '~/helpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { exceedsCharLimit, finalizeEmoji } from '~/helpers/stringHelpers';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ImageEditModal({
   aspectFixed = true,
@@ -38,7 +40,9 @@ export default function ImageEditModal({
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const uploadUserPic = useAppContext((v) => v.requestHelpers.uploadUserPic);
   const userId = useKeyContext((v) => v.myState.userId);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [crop, setCrop] = useState<{
@@ -92,16 +96,14 @@ export default function ImageEditModal({
         modalLevel={0}
         footer={
           <>
-            <Button
-              transparent
-              onClick={onHide}
-              style={{ marginRight: '0.7rem' }}
-            >
+            <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
               Cancel
             </Button>
             <Button
               disabled={!!captionExceedChatLimit}
-              color={doneColor}
+              color={
+                doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+              }
               onClick={handleSubmit}
               loading={uploading}
             >
@@ -297,6 +299,15 @@ export default function ImageEditModal({
     loaded: number;
     total: number;
   }) {
-    setUploadProgress(loaded / total);
+    if (!total || !Number.isFinite(total) || total <= 0) {
+      setUploadProgress(0);
+      return;
+    }
+    const ratio = loaded / total;
+    if (!Number.isFinite(ratio)) {
+      setUploadProgress(0);
+      return;
+    }
+    setUploadProgress(Math.max(0, Math.min(1, ratio)));
   }
 }

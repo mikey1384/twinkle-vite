@@ -863,7 +863,7 @@ function FenBar({ fen }: { fen: string }) {
   const boxCls = css`
     margin-top: 0.75rem;
     background: #fff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--ui-border);
     border-radius: 6px;
     padding: 0.5rem 0.75rem;
   `;
@@ -890,7 +890,7 @@ function FenBar({ fen }: { fen: string }) {
     width: 34px;
     height: 34px;
     border-radius: 4px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--ui-border);
     background: #f8fafc;
     color: #111827;
     transition: background 0.15s ease, transform 0.08s ease;

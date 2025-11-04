@@ -6,6 +6,7 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import { User } from '~/types';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -18,7 +19,11 @@ export default function GrammarRankings({
   myAttempts: any;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = useMemo(
+    () => tableHeaderRole.getColor() || Color.logoBlue(),
+    [tableHeaderRole]
+  );
   const [allSelected, setAllSelected] = useState(
     myAttempts[mission.id]?.status === 'pass'
   );
@@ -45,7 +50,7 @@ export default function GrammarRankings({
   return (
     <div>
       {myAttempts[mission.id]?.status === 'pass' && (
-        <FilterBar bordered>
+        <FilterBar>
           <nav
             onClick={() => setAllSelected(true)}
             className={allSelected ? 'active' : ''}
@@ -62,7 +67,7 @@ export default function GrammarRankings({
       )}
       <div
         className={css`
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: ${borderRadius};
           @media (max-width: ${mobileMaxWidth}) {
             border-left: 0;
@@ -92,7 +97,7 @@ export default function GrammarRankings({
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr 1fr',
-              background: Color[tableHeaderColor](),
+              background: tableHeaderColor,
               color: '#fff',
               fontWeight: 'bold',
               padding: '0.5rem 0'

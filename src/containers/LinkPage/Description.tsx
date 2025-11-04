@@ -19,6 +19,7 @@ import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const addedByLabel = localize('addedBy');
 const editLabel = localize('edit');
@@ -55,7 +56,9 @@ export default function Description({
   const [submitting, setSubmitting] = useState(false);
   const canDelete = useKeyContext((v) => v.myState.canDelete);
   const canEdit = useKeyContext((v) => v.myState.canEdit);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const editState = useInputContext((v) => v.state['edit' + 'url' + linkId]);
   const onSetEditForm = useInputContext((v) => v.actions.onSetEditForm);
@@ -231,10 +234,10 @@ export default function Description({
     <div style={{ position: 'relative', padding: '2rem 1rem 0 1rem' }}>
       {editButtonShown && !isEditing && (
         <DropdownButton
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           icon="chevron-down"
           color="darkerGray"
-          opacity={0.8}
           style={{ position: 'absolute', top: '1rem', right: '1rem' }}
           menuProps={editMenuItems}
         />
@@ -279,7 +282,17 @@ export default function Description({
               )}
             </>
           ) : (
-            <h2>{title}</h2>
+            <h2
+              className={css`
+                margin: 0 0 0.5rem 0;
+                font-size: 2.2rem;
+                line-height: 1.25;
+                text-align: center;
+                word-break: break-word;
+              `}
+            >
+              {title}
+            </h2>
           )}
         </div>
         <div>
@@ -341,7 +354,7 @@ export default function Description({
               }}
             >
               <Button
-                transparent
+                variant="ghost"
                 style={{ marginRight: '1rem' }}
                 onClick={onEditCancel}
               >

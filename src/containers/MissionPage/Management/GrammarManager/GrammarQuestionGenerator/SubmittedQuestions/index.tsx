@@ -51,7 +51,6 @@ export default function SubmittedQuestions({
   return (
     <div style={style}>
       <FilterBar
-        bordered
         style={{
           fontSize: '1.6rem',
           height: '5rem'

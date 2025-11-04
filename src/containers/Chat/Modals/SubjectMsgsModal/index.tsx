@@ -6,10 +6,10 @@ import Message from './Message';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { queryStringForArray } from '~/helpers/stringHelpers';
 import { useKeyContext } from '~/contexts';
 import URL from '~/constants/URL';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const API_URL = `${URL}/chat`;
 
@@ -25,12 +25,15 @@ export default function SubjectMsgsModal({
   subjectTitle: string;
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(
-    () => returnTheme(displayedThemeColor || profileTheme),
-    [displayedThemeColor, profileTheme]
-  );
+  const { colorKey: loadMoreButtonColor } = useRoleColor('loadMoreButton', {
+    themeName: displayedThemeColor || profileTheme,
+    fallback: 'lightBlue'
+  });
+  const headerColor = useMemo(() => {
+    const key = displayedThemeColor || profileTheme || 'logoBlue';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [displayedThemeColor, profileTheme]);
   const [loading, setLoading] = useState(false);
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
@@ -60,7 +63,7 @@ export default function SubjectMsgsModal({
       onHide={onHide}
     >
       <header>
-        <span style={{ color: Color[displayedThemeColor]() }}>
+        <span style={{ color: headerColor }}>
           {subjectTitle}
         </span>
       </header>
@@ -84,7 +87,7 @@ export default function SubjectMsgsModal({
         ))}
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       </footer>

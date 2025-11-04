@@ -4,10 +4,10 @@ import ContentPanel from '~/components/ContentPanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { useAppContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -30,9 +30,6 @@ export default function Feeds({
   username: string;
 }) {
   const { filter } = useParams();
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(() => returnTheme(selectedTheme || 'logoBlue'), [selectedTheme]);
   const location = useLocation();
   const navigate = useNavigate();
   const [loadingFeeds, setLoadingFeeds] = useState(false);
@@ -98,7 +95,9 @@ export default function Feeds({
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
         <FilterBar
           color={selectedTheme}
-          style={{ height: '5rem', marginTop: '-1rem', fontSize: '1.3rem' }}
+          style={{
+            fontSize: '1.3rem'
+          }}
           className="mobile"
         >
           {[
@@ -126,19 +125,25 @@ export default function Feeds({
             display: flex;
             justify-content: center;
             @media (max-width: ${mobileMaxWidth}) {
-              width: 100vw;
+              width: 100%;
             }
           `}
         >
           <div
             className={css`
-              margin-top: 1rem;
               width: 50%;
+              margin-left: 21rem;
+              margin-right: 2rem;
+              margin-top: 0;
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
+                margin-left: 0;
+                margin-right: 0;
               }
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
+                margin-left: 0;
+                margin-right: 0;
               }
             `}
           >
@@ -159,7 +164,7 @@ export default function Feeds({
                       <ContentPanel
                         key={filterTable[section] + feed.feedId}
                         style={{
-                          marginTop: index === 0 ? '-1rem' : '',
+                          marginTop: '0',
                           marginBottom: '1rem',
                           zIndex: feeds.length - index
                         }}
@@ -174,16 +179,10 @@ export default function Feeds({
                     );
                   })}
                 {feeds.length === 0 && (
-                  <div
-                    style={{
-                      marginTop: '10rem',
-                      fontSize: '2.5rem',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <div style={{ textAlign: 'center' }}>{noFeedLabel}</div>
+                  <div style={{ marginTop: '8rem', padding: '0 1rem' }}>
+                    <EmptyStateMessage theme={selectedTheme}>
+                      {noFeedLabel}
+                    </EmptyStateMessage>
                   </div>
                 )}
               </>
@@ -193,7 +192,7 @@ export default function Feeds({
                 style={{ marginBottom: '1rem' }}
                 onClick={handleLoadMoreFeeds}
                 loading={loadingMore}
-                color={loadMoreButtonColor}
+                theme={selectedTheme}
                 filled
               />
             )}
@@ -208,6 +207,8 @@ export default function Feeds({
             />
           </div>
           <SideMenu
+            className="desktop"
+            style={{ alignSelf: 'flex-start' }}
             menuItems={[
               { key: 'all', label: 'All' },
               { key: 'video', label: 'Videos' },

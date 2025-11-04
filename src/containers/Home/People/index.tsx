@@ -7,13 +7,14 @@ import PeopleFilterBar from './PeopleFilterBar';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
+import { useAppContext, useInputContext } from '~/contexts';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
 } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -40,7 +41,8 @@ function People() {
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
 
-  const searchColor = useKeyContext((v) => v.theme.search.color);
+  const searchRole = useRoleColor('search', { fallback: 'logoBlue' });
+  const searchColor = searchRole.color;
   const [loading, setLoading] = useState(false);
   const searchTextRef = useRef(userSearchText);
   const [searchText, setSearchText] = useState(userSearchText);
@@ -92,19 +94,22 @@ function People() {
 
   return (
     <div style={{ height: '100%' }}>
-      <SearchInput
+      <div
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 1rem;
+            padding: 1rem 1.2rem 0;
           }
         `}
-        style={{ zIndex: 0 }}
-        addonColor={searchColor}
-        borderColor={searchColor}
-        placeholder={`${searchUsersLabel}...`}
-        onChange={handleSearch}
-        value={searchText}
-      />
+      >
+        <SearchInput
+          style={{ zIndex: 0 }}
+          addonColor={searchColor}
+          borderColor={searchColor}
+          placeholder={`${searchUsersLabel}...`}
+          onChange={handleSearch}
+          value={searchText}
+        />
+      </div>
       <div
         style={{
           marginTop: '1rem',

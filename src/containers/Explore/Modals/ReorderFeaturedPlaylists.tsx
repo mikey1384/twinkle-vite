@@ -4,7 +4,8 @@ import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
 import { objectify } from '~/helpers';
 import { isEqual } from 'lodash';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useAppContext, useExploreContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ReorderFeaturedPlaylists({
   onHide,
@@ -13,7 +14,9 @@ export default function ReorderFeaturedPlaylists({
   onHide: () => void;
   playlistIds: number[];
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const uploadFeaturedPlaylists = useAppContext(
     (v) => v.requestHelpers.uploadFeaturedPlaylists
   );
@@ -39,7 +42,7 @@ export default function ReorderFeaturedPlaylists({
         />
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
         <Button

@@ -31,6 +31,7 @@ import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobileOS = isMobile(navigator);
 
@@ -69,7 +70,8 @@ export default function MessageInput({
   selectedTab,
   socketConnected,
   subchannelId,
-  legacyTopicObj
+  legacyTopicObj,
+  onRegisterSetText = () => null
 }: {
   currentTransactionId: number;
   currentTopic: any;
@@ -109,6 +111,7 @@ export default function MessageInput({
   subchannelId: number;
   topicId: number;
   legacyTopicObj: any;
+  onRegisterSetText?: (handler: ((text: string) => void) | null) => void;
 }) {
   const banned = useKeyContext((v) => v.myState.banned);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
@@ -159,8 +162,21 @@ export default function MessageInput({
   );
   const [inputText, setInputText] = useState(textForThisChannel);
   const [coolingDown, setCoolingDown] = useState(false);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const buttonHoverRole = useRoleColor('buttonHovered', {
+    fallback: buttonRole.colorKey
+  });
+  const successColorKey = successRole.colorKey;
+  const alertColorKey = alertRole.colorKey;
+  const buttonColorKey = buttonRole.colorKey;
+  const buttonHoverColorKey = buttonHoverRole.colorKey || buttonColorKey;
+  const themeIsGreen = successRole.themeName === 'green';
+  const sendButtonColorKey = themeIsGreen ? alertColorKey : successColorKey;
+  const sendButtonHoverColorKey = themeIsGreen
+    ? alertColorKey
+    : successColorKey;
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
@@ -186,6 +202,11 @@ export default function MessageInput({
   const [alertModalContent, setAlertModalContent] = useState('');
   const [fileObj, setFileObj] = useState(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
+  useEffect(() => {
+    onRegisterSetText(handleSetText);
+    return () => onRegisterSetText(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterSetText, selectedChannelId, subchannelId]);
 
   useEffect(() => {
     if (
@@ -423,8 +444,8 @@ export default function MessageInput({
         {!isAIChannel &&
           (isTwoPeopleChannel || hasWordleButton || legacyTopicButtonShown) && (
             <LeftButtons
-              buttonColor={buttonColor}
-              buttonHoverColor={buttonHoverColor}
+              buttonColor={buttonColorKey}
+              buttonHoverColor={buttonHoverColorKey}
               hasWordleButton={hasWordleButton}
               nextDayTimeStamp={nextDayTimeStamp}
               isChessBanned={banned?.chess}
@@ -480,7 +501,8 @@ export default function MessageInput({
             }}
           >
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               disabled={
                 loading ||
                 !socketConnected ||
@@ -489,8 +511,8 @@ export default function MessageInput({
                 isExceedingCharLimit ||
                 hasInsufficientCoinsForThinkHard
               }
-              color={buttonColor}
-              hoverColor={buttonHoverColor}
+              color={sendButtonColorKey}
+              hoverColor={sendButtonHoverColorKey}
               onClick={handleSendMsg}
             >
               <Icon size="lg" icon="paper-plane" />
@@ -499,7 +521,7 @@ export default function MessageInput({
         )}
         {isRightButtonsShown && (
           <RightButtons
-            buttonColor={buttonColor}
+            buttonColor={buttonColorKey}
             currentTransactionId={currentTransactionId}
             inputText={inputText}
             currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}

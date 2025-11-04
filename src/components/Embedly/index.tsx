@@ -414,8 +414,10 @@ function Embedly({
             right: ${twinkleVideoId ? '1rem' : 'CALC(50% - 1rem)'};
             color: ${Color.darkGray()};
             font-size: 2rem;
-            &:hover {
-              color: ${Color.black()};
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                color: ${Color.black()};
+              }
             }
             @media (max-width: ${mobileMaxWidth}) {
               right: 1rem;

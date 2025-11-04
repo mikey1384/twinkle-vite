@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
 
@@ -91,7 +90,7 @@ export default function Subchannel({
             {badgeShown && (
               <div
                 style={{
-                  background: Color[chatUnreadColor]?.(),
+                  background: chatUnreadColor,
                   display: 'flex',
                   color: '#fff',
                   fontWeight: 'bold',

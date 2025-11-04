@@ -191,7 +191,8 @@ function Comment({
           </div>
           {editButtonShown && !isEditing && (
             <DropdownButton
-              skeuomorphic
+              variant="solid"
+              tone="raised"
               icon="chevron-down"
               menuProps={editMenuItems}
             />

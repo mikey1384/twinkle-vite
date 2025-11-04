@@ -18,7 +18,7 @@ export default function TabButton({ onClick, active, children, disabled = false 
         padding: 0.75rem 1.5rem;
         background: ${disabled ? '#f5f5f5' : (active ? Color.logoBlue() : Color.white())};
         color: ${disabled ? '#ccc' : (active ? '#ffffff' : Color.darkGray())};
-        border: 2px solid ${disabled ? '#ccc' : (active ? Color.logoBlue() : Color.borderGray())};
+        border: 2px solid ${disabled ? '#ccc' : (active ? Color.logoBlue() : 'var(--ui-border)')};
         border-radius: 12px;
         font-size: 0.9rem;
         font-weight: 600;

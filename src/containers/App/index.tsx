@@ -46,7 +46,6 @@ import { useMyState, useScrollPosition } from '~/helpers/hooks';
 import {
   getSectionFromPathname,
   isMobile,
-  returnTheme,
   returnImageFileFromUrl
 } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -65,6 +64,8 @@ import AICallWindow from './AICallWindow';
 import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
+import { useRootTheme } from '~/theme/RootThemeProvider';
+import { applyThemeVars } from '~/theme';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -116,13 +117,25 @@ export default function App() {
   );
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const myState = useMyState();
-  const theme = useMemo(
-    () => returnTheme(myState.profileTheme || DEFAULT_PROFILE_THEME),
-    [myState.profileTheme]
-  );
-  const {
-    background: { color: backgroundColor }
-  } = theme;
+  const { themeRoles } = useRootTheme();
+  const backgroundColorName = themeRoles.background?.color || 'whiteGray';
+  const backgroundColorFn = Color[backgroundColorName as keyof typeof Color];
+  const resolvedBackgroundColor = backgroundColorFn
+    ? backgroundColorFn()
+    : backgroundColorName;
+
+  useEffect(() => {
+    const path = location?.pathname || '';
+    if (!path.startsWith('/users/')) {
+      try {
+        localStorage.removeItem('routeProfileTheme');
+        const restoreTheme = (myState.profileTheme ||
+          DEFAULT_PROFILE_THEME) as any;
+        applyThemeVars(restoreTheme);
+      } catch (_err) {}
+    }
+  }, [location?.pathname, myState.profileTheme]);
+
   const {
     level,
     profilePicUrl,
@@ -178,6 +191,7 @@ export default function App() {
   const onUpdateFileUploadProgress = useHomeContext(
     (v) => v.actions.onUpdateFileUploadProgress
   );
+
   const onUpdateSecretAttachmentUploadProgress = useHomeContext(
     (v) => v.actions.onUpdateSecretAttachmentUploadProgress
   );
@@ -447,7 +461,7 @@ export default function App() {
             loadingRankings,
             profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
           },
-          theme,
+          theme: themeRoles,
           helpers: { checkUserChange, setMobileMenuShown }
         }}
       >
@@ -464,6 +478,7 @@ export default function App() {
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
             margin-top: 4.5rem;
             height: 100%;
+            min-height: 100%;
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 0;
               padding-top: 0;
@@ -568,7 +583,8 @@ export default function App() {
       <Global
         styles={{
           body: {
-            background: Color[backgroundColor]()
+            // Prefer CSS variable, fall back to computed background color
+            background: `var(--page-bg, ${resolvedBackgroundColor})`
           }
         }}
       />

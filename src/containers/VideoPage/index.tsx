@@ -19,7 +19,7 @@ import {
   useParams,
   useNavigate
 } from 'react-router-dom';
-import { Color, tabletMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { fetchedVideoCodeFromURL } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
@@ -242,7 +242,6 @@ export default function VideoPage() {
         @media (max-width: ${tabletMaxWidth}) {
           margin-top: 0;
           width: 100%;
-          flex-direction: column;
         }
       `}
     >
@@ -265,23 +264,23 @@ export default function VideoPage() {
           width: 100%;
           height: 100%;
           margin-left: 1rem;
-          display: flex;
-          justify-content: space-between;
+          display: grid;
+          grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+          column-gap: 1.5rem;
+          row-gap: 1.5rem;
+          align-items: start;
           @media (max-width: ${tabletMaxWidth}) {
-            flex-direction: column;
+            grid-template-columns: 1fr;
             width: 100%;
             margin: 0;
+            row-gap: 1rem;
           }
         `}
       >
         {loaded && !isVideoUnavailable && (
           <div
             className={css`
-              width: CALC(70% - 1rem);
-              @media (max-width: ${tabletMaxWidth}) {
-                width: 100%;
-                border: 0;
-              }
+              grid-column: 1;
             `}
           >
             <Routes>
@@ -324,14 +323,8 @@ export default function VideoPage() {
               className={css`
                 display: flex;
                 flex-direction: column;
-                background: #fff;
                 margin-top: 1rem;
-                border: 1px solid ${Color.borderGray()};
                 width: 100%;
-                @media (max-width: ${tabletMaxWidth}) {
-                  border-left: 0;
-                  border-right: 0;
-                }
               `}
             >
               <Details
@@ -356,62 +349,90 @@ export default function VideoPage() {
                 videoId={videoId}
                 videoViews={views}
               />
-              <RewardStatus
-                contentType="video"
-                contentId={videoId}
-                rewardLevel={byUser ? 5 : 0}
-                onCommentEdit={onEditRewardComment}
-                style={{
-                  fontSize: '1.4rem'
-                }}
-                rewards={rewards}
-              />
+              {rewards?.length > 0 && (
+                <div
+                  className={css`
+                    background: #fff;
+                    border-radius: ${borderRadius};
+                    padding: 1.25rem;
+                    margin-top: 1rem;
+                    @media (max-width: ${tabletMaxWidth}) {
+                      padding: 1rem;
+                      border-radius: 0;
+                    }
+                  `}
+                >
+                  <RewardStatus
+                    contentType="video"
+                    contentId={videoId}
+                    rewardLevel={byUser ? 5 : 0}
+                    onCommentEdit={onEditRewardComment}
+                    style={{ fontSize: '1.4rem' }}
+                    rewards={rewards}
+                  />
+                </div>
+              )}
             </div>
-            <Subjects
-              loadMoreButton={subjectsLoadMoreButton}
-              subjects={subjects}
-              onLoadMoreSubjects={onLoadMoreSubjects}
-              onLoadSubjectComments={onLoadSubjectComments}
-              onSubjectEditDone={onEditSubject}
-              onSubjectDelete={(subjectId: number) =>
-                onDeleteContent({
-                  contentType: 'subject',
-                  contentId: subjectId
-                })
-              }
-              onSetRewardLevel={onSetRewardLevel}
-              uploadSubject={onUploadSubject}
-              contentId={videoId}
-              contentType="video"
-              rootRewardLevel={rewardLevel}
-              commentActions={{
-                editRewardComment: onEditRewardComment,
-                onDelete: onDeleteComment,
-                onEditDone: onEditComment,
-                onLikeClick: onLikeComment,
-                onLoadMoreComments: onLoadMoreSubjectComments,
-                onLoadMoreReplies: onLoadMoreSubjectReplies,
-                onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
-                onUploadComment,
-                onUploadReply
-              }}
-            />
             <div
               className={css`
                 background: #fff;
-                border: 1px solid ${Color.borderGray()};
-                padding: 1rem;
+                border-radius: ${borderRadius};
+                padding: 1.25rem;
+                margin-top: 1rem;
                 @media (max-width: ${tabletMaxWidth}) {
-                  border-left: 0;
-                  border-right: 0;
+                  padding: 1rem;
+                  border-radius: 0;
+                }
+              `}
+            >
+              <Subjects
+                loadMoreButton={subjectsLoadMoreButton}
+                subjects={subjects}
+                onLoadMoreSubjects={onLoadMoreSubjects}
+                onLoadSubjectComments={onLoadSubjectComments}
+                onSubjectEditDone={onEditSubject}
+                onSubjectDelete={(subjectId: number) =>
+                  onDeleteContent({
+                    contentType: 'subject',
+                    contentId: subjectId
+                  })
+                }
+                onSetRewardLevel={onSetRewardLevel}
+                uploadSubject={onUploadSubject}
+                contentId={videoId}
+                contentType="video"
+                rootRewardLevel={rewardLevel}
+                commentActions={{
+                  editRewardComment: onEditRewardComment,
+                  onDelete: onDeleteComment,
+                  onEditDone: onEditComment,
+                  onLikeClick: onLikeComment,
+                  onLoadMoreComments: onLoadMoreSubjectComments,
+                  onLoadMoreReplies: onLoadMoreSubjectReplies,
+                  onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
+                  onUploadComment,
+                  onUploadReply
+                }}
+              />
+            </div>
+            <div
+              className={css`
+                background: #fff;
+                border-radius: ${borderRadius};
+                padding: 1.25rem;
+                margin-top: 1rem;
+                @media (max-width: ${tabletMaxWidth}) {
+                  padding: 1rem;
+                  border-radius: 0;
                 }
               `}
             >
               <p
                 style={{
                   fontWeight: 'bold',
-                  fontSize: '2.5rem',
-                  color: Color.darkerGray()
+                  fontSize: '2.2rem',
+                  color: Color.darkGray(),
+                  margin: 0
                 }}
               >
                 {commentOnThisVideoLabel}
@@ -439,7 +460,7 @@ export default function VideoPage() {
                   rewardLevel,
                   uploader
                 }}
-                style={{ paddingTop: '1rem' }}
+                style={{ paddingTop: '0.75rem' }}
                 userId={userId}
               />
             </div>
@@ -461,11 +482,20 @@ export default function VideoPage() {
           </div>
         )}
         {loaded && !isVideoUnavailable && (
-          <NavMenu
-            videoId={videoId}
-            playlistId={playlistId ? Number(playlistId) : null}
-            isContinuing={!!isContinuing}
-          />
+          <div
+            className={css`
+              grid-column: 2;
+              @media (max-width: ${tabletMaxWidth}) {
+                grid-column: 1;
+              }
+            `}
+          >
+            <NavMenu
+              videoId={videoId}
+              playlistId={playlistId ? Number(playlistId) : null}
+              isContinuing={!!isContinuing}
+            />
+          </div>
         )}
       </div>
     </ErrorBoundary>

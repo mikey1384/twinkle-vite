@@ -95,6 +95,11 @@ export default function RewardLevelInfo({
             background: ${Color[
               playing && xpWarningShown ? warningColor : xpLevelColor
             ](isMaxReached ? 0.3 : 1)};
+            border-top-left-radius: 9999px;
+            border-bottom-left-radius: 9999px;
+            ${rewardLevel < 3
+              ? `border-top-right-radius: 9999px; border-bottom-right-radius: 9999px;`
+              : ''}
             cursor: default;
             @media (max-width: ${mobileMaxWidth}) {
               flex-grow: 0;
@@ -149,8 +154,7 @@ export default function RewardLevelInfo({
             marginTop: '0.5rem',
             color: '#000',
             width: '30rem',
-            fontSize: '1.2rem',
-            position: 'absolute'
+            fontSize: '1.2rem'
           }}
           text={reasonForDisable || ''}
         />

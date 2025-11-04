@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import TodayXPModal from './TodayXPModal';
+import { useRoleColor } from '~/theme/useRoleColor';
+import LeaderboardList from '~/components/LeaderboardList';
 
 export default function TodayXPRankings() {
   const myId = useKeyContext((v) => v.myState.userId);
-  const todayProgressTextColor = useKeyContext(
-    (v) => v.theme.todayProgressText.color
-  );
+  const progressRole = useRoleColor('todayProgressText', {
+    fallback: 'logoBlue'
+  });
   const loadTodayRankings = useAppContext(
     (v) => v.requestHelpers.loadTodayRankings
   );
@@ -44,6 +45,11 @@ export default function TodayXPRankings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStats?.xpEarned]);
 
+  const progressColor = useMemo(
+    () => progressRole.getColor() || Color.logoBlue(),
+    [progressRole]
+  );
+
   if (!todayStats?.todayXPRankingLoaded) {
     return <Loading style={{ height: '7rem' }} />;
   }
@@ -51,9 +57,10 @@ export default function TodayXPRankings() {
     <div style={{ marginTop: '1rem' }}>
       <div
         style={{
+          textAlign: 'center',
           fontWeight: 'bold',
           fontSize: '1.4rem',
-          color: Color[todayProgressTextColor](),
+          color: progressColor,
           marginBottom: '1rem'
         }}
       >
@@ -73,7 +80,13 @@ export default function TodayXPRankings() {
           No one has earned XP today yet. Be the first!
         </div>
       ) : (
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+          gap="0.75rem"
+        >
           {todayStats?.todayXPRanking?.map((user: any) => (
             <RankingsListItem
               key={user.id}
@@ -82,12 +95,9 @@ export default function TodayXPRankings() {
               target="xpEarned"
               activityContext="subjectPostXP"
               small
-              style={{
-                padding: user.id === myId ? '1rem' : '0.8rem'
-              }}
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       )}
 
       {todayStats?.todayXPRankingHasMore && (
@@ -96,7 +106,7 @@ export default function TodayXPRankings() {
             style={{
               fontWeight: 'bold',
               cursor: 'pointer',
-              color: Color[todayProgressTextColor]()
+              color: progressColor
             }}
             onClick={handleShowMore}
           >

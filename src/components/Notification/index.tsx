@@ -4,7 +4,7 @@ import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
-import { container } from './Styles';
+import { container, notiFilterBar } from './Styles';
 import {
   useAppContext,
   useNotiContext,
@@ -231,7 +231,9 @@ export default function Notification({
       <div
         ref={ContainerRef}
         onScroll={handleScroll}
-        style={style}
+        style={{
+          ...(style || {})
+        }}
         className={`${container} ${className}`}
       >
         <section
@@ -260,7 +262,7 @@ export default function Notification({
           <div style={{ position: 'relative' }}>
             {userId && (numNewNotis > 0 || !!(notifications.length > 0)) && (
               <FilterBar
-                bordered
+                className={notiFilterBar}
                 style={{
                   fontSize: '1.6rem',
                   height: '5rem',

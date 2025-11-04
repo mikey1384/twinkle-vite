@@ -13,9 +13,14 @@ export default function FileUploadStatusIndicator({
   theme?: string;
   uploadProgress: number;
 }) {
+  const normalizedProgress = useMemo(() => {
+    if (!Number.isFinite(uploadProgress) || uploadProgress < 0) return 0;
+    if (uploadProgress > 1) return 1;
+    return uploadProgress;
+  }, [uploadProgress]);
   const uploadComplete = useMemo(
-    () => uploadProgress > 0.999,
-    [uploadProgress]
+    () => normalizedProgress > 0.999,
+    [normalizedProgress]
   );
   const text = useMemo(
     () => (uploadComplete ? 'Upload Complete!' : ''),
@@ -26,8 +31,8 @@ export default function FileUploadStatusIndicator({
     [uploadComplete]
   );
   const progress = useMemo(
-    () => (uploadComplete ? 100 : Math.ceil(100 * uploadProgress)),
-    [uploadComplete, uploadProgress]
+    () => (uploadComplete ? 100 : Math.ceil(100 * normalizedProgress)),
+    [uploadComplete, normalizedProgress]
   );
 
   return (

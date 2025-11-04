@@ -32,7 +32,7 @@ export default function ItemPanel({
         }
       `} ${className}`}
       style={{
-        border: `1px solid ${Color.borderGray()}`,
+        border: '1px solid var(--ui-border)',
         background: '#fff',
         transition: 'border 0.2s, box-shadow 0.2s',
         padding: '1rem',
@@ -74,7 +74,8 @@ export default function ItemPanel({
         >
           <Button
             disabled={unlockProgress < 100}
-            skeuomorphic
+            variant={unlockProgress < 100 ? 'soft' : 'solid'}
+            tone={unlockProgress < 100 ? 'raised' : undefined}
             color="green"
             onClick={() => null}
           >

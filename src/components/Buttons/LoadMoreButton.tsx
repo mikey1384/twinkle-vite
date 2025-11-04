@@ -2,9 +2,11 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { returnTheme } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 const loadMoreLabel = localize('loadMore');
 const loadingLabel = localize('loading');
@@ -12,7 +14,7 @@ const loadingLabel = localize('loading');
 export default function LoadMoreButton({
   label,
   loading,
-  color,
+  color: overrideColor,
   onClick,
   theme,
   ...props
@@ -26,12 +28,48 @@ export default function LoadMoreButton({
 }) {
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+    themeName,
+    color: themedColorValue,
+    colorKey: themedColorKey
+  } = useRoleColor('loadMoreButton', {
+    themeName: theme || profileTheme,
+    fallback: 'lightBlue'
+  });
+  const { buttonColorKey, buttonColorValue } = useMemo(() => {
+    const overrideValue = overrideColor
+      ? resolveColorValue(overrideColor)
+      : undefined;
+    if (overrideColor && overrideValue) {
+      return {
+        buttonColorKey: overrideColor,
+        buttonColorValue: overrideValue
+      };
+    }
+    const resolvedKey = themedColorKey || 'lightBlue';
+    const resolvedValue =
+      themedColorValue ||
+      resolveColorValue(resolvedKey) ||
+      resolveColorValue('lightBlue') ||
+      '#4aa3ff';
+    return {
+      buttonColorKey: overrideColor || resolvedKey,
+      buttonColorValue: overrideValue || resolvedValue
+    };
+  }, [overrideColor, themedColorKey, themedColorValue]);
+  const scopedStyle = useMemo(
+    () =>
+      ({
+        '--role-loadMoreButton-color': buttonColorValue
+      } as React.CSSProperties),
+    [buttonColorValue]
+  );
 
   return (
     <ErrorBoundary componentPath="LoadMoreButton">
-      <div
+      <ScopedTheme
+        theme={themeName}
+        roles={['loadMoreButton']}
+        style={scopedStyle}
         className={css`
           width: 100%;
           display: flex;
@@ -41,13 +79,16 @@ export default function LoadMoreButton({
       >
         <Button
           loading={!!loading}
-          color={color || loadMoreButtonColor}
+          color={buttonColorKey}
           onClick={onClick}
+          variant="soft"
+          shape="pill"
+          uppercase={false}
           {...props}
         >
           {loading ? loadingLabel : label || loadMoreLabel}
         </Button>
-      </div>
+      </ScopedTheme>
     </ErrorBoundary>
   );
 }

@@ -3,7 +3,7 @@ import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import { useOutsideClick } from '~/helpers/hooks';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import {
   addEmoji,
   finalizeEmoji,
@@ -30,7 +30,9 @@ export default function EditTitleForm({
   style?: React.CSSProperties;
   title: string;
 }) {
-  const successColor = useKeyContext((v) => v.theme.success.color);
+  const { colorKey: successColorKey } = useRoleColor('success', {
+    fallback: 'green'
+  });
   const [title, setTitle] = useState(props.title);
   const FormRef = useRef(null);
   useOutsideClick(FormRef, onClickOutSide);
@@ -55,7 +57,7 @@ export default function EditTitleForm({
             style={{ marginLeft: '1rem', zIndex: 1000 }}
             filled
             disabled={title?.length > maxLength || savingEdit}
-            color={successColor}
+            color={successColorKey || 'green'}
             onClick={handleEditSubmit}
           >
             <Icon icon="check" size="lg" />

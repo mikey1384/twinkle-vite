@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { homePanelClass } from '~/theme/homePanels';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const freeLabel = localize('free');
 
@@ -42,8 +44,8 @@ export default function ItemPanel({
   unlocking?: boolean;
   upgradeIcon?: React.ReactNode;
 }) {
-  const [highlighted, setHighlighted] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
+  const { accentColor, accentTint, panelVars, themeStyles } = useHomePanelVars(0.08, { neutralSurface: true });
   const requiredKarmaPoints = useMemo(() => {
     if (!isLeveled) {
       return karmaPointTable[itemKey];
@@ -110,44 +112,63 @@ export default function ItemPanel({
       </>
     );
   }, [karmaPoints, notUpgraded, displayedRequiredKarmaPoints]);
+  const baseBorderColor = useMemo(() => {
+    if (locked) return 'var(--ui-border)';
+    return 'var(--ui-border)';
+  }, [locked]);
+
+  const panelStyle = useMemo(
+    () =>
+      ({
+        ...panelVars,
+        ['--home-panel-border' as const]: baseBorderColor,
+        ['--home-panel-color' as const]: Color.darkerGray(),
+        ['--home-panel-gap' as const]: '1.4rem',
+        ['--home-panel-padding' as const]: '2.2rem 2.4rem',
+        ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem',
+        ['--home-panel-card-border' as const]: 'var(--ui-border)',
+        ['--home-panel-tint' as const]:
+          themeStyles.hoverBg || accentTint || Color.logoBlue(0.12),
+        ...style
+      }) as React.CSSProperties,
+    [accentTint, baseBorderColor, panelVars, style, themeStyles.hoverBg]
+  );
 
   return (
     <div
-      className={css`
-        border-radius: ${borderRadius};
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-        }
-      `}
-      style={{
-        ...(highlighted
-          ? {
-              boxShadow: `0 0 10px ${Color.gold(0.8)}`,
-              border: `1px solid ${Color.gold(0.8)}`
-            }
-          : { border: `1px solid ${Color.borderGray()}` }),
-        background: '#fff',
-        transition: 'border 0.2s, box-shadow 0.2s',
-        padding: '1rem',
-        ...style
-      }}
+      className={homePanelClass}
+      style={panelStyle}
     >
       <div
-        style={{ fontWeight: 'bold', fontSize: '2rem', color: Color.black() }}
+        className={css`
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          font-weight: 700;
+          font-size: 2.1rem;
+          color: ${Color.darkerGray()};
+        `}
       >
-        {itemName}
+        <span>{itemName}</span>
+        {locked && requiredKarmaPoints ? (
+          <span
+            className={css`
+              font-size: 1.4rem;
+              padding: 0.35rem 1rem;
+              border-radius: 9999px;
+              border: 1px solid rgba(148, 163, 184, 0.4);
+              background: rgba(255, 255, 255, 0.9);
+              color: var(--home-panel-accent, ${accentColor});
+              font-weight: 600;
+            `}
+          >
+            {requirementLabel}
+          </span>
+        ) : null}
       </div>
       {locked && (
         <>
-          <p
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              color: Color.darkGray()
-            }}
-          >
-            {requirementLabel}
-          </p>
           {itemDescription && (
             <div style={{ fontSize: '1.5rem', marginTop: '1rem' }}>
               {itemDescription}
@@ -202,12 +223,11 @@ export default function ItemPanel({
                   <Button
                     disabled={unlockProgress < 100}
                     loading={unlocking || loading}
-                    skeuomorphic
+                    variant="soft"
+                    tone="raised"
                     color="green"
                     onClick={async () => {
                       await onUnlock();
-                      setHighlighted(true);
-                      setTimeout(() => setHighlighted(false), 1000);
                     }}
                   >
                     <Icon icon={notUpgraded ? 'level-up' : 'unlock'} />

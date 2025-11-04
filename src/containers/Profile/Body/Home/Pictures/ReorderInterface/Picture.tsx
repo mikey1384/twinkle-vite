@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import ItemTypes from '~/constants/itemTypes';
 import { css } from '@emotion/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
+import { borderRadius, innerBorderRadius } from '~/constants/css';
 import { useDrag, useDrop } from 'react-dnd';
 
 export default function Picture({
@@ -49,7 +49,7 @@ export default function Picture({
         opacity: ${isDragging ? 0.5 : 1};
         background: black;
         position: relative;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         width: ${width}%;
         padding-bottom: CALC(${width}% - 2px);

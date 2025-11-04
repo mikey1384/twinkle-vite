@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
+import { notiFilterBar } from '../../Styles';
 import ThisMonth from './ThisMonth';
 import AllTime from './AllTime';
 import localize from '~/constants/localize';
@@ -35,7 +36,7 @@ export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
     <ErrorBoundary componentPath="Notification/MainFeeds/Ranking/index">
       {userId && (
         <FilterBar
-          bordered
+          className={notiFilterBar}
           style={{
             height: '4.5rem',
             fontSize: '1.6rem'

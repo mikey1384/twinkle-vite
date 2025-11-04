@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { borderRadius, getThemeStyles } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 export default function StartTopicButton({
   channelId,
@@ -21,7 +22,6 @@ export default function StartTopicButton({
   onStartTopic?: () => void;
   pathId: string;
 }) {
-  const themeStyles = getThemeStyles(themeColor);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -34,42 +34,44 @@ export default function StartTopicButton({
   const titleIsEmpty = useMemo(() => stringIsEmpty(topicTitle), [topicTitle]);
 
   return (
-    <button
-      disabled={titleIsEmpty || isSubmitting}
-      className={css`
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 2rem;
-        padding: 1rem 2rem;
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: ${themeStyles.text};
-        background-color: ${themeStyles.bg};
-        border: 1px solid ${themeStyles.border};
-        border-radius: ${borderRadius};
-        cursor: pointer;
-        transition: background-color 0.3s ease;
+    <ScopedTheme theme={themeColor as any}>
+      <button
+        disabled={titleIsEmpty || isSubmitting}
+        className={css`
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin-top: 2rem;
+          padding: 1rem 2rem;
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: var(--theme-text);
+          background-color: var(--theme-bg);
+          border: 1px solid var(--theme-border);
+          border-radius: ${borderRadius};
+          cursor: pointer;
+          transition: background-color 0.3s ease, border-color 0.3s ease;
 
-        &:hover:not(:disabled) {
-          background-color: ${themeStyles.hoverBg};
-          border-color: ${themeStyles.border};
-        }
+          &:hover:not(:disabled) {
+            background-color: var(--theme-hover-bg);
+            border-color: var(--theme-border);
+          }
 
-        &:disabled {
-          cursor: not-allowed;
-          opacity: 0.5;
-          background-color: ${themeStyles.disabledBg};
-          border-color: ${themeStyles.disabledBorder};
-        }
-      `}
-      onClick={() => handleStartTopic(topicTitle)}
-    >
-      <span>Start this Topic</span>
-      {isSubmitting && (
-        <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
-      )}
-    </button>
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            background-color: var(--theme-disabled-bg);
+            border-color: var(--theme-disabled-border);
+          }
+        `}
+        onClick={() => handleStartTopic(topicTitle)}
+      >
+        <span>Start this Topic</span>
+        {isSubmitting && (
+          <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
+        )}
+      </button>
+    </ScopedTheme>
   );
 
   async function handleStartTopic(text: string) {

@@ -1,13 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ListItem from './ListItem';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
-import {
-  borderRadius,
-  Color,
-  innerBorderRadius,
-  mobileMaxWidth
-} from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 
 export default function ChoiceList({
   answerIndex,
@@ -36,7 +30,6 @@ export default function ChoiceList({
   initialDelayMs?: number;
   perWordMs?: number;
 }) {
-  const successColor = useKeyContext((v) => v.theme.success.color);
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -85,32 +78,18 @@ export default function ChoiceList({
         transition: opacity 1s;
         flex-direction: column;
         width: 80%;
+        gap: 0.75rem;
         nav {
-          border: 1px solid ${Color.borderGray()};
-          border-top: none;
-        }
-        nav:first-of-type {
-          border: 1px solid ${Color.borderGray()};
-          border-top-left-radius: ${borderRadius};
-          border-top-right-radius: ${borderRadius};
-          section {
-            border-top-left-radius: ${innerBorderRadius};
-          }
-        }
-        nav:last-child {
-          border-bottom-left-radius: ${borderRadius};
-          border-bottom-right-radius: ${borderRadius};
-          section {
-            border-bottom-left-radius: ${innerBorderRadius};
-          }
+          border: 0;
+          border-radius: ${borderRadius};
         }
         .correct {
           border: 0;
           background: linear-gradient(
             to right,
-            ${Color[successColor](1)} 0%,
-            ${Color[successColor](0.6)} 50%,
-            ${Color[successColor](1)} 100%
+            ${Color.green(1)} 0%,
+            ${Color.green(0.6)} 50%,
+            ${Color.green(1)} 100%
           );
           background-size: 200% auto;
           background-position: left top;
@@ -121,7 +100,7 @@ export default function ChoiceList({
         }
         .wrong {
           color: #fff;
-          border: 1px solid ${Color.red()};
+          border: 0;
           background: ${Color.red()};
           box-shadow: 0 0 10px ${Color.red()};
         }
@@ -130,15 +109,15 @@ export default function ChoiceList({
         }
         @keyframes pulse {
           0% {
-            box-shadow: 0 0 0 0 ${Color[successColor](0.7)};
+            box-shadow: 0 0 0 0 ${Color.green(0.7)};
             background-position: left top;
           }
           70% {
-            box-shadow: 0 0 0 10px ${Color[successColor](0)};
+            box-shadow: 0 0 0 10px ${Color.green(0)};
             background-position: right center;
           }
           100% {
-            box-shadow: 0 0 0 0 ${Color[successColor](0)};
+            box-shadow: 0 0 0 0 ${Color.green(0)};
             background-position: right center;
           }
         }

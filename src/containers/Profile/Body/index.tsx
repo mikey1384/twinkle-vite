@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Home from './Home';
@@ -95,28 +95,36 @@ export default function Body({
       `}
     >
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          width: '100%'
-        }}
+        className={css`
+          width: 100%;
+          border-bottom: none;
+          background: #fff;
+          padding: 0.2rem 0;
+        `}
       >
-        <div
-          className={css`
-            width: 40%;
-            background: #fff;
-            border-bottom: 1px solid ${Color.borderGray()};
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 20rem;
-            }
-          `}
-        />
         <FilterBar
           style={{ margin: 0 }}
           color={selectedTheme}
           className={css`
+            /* On desktop, indent tabs so "Profile" starts under username column */
+            > .nav-section {
+              padding-left: 29rem;
+            }
             @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.3rem;
+              font-size: 1.15rem;
+              > .nav-section {
+                padding-left: 15rem;
+                gap: 0.3rem;
+              }
+              > .nav-section > nav {
+                padding: 0.6rem 0.8rem;
+              }
+              > .nav-section > nav > a {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
             }
           `}
         >
@@ -159,16 +167,6 @@ export default function Body({
             <a>{postsLabel}</a>
           </nav>
         </FilterBar>
-        <div
-          className={css`
-            width: 35rem;
-            background: #fff;
-            border-bottom: 1px solid ${Color.borderGray()};
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 0;
-            }
-          `}
-        />
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
         <div

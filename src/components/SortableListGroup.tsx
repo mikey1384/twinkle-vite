@@ -3,7 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import SortableListItem from './SortableListItem';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 
@@ -39,7 +39,7 @@ export default function SortableListGroup({
             display: flex;
             justify-content: space-between;
             margin-bottom: -1px;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
           }
           nav:first-of-type {
             border-top-left-radius: ${borderRadius};

@@ -40,7 +40,7 @@ export default function QuestionsListGroup({
       </RoundList>
       <div style={{ marginTop: '2rem', display: 'flex' }}>
         <Button
-          transparent
+          variant="ghost"
           style={{ marginRight: '1rem' }}
           onClick={onReorderCancel}
         >

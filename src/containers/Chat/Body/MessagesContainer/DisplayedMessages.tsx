@@ -17,10 +17,11 @@ import { MessageHeights } from '~/constants/state';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import { isMobile, parseChannelPath, returnTheme } from '~/helpers';
+import { isMobile, parseChannelPath } from '~/helpers';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { rewardReasons } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const unseenButtonThreshold = -1;
 const deviceIsMobile = isMobile(navigator);
@@ -169,15 +170,15 @@ export default function DisplayedMessages({
     searchedMessageIds = [],
     twoPeople
   } = currentChannel;
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(
+  const loadMoreThemeName = useMemo(
     () =>
-      returnTheme(
-        twoPeople ? profileTheme : displayedThemeColor || profileTheme
-      ),
+      twoPeople ? profileTheme : displayedThemeColor || profileTheme,
     [displayedThemeColor, profileTheme, twoPeople]
   );
+  const { colorKey: loadMoreButtonColor } = useRoleColor('loadMoreButton', {
+    themeName: loadMoreThemeName,
+    fallback: 'lightBlue'
+  });
 
   const visibleMessageIndexRef = useRef(10);
   useEffect(() => {

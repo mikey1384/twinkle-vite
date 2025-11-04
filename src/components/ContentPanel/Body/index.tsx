@@ -12,9 +12,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { determineUserCanRewardThis, returnTheme } from '~/helpers';
+import { determineUserCanRewardThis } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
 import BottomInterface from './BottomInterface';
@@ -64,14 +65,15 @@ export default function Body({
     (v) => v.requestHelpers.checkIfUserResponded
   );
 
-  const { level, profileTheme, twinkleCoins, userId } = useKeyContext(
+  const { level, twinkleCoins, userId } = useKeyContext(
     (v) => v.myState
   );
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const {
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    themeName: theme,
+    fallback: 'pink'
+  });
 
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);

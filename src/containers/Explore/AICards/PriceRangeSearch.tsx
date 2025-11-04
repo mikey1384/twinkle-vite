@@ -37,7 +37,7 @@ export default function PriceRangeSearch({
         border-radius: 20px;
         padding: 0.3rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         background-color: #fff;
       `}
     >

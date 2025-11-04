@@ -9,7 +9,7 @@ import TargetContent from './TargetContent';
 import Embedly from '~/components/Embedly';
 import Profile from './Profile';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
@@ -19,44 +19,47 @@ import localize from '~/constants/localize';
 
 const urlCss = css`
   padding: 1rem;
-  background: ${Color.whiteGray()};
-  border: 1px solid ${Color.borderGray()};
+  background: #fff;
+  border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
-  margin-top: -1rem;
-  transition: background 0.5s;
+  margin-top: 0.8rem;
+  transition: border-color 0.18s ease;
   &:hover {
-    background: #fff;
+    border-color: var(--ui-border-strong);
   }
   @media (max-width: ${mobileMaxWidth}) {
-    margin-top: -0.5rem;
-    border-left: 0;
-    border-right: 0;
+    border: none;
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
+    &:hover {
+      border-color: var(--ui-border);
+    }
   }
 `;
-const userCommentCss = css`
+
+// Tucked profile target container to visually attach under main panel
+const profileTargetCss = css`
   cursor: pointer;
-  background: ${Color.whiteGray()};
-  border: 1px solid ${Color.borderGray()};
-  border-radius: ${borderRadius};
-  margin-top: -1rem;
-  transition: background 0.5s;
-  padding-bottom: 1rem;
-  &:hover {
-    background: #fff;
-  }
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: 0 0 ${borderRadius} ${borderRadius};
+  /* No outer padding: inner Profile provides its own padding */
   @media (max-width: ${mobileMaxWidth}) {
-    border-left: 0;
-    border-right: 0;
-    margin-top: -0.5rem;
+    border: none;
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
   }
 `;
+
+// Wrapper removed: ContentListItem now renders its own themed border
 
 export default function ContentPanel({
   alwaysShow,
   autoExpand,
   className,
   commentsLoadLimit,
-  isContentPage,
   feedId,
   contentId,
   contentType,
@@ -65,14 +68,14 @@ export default function ContentPanel({
   style = {},
   showActualDate,
   theme,
-  zIndex = 1
+  zIndex = 1,
+  isContentPage
 }: {
   alwaysShow?: boolean;
   autoExpand?: boolean;
   className?: string;
   commentsLoadLimit?: number;
   feedId?: number;
-  isContentPage?: boolean;
   contentId: number;
   contentType: string;
   rootType?: string;
@@ -81,6 +84,7 @@ export default function ContentPanel({
   showActualDate?: boolean;
   theme?: string;
   zIndex?: number;
+  isContentPage?: boolean;
 }) {
   const previousPlaceholderHeight = useMemo(
     () => placeholderHeights[`${contentType}-${contentId}`],
@@ -219,53 +223,60 @@ export default function ContentPanel({
     return !loaded ? '15rem' : '';
   }, [loaded]);
 
+  const targetTuckMargin = 'calc(-1rem - 1px)';
+  const alignTopWithTarget = targetObj?.comment ? targetTuckMargin : undefined;
+
   const container = useMemo(
     () => css`
-      background: #fff;
+      position: relative;
       width: 100%;
-      border: 1px solid ${Color.borderGray()};
+      background: #fff;
+      border: 1px solid var(--ui-border);
       border-radius: ${borderRadius};
+      padding: 0.8rem 1rem 0.8rem 1.2rem;
       &:last-child {
         margin-bottom: 0;
       }
+
       .heading {
         user-select: none;
-        padding: 1rem;
         display: flex;
         align-items: center;
+        gap: 0.9rem;
+        padding: 0.2rem 0.2rem 0.6rem 0.2rem;
         width: 100%;
-        justify-content: space-between;
+        border-bottom: none;
       }
       .body {
         width: 100%;
-        font-size: 1.7rem;
+        font-size: 1.65rem;
         padding: 0;
         z-index: 10;
         .bottom-interface {
-          padding: 0 1rem 0 1rem;
+          padding: 0.6rem 0 0 0;
           display: flex;
           flex-direction: column;
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0 0.5rem 0 0.5rem;
-          }
         }
       }
+      /* container spacing only; separators handled by outer wrapper */
+      padding: 1rem 1rem 1rem 1.2rem;
       .content-panel__likes {
-        font-weight: bold;
+        font-weight: 600;
         color: ${Color.darkerGray()};
         font-size: 1.2rem;
         line-height: 1;
       }
       .subject {
-        font-size: 2rem;
-        font-weight: bold;
+        font-size: 1.9rem;
+        font-weight: 700;
         white-space: pre-wrap;
         overflow-wrap: break-word;
         word-break: break-word;
-        margin-bottom: 1.5rem;
+        margin: 0 0 1rem 0;
       }
       .title {
-        font-size: 1.7rem;
+        font-size: 1.6rem;
+        font-weight: 600;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: pre-wrap;
@@ -273,32 +284,21 @@ export default function ContentPanel({
         word-break: break-word;
       }
       .timestamp {
-        font-size: 1rem;
+        display: inline-block;
+        margin-top: 0.2rem;
+        font-size: 1.1rem;
         color: ${Color.gray()};
       }
       @media (max-width: ${mobileMaxWidth}) {
         border-radius: 0;
-        ${isContentPage ? 'border-top: none;' : ''}
-        border-left: none;
-        border-right: none;
+        border: none;
+        width: 100%;
         .body {
-          font-size: 1.8rem;
-        }
-        .heading {
-          > a,
-          > span {
-            font-size: 1.7rem;
-          }
-          > small {
-            font-size: 1.2rem;
-          }
-          > button {
-            font-size: 1.2rem;
-          }
+          font-size: 1.75rem;
         }
       }
     `,
-    [isContentPage]
+    []
   );
 
   // this block MUST always come before the return statement
@@ -336,11 +336,20 @@ export default function ContentPanel({
           onUploadTargetComment
         }}
       >
-        <div style={style} className={className} ref={ComponentRef}>
+        <div
+          style={style}
+          className={className}
+          ref={ComponentRef}
+          data-content-page={isContentPage ? 'true' : undefined}
+        >
           <div
             className={css`
               width: 100%;
-              margin-bottom: 1rem;
+              margin: 0;
+              padding: 0.6rem 0 0.8rem 0;
+              &:not(:first-of-type) {
+                border-top: 1px solid var(--ui-border-strong);
+              }
             `}
           >
             {contentShown ? (
@@ -413,9 +422,11 @@ export default function ContentPanel({
                 {contentState.loaded && targetObj?.subject?.id && (
                   <ContentListItem
                     hideSideBordersOnMobile
+                    noTopBorderRadius
                     style={{
                       zIndex: 1,
-                      position: 'relative'
+                      position: 'relative',
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
                     }}
                     expandable
                     contentObj={{
@@ -427,8 +438,10 @@ export default function ContentPanel({
                 {contentType === 'comment' && appliedRootType === 'video' && (
                   <ContentListItem
                     hideSideBordersOnMobile
+                    noTopBorderRadius
                     style={{
-                      position: 'relative'
+                      position: 'relative',
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
                     }}
                     expandable
                     contentObj={rootObj}
@@ -437,8 +450,10 @@ export default function ContentPanel({
                 {contentType === 'comment' && appliedRootType === 'aiStory' && (
                   <ContentListItem
                     hideSideBordersOnMobile
+                    noTopBorderRadius
                     style={{
-                      position: 'relative'
+                      position: 'relative',
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
                     }}
                     expandable
                     contentObj={rootObj}
@@ -448,7 +463,14 @@ export default function ContentPanel({
                   appliedRootType === 'url' &&
                   !contentState.rootObj?.notFound &&
                   !rootObj.notFound && (
-                    <div className={urlCss}>
+                    <div
+                      className={urlCss}
+                      style={{
+                        marginTop: alignTopWithTarget ?? targetTuckMargin,
+                        borderTopLeftRadius: 0,
+                        borderTopRightRadius: 0
+                      }}
+                    >
                       {rootObj.loaded ? (
                         <Embedly small contentId={contentState.rootId} />
                       ) : (
@@ -458,7 +480,12 @@ export default function ContentPanel({
                   )}
                 {contentType === 'comment' && appliedRootType === 'user' ? (
                   <div
-                    className={userCommentCss}
+                    className={profileTargetCss}
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      marginTop: alignTopWithTarget ?? targetTuckMargin
+                    }}
                     onClick={() => navigate(`/users/${rootObj.username}`)}
                   >
                     {rootObj.id ? (

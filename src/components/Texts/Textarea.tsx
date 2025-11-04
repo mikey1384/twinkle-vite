@@ -1,13 +1,13 @@
 import React, {
   useMemo,
   useState,
-  useEffect,
   useRef,
   useLayoutEffect,
-  useCallback
+  useCallback,
+  useEffect
 } from 'react';
 import ProgressBar from '~/components/ProgressBar';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
@@ -17,8 +17,6 @@ import {
   returnMaxUploadSize
 } from '~/constants/defaultValues';
 import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
-import AlertModal from '~/components/Modals/AlertModal';
-import { debounce } from '~/helpers';
 
 export default function Textarea({
   className,
@@ -30,6 +28,7 @@ export default function Textarea({
   onDrop,
   style,
   theme,
+  disableFocusGlow,
   ...rest
 }: Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onDrop' | 'ref'> & {
   draggedFile?: File;
@@ -39,6 +38,7 @@ export default function Textarea({
   maxRows?: number;
   onDrop?: (filePath: string) => void;
   theme?: string;
+  disableFocusGlow?: boolean;
 }) {
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -53,9 +53,14 @@ export default function Textarea({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const normalizedProgress = useMemo(() => {
+    if (!Number.isFinite(uploadProgress) || uploadProgress <= 0) return 0;
+    if (uploadProgress >= 1) return 1;
+    return uploadProgress;
+  }, [uploadProgress]);
   const progress = useMemo(
-    () => Math.ceil(100 * uploadProgress),
-    [uploadProgress]
+    () => Math.ceil(100 * normalizedProgress),
+    [normalizedProgress]
   );
 
   const autoResize = useCallback(() => {
@@ -94,24 +99,50 @@ export default function Textarea({
     autoResize();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rest.value, maxRows, minRows]);
-
   useEffect(() => {
-    const setVh = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        `${window.innerHeight * 0.01}px`
-      );
+    const el = textareaRef.current;
+    if (!el) return;
+    const container = el.parentElement || el;
+
+    let rafId: number | null = null;
+    const schedule = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        autoResize();
+        rafId = null;
+      });
     };
-    const debouncedSetVh = debounce(setVh, 150);
-    window.addEventListener('resize', debouncedSetVh as any);
-    setVh();
-    return () => window.removeEventListener('resize', debouncedSetVh as any);
-  }, []);
 
-  useEffect(() => {
-    const debounced = debounce(() => autoResize(), 150);
-    window.addEventListener('resize', debounced as any);
-    return () => window.removeEventListener('resize', debounced as any);
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      let lastWidth = container.clientWidth;
+      ro = new ResizeObserver((entries) => {
+        const entry = entries[entries.length - 1];
+        // Only react to width changes to avoid loops from height mutations
+        const nextWidth = Math.round(entry.contentRect.width);
+        if (nextWidth !== Math.round(lastWidth)) {
+          lastWidth = nextWidth;
+          schedule();
+        }
+      });
+      ro.observe(container);
+    } else {
+      const handler = () => schedule();
+      window.addEventListener('orientationchange', handler, {
+        passive: true
+      } as any);
+      window.addEventListener('resize', handler, { passive: true } as any);
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        window.removeEventListener('orientationchange', handler as any);
+        window.removeEventListener('resize', handler as any);
+      };
+    }
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      ro?.disconnect();
+    };
   }, [autoResize]);
 
   const errorModalContent = useMemo(() => {
@@ -122,12 +153,6 @@ export default function Textarea({
           content: `The file size exceeds the maximum allowed upload size of ${addCommasToNumber(
             maxSize / mb
           )}MB.`
-        };
-      case 'type':
-        return {
-          title: 'Unsupported file type',
-          content:
-            'Only image files can be uploaded. Please try again with a different file.'
         };
       default:
         return {
@@ -147,6 +172,7 @@ export default function Textarea({
         alignItems: 'center',
         flexDirection: 'column',
         justifyContent: 'center',
+        borderRadius,
         ...style
       }}
     >
@@ -190,18 +216,24 @@ export default function Textarea({
         }}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
-          font-family: 'Noto Sans', Helvetica, sans-serif, Arial;
+          font-family: inherit;
           width: 100%;
+          box-sizing: border-box;
           position: relative;
           font-size: 1.7rem;
           padding: 1rem;
-          border: 1px solid ${Color.darkerBorderGray()};
+          border: 1px solid var(--ui-border);
+          border-radius: inherit;
+          background: #fff;
           resize: none;
           touch-action: manipulation;
+          transition: border-color 0.18s ease, box-shadow 0.18s ease,
+            background 0.18s ease;
           &:focus {
             outline: none;
-            border: 1px solid ${Color.logoBlue()};
-            box-shadow: 0px 0px 3px ${Color.logoBlue(0.8)};
+            ${disableFocusGlow
+              ? `border: none; box-shadow: none;`
+              : `border-color: var(--ui-border-strong); box-shadow: none;`}
             ::placeholder {
               color: ${Color.lighterGray()};
             }
@@ -222,6 +254,8 @@ export default function Textarea({
             height: '100%',
             width: '100%',
             top: '-5px',
+            left: 0,
+            zIndex: 2,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center'
@@ -236,10 +270,21 @@ export default function Textarea({
         </div>
       )}
       {uploadErrorType && (
-        <AlertModal
-          {...errorModalContent}
-          onHide={() => setUploadErrorType('')}
-        />
+        <div
+          className={css`
+            width: 100%;
+            margin-top: 0.5rem;
+            color: ${Color.red()};
+            font-size: 1.3rem;
+            line-height: 1.2;
+            text-align: left;
+          `}
+          role="alert"
+          aria-live="polite"
+        >
+          <strong>{errorModalContent.title}:</strong>{' '}
+          {errorModalContent.content}
+        </div>
       )}
     </div>
   );
@@ -285,10 +330,6 @@ export default function Textarea({
       return parts[1] || '';
     };
 
-    // Upload images first (common expectation), then other files
-    const imageItems = fileItems.filter((it) => /^image\//.test(it.type));
-    const otherItems = fileItems.filter((it) => !/^image\//.test(it.type));
-
     const uploadFromItems = (arr: DataTransferItem[]) => {
       for (const item of arr) {
         const blob = item.getAsFile();
@@ -304,20 +345,17 @@ export default function Textarea({
       }
     };
 
-    uploadFromItems(imageItems);
-    // Surface non-image file uploads as well so unsupported-file errors show
-    // even when text payloads (like filenames) accompany the clipboard data.
-    uploadFromItems(otherItems);
+    if (fileItems.length > 0) {
+      uploadFromItems(fileItems);
+    }
   }
 
   async function handleFileUpload(file: File) {
     setIsDragging(false);
+    if (uploadErrorType) setUploadErrorType('');
     if (!file || !maxSize || !userId) return;
     if (file.size / mb > maxSize) {
       return setUploadErrorType('size');
-    }
-    if (!file.type.startsWith('image/')) {
-      return setUploadErrorType('type');
     }
     setUploading(true);
     const filePath = uuidv1();
@@ -336,6 +374,8 @@ export default function Textarea({
         actualFileName: file.name,
         rootType: 'embed'
       });
+
+      if (uploadErrorType) setUploadErrorType('');
       onDrop?.(
         `${cloudFrontURL}/attachments/embed/${filePath}/${encodeURIComponent(
           appliedFileName
@@ -356,6 +396,15 @@ export default function Textarea({
     loaded: number;
     total: number;
   }) {
-    setUploadProgress(loaded / total);
+    if (!total || !Number.isFinite(total) || total <= 0) {
+      setUploadProgress(0);
+      return;
+    }
+    const ratio = loaded / total;
+    if (!Number.isFinite(ratio)) {
+      setUploadProgress(0);
+      return;
+    }
+    setUploadProgress(Math.max(0, Math.min(1, ratio)));
   }
 }

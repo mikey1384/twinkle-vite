@@ -41,7 +41,8 @@ export default function Deleted({
       <div style={{ display: 'flex', marginLeft: '1rem' }}>
         <Button
           style={{ fontSize: '1.3rem' }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={onUndeleteSlide}
         >
           <Icon icon="trash-restore" />
@@ -49,7 +50,8 @@ export default function Deleted({
         </Button>
         <Button
           style={{ marginLeft: '1rem', fontSize: '1.3rem' }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={onRemoveInteractiveSlide}
         >
           <Icon icon="minus" />

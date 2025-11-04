@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  borderRadius,
   Color,
   mobileMaxWidth,
-  tabletMaxWidth
+  tabletMaxWidth,
+  borderRadius,
+  getThemeStyles
 } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import {
@@ -32,6 +33,7 @@ export default function HomeMenuItems({
   style?: React.CSSProperties;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,10 +45,37 @@ export default function HomeMenuItems({
   const homeMenuItemActive = useKeyContext(
     (v) => v.theme.homeMenuItemActive.color
   );
-  const homeMenuItemActiveColor = useMemo(
-    () => Color[homeMenuItemActive](),
-    [homeMenuItemActive]
+  const activeColorFn = useMemo(() => {
+    const candidate = Color[homeMenuItemActive];
+    return typeof candidate === 'function'
+      ? (candidate as (opacity?: number) => string)
+      : null;
+  }, [homeMenuItemActive]);
+  const homeMenuItemActiveColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn();
+    return Color.logoBlue();
+  }, [activeColorFn]);
+  const activeContentColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn();
+    return Color.logoBlue();
+  }, [activeColorFn]);
+  const hoverAccentColor = useMemo(() => {
+    if (activeColorFn) return activeColorFn();
+    return Color.logoBlue();
+  }, [activeColorFn]);
+  const themeName = (profileTheme || 'logoBlue') as string;
+  const isVanta = themeName === 'vantaBlack';
+  const hoverBg = useMemo(
+    () => getThemeStyles(themeName, 0.12).bg,
+    [themeName]
   );
+  const outlineAccent = useMemo(() => {
+    return isVanta
+      ? 'rgba(0,0,0,0.9)'
+      : activeColorFn
+      ? activeColorFn(0.4)
+      : 'var(--ui-border)';
+  }, [activeColorFn, isVanta]);
   const year = useMemo(() => {
     return new Date(standardTimeStamp || Date.now()).getFullYear();
   }, [standardTimeStamp]);
@@ -58,85 +87,137 @@ export default function HomeMenuItems({
           width: 100%;
           flex: 1 1 auto;
           min-height: 0;
-          overflow-y: auto;
+          overflow-y: visible;
+          position: relative;
           background: #fff;
+          &::before {
+            content: '';
+            display: none;
+          }
           display: flex;
           flex-direction: column;
           font-size: 1.7rem;
-          border: 1px solid ${Color.borderGray()};
+          border: none;
           border-radius: ${borderRadius};
           border-left: 0;
           border-top-left-radius: 0;
           border-bottom-left-radius: 0;
-          padding-top: 1rem;
+          padding: 0.6rem 0 0.8rem;
+          box-shadow: none;
           > nav {
-            height: 4rem;
+            position: relative;
+            z-index: 1;
+            height: 4.8rem;
+            margin: 0.6rem 0;
             width: 100%;
             cursor: pointer;
             display: flex;
             align-items: center;
             color: ${Color.gray()};
             justify-content: center;
+            transition: transform 0.18s ease;
             > a {
               width: 100%;
               height: 100%;
-              text-align: center;
+              min-width: 0;
+              text-align: left;
               display: flex;
               align-items: center;
-              justify-content: center;
+              justify-content: flex-start;
               color: ${Color.darkGray()};
               text-decoration: none;
             }
             .homemenu__item {
               width: 100%;
               height: 100%;
-              display: grid;
-              grid-template-columns: 2px 4rem 1fr;
-              grid-template-rows: 100%;
-              grid-template-areas: 'selection icon label';
+              margin: 0.4rem 1rem;
+              display: flex;
+              align-items: center;
+              gap: 1.1rem;
+              padding: 1.2rem 1.5rem;
+              border-radius: ${borderRadius};
+              background: transparent;
+              border: 1px solid transparent;
+              box-shadow: none;
+              min-width: 0;
+              overflow: hidden;
+              transition: background 0.18s ease, border-color 0.18s ease,
+                color 0.18s ease, transform 0.06s ease;
               > .selection {
-                grid-area: selection;
-                margin-left: -1px;
+                display: none;
               }
               > .icon {
-                grid-area: icon;
-                padding-left: 1rem;
-                justify-self: center;
-                align-self: center;
+                padding-left: 0.2rem;
+                color: ${Color.darkerGray()};
+                flex: 0 0 auto;
               }
               > .label {
-                grid-area: label;
-                padding-left: 2rem;
-                justify-self: start;
-                align-self: center;
+                padding-left: 0.4rem;
+                font-weight: 600;
+                flex: 1 1 auto;
+                min-width: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
               }
             }
           }
-          > nav:hover {
-            background: ${Color.highlightGray()};
-            color: ${Color.black()};
-            a {
-              color: ${Color.black()};
+          @media (hover: hover) and (pointer: fine) {
+            > nav:hover {
+              transform: translateX(4px);
+              .homemenu__item {
+                background: ${hoverBg};
+                border-color: ${isVanta
+                  ? 'rgba(0,0,0,0.9)'
+                  : activeColorFn
+                  ? activeColorFn(0.4)
+                  : 'var(--ui-border)'};
+                box-shadow: 0 12px 20px -14px rgba(15, 23, 42, 0.22);
+                > .icon,
+                > .label {
+                  color: ${isVanta ? Color.darkGray() : hoverAccentColor};
+                }
+              }
+              a {
+                color: ${isVanta ? Color.darkGray() : hoverAccentColor};
+              }
             }
           }
           > nav.active {
             .homemenu__item {
+              background: ${isVanta
+                ? 'rgba(0,0,0,0.7)'
+                : activeColorFn
+                ? activeColorFn(0.22)
+                : Color.highlightGray()};
               > .selection {
                 background: ${homeMenuItemActiveColor};
                 border: 1px solid ${homeMenuItemActiveColor};
                 box-shadow: 0 0 1px ${homeMenuItemActiveColor};
               }
+              > .icon,
+              > .label {
+                color: ${isVanta ? '#ffffff' : activeContentColor};
+              }
+              border: 1px solid
+                ${isVanta
+                  ? 'rgba(0,0,0,0.9)'
+                  : activeColorFn
+                  ? activeColorFn(0.4)
+                  : 'var(--ui-border)'};
+              box-shadow: 0 16px 26px -18px ${outlineAccent};
             }
             font-weight: bold;
-            color: ${Color.black()};
+            color: ${isVanta ? '#ffffff' : activeContentColor};
             a {
-              color: ${Color.black()};
+              color: ${isVanta ? '#ffffff' : activeContentColor};
             }
           }
           @media (max-width: ${tabletMaxWidth}) {
             font-size: 1.5rem;
             > nav {
               .homemenu__item {
+                margin: 0 0.6rem;
                 > .icon {
                   padding-left: 0;
                 }
@@ -149,29 +230,28 @@ export default function HomeMenuItems({
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 2rem;
             background: #fff;
+            &::before {
+              display: none;
+            }
             border-radius: 0;
             border-left: 0;
             border-right: 0;
             > nav {
               height: 5rem;
+              margin: 0.6rem 0;
               a {
                 justify-content: center;
                 padding: 0;
               }
               .homemenu__item {
+                margin: 0.45rem 0.4rem;
+                border-radius: ${borderRadius};
                 > .icon {
-                  padding-left: 1rem;
+                  padding-left: 0.5rem;
                 }
                 > .label {
-                  padding-left: 2rem;
+                  padding-left: 1.6rem;
                 }
-              }
-            }
-            > nav:hover {
-              background: none;
-              color: ${Color.darkGray()};
-              a {
-                color: ${Color.darkGray()};
               }
             }
             > nav.active {
@@ -183,7 +263,7 @@ export default function HomeMenuItems({
             }
           }
           @media (min-width: 2304px) {
-            border-left: 1px solid ${Color.borderGray()};
+            border-left: 1px solid var(--ui-border);
           }
         `}`}
         style={style}

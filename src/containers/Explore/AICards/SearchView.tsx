@@ -4,6 +4,7 @@ import AICard from '~/components/AICard';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { Link } from 'react-router-dom';
 import { useAppContext, useKeyContext, useExploreContext } from '~/contexts';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 
 export default function SearchView({
   cardObj,
@@ -139,32 +140,49 @@ export default function SearchView({
       ) : (
         <div
           style={{
-            fontWeight: 'bold',
-            fontSize: '2rem',
-            padding: '5rem',
+            padding: '5rem 1rem',
+            width: '100%',
             display: 'flex',
-            flexDirection: 'column',
+            justifyContent: 'center',
             alignItems: 'center'
           }}
         >
-          <span>{noCardsLabel}</span>
-          {isCheckingMyCards && (
-            <Link
-              style={{ fontSize: '1.7rem', marginTop: '1.7rem' }}
-              to="/ai-cards/?search[isBuyNow]=true"
+          {isCheckingMyCards ? (
+            <EmptyStateMessage
+              autoWidth
+              caption={
+                <Link
+                  style={{ fontSize: '1.5rem' }}
+                  to="/ai-cards/?search[isBuyNow]=true"
+                >
+                  Buy AI Cards
+                </Link>
+              }
             >
-              Buy AI Cards
-            </Link>
+              {noCardsLabel}
+            </EmptyStateMessage>
+          ) : (
+            <EmptyStateMessage style={{ width: '100%', maxWidth: '40rem' }}>
+              {noCardsLabel}
+            </EmptyStateMessage>
           )}
         </div>
       )}
       {filteredLoadMoreShown && !loading && (
-        <LoadMoreButton
-          loading={loadingMore}
-          style={{ marginTop: '5rem' }}
-          filled
-          onClick={handleLoadMoreAICards}
-        />
+        <div
+          style={{
+            flex: '0 0 100%',
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '5rem'
+          }}
+        >
+          <LoadMoreButton
+            loading={loadingMore}
+            filled
+            onClick={handleLoadMoreAICards}
+          />
+        </div>
       )}
     </div>
   );

@@ -13,6 +13,8 @@ export default function ButtonGroup({
     filled?: boolean;
     hoverColor?: string;
     skeuomorphic?: boolean;
+    variant?: 'solid' | 'soft' | 'outline' | 'ghost';
+    tone?: 'flat' | 'raised';
     onClick: () => void;
   }[];
   style?: React.CSSProperties;
@@ -23,12 +25,20 @@ export default function ButtonGroup({
       style={{ ...style, display: 'flex' }}
     >
       {buttons.map((button, index) => {
+        const { skeuomorphic, filled, variant, tone, ...rest } = button as any;
+        const mappedProps: any = {
+          variant:
+            variant ??
+            (filled ? 'solid' : skeuomorphic ? 'soft' : 'solid'),
+          tone: tone ?? (skeuomorphic ? 'raised' : undefined),
+          hoverColor: button.hoverColor || button.color,
+          ...rest
+        };
         return (
           <Button
             key={index}
             style={{ marginLeft: index !== 0 ? '1rem' : 0 }}
-            {...button}
-            hoverColor={button.hoverColor || button.color}
+            {...mappedProps}
           >
             {button.label}
           </Button>

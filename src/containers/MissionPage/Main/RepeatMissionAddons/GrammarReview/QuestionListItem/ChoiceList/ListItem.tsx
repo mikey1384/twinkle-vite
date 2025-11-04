@@ -40,25 +40,15 @@ export default function ListItem({
           justify-content: center;
         `}
       >
-        <input
-          type="checkbox"
-          checked={listItem.checked}
-          onChange={handleSelect}
-        />
+        <input type="checkbox" checked={listItem.checked} onChange={handleSelect} />
       </section>
       <div style={{ padding: '0 2rem', display: 'flex', alignItems: 'center' }}>
         <div dangerouslySetInnerHTML={{ __html: listItem.label }} />
         {!!conditionPassStatus && index === answerIndex && (
-          <Icon
-            style={{ color: Color.green(), marginLeft: '1rem' }}
-            icon="check"
-          />
+          <Icon style={{ color: Color.green(), marginLeft: '1rem' }} icon="check" />
         )}
         {conditionPassStatus === 'fail' && listItem.checked && (
-          <Icon
-            style={{ color: Color.rose(), marginLeft: '1rem' }}
-            icon="times"
-          />
+          <Icon style={{ color: Color.rose(), marginLeft: '1rem' }} icon="times" />
         )}
       </div>
     </nav>
@@ -71,3 +61,4 @@ export default function ListItem({
     onSelect(index);
   }
 }
+

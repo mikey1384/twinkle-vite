@@ -19,7 +19,7 @@ export const months = [
   'November',
   'December'
 ];
-export const clientVersion = '1.9.74';
+export const clientVersion = '2.0.2';
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
@@ -462,7 +462,7 @@ export const karmaPointTable: any = {
   moreToCome: 30_000
 };
 export const MAX_NUM_SUMMONS = 3;
-export const maxSizes = [300, 400, 500, 650, 800, 1000, 1500, 2000];
+export const maxSizes = [500, 600, 700, 800, 900, 1000, 1500, 2000];
 export const returnMaxUploadSize = (fileUploadLvl: number): number => {
   return maxSizes[fileUploadLvl] * mb;
 };

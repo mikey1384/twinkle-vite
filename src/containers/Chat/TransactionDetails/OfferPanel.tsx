@@ -126,7 +126,7 @@ export default function OfferPanel({
       style={{
         width: '100%',
         borderRadius,
-        border: `1px solid ${Color.borderGray()}`
+        border: '1px solid var(--ui-border)'
       }}
     >
       {isTrade ? (
@@ -142,7 +142,7 @@ export default function OfferPanel({
             fontWeight: 'bold',
             fontFamily: 'Roboto, monospace',
             textAlign: 'center',
-            borderBottom: `1px solid ${Color.borderGray()}`
+            borderBottom: '1px solid var(--ui-border)'
           }}
         >
           <span style={{ marginRight: '1rem' }}>Offered...</span>

@@ -222,7 +222,7 @@ export default function Modal({
                 display: flex;
                 align-items: center;
                 justify-content: flex-end;
-                border-top: 1px solid ${Color.borderGray()};
+                border-top: 1px solid var(--ui-border);
               }
             `}
             onHide={onHide}

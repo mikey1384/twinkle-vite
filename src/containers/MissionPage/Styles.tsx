@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export const panel = css`
   width: 60%;
   background: #fff;
   padding: 1rem;
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
   @media (max-width: ${mobileMaxWidth}) {
     width: 100%;

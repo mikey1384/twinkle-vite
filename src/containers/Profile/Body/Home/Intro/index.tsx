@@ -3,6 +3,7 @@ import SectionPanel from '~/components/SectionPanel';
 import StatusMsg from '~/components/UserDetails/StatusMsg';
 import StatusInput from '~/components/UserDetails/StatusInput';
 import RankBar from '~/components/RankBar';
+import ScopedTheme from '~/theme/ScopedTheme';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import DropDownButton from '~/components/Buttons/DropdownButton';
@@ -115,6 +116,7 @@ export default function Intro({
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Intro">
       <SectionPanel
+        elevated
         loaded
         customColorTheme={selectedTheme}
         title={greeting || 'Welcome!'}
@@ -156,11 +158,9 @@ export default function Intro({
                   statusColor={editedStatusColor || statusColor}
                   editedStatusMsg={editedStatusMsg}
                   setColor={(color) => onSetEditedStatusColor(color)}
-                  onTextChange={(event: any) => {
-                    onSetEditedStatusMsg(
-                      addEmoji(renderText(event.target.value))
-                    );
-                    if (!event.target.value) {
+                  onTextChange={(text: string) => {
+                    onSetEditedStatusMsg(addEmoji(renderText(text)));
+                    if (!text) {
                       onSetEditedStatusColor('');
                     }
                   }}
@@ -200,7 +200,7 @@ export default function Intro({
                     }}
                   >
                     <Button
-                      transparent
+                      variant="ghost"
                       onClick={() => {
                         onSetEditedStatusMsg(
                           replaceFakeAtSymbol(statusMsg || '')
@@ -212,7 +212,7 @@ export default function Intro({
                       <span style={{ marginLeft: '0.7rem' }}>{editLabel}</span>
                     </Button>
                     <Button
-                      transparent
+                      variant="ghost"
                       style={{ marginLeft: '0.5rem' }}
                       onClick={() => setConfirmModalShown(true)}
                     >
@@ -274,27 +274,9 @@ export default function Intro({
           )}
         </div>
         {profile.twinkleXP > 0 && (
-          <RankBar
-            profile={profile}
-            className={css`
-              margin-left: ${!!profile.rank && profile.rank < 4
-                ? '-11px'
-                : '-10px'};
-              margin-right: ${!!profile.rank && profile.rank < 4
-                ? '-11px'
-                : '-10px'};
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: -1rem !important;
-                margin-right: -1rem !important;
-              }
-            `}
-            style={{
-              display: 'block',
-              borderRadius: 0,
-              borderRight: 0,
-              borderLeft: 0
-            }}
-          />
+          <ScopedTheme theme={(selectedTheme as any) || 'logoBlue'}>
+            <RankBar profile={profile} variant="page" />
+          </ScopedTheme>
         )}
         {!profile.twinkleXP && bioExists && (
           <hr
@@ -329,13 +311,13 @@ export default function Intro({
             />
             {userId === profile.id && (
               <DropDownButton
-                opacity={0.7}
                 style={{
                   right: 0,
                   top: '1rem',
                   position: 'absolute'
                 }}
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 color="darkerGray"
                 menuProps={[
                   {
@@ -384,7 +366,7 @@ export default function Intro({
           >
             <Button
               style={{ fontSize: '2rem' }}
-              transparent
+              variant="ghost"
               onClick={() => setBioEditModalShown(true)}
             >
               Add a Bio

@@ -210,7 +210,8 @@ function TextMessage({
               <div className={MessageStyle.relatedConversationsButton}>
                 <Button
                   color="logoBlue"
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   onClick={() => onShowSubjectMsgsModal({ subjectId, content })}
                 >
                   Show responses

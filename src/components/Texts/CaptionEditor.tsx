@@ -31,7 +31,7 @@ export default function CaptionEditor({
         hasError={!!commentExceedsCharLimit}
         minRows={3}
         value={text}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
           onSetText(event.target.value)
         }
         onKeyUp={handleKeyUp}
@@ -39,9 +39,9 @@ export default function CaptionEditor({
     </div>
   );
 
-  function handleKeyUp(event: { key: string; target: { value: string } }) {
+  function handleKeyUp(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === ' ') {
-      onSetText(addEmoji(event.target.value));
+      onSetText(addEmoji(event.currentTarget.value));
     }
   }
 }

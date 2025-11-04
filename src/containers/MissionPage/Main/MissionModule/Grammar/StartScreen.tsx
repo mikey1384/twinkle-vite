@@ -1,11 +1,10 @@
 import React, { useLayoutEffect, useMemo } from 'react';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { borderRadius, Color } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
+import MissionStatusCard from '~/components/MissionStatusCard';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 const startLabel = localize('start');
@@ -26,8 +25,11 @@ export default function StartScreen({
   onInitMission: () => any;
   onStartButtonClick: () => any;
 }) {
-  const successColor = useKeyContext((v) => v.theme.success.color);
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const successColor = useMemo(
+    () => successRole.getColor() || Color.green(),
+    [successRole]
+  );
   useLayoutEffect(() => {
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;
@@ -43,52 +45,13 @@ export default function StartScreen({
     return `Correctly answer all ${mission.numQuestions} questions`;
   }, [mission?.numQuestions]);
 
-  const rewardDetails = useMemo(() => {
-    return (mission.xpReward || mission.coinReward) &&
-      myAttempts[mission.id]?.status === 'pass' ? (
-      <div
-        style={{
-          marginTop: '0.5rem',
-          color: Color.black()
-        }}
-      >
-        You were rewarded{' '}
-        {mission.xpReward ? (
-          <span
-            style={{
-              color: Color[xpNumberColor](),
-              fontWeight: 'bold'
-            }}
-          >
-            {addCommasToNumber(mission.xpReward)}{' '}
-          </span>
-        ) : null}
-        {mission.xpReward && mission.coinReward ? (
-          <>
-            <span style={{ color: Color.gold(), fontWeight: 'bold' }}>XP</span>{' '}
-            and{' '}
-          </>
-        ) : null}
-        {mission.coinReward ? (
-          <>
-            <Icon
-              style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
-              icon={['far', 'badge-dollar']}
-            />{' '}
-            <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
-              {mission.coinReward}
-            </span>
-          </>
-        ) : null}
-      </div>
-    ) : null;
-  }, [
-    mission.coinReward,
-    mission.id,
-    mission.xpReward,
-    myAttempts,
-    xpNumberColor
-  ]);
+  const rewards = useMemo(() => {
+    if (myAttempts[mission.id]?.status !== 'pass') return undefined;
+    return {
+      xp: mission.xpReward,
+      coins: mission.coinReward
+    };
+  }, [mission.coinReward, mission.id, mission.xpReward, myAttempts]);
 
   return (
     <div
@@ -99,42 +62,24 @@ export default function StartScreen({
       }}
     >
       {isRepeating && (
-        <div
-          style={{
-            marginTop: '-1rem',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            marginBottom: '3.5rem'
-          }}
-        >
-          <div
-            style={{
-              borderRadius,
-              width: 'auto',
-              boxShadow: `0 0 2px ${Color.brown()}`,
-              padding: '0.5rem 2rem',
-              fontWeight: 'bold',
-              fontSize: '2rem',
-              background: Color.brownOrange(),
-              color: '#fff'
-            }}
+        <div style={{ marginBottom: '3.5rem' }}>
+          <MissionStatusCard
+            status="success"
+            title="Mission Accomplished"
+            message="You've already cleared this mission. Give it another run to earn repeat rewards."
+            rewards={rewards}
+            style={{ margin: '0 auto' }}
           >
-            Mission Accomplished
-          </div>
-          <div style={{ fontSize: '1.3rem' }}>{rewardDetails}</div>
-          <div
-            style={{
-              fontSize: '1.5rem',
-              marginTop: '1rem',
-              fontWeight: 'bold',
-              color: Color.green()
-            }}
-          >
-            This mission is repeatable
-          </div>
+            <div
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: Color.green()
+              }}
+            >
+              This mission is repeatable
+            </div>
+          </MissionStatusCard>
         </div>
       )}
       <h1>{correctlyAnswerAllQuestionsLabel}</h1>

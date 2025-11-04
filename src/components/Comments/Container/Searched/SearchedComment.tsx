@@ -26,7 +26,7 @@ import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
-  returnTheme
+  isTablet
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -36,6 +36,8 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import localize from '~/constants/localize';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const pinLabel = localize('pin');
 const unpinLabel = localize('unpin');
@@ -90,7 +92,7 @@ export default function SearchedComment({
     contentType?: string;
   };
   subject: any;
-  theme: string;
+  theme?: string;
 }) {
   const loadContent = useAppContext((v) => v.requestHelpers.loadContent);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
@@ -151,9 +153,20 @@ export default function SearchedComment({
   const { canDelete, canEdit, canReward } = useMyLevel();
 
   const {
-    link: { color: linkColor },
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+    color: linkColorFallback,
+    themeName
+  } = useRoleColor('link', {
+    themeName: theme || profileTheme,
+    fallback: 'blue'
+  });
+  const linkColorVar = useMemo(
+    () => `var(--role-link-color, ${linkColorFallback})`,
+    [linkColorFallback]
+  );
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    themeName,
+    fallback: 'pink'
+  });
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
@@ -409,7 +422,7 @@ export default function SearchedComment({
   }, [subjectId, subjectState.prevSecretViewerId, userId]);
 
   return isDeleted ? null : (
-    <>
+    <ScopedTheme theme={themeName} roles={['link', 'reward']}>
       <div className={commentContainer}>
         {pinnedCommentId === comment.id && (
           <div
@@ -443,16 +456,16 @@ export default function SearchedComment({
             </div>
           </div>
           {dropdownButtonShown && !isEditing && (
-            <div className="dropdown-wrapper">
-              <DropdownButton
-                skeuomorphic
-                icon="chevron-down"
-                color="darkerGray"
-                opacity={0.8}
-                menuProps={dropdownMenuItems}
-              />
-            </div>
-          )}
+          <div className="dropdown-wrapper">
+            <DropdownButton
+              variant="solid"
+              tone="raised"
+              icon="chevron-down"
+              color="darkerGray"
+              menuProps={dropdownMenuItems}
+            />
+          </div>
+        )}
           <section>
             <div>
               <UsernameText className="username" user={uploader} />{' '}
@@ -476,7 +489,7 @@ export default function SearchedComment({
               {comment.targetUserId &&
                 !!comment.replyId &&
                 comment.replyId !== parent.contentId && (
-                  <span className="to" style={{ color: Color[linkColor]() }}>
+                  <span className="to" style={{ color: linkColorVar }}>
                     to:{' '}
                     <UsernameText
                       user={{
@@ -576,20 +589,24 @@ export default function SearchedComment({
                             contentId={comment.id}
                             onClick={handleLikeClick}
                             likes={likes}
+                            hideLabel={isTablet(navigator)}
                           />
                           <Button
-                            transparent
+                            color="darkerGray"
+                            variant="ghost"
                             style={{ marginLeft: '1rem' }}
                             onClick={() => navigate(`/comments/${comment.id}`)}
                           >
                             <Icon icon="comment-alt" />
-                            <span style={{ marginLeft: '1rem' }}>
-                              {numReplies > 1 &&
-                              parent.contentType === 'comment'
-                                ? 'Replies'
-                                : 'Reply'}
-                              {numReplies > 0 ? ` (${numReplies})` : ''}
-                            </span>
+                            {!isTablet(navigator) && (
+                              <span style={{ marginLeft: '1rem' }}>
+                                {numReplies > 1 &&
+                                parent.contentType === 'comment'
+                                  ? 'Replies'
+                                  : 'Reply'}
+                                {numReplies > 0 ? ` (${numReplies})` : ''}
+                              </span>
+                            )}
                           </Button>
                           {userCanRewardThis && (
                             <Button
@@ -605,9 +622,11 @@ export default function SearchedComment({
                               disabled={!!xpButtonDisabled}
                             >
                               <Icon icon="certificate" />
-                              <span style={{ marginLeft: '0.7rem' }}>
-                                {xpButtonDisabled || 'Reward'}
-                              </span>
+                              {!isTablet(navigator) && (
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {xpButtonDisabled || 'Reward'}
+                                </span>
+                              )}
                             </Button>
                           )}
                         </div>
@@ -622,7 +641,8 @@ export default function SearchedComment({
                       <div>
                         <Button
                           color={rewardColor}
-                          filled={isRecommendedByUser}
+                          variant={isRecommendedByUser ? 'solid' : 'soft'}
+                          tone="raised"
                           disabled={recommendationInterfaceShown}
                           onClick={() => setRecommendationInterfaceShown(true)}
                         >
@@ -699,7 +719,7 @@ export default function SearchedComment({
           onConfirm={() => onDelete(comment.id)}
         />
       )}
-    </>
+    </ScopedTheme>
   );
 
   async function handleEditDone(editedComment: string) {

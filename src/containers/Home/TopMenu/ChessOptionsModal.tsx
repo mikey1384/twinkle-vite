@@ -24,7 +24,7 @@ export default function ChessOptionsModal({
       size="sm"
       modalLevel={0}
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Cancel
         </Button>
       }

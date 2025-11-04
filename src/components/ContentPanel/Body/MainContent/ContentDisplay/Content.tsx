@@ -10,16 +10,18 @@ import {
   stringIsEmpty,
   getRenderedTextForVocabQuestions
 } from '~/helpers/stringHelpers';
-import Question from '~/components/Question';
+import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import RichText from '~/components/Texts/RichText';
 import SecretAnswer from '~/components/SecretAnswer';
 import SecretComment from '~/components/SecretComment';
 import UsernameText from '~/components/Texts/UsernameText';
+import CardThumb from '~/components/CardThumb';
+import AICardModal from '~/components/Modals/AICardModal';
 import AIStoryView from './AIStoryView';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
-import { returnTheme } from '~/helpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Content({
   audioPath,
@@ -76,21 +78,26 @@ export default function Content({
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const userId = useKeyContext((v) => v.myState.userId);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number>();
-  const {
-    xpNumber: { color: xpNumberColor },
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
-  const { bonusQuestion, word, level, xpEarned, coinEarned } = useMemo(() => {
+  const [cardModalShown, setCardModalShown] = useState(false);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { color: xpNumberColor } = useRoleColor('xpNumber', {
+    themeName: theme,
+    fallback: 'logoGreen'
+  });
+  const { bonusQuestion, word, level, xpEarned, coinEarned, card } = useMemo(() => {
     if (contentType !== 'xpChange') {
       return {
         bonusQuestion: null,
         word: '',
         level: 0,
         xpEarned: 0,
-        coinEarned: 0
+        coinEarned: 0,
+        card: null
       };
     }
     return contentObj;
@@ -169,6 +176,8 @@ export default function Content({
             difficulty={difficulty}
             imagePath={imagePath}
             imageStyle={imageStyle}
+            title={title}
+            topic={contentObj.topic}
             story={story}
             theme={theme}
           />
@@ -179,6 +188,14 @@ export default function Content({
           word,
           cardLevelHash[level]?.color || 'green'
         );
+        const hasSelection = typeof selectedChoiceIndex === 'number';
+        const isCorrect =
+          hasSelection && selectedChoiceIndex === bonusQuestion.answerIndex;
+        const conditionStatus = hasSelection
+          ? isCorrect
+            ? 'pass'
+            : 'fail'
+          : '';
         return (
           <div
             style={{
@@ -190,9 +207,24 @@ export default function Content({
               marginBottom: '-3rem'
             }}
           >
-            <Question
+            {card && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginBottom: '1.6rem'
+                }}
+              >
+                <CardThumb
+                  detailed
+                  card={card}
+                  onClick={() => setCardModalShown(true)}
+                />
+              </div>
+            )}
+            <MultipleChoiceQuestion
               key={bonusQuestion.id}
-              isGraded={true}
+              isGraded={hasSelection}
               question={
                 <SanitizedHTML
                   allowedAttributes={{ b: ['style'] }}
@@ -203,14 +235,17 @@ export default function Content({
               selectedChoiceIndex={selectedChoiceIndex}
               answerIndex={bonusQuestion.answerIndex}
               onSelectChoice={setSelectedChoiceIndex}
+              conditionPassStatus={conditionStatus}
+              allowReselect={!isCorrect}
+              style={{ marginBottom: '2rem' }}
             />
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <UsernameText user={uploader} color={linkColor} />{' '}
               correctly answered this bonus question and earned{' '}
               <b>
                 <span
                   style={{
-                    color: Color[xpNumberColor]()
+                    color: xpNumberColor
                   }}
                 >
                   {displayedXPEarned}
@@ -278,7 +313,9 @@ export default function Content({
     linkColor,
     xpNumberColor,
     displayedXPEarned,
-    displayedCoinEarned
+    displayedCoinEarned,
+    card,
+    card?.id
   ]);
 
   return (
@@ -312,6 +349,12 @@ export default function Content({
           onClick={onClickSecretAnswer}
           subjectId={contentId}
           uploaderId={uploader.id}
+        />
+      )}
+      {cardModalShown && card?.id && (
+        <AICardModal
+          cardId={card.id}
+          onHide={() => setCardModalShown(false)}
         />
       )}
     </div>

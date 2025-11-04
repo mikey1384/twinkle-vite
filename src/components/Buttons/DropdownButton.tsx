@@ -11,7 +11,6 @@ export default function DropdownButton({
   color = 'darkerGray',
   isMenuShownWhenMounted,
   onDropdownShown,
-  opacity = 1,
   style,
   icon = 'ellipsis-h',
   iconSize = '1x',
@@ -22,7 +21,6 @@ export default function DropdownButton({
   text = '',
   stretch,
   innerRef,
-  transparent,
   xAdjustment,
   ...props
 }: {
@@ -31,7 +29,6 @@ export default function DropdownButton({
   className?: string;
   isMenuShownWhenMounted?: boolean;
   onDropdownShown?: (isShown: boolean) => void;
-  opacity?: number;
   style?: React.CSSProperties;
   icon?: string;
   iconSize?: string;
@@ -42,9 +39,9 @@ export default function DropdownButton({
   text?: string | React.ReactNode;
   stretch?: boolean;
   innerRef?: React.RefObject<any>;
-  transparent?: boolean;
   xAdjustment?: number;
-  skeuomorphic?: boolean;
+  variant?: 'solid' | 'soft' | 'outline' | 'ghost';
+  tone?: 'flat' | 'raised';
 }) {
   const [dropdownContext, setDropdownContext] = useState(null);
   const coolDownRef: React.RefObject<any> = useRef(null);
@@ -71,12 +68,13 @@ export default function DropdownButton({
         <Button
           {...props}
           color={color}
-          filled={!!dropdownContext && !transparent}
-          transparent={transparent}
-          opacity={transparent ? 0 : dropdownContext ? 1 : opacity}
+          variant={props.variant || (!!dropdownContext ? 'solid' : 'soft')}
+          tone={props.tone || 'raised'}
           className={`${className ? `${className} ` : ''}${css`
-            &:hover {
-              opacity: 1;
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                opacity: 1;
+              }
             }
           `}`}
           style={{
@@ -147,8 +145,10 @@ export default function DropdownButton({
           className={`${css`
             opacity: ${prop.disabled && 0.3};
             cursor: ${prop.disabled ? 'default' : 'pointer'};
-            &:hover {
-              background: ${prop.disabled ? '#fff !important' : ''};
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                background: ${prop.disabled ? '#fff !important' : ''};
+              }
             }
           `} ${prop.className}
           `}

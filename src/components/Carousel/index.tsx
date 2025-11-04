@@ -285,7 +285,8 @@ export default function Carousel({
             <div key={1}>
               {showAllButton ? (
                 <Button
-                  skeuomorphic
+                  variant="solid"
+                  tone="raised"
                   color="darkerGray"
                   className={css`
                     position: absolute;

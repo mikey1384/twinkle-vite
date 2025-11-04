@@ -1,6 +1,6 @@
 import React from 'react';
 import Icon from '~/components/Icon';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,7 +36,7 @@ export default function GoBack({
         transition: background 0.4s;
         line-height: 1.7;
         ${bordered
-          ? `border: 1px solid ${Color.borderGray()}; border-radius: ${borderRadius};`
+          ? `border: 1px solid var(--ui-border); border-radius: ${borderRadius};`
           : ''}
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.7rem;
@@ -46,9 +46,11 @@ export default function GoBack({
           ${isAtTop ? `border-top: 0;` : ''}
           border-left: 0;
           border-right: 0;
-          &:hover {
-            background: #fff;
-            color: #000;
+          @media (hover: hover) and (pointer: fine) {
+            &:hover {
+              background: #fff;
+              color: #000;
+            }
           }
         }
       `}`}

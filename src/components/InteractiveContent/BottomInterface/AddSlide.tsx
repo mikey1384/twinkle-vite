@@ -54,8 +54,7 @@ export default function AddSlide({
         align-items: center;
         justify-content: center;
         width: 100%;
-        border: 1px solid
-          ${forkOptionNotSelected ? Color.logoBlue() : Color.borderGray()};
+        border: 1px solid ${forkOptionNotSelected ? Color.logoBlue() : 'var(--ui-border)'};
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
           border-left: 0;
@@ -75,7 +74,7 @@ export default function AddSlide({
           <div
             style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
           >
-            <Button onClick={handleAddNewSlide} skeuomorphic>
+            <Button onClick={handleAddNewSlide} variant="soft" tone="raised">
               <Icon icon="plus" />
               <span style={{ marginLeft: '0.7rem' }}>Insert a New Slide</span>
             </Button>
@@ -95,7 +94,8 @@ export default function AddSlide({
                 <Button
                   style={{ marginTop: '1rem' }}
                   onClick={() => setSelectArchivedSlideModalShown(true)}
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                 >
                   <Icon icon="archive" />
                   <span style={{ marginLeft: '0.7rem' }}>

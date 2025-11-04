@@ -1,10 +1,27 @@
 import React, { useMemo, useState } from 'react';
-import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
+import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
+import { homePanelClass } from '~/theme/homePanels';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useRoleColor } from '~/theme/useRoleColor';
+
+function blendWithWhite(color: string, weight: number) {
+  const match = color
+    .replace(/\s+/g, '')
+    .match(/rgba?\(([-\d.]+),([-\d.]+),([-\d.]+)(?:,([-\d.]+))?\)/i);
+  if (!match) return '#f7f9ff';
+  const [, r, g, b, a] = match;
+  const w = Math.max(0, Math.min(1, weight));
+  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
+  const alpha = a ? Number(a) : 1;
+  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
+    Number(b)
+  )}, ${alpha.toFixed(3)})`;
+}
 
 export default function KarmaStatus({
   karmaPoints,
@@ -30,6 +47,48 @@ export default function KarmaStatus({
   userType: string;
 }) {
   const [karmaExplanationShown, setKarmaExplanationShown] = useState(false);
+  const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {
+    fallback: 'logoBlue'
+  });
+  const accentColor = useMemo(
+    () => homeMenuItemActiveRole.getColor() || Color.logoBlue(),
+    [homeMenuItemActiveRole]
+  );
+  const { panelVars, themeStyles, headingColor } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
+  const panelBg = useMemo(() => {
+    // Settings page requires a clean white surface for this panel
+    return '#ffffff';
+  }, []);
+  const karmaPanelVars = useMemo(
+    () =>
+      ({
+        ...panelVars,
+        // Drive the actual surface background used by homePanelClass
+        ['--home-panel-surface' as const]: panelBg,
+        // Keep tint for any decorative usages
+        ['--home-panel-tint' as const]:
+          themeStyles.hoverBg ||
+          homeMenuItemActiveRole.getColor(0.14) ||
+          Color.logoBlue(0.14),
+        ['--home-panel-border' as const]: 'var(--ui-border)',
+        ['--home-panel-heading' as const]: headingColor,
+        ['--home-panel-accent' as const]: accentColor,
+        ['--home-panel-color' as const]: Color.darkerGray(),
+        ['--home-panel-gap' as const]: '1.6rem',
+        ['--home-panel-padding' as const]: '2.2rem 2.4rem',
+        ['--home-panel-mobile-padding' as const]: '1.8rem 1.6rem'
+      } as React.CSSProperties),
+    [
+      accentColor,
+      headingColor,
+      panelBg,
+      panelVars,
+      homeMenuItemActiveRole,
+      themeStyles.hoverBg
+    ]
+  );
 
   const displayedKarmaPoints = useMemo(() => {
     if (karmaPoints) {
@@ -48,17 +107,13 @@ export default function KarmaStatus({
 
   return (
     <div
-      className={css`
-        background: #fff;
-        padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}
+      className={cx(
+        homePanelClass,
+        css`
+          gap: 1.6rem;
+        `
+      )}
+      style={karmaPanelVars}
     >
       {loading ? (
         <Loading style={{ height: '10rem' }} />
@@ -66,22 +121,44 @@ export default function KarmaStatus({
         <div>
           <div
             className={css`
-              font-weight: bold;
+              display: flex;
+              flex-direction: column;
+              gap: 0.8rem;
+              align-items: flex-start;
+              font-weight: 700;
               font-size: 2.2rem;
+              color: ${Color.darkerGray()};
             `}
           >
-            {youHaveKarmaPointsText}
-            <div>
-              <a
-                style={{
-                  cursor: 'pointer',
-                  fontSize: '1.5rem'
-                }}
-                onClick={() => setKarmaExplanationShown(true)}
-              >
-                tap here to learn why
-              </a>
-            </div>
+            <span>{youHaveKarmaPointsText}</span>
+            <button
+              className={css`
+                border: 1px solid var(--ui-border);
+                background: rgba(255, 255, 255, 0.92);
+                border-radius: 9999px;
+                padding: 0.6rem 1.2rem;
+                font-size: 1.4rem;
+                font-weight: 600;
+                color: var(--home-panel-accent, ${accentColor});
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                transition: transform 0.2s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background 0.2s ease;
+                &:hover {
+                  transform: translateY(-1px);
+                  border-color: var(--home-panel-accent, ${accentColor});
+                  box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.2);
+                  background: rgba(255, 255, 255, 0.98);
+                }
+              `}
+              onClick={() => setKarmaExplanationShown(true)}
+              type="button"
+            >
+              tap here to learn why
+              <span style={{ fontSize: '1.2rem' }}>→</span>
+            </button>
           </div>
           {karmaExplanationShown && (
             <div

@@ -128,7 +128,7 @@ export default function EditTextArea({
           Done
         </Button>
         <Button
-          transparent
+          variant="ghost"
           style={{
             marginRight: '1rem'
           }}

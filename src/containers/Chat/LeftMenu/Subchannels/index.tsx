@@ -5,7 +5,9 @@ import Subchannel from './Subchannel';
 import { Link } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 function SubChannels({
   currentChannel,
@@ -24,7 +26,9 @@ function SubChannels({
   subchannelObj: any;
   subchannelPath?: string;
 }) {
-  const chatUnreadColor = useKeyContext((v) => v.theme.chatUnread.color);
+  const chatUnreadRole = useRoleColor('chatUnread', {
+    fallback: 'logoBlue'
+  });
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const onUpdateLastSubchannelPath = useChatContext(
     (v) => v.actions.onUpdateLastSubchannelPath
@@ -54,6 +58,17 @@ function SubChannels({
   const badgeShown = useMemo(() => {
     return currentChannelNumUnreads > 0 && !!subchannelPath;
   }, [currentChannelNumUnreads, subchannelPath]);
+  const chatUnreadColor = useMemo(
+    () => chatUnreadRole.getColor() || Color.logoBlue(),
+    [chatUnreadRole]
+  );
+  const borderColor = useMemo(
+    () =>
+      resolveColorValue(displayedThemeColor, 0.5) ??
+      resolveColorValue('logoBlue', 0.5) ??
+      Color.logoBlue(0.5),
+    [displayedThemeColor]
+  );
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels">
@@ -88,7 +103,7 @@ function SubChannels({
           }
         `}
         style={{
-          border: `1px solid ${Color[displayedThemeColor](0.5)}`,
+          border: `1px solid ${borderColor}`,
           padding: '0.5rem 0',
           marginLeft: '1rem',
           marginRight: '1rem',
@@ -135,7 +150,7 @@ function SubChannels({
               {badgeShown && (
                 <div
                   style={{
-                    background: Color[chatUnreadColor]?.(),
+                    background: chatUnreadColor,
                     display: 'flex',
                     color: '#fff',
                     fontWeight: 'bold',

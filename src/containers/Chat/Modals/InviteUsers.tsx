@@ -71,7 +71,7 @@ export default function InviteUsersModal({
         />
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
         <Button

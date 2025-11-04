@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Loading from '~/components/Loading';
-import RoundList from '~/components/RoundList';
+import LeaderboardList from '~/components/LeaderboardList';
 import StreakItem from './StreakItem';
 import { useAppContext } from '~/contexts';
 
@@ -31,9 +31,14 @@ export default function WinStreaks({
   }, []);
 
   return loading ? (
-    <Loading style={{ height: 'CALC(100% - 6rem)' }} />
+    <Loading style={{ height: 'calc(100% - 6rem)' }} />
   ) : (
-    <RoundList style={{ marginTop: 0 }}>
+    <LeaderboardList
+      height="100%"
+      padding="0"
+      mobilePadding="0"
+      bottomPadding="0"
+    >
       {streaks.map((streak, index) => (
         <StreakItem
           key={streak}
@@ -44,6 +49,6 @@ export default function WinStreaks({
           myId={myId}
         />
       ))}
-    </RoundList>
+    </LeaderboardList>
   );
 }

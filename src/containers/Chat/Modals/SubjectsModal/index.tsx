@@ -69,7 +69,7 @@ export default function SubjectsModal({
       title="View Topics"
       size="md"
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }

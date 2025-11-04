@@ -91,7 +91,7 @@ export default function Window({
           top: ${position.y}px;
           left: ${position.x}px;
           background: ${Color.white()};
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: 10px;
           box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
           width: 400px;

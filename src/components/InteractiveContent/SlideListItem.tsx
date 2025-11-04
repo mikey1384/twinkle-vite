@@ -3,7 +3,8 @@ import Attachment from './Attachment';
 import { css } from '@emotion/css';
 import { borderRadius, Color } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
-import { useInteractiveContext, useKeyContext } from '~/contexts';
+import { useInteractiveContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function SlideListItem({
   interactiveId,
@@ -18,10 +19,9 @@ export default function SlideListItem({
   slide: any;
   style?: React.CSSProperties;
 }) {
-  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
-  const itemSelectedOpacity = useKeyContext(
-    (v) => v.theme.itemSelected.opacity
-  );
+  const itemSelectedRole = useRoleColor('itemSelected', {
+    fallback: 'logoBlue'
+  });
   const onSetSlideState = useInteractiveContext(
     (v) => v.actions.onSetSlideState
   );
@@ -29,10 +29,12 @@ export default function SlideListItem({
     () => selectedSlideId === slide.id,
     [selectedSlideId, slide.id]
   );
-  const highlightColor = useMemo(
-    () => Color[itemSelectedColor](itemSelectedOpacity),
-    [itemSelectedColor, itemSelectedOpacity]
-  );
+  const highlightColor = useMemo(() => {
+    return (
+      itemSelectedRole.getColor(itemSelectedRole.defaultOpacity || 0.8) ||
+      Color.logoBlue(0.8)
+    );
+  }, [itemSelectedRole]);
 
   return (
     <div
@@ -46,7 +48,7 @@ export default function SlideListItem({
         width: 100%;
         cursor: pointer;
         padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         background: #fff;
         .label {
@@ -55,7 +57,7 @@ export default function SlideListItem({
         }
         transition: background 0.5s, border 0.5s;
         &:hover {
-          border-color: ${Color.darkerBorderGray()};
+          border-color: var(--ui-border-strong);
           .label {
             color: ${Color.black()};
           }

@@ -44,7 +44,8 @@ export default function ForkButtonItem({
       <div style={{ padding: '1rem 1.5rem 1rem 0' }}>
         <Button
           onClick={() => setIconSelectionModalShown(true)}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           color={forkButton.icon ? 'black' : 'orange'}
         >
           {forkButton.icon ? (
@@ -61,7 +62,7 @@ export default function ForkButtonItem({
           padding: '1rem 2rem',
           display: 'flex',
           flexGrow: 1,
-          border: `1px solid ${Color.borderGray()}`
+          border: '1px solid var(--ui-border)'
         }}
       >
         <Input

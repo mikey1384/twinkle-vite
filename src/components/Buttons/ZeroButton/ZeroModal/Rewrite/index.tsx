@@ -317,7 +317,7 @@ export default function Rewrite({
             </div>
           )}
           <div style={{ marginBottom: '2rem', display: 'flex' }}>
-            <Button loading={preparing} skeuomorphic onClick={handleAudioClick}>
+            <Button loading={preparing} variant="soft" tone="raised" onClick={handleAudioClick}>
               <Icon icon={isPlaying ? 'stop' : 'volume'} />
               <span style={{ marginLeft: '0.7rem' }}>
                 {isPlaying ? 'Stop' : 'Speak'}
@@ -326,7 +326,8 @@ export default function Rewrite({
             {isDownloadButtonShown && (
               <Button
                 style={{ marginLeft: '1rem' }}
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 onClick={handleDownloadClick}
               >
                 <Icon icon="download" />

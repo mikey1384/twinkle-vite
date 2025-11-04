@@ -58,7 +58,7 @@ export default function RightPanel({
     flex-direction: column;
     gap: 0.75rem;
     background: #ffffff;
-    border: 1px solid #e5e7eb;
+  border: 1px solid var(--ui-border);
     border-radius: 8px;
     padding: 1.25rem;
     align-self: start;

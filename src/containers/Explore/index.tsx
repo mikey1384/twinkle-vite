@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
@@ -12,7 +12,7 @@ import Search from './Search';
 import Categories from './Categories';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
-import { isTablet } from '~/helpers';
+import { debounce, isTablet } from '~/helpers';
 
 const deviceIsTablet = isTablet(navigator);
 const aiCardsLabel = localize('aiCards');
@@ -21,6 +21,11 @@ const videosLabel = localize('videos2');
 const linksLabel = localize('links');
 
 export default function Explore({ category }: { category: string }) {
+  const [isLandscape, setIsLandscape] = useState(
+    typeof window !== 'undefined'
+      ? window.innerWidth > window.innerHeight
+      : false
+  );
   const searchText = useExploreContext((v) => v.state.search.searchText);
   const onSetPrevUserId = useExploreContext((v) => v.actions.onSetPrevUserId);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -31,6 +36,18 @@ export default function Explore({ category }: { category: string }) {
     onSetPrevUserId(userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    const updateOrientation = debounce(() => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    }, 100);
+    window.addEventListener('resize', updateOrientation);
+    window.addEventListener('orientationchange', updateOrientation);
+    return () => {
+      window.removeEventListener('resize', updateOrientation);
+      window.removeEventListener('orientationchange', updateOrientation);
+    };
+  }, []);
 
   return (
     <ErrorBoundary componentPath="Explore/index">
@@ -44,7 +61,7 @@ export default function Explore({ category }: { category: string }) {
           }
         `}
       >
-        <SideMenu>
+        <SideMenu variant="card">
           <NavLink
             to="/ai-cards"
             className={(navData) => (navData.isActive ? 'active' : '')}
@@ -76,10 +93,10 @@ export default function Explore({ category }: { category: string }) {
         </SideMenu>
         <div
           className={css`
-            width: CALC(100vw - 51rem - 2rem);
+            width: CALC(100% - 51rem - 2rem);
             margin-left: 20rem;
             @media (max-width: ${tabletMaxWidth}) {
-              width: CALC(100vw - 21rem);
+              width: CALC(100% - 21rem);
             }
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
@@ -124,7 +141,7 @@ export default function Explore({ category }: { category: string }) {
             `}
           />
         </div>
-        {!deviceIsTablet && (
+        {(!deviceIsTablet || isLandscape) && (
           <Notification
             trackScrollPosition
             className={css`

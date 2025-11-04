@@ -18,7 +18,7 @@ export default function CardItem({
   isBuy: boolean;
   onSetAICardModalCardId: (v: any) => void;
   onDeselect: () => void;
-  onSelect: (v: any) => void;
+  onSelect: () => void;
   selected: boolean;
   successColor: string;
 }) {
@@ -66,8 +66,8 @@ export default function CardItem({
       <div style={{ marginTop: '1rem' }}>
         <Button
           color={selected ? successColor : 'black'}
-          opacity={0.8}
-          skeuomorphic
+          variant={selected ? 'solid' : 'soft'}
+          tone="raised"
           mobilePadding="0.5rem"
           disabled={isCardSelectDisabled}
           onClick={selected ? onDeselect : onSelect}

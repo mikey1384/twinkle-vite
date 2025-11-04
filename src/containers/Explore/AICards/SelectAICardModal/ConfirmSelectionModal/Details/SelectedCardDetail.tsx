@@ -1,6 +1,6 @@
 import React from 'react';
 import AICardsPreview from '~/components/AICardsPreview';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 
 export default function SelectedCardDetail({
   isAICardModalShown,
@@ -18,7 +18,7 @@ export default function SelectedCardDetail({
         display: 'flex',
         flexDirection: 'column',
         borderRadius,
-        border: `1px solid ${Color.borderGray()}`
+        border: '1px solid var(--ui-border)'
       }}
     >
       <div

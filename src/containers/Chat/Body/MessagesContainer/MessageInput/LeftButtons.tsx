@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useChatContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
 
 export default function LeftButtons({
@@ -35,7 +37,32 @@ export default function LeftButtons({
   onWordleButtonClick: () => void;
   topicId: number;
 }) {
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const isGoldTheme = alertRole.themeName === 'gold';
+  const isOrangeTheme = alertRole.themeName === 'orange';
+  const baseButtonColorKey = isGoldTheme
+    ? 'bluerGray'
+    : isOrangeTheme
+      ? 'darkGray'
+      : buttonColor;
+  const baseHoverColorKey = isGoldTheme
+    ? 'darkBluerGray'
+    : isOrangeTheme
+      ? 'darkerGray'
+      : buttonHoverColor;
+
+  // Helper to tint Color keys
+  const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
+    const fn = (Color as any)[key];
+    if (typeof fn === 'function') return fn(alpha);
+    const fallbackFn = (Color as any)[fallbackKey];
+    return typeof fallbackFn === 'function' ? fallbackFn(alpha) : fallbackKey;
+  };
+
+  const glowHoverKey = 'gold';
+  const hoveredSoftBg = getTint(glowHoverKey, 0.18);
+  const hoveredSoftBorder = getTint(glowHoverKey, 0.32);
+  const hoveredText = getTint(glowHoverKey, 1);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const channelState = useChatContext(
     (v) => v.state.channelsObj[selectedChannelId]
@@ -97,22 +124,43 @@ export default function LeftButtons({
         <>
           <Button
             disabled={loading || isChessBanned || isRestrictedChannel}
-            skeuomorphic
-            filled={chessButtonIsGlowing}
+            variant="soft"
+            tone="raised"
             onClick={onChessButtonClick}
-            color={chessButtonIsGlowing ? alertColor : buttonColor}
-            hoverColor={chessButtonIsGlowing ? alertColor : buttonHoverColor}
+            color={baseButtonColorKey}
+            hoverColor={baseHoverColorKey}
+            style={
+              chessButtonIsGlowing
+                ? {
+                    background: hoveredSoftBg,
+                    borderColor: hoveredSoftBorder,
+                    color: hoveredText
+                  }
+                : undefined
+            }
           >
             <Icon size="lg" icon={['fas', 'chess']} />
           </Button>
           <Button
             disabled={loading || isChessBanned || isRestrictedChannel}
-            style={{ marginLeft: '0.5rem' }}
-            skeuomorphic
-            filled={omokButtonIsGlowing}
+            variant="soft"
+            tone="raised"
             onClick={onOmokButtonClick}
-            color={omokButtonIsGlowing ? alertColor : buttonColor}
-            hoverColor={omokButtonIsGlowing ? alertColor : buttonHoverColor}
+            color={baseButtonColorKey}
+            hoverColor={baseHoverColorKey}
+            // Avoid extra spacing between split label children (O + mok)
+            // by zeroing out Button's internal gap
+            style={{
+              marginLeft: '0.5rem',
+              gap: 0,
+              ...(omokButtonIsGlowing
+                ? {
+                    background: hoveredSoftBg,
+                    borderColor: hoveredSoftBorder,
+                    color: hoveredText
+                  }
+                : {})
+            }}
           >
             O<span className="desktop">mok</span>
           </Button>
@@ -120,10 +168,14 @@ export default function LeftButtons({
       ) : hasWordleButton ? (
         <Button
           loading={loading || !nextDayTimeStamp}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={onWordleButtonClick}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={baseButtonColorKey}
+          hoverColor={baseHoverColorKey}
+          // Avoid extra spacing between split label children (W + ordle)
+          // by zeroing out Button's internal gap
+          style={{ gap: 0 }}
         >
           W<span className="desktop">ordle</span>
         </Button>
@@ -134,10 +186,11 @@ export default function LeftButtons({
           style={{
             marginLeft: isTwoPeopleChannel || hasWordleButton ? '0.5rem' : 0
           }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           onClick={onTopicButtonClick}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={baseButtonColorKey}
+          hoverColor={baseHoverColorKey}
         >
           <Icon
             size={isTwoPeopleChannel || hasWordleButton ? '' : 'lg'}
@@ -156,13 +209,48 @@ function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
     game === 'chess'
       ? channelState.lastChessMessageId
       : channelState.lastOmokMessageId;
-  const direct =
-    (lastId !== null && lastId !== undefined && messagesObj[lastId]) ||
-    (lastId !== null && lastId !== undefined && messagesObj[String(lastId)]);
-  if (direct) return direct;
-  return game === 'chess'
-    ? channelState.recentChessMessage || null
-    : channelState.recentOmokMessage || null;
+  const getMessageById = (id: any) =>
+    messagesObj[id] ||
+    (typeof id === 'number' || typeof id === 'string'
+      ? messagesObj[String(id)] || messagesObj[Number(id)]
+      : null);
+
+  if (lastId !== null && lastId !== undefined) {
+    const direct = getMessageById(lastId);
+    if (direct) return direct;
+  }
+
+  const messageIds: any[] = channelState.messageIds || [];
+  for (let i = 0; i < messageIds.length; i++) {
+    const id = messageIds[i];
+    const message = getMessageById(id);
+    if (!message) continue;
+    if (
+      (game === 'chess' && message?.chessState) ||
+      (game === 'omok' && message?.omokState)
+    ) {
+      return message;
+    }
+  }
+
+  const recent =
+    game === 'chess'
+      ? channelState.recentChessMessage || null
+      : channelState.recentOmokMessage || null;
+  if (recent) return recent;
+
+  const messageList = Object.values(messagesObj);
+  for (let i = messageList.length - 1; i >= 0; i--) {
+    const message = messageList[i];
+    if (
+      (game === 'chess' && (message as any)?.chessState) ||
+      (game === 'omok' && (message as any)?.omokState)
+    ) {
+      return message;
+    }
+  }
+
+  return null;
 }
 
 function countOmokStones(board: OmokCell[][]) {

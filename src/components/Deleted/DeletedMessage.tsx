@@ -59,7 +59,7 @@ export default function DeletedMessage({
     isRecovered?: boolean;
     thumbUrl?: string;
     uploader?: any;
-  } = useMemo(() => messageObj, [messageObj]);
+  } = useMemo(() => messageObj || {}, [messageObj]);
 
   useEffect(() => {
     init();
@@ -68,7 +68,7 @@ export default function DeletedMessage({
       setLoading(true);
       try {
         const data = await loadDeletedMessage(messageId);
-        setMessageObj(data);
+        setMessageObj(data || {});
       } catch (error) {
         console.error(error);
       } finally {
@@ -86,8 +86,8 @@ export default function DeletedMessage({
       }}
       className={css`
         border-radius: ${borderRadius};
-        border: 1px solid ${Color.borderGray()};
-        background: '#fff';
+        border: 1px solid var(--ui-border);
+        background: #fff;
         .label {
           color: ${Color.black()};
         }
@@ -205,7 +205,8 @@ export default function DeletedMessage({
                 <Button
                   onClick={() => setConfirmModalShown(true)}
                   color="red"
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                 >
                   {deletePermanentlyLabel}
                 </Button>
@@ -214,7 +215,8 @@ export default function DeletedMessage({
                 onClick={() => handleUndoDelete({ redo: isRecovered })}
                 color="darkerGray"
                 style={{ marginLeft: '1rem' }}
-                skeuomorphic
+                variant="solid"
+                tone="raised"
               >
                 {isRecovered ? deleteLabel : undoLabel}
               </Button>
@@ -250,7 +252,7 @@ export default function DeletedMessage({
     });
     if (success) {
       setMessageObj((prevMessageObj: any) => ({
-        ...prevMessageObj,
+        ...(prevMessageObj || {}),
         isRecovered
       }));
     }

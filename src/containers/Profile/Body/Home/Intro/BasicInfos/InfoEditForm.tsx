@@ -95,7 +95,7 @@ export default function InfoEditForm({
           justifyContent: 'center'
         }}
       >
-        <Button transparent onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button

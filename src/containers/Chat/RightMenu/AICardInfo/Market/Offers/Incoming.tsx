@@ -6,7 +6,7 @@ import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import {
   useAppContext,
   useChatContext,
@@ -161,11 +161,9 @@ export default function Incoming() {
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Offers/Outgoing">
       <div
         className={css`
-          height: CALC(100% - 80px);
-          overflow: scroll;
-          @media (max-width: ${mobileMaxWidth}) {
-            height: CALC(100% - 71px);
-          }
+          height: calc(100% - 3.5rem - 1px);
+          overflow: auto;
+          padding: 0 0 2.4rem 0;
         `}
         ref={CardItemsRef}
       >

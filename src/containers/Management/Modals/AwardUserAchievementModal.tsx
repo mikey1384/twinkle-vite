@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -6,11 +6,12 @@ import SearchInput from '~/components/Texts/SearchInput';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
 import AchievementBadges from '~/components/AchievementBadges';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -21,7 +22,11 @@ export default function AwardUserAchievementModal({
   achievementType: string;
   onHide: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const grantAchievements = useAppContext(
     (v) => v.requestHelpers.grantAchievements
   );
@@ -89,7 +94,7 @@ export default function AwardUserAchievementModal({
                       background-color: ${hasAchievement
                         ? Color.highlightGray()
                         : Color.whiteGray()};
-                      border: 1px solid #e0e0e0;
+                      border: 1px solid var(--ui-border);
                       border-radius: 4px;
                       transition: all 0.2s ease-in-out;
                       opacity: ${hasAchievement ? 0.7 : 1};
@@ -198,13 +203,14 @@ export default function AwardUserAchievementModal({
           )}
         </main>
         <footer>
-          <Button onClick={onHide} transparent>
+          <Button onClick={onHide} variant="ghost">
             Close
           </Button>
           <Button
             color={doneColor}
             onClick={handleSubmit}
             loading={posting}
+            style={{ marginLeft: '1rem' }}
             disabled={
               selectedUsers.filter(
                 (user) => !user.achievements[achievementType]?.isUnlocked

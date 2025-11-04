@@ -86,7 +86,8 @@ export default function FinalizeYourCode({
           disabled={!saveAvailable}
           onClick={handleSave}
           style={{ marginTop: '2rem', marginBottom: '-0.5rem' }}
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           color={doneColor}
         >
           <Icon icon="save" />

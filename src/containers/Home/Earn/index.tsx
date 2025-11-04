@@ -6,14 +6,13 @@ import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
 import ActivitySuggester from './ActivitySuggester';
 import TopMenu from '../TopMenu';
-import { useHomeContext, useKeyContext } from '~/contexts';
+import { useHomeContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 
 const leaderboardsLabel = localize('leaderboards');
 
 export default function Earn() {
   const navigate = useNavigate();
-  const userId = useKeyContext((v) => v.myState.userId);
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
@@ -26,14 +25,12 @@ export default function Earn() {
 
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
-      {userId && (
-        <TopMenu
-          style={{ marginBottom: '3.5rem' }}
-          onPlayAIStories={() => onSetAIStoriesModalShown(true)}
-          onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
-          onInputModalButtonClick={handleInputModalButtonClick}
-        />
-      )}
+      <TopMenu
+        style={{ marginBottom: '3.5rem' }}
+        onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+        onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+        onInputModalButtonClick={handleInputModalButtonClick}
+      />
       <div
         className={css`
           > section {

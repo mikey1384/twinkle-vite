@@ -1,11 +1,11 @@
 import React, { useMemo, memo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { Color } from '~/constants/css';
 import { notiFeedListItem } from '../../Styles';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import NotiMessage from './NotiMessage';
 import UsernameText from '~/components/Texts/UsernameText';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 function NotiItem({
   actionColor,
@@ -64,7 +64,10 @@ function NotiItem({
     if (actionObj.contentType !== 'pass' && actionObj.contentType !== 'fail') {
       return (
         <div style={{ display: 'inline' }}>
-          <UsernameText user={user} color={Color[linkColor]()} />
+          <UsernameText
+            user={user}
+            color={resolveColorValue(linkColor) || linkColor}
+          />
           {SELECTED_LANGUAGE === 'kr' ? '' : ' '}
         </div>
       );
@@ -74,7 +77,7 @@ function NotiItem({
 
   return (
     <ErrorBoundary componentPath="Notification/MainFeeds/NotiItem/index">
-      <nav style={{ background: '#fff' }} className={notiFeedListItem} key={id}>
+      <nav className={notiFeedListItem} key={id}>
         <div>
           {userLabel}
           <NotiMessage
@@ -100,7 +103,15 @@ function NotiItem({
             myId={userId || 0}
           />
         </div>
-        <small style={{ color: Color.gray() }}>{timeSince(timeStamp)}</small>
+        {useMemo(() => {
+          const d = new Date(Number(timeStamp) * 1000);
+          const now = new Date();
+          const isToday =
+            d.getFullYear() === now.getFullYear() &&
+            d.getMonth() === now.getMonth() &&
+            d.getDate() === now.getDate();
+          return isToday;
+        }, [timeStamp]) && <small>{timeSince(timeStamp)}</small>}
       </nav>
     </ErrorBoundary>
   );

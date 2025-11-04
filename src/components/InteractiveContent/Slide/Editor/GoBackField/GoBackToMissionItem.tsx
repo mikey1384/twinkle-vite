@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function GoBackToMissionItem({
   style,
@@ -13,11 +13,15 @@ export default function GoBackToMissionItem({
   selectedSlideId?: number | null;
   onClick: () => void;
 }) {
-  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
-  const itemSelectedOpacity = useKeyContext(
-    (v) => v.theme.itemSelected.opacity
-  );
-  const highlightColor = Color[itemSelectedColor](itemSelectedOpacity);
+  const itemSelectedRole = useRoleColor('itemSelected', {
+    fallback: 'logoBlue'
+  });
+  const highlightColor = useMemo(() => {
+    return (
+      itemSelectedRole.getColor(itemSelectedRole.defaultOpacity || 0.8) ||
+      Color.logoBlue(0.8)
+    );
+  }, [itemSelectedRole]);
 
   return (
     <div
@@ -28,7 +32,7 @@ export default function GoBackToMissionItem({
         border:
           selectedSlideId === 0
             ? `0.3rem solid ${highlightColor}`
-            : `1px solid ${Color.borderGray()}`
+            : '1px solid var(--ui-border)'
       }}
       className={css`
         width: 100%;
@@ -42,7 +46,7 @@ export default function GoBackToMissionItem({
         }
         transition: background 0.5s, border 0.5s, box-shadow 0.5s;
         &:hover {
-          border-color: ${Color.darkerBorderGray()};
+          border-color: var(--ui-border-strong);
           .label {
             color: ${Color.black()};
           }

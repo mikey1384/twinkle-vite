@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import FromPanel from './FromPanel';
 import ToPanel from './ToPanel';
 import { css } from '@emotion/css';
 import { User } from '~/types';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function ConvertModal({
   target,
@@ -21,7 +23,8 @@ export default function ConvertModal({
     (v) => v.requestHelpers.loadAchievementsByUserId
   );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
 
   const [submitting, setSubmitting] = useState(false);
   const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
@@ -69,7 +72,7 @@ export default function ConvertModal({
           margin-top: 1rem;
         `}
       >
-        <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
+        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button loading={submitting} color={doneColor} onClick={handleSubmit}>

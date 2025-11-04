@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import ProgressBar from '~/components/ProgressBar';
-import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { css, cx } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
 import { useMyLevel } from '~/helpers/hooks';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
+import { homePanelClass } from '~/theme/homePanels';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 export default function UserLevelStatus({
   style
@@ -13,6 +15,7 @@ export default function UserLevelStatus({
 }) {
   const achievementPoints = useKeyContext((v) => v.myState.achievementPoints);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const { panelVars } = useHomePanelVars(0.08, { neutralSurface: true });
   const { ap, level, nextLevelAp } = useMyLevel();
   const displayedAP = useMemo(
     () => addCommasToNumber(achievementPoints),
@@ -39,18 +42,19 @@ export default function UserLevelStatus({
 
   return (
     <div
-      className={css`
-        background: #fff;
-        padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          border-left: 0;
-          border-right: 0;
-        }
-      `}
-      style={style}
+      className={cx(
+        homePanelClass,
+        css`
+          padding: 1.6rem 2rem;
+        `
+      )}
+      style={{
+        ...panelVars,
+        // Force neutral text colors regardless of theme
+        ['--home-panel-color' as any]: Color.darkerGray(),
+        ['--home-panel-heading' as any]: Color.black(),
+        ...style
+      }}
     >
       <p
         className={css`

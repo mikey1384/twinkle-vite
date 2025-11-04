@@ -21,8 +21,7 @@ export default function GoToNextTask({
       }}
     >
       <Button
-        filled
-        skeuomorphic
+        variant="solid"
         color="green"
         onClick={() => navigate(nextTaskType ? `../${nextTaskType}` : '..')}
       >

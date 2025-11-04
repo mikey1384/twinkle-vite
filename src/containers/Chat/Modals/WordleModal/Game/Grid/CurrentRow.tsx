@@ -5,11 +5,13 @@ import { unicodeSplit } from '../helpers/words';
 export default function CurrentRow({
   guess,
   className,
-  maxWordLength
+  maxWordLength,
+  uiScale = 1
 }: {
   guess: string;
   className: string;
   maxWordLength: number;
+  uiScale?: number;
 }) {
   const splitGuess = unicodeSplit(guess);
   const emptyCells = useMemo(
@@ -24,14 +26,14 @@ export default function CurrentRow({
       style={{
         display: 'flex',
         justifyContent: 'center',
-        marginBottom: '0.5rem'
+        marginBottom: `${0.5 * uiScale}rem`
       }}
     >
       {splitGuess.map((letter, i) => (
-        <Cell key={i} value={letter} />
+        <Cell key={i} value={letter} uiScale={uiScale} />
       ))}
       {emptyCells.map((_, i) => (
-        <Cell key={i} />
+        <Cell key={i} uiScale={uiScale} />
       ))}
     </div>
   );

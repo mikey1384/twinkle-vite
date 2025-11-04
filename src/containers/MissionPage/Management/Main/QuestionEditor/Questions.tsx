@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
@@ -39,7 +38,6 @@ export default function Questions({
         Registered questions
       </p>
       <FilterBar
-        bordered
         style={{
           marginTop: '2rem',
           fontSize: '1.6rem',
@@ -75,7 +73,7 @@ export default function Questions({
                 padding: '2rem',
                 fontSize: '1.7rem',
                 textAlign: 'center',
-                border: `1px solid ${Color.borderGray()}`
+                border: '1px solid var(--ui-border)'
               }}
               key={question.id}
             >
@@ -92,8 +90,9 @@ export default function Questions({
                   <Button
                     color="green"
                     disabled={isApproving}
-                    skeuomorphic
-                    opacity={0.5}
+                    variant="soft"
+                    tone="raised"
+                    style={{ opacity: 0.5 }}
                     onClick={() => handleApprove(question.id)}
                   >
                     <Icon icon="check" />
@@ -101,9 +100,9 @@ export default function Questions({
                   <Button
                     color="cranberry"
                     disabled={isDeleting}
-                    skeuomorphic
-                    opacity={0.5}
-                    style={{ marginLeft: '1rem' }}
+                    variant="soft"
+                    tone="raised"
+                    style={{ marginLeft: '1rem', opacity: 0.5 }}
                     onClick={() => handleDelete(question.id)}
                   >
                     <Icon icon="trash-alt" />
@@ -121,8 +120,9 @@ export default function Questions({
                   <Button
                     color="cranberry"
                     disabled={isDisapproving}
-                    skeuomorphic
-                    opacity={0.5}
+                    variant="soft"
+                    tone="raised"
+                    style={{ opacity: 0.5 }}
                     onClick={() => handleDisApprove(question.id)}
                   >
                     <Icon icon="ban" />

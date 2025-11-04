@@ -21,7 +21,7 @@ const progressContainerStyles = css`
   display: flex;
   flex-direction: column;
   gap: 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--ui-border);
   animation: slideDown 0.3s ease-out;
   transition: top 0.3s ease;
 
@@ -55,7 +55,7 @@ const progressBlockStyles = css`
   padding: 16px;
   background-color: #f8f9fa;
   border-radius: 8px;
-  border: 1px solid #eaedf0;
+  border: 1px solid var(--ui-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 `;
 

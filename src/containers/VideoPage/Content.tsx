@@ -10,7 +10,7 @@ import ResultModal from './Modals/ResultModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, tabletMaxWidth } from '~/constants/css';
 
 const addEditQuestionsLabel = localize('addEditQuestions');
 const addQuestionsLabel = localize('addQuestions');
@@ -68,16 +68,8 @@ export default function Content({
       <div
         className={css`
           width: 100%;
-          background: #fff;
           margin-bottom: 1rem;
-          padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
-          padding-top: 0;
-          @media (max-width: ${mobileMaxWidth}) {
-            border-top: 0;
-            border-left: 0;
-            border-right: 0;
-          }
+          padding: 0;
         `}
       >
         <PageTab
@@ -86,7 +78,11 @@ export default function Content({
           playlistId={playlistId}
           questions={questions}
         />
-        <div style={{ marginTop: '2rem' }}>
+        <div
+          className={css`
+            width: 100%;
+          `}
+        >
           {!questionsBuilderShown && (
             <XPVideoPlayer
               onPlay={() => onVideoPlay?.()}
@@ -101,7 +97,12 @@ export default function Content({
             />
           )}
           {userCanEditThis && !watchTabActive && (
-            <div style={{ marginTop: rewardLevel ? '1rem' : 0 }}>
+            <div
+              className={css`
+                margin-top: ${rewardLevel ? '1rem' : 0};
+                padding: 0 1rem;
+              `}
+            >
               <a
                 style={{
                   cursor: 'pointer',
@@ -128,20 +129,27 @@ export default function Content({
           )}
           {!watchTabActive && questions.length === 0 && (
             <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontSize: '2rem',
-                height: '15rem'
-              }}
+              className={css`
+                margin-top: 1rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                font-size: 2rem;
+                height: 15rem;
+                background: #fff;
+                border-radius: ${borderRadius};
+                @media (max-width: ${tabletMaxWidth}) {
+                  border-radius: 0;
+                }
+              `}
             >
               <p>{thereAreNoQuestionsLabel}.</p>
               {userCanEditThis && (
                 <Button
                   style={{ marginTop: '2rem', fontSize: '2rem' }}
-                  skeuomorphic
+                  variant="solid"
+                  tone="raised"
                   color="darkerGray"
                   onClick={() => setQuestionsBuilderShown(true)}
                 >
@@ -159,13 +167,29 @@ export default function Content({
           />
         )}
         {questionsBuilderShown && (
-          <QuestionsBuilder
-            questions={questions}
-            title={title}
-            videoCode={content}
-            onSubmit={handleUploadQuestions}
-            onHide={() => setQuestionsBuilderShown(false)}
-          />
+          <div
+            className={
+              !watchTabActive
+                ? css`
+                    background: #fff;
+                    border-radius: ${borderRadius};
+                    padding: 1.25rem;
+                    margin-top: 1rem;
+                    @media (max-width: ${tabletMaxWidth}) {
+                      padding: 1rem;
+                    }
+                  `
+                : ''
+            }
+          >
+            <QuestionsBuilder
+              questions={questions}
+              title={title}
+              videoCode={content}
+              onSubmit={handleUploadQuestions}
+              onHide={() => setQuestionsBuilderShown(false)}
+            />
+          </div>
         )}
       </div>
     </ErrorBoundary>

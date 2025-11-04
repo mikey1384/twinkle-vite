@@ -12,9 +12,9 @@ import { css } from '@emotion/css';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const Styles = {
   Player: css`
@@ -77,8 +77,10 @@ export default function QuestionsBuilder({
   title: string;
   videoCode: string;
 }) {
-  const successColor = useKeyContext((v) => v.theme.success.color);
-  const infoColor = useKeyContext((v) => v.theme.info.color);
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const infoRole = useRoleColor('info', { fallback: 'logoBlue' });
+  const successColor = successRole.colorKey;
+  const infoColor = infoRole.colorKey;
   const [reorderModeOn, setReorderModeOn] = useState(false);
   const [questions, setQuestions] = useState<Record<string, any>>({});
   const [questionIds, setQuestionIds] = useState<any[]>([]);

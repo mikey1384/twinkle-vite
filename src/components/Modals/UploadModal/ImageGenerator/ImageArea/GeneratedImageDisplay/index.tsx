@@ -121,14 +121,14 @@ export default function GeneratedImageDisplay({
         border-radius: 20px;
         padding: 1.5rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
       `}
     >
       {/* Image */}
       <div
         className={css`
           background: ${Color.highlightGray()};
-          border: 2px solid ${Color.borderGray()};
+          border: 2px solid var(--ui-border);
           border-radius: 16px;
           overflow: hidden;
           aspect-ratio: 1;

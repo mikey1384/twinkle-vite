@@ -18,7 +18,7 @@ export default function LoadingState({
         border-radius: 20px;
         padding: 2rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -28,7 +28,7 @@ export default function LoadingState({
       <div
         className={css`
           background: ${Color.highlightGray()};
-          border: 2px dashed ${Color.borderGray()};
+          border: 2px dashed var(--ui-border);
           border-radius: 16px;
           width: 100%;
           aspect-ratio: 1;
@@ -54,7 +54,7 @@ export default function LoadingState({
               className={css`
                 width: 32px;
                 height: 32px;
-                border: 4px solid ${Color.borderGray()};
+                border: 4px solid var(--ui-border);
                 border-top: 4px solid ${Color.logoBlue()};
                 border-radius: 50%;
                 animation: spin 1s linear infinite;

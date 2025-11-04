@@ -4,8 +4,36 @@ import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isPhone } from '~/helpers';
 import StatusTag from './StatusTag';
+import { css, cx } from '@emotion/css';
 
 const deviceIsPhone = isPhone(navigator);
+
+function toCssSize(value?: number | string) {
+  if (typeof value === 'number') {
+    return `${value}px`;
+  }
+  return value;
+}
+
+const containerBaseClass = css`
+  position: relative;
+  display: inline-block;
+  width: var(--profile-pic-size, 7rem);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  user-select: none;
+
+  @supports not (aspect-ratio: 1 / 1) {
+    /* Safari ≤14 / legacy fallback */
+    display: inline-block;
+    width: var(--profile-pic-size, 7rem);
+    &::before {
+      content: '';
+      display: block;
+      padding-bottom: 100%;
+    }
+  }
+`;
 
 export default function ProfilePic({
   className,
@@ -19,7 +47,8 @@ export default function ProfilePic({
   profilePicUrl,
   statusShown,
   style,
-  statusSize = 'auto'
+  statusSize = 'auto',
+  size
 }: {
   className?: string;
   isAway?: boolean;
@@ -33,6 +62,7 @@ export default function ProfilePic({
   statusShown?: boolean;
   style?: React.CSSProperties;
   statusSize?: 'auto' | 'medium' | 'large' | 'dot';
+  size?: number | string;
 }) {
   const userObj = useAppContext((v) => v.user.state.userObj);
   const myId = useKeyContext((v) => v.myState.userId);
@@ -60,51 +90,85 @@ export default function ProfilePic({
     setHasError(false);
   }, [userId]);
 
+  const {
+    width: styleWidth,
+    height: styleHeight,
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
+    cursor: styleCursor,
+    position: stylePosition,
+    ...restStyle
+  } = style || {};
+
+  const explicitSize = toCssSize(styleWidth ?? styleHeight ?? size);
+
+  const containerStyle: React.CSSProperties = {
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
+    position: stylePosition ?? 'relative',
+    cursor:
+      (myId === userId && isProfilePage) || onClick
+        ? 'pointer'
+        : styleCursor || 'default',
+    ...(explicitSize
+      ? { ['--profile-pic-size' as const]: explicitSize }
+      : {})
+  };
+
   return (
     <div
-      className={className}
+      className={cx(containerBaseClass, className)}
       style={{
-        display: 'block',
-        position: 'relative',
-        userSelect: 'none',
-        borderRadius: '50%',
-        paddingBottom: '100%',
-        cursor:
-          (myId === userId && isProfilePage) || onClick
-            ? 'pointer'
-            : style?.cursor || 'default',
-        ...style
+        ...containerStyle,
+        ...restStyle
       }}
       onClick={onClick || (() => null)}
       onMouseEnter={() => setChangePictureShown(true)}
       onMouseLeave={() => setChangePictureShown(false)}
     >
-      <img
-        alt="Thumbnail"
+      <div
         style={{
-          display: 'block',
           position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
           width: '100%',
           height: '100%',
-          borderRadius: '50%'
+          borderRadius: '50%',
+          overflow: 'hidden'
         }}
-        loading="lazy"
-        src={
-          displayedProfilePicUrl && !hasError
-            ? `${cloudFrontURL}${displayedProfilePicUrl}`
-            : '/img/default.png'
-        }
-        onError={() => setHasError(true)}
-      />
-      {!deviceIsPhone && (
-        <ChangePicture
-          shown={
-            myId === userId && isProfilePage && changePictureShown
-              ? true
-              : false
+      >
+        <img
+          alt="Thumbnail"
+          style={{
+            display: 'block',
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+          loading="lazy"
+          src={
+            displayedProfilePicUrl && !hasError
+              ? `${cloudFrontURL}${displayedProfilePicUrl}`
+              : '/img/default.png'
           }
+          onError={() => setHasError(true)}
         />
-      )}
+        {!deviceIsPhone && (
+          <ChangePicture
+            shown={
+              myId === userId && isProfilePage && changePictureShown
+                ? true
+                : false
+            }
+          />
+        )}
+      </div>
       {statusTagShown && (
         <StatusTag
           status={resolvedStatus}

@@ -16,9 +16,11 @@ import {
   finalizeEmoji
 } from '~/helpers/stringHelpers';
 import { useSearch } from '~/helpers/hooks';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { isMobile, objectify } from '~/helpers';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
@@ -37,7 +39,11 @@ export default function AddPlaylistModal({
   onUploadPlaylist: (arg: any) => void;
   title?: string;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const loadUploads = useAppContext((v) => v.requestHelpers.loadUploads);
   const searchContent = useAppContext((v) => v.requestHelpers.searchContent);
   const uploadPlaylist = useAppContext((v) => v.requestHelpers.uploadPlaylist);
@@ -241,7 +247,7 @@ export default function AddPlaylistModal({
           {section === 0 ? (
             <Button
               style={{ marginRight: '0.7rem' }}
-              transparent
+              variant="ghost"
               onClick={onHide}
             >
               Cancel
@@ -249,7 +255,7 @@ export default function AddPlaylistModal({
           ) : (
             <Button
               style={{ marginRight: '0.7rem' }}
-              transparent
+              variant="ghost"
               onClick={handlePrev}
             >
               Prev

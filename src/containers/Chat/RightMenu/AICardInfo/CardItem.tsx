@@ -70,8 +70,9 @@ export default function CardItem({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-start',
+          marginBottom: isOverflown && isLast ? '1.2rem' : 0,
           borderBottom:
-            isOverflown && isLast ? 'none' : `1px solid ${Color.borderGray()}`
+            isOverflown && isLast ? 'none' : '1px solid var(--ui-border)'
         }}
         onClick={() => (userMenuShown ? null : handleClick())}
         key={card.id}

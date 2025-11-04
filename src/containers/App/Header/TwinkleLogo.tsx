@@ -1,17 +1,23 @@
 import React, { useMemo } from 'react';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function TwinkleLogo({
   style
 }: {
   style?: React.CSSProperties;
 }) {
-  const logoTwinColor = useKeyContext((v) => v.theme.logoTwin.color);
-  const logoKleColor = useKeyContext((v) => v.theme.logoKle.color);
-  const twinColor = useMemo(() => Color[logoTwinColor](), [logoTwinColor]);
-  const kleColor = useMemo(() => Color[logoKleColor](), [logoKleColor]);
+  const logoTwinRole = useRoleColor('logoTwin', { fallback: 'logoBlue' });
+  const logoKleRole = useRoleColor('logoKle', { fallback: 'logoGreen' });
+  const twinColor = useMemo(
+    () => logoTwinRole.getColor() || Color.logoBlue(),
+    [logoTwinRole]
+  );
+  const kleColor = useMemo(
+    () => logoKleRole.getColor() || Color.logoGreen(),
+    [logoKleRole]
+  );
 
   return (
     <div

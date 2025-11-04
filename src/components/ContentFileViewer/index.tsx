@@ -4,10 +4,9 @@ import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { cloudFrontURL } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ContentFileViewer({
   className,
@@ -25,7 +24,8 @@ export default function ContentFileViewer({
   theme,
   thumbHeight,
   thumbUrl,
-  videoHeight
+  videoHeight,
+  modalOverModal
 }: {
   className?: string;
   contentId?: number;
@@ -43,11 +43,12 @@ export default function ContentFileViewer({
   thumbHeight?: string;
   thumbUrl?: string;
   videoHeight?: string;
+  modalOverModal?: boolean;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const isDisplayedOnHome = useMemo(
     () => contentType === 'subject' || contentType === 'comment',
     [contentType]
@@ -78,6 +79,7 @@ export default function ContentFileViewer({
           backgroundColor: isThumb ? Color.whiteGray() : '',
           ...style
         }}
+        data-modal-over-modal={modalOverModal ? 'true' : undefined}
       >
         {fileType === 'image' ? (
           <ErrorBoundary componentPath="ContentFileViewer/ImagePreview">
@@ -119,7 +121,7 @@ export default function ContentFileViewer({
                   <a
                     style={{
                       fontWeight: 'bold',
-                      color: Color[linkColor](),
+                      color: linkColor,
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical'
                     }}

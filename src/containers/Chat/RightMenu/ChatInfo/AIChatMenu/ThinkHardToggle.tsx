@@ -29,7 +29,7 @@ export default function ThinkHardToggle({
   return (
     <div
       className={css`
-        border-top: 1px solid ${Color.borderGray()};
+        border-top: 1px solid var(--ui-border);
         padding: 1rem 0;
         width: 100%;
       `}

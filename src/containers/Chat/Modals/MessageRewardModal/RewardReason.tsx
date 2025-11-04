@@ -18,7 +18,8 @@ export default function RewardReason({
     <Button
       color={rewardReasons[reasonId].color}
       onClick={() => onSelectReasonId(reasonId)}
-      filled={reasonId === selectedReasonId}
+      variant={reasonId === selectedReasonId ? 'solid' : 'soft'}
+      tone="raised"
       style={style}
     >
       <Icon size="lg" icon={rewardReasons[reasonId].icon} />

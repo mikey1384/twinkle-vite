@@ -3,7 +3,9 @@ import Button from '~/components/Button';
 import NewModal from '~/components/NewModal';
 import Caption from './Caption';
 import Icon from '~/components/Icon';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useAppContext, useContentContext } from '~/contexts';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 import {
   exceedsCharLimit,
   stringIsEmpty,
@@ -37,7 +39,9 @@ export default function ImageModal({
   contentId?: number;
   isReplaceable?: boolean;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const replaceSubjectAttachment = useAppContext(
@@ -84,7 +88,8 @@ export default function ImageModal({
         <>
           {downloadable && (
             <Button color="orange" onClick={() => window.open(src)}>
-              Download
+              <Icon icon="download" />
+              <span style={{ marginLeft: '0.5rem' }}>Download</span>
             </Button>
           )}
           {isReplaceable &&
@@ -113,14 +118,14 @@ export default function ImageModal({
             !stringIsEmpty(caption) &&
             userIsUploader &&
             !isEditing && (
-              <Button transparent onClick={() => setIsEditing(true)}>
+              <Button variant="ghost" onClick={() => setIsEditing(true)}>
                 <Icon icon="pencil-alt" />
                 <span style={{ marginLeft: '0.7rem' }}>Edit Caption</span>
               </Button>
             )}
           {hasCaption && isEditing && (
             <Button
-              transparent
+              variant="ghost"
               onClick={() => {
                 setIsEditing(false);
                 setEditedCaption(caption || '');
@@ -149,7 +154,9 @@ export default function ImageModal({
             )}
           <Button
             style={{ marginLeft: '1rem' }}
-            color={doneColor}
+            color={
+              doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+            }
             onClick={onHide}
           >
             Close

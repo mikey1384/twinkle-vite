@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { isMobile, isTablet } from '~/helpers';
 
-const rewardLevelLabel = localize('rewardLevel');
+const rewardLevelLabel = localize('effortLevel');
 
 export default function RewardLevelBar({
   className,
@@ -18,12 +19,36 @@ export default function RewardLevelBar({
   rewardLevel: number;
   style?: React.CSSProperties;
 }) {
-  const barColor = useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color);
-  const stars = useMemo(() => {
-    return Array.from({ length: rewardLevel }, (_, i) => (
-      <Icon key={i} icon="star" style={{ marginLeft: '0.2rem' }} />
-    ));
+  const deviceIsMobile = isMobile(navigator);
+  const deviceIsTablet = isTablet(navigator);
+  const levelRole = useRoleColor(`level${rewardLevel}`, {
+    fallback: 'logoBlue'
+  });
+  const themedBg = useMemo(
+    () => levelRole.getColor() || Color.logoBlue(),
+    [levelRole]
+  );
+
+  const starColor = useMemo(() => {
+    return rewardLevel >= 5 ? '#fff' : 'var(--perfect-star-color, #ffd700)';
   }, [rewardLevel]);
+
+  const leftStars = useMemo(() => {
+    if (deviceIsMobile || deviceIsTablet) {
+      return `${rewardLevel}-STAR`;
+    }
+    return Array.from({ length: rewardLevel }, (_, i) => (
+      <Icon
+        key={i}
+        icon="star"
+        style={{
+          marginLeft: '0.25rem',
+          fontSize: '1.4em',
+          color: starColor
+        }}
+      />
+    ));
+  }, [deviceIsMobile, deviceIsTablet, rewardLevel, starColor]);
 
   const earnUpToLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -34,20 +59,37 @@ export default function RewardLevelBar({
 
   return (
     <div
-      className={`${className} ${css`
-        background: ${Color[barColor]()};
+      className={`${className || ''} ${css`
+        background: ${themedBg};
         color: #fff;
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 0.6rem;
+        border: none;
+        border-radius: ${borderRadius};
+        font-weight: 600;
+        width: auto;
+        max-width: 100%;
+        .left {
+          display: flex;
+          align-items: center;
+          min-width: 0;
+        }
+        .right {
+          min-width: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       `}`}
       style={style}
     >
-      <div>
-        {rewardLevelLabel}: {stars}
+      <div className="left">
+        {rewardLevelLabel}: {leftStars}
       </div>
-      <div>{earnUpToLabel}</div>
+      <div className="right">{earnUpToLabel}</div>
     </div>
   );
 }

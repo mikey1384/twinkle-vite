@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, borderRadius } from '~/constants/css';
+import { borderRadius } from '~/constants/css';
 
 export default function Privacy() {
   return (
@@ -10,7 +10,7 @@ export default function Privacy() {
         margin: 2rem auto;
         max-width: 800px;
         background: #ffffff;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',

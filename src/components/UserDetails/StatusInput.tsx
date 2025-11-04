@@ -5,9 +5,10 @@ import ColorSelector from '~/components/ColorSelector';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { Color, borderRadius } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
+import Icon from '~/components/Icon';
 
 export default function StatusInput({
   autoFocus,
@@ -30,7 +31,11 @@ export default function StatusInput({
   onTextChange: (text: string) => void;
   setColor: (color: string) => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const statusExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -47,21 +52,47 @@ export default function StatusInput({
 
   return (
     <ErrorBoundary componentPath="UserDetails/StatusInput">
-      <Textarea
-        autoFocus={autoFocus}
+      <div
         className={css`
+          position: relative;
+          width: 100%;
           margin-top: 1rem;
-          ${profile.statusMsg
-            ? ''
-            : `box-shadow: ${`0 0 1rem ${Color.logoBlue()}`}; border: 1px solid ${Color.logoBlue()}`};
+          background: #fff;
+          border: 1px solid var(--ui-border);
+          border-radius: ${borderRadius};
+          overflow: hidden;
+          transition: border-color 0.18s ease;
+          &:focus-within {
+            border-color: var(--ui-border-strong);
+          }
         `}
-        hasError={!!statusExceedsCharLimit}
-        innerRef={innerRef}
-        minRows={1}
-        value={editedStatusMsg}
-        onChange={onTextChange}
-        placeholder={statusMsgPlaceholder}
-      />
+      >
+        <Icon
+          icon="comment-alt"
+          className={css`
+            position: absolute;
+            top: 0.9rem;
+            left: 1rem;
+            color: ${Color.gray()};
+          `}
+        />
+        <Textarea
+          autoFocus={autoFocus}
+          hasError={!!statusExceedsCharLimit}
+          innerRef={innerRef}
+          minRows={1}
+          value={editedStatusMsg}
+          onChange={(event) => onTextChange(event.target.value)}
+          placeholder={statusMsgPlaceholder}
+          disableFocusGlow
+          style={{
+            paddingLeft: '3.2rem',
+            border: 'none',
+            boxShadow: 'none',
+            background: 'transparent'
+          }}
+        />
+      </div>
       <p
         style={{
           fontSize: '1.3rem',
@@ -109,7 +140,8 @@ export default function StatusInput({
             }}
           >
             <Button
-              skeuomorphic
+              variant="solid"
+              tone="raised"
               color="darkerGray"
               onClick={onCancel}
               style={{ fontSize: '1rem' }}
@@ -118,7 +150,8 @@ export default function StatusInput({
             </Button>
             <Button
               color={doneColor}
-              filled
+              variant="soft"
+              tone="raised"
               disabled={
                 !!exceedsCharLimit({
                   contentType: 'statusMsg',

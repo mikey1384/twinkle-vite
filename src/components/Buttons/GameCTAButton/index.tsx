@@ -6,7 +6,7 @@ import Icon from '~/components/Icon';
 export default function GameCTAButton({
   onClick,
   children,
-  icon = 'question-circle',
+  icon = '',
   style,
   disabled,
   variant = 'primary',
@@ -34,6 +34,9 @@ export default function GameCTAButton({
   toggled?: boolean;
   loading?: boolean;
 }) {
+  const hasLabel = !!(
+    children && !(typeof children === 'string' && children.trim().length === 0)
+  );
   const cls = getButtonCls({ variant, size, shiny, toggled });
   return (
     <button
@@ -44,7 +47,7 @@ export default function GameCTAButton({
       aria-busy={loading || undefined}
     >
       <Icon icon={loading ? 'spinner' : icon} pulse={loading} />
-      <span className={labelCls}>{children}</span>
+      {hasLabel ? <span className={labelCls}>{children}</span> : null}
     </button>
   );
 }
@@ -134,7 +137,7 @@ function getButtonCls({
     sm: { fs: '0.9rem', pad: '0.625rem 1rem' },
     md: { fs: '1rem', pad: '0.75rem 1.25rem' },
     lg: { fs: '1.25rem', pad: '1rem 1.5rem' },
-    xl: { fs: '1.5rem', pad: '1.25rem 1.75rem' }
+    xl: { fs: '1.6rem', pad: '1.3rem 2rem' }
   } as const;
   const c = colorMap[variant];
   const s = sz[size];

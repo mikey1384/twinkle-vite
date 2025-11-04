@@ -50,7 +50,6 @@ export default function ItemThumb({
     () => Math.max(-circumference, -1 * (progress / 100) * circumference),
     [progress, circumference]
   );
-
   return (
     <div
       onMouseOver={() => {

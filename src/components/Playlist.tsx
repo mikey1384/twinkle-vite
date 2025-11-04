@@ -6,9 +6,10 @@ import Link from '~/components/Link';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const eitherRemovedOrNeverExistedLabel = localize(
   'eitherRemovedOrNeverExisted'
@@ -33,8 +34,14 @@ export default function Playlist({
   const onSetContentState = useContentContext(
     (v) => v.actions.onSetContentState
   );
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const userLinkColor = useKeyContext((v) => v.theme.userLink.color);
+  const { getColor: getLinkColor } = useRoleColor('link', {
+    fallback: 'blue'
+  });
+  const { getColor: getUserLinkColor } = useRoleColor('userLink', {
+    fallback: 'logoBlue'
+  });
+  const linkColor = getLinkColor();
+  const userLinkColor = getUserLinkColor();
 
   const { loadMoreShown, videos, loaded } = useContentState({
     contentType: 'playlist',
@@ -121,9 +128,7 @@ export default function Playlist({
               <div style={{ width: '60%' }}>
                 <Link
                   style={{
-                    color: video.byUser
-                      ? Color[userLinkColor]()
-                      : Color[linkColor](),
+                    color: video.byUser ? userLinkColor : linkColor,
                     fontSize: '2rem',
                     fontWeight: 'bold',
                     lineHeight: 1.5

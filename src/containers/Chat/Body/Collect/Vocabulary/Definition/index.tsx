@@ -59,7 +59,8 @@ export default function Definition({
                 opacity: 1;
               }
             `}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={() => setWordModalShown(true)}
           >
             {filteredPosOrder.length > 0 && <Icon icon="pencil-alt" />}

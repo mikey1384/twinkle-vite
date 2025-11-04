@@ -79,7 +79,8 @@ export default function Listed() {
     <div
       style={{
         height: '100%',
-        overflow: 'scroll'
+        overflow: 'scroll',
+        paddingBottom: '1rem'
       }}
       ref={CardItemsRef}
     >

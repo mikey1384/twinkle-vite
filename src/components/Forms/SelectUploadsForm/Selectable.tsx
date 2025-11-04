@@ -6,7 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile, textIsOverflown } from '~/helpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -23,12 +23,15 @@ export default function Selectable({
   onDeselect: (id: string) => void;
   selected: boolean;
 }) {
-  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
-  const itemSelectedOpacity = useKeyContext(
-    (v) => v.theme.itemSelected.opacity
-  );
+  const {
+    defaultOpacity: itemSelectedOpacity = 0.4,
+    getColor: getItemSelectedColor
+  } = useRoleColor('itemSelected', {
+    opacity: 0.4,
+    fallback: 'logoBlue'
+  });
   const [titleHovered, setTitleHovered] = useState(false);
-  const highlightColor = Color[itemSelectedColor](itemSelectedOpacity);
+  const highlightColor = getItemSelectedColor(itemSelectedOpacity);
   const ThumbLabelRef: React.RefObject<any> = useRef(null);
 
   return (

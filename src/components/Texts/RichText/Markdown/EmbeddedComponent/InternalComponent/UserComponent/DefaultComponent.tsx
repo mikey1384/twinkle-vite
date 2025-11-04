@@ -71,7 +71,7 @@ export default function DefaultComponent({
         background: #fff;
         padding: 1rem;
         transition: background 0.5s;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         cursor: pointer;
         &:hover {

@@ -3,7 +3,6 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 
-import Header from './Header';
 import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
@@ -199,6 +198,13 @@ export default function ImageGenerator({
             convertPartialImageToReference(latestPartialImage);
           }
 
+          if (typeof status.coins === 'number' && userId) {
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: status.coins }
+            });
+          }
+
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
@@ -282,31 +288,6 @@ export default function ImageGenerator({
         min-height: 600px;
       `}
     >
-      <Header />
-
-      <div
-        className={css`
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-        `}
-      >
-        <TabButton
-          onClick={() => handleModeChange('text')}
-          active={mode === 'text'}
-          disabled={isShowingLoadingState}
-        >
-          Text Prompt
-        </TabButton>
-        <TabButton
-          onClick={() => handleModeChange('draw')}
-          active={mode === 'draw'}
-          disabled={isShowingLoadingState}
-        >
-          Draw
-        </TabButton>
-      </div>
-
       {mode === 'text' && (
         <div
           className={css`
@@ -386,6 +367,29 @@ export default function ImageGenerator({
           </label>
         </div>
       )}
+
+      <div
+        className={css`
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        `}
+      >
+        <TabButton
+          onClick={() => handleModeChange('text')}
+          active={mode === 'text'}
+          disabled={isShowingLoadingState}
+        >
+          Text Prompt
+        </TabButton>
+        <TabButton
+          onClick={() => handleModeChange('draw')}
+          active={mode === 'draw'}
+          disabled={isShowingLoadingState}
+        >
+          Draw
+        </TabButton>
+      </div>
 
       {mode === 'draw' && (
         <ImageEditor
@@ -492,6 +496,12 @@ export default function ImageGenerator({
         const rawError = result.error || 'Failed to generate image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
+        if (typeof result.coins === 'number' && userId) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.coins }
+          });
+        }
         setIsGenerating(false);
         setProgressStage('not_started');
         onError?.(errorMessage);
@@ -567,6 +577,12 @@ export default function ImageGenerator({
         const rawError = result.error || 'Failed to generate follow-up image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
+        if (typeof result.coins === 'number' && userId) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.coins }
+          });
+        }
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');

@@ -25,7 +25,6 @@ export default function Main({
   isPreview,
   isSubjectPannelComments,
   loadMoreShown,
-  loadMoreButtonColor,
   noInput,
   numInputRows,
   numPreviews,
@@ -61,7 +60,6 @@ export default function Main({
   isPreview?: boolean;
   isSubjectPannelComments?: boolean;
   loadMoreShown?: boolean;
-  loadMoreButtonColor?: string;
   noInput?: boolean;
   numInputRows?: number;
   numPreviews?: number;
@@ -135,7 +133,7 @@ export default function Main({
     return (autoExpand || commentsShown) && !isLoading ? (
       <LoadMoreButton
         filled
-        color={loadMoreButtonColor}
+        theme={theme}
         loading={isLoadingMore}
         onClick={handleLoadMoreComments}
         style={{
@@ -184,10 +182,10 @@ export default function Main({
     isLoading,
     isLoadingMore,
     loadComments,
-    loadMoreButtonColor,
     onLoadMoreComments,
     parent.contentId,
-    parent.contentType
+    parent.contentType,
+    theme
   ]);
 
   return (

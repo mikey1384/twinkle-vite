@@ -1,4 +1,10 @@
-import React, { CSSProperties, memo, useCallback, useState } from 'react';
+import React, {
+  CSSProperties,
+  memo,
+  useCallback,
+  useMemo,
+  useState
+} from 'react';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useSearch } from '~/helpers/hooks';
@@ -6,6 +12,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
@@ -14,8 +21,12 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const generalChatColor = useKeyContext((v) => v.theme.generalChat.color);
-  const chatGroupColor = useKeyContext((v) => v.theme.chatGroup.color);
+  const generalChatRole = useRoleColor('generalChat', {
+    fallback: 'logoBlue'
+  });
+  const chatGroupRole = useRoleColor('chatGroup', {
+    fallback: 'logoBlue'
+  });
   const chatSearchResults = useChatContext((v) => v.state.chatSearchResults);
   const onClearChatSearchResults = useChatContext(
     (v) => v.actions.onClearChatSearchResults
@@ -24,6 +35,14 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
   const onSearchChat = useChatContext((v) => v.actions.onSearchChat);
 
   const [searchText, setSearchText] = useState('');
+  const generalChatColor = useMemo(
+    () => generalChatRole.getColor() || Color.logoBlue(),
+    [generalChatRole]
+  );
+  const chatGroupColor = useMemo(
+    () => chatGroupRole.getColor() || Color.logoBlue(),
+    [chatGroupRole]
+  );
   const handleSearchChat = useCallback(async (text: string) => {
     const data = await searchChat(text);
     onSearchChat(data);
@@ -88,9 +107,7 @@ function ChatSearchBox({ style }: { style?: CSSProperties }) {
               <span
                 style={{
                   color:
-                    Color[
-                      item.channelId === 2 ? generalChatColor : chatGroupColor
-                    ](),
+                    item.channelId === 2 ? generalChatColor : chatGroupColor,
                   fontWeight: 'bold'
                 }}
               >

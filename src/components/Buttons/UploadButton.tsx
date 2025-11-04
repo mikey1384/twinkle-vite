@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { IconName } from '@fortawesome/fontawesome-svg-core';
 import UploadModal from '../Modals/UploadModal';
 
@@ -16,7 +16,6 @@ export default function UploadButton({
   hoverColor,
   style,
   className,
-  skeuomorphic = true,
   transparent = false,
   filled = false,
   mobilePadding,
@@ -44,7 +43,6 @@ export default function UploadButton({
   className?: string;
 
   // Button variants
-  skeuomorphic?: boolean;
   transparent?: boolean;
   filled?: boolean;
 
@@ -65,20 +63,32 @@ export default function UploadButton({
   // New: Enable AI generation option
   enableAIGeneration?: boolean;
 }) {
-  const defaultButtonColor = useKeyContext((v) => v.theme.button.color);
+  const { colorKey: defaultButtonColor } = useRoleColor('button', {
+    fallback: 'logoBlue'
+  });
+  const { colorKey: defaultHoverColor } = useRoleColor('buttonHovered', {
+    fallback: defaultButtonColor || 'logoBlue'
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modalShown, setModalShown] = useState(false);
 
   const appliedColor = color || defaultButtonColor;
-  const appliedHoverColor = hoverColor || appliedColor;
+  const appliedHoverColor = hoverColor || defaultHoverColor || appliedColor;
+  const { variant: overrideVariant, tone: overrideTone, ...restButtonProps } =
+    buttonProps;
+  const resolvedVariant =
+    overrideVariant ??
+    (filled ? 'solid' : transparent ? 'ghost' : 'soft');
+  const resolvedTone =
+    overrideTone ??
+    (resolvedVariant === 'soft' ? 'raised' : undefined);
 
   return (
     <>
       <Button
-        skeuomorphic={skeuomorphic}
-        transparent={transparent}
-        filled={filled}
+        variant={resolvedVariant}
+        tone={resolvedTone}
         disabled={disabled}
         onClick={handleButtonClick}
         color={appliedColor}
@@ -89,10 +99,10 @@ export default function UploadButton({
         aria-label={ariaLabel || title || 'Upload file'}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        {...buttonProps}
+        {...restButtonProps}
       >
         <Icon size={iconSize} icon={icon} />
-        {text && <span style={{ marginLeft: '0.7rem' }}>{text}</span>}
+        {text && <span>{text}</span>}
       </Button>
 
       <UploadModal

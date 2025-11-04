@@ -5,9 +5,11 @@ import MonthItem from './MonthItem';
 import localize from '~/constants/localize';
 import moment from 'moment';
 import Loading from '~/components/Loading';
-import { panel } from '../../Styles';
+import { homePanelClass } from '~/theme/homePanels';
 import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
 import { SELECTED_LANGUAGE, months } from '~/constants/defaultValues';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const leaderboardLabel = localize('leaderboard');
 
@@ -31,6 +33,13 @@ export default function YearItem({
   const onSetLeaderboardsExpanded = useHomeContext(
     (v) => v.actions.onSetLeaderboardsExpanded
   );
+  const { panelVars, themeName } = useHomePanelVars(0.08, {
+    neutralSurface: true
+  });
+  const combinedStyle = useMemo(() => {
+    if (!style) return panelVars;
+    return { ...panelVars, ...style };
+  }, [panelVars, style]);
 
   const currentMonth = useMemo(
     () => Number(moment.utc(standardTimeStamp || Date.now()).format('M')),
@@ -73,7 +82,12 @@ export default function YearItem({
   }, [leaderboards?.length, leaderboardsObj, year]);
 
   return (
-    <div style={style} className={panel}>
+    <ScopedTheme
+      theme={themeName}
+      roles={['sectionPanel', 'sectionPanelText']}
+      className={homePanelClass}
+      style={combinedStyle}
+    >
       <p>
         {year}
         {SELECTED_LANGUAGE === 'kr' ? '년' : ''} {leaderboardLabel}
@@ -97,7 +111,7 @@ export default function YearItem({
             <LoadMoreButton
               style={{ fontSize: '2rem', marginTop: '1rem' }}
               label="Show All"
-              transparent
+              variant="ghost"
               onClick={() =>
                 onSetLeaderboardsExpanded({ expanded: true, year })
               }
@@ -107,6 +121,6 @@ export default function YearItem({
       ) : (
         <Loading />
       )}
-    </div>
+    </ScopedTheme>
   );
 }

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import localize from '~/constants/localize';
-import { useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const areYouSureLabel = localize('areYouSure');
 const cancelLabel = localize('cancel');
@@ -17,7 +18,8 @@ export default function ConfirmModal({
   onConfirm,
   confirmButtonColor = '',
   confirmButtonLabel = confirmLabel,
-  isReverseButtonOrder
+  isReverseButtonOrder,
+  modalOverModal = false
 }: {
   disabled?: boolean;
   description?: any;
@@ -28,9 +30,15 @@ export default function ConfirmModal({
   confirmButtonColor?: string;
   confirmButtonLabel?: string;
   isReverseButtonOrder?: boolean;
+  modalOverModal?: boolean;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const [submitting, setSubmitting] = useState(false);
+  const appliedConfirmColor =
+    confirmButtonColor ||
+    (doneColorKey && doneColorKey in Color ? doneColorKey : 'blue');
   return (
     <NewModal
       isOpen
@@ -38,6 +46,8 @@ export default function ConfirmModal({
       hasHeader
       title={title}
       size="md"
+      modalLevel={modalOverModal ? 2 : undefined}
+      priority={modalOverModal}
       closeOnBackdropClick
       footer={
         isReverseButtonOrder ? (
@@ -46,19 +56,19 @@ export default function ConfirmModal({
               loading={submitting}
               disabled={disabled}
               style={{ marginRight: '1.5rem' }}
-              color={confirmButtonColor || doneColor}
+              color={appliedConfirmColor}
               onClick={handleConfirm}
             >
               {confirmButtonLabel}
             </Button>
-            <Button transparent onClick={onHide}>
+            <Button variant="ghost" onClick={onHide}>
               {cancelLabel}
             </Button>
           </>
         ) : (
           <>
             <Button
-              transparent
+              variant="ghost"
               style={{ marginRight: '0.7rem' }}
               onClick={onHide}
             >
@@ -67,7 +77,7 @@ export default function ConfirmModal({
             <Button
               loading={submitting}
               disabled={disabled}
-              color={confirmButtonColor || doneColor}
+              color={appliedConfirmColor}
               onClick={handleConfirm}
             >
               {confirmButtonLabel}

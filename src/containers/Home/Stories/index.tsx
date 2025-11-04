@@ -19,6 +19,8 @@ import {
   useKeyContext
 } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const hiThereLabel = localize('hiThere');
 
@@ -47,9 +49,9 @@ export default function Stories() {
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
-  const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const alertColorKey = alertRole.colorKey;
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
@@ -91,6 +93,45 @@ export default function Stories() {
   const loadingPosts = useMemo(
     () => loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds,
     [loadingCategorizedFeeds, loadingFeeds, loadingFilteredFeeds]
+  );
+
+  const { panelVars } = useHomePanelVars(0.08);
+  const feedListClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      `,
+    []
+  );
+  const feedItemCustomClass = useMemo(
+    () =>
+      css`
+        /* spacing only; no background, no border */
+        padding: 0.4rem 1.1rem;
+        transition: background 0.15s ease;
+        &:first-of-type {
+          padding-top: 0;
+        }
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 0.3rem 0;
+        }
+      `,
+    []
+  );
+  const contentPanelClass = useMemo(
+    () =>
+      css`
+        > div {
+          padding: 1rem 0 1rem 0;
+          border-top: none;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 0.5rem 0 0.5rem 0;
+          }
+        }
+      `,
+    []
   );
 
   useEffect(() => {
@@ -182,22 +223,29 @@ export default function Stories() {
     };
   }, []);
 
+  const containerStyle = useMemo<React.CSSProperties>(
+    () => ({
+      width: '100%',
+      paddingBottom: '1rem',
+      ...(panelVars as React.CSSProperties)
+    }),
+    [panelVars]
+  );
+
   return (
     <ErrorBoundary componentPath="Home/Stories/index">
       <div
         key={`${category}-${subFilter}`}
-        style={{ width: '100%' }}
+        style={containerStyle}
         ref={ContainerRef}
       >
-        {userId && (
-          <TopMenu
-            onInputModalButtonClick={(modalType) =>
-              onSetInputModalShown({ shown: true, modalType })
-            }
-            onPlayAIStories={() => onSetAIStoriesModalShown(true)}
-            onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
-          />
-        )}
+        <TopMenu
+          onInputModalButtonClick={(modalType) =>
+            onSetInputModalShown({ shown: true, modalType })
+          }
+          onPlayAIStories={() => onSetAIStoriesModalShown(true)}
+          onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+        />
         <Featured />
         <HomeFilter
           category={category}
@@ -228,7 +276,7 @@ export default function Stories() {
             <>
               {numNewPosts > 0 ? (
                 <Banner
-                  color={alertColor}
+                  color={alertColorKey}
                   onClick={handleFetchNewFeeds}
                   style={{
                     marginBottom: '1rem',
@@ -244,7 +292,7 @@ export default function Stories() {
               ) : (
                 feedsOutdated && (
                   <Banner
-                    color={alertColor}
+                    color={alertColorKey}
                     onClick={() => window.location.reload()}
                     style={{
                       marginBottom: '1rem'
@@ -254,44 +302,49 @@ export default function Stories() {
                   </Banner>
                 )
               )}
-              {(feeds || []).map(
-                (feed: { [key: string]: any } = {}, index: number) => {
-                  const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
-                  return feed.contentId ? (
-                    <ContentPanel
-                      key={panelKey}
-                      style={{
-                        marginBottom: '1rem'
-                      }}
-                      feedId={feed.feedId}
-                      zIndex={feeds?.length - index}
-                      contentId={feed.contentId}
-                      contentType={feed.contentType}
-                      rootType={feed.rootType}
-                      commentsLoadLimit={5}
-                      numPreviewComments={1}
-                    />
-                  ) : null;
-                }
-              )}
-              {loadMoreButton ? (
-                <LoadMoreButton
-                  style={{ marginBottom: '1rem' }}
-                  onClick={handleLoadMoreFeeds}
-                  loading={loadingMore}
-                  filled
-                />
-              ) : null}
-              <div
-                className={css`
-                  display: ${loadMoreButton ? 'none' : 'block'};
-                  height: 5rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    height: 7rem;
-                    display: block;
+              <div className={feedListClass}>
+                {(feeds || []).map(
+                  (feed: { [key: string]: any } = {}, index: number) => {
+                    const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
+                    return feed.contentId ? (
+                      <div
+                        key={panelKey}
+                        className={`feed-item ${feedItemCustomClass}`}
+                      >
+                        <ContentPanel
+                          feedId={feed.feedId}
+                          zIndex={feeds?.length - index}
+                          contentId={feed.contentId}
+                          contentType={feed.contentType}
+                          rootType={feed.rootType}
+                          commentsLoadLimit={5}
+                          numPreviewComments={1}
+                          className={contentPanelClass}
+                          style={{ margin: 0 }}
+                        />
+                      </div>
+                    ) : null;
                   }
-                `}
-              />
+                )}
+                {loadMoreButton ? (
+                  <LoadMoreButton
+                    style={{ marginTop: '0.6rem' }}
+                    onClick={handleLoadMoreFeeds}
+                    loading={loadingMore}
+                    filled
+                  />
+                ) : null}
+                <div
+                  className={css`
+                    display: ${loadMoreButton ? 'none' : 'block'};
+                    height: 5rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      height: 7rem;
+                      display: block;
+                    }
+                  `}
+                />
+              </div>
             </>
           ) : null}
         </div>

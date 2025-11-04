@@ -41,7 +41,8 @@ export default function ReplitVerifier({
       return {
         label: 'Okay',
         color: 'logoBlue',
-        skeuomorphic: true,
+        variant: 'soft',
+        tone: 'raised',
         noArrow: true,
         onClick: () => {
           window.open('https://replit.com');
@@ -55,7 +56,8 @@ export default function ReplitVerifier({
     return {
       label: 'I made an account',
       color: 'green',
-      skeuomorphic: true
+      variant: 'soft',
+      tone: 'raised'
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [makeAccountOkayPressed, task.id]);
@@ -65,7 +67,8 @@ export default function ReplitVerifier({
       return {
         label: 'Okay',
         color: 'logoBlue',
-        skeuomorphic: true,
+        variant: 'soft',
+        tone: 'raised',
         noArrow: true,
         onClick: () => handleUpdateTaskProgress({ createReplOkayPressed: true })
       };
@@ -73,7 +76,8 @@ export default function ReplitVerifier({
     return {
       label: 'Yes, I did',
       color: 'green',
-      skeuomorphic: true
+      variant: 'soft',
+      tone: 'raised'
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createReplOkayPressed, task.id]);

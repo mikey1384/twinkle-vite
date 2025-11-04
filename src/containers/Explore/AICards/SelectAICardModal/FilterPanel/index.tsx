@@ -6,7 +6,13 @@ import WordFilter from './WordFilter';
 import CardIdFilter from './CardIdFilter';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  mobileMaxWidth,
+  borderRadius,
+  desktopMinWidth
+} from '~/constants/css';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
@@ -20,44 +26,18 @@ export default function FilterPanel({
   onDropdownShown: (isShown: boolean) => void;
   onSetFilters: (filters: any) => void;
 }) {
+  const { cardVars } = useThemedCardVars({ role: 'filter' });
+  const dallESwitchStyle = deviceIsMobile
+    ? ({
+        transform: 'scale(0.9)',
+        transformOrigin: 'center',
+        gap: '0.4rem'
+      } as React.CSSProperties)
+    : undefined;
+
   return (
-    <div
-      className={css`
-        font-size: 1.7rem;
-        width: 70%;
-        padding: 1rem;
-        background: #fff;
-        border: 1px solid ${Color.borderGray()};
-        margin-bottom: 1rem;
-        .label {
-          font-family: 'Roboto', sans-serif;
-          font-weight: bold;
-          font-size: 1.5rem;
-          color: ${Color.darkerGray()};
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.1rem;
-          }
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          width: 100%;
-        }
-      `}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          width: '100%',
-          padding: '1rem'
-        }}
-        className={css`
-          @media (max-width: ${mobileMaxWidth}) {
-            gap: 1rem;
-            flex-direction: column;
-          }
-        }
-        `}
-      >
+    <div style={cardVars} className={panelClass}>
+      <div className={filtersGridClass}>
         <ColorFilter
           selectedColor={filters.color}
           onSelectColor={handleSelectColor}
@@ -81,20 +61,13 @@ export default function FilterPanel({
           onDropdownShown={onDropdownShown}
         />
       </div>
-      <div
-        style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-        className={css`
-          @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-          }
-        `}
-      >
+      <div className={switchRowClass}>
         <SwitchButton
           checked={!!filters.isDalle3}
           label="DALL-E 3"
           onChange={handleDALLE3SwitchClick}
           small={deviceIsMobile}
+          style={dallESwitchStyle}
         />
       </div>
     </div>
@@ -142,3 +115,57 @@ export default function FilterPanel({
     }));
   }
 }
+
+const panelClass = css`
+  font-size: 1.6rem;
+  width: 100%;
+  max-width: 960px;
+  padding: 1.6rem 1.8rem;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  margin: 0 auto 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  .label {
+    font-family: 'Inter', 'Roboto', sans-serif;
+    font-weight: 600;
+    font-size: 1.35rem;
+    color: ${Color.darkerGray()};
+    letter-spacing: 0.02em;
+  }
+  @media (min-width: ${desktopMinWidth}) {
+    font-size: 1.7rem;
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    margin-bottom: 1.2rem;
+    padding: 1.2rem;
+    font-size: 1.45rem;
+    gap: 1.4rem;
+  }
+`;
+
+const filtersGridClass = css`
+  width: 100%;
+  display: grid;
+  gap: 1.2rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+  @media (max-width: ${mobileMaxWidth}) {
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+`;
+
+const switchRowClass = css`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 0.4rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    justify-content: center;
+    padding-top: 0.2rem;
+  }
+`;

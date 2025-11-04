@@ -69,7 +69,8 @@ export default function CopyAndPasteCode({
               Did you copy it?
             </h1>
             <Button
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               color="green"
               style={{ marginTop: '3rem' }}
               onClick={() => setCodeCopied(true)}

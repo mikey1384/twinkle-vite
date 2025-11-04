@@ -46,39 +46,44 @@ export default function MobileMenu({ onClose }: { onClose: () => void }) {
         display: flex;
       `}`}
     >
-      <animated.div
-        style={styles}
-        className={`momentum-scroll-enabled ${css`
-          height: 100%;
-          width: 70%;
-          position: relative;
-          background: ${Color.whiteGray()};
-          overflow-y: scroll;
-        `}`}
-      >
-        <ProfileWidget />
-        <HomeMenuItems style={{ marginTop: '1rem' }} />
-        <Notification location="home" />
-        {username && (
-          <div
-            className={css`
-              font-weight: bold;
-              border-top: 1px solid ${Color.borderGray()};
-              background: #fff;
-              width: 100%;
-              text-align: center;
-              color: ${Color.cranberry()};
-              font-size: 2rem;
-              padding: 1rem;
-              margin-top: 1rem;
-            `}
-            onClick={handleLogout}
+      {(() => {
+        const AnimatedDiv = animated('div');
+        return (
+          <AnimatedDiv
+            style={styles}
+            className={`momentum-scroll-enabled ${css`
+              height: 100%;
+              width: 70%;
+              position: relative;
+              background: ${Color.whiteGray()};
+              overflow-y: scroll;
+            `}`}
           >
-            <Icon icon="right-from-bracket" />
-            <span style={{ marginLeft: '0.7rem' }}>Log out</span>
-          </div>
-        )}
-      </animated.div>
+            <ProfileWidget />
+            <HomeMenuItems style={{ marginTop: '1rem' }} />
+            <Notification location="home" />
+            {username && (
+              <div
+                className={css`
+                  font-weight: bold;
+                  border-top: 1px solid var(--ui-border);
+                  background: #fff;
+                  width: 100%;
+                  text-align: center;
+                  color: ${Color.cranberry()};
+                  font-size: 2rem;
+                  padding: 1rem;
+                  margin-top: 1rem;
+                `}
+                onClick={handleLogout}
+              >
+                <Icon icon="right-from-bracket" />
+                <span style={{ marginLeft: '0.7rem' }}>Log out</span>
+              </div>
+            )}
+          </AnimatedDiv>
+        );
+      })()}
       <div style={{ width: '30%', position: 'relative' }} onClick={onClose}>
         <Icon
           icon="times"

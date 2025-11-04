@@ -3,7 +3,7 @@ import Code from '~/components/Texts/Code';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import localize from '~/constants/localize';
 
 const copiedLabel = localize('copied');
@@ -46,14 +46,15 @@ export default function CopyCode({
           }
           @media (max-width: ${mobileMaxWidth}) {
             margin-left: 0;
-          }
-        `}
-      >
-        <Button
-          skeuomorphic
-          onClick={() => {
-            setCopiedShown(true);
-            handleCopyToClipboard();
+      }
+    `}
+  >
+    <Button
+      variant="soft"
+      tone="raised"
+      onClick={() => {
+        setCopiedShown(true);
+        handleCopyToClipboard();
             setTimeout(() => setCopiedShown(false), 700);
           }}
         >
@@ -71,7 +72,7 @@ export default function CopyCode({
             fontSize: '1.2rem',
             padding: '1rem',
             wordBreak: 'keep-all',
-            border: `1px solid ${Color.borderGray()}`
+            border: '1px solid var(--ui-border)'
           }}
         >
           {copiedLabel}

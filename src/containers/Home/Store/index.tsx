@@ -8,11 +8,14 @@ import ProfilePictureItem from './ProfilePictureItem';
 import AICardItem from './AICardItem';
 import DonorLicenseItem from './DonorLicenseItem';
 import Loading from '~/components/Loading';
+import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import RewardBoostItem from './RewardBoostItem';
 import localize from '~/constants/localize';
+import { css } from '@emotion/css';
+import HomeSectionHeader from '~/components/HomeSectionHeader';
 
 const changePasswordLabel = localize('changePassword');
 const changePasswordDescriptionLabel = localize('changePasswordDescription');
@@ -22,6 +25,16 @@ const changeUsernameDescriptionLabel =
     ? `본 아이템을 잠금 해제 하시면 ${priceTable.username} 트윈클 코인 가격에 언제든 유저명을 바꾸실 수 있게 됩니다`
     : `Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`;
 const moreToComeLabel = localize('moreToCome');
+const settingsLabel = localize('settings');
+
+const contentWrapperClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  padding: 1rem 0;
+`;
+
+const headingMargin = { marginBottom: '2rem' } as React.CSSProperties;
 
 export default function Store() {
   const loadMyData = useAppContext((v) => v.requestHelpers.loadMyData);
@@ -38,6 +51,7 @@ export default function Store() {
   const donatedCoins = useKeyContext((v) => v.myState.donatedCoins);
   const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
   const userId = useKeyContext((v) => v.myState.userId);
+  
 
   const unlockUsernameChange = useAppContext(
     (v) => v.requestHelpers.unlockUsernameChange
@@ -88,71 +102,73 @@ export default function Store() {
   }, [pageVisible, userId]);
 
   return (
-    <div style={{ paddingBottom: '15rem' }}>
-      <KarmaStatus
-        karmaPoints={karmaPoints}
-        level={level}
-        loading={loading}
-        numApprovedRecommendations={numApprovedRecommendations}
-        numPostsRewarded={numPostsRewarded}
-        numRecommended={numRecommended}
-        numTwinklesRewarded={numTwinklesRewarded}
-        title={title}
-        userId={userId}
-        userType={userType}
-      />
-      <ItemPanel
-        itemKey="changePassword"
-        itemName={changePasswordLabel}
-        style={{ marginTop: userId ? '4rem' : 0 }}
-        itemDescription={changePasswordDescriptionLabel}
-        loading={loading}
-      >
-        <ChangePassword style={{ marginTop: '1rem' }} />
-      </ItemPanel>
-      {loading ? (
-        <Loading />
+    <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
+      <HomeSectionHeader title={settingsLabel} style={headingMargin} />
+      {!userId ? (
+        <HomeLoginPrompt />
       ) : (
-        <>
-          <ItemPanel
+        <div className={contentWrapperClass}>
+          <KarmaStatus
             karmaPoints={karmaPoints}
-            locked={!canChangeUsername}
-            itemKey="username"
-            itemName={changeUsernameLabel}
-            itemDescription={changeUsernameDescriptionLabel}
-            onUnlock={handleUnlockUsernameChange}
-            unlocking={unlockingUsernameChange}
-            style={{ marginTop: '3rem' }}
+            level={level}
+            loading={loading}
+            numApprovedRecommendations={numApprovedRecommendations}
+            numPostsRewarded={numPostsRewarded}
+            numRecommended={numRecommended}
+            numTwinklesRewarded={numTwinklesRewarded}
+            title={title}
+            userId={userId}
+            userType={userType}
+          />
+          <ItemPanel
+            itemKey="changePassword"
+            itemName={changePasswordLabel}
+            itemDescription={changePasswordDescriptionLabel}
             loading={loading}
           >
-            <ChangeUsername style={{ marginTop: '1rem' }} />
+            <ChangePassword style={{ marginTop: '1rem' }} />
           </ItemPanel>
-          <RewardBoostItem style={{ marginTop: '3rem' }} loading={loading} />
-          <FileSizeItem style={{ marginTop: '3rem' }} loading={loading} />
-          <ProfilePictureItem style={{ marginTop: '3rem' }} loading={loading} />
-          <AICardItem
-            style={{ marginTop: '3rem' }}
-            userId={userId}
-            canGenerateAICard={!!canGenerateAICard}
-            karmaPoints={karmaPoints}
-            loading={loading}
-          />
-          <DonorLicenseItem
-            karmaPoints={karmaPoints}
-            loading={loading}
-            canDonate={canDonate}
-            donatedCoins={donatedCoins || 0}
-            style={{ marginTop: '3rem' }}
-          />
-          <ItemPanel
-            karmaPoints={karmaPoints}
-            locked
-            itemKey="moreToCome"
-            itemName={`${moreToComeLabel}...`}
-            style={{ marginTop: '3rem' }}
-            loading={loading}
-          />
-        </>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              <ItemPanel
+                karmaPoints={karmaPoints}
+                locked={!canChangeUsername}
+                itemKey="username"
+                itemName={changeUsernameLabel}
+                itemDescription={changeUsernameDescriptionLabel}
+                onUnlock={handleUnlockUsernameChange}
+                unlocking={unlockingUsernameChange}
+                loading={loading}
+              >
+                <ChangeUsername style={{ marginTop: '1rem' }} />
+              </ItemPanel>
+              <RewardBoostItem loading={loading} />
+              <FileSizeItem loading={loading} />
+              <ProfilePictureItem loading={loading} />
+              <AICardItem
+                userId={userId}
+                canGenerateAICard={!!canGenerateAICard}
+                karmaPoints={karmaPoints}
+                loading={loading}
+              />
+              <DonorLicenseItem
+                karmaPoints={karmaPoints}
+                loading={loading}
+                canDonate={canDonate}
+                donatedCoins={donatedCoins || 0}
+              />
+              <ItemPanel
+                karmaPoints={karmaPoints}
+                locked
+                itemKey="moreToCome"
+                itemName={`${moreToComeLabel}...`}
+                loading={loading}
+              />
+            </>
+          )}
+        </div>
       )}
     </div>
   );

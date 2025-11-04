@@ -228,14 +228,15 @@ export default function QuestionEditForm({
           display: 'flex'
         }}
       >
-        <Button transparent onClick={onCancel}>
+        <Button variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button
           style={{ marginLeft: '1rem' }}
           loading={submitting}
           color="logoBlue"
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           disabled={submitDisabled}
           onClick={handleSubmit}
         >

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import AchievementItem from '~/components/AchievementItem';
 import UserLevelStatus from './UserLevelStatus';
 import Loading from '~/components/Loading';
+import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
+import HomeSectionHeader from '~/components/HomeSectionHeader';
 
 export default function Achievements() {
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
@@ -37,6 +38,7 @@ export default function Achievements() {
     }
     return result;
   }, [achievementsObj]);
+  
 
   useEffect(() => {
     if (userId) init();
@@ -78,44 +80,9 @@ export default function Achievements() {
 
   return (
     <div style={{ paddingBottom: userId ? '15rem' : 0 }}>
-      <div
-        className={css`
-          margin-bottom: 2rem;
-          background: #fff;
-          padding: 1rem;
-          border: 1px solid ${Color.borderGray()};
-          border-radius: ${borderRadius};
-          @media (max-width: ${mobileMaxWidth}) {
-            border-radius: 0;
-            border-top: 0;
-            border-left: 0;
-            border-right: 0;
-          }
-        `}
-      >
-        <p
-          className={css`
-            font-size: 2rem;
-            font-weight: bold;
-            line-height: 1.5;
-          `}
-          style={{ fontWeight: 'bold', fontSize: '2.5rem' }}
-        >
-          Achievements
-        </p>
-      </div>
+      <HomeSectionHeader title="Achievements" style={{ marginBottom: '2rem' }} />
       {!userId ? (
-        <div
-          className={css`
-            text-align: center;
-            font-size: 2.3rem;
-            font-weight: bold;
-            color: ${Color.black()};
-            margin-top: 17vh;
-          `}
-        >
-          Please log in to view this page
-        </div>
+        <HomeLoginPrompt />
       ) : !isAchievementsLoaded ? (
         <Loading />
       ) : (
@@ -123,7 +90,10 @@ export default function Achievements() {
           {userId && (
             <UserLevelStatus
               style={{
-                marginBottom: '4rem'
+                marginBottom: '4rem',
+                // Force neutral text colors (theme-independent)
+                ['--home-panel-color' as any]: Color.darkerGray(),
+                ['--home-panel-heading' as any]: Color.black(),
               }}
             />
           )}

@@ -53,6 +53,18 @@ export default function QualityFilter({
     }));
   }, [onSelectQuality, selectedQuality]);
 
+  const buttonColor =
+    selectedQuality === 'superior'
+      ? 'green'
+      : selectedQuality === 'rare'
+      ? 'purple'
+      : selectedQuality === 'elite'
+      ? 'redOrange'
+      : selectedQuality === 'legendary'
+      ? 'gold'
+      : 'darkerGray';
+  const buttonVariant = buttonColor === 'darkerGray' ? 'solid' : 'soft';
+
   return (
     <div
       style={{
@@ -69,18 +81,9 @@ export default function QualityFilter({
       <div style={{ marginLeft: '1rem' }}>
         <DropdownButton
           isMenuShownWhenMounted={selectedFilter === 'quality'}
-          skeuomorphic
-          color={
-            selectedQuality === 'superior'
-              ? 'green'
-              : selectedQuality === 'rare'
-              ? 'purple'
-              : selectedQuality === 'elite'
-              ? 'redOrange'
-              : selectedQuality === 'legendary'
-              ? 'gold'
-              : 'darkerGray'
-          }
+          variant={buttonVariant}
+          tone="raised"
+          color={buttonColor}
           icon="caret-down"
           text={selectedQuality}
           onDropdownShown={onDropdownShown}

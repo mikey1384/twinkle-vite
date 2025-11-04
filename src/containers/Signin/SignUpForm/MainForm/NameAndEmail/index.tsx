@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import EmailSection from './EmailSection';
 import Verifier from './Verifier';
 import localize from '~/constants/localize';
-import { useKeyContext } from '~/contexts';
 import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const firstNameLabel = localize('firstName');
 const lastNameLabel = localize('lastName');
@@ -46,7 +46,11 @@ export default function UsernamePassword({
   onSetHasNameError: (value: boolean) => void;
   userType: string;
 }) {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   const [firstnameErrorMsg, setFirstnameErrorMsg] = useState('');
   const [lastnameErrorMsg, setLastnameErrorMsg] = useState('');
   const [isLastnameHighlighted, setIsLastnameHighlighted] = useState(false);
@@ -262,7 +266,7 @@ export default function UsernamePassword({
               style={{
                 width: 'fit-content',
                 cursor: 'pointer',
-                color: Color[linkColor]()
+                color: linkColor
               }}
               className={css`
                 font-size: 1.3rem;

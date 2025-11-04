@@ -64,7 +64,8 @@ export default function Menu({
   return (
     <div style={style}>
       <Button
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         color="strongPink"
         disabled={loadingType === 'easy'}
         onClick={() => handleButtonClick('easy')}
@@ -87,7 +88,8 @@ export default function Menu({
             </div>
             <DropdownButton
               icon="chevron-down"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               text={styleLabelObj.label}
               listStyle={{ minWidth: '30ch' }}
               menuProps={[
@@ -130,7 +132,8 @@ export default function Menu({
             using
             <DropdownButton
               icon="chevron-down"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               text={wordLevel}
               listStyle={{ minWidth: '25ch' }}
               menuProps={[
@@ -155,7 +158,8 @@ export default function Menu({
         </div>
         <div>
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color="green"
             disabled={loadingType === 'rewrite'}
             style={{ marginLeft: '1rem' }}
@@ -167,7 +171,8 @@ export default function Menu({
         </div>
       </div>
       <Button
-        skeuomorphic
+        variant="soft"
+        tone="raised"
         color="logoBlue"
         disabled={loadingType === 'grammar'}
         style={{ marginTop: '2rem' }}

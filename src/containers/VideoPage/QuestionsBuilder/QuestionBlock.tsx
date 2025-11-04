@@ -24,7 +24,7 @@ const Styles = {
     > nav {
       display: flex;
       width: 100%;
-      border: 1px solid ${Color.borderGray()};
+      border: 1px solid var(--ui-border);
       margin-bottom: -1px;
       > main {
         position: relative;
@@ -181,7 +181,8 @@ export default function QuestionBlock({
           )}
           {deleted && (
             <Button
-              skeuomorphic
+              variant="solid"
+              tone="raised"
               color="darkerGray"
               onClick={() => onUndoRemove(questionId)}
             >
@@ -228,7 +229,7 @@ export default function QuestionBlock({
       >
         {!onEdit ? (
           <Button
-            transparent
+            variant="ghost"
             onClick={() => onEditStart(questionId)}
             style={{ opacity: deleted ? 0.2 : 1, fontSize: '2rem' }}
             disabled={deleted && true}
@@ -238,7 +239,7 @@ export default function QuestionBlock({
           </Button>
         ) : (
           <div style={{ display: 'flex' }}>
-            <Button transparent onClick={() => handleEditCancel(questionId)}>
+            <Button variant="ghost" onClick={() => handleEditCancel(questionId)}>
               {cancelLabel}
             </Button>
             <Button

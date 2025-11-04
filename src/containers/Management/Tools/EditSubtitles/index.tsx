@@ -854,7 +854,7 @@ export default function EditSubtitles({
                 width: 80px;
                 padding: 6px 10px;
                 border-radius: 4px;
-                border: 1px solid #ced4da;
+                border: 1px solid var(--ui-border);
                 margin-right: 10px;
               `}
               placeholder="±seconds"

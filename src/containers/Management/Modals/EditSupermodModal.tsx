@@ -13,7 +13,8 @@ import {
   roles
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function EditSupermodModal({
   onHide,
@@ -22,7 +23,8 @@ export default function EditSupermodModal({
   onHide: () => void;
   target: any;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const changeSupermodRole = useAppContext(
     (v) => v.requestHelpers.changeSupermodRole
@@ -97,7 +99,8 @@ export default function EditSupermodModal({
         <DropdownButton
           style={{ marginTop: '1rem' }}
           icon="chevron-down"
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           text={selectedRole || 'Not Selected'}
           color="darkerGray"
           menuProps={editMenuItems}
@@ -105,7 +108,7 @@ export default function EditSupermodModal({
         />
       </main>
       <footer>
-        <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
+        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button

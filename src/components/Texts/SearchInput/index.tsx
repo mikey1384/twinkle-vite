@@ -1,6 +1,6 @@
-import React, { RefObject, useRef, useState } from 'react';
+import React, { RefObject, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
@@ -44,60 +44,68 @@ export default function SearchInput({
 }) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
+  const resolvedBorderColor = useMemo(() => {
+    if (!borderColor) return undefined;
+    const candidate = Color[borderColor as keyof typeof Color];
+    if (typeof candidate === 'function') return candidate();
+    if (typeof candidate === 'string') return candidate;
+    return borderColor;
+  }, [borderColor]);
 
   return (
     <div
       className={`${css`
-        display: flex;
-        align-items: center;
-        width: 100%;
-        height: 4.3rem;
         position: relative;
         z-index: 400;
-        .addon {
-          height: 100%;
-          border: 1px solid
-            ${addonColor ? Color[addonColor]() : Color.darkerBorderGray()};
-          padding: 0 1rem;
-          display: flex;
-          align-items: center;
-          font-size: 1.5rem;
-        }
-        input {
-          height: 100%;
-          border: 1px solid
-            ${borderColor ? Color[borderColor]() : Color.darkerBorderGray()};
-          border-left: none;
-        }
-      `} ${className}`}
+        width: 100%;
+      `} ${className || ''}`}
       ref={SearchInputRef}
       style={style}
     >
       <div
-        className="addon"
-        style={{
-          height: inputHeight,
-          width: '3.5rem',
-          display: 'flex',
-          justifyContent: 'center',
-          backgroundColor: addonColor
-            ? Color[addonColor]()
-            : Color.borderGray(),
-          color: addonColor ? '#fff' : ''
-        }}
+        className={css`
+          position: relative;
+          width: 100%;
+          height: ${inputHeight || '4.3rem'};
+          display: flex;
+          align-items: center;
+          background: #fff;
+          border: 1px solid ${resolvedBorderColor || 'var(--ui-border)'};
+          border-radius: ${borderRadius};
+          transition: border-color 0.18s ease;
+          &:focus-within {
+            border-color: var(--ui-border-strong);
+          }
+        `}
       >
-        <Icon icon="search" />
+        <Icon
+          icon="search"
+          className={css`
+            position: absolute;
+            left: 1rem;
+            color: ${addonColor
+              ? (Color[addonColor as keyof typeof Color] || Color.gray)()
+              : Color.gray()};
+          `}
+        />
+        <Input
+          style={{
+            height: inputHeight || '100%',
+            width: '100%',
+            paddingLeft: '3.2rem',
+            border: 'none',
+            background: 'transparent',
+            boxShadow: 'none'
+          }}
+          autoFocus={autoFocus}
+          inputRef={innerRef}
+          onFocus={onFocus && onFocus}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+        />
       </div>
-      <Input
-        style={{ height: inputHeight, width: 'CALC(100% - 3.5rem)' }}
-        autoFocus={autoFocus}
-        inputRef={innerRef}
-        onFocus={onFocus && onFocus}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-      />
       <DropdownList
         indexToHighlight={indexToHighlight}
         renderItemLabel={renderItemLabel}

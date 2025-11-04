@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { removeLineBreaks, truncateTopic } from '~/helpers/stringHelpers';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ContentLink({
   style,
@@ -32,11 +31,14 @@ export default function ContentLink({
   const truncatedTopic = useMemo(() => {
     return topic ? truncateTopic(topic) : '';
   }, [topic]);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    userLink: { color: userLinkColor },
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const { color: userLinkColor } = useRoleColor('userLink', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const rootPath = useMemo(() => {
     let result = '';
     if (contentType === 'aiStory') {
@@ -71,7 +73,7 @@ export default function ContentLink({
     <Link
       style={{
         fontWeight: 'bold',
-        color: byUser ? Color[userLinkColor]() : Color[linkColor](),
+        color: byUser ? userLinkColor : linkColor,
         ...style
       }}
       to={`/${rootPath}${subPath}`}

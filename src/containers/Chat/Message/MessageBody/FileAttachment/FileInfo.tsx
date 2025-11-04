@@ -8,8 +8,8 @@ import {
   desktopMinWidth,
   mobileMaxWidth
 } from '~/constants/css';
-import { returnTheme } from '~/helpers';
 import { renderFileSize } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function FileInfo({
   fileName,
@@ -24,9 +24,10 @@ export default function FileInfo({
   src: string;
   theme?: string;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useMemo(() => returnTheme(theme), [theme]);
+  const { color: linkColor } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
 
   const displayedFileSize = useMemo(() => renderFileSize(fileSize), [fileSize]);
   return (
@@ -98,7 +99,7 @@ export default function FileInfo({
                 style={{
                   width: '100%',
                   fontWeight: 'bold',
-                  color: Color[linkColor](),
+                  color: linkColor,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: 'block',

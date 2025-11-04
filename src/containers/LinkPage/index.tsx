@@ -14,11 +14,13 @@ import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
 import XPRewardInterface from '~/components/XPRewardInterface';
 import Icon from '~/components/Icon';
+import MadeByBar from '~/components/MadeByBar';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Description from './Description';
+import Card from './Card';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled
@@ -33,7 +35,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useLocation, useParams } from 'react-router-dom';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function LinkPage() {
   const location = useLocation();
@@ -48,21 +50,12 @@ export default function LinkPage() {
   const level = useKeyContext((v) => v.myState.level);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const byUserIndicatorColor = useKeyContext(
-    (v) => v.theme.byUserIndicator.color
-  );
-  const byUserIndicatorOpacity = useKeyContext(
-    (v) => v.theme.byUserIndicator.opacity
-  );
-  const byUserIndicatorTextColor = useKeyContext(
-    (v) => v.theme.byUserIndicatorText.color
-  );
-  const byUserIndicatorTextShadowColor = useKeyContext(
-    (v) => v.theme.byUserIndicatorText.shadow
-  );
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    fallback: 'pink'
+  });
 
   const onEditLinkPage = useExploreContext((v) => v.actions.onEditLinkPage);
   const onLikeLink = useExploreContext((v) => v.actions.onLikeLink);
@@ -263,285 +256,308 @@ export default function LinkPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const madeByLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{uploader?.username}님이 직접 제작한 콘텐츠입니다</>;
-    }
-    return <>This was made by {uploader?.username}</>;
-  }, [uploader?.username]);
-
   return loaded && !isDeleted ? (
     <div
       className={css`
+        width: CALC(100% - 2rem);
+        min-height: 100%;
         margin-top: 1rem;
-        @media (max-width: ${mobileMaxWidth}) {
+        margin-bottom: 1rem;
+        @media (max-width: ${tabletMaxWidth}) {
           margin-top: 0;
+          width: 100%;
+          height: auto;
         }
       `}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        fontSize: '1.7rem',
-        paddingBottom: '10rem'
-      }}
+      style={{ fontSize: '1.7rem', paddingBottom: '2rem' }}
     >
       <div
         className={css`
-          width: 60%;
-          background-color: #fff;
-          border: 1px solid ${Color.borderGray()};
-          padding-bottom: 1rem;
-          @media (max-width: ${mobileMaxWidth}) {
-            border-top: 0;
-            border-left: 0;
-            border-right: 0;
+          width: 100%;
+          height: auto;
+          margin-left: 1rem;
+          display: grid;
+          grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr);
+          column-gap: 1.5rem;
+          row-gap: 1.5rem;
+          align-items: start;
+          &::after {
+            content: '';
+            display: block;
+            height: 1rem;
+            grid-column: 1 / -1;
+          }
+          @media (max-width: ${tabletMaxWidth}) {
+            grid-template-columns: 1fr;
             width: 100%;
+            margin: 0;
+            row-gap: 1rem;
+            height: auto;
           }
         `}
       >
-        <Description
-          key={'description' + linkId}
-          uploader={uploader}
-          timeStamp={timeStamp}
-          title={title}
-          url={content}
-          userCanEditThis={userCanEditThis}
-          description={description}
-          linkId={linkId}
-          onDelete={() => setConfirmModalShown(true)}
-          onEditDone={handleEditLinkPage}
-          userIsUploader={userIsUploader}
-        />
-        {!!byUser && (
-          <div
-            style={{
-              padding: '0.7rem',
-              background: Color[byUserIndicatorColor](byUserIndicatorOpacity),
-              color: Color[byUserIndicatorTextColor](),
-              textShadow: byUserIndicatorTextShadowColor
-                ? `0 0 1px ${Color[byUserIndicatorTextShadowColor]()}`
-                : 'none',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.7rem',
-              marginTop: '2rem',
-              marginBottom: '1rem'
-            }}
-            className={css`
-              margin-left: -1px;
-              margin-right: -1px;
-              @media (max-width: ${mobileMaxWidth}) {
-                margin-left: 0;
-                margin-right: 0;
-              }
-            `}
-          >
-            {madeByLabel}
-          </div>
-        )}
-        <Embedly
-          key={'link' + linkId}
-          style={{ marginTop: '2rem' }}
-          contentId={linkId}
-          loadingHeight="30rem"
-        />
         <div
-          style={{
-            position: 'relative',
-            paddingTop: '1.5rem',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}
+          className={css`
+            grid-column: 1;
+          `}
         >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <LikeButton
-                key={'like' + linkId}
-                filled
-                style={{ fontSize: '2rem' }}
-                contentType="url"
+          <Card edgeToEdgeOnMobile style={{ paddingBottom: '1rem' }}>
+            <Description
+              key={'description' + linkId}
+              uploader={uploader}
+              timeStamp={timeStamp}
+              title={title}
+              url={content}
+              userCanEditThis={userCanEditThis}
+              description={description}
+              linkId={linkId}
+              onDelete={() => setConfirmModalShown(true)}
+              onEditDone={handleEditLinkPage}
+              userIsUploader={userIsUploader}
+            />
+            <MadeByBar
+              byUser={!!byUser}
+              username={uploader?.username}
+              contentType="url"
+              style={{ marginTop: '1.25rem' }}
+            />
+            <Embedly
+              key={'link' + linkId}
+              style={{ marginTop: '1.5rem' }}
+              contentId={linkId}
+              loadingHeight="30rem"
+            />
+            <div
+              className={css`
+                position: relative;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                border-top: 1px solid var(--ui-border);
+                margin-top: 1.5rem;
+                padding-top: 1.25rem;
+              `}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <LikeButton
+                    key={'like' + linkId}
+                    filled
+                    style={{ fontSize: '2rem' }}
+                    contentType="url"
+                    contentId={linkId}
+                    onClick={handleLikeLink}
+                    likes={likes}
+                  />
+                  {userCanRewardThis && (
+                    <RewardButton
+                      contentId={linkId}
+                      contentType="url"
+                      disableReason={xpButtonDisabled}
+                      style={{
+                        fontSize: '2rem',
+                        marginLeft: '1rem'
+                      }}
+                    />
+                  )}
+                  <div style={{ position: 'relative' }}>
+                    <StarButton
+                      style={{
+                        fontSize: '2rem',
+                        marginLeft: '1rem'
+                      }}
+                      byUser={!!byUser}
+                      contentId={linkId}
+                      onToggleByUser={handleSetByUserStatus}
+                      contentType="url"
+                      uploader={uploader}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <Likers
+                    key={'likes' + linkId}
+                    style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}
+                    likes={likes}
+                    userId={userId}
+                    onLinkClick={() => setLikesModalShown(true)}
+                  />
+                </div>
+              </div>
+              <Button
+                style={{
+                  right: '1rem',
+                  bottom: '0.5rem',
+                  position: 'absolute'
+                }}
+                color={rewardColor}
+                variant={isRecommendedByUser ? 'solid' : 'soft'}
+                tone="raised"
+                disabled={recommendationInterfaceShown}
+                onClick={() => setRecommendationInterfaceShown(true)}
+              >
+                <Icon icon="heart" />
+              </Button>
+            </div>
+            {recommendationInterfaceShown && (
+              <RecommendationInterface
+                style={{
+                  marginTop: likes.length > 0 ? '0.5rem' : '1rem',
+                  marginBottom: 0
+                }}
                 contentId={linkId}
-                onClick={handleLikeLink}
-                likes={likes}
+                contentType="url"
+                onHide={() => setRecommendationInterfaceShown(false)}
+                recommendations={recommendations}
+                rewardLevel={byUser ? 5 : 0}
+                content={description}
+                uploaderId={uploader?.id}
               />
-              {userCanRewardThis && (
-                <RewardButton
-                  contentId={linkId}
+            )}
+            {xpRewardInterfaceShown && (
+              <div style={{ padding: '0 1rem' }}>
+                <XPRewardInterface
+                  innerRef={RewardInterfaceRef}
+                  rewards={rewards}
+                  rewardLevel={byUser ? 5 : 0}
                   contentType="url"
-                  disableReason={xpButtonDisabled}
-                  style={{
-                    fontSize: '2rem',
-                    marginLeft: '1rem'
-                  }}
-                />
-              )}
-              <div style={{ position: 'relative' }}>
-                <StarButton
-                  style={{
-                    fontSize: '2rem',
-                    marginLeft: '1rem'
-                  }}
-                  byUser={!!byUser}
                   contentId={linkId}
-                  onToggleByUser={handleSetByUserStatus}
-                  contentType="url"
-                  uploader={uploader}
+                  noPadding
+                  onReward={() =>
+                    setRecommendationInterfaceShown(
+                      !isRecommendedByUser && twinkleCoins > 0
+                    )
+                  }
+                  uploaderLevel={uploader?.level}
+                  uploaderId={uploader.id}
                 />
               </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Likers
-                key={'likes' + linkId}
-                style={{ marginTop: '0.5rem', fontSize: '1.5rem' }}
-                likes={likes}
-                userId={userId}
-                onLinkClick={() => setLikesModalShown(true)}
+            )}
+            <div
+              className={css`
+                margin: 1rem;
+                border-radius: ${borderRadius};
+                padding: 0 0.25rem;
+              `}
+            >
+              <RecommendationStatus
+                style={{
+                  marginTop: likes.length > 0 ? '0.5rem' : '1rem',
+                  marginBottom: recommendationInterfaceShown ? '1rem' : 0
+                }}
+                contentType="url"
+                recommendations={recommendations}
               />
             </div>
-          </div>
-          <Button
-            style={{ right: '1rem', bottom: '0.5rem', position: 'absolute' }}
-            color={rewardColor}
-            skeuomorphic
-            filled={isRecommendedByUser}
-            disabled={recommendationInterfaceShown}
-            onClick={() => setRecommendationInterfaceShown(true)}
-          >
-            <Icon icon="heart" />
-          </Button>
+            {Array.isArray(rewards) && rewards.length > 0 && (
+              <div
+                className={css`
+                  background: #fff;
+                  border-radius: ${borderRadius};
+                  padding: 1.25rem;
+                  margin: 1rem;
+                  border: 1px solid var(--ui-border);
+                  @media (max-width: ${mobileMaxWidth}) {
+                    margin: 1rem 0 0 0;
+                    border: 0;
+                  }
+                `}
+              >
+                <RewardStatus
+                  contentType="url"
+                  contentId={linkId}
+                  rewardLevel={byUser ? 5 : 0}
+                  onCommentEdit={onEditRewardComment}
+                  style={{ fontSize: '1.4rem' }}
+                  rewards={rewards}
+                />
+              </div>
+            )}
+          </Card>
         </div>
-        {recommendationInterfaceShown && (
-          <RecommendationInterface
-            style={{
-              marginTop: likes.length > 0 ? '0.5rem' : '1rem',
-              marginBottom: 0
-            }}
-            contentId={linkId}
-            contentType="url"
-            onHide={() => setRecommendationInterfaceShown(false)}
-            recommendations={recommendations}
-            rewardLevel={byUser ? 5 : 0}
-            content={description}
-            uploaderId={uploader?.id}
-          />
-        )}
-        {xpRewardInterfaceShown && (
-          <div style={{ padding: '0 1rem' }}>
-            <XPRewardInterface
-              innerRef={RewardInterfaceRef}
-              rewards={rewards}
-              rewardLevel={byUser ? 5 : 0}
-              contentType="url"
-              contentId={linkId}
-              noPadding
-              onReward={() =>
-                setRecommendationInterfaceShown(
-                  !isRecommendedByUser && twinkleCoins > 0
-                )
-              }
-              uploaderLevel={uploader?.level}
-              uploaderId={uploader.id}
-            />
-          </div>
-        )}
-        <RecommendationStatus
-          style={{
-            marginTop: likes.length > 0 ? '0.5rem' : '1rem',
-            marginBottom: recommendationInterfaceShown ? '1rem' : 0
-          }}
-          contentType="url"
-          recommendations={recommendations}
-        />
-        <RewardStatus
-          contentType="url"
-          contentId={linkId}
-          rewardLevel={byUser ? 5 : 0}
-          onCommentEdit={onEditRewardComment}
+        <div
           className={css`
-            margin-top: 1rem;
-            font-size: 1.4rem;
-            margin-right: -1px;
-            margin-left: -1px;
-            @media (max-width: ${mobileMaxWidth}) {
-              margin-left: 0;
-              margin-right: 0;
+            grid-column: 2;
+            @media (max-width: ${tabletMaxWidth}) {
+              grid-column: 1;
             }
           `}
-          rewards={rewards}
-        />
+        >
+          <Card
+            edgeToEdgeOnMobile
+            style={{ padding: '1rem', marginBottom: '1rem' }}
+          >
+            <Subjects
+              contentId={linkId}
+              contentType="url"
+              loadMoreButton={subjectsLoadMoreButton}
+              subjects={subjects}
+              onLoadMoreSubjects={onLoadMoreSubjects}
+              onLoadSubjectComments={onLoadSubjectComments}
+              onSubjectEditDone={onEditSubject}
+              onSubjectDelete={(subjectId: number) =>
+                onDeleteContent({
+                  contentType: 'subject',
+                  contentId: subjectId
+                })
+              }
+              onSetRewardLevel={onSetRewardLevel}
+              uploadSubject={onUploadSubject}
+              commentActions={{
+                editRewardComment: onEditRewardComment,
+                onDelete: handleDeleteComment,
+                onEditDone: onEditComment,
+                onLikeClick: onLikeComment,
+                onLoadMoreComments: onLoadMoreSubjectComments,
+                onLoadMoreReplies: onLoadMoreSubjectReplies,
+                onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
+                onUploadComment: handleUploadComment,
+                onUploadReply: handleUploadReply
+              }}
+            />
+          </Card>
+          <Card
+            edgeToEdgeOnMobile
+            style={{ padding: '1rem', marginBottom: '2rem' }}
+          >
+            <Comments
+              autoExpand
+              comments={comments}
+              isLoading={loadingComments}
+              inputTypeLabel="comment"
+              key={'comments' + linkId}
+              loadMoreButton={commentsLoadMoreButton}
+              onCommentSubmit={handleUploadComment}
+              onDelete={handleDeleteComment}
+              onEditDone={onEditComment}
+              onLikeClick={onLikeComment}
+              onLoadMoreComments={onLoadMoreComments}
+              onLoadMoreReplies={onLoadMoreReplies}
+              onLoadRepliesOfReply={onLoadRepliesOfReply}
+              onReplySubmit={handleUploadReply}
+              onRewardCommentEdit={onEditRewardComment}
+              parent={{
+                contentType: 'url',
+                contentId: linkId,
+                uploader,
+                pinnedCommentId
+              }}
+              userId={userId}
+            />
+          </Card>
+        </div>
       </div>
-      <Subjects
+      <div
         className={css`
-          width: 60%;
+          display: none;
           @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
+            display: block;
+            height: calc(
+              var(--mobile-nav-height, 7rem) + env(safe-area-inset-bottom, 0px)
+            );
           }
         `}
-        contentId={linkId}
-        contentType="url"
-        loadMoreButton={subjectsLoadMoreButton}
-        subjects={subjects}
-        onLoadMoreSubjects={onLoadMoreSubjects}
-        onLoadSubjectComments={onLoadSubjectComments}
-        onSubjectEditDone={onEditSubject}
-        onSubjectDelete={(subjectId: number) =>
-          onDeleteContent({ contentType: 'subject', contentId: subjectId })
-        }
-        onSetRewardLevel={onSetRewardLevel}
-        uploadSubject={onUploadSubject}
-        commentActions={{
-          editRewardComment: onEditRewardComment,
-          onDelete: handleDeleteComment,
-          onEditDone: onEditComment,
-          onLikeClick: onLikeComment,
-          onLoadMoreComments: onLoadMoreSubjectComments,
-          onLoadMoreReplies: onLoadMoreSubjectReplies,
-          onLoadRepliesOfReply: onLoadSubjectRepliesOfReply,
-          onUploadComment: handleUploadComment,
-          onUploadReply: handleUploadReply
-        }}
-      />
-      <Comments
-        autoExpand
-        comments={comments}
-        isLoading={loadingComments}
-        inputTypeLabel="comment"
-        key={'comments' + linkId}
-        loadMoreButton={commentsLoadMoreButton}
-        onCommentSubmit={handleUploadComment}
-        onDelete={handleDeleteComment}
-        onEditDone={onEditComment}
-        onLikeClick={onLikeComment}
-        onLoadMoreComments={onLoadMoreComments}
-        onLoadMoreReplies={onLoadMoreReplies}
-        onLoadRepliesOfReply={onLoadRepliesOfReply}
-        onReplySubmit={handleUploadReply}
-        onRewardCommentEdit={onEditRewardComment}
-        parent={{
-          contentType: 'url',
-          contentId: linkId,
-          uploader,
-          pinnedCommentId
-        }}
-        className={css`
-          border: 1px solid ${Color.borderGray()};
-          padding: 1rem;
-          width: 60%;
-          background: #fff;
-          @media (max-width: ${mobileMaxWidth}) {
-            border-left: 0;
-            border-right: 0;
-            width: 100%;
-          }
-        `}
-        userId={userId}
       />
       {confirmModalShown && (
         <ConfirmModal

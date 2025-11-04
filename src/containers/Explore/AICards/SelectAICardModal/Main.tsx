@@ -36,7 +36,14 @@ export default function Main({
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        width: '100%'
+      }}
+    >
       {loading ? (
         <Loading />
       ) : cards.length ? (

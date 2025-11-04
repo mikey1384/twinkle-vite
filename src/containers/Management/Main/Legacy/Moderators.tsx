@@ -14,6 +14,7 @@ import { User } from '~/types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const accountTypeLabel = localize('accountType');
 const changeAccountTypeLabel = localize('changeAccountType');
@@ -26,7 +27,8 @@ const deviceIsMobile = isMobile(navigator);
 
 export default function Moderators({ canManage }: { canManage: boolean }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });
+  const tableHeaderColor = tableHeaderRole.colorKey || 'logoBlue';
   const accountTypes = useManagementContext((v) => v.state.accountTypes);
   const moderators = useManagementContext((v) => v.state.moderators);
   const loadModeratorsCSV = useAppContext(
@@ -81,7 +83,8 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <Button
                 color="darkerGray"
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 onClick={() => setAddModeratorModalShown(true)}
               >
                 <Icon icon="plus" />
@@ -89,7 +92,8 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
               </Button>
               <Button
                 color="darkerGray"
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 onClick={handleDownloadCSV}
               >
                 <Icon icon="file-csv" />
@@ -177,7 +181,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
             }}
           >
             <LoadMoreButton
-              transparent
+              variant="ghost"
               style={{ fontSize: '2rem' }}
               onClick={onLoadMoreModerators}
             />

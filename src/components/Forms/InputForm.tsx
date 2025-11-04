@@ -32,11 +32,11 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
-import { returnTheme } from '~/helpers';
 import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const areYouSureLabel = localize('areYouSure');
 const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
@@ -83,21 +83,31 @@ function InputForm({
 }) {
   const level = useKeyContext((v) => v.myState.level);
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
   const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
   const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
-  const {
-    skeuomorphicDisabled: {
-      color: skeuomorphicDisabledColor,
-      opacity: skeuomorphicDisabledOpacity
-    },
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    danger: { color: dangerColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const { colorKey: buttonColor } = useRoleColor('button', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { colorKey: buttonHoverColor } = useRoleColor('buttonHovered', {
+    themeName: theme,
+    fallback: buttonColor || 'logoBlue'
+  });
+  const { color: skeuomorphicDisabledColor } = useRoleColor(
+    'skeuomorphicDisabled',
+    {
+      themeName: theme,
+      fallback: 'darkerGray',
+      opacity: 0.4
+    }
+  );
+  const { colorKey: dangerColor } = useRoleColor('danger', {
+    themeName: theme,
+    fallback: 'red'
+  });
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
     [fileUploadLvl]
@@ -381,7 +391,8 @@ function InputForm({
           >
             {isComment && <DraftSaveIndicator savingState={savingState} />}
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               color="green"
               disabled={submitDisabled}
               onClick={handleSubmit}
@@ -400,7 +411,8 @@ function InputForm({
             <Button
               style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}
               color={dangerColor}
-              filled
+              variant="soft"
+              tone="raised"
               loading={secretViewMessageSubmitting}
               onClick={() => {
                 level >= MOD_LEVEL
@@ -457,11 +469,7 @@ function InputForm({
                 opacity: uploadDisabled ? 0.2 : 1,
                 cursor: uploadDisabled ? 'default' : 'pointer',
                 boxShadow: uploadDisabled ? 'none' : '',
-                borderColor: uploadDisabled
-                  ? Color[skeuomorphicDisabledColor](
-                      skeuomorphicDisabledOpacity
-                    )
-                  : ''
+                borderColor: uploadDisabled ? skeuomorphicDisabledColor : ''
               }}
             />
           )}

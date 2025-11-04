@@ -3,14 +3,17 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import Table from '../Table';
-import { useAppContext, useKeyContext, useManagementContext } from '~/contexts';
+import { useAppContext, useManagementContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const userLabel = localize('user');
 
 export default function WealthData() {
-  const tableHeaderColor = useKeyContext((v) => v.theme.tableHeader.color);
+  const { colorKey: tableHeaderColor } = useRoleColor('tableHeader', {
+    fallback: 'logoBlue'
+  });
   const users = useManagementContext((v) => v.state.wealthData);
   const usersLoaded = useManagementContext((v) => v.state.wealthDataLoaded);
   const loadWealthDataCSV = useAppContext(
@@ -26,7 +29,7 @@ export default function WealthData() {
         loaded={usersLoaded}
         innerStyle={{ paddingLeft: 0, paddingRight: 0 }}
         button={
-          <Button color="darkerGray" skeuomorphic onClick={handleDownloadCSV}>
+          <Button color="darkerGray" variant="solid" tone="raised" onClick={handleDownloadCSV}>
             <Icon icon="file-csv" />
           </Button>
         }
@@ -114,7 +117,7 @@ export default function WealthData() {
           }}
         >
           <Button
-            transparent
+            variant="ghost"
             color={tableHeaderColor}
             onClick={handleDownloadCSV}
           >

@@ -132,8 +132,9 @@ export default function Menu({
             <span>
               Are you sure you want to burn this card? Once you do, it will be{' '}
               <b>permanently</b> destroyed and you {`won't`} be able to sell it
-              or use it for collection missions. This action is irreversible, so
-              make sure this is what you really want to do before proceeding
+              or use it for future AI Card related features. This action is
+              irreversible, so make sure this is what you really want to do
+              before proceeding
             </span>
           }
           onConfirm={handleBurn}

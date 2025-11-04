@@ -18,7 +18,8 @@ import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
   VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE
+  AI_CARD_CHAT_TYPE,
+  DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
 
 import { User } from '~/types';
@@ -29,6 +30,7 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface HeaderProps {
   onInit: () => void;
@@ -50,7 +52,13 @@ export default function Header({
   const userId = useKeyContext((v) => v.myState.userId);
   const loggedIn = useKeyContext((v) => v.myState.loggedIn);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
-  const headerColor = useKeyContext((v) => v.theme.header.color);
+  const viewerTheme =
+    useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
+  const headerRole = useRoleColor('header', {
+    fallback: 'white',
+    themeName: viewerTheme
+  });
+  const headerColor = headerRole.getColor() || Color.white();
   const chatType = useChatContext((v) => v.state.chatType);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const numUnreads = useChatContext((v) => v.state.numUnreads);
@@ -185,21 +193,32 @@ export default function Header({
           position: relative;
           font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
           font-size: 1.7rem;
-          background: ${Color[headerColor]()};
+          background: ${headerColor};
           display: flex;
-          box-shadow: 0 3px 3px -3px ${Color.black(0.6)};
+          box-shadow: none;
           align-items: center;
           width: 100%;
           margin-bottom: 0px;
           height: 4.5rem;
+          &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            pointer-events: none;
+            background: var(--ui-border);
+          }
           @media (min-width: ${desktopMinWidth}) {
             top: 0;
           }
           @media (max-width: ${mobileMaxWidth}) {
             bottom: 0;
             box-shadow: none;
-            height: 7rem;
-            border-top: 1px solid ${Color.borderGray()};
+            height: var(--mobile-nav-height, 7rem);
+            border-top: 1px solid var(--ui-border);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
           }
         `}`}
         style={{

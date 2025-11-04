@@ -43,6 +43,7 @@ export default function FeaturedSubjects({
   return (
     <ErrorBoundary componentPath="Explore/Subjects/Featured">
       <SectionPanel
+        elevated
         title="Featured Subjects"
         loaded={!loading}
         loadMoreButtonShown={!isExpanded && subjects.length > 3}
@@ -52,7 +53,8 @@ export default function FeaturedSubjects({
           myId === userId ? (
             <div style={{ display: 'flex' }}>
               <Button
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 color="darkerGray"
                 style={{ marginLeft: 'auto' }}
                 onClick={() => setSelectModalShown(true)}
@@ -60,7 +62,8 @@ export default function FeaturedSubjects({
                 {selectLabel}
               </Button>
               <Button
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 color="darkerGray"
                 style={{ marginLeft: '1rem' }}
                 onClick={() => setReorderModalShown(true)}

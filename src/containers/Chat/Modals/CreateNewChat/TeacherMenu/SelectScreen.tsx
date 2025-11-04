@@ -55,7 +55,8 @@ export default function SelectScreen({
               }}
             >
               <Button
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 style={{ fontSize: '3.5rem', padding: '1.5rem' }}
                 color="blue"
                 onClick={() => onSetSection('regular')}
@@ -92,7 +93,8 @@ export default function SelectScreen({
               }}
             >
               <Button
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 style={{ fontSize: '3.5rem', padding: '1.5rem' }}
                 color="pink"
                 onClick={() => onSetSection('classroom')}
@@ -104,7 +106,7 @@ export default function SelectScreen({
         </div>
       </main>
       <footer>
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           {cancelLabel}
         </Button>
       </footer>

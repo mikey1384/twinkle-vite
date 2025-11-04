@@ -28,7 +28,6 @@ export default function StarButton({
   onSetRewardLevel,
   onToggleByUser,
   uploader,
-  skeuomorphic,
   style = {}
 }: {
   byUser?: boolean;
@@ -41,7 +40,6 @@ export default function StarButton({
   onSetRewardLevel?: (v: any) => void;
   onToggleByUser: (v: any) => void;
   uploader: User;
-  skeuomorphic?: boolean;
   style?: React.CSSProperties;
 }) {
   const { canReward, canEditRewardLevel, userId } = useKeyContext(
@@ -138,11 +136,11 @@ export default function StarButton({
       >
         <Button
           style={otherStyles}
-          skeuomorphic={!(!!rewardLevel || byUser || filled) && skeuomorphic}
+          variant={!!rewardLevel || byUser || filled ? 'solid' : 'soft'}
+          tone="raised"
           color={
             !!rewardLevel && byUser ? 'gold' : byUser ? 'orange' : 'brownOrange'
           }
-          filled={!!rewardLevel || byUser || filled}
           onClick={onClick}
         >
           <Icon icon="star" />

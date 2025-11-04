@@ -3,6 +3,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import ContentLink from '~/components/ContentLink';
 import { Color } from '~/constants/css';
 import { truncateText } from '~/helpers/stringHelpers';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function RewardText({
   actionColor,
@@ -41,8 +42,16 @@ export default function RewardText({
   rootMissionType: string;
   targetObj: any;
 }) {
-  const missionLinkColor = Color[missionColor]();
-  const contentLinkColor = Color[actionColor]();
+  const missionLinkColor =
+    resolveColorValue(missionColor) || Color.logoBlue();
+  const contentLinkColor =
+    resolveColorValue(actionColor) || Color.logoBlue();
+  const linkColorValue =
+    resolveColorValue(linkColor) || Color.logoBlue();
+  const infoColorValue =
+    resolveColorValue(infoColor) || Color.logoBlue();
+  const rewardColorValue =
+    resolveColorValue(rewardColor) || Color.pink();
   const recommendationTargetLabel = useMemo(() => {
     let target = '';
     if (rootType === 'pass') {
@@ -74,7 +83,7 @@ export default function RewardText({
       <div>
         <UsernameText
           user={{ id: rewarderId, username: rewarderUsername }}
-          color={Color[linkColor]()}
+          color={linkColorValue}
         />{' '}
         <span
           style={{
@@ -85,7 +94,7 @@ export default function RewardText({
                 ? Color.rose()
                 : rewardAmount >= 3
                 ? Color.pink()
-                : Color[infoColor](),
+                : infoColorValue,
             fontWeight: 'bold'
           }}
         >
@@ -122,9 +131,9 @@ export default function RewardText({
     <div>
       <UsernameText
         user={{ id: rewarderId, username: rewarderUsername }}
-        color={Color[linkColor]()}
+        color={linkColorValue}
       />{' '}
-      <b style={{ color: Color[rewardColor]() }}>also recommended</b>{' '}
+      <b style={{ color: rewardColorValue }}>also recommended</b>{' '}
       {rootType === 'xpChange' ? (
         <b
           style={{

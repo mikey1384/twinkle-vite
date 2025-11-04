@@ -3,142 +3,183 @@ import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import {
+  Color,
+  mobileMaxWidth,
+  tabletMaxWidth,
+  borderRadius
+} from '~/constants/css';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const container = css`
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: ${borderRadius};
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border: none;
+  background: #fff;
+  box-shadow: none;
+  backdrop-filter: none;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  z-index: 400;
-  border: none;
+  overflow: visible;
 
   .heading {
-    padding: 1rem;
-    border: 1px solid ${Color.borderGray()};
-    border-bottom: none;
-    border-radius: ${borderRadius};
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-left: 0;
+    padding: 0.8rem 1.2rem;
     display: flex;
-    background: #fff;
-    width: 100%;
+    gap: 1.2rem;
     align-items: center;
-    justify-content: flex-start;
+    background: transparent;
+    border-bottom: 0;
     cursor: pointer;
-    &:hover {
-      transition: background 0.5s;
-      background: ${Color.highlightGray()};
-    }
+    transition: color 0.2s ease, transform 0.12s ease;
     .widget__profile-pic {
-      width: 8rem;
+      --profile-pic-size: 6.2rem;
+      box-shadow: none;
     }
-    .names {
-      width: CALC(100% - 8rem);
-      text-align: center;
+    .titles {
+      flex: 1 1 auto;
+      min-width: 0;
+      text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
-      a {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      .real-name {
         color: ${Color.darkerGray()};
-        font-weight: bold;
-        font-size: 2.2rem;
-        text-decoration: none;
+        font-weight: 700;
+        font-size: 2rem;
       }
-      span {
-        color: ${Color.darkerGray()};
-        font-size: 1.2rem;
+      .username {
+        color: ${Color.gray()};
+        font-size: 1.3rem;
+        font-weight: 600;
+      }
+      &.no-realname {
+        .username {
+          color: ${Color.darkerGray()};
+          font-size: 2rem;
+          font-weight: 700;
+        }
+      }
+    }
+  }
+
+  /* Tablet: stack name under avatar to avoid overflow */
+  @media (max-width: ${tabletMaxWidth}) {
+    .heading {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+      .widget__profile-pic {
+        --profile-pic-size: 5.6rem;
+      }
+      .titles {
+        text-align: center;
+        width: 100%;
+        min-width: 0;
+        .real-name,
+        .username {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
       }
     }
   }
 
   .details {
-    font-size: 1.3rem;
-    border: 1px solid ${Color.borderGray()};
-    border-left: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: ${borderRadius};
-    background: #fff;
-    padding: 1rem;
+    padding: 0.8rem 1.2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: transparent;
+    font-size: 1.4rem;
     .login-message {
       font-size: 2rem;
       color: ${Color.darkerGray()};
-      font-weight: bold;
+      font-weight: 700;
     }
-  }
-
-  .details.no-user {
-    border-top-right-radius: ${borderRadius};
   }
 
   .navigation {
-    padding: 1rem 0;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.8rem;
     width: 100%;
-    gap: 0.7rem;
   }
+
   .navigation-item {
     display: flex;
     align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+    border-radius: 1rem;
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+    font-weight: 600;
+    color: ${Color.darkerGray()};
+    gap: 0.6rem;
     cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    transition: background-color 0.3s ease;
-    > span {
-      margin-left: 0.5rem;
+    transition: transform 0.12s ease, border-color 0.18s ease,
+      background 0.18s ease, color 0.18s ease;
+    .navigation-icon {
+      color: ${Color.darkerGray()};
+      transition: color 0.18s ease;
     }
     &:hover {
-      background-color: ${Color.highlightGray()};
+      transform: translateX(4px);
+      background: var(--profile-widget-hover-bg, transparent);
+      border-color: var(--profile-widget-accent-border, var(--ui-border));
+      color: var(--profile-widget-accent, ${Color.logoBlue()});
+      .navigation-icon {
+        color: var(--profile-widget-accent, ${Color.logoBlue()});
+      }
     }
-  }
-  .navigation-icon {
-    color: ${Color.darkerGray()};
-    margin-right: 0.5rem;
   }
 
   @media (max-width: ${mobileMaxWidth}) {
     border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    box-shadow: none;
     .heading {
-      border: 0;
-      border-radius: 0;
-      justify-content: space-around;
-      .names {
-        text-align: center;
-        a {
-          font-size: 2.5rem;
+      padding: 1.2rem 1.4rem;
+      .widget__profile-pic {
+        --profile-pic-size: 7.2rem;
+      }
+      .titles {
+        .real-name {
+          font-size: 2.3rem;
         }
-        span {
+        .username {
           font-size: 1.5rem;
         }
-        width: 50%;
+        &.no-realname {
+          .username {
+            font-size: 2.3rem;
+          }
+        }
       }
     }
     .details {
-      border: 0;
-      border-top: 1px solid ${Color.borderGray()};
-      border-bottom: 1px solid ${Color.borderGray()};
-      border-radius: 0;
+      padding: 1.2rem 1.2rem 1.6rem;
       text-align: center;
-      font-size: 3rem;
       .login-message {
-        font-size: 3rem;
-      }
-      button {
-        font-size: 2rem;
+        font-size: 2.4rem;
       }
     }
-  }
-
-  @media (min-width: 2304px) {
-    border-left: 1px solid ${Color.borderGray()};
+    .navigation {
+      /* Stack navigation items in a single column on mobile */
+      grid-template-columns: 1fr;
+    }
   }
 `;
 
@@ -150,10 +191,29 @@ export default function ProfileWidget() {
   const { profilePicUrl, realName, userId, username } = useKeyContext(
     (v) => v.myState
   );
+  const { themeStyles, accentColor: defaultAccent } = useHomePanelVars(0.08);
+  const themeBg = themeStyles.hoverBg || 'transparent';
+  const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {
+    fallback: 'logoBlue'
+  });
+  const accentColor = React.useMemo(() => {
+    return homeMenuItemActiveRole.getColor() || defaultAccent;
+  }, [homeMenuItemActiveRole, defaultAccent]);
+  const accentBorderColor = React.useMemo(() => {
+    return homeMenuItemActiveRole.getColor(0.4) || 'var(--ui-border)';
+  }, [homeMenuItemActiveRole]);
 
   return (
     <ErrorBoundary componentPath="ProfileWidget/index">
-      <div className={container}>
+      <div
+        className={container}
+        style={{
+          ['--profile-widget-bg' as any]: themeBg,
+          ['--profile-widget-hover-bg' as any]: themeBg,
+          ['--profile-widget-accent' as any]: accentColor,
+          ['--profile-widget-accent-border' as any]: accentBorderColor
+        }}
+      >
         {username ? (
           <div
             className="heading"
@@ -167,17 +227,13 @@ export default function ProfileWidget() {
                 profilePicUrl={profilePicUrl}
               />
             </div>
-            <div className="names">
-              <a>{username}</a>
-              {realName && (
-                <div>
-                  <span>({realName})</span>
-                </div>
-              )}
+            <div className={`titles ${!realName ? 'no-realname' : ''}`}>
+              {realName ? <div className="real-name">{realName}</div> : null}
+              <div className="username">@{username}</div>
             </div>
           </div>
         ) : null}
-        <div className={`details${!username ? ' no-user' : ''}`}>
+        <div className="details">
           {userId ? (
             <div className="navigation">
               <div

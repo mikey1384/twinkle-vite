@@ -111,7 +111,8 @@ export default function LetsLaunch({
         {urlIsNotEmpty && !urlError && (
           <Button
             style={{ marginTop: '3rem' }}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color="green"
             disabled={submitting}
             onClick={handleSubmit}

@@ -19,12 +19,14 @@ import {
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = localize('searchUsers');
 
 export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(false);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const level = useKeyContext((v) => v.myState.level);
   const addSupermods = useAppContext((v) => v.requestHelpers.addSupermods);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
@@ -123,7 +125,8 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
               <DropdownButton
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 text={user.role || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}
@@ -196,7 +199,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
         )}
       </main>
       <footer>
-        <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
+        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button loading={loading} color={doneColor} onClick={handleSubmit}>

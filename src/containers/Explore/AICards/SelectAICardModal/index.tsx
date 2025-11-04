@@ -10,6 +10,7 @@ import ConfirmSelectionModal from './ConfirmSelectionModal';
 import { calculateTotalBurnValue } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const MAX_SELECTED_CARDS = 30;
 
@@ -39,8 +40,17 @@ export default function SelectAICardModal({
   const [loading, setLoading] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
-  const successColor = useKeyContext((v) => v.theme.success.color);
+  const { colorKey: doneColorKey } = useRoleColor(
+    'done',
+    {
+      fallback: 'blue'
+    }
+  );
+  const { colorKey: successColorKey } = useRoleColor('success', {
+    fallback: 'green'
+  });
+  const doneColor = doneColorKey || 'blue';
+  const successColor = successColorKey || 'green';
   const loadFilteredAICards = useAppContext(
     (v) => v.requestHelpers.loadFilteredAICards
   );
@@ -130,6 +140,7 @@ export default function SelectAICardModal({
             color={filters.color}
             quality={filters.quality}
             successColor={successColor}
+            isBuy={isBuy}
           />
         ) : (
           <Main
@@ -150,7 +161,7 @@ export default function SelectAICardModal({
         )}
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
           Cancel
         </Button>
         <Button

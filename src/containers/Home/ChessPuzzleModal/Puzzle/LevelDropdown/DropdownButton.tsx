@@ -13,7 +13,7 @@ export default React.forwardRef<
   const buttonCls = css`
     cursor: ${disabled ? 'not-allowed' : 'pointer'};
     background: #f8fafc;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--ui-border);
     color: #374151;
     font-weight: 700;
     font-size: 1.05rem;
@@ -31,7 +31,7 @@ export default React.forwardRef<
     @media (hover: hover) and (pointer: fine) {
       &:hover {
         background: ${disabled ? '#f8fafc' : '#f1f5f9'};
-        border-color: ${disabled ? '#e2e8f0' : '#3b82f6'};
+        border-color: ${disabled ? 'var(--ui-border)' : '#3b82f6'};
       }
     }
     @media (max-width: ${tabletMaxWidth}) {

@@ -8,12 +8,13 @@ import Loading from '~/components/Loading';
 import LocalContext from '../../../Context';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { isMobile, returnTheme, textIsOverflown } from '~/helpers';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { isMobile, textIsOverflown } from '~/helpers';
+import { mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { useInterval } from '~/helpers/hooks';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { charLimit, defaultChatSubject } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const maxTextLength = 65;
@@ -60,11 +61,18 @@ export default function LegacyTopic({
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
-  const {
-    button: { color: buttonColor },
-    buttonHovered: { color: buttonHoverColor },
-    chatTopic: { color: chatTopicColor }
-  } = useMemo(() => returnTheme(displayedThemeColor), [displayedThemeColor]);
+  const { colorKey: buttonColor } = useRoleColor('button', {
+    themeName: displayedThemeColor,
+    fallback: 'logoBlue'
+  });
+  const { colorKey: buttonHoverColor } = useRoleColor('buttonHovered', {
+    themeName: displayedThemeColor,
+    fallback: buttonColor || 'logoBlue'
+  });
+  const { color: chatTopicColor } = useRoleColor('chatTopic', {
+    themeName: displayedThemeColor,
+    fallback: displayedThemeColor
+  });
   const reloadingChatSubject = useRef(false);
   const HeaderLabelRef: React.RefObject<any> = useRef(null);
   const [submitting, setSubmitting] = useState(false);
@@ -160,7 +168,7 @@ export default function LegacyTopic({
               className={css`
                 width: 100%;
                 cursor: default;
-                color: ${Color[chatTopicColor]()};
+                color: ${chatTopicColor};
                 display: inline-block;
                 white-space: nowrap;
                 text-overflow: ellipsis;

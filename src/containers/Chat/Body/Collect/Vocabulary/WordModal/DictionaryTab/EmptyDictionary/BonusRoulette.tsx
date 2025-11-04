@@ -14,7 +14,9 @@ import Icon from '~/components/Icon';
 
 const wheelSize = 280;
 const wheelRadius = wheelSize / 2;
-const SPIN_DURATION = 6000;
+const DEFAULT_SPIN_DURATION = 3200;
+const MIN_SPIN_DURATION = 1500;
+const MAX_SPIN_DURATION = 4200;
 const INITIAL_FAST_SPINS = 15;
 
 const wheelContainer = css`
@@ -207,6 +209,7 @@ function BonusRoulette({
   const messageRef = useRef<string>('');
   const targetAngleRef = useRef<number>(0);
   const coinsRef = useRef<number | undefined>(undefined);
+  const spinDurationRef = useRef(DEFAULT_SPIN_DURATION);
 
   const intervalRef = useRef<number | null>(null);
 
@@ -418,14 +421,15 @@ function BonusRoulette({
       setWheelBlur(0);
       setWhiteOverlay(0);
       startTimeRef.current = 0;
+      spinDurationRef.current = DEFAULT_SPIN_DURATION;
     });
 
     let spinAngle = 0;
-    const startTime = Date.now();
+    const warmupStartTime = Date.now();
     const MAX_ROTATION_SPEED = 720;
 
     function warmUpSpin() {
-      const elapsedTime = Date.now() - startTime;
+      const elapsedTime = Date.now() - warmupStartTime;
       const speed = Math.min((elapsedTime / 20) * 20, MAX_ROTATION_SPEED);
 
       spinAngle += speed * (20 / 1000);
@@ -448,6 +452,16 @@ function BonusRoulette({
       const result = await getVocabRouletteResult({ word });
       ({ coins, message, outcome, partOfSpeechOrder, partOfSpeeches } = result);
     } catch (error: any) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = 0;
+      }
+      setWheelBlur(0);
+      setWhiteOverlay(0);
+      setLabelOpacity(1);
+      setCurrentAngle(0);
+      setResultMessage(null);
+      setHasSpun(false);
       onInsertBlackAICardUpdateLog(error?.message || 'Something went wrong');
       return;
     }
@@ -457,10 +471,21 @@ function BonusRoulette({
       animationRef.current = 0;
     }
 
-    onAIDefinitionsGenerated({ partOfSpeechOrder, partOfSpeeches });
+    onAIDefinitionsGenerated({
+      partOfSpeechOrder,
+      partOfSpeeches
+    });
     outcomeRef.current = outcome;
     messageRef.current = message;
     coinsRef.current = coins;
+
+    const warmupElapsed = Date.now() - warmupStartTime;
+    const targetTotal = DEFAULT_SPIN_DURATION;
+    const adjustedDuration = Math.max(
+      MIN_SPIN_DURATION,
+      Math.min(MAX_SPIN_DURATION, targetTotal - warmupElapsed)
+    );
+    spinDurationRef.current = adjustedDuration;
 
     const angleForOutcome = getTargetAngleForOutcome(outcome);
     targetAngleRef.current =
@@ -474,7 +499,8 @@ function BonusRoulette({
       startTimeRef.current = timestamp;
     }
     const elapsed = timestamp - startTimeRef.current;
-    const progress = Math.min(elapsed / SPIN_DURATION, 1);
+    const spinDuration = spinDurationRef.current || DEFAULT_SPIN_DURATION;
+    const progress = Math.min(elapsed / spinDuration, 1);
 
     function customEaseOut(t: number) {
       const fastPhase = Math.pow(1 - t, 2);

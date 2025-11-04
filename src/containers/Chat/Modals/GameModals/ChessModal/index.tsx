@@ -68,6 +68,7 @@ export default function ChessModal({
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const banned = useKeyContext((v) => v.myState.banned);
+  const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
   const rewindRequestId = useMemo(
     () => currentChannel?.gameState?.chess?.rewindRequestId,
     [currentChannel?.gameState]
@@ -178,9 +179,9 @@ export default function ChessModal({
   useEffect(() => {
     try {
       const saved = localStorage.getItem(`tw-chat-chess-theme-${userId}`);
-      if (saved) setTheme(saved);
+      setTheme(saved || null);
     } catch {}
-  }, [userId]);
+  }, [userId, chessThemeVersion]);
 
   useEffect(() => {
     if (theme && !allowedThemeValues.includes(theme as any)) {
@@ -262,7 +263,7 @@ export default function ChessModal({
             doneDisabled={
               !newChessState || !socketConnected || banned?.chess || submitting
             }
-            showSpinner={!socketConnected || submitting}
+            loading={!socketConnected || submitting}
             warningColor={warningColor}
             doneColor={doneColor}
             acceptDrawLabel={acceptDrawLabel}

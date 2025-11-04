@@ -10,11 +10,13 @@ import ProgressBar from '~/components/ProgressBar';
 import ProfilePic from '~/components/ProfilePic';
 import UserPopup from '~/components/UserPopup';
 import UserListModal from '~/components/Modals/UserListModal';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext, useAppContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
+import { homePanelClass } from '~/theme/homePanels';
+import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -88,6 +90,15 @@ export default function ItemPanel({
   const anyMilestoneCompleted =
     milestones && milestones.some((m) => m.completed);
   const shouldHideRequirements = milestonesShown && anyMilestoneCompleted;
+
+  const { panelVars } = useHomePanelVars();
+  const panelStyle = useMemo(() => {
+    const base = style ? { ...panelVars, ...style } : panelVars;
+    return {
+      ...base,
+      ['--home-panel-surface' as const]: '#ffffff'
+    } as React.CSSProperties;
+  }, [panelVars, style]);
 
   const displayedAP = useMemo(
     () => (typeof ap === 'number' ? addCommasToNumber(ap) : null),
@@ -190,39 +201,36 @@ export default function ItemPanel({
 
   return (
     <div
-      className={css`
-        display: grid;
-        grid-template-columns: auto 1fr 1fr;
-        grid-template-areas:
-          'badge title title'
-          'badge description description'
-          'badge ${shouldHideRequirements
-            ? 'milestones milestones'
-            : milestonesShown
-            ? 'requirements milestones'
-            : 'requirements requirements'}'
-          'accomplishers accomplishers accomplishers';
-        gap: 2rem;
-        align-items: start;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-        padding: 1rem;
-        background: #fff;
-        @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 1fr;
+      className={cx(
+        homePanelClass,
+        css`
+          display: grid;
+          grid-template-columns: auto 1fr 1fr;
           grid-template-areas:
-            'title'
-            'badge'
-            'description'
-            ${shouldHideRequirements ? '' : "'requirements'"}
-            ${milestonesShown ? "'milestones'" : ''}
-            'accomplishers';
-          border-radius: 0;
-          border-right: 0;
-          border-left: 0;
-        }
-      `}
-      style={style}
+            'badge title title'
+            'badge description description'
+            'badge ${shouldHideRequirements
+              ? 'milestones milestones'
+              : milestonesShown
+              ? 'requirements milestones'
+              : 'requirements requirements'}'
+            'accomplishers accomplishers accomplishers';
+          gap: 2rem;
+          align-items: start;
+          padding: 1.6rem 2rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            grid-template-columns: 1fr;
+            grid-template-areas:
+              'title'
+              'badge'
+              'description'
+              ${shouldHideRequirements ? '' : "'requirements'"}
+              ${milestonesShown ? "'milestones'" : ''}
+              'accomplishers';
+          }
+        `
+      )}
+      style={panelStyle}
     >
       {badgeSrc && (
         <img
@@ -242,9 +250,9 @@ export default function ItemPanel({
           className={css`
             grid-area: title;
             font-weight: bold;
-            color: ${Color.black()};
             font-size: 2rem;
           `}
+          style={{ color: Color.black() }}
         >
           {itemName}
           {displayedAP && (
@@ -270,6 +278,7 @@ export default function ItemPanel({
               />
             ) : (
               <Icon
+                color={Color.darkGray()}
                 className={css`
                   margin-left: 1rem;
                 `}
@@ -398,7 +407,7 @@ export default function ItemPanel({
                   align-items: center;
                   color: ${Color.darkerGray()};
                   font-size: 1.3rem;
-                  border-bottom: 1px solid ${Color.borderGray()};
+                  border-bottom: 1px solid var(--ui-border);
                   @media (max-width: ${mobileMaxWidth}) {
                     justify-content: center;
                   }

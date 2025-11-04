@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import ImageModal from '~/components/Modals/ImageModal';
-import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
+import { borderRadius, innerBorderRadius } from '~/constants/css';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
@@ -39,7 +39,7 @@ export default function Frame({
       className={css`
         background: #fff;
         position: relative;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         width: ${frameWidth}%;
         height: CALC(${frameWidth}% - 2px);

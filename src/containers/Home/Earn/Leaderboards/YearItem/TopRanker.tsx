@@ -4,6 +4,7 @@ import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import Link from '~/components/Link';
+import RankBadge from '~/components/RankBadge';
 
 export default function TopRanker({
   userId,
@@ -37,7 +38,7 @@ export default function TopRanker({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           borderBottom: 0,
           borderTopLeftRadius: borderRadius,
           borderTopRightRadius: borderRadius,
@@ -60,17 +61,17 @@ export default function TopRanker({
           borderBottomRightRadius: borderRadius,
           padding: '1rem',
           textAlign: 'center',
-          background: Color.black()
+          background: Color.black(),
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.35rem'
         }}
       >
-        <div
-          style={{
-            color: rankColor,
-            fontWeight: 'bold'
-          }}
-        >
-          #{rank}
-        </div>
+        <RankBadge
+          rank={rank}
+          style={{ margin: '0 auto' }}
+        />
         <Link
           style={{
             width: '100%',

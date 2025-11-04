@@ -12,10 +12,12 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { applyThemeVars } from '~/theme';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 export default function Profile() {
   const params = useParams();
@@ -25,6 +27,7 @@ export default function Profile() {
   );
   const setTheme = useAppContext((v) => v.requestHelpers.setTheme);
   const userId = useKeyContext((v) => v.myState.userId);
+  const viewerTheme = useKeyContext((v) => v.myState.profileTheme);
   const username = useKeyContext((v) => v.myState.username);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
@@ -34,11 +37,17 @@ export default function Profile() {
   const { notExist, profileId } = useProfileState(params.username || '');
   const profile = useAppContext((v) => v.user.state.userObj[profileId]) || {};
   const [selectedTheme, setSelectedTheme] = useState(
-    profile?.profileTheme || 'logoBlue'
+    profile?.profileTheme || DEFAULT_PROFILE_THEME
   );
-  const {
-    background: { color: backgroundColor }
-  } = useMemo(() => returnTheme(selectedTheme), [selectedTheme]);
+  const { themeRoles } = useThemeTokens({
+    themeName: selectedTheme
+  });
+  const backgroundColor = useMemo(() => {
+    const role = themeRoles.background;
+    const key = role?.color || 'whiteGray';
+    const fn = Color[key as keyof typeof Color];
+    return fn ? fn() : key;
+  }, [themeRoles.background]);
 
   useEffect(() => {
     let retries = 0;
@@ -93,7 +102,7 @@ export default function Profile() {
     if (params.username === 'undefined' && userId && profile?.unavailable) {
       navigate(`/${username}`);
     }
-    setSelectedTheme(profile?.profileTheme || 'logoBlue');
+    setSelectedTheme(profile?.profileTheme || DEFAULT_PROFILE_THEME);
   }, [
     navigate,
     params.username,
@@ -102,6 +111,38 @@ export default function Profile() {
     userId,
     username
   ]);
+
+  // Ensure viewing a profile applies that user's theme (even when logged out)
+  useEffect(() => {
+    if (!profile?.id) return;
+    const isViewingOwnProfile = userId ? profile.id === userId : false;
+    if (isViewingOwnProfile) {
+      // Clear any lingering route override when viewing own profile
+      try {
+        localStorage.removeItem('routeProfileTheme');
+      } catch (_err) {}
+      return;
+    }
+    // Visiting another user's profile: set a route-specific theme override
+    try {
+      const theme = profile?.profileTheme || DEFAULT_PROFILE_THEME;
+      localStorage.setItem('routeProfileTheme', theme);
+      // Immediately apply theme variables so page background updates without extra navigation
+      applyThemeVars(theme as any);
+    } catch (_err) {}
+    return () => {
+      // Clear override when leaving the profile page
+      try {
+        localStorage.removeItem('routeProfileTheme');
+        // Restore viewer theme variables immediately
+        const stored = (localStorage.getItem('profileTheme') ||
+          viewerTheme ||
+          DEFAULT_PROFILE_THEME) as any;
+        const restore = stored as any;
+        applyThemeVars(restore);
+      } catch (_err) {}
+    };
+  }, [profile?.id, profile?.profileTheme, userId, viewerTheme]);
 
   return (
     <ErrorBoundary componentPath="Profile/index" style={{ minHeight: '10rem' }}>
@@ -144,7 +185,7 @@ export default function Profile() {
       <Global
         styles={{
           body: {
-            background: Color[backgroundColor]()
+            background: `var(--page-bg, ${backgroundColor})`
           }
         }}
       />

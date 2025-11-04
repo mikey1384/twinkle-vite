@@ -56,7 +56,7 @@ export default function Big({
   return (
     <div
       style={{
-        padding: '1rem',
+        padding: isNotification ? '1rem' : '1rem 0',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -70,7 +70,7 @@ export default function Big({
         isThumb={isThumb}
         isNotification={isNotification}
         data={achievement}
-        style={{ width: '100%' }}
+        style={{ width: '100%', ...style }}
       />
     </div>
   );

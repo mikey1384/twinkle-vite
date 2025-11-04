@@ -79,7 +79,7 @@ export default function MyOffer({
         style={{
           marginTop: '0.5rem',
           padding: '2rem',
-          border: `1px solid ${Color.borderGray()}`,
+          border: '1px solid var(--ui-border)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -151,7 +151,8 @@ export default function MyOffer({
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Button
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                       style={{
                         fontSize: '3.5rem',
                         padding: '1.5rem'
@@ -185,7 +186,8 @@ export default function MyOffer({
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Button
-                      skeuomorphic
+                      variant="soft"
+                      tone="raised"
                       style={{
                         fontSize: '3.5rem',
                         padding: '1.5rem'
@@ -220,7 +222,8 @@ export default function MyOffer({
                   AI Cards
                 </div>
                 <Button
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   style={{
                     fontSize: '3.5rem',
                     padding: '1.5rem'
@@ -250,7 +253,8 @@ export default function MyOffer({
                   Groups
                 </div>
                 <Button
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                   style={{
                     fontSize: '3.5rem',
                     padding: '1.5rem'

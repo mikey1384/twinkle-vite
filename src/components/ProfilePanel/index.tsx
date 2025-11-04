@@ -15,11 +15,10 @@ import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { placeholderHeights } from '~/constants/state';
 import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
+import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
+import { css, cx } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { replaceFakeAtSymbol } from '~/helpers/stringHelpers';
 import { useInView } from 'react-intersection-observer';
 import {
@@ -31,6 +30,10 @@ import {
 } from '~/contexts';
 import localize from '~/constants/localize';
 import MessagesButton from './MessagesButton';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { ThemeName } from '~/theme';
+import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
 const chatLabel = localize('chat2');
 const changePicLabel = localize('changePic');
@@ -41,66 +44,73 @@ const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
 const profileLabel = localize('Profile');
 const cardsLabel = 'Cards';
 
+const quickLinkThemes = {
+  aiCards: {
+    background: 'rgba(152, 28, 235, 0.08)',
+    text: Color.darkBluerGray(),
+    icon: Color.purple(),
+    fillBg: Color.purple(0.92),
+    fillFg: '#fff',
+    fillIcon: '#fff',
+    fillBorder: 'rgba(152, 28, 235, 0.45)',
+    border: 'rgba(152, 28, 235, 0.18)',
+    shadow: `0 8px 18px -16px ${Color.purple(0.28)}`
+  },
+  website: {
+    background: 'rgba(40, 182, 44, 0.08)',
+    text: Color.darkBlueGray(),
+    icon: Color.green(),
+    fillBg: Color.green(0.92),
+    fillFg: '#fff',
+    fillIcon: '#fff',
+    fillBorder: 'rgba(40, 182, 44, 0.45)',
+    border: 'rgba(40, 182, 44, 0.18)',
+    shadow: `0 8px 18px -16px ${Color.green(0.26)}`
+  },
+  youtube: {
+    background: 'rgba(255, 82, 82, 0.08)',
+    text: Color.darkBluerGray(),
+    icon: Color.red(),
+    fillBg: Color.red(0.92),
+    fillFg: '#fff',
+    fillIcon: '#fff',
+    fillBorder: 'rgba(255, 82, 82, 0.48)',
+    border: 'rgba(255, 82, 82, 0.2)',
+    shadow: `0 8px 18px -16px ${Color.red(0.26)}`
+  }
+} as const;
+
 const actionButtonClass = css`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.65rem 1rem;
-  min-width: 8rem;
-  border-radius: 2.2rem;
-  color: inherit;
   font-weight: 600;
   letter-spacing: 0.02em;
-  transition: box-shadow 0.2s ease, filter 0.2s ease;
-  box-shadow: 0 12px 26px -18px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   text-decoration: none;
-  font-size: 1.2rem;
   gap: 0.6rem;
-  background: transparent;
-  border: none;
-  span {
-    margin-left: 0.9rem;
-    white-space: nowrap;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1rem;
-    gap: 0.35rem;
-    padding: 0.5rem 0.7rem;
-    min-width: 0;
-    width: 100%;
-    span {
-      margin-left: 0.5rem;
-    }
-  }
   span {
     white-space: nowrap;
   }
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.05rem;
+  @media (max-width: ${tabletMaxWidth}) {
     gap: 0.45rem;
-    padding: 0.55rem 0.85rem;
-    min-width: 0;
     width: 100%;
   }
-  @media (hover: hover) and (pointer: fine) {
-    &:hover {
-      text-decoration: none;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35),
-        0 16px 30px -18px rgba(0, 0, 0, 0.6);
-      filter: brightness(1.06) saturate(1.03);
-    }
-  }
-  &:active {
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25),
-      0 12px 26px -20px rgba(0, 0, 0, 0.58);
-    filter: brightness(0.98);
-  }
-  &:disabled {
-    opacity: 0.55;
-    cursor: default;
-    box-shadow: none;
-    filter: none;
+`;
+
+const actionButtonFlexLargeClass = css`
+  flex: 1 1 13rem;
+`;
+
+const actionButtonFlexMediumClass = css`
+  flex: 1 1 9rem;
+`;
+
+const actionButtonFullWidthClass = css`
+  flex: 1 0 100%;
+  min-width: 18rem;
+  @media (max-width: ${tabletMaxWidth}) {
+    min-width: 0;
   }
 `;
 
@@ -114,7 +124,7 @@ const actionButtonsLayoutClass = css`
   margin-left: auto;
   margin-right: auto;
 
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-areas:
@@ -125,27 +135,194 @@ const actionButtonsLayoutClass = css`
 `;
 
 const profileButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: profile;
   }
 `;
 
 const cardsButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: cards;
   }
 `;
 
 const chatButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: chat;
   }
 `;
 
 const messageButtonClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
+  @media (max-width: ${tabletMaxWidth}) {
     grid-area: message;
   }
+`;
+
+const rankBarWrapperClass = css`
+  margin-top: -1.6rem;
+  width: 100%;
+  position: relative;
+  z-index: 0;
+  @media (max-width: ${tabletMaxWidth}) {
+    margin-top: 0;
+  }
+`;
+
+const panelContainerClass = css`
+  ${themedCardBase};
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding: 2rem 2.3rem;
+  border-radius: ${borderRadius};
+  content-visibility: auto;
+  contain-intrinsic-size: 600px;
+  font-size: 1.5rem;
+  line-height: 2.3rem;
+  position: relative;
+  background: #fff;
+  border-color: var(--themed-card-border, var(--ui-border));
+  box-shadow: none;
+  @media (max-width: ${tabletMaxWidth}) {
+    border-radius: 0;
+    padding: 1.6rem 1.4rem;
+  }
+`;
+
+const heroSectionClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.4rem;
+  border-radius: calc(${borderRadius} - 0.6rem);
+  background: var(--profile-panel-hero-bg, rgba(59, 130, 246, 0.65));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 10px 32px -20px rgba(15, 23, 42, 0.55);
+  @media (max-width: ${tabletMaxWidth}) {
+    border-radius: ${borderRadius};
+  }
+`;
+
+const heroBadgesClass = css`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 2.5rem;
+`;
+
+const profileContentClass = css`
+  display: flex;
+  gap: 2.4rem;
+  flex-wrap: wrap;
+  width: 100%;
+  align-items: flex-start;
+`;
+
+const leftColumnClass = css`
+  flex: 0 0 20rem;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  @media (max-width: ${tabletMaxWidth}) {
+    flex: 1 1 100%;
+    max-width: unset;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+  }
+`;
+
+const quickLinksClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  align-items: center;
+  font-weight: 600;
+  @media (max-width: ${tabletMaxWidth}) {
+    width: auto;
+    align-items: flex-end;
+    gap: 0.6rem;
+    grid-column: 3;
+    justify-self: end;
+    text-align: right;
+  }
+`;
+
+const quickLinkClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease,
+    color 0.18s ease, box-shadow 0.22s ease, transform 0.2s ease,
+    filter 0.2s ease;
+  text-decoration: none;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.6rem;
+  justify-content: center;
+  min-width: 0;
+  width: fit-content;
+  font-size: 1.2rem;
+  background: var(--quick-link-bg, rgba(248, 249, 255, 0.94));
+  color: var(--quick-link-fg, ${Color.darkBlueGray()});
+  box-shadow: var(--quick-link-shadow, 0 8px 18px -16px rgba(15, 23, 42, 0.28));
+  border: 1px solid var(--quick-link-border, rgba(15, 23, 42, 0.08));
+  letter-spacing: 0.002em;
+  svg {
+    color: var(--quick-link-icon-color, currentColor);
+    transition: color 0.18s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: var(--quick-link-bg-hover, rgba(248, 249, 255, 0.98));
+      color: var(--quick-link-fg-hover, ${Color.darkBlueGray()});
+      border-color: var(--quick-link-border-hover, rgba(15, 23, 42, 0.14));
+      box-shadow: var(
+        --quick-link-shadow-hover,
+        0 12px 24px -16px rgba(15, 23, 42, 0.32)
+      );
+      filter: brightness(1.03);
+      svg {
+        color: var(--quick-link-icon-color-hover, currentColor);
+      }
+    }
+  }
+  &:active {
+    transform: translateY(0);
+    filter: brightness(0.97);
+  }
+`;
+
+const detailsColumnClass = css`
+  flex: 1 1 24rem;
+  min-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  position: relative;
+`;
+
+const profilePicWrapperClass = css`
+  width: 100%;
+  @media (max-width: ${tabletMaxWidth}) {
+    width: auto;
+    grid-column: 2;
+    justify-self: center;
+  }
+`;
+
+const actionsContainerClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
 `;
 
 function ProfilePanel({
@@ -256,9 +433,33 @@ function ProfilePanel({
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const banned = useKeyContext((v) => v.myState.banned);
+  const themeName = useMemo<ThemeName>(
+    () => (profileTheme || 'logoBlue') as ThemeName,
+    [profileTheme]
+  );
   const {
-    profilePanel: { color: profilePanelColor }
-  } = useMemo(() => returnTheme(profileTheme || 'logoBlue'), [profileTheme]);
+    accentColor: panelAccentColor,
+    cardBg,
+    cardVars
+  } = useThemedCardVars({
+    role: 'profilePanel',
+    intensity: 0.05,
+    themeName,
+    borderFallback: 'var(--ui-border)',
+    fallbackColor: 'logoBlue'
+  });
+  const heroBackground = useMemo(() => panelAccentColor, [panelAccentColor]);
+  const panelStyleVars = useMemo(
+    () =>
+      ({
+        ...cardVars,
+        ['--themed-card-bg' as const]: cardBg,
+        ['--themed-card-border' as const]: 'var(--ui-border)',
+        ['--profile-panel-hero-bg' as const]: heroBackground,
+        ['--profile-panel-accent' as const]: panelAccentColor
+      } as React.CSSProperties),
+    [cardBg, cardVars, heroBackground, panelAccentColor]
+  );
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -338,427 +539,473 @@ function ProfilePanel({
           width: '100%'
         }}
       >
-        {contentShown ? (
-          <div
-            ref={PanelRef}
-            className={css`
-              content-visibility: auto;
-              contain-intrinsic-size: 600px;
-              background: #fff;
-              width: 100%;
-              line-height: 2.3rem;
-              font-size: 1.5rem;
-              position: relative;
-            `}
-          >
-            <div
-              className={`unselectable ${css`
-                background: ${Color[profilePanelColor]()};
-                border-top-right-radius: ${borderRadius};
-                border-top-left-radius: ${borderRadius};
-                border-bottom: none;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                @media (max-width: ${mobileMaxWidth}) {
-                  border-radius: 0;
-                  border-left: none;
-                  border-right: none;
-                }
-              `}`}
-              style={{ minHeight: '2.5rem', padding: '0.7rem' }}
-            >
-              <AchievementBadges
-                thumbSize="2.5rem"
-                unlockedAchievementIds={profile.unlockedAchievementIds}
-              />
-            </div>
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                padding: 1rem;
-                border: ${Color.borderGray()} 1px solid;
-                ${twinkleXP
-                  ? 'border-bottom: none;'
-                  : `
-                  border-bottom-left-radius: ${borderRadius};
-                  border-bottom-right-radius: ${borderRadius};
-                `};
-                border-top: none;
-                @media (max-width: ${mobileMaxWidth}) {
-                  border-radius: 0;
-                  border-left: none;
-                  border-right: none;
-                }
-              `}
-            >
-              {profileLoaded ? (
+        <div style={{ width: '100%' }} ref={PanelRef}>
+          {contentShown ? (
+            <>
+              <ScopedTheme theme={themeName} roles={['profilePanel']}>
                 <div
                   style={{
-                    display: 'flex',
-                    height: '100%',
-                    marginTop: '1rem'
+                    position: 'relative',
+                    zIndex: 2,
+                    overflow: 'visible'
                   }}
                 >
-                  <div
-                    style={{
-                      width: '20rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexDirection: 'column'
-                    }}
-                  >
-                    <div
-                      className="unselectable"
-                      style={{ width: 'CALC(100% - 2rem)' }}
-                    >
-                      <Link
-                        onClick={handleReloadProfile}
-                        to={`/users/${profileName}`}
-                      >
-                        <div>
-                          <ProfilePic
-                            style={{
-                              width: '100%',
-                              cursor: 'pointer'
-                            }}
-                            userId={profileId}
-                            profilePicUrl={profilePicUrl}
-                            online={isOnline}
-                            isBusy={isBusy}
-                            isAway={isAway}
-                            statusShown
-                            large
-                            statusSize="medium"
-                          />
-                        </div>
-                      </Link>
-                    </div>
-                    <div
-                      className={css`
-                        font-family: 'Poppins', sans-serif;
-                        font-weight: bold;
-                        gap: 0.5rem;
-                        display: flex;
-                        justify-content: center;
-                        flex-direction: column;
-                        align-items: center;
-                        margin-top: 2rem;
-                      `}
-                    >
-                      <div
-                        className={css`
-                          color: #2c8cdb;
-                          cursor: pointer;
-                          transition: transform 0.3s ease;
-
-                          &:hover {
-                            transform: translateY(-2px);
+                  <div className={panelContainerClass} style={panelStyleVars}>
+                    <div className={`unselectable ${heroSectionClass}`}>
+                      <div className={heroBadgesClass}>
+                        <AchievementBadges
+                          thumbSize="2.5rem"
+                          unlockedAchievementIds={
+                            profile.unlockedAchievementIds
                           }
-                        `}
-                        onClick={() =>
-                          navigate(
-                            `/ai-cards/?search[owner]=${profile.username}`
-                          )
-                        }
-                      >
-                        <Icon icon="cards-blank" />
-                        <span style={{ marginLeft: '0.7rem' }}>AI Cards</span>
-                      </div>
-                      {website && (
-                        <div
-                          className={css`
-                            color: ${Color.green()};
-                            cursor: pointer;
-                            transition: transform 0.3s ease;
-
-                            &:hover {
-                              transform: translateY(-2px);
-                            }
-                          `}
-                          onClick={() => window.open(website)}
-                        >
-                          <Icon icon="globe" />
-                          <span style={{ marginLeft: '0.7rem' }}>Website</span>
-                        </div>
-                      )}
-                      {youtubeUrl && (
-                        <div
-                          className={css`
-                            color: #e64959;
-                            cursor: pointer;
-                            transition: transform 0.3s ease;
-
-                            &:hover {
-                              transform: translateY(-2px);
-                            }
-                          `}
-                          onClick={() => window.open(youtubeUrl)}
-                        >
-                          <Icon icon={['fab', 'youtube']} />
-                          <span style={{ marginLeft: '0.7rem' }}>YouTube</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      marginLeft: '2rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      position: 'relative',
-                      width: 'CALC(100% - 19rem)'
-                    }}
-                  >
-                    <UserDetails
-                      profile={profile}
-                      removeStatusMsg={(userId: number) =>
-                        onSetUserState({
-                          userId,
-                          newState: { statusMsg: '', statusColor: '' }
-                        })
-                      }
-                      updateStatusMsg={(data: any) => {
-                        if (banned?.posting) {
-                          return;
-                        }
-                        onSetUserState({
-                          userId: data.userId,
-                          newState: data
-                        });
-                      }}
-                      onSetBioEditModalShown={setBioEditModalShown}
-                      userId={userId}
-                    />
-                    {canEdit && (
-                      <div
-                        style={{
-                          marginTop: '1rem',
-                          zIndex: 1,
-                          display: 'flex',
-                          flexDirection: 'column'
-                        }}
-                      >
-                        <div style={{ display: 'flex' }}>
-                          <UploadButton
-                            skeuomorphic={false}
-                            onFileSelect={handlePicture}
-                            accept="image/*"
-                            icon="upload"
-                            color="black"
-                            transparent
-                            text={changePicLabel}
-                          />
-                          <Button
-                            transparent
-                            onClick={() => {
-                              if (banned?.posting) {
-                                return;
-                              }
-                              setBioEditModalShown(true);
-                            }}
-                            style={{ marginLeft: '0.5rem' }}
-                          >
-                            {editBioLabel}
-                          </Button>
-                          {profileId === userId && (
-                            <MessagesButton
-                              commentsShown={commentsShown}
-                              loading={loadingComments}
-                              profileId={profileId}
-                              myId={userId}
-                              onMessagesButtonClick={onMessagesButtonClick}
-                              numMessages={numMessages}
-                              style={{ marginLeft: '1rem' }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    {expandable && userId !== profileId && (
-                      <div
-                        className={actionButtonsLayoutClass}
-                        style={{ marginTop: noBio ? '2rem' : '1rem' }}
-                      >
-                        <Link
-                          className={`${actionButtonClass} ${profileButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            pointerEvents: profileUsername ? 'auto' : 'none',
-                            opacity: profileUsername ? 1 : 0.55,
-                            background: `linear-gradient(135deg, ${Color.logoBlue()} 0%, ${Color.skyBlue()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.logoBlue(0.65)}`
-                          }}
-                          to={
-                            profileUsername
-                              ? `/users/${profileUsername}`
-                              : '#'
-                          }
-                        >
-                          <Icon icon="user" color="rgba(255,255,255,0.92)" />
-                          <span>{profileLabel}</span>
-                        </Link>
-                        <Link
-                          className={`${actionButtonClass} ${cardsButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            pointerEvents: profileUsername ? 'auto' : 'none',
-                            opacity: profileUsername ? 1 : 0.55,
-                            background: `linear-gradient(135deg, ${Color.purple()} 0%, ${Color.lightPurple()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.purple(0.6)}`
-                          }}
-                          to={
-                            profileUsername
-                              ? `/ai-cards/?search[owner]=${profileUsername}`
-                              : '#'
-                          }
-                        >
-                          <Icon
-                            icon="cards-blank"
-                            color="rgba(255,255,255,0.92)"
-                          />
-                          <span>{cardsLabel}</span>
-                        </Link>
-                        <button
-                          type="button"
-                          className={`${actionButtonClass} ${chatButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            background: `linear-gradient(135deg, ${Color.green()} 0%, ${Color.limeGreen()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.green(0.55)}`
-                          }}
-                          onClick={handleTalkClick}
-                          disabled={chatLoading || !profileUsername}
-                        >
-                          {chatLoading ? (
-                            <Icon
-                              icon="spinner"
-                              pulse
-                              color="rgba(255,255,255,0.9)"
-                            />
-                          ) : (
-                            <Icon
-                              icon="comments"
-                              color="rgba(255,255,255,0.92)"
-                            />
-                          )}
-                          <span>{chatLabel}</span>
-                        </button>
-                        <MessagesButton
-                          variant="action"
-                          className={`${actionButtonClass} ${messageButtonClass}`}
-                          style={{
-                            flex: '1 1 9rem',
-                            background: `linear-gradient(135deg, ${Color.orange()} 0%, ${Color.lightOrange()} 100%)`,
-                            color: '#fff',
-                            boxShadow: `0 16px 30px -18px ${Color.orange(0.5)}`
-                          }}
-                          loading={loadingComments}
-                          commentsShown={commentsShown}
-                          profileId={profileId}
-                          myId={userId}
-                          onMessagesButtonClick={onMessagesButtonClick}
-                          numMessages={numMessages}
-                          iconColor="rgba(255,255,255,0.92)"
-                          textColor="rgba(255,255,255,0.95)"
                         />
                       </div>
-                    )}
-                    {lastActive &&
-                      !isOnline &&
-                      profileId !== userId && (
-                        <div
-                          style={{
-                            marginTop: '1rem',
-                            fontSize: '1.5rem',
-                            color: Color.gray()
-                          }}
-                        >
-                          <p>
-                            {lastOnlineLabel} {timeSince(lastActive)}
-                          </p>
+                    </div>
+                    {profileLoaded ? (
+                      <>
+                        <div className={profileContentClass}>
+                          <div className={leftColumnClass}>
+                            <div
+                              className={`unselectable ${profilePicWrapperClass}`}
+                            >
+                              <Link
+                                onClick={handleReloadProfile}
+                                to={`/users/${profileName}`}
+                                style={{ display: 'block', width: '100%' }}
+                              >
+                                <ProfilePic
+                                  style={{ cursor: 'pointer' }}
+                                  className={css`
+                                    margin: 0 auto;
+                                    display: block;
+                                    --profile-pic-size: min(16rem, 58vw);
+                                    @media (max-width: ${tabletMaxWidth}) {
+                                      --profile-pic-size: min(13rem, 72vw);
+                                    }
+                                  `}
+                                  userId={profileId}
+                                  profilePicUrl={profilePicUrl}
+                                  online={isOnline}
+                                  isBusy={isBusy}
+                                  isAway={isAway}
+                                  statusShown
+                                  large
+                                  statusSize="medium"
+                                />
+                              </Link>
+                            </div>
+                            <div className={quickLinksClass}>
+                              <div
+                                className={quickLinkClass}
+                                style={
+                                  {
+                                    ['--quick-link-bg' as const]:
+                                      quickLinkThemes.aiCards.background,
+                                    ['--quick-link-fg' as const]:
+                                      quickLinkThemes.aiCards.text,
+                                    ['--quick-link-shadow' as const]:
+                                      quickLinkThemes.aiCards.shadow,
+                                    ['--quick-link-border' as const]:
+                                      quickLinkThemes.aiCards.border,
+                                    ['--quick-link-bg-hover' as const]:
+                                      quickLinkThemes.aiCards.fillBg,
+                                    ['--quick-link-fg-hover' as const]:
+                                      quickLinkThemes.aiCards.fillFg,
+                                    ['--quick-link-border-hover' as const]:
+                                      quickLinkThemes.aiCards.fillBorder,
+                                    ['--quick-link-icon-color' as const]:
+                                      quickLinkThemes.aiCards.icon,
+                                    ['--quick-link-icon-color-hover' as const]:
+                                      quickLinkThemes.aiCards.fillIcon,
+                                    opacity: profileUsername ? 1 : 0.55,
+                                    pointerEvents: profileUsername
+                                      ? 'auto'
+                                      : 'none'
+                                  } as React.CSSProperties
+                                }
+                                onClick={() =>
+                                  profileUsername
+                                    ? navigate(
+                                        `/ai-cards/?search[owner]=${profile.username}`
+                                      )
+                                    : null
+                                }
+                              >
+                                <Icon icon="cards-blank" />
+                                <span>AI Cards</span>
+                              </div>
+                              {website && (
+                                <div
+                                  className={quickLinkClass}
+                                  style={
+                                    {
+                                      ['--quick-link-bg' as const]:
+                                        quickLinkThemes.website.background,
+                                      ['--quick-link-fg' as const]:
+                                        quickLinkThemes.website.text,
+                                      ['--quick-link-shadow' as const]:
+                                        quickLinkThemes.website.shadow,
+                                      ['--quick-link-border' as const]:
+                                        quickLinkThemes.website.border,
+                                      ['--quick-link-bg-hover' as const]:
+                                        quickLinkThemes.website.fillBg,
+                                      ['--quick-link-fg-hover' as const]:
+                                        quickLinkThemes.website.fillFg,
+                                      ['--quick-link-border-hover' as const]:
+                                        quickLinkThemes.website.fillBorder,
+                                      ['--quick-link-icon-color' as const]:
+                                        quickLinkThemes.website.icon,
+                                      ['--quick-link-icon-color-hover' as const]:
+                                        quickLinkThemes.website.fillIcon
+                                    } as React.CSSProperties
+                                  }
+                                  onClick={() => window.open(website)}
+                                >
+                                  <Icon icon="globe" />
+                                  <span>Website</span>
+                                </div>
+                              )}
+                              {youtubeUrl && (
+                                <div
+                                  className={quickLinkClass}
+                                  style={
+                                    {
+                                      ['--quick-link-bg' as const]:
+                                        quickLinkThemes.youtube.background,
+                                      ['--quick-link-fg' as const]:
+                                        quickLinkThemes.youtube.text,
+                                      ['--quick-link-shadow' as const]:
+                                        quickLinkThemes.youtube.shadow,
+                                      ['--quick-link-border' as const]:
+                                        quickLinkThemes.youtube.border,
+                                      ['--quick-link-bg-hover' as const]:
+                                        quickLinkThemes.youtube.fillBg,
+                                      ['--quick-link-fg-hover' as const]:
+                                        quickLinkThemes.youtube.fillFg,
+                                      ['--quick-link-border-hover' as const]:
+                                        quickLinkThemes.youtube.fillBorder,
+                                      ['--quick-link-icon-color' as const]:
+                                        quickLinkThemes.youtube.icon,
+                                      ['--quick-link-icon-color-hover' as const]:
+                                        quickLinkThemes.youtube.fillIcon
+                                    } as React.CSSProperties
+                                  }
+                                  onClick={() => window.open(youtubeUrl)}
+                                >
+                                  <Icon icon={['fab', 'youtube']} />
+                                  <span>YouTube</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className={detailsColumnClass}>
+                            <UserDetails
+                              profile={profile}
+                              removeStatusMsg={(userId: number) =>
+                                onSetUserState({
+                                  userId,
+                                  newState: { statusMsg: '', statusColor: '' }
+                                })
+                              }
+                              updateStatusMsg={(data: any) => {
+                                if (banned?.posting) {
+                                  return;
+                                }
+                                onSetUserState({
+                                  userId: data.userId,
+                                  newState: data
+                                });
+                              }}
+                              onSetBioEditModalShown={setBioEditModalShown}
+                              userId={userId}
+                            />
+                            {canEdit && (
+                              <div className={actionsContainerClass}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '0.6rem',
+                                    justifyContent: 'flex-start'
+                                  }}
+                                >
+                                  <UploadButton
+                                    onFileSelect={handlePicture}
+                                    accept="image/*"
+                                    icon="upload"
+                                    text={changePicLabel}
+                                    className={cx(
+                                      actionButtonClass,
+                                      actionButtonFlexLargeClass
+                                    )}
+                                    color="logoBlue"
+                                    hoverColor="mediumBlue"
+                                    buttonProps={{
+                                      variant: 'solid',
+                                      tone: 'raised',
+                                      uppercase: false
+                                    }}
+                                  />
+                                  <Button
+                                    onClick={() => {
+                                      if (banned?.posting) {
+                                        return;
+                                      }
+                                      setBioEditModalShown(true);
+                                    }}
+                                    className={cx(
+                                      actionButtonClass,
+                                      actionButtonFlexMediumClass
+                                    )}
+                                    variant="solid"
+                                    tone="raised"
+                                    color="purple"
+                                    hoverColor="mediumPurple"
+                                    uppercase={false}
+                                  >
+                                    {editBioLabel}
+                                  </Button>
+                                  {profileId === userId && (
+                                    <MessagesButton
+                                      commentsShown={commentsShown}
+                                      loading={loadingComments}
+                                      profileId={profileId}
+                                      myId={userId}
+                                      onMessagesButtonClick={
+                                        onMessagesButtonClick
+                                      }
+                                      numMessages={numMessages}
+                                      className={cx(
+                                        actionButtonClass,
+                                        messageButtonClass,
+                                        actionButtonFullWidthClass
+                                      )}
+                                      iconColor="rgba(255,255,255,0.92)"
+                                      textColor="rgba(255,255,255,0.95)"
+                                      buttonColor="orange"
+                                      buttonHoverColor="mediumOrange"
+                                      buttonVariant="solid"
+                                      buttonTone="raised"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            {expandable && userId !== profileId && (
+                              <div
+                                className={actionButtonsLayoutClass}
+                                style={{ marginTop: noBio ? '2rem' : '1rem' }}
+                              >
+                                <Button
+                                  className={cx(
+                                    actionButtonClass,
+                                    profileButtonClass,
+                                    actionButtonFlexMediumClass
+                                  )}
+                                  variant="solid"
+                                  tone="raised"
+                                  color="logoBlue"
+                                  hoverColor="mediumBlue"
+                                  uppercase={false}
+                                  disabled={!profileUsername}
+                                  onClick={() =>
+                                    profileUsername
+                                      ? navigate(`/users/${profileUsername}`)
+                                      : null
+                                  }
+                                >
+                                  <Icon
+                                    icon="user"
+                                    color="rgba(255,255,255,0.92)"
+                                  />
+                                  <span>{profileLabel}</span>
+                                </Button>
+                                <Button
+                                  className={cx(
+                                    actionButtonClass,
+                                    cardsButtonClass,
+                                    actionButtonFlexMediumClass
+                                  )}
+                                  variant="solid"
+                                  tone="raised"
+                                  color="purple"
+                                  hoverColor="mediumPurple"
+                                  uppercase={false}
+                                  disabled={!profileUsername}
+                                  onClick={() =>
+                                    profileUsername
+                                      ? navigate(
+                                          `/ai-cards/?search[owner]=${profileUsername}`
+                                        )
+                                      : null
+                                  }
+                                >
+                                  <Icon
+                                    icon="cards-blank"
+                                    color="rgba(255,255,255,0.92)"
+                                  />
+                                  <span>{cardsLabel}</span>
+                                </Button>
+                                <Button
+                                  className={cx(
+                                    actionButtonClass,
+                                    chatButtonClass,
+                                    actionButtonFlexMediumClass
+                                  )}
+                                  variant="solid"
+                                  tone="raised"
+                                  color="green"
+                                  hoverColor="lightGreen"
+                                  uppercase={false}
+                                  loading={chatLoading}
+                                  disabled={chatLoading || !profileUsername}
+                                  onClick={handleTalkClick}
+                                >
+                                  <Icon
+                                    icon="comments"
+                                    color="rgba(255,255,255,0.92)"
+                                  />
+                                  <span>{chatLabel}</span>
+                                </Button>
+                                <MessagesButton
+                                  className={cx(
+                                    actionButtonClass,
+                                    messageButtonClass,
+                                    actionButtonFullWidthClass
+                                  )}
+                                  commentsShown={commentsShown}
+                                  loading={loadingComments}
+                                  profileId={profileId}
+                                  myId={userId}
+                                  onMessagesButtonClick={onMessagesButtonClick}
+                                  numMessages={numMessages}
+                                  iconColor="rgba(255,255,255,0.92)"
+                                  textColor="rgba(255,255,255,0.95)"
+                                  buttonColor="orange"
+                                  buttonHoverColor="mediumOrange"
+                                  buttonVariant="solid"
+                                  buttonTone="raised"
+                                />
+                              </div>
+                            )}
+                            {lastActive &&
+                              !isOnline &&
+                              profileId !== userId && (
+                                <div
+                                  className={css`
+                                    margin-top: 1rem;
+                                    font-size: 1.5rem;
+                                    color: ${Color.gray()};
+                                    @media (max-width: ${tabletMaxWidth}) {
+                                      text-align: center;
+                                    }
+                                  `}
+                                >
+                                  <p>
+                                    {lastOnlineLabel} {timeSince(lastActive)}
+                                  </p>
+                                </div>
+                              )}
+                          </div>
                         </div>
-                      )}
+                        {bioEditModalShown && (
+                          <BioEditModal
+                            firstLine={replaceFakeAtSymbol(
+                              profileFirstRow || ''
+                            )}
+                            secondLine={replaceFakeAtSymbol(
+                              profileSecondRow || ''
+                            )}
+                            thirdLine={replaceFakeAtSymbol(
+                              profileThirdRow || ''
+                            )}
+                            onSubmit={handleUploadBio}
+                            onHide={() => setBioEditModalShown(false)}
+                          />
+                        )}
+                        {imageEditModalShown && (
+                          <ImageEditModal
+                            isProfilePic
+                            imageUri={imageUri}
+                            onEditDone={handleImageEditDone}
+                            onHide={() => {
+                              setImageUri(null);
+                              setImageEditModalShown(false);
+                            }}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          padding: '2rem 0'
+                        }}
+                      >
+                        <Loading />
+                      </div>
+                    )}
+                    {profileLoaded && (
+                      <Comments
+                        comments={comments}
+                        commentsLoadLimit={5}
+                        commentsShown={commentsShown}
+                        theme={themeName}
+                        inputAreaInnerRef={CommentInputAreaRef}
+                        inputTypeLabel={`message${
+                          userId === profileId ? '' : ` to ${profileName}`
+                        }`}
+                        isLoading={loadingComments}
+                        loadMoreButton={commentsLoadMoreButton}
+                        numPreviews={1}
+                        onCommentSubmit={onUploadComment}
+                        onDelete={onDeleteComment}
+                        onEditDone={onEditComment}
+                        onLikeClick={onLikeComment}
+                        onLoadMoreComments={onLoadMoreComments}
+                        onLoadMoreReplies={onLoadMoreReplies}
+                        onLoadRepliesOfReply={onLoadRepliesOfReply}
+                        onPreviewClick={onExpandComments}
+                        onReplySubmit={onUploadReply}
+                        onRewardCommentEdit={onEditRewardComment}
+                        parent={{
+                          ...profile,
+                          ...profilePanelState,
+                          contentType: 'user'
+                        }}
+                        style={{ marginTop: '0.6rem' }}
+                        userId={userId}
+                      />
+                    )}
                   </div>
-                  {bioEditModalShown && (
-                    <BioEditModal
-                      firstLine={replaceFakeAtSymbol(profileFirstRow || '')}
-                      secondLine={replaceFakeAtSymbol(profileSecondRow || '')}
-                      thirdLine={replaceFakeAtSymbol(profileThirdRow || '')}
-                      onSubmit={handleUploadBio}
-                      onHide={() => setBioEditModalShown(false)}
-                    />
-                  )}
-                  {imageEditModalShown && (
-                    <ImageEditModal
-                      isProfilePic
-                      imageUri={imageUri}
-                      onEditDone={handleImageEditDone}
-                      onHide={() => {
-                        setImageUri(null);
-                        setImageEditModalShown(false);
-                      }}
-                    />
-                  )}
                 </div>
-              ) : (
-                <Loading />
+                {alertModalShown && (
+                  <AlertModal
+                    title={imageTooLarge10MBLabel}
+                    content={pleaseSelectSmallerImageLabel}
+                    onHide={() => setAlertModalShown(false)}
+                  />
+                )}
+              </ScopedTheme>
+              {!!twinkleXP && profileLoaded && (
+                <div className={rankBarWrapperClass}>
+                  <ScopedTheme theme={themeName as any}>
+                    <RankBar profile={profile} />
+                  </ScopedTheme>
+                </div>
               )}
-              {profileLoaded && (
-                <Comments
-                  comments={comments}
-                  commentsLoadLimit={5}
-                  commentsShown={commentsShown}
-                  inputAreaInnerRef={CommentInputAreaRef}
-                  inputTypeLabel={`message${
-                    userId === profileId ? '' : ` to ${profileName}`
-                  }`}
-                  isLoading={loadingComments}
-                  loadMoreButton={commentsLoadMoreButton}
-                  numPreviews={1}
-                  onCommentSubmit={onUploadComment}
-                  onDelete={onDeleteComment}
-                  onEditDone={onEditComment}
-                  onLikeClick={onLikeComment}
-                  onLoadMoreComments={onLoadMoreComments}
-                  onLoadMoreReplies={onLoadMoreReplies}
-                  onLoadRepliesOfReply={onLoadRepliesOfReply}
-                  onPreviewClick={onExpandComments}
-                  onReplySubmit={onUploadReply}
-                  onRewardCommentEdit={onEditRewardComment}
-                  parent={{
-                    ...profile,
-                    ...profilePanelState,
-                    contentType: 'user'
-                  }}
-                  style={{ marginTop: '1rem' }}
-                  userId={userId}
-                />
-              )}
-            </div>
-            {!!twinkleXP && profileLoaded && <RankBar profile={profile} />}
-            {alertModalShown && (
-              <AlertModal
-                title={imageTooLarge10MBLabel}
-                content={pleaseSelectSmallerImageLabel}
-                onHide={() => setAlertModalShown(false)}
-              />
-            )}
-          </div>
-        ) : (
-          <div
-            style={{
-              width: '100%',
-              height: componentHeight
-            }}
-          />
-        )}
+            </>
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: componentHeight
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

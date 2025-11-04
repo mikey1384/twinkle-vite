@@ -15,7 +15,7 @@ import { NotiContextProvider } from './Notification';
 import { ProfileContextProvider } from './Profile';
 import { MissionContextProvider } from './Mission';
 import { ViewContextProvider } from './View';
-import { LAST_ONLINE_FILTER_LABEL } from '~/constants/defaultValues';
+import { DEFAULT_PROFILE_THEME, LAST_ONLINE_FILTER_LABEL } from '~/constants/defaultValues';
 
 export const AppContext = createContext({});
 export const initialMyState = {
@@ -31,7 +31,7 @@ export const initialMyState = {
   hideWatched: false,
   isAdmin: false,
   lastChatPath: '',
-  profileTheme: 'logoBlue',
+  profileTheme: DEFAULT_PROFILE_THEME,
   searchFilter: '',
   userId: null,
   wordleStrictMode: false,

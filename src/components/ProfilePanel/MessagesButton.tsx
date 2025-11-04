@@ -14,7 +14,11 @@ export default function MessagesButton({
   variant = 'button',
   className,
   iconColor,
-  textColor
+  textColor,
+  buttonColor,
+  buttonHoverColor,
+  buttonVariant,
+  buttonTone
 }: {
   commentsShown: boolean;
   loading: boolean;
@@ -27,6 +31,10 @@ export default function MessagesButton({
   className?: string;
   iconColor?: string;
   textColor?: string;
+  buttonColor?: string;
+  buttonHoverColor?: string;
+  buttonVariant?: 'solid' | 'soft' | 'outline' | 'ghost';
+  buttonTone?: 'flat' | 'raised';
 }) {
   const leaveMessageLabel = useMemo(() => {
     if (SELECTED_LANGUAGE === 'kr') {
@@ -47,14 +55,14 @@ export default function MessagesButton({
 
   const disabled = loading || (commentsShown && profileId === myId);
   const iconTint = iconColor || undefined;
-  const actionLabelStyle = {
+  const baseLabelStyle: React.CSSProperties = textColor
+    ? { color: textColor }
+    : {};
+  const actionLabelStyle: React.CSSProperties = {
     marginLeft: '0.6rem',
-    ...(textColor ? { color: textColor } : {})
-  } as React.CSSProperties;
-  const buttonLabelStyle = {
-    marginLeft: '0.6rem',
-    ...(textColor ? { color: textColor } : {})
-  } as React.CSSProperties;
+    ...baseLabelStyle
+  };
+  const buttonLabelStyle = baseLabelStyle;
 
   if (variant === 'action') {
     return (
@@ -90,8 +98,13 @@ export default function MessagesButton({
       loading={loading}
       style={style}
       disabled={commentsShown && profileId === myId}
-      color="logoBlue"
+      color={buttonColor || 'logoBlue'}
+      hoverColor={buttonHoverColor}
+      variant={buttonVariant}
+      tone={buttonTone}
+      uppercase={false}
       onClick={onMessagesButtonClick}
+      className={className}
     >
       <Icon icon="comment-alt" color={iconTint} />
       <span style={buttonLabelStyle}>

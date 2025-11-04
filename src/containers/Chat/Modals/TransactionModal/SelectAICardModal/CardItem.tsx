@@ -60,8 +60,8 @@ export default function CardItem({
       <div style={{ marginTop: '1rem' }}>
         <Button
           color={selected ? successColor : 'black'}
-          opacity={0.8}
-          skeuomorphic
+          variant={selected ? 'solid' : 'soft'}
+          tone="raised"
           mobilePadding="0.5rem"
           onClick={selected ? onDeselect : onSelect}
         >

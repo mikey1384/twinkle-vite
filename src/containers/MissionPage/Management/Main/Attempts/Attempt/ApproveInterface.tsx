@@ -72,7 +72,7 @@ export default function ApproveInterface({
         }}
       >
         <Button
-          filled={status === 'fail'}
+          variant={status === 'fail' ? 'solid' : 'soft'}
           onClick={() => handleSetStatus('fail')}
           color="rose"
         >
@@ -80,7 +80,7 @@ export default function ApproveInterface({
           <span style={{ marginLeft: '1rem' }}>Reject</span>
         </Button>
         <Button
-          filled={status === 'pass'}
+          variant={status === 'pass' ? 'solid' : 'soft'}
           onClick={() => handleSetStatus('pass')}
           color="green"
           style={{ marginLeft: '1rem' }}
@@ -115,7 +115,7 @@ export default function ApproveInterface({
               disabled={!!feedbackExceedsCharLimit}
               style={{ marginTop: '1.5rem', fontSize: '2rem' }}
               color={status === 'pass' ? 'green' : 'rose'}
-              filled
+              variant={status === 'pass' ? 'solid' : 'soft'}
               loading={confirming}
               onClick={handleConfirm}
             >

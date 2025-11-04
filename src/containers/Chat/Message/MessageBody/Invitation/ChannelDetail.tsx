@@ -3,9 +3,10 @@ import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import { useChatContext, useKeyContext, useAppContext } from '~/contexts';
+import { useChatContext, useAppContext } from '~/contexts';
 import UserListModal from '~/components/Modals/UserListModal';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const membersLabel = localize('members');
 
@@ -31,10 +32,12 @@ export default function ChannelDetail({
   }[];
 }) {
   const navigate = useNavigate();
-  const chatInvitationColor = useKeyContext(
-    (v) => v.theme.chatInvitation.color
-  );
-  const linkColor = useKeyContext((v) => v.theme.link.color);
+  const chatInvitationRole = useRoleColor('chatInvitation', {
+    fallback: 'logoBlue'
+  });
+  const linkRole = useRoleColor('link', {
+    fallback: 'logoBlue'
+  });
   const loadMoreChannelMembers = useAppContext(
     (v) => v.requestHelpers.loadMoreChannelMembers
   );
@@ -48,6 +51,14 @@ export default function ChannelDetail({
   const [loadMoreButtonShown, setLoadMoreButtonShown] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [more, setMore] = useState<number | null>(null);
+  const chatInvitationColor = useMemo(
+    () => chatInvitationRole.getColor() || Color.logoBlue(),
+    [chatInvitationRole]
+  );
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
   useEffect(() => {
     if (allMemberIds?.length > 3) {
       setShownMembers(members.filter((member, index) => index < 3));
@@ -98,7 +109,7 @@ export default function ChannelDetail({
           line-height: 1.3;
           font-weight: bold;
           font-size: 2.2rem;
-          color: ${Color[chatInvitationColor]()};
+          color: ${chatInvitationColor};
           cursor: ${alreadyJoined ? 'pointer' : 'default'};
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.5rem;
@@ -128,7 +139,7 @@ export default function ChannelDetail({
           <p
             className={css`
               cursor: pointer;
-              color: ${Color[linkColor]()};
+              color: ${linkColor};
               &:hover {
                 text-decoration: underline;
               }

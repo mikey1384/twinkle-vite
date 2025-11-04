@@ -12,25 +12,10 @@ import InvisibleTextContainer from './InvisibleTextContainer';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
-import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { fullTextStates, richTextHeights } from '~/constants/state';
 import ErrorBoundary from '~/components/ErrorBoundary';
-
-type Color =
-  | 'blue'
-  | 'gray'
-  | 'green'
-  | 'lime'
-  | 'logoBlue'
-  | 'orange'
-  | 'passionFruit'
-  | 'pink'
-  | 'purple'
-  | 'red'
-  | 'yellow';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const RichTextCss = css`
   width: 100%;
@@ -123,13 +108,30 @@ function RichText({
   voice?: string;
 }) {
   text = text || '';
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
-    statusMsgLink: { color: statusMsgLinkColor },
-    link: { color: linkColor },
-    listItemMarker: { color: listItemMarkerColor },
-    statusMsgListItemMarker: { color: statusMsgListItemMarkerColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+    color: linkColor,
+    colorKey: linkColorKey,
+    themeName
+  } = useRoleColor('link', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const { color: statusMsgLinkColor, colorKey: statusMsgLinkColorKey } =
+    useRoleColor('statusMsgLink', {
+      themeName,
+      fallback: linkColor
+    });
+  const { color: listItemMarkerColor } = useRoleColor('listItemMarker', {
+    themeName,
+    fallback: 'darkerGray'
+  });
+  const { color: statusMsgListItemMarkerColor } = useRoleColor(
+    'statusMsgListItemMarker',
+    {
+      themeName,
+      fallback: 'white'
+    }
+  );
   const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(
     null
   );
@@ -221,15 +223,21 @@ function RichText({
   }, [containerNode, fullTextShown, isOverflown, isParsed]);
 
   const appliedLinkColor = useMemo(
-    () => Color[isStatusMsg ? statusMsgLinkColor : linkColor](),
+    () => (isStatusMsg ? statusMsgLinkColor : linkColor),
     [isStatusMsg, linkColor, statusMsgLinkColor]
   );
 
   const markerColor = useMemo(
     () =>
-      Color[isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor](),
+      isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor,
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
+
+  const showMoreButtonColorKey = useMemo(() => {
+    if (readMoreColor) return 'logoBlue';
+    if (isStatusMsg) return statusMsgLinkColorKey || 'white';
+    return linkColorKey || 'logoBlue';
+  }, [isStatusMsg, linkColorKey, readMoreColor, statusMsgLinkColorKey]);
 
   useEffect(() => {
     let resizeObserver: any;
@@ -368,25 +376,27 @@ function RichText({
         `}
       >
         {isOverflown && !isPreview && (
-          <a
+          <Button
+            variant="soft"
+            tone="raised"
+            shape="pill"
+            size="sm"
+            uppercase={false}
+            color={showMoreButtonColorKey}
             style={{
-              color: readMoreColor || appliedLinkColor,
-              ...(showMoreButtonStyle || {})
+              marginTop: '1rem',
+              ...(showMoreButtonStyle || {}),
+              ...(readMoreColor ? { color: readMoreColor } : {})
             }}
-            className={`unselectable ${css`
-              font-weight: bold;
-              cursor: pointer;
-              display: inline;
-              padding-top: 1rem;
-            `}`}
             onClick={() => {
               setMinHeight(fullTextShown ? 0 : minHeight);
               setFullTextShown((shown) => !shown);
               fullTextShownRef.current = !fullTextShownRef.current;
             }}
           >
-            {fullTextShown ? 'Show Less' : 'Show More'}
-          </a>
+            <Icon icon={fullTextShown ? 'chevron-up' : 'chevron-down'} />
+            <span>{fullTextShown ? 'Show Less' : 'Show More'}</span>
+          </Button>
         )}
       </div>
       {isAIMessage && !hideDictation && (
@@ -401,14 +411,14 @@ function RichText({
           }}
         >
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             onClick={handleCopyMessage}
             style={{
               padding: '0.5rem 0.7rem',
               lineHeight: 1
             }}
             color="darkerGray"
-            opacity={0.5}
           >
             <Icon icon={copySuccess ? 'check' : 'copy'} />
           </Button>

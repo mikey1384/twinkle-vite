@@ -74,7 +74,7 @@ export default function RestoreAccount({
       <footer>
         {section === 'username' && (
           <Button
-            transparent
+            variant="ghost"
             color="orange"
             style={{
               fontSize: '1.5rem',

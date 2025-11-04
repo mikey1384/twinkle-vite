@@ -5,7 +5,7 @@ import CardItem from '../CardItem';
 import Loading from '~/components/Loading';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 
 export default function Listings() {
@@ -86,11 +86,9 @@ export default function Listings() {
     <ErrorBoundary componentPath="Chat/RightMenu/AICardInfo/Market/Listings">
       <div
         className={css`
-          height: CALC(100% - 45px);
-          overflow: scroll;
-          @media (max-width: ${mobileMaxWidth}) {
-            height: CALC(100% - 36px);
-          }
+          height: 100%;
+          overflow: auto;
+          padding: 0 0 1.2rem 0;
         `}
         ref={CardItemsRef}
       >

@@ -11,16 +11,24 @@ export default function Options({
   selectedOption: string;
 }) {
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
+    >
       <Button
-        skeuomorphic={selectedOption === 'want'}
+        variant={selectedOption === 'want' ? 'solid' : 'soft'}
+        tone="raised"
         color="logoBlue"
         onClick={() => onSelectOption('want')}
       >
         I want to see what {partnerName} has (Trade)
       </Button>
       <Button
-        skeuomorphic={selectedOption === 'offer'}
+        variant={selectedOption === 'offer' ? 'solid' : 'soft'}
+        tone="raised"
         style={{ marginTop: '1rem' }}
         color="pink"
         onClick={() => onSelectOption('offer')}
@@ -28,7 +36,8 @@ export default function Options({
         {`I want to show ${partnerName} what I have`}
       </Button>
       <Button
-        skeuomorphic={selectedOption === 'send'}
+        variant={selectedOption === 'send' ? 'solid' : 'soft'}
+        tone="raised"
         style={{ marginTop: '1rem' }}
         color="green"
         onClick={() => onSelectOption('send')}

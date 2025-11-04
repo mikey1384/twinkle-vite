@@ -4,15 +4,14 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import LocalContext from '../../Context';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
-import { Color } from '~/constants/css';
 import {
   expectedResponseLength,
   SELECTED_LANGUAGE
 } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function CommentInputArea({
   autoFocus,
@@ -47,20 +46,20 @@ export default function CommentInputArea({
   targetCommentId?: number | null;
   theme?: string;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeObj = useMemo(
-    () => returnTheme(theme || profileTheme),
-    [profileTheme, theme]
-  );
   const expectedContentLength = useMemo(() => {
     if (subjectRewardLevel) {
       return expectedResponseLength(subjectRewardLevel);
     }
     return 0;
   }, [subjectRewardLevel]);
-  const effortBarColor = useMemo(() => {
-    return Color[themeObj[`level${subjectRewardLevel || 1}`]?.color]();
-  }, [subjectRewardLevel, themeObj]);
+  const levelRole = useMemo(
+    () => `level${Math.min(Math.max(subjectRewardLevel || 1, 1), 5)}`,
+    [subjectRewardLevel]
+  );
+  const { color: effortBarColor } = useRoleColor(levelRole, {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
   const [uploading, setUploading] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const placeholderLabel = useMemo(() => {

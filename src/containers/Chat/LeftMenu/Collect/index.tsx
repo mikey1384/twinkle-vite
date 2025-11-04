@@ -24,7 +24,7 @@ export default function Collect({
         style={{
           cursor: 'pointer',
           padding: '1rem',
-          borderBottom: `1px solid ${Color.borderGray()}`,
+          borderBottom: '1px solid var(--ui-border)',
           background:
             aiCardSelected || vocabSelected ? Color.highlightGray() : undefined
         }}

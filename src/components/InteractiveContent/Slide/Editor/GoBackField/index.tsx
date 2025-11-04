@@ -4,7 +4,6 @@ import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
 import IconSelectionModal from '../IconSelectionModal';
 import SlideListItem from '../../../SlideListItem';
-import { Color } from '~/constants/css';
 import { exceedsCharLimit } from '~/helpers/stringHelpers';
 import SelectDestinationModal from './SelectDestinationModal';
 import GoBackToMissionItem from './GoBackToMissionItem';
@@ -69,7 +68,8 @@ export default function GoBackField({
         <div style={{ padding: '1rem 1.5rem 1rem 0' }}>
           <Button
             onClick={() => setIconSelectionModalShown(true)}
-            skeuomorphic
+            variant={button.icon ? 'solid' : 'soft'}
+            tone={!button.icon ? 'raised' : undefined}
             color={button.icon ? 'black' : 'orange'}
           >
             {button.icon ? <Icon icon={button.icon} /> : <Icon icon="plus" />}
@@ -82,7 +82,7 @@ export default function GoBackField({
             padding: '1rem 2rem',
             display: 'flex',
             flexGrow: 1,
-            border: `1px solid ${Color.borderGray()}`
+            border: '1px solid var(--ui-border)'
           }}
         >
           <Input

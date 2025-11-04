@@ -105,9 +105,8 @@ export default function ReactionButton({
             lineHeight: 1
           }}
           color="darkerGray"
-          opacity={0.5}
-          skeuomorphic
-          filled={reactionsMenuShown}
+          variant="solid"
+          tone="raised"
           onClick={() => (deviceIsMobile ? handleReactionBarShown() : {})}
         >
           <Icon icon="thumbs-up" />

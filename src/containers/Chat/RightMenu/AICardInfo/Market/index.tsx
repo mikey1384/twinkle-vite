@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Color } from '~/constants/css';
 import FilterBar from '~/components/FilterBar';
 import Listings from './Listings';
 import Offers from './Offers';
@@ -41,8 +40,7 @@ export default function Market() {
   return (
     <div
       style={{
-        height: 'CALC(50% - 4.5rem)',
-        borderBottom: `1px solid ${Color.borderGray()}`
+        height: '50%'
       }}
     >
       <FilterBar
@@ -63,7 +61,7 @@ export default function Market() {
           Offers
         </nav>
       </FilterBar>
-      <div style={{ height: '100%' }}>
+      <div style={{ height: 'calc(100% - 4.5rem)' }}>
         {activeTab === 'buy' ? (
           <Listings />
         ) : (

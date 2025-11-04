@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Highlight, themes } from 'prism-react-renderer';
-import { Color } from '~/constants/css';
 
 export default function Code({
   children,
@@ -37,7 +36,7 @@ export default function Code({
             style={{
               ...defaultStyle,
               marginTop: 0,
-              border: `1px solid ${Color.borderGray()}`,
+            border: '1px solid var(--ui-border)',
               ...style
             }}
             ref={codeRef}

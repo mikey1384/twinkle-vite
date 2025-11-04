@@ -7,10 +7,10 @@ import Loading from '~/components/Loading';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
-import { returnTheme } from '~/helpers';
 import { useAppContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 
 const appElement = document.getElementById('App');
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -33,9 +33,6 @@ export default function Feeds({
   username: string;
 }) {
   const { filter } = useParams();
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(() => returnTheme(selectedTheme || 'logoBlue'), [selectedTheme]);
   const location = useLocation();
   const navigate = useNavigate();
   const [loadingFeeds, setLoadingFeeds] = useState(false);
@@ -153,6 +150,31 @@ export default function Feeds({
         return `${username} hasn't posted any video to show here`;
     }
   }, [section, username]);
+  const emptyMessage = useMemo(() => {
+    return filter === 'byuser' ? noFeedByUserLabel : noFeedLabel;
+  }, [filter, noFeedByUserLabel, noFeedLabel]);
+
+  const feedListClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        /* Match Likes tab spacing: no dividers, 1rem vertical gap */
+        > .feed-item {
+          margin: 0 0 1rem 0;
+        }
+      `,
+    []
+  );
+  const feedItemCustomClass = useMemo(
+    () =>
+      css`
+        /* Remove inner padding so posts can be full-bleed on mobile */
+        padding: 0;
+      `,
+    []
+  );
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Posts/Feeds">
@@ -166,7 +188,9 @@ export default function Feeds({
         {section !== 'watched' && (
           <FilterBar
             color={selectedTheme}
-            style={{ height: '5rem', marginTop: '-1rem', fontSize: '1.3rem' }}
+            style={{
+              fontSize: '1.3rem'
+            }}
             className="mobile"
           >
             {[
@@ -201,24 +225,29 @@ export default function Feeds({
         >
           <div
             className={css`
-              margin-top: 1rem;
               width: ${section === 'watched' ? '55%' : '50%'};
+              margin-left: ${section === 'watched' ? '0' : '21rem'};
+              margin-right: ${section === 'watched' ? '0' : '2rem'};
+              margin-top: ${section !== 'watched' ? '-2rem' : '0'};
               @media (max-width: ${tabletMaxWidth}) {
                 width: 70%;
+                margin-left: 0;
+                margin-right: 0;
               }
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
+                margin-left: 0;
+                margin-right: 0;
               }
             `}
           >
             {filterBarShown && (
               <FilterBar
-                bordered
                 color={selectedTheme}
                 style={{
                   height: '5rem',
-                  marginTop: '-1rem',
-                  marginBottom: '2rem'
+                  marginTop: '1rem',
+                  marginBottom: '1.2rem'
                 }}
               >
                 <nav
@@ -248,41 +277,36 @@ export default function Feeds({
               />
             ) : (
               <>
-                {feeds.length > 0 &&
-                  feeds.map((feed, index) => {
-                    const { contentId, contentType, rootType } = feed;
-                    return (
-                      <ContentPanel
-                        key={filterTable[section] + feed.feedId}
-                        style={{
-                          marginTop: index === 0 ? '-1rem' : '',
-                          marginBottom: '1rem',
-                          zIndex: feeds.length - index
-                        }}
-                        zIndex={feeds.length - index}
-                        feedId={feed.feedId}
-                        contentId={contentId}
-                        contentType={contentType}
-                        rootType={rootType}
-                        theme={selectedTheme}
-                        commentsLoadLimit={5}
-                        numPreviewComments={1}
-                      />
-                    );
-                  })}
+                {feeds.length > 0 && (
+                  <div className={feedListClass}>
+                    {feeds.map((feed, index) => {
+                      const { contentId, contentType, rootType } = feed;
+                      return (
+                        <div
+                          key={filterTable[section] + feed.feedId}
+                          className={`feed-item ${feedItemCustomClass}`}
+                        >
+                          <ContentPanel
+                            style={{ margin: 0, zIndex: feeds.length - index }}
+                            zIndex={feeds.length - index}
+                            feedId={feed.feedId}
+                            contentId={contentId}
+                            contentType={contentType}
+                            rootType={rootType}
+                            theme={selectedTheme}
+                            commentsLoadLimit={5}
+                            numPreviewComments={1}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 {feeds.length === 0 && (
-                  <div
-                    style={{
-                      marginTop: '10rem',
-                      fontSize: '2.5rem',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <div style={{ textAlign: 'center' }}>
-                      {filter === 'byuser' ? noFeedByUserLabel : noFeedLabel}
-                    </div>
+                  <div style={{ marginTop: '8rem', padding: '0 1rem' }}>
+                    <EmptyStateMessage theme={selectedTheme}>
+                      {emptyMessage}
+                    </EmptyStateMessage>
                   </div>
                 )}
               </>
@@ -292,7 +316,7 @@ export default function Feeds({
                 style={{ marginBottom: '1rem' }}
                 onClick={handleLoadMoreFeeds}
                 loading={loadingMore}
-                color={loadMoreButtonColor}
+                theme={selectedTheme}
                 filled
               />
             )}
@@ -308,9 +332,8 @@ export default function Feeds({
           </div>
           {section !== 'watched' && (
             <SideMenu
-              className={`desktop ${css`
-                width: 10%;
-              `}`}
+              className={`desktop`}
+              style={{ alignSelf: 'flex-start' }}
               menuItems={[
                 { key: 'all', label: 'All' },
                 { key: 'comment', label: 'Comments' },

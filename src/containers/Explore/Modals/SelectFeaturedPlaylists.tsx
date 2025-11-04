@@ -10,7 +10,8 @@ import Loading from '~/components/Loading';
 import { useSearch } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isEqual } from 'lodash';
-import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
+import { useAppContext, useExploreContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function SelectFeaturedPlaylists({
   onHide,
@@ -19,7 +20,9 @@ export default function SelectFeaturedPlaylists({
   onHide: () => void;
   selectedPlaylists: any[];
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const { color: doneColor } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const loadPlaylistList = useAppContext(
     (v) => v.requestHelpers.loadPlaylistList
   );
@@ -139,7 +142,7 @@ export default function SelectFeaturedPlaylists({
               {displayedLoadMoreButton && !searching && (
                 <LoadMoreButton
                   style={{ marginTop: '2rem', width: '100%' }}
-                  transparent
+                  variant="ghost"
                   onClick={() => handleLoadMore(lastPlaylistId)}
                   loading={loadingMore}
                 />
@@ -189,7 +192,11 @@ export default function SelectFeaturedPlaylists({
         </div>
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button

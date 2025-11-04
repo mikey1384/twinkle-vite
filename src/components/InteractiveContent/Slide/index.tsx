@@ -4,7 +4,7 @@ import {
   useInteractiveContext,
   useKeyContext
 } from '~/contexts';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import Content from './Content';
 import Deleted from './Deleted';
@@ -241,7 +241,7 @@ export default function Slide({
           padding-bottom: 2rem;
           margin-top: ${canEdit ? '2rem' : index === 0 ? 0 : '5rem'};
           background: #fff;
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           border-radius: ${borderRadius};
           @media (max-width: ${mobileMaxWidth}) {
             margin-top: ${canEdit ? '1rem' : index === 0 ? 0 : '2rem'};
@@ -255,7 +255,8 @@ export default function Slide({
         {!!canEdit && !isEditing && !isDeleted && (
           <div className="dropdown-wrapper">
             <DropdownButton
-              skeuomorphic
+              variant="solid"
+              tone="raised"
               color="darkerGray"
               listStyle={{ width: '25ch' }}
               style={{
@@ -264,7 +265,6 @@ export default function Slide({
                 top: '1rem',
                 zIndex: 10
               }}
-              opacity={0.8}
               menuProps={dropdownMenuProps}
             />
           </div>
@@ -324,7 +324,8 @@ export default function Slide({
               color="darkBlue"
               loading={publishing}
               onClick={handlePublishSlide}
-              skeuomorphic
+              variant="solid"
+              tone="raised"
             >
               <Icon icon="upload" />
               <span style={{ marginLeft: '0.7rem' }}>Publish</span>

@@ -33,7 +33,7 @@ import { useContentState, useMyLevel } from '~/helpers/hooks';
 import {
   determineUserCanRewardThis,
   determineXpButtonDisabled,
-  returnTheme
+  isTablet
 } from '~/helpers';
 import { borderRadius, Color } from '~/constants/css';
 import {
@@ -43,6 +43,9 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import LocalContext from '../../Context';
 import { Content, Comment as CommentType } from '~/types';
+import { useThemeTokens } from '~/theme/useThemeTokens';
+import { useRoleColor } from '~/theme/useRoleColor';
+import ScopedTheme from '~/theme/ScopedTheme';
 
 function Comment({
   comment,
@@ -95,15 +98,20 @@ function Comment({
   const banned = useKeyContext((v) => v.myState.banned);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const level = useKeyContext((v) => v.myState.level);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const {
-    link: { color: linkColor },
-    reward: { color: rewardColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const { themeName } = useThemeTokens({ themeName: theme });
+  const { color: linkRoleColor } = useRoleColor('link', {
+    themeName,
+    fallback: 'logoBlue'
+  });
+  const linkColorVar = `var(--role-link-color, ${linkRoleColor})`;
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    themeName,
+    fallback: 'pink'
+  });
   const onChangeSpoilerStatus = useContentContext(
     (v) => v.actions.onChangeSpoilerStatus
   );
@@ -363,7 +371,7 @@ function Comment({
   }, [subjectId, subjectState.prevSecretViewerId, userId]);
 
   return (
-    <>
+    <ScopedTheme theme={themeName} roles={['link', 'reward']}>
       <div
         style={isPreview ? { cursor: 'pointer' } : {}}
         className={commentContainer}
@@ -409,7 +417,7 @@ function Comment({
               {comment.targetUserId &&
                 !!comment.replyId &&
                 comment.replyId !== parent.contentId && (
-                  <span className="to" style={{ color: Color[linkColor]() }}>
+                  <span className="to" style={{ color: linkColorVar }}>
                     to:{' '}
                     <UsernameText
                       user={{
@@ -510,25 +518,31 @@ function Comment({
                             contentId={comment.id}
                             onClick={handleLikeClick}
                             likes={likes}
+                            hideLabel={isTablet(navigator)}
                           />
                           <Button
-                            transparent
+                            color="darkerGray"
+                            variant="ghost"
                             style={{ marginLeft: '1rem' }}
                             onClick={() => navigate(`/comments/${comment.id}`)}
                           >
                             <Icon icon="comment-alt" />
-                            <span style={{ marginLeft: '1rem' }}>
-                              {numReplies > 1 &&
-                              parent.contentType === 'comment'
-                                ? 'Replies'
-                                : 'Reply'}
-                              {numReplies > 0 ? ` (${numReplies})` : ''}
-                            </span>
+                            {!isTablet(navigator) && (
+                              <span style={{ marginLeft: '1rem' }}>
+                                {numReplies > 1 &&
+                                parent.contentType === 'comment'
+                                  ? 'Replies'
+                                  : 'Reply'}
+                                {numReplies > 0 ? ` (${numReplies})` : ''}
+                              </span>
+                            )}
                           </Button>
                           {userCanRewardThis && (
                             <Button
                               color={rewardColor}
                               style={{ marginLeft: '0.7rem' }}
+                              variant={xpButtonDisabled ? 'soft' : 'soft'}
+                              tone="raised"
                               onClick={() =>
                                 onSetXpRewardInterfaceShown({
                                   contentId: commentId,
@@ -539,9 +553,11 @@ function Comment({
                               disabled={!!xpButtonDisabled}
                             >
                               <Icon icon="certificate" />
-                              <span style={{ marginLeft: '0.7rem' }}>
-                                {xpButtonDisabled || 'Reward'}
-                              </span>
+                              {!isTablet(navigator) && (
+                                <span style={{ marginLeft: '0.7rem' }}>
+                                  {xpButtonDisabled || 'Reward'}
+                                </span>
+                              )}
                             </Button>
                           )}
                         </div>
@@ -556,7 +572,8 @@ function Comment({
                       <div>
                         <Button
                           color={rewardColor}
-                          filled={isRecommendedByUser}
+                          variant={isRecommendedByUser ? 'solid' : 'soft'}
+                          tone="raised"
                           disabled={recommendationInterfaceShown}
                           onClick={() => setRecommendationInterfaceShown(true)}
                         >
@@ -632,9 +649,10 @@ function Comment({
         {dropdownButtonShown && !isEditing && (
           <div className="dropdown-wrapper">
             <DropdownButton
-              skeuomorphic
+              variant="solid"
+              tone="raised"
               icon="chevron-down"
-              opacity={0.8}
+              color="darkerGray"
               menuProps={dropdownMenuItems}
             />
           </div>
@@ -647,7 +665,7 @@ function Comment({
           onConfirm={() => onDelete(comment.id)}
         />
       )}
-    </>
+    </ScopedTheme>
   );
 
   async function handleEditDone(editedComment: string) {

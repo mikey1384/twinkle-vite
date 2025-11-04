@@ -113,13 +113,9 @@ export default function TopicItem({
       <FullTextReveal
         show={showFullText}
         text={children}
+        direction="left"
         style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
           fontSize: '1rem',
-          zIndex: 1000,
           width: '70%'
         }}
       />

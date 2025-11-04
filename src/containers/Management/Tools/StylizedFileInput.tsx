@@ -21,7 +21,7 @@ const fileInputButtonStyles = css`
   justify-content: center;
   padding: 10px 16px;
   background-color: #f8f9fa;
-  border: 1px dashed #ced4da;
+  border: 1px dashed var(--ui-border);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.95rem;

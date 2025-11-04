@@ -3,7 +3,7 @@ import Icon from '~/components/Icon';
 import Button from '~/components/Button';
 import QuestionContent from './QuestionContent';
 import QuestionEditForm from './QuestionEditForm';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 
@@ -45,7 +45,7 @@ export default function QuestionListItem({
         background: #fff;
         border-radius: ${borderRadius};
         padding: 1.5rem 1rem 1.5rem 1rem;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         @media (max-width: ${mobileMaxWidth}) {
           border-left: 0;
           border-right: 0;
@@ -88,7 +88,8 @@ export default function QuestionListItem({
               width: '50%',
               fontSize: '1.7rem'
             }}
-            skeuomorphic
+            variant="solid"
+            tone="raised"
             color="darkerGray"
             onClick={() => onSetIsEditing(true)}
           >
@@ -97,7 +98,8 @@ export default function QuestionListItem({
           </Button>
           <Button
             style={{ width: '50%', fontSize: '1.7rem', marginTop: '1rem' }}
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             color={!question.isApproved ? 'darkBlue' : 'rose'}
             onClick={handleApprove}
           >
@@ -107,7 +109,8 @@ export default function QuestionListItem({
             <Button
               style={{ width: '50%', fontSize: '1.7rem', marginTop: '5rem' }}
               color="rose"
-              skeuomorphic
+              variant="soft"
+              tone="raised"
               onClick={handleDelete}
             >
               <Icon icon="trash-alt" />

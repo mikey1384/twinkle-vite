@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import localize from '~/constants/localize';
 import FilterBar from '~/components/FilterBar';
@@ -7,7 +6,12 @@ import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
+import { notiFilterBar } from '../../Styles';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -28,6 +32,38 @@ export default function ThisMonth({
   myMonthlyXP: number;
 }) {
   const [allSelected, setAllSelected] = useState(!!myId);
+  const { accentColor, cardVars, themeName } = useThemedCardVars({
+    role: 'sectionPanel'
+  });
+  const emptyStateVars = useMemo(
+    () =>
+      ({
+        ...cardVars,
+        ['--rankings-empty-accent' as const]: accentColor
+      } as React.CSSProperties),
+    [accentColor, cardVars]
+  );
+  const emptyStateClass = useMemo(
+    () =>
+      css`
+        ${themedCardBase};
+        padding: 1.6rem 2rem;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: ${Color.darkerGray()};
+        font-size: 1.5rem;
+        line-height: 1.6;
+        text-align: center;
+        gap: 0.8rem;
+        strong {
+          color: var(--rankings-empty-accent, ${accentColor});
+        }
+      `,
+    [accentColor]
+  );
   const users = useMemo(() => {
     if (allSelected) {
       return allMonthly || [];
@@ -39,7 +75,7 @@ export default function ThisMonth({
     <ErrorBoundary componentPath="Notification/MainFeeds/Rankings/ThisMonth">
       {loggedIn && (
         <FilterBar
-          bordered
+          className={notiFilterBar}
           style={{
             height: '4.5rem',
             fontSize: '1.6rem'
@@ -64,32 +100,41 @@ export default function ThisMonth({
         </FilterBar>
       )}
       {loggedIn && allSelected && !!myMonthlyXP && (
-        <MyRank myId={myId} rank={myMonthlyRank} twinkleXP={myMonthlyXP} />
+        <MyRank
+          myId={myId}
+          rank={myMonthlyRank}
+          twinkleXP={myMonthlyXP}
+          isNotification
+        />
       )}
       {!myId ? (
         loading ? (
           <Loading />
         ) : null
       ) : users?.length === 0 || (allSelected && myMonthlyXP === 0) ? (
-        <div
-          className={css`
-            border-radius: ${borderRadius};
-            border: 1px solid ${Color.borderGray()};
-            background: #fff;
-            padding: 1rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              border-radius: 0;
-              border-left: none;
-              border-right: none;
-            }
-          `}
+        <ScopedTheme
+          theme={themeName}
+          roles={['sectionPanel', 'sectionPanelText']}
+          style={emptyStateVars}
         >
-          {myMonthlyXP === 0
-            ? "Earn XP by completing missions, watching XP videos, or leaving comments to join this month's leaderboard"
-            : "Be the first to join this month's leaderboard by earning XP"}
-        </div>
+          <div className={emptyStateClass}>
+            {myMonthlyXP === 0 ? (
+              <>
+                Earn XP by completing missions, watching XP videos, or leaving
+                comments to join this month's leaderboard.
+              </>
+            ) : (
+              <>Be the first to join this month's leaderboard by earning XP.</>
+            )}
+          </div>
+        </ScopedTheme>
       ) : (
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+        >
           {users?.map((user) => (
             <RankingsListItem
               key={user.id}
@@ -98,7 +143,7 @@ export default function ThisMonth({
               activityContext="monthlyXP"
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       )}
     </ErrorBoundary>
   );

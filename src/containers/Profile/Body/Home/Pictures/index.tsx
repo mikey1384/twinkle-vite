@@ -62,11 +62,12 @@ export default function Pictures({
     if (userId !== profileId || !pictures) return null;
     return deleteMode || reorderMode ? (
       <div style={{ display: 'flex' }}>
-        <Button color="vantaBlack" transparent onClick={handleCancel}>
+        <Button color="vantaBlack" variant="ghost" onClick={handleCancel}>
           Cancel
         </Button>
         <Button
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           disabled={saveDisabled}
           style={{ marginLeft: '1rem' }}
           onClick={handleConfirm}
@@ -79,7 +80,8 @@ export default function Pictures({
         <Button
           disabled={addPictureButtonDisabled}
           color="darkerGray"
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           onClick={() => setAddPictureModalShown(true)}
         >
           <Icon icon="plus" />
@@ -88,7 +90,8 @@ export default function Pictures({
           </span>
         </Button>
         <DropdownButton
-          skeuomorphic
+          variant="solid"
+          tone="raised"
           icon="ellipsis-h"
           color="darkerGray"
           style={{ marginLeft: '1rem' }}
@@ -194,6 +197,7 @@ export default function Pictures({
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/index">
       {pictures && pictures.length > 0 ? (
         <SectionPanel
+          elevated
           button={menuButtons}
           customColorTheme={selectedTheme}
           loaded

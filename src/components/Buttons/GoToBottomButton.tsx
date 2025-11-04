@@ -25,10 +25,12 @@ export default function GoToBottomButton({
         padding: 8px;
         transition: all 0.3s ease;
         width: 40px;
-        &:hover {
-          background-color: ${Color[theme || profileTheme]()};
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          transform: translateY(-2px);
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            background-color: ${Color[theme || profileTheme]()};
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+          }
         }
         &:active {
           box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
@@ -47,11 +49,15 @@ export default function GoToBottomButton({
             transform: translateY(-5px);
           }
         }
-        &:hover {
-          > svg {
-            animation: bounce 0.5s ease infinite;
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            > svg {
+              animation: bounce 0.5s ease infinite;
+            }
           }
         }
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       `}
       onClick={onClick}
       aria-label="Go to bottom"

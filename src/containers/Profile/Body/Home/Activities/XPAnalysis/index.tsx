@@ -52,6 +52,7 @@ export default function XPAnalysis({
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/XPAnalysis">
       <SectionPanel
+        elevated
         customColorTheme={selectedTheme}
         title={xpAnalysisLabel}
         loaded={loaded}

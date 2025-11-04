@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import SectionPanel from '~/components/SectionPanel';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
 import localize from '~/constants/localize';
 import MissionItem from './MissionItem';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
@@ -96,6 +97,7 @@ export default function MissionProgress({
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Achievements/MissionProgress/index">
       <SectionPanel
+        elevated
         customColorTheme={selectedTheme}
         title={missionProgressLabel}
         loaded={missionsLoaded}
@@ -103,7 +105,6 @@ export default function MissionProgress({
       >
         <FilterBar
           color={selectedTheme}
-          bordered
           style={{ fontSize: '1.5rem', height: '5rem' }}
         >
           <nav
@@ -160,20 +161,17 @@ export default function MissionProgress({
                 ))}
               </>
             ) : (
-              <div
+              <EmptyStateMessage
+                theme={selectedTheme}
                 style={{
                   width: '100%',
-                  textAlign: 'center',
-                  fontSize: '2rem',
-                  paddingTop: '5rem',
-                  paddingBottom: '5rem',
-                  fontWeight: 'bold'
+                  marginTop: '3rem'
                 }}
               >
                 {selectedMissionListTab === 'complete'
                   ? noMissionsCompleteLabel
                   : allMissionsCompleteLabel}
-              </div>
+              </EmptyStateMessage>
             )}
           </div>
         </div>

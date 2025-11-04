@@ -114,7 +114,7 @@ export default function TopicSettingsModal({
       footer={
         <>
           <Button
-            transparent
+            variant="ghost"
             style={{ marginRight: '0.7rem' }}
             onClick={onHide}
           >

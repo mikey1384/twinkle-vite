@@ -89,7 +89,6 @@ export default function Videos() {
         <FeaturedPlaylistsPanel />
         <PlaylistsPanel
           key="allplaylists"
-          style={{ marginTop: '2.5rem' }}
           innerRef={AllPlaylistsPanelRef}
           buttonGroup={() => (
             <ButtonGroup
@@ -101,7 +100,8 @@ export default function Videos() {
                 {
                   label: `+ ${addPlaylistLabel}`,
                   onClick: onOpenAddPlaylistModal,
-                  skeuomorphic: true,
+                  variant: 'soft' as const,
+                  tone: 'raised' as const,
                   color: 'darkerGray',
                   disabled: !canEditPlaylists
                 }

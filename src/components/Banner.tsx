@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function Banner({
   children,
@@ -21,9 +21,15 @@ export default function Banner({
   spinnerDelay?: number;
   style?: React.CSSProperties;
 }) {
-  const warningColor = useKeyContext((v) => v.theme.warning.color);
+  const warningRole = useRoleColor('warning', { fallback: 'redOrange' });
   const timerRef: React.RefObject<any> = useRef(null);
   const [spinnerShown, setSpinnerShown] = useState(false);
+  const hue = color || warningRole.colorKey;
+
+  function tint(key: string, a: number) {
+    const fn = (Color as any)[key];
+    return typeof fn === 'function' ? fn(a) : key;
+  }
 
   useEffect(() => {
     if (loading) {
@@ -40,27 +46,42 @@ export default function Banner({
     <div
       ref={innerRef}
       className={css`
-        opacity: ${loading ? 0.5 : 1};
-        width: 100%;
-        background: ${Color[color || warningColor]()};
+        opacity: ${loading ? 0.6 : 1};
+        width: calc(100% - 1.2rem);
+        margin: 0.6rem;
+        background: ${tint(hue, 1)};
         color: #fff;
-        padding: 1.5rem;
-        text-align: center;
-        font-size: 2rem;
+        padding: 1rem 1.2rem;
+        font-size: 1.6rem;
+        border: 1px solid ${tint(hue, 1)};
+        border-radius: ${borderRadius};
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        &:hover {
-          ${onClick && !loading ? 'opacity: 0.8;' : ''};
+        text-align: center;
+        transition: background 0.18s ease, border-color 0.18s ease,
+          transform 0.06s ease, opacity 0.18s ease;
+        ${onClick && !loading ? 'cursor: pointer;' : 'cursor: default;'}
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            ${onClick && !loading
+              ? `background: ${tint(hue, 1)}; border-color: ${tint(hue, 1)};`
+              : ''};
+          }
+        }
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: 1.4rem;
+          padding: 0.9rem 1rem;
         }
       `}
-      style={{
-        ...style,
-        cursor: onClick && !loading ? 'pointer' : 'default'
-      }}
+      style={style}
       onClick={loading || !onClick ? () => null : onClick}
     >
       {children}
       {loading && spinnerShown && (
-        <Icon style={{ marginLeft: '1rem' }} icon="spinner" pulse />
+        <Icon style={{ marginLeft: '0.7rem' }} icon="spinner" pulse />
       )}
     </div>
   );

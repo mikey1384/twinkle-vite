@@ -1,10 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
 import {
   innerBorderRadius,
   borderRadius,
-  getThemeStyles,
   mobileMaxWidth
 } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
@@ -13,6 +12,8 @@ import SearchInput from './SearchInput';
 import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
@@ -57,12 +58,31 @@ export default function ChatFilterBar({
   const searchInputRef = useRef(null);
   const searchButtonRef = useRef(null);
   const topicButtonRef = useRef(null);
+  const normalizedTheme = useMemo(
+    () => themeColor || 'logoBlue',
+    [themeColor]
+  );
+  const { color: chatTopicColor, themeName } = useRoleColor('chatTopic', {
+    themeName: normalizedTheme,
+    fallback: normalizedTheme
+  });
+  const { color: chatTopicTextColor } = useRoleColor('chatTopicText', {
+    themeName,
+    fallback: 'white'
+  });
+  const chatTopicColorVar = useMemo(
+    () => `var(--role-chatTopic-color, ${chatTopicColor})`,
+    [chatTopicColor]
+  );
+  const chatTopicTextColorVar = useMemo(
+    () => `var(--role-chatTopicText-color, ${chatTopicTextColor})`,
+    [chatTopicTextColor]
+  );
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
-  const themeStyles = getThemeStyles(themeColor);
 
   outsideClickMethod([searchInputRef, searchButtonRef, topicButtonRef], () => {
     if (!stringIsEmpty(searchText)) {
@@ -75,8 +95,12 @@ export default function ChatFilterBar({
   });
 
   return (
-    <div
-      className={css`
+    <ScopedTheme
+      theme={themeName}
+      roles={['chatTopic', 'chatTopicText']}
+    >
+      <div
+        className={css`
         display: flex;
         flex-direction: column;
         height: 4rem;
@@ -104,14 +128,22 @@ export default function ChatFilterBar({
             align-items: center;
             background: #fff;
             cursor: pointer;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+            border: 1px solid var(--ui-border);
+            box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
+            transition: background 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease,
+              transform 0.06s ease;
             ${selectedTab === 'all'
-              ? `background-color: ${themeStyles.bg};`
+              ? `background-color: ${chatTopicColorVar};`
               : ''};
-            ${selectedTab === 'all' ? `color: ${themeStyles.text};` : ''};
+            ${selectedTab === 'all'
+              ? `color: ${chatTopicTextColorVar};`
+              : ''};
             &:hover {
-              color: ${themeStyles.text};
-              background-color: ${themeStyles.bg};
+              color: ${chatTopicTextColorVar};
+              background-color: ${chatTopicColorVar};
+              box-shadow: 0 16px 26px -18px rgba(15, 23, 42, 0.22);
+              transform: translateY(-1px);
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 0;
@@ -136,7 +168,9 @@ export default function ChatFilterBar({
             display: flex;
             align-items: center;
             background: #fff;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
+            border: 1px solid var(--ui-border);
+            box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
+            transition: box-shadow 0.18s ease, transform 0.06s ease;
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: ${innerBorderRadius};
             }
@@ -169,12 +203,14 @@ export default function ChatFilterBar({
                 display: flex;
                 align-items: center;
                 ${selectedTab === 'topic'
-                  ? `background-color: ${themeStyles.bg};`
+                  ? `background-color: ${chatTopicColorVar};`
                   : ''}
-                ${selectedTab === 'topic' ? `color: ${themeStyles.text};` : ''}
+                ${selectedTab === 'topic'
+                  ? `color: ${chatTopicTextColorVar};`
+                  : ''}
               &:hover {
-                  color: ${themeStyles.text};
-                  background-color: ${themeStyles.bg};
+                  color: ${chatTopicTextColorVar};
+                  background-color: ${chatTopicColorVar};
                 }
                 max-width: 20vw;
                 @media (max-width: ${mobileMaxWidth}) {
@@ -278,9 +314,13 @@ export default function ChatFilterBar({
             align-items: center;
             background: #fff;
             cursor: pointer;
-            box-shadow: 2px 2px 5px #d1d1d1, -2px -2px 5px #ffffff;
-            ${isSearchActive ? `background-color: ${themeStyles.bg};` : ''};
-            ${isSearchActive ? `color: ${themeStyles.text};` : ''};
+            border: 1px solid var(--ui-border);
+            box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
+            transition: background 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, box-shadow 0.18s ease,
+              transform 0.06s ease;
+            ${isSearchActive ? `background-color: var(--chat-bg);` : ''};
+            ${isSearchActive ? `color: var(--chat-text);` : ''};
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: ${innerBorderRadius};
             }
@@ -300,7 +340,8 @@ export default function ChatFilterBar({
           <SearchInput searchText={searchText} onChange={onSearch} />
         </div>
       )}
-    </div>
+      </div>
+    </ScopedTheme>
   );
 
   function handleTabClick(tabName: string) {

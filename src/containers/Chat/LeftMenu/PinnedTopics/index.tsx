@@ -6,6 +6,7 @@ import { useAppContext, useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
@@ -123,6 +124,13 @@ function PinnedTopics({
       );
     });
   }, [appliedFeaturedTopicId, lastTopicId, pinnedTopicIds, topicObj]);
+  const borderColor = useMemo(
+    () =>
+      resolveColorValue(displayedThemeColor, 0.5) ??
+      resolveColorValue('logoBlue', 0.5) ??
+      Color.logoBlue(0.5),
+    [displayedThemeColor]
+  );
 
   if (!featuredTopic && !pinnedTopics.length && !lastTopic) return null;
 
@@ -150,7 +158,7 @@ function PinnedTopics({
           }
         `}
         style={{
-          border: `1px solid ${Color[displayedThemeColor](0.5)}`,
+          border: `1px solid ${borderColor}`,
           padding: '0.5rem 0',
           marginLeft: '1rem',
           marginRight: '1rem',

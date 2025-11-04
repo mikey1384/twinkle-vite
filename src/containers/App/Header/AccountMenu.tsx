@@ -12,6 +12,7 @@ import { socket } from '~/constants/sockets/api';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const logInLabel = localize('logIn');
 const profileLabel = localize('Profile');
@@ -35,7 +36,8 @@ export default function AccountMenu({
     () => location.pathname === `/users/${username}`,
     [location, username]
   );
-  const loginColor = useKeyContext((v) => v.theme.login.color);
+  const loginRole = useRoleColor('login', { fallback: 'green' });
+  const loginColorKey = loginRole.colorKey;
   const onLogout = useAppContext((v) => v.user.actions.onLogout);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
@@ -47,10 +49,17 @@ export default function AccountMenu({
     const result = [
       {
         label: (
-          <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem'
+            }}
+          >
             <Icon icon="user" />
-            <span style={{ marginLeft: '1rem' }}>{profileLabel}</span>
-          </>
+            <span>{profileLabel}</span>
+          </div>
         ),
         onClick: () => (isOnProfilePage ? null : navigate(`/users/${username}`))
       }
@@ -58,9 +67,16 @@ export default function AccountMenu({
     if (managementLevel > 0) {
       result.push({
         label: (
-          <div style={{ width: '13rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.8rem'
+            }}
+          >
             <Icon icon="user-group-crown" />
-            <span style={{ marginLeft: '1rem' }}>{managementLabel}</span>
+            <span>{managementLabel}</span>
           </div>
         ),
         onClick: () => navigate('/management')
@@ -68,10 +84,17 @@ export default function AccountMenu({
     }
     result.push({
       label: (
-        <>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.8rem'
+          }}
+        >
           <Icon icon="sign-out-alt" />
-          <span style={{ marginLeft: '1rem' }}>{logOutLabel}</span>
-        </>
+          <span>{logOutLabel}</span>
+        </div>
       ),
       onClick: handleLogout
     });
@@ -96,7 +119,8 @@ export default function AccountMenu({
       {userId ? (
         <DropdownButton
           className={className}
-          transparent
+          variant="ghost"
+          tone="flat"
           xAdjustment={-30}
           listStyle={{
             top: '4.5rem'
@@ -123,7 +147,7 @@ export default function AccountMenu({
           className={className}
           onClick={onOpenSigninModal}
           style={{ marginLeft: '1rem', height: '3.5rem' }}
-          color={loginColor}
+          color={loginColorKey}
           filled
         >
           {logInLabel}

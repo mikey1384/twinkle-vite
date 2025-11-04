@@ -1,8 +1,8 @@
 import React from 'react';
 import Bubble from './Bubble';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ProgressBar({
   isOnStreak,
@@ -17,12 +17,25 @@ export default function ProgressBar({
   selectedIndex: number;
   style: React.CSSProperties;
 }) {
-  const colorS = useKeyContext((v) => v.theme.grammarGameScoreS.color);
-  const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
-  const colorB = useKeyContext((v) => v.theme.grammarGameScoreB.color);
-  const colorC = useKeyContext((v) => v.theme.grammarGameScoreC.color);
-  const colorD = useKeyContext((v) => v.theme.grammarGameScoreD.color);
-  const colorF = useKeyContext((v) => v.theme.grammarGameScoreF.color);
+  const roleS = useRoleColor('grammarGameScoreS', { fallback: 'gold' });
+  const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
+  const roleB = useRoleColor('grammarGameScoreB', { fallback: 'orange' });
+  const roleC = useRoleColor('grammarGameScoreC', { fallback: 'pink' });
+  const roleD = useRoleColor('grammarGameScoreD', { fallback: 'logoBlue' });
+  const roleF = useRoleColor('grammarGameScoreF', { fallback: 'gray' });
+
+  const colorS = (opacity?: number) =>
+    roleS.getColor(opacity) || Color.gold(opacity ?? 1);
+  const colorA = (opacity?: number) =>
+    roleA.getColor(opacity) || Color.magenta(opacity ?? 1);
+  const colorB = (opacity?: number) =>
+    roleB.getColor(opacity) || Color.orange(opacity ?? 1);
+  const colorC = (opacity?: number) =>
+    roleC.getColor(opacity) || Color.pink(opacity ?? 1);
+  const colorD = (opacity?: number) =>
+    roleD.getColor(opacity) || Color.logoBlue(opacity ?? 1);
+  const colorF = (opacity?: number) =>
+    roleF.getColor(opacity) || Color.gray(opacity ?? 1);
 
   const className = css`
     .waving {
@@ -69,9 +82,9 @@ export default function ProgressBar({
 
     .gradedS {
       background: radial-gradient(
-        ${Color[colorS](0.9)},
-        ${Color[colorS](0.9)} 40%,
-        ${Color[colorS](0.8)} 60%,
+        ${colorS(0.9)},
+        ${colorS(0.9)} 40%,
+        ${colorS(0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
@@ -79,10 +92,10 @@ export default function ProgressBar({
     .streak {
       background: linear-gradient(
         -45deg,
-        ${Color[colorS]()},
-        ${Color[colorA]()},
-        ${Color[colorB]()},
-        ${Color[colorC]()}
+        ${colorS()},
+        ${colorA()},
+        ${colorB()},
+        ${colorC()}
       );
       background-size: 200% 200%;
       animation: Gradient ${selectedIndex === 9 ? 0.3 : 1}s ease infinite;
@@ -90,45 +103,45 @@ export default function ProgressBar({
 
     .gradedA {
       background: radial-gradient(
-        ${Color[colorA](0.9)},
-        ${Color[colorA](0.9)} 40%,
-        ${Color[colorA](0.8)} 60%,
+        ${colorA(0.9)},
+        ${colorA(0.9)} 40%,
+        ${colorA(0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedB {
       background: radial-gradient(
-        ${Color[colorB](0.9)},
-        ${Color[colorB](0.9)} 40%,
-        ${Color[colorB](0.8)} 60%,
+        ${colorB(0.9)},
+        ${colorB(0.9)} 40%,
+        ${colorB(0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedC {
       background: radial-gradient(
-        ${Color[colorC](0.9)},
-        ${Color[colorC](0.9)} 40%,
-        ${Color[colorC](0.8)} 60%,
+        ${colorC(0.9)},
+        ${colorC(0.9)} 40%,
+        ${colorC(0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedD {
       background: radial-gradient(
-        ${Color[colorD](0.9)},
-        ${Color[colorD](0.9)} 40%,
-        ${Color[colorD](0.8)} 60%,
+        ${colorD(0.9)},
+        ${colorD(0.9)} 40%,
+        ${colorD(0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }
 
     .gradedF {
       background: radial-gradient(
-        ${Color[colorF](0.9)},
-        ${Color[colorF](0.9)} 40%,
-        ${Color[colorF](0.8)} 60%,
+        ${colorF(0.9)},
+        ${colorF(0.9)} 40%,
+        ${colorF(0.8)} 60%,
         rgba(143, 130, 255, 0.4)
       );
     }

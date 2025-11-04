@@ -14,9 +14,10 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
-import { isMobile, returnTheme } from '~/helpers';
+import { isMobile } from '~/helpers';
 import { isEqual } from 'lodash';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const youLabel = localize('You');
@@ -53,11 +54,14 @@ function Reaction({
   const userId = useKeyContext((v) => v.myState.userId);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const {
-    reactionButton: {
-      color: reactionButtonColor,
-      opacity: reactionButtonOpacity
-    }
-  } = useMemo(() => returnTheme(theme), [theme]);
+    color: reactionButtonColor,
+    getColor: getReactionButtonColor,
+    token: reactionButtonToken
+  } = useRoleColor('reactionButton', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const reactionButtonOpacity = reactionButtonToken?.opacity ?? 0.2;
   const userReacted = useMemo(
     () => reactedUserIds.includes(userId),
     [reactedUserIds, userId]
@@ -172,7 +176,7 @@ function Reaction({
         borderRadius,
         height: '2.3rem',
         border: `1px solid ${
-          userReacted ? Color[reactionButtonColor]() : Color.borderGray()
+          userReacted ? reactionButtonColor : Color.borderGray()
         }`,
         background: Color.targetGray(),
         marginRight: '0.5rem',
@@ -182,7 +186,7 @@ function Reaction({
       <div
         style={{
           ...(userReacted
-            ? { background: Color[reactionButtonColor](reactionButtonOpacity) }
+            ? { background: getReactionButtonColor(reactionButtonOpacity) }
             : {}),
           borderRadius: innerBorderRadius,
           cursor: 'pointer',

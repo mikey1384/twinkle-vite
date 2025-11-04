@@ -9,6 +9,7 @@ import { css } from '@emotion/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
 import SearchInput from '~/components/Texts/SearchInput';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface GroupsProps {
   id: number;
@@ -27,7 +28,8 @@ export default function Groups() {
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
   );
-  const searchColor = useKeyContext((v) => v.theme.search.color);
+  const searchRole = useRoleColor('search', { fallback: 'logoBlue' });
+  const searchColor = searchRole.color;
   const searchGroups = useAppContext((v) => v.requestHelpers.searchGroups);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -155,25 +157,31 @@ export default function Groups() {
 
   return (
     <ErrorBoundary componentPath="Home/Groups">
-      <SearchInput
+      <div
         className={css`
           @media (max-width: ${mobileMaxWidth}) {
-            margin-top: 1rem;
+            padding: 1rem 1.2rem 0;
           }
         `}
-        style={{ zIndex: 0 }}
-        addonColor={searchColor}
-        borderColor={searchColor}
-        placeholder="Search Groups..."
-        onChange={handleSearch}
-        value={searchText}
-      />
+      >
+        <SearchInput
+          style={{ zIndex: 0 }}
+          addonColor={searchColor}
+          borderColor={searchColor}
+          placeholder="Search Groups..."
+          onChange={handleSearch}
+          value={searchText}
+        />
+      </div>
       <div
         className={css`
           display: flex;
           flex-direction: column;
           width: 100%;
           padding: 16px;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1rem 0;
+          }
         `}
       >
         {isLoading ? (

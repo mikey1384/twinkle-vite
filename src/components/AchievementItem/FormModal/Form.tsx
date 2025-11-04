@@ -17,7 +17,7 @@ export default function Form({
   const inputStyle = css`
     padding: 0.5rem;
     font-size: 1.3rem;
-    border: 1px solid ${Color.borderGray()};
+    border: 1px solid var(--ui-border);
     border-radius: ${borderRadius};
     outline: 2px solid transparent;
     transition: outline-color 0.3s ease;

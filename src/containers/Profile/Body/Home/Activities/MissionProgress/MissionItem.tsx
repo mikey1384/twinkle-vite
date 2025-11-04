@@ -34,7 +34,7 @@ export default function MissionItem({
     <div
       style={style}
       className={css`
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         width: 15rem;
         height: 15rem;

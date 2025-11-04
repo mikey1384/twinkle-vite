@@ -15,6 +15,8 @@ function LikeButton({
   contentType,
   filled,
   likes,
+  labelClassName,
+  hideLabel,
   style,
   theme,
   onClick = () => null
@@ -24,6 +26,8 @@ function LikeButton({
   contentType: string;
   filled?: boolean;
   likes: Array<{ id: number }>;
+  labelClassName?: string;
+  hideLabel?: boolean;
   style?: React.CSSProperties;
   theme?: string;
   onClick: (v?: any) => void;
@@ -50,12 +54,9 @@ function LikeButton({
       <Button
         loading={loading}
         className={className}
-        color={
-          (filled && liked) || !filled
-            ? likeButtonPressedColor
-            : likeButtonColor
-        }
-        filled={filled || liked}
+        color={(filled && liked) || !filled ? likeButtonPressedColor : likeButtonColor}
+        variant={filled || liked ? 'solid' : 'soft'}
+        tone="raised"
         style={style}
         onClick={async () => {
           try {
@@ -76,9 +77,11 @@ function LikeButton({
         }}
       >
         <Icon icon="thumbs-up" />
-        <span style={{ marginLeft: '0.7rem' }}>
-          {liked ? `${likedLabel}!` : likeLabel}
-        </span>
+        {!hideLabel && (
+          <span className={labelClassName} style={{ marginLeft: '0.7rem' }}>
+            {liked ? `${likedLabel}!` : likeLabel}
+          </span>
+        )}
       </Button>
     </ErrorBoundary>
   );

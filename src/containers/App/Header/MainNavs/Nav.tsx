@@ -8,10 +8,12 @@ import {
   useContentContext,
   useExploreContext,
   useHomeContext,
-  useKeyContext,
   useNotiContext,
-  useProfileContext
+  useProfileContext,
+  useKeyContext
 } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -37,7 +39,16 @@ function Nav({
   style?: React.CSSProperties;
 }) {
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
+  const viewerTheme =
+    useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;
+  const alertRole = useRoleColor('alert', {
+    fallback: 'gold',
+    themeName: viewerTheme
+  });
+  const alertHue = useMemo(
+    () => alertRole.getColor() || Color.gold(),
+    [alertRole]
+  );
   const { pathname, search } = useLocation();
   const onResetProfile = useProfileContext((v) => v.actions.onResetProfile);
   const profileState = useProfileContext((v) => v.state || {});
@@ -54,9 +65,25 @@ function Nav({
   const onSetSubjectsLoaded = useExploreContext(
     (v) => v.actions.onSetSubjectsLoaded
   );
+  const { getColor: getFilterColor } = useRoleColor('filter', {
+    fallback: 'logoBlue',
+    themeName: viewerTheme
+  });
+  const activeColor = useMemo(
+    () => getFilterColor() || Color.logoBlue(),
+    [getFilterColor]
+  );
+  const hoverBorder = useMemo(
+    () => getFilterColor(0.28) || Color.logoBlue(0.28),
+    [getFilterColor]
+  );
+  const activeBorder = useMemo(
+    () => getFilterColor() || Color.logoBlue(),
+    [getFilterColor]
+  );
   const highlightColor = useMemo(
-    () => (alert ? Color[alertColor]() : Color.darkGray()),
-    [alert, alertColor]
+    () => (alert ? alertHue : activeColor),
+    [alert, alertHue, activeColor]
   );
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
@@ -109,18 +136,22 @@ function Nav({
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        .chat {
-          color: ${Color.lightGray()};
-        }
         a {
           text-decoration: none;
-          font-weight: bold;
-          color: ${Color.lightGray()};
+          font-weight: 600;
+          color: ${Color.gray()};
           align-items: center;
           line-height: 1;
+          padding: 0.6rem 1rem 0.9rem;
+          border: none;
+          background: transparent;
+          box-shadow: none;
+          border-bottom: 2px solid transparent;
         }
         > a.active {
           color: ${highlightColor}!important;
+          background: transparent !important;
+          border-bottom-color: ${activeBorder} !important;
           > svg {
             color: ${highlightColor}!important;
           }
@@ -145,15 +176,16 @@ function Nav({
         }
         ${!isDailyTaskAlerted
           ? `@media (min-width: ${desktopMinWidth}) {
-          &:hover {
-            > a {
-              > svg {
-                color: ${highlightColor};
+              &:hover {
+                > a {
+                  > svg {
+                    color: ${highlightColor};
+                  }
+                  color: ${highlightColor};
+                  border-bottom-color: ${hoverBorder};
+                }
               }
-              color: ${highlightColor};
-            }
-          }
-        }`
+            }`
           : ''}
         @media (max-width: ${mobileMaxWidth}) {
           width: 100%;
@@ -163,6 +195,10 @@ function Nav({
             .nav-label {
               display: none;
             }
+            padding: 0.5rem 0.7rem;
+            background: transparent;
+            box-shadow: none;
+            border: none;
           }
           > a.active {
             > svg {
@@ -180,7 +216,7 @@ function Nav({
         style={{
           display: 'flex',
           alignItems: 'center',
-          ...(alert ? { color: Color[alertColor]() } : {})
+          ...(alert ? { color: alertHue } : {})
         }}
         to={to}
       >

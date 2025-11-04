@@ -6,6 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { isTablet } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
@@ -29,8 +30,10 @@ export default function Categories({
     (v) => v.user.actions.onChangeDefaultSearchFilter
   );
   const defaultSearchFilter = useKeyContext((v) => v.myState.searchFilter);
-  const searchColor = useKeyContext((v) => v.theme.search.color);
-  const searchShadowColor = useKeyContext((v) => v.theme.search.shadow);
+  const searchRole = useRoleColor('search', {
+    fallback: 'logoBlue'
+  });
+  const searchColor = searchRole.color;
   const [changingDefaultFilter, setChangingDefaultFilter] = useState(false);
 
   useEffect(() => {
@@ -54,45 +57,45 @@ export default function Categories({
         <div
           className={css`
             width: 80%;
-            color: ${Color[searchColor]()};
+            color: ${searchColor};
+            font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
             > nav {
               width: 100%;
               text-align: center;
               > p {
                 cursor: default;
-                font-weight: bold;
+                font-weight: 800;
                 text-transform: capitalize;
-                font-size: 3.5rem;
-                text-shadow: ${searchShadowColor
-                  ? `0.05rem 0.05rem ${Color[searchShadowColor]()}`
-                  : 'none'};
+                letter-spacing: 0.2px;
+                font-size: 2.8rem;
+                text-shadow: none;
                 > svg {
-                  font-size: 3.2rem;
+                  font-size: 2.4rem;
                   @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 2.2rem;
+                    font-size: 2rem;
                   }
                 }
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 2.5rem;
+                  font-size: 2.1rem;
                 }
               }
               > a {
-                line-height: 1.8;
-                font-size: 2.7rem;
+                line-height: 1.6;
+                font-size: 2rem;
                 cursor: pointer;
                 text-transform: capitalize;
                 color: ${Color.gray()};
-                transition: color 0.1s;
+                transition: color 0.12s ease;
+                text-decoration: none;
                 &:hover {
-                  text-decoration: none;
-                  color: ${Color[searchColor]()};
+                  color: ${searchColor};
                 }
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.7rem;
+                  font-size: 1.6rem;
                 }
               }
               span {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
               }
             }
           `}

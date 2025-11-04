@@ -104,7 +104,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
       size="lg"
       modalLevel={0}
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }

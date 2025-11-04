@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import FilterBar from '~/components/FilterBar';
 import localize from '~/constants/localize';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -31,6 +31,8 @@ export default function Rankings({
     () => (rankingsTab === 'all' ? allRanks : top30s),
     [allRanks, rankingsTab, top30s]
   );
+  const desktopPaddingTop = myRank ? '2rem' : '1rem';
+  const mobilePaddingTop = myRank ? '1.5rem' : '1rem';
   useEffect(() => {
     init();
     async function init() {
@@ -48,11 +50,12 @@ export default function Rankings({
   ) : (
     <div
       style={{
-        height: '100%',
         width: '100%',
+        height: '100%',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        flexDirection: 'column'
+        minHeight: 0
       }}
     >
       {!!myRank && (
@@ -80,16 +83,19 @@ export default function Rankings({
       )}
       <div
         style={{
-          height: '100%',
-          overflow: 'scroll',
           width: '100%',
-          paddingTop: myRank ? '2rem' : '1rem',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+          justifyContent: 'center',
+          flex: 1,
+          minHeight: 0
         }}
       >
-        <RoundList style={{ marginTop: 0 }} width="35rem" mobileWidth="100%">
+        <LeaderboardList
+          height="100%"
+          width="35rem"
+          padding={`${desktopPaddingTop} 1rem 3.5rem`}
+          mobilePadding={`${mobilePaddingTop} 0.75rem 3rem`}
+        >
           {users.map((user: User) => (
             <RankingsListItem
               small
@@ -101,8 +107,7 @@ export default function Rankings({
               activityContext="aiStories"
             />
           ))}
-        </RoundList>
-        <div style={{ width: '100%', padding: '1rem' }} />
+        </LeaderboardList>
       </div>
     </div>
   );

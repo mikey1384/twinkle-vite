@@ -21,7 +21,7 @@ export default function ShowMoreGroupsButton({
         padding: 1rem;
         border-radius: ${borderRadius};
         cursor: ${onClick ? 'pointer' : 'inherit'};
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         font-weight: bold;
         color: ${Color.black()};
         width: calc(50% - 0.5rem);

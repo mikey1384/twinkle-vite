@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const allPostsLabel = localize('allPosts');
 const subjectsLabel = localize('subjects');
@@ -54,6 +55,66 @@ export default function HomeFilter({
   const hideWatched = useKeyContext((v) => v.myState.hideWatched);
   const userId = useKeyContext((v) => v.myState.userId);
   const [activeTab, setActiveTab] = useState('');
+  const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
+
+  const videoContainerTone = useMemo(() => {
+    const base = '#fff';
+    const border = 'var(--ui-border)';
+    const hoverBorder = 'var(--ui-border-strong)';
+    const label = '#0f172a';
+    const helper = 'rgba(71, 85, 105, 0.9)';
+    const icon = filterRole.getColor() || Color.logoBlue();
+    const switchColor = filterRole.getColor() || Color.logoBlue();
+    const shadow = 'none';
+    return {
+      base,
+      border,
+      hoverBorder,
+      label,
+      helper,
+      icon,
+      switchColor,
+      shadow
+    };
+  }, [filterRole]);
+
+  const videoContainerClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.4rem;
+        width: 100%;
+        padding: 1.2rem 1.6rem;
+        border-radius: ${borderRadius};
+        border: 1px solid ${videoContainerTone.border};
+        background: ${videoContainerTone.base};
+        box-shadow: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        @media (max-width: ${mobileMaxWidth}) {
+          border-radius: 0;
+          border: 0;
+        }
+      `,
+    [videoContainerTone]
+  );
+
+  const videoInfoClass = useMemo(
+    () =>
+      css`
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        color: ${videoContainerTone.label};
+        .label {
+          font-weight: 700;
+          font-size: 1.4rem;
+        }
+      `,
+    [videoContainerTone]
+  );
 
   useEffect(() => {
     setActiveTab(category);
@@ -62,8 +123,6 @@ export default function HomeFilter({
   return (
     <ErrorBoundary componentPath="Home/Stories/HomeFilter">
       <FilterBar
-        inverted
-        bordered
         style={{
           height: '4rem',
           fontSize: '1.6rem'
@@ -103,33 +162,11 @@ export default function HomeFilter({
           >
             {category === 'uploads' && (
               <FilterBar
-                bordered
                 style={{
                   height: '5rem',
                   fontSize: '1.6rem',
                   marginBottom: 0
                 }}
-                dropdownButton={
-                  <DropdownButton
-                    skeuomorphic
-                    className={css`
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1.2rem !important;
-                      }
-                    `}
-                    icon="caret-down"
-                    text={categoryObj.uploads[displayOrder]}
-                    menuProps={[
-                      {
-                        label:
-                          displayOrder === 'desc'
-                            ? categoryObj.uploads['asc']
-                            : categoryObj.uploads['desc'],
-                        onClick: setDisplayOrder
-                      }
-                    ]}
-                  />
-                }
               >
                 {['all', 'subject'].map((type) => {
                   const displayLabel =
@@ -146,33 +183,42 @@ export default function HomeFilter({
                     </nav>
                   );
                 })}
+                <DropdownButton
+                  variant="solid"
+                  tone="raised"
+                  color="darkerGray"
+                  className={css`
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.2rem !important;
+                    }
+                  `}
+                  style={{ marginLeft: 'auto' }}
+                  icon="caret-down"
+                  text={categoryObj.uploads[displayOrder]}
+                  menuProps={[
+                    {
+                      label:
+                        displayOrder === 'desc'
+                          ? categoryObj.uploads['asc']
+                          : categoryObj.uploads['desc'],
+                      onClick: setDisplayOrder
+                    }
+                  ]}
+                />
               </FilterBar>
             )}
             {category === 'videos' && (
-              <div
-                className={css`
-                  border: 1px solid ${Color.borderGray()};
-                  @media (max-width: ${mobileMaxWidth}) {
-                    border-right: 0;
-                    border-left: 0;
-                  }
-                `}
-                style={{
-                  display: 'flex',
-                  background: '#fff',
-                  height: '100%',
-                  width: '100%',
-                  padding: '1rem',
-                  justifyContent: 'flex-end'
-                }}
-              >
+              <div className={videoContainerClass}>
                 {userId && (
-                  <SwitchButton
-                    checked={!!hideWatched}
-                    label={hideWatchedLabel}
-                    onChange={handleToggleHideWatched}
-                    labelStyle={{ fontSize: '1.6rem' }}
-                  />
+                  <div className={videoInfoClass}>
+                    <div className="label">{hideWatchedLabel}</div>
+                    <SwitchButton
+                      ariaLabel="Toggle hide watched videos"
+                      checked={!!hideWatched}
+                      onChange={handleToggleHideWatched}
+                      color={videoContainerTone.switchColor}
+                    />
+                  </div>
                 )}
               </div>
             )}

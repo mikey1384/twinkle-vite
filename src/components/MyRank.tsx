@@ -4,8 +4,11 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
+import RankBadge from '~/components/RankBadge';
+import { getRankDigitCount, getRankFontScale } from '~/helpers/rankHelpers';
 
 const unrankedLabel = localize('unranked');
 
@@ -14,15 +17,19 @@ export default function MyRank({
   noBorderRadius,
   rank,
   style,
-  twinkleXP
+  twinkleXP,
+  isNotification
 }: {
   myId: number;
   noBorderRadius?: boolean;
   rank: number;
   style?: React.CSSProperties;
   twinkleXP: number;
+  isNotification?: boolean;
 }) {
-  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
+  const { getColor: getXpNumberColor } = useRoleColor('xpNumber', {
+    fallback: 'logoGreen'
+  });
   const loadingRankings = useKeyContext((v) => v.myState.loadingRankings);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const rankedColor = useMemo(
@@ -36,19 +43,19 @@ export default function MyRank({
         : null,
     [rank]
   );
-  const rankLabel = useMemo(() => {
-    return SELECTED_LANGUAGE === 'kr' ? `랭킹 ${rank}위` : `Rank #${rank}`;
-  }, [rank]);
+  const isKorean = SELECTED_LANGUAGE === 'kr';
+  const rankLabel = localize('rank');
+  const rankDigitCount = useMemo(() => getRankDigitCount(rank), [rank]);
+  const rankFontScale = useMemo(
+    () => getRankFontScale(rankDigitCount),
+    [rankDigitCount]
+  );
 
   return (
     <div
       style={{
         marginTop: '1rem',
         marginBottom: myId ? '1rem' : 0,
-        borderBottom:
-          !(rank > 0 && rank < 4) && noBorderRadius
-            ? `1px solid ${Color.borderGray()}`
-            : '',
         background: myId
           ? rank > 0
             ? rank < 4
@@ -63,10 +70,8 @@ export default function MyRank({
         margin-bottom: 0px;
         text-align: center;
         padding: 1rem;
-        border: ${(rank > 0 && rank < 4) || noBorderRadius
-          ? ''
-          : `1px solid ${Color.borderGray()}`};
-        border-radius: ${!noBorderRadius ? borderRadius : ''};
+        border: none;
+        border-radius: ${!noBorderRadius ? borderRadius : 0};
         p {
           font-weight: bold;
         }
@@ -74,19 +79,36 @@ export default function MyRank({
           font-size: 1.5rem;
           font-weight: bold;
         }
-        span {
-          font-size: ${twinkleXP > 1_000_000 ? '2.8rem' : '3rem'};
+        .rank-prefix,
+        .rank-suffix {
+          display: inline-flex;
+          align-items: center;
         }
-        span.rank {
-          font-size: ${twinkleXP > 1_000_000 ? '1.7rem' : '2rem'};
+        ${isNotification
+          ? css`
+              .rank-prefix {
+                font-size: 2.1rem;
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                .rank-prefix {
+                  font-size: 1.8rem;
+                }
+              }
+            `
+          : ''}
+        .rank {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+        .rank-suffix {
+          margin-left: 0.5rem;
         }
         @media (max-width: ${mobileMaxWidth}) {
           border-radius: 0;
-          span {
-            font-size: 2rem;
-          }
           span.rank {
-            font-size: ${twinkleXP > 1_000_000 ? '1.3rem' : '1.6rem'};
+            font-size: 1.6rem;
           }
         }
       `}
@@ -103,14 +125,26 @@ export default function MyRank({
           }}
         >
           <span
+            className={css`
+              font-size: 3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 2rem;
+              }
+            `}
             style={{
               fontWeight: 'bold',
-              color: rankedColor || Color[xpNumberColor]()
+              color: rankedColor || getXpNumberColor()
             }}
           >
             {twinkleXP ? addCommasToNumber(twinkleXP) : 0}
           </span>{' '}
           <span
+            className={css`
+              font-size: 3rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 2rem;
+              }
+            `}
             style={{
               fontWeight: 'bold',
               color: rankedColor || Color.gold()
@@ -135,16 +169,39 @@ export default function MyRank({
           ) : null}
         </div>
         {typeof twinkleCoins === 'number' && (
-          <p
-            className="rank"
+          <div
+            className={css`
+              font-size: 2.5rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              font-weight: bold;
+            `}
             style={{
               color:
                 rankedColor ||
                 (rank > 0 && rank <= 10 ? Color.pink() : Color.darkGray())
             }}
           >
-            {rank && twinkleXP ? rankLabel : unrankedLabel}
-          </p>
+            {rank && twinkleXP ? (
+              <>
+                <div className="rank-prefix">
+                  <span style={{ fontSize: `${rankFontScale}em` }}>
+                    {rankLabel}
+                  </span>
+                </div>
+                <RankBadge rank={rank} />
+                {isKorean ? (
+                  <span className="rank-suffix">
+                    <span style={{ fontSize: `${rankFontScale}em` }}>위</span>
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              unrankedLabel
+            )}
+          </div>
         )}
       </div>
     </div>

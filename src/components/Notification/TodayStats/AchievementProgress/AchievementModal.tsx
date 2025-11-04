@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import AchievementItem from '~/components/AchievementItem';
 import NextMission from './NextMission';
-import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function AchievementModal({
   achievement,
@@ -14,7 +15,8 @@ export default function AchievementModal({
   onHide: () => void;
   onShown: () => void;
 }) {
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
 
   useEffect(() => {
     onShown();

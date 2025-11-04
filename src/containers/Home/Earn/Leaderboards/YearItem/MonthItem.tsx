@@ -1,8 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import TopRanker from './TopRanker';
 import Top30Modal from './Top30Modal';
+import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
+
+const container = css`
+  ${themedCardBase};
+  padding: 1.5rem 1.8rem;
+`;
 
 export default function MonthItem({
   monthLabel,
@@ -19,16 +26,20 @@ export default function MonthItem({
   const top3 = useMemo(() => {
     return top30?.slice(0, 3);
   }, [top30]);
+  const { cardVars } = useThemedCardVars({
+    role: 'sectionPanel',
+    blendWeight: 0.94
+  });
 
   return (
     <div
-      className={css`
-        background: #fff;
-        padding: 1rem;
-        border: 1px solid ${Color.borderGray()};
-        border-radius: ${borderRadius};
-      `}
-      style={style}
+      className={container}
+      style={
+        {
+          ...cardVars,
+          ...(style || {})
+        } as React.CSSProperties
+      }
     >
       <p
         className={css`

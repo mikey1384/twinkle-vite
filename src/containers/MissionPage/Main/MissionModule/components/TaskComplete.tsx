@@ -61,7 +61,7 @@ export default function TaskComplete({
         filled
         disabled={submitDisabled}
         style={{ marginTop: '3.5rem', fontSize: '1.7rem' }}
-        skeuomorphic
+        tone="raised"
         color="brownOrange"
         onClick={handleTaskComplete}
       >

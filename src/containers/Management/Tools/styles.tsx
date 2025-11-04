@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 export const inputStyles = css`
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--ui-border);
   font-size: 0.95rem;
   transition: all 0.2s ease;
   width: 100%;
@@ -51,7 +51,7 @@ export const videoContainerStyles = css`
   background-color: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(5px);
   padding: 10px;
-  border-bottom: 1px solid rgba(238, 238, 238, 0.8);
+  border-bottom: 1px solid var(--ui-border);
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
@@ -70,7 +70,7 @@ export const timestampStyles = css`
   background-color: rgba(248, 249, 250, 0.7);
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid rgba(222, 226, 230, 0.7);
+  border: 1px solid var(--ui-border);
   display: inline-block;
 `;
 
@@ -89,7 +89,7 @@ export const textAreaStyles = css`
   width: 100%;
   min-height: 80px;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--ui-border);
   border-radius: 4px;
   font-size: 14px;
   resize: vertical;

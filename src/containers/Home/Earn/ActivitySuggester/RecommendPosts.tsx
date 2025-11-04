@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
-import ContentPreview from './ContentPreview';
+import ContentPreview from '~/components/ContentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useKeyContext, useAppContext, useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext } from '~/contexts';
+import { Color, borderRadius } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function RecommendPosts() {
-  const showMeAnotherPostButtonColor = useKeyContext(
-    (v) => v.theme.showMeAnotherPostButton.color
-  );
+  const showAnotherPostRole = useRoleColor('showMeAnotherPostButton', {
+    fallback: 'green'
+  });
+  const showMeAnotherPostButtonColor = showAnotherPostRole.colorKey;
   const onSetTopMenuSectionSection = useHomeContext(
     (v) => v.actions.onSetTopMenuSectionSection
   );
@@ -32,63 +36,38 @@ export default function RecommendPosts() {
 
   return (
     <ErrorBoundary componentPath="Home/Earn/ActivitySuggester/RecommendPosts">
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <p>Earn Karma Points by Recommending Posts</p>
-        <div
-          style={{
-            marginTop: '1.5rem'
-          }}
-        >
+      <div className={sectionContainer}>
+        <h3 className={sectionHeading}>
+          Earn Karma Points by Recommending Posts
+        </h3>
+        <div className={listContainer}>
           {loading ? (
             <Loading style={{ height: '20rem' }} />
           ) : posts.length === 0 ? (
-            <div
-              style={{
-                height: '17rem',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: '2rem'
-              }}
-            >{`Wow, it looks like there aren't any posts left to recommend!`}</div>
+            <div className={emptyState}>
+              Wow, it looks like there aren't any posts left to recommend!
+            </div>
           ) : (
-            <>
-              {posts.map(
-                (post: {
+            posts.map(
+              (post: {
+                id: number;
+                contentType: string;
+                content: string;
+                story: string;
+                uploader: {
                   id: number;
-                  contentType: string;
-                  content: string;
-                  story: string;
-                  uploader: {
-                    id: number;
-                    username: string;
-                    profilePicUrl: string;
-                  };
-                }) => (
-                  <ContentPreview key={post.id} contentObj={post} />
-                )
-              )}
-            </>
+                  username: string;
+                  profilePicUrl: string;
+                };
+              }) => <ContentPreview key={post.id} contentObj={post} />
+            )
           )}
         </div>
         {posts.length > 0 && (
-          <div
-            style={{
-              marginTop: '1.5rem',
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '3rem'
-            }}
-          >
+          <div className={primaryActionRow}>
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               color={showMeAnotherPostButtonColor}
               onClick={handleLoadAnotherPostClick}
               disabled={skipping || loading}
@@ -98,30 +77,24 @@ export default function RecommendPosts() {
             </Button>
           </div>
         )}
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        >
+        <div className={secondaryActionRow}>
           <Button
             onClick={() => handleSetTopMenuSection('subject')}
-            style={{ width: '50%' }}
-            filled
             color="logoBlue"
+            variant="soft"
+            tone="flat"
           >
             <Icon icon="certificate" />
-            <span style={{ marginLeft: '0.7rem' }}>Answer subjects</span>
+            <span>Answer Subjects</span>
           </Button>
           <Button
             onClick={() => handleSetTopMenuSection('reward')}
-            style={{ marginLeft: '1rem', width: '50%' }}
-            filled
             color="pink"
+            variant="soft"
+            tone="flat"
           >
             <Icon icon="certificate" />
-            <span style={{ marginLeft: '0.7rem' }}>Reward posts</span>
+            <span>Reward Posts</span>
           </Button>
         </div>
       </div>
@@ -163,3 +136,49 @@ export default function RecommendPosts() {
     setLoading(false);
   }
 }
+
+const sectionContainer = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  width: 100%;
+`;
+
+const sectionHeading = css`
+  margin: 0;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--home-panel-heading, ${Color.darkerGray()});
+`;
+
+const listContainer = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+`;
+
+const emptyState = css`
+  height: 17rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: ${borderRadius};
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  color: rgba(15, 23, 42, 0.68);
+  padding: 1.6rem;
+  background: rgba(255, 255, 255, 0.78);
+`;
+
+const primaryActionRow = css`
+  display: flex;
+  justify-content: center;
+  margin-top: 1.6rem;
+`;
+
+const secondaryActionRow = css`
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 1.4rem;
+`;

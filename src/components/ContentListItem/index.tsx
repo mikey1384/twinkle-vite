@@ -4,6 +4,7 @@ import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 
 function ContentListItem({
@@ -16,7 +17,8 @@ function ContentListItem({
   selectable,
   selected,
   style,
-  hideSideBordersOnMobile
+  hideSideBordersOnMobile,
+  noTopBorderRadius
 }: {
   onClick?: () => void;
   contentObj: any;
@@ -27,15 +29,17 @@ function ContentListItem({
   selected?: boolean;
   style?: React.CSSProperties;
   hideSideBordersOnMobile?: boolean;
+  noTopBorderRadius?: boolean;
 }) {
   const [ComponentRef, inView] = useInView();
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const userId = useKeyContext((v) => v.myState.userId);
-  const itemSelectedColor = useKeyContext((v) => v.theme.itemSelected.color);
-  const itemSelectedOpacity = useKeyContext(
-    (v) => v.theme.itemSelected.opacity
-  );
+  const itemSelectedRole = useRoleColor('itemSelected', {
+    fallback: 'logoBlue'
+  });
+  const itemSelectedColor = itemSelectedRole.colorKey || 'logoBlue';
+  const itemSelectedOpacity = itemSelectedRole.defaultOpacity ?? 0.8;
 
   const [isVisible, setIsVisible] = useState(false);
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});
@@ -142,6 +146,7 @@ function ContentListItem({
               expandable={expandable}
               selected={selected}
               hideSideBordersOnMobile={hideSideBordersOnMobile}
+              noTopBorderRadius={noTopBorderRadius}
               itemSelectedColor={itemSelectedColor}
               itemSelectedOpacity={itemSelectedOpacity}
               isListening={isListening}

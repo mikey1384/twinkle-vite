@@ -1,16 +1,9 @@
-import React, {
-  memo,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { memo, useContext, useEffect, useRef, useState } from 'react';
 import LocalContext from '../../Context';
 import Reply from './Reply';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { returnTheme, scrollElementToCenter } from '~/helpers';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { scrollElementToCenter } from '~/helpers';
+import { useAppContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
 function Replies({
@@ -38,7 +31,6 @@ function Replies({
   rootContent?: Content;
   theme?: string;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     onDelete,
     onLoadMoreReplies,
@@ -46,9 +38,6 @@ function Replies({
     onReplySubmit,
     onSubmitWithAttachment
   } = useContext(LocalContext);
-  const {
-    loadMoreButton: { color: loadMoreButtonColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
   const loadReplies = useAppContext((v) => v.requestHelpers.loadReplies);
   const [deleting, setDeleting] = useState(false);
   const [replying, setReplying] = useState(false);
@@ -91,7 +80,7 @@ function Replies({
             width: '100%'
           }}
           filled
-          color={loadMoreButtonColor}
+          theme={theme}
           loading={loadingMoreReplies}
           onClick={handleLoadMoreReplies}
         />
@@ -105,7 +94,7 @@ function Replies({
               width: '100%'
             }}
             filled
-            color={loadMoreButtonColor}
+            theme={theme}
             loading={loadingMoreRepliesOfReply}
             onClick={() =>
               handleLoadMoreRepliesOfReply({

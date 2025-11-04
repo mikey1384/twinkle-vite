@@ -11,7 +11,6 @@ import parse from 'html-react-parser';
 import parseStyle from 'style-to-object';
 import EmbeddedComponent from './EmbeddedComponent';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import {
   applyTextEffects,
@@ -350,7 +349,7 @@ function Markdown({
                           td {
                             text-align: center;
                             width: 33%;
-                            border: 1px solid ${Color.borderGray()};
+                            border: 1px solid var(--ui-border);
                             padding: 0.5rem;
                             white-space: nowrap;
                             &:first-child {
@@ -687,7 +686,7 @@ function Markdown({
                       td {
                         text-align: center;
                         width: 33%;
-                        border: 1px solid ${Color.borderGray()};
+                        border: 1px solid var(--ui-border);
                         padding: 0.5rem;
                         white-space: nowrap;
                         &:first-child {

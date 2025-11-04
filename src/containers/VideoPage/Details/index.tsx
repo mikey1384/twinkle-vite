@@ -6,7 +6,10 @@ import XPRewardInterface from '~/components/XPRewardInterface';
 import RewardButton from '~/components/Buttons/RewardButton';
 import AlreadyPosted from '~/components/AlreadyPosted';
 import BasicInfos from './BasicInfos';
-import SideButtons from './SideButtons';
+import LikeButton from '~/components/Buttons/LikeButton';
+import Likers from '~/components/Likers';
+import UserListModal from '~/components/Modals/UserListModal';
+import StarButton from '~/components/Buttons/StarButton';
 import Description from './Description';
 import RecommendationInterface from '~/components/RecommendationInterface';
 import RecommendationStatus from '~/components/RecommendationStatus';
@@ -18,7 +21,7 @@ import {
   determineXpButtonDisabled,
   textIsOverflown
 } from '~/helpers';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import {
   addCommasToNumber,
   addEmoji,
@@ -38,10 +41,12 @@ import {
 import { css } from '@emotion/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deleteLabel = localize('delete');
 const editLabel = localize('edit');
 const editOrDeleteLabel = localize('editOrDelete');
+const peopleWhoLikeThisVideoLabel = localize('peopleWhoLikeThisVideo');
 const deviceIsMobile = isMobile(navigator);
 
 export default function Details({
@@ -87,12 +92,19 @@ export default function Details({
   videoId: number;
   videoViews: number;
 }) {
-  const rewardColor = useKeyContext((v) => v.theme.reward.color);
+  const { colorKey: rewardColor } = useRoleColor('reward', {
+    fallback: 'pink'
+  });
   const banned = useKeyContext((v) => v.myState.banned);
   const level = useKeyContext((v) => v.myState.level);
+  const {
+    canEditRewardLevel: keyCanEditRewardLevel,
+    canReward: keyCanReward,
+    userId: myUserId
+  } = useKeyContext((v) => v.myState);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
-  const { canDelete, canEdit, canEditPlaylists, canReward } = useMyLevel();
+  const { canDelete, canEdit, canReward } = useMyLevel();
 
   const onSetIsEditing = useContentContext((v) => v.actions.onSetIsEditing);
   const onSetXpRewardInterfaceShown = useContentContext(
@@ -109,8 +121,16 @@ export default function Details({
 
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
+  const [likesModalShown, setLikesModalShown] = useState(false);
 
   const [titleHovered, setTitleHovered] = useState(false);
+  const starButtonShown = useMemo(() => {
+    const hasUploader = !!uploader;
+    return (
+      !!keyCanEditRewardLevel ||
+      (hasUploader && (uploader?.id === myUserId || !!keyCanReward))
+    );
+  }, [keyCanEditRewardLevel, keyCanReward, myUserId, uploader]);
 
   const TitleRef: React.RefObject<any> = useRef(null);
   const RewardInterfaceRef = useRef(null);
@@ -196,8 +216,8 @@ export default function Details({
   );
 
   const rewardButtonShown = useMemo(() => {
-    return !isEditing && userCanRewardThis;
-  }, [isEditing, userCanRewardThis]);
+    return userCanRewardThis;
+  }, [userCanRewardThis]);
 
   const xpButtonDisabled = useMemo(
     () =>
@@ -275,49 +295,63 @@ export default function Details({
 
   return (
     <ErrorBoundary componentPath="VideoPage/Details">
-      <div style={{ width: '100%' }}>
-        <AlreadyPosted
-          changingPage={changingPage}
-          style={{ marginBottom: '1rem' }}
-          contentId={Number(videoId)}
-          contentType="video"
-          url={content}
-          uploaderId={uploader?.id}
-          videoCode={content}
-        />
-        <TagStatus
-          style={{ fontSize: '1.5rem' }}
-          onAddTags={addTags}
-          tags={tags}
-          contentId={Number(videoId)}
-        />
-        <div
-          style={{
-            padding: '0 1rem 1rem 1rem',
-            width: '100%'
-          }}
-        >
+      <div
+        className={css`
+          width: 100%;
+          background: #fff;
+          border-radius: ${borderRadius};
+          @media (max-width: ${tabletMaxWidth}) {
+            border-radius: 0;
+          }
+        `}
+      >
+        <div style={{ width: '100%', padding: '1rem' }}>
+          <AlreadyPosted
+            changingPage={changingPage}
+            style={{ marginBottom: '1rem' }}
+            contentId={Number(videoId)}
+            contentType="video"
+            url={content}
+            uploaderId={uploader?.id}
+            videoCode={content}
+          />
+          <TagStatus
+            style={{ fontSize: '1.5rem' }}
+            onAddTags={addTags}
+            tags={tags}
+            contentId={Number(videoId)}
+          />
+        </div>
+        <div style={{ width: '100%' }}>
           <div
-            style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+            className={css`
+              display: grid;
+              /* Left fills remaining space; right sizes to content */
+              grid-template-columns: minmax(0, 1fr) auto;
+              grid-auto-rows: auto;
+              column-gap: 1.25rem;
+              row-gap: 1rem;
+              width: 100%;
+              margin-top: 1rem;
+              background: #fff;
+              border-radius: ${borderRadius};
+              padding: 1.25rem;
+              @media (max-width: ${tabletMaxWidth}) {
+                border-radius: 0;
+                padding: 1rem;
+              }
+            `}
           >
             <div
-              style={{
-                display: 'flex',
-                width: '100%',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '1.5rem'
-              }}
+              className={css`
+                grid-column: 1 / -1;
+                min-width: 0; /* prevent grid child from forcing overflow */
+                overflow: hidden;
+              `}
             >
               <BasicInfos
-                className={css`
-                  width: CALC(100% - 25rem);
-                  @media (max-width: ${mobileMaxWidth}) {
-                    width: CALC(100% - ${canReward ? '15rem' : '12rem'});
-                  }
-                `}
                 style={{
-                  marginRight: '1rem',
+                  marginRight: 0,
                   display: 'flex',
                   flexDirection: 'column'
                 }}
@@ -346,45 +380,13 @@ export default function Details({
                 uploader={uploader}
                 urlExceedsCharLimit={urlExceedsCharLimit}
               />
-              <SideButtons
-                className={css`
-                  width: 25rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    width: ${canReward ? '15rem' : '12rem'};
-                  }
-                `}
-                style={{
-                  marginTop: canEditPlaylists ? 0 : '1rem',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-                byUser={byUser}
-                changeByUserStatus={changeByUserStatus}
-                rewardLevel={rewardLevel}
-                likes={likes}
-                onLikeVideo={handleLikeVideo}
-                onSetRewardLevel={onSetRewardLevel}
-                uploader={uploader}
-                userId={userId}
-                videoId={videoId}
-              />
             </div>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              width: '100%',
-              marginTop: '1rem',
-              position: 'relative'
-            }}
-          >
+            {/* Left column: Description */}
             <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%'
-              }}
+              className={css`
+                grid-column: 1;
+                min-width: 0;
+              `}
             >
               <Description
                 onChange={(event) =>
@@ -403,91 +405,171 @@ export default function Details({
                 descriptionExceedsCharLimit={descriptionExceedsCharLimit}
                 determineEditButtonDoneStatus={determineEditButtonDoneStatus}
               />
-              {!isEditing && videoViews > 10 && (
-                <div
-                  style={{
-                    padding: '1rem 0',
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: Color.darkerGray()
-                  }}
-                >
-                  {viewsLabel}
-                </div>
-              )}
-              <div style={{ display: 'flex', marginTop: '1rem' }}>
-                {editButtonShown && !isEditing && (
-                  <DropdownButton
-                    skeuomorphic
-                    icon="pencil-alt"
-                    color="darkerGray"
-                    style={{ marginRight: '1rem' }}
-                    text={editOrDeleteLabel}
-                    menuProps={editMenuItems}
-                  />
+            </div>
+            <aside
+              className={css`
+                grid-column: 2;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                row-gap: 0.75rem;
+                min-width: 0;
+              `}
+            >
+              {/* Row 1: Like + Reward */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <LikeButton
+                  contentType="video"
+                  contentId={Number(videoId)}
+                  likes={likes}
+                  filled
+                  style={{ fontSize: '1.8rem' }}
+                  onClick={handleLikeVideo}
+                />
+                {rewardButtonShown && (
+                  <div style={{ marginLeft: '1rem' }}>
+                    <RewardButton
+                      contentId={videoId}
+                      contentType="video"
+                      disableReason={xpButtonDisabled}
+                    />
+                  </div>
                 )}
               </div>
-            </div>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0
-              }}
-            >
-              <div style={{ display: 'flex' }}>
-                {rewardButtonShown && (
-                  <RewardButton
-                    skeuomorphic
-                    contentId={videoId}
-                    contentType="video"
-                    disableReason={xpButtonDisabled}
+              {/* Row 1.5: Likers (appears only when there are likes) */}
+              {likes?.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Likers
+                    userId={userId}
+                    likes={likes}
+                    onLinkClick={() => setLikesModalShown(true)}
+                    target="video"
+                    wordBreakEnabled
+                    style={{
+                      marginTop: '0.1rem',
+                      lineHeight: '1.7rem',
+                      textAlign: 'right'
+                    }}
                   />
-                )}
+                </div>
+              )}
+              {/* Row 2: Star + Heart */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end'
+                }}
+              >
                 <Button
                   color={rewardColor}
-                  style={{ marginLeft: '1rem' }}
-                  skeuomorphic
-                  filled={isRecommendedByUser}
+                  style={{}}
+                  variant={isRecommendedByUser ? 'solid' : 'soft'}
+                  tone="raised"
                   disabled={recommendationInterfaceShown}
                   onClick={() => setRecommendationInterfaceShown(true)}
                 >
                   <Icon icon="heart" />
                 </Button>
+                {starButtonShown && (
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '3.6rem',
+                      height: '3.6rem',
+                      marginLeft: '1rem'
+                    }}
+                  >
+                    <StarButton
+                      byUser={!!byUser}
+                      contentId={Number(videoId)}
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                      contentType="video"
+                      rewardLevel={rewardLevel}
+                      onSetRewardLevel={onSetRewardLevel}
+                      onToggleByUser={handleToggleByUser}
+                      uploader={uploader}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+              {/* Row 3: Views */}
+              {videoViews > 10 && (
+                <div
+                  style={{
+                    paddingTop: '0.25rem',
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    color: Color.darkerGray(),
+                    textAlign: 'right'
+                  }}
+                >
+                  {viewsLabel}
+                </div>
+              )}
+              {/* Row 4: Edit/Delete */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {editButtonShown && !isEditing && (
+                  <DropdownButton
+                    variant="solid"
+                    tone="raised"
+                    icon="pencil-alt"
+                    color="darkerGray"
+                    style={{}}
+                    text={editOrDeleteLabel}
+                    menuProps={editMenuItems}
+                  />
+                )}
+              </div>
+            </aside>
           </div>
 
-          <RecommendationStatus
-            style={{
-              marginTop: '1rem',
-              marginBottom: 0,
-              marginLeft: '-1rem',
-              marginRight: '-1rem'
-            }}
-            contentType="video"
-            recommendations={recommendations}
-          />
-          <div
-            style={{
-              marginTop: '1rem',
-              fontSize: '1.7rem',
-              marginBottom: 0,
-              marginLeft: '-1rem',
-              marginRight: '-1rem',
-              display: recommendationInterfaceShown ? 'block' : 'none'
-            }}
-          >
-            <RecommendationInterface
-              key={`recommendation-interface-${videoId}`}
-              contentId={videoId}
-              contentType="video"
-              onHide={() => setRecommendationInterfaceShown(false)}
-              recommendations={recommendations}
-              rewardLevel={byUser ? 5 : 0}
-              content={description}
-              uploaderId={uploader?.id}
+          {likesModalShown && (
+            <UserListModal
+              onHide={() => setLikesModalShown(false)}
+              title={peopleWhoLikeThisVideoLabel}
+              users={likes}
             />
+          )}
+
+          <div
+            className={css`
+              background: #fff;
+              border-radius: ${borderRadius};
+              padding: 1.25rem;
+              margin-top: 1rem;
+              @media (max-width: ${tabletMaxWidth}) {
+                padding: 1rem;
+                border-radius: 0;
+              }
+            `}
+          >
+            <RecommendationStatus
+              style={{
+                marginBottom: 0
+              }}
+              contentType="video"
+              recommendations={recommendations}
+            />
+            <div
+              style={{
+                marginTop: '1rem',
+                fontSize: '1.7rem',
+                marginBottom: 0,
+                display: recommendationInterfaceShown ? 'block' : 'none'
+              }}
+            >
+              <RecommendationInterface
+                key={`recommendation-interface-${videoId}`}
+                contentId={videoId}
+                contentType="video"
+                onHide={() => setRecommendationInterfaceShown(false)}
+                recommendations={recommendations}
+                rewardLevel={byUser ? 5 : 0}
+                content={description}
+                uploaderId={uploader?.id}
+              />
+            </div>
           </div>
 
           <div
@@ -516,6 +598,10 @@ export default function Details({
       </div>
     </ErrorBoundary>
   );
+
+  function handleToggleByUser(byUser: boolean) {
+    changeByUserStatus({ byUser, contentId: videoId, contentType: 'video' });
+  }
 
   function determineEditButtonDoneStatus() {
     const urlIsInvalid = !isValidYoutubeUrl(editedUrl);

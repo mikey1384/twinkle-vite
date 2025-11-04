@@ -54,7 +54,6 @@ export default function AICards({
       <div
         className={css`
           z-index: 100;
-          box-shadow: 0 3px 5px -3px ${Color.black(0.6)};
         `}
       >
         <FilterBar
@@ -113,7 +112,7 @@ export default function AICards({
           height: 6.5rem;
           background: ${Color.inputGray()};
           padding: 1rem;
-          border-top: 1px solid ${Color.borderGray()};
+          border-top: 1px solid var(--ui-border);
         `}
       >
         <GenerateCardInterface

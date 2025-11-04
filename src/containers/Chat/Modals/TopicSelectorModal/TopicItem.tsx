@@ -158,8 +158,7 @@ function TopicItem({
           style={{
             maxHeight: '3.5rem'
           }}
-          filled
-          opacity={0.5}
+          variant="soft"
           onClick={() => setIsEditing(true)}
           disabled={selectButtonDisabled}
         >
@@ -179,8 +178,7 @@ function TopicItem({
               maxHeight: '3.5rem',
               marginLeft: canEditTopic ? '0.5rem' : 0
             }}
-            filled
-            opacity={isPinned ? 1 : 0.5}
+            variant={isPinned ? 'solid' : 'soft'}
             onClick={handlePinTopic}
             disabled={selectButtonDisabled}
           >
@@ -195,9 +193,8 @@ function TopicItem({
             marginLeft: '0.5rem'
           }}
           disabledOpacity={1}
-          filled
+          variant="soft"
           disabled={isFeatured}
-          opacity={0.5}
           onClick={handleUpdateFeaturedTopic}
         >
           {isFeatured ? <span>Featured</span> : <Icon icon="star" />}
@@ -207,8 +204,7 @@ function TopicItem({
         <Button
           color="green"
           style={{ maxHeight: '3.5rem', marginLeft: '0.5rem' }}
-          filled
-          opacity={0.5}
+          variant="soft"
           onClick={handleSelectTopic}
           disabled={selectButtonDisabled}
         >

@@ -1,14 +1,12 @@
 import React from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import RankBar from '~/components/RankBar';
+import ScopedTheme from '~/theme/ScopedTheme';
 import UserDetails from '~/components/UserDetails';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
-
-const deviceIsMobile = isMobile(navigator);
 
 const profileContainerCSS = css`
   display: flex;
@@ -32,6 +30,7 @@ const rankBarCSS = css`
   @media (max-width: ${mobileMaxWidth}) {
     margin-left: 0;
     margin-right: 0;
+    border-radius: 0;
   }
 `;
 
@@ -66,19 +65,9 @@ export default function Profile({ profile }: { profile: User }) {
         />
       </div>
       {!!profile.twinkleXP && (
-        <RankBar
-          profile={profile}
-          className={rankBarCSS}
-          style={{
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderRadius: 0,
-            marginLeft:
-              !deviceIsMobile && profile.rank && profile.rank < 4 ? '-1px' : '',
-            marginRight:
-              !deviceIsMobile && profile.rank && profile.rank < 4 ? '-1px' : ''
-          }}
-        />
+        <ScopedTheme theme={(profile.profileTheme as any) || 'logoBlue'}>
+          <RankBar profile={profile} variant="page" className={rankBarCSS} />
+        </ScopedTheme>
       )}
     </div>
   );

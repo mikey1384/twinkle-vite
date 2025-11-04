@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
@@ -106,19 +106,41 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Home/AIStoriesModal">
-      <Modal
-        closeWhenClickedOutside={
+      <NewModal
+        isOpen
+        onClose={handleHide}
+        size="xl"
+        hasHeader={false}
+        closeOnBackdropClick={
           !dropdownShown && (!isCloseLocked || activeTab === 'rankings')
         }
-        modalStyle={{
-          height: '80vh'
+        bodyPadding={0}
+        showCloseButton={
+          activeTab === 'rankings' ||
+          (activeTab === 'game' && (!isGameStarted || solveObj.isGraded))
+        }
+        style={{
+          height: '80vh',
+          display: 'flex',
+          flexDirection: 'column'
         }}
-        wrapped
-        large
-        onHide={handleHide}
+        footer={
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <Button variant="ghost" onClick={onHide}>
+              Close
+            </Button>
+          </div>
+        }
       >
-        {!isGameStarted && (
-          <header style={{ padding: 0 }}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          {!isGameStarted ? (
             <FilterBar
               style={{
                 height: '6rem',
@@ -138,18 +160,22 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
                 Rankings
               </nav>
             </FilterBar>
-          </header>
-        )}
-        <main
-          style={{
-            height: '100%',
-            padding: 0,
-            overflow: 'scroll',
-            justifyContent: 'flex-start',
-            alignItems: 'center'
-          }}
-          ref={MainRef}
-        >
+          ) : null}
+          <div
+            style={{
+              width: '100%',
+              padding: 0,
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              ...(activeTab === 'rankings'
+                ? { overflow: 'hidden' }
+                : { overflow: 'auto' })
+            }}
+            ref={MainRef}
+          >
           {activeTab === 'game' && (
             <Game
               attemptId={attemptId}
@@ -199,12 +225,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               />
             </div>
           )}
-        </main>
-        <footer style={{ justifyContent: 'center' }}>
-          <Button transparent onClick={onHide}>
-            Close
-          </Button>
-        </footer>
+          </div>
+        </div>
         {successModalShown && (
           <SuccessModal
             imageGeneratedCount={imageGeneratedCount}
@@ -229,7 +251,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             isReverseButtonOrder
           />
         )}
-      </Modal>
+      </NewModal>
     </ErrorBoundary>
   );
 

@@ -1,10 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Link } from 'react-router-dom';
-import { Color } from '~/constants/css';
-import { returnTheme } from '~/helpers';
-import { useKeyContext } from '~/contexts';
 import { Subject } from '~/types';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function SubjectLink({
   subject,
@@ -13,22 +12,25 @@ export default function SubjectLink({
   subject: Subject;
   theme?: string;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const {
-    content: { color: contentColor }
-  } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const { color: contentColor, themeName } = useRoleColor('content', {
+    themeName: theme,
+    fallback: 'logoBlue'
+  });
+  const contentColorVar = `var(--role-content-color, ${contentColor})`;
 
   return (
     <ErrorBoundary componentPath="Comments/SubjectLink">
-      <Link
-        style={{
-          fontWeight: 'bold',
-          color: Color[contentColor]()
-        }}
-        to={`/subjects/${subject.id}`}
-      >
-        {subject.title}
-      </Link>
+      <ScopedTheme theme={themeName} roles={['content']}>
+        <Link
+          style={{
+            fontWeight: 'bold',
+            color: contentColorVar
+          }}
+          to={`/subjects/${subject.id}`}
+        >
+          {subject.title}
+        </Link>
+      </ScopedTheme>
     </ErrorBoundary>
   );
 }

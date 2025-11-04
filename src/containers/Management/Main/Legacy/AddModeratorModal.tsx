@@ -11,6 +11,7 @@ import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { capitalize } from '~/helpers/stringHelpers';
 import localize from '~/constants/localize';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = localize('searchUsers');
 
@@ -22,7 +23,8 @@ export default function AddModeratorModal({
   onHide: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
+  const doneRole = useRoleColor('done', { fallback: 'blue' });
+  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
   const level = useKeyContext((v) => v.myState.level);
   const addModerators = useAppContext((v) => v.requestHelpers.addModerators);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
@@ -91,7 +93,8 @@ export default function AddModeratorModal({
               <DropdownButton
                 style={{ position: 'absolute' }}
                 icon="chevron-down"
-                skeuomorphic
+                variant="solid"
+                tone="raised"
                 text={user.userType || 'Not Selected'}
                 color="darkerGray"
                 onDropdownShown={setDropdownShown}
@@ -153,7 +156,7 @@ export default function AddModeratorModal({
         )}
       </main>
       <footer>
-        <Button transparent onClick={onHide} style={{ marginRight: '0.7rem' }}>
+        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
           Cancel
         </Button>
         <Button loading={loading} color={doneColor} onClick={handleSubmit}>

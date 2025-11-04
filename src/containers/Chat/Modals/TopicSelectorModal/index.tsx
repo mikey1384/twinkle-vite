@@ -146,7 +146,7 @@ export default function TopicSelectorModal({
       title="Topics"
       size="md"
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }

@@ -80,7 +80,8 @@ export default function TitleSelectionModal({
             <div style={{ marginLeft: '1rem' }}>
               <DropdownButton
                 isMenuShownWhenMounted
-                skeuomorphic
+                variant="soft"
+                tone="raised"
                 icon="caret-down"
                 text={selectedTitle || `level ${userLevel}`}
                 onDropdownShown={setDropdownShown}
@@ -91,7 +92,7 @@ export default function TitleSelectionModal({
         )}
       </main>
       <footer>
-        <Button transparent style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
           {cancelLabel}
         </Button>
         <Button

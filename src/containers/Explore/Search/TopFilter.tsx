@@ -11,7 +11,7 @@ export default function TopFilter({
 }) {
   const navigate = useNavigate();
   return (
-    <FilterBar className={className} bordered>
+    <FilterBar className={className}>
       <nav
         onClick={() => navigate('/videos')}
         className={selectedFilter === 'videos' ? 'active' : ''}

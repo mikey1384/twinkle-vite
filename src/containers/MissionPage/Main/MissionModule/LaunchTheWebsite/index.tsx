@@ -40,7 +40,8 @@ export default function LaunchTheWebsite({
     return {
       label: 'Save and move on',
       color: doneColor,
-      skeuomorphic: true,
+      variant: 'soft',
+      tone: 'raised',
       onClick: async (onNext: () => void) => {
         await handleSaveCode(taskState.code);
         onNext();
@@ -61,7 +62,8 @@ export default function LaunchTheWebsite({
         label: 'Okay',
         color: 'logoBlue',
         noArrow: true,
-        skeuomorphic: true,
+        variant: 'soft',
+        tone: 'raised',
         onClick: () => {
           window.open('https://vercel.com');
           setTimeout(
@@ -74,7 +76,8 @@ export default function LaunchTheWebsite({
     return {
       label: 'I made an account',
       color: 'green',
-      skeuomorphic: true
+      variant: 'soft',
+      tone: 'raised'
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [makeAccountOkayPressed, task.id]);
@@ -86,7 +89,8 @@ export default function LaunchTheWebsite({
         color: 'logoBlue',
         noArrow: true,
         disabled: deviceIsMobile,
-        skeuomorphic: true,
+        variant: 'soft',
+        tone: 'raised',
         onClick: () =>
           handleUpdateTaskProgress({ connectReplToGitHubOkayPressed: true })
       };
@@ -95,7 +99,8 @@ export default function LaunchTheWebsite({
       label: 'Yes',
       color: 'green',
       disabled: deviceIsMobile,
-      skeuomorphic: true
+      variant: 'soft',
+      tone: 'raised'
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connectReplToGitHubOkayPressed, task.id]);
@@ -116,7 +121,8 @@ export default function LaunchTheWebsite({
           {
             label: 'Yes I did',
             color: 'green',
-            skeuomorphic: true,
+            variant: 'soft',
+            tone: 'raised',
             disabled: deviceIsMobile
           },
           FourthButton

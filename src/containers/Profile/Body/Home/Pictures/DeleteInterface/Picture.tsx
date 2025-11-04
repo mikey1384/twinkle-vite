@@ -28,7 +28,7 @@ export default function Picture({
       className={css`
         background: black;
         position: relative;
-        border: 1px solid ${Color.borderGray()};
+        border: 1px solid var(--ui-border);
         border-radius: ${borderRadius};
         width: ${width}%;
         padding-bottom: CALC(${width}% - 2px);

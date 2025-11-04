@@ -4,6 +4,8 @@ import RewardAmountInfo from '../../../RewardAmountInfo';
 import RewardLevelInfo from '../../../RewardLevelInfo';
 import TwinkleVideoModal from '../../../TwinkleVideoModal';
 import { css } from '@emotion/css';
+import { useKeyContext } from '~/contexts';
+import XPBar from '~/components/XPVideoPlayer/XPBar';
 
 export default function TwinkleVideoLink({
   title,
@@ -19,6 +21,7 @@ export default function TwinkleVideoLink({
   messageId: number;
 }) {
   const [modalShown, setModalShown] = useState(false);
+  const userId = useKeyContext((v) => v.myState.userId);
   return (
     <div
       style={{
@@ -72,18 +75,33 @@ export default function TwinkleVideoLink({
         </h3>
       </div>
       {rewardLevel ? (
-        <div
-          style={{
-            marginTop: '1rem',
-            height: '3rem',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <RewardAmountInfo rewardLevel={rewardLevel} />
-          <RewardLevelInfo rewardLevel={rewardLevel} videoId={videoId} />
-        </div>
+        userId ? (
+          <div style={{ marginTop: '1rem' }}>
+            <XPBar
+              isChat
+              rewardLevel={rewardLevel}
+              started={false}
+              startingPosition={0}
+              userId={userId}
+              reachedDailyLimit={false}
+              reachedMaxWatchDuration={false}
+              videoId={videoId}
+            />
+          </div>
+        ) : (
+          <div
+            style={{
+              marginTop: '1rem',
+              height: '3rem',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <RewardAmountInfo rewardLevel={rewardLevel} />
+            <RewardLevelInfo rewardLevel={rewardLevel} videoId={videoId} />
+          </div>
+        )
       ) : null}
       {modalShown && (
         <TwinkleVideoModal

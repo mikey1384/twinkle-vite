@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import AddSlide from './AddSlide';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
 
@@ -48,7 +48,7 @@ export default function BottomInterface({
             align-items: center;
             justify-content: center;
             width: 100%;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             @media (max-width: ${mobileMaxWidth}) {
               border-radius: 0;
               margin-top: 2rem;
@@ -60,7 +60,8 @@ export default function BottomInterface({
           <Button
             onClick={handlePublish}
             color="darkBlue"
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             loading={publishing}
             style={{ marginLeft: '1rem' }}
           >

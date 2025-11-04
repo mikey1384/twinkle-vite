@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import UploadButton from '~/components/Buttons/UploadButton';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
 
 export default function AddButtons({
   channelId,
@@ -29,9 +31,41 @@ export default function AddButtons({
 }) {
   const [transactionButtonIsGlowing, setTransactionButtonIsGlowing] =
     useState(false);
-  const alertColor = useKeyContext((v) => v.theme.alert.color);
-  const buttonColor = useKeyContext((v) => v.theme.button.color);
-  const buttonHoverColor = useKeyContext((v) => v.theme.buttonHovered.color);
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const isGoldTheme = alertRole.themeName === 'gold';
+  const isOrangeTheme = alertRole.themeName === 'orange';
+  const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
+  const buttonColorKey = buttonRole.colorKey;
+  const buttonHoverRole = useRoleColor('buttonHovered', {
+    fallback: buttonColorKey
+  });
+  const buttonHoverColorKey = buttonHoverRole.colorKey || buttonColorKey;
+
+  // Override base colors for gold and orange theme buttons to keep contrast high
+  const baseButtonColorKey = isGoldTheme
+    ? 'bluerGray'
+    : isOrangeTheme
+    ? 'darkGray'
+    : buttonColorKey;
+  const baseHoverColorKey = isGoldTheme
+    ? 'darkBluerGray'
+    : isOrangeTheme
+    ? 'darkerGray'
+    : buttonHoverColorKey;
+
+  // Helper to tint Color keys
+  const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
+    const fn = (Color as any)[key];
+    if (typeof fn === 'function') return fn(alpha);
+    const fallbackFn = (Color as any)[fallbackKey];
+    return typeof fallbackFn === 'function' ? fallbackFn(alpha) : fallbackKey;
+  };
+
+  // All glow effects are gold regardless of theme
+  const glowHoverKey = 'gold';
+  const hoveredSoftBg = getTint(glowHoverKey, 0.18);
+  const hoveredSoftBorder = getTint(glowHoverKey, 0.32);
+  const hoveredText = getTint(glowHoverKey, 1);
 
   const loadPendingTransaction = useAppContext(
     (v) => v.requestHelpers.loadPendingTransaction
@@ -61,13 +95,22 @@ export default function AddButtons({
     >
       {isTwoPeopleChannel && isTradeButtonShown && !isAIChannel && (
         <Button
-          skeuomorphic
-          filled={transactionButtonIsGlowing}
+          variant="soft"
+          tone="raised"
           disabled={disabled}
           onClick={onSetTransactionModalShown}
-          color={transactionButtonIsGlowing ? alertColor : buttonColor}
+          color={baseButtonColorKey}
           mobilePadding="0.5rem"
-          hoverColor={transactionButtonIsGlowing ? alertColor : buttonColor}
+          hoverColor={baseHoverColorKey}
+          style={
+            transactionButtonIsGlowing
+              ? {
+                  background: hoveredSoftBg,
+                  borderColor: hoveredSoftBorder,
+                  color: hoveredText
+                }
+              : undefined
+          }
         >
           <Icon size="lg" icon={['far', 'badge-dollar']} />
         </Button>
@@ -76,8 +119,8 @@ export default function AddButtons({
         icon="upload"
         disabled={disabled}
         onFileSelect={onFileSelect}
-        color={buttonColor}
-        hoverColor={buttonHoverColor}
+        color={baseButtonColorKey}
+        hoverColor={baseHoverColorKey}
         mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
         style={{
           marginLeft: isTwoPeopleChannel && !isAIChannel ? '0.5rem' : 0
@@ -85,10 +128,11 @@ export default function AddButtons({
       />
       {!isAIChannel && (
         <Button
-          skeuomorphic
+          variant="soft"
+          tone="raised"
           disabled={disabled}
-          color={buttonColor}
-          hoverColor={buttonHoverColor}
+          color={baseButtonColorKey}
+          hoverColor={baseHoverColorKey}
           onClick={onSelectVideoButtonClick}
           mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}
           style={{ marginLeft: '0.5rem' }}

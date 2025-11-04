@@ -58,7 +58,7 @@ export default function UsernameHistoryModal({
       size="sm"
       priority
       footer={
-        <Button transparent onClick={onHide}>
+        <Button variant="ghost" onClick={onHide}>
           Close
         </Button>
       }
@@ -100,7 +100,7 @@ export default function UsernameHistoryModal({
                   {myId === userId && (
                     <Button
                       color="red"
-                      transparent
+                      variant="ghost"
                       style={{ padding: 0, marginLeft: '1rem' }}
                       onClick={() => setUsernameToDelete(username)}
                     >

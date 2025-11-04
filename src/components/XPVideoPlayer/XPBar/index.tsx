@@ -154,7 +154,14 @@ function XPBar({
                     font-size: 1.3rem;
                     font-weight: bold;
                     padding: 0 1rem;
-                    background: ${Color[xpLevelColor](isMaxReached ? 0.3 : 1)};
+                    background: ${Color[xpLevelColor]()};
+                    border: 1px solid ${Color[xpLevelColor]()};
+                    border-top-left-radius: 9999px;
+                    border-bottom-left-radius: 9999px;
+                    ${!canEarnCoins
+                      ? `border-top-right-radius: 9999px; border-bottom-right-radius: 9999px;`
+                      : ''}
+                    /* flattened: no shadow on white containers */
                     cursor: default;
                     @media (max-width: ${mobileMaxWidth}) {
                       padding: 0;
@@ -186,13 +193,22 @@ function XPBar({
                       font-size: ${numCoinsEarned > 0 && !isMaxReached
                         ? '1.3rem'
                         : '1.5rem'};
-                      background: ${Color.brownOrange(isMaxReached ? 0.3 : 1)};
+                      background: ${Color.brownOrange(
+                        isMaxReached ? 0.7 : 0.6
+                      )};
+                      border: 1px solid
+                        ${Color.brownOrange(isMaxReached ? 0.85 : 0.75)};
+                      border-top-right-radius: 9999px;
+                      border-bottom-right-radius: 9999px;
                       @media (max-width: ${mobileMaxWidth}) {
                         flex: 0 0 auto;
                         min-width: 3.5rem;
                         font-size: ${numCoinsEarned > 0 && !isMaxReached
                           ? '0.7rem'
                           : '1.2rem'};
+                        border-top-right-radius: 0;
+                        border-bottom-right-radius: 0;
+                        border-right: 0;
                       }
                     `}
                   >

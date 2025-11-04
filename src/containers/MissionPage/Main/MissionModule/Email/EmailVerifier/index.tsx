@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import EmailSubmitForm from './EmailSubmitForm';
 import VerificationCodeInput from './VerificationCodeInput';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function EmailVerifier() {
-  const linkColor = useKeyContext((v) => v.theme.link.color);
-  const successColor = useKeyContext((v) => v.theme.success.color);
+  const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
+  const successRole = useRoleColor('success', { fallback: 'green' });
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+  const linkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
+  const successColor = useMemo(
+    () => successRole.getColor() || Color.green(),
+    [successRole]
+  );
   return (
     <ErrorBoundary componentPath="MissionModule/Email/EmailVerifier">
       <div
@@ -30,7 +38,7 @@ export default function EmailVerifier() {
               An email with a 6-digit number was sent to{' '}
               <span
                 onClick={handleEmailClick}
-                style={{ color: Color[linkColor](), cursor: 'pointer' }}
+                style={{ color: linkColor, cursor: 'pointer' }}
                 className={css`
                   &:hover {
                     text-decoration: underline;
@@ -47,7 +55,7 @@ export default function EmailVerifier() {
         ) : (
           <>
             Enter your email address below and tap{' '}
-            <b style={{ color: Color[successColor]() }}>submit</b>
+            <b style={{ color: successColor }}>submit</b>
           </>
         )}
       </div>

@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import RoundList from '~/components/RoundList';
 import RankingsListItem from '~/components/RankingsListItem';
 import localize from '~/constants/localize';
 import FilterBar from '~/components/FilterBar';
@@ -7,7 +6,9 @@ import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { notiFilterBar } from '../../Styles';
+import LeaderboardList from '~/components/LeaderboardList';
 
 const myRankingLabel = localize('myRanking');
 const top30Label = localize('top30');
@@ -40,7 +41,7 @@ export default function AllTime({
     <ErrorBoundary componentPath="Notification/MainFeeds/Rankings/AllTime">
       {loggedIn && (
         <FilterBar
-          bordered
+          className={notiFilterBar}
           style={{
             height: '4.5rem',
             fontSize: '1.6rem'
@@ -65,7 +66,12 @@ export default function AllTime({
         </FilterBar>
       )}
       {loggedIn && allSelected && (
-        <MyRank myId={myId} rank={myAllTimeRank} twinkleXP={myAllTimeXP} />
+        <MyRank
+          myId={myId}
+          rank={myAllTimeRank}
+          twinkleXP={myAllTimeXP}
+          isNotification
+        />
       )}
       {users?.length === 0 || (allSelected && loggedIn && myAllTimeXP === 0) ? (
         !myId ? (
@@ -76,13 +82,11 @@ export default function AllTime({
           <div
             className={css`
               border-radius: ${borderRadius};
-              border: 1px solid ${Color.borderGray()};
+              border: none;
               background: #fff;
               padding: 1rem;
               @media (max-width: ${mobileMaxWidth}) {
                 border-radius: 0;
-                border-left: none;
-                border-right: none;
               }
             `}
           >
@@ -90,7 +94,12 @@ export default function AllTime({
           </div>
         )
       ) : (
-        <RoundList style={{ marginTop: 0 }}>
+        <LeaderboardList
+          scrollable={false}
+          padding="0"
+          mobilePadding="0"
+          bottomPadding="0"
+        >
           {users?.map((user) => (
             <RankingsListItem
               key={user.id}
@@ -99,7 +108,7 @@ export default function AllTime({
               activityContext="allTimeXP"
             />
           ))}
-        </RoundList>
+        </LeaderboardList>
       )}
     </ErrorBoundary>
   );

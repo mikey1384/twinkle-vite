@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   addEmoji,
   finalizeEmoji,
@@ -8,7 +8,6 @@ import {
 import { useOutsideClick } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
-import { useKeyContext } from '~/contexts';
 import SearchDropdown from '~/components/SearchDropdown';
 import Button from '~/components/Button';
 import SubjectsModal from '../../../Modals/SubjectsModal';
@@ -17,6 +16,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import { edit } from '~/constants/placeholders';
 import { css } from '@emotion/css';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { resolveColorValue } from '~/theme/resolveColor';
 
 export default function EditSubjectForm({
   autoFocus,
@@ -45,9 +46,9 @@ export default function EditSubjectForm({
   theme?: string;
   userIsOwner: boolean;
 }) {
-  const {
-    link: { color: linkColor }
-  } = useKeyContext((v) => v.theme);
+  const linkRole = useRoleColor('link', {
+    fallback: 'logoBlue'
+  });
   const [exactMatchExists, setExactMatchExists] = useState(false);
   const [title, setTitle] = useState(props.title || '');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -55,6 +56,17 @@ export default function EditSubjectForm({
   const [subjectsModalShown, setSubjectsModalShown] = useState(false);
   const EditSubjectFormRef = useRef(null);
   const timerRef: React.RefObject<any> = useRef(null);
+  const resolvedLinkColor = useMemo(
+    () => linkRole.getColor() || Color.logoBlue(),
+    [linkRole]
+  );
+  const resolvedThemeColor = useMemo(
+    () =>
+      resolveColorValue(displayedThemeColor) ??
+      resolveColorValue('logoBlue') ??
+      Color.logoBlue(),
+    [displayedThemeColor]
+  );
   useOutsideClick(EditSubjectFormRef, () => {
     if (!subjectsModalShown) onClickOutSide();
   });
@@ -247,12 +259,12 @@ export default function EditSubjectForm({
       <div>
         <div
           style={{
-            color: Color[displayedThemeColor](),
+            color: resolvedThemeColor,
             fontWeight: 'bold'
           }}
         >
           {item.content}
-          <span style={{ color: Color[linkColor]() }}>
+          <span style={{ color: resolvedLinkColor }}>
             {Number(item.numMsgs) > 0 && ` (${item.numMsgs})`}
           </span>
         </div>

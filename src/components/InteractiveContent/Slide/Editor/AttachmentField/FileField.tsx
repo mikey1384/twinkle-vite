@@ -43,7 +43,8 @@ export default function FileField({
       {!(isChanging || !fileUrl) ? (
         <>
           <Button
-            skeuomorphic
+            variant="soft"
+            tone="raised"
             className={css`
               z-index: 10;
               opacity: 0.9;
@@ -98,7 +99,6 @@ export default function FileField({
               <UploadButton
                 onFileSelect={handleFileSelection}
                 color="orange"
-                skeuomorphic
                 icon="paperclip"
                 text={`Select ${newAttachment ? 'another' : 'a'} file`}
               />
@@ -111,7 +111,8 @@ export default function FileField({
                     })
                   }
                   style={{ marginTop: '1rem' }}
-                  skeuomorphic
+                  variant="soft"
+                  tone="raised"
                 >
                   Cancel
                 </Button>
