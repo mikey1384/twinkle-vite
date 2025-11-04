@@ -190,27 +190,48 @@ export default function UserReducer(
         }
       };
     case 'SET_USER_STATE': {
-      const updatedUser = {
-        ...(state.userObj[action.userId] || {}),
+      const prevUser = state.userObj[action.userId] || {};
+      let updatedUser: any = {
+        ...prevUser,
         ...action.newState,
         userId: action.userId,
         contentId: action.userId
       };
+
+      const prevRank = Number(prevUser.rank);
+      const incomingHasRank = Object.prototype.hasOwnProperty.call(
+        action.newState || {},
+        'rank'
+      );
+      const mergedRank = Number(updatedUser.rank);
+      if (incomingHasRank && prevRank > 0 && !(mergedRank > 0)) {
+        updatedUser = { ...updatedUser, rank: prevRank };
+      }
+
       const isViewer = action.userId === state.myState.userId;
+      let nextMyState = state.myState;
+      if (isViewer) {
+        nextMyState = {
+          ...state.myState,
+          ...action.newState,
+          userId: action.userId,
+          contentId: action.userId
+        } as any;
+        const prevMyRank = Number(state.myState.rank);
+        const incomingMyHasRank = incomingHasRank;
+        const mergedMyRank = Number((nextMyState as any).rank);
+        if (incomingMyHasRank && prevMyRank > 0 && !(mergedMyRank > 0)) {
+          (nextMyState as any).rank = prevMyRank;
+        }
+      }
+
       return {
         ...state,
         userObj: {
           ...state.userObj,
           [action.userId]: updatedUser
         },
-        myState: isViewer
-          ? {
-              ...state.myState,
-              ...action.newState,
-              userId: action.userId,
-              contentId: action.userId
-            }
-          : state.myState
+        myState: nextMyState
       };
     }
     case 'TOGGLE_HIDE_WATCHED':
