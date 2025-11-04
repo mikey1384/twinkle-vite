@@ -38,6 +38,7 @@ import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 const pinLabel = localize('pin');
 const unpinLabel = localize('unpin');
@@ -564,6 +565,15 @@ export default function SearchedComment({
                   ) : (
                     !stringIsEmpty(content) && (
                       <RichText
+                        isAIMessage={
+                          uploader?.id === Number(ZERO_TWINKLE_ID) ||
+                          uploader?.id === Number(CIEL_TWINKLE_ID)
+                        }
+                        voice={
+                          uploader?.id === Number(CIEL_TWINKLE_ID)
+                            ? 'nova'
+                            : ''
+                        }
                         contentType="comment"
                         contentId={commentId}
                         section="pinned"
