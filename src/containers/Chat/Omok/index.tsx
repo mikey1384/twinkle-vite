@@ -202,9 +202,12 @@ export default function Omok({
     return myAssignedColor === 'white' ? base.reverse() : base;
   }, [myAssignedColor]);
 
+  const winnerId = initialState?.winnerId || gameWinnerId;
+
   const isMyTurn =
     Boolean(interactable && loaded && (spoilerOff || stonesPlaced === 0)) &&
     !pendingMove &&
+    !winnerId &&
     myAssignedColor === nextColor;
 
   const lastCommittedMove = initialState?.move || null;
@@ -220,8 +223,7 @@ export default function Omok({
     (displayedMove?.by != null
       ? playerColors[displayedMove.by as number]
       : undefined);
-  // moved below userMadeLastMove declaration to avoid TDZ
-  const winnerId = initialState?.winnerId || gameWinnerId;
+
   const userMadeLastMove = displayedMove?.by === myId;
 
   // Show board on: game over, spoiler off, brand-new board, while placing a move, or after my move

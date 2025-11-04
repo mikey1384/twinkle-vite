@@ -371,10 +371,12 @@ export default function DailyRewardModal({
     width: 100%;
     min-height: 30vh;
     justify-items: center;
-    align-items: start;
+    /* Center the stack vertically before reveal */
+    align-content: center;
 
     &.revealed {
-      align-items: start;
+      /* Top-align after reveal so summary flows naturally */
+      align-content: start;
     }
   `;
 

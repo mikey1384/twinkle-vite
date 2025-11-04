@@ -204,10 +204,10 @@ export default function OmokModal({
   const doneLabel = 'Confirm move';
 
   const gameFinished = useMemo(
-    () => Boolean(initialState?.winnerId),
-    [initialState?.winnerId]
+    () => Boolean(initialState?.winnerId ?? message?.gameWinnerId),
+    [initialState?.winnerId, message?.gameWinnerId]
   );
-  // userMadeLastMove moved above for spoiler computation
+
   const gameEndButtonShown = useMemo(
     () =>
       (initialState?.move?.number || 0) > 0 &&
