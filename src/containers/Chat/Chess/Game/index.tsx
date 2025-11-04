@@ -3,9 +3,21 @@ import Loading from '~/components/Loading';
 import Board from './Board';
 import { css } from '@emotion/css';
 import { isTablet } from '~/helpers';
-import { mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth, Color, borderRadius } from '~/constants/css';
 
 const deviceIsTablet = isTablet(navigator);
+
+const loadingContainerClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${Color.white(0.95)};
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
+  width: 100%;
+  height: 100%;
+`;
 
 export default function Game({
   interactable,
@@ -58,7 +70,9 @@ export default function Game({
       `}
     >
       {loading ? (
-        <Loading />
+        <div className={loadingContainerClass}>
+          <Loading />
+        </div>
       ) : squares.length > 0 ? (
         <Board
           interactable={interactable}

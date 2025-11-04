@@ -253,7 +253,6 @@ export default function ChessModal({
             onClose={onHide}
             onCancelMove={() => setNewChessState(null)}
             onStartNewGame={() => {
-              // Reset all client chess modal state so the board starts from the initial position
               setUserMadeLastMove(false);
               setInitialState(null);
               setNewChessState(null);
@@ -263,7 +262,6 @@ export default function ChessModal({
             doneDisabled={
               !newChessState || !socketConnected || banned?.chess || submitting
             }
-            loading={!socketConnected || submitting}
             warningColor={warningColor}
             doneColor={doneColor}
             acceptDrawLabel={acceptDrawLabel}
