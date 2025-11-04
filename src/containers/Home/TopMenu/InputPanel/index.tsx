@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
+import { borderRadius, Color } from '~/constants/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import InputModal from './InputModal';
 import CielButton from './CielButton';
@@ -33,7 +33,7 @@ export default function InputPanel({
       >
         <div style={{ flexGrow: 1 }}>
           <input
-            style={{ width: '100%' }}
+            style={{ width: '100%', borderRadius }}
             placeholder="Post Something"
             value={inputValue}
             onChange={() => setInputValue('')}
