@@ -46,7 +46,7 @@ export default function GameCTAButton({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
     >
-      <Icon icon={loading ? 'spinner' : icon} pulse={loading} />
+      {icon && <Icon icon={loading ? 'spinner' : icon} pulse={loading} />}
       {hasLabel ? <span className={labelCls}>{children}</span> : null}
     </button>
   );

@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import moment from 'moment';
-import { Color, mobileMaxWidth, wideBorderRadius } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 
 interface QuizLayoutProps {
   feedRef: React.RefObject<HTMLDivElement | null>;
@@ -62,7 +62,7 @@ export default function WordMasterLayout({
           rgba(60, 180, 130, 0.08)
         );
         border-left: 8px solid ${Color.logoBlue()};
-        border-radius: ${wideBorderRadius};
+        border-radius: ${borderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
         margin-bottom: 1.5rem;
         min-height: 160px;
