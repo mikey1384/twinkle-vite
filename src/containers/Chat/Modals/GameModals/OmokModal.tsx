@@ -149,7 +149,7 @@ export default function OmokModal({
     }
   };
 
-  async function handleResign() {
+  async function handleGameOver() {
     try {
       if (message) {
         await setOmokMoveViewTimeStamp({ channelId, message });
@@ -167,8 +167,9 @@ export default function OmokModal({
         channelId,
         targetUserId: myId,
         gameType: 'omok',
-        winnerId: opponentId,
-        isResign: true
+        ...(isAbortable
+          ? { isAbort: true }
+          : { winnerId: opponentId, isResign: true })
       });
       onScrollToBottom();
       onHide();
@@ -199,6 +200,7 @@ export default function OmokModal({
   const cancelMoveLabel = localize('cancelMove');
   const startNewGameLabel = localize('startNewGame');
   const resignLabel = localize('resign');
+  const abortLabel = localize('abort');
   const doneLabel = 'Confirm move';
 
   const gameFinished = useMemo(
@@ -215,6 +217,12 @@ export default function OmokModal({
     [gameFinished, newOmokState, initialState?.move?.number, userMadeLastMove]
   );
 
+  // Allow abort early in the game (before 4 half-moves), matching chess behavior
+  const isAbortable = useMemo(
+    () => (initialState?.move?.number || 0) < 4,
+    [initialState?.move?.number]
+  );
+
   return (
     <ErrorBoundary componentPath="Chat/Modals/OmokModal">
       <NewModal
@@ -229,7 +237,7 @@ export default function OmokModal({
             showCancelMove={!!newOmokState}
             showDoneButton={!gameFinished && !userMadeLastMove}
             drawOfferPending={false}
-            isAbortable={false}
+            isAbortable={isAbortable}
             gameFinished={gameFinished}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={() => {}}
@@ -251,7 +259,7 @@ export default function OmokModal({
             warningColor={warningColor}
             doneColor={doneColor}
             acceptDrawLabel={''}
-            abortLabel={''}
+            abortLabel={abortLabel}
             resignLabel={resignLabel}
             offerDrawLabel={''}
             closeLabel={closeLabel}
@@ -288,8 +296,8 @@ export default function OmokModal({
       </NewModal>
       {confirmModalShown && (
         <ConfirmModal
-          title="Resign Omok Match"
-          onConfirm={handleResign}
+          title={isAbortable ? 'Abort Omok Match' : 'Resign Omok Match'}
+          onConfirm={handleGameOver}
           onHide={() => setConfirmModalShown(false)}
         />
       )}
