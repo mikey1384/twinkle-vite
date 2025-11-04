@@ -200,7 +200,7 @@ export default function OmokModal({
   const cancelMoveLabel = localize('cancelMove');
   const startNewGameLabel = localize('startNewGame');
   const resignLabel = localize('resign');
-  const abortLabel = localize('abort');
+  const abortLabel = 'Abort';
   const doneLabel = 'Confirm move';
 
   const gameFinished = useMemo(
