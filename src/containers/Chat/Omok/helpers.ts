@@ -195,6 +195,11 @@ export function createsDoubleThree({
 
   let openThreeDirections = 0;
   for (const [dr, dc] of directions) {
+    // If a four exists in this direction, do NOT count it as an open three.
+    // This prevents misclassifying 4-3 or 4-4 as 3-3.
+    if (hasFourInDirection(simBoard, move.position, color, dr, dc)) {
+      continue;
+    }
     // scan windows length 5 (contiguous open three: .XXX.)
     if (scanWindowsForOpenThree(simBoard, move.position, color, dr, dc, 5)) {
       openThreeDirections++;
@@ -234,6 +239,66 @@ function scanWindowsForOpenThree(
     }
     if (!includesTarget) continue;
     if (isOpenThreePattern(window, color)) return true;
+  }
+  return false;
+}
+
+// Detect whether this direction forms a "four" (an immediate threat to five)
+// after placing the stone at pos. We treat as four if either:
+// - A 5-length window contains exactly four stones and one empty (no opponent);
+// - A 6-length window matches .XXXX. (straight open four).
+function hasFourInDirection(
+  board: OmokCell[][],
+  pos: { row: number; col: number },
+  color: OmokColor,
+  dr: number,
+  dc: number
+) {
+  // length 5 windows: any with 4 stones + 1 empty and no opponent
+  if (scanWindowsForFour(board, pos, color, dr, dc, 5)) return true;
+  // length 6 windows: .XXXX.
+  if (scanWindowsForFour(board, pos, color, dr, dc, 6)) return true;
+  return false;
+}
+
+function scanWindowsForFour(
+  board: OmokCell[][],
+  pos: { row: number; col: number },
+  color: OmokColor,
+  dr: number,
+  dc: number,
+  length: number
+) {
+  const opp = color === 'black' ? 'white' : 'black';
+  const span = length;
+  for (let offset = -span + 1; offset <= 0; offset++) {
+    const window: WindowCell[] = [];
+    let includesTarget = false;
+    for (let i = 0; i < span; i++) {
+      const r = pos.row + (offset + i) * dr;
+      const c = pos.col + (offset + i) * dc;
+      if (!isInside(r, c)) {
+        window.push('OOB');
+      } else {
+        const cell = board[r][c];
+        window.push(cell);
+        if (r === pos.row && c === pos.col) includesTarget = true;
+      }
+    }
+    if (!includesTarget) continue;
+    if (window.some((cell) => cell === 'OOB')) continue;
+    if (length === 5) {
+      const cells = window as OmokCell[];
+      if (cells.includes(opp as OmokCell)) continue;
+      const stones = cells.filter((s) => s === color).length;
+      const empties = cells.filter((s) => s === null).length;
+      if (stones === 4 && empties === 1) return true;
+    } else if (length === 6) {
+      const [a, b, c, d, e, f] = window as OmokCell[];
+      const endsOpen = a === null && f === null;
+      const inner = [b, c, d, e];
+      if (endsOpen && inner.every((s) => s === color)) return true; // .XXXX.
+    }
   }
   return false;
 }
@@ -283,3 +348,9 @@ export function normaliseBoard(board?: any): OmokCell[][] {
   }
   return result;
 }
+
+// Detects whether placing the given move creates two or more "fours" (double-four)
+// for black. A "four" is any immediate one-move winning threat in a single direction
+// (straight open four or broken four within a 5-length window).
+// Note: Double-fours are allowed in this ruleset, so we do not export or
+// enforce any double-four detection here.

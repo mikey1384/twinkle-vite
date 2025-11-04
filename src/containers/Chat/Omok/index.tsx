@@ -269,7 +269,7 @@ export default function Omok({
     };
 
     const boardBeforeMove = cloneBoard(boardToRender);
-    // Double-three rule: apply only for black
+    // Foul checks: apply only for black (double-three + overline)
     if (
       myAssignedColor === 'black' &&
       createsDoubleThree({

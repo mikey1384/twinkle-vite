@@ -22,7 +22,8 @@ export default function ChessGame({
   opponentName,
   setChessMoveViewTimeStamp,
   userMadeLastMove,
-  squareColors
+  squareColors,
+  interactableOverride
 }: {
   boardState: any;
   countdownNumber: number | null;
@@ -43,6 +44,7 @@ export default function ChessGame({
   setChessMoveViewTimeStamp: (v: any) => void;
   userMadeLastMove: boolean;
   squareColors?: { light?: string; dark?: string };
+  interactableOverride?: boolean;
 }) {
   const fetchCurrentChessState = useAppContext(
     (v) => v.requestHelpers.fetchCurrentChessState
@@ -118,7 +120,11 @@ export default function ChessGame({
       isFromModal
       channelId={channelId}
       countdownNumber={countdownNumber}
-      interactable={!boardState?.isDraw}
+      interactable={
+        typeof interactableOverride === 'boolean'
+          ? interactableOverride
+          : !boardState?.isDraw
+      }
       initialState={initialState}
       loaded={loaded}
       myId={myId}
