@@ -92,7 +92,7 @@ export default function SearchInput({
           style={{
             height: inputHeight || '100%',
             width: '100%',
-            paddingLeft: '3.2rem',
+            paddingLeft: '4.2rem',
             border: 'none',
             background: 'transparent',
             boxShadow: 'none'
