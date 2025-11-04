@@ -248,7 +248,6 @@ export default function OmokModal({
               })
             }
             doneDisabled={!newOmokState || !socketConnected || submitting}
-            loading={!socketConnected || submitting}
             warningColor={warningColor}
             doneColor={doneColor}
             acceptDrawLabel={''}

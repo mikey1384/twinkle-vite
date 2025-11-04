@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '~/components/Button';
 
 export default function GameModalFooter({
@@ -22,7 +22,6 @@ export default function GameModalFooter({
   onHowToPlay,
   // UI state
   doneDisabled,
-  loading,
   // colors
   warningColor,
   doneColor,
@@ -54,7 +53,6 @@ export default function GameModalFooter({
   onDone?: () => void;
   onHowToPlay?: () => void;
   doneDisabled?: boolean;
-  loading?: boolean;
   warningColor?: string;
   doneColor?: string;
   howToPlayColor?: string;
@@ -68,6 +66,7 @@ export default function GameModalFooter({
   doneLabel?: string;
   howToPlayLabel?: string;
 }) {
+  const [loading, setLoading] = useState(false);
   const noop = () => {};
   return (
     <>
@@ -133,7 +132,7 @@ export default function GameModalFooter({
           color={doneColor}
           loading={loading}
           style={{ marginLeft: '1rem' }}
-          onClick={onDone || noop}
+          onClick={handleDone}
           disabled={doneDisabled}
         >
           {doneLabel}
@@ -141,4 +140,12 @@ export default function GameModalFooter({
       ) : null}
     </>
   );
+
+  function handleDone() {
+    if (onDone) {
+      setLoading(true);
+      onDone();
+    }
+    noop();
+  }
 }
