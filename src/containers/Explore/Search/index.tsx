@@ -34,12 +34,6 @@ export default function Search({
             height: '5rem'
           }}
           category={category}
-          className={css`
-            svg,
-            input {
-              font-size: 2.3rem;
-            }
-          `}
           innerRef={innerRef}
         />
         {!isStringEmpty && (

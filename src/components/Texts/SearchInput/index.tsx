@@ -4,13 +4,14 @@ import { Color, borderRadius } from '~/constants/css';
 import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function SearchInput({
+  addonColor,
+  borderColor,
   onClickOutSide,
   searchResults = [],
-  addonColor,
   autoFocus,
-  borderColor,
   className,
   innerRef,
   inputHeight,
@@ -24,11 +25,11 @@ export default function SearchInput({
   style,
   value = ''
 }: {
+  addonColor?: string;
+  borderColor?: string;
   onClickOutSide?: () => void;
   searchResults?: any[];
-  addonColor?: string;
   autoFocus?: boolean;
-  borderColor?: string;
   className?: string;
   innerRef?: RefObject<any>;
   inputHeight?: string;
@@ -44,13 +45,26 @@ export default function SearchInput({
 }) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
+  const { colorKey: searchColor } = useRoleColor('search', {
+    fallback: 'logoBlue'
+  });
   const resolvedBorderColor = useMemo(() => {
-    if (!borderColor) return undefined;
-    const candidate = Color[borderColor as keyof typeof Color];
+    if (!borderColor && !searchColor) return undefined;
+    const appliedColor = borderColor || searchColor;
+    const candidate = Color[appliedColor as keyof typeof Color];
     if (typeof candidate === 'function') return candidate();
     if (typeof candidate === 'string') return candidate;
-    return borderColor;
-  }, [borderColor]);
+    return appliedColor;
+  }, [borderColor, searchColor]);
+
+  const appliedAddonColor = useMemo(() => {
+    if (!addonColor && !searchColor) return Color.gray();
+    const appliedColor = addonColor || searchColor;
+    const candidate = Color[appliedColor as keyof typeof Color];
+    if (typeof candidate === 'function') return candidate();
+    if (typeof candidate === 'string') return candidate;
+    return appliedColor;
+  }, [addonColor, searchColor]);
 
   return (
     <div
@@ -58,6 +72,10 @@ export default function SearchInput({
         position: relative;
         z-index: 400;
         width: 100%;
+        svg,
+        input {
+          font-size: 2.3rem;
+        }
       `} ${className || ''}`}
       ref={SearchInputRef}
       style={style}
@@ -83,9 +101,8 @@ export default function SearchInput({
           className={css`
             position: absolute;
             left: 1rem;
-            color: ${addonColor
-              ? (Color[addonColor as keyof typeof Color] || Color.gray)()
-              : Color.gray()};
+            font-size: 1.6rem; /* keep icon size consistent regardless of parent font-size */
+            color: ${appliedAddonColor};
           `}
         />
         <Input
