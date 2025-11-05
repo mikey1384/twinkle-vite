@@ -6,7 +6,8 @@ import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
 import Countdown from 'react-countdown';
 import AICardModal from '~/components/Modals/AICardModal';
-import DailyBonusModal from './DailyBonusModal';
+import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
+import SanitizedHTML from 'react-sanitized-html';
 import {
   cardLevelHash,
   qualityProps,
@@ -14,7 +15,10 @@ import {
   cloudFrontURL
 } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
-import { addCommasToNumber } from '~/helpers/stringHelpers';
+import {
+  addCommasToNumber,
+  getRenderedTextForVocabQuestions
+} from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
@@ -31,16 +35,23 @@ export default function DailyRewardModal({
   onHide,
   onSetHasBonus,
   onSetIsDailyRewardChecked,
-  onCountdownComplete
+  onCountdownComplete,
+  openBonus,
+  onSetDailyBonusAttempted
 }: {
   onHide: () => void;
   onSetHasBonus: (hasBonus: boolean) => void;
   onSetIsDailyRewardChecked: (isChecked: boolean) => void;
   onCountdownComplete: () => void;
+  openBonus?: boolean;
+  onSetDailyBonusAttempted?: () => void;
 }) {
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const unlockDailyReward = useAppContext(
     (v) => v.requestHelpers.unlockDailyReward
   );
+  const loadDailyBonus = useAppContext((v) => v.requestHelpers.loadDailyBonus);
+  const postDailyBonus = useAppContext((v) => v.requestHelpers.postDailyBonus);
   const updateDailyRewardViewStatus = useAppContext(
     (v) => v.requestHelpers.updateDailyRewardViewStatus
   );
@@ -73,6 +84,7 @@ export default function DailyRewardModal({
   const [showFourthSentence, setShowFourthSentence] = useState(false);
   const [showFifthSentence, setShowFifthSentence] = useState(false);
   const [showBonusSentence, setShowBonusSentence] = useState(false);
+  const [showBonusUI, setShowBonusUI] = useState(!!openBonus);
   const [animateReveal, setAnimateReveal] = useState(false);
   const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -86,7 +98,19 @@ export default function DailyRewardModal({
   const [xpEarned, setXPEarned] = useState(0);
   const [bonusAttempted, setBonusAttempted] = useState(false);
   const [bonusAchieved, setBonusAchieved] = useState(false);
-  const [dailyBonusModalShown, setDailyBonusModalShown] = useState(false);
+  // Bonus (question) UI states
+  const [bonusQuestions, setBonusQuestions] = useState<any[]>([]);
+  const [bonusLoading, setBonusLoading] = useState(false);
+  const [bonusSubmitting, setBonusSubmitting] = useState(false);
+  const [bonusIsGraded, setBonusIsGraded] = useState(false);
+  const [bonusSelectedChoiceIndex, setBonusSelectedChoiceIndex] =
+    useState<number>();
+  const [bonusIsCorrect, setBonusIsCorrect] = useState<boolean | null>(null);
+  const [showBonusLine1, setShowBonusLine1] = useState(false);
+  const [showBonusLine2, setShowBonusLine2] = useState(false);
+  const [showBonusLine3, setShowBonusLine3] = useState(false);
+  const [showBonusLine4, setShowBonusLine4] = useState(false);
+  const [showBonusLine5, setShowBonusLine5] = useState(false);
   const [imagesPreloaded, setImagesPreloaded] = useState(false);
   const hasBonusRef = useRef(false);
   const isRevealPressedRef = useRef(false);
@@ -94,6 +118,7 @@ export default function DailyRewardModal({
   const isAlreadyCheckedRef = useRef(false);
   const newCoinsRef = useRef(0);
   const isComponentMounted = useRef(true);
+  const bonusIsGradedRef = useRef(false);
   const deviceIsMobile = isMobile(navigator);
 
   useEffect(() => {
@@ -144,6 +169,10 @@ export default function DailyRewardModal({
   useEffect(() => {
     init();
     async function init() {
+      if (openBonus) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         setImagesPreloaded(false);
@@ -193,6 +222,9 @@ export default function DailyRewardModal({
         setIsCardOwned(isCardOwned);
         setChosenCardId(chosenCardId);
         hasBonusRef.current = hasBonus;
+        if (openBonus) {
+          setShowBonusUI(true);
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -212,6 +244,73 @@ export default function DailyRewardModal({
           userId,
           newState: { twinkleCoins: newCoinsRef.current }
         });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load bonus question data when bonus UI is shown
+  // Also react to async unlockDailyReward state (bonusAttempted/bonusAchieved)
+  useEffect(() => {
+    if (!showBonusUI) return;
+    let ignore = false;
+
+    const applyGradedIfNeeded = (qs?: any[]) => {
+      if (!bonusAttempted) return;
+      setBonusIsGraded(true);
+      bonusIsGradedRef.current = true;
+      if (bonusAchieved) {
+        setShowBonusLine1(true);
+        setShowBonusLine2(true);
+        setShowBonusLine3(true);
+        setShowBonusLine4(true);
+        setShowBonusLine5(true);
+        const first = (qs && qs[0]) || bonusQuestions?.[0];
+        if (first?.answerIndex !== undefined) {
+          setBonusSelectedChoiceIndex(first.answerIndex);
+        }
+      }
+      setBonusIsCorrect(!!bonusAchieved);
+    };
+
+    (async () => {
+      try {
+        setBonusLoading(true);
+        if (bonusQuestions.length === 0) {
+          const { questions, chosenCard, isCardOwned, isUnavailable } =
+            await loadDailyBonus();
+          if (ignore) return;
+          if (isUnavailable) {
+            return window.location.reload();
+          }
+          setChosenCardId(chosenCard?.id);
+          onUpdateAICard({
+            cardId: chosenCard?.id,
+            newState: chosenCard
+          });
+          setIsCardOwned(isCardOwned);
+          setBonusQuestions(questions);
+          applyGradedIfNeeded(questions);
+        } else {
+          applyGradedIfNeeded(bonusQuestions);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setBonusLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showBonusUI, bonusAttempted, bonusAchieved]);
+
+  // On unmount, if a bonus attempt occurred, notify parent
+  useEffect(() => {
+    return () => {
+      if (bonusIsGradedRef.current) {
+        onSetDailyBonusAttempted?.();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -264,6 +363,12 @@ export default function DailyRewardModal({
   const displayedBurnValue = useMemo(() => {
     return addCommasToNumber(burnValue);
   }, [burnValue]);
+
+  // For bonus flow, show adjusted XP amount instead of coins
+  const xpAdjustedToCardOwnership = useMemo(() => {
+    const val = isCardOwned ? burnValue * 5 : burnValue / 2;
+    return addCommasToNumber(val);
+  }, [burnValue, isCardOwned]);
 
   const numCoinsAdjustedToCardOwnership = useMemo(() => {
     return addCommasToNumber(isCardOwned ? burnValue * 5 : burnValue / 2);
@@ -606,13 +711,65 @@ export default function DailyRewardModal({
     </div>
   );
 
+  const modalTitle = useMemo(() => {
+    if (showBonusUI) {
+      if (bonusIsGraded) {
+        return bonusIsCorrect ? 'Bonus Earned!' : 'Bonus Failed...';
+      }
+      return 'Bonus Chance!';
+    }
+    return 'Daily Reward';
+  }, [showBonusUI, bonusIsGraded, bonusIsCorrect]);
+
+  const headerContent = useMemo(() => {
+    if (!showBonusUI) return undefined;
+    const headerTitle = bonusIsGraded ? '' : 'Bonus Chance!';
+    const showBack = !!bonusIsGraded;
+    return (
+      <div
+        className={css`
+          display: grid;
+          grid-template-columns: ${showBack ? 'max-content 1fr' : '1fr'};
+          align-items: center;
+          column-gap: 1rem;
+          width: 100%;
+        `}
+      >
+        {showBack ? (
+          <Button
+            variant="ghost"
+            shape="pill"
+            size="sm"
+            color={linkColor}
+            onClick={() => setShowBonusUI(false)}
+          >
+            <Icon icon="chevron-left" /> Back to summary
+          </Button>
+        ) : null}
+        {headerTitle ? (
+          <div
+            className={css`
+              text-align: center;
+              font-weight: 600;
+            `}
+          >
+            {headerTitle}
+          </div>
+        ) : (
+          <div />
+        )}
+      </div>
+    );
+  }, [showBonusUI, linkColor, bonusIsGraded]);
+
   return (
     <>
       <NewModal
         isOpen
         onClose={handleHide}
-        title="Daily Reward"
-        closeOnBackdropClick={false}
+        title={modalTitle}
+        header={headerContent}
+        closeOnBackdropClick={showBonusUI ? !!bonusAttempted : false}
         size="lg"
         allowOverflow
         className={modalClass}
@@ -632,6 +789,218 @@ export default function DailyRewardModal({
               `}
             >
               <Loading />
+            </div>
+          ) : showBonusUI ? (
+            <div className={`${contentGridClass} ${contentClass}`}>
+              {/* Bonus Chance UI */}
+              {bonusLoading ? (
+                <div
+                  className={css`
+                    display: grid;
+                    place-items: center;
+                    min-height: 30vh;
+                    width: 100%;
+                  `}
+                >
+                  <Loading />
+                </div>
+              ) : (
+                <>
+                  {/* Questions */}
+                  {bonusQuestions.map(
+                    (question: {
+                      id: number;
+                      question: string;
+                      word: string;
+                      wordLevel: number;
+                      choices: string[];
+                      answerIndex: number;
+                    }) => {
+                      const appliedQuestion = getRenderedTextForVocabQuestions(
+                        question.question,
+                        chosenCard?.word,
+                        cardLevelHash[chosenCard?.level]?.color || 'green'
+                      );
+                      return (
+                        <MultipleChoiceQuestion
+                          key={question.id}
+                          isGraded={bonusIsGraded}
+                          question={
+                            <div
+                              style={{
+                                textAlign: 'center',
+                                fontFamily:
+                                  "'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                                fontSize: '1.8rem',
+                                marginBottom: '5rem'
+                              }}
+                            >
+                              <SanitizedHTML
+                                allowedAttributes={{ b: ['style'] }}
+                                html={appliedQuestion as string}
+                              />
+                            </div>
+                          }
+                          choices={question.choices}
+                          selectedChoiceIndex={bonusSelectedChoiceIndex}
+                          answerIndex={question.answerIndex}
+                          onSelectChoice={setBonusSelectedChoiceIndex}
+                          style={{ width: '100%', maxWidth: '680px' }}
+                        />
+                      );
+                    }
+                  )}
+                  {!bonusIsGraded && (
+                    <div style={{ width: '100%' }}>
+                      <div
+                        style={{
+                          fontWeight: 'bold',
+                          marginTop: '2rem',
+                          textAlign: 'center'
+                        }}
+                      >
+                        Feel free to ask anyone or look up anywhere for the
+                        answer
+                      </div>
+                      <div
+                        style={{
+                          marginTop: '1.5rem',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          width: '100%'
+                        }}
+                      >
+                        <Button
+                          variant="solid"
+                          loading={bonusSubmitting}
+                          disabled={bonusSelectedChoiceIndex === undefined}
+                          color="logoBlue"
+                          onClick={handleBonusConfirm}
+                        >
+                          Confirm
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {bonusIsGraded && (
+                    <div className={summaryContainerClass}>
+                      {showBonusLine1 && (
+                        <div
+                          className={`fadeIn ${summaryHeadlineClass}`}
+                          style={{ color: levelColorHex, fontWeight: 700 }}
+                        >
+                          {bonusIsCorrect
+                            ? 'Correct!'
+                            : 'Oops! Wrong answer... Better luck next time'}
+                        </div>
+                      )}
+                      {showBonusLine2 && (
+                        <div className={`fadeIn ${summaryRowClass}`}>
+                          <div className={summaryColLeft}>
+                            You rolled{' '}
+                            {chosenCard?.quality === 'elite' ? 'an' : 'a'}{' '}
+                            <span
+                              style={
+                                chosenCard
+                                  ? qualityProps[chosenCard.quality]
+                                  : undefined
+                              }
+                            >
+                              {chosenCard?.quality}
+                            </span>{' '}
+                            <strong style={{ color: levelColorHex }}>
+                              {chosenCardColorDescription}
+                            </strong>{' '}
+                            card
+                          </div>
+                          <div
+                            className={summaryColCenter}
+                            style={{ color: Color.redOrange() }}
+                          >
+                            {burnValue} {deviceIsMobile ? 'bv' : 'burn value'}
+                          </div>
+                          <div className={summaryColRight}>
+                            <span
+                              className={coinsNumberClass}
+                              style={{
+                                color: Color[xpNumberColor](),
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {displayedBurnValue}
+                            </span>
+                            <span style={{ color: Color.gold() }}>XP</span>
+                          </div>
+                        </div>
+                      )}
+                      {showBonusLine3 && (
+                        <div className={`fadeIn ${summaryRowClass}`}>
+                          <div className={summaryColLeft}>
+                            {cardOwnStatusText}
+                          </div>
+                          <div className={summaryColCenter}>
+                            <Icon icon="times" /> {isCardOwned ? '5' : '1/2'}
+                          </div>
+                          <div className={summaryColRight}>
+                            <span
+                              className={coinsNumberClass}
+                              style={{
+                                color: Color[xpNumberColor](),
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {xpAdjustedToCardOwnership}
+                            </span>
+                            <span style={{ color: Color.gold() }}>XP</span>
+                          </div>
+                        </div>
+                      )}
+                      {showBonusLine4 && (
+                        <div className={`fadeIn ${summaryRowClass}`}>
+                          <div className={summaryColLeft}>
+                            {fourthSentenceText}
+                          </div>
+                          <div className={summaryColCenter} />
+                          <div className={summaryColRight}>
+                            <span
+                              className={coinsNumberClass}
+                              style={{
+                                color: Color[xpNumberColor](),
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {addCommasToNumber(xpEarned)}
+                            </span>
+                            <span style={{ color: Color.gold() }}>XP</span>
+                          </div>
+                        </div>
+                      )}
+                      {showBonusLine5 && (
+                        <div className={`fadeIn ${bonusMessageClass}`}>
+                          You earned{' '}
+                          <span
+                            style={{
+                              fontWeight: 'bold',
+                              color: Color[xpNumberColor](),
+                              fontSize: xpFontSize
+                            }}
+                          >
+                            {addCommasToNumber(xpEarned)}
+                          </span>{' '}
+                          <span
+                            style={{
+                              color: Color.gold(),
+                              fontSize: xpFontSize
+                            }}
+                          >
+                            XP
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <div
@@ -810,32 +1179,32 @@ export default function DailyRewardModal({
                   )}
                   {showBonusSentence ? (
                     bonusAchieved ? (
-                      <div className={`fadeIn ${bonusMessageClass}`}>
-                        ...and{' '}
+                      <div
+                        className={`fadeIn ${bonusMessageClass}`}
+                        style={{
+                          display: 'grid',
+                          gridAutoRows: 'max-content',
+                          rowGap: '0.6rem',
+                          justifyItems: 'center'
+                        }}
+                      >
+                        <div>...and</div>
                         <div
+                          className={rewardAmountClass}
                           style={{
-                            display: 'inline',
-                            fontWeight: 'bold'
+                            fontSize: xpFontSize,
+                            display: 'grid',
+                            gridAutoFlow: 'column',
+                            alignItems: 'center',
+                            columnGap: '0.6rem'
                           }}
                         >
-                          <span
-                            style={{
-                              color: Color[xpNumberColor](),
-                              fontSize: xpFontSize
-                            }}
-                          >
+                          <span style={{ color: Color[xpNumberColor]() }}>
                             {addCommasToNumber(xpEarned)}
-                          </span>{' '}
-                          <span
-                            style={{
-                              color: Color.gold(),
-                              fontSize: xpFontSize
-                            }}
-                          >
-                            XP
                           </span>
-                        </div>{' '}
-                        for correctly answering the{' '}
+                          <span style={{ color: Color.gold() }}>XP</span>
+                        </div>
+                        <div>for correctly answering the</div>
                         <span
                           className={css`
                             font-weight: bold;
@@ -845,7 +1214,7 @@ export default function DailyRewardModal({
                               text-decoration: underline;
                             }
                           `}
-                          onClick={() => setDailyBonusModalShown(true)}
+                          onClick={() => setShowBonusUI(true)}
                         >
                           bonus question
                         </span>
@@ -865,7 +1234,7 @@ export default function DailyRewardModal({
                                 text-decoration: underline;
                               }
                             `}
-                            onClick={() => setDailyBonusModalShown(true)}
+                            onClick={() => setShowBonusUI(true)}
                           >
                             bonus question
                           </span>{' '}
@@ -884,15 +1253,6 @@ export default function DailyRewardModal({
         <AICardModal
           cardId={chosenCardId}
           onHide={() => setCardModalShown(false)}
-        />
-      )}
-      {dailyBonusModalShown && (
-        <DailyBonusModal
-          modalOverModal
-          isBonusAttempted={bonusAttempted}
-          isBonusAchieved={bonusAchieved}
-          xpEarned={xpEarned}
-          onHide={() => setDailyBonusModalShown(false)}
         />
       )}
     </>
@@ -961,5 +1321,39 @@ export default function DailyRewardModal({
       }
     };
     setTimeout(reveal, interval);
+  }
+
+  async function handleBonusConfirm() {
+    try {
+      setBonusSubmitting(true);
+      const { isCorrect, isAlreadyAttempted, rewardAmount } =
+        await postDailyBonus(bonusSelectedChoiceIndex);
+      if (isAlreadyAttempted) {
+        return window.location.reload();
+      }
+      setBonusIsGraded(true);
+      bonusIsGradedRef.current = true;
+      setBonusIsCorrect(isCorrect);
+      setBonusAttempted(true);
+      setShowBonusSentence(true);
+      setBonusAchieved(!!isCorrect);
+      setXPEarned(rewardAmount);
+
+      setShowBonusLine1(true);
+      if (isCorrect) {
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: twinkleXP + rewardAmount }
+        });
+        setTimeout(() => setShowBonusLine2(true), 2000);
+        setTimeout(() => setShowBonusLine3(true), 4000);
+        setTimeout(() => setShowBonusLine4(true), 6000);
+        setTimeout(() => setShowBonusLine5(true), 8000);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setBonusSubmitting(false);
+    }
   }
 }
