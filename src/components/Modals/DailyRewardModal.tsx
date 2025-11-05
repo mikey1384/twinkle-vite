@@ -749,7 +749,7 @@ export default function DailyRewardModal({
         {headerTitle ? (
           <div
             className={css`
-              text-align: center;
+              text-align: left;
               font-weight: 600;
             `}
           >
