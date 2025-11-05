@@ -16,7 +16,10 @@ export default function AchievementModal({
   onShown: () => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
 
   useEffect(() => {
     onShown();

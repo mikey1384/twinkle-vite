@@ -24,7 +24,10 @@ function TagModal({
   onSubmit: (playlists: any[]) => any;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const addVideoToPlaylists = useAppContext(
     (v) => v.requestHelpers.addVideoToPlaylists
   );
@@ -99,7 +102,11 @@ function TagModal({
         )}
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button
