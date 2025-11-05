@@ -112,7 +112,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(179, 194, 255, 1)'
     },
-    page: { bg: 'rgba(248, 248, 255, 1)' }
+    page: { bg: 'rgba(250,250,253, 1)' }
   },
   green: {
     general: {
@@ -446,8 +446,11 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     draw: { color: 'logoBlue' },
     fail: { color: 'black' },
     filter: {
-      color: pickColor({ gold: 'darkerGray', orange: 'darkerGray' }, color),
-      opacity: pickNumber({ gold: 1, orange: 1 }, 0.7)
+      color: pickColor(
+        { gold: 'darkerGray', orange: 'darkerGray', logoBlue: 'darkGray' },
+        color
+      ),
+      opacity: pickNumber({ gold: 1, orange: 1, logoBlue: 1 }, 0.7)
     },
     filterText: {
       color: 'white',
