@@ -85,6 +85,7 @@ export default function DailyRewardModal({
   const [showFifthSentence, setShowFifthSentence] = useState(false);
   const [showBonusSentence, setShowBonusSentence] = useState(false);
   const [showBonusUI, setShowBonusUI] = useState(!!openBonus);
+  const [openedFromSummary, setOpenedFromSummary] = useState(false);
   const [animateReveal, setAnimateReveal] = useState(false);
   const [cardModalShown, setCardModalShown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -249,14 +250,12 @@ export default function DailyRewardModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load bonus question data when bonus UI is shown
-  // Also react to async unlockDailyReward state (bonusAttempted/bonusAchieved)
   useEffect(() => {
     if (!showBonusUI) return;
     let ignore = false;
 
     const applyGradedIfNeeded = (qs?: any[]) => {
-      if (!bonusAttempted) return;
+      if (!bonusAttempted || bonusIsGradedRef.current) return;
       setBonusIsGraded(true);
       bonusIsGradedRef.current = true;
       if (bonusAchieved) {
@@ -712,6 +711,9 @@ export default function DailyRewardModal({
   );
 
   const modalTitle = useMemo(() => {
+    if (openedFromSummary) {
+      return '';
+    }
     if (showBonusUI) {
       if (bonusIsGraded) {
         return bonusIsCorrect ? 'Bonus Earned!' : 'Bonus Failed...';
@@ -719,12 +721,12 @@ export default function DailyRewardModal({
       return 'Bonus Chance!';
     }
     return 'Daily Reward';
-  }, [showBonusUI, bonusIsGraded, bonusIsCorrect]);
+  }, [showBonusUI, bonusIsGraded, openedFromSummary, bonusIsCorrect]);
 
   const headerContent = useMemo(() => {
     if (!showBonusUI) return undefined;
-    const headerTitle = bonusIsGraded ? '' : 'Bonus Chance!';
-    const showBack = !!bonusIsGraded;
+    const headerTitle = modalTitle;
+    const showBack = openedFromSummary;
     return (
       <div
         className={css`
@@ -760,7 +762,7 @@ export default function DailyRewardModal({
         )}
       </div>
     );
-  }, [showBonusUI, linkColor, bonusIsGraded]);
+  }, [showBonusUI, linkColor, openedFromSummary, modalTitle]);
 
   return (
     <>
@@ -1214,7 +1216,10 @@ export default function DailyRewardModal({
                               text-decoration: underline;
                             }
                           `}
-                          onClick={() => setShowBonusUI(true)}
+                          onClick={() => {
+                            setOpenedFromSummary(true);
+                            setShowBonusUI(true);
+                          }}
                         >
                           bonus question
                         </span>
@@ -1234,7 +1239,10 @@ export default function DailyRewardModal({
                                 text-decoration: underline;
                               }
                             `}
-                            onClick={() => setShowBonusUI(true)}
+                            onClick={() => {
+                              setOpenedFromSummary(true);
+                              setShowBonusUI(true);
+                            }}
                           >
                             bonus question
                           </span>{' '}
