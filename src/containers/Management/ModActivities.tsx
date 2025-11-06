@@ -51,16 +51,7 @@ export default function ModActivities() {
         }
       `}
     >
-      <FilterBar
-        className={css`
-          font-size: 1.5rem !important;
-          height: 4.5rem !important;
-          @media (max-width: ${mobileMaxWidth}) {
-            font-size: 1.1rem !important;
-            height: 3rem !important;
-          }
-        `}
-      >
+      <FilterBar>
         <nav
           className={contentType === 'post' ? 'active' : ''}
           onClick={() => {

@@ -64,7 +64,6 @@ export default function HomeFilter({
     const label = '#0f172a';
     const helper = 'rgba(71, 85, 105, 0.9)';
     const icon = filterRole.getColor() || Color.logoBlue();
-    const switchColor = filterRole.getColor() || Color.logoBlue();
     const shadow = 'none';
     return {
       base,
@@ -73,7 +72,6 @@ export default function HomeFilter({
       label,
       helper,
       icon,
-      switchColor,
       shadow
     };
   }, [filterRole]);
@@ -216,7 +214,6 @@ export default function HomeFilter({
                       ariaLabel="Toggle hide watched videos"
                       checked={!!hideWatched}
                       onChange={handleToggleHideWatched}
-                      color={videoContainerTone.switchColor}
                     />
                   </div>
                 )}
