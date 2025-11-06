@@ -543,9 +543,19 @@ function Comment({
                                 parent.contentType === 'comment'
                                   ? 'Replies'
                                   : 'Reply'}
-                                {numReplies > 0 ? ` (${numReplies})` : ''}
                               </span>
                             )}
+                            {numReplies > 0 ? (
+                              <span
+                                style={{
+                                  marginLeft: isTablet(navigator)
+                                    ? '0.7rem'
+                                    : '0.5rem'
+                                }}
+                              >
+                                ({numReplies})
+                              </span>
+                            ) : null}
                           </Button>
                           {userCanRewardThis && (
                             <Button

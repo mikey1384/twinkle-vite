@@ -793,20 +793,28 @@ function Comment({
                                         parent.contentType === 'comment'
                                           ? repliesLabel
                                           : replyLabel}
-                                        {loadingReplies ? (
-                                          <Icon
-                                            style={{ marginLeft: '0.7rem' }}
-                                            icon="spinner"
-                                            pulse
-                                          />
-                                        ) : numReplies > 0 &&
-                                          parent.contentType === 'comment' ? (
-                                          ` (${numReplies})`
-                                        ) : (
-                                          ''
-                                        )}
                                       </span>
                                     )}
+                                    {loadingReplies ? (
+                                      <Icon
+                                        style={{
+                                          marginLeft: '0.7rem'
+                                        }}
+                                        icon="spinner"
+                                        pulse
+                                      />
+                                    ) : numReplies > 0 &&
+                                      parent.contentType === 'comment' ? (
+                                      <span
+                                        style={{
+                                          marginLeft: deviceIsTablet
+                                            ? '0.5rem'
+                                            : '0.3rem'
+                                        }}
+                                      >
+                                        ({numReplies})
+                                      </span>
+                                    ) : null}
                                   </Button>
                                 )}
                                 {userCanRewardThis && !isDeleteNotification && (
