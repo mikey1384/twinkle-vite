@@ -32,6 +32,9 @@ export default function ListItem({
       }unselectable ${css`
         padding: 1.1rem 1.25rem;
         width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         cursor: ${isCompleted ? 'default' : 'pointer'};
         min-height: 48px;
         border-radius: 12px;
