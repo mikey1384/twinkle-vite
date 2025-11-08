@@ -13,7 +13,12 @@ import {
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { scoreTable, perfectScoreBonus } from '../constants';
+import {
+  scoreTable,
+  perfectScoreBonus,
+  fullClearBonusMultiplier,
+  allPerfectBonusMultiplier
+} from '../constants';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -74,6 +79,9 @@ export default function StartScreen({
     roleC.colorKey,
     roleD.colorKey
   ];
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColor = xpNumberRole.getColor() || Color.logoGreen();
+  const xpLabelColor = Color.gold();
   const checkNumGrammarGamesPlayedToday = useAppContext(
     (v) => v.requestHelpers.checkNumGrammarGamesPlayedToday
   );
@@ -302,58 +310,134 @@ export default function StartScreen({
                 <div style={{ marginTop: '2rem' }}>
                   <div>
                     <Marble letterGrade="S" />{' '}
-                    <b style={{ color: Color.logoGreen() }}>{scoreTable.S}</b>{' '}
-                    <b style={{ color: Color.darkGold() }}>XP</b>
-                    <Marble
-                      style={{ marginLeft: '1.5rem' }}
-                      letterGrade="A"
-                    />{' '}
-                    <b style={{ color: Color.logoGreen() }}>{scoreTable.A}</b>{' '}
-                    <b style={{ color: Color.darkGold() }}>XP</b>
-                    <Marble
-                      style={{ marginLeft: '1.5rem' }}
-                      letterGrade="B"
-                    />{' '}
-                    <b style={{ color: Color.logoGreen() }}>{scoreTable.B}</b>{' '}
-                    <b style={{ color: Color.darkGold() }}>XP</b>
+                    <XPValue
+                      amount={scoreTable.S}
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
+                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="A" />{' '}
+                    <XPValue
+                      amount={scoreTable.A}
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
+                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="B" />{' '}
+                    <XPValue
+                      amount={scoreTable.B}
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
                   </div>
                   <div style={{ marginTop: '1rem' }}>
-                    <Marble letterGrade="C" /> {scoreTable.C} XP
-                    <Marble
-                      style={{ marginLeft: '1.5rem' }}
-                      letterGrade="D"
-                    />{' '}
-                    {scoreTable.D} XP
-                    <Marble
-                      style={{ marginLeft: '1.5rem' }}
-                      letterGrade="F"
-                    />{' '}
-                    {scoreTable.F} XP
+                    <Marble letterGrade="C" />{' '}
+                    <XPValue
+                      amount={scoreTable.C}
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
+                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="D" />{' '}
+                    <XPValue
+                      amount={scoreTable.D}
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
+                    <Marble style={{ marginLeft: '1.5rem' }} letterGrade="F" />{' '}
+                    <XPValue
+                      amount={scoreTable.F}
+                      xpLabelColor={xpLabelColor}
+                      xpNumberColor={xpNumberColor}
+                    />
                   </div>
                   <div style={{ marginTop: '1rem' }}>
                     Perfect score bonus:{' '}
                     <b style={{ color: Color.purple() }}>
                       x{perfectScoreBonus}
+                    </b>{' '}
+                    (each game)
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    Clear all 5 levels bonus:{' '}
+                    <b style={{ color: Color.logoBlue() }}>
+                      x{fullClearBonusMultiplier}
                     </b>
                   </div>
                   <div style={{ marginTop: '0.5rem' }}>
                     All 5 levels perfect bonus:{' '}
-                    <b style={{ color: Color.gold() }}>x20</b>
+                    <b style={{ color: Color.gold() }}>
+                      x{allPerfectBonusMultiplier}
+                    </b>
                   </div>
-                  <div style={{ marginTop: '0.5rem', fontSize: '1.3rem' }}>
-                    <span>Earn up to </span>
-                    <b style={{ color: Color.gold() }}>100 XP</b>
-                    <span> × </span>
-                    <span>10</span>
-                    <span> × </span>
-                    <span style={{ color: Color.purple() }}>10</span>
-                    <span> × </span>
-                    <span>5</span>
-                    <span> × </span>
-                    <span style={{ color: Color.gold() }}>20</span>
-                    <span> = </span>
-                    <b style={{ color: Color.gold() }}>1,000,000 XP</b>
-                    <span> a day!</span>
+                  <div
+                    style={{
+                      marginTop: '0.75rem',
+                      fontSize: '1.3rem',
+                      lineHeight: 1.5
+                    }}
+                  >
+                    <div>
+                      <span>Daily clear: </span>
+                      <XPValue
+                        amount={100}
+                        xpLabelColor={xpLabelColor}
+                        xpNumberColor={xpNumberColor}
+                      />{' '}
+                      × 10 (questions){' '}
+                      <b
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'baseline',
+                          fontWeight: 800,
+                          color: Color.purple()
+                        }}
+                      >
+                        <span>×</span>
+                        <span style={{ marginLeft: '0.35rem' }}>
+                          {perfectScoreBonus}
+                        </span>
+                      </b>{' '}
+                      × <span>5 (levels)</span> ={' '}
+                      <XPValue
+                        amount="50,000"
+                        xpLabelColor={xpLabelColor}
+                        xpNumberColor={xpNumberColor}
+                      />
+                    </div>
+                    <div style={{ marginTop: '0.4rem' }}>
+                      <span>All five levels clear bonus: </span>
+                      <XPValue
+                        amount="50,000"
+                        xpLabelColor={xpLabelColor}
+                        xpNumberColor={xpNumberColor}
+                      />{' '}
+                      <span
+                        style={{ color: Color.logoBlue(), fontWeight: 700 }}
+                      >
+                        × {fullClearBonusMultiplier}
+                      </span>{' '}
+                      ={' '}
+                      <XPValue
+                        amount="250,000"
+                        xpLabelColor={xpLabelColor}
+                        xpNumberColor={xpNumberColor}
+                      />
+                    </div>
+                    <div style={{ marginTop: '0.4rem' }}>
+                      <span>All five perfect: </span>
+                      <XPValue
+                        amount="250,000"
+                        xpLabelColor={xpLabelColor}
+                        xpNumberColor={xpNumberColor}
+                      />{' '}
+                      <span style={{ color: Color.gold(), fontWeight: 700 }}>
+                        × {allPerfectBonusMultiplier}
+                      </span>{' '}
+                      ={' '}
+                      <XPValue
+                        amount="5,000,000"
+                        xpLabelColor={xpLabelColor}
+                        xpNumberColor={xpNumberColor}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -504,4 +588,48 @@ export default function StartScreen({
     }
     onGameStart();
   }
+}
+
+function XPValue({
+  amount,
+  style,
+  xpLabelColor,
+  xpNumberColor
+}: {
+  amount: React.ReactNode;
+  style?: React.CSSProperties;
+  xpLabelColor: string;
+  xpNumberColor: string;
+}) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'baseline',
+        gap: '0.35rem',
+        fontWeight: 800,
+        letterSpacing: '0.01em',
+        ...style
+      }}
+    >
+      <span
+        style={{
+          color: xpNumberColor,
+          fontWeight: 800
+        }}
+      >
+        {amount}
+      </span>
+      <span
+        style={{
+          color: xpLabelColor,
+          fontWeight: 700,
+          fontSize: '0.9em',
+          letterSpacing: '0.04em'
+        }}
+      >
+        XP
+      </span>
+    </span>
+  );
 }

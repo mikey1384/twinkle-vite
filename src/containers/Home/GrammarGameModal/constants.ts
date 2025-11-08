@@ -7,3 +7,5 @@ export const scoreTable: { [key: string]: number } = {
   F: 10
 };
 export const perfectScoreBonus = 10;
+export const fullClearBonusMultiplier = 5;
+export const allPerfectBonusMultiplier = 20;

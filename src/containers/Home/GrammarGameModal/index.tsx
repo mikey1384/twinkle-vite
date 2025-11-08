@@ -188,14 +188,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
             <FinishScreen
               timesPlayedToday={timesPlayedToday}
               scoreArrayRef={scoreArrayRef}
-              onBackToStart={() => {
-                setQuestionsReady(false);
-                setQuestionIds([]);
-                setCurrentIndex(0);
-                questionObjRef.current = {};
-                onUpdateGrammarLoadingStatus?.('');
-                setGameState('notStarted');
-              }}
+              onBackToStart={handleBackToStart}
             />
           )}
           {activeTab === 'rankings' && gameState !== 'started' && (
@@ -295,6 +288,15 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       setGameLoading(false);
       setQuestionsReady(true);
     }
+  }
+
+  function handleBackToStart() {
+    setQuestionsReady(false);
+    setQuestionIds([]);
+    setCurrentIndex(0);
+    questionObjRef.current = {};
+    onUpdateGrammarLoadingStatus?.('');
+    setGameState('notStarted');
   }
 
   async function startAttemptInBackground() {

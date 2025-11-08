@@ -212,7 +212,8 @@ export default function FinishScreen({
               <Button
                 style={{ marginTop: '1rem', fontSize: '1.7rem' }}
                 onClick={onBackToStart}
-                filled
+                variant="soft"
+                tone="raised"
                 color="logoBlue"
               >
                 {`See Today's Score`}
