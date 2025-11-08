@@ -23,7 +23,7 @@ const colorHash: Record<
 };
 
 interface ImageGenStatus {
-  storyId: number;
+  storyId?: number;
   stage:
     | 'not_started'
     | 'validating_style'
@@ -31,10 +31,15 @@ interface ImageGenStatus {
     | 'calling_openai'
     | 'downloading'
     | 'uploading'
-    | 'error';
+    | 'error'
+    | 'in_progress'
+    | 'generating'
+    | 'partial_image'
+    | 'completed';
   percent?: number;
   imageUrl?: string;
   message?: string;
+  partialImageB64?: string;
 }
 
 function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
@@ -46,6 +51,9 @@ function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
     case 'prompt_ready':
       return 'Cooking up ideas…';
     case 'calling_openai':
+    case 'in_progress':
+    case 'generating':
+    case 'partial_image':
       if (callingOpenAITime < 20) {
         return `Generating...`;
       } else if (callingOpenAITime < 50) {
@@ -90,6 +98,7 @@ export default function SuccessModal({
 
   const [imageUrl, setImageUrl] = useState('');
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
 
@@ -108,7 +117,13 @@ export default function SuccessModal({
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
-    if (progressStage === 'calling_openai') {
+    const isActiveStage = [
+      'calling_openai',
+      'in_progress',
+      'generating',
+      'partial_image'
+    ].includes(progressStage);
+    if (isActiveStage) {
       intervalId = setInterval(() => {
         setCallingOpenAITime((time) => time + 1);
       }, 1000);
@@ -130,10 +145,21 @@ export default function SuccessModal({
     );
 
     function handleImageGenerationStatusReceived(status: ImageGenStatus) {
+      if (status.storyId && status.storyId !== storyId) return;
       setProgressStage(status.stage);
+      if (status.partialImageB64) {
+        setPreviewImageUrl(`data:image/png;base64,${status.partialImageB64}`);
+      }
+      if (status.imageUrl) {
+        setImageUrl(status.imageUrl);
+        setPreviewImageUrl('');
+        setGeneratingImage(false);
+        setProgressStage('not_started');
+      }
       if (status.stage === 'error') {
         setProgressStage('not_started');
         setGeneratingImage(false);
+        setPreviewImageUrl('');
       }
     }
 
@@ -143,7 +169,7 @@ export default function SuccessModal({
         handleImageGenerationStatusReceived
       );
     };
-  }, []);
+  }, [storyId]);
 
   const freeThreshold = isListening ? 10 : 3;
   const imageGenerationCost = useMemo(() => {
@@ -206,25 +232,30 @@ export default function SuccessModal({
         </div>
         <div
           style={{
-            marginTop: imageUrl ? '1rem' : '2rem',
+            marginTop: '2rem',
             marginBottom: imageUrl ? '1rem' : 0,
             width: '100%',
             display: 'flex',
-            justifyContent: 'center'
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1.5rem'
           }}
         >
-          {imageUrl ? (
+          {(imageUrl || previewImageUrl) && (
             <img
               loading="lazy"
               style={{
                 width: '100%',
                 maxHeight: '50vh',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                borderRadius: '12px'
               }}
-              src={imageUrl}
+              src={imageUrl || previewImageUrl}
               alt="Generated Story Image"
             />
-          ) : (
+          )}
+
+          {!imageUrl && (
             <div
               style={{
                 width: '100%',
@@ -320,7 +351,11 @@ export default function SuccessModal({
         </div>
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Close
         </Button>
       </footer>
@@ -348,6 +383,8 @@ export default function SuccessModal({
     if (inputError || generatingImage) return;
 
     setGeneratingImage(true);
+    setImageUrl('');
+    setPreviewImageUrl('');
     setProgressStage('calling_openai');
 
     try {
@@ -364,6 +401,7 @@ export default function SuccessModal({
     } catch (error) {
       console.error(error);
       setProgressStage('error');
+      setPreviewImageUrl('');
     } finally {
       if (isMountedRef.current) {
         setGeneratingImage(false);
