@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -81,11 +81,23 @@ export default function Card({
     () => !!finalCard.imagePath,
     [finalCard.imagePath]
   );
-  const frontPicUrl = useMemo(
-    () => `${cloudFrontURL}${finalCard.imagePath}`,
-    [finalCard.imagePath]
+  const frontPicUrl = useMemo(() => {
+    if (!finalCard.imagePath) return '';
+    if (
+      typeof finalCard.imagePath === 'string' &&
+      (finalCard.imagePath.startsWith('data:') ||
+        finalCard.imagePath.startsWith('http'))
+    ) {
+      return finalCard.imagePath;
+    }
+    return `${cloudFrontURL}${finalCard.imagePath}`;
+  }, [finalCard.imagePath]);
+  const isImageOne = useMemo(
+    () => finalCard?.engine === 'image-1',
+    [finalCard?.engine]
   );
   const { cardCss, cardColor } = useAICard(finalCard);
+  const [showFullOnTouch, setShowFullOnTouch] = useState(false);
 
   return (
     <div className={cardCss}>
@@ -130,17 +142,64 @@ export default function Card({
       >
         <div
           className={css`
+            position: relative;
+            overflow: hidden;
             width: 100%;
+            height: CALC(100% - 110px);
+            display: flex;
+            align-items: center;
+            @media (max-width: ${mobileMaxWidth}) {
+              height: CALC(100% - 55px);
+            }
           `}
+          onTouchStart={() => setShowFullOnTouch(true)}
+          onTouchEnd={() => setShowFullOnTouch(false)}
+          onTouchCancel={() => setShowFullOnTouch(false)}
         >
           {imageExists && !finalCard.isBurned ? (
-            <img
-              loading="lazy"
-              style={{
-                width: '100%'
-              }}
-              src={frontPicUrl}
-            />
+            isImageOne ? (
+              <>
+                <img
+                  loading="lazy"
+                  className={css`
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: opacity 0.2s ease;
+                    @media (hover: hover) {
+                      .card:hover & {
+                        opacity: 0;
+                      }
+                    }
+                  `}
+                  style={{ opacity: showFullOnTouch ? 0 : 1 }}
+                  src={frontPicUrl}
+                />
+                <img
+                  loading="lazy"
+                  className={css`
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    transition: opacity 0.2s ease;
+                    opacity: 0;
+                    @media (hover: hover) {
+                      .card:hover & {
+                        opacity: 1;
+                      }
+                    }
+                  `}
+                  style={{ opacity: showFullOnTouch ? 1 : undefined }}
+                  src={frontPicUrl}
+                />
+              </>
+            ) : (
+              <img loading="lazy" style={{ width: '100%' }} src={frontPicUrl} />
+            )
           ) : null}
           {!!finalCard.isBurned && (
             <div
@@ -151,6 +210,7 @@ export default function Card({
                 }
               `}
               style={{
+                width: '100%',
                 background: '#fff',
                 textAlign: 'center',
                 padding: '1rem'

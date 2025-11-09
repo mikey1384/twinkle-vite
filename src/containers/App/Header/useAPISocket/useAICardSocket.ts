@@ -62,6 +62,10 @@ export default function useAICardSocket() {
       'new_black_ai_card_generation_status',
       onInsertBlackAICardUpdateLog
     );
+    socket.on(
+      'ai_card_image_generation_status_received',
+      handleAICardImageStatus
+    );
 
     return function cleanUp() {
       socket.off('ai_card_bought', handleAICardBought);
@@ -81,7 +85,94 @@ export default function useAICardSocket() {
         'new_black_ai_card_generation_status',
         onInsertBlackAICardUpdateLog
       );
+      socket.off(
+        'ai_card_image_generation_status_received',
+        handleAICardImageStatus
+      );
     };
+
+    function handleAICardImageStatus(status: any) {
+      const rawId = status?.cardId;
+      const cardId = typeof rawId === 'string' ? Number(rawId) : rawId;
+      if (!cardId) return;
+
+      const stage = status?.stage as
+        | 'not_started'
+        | 'validating_style'
+        | 'prompt_ready'
+        | 'calling_openai'
+        | 'in_progress'
+        | 'generating'
+        | 'partial_image'
+        | 'downloading'
+        | 'uploading'
+        | 'completed'
+        | 'error';
+
+      const activeStages = new Set([
+        'validating_style',
+        'prompt_ready',
+        'calling_openai',
+        'in_progress',
+        'generating',
+        'partial_image',
+        'downloading',
+        'uploading'
+      ]);
+
+      const inProgress = activeStages.has(stage);
+      // Only use preview while generation is active. When completed with a final URL,
+      // persist it to imagePath instead so it shows everywhere.
+      const hasPartial = !!status?.partialImageB64;
+      const rawImageUrl: string | undefined = status?.imageUrl;
+      const previewUrl = hasPartial
+        ? `data:image/png;base64,${status.partialImageB64}`
+        : !inProgress && stage === 'completed'
+        ? ''
+        : rawImageUrl || '';
+
+      const newState: Record<string, any> = {
+        imageGenerationStage: stage,
+        imageGenerationInProgress: inProgress
+      };
+
+      // For completed events, the server currently sends a data URL (base64) for
+      // imageUrl while the actual CDN path is returned via the HTTP response.
+      // Avoid setting imagePath from a data URI (which would clear it to '').
+      if (stage === 'completed' && rawImageUrl) {
+        const isDataUrl = typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
+        if (!isDataUrl) {
+          // Normalize to a path so non-modal card renders (which prefix CloudFront) work.
+          newState.imagePath = normalizeToPath(rawImageUrl);
+          newState.imageGenerationPreviewUrl = '';
+        } else {
+          // Keep showing the final base64 in the preview location until the
+          // HTTP response updates imagePath to the CDN path.
+          newState.imageGenerationPreviewUrl = rawImageUrl;
+        }
+      } else if (previewUrl) {
+        newState.imageGenerationPreviewUrl = previewUrl;
+      } else if (stage === 'error') {
+        newState.imageGenerationPreviewUrl = '';
+      }
+      onUpdateAICard({ cardId, newState });
+    }
+
+    function normalizeToPath(url: string): string {
+      if (!url) return '';
+      // If already a relative path, ensure it starts with '/'
+      if (url.startsWith('/')) return url;
+      // Do not ever persist data URIs as imagePath
+      if (url.startsWith('data:')) return '';
+      try {
+        const u = new URL(url);
+        const path = u.pathname + (u.search || '');
+        return path.startsWith('/') ? path : `/${path}`;
+      } catch {
+        // Fallback: best-effort to make it a path
+        return url.startsWith('/') ? url : `/${url}`;
+      }
+    }
 
     async function handleAICardBought({
       feed,

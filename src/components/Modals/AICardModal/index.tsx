@@ -22,6 +22,57 @@ import UnlistedMenu from './UnlistedMenu';
 import ListedMenu from './ListedMenu';
 import AICardDetails from '~/components/AICardDetails';
 
+type CardImageStage =
+  | 'not_started'
+  | 'validating_style'
+  | 'prompt_ready'
+  | 'calling_openai'
+  | 'in_progress'
+  | 'generating'
+  | 'partial_image'
+  | 'downloading'
+  | 'uploading'
+  | 'completed'
+  | 'error';
+
+interface CardImageGenStatus {
+  cardId?: number;
+  stage: CardImageStage;
+  partialImageB64?: string;
+  imageUrl?: string;
+  message?: string;
+}
+
+function labelFromStage(stage: CardImageStage, callingOpenAITime: number) {
+  switch (stage) {
+    case 'not_started':
+      return 'Generate Image';
+    case 'validating_style':
+      return 'Checking your vibe...';
+    case 'prompt_ready':
+      return 'Cooking up ideas...';
+    case 'calling_openai':
+    case 'in_progress':
+    case 'generating':
+    case 'partial_image':
+      if (callingOpenAITime < 20) {
+        return `Generating...`;
+      } else if (callingOpenAITime < 50) {
+        return `Still generating... Hang tight!`;
+      } else {
+        return `Still working on it...`;
+      }
+    case 'downloading':
+      return 'Rendering pixels...';
+    case 'uploading':
+      return 'Finalizing...';
+    case 'completed':
+      return 'Finishing touches...';
+    default:
+      return 'Sprinkling magic...';
+  }
+}
+
 export default function AICardModal({
   cardId,
   modalOverModal,
@@ -51,11 +102,9 @@ export default function AICardModal({
   const deleteAICardOffer = useAppContext(
     (v) => v.requestHelpers.deleteAICardOffer
   );
-  const getAiImage = useAppContext((v) => v.requestHelpers.getAiImage);
-  const saveAIImageToS3 = useAppContext(
-    (v) => v.requestHelpers.saveAIImageToS3
+  const generateAICardImage = useAppContext(
+    (v) => v.requestHelpers.generateAICardImage
   );
-  const postAICard = useAppContext((v) => v.requestHelpers.postAICard);
   const getOffersForCard = useAppContext(
     (v) => v.requestHelpers.getOffersForCard
   );
@@ -73,7 +122,8 @@ export default function AICardModal({
   const [activeTab, setActiveTab] = useState('myMenu');
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
-  const [generatingImage, setGeneratingImage] = useState(false);
+
+  const [callingOpenAITime, setCallingOpenAITime] = useState(0);
   const [prevCardId, setPrevCardId] = useState(null);
   const [nextCardId, setNextCardId] = useState(null);
   const [offers, setOffers] = useState<any[]>([]);
@@ -82,7 +132,40 @@ export default function AICardModal({
   const [offerPrice, setOfferPrice] = useState(0);
   const [copied, setCopied] = useState(false);
   const userSwitchedTab = useRef(false);
+  const isMountedRef = useRef(true);
   const card = cardObj[cardId];
+
+  const showMenuTabs = useMemo(() => {
+    return !!card?.id && !card?.isBurned && card?.isLive !== false;
+  }, [card?.id, card?.isBurned, card?.isLive]);
+  const generatingImage = useMemo(() => {
+    return !!card?.imageGenerationInProgress;
+  }, [card?.imageGenerationInProgress]);
+  const progressStage: CardImageGenStatus['stage'] = useMemo(() => {
+    return (
+      (card?.imageGenerationStage as CardImageGenStatus['stage']) ||
+      'not_started'
+    );
+  }, [card?.imageGenerationStage]);
+  const previewImageUrl: string = useMemo(() => {
+    return card?.imageGenerationPreviewUrl || '';
+  }, [card?.imageGenerationPreviewUrl]);
+
+  useEffect(() => {
+    // Ensure we are in the notification room to receive stream events
+    // This is idempotent and guards cases where the global socket join
+    // may not have completed before opening this modal.
+    if (userId) {
+      try {
+        socket.emit('enter_my_notification_channel', userId);
+      } catch {
+        // no-op
+      }
+    }
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [userId]);
 
   const burnXP = useMemo(() => {
     return returnCardBurnXP({
@@ -216,9 +299,58 @@ export default function AICardModal({
     };
   });
 
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+    const isActiveStage = [
+      'calling_openai',
+      'in_progress',
+      'generating',
+      'partial_image'
+    ].includes(progressStage);
+    if (isActiveStage) {
+      intervalId = setInterval(() => {
+        setCallingOpenAITime((time) => time + 1);
+      }, 1000);
+    } else {
+      setCallingOpenAITime(0);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [progressStage]);
+
+  // Streaming is handled globally in useAPISocket. No local socket listener needed.
+
+  useEffect(() => {
+    if (card?.imagePath) {
+      setCallingOpenAITime(0);
+    }
+  }, [card?.imagePath]);
+
+  useEffect(() => {
+    setCallingOpenAITime(0);
+  }, [cardId]);
+
   const rootPath = useMemo(() => {
     return location.pathname.replace(/\/$/, '');
   }, [location.pathname]);
+
+  const buttonLabel = useMemo(
+    () => labelFromStage(progressStage, callingOpenAITime),
+    [progressStage, callingOpenAITime]
+  );
+
+  const displayedCard = useMemo(() => {
+    if (!card) return card;
+    // Only override with preview while there is no final image on the card yet
+    if (!card.imagePath && previewImageUrl) {
+      return {
+        ...card,
+        imagePath: previewImageUrl
+      };
+    }
+    return card;
+  }, [card, previewImageUrl]);
 
   return (
     <NewModal
@@ -314,7 +446,7 @@ export default function AICardModal({
               ) : null}
             </div>
           </div>
-        <Button variant="ghost" onClick={onHide}>
+          <Button variant="ghost" onClick={onHide}>
             Close
           </Button>
         </>
@@ -347,7 +479,7 @@ export default function AICardModal({
                 }
               `}
             >
-              <AICard card={card} />
+              <AICard card={displayedCard} />
             </div>
             <div
               className={css`
@@ -377,7 +509,7 @@ export default function AICardModal({
                 }
               `}
             >
-              {!card.isBurned && card.imagePath ? (
+              {showMenuTabs ? (
                 <FilterBar
                   className={css`
                     font-size: 1.5rem !important;
@@ -427,23 +559,15 @@ export default function AICardModal({
                 <div
                   style={{
                     width: '100%',
-                    height: card.isBurned ? '100%' : 'CALC(100% - 4.5rem)',
+                    height: showMenuTabs ? 'CALC(100% - 4.5rem)' : '100%',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    gap: card.isBurned ? 0 : '1.5rem'
                   }}
                 >
-                  {!card.imagePath ? (
-                    <GradientButton
-                      loading={generatingImage}
-                      onClick={handleGenerateImage}
-                      fontSize="1.5rem"
-                      mobileFontSize="1.1rem"
-                    >
-                      {generatingImage ? 'Generating...' : 'Generate Image'}
-                    </GradientButton>
-                  ) : card.isBurned ? (
+                  {card.isBurned ? (
                     <div
                       style={{
                         fontWeight: 'bold',
@@ -452,32 +576,50 @@ export default function AICardModal({
                     >
                       This card was burned
                     </div>
-                  ) : card.isListed ? (
-                    <ListedMenu
-                      burnXP={burnXP}
-                      cardId={card.id}
-                      myId={userId}
-                      myOffer={card.myOffer}
-                      userIsOwner={card.ownerId === userId}
-                      askPrice={card.askPrice}
-                      onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
-                      onSetOfferModalShown={setOfferModalShown}
-                    />
                   ) : (
-                    <UnlistedMenu
-                      burnXP={burnXP}
-                      cardId={card.id}
-                      cardLevel={card.level}
-                      cardQuality={card.quality}
-                      userIsOwner={card.ownerId === userId}
-                      myId={userId}
-                      myOffer={card.myOffer}
-                      onSetSellModalShown={setSellModalShown}
-                      owner={card.owner}
-                      onUserMenuShownChange={setUsermenuShown}
-                      onSetWithdrawOfferModalShown={setWithdrawOfferModalShown}
-                      onSetOfferModalShown={setOfferModalShown}
-                    />
+                    <>
+                      {!card.imagePath && (
+                        <GradientButton
+                          loading={generatingImage}
+                          onClick={handleGenerateImage}
+                          fontSize="1.5rem"
+                          mobileFontSize="1.1rem"
+                        >
+                          {buttonLabel}
+                        </GradientButton>
+                      )}
+                      {card.isListed ? (
+                        <ListedMenu
+                          burnXP={burnXP}
+                          cardId={card.id}
+                          myId={userId}
+                          myOffer={card.myOffer}
+                          userIsOwner={card.ownerId === userId}
+                          askPrice={card.askPrice}
+                          onSetWithdrawOfferModalShown={
+                            setWithdrawOfferModalShown
+                          }
+                          onSetOfferModalShown={setOfferModalShown}
+                        />
+                      ) : (
+                        <UnlistedMenu
+                          burnXP={burnXP}
+                          cardId={card.id}
+                          cardLevel={card.level}
+                          cardQuality={card.quality}
+                          userIsOwner={card.ownerId === userId}
+                          myId={userId}
+                          myOffer={card.myOffer}
+                          onSetSellModalShown={setSellModalShown}
+                          owner={card.owner}
+                          onUserMenuShownChange={setUsermenuShown}
+                          onSetWithdrawOfferModalShown={
+                            setWithdrawOfferModalShown
+                          }
+                          onSetOfferModalShown={setOfferModalShown}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -561,23 +703,34 @@ export default function AICardModal({
   }
 
   async function handleGenerateImage() {
-    setGeneratingImage(true);
+    if (!card || generatingImage) return;
+    // Mark generation as started globally for this card so UI persists across modal open/close
+    onUpdateAICard({
+      cardId: card.id,
+      newState: {
+        imageGenerationInProgress: true,
+        imageGenerationStage: 'calling_openai',
+        imageGenerationPreviewUrl: ''
+      }
+    });
     try {
-      const { imageUrl, style, engine } = await getAiImage({
-        prompt: card.prompt
+      const { card: newState } = await generateAICardImage({
+        cardId: card.id
       });
-      const imagePath = await saveAIImageToS3(imageUrl);
-      const { card: newState } = await postAICard({
-        imagePath,
-        cardId: card.id,
-        style,
-        engine
-      });
-      onUpdateAICard({ cardId: card.id, newState });
+      if (newState) {
+        onUpdateAICard({ cardId: card.id, newState });
+      }
     } catch (err) {
       console.error(err);
+      onUpdateAICard({
+        cardId: card.id,
+        newState: {
+          imageGenerationInProgress: false,
+          imageGenerationStage: 'error'
+        }
+      });
     } finally {
-      setGeneratingImage(false);
+      // Do not flip off global in-progress here; wait for socket event or error
     }
   }
 }

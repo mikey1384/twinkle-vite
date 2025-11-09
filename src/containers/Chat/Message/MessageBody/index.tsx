@@ -1072,6 +1072,8 @@ function MessageBody({
                   opponentName={partner?.username}
                   senderId={userId}
                   spoilerOff={omokSpoilerOff}
+                  isDraw={!!isDraw}
+                  isAbort={!!isAbort}
                   style={{ marginTop: '1rem', width: '100%' }}
                 />
               ) : isChessBoardMsg ? (

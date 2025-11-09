@@ -174,7 +174,7 @@ export default function AICards({
         errorMessage = 'Payment failed. Please try again.';
       } else if (errorKey === 'failure_after_payment') {
         errorMessage =
-          "Card generation failed after payment. Reload the site, open 'My Collection' at the bottom right, select your card, and press 'Generate' to retry.";
+          "Card generation failed after payment. Open 'My Collection' at the bottom right, select your card, and press 'Generate' to add an image.";
       }
 
       onSetAICardStatusMessage(errorMessage);

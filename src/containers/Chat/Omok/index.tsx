@@ -42,6 +42,8 @@ interface OmokProps {
   gameWinnerId?: number;
   moveViewed?: boolean;
   spoilerOff?: boolean;
+  isDraw?: boolean;
+  isAbort?: boolean;
   interactable?: boolean;
   loaded?: boolean;
   lastOmokMessageId?: number;
@@ -125,6 +127,8 @@ export default function Omok({
   interactable,
   loaded,
   lastOmokMessageId,
+  isDraw,
+  isAbort,
   onBoardClick,
   onSpoilerClick,
   onConfirmMove,
@@ -232,6 +236,8 @@ export default function Omok({
     !!spoilerOff ||
     stonesPlaced === 0 ||
     !!pendingMove ||
+    isDraw ||
+    isAbort ||
     displayedMove?.by === myId;
   const boardIsLoading = loaded === false;
 
