@@ -87,7 +87,7 @@ export default function DropdownButton({
           onClick={handleClick}
         >
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Icon icon={icon} size={iconSize} />
+            {icon && <Icon icon={icon} size={iconSize} />}
             {text && <span>&nbsp;&nbsp;</span>}
             {text}
           </div>

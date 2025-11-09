@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -28,7 +28,11 @@ const mysteryCardPlaceholder = css`
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.07), transparent 70%);
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.07),
+      transparent 70%
+    );
     opacity: 0.5;
   }
   & > * {
@@ -119,7 +123,6 @@ export default function Card({
   );
   const frontPicUrl = useMemo(() => {
     if (!finalCard.imagePath) return finalCard.imageGenerationPreviewUrl || '';
-    console.log('here');
     if (
       typeof finalCard.imagePath === 'string' &&
       (finalCard.imagePath.startsWith('data:') ||
@@ -134,7 +137,6 @@ export default function Card({
     [finalCard?.engine]
   );
   const { cardCss, cardColor } = useAICard(finalCard);
-  const [showFullOnTouch, setShowFullOnTouch] = useState(false);
 
   return (
     <div className={cardCss}>
@@ -189,9 +191,6 @@ export default function Card({
               height: CALC(100% - 55px);
             }
           `}
-          onTouchStart={() => setShowFullOnTouch(true)}
-          onTouchEnd={() => setShowFullOnTouch(false)}
-          onTouchCancel={() => setShowFullOnTouch(false)}
         >
           {imageExists && !finalCard.isBurned ? (
             isImageOne ? (
@@ -199,19 +198,21 @@ export default function Card({
                 <img
                   loading="lazy"
                   className={css`
-                    position: absolute;
-                    inset: 0;
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    transition: opacity 0.2s ease;
                     @media (hover: hover) {
                       .card:hover & {
                         opacity: 0;
                       }
                     }
                   `}
-                  style={{ opacity: showFullOnTouch ? 0 : 1 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'opacity 0.2s ease',
+                    opacity: 1
+                  }}
                   src={frontPicUrl}
                 />
                 <img
@@ -230,7 +231,6 @@ export default function Card({
                       }
                     }
                   `}
-                  style={{ opacity: showFullOnTouch ? 1 : undefined }}
                   src={frontPicUrl}
                 />
               </>
