@@ -134,6 +134,7 @@ export default function AICardModal({
   const userSwitchedTab = useRef(false);
   const isMountedRef = useRef(true);
   const card = cardObj[cardId];
+  const userIsOwner = card?.ownerId === userId;
 
   const showMenuTabs = useMemo(() => {
     return !!card?.id && !card?.isBurned && card?.isLive !== false;
@@ -563,7 +564,7 @@ export default function AICardModal({
                     </div>
                   ) : (
                     <>
-                      {!card.imagePath && (
+                      {!card.imagePath && userIsOwner && (
                         <GradientButton
                           loading={generatingImage}
                           onClick={handleGenerateImage}
@@ -579,7 +580,7 @@ export default function AICardModal({
                           cardId={card.id}
                           myId={userId}
                           myOffer={card.myOffer}
-                          userIsOwner={card.ownerId === userId}
+                          userIsOwner={userIsOwner}
                           askPrice={card.askPrice}
                           onSetWithdrawOfferModalShown={
                             setWithdrawOfferModalShown
@@ -592,7 +593,7 @@ export default function AICardModal({
                           cardId={card.id}
                           cardLevel={card.level}
                           cardQuality={card.quality}
-                          userIsOwner={card.ownerId === userId}
+                          userIsOwner={userIsOwner}
                           myId={userId}
                           myOffer={card.myOffer}
                           onSetSellModalShown={setSellModalShown}
