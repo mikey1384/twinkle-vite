@@ -147,9 +147,6 @@ export default function AICardModal({
       'not_started'
     );
   }, [card?.imageGenerationStage]);
-  const previewImageUrl: string = useMemo(() => {
-    return card?.imageGenerationPreviewUrl || '';
-  }, [card?.imageGenerationPreviewUrl]);
 
   useEffect(() => {
     // Ensure we are in the notification room to receive stream events
@@ -340,18 +337,6 @@ export default function AICardModal({
     [progressStage, callingOpenAITime]
   );
 
-  const displayedCard = useMemo(() => {
-    if (!card) return card;
-    // Only override with preview while there is no final image on the card yet
-    if (!card.imagePath && previewImageUrl) {
-      return {
-        ...card,
-        imagePath: previewImageUrl
-      };
-    }
-    return card;
-  }, [card, previewImageUrl]);
-
   return (
     <NewModal
       isOpen
@@ -479,7 +464,7 @@ export default function AICardModal({
                 }
               `}
             >
-              <AICard card={displayedCard} />
+              <AICard card={card} />
             </div>
             <div
               className={css`

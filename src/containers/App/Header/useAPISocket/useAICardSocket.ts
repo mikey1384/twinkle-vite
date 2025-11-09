@@ -121,8 +121,6 @@ export default function useAICardSocket() {
       ]);
 
       const inProgress = activeStages.has(stage);
-      // Only use preview while generation is active. When completed with a final URL,
-      // persist it to imagePath instead so it shows everywhere.
       const hasPartial = !!status?.partialImageB64;
       const rawImageUrl: string | undefined = status?.imageUrl;
       const previewUrl = hasPartial
@@ -136,18 +134,13 @@ export default function useAICardSocket() {
         imageGenerationInProgress: inProgress
       };
 
-      // For completed events, the server currently sends a data URL (base64) for
-      // imageUrl while the actual CDN path is returned via the HTTP response.
-      // Avoid setting imagePath from a data URI (which would clear it to '').
       if (stage === 'completed' && rawImageUrl) {
-        const isDataUrl = typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
+        const isDataUrl =
+          typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
         if (!isDataUrl) {
-          // Normalize to a path so non-modal card renders (which prefix CloudFront) work.
           newState.imagePath = normalizeToPath(rawImageUrl);
           newState.imageGenerationPreviewUrl = '';
         } else {
-          // Keep showing the final base64 in the preview location until the
-          // HTTP response updates imagePath to the CDN path.
           newState.imageGenerationPreviewUrl = rawImageUrl;
         }
       } else if (previewUrl) {

@@ -65,7 +65,8 @@ export default function Card({
       cardObj?.[card.id]?.isBurned,
       cardObj?.[card.id]?.owner?.username,
       cardObj?.[card.id]?.askPrice,
-      cardObj?.[card.id]?.imagePath
+      cardObj?.[card.id]?.imagePath,
+      cardObj?.[card.id]?.imageGenerationPreviewUrl
     ]
   );
 
@@ -78,11 +79,12 @@ export default function Card({
     [finalCard?.level, finalCard?.quality]
   );
   const imageExists = useMemo(
-    () => !!finalCard.imagePath,
-    [finalCard.imagePath]
+    () => !!finalCard.imagePath || !!finalCard.imageGenerationPreviewUrl,
+    [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]
   );
   const frontPicUrl = useMemo(() => {
-    if (!finalCard.imagePath) return '';
+    if (!finalCard.imagePath) return finalCard.imageGenerationPreviewUrl || '';
+    console.log('here');
     if (
       typeof finalCard.imagePath === 'string' &&
       (finalCard.imagePath.startsWith('data:') ||
@@ -91,7 +93,7 @@ export default function Card({
       return finalCard.imagePath;
     }
     return `${cloudFrontURL}${finalCard.imagePath}`;
-  }, [finalCard.imagePath]);
+  }, [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]);
   const isImageOne = useMemo(
     () => finalCard?.engine === 'image-1',
     [finalCard?.engine]

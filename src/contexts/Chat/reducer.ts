@@ -2521,11 +2521,15 @@ export default function ChatReducer(
         !!action.message.chessState &&
         !action.message.omokState;
       const lastChessMoveViewerId =
-        isChessMoveMessage && action.message.userId && !action.message.isDrawOffer
+        isChessMoveMessage &&
+        action.message.userId &&
+        !action.message.isDrawOffer
           ? action.message.userId
           : prevChannelObj.lastChessMoveViewerId;
       const lastOmokMoveViewerId =
-        action.message.isChessMsg && action.message.omokState && action.message.userId
+        action.message.isChessMsg &&
+        action.message.omokState &&
+        action.message.userId
           ? action.message.userId
           : prevChannelObj.lastOmokMoveViewerId;
       const messageIds = subchannelId
