@@ -201,7 +201,7 @@ export default function OmokModal({
             showDoneButton={!userMadeLastMove}
             drawOfferPending={false}
             isAbortable={isAbortable}
-            gameFinished={false}
+            gameFinished={!!message?.gameWinnerId}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={() => {}}
             onClose={onHide}
