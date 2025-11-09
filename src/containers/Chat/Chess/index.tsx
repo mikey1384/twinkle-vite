@@ -258,16 +258,18 @@ export default function Chess({
   );
 
   const move = useMemo(() => {
-    if (boardState) {
+    if (boardState?.move?.number) {
       return boardState.move;
     } else {
       return {};
     }
-  }, [boardState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardState?.move?.number]);
 
   const myColor = useMemo(
     () => boardState?.playerColors?.[userId] || 'white',
-    [userId, boardState]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [boardState?.playerColors?.[userId]]
   );
 
   const userMadeLastMove = useMemo(

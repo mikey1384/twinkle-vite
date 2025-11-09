@@ -5,7 +5,6 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import NewModal from '~/components/NewModal';
 import ModalContentWrapper from './ModalContentWrapper';
 import GameModalFooter from './GameModalFooter';
-import localize from '~/constants/localize';
 import { socket } from '~/constants/sockets/api';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 
@@ -120,13 +119,6 @@ export default function OmokModal({
     }
   };
 
-  const closeLabel = localize('close');
-  const cancelMoveLabel = localize('cancelMove');
-  const startNewGameLabel = localize('startNewGame');
-  const resignLabel = localize('resign');
-  const abortLabel = 'Abort';
-  const doneLabel = 'Confirm move';
-
   useEffect(() => {
     let ignore = false;
     async function init() {
@@ -159,9 +151,9 @@ export default function OmokModal({
   const gameEndButtonShown = useMemo(
     () =>
       (initialState?.move?.number || 0) > 0 &&
-      !newOmokState &&
+      !newOmokState?.move?.number &&
       !userMadeLastMove,
-    [newOmokState, initialState?.move?.number, userMadeLastMove]
+    [newOmokState?.move?.number, initialState?.move?.number, userMadeLastMove]
   );
 
   // Allow abort early in the game (before 4 half-moves), matching chess behavior
@@ -198,7 +190,7 @@ export default function OmokModal({
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={false}
             showCancelMove={!!newOmokState}
-            showDoneButton={!userMadeLastMove}
+            showDoneButton={!message?.gameWinnerId && !userMadeLastMove}
             drawOfferPending={false}
             isAbortable={isAbortable}
             gameFinished={!!message?.gameWinnerId}
@@ -221,16 +213,7 @@ export default function OmokModal({
             doneDisabled={!newOmokState || !socketConnected || submitting}
             warningColor={warningColor}
             doneColor={doneColor}
-            acceptDrawLabel={''}
-            abortLabel={abortLabel}
-            resignLabel={resignLabel}
-            offerDrawLabel={''}
-            closeLabel={closeLabel}
-            cancelMoveLabel={cancelMoveLabel}
-            startNewGameLabel={startNewGameLabel}
-            doneLabel={doneLabel}
             showHowToPlay
-            howToPlayLabel="How to play"
             onHowToPlay={() => setHowToPlayShown(true)}
           />
         }

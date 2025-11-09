@@ -156,8 +156,10 @@ export default function Omok({
 
   const baseBoard = useMemo(
     () =>
-      initialState ? normaliseBoard(initialState.board) : createEmptyBoard(),
-    [initialState]
+      initialState?.move?.number
+        ? normaliseBoard(initialState.board)
+        : createEmptyBoard(),
+    [initialState?.move?.number, initialState?.board]
   );
 
   const [playerColors, setPlayerColors] = useState<PlayerColors>(
@@ -170,7 +172,7 @@ export default function Omok({
     setPlayerColors(initialState?.playerColors || {});
     setPendingMove(null);
     setErrorMessage(null);
-  }, [initialState]);
+  }, [initialState?.playerColors]);
 
   const boardToRender = newOmokState
     ? newOmokState.board

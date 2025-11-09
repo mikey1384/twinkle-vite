@@ -19,17 +19,10 @@ import { v1 as uuidv1 } from 'uuid';
 import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
 
 const acceptDrawLabel = localize('acceptDraw');
-const cancelMoveLabel = localize('cancelMove');
 const chessLabel = localize('chess');
-const closeLabel = localize('close');
-const doneLabel = localize('done');
-const offerDrawLabel = localize('offerDraw');
 const offeredDrawLabel = localize('offeredDraw');
-const resignLabel = localize('resign');
-const abortLabel = 'Abort';
 const abortChessMatchLabel = localize('abortChessMatch');
 const resignChessMatchLabel = localize('resignChessMatch');
-const startNewGameLabel = localize('startNewGame');
 
 export default function ChessModal({
   currentChannel,
@@ -63,7 +56,7 @@ export default function ChessModal({
   socketConnected: boolean;
 }) {
   const [activeTab, setActiveTab] = useState('game');
-  const [message, setMessage] = useState({});
+  const [message, setMessage] = useState<any>(null);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -138,14 +131,18 @@ export default function ChessModal({
     for (const rawId of messageIds) {
       const msg = getMessageById(rawId);
       if (!msg?.isChessMsg) continue;
-      const content = typeof msg.content === 'string' ? msg.content.toLowerCase() : '';
+      const content =
+        typeof msg.content === 'string' ? msg.content.toLowerCase() : '';
       const isOmokMsg =
         Boolean(msg.omokState) ||
-        (!msg.chessState && (content.includes('omok') || msg.gameType === 'omok'));
+        (!msg.chessState &&
+          (content.includes('omok') || msg.gameType === 'omok'));
       if (isOmokMsg) continue;
       const hasBoardState = Boolean(msg.chessState);
       const isResultMessage =
-        typeof msg.gameWinnerId === 'number' || Boolean(msg.isDraw) || Boolean(msg.isAbort);
+        typeof msg.gameWinnerId === 'number' ||
+        Boolean(msg.isDraw) ||
+        Boolean(msg.isAbort);
       if (isResultMessage && !hasBoardState) {
         return { type: 'result' as const, message: msg };
       }
@@ -156,11 +153,15 @@ export default function ChessModal({
 
     const fallback = currentChannel?.recentChessMessage;
     const fallbackContent =
-      typeof fallback?.content === 'string' ? fallback.content.toLowerCase() : '';
+      typeof fallback?.content === 'string'
+        ? fallback.content.toLowerCase()
+        : '';
     const fallbackIsChessResult =
       fallback?.isChessMsg &&
       !fallback?.omokState &&
-      (typeof fallback?.gameWinnerId === 'number' || fallback?.isDraw || fallback?.isAbort) &&
+      (typeof fallback?.gameWinnerId === 'number' ||
+        fallback?.isDraw ||
+        fallback?.isAbort) &&
       !fallback?.chessState &&
       (fallbackContent.includes('chess') || fallback?.gameType === 'chess');
     if (fallbackIsChessResult) {
@@ -192,15 +193,11 @@ export default function ChessModal({
     }
   }, [latestChessRelevantMessage?.type]);
 
-  const resultBlockingPlay = resultMessageActive && !submitting;
-
   const gameFinished = useMemo(
     () =>
       (resultMessageActive && !submitting) ||
       Boolean(
-        boardState?.isCheckmate ||
-          boardState?.isStalemate ||
-          boardState?.isDraw
+        boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw
       ),
     [
       boardState?.isCheckmate,
@@ -216,9 +213,8 @@ export default function ChessModal({
     boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw
   );
   const boardInteractable = useMemo(() => {
-    if (boardFinished) return false;
-    return !resultBlockingPlay;
-  }, [boardFinished, resultBlockingPlay]);
+    return !!boardFinished || !userMadeLastMove;
+  }, [boardFinished, userMadeLastMove]);
 
   const gameEndButtonShown = useMemo(
     () =>
@@ -265,12 +261,10 @@ export default function ChessModal({
   }, [rewindRequestId]);
 
   useEffect(() => {
-    if (resultBlockingPlay) {
-      setUserMadeLastMove(false);
-      setNewChessState(null);
-      setConfirmModalShown(false);
-    }
-  }, [resultBlockingPlay]);
+    setUserMadeLastMove(false);
+    setNewChessState(null);
+    setConfirmModalShown(false);
+  }, []);
 
   useEffect(() => {
     try {
@@ -281,7 +275,6 @@ export default function ChessModal({
 
   useEffect(() => {
     if (theme && !allowedThemeValues.includes(theme as any)) {
-      // Clamp to a safe default if saved theme exceeds unlocked level
       setTheme(null);
     }
   }, [allowedThemeValues, theme]);
@@ -340,10 +333,10 @@ export default function ChessModal({
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={drawButtonShown}
             showCancelMove={!!newChessState}
-            showDoneButton={!gameFinished && !userMadeLastMove}
+            showDoneButton={!message?.gameWinnerId && !userMadeLastMove}
             drawOfferPending={drawOfferPending}
             isAbortable={isAbortable}
-            gameFinished={gameFinished}
+            gameFinished={!!message?.gameWinnerId}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={handleOfferDraw}
             onClose={onHide}
@@ -365,14 +358,6 @@ export default function ChessModal({
             }
             warningColor={warningColor}
             doneColor={doneColor}
-            acceptDrawLabel={acceptDrawLabel}
-            abortLabel={abortLabel}
-            resignLabel={resignLabel}
-            offerDrawLabel={offerDrawLabel}
-            closeLabel={closeLabel}
-            cancelMoveLabel={cancelMoveLabel}
-            startNewGameLabel={startNewGameLabel}
-            doneLabel={doneLabel}
           />
         }
       >
@@ -449,7 +434,7 @@ export default function ChessModal({
   }
 
   async function handleSubmitChessMove() {
-    if (resultBlockingPlay || !newChessState) return;
+    if (!newChessState) return;
     if (!submittingRef.current) {
       submittingRef.current = true;
       setSubmitting(true);

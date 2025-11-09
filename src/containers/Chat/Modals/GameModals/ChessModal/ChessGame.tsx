@@ -54,7 +54,7 @@ export default function ChessGame({
   const loading: React.RefObject<any> = useRef(null);
   useEffect(() => {
     const maxRetries = 3;
-    const retryDelay = 1000; // Delay in milliseconds
+    const retryDelay = 1000;
     let success = false;
 
     init();
@@ -93,11 +93,12 @@ export default function ChessGame({
 
     const userIsTheLastMoveViewer =
       currentChannel.lastChessMoveViewerId === myId;
-    const isLoadingOrNoInitialState = !loading.current && !initialState;
+    const isLoadingOrNoInitialState =
+      !loading.current && !initialState?.move?.number;
     const isOlderMessage =
-      message.id &&
+      message?.id &&
       currentChannel.lastChessMessageId &&
-      message.id < currentChannel.lastChessMessageId;
+      message?.id < currentChannel?.lastChessMessageId;
 
     return (
       isLoadingOrNoInitialState ||
@@ -107,10 +108,10 @@ export default function ChessGame({
     );
   }, [
     countdownNumber,
-    currentChannel.lastChessMessageId,
-    currentChannel.lastChessMoveViewerId,
-    initialState,
-    message.id,
+    initialState?.move?.number,
+    currentChannel?.lastChessMessageId,
+    currentChannel?.lastChessMoveViewerId,
+    message?.id,
     myId,
     userMadeLastMove
   ]);
