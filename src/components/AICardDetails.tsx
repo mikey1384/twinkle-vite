@@ -91,7 +91,7 @@ export default function AICardDetails({
         <div
           className={css`
             text-align: center;
-            margin-top: 5rem;
+            margin-top: 2.5rem;
 
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 2rem;
@@ -113,13 +113,15 @@ export default function AICardDetails({
           >
             {card.style}
           </div>
-          {engine === 'DALL-E 3' && (
+          {(engine === 'DALL-E 3' || engine === 'image-1') && (
             <div
               className={css`
                 font-size: 1.2rem;
-                font-family: 'Orbitron', 'Roboto Mono', sans-serif;
-                text-transform: uppercase;
-                letter-spacing: 0.1em;
+                font-family: ${engine === 'image-1'
+                  ? `'Roboto Mono', monospace`
+                  : `'Orbitron', 'Roboto Mono', sans-serif`};
+                text-transform: ${engine === 'image-1' ? 'none' : 'uppercase'};
+                letter-spacing: ${engine === 'image-1' ? '0.02em' : '0.1em'};
                 font-weight: 700;
                 color: ${Color.darkerGray()};
                 margin-top: 0.5rem;
@@ -130,7 +132,7 @@ export default function AICardDetails({
                 }
               `}
             >
-              DALL-E 3
+              {engine === 'DALL-E 3' ? 'DALL·E 3' : 'image-1'}
             </div>
           )}
         </div>

@@ -131,14 +131,18 @@ export default function SummonActivity({ card }: { card: any }) {
         >
           {card.style}
         </div>
-        {card.engine === 'DALL-E 3' && (
+        {(card.engine === 'DALL-E 3' || card.engine === 'image-1') && (
           <div
             className={css`
               text-align: center;
               font-size: 1.2rem;
-              font-family: 'Orbitron', 'Roboto Mono', sans-serif;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
+              font-family: ${
+                card.engine === 'image-1'
+                  ? `'Roboto Mono', monospace`
+                  : `'Orbitron', 'Roboto Mono', sans-serif`
+              };
+              text-transform: ${card.engine === 'image-1' ? 'none' : 'uppercase'};
+              letter-spacing: ${card.engine === 'image-1' ? '0.02em' : '0.1em'};
               font-weight: 700;
               color: ${Color.darkerGray()};
               margin-top: 0.5rem;
@@ -148,7 +152,7 @@ export default function SummonActivity({ card }: { card: any }) {
               }
             `}
           >
-            DALL-E 3
+            {card.engine === 'DALL-E 3' ? 'DALL·E 3' : 'image-1'}
           </div>
         )}
       </div>
