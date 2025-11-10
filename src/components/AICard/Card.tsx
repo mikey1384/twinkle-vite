@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -9,6 +9,7 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
+import { isMobile, isTablet } from '~/helpers';
 import { Card as CardType } from '~/types';
 
 const mysteryCardPlaceholder = css`
@@ -69,6 +70,7 @@ export default function Card({
   onMouseLeave: () => void;
   onMouseMove: (event: any) => void;
 }) {
+  const [tapped, setTapped] = useState(false);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -145,6 +147,9 @@ export default function Card({
         ref={innerRef}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
+        onTouchStart={() => handleTap(true)}
+        onTouchEnd={() => handleTap(false)}
+        onTouchCancel={() => handleTap(false)}
         style={cardStyle}
         className={`card${isAnimated ? ' animated' : ''} ${
           finalCard.isBurning && !finalCard.isBurned
@@ -211,7 +216,7 @@ export default function Card({
                     height: '100%',
                     objectFit: 'cover',
                     transition: 'opacity 0.2s ease',
-                    opacity: 1
+                    opacity: tapped ? 0 : 1
                   }}
                   src={frontPicUrl}
                 />
@@ -224,7 +229,7 @@ export default function Card({
                     height: 100%;
                     object-fit: contain;
                     transition: opacity 0.2s ease;
-                    opacity: 0;
+                    opacity: ${tapped ? 1 : 0};
                     @media (hover: hover) {
                       .card:hover & {
                         opacity: 1;
@@ -330,4 +335,10 @@ export default function Card({
       </animated.div>
     </div>
   );
+
+  function handleTap(tapped: boolean) {
+    if (isMobile(navigator) || isTablet(navigator)) {
+      setTapped(tapped);
+    }
+  }
 }
