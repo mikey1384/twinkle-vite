@@ -131,7 +131,6 @@ export default function AICards() {
         <CardSearchPanel
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
-          onEngineSelect={handleEngineSelect}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
@@ -263,7 +262,15 @@ export default function AICards() {
             filters={filters}
             selectedFilter={selectedFilter}
             onApply={(queryString) => {
-              const searchParams = new URLSearchParams(queryString);
+              const querySegment = (() => {
+                if (!queryString) return '';
+                const questionMarkIndex = queryString.indexOf('?');
+                if (questionMarkIndex > -1) {
+                  return queryString.slice(questionMarkIndex + 1);
+                }
+                return queryString.startsWith('/') ? '' : queryString;
+              })();
+              const searchParams = new URLSearchParams(querySegment);
               if (filters.isBuyNow) {
                 searchParams.set('search[isBuyNow]', 'true');
                 if (filters.minPrice) {
@@ -273,36 +280,11 @@ export default function AICards() {
                   searchParams.set('search[maxPrice]', filters.maxPrice);
                 }
               }
-              if (filters.engine) {
-                searchParams.set('search[engine]', filters.engine);
-              }
-              const decodedURL =
-                queryString === '/ai-cards'
-                  ? `/ai-cards/?${
-                      filters.isBuyNow
-                        ? `search[isBuyNow]=true${
-                            filters.minPrice
-                              ? `&search[minPrice]=${filters.minPrice}`
-                              : ''
-                          }${
-                            filters.maxPrice
-                              ? `&search[maxPrice]=${filters.maxPrice}`
-                              : ''
-                          }`
-                        : ''
-                    }${
-                      filters.engine
-                        ? (filters.isBuyNow ||
-                          filters.minPrice ||
-                          filters.maxPrice
-                            ? '&'
-                            : '') + `search[engine]=${filters.engine}`
-                        : ''
-                    }`
-                  : decodeURIComponent(searchParams.toString());
-              navigate(
-                filters.isBuyNow || filters.engine ? decodedURL : queryString
-              );
+              const searchQuery = decodeURIComponent(searchParams.toString());
+              const decodedURL = searchQuery
+                ? `/ai-cards/?${searchQuery}`
+                : '/ai-cards';
+              navigate(decodedURL);
               setSelectedFilter(null);
             }}
             onHide={() => setSelectedFilter(null)}
@@ -328,21 +310,6 @@ export default function AICards() {
       setPriceRange({ min: '', max: '' });
     } else {
       searchParams.set('search[isBuyNow]', 'true');
-    }
-    const decodedURL = decodeURIComponent(searchParams.toString());
-    navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
-  }
-
-  function handleEngineSelect(
-    engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1' | null
-  ) {
-    const searchParams = new URLSearchParams(search);
-    // remove legacy param if present
-    searchParams.delete('search[isDalle3]');
-    if (engine) {
-      searchParams.set('search[engine]', engine);
-    } else {
-      searchParams.delete('search[engine]');
     }
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);

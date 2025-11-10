@@ -38,7 +38,6 @@ export default function WordFilter({
       <div className={inputWrapperClass}>
         <SearchInput
           placeholder="Search word..."
-          style={{ width: '100%' }}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedWords}

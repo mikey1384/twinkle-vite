@@ -90,9 +90,7 @@ export default function SelectVideoModal({
           placeholder="Search..."
           autoFocus
           style={{
-            marginBottom: 0,
-            width: '100%',
-            maxWidth: '420px'
+            marginBottom: 0
           }}
           value={searchText}
           onChange={handleSearch}

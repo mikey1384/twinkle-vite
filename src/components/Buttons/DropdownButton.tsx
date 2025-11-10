@@ -34,6 +34,7 @@ export default function DropdownButton({
   iconSize?: string;
   listStyle?: React.CSSProperties;
   menuProps?: any[];
+  mobilePadding?: string;
   noBorderRadius?: boolean;
   onButtonClick?: (arg: any) => void;
   text?: string | React.ReactNode;

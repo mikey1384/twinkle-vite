@@ -61,8 +61,14 @@ export default function FilterPanel({
           onDropdownShown={onDropdownShown}
           menuProps={[
             { label: 'Any', onClick: handleClearEngine },
-            { label: 'DALL-E 2', onClick: () => handleSelectEngine('DALL-E 2') },
-            { label: 'DALL-E 3', onClick: () => handleSelectEngine('DALL-E 3') },
+            {
+              label: 'DALL-E 2',
+              onClick: () => handleSelectEngine('DALL-E 2')
+            },
+            {
+              label: 'DALL-E 3',
+              onClick: () => handleSelectEngine('DALL-E 3')
+            },
             { label: 'image-1', onClick: () => handleSelectEngine('image-1') }
           ]}
         />
@@ -114,6 +120,7 @@ export default function FilterPanel({
 
   function handleClearEngine() {
     onSetFilters((prevFilters: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { engine, ...rest } = prevFilters;
       return rest;
     });
@@ -158,7 +165,6 @@ const filtersGridClass = css`
   align-items: start;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 `;
 

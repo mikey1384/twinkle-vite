@@ -11,7 +11,6 @@ import Button from '~/components/Button';
 import Checkbox from '~/components/Checkbox';
 import Icon from '~/components/Icon';
 import SwitchButton from '~/components/Buttons/SwitchButton';
-import DropdownButton from '~/components/Buttons/DropdownButton';
 import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -190,7 +189,6 @@ const baseInputClass = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.2rem;
-    min-width: 6rem;
     &::placeholder {
       font-size: 1.1rem;
     }
@@ -309,15 +307,11 @@ const searchIconClass = css`
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
-  onEngineSelect,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
-  onEngineSelect: (
-    engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1' | null
-  ) => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
@@ -328,7 +322,7 @@ export default function CardSearchPanel({
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
   const { themeName, themeRoles, accentColor } = useHomePanelVars();
-  // Use the standard UI border to avoid overly faint appearance
+
   const borderColor = 'var(--ui-border)';
   const panelVars = useMemo(() => {
     const searchRole = themeRoles.search || {};
@@ -479,6 +473,19 @@ export default function CardSearchPanel({
               <span>{qualityFilterKey || 'Quality'}</span>
             </span>
           </Button>
+          <Button
+            className={filterButtonClass}
+            mobilePadding="0.5rem 1rem"
+            color={filters.engine ? 'logoBlue' : 'darkerGray'}
+            variant={filters.engine ? 'soft' : 'solid'}
+            tone="raised"
+            onClick={() => onSetSelectedFilter('engine')}
+          >
+            <span className={buttonContentClass}>
+              <Icon icon="caret-down" />
+              <span>{filters.engine ? filters.engine : 'Model'}</span>
+            </span>
+          </Button>
         </div>
         <div className={searchSectionClass}>
           <div className={inlineFieldRowClass}>
@@ -534,31 +541,6 @@ export default function CardSearchPanel({
             label="Buy Now"
             onChange={onBuyNowSwitchClick}
           />
-          <DropdownButton
-            color={filters.engine ? 'logoBlue' : 'darkerGray'}
-            variant={filters.engine ? 'soft' : 'solid'}
-            tone="raised"
-            icon="caret-down"
-            text={filters.engine ? filters.engine : 'Model'}
-            menuProps={[
-              {
-                label: 'Any',
-                onClick: () => onEngineSelect(null)
-              },
-              {
-                label: 'DALL-E 2',
-                onClick: () => onEngineSelect('DALL-E 2')
-              },
-              {
-                label: 'DALL-E 3',
-                onClick: () => onEngineSelect('DALL-E 3')
-              },
-              {
-                label: 'image-1',
-                onClick: () => onEngineSelect('image-1')
-              }
-            ]}
-          />
         </div>
         {location.search && (
           <div
@@ -588,8 +570,6 @@ export default function CardSearchPanel({
 
   function handleMyCardsClick() {
     const searchParams = new URLSearchParams(location.search);
-    // remove legacy param if present
-    searchParams.delete('search[isDalle3]');
     const obj = { ...filters };
 
     if (filters.owner === username) {
