@@ -4,7 +4,7 @@ import QualityFilter from './QualityFilter';
 import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
 import CardIdFilter from './CardIdFilter';
-import SwitchButton from '~/components/Buttons/SwitchButton';
+import DropdownButton from '~/components/Buttons/DropdownButton';
 import { css } from '@emotion/css';
 import {
   Color,
@@ -13,9 +13,7 @@ import {
   desktopMinWidth
 } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
-import { isMobile } from '~/helpers';
-
-const deviceIsMobile = isMobile(navigator);
+ 
 
 export default function FilterPanel({
   filters,
@@ -27,13 +25,6 @@ export default function FilterPanel({
   onSetFilters: (filters: any) => void;
 }) {
   const { cardVars } = useThemedCardVars({ role: 'filter' });
-  const dallESwitchStyle = deviceIsMobile
-    ? ({
-        transform: 'scale(0.9)',
-        transformOrigin: 'center',
-        gap: '0.4rem'
-      } as React.CSSProperties)
-    : undefined;
 
   return (
     <div style={cardVars} className={panelClass}>
@@ -62,12 +53,19 @@ export default function FilterPanel({
         />
       </div>
       <div className={switchRowClass}>
-        <SwitchButton
-          checked={!!filters.isDalle3}
-          label="DALL-E 3"
-          onChange={handleDALLE3SwitchClick}
-          small={deviceIsMobile}
-          style={dallESwitchStyle}
+        <DropdownButton
+          color={filters.engine ? 'logoBlue' : 'darkerGray'}
+          variant={filters.engine ? 'soft' : 'solid'}
+          tone="raised"
+          icon="caret-down"
+          text={filters.engine ? filters.engine : 'Model'}
+          onDropdownShown={onDropdownShown}
+          menuProps={[
+            { label: 'Any', onClick: handleClearEngine },
+            { label: 'DALL-E 2', onClick: () => handleSelectEngine('DALL-E 2') },
+            { label: 'DALL-E 3', onClick: () => handleSelectEngine('DALL-E 3') },
+            { label: 'image-1', onClick: () => handleSelectEngine('image-1') }
+          ]}
         />
       </div>
     </div>
@@ -108,11 +106,18 @@ export default function FilterPanel({
     }));
   }
 
-  function handleDALLE3SwitchClick() {
+  function handleSelectEngine(engine: 'DALL-E 2' | 'DALL-E 3' | 'image-1') {
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
-      isDalle3: !prevFilters.isDalle3
+      engine
     }));
+  }
+
+  function handleClearEngine() {
+    onSetFilters((prevFilters: any) => {
+      const { engine, ...rest } = prevFilters;
+      return rest;
+    });
   }
 }
 

@@ -11,7 +11,7 @@ export default function Filtered({
   cardObj,
   color,
   quality,
-  isDalle3,
+  engine,
   cardStyle,
   loadFilteredAICards,
   myId,
@@ -31,7 +31,7 @@ export default function Filtered({
   color: string;
   quality: string;
   cardStyle: string;
-  isDalle3: boolean;
+  engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1';
   loadFilteredAICards: (v: any) => any;
   myId: number;
   myUsername: string;
@@ -72,7 +72,7 @@ export default function Filtered({
             ...(!word ? {} : { word }),
             ...(!cardStyle ? {} : { style: cardStyle }),
             ...(!cardId ? {} : { cardId }),
-            ...(isDalle3 ? { isDalle3 } : {})
+            ...(engine ? { engine } : {})
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
@@ -88,7 +88,7 @@ export default function Filtered({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardStyle, color, quality, word, cardId, isDalle3]);
+  }, [cardStyle, color, quality, word, cardId, engine]);
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
@@ -161,7 +161,7 @@ export default function Filtered({
         ...(!color || color === 'any' ? {} : { color }),
         ...(!quality || quality === 'any' ? {} : { quality }),
         ...(!cardStyle ? {} : { style: cardStyle }),
-        ...(isDalle3 ? { isDalle3 } : {})
+        ...(engine ? { engine } : {})
       }
     });
     for (const card of newCards) {

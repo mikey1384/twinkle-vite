@@ -11,6 +11,7 @@ import Button from '~/components/Button';
 import Checkbox from '~/components/Checkbox';
 import Icon from '~/components/Icon';
 import SwitchButton from '~/components/Buttons/SwitchButton';
+import DropdownButton from '~/components/Buttons/DropdownButton';
 import Input from '~/components/Texts/Input';
 import { useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
@@ -308,13 +309,15 @@ const searchIconClass = css`
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
-  onDALLE3SwitchClick,
+  onEngineSelect,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
-  onDALLE3SwitchClick: () => any;
+  onEngineSelect: (
+    engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1' | null
+  ) => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
@@ -531,11 +534,30 @@ export default function CardSearchPanel({
             label="Buy Now"
             onChange={onBuyNowSwitchClick}
           />
-          <SwitchButton
-            small={deviceIsMobile}
-            checked={!!filters.isDalle3}
-            label="DALL-E 3"
-            onChange={onDALLE3SwitchClick}
+          <DropdownButton
+            color={filters.engine ? 'logoBlue' : 'darkerGray'}
+            variant={filters.engine ? 'soft' : 'solid'}
+            tone="raised"
+            icon="caret-down"
+            text={filters.engine ? filters.engine : 'Model'}
+            menuProps={[
+              {
+                label: 'Any',
+                onClick: () => onEngineSelect(null)
+              },
+              {
+                label: 'DALL-E 2',
+                onClick: () => onEngineSelect('DALL-E 2')
+              },
+              {
+                label: 'DALL-E 3',
+                onClick: () => onEngineSelect('DALL-E 3')
+              },
+              {
+                label: 'image-1',
+                onClick: () => onEngineSelect('image-1')
+              }
+            ]}
           />
         </div>
         {location.search && (
@@ -566,6 +588,8 @@ export default function CardSearchPanel({
 
   function handleMyCardsClick() {
     const searchParams = new URLSearchParams(location.search);
+    // remove legacy param if present
+    searchParams.delete('search[isDalle3]');
     const obj = { ...filters };
 
     if (filters.owner === username) {
@@ -582,10 +606,10 @@ export default function CardSearchPanel({
     if (maxPrice) searchParams.set('search[maxPrice]', maxPrice);
 
     if (obj.isBuyNow) searchParams.set('search[isBuyNow]', 'true');
-    if (obj.isDalle3) searchParams.set('search[isDalle3]', 'true');
+    if (obj.engine) searchParams.set('search[engine]', obj.engine);
 
     Object.entries(obj).forEach(([key, value]) => {
-      if (value && key !== 'isBuyNow' && key !== 'isDalle3') {
+      if (value && key !== 'isBuyNow' && key !== 'engine') {
         searchParams.set(`search[${key}]`, value as string);
       }
     });

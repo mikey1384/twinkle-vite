@@ -131,7 +131,7 @@ export default function AICards() {
         <CardSearchPanel
           filters={filters}
           onSetSelectedFilter={setSelectedFilter}
-          onDALLE3SwitchClick={handleDALLE3SwitchSwitchClick}
+          onEngineSelect={handleEngineSelect}
           onBuyNowSwitchClick={handleBuyNowSwitchClick}
           onCardNumberSearch={handleCardNumberSearch}
         />
@@ -273,8 +273,8 @@ export default function AICards() {
                   searchParams.set('search[maxPrice]', filters.maxPrice);
                 }
               }
-              if (filters.isDalle3) {
-                searchParams.set('search[isDalle3]', 'true');
+              if (filters.engine) {
+                searchParams.set('search[engine]', filters.engine);
               }
               const decodedURL =
                 queryString === '/ai-cards'
@@ -291,17 +291,17 @@ export default function AICards() {
                           }`
                         : ''
                     }${
-                      filters.isDalle3
+                      filters.engine
                         ? (filters.isBuyNow ||
                           filters.minPrice ||
                           filters.maxPrice
                             ? '&'
-                            : '') + 'search[isDalle3]=true'
+                            : '') + `search[engine]=${filters.engine}`
                         : ''
                     }`
                   : decodeURIComponent(searchParams.toString());
               navigate(
-                filters.isBuyNow || filters.isDalle3 ? decodedURL : queryString
+                filters.isBuyNow || filters.engine ? decodedURL : queryString
               );
               setSelectedFilter(null);
             }}
@@ -333,12 +333,16 @@ export default function AICards() {
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);
   }
 
-  function handleDALLE3SwitchSwitchClick() {
+  function handleEngineSelect(
+    engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1' | null
+  ) {
     const searchParams = new URLSearchParams(search);
-    if (filters.isDalle3) {
-      searchParams.delete('search[isDalle3]');
+    // remove legacy param if present
+    searchParams.delete('search[isDalle3]');
+    if (engine) {
+      searchParams.set('search[engine]', engine);
     } else {
-      searchParams.set('search[isDalle3]', 'true');
+      searchParams.delete('search[engine]');
     }
     const decodedURL = decodeURIComponent(searchParams.toString());
     navigate(`../ai-cards${decodedURL ? '/?' : ''}${decodedURL}`);

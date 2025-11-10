@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 export default function MultiCardComponent({
   color,
   isBuyNow,
-  isDalle3,
+  engine,
   quality,
   owner,
   rootId,
@@ -21,7 +21,7 @@ export default function MultiCardComponent({
 }: {
   color?: string | null;
   isBuyNow?: string | null;
-  isDalle3?: string | null;
+  engine?: string | null;
   quality?: string | null;
   owner?: string | null;
   rootId?: number | string;
@@ -33,7 +33,7 @@ export default function MultiCardComponent({
   const filters = {
     color,
     isBuyNow,
-    isDalle3,
+    engine,
     quality,
     owner,
     word,
@@ -87,7 +87,7 @@ export default function MultiCardComponent({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [color, isDalle3, isBuyNow, owner, quality, style, word]);
+  }, [color, engine, isBuyNow, owner, quality, style, word]);
 
   const title = useMemo(() => {
     const titleParts = [];
@@ -97,18 +97,18 @@ export default function MultiCardComponent({
     if (color) {
       titleParts.push(
         `${color} ${quality ? `${quality} ` : ''}${
-          isDalle3 ? 'DALL-E 3 ' : ''
+          engine ? `${engine} ` : ''
         }card${cardIds?.length === 1 ? '' : 's'}`
       );
     } else if (quality) {
       titleParts.push(
-        `${quality ? `${quality} ` : ''}${isDalle3 ? 'DALL-E 3 ' : ''}card${
+        `${quality ? `${quality} ` : ''}${engine ? `${engine} ` : ''}card${
           cardIds?.length === 1 ? '' : 's'
         }`
       );
     } else {
       titleParts.push(
-        `${isDalle3 ? 'DALL-E 3 ' : ''}card${cardIds?.length === 1 ? '' : 's'}`
+        `${engine ? `${engine} ` : ''}card${cardIds?.length === 1 ? '' : 's'}`
       );
     }
     if (style) {
@@ -121,7 +121,7 @@ export default function MultiCardComponent({
       titleParts.push('you can buy now');
     }
     return titleParts.filter(Boolean).join(' ');
-  }, [owner, color, quality, style, word, isBuyNow, isDalle3, cardIds?.length]);
+  }, [owner, color, quality, style, word, isBuyNow, engine, cardIds?.length]);
 
   return loading ? (
     <div

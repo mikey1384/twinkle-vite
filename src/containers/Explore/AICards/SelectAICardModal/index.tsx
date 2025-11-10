@@ -83,7 +83,7 @@ export default function SelectAICardModal({
     filters?.word,
     filters?.style,
     filters?.cardId,
-    filters?.isDalle3
+    filters?.engine
   ]);
 
   const cards = useMemo(() => {
