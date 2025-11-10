@@ -202,21 +202,13 @@ export default function Card({
               <>
                 <img
                   loading="lazy"
-                  className={css`
-                    @media (hover: hover) {
-                      .card:hover & {
-                        opacity: 0;
-                      }
-                    }
-                  `}
                   style={{
                     position: 'absolute',
                     inset: 0,
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    transition: 'opacity 0.2s ease',
-                    opacity: tapped ? 0 : 1
+                    transition: 'opacity 0.2s ease'
                   }}
                   src={frontPicUrl}
                 />
