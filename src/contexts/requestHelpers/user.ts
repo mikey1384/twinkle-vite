@@ -66,12 +66,15 @@ export default function userRequestHelpers({
     }) {
       try {
         const {
-          data: { isSuccess }
+          data: { isSuccess, token }
         } = await request.put(
           `${URL}/user/password/change`,
           { currentPassword, newPassword },
           auth()
         );
+        if (isSuccess && token) {
+          localStorage.setItem('token', token);
+        }
         return { isSuccess };
       } catch (error) {
         return handleError(error);
