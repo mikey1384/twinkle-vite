@@ -75,15 +75,12 @@ export default function NavMenu({
     fallback: 'logoBlue'
   });
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
-  const notiObj = useNotiContext((v) => v.state.notiObj);
-  const totalRewardedTwinkles = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkles || 0,
-    [notiObj, userId]
+  const myRewardStats = useNotiContext((v) =>
+    userId ? v.state?.notiObj?.[userId] : null
   );
-  const totalRewardedTwinkleCoins = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkleCoins || 0,
-    [notiObj, userId]
-  );
+  const totalRewardedTwinkles = myRewardStats?.totalRewardedTwinkles || 0;
+  const totalRewardedTwinkleCoins =
+    myRewardStats?.totalRewardedTwinkleCoins || 0;
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
 
   const [rewardsExist, setRewardsExist] = useState(false);
@@ -127,7 +124,8 @@ export default function NavMenu({
   }, [userId]);
 
   useEffect(() => {
-    handleLoadRightMenuVideos();
+    let isActive = true;
+
     async function handleLoadRightMenuVideos() {
       setLoading(true);
       try {
@@ -136,6 +134,7 @@ export default function NavMenu({
           playlistId,
           isContinuing
         });
+        if (!isActive) return;
         if (data.playlistTitle) {
           setPlaylistTitle(data.playlistTitle);
         }
@@ -156,10 +155,21 @@ export default function NavMenu({
           onSetNavVideoState({ otherVideos: data.otherVideos });
         }
       } catch (error) {
-        console.error(error);
+        if (isActive) {
+          console.error(error);
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
+
+    handleLoadRightMenuVideos();
+
+    return () => {
+      isActive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, hideWatched, userId, playlistId]);
 

@@ -67,7 +67,9 @@ export default function Header({
   );
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
-  const notiObj = useNotiContext((v) => v.state.notiObj);
+  const myRewardStats = useNotiContext((v) =>
+    userId ? v.state?.notiObj?.[userId] : null
+  );
   const versionMatch = useNotiContext((v) => v.state.versionMatch);
   const onShowUpdateNotice = useNotiContext(
     (v) => v.actions.onShowUpdateNotice
@@ -103,15 +105,10 @@ export default function Header({
     return null;
   }, [currentChannel?.subchannelObj, subchannelPath]);
 
-  const totalRewardedTwinkles = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkles || 0,
-    [notiObj, userId]
-  );
+  const totalRewardedTwinkles = myRewardStats?.totalRewardedTwinkles || 0;
 
-  const totalRewardedTwinkleCoins = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkleCoins || 0,
-    [notiObj, userId]
-  );
+  const totalRewardedTwinkleCoins =
+    myRewardStats?.totalRewardedTwinkleCoins || 0;
 
   const partner = useMemo(() => {
     return currentChannel?.twoPeople

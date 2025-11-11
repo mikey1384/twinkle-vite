@@ -197,8 +197,11 @@ export function useMyState() {
     }, {});
   };
 
-  // Retrieve stored items from local storage using predefined keys
-  const storedItems = getStoredItems(localStorageKeys);
+  const storedItems = useMemo(
+    () => getStoredItems(localStorageKeys),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId]
+  );
   const result = useMemo(() => {
     return userId
       ? {
@@ -475,8 +478,7 @@ export function useMyLevel() {
 }
 
 export function useUserLevel(user: User): UserLevel {
-  const userObj = useAppContext((v) => v.user.state.userObj);
-  const userId = user.id;
+  const userData = useAppContext((v) => v.user.state.userObj[user.id]);
   const {
     achievementPoints = user.achievementPoints || 0,
     canEdit,
@@ -485,7 +487,7 @@ export function useUserLevel(user: User): UserLevel {
     canPinPlaylists,
     canEditRewardLevel,
     managementLevel = 0
-  } = userObj[userId] || {};
+  } = userData || {};
 
   const result = useMemo(() => {
     for (let i = levels.length - 1; i >= 0; i--) {

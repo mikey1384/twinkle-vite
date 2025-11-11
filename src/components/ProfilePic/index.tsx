@@ -64,16 +64,18 @@ export default function ProfilePic({
   statusSize?: 'auto' | 'medium' | 'large' | 'dot';
   size?: number | string;
 }) {
-  const userObj = useAppContext((v) => v.user.state.userObj);
+  const userProfile = useAppContext(
+    (v) => v.user?.state?.userObj?.[userId] || {}
+  );
   const myId = useKeyContext((v) => v.myState.userId);
   const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);
   const displayedProfilePicUrl = useMemo(() => {
-    if (userObj?.[userId]?.profilePicUrl) {
-      return userObj?.[userId]?.profilePicUrl;
+    if (userProfile?.profilePicUrl) {
+      return userProfile.profilePicUrl;
     }
     return profilePicUrl;
-  }, [profilePicUrl, userId, userObj]);
+  }, [profilePicUrl, userProfile?.profilePicUrl]);
 
   const statusTagShown = useMemo(
     () => statusShown && (myId === userId || online),
@@ -114,9 +116,7 @@ export default function ProfilePic({
       (myId === userId && isProfilePage) || onClick
         ? 'pointer'
         : styleCursor || 'default',
-    ...(explicitSize
-      ? { ['--profile-pic-size' as const]: explicitSize }
-      : {})
+    ...(explicitSize ? { ['--profile-pic-size' as const]: explicitSize } : {})
   };
 
   return (

@@ -79,15 +79,12 @@ export default function MainFeeds({
   const successRole = useRoleColor('success', { fallback: 'green' });
   const alertColor = alertRole.colorKey;
   const successColor = successRole.colorKey;
-  const notiObj = useNotiContext((v) => v.state.notiObj);
-  const totalRewardedTwinkles = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkles || 0,
-    [userId, notiObj]
+  const myRewardStats = useNotiContext((v) =>
+    userId ? v.state?.notiObj?.[userId] : null
   );
-  const totalRewardedTwinkleCoins = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkleCoins || 0,
-    [userId, notiObj]
-  );
+  const totalRewardedTwinkles = myRewardStats?.totalRewardedTwinkles || 0;
+  const totalRewardedTwinkleCoins =
+    myRewardStats?.totalRewardedTwinkleCoins || 0;
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onCollectRewards = useNotiContext((v) => v.actions.onCollectRewards);
   const onLoadNotifications = useNotiContext(
