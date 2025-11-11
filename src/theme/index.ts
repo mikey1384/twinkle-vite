@@ -1,6 +1,6 @@
 const MOBILE_MAX_WIDTH_PX = 767;
 const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
-const GOLD_MOBILE_PAGE_BG = 'rgba(235, 240, 248, 1)';
+const GOLD_MOBILE_PAGE_BG = 'rgba(245, 245, 255, 1)';
 const MOBILE_BG_AMPLIFY = 2;
 
 let pageBgMediaCleanup: (() => void) | null = null;
