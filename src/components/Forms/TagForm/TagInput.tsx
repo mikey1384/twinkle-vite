@@ -1,9 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import SearchDropdown from '~/components/SearchDropdown';
-import Input from '~/components/Texts/Input';
-import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
-import { css } from '@emotion/css';
+import React, { useEffect, useMemo, useRef } from 'react';
+import SearchInput from '~/components/Texts/SearchInput';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useOutsideClick } from '~/helpers/hooks';
 import Loading from '~/components/Loading';
@@ -42,7 +38,6 @@ export default function TagInput({
   style?: React.CSSProperties;
   value: string;
 }) {
-  const [indexToHighlight, setIndexToHighlight] = useState(0);
   const TagInputRef = useRef(null);
   useEffect(() => {
     if (!loading) {
@@ -67,76 +62,29 @@ export default function TagInput({
   return (
     <ErrorBoundary componentPath="TagForm/TagInput">
       <div
-        className={`${css`
-          height: 4.3rem;
-          position: relative;
-          .addon {
-            border: 1px solid var(--ui-border);
-            align-self: stretch;
-            padding: 0 1rem;
-            display: flex;
-            align-items: center;
-          }
-          input {
-            height: 100%;
-            border: 1px solid var(--ui-border);
-            border-left: none;
-          }
-        `} ${className}`}
+        className={className}
         ref={TagInputRef}
-        style={style}
+        style={{ position: 'relative', width: '100%', ...style }}
       >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div className="addon" style={{ background: Color.borderGray() }}>
-            <Icon icon="search" />
-          </div>
-          <Input
-            autoFocus={autoFocus}
-            inputRef={inputRef}
-            value={value}
-            placeholder={placeholder}
-            onChange={(text) => onChange(text)}
-            onKeyDown={onKeyDown}
-          />
-        </div>
-        {loading && <Loading style={{ position: 'absolute', top: '1rem' }} />}
-        {results.length > 0 ? (
-          <SearchDropdown
-            dropdownFooter={dropdownFooter}
-            searchResults={results}
-            onUpdate={() => setIndexToHighlight(0)}
-            indexToHighlight={indexToHighlight}
-            onItemClick={onAddItem}
-            renderItemLabel={renderDropdownLabel}
-          />
-        ) : null}
+        <SearchInput
+          autoFocus={autoFocus}
+          innerRef={inputRef}
+          onChange={onChange}
+          onClickOutSide={onClickOutSide}
+          onSelect={onAddItem}
+          placeholder={placeholder}
+          renderItemLabel={renderDropdownLabel}
+          searchResults={results}
+          value={value}
+          dropdownFooter={dropdownFooter}
+        />
+        {loading && (
+          <Loading style={{ position: 'absolute', top: '1rem', right: '1rem' }} />
+        )}
       </div>
       {dropdownFooter && (
         <div style={{ marginTop: '0.5rem' }}>{dropdownFooter}</div>
       )}
     </ErrorBoundary>
   );
-
-  function onKeyDown(event: any) {
-    let index = indexToHighlight;
-    if (results.length > 0) {
-      if (event.keyCode === 40) {
-        event.preventDefault();
-        const highlightIndex = Math.min(++index, results.length - 1);
-        setIndexToHighlight(highlightIndex);
-      }
-
-      if (event.keyCode === 38) {
-        event.preventDefault();
-        const highlightIndex = Math.max(--index, 0);
-        setIndexToHighlight(highlightIndex);
-      }
-
-      if (event.keyCode === 13) {
-        event.preventDefault();
-        const user = results[index];
-        onAddItem(user);
-      }
-    }
-  }
 }

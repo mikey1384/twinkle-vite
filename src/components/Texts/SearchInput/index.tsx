@@ -5,10 +5,12 @@ import Input from '../Input';
 import Icon from '~/components/Icon';
 import DropdownList from './DropdownList';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { useOutsideClick } from '~/helpers/hooks';
 
 export default function SearchInput({
   addonColor,
   borderColor,
+  dropdownFooter,
   onClickOutSide,
   searchResults = [],
   autoFocus,
@@ -27,6 +29,7 @@ export default function SearchInput({
 }: {
   addonColor?: string;
   borderColor?: string;
+  dropdownFooter?: any;
   onClickOutSide?: () => void;
   searchResults?: any[];
   autoFocus?: boolean;
@@ -45,6 +48,7 @@ export default function SearchInput({
 }) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
+  useOutsideClick(SearchInputRef, onClickOutSide);
   const { colorKey: searchColor } = useRoleColor('search', {
     fallback: 'logoBlue'
   });
@@ -124,11 +128,11 @@ export default function SearchInput({
         />
       </div>
       <DropdownList
+        dropdownFooter={dropdownFooter}
         indexToHighlight={indexToHighlight}
         renderItemLabel={renderItemLabel}
         renderItemUrl={renderItemUrl}
         searchResults={searchResults}
-        onClickOutSide={onClickOutSide}
         onSelect={onSelect}
         onSetIndexToHighlight={setIndexToHighlight}
       />
