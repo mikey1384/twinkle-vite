@@ -419,6 +419,9 @@ export default function useAISocket({
   });
 
   function sendAIUIInformation() {
+    if (!aiCallChannelId) {
+      return;
+    }
     const mainContent = document.getElementById('react-view');
     const modalContent = document.getElementById('modal');
     const outerLayerContent = document.getElementById('outer-layer');

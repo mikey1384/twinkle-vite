@@ -201,11 +201,12 @@ export default function useNotiSocket({
       uploaderId: number;
       recommendations: any[];
       recommenderId: number;
-      target: any;
+      target: { contentId: number; contentType: string };
     }) {
       if (
-        contentState[target.contentType + target.contentId] ||
-        (uploaderId === userId && recommenderId !== userId)
+        recommenderId === userId ||
+        uploaderId === userId ||
+        shouldUpdateRecommendations(target)
       ) {
         onRecommendContent({
           recommendations,
@@ -213,6 +214,108 @@ export default function useNotiSocket({
           contentType: target.contentType
         });
       }
+    }
+
+    function shouldUpdateRecommendations(target: {
+      contentId: number;
+      contentType: string;
+    }) {
+      const { contentId, contentType } = target;
+      const targetKey = `${contentType}${contentId}`;
+      if (contentState[targetKey]) {
+        return true;
+      }
+      if (contentType === 'comment') {
+        return commentExistsInState(Number(contentId));
+      }
+      return Object.values(contentState).some((value: any) => {
+        if (!value || typeof value !== 'object') return false;
+        if (
+          value.contentType === contentType &&
+          Number(value.contentId) === Number(contentId)
+        ) {
+          return true;
+        }
+        if (
+          contentType === 'subject' &&
+          Array.isArray(value.subjects) &&
+          value.subjects.some(
+            (subject: any) => Number(subject?.id) === Number(contentId)
+          )
+        ) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    function commentExistsInState(commentId: number) {
+      const id = Number(commentId);
+      return Object.values(contentState).some((value: any) =>
+        commentIsNested(value, id, new Set<any>())
+      );
+    }
+
+    function commentIsNested(
+      container: any,
+      commentId: number,
+      visited: Set<any>
+    ): boolean {
+      if (!container || typeof container !== 'object' || visited.has(container))
+        return false;
+      visited.add(container);
+
+      if (
+        (!container.contentType || container.contentType === 'comment') &&
+        Number(container.id) === commentId
+      ) {
+        return true;
+      }
+
+      if (
+        Array.isArray(container.comments) &&
+        container.comments.some((comment: any) =>
+          commentIsNested(comment, commentId, visited)
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        Array.isArray(container.replies) &&
+        container.replies.some((reply: any) =>
+          commentIsNested(reply, commentId, visited)
+        )
+      ) {
+        return true;
+      }
+
+      if (
+        Array.isArray(container.subjects) &&
+        container.subjects.some((subject: any) =>
+          commentIsNested(subject, commentId, visited)
+        )
+      ) {
+        return true;
+      }
+
+      if (container.targetObj && typeof container.targetObj === 'object') {
+        if (
+          Object.values(container.targetObj).some((value: any) =>
+            commentIsNested(value, commentId, visited)
+          )
+        ) {
+          return true;
+        }
+      }
+
+      if (container.rootObj && typeof container.rootObj === 'object') {
+        if (commentIsNested(container.rootObj, commentId, visited)) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     async function handleNewReward({

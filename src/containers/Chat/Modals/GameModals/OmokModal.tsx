@@ -5,7 +5,6 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import NewModal from '~/components/NewModal';
 import ModalContentWrapper from './ModalContentWrapper';
 import GameModalFooter from './GameModalFooter';
-import localize from '~/constants/localize';
 import { socket } from '~/constants/sockets/api';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 
@@ -64,35 +63,6 @@ export default function OmokModal({
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [howToPlayShown, setHowToPlayShown] = useState(false);
 
-  useEffect(() => {
-    let ignore = false;
-    async function init() {
-      try {
-        const data = await fetchCurrentOmokState({
-          channelId,
-          recentOmokMessage: currentChannel.recentOmokMessage
-        });
-        if (!ignore) {
-          if (data) {
-            setMessage(data);
-            onUpdateRecentOmokMessage({ channelId, message: data });
-          }
-          setLoaded(true);
-        }
-      } catch (error) {
-        console.error(error);
-        if (!ignore) {
-          setLoaded(true);
-        }
-      }
-    }
-    init();
-    return () => {
-      ignore = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const initialState = useMemo(() => message?.omokState, [message]);
 
   const userMadeLastMove = useMemo(
@@ -149,35 +119,48 @@ export default function OmokModal({
     }
   };
 
-  async function handleResign() {
-    try {
-      if (message) {
-        await setOmokMoveViewTimeStamp({ channelId, message });
-        onUpdateLastOmokMoveViewerId({ channelId, viewerId: myId });
+  useEffect(() => {
+    let ignore = false;
+    async function init() {
+      try {
+        const data = await fetchCurrentOmokState({
+          channelId,
+          recentOmokMessage: currentChannel.recentOmokMessage
+        });
+        if (!ignore) {
+          if (data) {
+            setMessage(data);
+            onUpdateRecentOmokMessage({ channelId, message: data });
+          }
+          setLoaded(true);
+        }
+      } catch (error) {
+        console.error(error);
+        if (!ignore) {
+          setLoaded(true);
+        }
       }
-      // Use unified event name with gameType for omok
-      socket.emit('end_chess_game', {
-        channel: {
-          id: currentChannel.id,
-          channelName: currentChannel.channelName,
-          members: currentChannel.members,
-          twoPeople: currentChannel.twoPeople,
-          pathId: currentChannel.pathId
-        },
-        channelId,
-        targetUserId: myId,
-        gameType: 'omok',
-        winnerId: opponentId,
-        isResign: true
-      });
-      onScrollToBottom();
-      onHide();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setConfirmModalShown(false);
     }
-  }
+    init();
+    return () => {
+      ignore = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const gameEndButtonShown = useMemo(
+    () =>
+      (initialState?.move?.number || 0) > 0 &&
+      !newOmokState?.move?.number &&
+      !userMadeLastMove,
+    [newOmokState?.move?.number, initialState?.move?.number, userMadeLastMove]
+  );
+
+  // Allow abort early in the game (before 4 half-moves), matching chess behavior
+  const isAbortable = useMemo(
+    () => (initialState?.move?.number || 0) < 4,
+    [initialState?.move?.number]
+  );
 
   const handleSpoilerClick = async (senderId: number) => {
     try {
@@ -195,26 +178,6 @@ export default function OmokModal({
     }
   };
 
-  const closeLabel = localize('close');
-  const cancelMoveLabel = localize('cancelMove');
-  const startNewGameLabel = localize('startNewGame');
-  const resignLabel = localize('resign');
-  const doneLabel = 'Confirm move';
-
-  const gameFinished = useMemo(
-    () => Boolean(initialState?.winnerId),
-    [initialState?.winnerId]
-  );
-  // userMadeLastMove moved above for spoiler computation
-  const gameEndButtonShown = useMemo(
-    () =>
-      (initialState?.move?.number || 0) > 0 &&
-      !newOmokState &&
-      !gameFinished &&
-      !userMadeLastMove,
-    [gameFinished, newOmokState, initialState?.move?.number, userMadeLastMove]
-  );
-
   return (
     <ErrorBoundary componentPath="Chat/Modals/OmokModal">
       <NewModal
@@ -227,10 +190,10 @@ export default function OmokModal({
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={false}
             showCancelMove={!!newOmokState}
-            showDoneButton={!gameFinished && !userMadeLastMove}
+            showDoneButton={!message?.gameWinnerId && !userMadeLastMove}
             drawOfferPending={false}
-            isAbortable={false}
-            gameFinished={gameFinished}
+            isAbortable={isAbortable}
+            gameFinished={!!message?.gameWinnerId}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={() => {}}
             onClose={onHide}
@@ -250,16 +213,7 @@ export default function OmokModal({
             doneDisabled={!newOmokState || !socketConnected || submitting}
             warningColor={warningColor}
             doneColor={doneColor}
-            acceptDrawLabel={''}
-            abortLabel={''}
-            resignLabel={resignLabel}
-            offerDrawLabel={''}
-            closeLabel={closeLabel}
-            cancelMoveLabel={cancelMoveLabel}
-            startNewGameLabel={startNewGameLabel}
-            doneLabel={doneLabel}
             showHowToPlay
-            howToPlayLabel="How to play"
             onHowToPlay={() => setHowToPlayShown(true)}
           />
         }
@@ -278,6 +232,8 @@ export default function OmokModal({
             interactable
             loaded={loaded && socketConnected}
             isFromModal
+            isDraw={!!message?.isDraw}
+            isAbort={!!message?.isAbort}
             onConfirmMove={handleConfirmMove}
             onCancelPendingMove={() => setSubmitting(false)}
             onSpoilerClick={handleSpoilerClick}
@@ -288,8 +244,8 @@ export default function OmokModal({
       </NewModal>
       {confirmModalShown && (
         <ConfirmModal
-          title="Resign Omok Match"
-          onConfirm={handleResign}
+          title={isAbortable ? 'Abort Omok Match' : 'Resign Omok Match'}
+          onConfirm={handleGameOver}
           onHide={() => setConfirmModalShown(false)}
         />
       )}
@@ -351,4 +307,35 @@ export default function OmokModal({
       )}
     </ErrorBoundary>
   );
+
+  async function handleGameOver() {
+    try {
+      if (message) {
+        await setOmokMoveViewTimeStamp({ channelId, message });
+        onUpdateLastOmokMoveViewerId({ channelId, viewerId: myId });
+      }
+      // Use unified event name with gameType for omok
+      socket.emit('end_chess_game', {
+        channel: {
+          id: currentChannel.id,
+          channelName: currentChannel.channelName,
+          members: currentChannel.members,
+          twoPeople: currentChannel.twoPeople,
+          pathId: currentChannel.pathId
+        },
+        channelId,
+        targetUserId: myId,
+        gameType: 'omok',
+        ...(isAbortable
+          ? { isAbort: true }
+          : { winnerId: opponentId, isResign: true })
+      });
+      onScrollToBottom();
+      onHide();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setConfirmModalShown(false);
+    }
+  }
 }

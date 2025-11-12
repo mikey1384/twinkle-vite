@@ -42,6 +42,8 @@ interface OmokProps {
   gameWinnerId?: number;
   moveViewed?: boolean;
   spoilerOff?: boolean;
+  isDraw?: boolean;
+  isAbort?: boolean;
   interactable?: boolean;
   loaded?: boolean;
   lastOmokMessageId?: number;
@@ -125,6 +127,8 @@ export default function Omok({
   interactable,
   loaded,
   lastOmokMessageId,
+  isDraw,
+  isAbort,
   onBoardClick,
   onSpoilerClick,
   onConfirmMove,
@@ -152,8 +156,10 @@ export default function Omok({
 
   const baseBoard = useMemo(
     () =>
-      initialState ? normaliseBoard(initialState.board) : createEmptyBoard(),
-    [initialState]
+      initialState?.move?.number
+        ? normaliseBoard(initialState.board)
+        : createEmptyBoard(),
+    [initialState?.move?.number, initialState?.board]
   );
 
   const [playerColors, setPlayerColors] = useState<PlayerColors>(
@@ -166,7 +172,7 @@ export default function Omok({
     setPlayerColors(initialState?.playerColors || {});
     setPendingMove(null);
     setErrorMessage(null);
-  }, [initialState]);
+  }, [initialState?.playerColors]);
 
   const boardToRender = newOmokState
     ? newOmokState.board
@@ -202,9 +208,12 @@ export default function Omok({
     return myAssignedColor === 'white' ? base.reverse() : base;
   }, [myAssignedColor]);
 
+  const winnerId = initialState?.winnerId || gameWinnerId;
+
   const isMyTurn =
     Boolean(interactable && loaded && (spoilerOff || stonesPlaced === 0)) &&
     !pendingMove &&
+    !winnerId &&
     myAssignedColor === nextColor;
 
   const lastCommittedMove = initialState?.move || null;
@@ -220,8 +229,7 @@ export default function Omok({
     (displayedMove?.by != null
       ? playerColors[displayedMove.by as number]
       : undefined);
-  // moved below userMadeLastMove declaration to avoid TDZ
-  const winnerId = initialState?.winnerId || gameWinnerId;
+
   const userMadeLastMove = displayedMove?.by === myId;
 
   // Show board on: game over, spoiler off, brand-new board, while placing a move, or after my move
@@ -230,6 +238,8 @@ export default function Omok({
     !!spoilerOff ||
     stonesPlaced === 0 ||
     !!pendingMove ||
+    isDraw ||
+    isAbort ||
     displayedMove?.by === myId;
   const boardIsLoading = loaded === false;
 
@@ -269,7 +279,7 @@ export default function Omok({
     };
 
     const boardBeforeMove = cloneBoard(boardToRender);
-    // Double-three rule: apply only for black
+    // Foul checks: apply only for black (double-three + overline)
     if (
       myAssignedColor === 'black' &&
       createsDoubleThree({

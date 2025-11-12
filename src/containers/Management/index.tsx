@@ -4,6 +4,7 @@ import FilterBar from '~/components/FilterBar';
 import ManagementRoutes from './ManagementRoutes';
 import Loading from '~/components/Loading';
 import SideMenu from '~/components/SideMenu';
+import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
@@ -28,26 +29,29 @@ export default function Management() {
     <Loading />
   ) : managementLevel > 0 ? (
     <div>
-      <SideMenu style={{ top: 'CALC(50vh - 8rem)' }}>
+      <SideMenu variant="card">
         <NavLink
           to="/management"
           end
           className={(navData) => (navData.isActive ? 'active' : '')}
         >
-          <span style={{ marginLeft: '1.1rem' }}>Account Mgmt</span>
+          <Icon icon="users" />
+          <span style={{ marginLeft: '1.1rem' }}>Accounts</span>
         </NavLink>
         <NavLink
           to="/management/tools"
           end
           className={(navData) => (navData.isActive ? 'active' : '')}
         >
+          <Icon icon="sliders-h" />
           <span style={{ marginLeft: '1.1rem' }}>Tools</span>
         </NavLink>
         <NavLink
           to="/management/mod-activities"
           className={(navData) => (navData.isActive ? 'active' : '')}
         >
-          <span style={{ marginLeft: '1.1rem' }}>Mod Activities</span>
+          <Icon icon="clipboard-check" />
+          <span style={{ marginLeft: '1.1rem' }}>Moderation</span>
         </NavLink>
       </SideMenu>
       <FilterBar

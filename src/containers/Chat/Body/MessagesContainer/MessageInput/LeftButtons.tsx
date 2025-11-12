@@ -43,13 +43,13 @@ export default function LeftButtons({
   const baseButtonColorKey = isGoldTheme
     ? 'bluerGray'
     : isOrangeTheme
-      ? 'darkGray'
-      : buttonColor;
+    ? 'darkGray'
+    : buttonColor;
   const baseHoverColorKey = isGoldTheme
     ? 'darkBluerGray'
     : isOrangeTheme
-      ? 'darkerGray'
-      : buttonHoverColor;
+    ? 'darkerGray'
+    : buttonHoverColor;
 
   // Helper to tint Color keys
   const getTint = (key: string, alpha: number, fallbackKey = 'gold') => {
@@ -72,6 +72,17 @@ export default function LeftButtons({
   const chessButtonIsGlowing = useMemo(() => {
     if (!isTwoPeopleChannel || !channelState) return false;
     const latestMessage = getLatestGameMessage(channelState, 'chess');
+    const latestGameOver = getLatestChessGameOverMessage(channelState);
+    if (latestGameOver) {
+      const overIdx = getMessageIndex(channelState, latestGameOver.id);
+      const stateIdx = latestMessage
+        ? getMessageIndex(channelState, latestMessage.id)
+        : -1;
+
+      if (overIdx >= 0 && (stateIdx < 0 || overIdx < stateIdx)) {
+        return false;
+      }
+    }
     const chessState = latestMessage?.chessState;
     if (!chessState) return false;
     if (
@@ -97,6 +108,18 @@ export default function LeftButtons({
   const omokButtonIsGlowing = useMemo(() => {
     if (!isTwoPeopleChannel || !channelState) return false;
     const latestMessage = getLatestGameMessage(channelState, 'omok');
+    const latestGameOver = getLatestOmokGameOverMessage(channelState);
+
+    if (latestGameOver) {
+      const overIdx = getMessageIndex(channelState, latestGameOver.id);
+      const stateIdx = latestMessage
+        ? getMessageIndex(channelState, latestMessage.id)
+        : -1;
+
+      if (overIdx >= 0 && (stateIdx < 0 || overIdx < stateIdx)) {
+        return false;
+      }
+    }
     const omokState = latestMessage?.omokState;
     if (!omokState) return false;
     const gameWinner =
@@ -221,6 +244,7 @@ function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
   }
 
   const messageIds: any[] = channelState.messageIds || [];
+
   for (let i = 0; i < messageIds.length; i++) {
     const id = messageIds[i];
     const message = getMessageById(id);
@@ -250,6 +274,62 @@ function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
     }
   }
 
+  return null;
+}
+
+function getLatestOmokGameOverMessage(channelState: any) {
+  if (!channelState) return null;
+  const messagesObj = channelState.messagesObj || {};
+  const messageIds: any[] = channelState.messageIds || [];
+  const getMessageById = (id: any) =>
+    messagesObj[id] ||
+    (typeof id === 'number' || typeof id === 'string'
+      ? messagesObj[String(id)] || messagesObj[Number(id)]
+      : null);
+
+  for (let i = 0; i < messageIds.length; i++) {
+    const id = messageIds[i];
+    const msg = getMessageById(id);
+    if (!msg) continue;
+    const isBoard = !!msg.isChessMsg;
+    const isGameOver =
+      typeof msg?.gameWinnerId === 'number' || !!msg?.isDraw || !!msg?.isAbort;
+    const isOmok = /omok/i.test(msg?.content || '') || !!msg?.omokState;
+    if (isBoard && isGameOver && isOmok) return msg;
+  }
+  return null;
+}
+
+function getMessageIndex(channelState: any, id: any) {
+  const ids: any[] = channelState?.messageIds || [];
+  if (id === undefined || id === null) return -1;
+  const keyStr = String(id);
+  // messageIds may contain both strings and numbers
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i] === id || String(ids[i]) === keyStr) return i;
+  }
+  return -1;
+}
+
+function getLatestChessGameOverMessage(channelState: any) {
+  if (!channelState) return null;
+  const messagesObj = channelState.messagesObj || {};
+  const messageIds: any[] = channelState.messageIds || [];
+  const getMessageById = (id: any) =>
+    messagesObj[id] ||
+    (typeof id === 'number' || typeof id === 'string'
+      ? messagesObj[String(id)] || messagesObj[Number(id)]
+      : null);
+  for (let i = 0; i < messageIds.length; i++) {
+    const id = messageIds[i];
+    const msg = getMessageById(id);
+    if (!msg) continue;
+    const isBoard = !!msg.isChessMsg;
+    const isGameOver =
+      typeof msg?.gameWinnerId === 'number' || !!msg?.isDraw || !!msg?.isAbort;
+    const isChess = /chess/i.test(msg?.content || '') || !!msg?.chessState;
+    if (isBoard && isGameOver && isChess) return msg;
+  }
   return null;
 }
 

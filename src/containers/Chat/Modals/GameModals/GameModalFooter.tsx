@@ -25,17 +25,7 @@ export default function GameModalFooter({
   // colors
   warningColor,
   doneColor,
-  howToPlayColor,
-  // labels
-  acceptDrawLabel,
-  abortLabel,
-  resignLabel,
-  offerDrawLabel,
-  closeLabel,
-  cancelMoveLabel,
-  startNewGameLabel,
-  doneLabel,
-  howToPlayLabel
+  howToPlayColor
 }: {
   showGameEndButton?: boolean;
   showOfferDraw?: boolean;
@@ -56,15 +46,6 @@ export default function GameModalFooter({
   warningColor?: string;
   doneColor?: string;
   howToPlayColor?: string;
-  acceptDrawLabel?: string;
-  abortLabel?: string;
-  resignLabel?: string;
-  offerDrawLabel?: string;
-  closeLabel?: string;
-  cancelMoveLabel?: string;
-  startNewGameLabel?: string;
-  doneLabel?: string;
-  howToPlayLabel?: string;
 }) {
   const [loading, setLoading] = useState(false);
   const noop = () => {};
@@ -77,7 +58,7 @@ export default function GameModalFooter({
           color={howToPlayColor || 'magenta'}
           onClick={onHowToPlay || noop}
         >
-          {howToPlayLabel}
+          How to play
         </Button>
       )}
       {showGameEndButton && (
@@ -87,11 +68,7 @@ export default function GameModalFooter({
           color={drawOfferPending || isAbortable ? 'orange' : 'red'}
           onClick={onOpenConfirmModal || noop}
         >
-          {drawOfferPending
-            ? acceptDrawLabel
-            : isAbortable
-            ? abortLabel
-            : resignLabel}
+          {drawOfferPending ? 'Accept draw' : isAbortable ? 'Abort' : 'Resign'}
         </Button>
       )}
       {showOfferDraw && (
@@ -101,11 +78,11 @@ export default function GameModalFooter({
           color="orange"
           onClick={onOfferDraw || noop}
         >
-          {offerDrawLabel}
+          Offer draw
         </Button>
       )}
       <Button variant="ghost" onClick={onClose || noop}>
-        {closeLabel}
+        Close
       </Button>
       {showCancelMove && (
         <Button
@@ -114,7 +91,7 @@ export default function GameModalFooter({
           color={warningColor}
           onClick={onCancelMove || noop}
         >
-          {cancelMoveLabel}
+          Cancel
         </Button>
       )}
       {gameFinished ? (
@@ -124,7 +101,7 @@ export default function GameModalFooter({
           color="orange"
           onClick={onStartNewGame || noop}
         >
-          {startNewGameLabel}
+          Start new game
         </Button>
       ) : showDoneButton ? (
         <Button
@@ -135,7 +112,7 @@ export default function GameModalFooter({
           onClick={handleDone}
           disabled={doneDisabled}
         >
-          {doneLabel}
+          Done
         </Button>
       ) : null}
     </>

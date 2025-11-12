@@ -6,6 +6,7 @@ import React, {
   forwardRef
 } from 'react';
 import FilterBar from '~/components/FilterBar';
+import Button from '~/components/Button';
 import Reorder from './Reorder';
 import Remove from './Remove';
 import { mobileMaxWidth } from '~/constants/css';
@@ -43,6 +44,7 @@ export default forwardRef(function EditTab(
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
   const canDelete = useKeyContext((v) => v.myState.canDelete);
   const level = useKeyContext((v) => v.myState.level);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [selectedTab, setSelectedTab] = useState('reorder');
   const [posting, setPosting] = useState(false);
   const [poses, setPoses] = useState<string[]>([]);
@@ -153,6 +155,22 @@ export default forwardRef(function EditTab(
           />
         )}
       </main>
+      <footer
+        className={css`
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 2rem;
+        `}
+      >
+        <Button
+          color={doneColor}
+          disabled={disabled || posting}
+          loading={posting}
+          onClick={() => handleEditDone({ poses, editedDefinitionOrder })}
+        >
+          Apply
+        </Button>
+      </footer>
     </>
   );
 

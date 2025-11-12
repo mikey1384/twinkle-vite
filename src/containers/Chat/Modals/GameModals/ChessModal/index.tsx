@@ -19,17 +19,10 @@ import { v1 as uuidv1 } from 'uuid';
 import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
 
 const acceptDrawLabel = localize('acceptDraw');
-const cancelMoveLabel = localize('cancelMove');
 const chessLabel = localize('chess');
-const closeLabel = localize('close');
-const doneLabel = localize('done');
-const offerDrawLabel = localize('offerDraw');
 const offeredDrawLabel = localize('offeredDraw');
-const resignLabel = localize('resign');
-const abortLabel = localize('abort');
 const abortChessMatchLabel = localize('abortChessMatch');
 const resignChessMatchLabel = localize('resignChessMatch');
-const startNewGameLabel = localize('startNewGame');
 
 export default function ChessModal({
   currentChannel,
@@ -63,7 +56,7 @@ export default function ChessModal({
   socketConnected: boolean;
 }) {
   const [activeTab, setActiveTab] = useState('game');
-  const [message, setMessage] = useState({});
+  const [message, setMessage] = useState<any>(null);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -89,6 +82,9 @@ export default function ChessModal({
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const [theme, setTheme] = useState<string | null>(null);
+  const [acknowledgedResultId, setAcknowledgedResultId] = useState<
+    string | number | null
+  >(null);
   const maxLevelUnlocked: number =
     useChessContext((v) => v.state.stats?.maxLevelUnlocked) ?? 1;
 
@@ -123,19 +119,110 @@ export default function ChessModal({
     [initialState]
   );
 
+  const latestChessRelevantMessage = useMemo(() => {
+    const messageIds: any[] = currentChannel?.messageIds || [];
+    const messagesObj: Record<string, any> = currentChannel?.messagesObj || {};
+    const getMessageById = (id: any) =>
+      messagesObj[id] ??
+      messagesObj[String(id)] ??
+      messagesObj[Number(id)] ??
+      null;
+
+    for (const rawId of messageIds) {
+      const msg = getMessageById(rawId);
+      if (!msg?.isChessMsg) continue;
+      const content =
+        typeof msg.content === 'string' ? msg.content.toLowerCase() : '';
+      const isOmokMsg =
+        Boolean(msg.omokState) ||
+        (!msg.chessState &&
+          (content.includes('omok') || msg.gameType === 'omok'));
+      if (isOmokMsg) continue;
+      const hasBoardState = Boolean(msg.chessState);
+      const isResultMessage =
+        typeof msg.gameWinnerId === 'number' ||
+        Boolean(msg.isDraw) ||
+        Boolean(msg.isAbort);
+      if (isResultMessage && !hasBoardState) {
+        return { type: 'result' as const, message: msg };
+      }
+      if (hasBoardState) {
+        return { type: 'board' as const, message: msg };
+      }
+    }
+
+    const fallback = currentChannel?.recentChessMessage;
+    const fallbackContent =
+      typeof fallback?.content === 'string'
+        ? fallback.content.toLowerCase()
+        : '';
+    const fallbackIsChessResult =
+      fallback?.isChessMsg &&
+      !fallback?.omokState &&
+      (typeof fallback?.gameWinnerId === 'number' ||
+        fallback?.isDraw ||
+        fallback?.isAbort) &&
+      !fallback?.chessState &&
+      (fallbackContent.includes('chess') || fallback?.gameType === 'chess');
+    if (fallbackIsChessResult) {
+      return { type: 'result' as const, message: fallback };
+    }
+
+    return null;
+  }, [
+    currentChannel?.messageIds,
+    currentChannel?.messagesObj,
+    currentChannel?.recentChessMessage
+  ]);
+
+  const latestResultMessageKey =
+    latestChessRelevantMessage?.type === 'result'
+      ? latestChessRelevantMessage?.message?.id ??
+        latestChessRelevantMessage?.message?.timeStamp ??
+        latestChessRelevantMessage?.message?.content ??
+        null
+      : null;
+
+  const resultMessageActive =
+    latestChessRelevantMessage?.type === 'result' &&
+    acknowledgedResultId !== latestResultMessageKey;
+
+  useEffect(() => {
+    if (latestChessRelevantMessage?.type !== 'result') {
+      setAcknowledgedResultId(null);
+    }
+  }, [latestChessRelevantMessage?.type]);
+
   const gameFinished = useMemo(
     () =>
-      boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw,
-    [boardState]
+      (resultMessageActive && !submitting) ||
+      Boolean(
+        boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw
+      ),
+    [
+      boardState?.isCheckmate,
+      boardState?.isDraw,
+      boardState?.isStalemate,
+      resultMessageActive,
+      submitting
+    ]
   );
+
+  const boardMoveNumber = Number(boardState?.move?.number || 0);
+  const boardFinished = Boolean(
+    boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw
+  );
+  const boardInteractable = useMemo(() => {
+    return !!boardFinished || !userMadeLastMove;
+  }, [boardFinished, userMadeLastMove]);
 
   const gameEndButtonShown = useMemo(
     () =>
-      boardState?.move?.number > 0 &&
+      boardMoveNumber > 0 &&
       !newChessState &&
       !gameFinished &&
       !userMadeLastMove,
-    [gameFinished, newChessState, boardState?.move?.number, userMadeLastMove]
+    [boardMoveNumber, gameFinished, newChessState, userMadeLastMove]
   );
 
   const drawOffererId = useMemo(() => {
@@ -148,16 +235,16 @@ export default function ChessModal({
   const drawButtonShown = useMemo(() => {
     return (
       !drawOffererId &&
-      boardState?.move?.number > 0 &&
+      boardMoveNumber > 0 &&
       !newChessState &&
       !gameFinished &&
       userMadeLastMove
     );
   }, [
     drawOffererId,
+    boardMoveNumber,
     gameFinished,
     newChessState,
-    boardState?.move?.number,
     userMadeLastMove
   ]);
 
@@ -165,16 +252,19 @@ export default function ChessModal({
     return drawOffererId && drawOffererId !== myId;
   }, [drawOffererId, myId]);
 
-  const isAbortable = useMemo(
-    () => boardState?.move?.number < 4,
-    [boardState?.move?.number]
-  );
+  const isAbortable = useMemo(() => boardMoveNumber < 4, [boardMoveNumber]);
 
   useEffect(() => {
     if (!rewindRequestId) {
       setActiveTab('game');
     }
   }, [rewindRequestId]);
+
+  useEffect(() => {
+    setUserMadeLastMove(false);
+    setNewChessState(null);
+    setConfirmModalShown(false);
+  }, []);
 
   useEffect(() => {
     try {
@@ -185,7 +275,6 @@ export default function ChessModal({
 
   useEffect(() => {
     if (theme && !allowedThemeValues.includes(theme as any)) {
-      // Clamp to a safe default if saved theme exceeds unlocked level
       setTheme(null);
     }
   }, [allowedThemeValues, theme]);
@@ -244,10 +333,10 @@ export default function ChessModal({
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={drawButtonShown}
             showCancelMove={!!newChessState}
-            showDoneButton={!gameFinished && !userMadeLastMove}
+            showDoneButton={!message?.gameWinnerId && !userMadeLastMove}
             drawOfferPending={drawOfferPending}
             isAbortable={isAbortable}
-            gameFinished={gameFinished}
+            gameFinished={!!message?.gameWinnerId}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={handleOfferDraw}
             onClose={onHide}
@@ -257,6 +346,11 @@ export default function ChessModal({
               setInitialState(null);
               setNewChessState(null);
               setMessage({});
+              if (latestResultMessageKey !== null) {
+                setAcknowledgedResultId(latestResultMessageKey);
+              } else {
+                setAcknowledgedResultId(null);
+              }
             }}
             onDone={handleSubmitChessMove}
             doneDisabled={
@@ -264,14 +358,6 @@ export default function ChessModal({
             }
             warningColor={warningColor}
             doneColor={doneColor}
-            acceptDrawLabel={acceptDrawLabel}
-            abortLabel={abortLabel}
-            resignLabel={resignLabel}
-            offerDrawLabel={offerDrawLabel}
-            closeLabel={closeLabel}
-            cancelMoveLabel={cancelMoveLabel}
-            startNewGameLabel={startNewGameLabel}
-            doneLabel={doneLabel}
           />
         }
       >
@@ -298,6 +384,7 @@ export default function ChessModal({
                 setChessMoveViewTimeStamp={setChessMoveViewTimeStamp}
                 userMadeLastMove={userMadeLastMove}
                 squareColors={squareColors}
+                interactableOverride={boardInteractable}
               />
             </>
           ) : (
@@ -347,6 +434,7 @@ export default function ChessModal({
   }
 
   async function handleSubmitChessMove() {
+    if (!newChessState) return;
     if (!submittingRef.current) {
       submittingRef.current = true;
       setSubmitting(true);

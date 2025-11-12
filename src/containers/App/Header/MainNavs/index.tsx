@@ -371,14 +371,12 @@ export default function MainNavs({
         />
       )}
       <Nav to={`/missions`} className="mobile" imgLabel="tasks" />
-      {!banned?.chat && (
-        <Nav
-          to={chatButtonPath}
-          className="mobile"
-          imgLabel="comments"
-          alert={chatAlertShown}
-        />
-      )}
+      <Nav
+        to={chatButtonPath}
+        className="mobile"
+        imgLabel="comments"
+        alert={chatAlertShown}
+      />
       {profileNav && (
         <Nav
           to={profileNav}

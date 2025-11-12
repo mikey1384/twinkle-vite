@@ -46,6 +46,7 @@ import { Content, Comment as CommentType } from '~/types';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useRoleColor } from '~/theme/useRoleColor';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Comment({
   comment,
@@ -493,6 +494,15 @@ function Comment({
                   ) : (
                     !stringIsEmpty(comment.content) && (
                       <RichText
+                        isAIMessage={
+                          uploader?.id === Number(ZERO_TWINKLE_ID) ||
+                          uploader?.id === Number(CIEL_TWINKLE_ID)
+                        }
+                        voice={
+                          uploader?.id === Number(CIEL_TWINKLE_ID)
+                            ? 'nova'
+                            : ''
+                        }
                         contentType="comment"
                         contentId={commentId}
                         section="pinned"
@@ -533,9 +543,19 @@ function Comment({
                                 parent.contentType === 'comment'
                                   ? 'Replies'
                                   : 'Reply'}
-                                {numReplies > 0 ? ` (${numReplies})` : ''}
                               </span>
                             )}
+                            {numReplies > 0 ? (
+                              <span
+                                style={{
+                                  marginLeft: isTablet(navigator)
+                                    ? '0.7rem'
+                                    : '0.5rem'
+                                }}
+                              >
+                                ({numReplies})
+                              </span>
+                            ) : null}
                           </Button>
                           {userCanRewardThis && (
                             <Button

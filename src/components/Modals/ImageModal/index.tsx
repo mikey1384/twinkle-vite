@@ -154,6 +154,7 @@ export default function ImageModal({
             )}
           <Button
             style={{ marginLeft: '1rem' }}
+            variant="ghost"
             color={
               doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
             }

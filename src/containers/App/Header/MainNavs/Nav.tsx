@@ -85,6 +85,14 @@ function Nav({
     () => (alert ? alertHue : activeColor),
     [alert, alertHue, activeColor]
   );
+  const activeUnderlineColor = useMemo(
+    () => (alert ? alertHue : activeBorder),
+    [alert, alertHue, activeBorder]
+  );
+  const hoverUnderlineColor = useMemo(
+    () => (alert ? alertHue : hoverBorder),
+    [alert, alertHue, hoverBorder]
+  );
   const onSetProfilesLoaded = useAppContext(
     (v) => v.user.actions.onSetProfilesLoaded
   );
@@ -151,7 +159,7 @@ function Nav({
         > a.active {
           color: ${highlightColor}!important;
           background: transparent !important;
-          border-bottom-color: ${activeBorder} !important;
+          border-bottom-color: ${activeUnderlineColor} !important;
           > svg {
             color: ${highlightColor}!important;
           }
@@ -182,7 +190,7 @@ function Nav({
                     color: ${highlightColor};
                   }
                   color: ${highlightColor};
-                  border-bottom-color: ${hoverBorder};
+                  border-bottom-color: ${hoverUnderlineColor};
                 }
               }
             }`

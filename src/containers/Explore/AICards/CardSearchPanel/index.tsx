@@ -189,7 +189,6 @@ const baseInputClass = css`
   }
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.2rem;
-    min-width: 6rem;
     &::placeholder {
       font-size: 1.1rem;
     }
@@ -308,13 +307,11 @@ const searchIconClass = css`
 export default function CardSearchPanel({
   filters,
   onBuyNowSwitchClick,
-  onDALLE3SwitchClick,
   onSetSelectedFilter,
   onCardNumberSearch
 }: {
   filters: any;
   onBuyNowSwitchClick: () => any;
-  onDALLE3SwitchClick: () => any;
   onSetSelectedFilter: (filter: string) => any;
   onCardNumberSearch: (cardNumber: string | number) => void;
 }) {
@@ -325,7 +322,7 @@ export default function CardSearchPanel({
   const [copied, setCopied] = useState(false);
   const [cardNumber, setCardNumber] = useState<string | number>('');
   const { themeName, themeRoles, accentColor } = useHomePanelVars();
-  // Use the standard UI border to avoid overly faint appearance
+
   const borderColor = 'var(--ui-border)';
   const panelVars = useMemo(() => {
     const searchRole = themeRoles.search || {};
@@ -476,6 +473,19 @@ export default function CardSearchPanel({
               <span>{qualityFilterKey || 'Quality'}</span>
             </span>
           </Button>
+          <Button
+            className={filterButtonClass}
+            mobilePadding="0.5rem 1rem"
+            color={filters.engine ? 'logoBlue' : 'darkerGray'}
+            variant={filters.engine ? 'soft' : 'solid'}
+            tone="raised"
+            onClick={() => onSetSelectedFilter('engine')}
+          >
+            <span className={buttonContentClass}>
+              <Icon icon="caret-down" />
+              <span>{filters.engine ? filters.engine : 'Model'}</span>
+            </span>
+          </Button>
         </div>
         <div className={searchSectionClass}>
           <div className={inlineFieldRowClass}>
@@ -531,12 +541,6 @@ export default function CardSearchPanel({
             label="Buy Now"
             onChange={onBuyNowSwitchClick}
           />
-          <SwitchButton
-            small={deviceIsMobile}
-            checked={!!filters.isDalle3}
-            label="DALL-E 3"
-            onChange={onDALLE3SwitchClick}
-          />
         </div>
         {location.search && (
           <div
@@ -582,10 +586,10 @@ export default function CardSearchPanel({
     if (maxPrice) searchParams.set('search[maxPrice]', maxPrice);
 
     if (obj.isBuyNow) searchParams.set('search[isBuyNow]', 'true');
-    if (obj.isDalle3) searchParams.set('search[isDalle3]', 'true');
+    if (obj.engine) searchParams.set('search[engine]', obj.engine);
 
     Object.entries(obj).forEach(([key, value]) => {
-      if (value && key !== 'isBuyNow' && key !== 'isDalle3') {
+      if (value && key !== 'isBuyNow' && key !== 'engine') {
         searchParams.set(`search[${key}]`, value as string);
       }
     });

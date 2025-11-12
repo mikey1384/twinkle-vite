@@ -1,6 +1,6 @@
 const MOBILE_MAX_WIDTH_PX = 767;
 const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
-const GOLD_MOBILE_PAGE_BG = 'rgba(235, 240, 248, 1)';
+const GOLD_MOBILE_PAGE_BG = 'rgba(245, 245, 255, 1)';
 const MOBILE_BG_AMPLIFY = 2;
 
 let pageBgMediaCleanup: (() => void) | null = null;
@@ -112,7 +112,7 @@ export const themeRegistry: Record<ThemeName, ThemeTokens> = {
       text: 'rgba(50, 50, 50, 1)',
       border: 'rgba(179, 194, 255, 1)'
     },
-    page: { bg: 'rgba(248, 248, 255, 1)' }
+    page: { bg: 'rgba(250,250,253, 1)' }
   },
   green: {
     general: {
@@ -446,8 +446,11 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     draw: { color: 'logoBlue' },
     fail: { color: 'black' },
     filter: {
-      color: pickColor({ gold: 'darkerGray', orange: 'darkerGray' }, color),
-      opacity: pickNumber({ gold: 1, orange: 1 }, 0.7)
+      color: pickColor(
+        { gold: 'darkerGray', orange: 'darkerGray', logoBlue: 'darkerGray' },
+        color
+      ),
+      opacity: pickNumber({ gold: 1, orange: 1, logoBlue: 1 }, 0.7)
     },
     filterText: {
       color: 'white',

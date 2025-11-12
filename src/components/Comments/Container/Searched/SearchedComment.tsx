@@ -38,6 +38,7 @@ import LocalContext from '../../Context';
 import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 const pinLabel = localize('pin');
 const unpinLabel = localize('unpin');
@@ -152,10 +153,7 @@ export default function SearchedComment({
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
-  const {
-    color: linkColorFallback,
-    themeName
-  } = useRoleColor('link', {
+  const { color: linkColorFallback, themeName } = useRoleColor('link', {
     themeName: theme || profileTheme,
     fallback: 'blue'
   });
@@ -456,16 +454,16 @@ export default function SearchedComment({
             </div>
           </div>
           {dropdownButtonShown && !isEditing && (
-          <div className="dropdown-wrapper">
-            <DropdownButton
-              variant="solid"
-              tone="raised"
-              icon="chevron-down"
-              color="darkerGray"
-              menuProps={dropdownMenuItems}
-            />
-          </div>
-        )}
+            <div className="dropdown-wrapper">
+              <DropdownButton
+                variant="solid"
+                tone="raised"
+                icon="chevron-down"
+                color="darkerGray"
+                menuProps={dropdownMenuItems}
+              />
+            </div>
+          )}
           <section>
             <div>
               <UsernameText className="username" user={uploader} />{' '}
@@ -564,6 +562,13 @@ export default function SearchedComment({
                   ) : (
                     !stringIsEmpty(content) && (
                       <RichText
+                        isAIMessage={
+                          uploader?.id === Number(ZERO_TWINKLE_ID) ||
+                          uploader?.id === Number(CIEL_TWINKLE_ID)
+                        }
+                        voice={
+                          uploader?.id === Number(CIEL_TWINKLE_ID) ? 'nova' : ''
+                        }
                         contentType="comment"
                         contentId={commentId}
                         section="pinned"
@@ -604,9 +609,19 @@ export default function SearchedComment({
                                 parent.contentType === 'comment'
                                   ? 'Replies'
                                   : 'Reply'}
-                                {numReplies > 0 ? ` (${numReplies})` : ''}
                               </span>
                             )}
+                            {numReplies > 0 ? (
+                              <span
+                                style={{
+                                  marginLeft: isTablet(navigator)
+                                    ? '0.5rem'
+                                    : '0.3rem'
+                                }}
+                              >
+                                ({numReplies})
+                              </span>
+                            ) : null}
                           </Button>
                           {userCanRewardThis && (
                             <Button

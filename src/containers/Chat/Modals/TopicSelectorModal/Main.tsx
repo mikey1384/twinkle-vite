@@ -67,7 +67,7 @@ export default function Main({
   );
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', paddingBottom: '1rem' }}>
       {!isLoaded && <Loading />}
       <div style={{ width: '100%', marginTop: '3rem' }}>
         {!isTwoPeopleChat && (
@@ -364,12 +364,12 @@ export default function Main({
       mineOnly,
       lastSubject
     });
-    
+
     // Filter out current topic since it's already shown at the top
     const filteredSubjects = subjects.filter(
       (subject: { id: number }) => subject.id !== currentTopic?.id
     );
-    
+
     if (mineOnly) {
       onSetMyTopicObj({
         ...myTopicObj,

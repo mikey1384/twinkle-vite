@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -7,7 +7,7 @@ import DictionaryTab from './DictionaryTab';
 import EditTab from './EditTab';
 import { DndProvider } from 'react-dnd';
 import { isMobile } from '~/helpers';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext } from '~/contexts';
 import Button from '~/components/Button';
 import PronounceButton from '../PronounceButton';
 import { mobileMaxWidth } from '~/constants/css';
@@ -121,11 +121,6 @@ export default function WordModal({
   }, [selectedTab, word]);
   const [editedDefinitionOrder, setEditedDefinitionOrder] =
     useState(definitionOrder);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
-  const editRef = useRef<any>(null);
-  const [editDisabled, setEditDisabled] = useState(true);
-  const [editPosting, setEditPosting] = useState(false);
-
   // Pronunciation logic is handled by PronounceButton component
 
   return (
@@ -140,31 +135,9 @@ export default function WordModal({
           </div>
         }
         footer={
-          selectedTab === 'edit' ? (
-            <>
-              <Button
-                transparent
-                style={{ marginRight: '0.7rem' }}
-                onClick={handleHide}
-              >
-                Close
-              </Button>
-              <Button
-                color={doneColor}
-                disabled={editDisabled || editPosting}
-                loading={editPosting}
-                onClick={() => editRef.current?.apply?.()}
-              >
-                Apply
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button transparent onClick={handleHide}>
-                Close
-              </Button>
-            </>
-          )
+          <Button variant="ghost" onClick={handleHide}>
+            Close
+          </Button>
         }
       >
         <div
@@ -227,7 +200,6 @@ export default function WordModal({
           )}
           {selectedTab === 'edit' && (
             <EditTab
-              ref={editRef}
               deletedDefIds={deletedDefIds}
               originalDefinitionOrder={definitionOrder}
               editedDefinitionOrder={editedDefinitionOrder}
@@ -235,8 +207,6 @@ export default function WordModal({
               originalPosOrder={posOrder}
               posObj={posObj}
               onSetEditedDefinitionOrder={setEditedDefinitionOrder}
-              onDisabledChange={setEditDisabled}
-              onPostingChange={setEditPosting}
               word={word}
             />
           )}

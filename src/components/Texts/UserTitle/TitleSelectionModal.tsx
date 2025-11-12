@@ -92,7 +92,11 @@ export default function TitleSelectionModal({
         )}
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           {cancelLabel}
         </Button>
         <Button

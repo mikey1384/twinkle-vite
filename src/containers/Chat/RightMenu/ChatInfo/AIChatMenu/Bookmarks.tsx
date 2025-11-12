@@ -3,19 +3,22 @@ import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import { BookmarkView } from '~/constants/defaultValues';
 
 function Bookmarks({
   channelId,
   topicId,
-  bookmarkedMessages,
+  bookmarksByView,
+  bookmarkView,
   onSetSelectedBookmark,
   loadMoreBookmarksShown
 }: {
   channelId: number;
-  topicId: number;
-  bookmarkedMessages: any[];
+  topicId?: number;
+  bookmarksByView: Record<'ai' | 'me', any[]>;
+  bookmarkView: BookmarkView;
   onSetSelectedBookmark: (message: any) => void;
-  loadMoreBookmarksShown: boolean;
+  loadMoreBookmarksShown: { ai: boolean; me: boolean };
 }) {
   const loadMoreBookmarks = useAppContext(
     (v) => v.requestHelpers.loadMoreBookmarks
@@ -23,9 +26,12 @@ function Bookmarks({
   const onLoadMoreBookmarks = useChatContext(
     (v) => v.actions.onLoadMoreBookmarks
   );
-  const [loading, setLoading] = useState(false);
+  const [loadingView, setLoadingView] = useState<BookmarkView | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const timeoutRef = useRef<any>(null);
+  const bookmarks = bookmarksByView?.[bookmarkView] || [];
+  const loadMoreShown = loadMoreBookmarksShown?.[bookmarkView] || false;
+  const isLoading = loadingView === bookmarkView;
 
   useEffect(() => {
     const listElement = listRef.current;
@@ -45,7 +51,8 @@ function Bookmarks({
 
     listElement.addEventListener('scroll', onScroll);
     return () => listElement.removeEventListener('scroll', onScroll);
-  }, [handleLoadMore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookmarkView, bookmarks.length, loadMoreShown, isLoading]);
 
   return (
     <div
@@ -70,7 +77,7 @@ function Bookmarks({
         <Icon icon="bookmark" />
         <span style={{ marginLeft: '0.7rem' }}>Bookmarks</span>
       </h3>
-      {bookmarkedMessages.length === 0 ? (
+      {bookmarks.length === 0 ? (
         <div
           className={css`
             display: flex;
@@ -97,9 +104,9 @@ function Bookmarks({
             width: 100%;
           `}
         >
-          {bookmarkedMessages.map((message, index) => (
+          {bookmarks.map((message, index) => (
             <li
-              key={index}
+              key={message.bookmarkId || message.id || index}
               className={css`
                 font-size: 1rem;
                 color: #666;
@@ -120,10 +127,10 @@ function Bookmarks({
                 : message.content}
             </li>
           ))}
-          {loadMoreBookmarksShown && (
+          {loadMoreShown && (
             <LoadMoreButton
               filled
-              loading={loading}
+              loading={isLoading}
               onClick={handleLoadMore}
               style={{
                 width: '100%',
@@ -137,23 +144,30 @@ function Bookmarks({
     </div>
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   async function handleLoadMore() {
-    if (loading || !loadMoreBookmarksShown) return;
+    if (isLoading || !loadMoreShown || bookmarks.length === 0) return;
+    const lastBookmark = bookmarks[bookmarks.length - 1];
+    const lastBookmarkId = lastBookmark?.bookmarkId || lastBookmark?.id;
+    if (!lastBookmarkId) return;
     try {
-      setLoading(true);
-      const lastBookmarkId =
-        bookmarkedMessages[bookmarkedMessages.length - 1].id;
+      setLoadingView(bookmarkView);
       const { bookmarks, loadMoreShown } = await loadMoreBookmarks({
         channelId,
         topicId,
-        lastBookmarkId
+        lastBookmarkId,
+        view: bookmarkView
       });
-      onLoadMoreBookmarks({ channelId, topicId, bookmarks, loadMoreShown });
+      onLoadMoreBookmarks({
+        channelId,
+        topicId,
+        bookmarks,
+        loadMoreShown,
+        view: bookmarkView
+      });
     } catch (error) {
       console.error('Failed to load more bookmarks:', error);
     } finally {
-      setLoading(false);
+      setLoadingView(null);
     }
   }
 }

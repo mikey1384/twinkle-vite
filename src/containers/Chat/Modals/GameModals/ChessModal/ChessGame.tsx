@@ -22,7 +22,8 @@ export default function ChessGame({
   opponentName,
   setChessMoveViewTimeStamp,
   userMadeLastMove,
-  squareColors
+  squareColors,
+  interactableOverride
 }: {
   boardState: any;
   countdownNumber: number | null;
@@ -43,6 +44,7 @@ export default function ChessGame({
   setChessMoveViewTimeStamp: (v: any) => void;
   userMadeLastMove: boolean;
   squareColors?: { light?: string; dark?: string };
+  interactableOverride?: boolean;
 }) {
   const fetchCurrentChessState = useAppContext(
     (v) => v.requestHelpers.fetchCurrentChessState
@@ -52,7 +54,7 @@ export default function ChessGame({
   const loading: React.RefObject<any> = useRef(null);
   useEffect(() => {
     const maxRetries = 3;
-    const retryDelay = 1000; // Delay in milliseconds
+    const retryDelay = 1000;
     let success = false;
 
     init();
@@ -91,11 +93,12 @@ export default function ChessGame({
 
     const userIsTheLastMoveViewer =
       currentChannel.lastChessMoveViewerId === myId;
-    const isLoadingOrNoInitialState = !loading.current && !initialState;
+    const isLoadingOrNoInitialState =
+      !loading.current && !initialState?.move?.number;
     const isOlderMessage =
-      message.id &&
+      message?.id &&
       currentChannel.lastChessMessageId &&
-      message.id < currentChannel.lastChessMessageId;
+      message?.id < currentChannel?.lastChessMessageId;
 
     return (
       isLoadingOrNoInitialState ||
@@ -105,10 +108,10 @@ export default function ChessGame({
     );
   }, [
     countdownNumber,
-    currentChannel.lastChessMessageId,
-    currentChannel.lastChessMoveViewerId,
-    initialState,
-    message.id,
+    initialState?.move?.number,
+    currentChannel?.lastChessMessageId,
+    currentChannel?.lastChessMoveViewerId,
+    message?.id,
     myId,
     userMadeLastMove
   ]);
@@ -118,7 +121,11 @@ export default function ChessGame({
       isFromModal
       channelId={channelId}
       countdownNumber={countdownNumber}
-      interactable={!boardState?.isDraw}
+      interactable={
+        typeof interactableOverride === 'boolean'
+          ? interactableOverride
+          : !boardState?.isDraw
+      }
       initialState={initialState}
       loaded={loaded}
       myId={myId}

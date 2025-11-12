@@ -301,27 +301,29 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async bookmarkAIMessage({
+    async bookmarkChatMessage({
       messageId,
       channelId,
       topicId
     }: {
       messageId: number;
       channelId: number;
-      topicId: number;
+      topicId?: number;
     }) {
       try {
-        const data = await request.put(
+        const {
+          data: { bookmark }
+        } = await request.put(
           `${URL}/chat/ai/bookmark`,
           { messageId, channelId, topicId },
           auth()
         );
-        return data;
+        return bookmark;
       } catch (error) {
         return handleError(error);
       }
     },
-    async unBookmarkAIMessage({
+    async unbookmarkChatMessage({
       messageId,
       channelId,
       topicId
@@ -571,15 +573,14 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getAiImage({ prompt }: { prompt: string }) {
+    async generateAICardImage({ cardId }: { cardId: number }) {
       try {
-        const {
-          data: { imageUrl, style, engine }
-        } = await axios.get(
-          `${URL}/chat/aiCard/image?prompt=${prompt}`,
+        const { data } = await request.post(
+          `${URL}/chat/aiCard/image`,
+          { cardId },
           auth()
         );
-        return { imageUrl, style, engine };
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -721,48 +722,6 @@ export default function chatRequestHelpers({
           auth()
         );
         return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async saveAIImageToS3(imageUrl: string) {
-      try {
-        const {
-          data: { imagePath }
-        } = await request.post(`${URL}/chat/aiCard/s3`, { imageUrl }, auth());
-        return imagePath;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async postAICard({
-      cardId,
-      imagePath,
-      style,
-      engine,
-      quality,
-      level,
-      word,
-      prompt
-    }: {
-      cardId: number;
-      imagePath: string;
-      style: string;
-      engine: string;
-      quality: string;
-      level: number;
-      word: string;
-      prompt: string;
-    }) {
-      try {
-        const {
-          data: { feed, card }
-        } = await request.post(
-          `${URL}/chat/aiCard`,
-          { cardId, imagePath, engine, style, quality, level, word, prompt },
-          auth()
-        );
-        return { feed, card };
       } catch (error) {
         return handleError(error);
       }
@@ -969,17 +928,20 @@ export default function chatRequestHelpers({
     async loadMoreBookmarks({
       channelId,
       topicId,
-      lastBookmarkId
+      lastBookmarkId,
+      view
     }: {
       channelId: number;
       topicId?: number;
       lastBookmarkId: number;
+      view: 'ai' | 'me';
     }) {
       try {
         const {
           data: { bookmarks, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId}&lastBookmarkId=${lastBookmarkId}`
+          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId ?? ''}&lastBookmarkId=${lastBookmarkId}&view=${view}`,
+          auth()
         );
         return { bookmarks, loadMoreShown };
       } catch (error) {

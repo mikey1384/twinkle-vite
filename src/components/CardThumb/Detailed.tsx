@@ -5,6 +5,26 @@ import { css } from '@emotion/css';
 import { cloudFrontURL, cardProps } from '~/constants/defaultValues';
 import { Card } from '~/types';
 
+const thumbMystery = css`
+  width: 100%;
+  height: 75%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${Color.midnightBlack(0.96)};
+`;
+
+const thumbQuestion = css`
+  font-size: 3.8rem;
+  line-height: 1;
+  font-weight: 800;
+  color: ${Color.gold()};
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 14px ${Color.gold(0.35)};
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 3rem;
+  }
+`;
+
 export default function CardThumb({
   card,
   displayedBurnXP,
@@ -64,13 +84,21 @@ export default function CardThumb({
           position: 'relative'
         }}
       >
-        {card.imagePath && !card.isBurned && (
+        {card.imagePath && !card.isBurned ? (
           <img
-            style={{ width: '100%' }}
+            style={{
+              width: '100%',
+              height: '75%',
+              objectFit: 'cover'
+            }}
             loading="lazy"
             src={`${cloudFrontURL}${card.imagePath}`}
           />
-        )}
+        ) : !card.isBurned ? (
+          <div className={thumbMystery}>
+            <span className={thumbQuestion}>?</span>
+          </div>
+        ) : null}
         {!!card.isBurned && (
           <div
             className={css`

@@ -535,19 +535,26 @@ function Reply({
                                   {!isExpanded && reply.numReplies > 1
                                     ? repliesLabel
                                     : replyLabel}
-                                  {loadingReplies ? (
-                                    <Icon
-                                      style={{ marginLeft: '0.7rem' }}
-                                      icon="spinner"
-                                      pulse
-                                    />
-                                  ) : !isExpanded && reply.numReplies > 0 ? (
-                                    ` (${reply.numReplies})`
-                                  ) : (
-                                    ''
-                                  )}
                                 </span>
                               )}
+                              {loadingReplies ? (
+                                <Icon
+                                  style={{ marginLeft: '0.7rem' }}
+                                  icon="spinner"
+                                  pulse
+                                />
+                              ) : !isExpanded && reply.numReplies > 0 ? (
+                                <span
+                                  style={{
+                                    marginLeft:
+                                      isTablet(navigator) || isMobile(navigator)
+                                        ? '0.5rem'
+                                        : '0.3rem'
+                                  }}
+                                >
+                                  ({reply.numReplies})
+                                </span>
+                              ) : null}
                             </Button>
                           )}
                           {userCanRewardThis && !isDeleteNotification && (

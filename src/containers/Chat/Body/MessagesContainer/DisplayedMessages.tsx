@@ -171,8 +171,7 @@ export default function DisplayedMessages({
     twoPeople
   } = currentChannel;
   const loadMoreThemeName = useMemo(
-    () =>
-      twoPeople ? profileTheme : displayedThemeColor || profileTheme,
+    () => (twoPeople ? profileTheme : displayedThemeColor || profileTheme),
     [displayedThemeColor, profileTheme, twoPeople]
   );
   const { colorKey: loadMoreButtonColor } = useRoleColor('loadMoreButton', {
@@ -303,9 +302,17 @@ export default function DisplayedMessages({
   );
 
   const handleLoadMore = useCallback(async () => {
-    if (!loadMoreButtonShown || loadMoreButtonLock.current) return;
+    if (
+      !loadMoreButtonShown ||
+      loadMoreButtonLock.current ||
+      messages.length === 0
+    ) {
+      return;
+    }
 
-    const messageId = messages[messages.length - 1].id;
+    const lastMessageId = messages[messages.length - 1]?.id;
+    if (!lastMessageId) return;
+
     const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
     loadMoreButtonLock.current = true;
     setLoadingMore(true);
@@ -318,7 +325,7 @@ export default function DisplayedMessages({
             channelId: selectedChannelId,
             topicId,
             text: searchText,
-            lastId: messageId
+            lastId: lastMessageId
           });
         onLoadMoreSearchedMessages({
           channelId: selectedChannelId,
@@ -332,7 +339,7 @@ export default function DisplayedMessages({
         const { messages, loadMoreShown, topicObj } = await loadTopicMessages({
           channelId: selectedChannelId,
           topicId: appliedTopicId,
-          lastMessageId: messageId
+          lastMessageId: lastMessageId
         });
         onLoadMoreTopicMessages({
           channelId: selectedChannelId,
@@ -346,7 +353,7 @@ export default function DisplayedMessages({
         const { messageIds, messagesObj, loadedChannelId, loadedSubchannelId } =
           await loadMoreChatMessages({
             userId,
-            messageId,
+            messageId: lastMessageId,
             channelId: selectedChannelId,
             subchannelId: subchannel?.id
           });
@@ -395,13 +402,18 @@ export default function DisplayedMessages({
   ]);
 
   const handleLoadMoreRecentMessages = useCallback(async () => {
+    if (messages.length === 0) return;
     setLoadingMoreRecent(true);
 
     const prevScrollHeight = MessagesRef.current?.scrollHeight;
     const prevScrollTop = MessagesRef.current?.scrollTop;
 
     try {
-      const messageId = messages[0].id;
+      const messageId = messages[0]?.id;
+      if (!messageId) {
+        setLoadingMoreRecent(false);
+        return;
+      }
       const topicId = selectedTab === 'topic' ? appliedTopicId : undefined;
       const { messages: recentMessages, loadMoreShownAtBottom } =
         await loadMoreRecentTopicMessages({
@@ -634,7 +646,8 @@ export default function DisplayedMessages({
             >
               {newUnseenMessage ? (
                 <Button
-                  filled
+                  variant="solid"
+                  tone="raised"
                   color="orange"
                   style={{ opacity: 0.9 }}
                   onClick={() => {

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import useAICard from '~/helpers/hooks/useAICard';
 import UsernameText from '~/components/Texts/UsernameText';
 import Icon from '~/components/Icon';
@@ -9,7 +9,47 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { cloudFrontURL, returnCardBurnXP } from '~/constants/defaultValues';
 import { animated } from 'react-spring';
+import { isMobile, isTablet } from '~/helpers';
 import { Card as CardType } from '~/types';
+
+const mysteryCardPlaceholder = css`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 1.5rem;
+  text-align: center;
+  background: ${Color.midnightBlack(0.96)};
+  color: ${Color.gold()};
+  overflow: hidden;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.07),
+      transparent 70%
+    );
+    opacity: 0.5;
+  }
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
+`;
+const questionMarkIcon = css`
+  font-size: clamp(7rem, 22vmin, 13rem);
+  line-height: 1;
+  font-weight: 800;
+  color: ${Color.gold()};
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 22px ${Color.gold(0.35)};
+`;
+
+// caption removed per design feedback
 
 export default function Card({
   bind,
@@ -30,6 +70,7 @@ export default function Card({
   onMouseLeave: () => void;
   onMouseMove: (event: any) => void;
 }) {
+  const [tapped, setTapped] = useState(false);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
@@ -65,7 +106,8 @@ export default function Card({
       cardObj?.[card.id]?.isBurned,
       cardObj?.[card.id]?.owner?.username,
       cardObj?.[card.id]?.askPrice,
-      cardObj?.[card.id]?.imagePath
+      cardObj?.[card.id]?.imagePath,
+      cardObj?.[card.id]?.imageGenerationPreviewUrl
     ]
   );
 
@@ -78,12 +120,23 @@ export default function Card({
     [finalCard?.level, finalCard?.quality]
   );
   const imageExists = useMemo(
-    () => !!finalCard.imagePath,
-    [finalCard.imagePath]
+    () => !!finalCard.imagePath || !!finalCard.imageGenerationPreviewUrl,
+    [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]
   );
-  const frontPicUrl = useMemo(
-    () => `${cloudFrontURL}${finalCard.imagePath}`,
-    [finalCard.imagePath]
+  const frontPicUrl = useMemo(() => {
+    if (!finalCard.imagePath) return finalCard.imageGenerationPreviewUrl || '';
+    if (
+      typeof finalCard.imagePath === 'string' &&
+      (finalCard.imagePath.startsWith('data:') ||
+        finalCard.imagePath.startsWith('http'))
+    ) {
+      return finalCard.imagePath;
+    }
+    return `${cloudFrontURL}${finalCard.imagePath}`;
+  }, [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]);
+  const isImageOne = useMemo(
+    () => finalCard?.engine === 'image-1',
+    [finalCard?.engine]
   );
   const { cardCss, cardColor } = useAICard(finalCard);
 
@@ -94,6 +147,9 @@ export default function Card({
         ref={innerRef}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
+        onTouchStart={() => handleTap(true)}
+        onTouchEnd={() => handleTap(false)}
+        onTouchCancel={() => handleTap(false)}
         style={cardStyle}
         className={`card${isAnimated ? ' animated' : ''} ${
           finalCard.isBurning && !finalCard.isBurned
@@ -130,17 +186,58 @@ export default function Card({
       >
         <div
           className={css`
+            position: relative;
+            overflow: hidden;
             width: 100%;
+            height: CALC(100% - 110px);
+            display: flex;
+            align-items: center;
+            @media (max-width: ${mobileMaxWidth}) {
+              height: CALC(100% - 55px);
+            }
           `}
         >
           {imageExists && !finalCard.isBurned ? (
-            <img
-              loading="lazy"
-              style={{
-                width: '100%'
-              }}
-              src={frontPicUrl}
-            />
+            isImageOne ? (
+              <>
+                <img
+                  loading="lazy"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'opacity 0.2s ease'
+                  }}
+                  src={frontPicUrl}
+                />
+                <img
+                  loading="lazy"
+                  className={css`
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    transition: opacity 0.2s ease;
+                    opacity: ${tapped ? 1 : 0};
+                    @media (hover: hover) {
+                      .card:hover & {
+                        opacity: 1;
+                      }
+                    }
+                  `}
+                  src={frontPicUrl}
+                />
+              </>
+            ) : (
+              <img loading="lazy" style={{ width: '100%' }} src={frontPicUrl} />
+            )
+          ) : !finalCard.isBurned ? (
+            <div className={mysteryCardPlaceholder}>
+              <span className={questionMarkIcon}>?</span>
+            </div>
           ) : null}
           {!!finalCard.isBurned && (
             <div
@@ -151,6 +248,7 @@ export default function Card({
                 }
               `}
               style={{
+                width: '100%',
                 background: '#fff',
                 textAlign: 'center',
                 padding: '1rem'
@@ -229,4 +327,10 @@ export default function Card({
       </animated.div>
     </div>
   );
+
+  function handleTap(tapped: boolean) {
+    if (isMobile(navigator) || isTablet(navigator)) {
+      setTapped(tapped);
+    }
+  }
 }

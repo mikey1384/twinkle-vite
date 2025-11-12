@@ -127,6 +127,25 @@ export default function SubjectPanel({
     contentId: subjectId
   });
 
+  const { isClosedBy: subjectClosedBy } = useContentState({
+    contentType: 'subject',
+    contentId: subjectId
+  });
+  const { isClosedBy: rootClosedBy } = useContentState({
+    contentType: rootType,
+    contentId: rootId
+  });
+
+  const disableReason = useMemo(() => {
+    const closedBy: any = subjectClosedBy || rootClosedBy;
+    if (closedBy) {
+      const closer = closedBy?.id === myId ? 'You' : closedBy?.username;
+      const scope = subjectClosedBy ? 'subject' : rootType;
+      return `${closer} disabled comments for this ${scope}`;
+    }
+    return undefined;
+  }, [myId, rootClosedBy, rootType, subjectClosedBy]);
+
   const [expanded, setExpanded] = useState(false);
   const [onEdit, setOnEdit] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -499,6 +518,7 @@ export default function SubjectPanel({
               commentsLoadLimit={5}
               commentsHidden={secretHidden}
               commentsShown
+              disableReason={disableReason}
               inputTypeLabel="comment"
               comments={comments}
               loadMoreButton={loadMoreCommentsButton}

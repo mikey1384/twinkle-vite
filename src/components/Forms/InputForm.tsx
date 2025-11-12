@@ -149,7 +149,7 @@ function InputForm({
     [parent.contentId, targetCommentId]
   );
   const inputState = inputStates[`${contentType}${contentId}`] as any;
-  const initialText = inputState?.text || '';
+  const initialText = disableReason ? '' : inputState?.text || '';
   const attachment = useInputContext(
     (v) => v.state[contentType + contentId]?.attachment
   );
@@ -171,12 +171,25 @@ function InputForm({
   );
   const submitDisabled = useMemo(
     () =>
-      submitting || (textIsEmpty && !attachment) || !!commentExceedsCharLimit,
-    [attachment, commentExceedsCharLimit, submitting, textIsEmpty]
+      !!disableReason ||
+      submitting ||
+      (textIsEmpty && !attachment) ||
+      !!commentExceedsCharLimit,
+    [
+      attachment,
+      commentExceedsCharLimit,
+      disableReason,
+      submitting,
+      textIsEmpty
+    ]
   );
-  const uploadDisabled = useMemo(
+  const uploadDisabledForXP = useMemo(
     () => level < MOD_LEVEL && twinkleXP < FILE_UPLOAD_XP_REQUIREMENT,
     [level, twinkleXP]
+  );
+  const uploadDisabled = useMemo(
+    () => !!disableReason || uploadDisabledForXP,
+    [disableReason, uploadDisabledForXP]
   );
 
   useEffect(() => {
@@ -192,11 +205,28 @@ function InputForm({
   }, []);
 
   useEffect(() => {
-    if (isComment && userId) {
+    if (isComment && userId && !disableReason) {
       loadDraftForComment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isComment, userId]);
+  }, [disableReason, isComment, userId]);
+
+  useEffect(() => {
+    if (disableReason && (textRef.current || '').length > 0) {
+      setText('');
+      textRef.current = '';
+    }
+  }, [disableReason]);
+
+  useEffect(() => {
+    if (!disableReason && !textRef.current) {
+      const restored = (inputStates[`${contentType}${contentId}`] as any)?.text;
+      if (restored) {
+        setText(restored);
+        textRef.current = restored;
+      }
+    }
+  }, [contentId, contentType, disableReason]);
 
   useEffect(() => {
     draftIdRef.current = draftId;
@@ -473,7 +503,7 @@ function InputForm({
               }}
             />
           )}
-          {userId && uploadDisabled && (
+          {userId && uploadDisabledForXP && !disableReason && (
             <FullTextReveal
               style={{
                 fontSize: '1.3rem',
@@ -597,7 +627,7 @@ function InputForm({
         ...(inputStates[`${contentType}${contentId}`] as any),
         text: newText
       };
-      if (isComment && userId) {
+      if (isComment && userId && !disableReason) {
         saveDraftWithTimeout({
           content: newText
         });
@@ -612,6 +642,8 @@ function InputForm({
         rootType: parent.contentType,
         rootId: parent.contentId
       });
+
+      if (disableReason) return;
       const commentDraft = drafts.find(
         (draft: {
           type: string;
@@ -626,8 +658,9 @@ function InputForm({
       );
       if (commentDraft) {
         const { id, content } = commentDraft;
+        if (disableReason) return;
         setDraftId(id);
-        if (!initialText) {
+        if (!textRef.current && !disableReason) {
           setText(content);
           textRef.current = content;
         }

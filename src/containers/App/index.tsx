@@ -27,7 +27,6 @@ import Incoming from './Stream/Incoming';
 import Outgoing from './Stream/Outgoing';
 import InvalidPage from '~/components/InvalidPage';
 import DailyRewardModal from '~/components/Modals/DailyRewardModal';
-import DailyBonusModal from '~/components/Modals/DailyBonusModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -548,9 +547,14 @@ export default function App() {
           />
         )}
         {dailyBonusModalShown && (
-          <DailyBonusModal
+          <DailyRewardModal
+            openBonus
             onHide={() => onSetDailyBonusModalShown(false)}
             onSetDailyBonusAttempted={handleSetDailyBonusAttempted}
+            // No-ops for unrelated callbacks when in bonus-only mode
+            onSetHasBonus={() => {}}
+            onSetIsDailyRewardChecked={() => {}}
+            onCountdownComplete={() => {}}
           />
         )}
         {signinModalShown && <SigninModal onHide={onCloseSigninModal} />}

@@ -115,7 +115,11 @@ export default function MessageRewardModal({
         </div>
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button

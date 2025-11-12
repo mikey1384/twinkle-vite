@@ -6,12 +6,14 @@ export default function FileUploadStatusIndicator({
   fileName,
   style,
   theme,
-  uploadProgress
+  uploadProgress,
+  hideUploading
 }: {
   fileName?: string;
   style?: React.CSSProperties;
   theme?: string;
   uploadProgress: number;
+  hideUploading?: boolean;
 }) {
   const normalizedProgress = useMemo(() => {
     if (!Number.isFinite(uploadProgress) || uploadProgress < 0) return 0;
@@ -37,14 +39,16 @@ export default function FileUploadStatusIndicator({
 
   return (
     <div style={{ marginTop: '1rem', ...style }}>
-      <div
-        style={{
-          textAlign: 'center',
-          maxWidth: '100%',
-          textOverflow: 'ellipsis',
-          overflow: 'hidden'
-        }}
-      >{`Uploading${fileName ? ` ${fileName}` : ''}...`}</div>
+      {!hideUploading && (
+        <div
+          style={{
+            textAlign: 'center',
+            maxWidth: '100%',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden'
+          }}
+        >{`Uploading${fileName ? ` ${fileName}` : ''}...`}</div>
+      )}
       <ProgressBar
         text={text}
         theme={theme}

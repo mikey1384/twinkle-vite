@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useEffect
 } from 'react';
-import ProgressBar from '~/components/ProgressBar';
+import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -58,10 +58,6 @@ export default function Textarea({
     if (uploadProgress >= 1) return 1;
     return uploadProgress;
   }, [uploadProgress]);
-  const progress = useMemo(
-    () => Math.ceil(100 * normalizedProgress),
-    [normalizedProgress]
-  );
 
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
@@ -212,7 +208,8 @@ export default function Textarea({
             ? isDragging
               ? '2px dashed #00aaff'
               : style?.border
-            : style?.border
+            : style?.border,
+          pointerEvents: uploading ? 'none' : style?.pointerEvents
         }}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
@@ -249,23 +246,24 @@ export default function Textarea({
       />
       {uploading && (
         <div
-          style={{
-            position: 'absolute',
-            height: '100%',
-            width: '100%',
-            top: '-5px',
-            left: 0,
-            zIndex: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
+          className={css`
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999;
+            border-radius: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          `}
         >
-          <ProgressBar
+          <FileUploadStatusIndicator
+            hideUploading
             theme={theme}
-            progress={progress}
-            color={progress === 100 ? Color.green() : undefined}
-            style={{ width: '80%' }}
+            uploadProgress={normalizedProgress}
+            style={{ width: '70%', marginTop: 0 }}
           />
         </div>
       )}
@@ -291,18 +289,21 @@ export default function Textarea({
 
   async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (uploading) return;
     const file = draggedFile || e.dataTransfer.files[0];
-    handleFileUpload(file);
+    if (file) {
+      await handleFileUpload(file);
+    }
   }
 
   function handleCombinedPaste(e: React.ClipboardEvent) {
-    // Always allow parent onPaste to run first, if provided
     const parentHasOnPaste = !!(rest as any).onPaste;
     if (parentHasOnPaste) {
       try {
         (rest as any).onPaste(e);
       } catch (err) {
-        // ignore parent handler errors to avoid breaking default behavior
         console.error(err);
       }
     }

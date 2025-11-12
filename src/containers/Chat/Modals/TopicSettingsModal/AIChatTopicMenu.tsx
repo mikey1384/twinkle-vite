@@ -96,7 +96,8 @@ export default function AIChatTopicMenu({
             <Button
               onClick={handleLoadCustomInstructions}
               color="darkBlue"
-              filled
+              variant="soft"
+              tone="raised"
               disabled={loading || improving}
               style={{
                 fontSize: '1rem',
@@ -124,7 +125,8 @@ export default function AIChatTopicMenu({
               <Button
                 onClick={handleImproveCustomInstructions}
                 color="magenta"
-                filled
+                variant="soft"
+                tone="raised"
                 disabled={loading || improving}
                 style={{
                   fontSize: '1rem',

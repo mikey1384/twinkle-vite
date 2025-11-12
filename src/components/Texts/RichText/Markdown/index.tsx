@@ -717,19 +717,34 @@ function Markdown({
   }
 
   function handleMentions(text: string) {
-    const mentionRegex = /@[A-Za-z0-9_%]{3,}/gi;
+    if (!text) {
+      return text;
+    }
+    const baseText = text.includes('＠') ? text.replace(/＠/g, '@') : text;
+    const containsAngleBrackets = /[<>]/.test(baseText);
+    if (baseText.indexOf('@') === -1 && !containsAngleBrackets) {
+      return applyLineBreaks(baseText);
+    }
+    const mentionTestRegex = /@[A-Za-z0-9_%]{3,}/;
+    if (!mentionTestRegex.test(baseText) && !containsAngleBrackets) {
+      return applyLineBreaks(baseText);
+    }
+    const mentionReplaceRegex = /@[A-Za-z0-9_%]{3,}/g;
+    const mentionReplacer = (match: string) => {
+      const path = match.slice(1);
+      return `<a class="mention" href="/users/${path}">@${path}</a>`;
+    };
+    if (!containsAngleBrackets) {
+      const replaced = baseText.replace(mentionReplaceRegex, mentionReplacer);
+      return applyLineBreaks(replaced);
+    }
+
     const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/html');
+    const doc = parser.parseFromString(baseText, 'text/html');
 
     traverse(doc.body);
     let result = doc.body.innerHTML;
-    if (result.includes('\n')) {
-      result = result.replace('\n', '<br />');
-    }
-    if (result.includes('＠')) {
-      result = result.replace(/＠/g, '@');
-    }
-    return result;
+    return applyLineBreaks(result);
 
     function traverse(node: Node) {
       if (
@@ -747,14 +762,10 @@ function Markdown({
         if (nodeValue.includes('>')) {
           newNodeValue = newNodeValue.replace(/>/g, '&gt;');
         }
-        if (mentionRegex.test(nodeValue)) {
+        if (mentionTestRegex.test(nodeValue)) {
           newNodeValue = newNodeValue.replace(
-            mentionRegex,
-            (string: string) => {
-              const path = string.slice(1);
-              const anchor = `<a class="mention" href="/users/${path}">@${path}</a>`;
-              return anchor;
-            }
+            mentionReplaceRegex,
+            mentionReplacer
           );
         }
 
@@ -774,6 +785,12 @@ function Markdown({
         traverse(childNode);
       }
     }
+  }
+
+  function applyLineBreaks(value: string) {
+    return value && value.includes('\n')
+      ? value.replace(/\n/g, '<br />')
+      : value;
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {

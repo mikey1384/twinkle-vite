@@ -24,7 +24,6 @@ export default function InputArea({
   isTwoPeopleChannel,
   isOwner,
   loading,
-  isAIChannel,
   isMain,
   partner,
   handleSendMsg,
@@ -48,7 +47,6 @@ export default function InputArea({
     id: number;
     username: string;
   };
-  isAIChannel: boolean;
   handleSendMsg: () => any;
   onHeightChange: (v: number) => any;
   onSetText: (v: string) => any;
@@ -145,7 +143,7 @@ export default function InputArea({
   );
 
   function getPlaceholder() {
-    if (!isAIChannel && isBanned) {
+    if (isBanned) {
       return 'You are banned from chatting with other users on this website...';
     }
     if (isRestrictedChannel) {

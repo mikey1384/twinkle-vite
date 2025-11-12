@@ -571,7 +571,20 @@ export default function MessagesContainer({
 
     function handleReceiveMessage({ message }: { message: any }) {
       if (message.isChessMsg) {
-        const gameType: 'chess' | 'omok' = message.omokState ? 'omok' : 'chess';
+        // Determine game type, respecting explicit server tag first
+        const content: string = message?.content || '';
+        let gameType: 'chess' | 'omok';
+        if (message.gameType === 'omok') {
+          gameType = 'omok';
+        } else if (message.gameType === 'chess') {
+          gameType = 'chess';
+        } else if (message.omokState) {
+          gameType = 'omok';
+        } else if (/omok/i.test(content)) {
+          gameType = 'omok';
+        } else {
+          gameType = 'chess';
+        }
         setBoardCountdownObj((prev) => ({
           ...prev,
           [message.channelId]: {

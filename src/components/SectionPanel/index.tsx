@@ -267,14 +267,7 @@ export default function SectionPanel({
               style={{
                 color: Color.darkerGray(),
                 flex: '1 1 240px',
-                minWidth: '220px',
-                maxWidth: '360px',
-                width: '100%',
-                alignSelf: 'stretch',
-                zIndex: 0,
-                background: 'rgba(255,255,255,0.95)',
-                boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.35)',
-                borderRadius: '12px'
+                zIndex: 0
               }}
               onChange={onSearch}
               placeholder={searchPlaceholder}

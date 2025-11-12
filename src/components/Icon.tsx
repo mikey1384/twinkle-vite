@@ -12,7 +12,7 @@ export default function Icon({
   size?: string;
   [key: string]: any;
 }) {
-  return ExecutionEnvironment.canUseDOM ? (
+  return ExecutionEnvironment.canUseDOM && icon ? (
     <FontAwesomeIcon icon={icon} size={size as SizeProp} {...props} />
   ) : null;
 }

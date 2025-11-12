@@ -408,7 +408,8 @@ export default function SettingsModal({
                   onClick={() =>
                     insufficientFunds ? null : setConfirmModalShown(true)
                   }
-                  filled
+                  variant="solid"
+                  tone="raised"
                   onMouseEnter={() => setHovered(true)}
                   onMouseLeave={() => setHovered(false)}
                   color="logoBlue"
@@ -496,7 +497,8 @@ export default function SettingsModal({
             >
               <Button
                 onClick={() => setSelectNewOwnerModalShown(true)}
-                filled
+                variant="solid"
+                tone="raised"
                 disabled={isSubmitting}
               >
                 Change Owner

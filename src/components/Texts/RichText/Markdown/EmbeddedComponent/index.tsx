@@ -50,7 +50,7 @@ function EmbeddedComponent({
     let decoded = last;
     try {
       decoded = decodeURIComponent(last);
-    } catch (err) {
+    } catch {
       decoded = last;
     }
     const dotIdx = decoded.lastIndexOf('.');

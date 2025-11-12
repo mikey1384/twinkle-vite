@@ -117,6 +117,7 @@ export default function Main({
     [
       autoFocus,
       banned?.posting,
+      disableReason,
       inputAreaInnerRef,
       inputTypeLabel,
       numInputRows,

@@ -7,6 +7,8 @@ import FileSelector from './FileSelector';
 import ThinkHardToggle from './ThinkHardToggle';
 import { FileData } from '~/types';
 import { useChatContext, useKeyContext } from '~/contexts';
+import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
+import FilterBar from '~/components/FilterBar';
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -21,9 +23,9 @@ function AIChatMenu({
   files,
   hasMoreFiles
 }: {
-  bookmarkedMessages: any[];
+  bookmarkedMessages: Record<'ai' | 'me', any[]> | any[];
   isTwoPeopleConnected: boolean;
-  loadMoreBookmarksShown: boolean;
+  loadMoreBookmarksShown: { ai: boolean; me: boolean } | boolean | undefined;
   channelId: number;
   displayedThemeColor: string;
   topicId: number;
@@ -32,31 +34,39 @@ function AIChatMenu({
   topicObj: Record<
     number,
     {
-      bookmarkedMessages: any[];
-      loadMoreBookmarksShown: boolean;
+      bookmarkedMessages: Record<'ai' | 'me', any[]> | any[];
+      loadMoreBookmarksShown:
+        | { ai: boolean; me: boolean }
+        | boolean
+        | undefined;
     }
   >;
   files: FileData[];
   hasMoreFiles: boolean;
 }) {
+  const username = useKeyContext((v) => v.myState.username);
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
   }, [topicId, topicObj]);
   const appliedBookmarkedMessages = useMemo(() => {
     if (currentTopic) {
-      return currentTopic.bookmarkedMessages || [];
+      return normalizeBookmarkMap(currentTopic.bookmarkedMessages);
     }
-    return bookmarkedMessages || [];
+    return normalizeBookmarkMap(bookmarkedMessages);
   }, [bookmarkedMessages, currentTopic]);
   const appliedLoadMoreBookmarksShown = useMemo(() => {
     if (currentTopic) {
-      return !!currentTopic.loadMoreBookmarksShown;
+      return normalizeLoadMoreMap(currentTopic.loadMoreBookmarksShown);
     }
-    return loadMoreBookmarksShown;
+    return normalizeLoadMoreMap(loadMoreBookmarksShown);
   }, [currentTopic, loadMoreBookmarksShown]);
+  const [bookmarkView, setBookmarkView] = useState<BookmarkView>(
+    BOOKMARK_VIEWS.AI
+  );
   const [selectedBookmark, setSelectedBookmark] = useState<{
-    id: number;
+    view: BookmarkView;
+    data: any;
   } | null>(null);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const communityFunds = useKeyContext((v) => v.myState.communityFunds);
@@ -90,7 +100,7 @@ function AIChatMenu({
         max-width: 300px;
         margin: 0 auto;
         display: grid;
-        grid-template-rows: 1fr auto auto;
+        grid-template-rows: auto 1fr;
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isCallButtonShown
             ? 'CALC(100% - 10.9rem)'
@@ -98,6 +108,22 @@ function AIChatMenu({
         }
       `}
     >
+      <div>
+        <FilterBar>
+          <nav
+            className={bookmarkView === BOOKMARK_VIEWS.AI ? 'active' : ''}
+            onClick={() => setBookmarkView(BOOKMARK_VIEWS.AI)}
+          >
+            {isCielChat ? 'Ciel' : 'Zero'}
+          </nav>
+          <nav
+            className={bookmarkView === BOOKMARK_VIEWS.ME ? 'active' : ''}
+            onClick={() => setBookmarkView(BOOKMARK_VIEWS.ME)}
+          >
+            {username}
+          </nav>
+        </FilterBar>
+      </div>
       <div
         className={css`
           overflow-y: auto;
@@ -109,8 +135,11 @@ function AIChatMenu({
         <Bookmarks
           channelId={channelId}
           topicId={topicId}
-          bookmarkedMessages={appliedBookmarkedMessages}
-          onSetSelectedBookmark={setSelectedBookmark}
+          bookmarksByView={appliedBookmarkedMessages}
+          bookmarkView={bookmarkView}
+          onSetSelectedBookmark={(bookmark) =>
+            setSelectedBookmark({ view: bookmarkView, data: bookmark })
+          }
           loadMoreBookmarksShown={appliedLoadMoreBookmarksShown}
         />
       </div>
@@ -133,9 +162,12 @@ function AIChatMenu({
       )}
       {selectedBookmark && (
         <BookmarkModal
-          bookmark={selectedBookmark}
-          isCurrentlyBookmarked={appliedBookmarkedMessages.some(
-            (message) => message.id === selectedBookmark.id
+          bookmark={selectedBookmark.data}
+          bookmarkView={selectedBookmark.view}
+          isCurrentlyBookmarked={appliedBookmarkedMessages[
+            selectedBookmark.view
+          ].some(
+            (message: { id: number }) => message.id === selectedBookmark.data.id
           )}
           channelId={channelId}
           isCielChat={isCielChat}
@@ -168,3 +200,29 @@ function AIChatMenu({
 }
 
 export default memo(AIChatMenu);
+
+function normalizeBookmarkMap(bookmarks?: any) {
+  if (Array.isArray(bookmarks)) {
+    return {
+      ai: bookmarks,
+      me: []
+    };
+  }
+  return {
+    ai: bookmarks?.ai || [],
+    me: bookmarks?.me || []
+  };
+}
+
+function normalizeLoadMoreMap(loadMore?: any) {
+  if (typeof loadMore === 'boolean') {
+    return {
+      ai: loadMore,
+      me: loadMore
+    };
+  }
+  return {
+    ai: !!loadMore?.ai,
+    me: !!loadMore?.me
+  };
+}

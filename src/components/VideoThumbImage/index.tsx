@@ -25,7 +25,8 @@ function VideoThumbImage({
   style?: any;
   videoId?: number;
 }) {
-  const tagColor = useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color);
+  const tagColor =
+    useKeyContext((v) => v.theme[`level${rewardLevel}`]?.color) || 'logoBlue';
   const loadVideoWatchPercentage = useAppContext(
     (v) => v.requestHelpers.loadVideoWatchPercentage
   );
@@ -114,7 +115,7 @@ function VideoThumbImage({
               margin: 0.6rem;
               padding: 0.3rem 0.6rem;
               border-radius: 9999px;
-              background: ${Color[tagColor]()};
+              background: ${Color[tagColor]?.()};
               font-size: 1.5rem;
               font-weight: bold;
               color: #fff;

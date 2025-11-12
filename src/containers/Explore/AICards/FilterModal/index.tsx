@@ -6,6 +6,7 @@ import ColorFilter from './ColorFilter';
 import QualityFilter from './QualityFilter';
 import StyleFilter from './StyleFilter';
 import WordFilter from './WordFilter';
+import EngineFilter from './EngineFilter';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function FilterModal({
@@ -30,12 +31,16 @@ export default function FilterModal({
   const [selectedQuality, setSelectedQuality] = useState(
     filters.quality || 'any'
   );
+  const [selectedEngine, setSelectedEngine] = useState<
+    'any' | 'DALL-E 2' | 'DALL-E 3' | 'image-1'
+  >(filters.engine || 'any');
   const filterComponents = useMemo(() => {
     const defaultFilters = [
       'owner',
       'style',
       'color',
       'quality',
+      'engine',
       'price',
       'cardId',
       'word'
@@ -116,6 +121,18 @@ export default function FilterModal({
               />
             );
           }
+          if (component === 'engine') {
+            return (
+              <EngineFilter
+                selectedEngine={selectedEngine}
+                selectedFilter={selectedFilter}
+                style={style}
+                onDropdownShown={setDropdownShown}
+                onSelectEngine={setSelectedEngine}
+                key={component}
+              />
+            );
+          }
           return null;
         })}
       </main>
@@ -141,6 +158,7 @@ export default function FilterModal({
       color?: string;
       quality?: string;
       style?: string;
+      engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1';
     } = {};
     if (selectedOwner) {
       obj.owner = selectedOwner;
@@ -156,6 +174,9 @@ export default function FilterModal({
     }
     if (selectedStyle) {
       obj.style = selectedStyle;
+    }
+    if (selectedEngine !== 'any') {
+      obj.engine = selectedEngine;
     }
     const queryString =
       Object.keys(obj).length > 0

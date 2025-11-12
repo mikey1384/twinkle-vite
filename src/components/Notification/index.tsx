@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MainFeeds from './MainFeeds';
 import TodayStats from './TodayStats';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -39,7 +39,9 @@ export default function Notification({
   );
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
   const userId = useKeyContext((v) => v.myState.userId);
-  const notiObj = useNotiContext((v) => v.state.notiObj);
+  const myNotiState = useNotiContext((v) =>
+    userId ? v.state?.notiObj?.[userId] : null
+  );
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
@@ -69,34 +71,16 @@ export default function Notification({
   const [collectingReward, setCollectingReward] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const userChangedTab = useRef(false);
-  const totalRewardedTwinkles = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkles || 0,
-    [notiObj, userId]
-  );
-  const totalRewardedTwinkleCoins = useMemo(
-    () => notiObj[userId]?.totalRewardedTwinkleCoins || 0,
-    [notiObj, userId]
-  );
-  const rewards = useMemo(
-    () => notiObj[userId]?.rewards || [],
-    [notiObj, userId]
-  );
-  const loadMoreRewards = useMemo(
-    () => notiObj[userId]?.loadMoreRewards || false,
-    [notiObj, userId]
-  );
-  const notifications = useMemo(
-    () => notiObj[userId]?.notifications || [],
-    [userId, notiObj]
-  );
+  const totalRewardedTwinkles = myNotiState?.totalRewardedTwinkles || 0;
+  const totalRewardedTwinkleCoins = myNotiState?.totalRewardedTwinkleCoins || 0;
+  const rewards = myNotiState?.rewards || [];
+  const loadMoreRewards = myNotiState?.loadMoreRewards || false;
+  const notifications = myNotiState?.notifications || [];
   const [activeTab, setActiveTab] = useState(
     notifications?.length > 0 ? 'notifications' : 'rankings'
   );
   const activeTabRef = useRef(activeTab);
-  const loadMoreNotifications = useMemo(
-    () => notiObj[userId]?.loadMore || false,
-    [userId, notiObj]
-  );
+  const loadMoreNotifications = myNotiState?.loadMore || false;
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
     !!todayStats.dailyHasBonus &&

@@ -98,13 +98,14 @@ export default function TopicSettingsModal({
       isOpen
       onClose={onHide}
       size="md"
+      allowOverflow
       modalLevel={2}
       header={
         <div
           className={css`
             font-size: 1.5rem;
             font-weight: bold;
-            text-align: center;
+            text-align: left;
             padding: 1rem;
           `}
         >
@@ -121,6 +122,7 @@ export default function TopicSettingsModal({
             Cancel
           </Button>
           <Button
+            variant="ghost"
             loading={submitting}
             disabled={isSubmitDisabled}
             color={doneColor}
@@ -226,11 +228,12 @@ export default function TopicSettingsModal({
             <Button
               onClick={() => setConfirmModalShown(true)}
               color="red"
-              filled
+              variant="soft"
+              tone="raised"
               style={{
                 padding: '0.7rem',
                 fontSize: '1rem',
-                marginTop: '5rem'
+                marginTop: '2rem'
               }}
             >
               <Icon style={{ marginRight: '0.5rem' }} icon="trash-alt" />

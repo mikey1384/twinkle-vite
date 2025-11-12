@@ -480,7 +480,6 @@ export default function MessageInput({
           isMain={selectedTab !== 'topic'}
           loading={loading}
           partner={partner}
-          isAIChannel={isAIChannel}
           handleSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           onSetText={handleSetText}

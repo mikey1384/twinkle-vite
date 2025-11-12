@@ -1737,13 +1737,27 @@ export default function contentRequestHelpers({
     }) {
       try {
         const {
-          data: { newXp, newCoins, isDuplicate }
+          data: {
+            newXp,
+            newCoins,
+            isDuplicate,
+            allLevelsClearedBonusApplied,
+            fullClearBonusAmount,
+            fullClearBonusBase
+          }
         } = await request.post(
           `${URL}/content/game/grammar`,
           { attemptNumber, scoreArray, questionResults },
           auth()
         );
-        return { isDuplicate, newXp, newCoins };
+        return {
+          isDuplicate,
+          newXp,
+          newCoins,
+          allLevelsClearedBonusApplied,
+          fullClearBonusAmount,
+          fullClearBonusBase
+        };
       } catch (error) {
         return handleError(error);
       }

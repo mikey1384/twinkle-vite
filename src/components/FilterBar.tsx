@@ -140,7 +140,7 @@ export default function FilterBar({
 
     > .nav-section > nav.active.alert {
       color: ${alertColorVar};
-      border-bottom-color: ${alertColorVar};
+      border-bottom-color: currentColor !important;
     }
 
     > .nav-section > nav.active.super-alert {

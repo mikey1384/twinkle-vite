@@ -5,7 +5,9 @@ import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { priceTable } from '~/constants/defaultValues';
 import {
   scoreTable,
-  perfectScoreBonus
+  perfectScoreBonus,
+  fullClearBonusMultiplier,
+  allPerfectBonusMultiplier
 } from '~/components/MarbleQuestions/Main/constants';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
@@ -28,6 +30,9 @@ export default function TodayResult({ results }: { results: any[] }) {
   });
   const perfectColor = (opacity?: number) =>
     perfectRole.getColor(opacity) || Color.brownOrange(opacity ?? 1);
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColor = xpNumberRole.getColor() || Color.logoGreen();
+  const xpLabelColor = Color.gold();
   const funFont =
     "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
   const titleCls = css`
@@ -67,7 +72,34 @@ export default function TodayResult({ results }: { results: any[] }) {
     position: relative;
     overflow: hidden;
   `;
+  const xpValueClass = css`
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-weight: 800;
+    .xp-number {
+      color: ${xpNumberColor};
+      letter-spacing: 0.01em;
+      display: inline-flex;
+      align-items: baseline;
+    }
+    .xp-label {
+      color: ${xpLabelColor};
+      font-weight: 700;
+      font-size: 0.8em;
+      letter-spacing: 0.05em;
+    }
+  `;
   const REQUIRED_SCORE = 700;
+  const allPerfectToday = useMemo(() => {
+    if ((results?.length || 0) !== 5) return false;
+    return results.every(
+      (row: any[]) =>
+        Array.isArray(row) &&
+        row.length > 0 &&
+        row.every((grade: string) => grade === 'S')
+    );
+  }, [results]);
 
   const levelsCleared = useMemo(() => {
     try {
@@ -119,7 +151,20 @@ export default function TodayResult({ results }: { results: any[] }) {
     }
   }, [results]);
 
-  const todaysScore = useMemo(() => {
+  const clearedAllLevelsToday = useMemo(() => {
+    if ((results?.length || 0) !== 5) return false;
+    return (results || []).every((row: any[]) => {
+      if (!Array.isArray(row)) return false;
+      if (row.length === 0) return false;
+      const sum = row.reduce(
+        (acc: number, grade: string) => acc + (scoreTable[grade] || 0),
+        0
+      );
+      return sum >= REQUIRED_SCORE;
+    });
+  }, [results]);
+
+  const baseScoreToday = useMemo(() => {
     let totalScore = 0;
     for (const result of results) {
       if (!result?.length) continue;
@@ -136,20 +181,34 @@ export default function TodayResult({ results }: { results: any[] }) {
     return totalScore;
   }, [perfectScore, results]);
 
-  useEffect(() => {
-    const allS =
-      results.length === 5 &&
-      results.every(
-        (row) => row?.length > 0 && row.every((grade: string) => grade === 'S')
-      );
-    setIsAllS(allS);
-    if (allS) {
-      setTimeout(() => setShowAllPerfect(true), 1000);
+  const todaysScore = useMemo(() => {
+    let totalScore = baseScoreToday;
+    if (clearedAllLevelsToday) {
+      totalScore *= fullClearBonusMultiplier;
     }
-  }, [results]);
+    if (allPerfectToday) {
+      totalScore *= allPerfectBonusMultiplier;
+    }
+    return totalScore;
+  }, [baseScoreToday, clearedAllLevelsToday, allPerfectToday]);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    setIsAllS(allPerfectToday);
+    if (allPerfectToday) {
+      timeout = setTimeout(() => setShowAllPerfect(true), 1000);
+    } else {
+      setShowAllPerfect(false);
+    }
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [allPerfectToday]);
 
   const allPerfectProps = useSpring({
-    number: 1_000_000,
+    number: allPerfectToday ? todaysScore : 0,
     from: { number: 0 },
     config: { duration: 2000 }
   });
@@ -276,30 +335,93 @@ export default function TodayResult({ results }: { results: any[] }) {
             }
           `}
         >
-          {isAllS ? (
-            <AnimatedSpan
-              className={css`
-                font-size: 2.5rem;
-              `}
-              style={{ color: '#ffffff' }}
-            >
-              {allPerfectProps.number.to((val) =>
-                addCommasToNumber(Math.floor(val))
+          {clearedAllLevelsToday ? (
+            <div>
+              <div
+                className={xpValueClass}
+                style={{ fontSize: '1.7rem', fontWeight: 800 }}
+              >
+                <span className="xp-number">
+                  {addCommasToNumber(baseScoreToday)}
+                </span>
+                <span className="xp-label">XP</span>
+              </div>
+              <div
+                style={{
+                  marginTop: '0.2rem',
+                  fontSize: '1.5rem',
+                  color: '#f0e6d6'
+                }}
+              >
+                ×{fullClearBonusMultiplier}{' '}
+                <span style={{ color: '#f0e6d6' }}>
+                  (all five levels cleared)
+                </span>
+              </div>
+              {allPerfectToday && (
+                <div
+                  style={{
+                    marginTop: '0.2rem',
+                    fontSize: '1.5rem',
+                    color: '#f0e6d6'
+                  }}
+                >
+                  ×{allPerfectBonusMultiplier}{' '}
+                  <span style={{ color: '#f0e6d6' }}>(all perfect bonus)</span>
+                </div>
               )}
-            </AnimatedSpan>
-          ) : (
-            <span
-              style={{
-                color: '#ffffff',
-                fontSize: isAllS ? '2.5rem' : 'inherit'
-              }}
-            >
-              {addCommasToNumber(todaysScore)}
+              <div
+                className={xpValueClass}
+                style={{
+                  marginTop: '0.3rem',
+                  fontSize: '2.2rem'
+                }}
+              >
+                <span className="xp-number">
+                  {allPerfectToday ? (
+                    <AnimatedSpan
+                      className={css`
+                        font-size: 2.5rem;
+                        display: inline-flex;
+                      `}
+                    >
+                      {allPerfectProps.number.to((val) =>
+                        addCommasToNumber(Math.floor(val))
+                      )}
+                    </AnimatedSpan>
+                  ) : (
+                    addCommasToNumber(todaysScore)
+                  )}
+                </span>
+                <span className="xp-label">XP</span>
+              </div>
+            </div>
+          ) : isAllS ? (
+            <span className={xpValueClass} style={{ fontSize: '2.5rem' }}>
+              <span className="xp-number">
+                <AnimatedSpan
+                  className={css`
+                    font-size: 2.5rem;
+                    display: inline-flex;
+                  `}
+                >
+                  {allPerfectProps.number.to((val) =>
+                    addCommasToNumber(Math.floor(val))
+                  )}
+                </AnimatedSpan>
+              </span>
+              <span className="xp-label">XP</span>
             </span>
-          )}{' '}
-          <span style={{ color: '#ffd564' }}>XP</span>
+          ) : (
+            <span className={xpValueClass}>
+              <span className="xp-number">
+                {addCommasToNumber(todaysScore)}
+              </span>
+              <span className="xp-label">XP</span>
+            </span>
+          )}
           {(results?.length || 0) > 0 ? (
-            <p>
+            <p style={{ marginTop: '0.6rem' }}>
               ...and{' '}
               {addCommasToNumber(
                 (results?.length || 0) * priceTable.grammarbles
@@ -323,9 +445,9 @@ export default function TodayResult({ results }: { results: any[] }) {
               font-weight: bold;
               background-image: linear-gradient(
                 to left,
-      ${perfectColor(1)} 0%,
-      ${perfectColor(0.5)} 30%,
-      ${perfectColor(1)} 100%
+                ${perfectColor(1)} 0%,
+                ${perfectColor(0.5)} 30%,
+                ${perfectColor(1)} 100%
               );
               background-clip: text;
               color: transparent;

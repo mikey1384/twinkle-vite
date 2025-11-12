@@ -4,6 +4,11 @@ import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import {
+  CIEL_TWINKLE_ID,
+  ZERO_TWINKLE_ID,
+  BookmarkView
+} from '~/constants/defaultValues';
 
 export default function BookmarkModal({
   channelId,
@@ -11,7 +16,8 @@ export default function BookmarkModal({
   isCurrentlyBookmarked,
   onHide,
   bookmark,
-  displayedThemeColor
+  displayedThemeColor,
+  bookmarkView
 }: {
   channelId: number;
   isCielChat: boolean;
@@ -19,14 +25,15 @@ export default function BookmarkModal({
   onHide: () => void;
   bookmark: any;
   displayedThemeColor: string;
+  bookmarkView: BookmarkView;
 }) {
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const successColor = useKeyContext((v) => v.theme.success.color);
-  const bookmarkAIMessage = useAppContext(
-    (v) => v.requestHelpers.bookmarkAIMessage
+  const bookmarkChatMessage = useAppContext(
+    (v) => v.requestHelpers.bookmarkChatMessage
   );
-  const unBookmarkAIMessage = useAppContext(
-    (v) => v.requestHelpers.unBookmarkAIMessage
+  const unbookmarkChatMessage = useAppContext(
+    (v) => v.requestHelpers.unbookmarkChatMessage
   );
   const onAddBookmarkedMessage = useChatContext(
     (v) => v.actions.onAddBookmarkedMessage
@@ -37,14 +44,22 @@ export default function BookmarkModal({
   const onSetReplyTarget = useChatContext((v) => v.actions.onSetReplyTarget);
   const [addingBookmark, setAddingBookmark] = useState(false);
   const [removingBookmark, setRemovingBookmark] = useState(false);
+  const isAIMessage = [ZERO_TWINKLE_ID, CIEL_TWINKLE_ID].includes(
+    bookmark.userId
+  );
+  const replyUsername = isAIMessage
+    ? bookmark.userId === CIEL_TWINKLE_ID
+      ? 'Ciel'
+      : 'Zero'
+    : bookmark.username;
 
   return (
     <Modal onHide={onHide}>
       <main>
         <div style={{ height: '100%', width: '100%', padding: '3rem 1rem' }}>
           <RichText
-            isAIMessage
-            voice={isCielChat ? 'nova' : ''}
+            isAIMessage={isAIMessage}
+            voice={isAIMessage ? (isCielChat ? 'nova' : '') : ''}
             theme={displayedThemeColor}
             contentType="chat"
             contentId={bookmark.id}
@@ -100,16 +115,19 @@ export default function BookmarkModal({
   async function handleAddBookmark() {
     setAddingBookmark(true);
     try {
-      await bookmarkAIMessage({
+      const savedBookmark = await bookmarkChatMessage({
         messageId: bookmark.id,
         channelId,
         topicId: bookmark.subjectId
       });
-      onAddBookmarkedMessage({
-        channelId,
-        message: bookmark,
-        topicId: bookmark.subjectId
-      });
+      if (savedBookmark) {
+        onAddBookmarkedMessage({
+          channelId,
+          bookmark: savedBookmark,
+          topicId: bookmark.subjectId,
+          view: bookmarkView
+        });
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -120,7 +138,7 @@ export default function BookmarkModal({
   async function handleRemoveBookmark() {
     setRemovingBookmark(true);
     try {
-      await unBookmarkAIMessage({
+      await unbookmarkChatMessage({
         messageId: bookmark.id,
         channelId,
         topicId: bookmark.subjectId
@@ -128,7 +146,8 @@ export default function BookmarkModal({
       onRemoveBookmarkedMessage({
         channelId,
         messageId: bookmark.id,
-        topicId: bookmark.subjectId
+        topicId: bookmark.subjectId,
+        view: bookmarkView
       });
     } catch (error) {
       console.error(error);
@@ -142,7 +161,7 @@ export default function BookmarkModal({
       channelId,
       target: {
         ...bookmark,
-        username: isCielChat ? 'Ciel' : 'Zero'
+        username: replyUsername
       }
     });
     onHide();

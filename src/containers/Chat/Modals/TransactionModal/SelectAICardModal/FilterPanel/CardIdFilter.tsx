@@ -40,7 +40,6 @@ export default function CardIdFilter({
       <div className={inputWrapperClass}>
         <SearchInput
           placeholder="Card No."
-          style={{ width: '100%' }}
           onChange={handleSearch}
           value={searchText}
           searchResults={searchedIds}

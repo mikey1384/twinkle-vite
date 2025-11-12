@@ -37,11 +37,11 @@ export default function CardItem({
   );
   const promptText = useMemo(() => {
     if (card.word) {
-      const prompt = card.prompt;
-      const word = card.word;
+      const prompt = card.prompt || '';
+      const word = card.word || '';
       const wordIndex = prompt.toLowerCase().indexOf(word.toLowerCase());
       const isCapitalized =
-        prompt[wordIndex] !== prompt[wordIndex].toLowerCase();
+        prompt[wordIndex] !== (prompt[wordIndex] || '').toLowerCase();
       const wordToDisplay = isCapitalized
         ? (word[0] || '').toUpperCase() + word.slice(1)
         : word;
