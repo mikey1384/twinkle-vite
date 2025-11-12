@@ -24,12 +24,11 @@ export default function ButtonGroup({
       componentPath="ButtonGroup"
       style={{ ...style, display: 'flex' }}
     >
-      {buttons.map((button, index) => {
+      {(buttons || []).map((button, index) => {
         const { skeuomorphic, filled, variant, tone, ...rest } = button as any;
         const mappedProps: any = {
           variant:
-            variant ??
-            (filled ? 'solid' : skeuomorphic ? 'soft' : 'solid'),
+            variant ?? (filled ? 'solid' : skeuomorphic ? 'soft' : 'solid'),
           tone: tone ?? (skeuomorphic ? 'raised' : undefined),
           hoverColor: button.hoverColor || button.color,
           ...rest

@@ -102,7 +102,7 @@ export default function FeaturedPlaylistsPanel() {
       />
       {selectFeaturedPlaylistsModalShown && (
         <SelectFeaturedPlaylists
-          selectedPlaylists={featuredPlaylists.map(
+          selectedPlaylists={(featuredPlaylists || []).map(
             (playlist: { id: number }) => {
               return playlist.id;
             }
@@ -112,7 +112,7 @@ export default function FeaturedPlaylistsPanel() {
       )}
       {reorderFeaturedPlaylistsShown && (
         <ReorderFeaturedPlaylists
-          playlistIds={featuredPlaylists.map(
+          playlistIds={(featuredPlaylists || []).map(
             (playlist: { id: number }) => playlist.id
           )}
           onHide={onCloseReorderFeaturedPlaylists}
