@@ -6,9 +6,12 @@ import URL from '~/constants/URL';
 import request from 'axios';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
-import { install } from 'source-map-support';
 
-install();
+if (typeof window === 'undefined') {
+  import('source-map-support')
+    .then(({ install }) => install())
+    .catch(() => {});
+}
 
 const token = () => getStoredItem('token');
 

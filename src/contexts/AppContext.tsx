@@ -39,6 +39,35 @@ export const initialMyState = {
   communityFunds: 0
 };
 
+const REDIRECT_RELOAD_STORAGE_KEY = 'twinkleRedirectReloadAt';
+const REDIRECT_RELOAD_COOLDOWN_MS = 60 * 1000;
+
+function shouldReloadForRedirect() {
+  try {
+    if (typeof window === 'undefined') {
+      return true;
+    }
+    if (typeof window.sessionStorage === 'undefined') {
+      return true;
+    }
+    const lastReload =
+      Number(window.sessionStorage.getItem(REDIRECT_RELOAD_STORAGE_KEY)) || 0;
+    const now = Date.now();
+    if (!lastReload || now - lastReload > REDIRECT_RELOAD_COOLDOWN_MS) {
+      window.sessionStorage.setItem(
+        REDIRECT_RELOAD_STORAGE_KEY,
+        String(now)
+      );
+      return true;
+    }
+    return false;
+  } catch {
+    // When storage is unavailable (private mode, quota exceeded, etc.),
+    // fall back to the old behavior and reload immediately.
+    return true;
+  }
+}
+
 export function AppContextProvider({ children }: { children: ReactNode }) {
   const [userState, userDispatch] = useReducer(UserReducer, {
     myState: initialMyState,
@@ -68,7 +97,11 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
         }
 
         if (status === 301) {
-          window.location.reload();
+          if (shouldReloadForRedirect()) {
+            window.location.reload();
+          } else {
+            console.warn('Redirect response detected; reload suppressed to avoid loop.');
+          }
         }
 
         return Promise.reject({
