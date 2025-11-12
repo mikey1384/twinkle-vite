@@ -49,7 +49,9 @@ import { isMobile, isSupermod } from '~/helpers';
 import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
-  GENERAL_CHAT_ID
+  GENERAL_CHAT_ID,
+  BOOKMARK_VIEWS,
+  BookmarkView
 } from '~/constants/defaultValues';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
@@ -197,8 +199,8 @@ function MessageBody({
   const level = useKeyContext((v) => v.myState.level);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
 
-  const bookmarkAIMessage = useAppContext(
-    (v) => v.requestHelpers.bookmarkAIMessage
+  const bookmarkChatMessage = useAppContext(
+    (v) => v.requestHelpers.bookmarkChatMessage
   );
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const { canDelete, canEdit, canReward } = useMyLevel();
@@ -636,7 +638,10 @@ function MessageBody({
         onClick: () => setMessageRewardModalShown(true)
       });
     }
-    if (isAIMessage) {
+    const canBookmark =
+      isAIMessage || (!!myId && userId === myId && !!messageId);
+    if (canBookmark) {
+      const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
       result.push({
         label: (
           <>
@@ -654,7 +659,7 @@ function MessageBody({
             opacity: 1 !important;
           }
         `,
-        onClick: () => handleBookmarkMessage(messageId)
+        onClick: () => handleBookmarkMessage(messageId, bookmarkView)
       });
     }
     return result;
@@ -664,13 +669,17 @@ function MessageBody({
     channelId,
     isBanned,
     isAdmin,
+    isAIMessage,
+    isCielMessage,
     isDrawOffer,
     message,
     messageId,
+    myId,
     recentThumbUrl,
     rewardAmount,
     targetMessage,
     thumbUrl,
+    userId,
     userCanEditThis,
     userCanRewardThis,
     userIsUploader
@@ -1280,21 +1289,27 @@ function MessageBody({
     </ErrorBoundary>
   );
 
-  async function handleBookmarkMessage(messageId: number) {
-    if (!isAIMessage) {
+  async function handleBookmarkMessage(
+    messageId: number,
+    bookmarkView: BookmarkView
+  ) {
+    if (!isAIMessage && userId !== myId) {
       return;
     }
     try {
-      await bookmarkAIMessage({
+      const bookmark = await bookmarkChatMessage({
         messageId,
         channelId,
         topicId: subjectId
       });
-      onAddBookmarkedMessage({
-        channelId,
-        topicId: subjectId,
-        message
-      });
+      if (bookmark) {
+        onAddBookmarkedMessage({
+          channelId,
+          topicId: subjectId,
+          bookmark,
+          view: bookmarkView
+        });
+      }
     } catch (error) {
       console.error(error);
     }

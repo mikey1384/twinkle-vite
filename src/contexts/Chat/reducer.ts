@@ -2,11 +2,23 @@ import { initialChatState } from '.';
 import {
   defaultChatSubject,
   VOCAB_CHAT_TYPE,
-  AI_CARD_CHAT_TYPE
+  AI_CARD_CHAT_TYPE,
+  BOOKMARK_VIEWS,
+  BookmarkView
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
+
+interface BookmarkListMap {
+  ai?: any[];
+  me?: any[];
+}
+
+interface BookmarkLoadMoreMap {
+  ai?: boolean;
+  me?: boolean;
+}
 
 const chatTabHash: {
   [key: string]: string;
@@ -1606,41 +1618,72 @@ export default function ChatReducer(
       };
     }
     case 'LOAD_MORE_BOOKMARKS': {
+      const isTopicScope = !!action.topicId;
+      const channelState = state.channelsObj[action.channelId] || {};
+      const topicState = isTopicScope
+        ? channelState.topicObj?.[action.topicId]
+        : null;
+      const view = (action.view || BOOKMARK_VIEWS.AI) as BookmarkView;
+
+      const currentBookmarks = getBookmarkLists(
+        isTopicScope
+          ? topicState?.bookmarkedMessages
+          : channelState.bookmarkedMessages
+      );
+      const currentLoadMoreState = getBookmarkLoadMore(
+        isTopicScope
+          ? topicState?.loadMoreBookmarksShown
+          : channelState.loadMoreBookmarksShown
+      );
+
+      const updatedBookmarks = {
+        ...currentBookmarks,
+        [view]: currentBookmarks[view].concat(action.bookmarks)
+      };
+
+      const updatedLoadMoreState = {
+        ...currentLoadMoreState,
+        [view]: action.loadMoreShown
+      };
+
+      if (isTopicScope) {
+        return {
+          ...state,
+          channelsObj: {
+            ...state.channelsObj,
+            [action.channelId]: {
+              ...channelState,
+              topicObj: {
+                ...channelState.topicObj,
+                [action.topicId]: {
+                  ...topicState,
+                  bookmarkedMessages: updatedBookmarks,
+                  loadMoreBookmarksShown: updatedLoadMoreState
+                }
+              }
+            }
+          }
+        };
+      }
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            ...(action.topicId
-              ? {
-                  topicObj: {
-                    ...state.channelsObj[action.channelId]?.topicObj,
-                    [action.topicId]: {
-                      ...state.channelsObj[action.channelId]?.topicObj?.[
-                        action.topicId
-                      ],
-                      bookmarkedMessages: [
-                        ...(state.channelsObj[action.channelId]?.topicObj?.[
-                          action.topicId
-                        ]?.bookmarkedMessages || []),
-                        ...action.bookmarks
-                      ],
-                      loadMoreBookmarksShown: action.loadMoreShown
-                    }
-                  }
-                }
-              : {
-                  bookmarkedMessages: [
-                    ...(state.channelsObj[action.channelId]
-                      ?.bookmarkedMessages || []),
-                    ...action.bookmarks
-                  ],
-                  loadMoreBookmarksShown: action.loadMoreShown
-                })
+            ...channelState,
+            bookmarkedMessages: updatedBookmarks,
+            loadMoreBookmarksShown: updatedLoadMoreState
           }
         }
       };
+
+      function getBookmarkLoadMore(loadMore?: BookmarkLoadMoreMap) {
+        return {
+          ai: typeof loadMore?.ai === 'boolean' ? loadMore.ai : false,
+          me: typeof loadMore?.me === 'boolean' ? loadMore.me : false
+        };
+      }
     }
     case 'LOAD_MORE_CHANNEL_MEMBERS': {
       return {
@@ -3205,112 +3248,106 @@ export default function ChatReducer(
         yearlyVocabRankings: action.yearlyVocabRankings
       };
     case 'ADD_BOOKMARKED_MESSAGE': {
-      const currentBookmarkedMessages =
-        state.channelsObj[action.channelId]?.bookmarkedMessages || [];
-      const currentBookmarks =
-        state.channelsObj[action.channelId]?.settings?.bookmarks || [];
-      const currentTopicObj =
-        state.channelsObj[action.channelId]?.topicObj || {};
+      const isTopicScope = !!action.topicId;
+      const channelState = state.channelsObj[action.channelId] || {};
+      const topicState = isTopicScope
+        ? channelState.topicObj?.[action.topicId]
+        : null;
+      const view = (action.view || BOOKMARK_VIEWS.AI) as BookmarkView;
 
-      const filteredBookmarkedMessages = currentBookmarkedMessages.filter(
-        (bookmark: { id: number }) => bookmark.id !== action.message.id
+      const currentBookmarks = getBookmarkLists(
+        isTopicScope
+          ? topicState?.bookmarkedMessages
+          : channelState.bookmarkedMessages
       );
-      const filteredBookmarks = currentBookmarks.filter(
-        (bookmarkId: number) => bookmarkId !== action.message.id
-      );
+
+      const updatedBookmarks = {
+        ...currentBookmarks,
+        [view]: [action.bookmark].concat(
+          currentBookmarks[view].filter(
+            (bookmark: { id: number }) => bookmark.id !== action.bookmark.id
+          )
+        )
+      };
+
+      if (isTopicScope) {
+        return {
+          ...state,
+          channelsObj: {
+            ...state.channelsObj,
+            [action.channelId]: {
+              ...channelState,
+              topicObj: {
+                ...channelState.topicObj,
+                [action.topicId]: {
+                  ...topicState,
+                  bookmarkedMessages: updatedBookmarks
+                }
+              }
+            }
+          }
+        };
+      }
 
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            topicObj: action.topicId
-              ? {
-                  ...currentTopicObj,
-                  [action.topicId]: {
-                    ...currentTopicObj[action.topicId],
-                    bookmarkedMessages: [action.message].concat(
-                      (
-                        currentTopicObj[action.topicId]?.bookmarkedMessages ||
-                        []
-                      ).filter(
-                        (bookmark: { id: number }) =>
-                          bookmark.id !== action.message.id
-                      )
-                    ),
-                    settings: {
-                      ...currentTopicObj[action.topicId]?.settings,
-                      bookmarks: [action.message.id].concat(
-                        (
-                          currentTopicObj[action.topicId]?.settings
-                            ?.bookmarks || []
-                        ).filter(
-                          (bookmarkId: number) =>
-                            bookmarkId !== action.message.id
-                        )
-                      )
-                    }
-                  }
-                }
-              : currentTopicObj,
-            bookmarkedMessages: action.topicId
-              ? currentBookmarkedMessages
-              : [action.message].concat(filteredBookmarkedMessages),
-            settings: {
-              ...state.channelsObj[action.channelId]?.settings,
-              bookmarks: action.topicId
-                ? currentBookmarks
-                : [action.message.id].concat(filteredBookmarks)
-            }
+            ...channelState,
+            bookmarkedMessages: updatedBookmarks
           }
         }
       };
     }
 
     case 'REMOVE_BOOKMARKED_MESSAGE': {
+      const isTopicScope = !!action.topicId;
+      const channelState = state.channelsObj[action.channelId] || {};
+      const topicState = isTopicScope
+        ? channelState.topicObj?.[action.topicId]
+        : null;
+      const view = (action.view || BOOKMARK_VIEWS.AI) as BookmarkView;
+
+      const currentBookmarks = getBookmarkLists(
+        isTopicScope
+          ? topicState?.bookmarkedMessages
+          : channelState.bookmarkedMessages
+      );
+
+      const updatedBookmarks = {
+        ...currentBookmarks,
+        [view]: currentBookmarks[view].filter(
+          (bookmark: { id: number }) => bookmark.id !== action.messageId
+        )
+      };
+
+      if (isTopicScope) {
+        return {
+          ...state,
+          channelsObj: {
+            ...state.channelsObj,
+            [action.channelId]: {
+              ...channelState,
+              topicObj: {
+                ...channelState.topicObj,
+                [action.topicId]: {
+                  ...topicState,
+                  bookmarkedMessages: updatedBookmarks
+                }
+              }
+            }
+          }
+        };
+      }
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            topicObj: {
-              ...state.channelsObj[action.channelId]?.topicObj,
-              [action.topicId]: {
-                ...state.channelsObj[action.channelId]?.topicObj?.[
-                  action.topicId
-                ],
-                bookmarkedMessages: state.channelsObj[
-                  action.channelId
-                ]?.topicObj?.[action.topicId]?.bookmarkedMessages?.filter(
-                  (bookmark: { id: number }) => bookmark.id !== action.messageId
-                ),
-                settings: {
-                  ...state.channelsObj[action.channelId]?.topicObj?.[
-                    action.topicId
-                  ]?.settings,
-                  bookmarks: state.channelsObj[action.channelId]?.topicObj?.[
-                    action.topicId
-                  ]?.settings?.bookmarks?.filter(
-                    (bookmarkId: number) => bookmarkId !== action.messageId
-                  )
-                }
-              }
-            },
-            bookmarkedMessages: state.channelsObj[
-              action.channelId
-            ]?.bookmarkedMessages?.filter(
-              (bookmark: { id: number }) => bookmark.id !== action.messageId
-            ),
-            settings: {
-              ...state.channelsObj[action.channelId]?.settings,
-              bookmarks: state.channelsObj[
-                action.channelId
-              ]?.settings?.bookmarks?.filter(
-                (bookmarkId: number) => bookmarkId !== action.messageId
-              )
-            }
+            ...channelState,
+            bookmarkedMessages: updatedBookmarks
           }
         }
       };
@@ -4086,4 +4123,11 @@ export default function ChatReducer(
     default:
       return state;
   }
+}
+
+function getBookmarkLists(bookmarks?: BookmarkListMap) {
+  return {
+    ai: bookmarks?.ai ? [...bookmarks.ai] : [],
+    me: bookmarks?.me ? [...bookmarks.me] : []
+  };
 }

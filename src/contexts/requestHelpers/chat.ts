@@ -301,27 +301,29 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async bookmarkAIMessage({
+    async bookmarkChatMessage({
       messageId,
       channelId,
       topicId
     }: {
       messageId: number;
       channelId: number;
-      topicId: number;
+      topicId?: number;
     }) {
       try {
-        const data = await request.put(
+        const {
+          data: { bookmark }
+        } = await request.put(
           `${URL}/chat/ai/bookmark`,
           { messageId, channelId, topicId },
           auth()
         );
-        return data;
+        return bookmark;
       } catch (error) {
         return handleError(error);
       }
     },
-    async unBookmarkAIMessage({
+    async unbookmarkChatMessage({
       messageId,
       channelId,
       topicId
@@ -926,17 +928,20 @@ export default function chatRequestHelpers({
     async loadMoreBookmarks({
       channelId,
       topicId,
-      lastBookmarkId
+      lastBookmarkId,
+      view
     }: {
       channelId: number;
       topicId?: number;
       lastBookmarkId: number;
+      view: 'ai' | 'me';
     }) {
       try {
         const {
           data: { bookmarks, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId}&lastBookmarkId=${lastBookmarkId}`
+          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId ?? ''}&lastBookmarkId=${lastBookmarkId}&view=${view}`,
+          auth()
         );
         return { bookmarks, loadMoreShown };
       } catch (error) {

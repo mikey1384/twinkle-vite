@@ -8,17 +8,20 @@ export default function ChatActions(dispatch: Dispatch) {
     onAddBookmarkedMessage({
       topicId,
       channelId,
-      message
+      bookmark,
+      view
     }: {
       topicId: number;
       channelId: number;
-      message: any;
+      bookmark: any;
+      view: 'ai' | 'me';
     }) {
       return dispatch({
         type: 'ADD_BOOKMARKED_MESSAGE',
         topicId,
         channelId,
-        message
+        bookmark,
+        view
       });
     },
     onApplyAIGeneratedDefinitions({
@@ -129,17 +132,20 @@ export default function ChatActions(dispatch: Dispatch) {
     onRemoveBookmarkedMessage({
       topicId,
       channelId,
-      messageId
+      messageId,
+      view
     }: {
       channelId: number;
       topicId: number;
       messageId: number;
+      view: 'ai' | 'me';
     }) {
       return dispatch({
         type: 'REMOVE_BOOKMARKED_MESSAGE',
         topicId,
         channelId,
-        messageId
+        messageId,
+        view
       });
     },
     onAddReactionToMessage({
@@ -785,19 +791,22 @@ export default function ChatActions(dispatch: Dispatch) {
       channelId,
       topicId,
       bookmarks,
-      loadMoreShown
+      loadMoreShown,
+      view
     }: {
       channelId: number;
       topicId: number;
       bookmarks: object[];
       loadMoreShown: boolean;
+      view: 'ai' | 'me';
     }) {
       return dispatch({
         type: 'LOAD_MORE_BOOKMARKS',
         channelId,
         topicId,
         bookmarks,
-        loadMoreShown
+        loadMoreShown,
+        view
       });
     },
     onLoadMoreChannels({

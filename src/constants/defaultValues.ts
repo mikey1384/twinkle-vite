@@ -5,6 +5,13 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
+export const clientVersion = '2.0.9';
+
+export const BOOKMARK_VIEWS = {
+  AI: 'ai',
+  ME: 'me'
+} as const;
+export type BookmarkView = (typeof BOOKMARK_VIEWS)[keyof typeof BOOKMARK_VIEWS];
 export const months = [
   'January',
   'February',
@@ -19,7 +26,6 @@ export const months = [
   'November',
   'December'
 ];
-export const clientVersion = '2.0.8';
 export const ADMIN_USER_ID = Number(import.meta.env.VITE_ADMIN_USER_ID);
 export const CIEL_TWINKLE_ID = Number(import.meta.env.VITE_CIEL_TWINKLE_ID);
 export const CIEL_PFP_URL = import.meta.env.VITE_CIEL_PFP_URL;
