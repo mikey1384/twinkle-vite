@@ -141,7 +141,8 @@ export default function AICards({
         coins,
         numCardSummoned,
         feed,
-        card
+        card,
+        isMysteryCard
       } = await generateAICard();
       onUpdateNumSummoned(numCardSummoned);
       if (isMaxReached) {
@@ -157,7 +158,9 @@ export default function AICards({
           `You don't have enough Twinkle Coins to summon a card.`
         );
       }
-      onSetAICardStatusMessage('Card Summoned');
+      onSetAICardStatusMessage(
+        isMysteryCard ? 'Mystery Card Summoned' : 'Card Summoned'
+      );
       onPostAICardFeed({
         feed,
         isSummon: true,
@@ -172,7 +175,7 @@ export default function AICards({
 
       if (errorKey === 'inappropriate_word') {
         errorMessage = 'Payment failed. Please try again.';
-      } else if (errorKey === 'failure_after_payment') {
+      } else if (errorKey === 'image_generation_failed') {
         errorMessage =
           "Card generation failed after payment. Open 'My Collection' at the bottom right, select your card, and press 'Generate' to add an image.";
       }
