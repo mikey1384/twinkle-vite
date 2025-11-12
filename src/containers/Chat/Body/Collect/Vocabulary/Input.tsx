@@ -10,6 +10,7 @@ import {
 } from '~/helpers/stringHelpers';
 import { useChatContext, useInputContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const typeWordLabel = 'Type a word...';
@@ -34,6 +35,12 @@ export default function Input({
   const onSetVocabErrorMessage = useChatContext(
     (v) => v.actions.onSetVocabErrorMessage
   );
+  const successRole = useRoleColor('success', { fallback: 'green' });
+  const alertRole = useRoleColor('alert', { fallback: 'gold' });
+  const successColorKey = successRole.colorKey;
+  const alertColorKey = alertRole.colorKey;
+  const themeIsGreen = successRole.themeName === 'green';
+  const sendButtonColorKey = themeIsGreen ? alertColorKey : successColorKey;
   const [localText, setLocalText] = useState('');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -85,9 +92,10 @@ export default function Input({
         {registerButtonShown && (
           <div style={{ height: '100%', margin: '0.5rem 0 0.2rem 1rem' }}>
             <Button
-              filled
+              variant="soft"
+              tone="raised"
               disabled={loading || isSubmitting || !!messageExceedsCharLimit}
-              color="green"
+              color={sendButtonColorKey}
               onClick={handleSubmit}
             >
               <Icon icon="paper-plane" />

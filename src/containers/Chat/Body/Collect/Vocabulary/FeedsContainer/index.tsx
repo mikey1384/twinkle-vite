@@ -14,9 +14,11 @@ const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
 function FeedsContainer({
+  displayedThemeColor,
   style,
   contentRef
 }: {
+  displayedThemeColor: string;
   style?: React.CSSProperties;
   contentRef: React.RefObject<any>;
 }) {
@@ -113,6 +115,7 @@ function FeedsContainer({
         style={{
           padding: '0 1rem',
           height: '100%',
+          width: '100%',
           display: 'flex',
           flexDirection: 'column-reverse',
           overflowY: 'scroll',
@@ -200,28 +203,28 @@ function FeedsContainer({
             </div>
           )}
         </div>
-
-        {showGoToBottom && (
-          <div
-            style={{
-              position: 'absolute',
-              display: 'flex',
-              justifyContent: 'center',
-              width: '100%',
-              zIndex: 1000,
-              bottom: '17rem'
-            }}
-          >
-            <GoToBottomButton
-              theme="blue"
-              onClick={async () => {
-                await handleScrollToBottom();
-                setShowGoToBottom(false);
-              }}
-            />
-          </div>
-        )}
       </div>
+      {showGoToBottom && (
+        <div
+          style={{
+            position: 'absolute',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 1000,
+            left: 0,
+            right: 0,
+            bottom: '17rem'
+          }}
+        >
+          <GoToBottomButton
+            theme={displayedThemeColor}
+            onClick={async () => {
+              await handleScrollToBottom();
+              setShowGoToBottom(false);
+            }}
+          />
+        </div>
+      )}
     </ErrorBoundary>
   );
 

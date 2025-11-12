@@ -15,7 +15,10 @@ export default function Collect({
   loadingAICardChat: boolean;
 }) {
   return chatType === VOCAB_CHAT_TYPE ? (
-    <Vocabulary loadingVocabulary={loadingVocabulary} />
+    <Vocabulary
+      displayedThemeColor={displayedThemeColor}
+      loadingVocabulary={loadingVocabulary}
+    />
   ) : (
     <AICards
       displayedThemeColor={displayedThemeColor}
