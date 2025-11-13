@@ -18,8 +18,10 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 
 export default function Vocabulary({
+  displayedThemeColor,
   loadingVocabulary
 }: {
+  displayedThemeColor: string;
   loadingVocabulary: boolean;
 }) {
   const navigate = useNavigate();
@@ -156,6 +158,7 @@ export default function Vocabulary({
       ) : (
         <FeedsContainer
           contentRef={feedsContentRef}
+          displayedThemeColor={displayedThemeColor}
           style={{
             width: '100%',
             overflow: 'scroll',

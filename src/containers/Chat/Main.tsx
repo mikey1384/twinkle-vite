@@ -860,13 +860,18 @@ export default function Main({
     if (currentChannel.theme) {
       return currentChannel.theme;
     }
-    if (selectedChannelId === GENERAL_CHAT_ID || currentChannel?.twoPeople) {
+    if (
+      selectedChannelId === GENERAL_CHAT_ID ||
+      currentChannel?.twoPeople ||
+      isUsingCollect
+    ) {
       return profileTheme;
     }
     return 'logoBlue';
   }, [
     currentChannel.theme,
     currentChannel?.twoPeople,
+    isUsingCollect,
     profileTheme,
     selectedChannelId
   ]);

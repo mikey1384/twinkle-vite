@@ -45,7 +45,8 @@ export default function SelectEmail({
           <p>{hiddenEmail || email}</p>
           <Button
             style={{ marginLeft: '1rem' }}
-            filled
+            variant="soft"
+            tone="raised"
             color="orange"
             onClick={() => handleSendEmail(email)}
             disabled={!!emailSent[email]}
@@ -62,7 +63,8 @@ export default function SelectEmail({
           <p>{hiddenVerifiedEmail || verifiedEmail}</p>
           <Button
             style={{ marginLeft: '1rem' }}
-            filled
+            variant="soft"
+            tone="raised"
             color="orange"
             onClick={() => handleSendEmail(verifiedEmail)}
             disabled={!!emailSent[verifiedEmail]}
