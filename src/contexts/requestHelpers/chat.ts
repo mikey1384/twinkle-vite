@@ -842,7 +842,10 @@ export default function chatRequestHelpers({
           }`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false // chat bootstrap can take a while on slow networks
+            }
           }
         );
         return data;
@@ -870,7 +873,10 @@ export default function chatRequestHelpers({
           }`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return data;
@@ -1110,7 +1116,10 @@ export default function chatRequestHelpers({
           }`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return { topicObj, messages, loadMoreShown, loadMoreShownAtBottom };
@@ -1134,7 +1143,10 @@ export default function chatRequestHelpers({
           `${URL}/chat/topic/messages/more/recent?channelId=${channelId}&topicId=${topicId}&lastMessageId=${lastMessageId}`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return { messages, loadMoreShownAtBottom };
