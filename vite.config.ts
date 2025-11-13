@@ -41,7 +41,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '~': resolve(__dirname, 'src'),
-      buffer: 'buffer/'
+      buffer: 'buffer/',
+      phaser: 'phaser/src/phaser.js'
     }
   },
   build: {
