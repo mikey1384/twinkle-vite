@@ -1110,25 +1110,43 @@ function Markdown({
 
   function preprocessText(text: string) {
     const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
+    const matches = [...text.matchAll(codeBlockRegex)];
+
+    if (!matches.length) {
+      return preprocessNonCode(text, { isAtStart: true, isAtEnd: true });
+    }
+
     let lastIndex = 0;
     let processedText = '';
 
-    const matches = [...text.matchAll(codeBlockRegex)];
-
     matches.forEach((match) => {
       const beforeCode = text.slice(lastIndex, match.index!);
-      processedText += preprocessNonCode(beforeCode);
+      if (beforeCode) {
+        processedText += preprocessNonCode(beforeCode, {
+          isAtStart: lastIndex === 0,
+          isAtEnd: false
+        });
+      }
 
       processedText += match[0];
       lastIndex = match.index! + match[0].length;
     });
 
-    processedText += preprocessNonCode(text.slice(lastIndex));
+    const tail = text.slice(lastIndex);
+    if (tail) {
+      processedText += preprocessNonCode(tail, {
+        isAtStart: lastIndex === 0,
+        isAtEnd: true
+      });
+    }
 
     return processedText;
   }
 
-  function preprocessNonCode(text: string) {
+  function preprocessNonCode(
+    text: string,
+    options?: { isAtStart?: boolean; isAtEnd?: boolean }
+  ) {
     let processedText = text;
 
     const PLACEHOLDERS: string[] = [];
@@ -1171,9 +1189,15 @@ function Markdown({
     const containsTable = lines.some((line) => tablePattern.test(line));
 
     if (containsTable) {
-      const isTableLine = (line: string) => /\|.*\|.*\|/.test(line);
+      const isTableLine = (line: string) => tablePattern.test(line.trim());
+      const restoreTableSyntax = (line: string) =>
+        line.replace(/\\-/g, '-').replace(/&#43;/g, '+');
       processedText = lines
-        .map((l) => (isTableLine(l) ? l : l.replace(/_/g, '\\_')))
+        .map((line) =>
+          isTableLine(line)
+            ? restoreTableSyntax(line)
+            : line.replace(/_/g, '\\_')
+        )
         .join('\n');
     } else if (processedText.includes('_')) {
       processedText = processedText.replace(/_/g, '\\_');
@@ -1189,28 +1213,49 @@ function Markdown({
     let nbspCount = 0;
     let inList = false;
     let lastLineWasList = false;
+    const startsWithBoundaryNewline =
+      !options?.isAtStart && text.startsWith('\n');
+    const endsWithBoundaryNewline =
+      !options?.isAtEnd && text.endsWith('\n');
 
-    const processedLines = processedText.split('\n').map((line) => {
-      const trimmedLine = line.trim();
-      const isList = /^\d\./.test(trimmedLine);
+    const processedLines = processedText
+      .split('\n')
+      .map((line, index, arr) => {
+        const trimmedLine = line.trim();
+        const isList = /^\d\./.test(trimmedLine);
+        const isLeadingBoundaryLine =
+          startsWithBoundaryNewline && index === 0 && trimmedLine === '';
+        const isTrailingBoundaryLine =
+          endsWithBoundaryNewline &&
+          index === arr.length - 1 &&
+          trimmedLine === '';
+        const shouldPreserveBoundaryLine =
+          isLeadingBoundaryLine || isTrailingBoundaryLine;
 
-      if (isList) {
-        inList = true;
-        lastLineWasList = true;
-      } else if (trimmedLine === '' && inList) {
-        inList = false;
-        lastLineWasList = true;
-      } else if (trimmedLine !== '') {
-        lastLineWasList = false;
-      }
+        if (isList) {
+          inList = true;
+          lastLineWasList = true;
+        } else if (trimmedLine === '' && inList) {
+          inList = false;
+          lastLineWasList = true;
+        } else if (trimmedLine !== '') {
+          lastLineWasList = false;
+        }
 
-      if (trimmedLine === '' && !lastLineWasList && nbspCount < maxNbsp) {
-        nbspCount++;
-        return line + '&nbsp;';
-      } else {
+        if (
+          trimmedLine === '' &&
+          !shouldPreserveBoundaryLine &&
+          !lastLineWasList &&
+          nbspCount < maxNbsp
+        ) {
+          if (line === '') {
+            nbspCount++;
+            return '&nbsp;';
+          }
+          return line;
+        }
         return line;
-      }
-    });
+      });
 
     return processedLines.join('\n');
   }

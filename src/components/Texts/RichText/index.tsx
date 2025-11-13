@@ -34,6 +34,14 @@ const RichTextCss = css`
   p + p {
     margin-top: 1em;
   }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 1.2em 0 0.45em;
+  }
   img {
     width: 100%;
     max-height: 400px;
