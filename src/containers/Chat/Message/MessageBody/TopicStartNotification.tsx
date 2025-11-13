@@ -27,12 +27,6 @@ export default function TopicStartNotification({
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
   }, [themeRoles.topicText?.color, themeName]);
-  const topicShadowColor = useMemo(() => {
-    const key = themeRoles.topicText?.shadow;
-    if (!key) return '';
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn() : key;
-  }, [themeRoles.topicText?.shadow]);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -95,9 +89,6 @@ export default function TopicStartNotification({
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 color: ${topicTextColor};
-                text-shadow: ${topicShadowColor
-                  ? `0.05rem 0.05rem 0.05rem ${topicShadowColor}`
-                  : 'none'};
                 @media (max-width: ${mobileMaxWidth}) {
                   padding: 0 3rem;
                 }

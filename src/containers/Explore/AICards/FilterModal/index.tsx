@@ -57,12 +57,12 @@ export default function FilterModal({
       <main>
         {filterComponents.map((component, index) => {
           const style =
-            index < filterComponents.length - 1
+            index < filterComponents?.length - 1
               ? {
                   marginBottom: '2rem',
-                  zIndex: filterComponents.length - 1 - index
+                  zIndex: filterComponents?.length - 1 - index
                 }
-              : { zIndex: filterComponents.length - 1 - index };
+              : { zIndex: filterComponents?.length - 1 - index };
           if (component === 'owner') {
             return (
               <OwnerFilter
@@ -179,7 +179,7 @@ export default function FilterModal({
       obj.engine = selectedEngine;
     }
     const queryString =
-      Object.keys(obj).length > 0
+      Object.keys(obj)?.length > 0
         ? `/ai-cards/?${Object.entries(obj)
             .map(([key, value]) => `search[${key}]=${value}`)
             .join('&')}`

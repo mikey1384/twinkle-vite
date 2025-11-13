@@ -56,12 +56,6 @@ export default function TopicMessagePreview({
     const fn = Color[key as keyof typeof Color];
     return fn ? fn() : key;
   }, [themeRoles.topicText?.color, themeName]);
-  const topicShadowColor = useMemo(() => {
-    const key = themeRoles.topicText?.shadow;
-    if (!key) return '';
-    const fn = Color[key as keyof typeof Color];
-    return fn ? fn() : key;
-  }, [themeRoles.topicText?.shadow]);
   const contentPreviewShown = useMemo(() => {
     return (
       !stringIsEmpty(content) &&
@@ -173,9 +167,6 @@ export default function TopicMessagePreview({
                 ref={topicRef}
                 className={css`
                   color: ${topicTextColor};
-                  ${topicShadowColor
-                    ? `text-shadow: 0.05rem 0.05rem 0.05rem ${topicShadowColor};`
-                    : ''}
                 `}
               >
                 {truncatedTopic}

@@ -74,7 +74,7 @@ export default function SearchView({
         }
       }
       setLoading(false);
-      if (filterChanged && Object.keys(filters).length) {
+      if (filterChanged && Object.keys(filters)?.length) {
         onSetPrevAICardFilters(filters);
       }
     }
@@ -92,12 +92,12 @@ export default function SearchView({
   ]);
 
   const isCheckingMyCards = useMemo(() => {
-    return Object.keys(filters).length === 1 && filters.owner;
+    return Object.keys(filters)?.length === 1 && filters.owner;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Object.keys(filters).length, filters?.owner]);
+  }, [Object.keys(filters)?.length, filters?.owner]);
 
   const noCardsLabel = useMemo(() => {
-    if (Object.keys(filters).length === 1 && filters.owner) {
+    if (Object.keys(filters)?.length === 1 && filters.owner) {
       return `${
         username === filters.owner ? `You don't` : `${filters.owner} doesn't`
       } own any AI Cards`;
@@ -118,7 +118,7 @@ export default function SearchView({
     >
       {loading || !filteredLoaded ? (
         <Loading />
-      ) : filteredCards.length ? (
+      ) : filteredCards?.length ? (
         filteredCards.map((card: any) => {
           return (
             <div key={card.id} style={{ margin: '1rem' }}>
@@ -188,7 +188,7 @@ export default function SearchView({
   );
 
   async function handleLoadMoreAICards() {
-    const lastCard = filteredCards[filteredCards.length - 1];
+    const lastCard = filteredCards[filteredCards?.length - 1];
     let lastInteraction, lastPrice, lastId;
     if (filters.isBuyNow) {
       lastPrice = lastCard.askPrice;

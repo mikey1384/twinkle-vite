@@ -345,7 +345,7 @@ export default function CardSearchPanel({
     const rawShadow =
       typeof searchRole.shadow === 'string' ? searchRole.shadow : undefined;
     const shadowColor =
-      rawShadow && rawShadow.trim().length
+      rawShadow && rawShadow.trim()?.length
         ? typeof Color[rawShadow as keyof typeof Color] === 'function'
           ? Color[rawShadow as keyof typeof Color](0.35)
           : rawShadow

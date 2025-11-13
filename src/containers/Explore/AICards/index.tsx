@@ -66,8 +66,8 @@ export default function AICards() {
     Object.entries(paramsObject).forEach(([key, value]) => {
       const keys = key.split('[').map((k) => k.replace(/[[\]]/g, ''));
       let obj: { [key: string]: any } = searchObj;
-      for (let i = 0; i < keys.length; i++) {
-        if (i === keys.length - 1) {
+      for (let i = 0; i < keys?.length || 0; i++) {
+        if (i === (keys?.length || 0) - 1) {
           obj[keys[i]] = value;
         } else {
           obj[keys[i]] = obj[keys[i]] || {};
@@ -110,7 +110,10 @@ export default function AICards() {
     });
   }, [search]);
 
-  const isFilterSet = useMemo(() => Object.keys(filters).length > 0, [filters]);
+  const isFilterSet = useMemo(
+    () => Object.keys(filters)?.length > 0,
+    [filters]
+  );
   const displayedNumCards = useMemo(
     () => (isFilterSet ? numFilteredCards : numCards),
     [isFilterSet, numCards, numFilteredCards]
