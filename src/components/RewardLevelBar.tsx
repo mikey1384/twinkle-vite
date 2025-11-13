@@ -68,12 +68,16 @@ export default function RewardLevelBar({
         width: auto;
         max-width: 100%;
         .left {
+          margin: 0;
           display: flex;
           align-items: center;
-          min-width: 0;
+          justify-content: flex-start;
+          max-width: 50%;
         }
         .right {
-          min-width: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
