@@ -246,6 +246,11 @@ function MessageBody({
   const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
+  const isAIChat = useMemo(() => {
+    return (
+      partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID
+    );
+  }, [partner?.id]);
 
   // Check if this AI message has an error
 
@@ -639,7 +644,7 @@ function MessageBody({
       });
     }
     const canBookmark =
-      isAIMessage || (!!myId && userId === myId && !!messageId);
+      isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
     if (canBookmark) {
       const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
       result.push({
@@ -667,6 +672,7 @@ function MessageBody({
   }, [
     canDelete,
     channelId,
+    isAIChat,
     isBanned,
     isAdmin,
     isAIMessage,
@@ -1293,7 +1299,7 @@ function MessageBody({
     messageId: number,
     bookmarkView: BookmarkView
   ) {
-    if (!isAIMessage && userId !== myId) {
+    if (!isAIChat || (!isAIMessage && userId !== myId)) {
       return;
     }
     try {
