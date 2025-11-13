@@ -29,6 +29,18 @@ export default function InputModal({
   const draftIdRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const nextTitle = subject?.details?.title || '';
+    if (nextTitle !== titleRef.current) {
+      setTitle(nextTitle);
+      titleRef.current = nextTitle;
+    }
+    const nextDescription = subject?.details?.description || '';
+    if (nextDescription !== descriptionRef.current) {
+      descriptionRef.current = nextDescription;
+    }
+  }, [subject?.details?.title, subject?.details?.description]);
+
+  useEffect(() => {
     if (!isOpen || !userId) return;
     fetchDrafts();
     async function fetchDrafts() {
