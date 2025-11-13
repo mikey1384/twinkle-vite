@@ -5,7 +5,7 @@ import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { css } from '@emotion/css';
 import { Color, Theme } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { videoRewardHash, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { videoRewardHash } from '~/constants/defaultValues';
 
 const boostRewardsFromWatchingXPVideosLabel =
   'Boost rewards from watching XP Videos';
@@ -27,18 +27,12 @@ const item = {
   description: [...Array(10).keys()].map((key) => {
     const rewardLevels: number[] = [1, 2, 3, 4, 5];
     const keyNumber = Number(key);
-    const descriptionLabel =
-      SELECTED_LANGUAGE === 'kr' ? (
-        <>
-          본 아이템을 {keyNumber === 0 ? '잠금 해제' : '업그레이드'} 하시면 XP
-          동영상을 보실때 <b>매분마다</b> 아래의 보상을 획득하실 수 있게 됩니다
-        </>
-      ) : (
-        <>
-          {keyNumber === 0 ? 'Unlock' : 'Upgrade'} this item to earn the
-          following rewards <b>per minute</b> while watching XP Videos
-        </>
-      );
+    const descriptionLabel = (
+      <>
+        {keyNumber === 0 ? 'Unlock' : 'Upgrade'} this item to earn the following
+        rewards <b>per minute</b> while watching XP Videos
+      </>
+    );
 
     return (
       <div style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }} key={key}>
@@ -205,9 +199,6 @@ export default function RewardBoostItem({
     if (!videoRewardHash[rewardBoostLvl]) {
       return '';
     }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `이제 XP동영상을 시청하실 때 매분 (보상레벨 × ${videoRewardHash[rewardBoostLvl].xp})XP와 트윈클 코인 ${videoRewardHash[rewardBoostLvl].coin}개를 획득하실 수 있습니다`;
-    }
     return `You can now earn (reward level × ${videoRewardHash[rewardBoostLvl].xp}) XP and ${videoRewardHash[rewardBoostLvl].coin} Twinkle Coins per minute while watching XP Videos`;
   }, [rewardBoostLvl]);
 
@@ -229,11 +220,7 @@ export default function RewardBoostItem({
     >
       <MaxLevelItemInfo
         icon="bolt"
-        title={
-          SELECTED_LANGUAGE === 'kr'
-            ? 'XP동영상 보상 증가 - Level 10'
-            : 'XP Video Reward Boost - Level 10'
-        }
+        title="XP Video Reward Boost - Level 10"
         description={maxLevelItemDescriptionLabel}
       />
     </ItemPanel>

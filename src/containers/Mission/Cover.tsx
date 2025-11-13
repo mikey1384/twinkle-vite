@@ -4,8 +4,8 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import ProfilePic from '~/components/ProfilePic';import { useRoleColor } from '~/theme/useRoleColor';
+import ProfilePic from '~/components/ProfilePic';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
 const completedLabel = 'Completed';
@@ -87,13 +87,6 @@ export default function Cover({
   }, [missionObj, missionIds]);
 
   const completedStatusLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          {missionIds.length} 미션 중 {numComplete} 완료
-        </>
-      );
-    }
     return (
       <>
         Completed {numComplete} out of {missionIds.length} mission

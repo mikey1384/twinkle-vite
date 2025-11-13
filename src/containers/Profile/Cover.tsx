@@ -211,7 +211,7 @@ export default function Cover({
               {!colorSelectorShown && (
                 <Button
                   style={{ marginBottom: '-1rem', marginRight: '-1rem' }}
-                  variant="soft"
+                  variant="solid"
                   tone="raised"
                   onClick={() => setColorSelectorShown(true)}
                 >

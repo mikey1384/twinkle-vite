@@ -2,7 +2,6 @@ import React, { memo, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 
 function GameOverMessage({
@@ -31,29 +30,8 @@ function GameOverMessage({
 
   const isVictorious = useMemo(() => myId === winnerId, [myId, winnerId]);
   const gameDisplayEn = gameType === 'omok' ? 'omok' : 'chess';
-  const gameDisplayKr = gameType === 'omok' ? '오목' : '체스';
 
   const failedToMakeMoveInTimeLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return isVictorious ? (
-        <div style={{ textAlign: 'center' }}>
-          <p>
-            {opponentName}님이 제한시간 안에 {gameDisplayKr}에서 회신하지
-            못했습니다...
-          </p>
-          <p style={{ fontWeight: 'bold' }}>{gameDisplayKr} 승리!</p>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center' }}>
-          <p>
-            회원님은 제한시간 안에 {gameDisplayKr}에서 회신하지 못했습니다...
-          </p>
-          <p>
-            {opponentName}님이 {gameDisplayKr}에서 승리했습니다
-          </p>
-        </div>
-      );
-    }
     return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
         <p>
@@ -69,26 +47,13 @@ function GameOverMessage({
         </p>
       </div>
     );
-  }, [gameDisplayEn, gameDisplayKr, isVictorious, opponentName]);
+  }, [gameDisplayEn, isVictorious, opponentName]);
 
   // Omok-specific: detect connect-five victory when message contains omokState.winnerId
   const omokConnectFiveLabel = useMemo(() => {
     if (gameType !== 'omok') return null;
     const isFiveWin = Boolean(omokState?.winnerId);
     if (!isFiveWin) return null;
-    if (SELECTED_LANGUAGE === 'kr') {
-      return isVictorious ? (
-        <div style={{ textAlign: 'center' }}>
-          <p>五目!</p>
-          <p style={{ fontWeight: 'bold' }}>회원님이 승리했습니다</p>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center' }}>
-          <p>五目...</p>
-          <p>{opponentName}님이 승리했습니다</p>
-        </div>
-      );
-    }
     return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
         <p>五目!</p>
@@ -103,21 +68,6 @@ function GameOverMessage({
   }, [gameType, isVictorious, omokState?.winnerId, opponentName]);
 
   const resignLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return isVictorious ? (
-        <div style={{ textAlign: 'center' }}>
-          <p>
-            {opponentName}님이 {gameDisplayKr}에서 기권했습니다
-          </p>
-          <p style={{ fontWeight: 'bold' }}>승리!</p>
-        </div>
-      ) : (
-        <div style={{ textAlign: 'center' }}>
-          <p>회원님은 {gameDisplayKr}에서 기권하셨습니다...</p>
-          <p>{opponentName}님이 승리했습니다</p>
-        </div>
-      );
-    }
     return isVictorious ? (
       <div style={{ textAlign: 'center' }}>
         <p>
@@ -131,7 +81,7 @@ function GameOverMessage({
         <p>{opponentName} wins</p>
       </div>
     );
-  }, [gameDisplayEn, gameDisplayKr, isVictorious, opponentName]);
+  }, [gameDisplayEn, isVictorious, opponentName]);
 
   return (
     <ErrorBoundary componentPath="GameOverMessage">
@@ -162,15 +112,11 @@ function GameOverMessage({
         >
           {isDraw ? (
             <div style={{ textAlign: 'center' }}>
-              {SELECTED_LANGUAGE === 'kr'
-                ? `${gameDisplayKr} 게임이 무승부로 종료되었습니다`
-                : `The ${gameDisplayEn} match ended in a draw`}
+              {`The ${gameDisplayEn} match ended in a draw`}
             </div>
           ) : isAbort ? (
             <div style={{ textAlign: 'center' }}>
-              {SELECTED_LANGUAGE === 'kr'
-                ? `${gameDisplayKr} 게임이 취소되었습니다`
-                : `The ${gameDisplayEn} match was aborted`}
+              {`The ${gameDisplayEn} match was aborted`}
             </div>
           ) : omokConnectFiveLabel ? (
             omokConnectFiveLabel

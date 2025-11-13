@@ -90,10 +90,6 @@ export default function RecommendationStatus({
     myRecommendation?.rewardDisabled
   ]);
 
-  const andLabel = useMemo(() => {
-    return ' and';
-  }, [recommendationsByUsertypeExceptMe.length]);
-
   const rewardableRecommendationColor = useMemo(
     () => getRewardableColor(),
     [getRewardableColor]
@@ -163,9 +159,7 @@ export default function RecommendationStatus({
         {mostRecentRecommenderOtherThanMe && (
           <>
             {myRecommendation &&
-              (recommendationsByUsertypeExceptMe.length > 1
-                ? ', '
-                : `${andLabel} `)}
+              (recommendationsByUsertypeExceptMe.length > 1 ? ', ' : ' and ')}
             <UsernameText
               color={isRewardable ? 'black' : 'darkBlueGray'}
               user={{
@@ -177,7 +171,7 @@ export default function RecommendationStatus({
         )}
         {recommendationsByUsertypeExceptMe.length === 2 && (
           <>
-            {andLabel}{' '}
+            and{' '}
             <UsernameText
               color={isRewardable ? 'black' : 'darkBlueGray'}
               user={{
@@ -189,7 +183,7 @@ export default function RecommendationStatus({
         )}
         {recommendationsByUsertypeExceptMe.length > 2 && (
           <>
-            {andLabel}{' '}
+            and{' '}
             <a
               style={{
                 cursor: 'pointer',

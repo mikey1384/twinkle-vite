@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useChatContext, useAppContext } from '~/contexts';
-import UserListModal from '~/components/Modals/UserListModal';import { useRoleColor } from '~/theme/useRoleColor';
+import UserListModal from '~/components/Modals/UserListModal';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const membersLabel = 'Members';
 
@@ -75,15 +75,9 @@ export default function ChannelDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alreadyJoined, invitePath]);
   const invitationLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${channelName} 대화방에 초대합니다`;
-    }
     return `Invitation to ${channelName}`;
   }, [channelName]);
   const andMoreLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `외 ${more}명`;
-    }
     return `and ${more} more`;
   }, [more]);
 

@@ -38,7 +38,6 @@ export const S3URL = `https://${
 }.s3.amazonaws.com`;
 export const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
 export const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
-export const SELECTED_LANGUAGE = import.meta.env.VITE_SELECTED_LANGUAGE || 'en';
 export const mb = 1000;
 export const mobileFullTextRevealShowDuration = 2000;
 export const returnMissionThumb = (missionType: string): string =>

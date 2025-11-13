@@ -4,9 +4,10 @@ import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { karmaPointTable } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';import { homePanelClass } from '~/theme/homePanels';
+import { useKeyContext } from '~/contexts';
+import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const freeLabel = 'Free';
@@ -83,22 +84,9 @@ export default function ItemPanel({
     return !notUnlocked && isLeveled && (currentLvl || 0) < (maxLvl || 0);
   }, [currentLvl, isLeveled, maxLvl, notUnlocked]);
   const requirementLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${displayedRequiredKarmaPoints}KP 필요`;
-    }
     return `Requires ${displayedRequiredKarmaPoints} KP`;
   }, [displayedRequiredKarmaPoints]);
   const requirementDescriptionLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          본 아이템을 {notUpgraded ? '업그레이드' : '잠금 해제'}하시려면
-          카마포인트 <b>{displayedRequiredKarmaPoints}점</b>이 필요합니다.
-          회원님의 카마포인트는 현재{' '}
-          <b>{addCommasToNumber(karmaPoints || 0)}점</b>입니다
-        </>
-      );
-    }
     return (
       <>
         You need <b>{displayedRequiredKarmaPoints} karma points</b> to{' '}

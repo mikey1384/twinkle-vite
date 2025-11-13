@@ -2,26 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import KarmaExplanationModal from './KarmaExplanationModal';
 import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 import { useRoleColor } from '~/theme/useRoleColor';
-
-function blendWithWhite(color: string, weight: number) {
-  const match = color
-    .replace(/\s+/g, '')
-    .match(/rgba?\(([-\d.]+),([-\d.]+),([-\d.]+)(?:,([-\d.]+))?\)/i);
-  if (!match) return '#f7f9ff';
-  const [, r, g, b, a] = match;
-  const w = Math.max(0, Math.min(1, weight));
-  const mix = (channel: number) => Math.round(channel * (1 - w) + 255 * w);
-  const alpha = a ? Number(a) : 1;
-  return `rgba(${mix(Number(r))}, ${mix(Number(g))}, ${mix(
-    Number(b)
-  )}, ${alpha.toFixed(3)})`;
-}
 
 export default function KarmaStatus({
   karmaPoints,
@@ -98,9 +83,7 @@ export default function KarmaStatus({
   }, [karmaPoints]);
 
   const youHaveKarmaPointsText = useMemo(() => {
-    return SELECTED_LANGUAGE === 'kr'
-      ? `회원님의 카마포인트는 ${displayedKarmaPoints}점입니다`
-      : `You have ${displayedKarmaPoints} Karma Points`;
+    return `You have ${displayedKarmaPoints} Karma Points`;
   }, [displayedKarmaPoints]);
 
   if (!userId) return null;

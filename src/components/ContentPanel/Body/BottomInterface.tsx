@@ -8,7 +8,6 @@ import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { mobileMaxWidth, tabletMaxWidth, desktopMinWidth } from '~/constants/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
@@ -294,9 +293,6 @@ export default function BottomInterface({
     return !!editMenuItems?.length;
   }, [editMenuItems?.length]);
   const viewsLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>조회수 {addCommasToNumber(views)}회</>;
-    }
     return (
       <>
         {addCommasToNumber(views)} view

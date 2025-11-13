@@ -4,7 +4,6 @@ import Button from '~/components/Button';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { parseChannelPath } from '~/helpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 const alreadyJoinedLabel = 'Already Joined';
 
@@ -120,9 +119,6 @@ export default function Invitation({
   }, [invitePath]);
 
   const acceptGroupInvitationLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${sender.username}님의 초대 수락`;
-    }
     return `Accept ${sender.username}'s Invitation`;
   }, [sender?.username]);
 

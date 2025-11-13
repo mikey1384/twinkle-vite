@@ -1,7 +1,6 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 export default function BoardSpoiler({
   revealed,
@@ -50,9 +49,7 @@ export default function BoardSpoiler({
     }
   `;
   const gameDisplayEn = gameType === 'omok' ? 'omok' : 'chess';
-  const gameDisplayKr = gameType === 'omok' ? '오목' : '체스';
   const opponentLabelEn = opponentName || 'opponent';
-  const opponentLabelKr = opponentName ? `${opponentName}님` : '상대방';
   return (
     <div style={style}>
       <div
@@ -63,29 +60,15 @@ export default function BoardSpoiler({
         <Icon icon="eye-slash" />
         <div>
           <p>
-            {SELECTED_LANGUAGE === 'kr'
-              ? opponentName
-                ? `${opponentName}님이 ${gameDisplayKr}에서 새 수를 두었습니다.`
-                : `${gameDisplayKr}에서 새로운 수가 있습니다.`
-              : opponentName
+            {opponentName
               ? `${opponentName} made a new ${gameDisplayEn} move.`
               : `New ${gameDisplayEn} move available.`}
           </p>
-          <p>{SELECTED_LANGUAGE === 'kr' ? '탭하여 확인하세요.' : 'Tap to view it.'}</p>
+          <p>Tap to view it.</p>
           <p>
-            {SELECTED_LANGUAGE === 'kr' ? (
-              <>
-                {`${opponentLabelKr}의 수를 확인한 후, 회원님의 제한시간 안에 `}
-                <b>반드시</b>
-                {` 자신의 수를 두셔야 합니다. 그렇지 않으면 패배합니다.`}
-              </>
-            ) : (
-              <>
-                {`After viewing ${opponentLabelEn}'s move, you `}
-                <b>must</b>
-                {' make your own move within your timer. Otherwise, you will lose.'}
-              </>
-            )}
+            {`After viewing ${opponentLabelEn}'s move, you `}
+            <b>must</b>
+            {' make your own move within your timer. Otherwise, you will lose.'}
           </p>
         </div>
       </div>

@@ -12,7 +12,6 @@ import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
   returnMaxUploadSize,
-  SELECTED_LANGUAGE,
   MOD_LEVEL
 } from '~/constants/defaultValues';
 const fromTwinkleWebsiteLabel = 'from Twinkle Website';
@@ -43,12 +42,7 @@ export default function StartScreen({
     if (twinkleXP >= FILE_UPLOAD_XP_REQUIREMENT) return false;
     return true;
   }, [level, twinkleXP]);
-  const fromYourLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{deviceIsMobile ? '기기' : '컴퓨터'}에서 가져오기</>;
-    }
-    return <>from Your {deviceIsMobile ? 'Device' : 'Computer'}</>;
-  }, []);
+  const fromYourLabel = <>from Your {deviceIsMobile ? 'Device' : 'Computer'}</>;
 
   return (
     <ErrorBoundary

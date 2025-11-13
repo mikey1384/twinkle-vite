@@ -3,11 +3,8 @@ import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { useAppContext, useKeyContext } from '~/contexts';
-import {
-  translateMBToGB,
-  translateMBToGBWithoutSpace
-} from '~/helpers/stringHelpers';
-import { maxSizes, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { translateMBToGB } from '~/helpers/stringHelpers';
+import { maxSizes } from '~/constants/defaultValues';
 const expandMaximumUploadSizeLabel = 'Expand maximum upload file size';
 const maximumUploadSizeLabel = 'Maximum Upload File Size';
 
@@ -24,23 +21,9 @@ const item = {
   ],
   description: maxSizes.map((currentSize, index) => {
     if (index === 0) {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return `본 아이템을 잠금 해제 하시면 파일 업로드 용량 최대치를 ${translateMBToGBWithoutSpace(
-          maxSizes[1]
-        )}까지 확장하실 수 있습니다 (현재 ${translateMBToGBWithoutSpace(
-          currentSize
-        )})`;
-      }
       return `Unlock this item to expand your maximum upload file size to ${translateMBToGB(
         maxSizes[1]
       )} (from ${translateMBToGB(currentSize)})`;
-    }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `본 아이템을 업그레이드 하시면 파일 업로드 용량 최대치를 ${translateMBToGBWithoutSpace(
-        maxSizes[index + 1]
-      )}까지 확장하실 수 있습니다 (현재 ${translateMBToGBWithoutSpace(
-        currentSize
-      )})`;
     }
     return `Upgrade this item to expand your maximum upload file size to ${translateMBToGB(
       maxSizes[index + 1]
@@ -48,14 +31,9 @@ const item = {
   })
 };
 
-const youCanNowUploadLabel =
-  SELECTED_LANGUAGE === 'kr'
-    ? `이제 최대 ${translateMBToGBWithoutSpace(
-        maxSizes[maxSizes.length - 1]
-      )}까지 업로드 가능합니다`
-    : `You can now upload files up to ${translateMBToGB(
-        maxSizes[maxSizes.length - 1]
-      )} in size`;
+const youCanNowUploadLabel = `You can now upload files up to ${translateMBToGB(
+  maxSizes[maxSizes.length - 1]
+)} in size`;
 
 export default function FileSizeItem({
   loading,
@@ -76,7 +54,7 @@ export default function FileSizeItem({
       ({
         ['--home-panel-gap' as const]: '2rem',
         ...style
-      }) as React.CSSProperties,
+      } as React.CSSProperties),
     [style]
   );
   return (

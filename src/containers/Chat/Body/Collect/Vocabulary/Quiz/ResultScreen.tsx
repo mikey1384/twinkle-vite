@@ -37,7 +37,7 @@ export default function ResultScreen({
     maxAttempts: number;
   } | null;
 }) {
-  const { isPassed, numCorrect, total, grades } = result;
+  const { isPassed, grades } = result;
   // Theme colors for each letter grade
   const colorS = useKeyContext((v) => v.theme.grammarGameScoreS.color);
   const colorA = useKeyContext((v) => v.theme.grammarGameScoreA.color);
@@ -70,8 +70,6 @@ export default function ResultScreen({
     const key = counts[g] != null ? g : 'F';
     counts[key]++;
   }
-  const entries = Object.entries(counts).filter(([, n]) => n > 0);
-
   // Compute total score and perfect
   const baseQuestionPoints = grades.reduce(
     (acc, g) => acc + (gradePoints[g] || 0),
@@ -80,9 +78,6 @@ export default function ResultScreen({
   const questionPoints = quiz ? quiz.questionPoints : baseQuestionPoints;
   const bonusPoints = quiz ? quiz.bonusPoints || 0 : 0;
   const shownTotal = questionPoints + bonusPoints;
-  const isPerfect =
-    quiz?.allPerfect ?? (grades.length === 10 && baseQuestionPoints === 10);
-
   const equation = (() => {
     const parts: string[] = [];
     const sCount = counts.S || 0;

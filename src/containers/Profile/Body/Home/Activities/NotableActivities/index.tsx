@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionPanel from '~/components/SectionPanel';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';import ContentPreview from '~/components/ContentPreview';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import ContentPreview from '~/components/ContentPreview';
 import SecretComment from '~/components/SecretComment';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import {
@@ -9,7 +10,6 @@ import {
   useProfileContext,
   useContentContext
 } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useContentState } from '~/helpers/hooks';
 import { css } from '@emotion/css';
@@ -42,9 +42,6 @@ export default function NotableActivities({
     (v) => v.actions.onLoadMoreNotables
   );
   const hasntEngagedLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${username}님은 아직 여기에 보일 만한 활동기록이 없습니다`;
-    }
     return `${username} hasn't engaged in an activity worth showing here, yet`;
   }, [username]);
 

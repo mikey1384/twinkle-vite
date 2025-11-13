@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { createPortal } from 'react-dom';
 
 export default function Tooltip({
-  myId,
+  myId: _myId,
   parentContext,
   onMouseEnter,
   onMouseLeave,
@@ -35,37 +34,7 @@ export default function Tooltip({
 
   const peopleWhoReactedText = useMemo(() => {
     if (displayedReactedUsers.length === 2 && otherReactedUserNumber === 0) {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return `${displayedReactedUsers[0].username}${
-          displayedReactedUsers[0].id === myId ? '' : '님'
-        }과 ${displayedReactedUsers[1].username}${
-          displayedReactedUsers[1].id === myId ? '' : '님'
-        }`;
-      }
       return `${displayedReactedUsers[0].username} and ${displayedReactedUsers[1].username}`;
-    }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          {displayedReactedUsers
-            .map((user) => `${user.username}${user.id === myId ? '' : '님'}`)
-            .join(', ')}
-          {otherReactedUserNumber > 0 ? (
-            <>
-              {', '}
-              <a
-                style={{
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}
-                onClick={onShowAllReactedUsers}
-              >
-                외 {otherReactedUserNumber}명
-              </a>
-            </>
-          ) : null}
-        </>
-      );
     }
     return (
       <>
@@ -89,7 +58,6 @@ export default function Tooltip({
     );
   }, [
     displayedReactedUsers,
-    myId,
     onShowAllReactedUsers,
     otherReactedUserNumber
   ]);

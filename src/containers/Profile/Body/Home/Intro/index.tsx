@@ -23,7 +23,6 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import {
   addEmoji,
   renderText,
@@ -91,14 +90,6 @@ export default function Intro({
   );
   const usernameColor = useMemo(() => Color[selectedTheme](), [selectedTheme]);
   const defaultMessage = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <p>
-          <b style={{ color: usernameColor }}>{username}</b>님의 프로필
-          페이지입니다
-        </p>
-      );
-    }
     return (
       <p>
         Welcome to <b style={{ color: usernameColor }}>{username}</b>

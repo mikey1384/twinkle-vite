@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo } from 'react';
 import CurrentMonth from './CurrentMonth';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import MonthItem from './MonthItem';import moment from 'moment';
+import MonthItem from './MonthItem';
+import moment from 'moment';
 import Loading from '~/components/Loading';
 import { homePanelClass } from '~/theme/homePanels';
 import { useAppContext, useHomeContext, useNotiContext } from '~/contexts';
-import { SELECTED_LANGUAGE, months } from '~/constants/defaultValues';
+import { months } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
@@ -88,7 +89,7 @@ export default function YearItem({
     >
       <p>
         {year}
-        {SELECTED_LANGUAGE === 'kr' ? '년' : ''} {leaderboardLabel}
+        {leaderboardLabel}
       </p>
       {year === currentYear || leaderboardsObj?.[year]?.loaded ? (
         <div style={{ marginTop: '2rem', position: 'relative' }}>
