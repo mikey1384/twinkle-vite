@@ -300,37 +300,84 @@ function Markdown({
                   );
                 }
                 case 'p': {
-                  const hasMediaOrBlockChild = containsDescendantTagNames(
-                    domNode,
-                    ['img', 'table', 'pre', 'div', 'iframe']
-                  );
-                  if (!hasMediaOrBlockChild) {
+                  const parentTagName = getParentTagName(domNode);
+                  const isWithinList = parentTagName === 'li';
+                  const paragraphStyle = {
+                    width: '100%',
+                    marginInlineStart: '0px',
+                    marginInlineEnd: '0px'
+                  };
+                  const baseChildNodes = domNode.children || [];
+                  const childNodes = isWithinList
+                    ? stripLeadingBreakNodes(baseChildNodes)
+                    : baseChildNodes;
+                  const breakIndex =
+                    parentTagName === 'li'
+                      ? childNodes.findIndex(
+                          (child: any) =>
+                            child?.type === 'tag' && child.name === 'br'
+                        )
+                      : -1;
+                  const shouldSplit =
+                    isWithinList &&
+                    breakIndex > -1 &&
+                    hasMeaningfulContent(childNodes.slice(0, breakIndex)) &&
+                    hasMeaningfulContent(childNodes.slice(breakIndex + 1));
+
+                  const renderSegment = (
+                    nodes: any[],
+                    keySuffix: string | number
+                  ) => {
+                    const normalizedNodes =
+                      (isWithinList
+                        ? stripLeadingBreakNodes(nodes)
+                        : nodes) || [];
+                    if (!normalizedNodes.length) {
+                      return null;
+                    }
+                    const hasMediaOrBlockChild = containsDescendantTagNames(
+                      { children: normalizedNodes },
+                      ['img', 'table', 'pre', 'div', 'iframe']
+                    );
+                    if (!hasMediaOrBlockChild) {
+                      return (
+                        <p
+                          key={`${key}-segment-${keySuffix}`}
+                          style={{
+                            ...paragraphStyle
+                          }}
+                        >
+                          {convertToJSX(normalizedNodes)}
+                        </p>
+                      );
+                    }
                     return (
-                      <p
+                      <div
+                        key={`${key}-segment-${keySuffix}`}
                         style={{
                           width: '100%',
                           marginInlineStart: '0px',
                           marginInlineEnd: '0px',
-                          marginBlockStart: '0px',
-                          marginBlockEnd: '0px'
+                          display: 'block'
                         }}
                       >
-                        {convertToJSX(domNode.children || [])}
-                      </p>
+                        {convertToJSX(normalizedNodes)}
+                      </div>
+                    );
+                  };
+
+                  if (shouldSplit) {
+                    const leadingChildren = childNodes.slice(0, breakIndex);
+                    const trailingChildren = childNodes.slice(breakIndex + 1);
+                    return (
+                      <Fragment key={`${key}-split`}>
+                        {renderSegment(leadingChildren, 'lead')}
+                        {renderSegment(trailingChildren, 'body')}
+                      </Fragment>
                     );
                   }
-                  return (
-                    <div
-                      style={{
-                        width: '100%',
-                        marginInlineStart: '0px',
-                        marginInlineEnd: '0px',
-                        display: 'block'
-                      }}
-                    >
-                      {convertToJSX(domNode.children || [])}
-                    </div>
-                  );
+
+                  return renderSegment(childNodes, 'single');
                 }
                 case 'strong': {
                   return (
@@ -342,6 +389,16 @@ function Markdown({
                     >
                       {convertToJSX(domNode.children || [])}
                     </span>
+                  );
+                }
+                case 'hr': {
+                  return (
+                    <hr
+                      className={css`
+                        margin-top: 1.25em;
+                        margin-bottom: 1.25em;
+                      `}
+                    />
                   );
                 }
                 case 'table': {
@@ -422,6 +479,16 @@ function Markdown({
                   }
                   return null;
                 }
+                case 'hr': {
+                  return (
+                    <hr
+                      className={css`
+                        margin-top: 1.25em;
+                        margin-bottom: 1.25em;
+                      `}
+                    />
+                  );
+                }
 
                 default:
                   break;
@@ -443,15 +510,16 @@ function Markdown({
     }[]
   ): React.ReactNode {
     return nodes.map((node: any, index) => {
+      const parentTagName = getParentTagName(node);
       if (node.type === 'text') {
         if (
           node.data.includes('\n') &&
-          node.parent?.name !== 'tr' &&
-          node.parent?.name !== 'th' &&
-          node.parent?.name !== 'table' &&
-          node.parent?.name !== 'thead' &&
-          node.parent?.name !== 'tbody' &&
-          node.parent?.name !== 'li'
+          parentTagName !== 'tr' &&
+          parentTagName !== 'th' &&
+          parentTagName !== 'table' &&
+          parentTagName !== 'thead' &&
+          parentTagName !== 'tbody' &&
+          parentTagName !== 'li'
         ) {
           if (isAIMessage) return node.data;
           const parts = node.data.split('\n');
@@ -658,6 +726,99 @@ function Markdown({
               </ErrorBoundary>
             );
           }
+          case 'p': {
+            const { style, ...restProps } = commonProps;
+            const parentTagName = getParentTagName(node);
+            const isWithinList = parentTagName === 'li';
+            const sharedStyle = {
+              width: '100%',
+              marginInlineStart: '0px',
+              marginInlineEnd: '0px'
+            };
+            const baseChildNodes = node.children || [];
+            const childNodes = isWithinList
+              ? stripLeadingBreakNodes(baseChildNodes)
+              : baseChildNodes;
+            const breakIndex =
+              parentTagName === 'li'
+                ? childNodes.findIndex(
+                    (child: any) => child?.type === 'tag' && child.name === 'br'
+                  )
+                : -1;
+            const shouldSplit =
+              isWithinList &&
+              breakIndex > -1 &&
+              hasMeaningfulContent(childNodes.slice(0, breakIndex)) &&
+              hasMeaningfulContent(childNodes.slice(breakIndex + 1));
+
+            const renderSegment = (
+              nodes: any[],
+              keySuffix: string,
+              pathSuffix: string
+            ) => {
+              const normalizedNodes =
+                (isWithinList
+                  ? stripLeadingBreakNodes(nodes)
+                  : nodes) || [];
+              if (!normalizedNodes.length) {
+                return null;
+              }
+              const hasMediaOrBlockChild = containsDescendantTagNames(
+                { children: normalizedNodes },
+                ['img', 'table', 'pre', 'div', 'iframe']
+              );
+              if (!hasMediaOrBlockChild) {
+                return (
+                  <ErrorBoundary
+                    componentPath={`${componentPath}/convertToJSX/p${pathSuffix}`}
+                    key={`${key}-${keySuffix}`}
+                  >
+                    <p
+                      {...restProps}
+                      style={{
+                        ...sharedStyle,
+                        ...style
+                      }}
+                      key={`${key}-${keySuffix}`}
+                    >
+                      {convertToJSX(normalizedNodes)}
+                    </p>
+                  </ErrorBoundary>
+                );
+              }
+              return (
+                <ErrorBoundary
+                  componentPath={`${componentPath}/convertToJSX/p/Block${pathSuffix}`}
+                    key={`${key}-${keySuffix}`}
+                  >
+                    <div
+                      {...restProps}
+                      style={{
+                        ...sharedStyle,
+                        display: 'block',
+                        ...style
+                      }}
+                      key={`${key}-${keySuffix}`}
+                    >
+                      {convertToJSX(normalizedNodes)}
+                    </div>
+                  </ErrorBoundary>
+                );
+              };
+
+            if (shouldSplit) {
+              const leadingChildren = childNodes.slice(0, breakIndex);
+              const trailingChildren = childNodes.slice(breakIndex + 1);
+              return (
+                <Fragment key={`${key}-split`}>
+                  {renderSegment(leadingChildren, 'lead', '/Lead')}
+                  {renderSegment(trailingChildren, 'body', '/Body')}
+                </Fragment>
+              );
+            }
+
+            return renderSegment(childNodes, 'single', '');
+          }
           case 'strong': {
             return (
               <ErrorBoundary
@@ -673,6 +834,22 @@ function Markdown({
                     {children}
                   </em>
                 )}
+              </ErrorBoundary>
+            );
+          }
+          case 'hr': {
+            return (
+              <ErrorBoundary
+                componentPath={`${componentPath}/convertToJSX/hr`}
+                key={key}
+              >
+                <hr
+                  {...commonProps}
+                  className={css`
+                    margin-top: 1.25em;
+                    margin-bottom: 1.25em;
+                  `}
+                />
               </ErrorBoundary>
             );
           }
@@ -753,6 +930,49 @@ function Markdown({
     });
   }
 
+  function getParentTagName(node?: { parent?: any }) {
+    const parent = node?.parent as { name?: string } | undefined;
+    return typeof parent?.name === 'string' ? parent.name : undefined;
+  }
+
+  function stripLeadingBreakNodes(nodes?: any[]) {
+    if (!Array.isArray(nodes)) {
+      return [];
+    }
+    let startIndex = 0;
+    while (startIndex < nodes.length) {
+      const child = nodes[startIndex];
+      if (
+        (child?.type === 'tag' && child.name === 'br') ||
+        (child?.type === 'text' && !child.data?.trim())
+      ) {
+        startIndex++;
+        continue;
+      }
+      break;
+    }
+    return nodes.slice(startIndex);
+  }
+
+  function hasMeaningfulContent(nodes?: any[]) {
+    const normalizedNodes = stripLeadingBreakNodes(nodes);
+    if (!normalizedNodes.length) {
+      return false;
+    }
+    return normalizedNodes.some((child: any) => {
+      if (child?.type === 'text') {
+        return !!child.data?.trim();
+      }
+      if (child?.type === 'tag') {
+        if (child.name === 'br') {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    });
+  }
+
   function handleMentions(text: string) {
     if (!text) {
       return text;
@@ -825,9 +1045,56 @@ function Markdown({
   }
 
   function applyLineBreaks(value: string) {
-    return value && value.includes('\n')
-      ? value.replace(/\n/g, '<br />')
-      : value;
+    if (!value || !value.includes('\n')) {
+      return value;
+    }
+    const lowerValue = value.toLowerCase();
+    return value.replace(/\n/g, (_, offset) => {
+      if (isWithinPreservedTag(lowerValue, offset, ['pre', 'code'])) {
+        return '\n';
+      }
+      const prev = findPreviousNonWhitespace(value, offset - 1);
+      const next = findNextNonWhitespace(value, offset + 1);
+      const isBetweenTags = prev === '>' && next === '<';
+      return isBetweenTags ? '' : '<br />';
+    });
+  }
+
+  function findPreviousNonWhitespace(str: string, start: number) {
+    for (let i = start; i >= 0; i--) {
+      const char = str[i];
+      if (!char) continue;
+      if (char.trim()) {
+        return char;
+      }
+    }
+    return '';
+  }
+
+  function findNextNonWhitespace(str: string, start: number) {
+    for (let i = start; i < str.length; i++) {
+      const char = str[i];
+      if (!char) continue;
+      if (char.trim()) {
+        return char;
+      }
+    }
+    return '';
+  }
+
+  function isWithinPreservedTag(
+    lowerHtml: string,
+    index: number,
+    tagNames: string[]
+  ) {
+    return tagNames.some((tag) => {
+      const openTagIndex = lowerHtml.lastIndexOf(`<${tag}`, index);
+      if (openTagIndex === -1) {
+        return false;
+      }
+      const closeTagIndex = lowerHtml.lastIndexOf(`</${tag}>`, index);
+      return openTagIndex > closeTagIndex;
+    });
   }
 
   function keyToCamelCase(obj: { [key: string]: string } | null) {

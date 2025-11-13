@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 export default function DrawOffer({
   onClick,
@@ -16,18 +15,12 @@ export default function DrawOffer({
 }) {
   const displayedUserLabel = useMemo(() => {
     if (userId === myId) {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return '회원';
-      }
       return 'You';
     }
     return username;
   }, [myId, userId, username]);
 
   const offeredDrawLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${displayedUserLabel}님이 무승부를 제안했습니다`;
-    }
     return `${displayedUserLabel} offered a draw`;
   }, [displayedUserLabel]);
 

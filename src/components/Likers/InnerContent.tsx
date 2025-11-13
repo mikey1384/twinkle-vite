@@ -1,7 +1,6 @@
 import React, { useMemo, memo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 function InnerContent({
@@ -49,24 +48,6 @@ function InnerContent({
         const firstOtherLike = otherLikes[0];
         if (!firstOtherLike) return null;
 
-        if (SELECTED_LANGUAGE === 'kr') {
-          return (
-            <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/KR">
-              <div key={`you-and-one-total-like-kr-${totalLikes}`}>
-                회원님과{' '}
-                <UsernameText
-                  wordBreakEnabled={wordBreakEnabled}
-                  color={linkColor}
-                  user={{
-                    id: firstOtherLike.id,
-                    username: firstOtherLike.username
-                  }}
-                />
-                님이 이 게시물을 좋아합니다.
-              </div>
-            </ErrorBoundary>
-          );
-        }
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/YouAndOneTotalLike/EN">
             <div key={`you-and-one-total-like-en-${totalLikes}`}>
@@ -84,22 +65,6 @@ function InnerContent({
           </ErrorBoundary>
         );
       } else {
-        if (SELECTED_LANGUAGE === 'kr') {
-          return (
-            <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/KR">
-              <div key={`you-and-multi-total-likes-kr-${totalLikes}`}>
-                회원님과{' '}
-                <a
-                  style={{ cursor: 'pointer', fontWeight: 'bold' }}
-                  onClick={() => onLinkClick()}
-                >
-                  {totalLikes}
-                </a>
-                명의 회원님들이 이 게시물을 좋아합니다
-              </div>
-            </ErrorBoundary>
-          );
-        }
         return (
           <ErrorBoundary componentPath="Likers/InnerContent/YouAndMultiTotalLikes/EN">
             <div key={`you-and-multi-total-likes-en-${totalLikes}`}>
@@ -120,13 +85,6 @@ function InnerContent({
         );
       }
     }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <ErrorBoundary componentPath="Likers/InnerContent/YouLike/KR">
-          <div key="you-like-kr">회원님이 이 게시물을 좋아합니다.</div>
-        </ErrorBoundary>
-      );
-    }
     return (
       <ErrorBoundary componentPath="Likers/InnerContent/YouLike/EN">
         <div key={`you-like-en-${totalLikes}`}>
@@ -139,20 +97,6 @@ function InnerContent({
       const firstLike = likes[0];
       if (!firstLike) return null;
 
-      if (SELECTED_LANGUAGE === 'kr') {
-        return (
-          <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/KR">
-            <div key={`one-total-like-kr-${totalLikes}`}>
-              <UsernameText
-                wordBreakEnabled={wordBreakEnabled}
-                color={linkColor}
-                user={firstLike}
-              />
-              님이 이 게시물을 좋아합니다.
-            </div>
-          </ErrorBoundary>
-        );
-      }
       return (
         <ErrorBoundary componentPath="Likers/InnerContent/OneTotalLike/EN">
           <div key={`one-total-like-en-${totalLikes}`}>
@@ -166,25 +110,6 @@ function InnerContent({
         </ErrorBoundary>
       );
     } else {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return (
-          <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/KR">
-            <div key={`multi-total-likes-kr-${totalLikes}`}>
-            <a
-              style={{
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                color: linkColor
-              }}
-              onClick={() => onLinkClick()}
-            >
-                {totalLikes}
-              </a>
-              명의 회원님들이 이 게시물을 좋아합니다.
-            </div>
-          </ErrorBoundary>
-        );
-      }
       return (
         <ErrorBoundary componentPath="Likers/InnerContent/MultiTotalLikes/EN">
           <div key={`multi-total-likes-en-${totalLikes}`}>

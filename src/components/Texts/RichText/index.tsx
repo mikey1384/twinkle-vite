@@ -31,6 +31,9 @@ const RichTextCss = css`
   p {
     margin: 0;
   }
+  p + p {
+    margin-top: 1em;
+  }
   img {
     width: 100%;
     max-height: 400px;
@@ -42,18 +45,33 @@ const RichTextCss = css`
     overflow-wrap: break-word;
     word-break: break-word;
     width: 100%;
+    margin: 1em 0;
+  }
+  [data-codeblock] {
+    width: 100%;
+    margin: 1em 0;
   }
   ul {
     margin: 0;
     padding: 0;
     list-style-type: disc;
     list-style-position: inside;
+    > li {
+      margin-left: 3.5ch;
+      & + li {
+        margin-top: 0.9em;
+      }
+    }
   }
   ul ul {
     list-style-type: circle;
   }
   ul ul ul {
     list-style-type: square;
+  }
+  p + ol,
+  p + ul {
+    margin-top: 1em;
   }
   ol {
     margin: 0;
@@ -62,7 +80,14 @@ const RichTextCss = css`
     list-style-position: outside;
     > li {
       margin-left: 3.5ch;
+      & + li {
+        margin-top: 0.9em;
+      }
     }
+  }
+  ol + p,
+  ul + p {
+    margin-top: 1em;
   }
 `;
 
@@ -336,7 +361,17 @@ function RichText({
           }
           li {
             > p {
+              margin: 0;
+            }
+            > p:first-of-type {
               display: inline;
+            }
+            > p:not(:first-of-type) {
+              display: block;
+              margin-top: 0.65em;
+            }
+            > p:not(:first-of-type) > br:first-child {
+              display: none;
             }
             ::marker {
               font-family: 'Roboto', 'Noto Sans';

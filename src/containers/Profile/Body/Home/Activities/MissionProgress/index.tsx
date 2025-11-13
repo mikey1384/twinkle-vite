@@ -2,8 +2,8 @@ import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import SectionPanel from '~/components/SectionPanel';
-import EmptyStateMessage from '~/components/EmptyStateMessage';import MissionItem from './MissionItem';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import EmptyStateMessage from '~/components/EmptyStateMessage';
+import MissionItem from './MissionItem';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 
@@ -33,15 +33,9 @@ export default function MissionProgress({
     (v) => v.requestHelpers.loadMissionProgress
   );
   const allMissionsCompleteLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${username}님은 모든 미션을 완료했습니다`;
-    }
     return `${username} has completed all available missions`;
   }, [username]);
   const noMissionsCompleteLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${username}님은 아직 어떤 미션도 완료하지 못했습니다`;
-    }
     return `${username} has not completed any missions yet`;
   }, [username]);
 

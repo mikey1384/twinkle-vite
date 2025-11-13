@@ -11,13 +11,13 @@ import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useInfiniteScroll } from '~/helpers/hooks';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import {
   useAppContext,
   useHomeContext,
   useNotiContext,
   useKeyContext
-} from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
 const hiThereLabel = 'Hi there!';
@@ -208,9 +208,6 @@ export default function Stories() {
   }, [loaded]);
 
   const beTheFirstLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `안녕하세요 ${username}님! 첫 번째 게시물을 올려보세요!`;
-    }
     return `Hello ${username}, be the first to post something`;
   }, [username]);
 

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 interface ChessTopInfo {
   type: 'chess';
@@ -83,16 +82,6 @@ export default function BoardWrapper({
     }
     if (timerData?.showAwaitingStatus === false) {
       return null;
-    }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          <span>회신 대기중</span>
-          {timerData?.awaitingOpponentName ? (
-            <span>{` (${timerData.awaitingOpponentName})`}</span>
-          ) : null}
-        </>
-      );
     }
     return (
       <>

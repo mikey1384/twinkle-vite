@@ -1,7 +1,6 @@
 import React, { useLayoutEffect, useMemo } from 'react';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/useRoleColor';
 import MissionStatusCard from '~/components/MissionStatusCard';
 
@@ -38,9 +37,6 @@ export default function StartScreen({
   }, []);
 
   const correctlyAnswerAllQuestionsLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${mission.numQuestions} 문제를 모두 맞추셔야 통과합니다`;
-    }
     return `Correctly answer all ${mission.numQuestions} questions`;
   }, [mission?.numQuestions]);
 

@@ -115,7 +115,7 @@ export default function FilterPanel({
 
   function handleClearEngine() {
     onSetFilters((prevFilters: any) => {
-      const { engine, ...rest } = prevFilters;
+      const { engine: _unusedEngine, ...rest } = prevFilters;
       return rest;
     });
   }

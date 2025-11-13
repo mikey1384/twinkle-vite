@@ -18,7 +18,6 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 
@@ -112,13 +111,6 @@ export default function LinkItem({
   }, [canDelete, canEdit, userIsUploader]);
 
   const uploadedLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          게시자: <UsernameText user={uploader} /> {`${timeSince(timeStamp)}`}
-        </>
-      );
-    }
     return (
       <>
         Uploaded {`${timeSince(timeStamp)} `}
@@ -128,19 +120,6 @@ export default function LinkItem({
   }, [timeStamp, uploader]);
 
   const likesLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          <span
-            style={{ cursor: 'pointer' }}
-            onClick={() => setUserListModalShown(true)}
-          >
-            좋아요 ({`${likes.length}`})
-          </span>
-          &nbsp;&nbsp;
-        </>
-      );
-    }
     return (
       <>
         <span
@@ -156,9 +135,6 @@ export default function LinkItem({
   }, [likes.length]);
 
   const commentsLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <span>댓글 ({numComments})</span>;
-    }
     return (
       <span>
         {numComments} comment

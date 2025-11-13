@@ -32,7 +32,7 @@ import {
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE, charLimit } from '~/constants/defaultValues';
+import { charLimit } from '~/constants/defaultValues';
 const commentLabel = 'Comment';
 const editLabel = 'Edit';
 const byLabel = 'By';
@@ -416,9 +416,7 @@ export default function SubjectPanel({
                   <Icon icon="comment-alt" />
                   <span style={{ marginLeft: '1rem' }}>
                     {commentLabel}
-                    {!expanded && SELECTED_LANGUAGE === 'en' && numComments > 1
-                      ? 's'
-                      : ''}
+                    {!expanded && numComments > 1 ? 's' : ''}
                     {!expanded &&
                     numComments &&
                     numComments > 0 &&

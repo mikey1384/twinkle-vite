@@ -9,10 +9,10 @@ import ConvertModal from './ConvertModal';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { User } from '~/types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/useRoleColor';
+import Icon from '~/components/Icon';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const accountTypeLabel = 'Account Type';
 const changeAccountTypeLabel = 'Change Account Type';
@@ -58,12 +58,7 @@ export default function Moderators({ canManage }: { canManage: boolean }) {
         : moderator
     );
   }, [moderators, searchQuery]);
-  const addLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{deviceIsMobile ? '' : '관리자 '}등록</>;
-    }
-    return <>Add{deviceIsMobile ? '' : ' Moderators'}</>;
-  }, []);
+  const addLabel = <>Add{deviceIsMobile ? '' : ' Moderators'}</>;
 
   return (
     <ErrorBoundary componentPath="Management/Main/Legacy/Moderators">

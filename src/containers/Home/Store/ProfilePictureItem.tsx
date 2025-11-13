@@ -3,7 +3,6 @@ import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 const profilePicturesLabel = 'Profile Pictures';
 const postPicturesOnYourProfilePageLabel =
@@ -37,24 +36,13 @@ export default function ProfilePictureItem({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const descriptionLabel = useMemo(() => {
     if (numPics > 0) {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return `본 아이템을 업그레이드 하시면 프로필 페이지에 사진을 ${
-          numPics + 1
-        }장까지 게시하실 수 있게 됩니다`;
-      }
       return `Upgrade this item to post up to ${
         numPics + 1
       } pictures on your profile page`;
     }
-    if (SELECTED_LANGUAGE === 'kr') {
-      return '본 아이템을 잠금 해제 하시면 프로필 페이지에 사진을 게시하실 수 있게 됩니다';
-    }
     return 'Unlock this item to post pictures on your profile page';
   }, [numPics]);
   const youCanNowPostUpToLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `이제 프로필 페이지에 사진을 최대 ${numPics}장까지 게시할 수 있습니다`;
-    }
     return `You can now post up to ${numPics} pictures on your profile page`;
   }, [numPics]);
 
