@@ -1,12 +1,10 @@
 import React from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import localize from '~/constants/localize';
-
-const iForgotMyPasswordLabel = localize('iForgotMyPassword');
-const noIDontHaveAnAccountLabel = localize('noIDontHaveAnAccount');
-const welcomeLabel = localize('welcomeToTwinkle');
-const yesIHaveAnAccountLabel = localize('yesIHaveAnAccount');
+const iForgotMyPasswordLabel = 'I forgot my password';
+const noIDontHaveAnAccountLabel = `No, I don't have an account`;
+const welcomeLabel = 'Welcome to Twinkle. Do you have a Twinkle account?';
+const yesIHaveAnAccountLabel = 'Yes, I have an account';
 
 export default function Main({
   onShowForgotPasswordForm,

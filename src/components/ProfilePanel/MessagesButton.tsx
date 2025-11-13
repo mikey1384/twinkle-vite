@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 
 export default function MessagesButton({
   commentsShown,
@@ -37,14 +36,6 @@ export default function MessagesButton({
   buttonTone?: 'flat' | 'raised';
 }) {
   const leaveMessageLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          메시지
-          {profileId === myId ? '' : ' 남기기'}
-        </>
-      );
-    }
     return (
       <>
         {profileId === myId ? '' : 'Leave '}

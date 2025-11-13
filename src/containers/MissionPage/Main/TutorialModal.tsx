@@ -2,9 +2,7 @@ import React, { useRef } from 'react';
 import Modal from '~/components/Modal';
 import InteractiveContent from '~/components/InteractiveContent';
 import Button from '~/components/Button';
-import localize from '~/constants/localize';
-
-const closeLabel = localize('close');
+const closeLabel = 'Close';
 
 export default function TutorialModal({
   missionTitle,

@@ -65,6 +65,7 @@ import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import { applyThemeVars } from '~/theme';
+import Board from '~/containers/Board';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -518,6 +519,7 @@ export default function App() {
             />
             <Route path="/settings" element={<Home section="store" />} />
             <Route path="/earn" element={<Home section="earn" />} />
+            <Route path="/board" element={<Board />} />
             <Route
               path="/"
               element={

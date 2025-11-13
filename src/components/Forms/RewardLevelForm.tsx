@@ -3,9 +3,7 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
-import localize from '~/constants/localize';
-
-const clearLabel = localize('clear');
+const clearLabel = 'Clear';
 
 export default function RewardLevelForm({
   alreadyPosted,

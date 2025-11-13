@@ -3,12 +3,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import { notiFilterBar } from '../../Styles';
 import ThisMonth from './ThisMonth';
-import AllTime from './AllTime';
-import localize from '~/constants/localize';
-import moment from 'moment';
+import AllTime from './AllTime';import moment from 'moment';
 import { useKeyContext, useNotiContext } from '~/contexts';
 
-const allTimeLabel = localize('allTime');
+const allTimeLabel = 'All Time';
 
 export default function Rankings({ loadingFeeds }: { loadingFeeds: boolean }) {
   const userId = useKeyContext((v) => v.myState.userId);

@@ -8,10 +8,8 @@ import {
   translateMBToGBWithoutSpace
 } from '~/helpers/stringHelpers';
 import { maxSizes, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
-const expandMaximumUploadSizeLabel = localize('expandMaximumUploadSize');
-const maximumUploadSizeLabel = localize('maximumUploadSize');
+const expandMaximumUploadSizeLabel = 'Expand maximum upload file size';
+const maximumUploadSizeLabel = 'Maximum Upload File Size';
 
 const item = {
   maxLvl: 7,

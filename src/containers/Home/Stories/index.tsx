@@ -17,12 +17,10 @@ import {
   useHomeContext,
   useNotiContext,
   useKeyContext
-} from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
-const hiThereLabel = localize('hiThere');
+const hiThereLabel = 'Hi there!';
 
 const categoryObj: Record<string, any> = {
   uploads: {

@@ -8,10 +8,14 @@ import { css } from '@emotion/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { isTablet } from '~/helpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 
 const deviceIsTablet = isTablet(navigator);
+const categoryLabels: Record<string, string> = {
+  'ai-cards': 'AI Cards',
+  subjects: 'Subjects',
+  videos: 'Videos',
+  links: 'Links'
+};
 
 export default function Categories({
   filter,
@@ -102,22 +106,14 @@ export default function Categories({
         >
           {['ai-cards', 'subjects', 'videos', 'links'].map((contentType) => {
             const displayedContentType =
-              contentType === 'ai-cards' ? 'AI Cards' : contentType;
-            const exploreLabel =
-              SELECTED_LANGUAGE === 'kr' ? (
-                <>{localize(displayedContentType.slice(0, -1))} 탐색</>
-              ) : (
-                <>
-                  {deviceIsTablet ? '' : `Explore `}
-                  {displayedContentType}
-                </>
-              );
-            const alwaysExploreFirstLabel =
-              SELECTED_LANGUAGE === 'kr'
-                ? `항상 ${localize(
-                    displayedContentType.slice(0, -1)
-                  )} 먼저 탐색하기:`
-                : `Always explore ${displayedContentType} first:`;
+              categoryLabels[contentType] || contentType;
+            const exploreLabel = (
+              <>
+                {deviceIsTablet ? '' : `Explore `}
+                {displayedContentType}
+              </>
+            );
+            const alwaysExploreFirstLabel = `Always explore ${displayedContentType} first:`;
 
             let icon = '';
             if (contentType === 'ai-cards') {

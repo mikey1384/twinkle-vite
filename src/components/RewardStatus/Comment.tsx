@@ -13,13 +13,11 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isSupermod } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-import RewardStatusLabel from './RewardStatusLabel';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';import RewardStatusLabel from './RewardStatusLabel';
 
-const editLabel = localize('edit');
-const revokeLabel = localize('revoke');
-const revokeRewardLabel = localize('revokeReward');
+const editLabel = 'Edit';
+const revokeLabel = 'Revoke';
+const revokeRewardLabel = 'Revoke Reward';
 
 function Comment({
   contentType,

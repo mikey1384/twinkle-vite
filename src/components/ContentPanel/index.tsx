@@ -15,8 +15,6 @@ import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
-import localize from '~/constants/localize';
-
 const urlCss = css`
   padding: 1rem;
   background: #fff;
@@ -382,12 +380,12 @@ export default function ContentPanel({
                                     ? ' on'
                                     : ''
                                 }`
-                              : localize('repliedTo')
+                              : 'replied to'
                             : appliedRootType === 'subject'
-                            ? localize('respondedTo')
+                            ? 'responded to'
                             : appliedRootType === 'user'
                             ? 'posted a profile message'
-                            : localize('commentedOn')
+                            : 'commented on'
                         }
                       />
                       <div className="body">

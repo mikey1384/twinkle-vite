@@ -7,12 +7,10 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { borderRadius } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const startNewSubjectLabel = localize('startNewSubject');
-const enterSubjectLabel = localize('enterSubject');
-const enterDetailsLabel = localize('enterDetails');
-const optionalLabel = localize('optional');
+const startNewSubjectLabel = 'Start a new subject';
+const enterSubjectLabel = 'Enter Subject';
+const enterDetailsLabel = 'Enter Details';
+const optionalLabel = '(Optional)';
 
 export default function StartNewSubjectPanel({
   contentId,

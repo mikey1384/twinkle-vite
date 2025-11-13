@@ -18,13 +18,11 @@ import {
   isValidUrl,
   isValidYoutubeUrl,
   replaceFakeAtSymbol
-} from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/helpers/stringHelpers';import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 
-const cancelLabel = localize('cancel');
-const doneLabel = localize('done');
+const cancelLabel = 'Cancel';
+const doneLabel = 'Done';
 
 function ContentEditor({
   comment,

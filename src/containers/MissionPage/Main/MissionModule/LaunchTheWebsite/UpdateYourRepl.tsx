@@ -5,9 +5,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const copiedLabel = localize('copied');
+const copiedLabel = 'Copied!';
 
 export default function UpdateYourRepl({
   code,

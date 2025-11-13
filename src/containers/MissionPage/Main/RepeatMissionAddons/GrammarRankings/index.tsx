@@ -3,13 +3,11 @@ import FilterBar from '~/components/FilterBar';
 import Ranker from './Ranker';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-import { User } from '~/types';
+import { css } from '@emotion/css';import { User } from '~/types';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const myRankingLabel = localize('myRanking');
-const top30Label = localize('top30');
+const myRankingLabel = 'My Ranking';
+const top30Label = 'Top 30';
 
 export default function GrammarRankings({
   mission,

@@ -1,11 +1,9 @@
 import React from 'react';
 import FilterBar from '~/components/FilterBar';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import localize from '~/constants/localize';
-import { useNavigate } from 'react-router-dom';
+import ErrorBoundary from '~/components/ErrorBoundary';import { useNavigate } from 'react-router-dom';
 
-const videoLabel = localize('video');
-const questionsLabel = localize('questions');
+const videoLabel = 'Video';
+const questionsLabel = 'Questions';
 
 export default function PageTab({
   isContinuing,

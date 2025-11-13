@@ -8,15 +8,13 @@ import SectionHeader from './SectionHeader';
 import RewardItem from './RewardItem';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { REWARD_VALUE, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { REWARD_VALUE } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
-const tapToCollectRewardsLabel = localize('tapToCollectRewards');
-const yourXPLabel = localize('yourXP');
-const yourTwinkleCoinsLabel = localize('yourTwinkleCoins');
+const tapToCollectRewardsLabel = 'Tap to collect all your rewards';
+const yourXPLabel = 'Your XP';
+const yourTwinkleCoinsLabel = 'Your Twinkle Coins';
 
 export default function MainFeeds({
   activeTab,
@@ -112,9 +110,7 @@ export default function MainFeeds({
   }, [totalRewardedTwinkles, totalRewardedTwinkleCoins]);
 
   const twinkleLabel = useMemo(() => {
-    return SELECTED_LANGUAGE === 'kr'
-      ? `트윈클 ${totalTwinkles}개`
-      : `${totalTwinkles} Twinkle${totalTwinkles > 0 ? 's' : ''}`;
+    return `${totalTwinkles} Twinkle${totalTwinkles > 0 ? 's' : ''}`;
   }, [totalTwinkles]);
 
   const totalRewardAmount = useMemo(

@@ -1,8 +1,13 @@
 import React, { useMemo } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useExploreContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
+
+const categoryLabels: Record<string, string> = {
+  'ai-cards': 'AI Cards',
+  subjects: 'Subjects',
+  videos: 'Videos',
+  links: 'Links'
+};
 
 export default function SearchBox({
   category,
@@ -18,12 +23,8 @@ export default function SearchBox({
     (v) => v.actions.onChangeSearchInput
   );
   const placeholderLabel = useMemo(() => {
-    const displayedCategory = category === 'ai-cards' ? 'AI Cards' : category;
-    return SELECTED_LANGUAGE === 'kr'
-      ? `${localize(displayedCategory.slice(0, -1))}${
-          displayedCategory === 'videos' ? '을' : '를'
-        } 검색하세요...`
-      : `Search ${displayedCategory}...`;
+    const displayedCategory = categoryLabels[category] || category || 'items';
+    return `Search ${displayedCategory}...`;
   }, [category]);
 
   return category === 'ai-cards' ? null : (

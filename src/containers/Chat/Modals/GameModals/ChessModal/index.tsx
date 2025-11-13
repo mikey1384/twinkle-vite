@@ -6,9 +6,7 @@ import NewModal from '~/components/NewModal';
 import ModalContentWrapper from '../ModalContentWrapper';
 import GameModalFooter from '../GameModalFooter';
 import Game from './ChessGame';
-import Rewind from './Rewind';
-import localize from '~/constants/localize';
-import { socket } from '~/constants/sockets/api';
+import Rewind from './Rewind';import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
   useChatContext,
@@ -18,11 +16,11 @@ import {
 import { v1 as uuidv1 } from 'uuid';
 import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
 
-const acceptDrawLabel = localize('acceptDraw');
-const chessLabel = localize('chess');
-const offeredDrawLabel = localize('offeredDraw');
-const abortChessMatchLabel = localize('abortChessMatch');
-const resignChessMatchLabel = localize('resignChessMatch');
+const acceptDrawLabel = 'Accept Draw';
+const chessLabel = 'Chess';
+const offeredDrawLabel = 'offered a draw';
+const abortChessMatchLabel = 'Abort Chess Match';
+const resignChessMatchLabel = 'Resign Chess Match';
 
 export default function ChessModal({
   currentChannel,

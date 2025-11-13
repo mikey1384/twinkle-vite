@@ -1,11 +1,9 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-import ChatFlatButton from '../../ChatFlatButton';
+import { Color } from '~/constants/css';import ChatFlatButton from '../../ChatFlatButton';
 
-const callLabel = localize('call');
-const hangUpLabel = localize('hangUp');
+const callLabel = 'Call';
+const hangUpLabel = 'Hang Up';
 
 export default function CallButton({
   callOngoing,

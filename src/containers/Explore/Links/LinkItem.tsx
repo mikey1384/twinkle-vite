@@ -19,10 +19,8 @@ import {
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
-const editLabel = localize('edit');
-const removeLabel = localize('remove');
+const editLabel = 'Edit';
+const removeLabel = 'Remove';
 
 export default function LinkItem({
   link: { id, numComments, likes, timeStamp, title, uploader, ...embedProps }

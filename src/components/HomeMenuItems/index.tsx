@@ -18,13 +18,11 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RecentGroupItems from './RecentGroupItems';
-import localize from '~/constants/localize';
-
 const BodyRef = document.scrollingElement || document.documentElement;
 
-const peopleLabel = localize('people');
-const postsLabel = localize('posts');
-const achievementsLabel = localize('achievements');
+const peopleLabel = 'People';
+const postsLabel = 'Posts';
+const achievementsLabel = 'Achievements';
 const deviceIsMobile = isMobile(navigator);
 
 export default function HomeMenuItems({

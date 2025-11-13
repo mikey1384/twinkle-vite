@@ -4,10 +4,8 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
-import localize from '~/constants/localize';
-
 const deviceIsMobile = isMobile(navigator);
-const xpAcquisitionLabel = localize('xpAcquisition');
+const xpAcquisitionLabel = 'XP Acquisition';
 const colors: Record<string, string> = {
   posting: Color.logoBlue(),
   watching: Color.passionFruit(),

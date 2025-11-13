@@ -7,14 +7,12 @@ import { isMobile, isSupermod } from '~/helpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import SwitchButton from '~/components/Buttons/SwitchButton';
-import localize from '~/constants/localize';
-import PriceText from './PriceText';
+import SwitchButton from '~/components/Buttons/SwitchButton';import PriceText from './PriceText';
 
-const recommendLabel = localize('recommendQ');
-const yesLabel = localize('yes');
-const noLabel = localize('no');
-const rewardableLabel = localize('rewardable');
+const recommendLabel = 'Recommend?';
+const yesLabel = 'Yes';
+const noLabel = 'No';
+const rewardableLabel = 'anyone can reward';
 const deviceIsMobile = isMobile(navigator);
 
 export default function RecommendationInterface({

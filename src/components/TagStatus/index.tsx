@@ -5,12 +5,10 @@ import { hashify } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 import Icon from '~/components/Icon';
 
-const addVideoToPlaylistsLabel = localize('addVideoToPlaylists');
+const addVideoToPlaylistsLabel = 'Add Video to Playlists';
 
 function TagStatus({
   contentId,
@@ -167,9 +165,6 @@ function TagStatus({
   );
 
   const addLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{tags?.length === 0 ? '재생목록에 추가' : '추가'}</>;
-    }
     return (
       <>
         Add{tags?.length === 0 ? ' to Playlists' : ''}

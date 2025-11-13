@@ -15,14 +15,12 @@ import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import { useAppContext, useContentContext, useInputContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { returnImageFileFromUrl } from '~/helpers';
-import { v1 as uuidv1 } from 'uuid';
-import localize from '~/constants/localize';
-import ThumbnailPicker from '~/components/ThumbnailPicker';
+import { v1 as uuidv1 } from 'uuid';import ThumbnailPicker from '~/components/ThumbnailPicker';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 
-const cancelLabel = localize('cancel');
-const submitLabel = localize('submit3');
+const cancelLabel = 'Cancel';
+const submitLabel = 'Submit';
 
 export default function SubjectInputForm({
   autoFocus,

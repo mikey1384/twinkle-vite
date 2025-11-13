@@ -9,11 +9,9 @@ import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
-import { capitalize } from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { capitalize } from '~/helpers/stringHelpers';import { useRoleColor } from '~/theme/useRoleColor';
 
-const searchUsersLabel = localize('searchUsers');
+const searchUsersLabel = 'Search Users';
 
 export default function AddModeratorModal({
   accountTypes,

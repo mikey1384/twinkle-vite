@@ -4,9 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, borderRadius } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const copiedLabel = localize('copied');
+const copiedLabel = 'Copied!';
 
 export default function CopyCode({
   className,

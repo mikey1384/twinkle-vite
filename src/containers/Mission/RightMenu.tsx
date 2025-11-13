@@ -1,10 +1,8 @@
 import React from 'react';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import SideMenu from '~/components/SideMenu';
+import Icon from '~/components/Icon';import SideMenu from '~/components/SideMenu';
 
-const missionsLabel = localize('missions2');
-const manageLabel = localize('manage');
+const missionsLabel = 'Missions';
+const manageLabel = 'Manage';
 
 export default function RightMenu({
   className,

@@ -2,9 +2,7 @@ import React from 'react';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const mustLogInToViewContentLabel = localize('mustLogInToViewContent');
+const mustLogInToViewContentLabel = 'You must log in to view this content';
 
 export default function LoginToViewContent({
   className

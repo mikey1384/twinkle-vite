@@ -10,9 +10,7 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const submitYourResponseLabel = localize('submitYourResponse');
+const submitYourResponseLabel = 'Submit your response to view the secret message';
 
 function SecretAnswer({
   answer,

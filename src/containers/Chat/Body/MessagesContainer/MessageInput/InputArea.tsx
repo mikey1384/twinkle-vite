@@ -4,13 +4,11 @@ import {
   addEmoji,
   exceedsCharLimit,
   stringIsEmpty
-} from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-import { mb } from '~/constants/defaultValues';
+} from '~/helpers/stringHelpers';import { mb } from '~/constants/defaultValues';
 import { isMobile, debounce } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
-const enterMessageLabel = localize('enterMessage');
+const enterMessageLabel = 'Enter a message';
 const deviceIsMobileOS = isMobile(navigator);
 
 export default function InputArea({

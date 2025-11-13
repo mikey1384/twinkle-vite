@@ -1,7 +1,5 @@
 import React from 'react';
-import ErrorBoundary from '~/components/ErrorBoundary';
-import localize from '~/constants/localize';
-import { css } from '@emotion/css';
+import ErrorBoundary from '~/components/ErrorBoundary';import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Leaderboards from './Leaderboards';
 import ActivitySuggester from './ActivitySuggester';
@@ -9,7 +7,7 @@ import TopMenu from '../TopMenu';
 import { useHomeContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 
-const leaderboardsLabel = localize('leaderboards');
+const leaderboardsLabel = 'Leaderboards';
 
 export default function Earn() {
   const navigate = useNavigate();

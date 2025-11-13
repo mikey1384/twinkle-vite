@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import NewModal from '~/components/NewModal';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import { Color } from '~/constants/css';
+import Button from '~/components/Button';import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const areYouSureLabel = localize('areYouSure');
-const cancelLabel = localize('cancel');
-const confirmLabel = localize('confirm');
+const areYouSureLabel = 'Are you sure?';
+const cancelLabel = 'Cancel';
+const confirmLabel = 'Confirm';
 
 export default function ConfirmModal({
   disabled = false,

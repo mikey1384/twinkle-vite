@@ -4,11 +4,9 @@ import SectionPanel from '~/components/SectionPanel';
 import Button from '~/components/Button';
 import Table from '../Table';
 import { useAppContext, useManagementContext } from '~/contexts';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/useRoleColor';
 
-const userLabel = localize('user');
+const userLabel = 'User';
 
 export default function WealthData() {
   const { colorKey: tableHeaderColor } = useRoleColor('tableHeader', {

@@ -7,8 +7,6 @@ import { borderRadius, innerBorderRadius, Color } from '~/constants/css';
 import Banner from '~/components/Banner';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
 const Styles = {
   content: css`
     display: flex;
@@ -64,18 +62,18 @@ const Styles = {
   `
 };
 
-const questionTitleLabel = localize('questionTitle');
-const choiceALabel = localize('choiceA');
-const choiceBLabel = localize('choiceB');
-const choiceCLabel = localize('choiceC');
-const choiceDLabel = localize('choiceD');
-const choiceELabel = localize('choiceE');
-const cancelLabel = localize('cancel');
-const doneLabel = localize('done');
-const enterQuestionLabel = localize('enterQuestion');
-const editQuestionLabel = localize('editQuestion');
-const removeLabel = localize('remove');
-const undoLabel = localize('undo');
+const questionTitleLabel = 'Question Title';
+const choiceALabel = 'Choice A';
+const choiceBLabel = 'Choice B';
+const choiceCLabel = 'Choice C (Optional)';
+const choiceDLabel = 'Choice D (Optional)';
+const choiceELabel = 'Choice E (Optional)';
+const cancelLabel = 'Cancel';
+const doneLabel = 'Done';
+const enterQuestionLabel = 'Enter Question';
+const editQuestionLabel = 'Edit Question';
+const removeLabel = 'Remove';
+const undoLabel = 'Undo';
 
 export default function QuestionBlock({
   correctChoice,
@@ -175,7 +173,12 @@ export default function QuestionBlock({
         </div>
         <div>
           {!onEdit && !deleted && (
-            <Button color="pink" filled onClick={() => onRemove(questionId)}>
+            <Button
+              color="pink"
+              variant="soft"
+              tone="raised"
+              onClick={() => onRemove(questionId)}
+            >
               {removeLabel}
             </Button>
           )}
@@ -239,7 +242,10 @@ export default function QuestionBlock({
           </Button>
         ) : (
           <div style={{ display: 'flex' }}>
-            <Button variant="ghost" onClick={() => handleEditCancel(questionId)}>
+            <Button
+              variant="ghost"
+              onClick={() => handleEditCancel(questionId)}
+            >
               {cancelLabel}
             </Button>
             <Button

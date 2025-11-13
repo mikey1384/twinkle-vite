@@ -9,9 +9,7 @@ import { useContentState } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const messageBoardLabel = localize('messageBoard');
+const messageBoardLabel = 'Message Board';
 
 export default function Home({
   profile,

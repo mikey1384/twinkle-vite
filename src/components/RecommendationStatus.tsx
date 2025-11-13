@@ -4,14 +4,12 @@ import UserListModal from '~/components/Modals/UserListModal';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { isSupermod } from '~/helpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 
-const recommendedByLabel = localize('recommendedBy');
-const youLabel = localize('you');
-const othersLabel = localize('others');
+const recommendedByLabel = 'Recommended by';
+const youLabel = 'you';
+const othersLabel = ' others';
 
 export default function RecommendationStatus({
   contentType,
@@ -93,12 +91,6 @@ export default function RecommendationStatus({
   ]);
 
   const andLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      if (recommendationsByUsertypeExceptMe.length > 2) {
-        return '님 외';
-      }
-      return ',';
-    }
     return ' and';
   }, [recommendationsByUsertypeExceptMe.length]);
 

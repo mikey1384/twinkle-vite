@@ -3,13 +3,11 @@ import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
 import Modal from '~/components/Modal';
-import RankingsListItem from '~/components/RankingsListItem';
-import localize from '~/constants/localize';
-import { useKeyContext, useAppContext } from '~/contexts';
+import RankingsListItem from '~/components/RankingsListItem';import { useKeyContext, useAppContext } from '~/contexts';
 import LeaderboardList from '~/components/LeaderboardList';
 
-const myRankingLabel = localize('myRanking');
-const top30Label = localize('top30');
+const myRankingLabel = 'My Ranking';
+const top30Label = 'Top 30';
 
 export default function TodayXPModal({ onHide }: { onHide: () => void }) {
   const myId = useKeyContext((v) => v.myState.userId);

@@ -4,10 +4,8 @@ import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Theme } from '~/constants/css';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const likeLabel = localize('like');
-const likedLabel = localize('liked');
+const likeLabel = 'Like';
+const likedLabel = 'Liked';
 
 function LikeButton({
   className,

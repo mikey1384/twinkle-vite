@@ -5,10 +5,8 @@ import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const beFirstToLikeThisVideoLabel = localize('beFirstToLikeThisVideo');
-const peopleWhoLikeThisVideoLabel = localize('peopleWhoLikeThisVideo');
+const beFirstToLikeThisVideoLabel = 'Be the first to like this video';
+const peopleWhoLikeThisVideoLabel = 'People who like this video';
 
 export default function SideButtons({
   byUser,

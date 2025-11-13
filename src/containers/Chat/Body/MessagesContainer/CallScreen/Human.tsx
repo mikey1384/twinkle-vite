@@ -5,9 +5,7 @@ import ProfilePic from '~/components/ProfilePic';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import LocalContext from '../../../Context';
-import localize from '~/constants/localize';
-
-const callingLabel = localize('calling');
+const callingLabel = 'Calling';
 
 export default function CallScreen({ style }: { style?: React.CSSProperties }) {
   const {
@@ -77,7 +75,12 @@ export default function CallScreen({ style }: { style?: React.CSSProperties }) {
             alignItems: 'center'
           }}
         >
-          <Button filled color="green" onClick={handleShowIncoming}>
+          <Button
+            variant="soft"
+            tone="raised"
+            color="green"
+            onClick={handleShowIncoming}
+          >
             <Icon icon="phone-volume" />
             <span style={{ marginLeft: '1rem' }}>Answer</span>
           </Button>

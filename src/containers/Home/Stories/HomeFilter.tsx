@@ -5,18 +5,16 @@ import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useAppContext, useKeyContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
-const allPostsLabel = localize('allPosts');
-const subjectsLabel = localize('subjects');
-const postsLabel = localize('posts');
-const newToOldLabel = localize('newToOld');
-const oldToNewLabel = localize('oldToNew');
-const recommendedLabel = localize('recommended');
-const xpVideosLabel = localize('xpVideos');
-const hideWatchedLabel = localize('hideWatched');
+const allPostsLabel = 'All Posts';
+const subjectsLabel = 'Subjects';
+const postsLabel = 'Posts';
+const newToOldLabel = 'New to Old';
+const oldToNewLabel = 'Old to New';
+const recommendedLabel = 'Recommended';
+const xpVideosLabel = 'XP Videos';
+const hideWatchedLabel = 'Hide Watched';
 const categoryObj: Record<string, any> = {
   uploads: {
     label: postsLabel,

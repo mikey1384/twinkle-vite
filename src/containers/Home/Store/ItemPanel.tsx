@@ -6,12 +6,10 @@ import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { karmaPointTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
-import { useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { homePanelClass } from '~/theme/homePanels';
+import { useKeyContext } from '~/contexts';import { homePanelClass } from '~/theme/homePanels';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
-const freeLabel = localize('free');
+const freeLabel = 'Free';
 
 export default function ItemPanel({
   children,

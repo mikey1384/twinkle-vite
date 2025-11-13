@@ -1,15 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import AICardsPreview from '~/components/AICardsPreview';
+import Button from '~/components/Button';import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
-const cancelLabel = localize('cancel');
+const cancelLabel = 'Cancel';
 
 export default function ConfirmSelectionModal({
   higherBidCards,

@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
-import SelectAttachmentScreen from './SelectAttachmentScreen';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import SelectAttachmentScreen from './SelectAttachmentScreen';import { useRoleColor } from '~/theme/useRoleColor';
 
-const attachContentToSubjectLabel = localize('attachContentToSubject');
-const backLabel = localize('back');
-const cancelLabel = localize('cancel');
-const confirmLabel = localize('confirm');
-const selectVideoLabel = localize('selectVideo');
-const selectWebpageLabel = localize('selectWebpage');
+const attachContentToSubjectLabel = 'Attach a content to your subject';
+const backLabel = 'Back';
+const cancelLabel = 'Cancel';
+const confirmLabel = 'Confirm';
+const selectVideoLabel = 'Select a video';
+const selectWebpageLabel = 'Select a webpage';
 
 const sectionObj: Record<string, any> = {
   start: {

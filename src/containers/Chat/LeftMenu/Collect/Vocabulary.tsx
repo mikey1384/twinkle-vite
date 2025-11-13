@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import { css } from '@emotion/css';
+import Icon from '~/components/Icon';import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 
-const youLabel = localize('You');
+const youLabel = 'You';
 
 const actionLabel: Record<string, string> = {
   register: 'discovered',

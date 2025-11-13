@@ -9,12 +9,10 @@ import Loading from '~/components/Loading';
 import { useSearch } from '~/helpers/hooks';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { isEqual } from 'lodash';
-import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { css } from '@emotion/css';import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 
-const searchUsersLabel = localize('searchUsers');
+const searchUsersLabel = 'Search Users';
 
 export default function AddBanModal({ onHide }: { onHide: () => void }) {
   const level = useKeyContext((v) => v.myState.level);

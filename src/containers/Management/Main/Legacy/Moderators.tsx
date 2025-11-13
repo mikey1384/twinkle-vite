@@ -12,17 +12,15 @@ import { isMobile } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { User } from '~/types';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/useRoleColor';
 
-const accountTypeLabel = localize('accountType');
-const changeAccountTypeLabel = localize('changeAccountType');
-const nowLabel = localize('now');
-const noModeratorsLabel = localize('noModerators');
-const onlineLabel = localize('online');
-const searchModeratorsLabel = localize('searchModerators');
-const userLabel = localize('user');
+const accountTypeLabel = 'Account Type';
+const changeAccountTypeLabel = 'Change Account Type';
+const nowLabel = 'now';
+const noModeratorsLabel = 'No Moderators';
+const onlineLabel = 'Online';
+const searchModeratorsLabel = 'Search Moderators';
+const userLabel = 'User';
 const deviceIsMobile = isMobile(navigator);
 
 export default function Moderators({ canManage }: { canManage: boolean }) {

@@ -9,13 +9,11 @@ import { socket } from '~/constants/sockets/api';
 import { mobileMaxWidth } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
-import localize from '~/constants/localize';
-
-const addMembersOfClassLabel = localize('addMembersOfClass');
-const enterClassNameLabel = localize('enterClassName');
-const membersLabel = localize('members');
-const nameLabel = localize('name');
-const newClassroomLabel = localize('newClassroomChat');
+const addMembersOfClassLabel = 'Add members of your class';
+const enterClassNameLabel = 'Enter the name of your class';
+const membersLabel = 'Members';
+const nameLabel = 'Name';
+const newClassroomLabel = 'New Classroom';
 
 export default function ClassroomChatForm({
   channelId,

@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Countdown from 'react-countdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Marble from '../Marble';
-import localize from '~/constants/localize';
-import TodayResult from './TodayResult';
+import Marble from '../Marble';import TodayResult from './TodayResult';
 import {
   useAppContext,
   useHomeContext,
@@ -23,7 +21,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ReviewSkeletonList from '~/components/SkeletonLoader';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const grammarGameLabel = localize('grammarGame');
+const grammarGameLabel = 'Grammarbles';
 const deviceIsMobile = isMobile(navigator);
 
 const funFont =

@@ -13,11 +13,9 @@ import {
 } from '~/contexts';
 import { scrollPositions, isRewardCollected } from '~/constants/state';
 import { isMobile } from '~/helpers';
-import localize from '~/constants/localize';
-
 const deviceIsMobile = isMobile(navigator);
-const newsLabel = localize('news');
-const rankingsLabel = localize('rankings');
+const newsLabel = 'News';
+const rankingsLabel = 'Rankings';
 
 export default function Notification({
   className,

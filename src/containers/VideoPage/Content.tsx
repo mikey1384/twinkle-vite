@@ -2,9 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Carousel from '~/components/Carousel';
 import Button from '~/components/Button';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
-import PageTab from './PageTab';
-import localize from '~/constants/localize';
-import CheckListGroup from '~/components/CheckListGroup';
+import PageTab from './PageTab';import CheckListGroup from '~/components/CheckListGroup';
 import QuestionsBuilder from './QuestionsBuilder';
 import ResultModal from './Modals/ResultModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -12,9 +10,9 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, tabletMaxWidth } from '~/constants/css';
 
-const addEditQuestionsLabel = localize('addEditQuestions');
-const addQuestionsLabel = localize('addQuestions');
-const thereAreNoQuestionsLabel = localize('thereAreNoQuestions');
+const addEditQuestionsLabel = 'Add/Edit Questions';
+const addQuestionsLabel = 'Add Questions';
+const thereAreNoQuestionsLabel = 'There are no questions, yet';
 
 export default function Content({
   byUser,

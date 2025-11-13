@@ -24,9 +24,7 @@ import {
   useInputContext,
   useProfileContext
 } from '~/contexts';
-import localize from '~/constants/localize';
-
-const doesNotHaveBioLabel = localize('doesNotHaveBio');
+const doesNotHaveBioLabel = ' does not have a bio, yet';
 
 export default function UserDetails({
   noLink,

@@ -2,9 +2,7 @@ import React, { useMemo } from 'react';
 import MissionItem from '~/components/MissionItem';
 import { css } from '@emotion/css';
 import { useMissionContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const currentMissionLabel = localize('currentMission');
+const currentMissionLabel = 'Current Mission';
 
 export default function CurrentMission({
   style,

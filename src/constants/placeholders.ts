@@ -1,14 +1,13 @@
-import localize from './localize';
 
-const enterCommentLabel = localize('enterComment');
-const enterDescriptionLabel = localize('enterDescription');
-const optionalLabel = localize('optional');
-const enterHeadingLabel = localize('enterHeading');
-const enterTitleLabel = localize('enterTitle');
-const enterUrlLabel = localize('enterUrl');
-const enterSecretMessageLabel = localize('enterSecretMessage');
-const enterSubjectLabel = localize('enterSubject');
-const enterYoutubeUrlLabel = localize('enterYoutubeUrl');
+const enterCommentLabel = 'Enter Comment';
+const enterDescriptionLabel = 'Enter Description';
+const optionalLabel = '(Optional)';
+const enterHeadingLabel = 'Enter Heading';
+const enterTitleLabel = 'Enter Title';
+const enterUrlLabel = 'Enter URL';
+const enterSecretMessageLabel = 'Enter Secret Message';
+const enterSubjectLabel = 'Enter Subject';
+const enterYoutubeUrlLabel = 'Enter YouTube URL';
 
 export const edit = {
   comment: `${enterCommentLabel}...`,

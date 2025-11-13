@@ -8,9 +8,7 @@ import { useAppContext } from '~/contexts';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const createMyAccountLabel = localize('createMyAccount');
+const createMyAccountLabel = 'Create my account!';
 const pages = ['username', 'password', 'name_and_email'];
 const titles: {
   [key: string]: string;
@@ -186,7 +184,12 @@ export default function MainForm({
         }}
       >
         <div>
-          <Button filled color="redOrange" onClick={handlePrevious}>
+          <Button
+            variant="soft"
+            tone="raised"
+            color="redOrange"
+            onClick={handlePrevious}
+          >
             <Icon icon="chevron-left" />
             <span style={{ marginLeft: '0.7rem' }}>Back</span>
           </Button>
@@ -205,7 +208,8 @@ export default function MainForm({
         </div>
         <div>
           <Button
-            filled
+            variant="soft"
+            tone="raised"
             disabled={
               (displayedPage === 'username' && !isUsernameAvailable) ||
               (displayedPage === 'password' &&

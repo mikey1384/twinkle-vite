@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { borderRadius, Color, desktopMinWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const submitYourResponseLabel = localize('submitYourResponse2');
+const submitYourResponseLabel = 'Submit your response to view this comment';
 
 export default function SecretComment({
   onClick,

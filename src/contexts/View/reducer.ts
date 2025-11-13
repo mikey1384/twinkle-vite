@@ -5,6 +5,7 @@ export interface ViewState {
   contentNav: string;
   pageTitle: string;
   profileNav: string;
+  boardNav: string;
   homeNav: string;
   audioKey: string;
 }
@@ -16,6 +17,7 @@ export interface ViewAction {
     | 'SET_EXPLORE_CATEGORY'
     | 'SET_CONTENT_PATH'
     | 'SET_CONTENT_NAV'
+    | 'SET_BOARD_NAV'
     | 'SET_HOME_NAV'
     | 'SET_PAGE_TITLE'
     | 'SET_PROFILE_NAV';
@@ -56,6 +58,11 @@ export default function ViewReducer(
       return {
         ...state,
         contentNav: action.nav!
+      };
+    case 'SET_BOARD_NAV':
+      return {
+        ...state,
+        boardNav: action.nav!
       };
     case 'SET_HOME_NAV':
       return {

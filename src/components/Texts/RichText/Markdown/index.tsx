@@ -300,6 +300,25 @@ function Markdown({
                   );
                 }
                 case 'p': {
+                  const hasMediaOrBlockChild = containsDescendantTagNames(
+                    domNode,
+                    ['img', 'table', 'pre', 'div', 'iframe']
+                  );
+                  if (!hasMediaOrBlockChild) {
+                    return (
+                      <p
+                        style={{
+                          width: '100%',
+                          marginInlineStart: '0px',
+                          marginInlineEnd: '0px',
+                          marginBlockStart: '0px',
+                          marginBlockEnd: '0px'
+                        }}
+                      >
+                        {convertToJSX(domNode.children || [])}
+                      </p>
+                    );
+                  }
                   return (
                     <div
                       style={{
@@ -713,6 +732,24 @@ function Markdown({
           }
         }
       }
+    });
+  }
+
+  function containsDescendantTagNames(
+    node: { children?: any[] },
+    tagNames: string[]
+  ): boolean {
+    if (!node?.children) {
+      return false;
+    }
+    return node.children.some((child: any) => {
+      if (child?.type !== 'tag') {
+        return false;
+      }
+      if (tagNames.includes(child.name)) {
+        return true;
+      }
+      return containsDescendantTagNames(child, tagNames);
     });
   }
 

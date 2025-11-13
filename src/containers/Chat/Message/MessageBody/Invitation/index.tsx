@@ -6,9 +6,7 @@ import { css } from '@emotion/css';
 import { parseChannelPath } from '~/helpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const alreadyJoinedLabel = localize('alreadyJoined');
+const alreadyJoinedLabel = 'Already Joined';
 
 export default function Invitation({
   invitationChannelId,
@@ -150,7 +148,8 @@ export default function Invitation({
       )}
       {userId !== sender.id && (
         <Button
-          filled
+          variant="soft"
+          tone="raised"
           color={chatInvitationColor}
           onClick={handleAcceptGroupInvitation}
           loading={accepting}

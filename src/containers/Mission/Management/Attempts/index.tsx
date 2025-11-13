@@ -5,8 +5,6 @@ import Loading from '~/components/Loading';
 import EmptyStateMessage from '~/components/EmptyStateMessage';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext } from '~/contexts';
-import localize from '~/constants/localize';
-
 const displayedStatus: {
   [key: string]: string;
 } = {
@@ -15,9 +13,9 @@ const displayedStatus: {
   pass: 'approved'
 };
 
-const pendingLabel = localize('pending');
-const approvedLabel = localize('approved');
-const rejectedLabel = localize('rejected');
+const pendingLabel = 'Pending';
+const approvedLabel = 'Approved';
+const rejectedLabel = 'Rejected';
 
 export default function Attempts({
   attemptObj,

@@ -5,13 +5,11 @@ import SectionPanel from '~/components/SectionPanel';
 import LinkGroup from './LinkGroup';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const addLinkLabel = localize('addLink');
-const allLinksLabel = localize('allLinks');
-const madeByUsersLabel = localize('madeByUsers');
-const noUploadedLinksLabel = localize('noLinks');
-const recommendedLabel = localize('recommendedLinks');
+const addLinkLabel = 'Add Link';
+const allLinksLabel = 'All Links';
+const madeByUsersLabel = 'Made By Twinkle Users';
+const noUploadedLinksLabel = 'No Uploaded Links';
+const recommendedLabel = 'Recommended';
 
 export default function Links() {
   const userId = useKeyContext((v) => v.myState.userId);

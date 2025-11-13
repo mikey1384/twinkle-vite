@@ -16,13 +16,23 @@ import {
   useKeyContext
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-import localize from '~/constants/localize';
 
 const deviceIsTablet = isTablet(navigator);
-const homeLabel = localize('home');
-const exploreLabel = localize('explore');
-const missionsLabel = localize('missions');
-const chatLabel = localize('chat');
+const homeLabel = 'Home';
+const boardLabel = 'Board';
+const exploreLabel = 'Explore';
+const missionsLabel = 'Missions';
+const chatLabel = 'Chat';
+const contentLabels: Record<string, string> = {
+  comments: 'Comment',
+  links: 'Link',
+  missions: 'Mission',
+  playlists: 'Playlist',
+  subjects: 'Subject',
+  videos: 'Video',
+  'ai-cards': 'AI Card',
+  'ai-stories': 'AI Story'
+};
 
 export default function MainNavs({
   isAIChat,
@@ -57,6 +67,7 @@ export default function MainNavs({
   const contentNav = useViewContext((v) => v.state.contentNav);
   const profileNav = useViewContext((v) => v.state.profileNav);
   const homeNav = useViewContext((v) => v.state.homeNav);
+  const boardNav = useViewContext((v) => v.state.boardNav);
   const onSetExploreCategory = useViewContext(
     (v) => v.actions.onSetExploreCategory
   );
@@ -64,6 +75,7 @@ export default function MainNavs({
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const onSetProfileNav = useViewContext((v) => v.actions.onSetProfileNav);
   const onSetHomeNav = useViewContext((v) => v.actions.onSetHomeNav);
+  const onSetBoardNav = useViewContext((v) => v.actions.onSetBoardNav);
 
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
@@ -75,8 +87,7 @@ export default function MainNavs({
 
   const contentLabel = useMemo(() => {
     if (!contentNav) return null;
-    if (contentNav === 'ai-stories') return 'AI Story';
-    return localize(contentNav.substring(0, contentNav.length - 1));
+    return contentLabels[contentNav] || null;
   }, [contentNav]);
 
   const displayedTwinkleCoins = useMemo(() => {
@@ -242,6 +253,23 @@ export default function MainNavs({
     pathname
   );
 
+  const boardMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: '/board/*'
+        },
+        pathname
+      ) ||
+      matchPath(
+        {
+          path: '/board'
+        },
+        pathname
+      ),
+    [pathname]
+  );
+
   useEffect(() => {
     const { section } = getSectionFromPathname(pathname);
     if (homeMatch) {
@@ -256,6 +284,10 @@ export default function MainNavs({
       onSetHomeNav('/settings');
     } else if (achievementsMatch) {
       onSetHomeNav('/achievements');
+    }
+
+    if (boardMatch) {
+      onSetBoardNav(pathname + (search || ''));
     }
 
     if (chatMatch) {
@@ -354,6 +386,7 @@ export default function MainNavs({
         onClick={onMobileMenuOpen}
       />
       {profileNav && <Nav to={profileNav} className="mobile" imgLabel="user" />}
+      <Nav to={boardNav} className="mobile" imgLabel="chalkboard" />
       <Nav
         to={homeNav}
         isHome
@@ -388,6 +421,14 @@ export default function MainNavs({
           {truncateText({ text: profileUsername.toUpperCase(), limit: 7 })}
         </Nav>
       )}
+      <Nav
+        to={boardNav}
+        className="desktop"
+        style={{ marginLeft: '2rem', marginRight: '2rem' }}
+        imgLabel="chalkboard"
+      >
+        {deviceIsTablet ? '' : boardLabel}
+      </Nav>
       <Nav
         to={homeNav}
         isHome

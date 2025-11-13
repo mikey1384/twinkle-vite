@@ -4,12 +4,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import VideoThumb from '~/components/VideoThumb';
 import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-
-const continueWatchingLabel = localize('continueWatching');
-const emptyMessageLabel = localize('noVideosToRecommend');
-const loadingLabel = localize('loading');
-const recommendedLabel = localize('recommendedVideos');
+const continueWatchingLabel = 'Continue Watching';
+const emptyMessageLabel = `We don't have any videos to recommend to you at the moment`;
+const loadingLabel = 'Loading';
+const recommendedLabel = 'Recommended';
 
 export default function ContinueWatchingPanel() {
   const userId = useKeyContext((v) => v.myState.userId);

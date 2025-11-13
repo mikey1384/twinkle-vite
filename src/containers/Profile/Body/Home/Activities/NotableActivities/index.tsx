@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionPanel from '~/components/SectionPanel';
-import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import localize from '~/constants/localize';
-import ContentPreview from '~/components/ContentPreview';
+import LoadMoreButton from '~/components/Buttons/LoadMoreButton';import ContentPreview from '~/components/ContentPreview';
 import SecretComment from '~/components/SecretComment';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import {
@@ -17,8 +15,8 @@ import { useContentState } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 
-const notableActivitiesLabel = localize('notableActivities');
-const showMoreLabel = localize('showMore');
+const notableActivitiesLabel = 'Notable Activities';
+const showMoreLabel = 'Show More';
 
 export default function NotableActivities({
   posts,

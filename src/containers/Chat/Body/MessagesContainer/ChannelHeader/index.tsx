@@ -11,16 +11,14 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useKeyContext } from '~/contexts';
 import LocalContext from '../../../Context';
-import localize from '~/constants/localize';
-
 const deviceIsMobile = isMobile(navigator);
-const addToFavoritesLabel = localize('addToFavorites');
-const changeTopicLabel = localize('changeTopic');
-const editGroupNameLabel = localize('editGroupName');
-const invitePeopleLabel = localize('invitePeople');
-const leaveLabel = localize('leave');
-const menuLabel = deviceIsMobile ? '' : localize('menu');
-const settingsLabel = localize('settings');
+const addToFavoritesLabel = 'Add to favorites';
+const changeTopicLabel = 'Change Topic';
+const editGroupNameLabel = 'Edit Group Name';
+const invitePeopleLabel = 'Invite People';
+const leaveLabel = 'Leave';
+const menuLabel = deviceIsMobile ? '' : 'Menu';
+const settingsLabel = 'Settings';
 
 export default function ChannelHeader({
   currentChannel,

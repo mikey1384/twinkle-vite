@@ -2,16 +2,14 @@ import React, { useMemo } from 'react';
 import ContentLink from '~/components/ContentLink';
 import MissionStatusCard from '~/components/MissionStatusCard';
 import UsernameText from '~/components/Texts/UsernameText';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import { Color } from '~/constants/css';
+import Icon from '~/components/Icon';import { Color } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Content, User } from '~/types';
 
-const taskCompleteLabel = localize('taskComplete');
-const missionAccomplishedLabel = localize('missionAccomplished');
+const taskCompleteLabel = 'Task Complete';
+const missionAccomplishedLabel = 'Mission Accomplished';
 
 export default function MissionPass({
   linkColor,

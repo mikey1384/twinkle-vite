@@ -3,11 +3,9 @@ import PlaylistCarousel from '../PlaylistCarousel';
 import SectionPanel from '~/components/SectionPanel';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useExploreContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const noPlaylistsLabel = localize('noPlaylists');
-const searchPlaylistsLabel = localize('searchPlaylists');
-const allPlaylistsLabel = localize('allPlaylists');
+const noPlaylistsLabel = 'No playlists';
+const searchPlaylistsLabel = 'Search Playlists';
+const allPlaylistsLabel = 'All Playlists';
 
 export default function PlaylistsPanel({
   buttonGroupShown = true,

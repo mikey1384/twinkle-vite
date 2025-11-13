@@ -1,11 +1,9 @@
 import React from 'react';
 import Button from '~/components/Button';
 import ConditionalButton from './ConditionalButton';
-import localize from '~/constants/localize';
-
-const finishLabel = localize('finish');
-const nextLabel = localize('next');
-const prevLabel = localize('prev');
+const finishLabel = 'Finish';
+const nextLabel = 'Next';
+const prevLabel = 'Prev';
 
 export default function BottomNavButtons({
   currentSlide,
@@ -52,7 +50,8 @@ export default function BottomNavButtons({
             {prevLabel}
           </Button>
           <Button
-            filled
+            variant="soft"
+            tone="raised"
             disabled={nextButtonDisabled}
             style={{ fontSize: '1.7rem' }}
             onClick={currentSlide + 1 === slideCount ? onFinish : onNext}

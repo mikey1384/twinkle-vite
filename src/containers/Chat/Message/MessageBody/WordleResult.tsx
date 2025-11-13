@@ -1,8 +1,6 @@
 import React, { useContext, useMemo, useRef, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import LocalContext from '../../Context';
+import Icon from '~/components/Icon';import LocalContext from '../../Context';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useWordleLabels } from '~/helpers/hooks';
@@ -10,7 +8,7 @@ import { isMobile } from '~/helpers';
 import moment from 'moment';
 
 const deviceIsMobile = isMobile(navigator);
-const replyLabel = localize('reply2');
+const replyLabel = 'Reply';
 
 export default function WordleResult({
   channelId,

@@ -34,14 +34,12 @@ import {
   stringIsEmpty
 } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import LocalContext from '../../Context';
-import localize from '~/constants/localize';
-import ScopedTheme from '~/theme/ScopedTheme';
+import LocalContext from '../../Context';import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
-const pinLabel = localize('pin');
-const unpinLabel = localize('unpin');
+const pinLabel = 'Pin';
+const unpinLabel = 'Unpin';
 
 export default function SearchedComment({
   comment,

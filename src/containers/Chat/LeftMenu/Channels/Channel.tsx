@@ -5,12 +5,10 @@ import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
-import LocalContext from '../../Context';
-import localize from '~/constants/localize';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import LocalContext from '../../Context';import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const deletedLabel = localize('deleted');
+const deletedLabel = 'Deleted';
 
 export default function Channel({
   customChannelNames,
@@ -172,7 +170,7 @@ export default function Channel({
     }) {
       const messageSender = senderId
         ? senderId === userId
-          ? localize('You')
+          ? 'You'
           : senderName
         : '';
       if (rewardAmount) {

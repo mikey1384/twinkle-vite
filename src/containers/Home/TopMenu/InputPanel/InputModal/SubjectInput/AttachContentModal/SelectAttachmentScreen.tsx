@@ -6,9 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { objectify } from '~/helpers';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useContentContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const searchLabel = localize('search');
+const searchLabel = 'Search';
 
 export default function SelectAttachmentScreen({
   onSelect,

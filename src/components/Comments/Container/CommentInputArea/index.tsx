@@ -5,10 +5,7 @@ import LocalContext from '../../Context';
 import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { v1 as uuidv1 } from 'uuid';
-import {
-  expectedResponseLength,
-  SELECTED_LANGUAGE
-} from '~/constants/defaultValues';
+import { expectedResponseLength } from '~/constants/defaultValues';
 import Loading from '~/components/Loading';
 import RewardLevelExpectation from './RewardLevelExpectation';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -63,9 +60,6 @@ export default function CommentInputArea({
   const [uploading, setUploading] = useState(false);
   const userId = useKeyContext((v) => v.myState.userId);
   const placeholderLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return '댓글을 입력하세요...';
-    }
     if (inputTypeLabel === 'reply') {
       if (!parent.uploader?.id) {
         return 'Reply...';

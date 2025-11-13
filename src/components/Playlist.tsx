@@ -8,15 +8,13 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { useAppContext, useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const eitherRemovedOrNeverExistedLabel = localize(
-  'eitherRemovedOrNeverExisted'
-);
-const loadingLabel = localize('loading');
-const playlistNotExistLabel = localize('playlistNotExist');
-const uploadedByLabel = localize('uploadedBy');
+const eitherRemovedOrNeverExistedLabel =
+  'It is either removed or never existed in the first place';
+const loadingLabel = 'Loading';
+const playlistNotExistLabel = 'Playlist does not exist';
+const uploadedByLabel = 'Uploaded by';
 
 export default function Playlist({
   onLinkClick = () => null,

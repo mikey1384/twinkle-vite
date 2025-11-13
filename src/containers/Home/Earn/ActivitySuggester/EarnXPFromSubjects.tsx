@@ -3,15 +3,13 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import ContentListItem from '~/components/ContentListItem';
 import Button from '~/components/Button';
-import Loading from '~/components/Loading';
-import localize from '~/constants/localize';
-import { useAppContext, useHomeContext } from '~/contexts';
+import Loading from '~/components/Loading';import { useAppContext, useHomeContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-const showMeAnotherSubjectLabel = localize('showMeAnotherSubject');
+const showMeAnotherSubjectLabel = 'Show me another subject';
 
 export default function EarnXPFromSubjects() {
   const showMeAnotherSubjectRole = useRoleColor('showMeAnotherSubjectButton', {

@@ -1,6 +1,4 @@
 import React, { useMemo } from 'react';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import { Color, borderRadius } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
@@ -12,19 +10,11 @@ export default function Video({
   rewardLevel: number;
   style?: React.CSSProperties;
 }) {
-  const forEveryStarYouAddLabel = localize('forEveryStarYouAdd');
+  const forEveryStarYouAddLabel =
+    'For every star you add, the amount of XP viewers earn per minute rises.';
   const rewardLevelDescription = useMemo(() => {
     switch (rewardLevel) {
       case 3:
-        if (SELECTED_LANGUAGE === 'kr') {
-          return (
-            <>
-              이 동영상은{' '}
-              <span style={{ color: Color.pink() }}>흥미 위주의 콘텐츠</span>
-              이지만 영어 듣기에 도움이 됩니다
-            </>
-          );
-        }
         return (
           <>
             This video is{' '}
@@ -35,15 +25,6 @@ export default function Video({
           </>
         );
       case 4:
-        if (SELECTED_LANGUAGE === 'kr') {
-          return (
-            <>
-              이 동영상은{' '}
-              <span style={{ color: Color.green() }}>교육적이며</span> 영어
-              듣기에 도움이 됩니다
-            </>
-          );
-        }
         return (
           <>
             This video is{' '}
@@ -52,15 +33,6 @@ export default function Video({
           </>
         );
       case 5:
-        if (SELECTED_LANGUAGE === 'kr') {
-          return (
-            <>
-              이 동영상은{' '}
-              <span style={{ color: Color.green() }}>교육적이고</span>, 영어
-              듣기에 도움이 되며, 유저들이 꼭 봐야할 콘텐츠입니다
-            </>
-          );
-        }
         return (
           <>
             This video is{' '}

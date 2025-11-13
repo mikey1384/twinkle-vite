@@ -1,4 +1,3 @@
-import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 
 // ===========================
@@ -184,9 +183,9 @@ export const localStorageKeys: {
 };
 export const DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL = 1000;
 export const FILE_UPLOAD_XP_REQUIREMENT = 0;
-export const LAST_ONLINE_FILTER_LABEL = localize('lastOnline2');
+export const LAST_ONLINE_FILTER_LABEL = 'Last Online';
 export const MAX_PROFILE_PIC_SIZE = 10000;
-export const RANKING_FILTER_LABEL = localize('ranking');
+export const RANKING_FILTER_LABEL = 'Ranking';
 export const REWARD_VALUE = 200;
 export const returnMaxRewards = ({
   rewardLevel

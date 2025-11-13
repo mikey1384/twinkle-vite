@@ -40,19 +40,14 @@ import {
   useKeyContext
 } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
-import {
-  SELECTED_LANGUAGE,
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID
-} from '~/constants/defaultValues';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 import { v1 as uuidv1 } from 'uuid';
-import localize from '~/constants/localize';
 import { Comment as CommentType, Subject } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const commentRemovedLabel = localize('commentRemoved');
-const replyLabel = localize('reply');
+const commentRemovedLabel = 'Comment removed / no longer available';
+const replyLabel = 'Reply';
 const deviceIsMobile = isMobile(navigator);
 
 const targetContentCSS = css`
@@ -286,11 +281,7 @@ export default function TargetContent({
 
   const DetailText = useMemo(() => {
     const commentLinkColor = contentColorValue;
-    return (
-      <div>
-        {SELECTED_LANGUAGE === 'kr' ? renderKoreanText() : renderEnglishText()}
-      </div>
-    );
+    return <div>{renderEnglishText()}</div>;
 
     function renderEnglishText() {
       return (
@@ -312,31 +303,6 @@ export default function TargetContent({
                 : 'responded'
             }:`}
           />
-        </>
-      );
-    }
-    function renderKoreanText() {
-      return (
-        <>
-          <UsernameText user={comment.uploader} color={linkColorValue} />
-          님이{' '}
-          <ContentLink
-            content={{
-              id: comment.id
-            }}
-            contentType="comment"
-            style={{ color: commentLinkColor }}
-            label={`${
-              type === 'reply'
-                ? '답글을 남겼습니다'
-                : type === 'comment'
-                ? rootType === 'user'
-                  ? '메시지를 남겼습니다'
-                  : '댓글을 남겼습니다'
-                : '댓글을 남겼습니다'
-            }`}
-          />
-          :
         </>
       );
     }

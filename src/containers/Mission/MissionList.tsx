@@ -9,11 +9,9 @@ import { useMissionContext, useKeyContext } from '~/contexts';
 import { mobileMaxWidth, Color } from '~/constants/css';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const allMissionsLabel = localize('allMissions');
-const completeLabel = localize('complete');
-const inProgressLabel = localize('inProgress');
+const allMissionsLabel = 'All Missions';
+const completeLabel = 'Complete';
+const inProgressLabel = 'In Progress';
 
 export default function MissionList({
   style,

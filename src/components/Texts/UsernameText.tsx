@@ -2,11 +2,9 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { isMobile } from '~/helpers';
-import { User } from '~/types';
-import localize from '~/constants/localize';
-import UserPopup from '~/components/UserPopup';
+import { User } from '~/types';import UserPopup from '~/components/UserPopup';
 const deviceIsMobile = isMobile(navigator);
-const deletedLabel = localize('deleted');
+const deletedLabel = 'Deleted';
 
 export default function UsernameText({
   className,

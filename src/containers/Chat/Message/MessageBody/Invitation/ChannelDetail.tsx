@@ -4,11 +4,9 @@ import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useChatContext, useAppContext } from '~/contexts';
-import UserListModal from '~/components/Modals/UserListModal';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import UserListModal from '~/components/Modals/UserListModal';import { useRoleColor } from '~/theme/useRoleColor';
 
-const membersLabel = localize('members');
+const membersLabel = 'Members';
 
 export default function ChannelDetail({
   allMemberIds,

@@ -5,11 +5,9 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useKeyContext } from '~/contexts';
 import { videoRewardHash } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
-const continueLabel = localize('continue');
-const watchingLabel = localize('watching');
-const perMinuteLabel = localize('perMinute');
+const continueLabel = 'Continue';
+const watchingLabel = 'watching';
+const perMinuteLabel = 'per minute';
 
 export default function RewardAmountInfo({
   rewardLevel,

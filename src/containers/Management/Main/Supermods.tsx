@@ -16,13 +16,11 @@ import {
   FOUNDER_LABEL
 } from '~/constants/defaultValues';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import Icon from '~/components/Icon';import { useRoleColor } from '~/theme/useRoleColor';
 
-const nowLabel = localize('now');
-const onlineLabel = localize('online');
-const userLabel = localize('user');
+const nowLabel = 'now';
+const onlineLabel = 'Online';
+const userLabel = 'User';
 
 export default function Supermods({ canManage }: { canManage: boolean }) {
   const userId = useKeyContext((v) => v.myState.userId);

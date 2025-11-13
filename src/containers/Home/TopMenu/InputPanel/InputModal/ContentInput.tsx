@@ -26,17 +26,15 @@ import {
   useHomeContext,
   useInputContext,
   useKeyContext
-} from '~/contexts';
-import localize from '~/constants/localize';
-import RewardLevelExplainer from '~/components/RewardLevelExplainer';
+} from '~/contexts';import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
-const enterTitleHereLabel = localize('enterTitleHere');
-const postContentLabel = localize('postContent');
-const copyAndPasteUrlLabel = localize('copyAndPasteUrl');
-const youtubeVideoLabel = localize('youtubeVideo');
+const enterDescriptionOptionalLabel = `Enter Description (Optional, you don't need to write this)`;
+const enterTitleHereLabel = 'Enter Title Here';
+const postContentLabel = 'Share webpages or YouTube videos';
+const copyAndPasteUrlLabel = 'Copy and paste a URL address here';
+const youtubeVideoLabel = 'YouTube Video';
 const alreadyPostedTextClass = css`
   display: flex;
   flex-direction: column;

@@ -4,11 +4,9 @@ import Comment from './Comment';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import { useAppContext, useContentContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { Content, Subject } from '~/types';
+import { useAppContext, useContentContext } from '~/contexts';import { Content, Subject } from '~/types';
 
-const pinnedLabel = localize('pinned');
+const pinnedLabel = 'Pinned';
 
 export default function PinnedComment({
   commentId,

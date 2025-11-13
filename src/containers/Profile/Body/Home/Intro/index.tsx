@@ -31,11 +31,9 @@ import {
   finalizeEmoji,
   replaceFakeAtSymbol
 } from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-
-const editLabel = localize('edit');
-const enterMessageForVisitorsLabel = localize('enterMessageForVisitors');
-const removeLabel = localize('remove');
+const editLabel = 'Edit';
+const enterMessageForVisitorsLabel = 'Enter a message for your visitors';
+const removeLabel = 'Remove';
 
 export default function Intro({
   profile,
