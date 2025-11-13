@@ -19,6 +19,18 @@ import {
 } from '~/helpers/stringHelpers';
 import LazyCodeBlockWrapper from './LazyCodeBlockWrapper';
 
+const SECTION_LABEL_CLASS = 'rich-text-section-label';
+const INLINE_LABEL_TAGS = new Set([
+  'strong',
+  'em',
+  'span',
+  'code',
+  'u',
+  'i',
+  'b',
+  'small'
+]);
+
 function Markdown({
   contentId,
   contentType,
@@ -302,11 +314,11 @@ function Markdown({
                 case 'p': {
                   const parentTagName = getParentTagName(domNode);
                   const isWithinList = parentTagName === 'li';
-                  const paragraphStyle = {
-                    width: '100%',
-                    marginInlineStart: '0px',
-                    marginInlineEnd: '0px'
-                  };
+                const paragraphStyle = {
+                  width: '100%',
+                  marginInlineStart: '0px',
+                  marginInlineEnd: '0px'
+                };
                   const baseChildNodes = domNode.children || [];
                   const childNodes = isWithinList
                     ? stripLeadingBreakNodes(baseChildNodes)
@@ -323,6 +335,9 @@ function Markdown({
                     breakIndex > -1 &&
                     hasMeaningfulContent(childNodes.slice(0, breakIndex)) &&
                     hasMeaningfulContent(childNodes.slice(breakIndex + 1));
+                  const labelSplit = !isWithinList
+                    ? splitLabelAndContent(childNodes)
+                    : null;
 
                   const renderSegment = (
                     nodes: any[],
@@ -339,10 +354,17 @@ function Markdown({
                       { children: normalizedNodes },
                       ['img', 'table', 'pre', 'div', 'iframe']
                     );
+                    const isLabelParagraph =
+                      !isWithinList &&
+                      isSectionLabelParagraph(normalizedNodes);
+                    const paragraphClassName = isLabelParagraph
+                      ? SECTION_LABEL_CLASS
+                      : undefined;
                     if (!hasMediaOrBlockChild) {
                       return (
                         <p
                           key={`${key}-segment-${keySuffix}`}
+                          className={paragraphClassName}
                           style={{
                             ...paragraphStyle
                           }}
@@ -366,6 +388,49 @@ function Markdown({
                     );
                   };
 
+                  const renderWithLabelSplit = (
+                    nodes: any[],
+                    keySuffix: string | number
+                  ) => {
+                    if (!nodes?.length) {
+                      return null;
+                    }
+                    if (!isWithinList) {
+                      const splitResult = splitLabelAndContent(nodes);
+                      if (splitResult) {
+                        return (
+                          <Fragment key={`${key}-segment-${keySuffix}`}>
+                            {renderSegment(
+                              splitResult.labelNodes,
+                              `${keySuffix}-label`
+                            )}
+                            {renderSegment(
+                              splitResult.contentNodes,
+                              `${keySuffix}-body`
+                            )}
+                          </Fragment>
+                        );
+                      }
+                    }
+                    return renderSegment(nodes, keySuffix);
+                  };
+
+                  if (!isWithinList) {
+                    const segments = splitNodesByDoubleBreaks(childNodes);
+                    if (segments.length > 1) {
+                      return (
+                        <Fragment key={`${key}-segments`}>
+                          {segments.map((segmentNodes, segmentIndex) =>
+                            renderWithLabelSplit(
+                              segmentNodes,
+                              `segment-${segmentIndex}`
+                            )
+                          )}
+                        </Fragment>
+                      );
+                    }
+                  }
+
                   if (shouldSplit) {
                     const leadingChildren = childNodes.slice(0, breakIndex);
                     const trailingChildren = childNodes.slice(breakIndex + 1);
@@ -377,7 +442,16 @@ function Markdown({
                     );
                   }
 
-                  return renderSegment(childNodes, 'single');
+                  if (labelSplit) {
+                    return (
+                      <Fragment key={`${key}-label-split`}>
+                        {renderSegment(labelSplit.labelNodes, 'label')}
+                        {renderSegment(labelSplit.contentNodes, 'body')}
+                      </Fragment>
+                    );
+                  }
+
+                  return renderWithLabelSplit(childNodes, 'single');
                 }
                 case 'strong': {
                   return (
@@ -750,6 +824,9 @@ function Markdown({
               breakIndex > -1 &&
               hasMeaningfulContent(childNodes.slice(0, breakIndex)) &&
               hasMeaningfulContent(childNodes.slice(breakIndex + 1));
+            const labelSplit = !isWithinList
+              ? splitLabelAndContent(childNodes)
+              : null;
 
             const renderSegment = (
               nodes: any[],
@@ -767,6 +844,20 @@ function Markdown({
                 { children: normalizedNodes },
                 ['img', 'table', 'pre', 'div', 'iframe']
               );
+              const isLabelParagraph =
+                !isWithinList && isSectionLabelParagraph(normalizedNodes);
+              const paragraphClassName = isLabelParagraph
+                ? SECTION_LABEL_CLASS
+                : undefined;
+              const existingClassName =
+                typeof restProps.className === 'string'
+                  ? restProps.className
+                  : undefined;
+              const combinedClassName = paragraphClassName
+                ? [existingClassName, paragraphClassName]
+                    .filter(Boolean)
+                    .join(' ')
+                : existingClassName;
               if (!hasMediaOrBlockChild) {
                 return (
                   <ErrorBoundary
@@ -779,6 +870,7 @@ function Markdown({
                         ...sharedStyle,
                         ...style
                       }}
+                      className={combinedClassName}
                       key={`${key}-${keySuffix}`}
                     >
                       {convertToJSX(normalizedNodes)}
@@ -806,6 +898,53 @@ function Markdown({
                 );
               };
 
+            const renderWithLabelSplit = (
+              nodes: any[],
+              keySuffix: string,
+              pathSuffix: string
+            ) => {
+              if (!nodes?.length) {
+                return null;
+              }
+              if (!isWithinList) {
+                const splitResult = splitLabelAndContent(nodes);
+                if (splitResult) {
+                  return (
+                    <Fragment key={`${key}-segment-${keySuffix}`}>
+                      {renderSegment(
+                        splitResult.labelNodes,
+                        `${keySuffix}-label`,
+                        `${pathSuffix}/Label`
+                      )}
+                      {renderSegment(
+                        splitResult.contentNodes,
+                        `${keySuffix}-body`,
+                        `${pathSuffix}/Body`
+                      )}
+                    </Fragment>
+                  );
+                }
+              }
+              return renderSegment(nodes, keySuffix, pathSuffix);
+            };
+
+            if (!isWithinList) {
+              const segments = splitNodesByDoubleBreaks(childNodes);
+              if (segments.length > 1) {
+                return (
+                  <Fragment key={`${key}-segments`}>
+                    {segments.map((segmentNodes, segmentIndex) =>
+                      renderWithLabelSplit(
+                        segmentNodes,
+                        `segment-${segmentIndex}`,
+                        `/Segment`
+                      )
+                    )}
+                  </Fragment>
+                );
+              }
+            }
+
             if (shouldSplit) {
               const leadingChildren = childNodes.slice(0, breakIndex);
               const trailingChildren = childNodes.slice(breakIndex + 1);
@@ -817,7 +956,16 @@ function Markdown({
               );
             }
 
-            return renderSegment(childNodes, 'single', '');
+            if (labelSplit) {
+              return (
+                <Fragment key={`${key}-label-split`}>
+                  {renderSegment(labelSplit.labelNodes, 'label', '/Label')}
+                  {renderSegment(labelSplit.contentNodes, 'body', '/Body')}
+                </Fragment>
+              );
+            }
+
+            return renderWithLabelSplit(childNodes, 'single', '');
           }
           case 'strong': {
             return (
@@ -954,6 +1102,43 @@ function Markdown({
     return nodes.slice(startIndex);
   }
 
+  function isBreakNode(node?: any) {
+    return node?.type === 'tag' && node.name === 'br';
+  }
+
+  function splitNodesByDoubleBreaks(nodes?: any[]) {
+    if (!Array.isArray(nodes) || !nodes.length) {
+      return [];
+    }
+    const segments: any[][] = [];
+    let current: any[] = [];
+    let i = 0;
+    while (i < nodes.length) {
+      if (isBreakNode(nodes[i])) {
+        const breakNodes: any[] = [];
+        while (i < nodes.length && isBreakNode(nodes[i])) {
+          breakNodes.push(nodes[i]);
+          i++;
+        }
+        if (breakNodes.length >= 2) {
+          if (current.length) {
+            segments.push(current);
+          }
+          current = [];
+        } else {
+          current.push(...breakNodes);
+        }
+        continue;
+      }
+      current.push(nodes[i]);
+      i++;
+    }
+    if (current.length) {
+      segments.push(current);
+    }
+    return segments;
+  }
+
   function hasMeaningfulContent(nodes?: any[]) {
     const normalizedNodes = stripLeadingBreakNodes(nodes);
     if (!normalizedNodes.length) {
@@ -971,6 +1156,99 @@ function Markdown({
       }
       return false;
     });
+  }
+
+  function splitLabelAndContent(nodes?: any[]) {
+    if (!Array.isArray(nodes) || !nodes.length) {
+      return null;
+    }
+    const normalizedNodes = stripLeadingBreakNodes(nodes);
+    const breakIndex = normalizedNodes.findIndex(
+      (child: any) => child?.type === 'tag' && child.name === 'br'
+    );
+    if (breakIndex === -1) {
+      return null;
+    }
+    const labelNodes = normalizedNodes.slice(0, breakIndex);
+    const contentNodes = stripLeadingBreakNodes(
+      normalizedNodes.slice(breakIndex + 1)
+    );
+    if (
+      !labelNodes.length ||
+      !contentNodes.length ||
+      !isSectionLabelParagraph(labelNodes) ||
+      !hasMeaningfulContent(contentNodes)
+    ) {
+      return null;
+    }
+    return { labelNodes, contentNodes };
+  }
+
+  function isSectionLabelParagraph(nodes?: any[]) {
+    if (!Array.isArray(nodes) || !nodes.length) {
+      return false;
+    }
+    const normalizedNodes = stripLeadingBreakNodes(nodes).filter(
+      (child: any) => {
+        if (child?.type === 'tag' && child.name === 'br') {
+          return false;
+        }
+        if (child?.type === 'text') {
+          return !!child.data?.trim();
+        }
+        return true;
+      }
+    );
+    if (!normalizedNodes.length) {
+      return false;
+    }
+    const allInlineNodes = normalizedNodes.every((child: any) => {
+      if (child?.type === 'text') {
+        return true;
+      }
+      if (child?.type === 'tag') {
+        if (INLINE_LABEL_TAGS.has(child.name)) {
+          return true;
+        }
+        return false;
+      }
+      return false;
+    });
+    if (!allInlineNodes) {
+      return false;
+    }
+    const labelText = normalizedNodes
+      .map((child: any) => extractNodeText(child))
+      .join('')
+      .trim();
+    if (!labelText || labelText.length > 160) {
+      return false;
+    }
+    if (!/[:：]$/.test(labelText)) {
+      return false;
+    }
+    const colonCount =
+      (labelText.match(/:/g) || []).length +
+      (labelText.match(/：/g) || []).length;
+    if (colonCount !== 1) {
+      return false;
+    }
+    return true;
+  }
+
+  function extractNodeText(node: any): string {
+    if (!node) {
+      return '';
+    }
+    if (node.type === 'text') {
+      return typeof node.data === 'string' ? node.data : '';
+    }
+    if (Array.isArray(node.children)) {
+      return node.children
+        .map((child: any) => extractNodeText(child))
+        .join('');
+    }
+    return '';
   }
 
   function handleMentions(text: string) {
@@ -1205,6 +1483,8 @@ function Markdown({
 
     unprotect();
 
+    processedText = ensureListBreakBeforeLabels(processedText);
+
     if (isAIMessage) {
       return processedText;
     }
@@ -1218,11 +1498,12 @@ function Markdown({
     const endsWithBoundaryNewline =
       !options?.isAtEnd && text.endsWith('\n');
 
+    const listLineRegex = /^\s*(?:[*+\-]|•|\d+\.)\s+/;
     const processedLines = processedText
       .split('\n')
       .map((line, index, arr) => {
         const trimmedLine = line.trim();
-        const isList = /^\d\./.test(trimmedLine);
+        const isList = listLineRegex.test(trimmedLine);
         const isLeadingBoundaryLine =
           startsWithBoundaryNewline && index === 0 && trimmedLine === '';
         const isTrailingBoundaryLine =
@@ -1258,6 +1539,24 @@ function Markdown({
       });
 
     return processedLines.join('\n');
+  }
+
+  function ensureListBreakBeforeLabels(text: string) {
+    if (!text) {
+      return text;
+    }
+    const angleLabelPattern = '(?:&lt;|&#x3C;)[^>\\n]+(?:>|&gt;)';
+    const strongLabelPattern = '(?:\\*\\*|__)[^\\n]+?:(?:\\*\\*|__)';
+    const emLabelPattern = '(?:\\*|_)[^\\n]+?:(?:\\*|_)';
+    const labelPattern = `(?:${angleLabelPattern}|${strongLabelPattern}|${emLabelPattern})`;
+    const listLinePattern = '(?:[*+\\-]|\\d+\\.|•)';
+    const regex = new RegExp(
+      `(^|\\n)(\\s*${listLinePattern}\\s[^\\n]+)\\n(\\s*${labelPattern})`,
+      'g'
+    );
+    return text.replace(regex, (_, prefix, listLine, labelLine) => {
+      return `${prefix || ''}${listLine}\n\n${labelLine}`;
+    });
   }
 
   function removeNbsp(text?: string) {

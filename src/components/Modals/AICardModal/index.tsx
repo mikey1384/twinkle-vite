@@ -198,10 +198,10 @@ export default function AICardModal({
       const { offers: loadedOffers, loadMoreShown } = await getOffersForCard({
         cardId
       });
-      setOfferPrice(loadedOffers.length ? loadedOffers[0].price : 0);
+      setOfferPrice(loadedOffers?.length ? loadedOffers?.[0]?.price : 0);
       if (!userSwitchedTab.current) {
         setActiveTab(
-          card?.ownerId === userId && loadedOffers.length ? 'offers' : 'myMenu'
+          card?.ownerId === userId && loadedOffers?.length ? 'offers' : 'myMenu'
         );
       }
       setOffers(loadedOffers);
@@ -259,7 +259,7 @@ export default function AICardModal({
                 (user: { id: number }) => user.id !== offererId
               );
             }
-            if (newOffer.users.length) {
+            if (newOffer.users?.length) {
               result.push(newOffer);
             }
           }
@@ -281,7 +281,7 @@ export default function AICardModal({
                 (user: { id: number }) => user.id !== acceptedOffer.userId
               );
             }
-            if (newOffer.users.length) {
+            if (newOffer.users?.length) {
               result.push(newOffer);
             }
           }
@@ -672,7 +672,7 @@ export default function AICardModal({
           const newUsers = offer.users.filter(
             (user: { id: number }) => user.id !== userId
           );
-          if (newUsers.length > 0) {
+          if (newUsers?.length > 0) {
             acc.push({ ...offer, users: newUsers });
           }
           return acc;

@@ -73,9 +73,9 @@ export default function DefaultView({
   );
 
   async function handleLoadMoreAICards() {
-    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
+    const lastInteraction = cards[cards?.length - 1]?.lastInteraction;
     setLoadingMore(true);
-    const lastId = cards[cards.length - 1]?.id;
+    const lastId = cards[cards?.length - 1]?.id;
     const { cards: newCards, loadMoreShown } = await loadAICards(
       lastInteraction,
       lastId

@@ -34,6 +34,21 @@ const RichTextCss = css`
   p + p {
     margin-top: 1em;
   }
+  p.rich-text-section-label {
+    font-weight: 600;
+  }
+  p.rich-text-section-label:first-child {
+    margin-top: 0;
+  }
+  p.rich-text-section-label:not(:first-child) {
+    margin-top: 1.25em;
+  }
+  p.rich-text-section-label + p,
+  p.rich-text-section-label + ul,
+  p.rich-text-section-label + ol,
+  p.rich-text-section-label + div {
+    margin-top: 0.55em;
+  }
   h1,
   h2,
   h3,

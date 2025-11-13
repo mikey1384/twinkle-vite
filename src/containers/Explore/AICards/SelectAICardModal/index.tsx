@@ -40,12 +40,9 @@ export default function SelectAICardModal({
   const [loading, setLoading] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const { colorKey: doneColorKey } = useRoleColor(
-    'done',
-    {
-      fallback: 'blue'
-    }
-  );
+  const { colorKey: doneColorKey } = useRoleColor('done', {
+    fallback: 'blue'
+  });
   const { colorKey: successColorKey } = useRoleColor('success', {
     fallback: 'green'
   });
@@ -161,7 +158,11 @@ export default function SelectAICardModal({
         )}
       </main>
       <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
+        <Button
+          variant="ghost"
+          style={{ marginRight: '0.7rem' }}
+          onClick={onHide}
+        >
           Cancel
         </Button>
         <Button
@@ -172,8 +173,8 @@ export default function SelectAICardModal({
           color={doneColor}
           onClick={() => setConfirmModalShown(true)}
         >
-          {selectedCardIds.length > MAX_SELECTED_CARDS
-            ? `${selectedCardIds.length} cards selected. Maximum is ${MAX_SELECTED_CARDS}`
+          {selectedCardIds?.length > MAX_SELECTED_CARDS
+            ? `${selectedCardIds?.length} cards selected. Maximum is ${MAX_SELECTED_CARDS}`
             : 'Done'}
         </Button>
       </footer>
