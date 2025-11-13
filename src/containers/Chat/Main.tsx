@@ -872,6 +872,7 @@ export default function Main({
     isUsingCollect,
     currentChannel.theme,
     currentChannel?.twoPeople,
+    isUsingCollect,
     profileTheme,
     selectedChannelId
   ]);
