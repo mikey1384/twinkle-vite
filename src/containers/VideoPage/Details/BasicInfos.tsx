@@ -6,9 +6,7 @@ import { edit } from '~/constants/placeholders';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const addedByLabel = localize('addedBy');
+const addedByLabel = 'Added by';
 
 export default function BasicInfos({
   className,

@@ -2,16 +2,14 @@ import React, { useEffect, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FilterBar from '~/components/FilterBar';
 import SectionPanel from '~/components/SectionPanel';
-import EmptyStateMessage from '~/components/EmptyStateMessage';
-import localize from '~/constants/localize';
-import MissionItem from './MissionItem';
+import EmptyStateMessage from '~/components/EmptyStateMessage';import MissionItem from './MissionItem';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
 
-const missionProgressLabel = localize('missionProgress');
-const completeLabel = localize('complete');
-const incompleteLabel = localize('incomplete');
+const missionProgressLabel = 'Mission Progress';
+const completeLabel = 'Complete';
+const incompleteLabel = 'Incomplete';
 
 export default function MissionProgress({
   missionsLoaded,

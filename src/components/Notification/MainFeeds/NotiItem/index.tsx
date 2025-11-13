@@ -2,7 +2,6 @@ import React, { useMemo, memo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { notiFeedListItem } from '../../Styles';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import NotiMessage from './NotiMessage';
 import UsernameText from '~/components/Texts/UsernameText';
 import { resolveColorValue } from '~/theme/resolveColor';
@@ -68,7 +67,7 @@ function NotiItem({
             user={user}
             color={resolveColorValue(linkColor) || linkColor}
           />
-          {SELECTED_LANGUAGE === 'kr' ? '' : ' '}
+          {' '}
         </div>
       );
     }

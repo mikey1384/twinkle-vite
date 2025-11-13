@@ -39,14 +39,12 @@ import {
   useKeyContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const deleteLabel = localize('delete');
-const editLabel = localize('edit');
-const editOrDeleteLabel = localize('editOrDelete');
-const peopleWhoLikeThisVideoLabel = localize('peopleWhoLikeThisVideo');
+const deleteLabel = 'Delete';
+const editLabel = 'Edit';
+const editOrDeleteLabel = 'Edit or Delete';
+const peopleWhoLikeThisVideoLabel = 'People who like this video';
 const deviceIsMobile = isMobile(navigator);
 
 export default function Details({
@@ -282,9 +280,6 @@ export default function Details({
   }, []);
 
   const viewsLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>조회수 {addCommasToNumber(videoViews)}회</>;
-    }
     return (
       <>
         {addCommasToNumber(videoViews)} view

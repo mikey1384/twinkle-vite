@@ -15,12 +15,11 @@ import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
 import { isMobile } from '~/helpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
-import localize from '~/constants/localize';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 
 const deviceIsMobile = isMobile(navigator);
-const changeThemeMobileLabel = localize('changeThemeMobile');
-const changeThemeLabel = localize('changeTheme2');
+const changeThemeMobileLabel = 'Theme';
+const changeThemeLabel = 'Change Theme';
 
 export default function Cover({
   onSelectTheme,
@@ -70,14 +69,11 @@ export default function Cover({
     return fn ? fn() : target;
   };
 
-  const coverBackground = resolveColor(themeRoles.cover?.color, themeName) ||
-    Color.logoBlue();
+  const coverBackground =
+    resolveColor(themeRoles.cover?.color, themeName) || Color.logoBlue();
   const coverTextColor =
     resolveColor(themeRoles.coverText?.color, 'white') || '#fff';
-  const coverTextShadowColor = resolveColor(
-    themeRoles.coverText?.shadow,
-    ''
-  );
+  const coverTextShadowColor = resolveColor(themeRoles.coverText?.shadow, '');
   const doneButtonColor = themeRoles.done?.color || 'blue';
 
   const coverBackgroundVar = `var(--role-cover-color, ${coverBackground})`;
@@ -215,7 +211,8 @@ export default function Cover({
               {!colorSelectorShown && (
                 <Button
                   style={{ marginBottom: '-1rem', marginRight: '-1rem' }}
-                  filled
+                  variant="solid"
+                  tone="raised"
                   onClick={() => setColorSelectorShown(true)}
                 >
                   {deviceIsMobile ? changeThemeMobileLabel : changeThemeLabel}
@@ -265,7 +262,8 @@ export default function Cover({
                     <Button
                       style={{ fontSize: '1.2rem' }}
                       color={doneButtonColor}
-                      filled
+                      variant="soft"
+                      tone="raised"
                       onClick={handleSetTheme}
                     >
                       Change
@@ -320,38 +318,38 @@ export default function Cover({
             statusShown
             statusSize={coverStatusSize}
           />
-      </div>
-      {imageModalShown && (
-        <ImageModal
-          downloadable={false}
-          src={`${cloudFrontURL}${profilePicUrl}`}
-          onHide={() => setImageModalShown(false)}
-        />
-      )}
-      {imageEditModalShown && (
-        <ImageEditModal
-          isProfilePic
-          imageUri={imageUri}
-          onEditDone={handleImageEditDone}
-          onHide={() => {
-            setImageUri(null);
-            setImageEditModalShown(false);
-          }}
-        />
-      )}
-      {alertModalShown && (
-        <AlertModal
-          title="Image is too large (limit: 10mb)"
-          content="Please select a smaller image"
-          onHide={() => setAlertModalShown(false)}
-        />
-      )}
-      {usernameHistoryShown && (
-        <UsernameHistoryModal
-          userId={profile.id}
-          onHide={() => setUsernameHistoryShown(false)}
-        />
-      )}
+        </div>
+        {imageModalShown && (
+          <ImageModal
+            downloadable={false}
+            src={`${cloudFrontURL}${profilePicUrl}`}
+            onHide={() => setImageModalShown(false)}
+          />
+        )}
+        {imageEditModalShown && (
+          <ImageEditModal
+            isProfilePic
+            imageUri={imageUri}
+            onEditDone={handleImageEditDone}
+            onHide={() => {
+              setImageUri(null);
+              setImageEditModalShown(false);
+            }}
+          />
+        )}
+        {alertModalShown && (
+          <AlertModal
+            title="Image is too large (limit: 10mb)"
+            content="Please select a smaller image"
+            onHide={() => setAlertModalShown(false)}
+          />
+        )}
+        {usernameHistoryShown && (
+          <UsernameHistoryModal
+            userId={profile.id}
+            onHide={() => setUsernameHistoryShown(false)}
+          />
+        )}
       </ScopedTheme>
     </ErrorBoundary>
   );

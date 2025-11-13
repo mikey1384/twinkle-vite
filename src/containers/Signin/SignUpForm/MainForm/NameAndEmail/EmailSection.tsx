@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
-import localize from '~/constants/localize';
 import { isValidEmailAddress } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 
-const emailIsNeededInCaseLabel = localize('emailIsNeededInCase');
-const emailYoursOrYourParentsLabel = localize('emailYoursOrYourParents');
+const emailIsNeededInCaseLabel =
+  'Email is needed in case you forget your password';
+const emailYoursOrYourParentsLabel = `Email (yours or your parent's)`;
 
 export default function EmailSection({
   email,
@@ -72,7 +72,8 @@ export default function EmailSection({
         >
           <Button
             style={{ marginTop: '1.5rem' }}
-            filled
+            variant="soft"
+            tone="raised"
             color="logoBlue"
             loading={sendingEmail}
             onClick={() => handleConfirmEmail(email)}

@@ -1,24 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import Input from '~/components/Texts/Input';
-import localize from '~/constants/localize';
-import VerificationEmailSendModal from './VerificationEmailSendModal';
+import Input from '~/components/Texts/Input';import VerificationEmailSendModal from './VerificationEmailSendModal';
 import { css } from '@emotion/css';
 import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const currentPasswordLabel = localize('currentPassword');
-const enterCurrentPasswordLabel = localize('enterCurrentPassword');
-const enterNewPasswordLabel = localize('enterNewPassword');
-const iForgotMyPasswordLabel = localize('iForgotMyPassword');
-const newPasswordLabel = localize('newPassword');
-const passwordsNeedToBeAtLeastLabel = localize('passwordsNeedToBeAtLeast');
-const incorrectPasswordLabel = localize('incorrectPassword');
-const retypeNewPasswordLabel = localize('retypeNewPassword');
-const retypePasswordDoesNotMatchLabel = localize('retypePasswordDoesNotMatch');
+const currentPasswordLabel = 'Current Password';
+const enterCurrentPasswordLabel = 'Enter your current password';
+const enterNewPasswordLabel = 'Enter a new password';
+const iForgotMyPasswordLabel = 'I forgot my password';
+const newPasswordLabel = 'New Password';
+const passwordsNeedToBeAtLeastLabel = 'Passwords need to be at least 5 characters long';
+const incorrectPasswordLabel = 'Incorrect password';
+const retypeNewPasswordLabel = 'Retype new password';
+const retypePasswordDoesNotMatchLabel = 'The passwords do not match';
 
 export default function ChangePasswordModal({
   onHide

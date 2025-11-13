@@ -7,20 +7,18 @@ import Check from '../../Check';
 import AddAccountTypeModal from '../../Modals/AddAccountTypeModal';
 import EditAccountTypeModal from '../../Modals/EditAccountTypeModal';
 import Icon from '~/components/Icon';
-import { useManagementContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
-const addAccountTypeLabel = localize('addAccountType');
-const authLevelLabel = localize('authLevel');
-const deleteLabel = localize('delete');
-const editLabel = localize('edit');
-const editPlaylistsLabel = localize('editPlaylists');
-const editRewardLevelLabel = localize('editRewardLevel');
-const featureContentsLabel = localize('featureContents');
-const labelLabel = localize('label');
-const rewardLabel = localize('reward');
-const noAccountTypesLabel = localize('noAccountTypes');
+const addAccountTypeLabel = 'Add Account Type';
+const authLevelLabel = 'Auth Level';
+const deleteLabel = 'Delete';
+const editLabel = 'Edit';
+const editPlaylistsLabel = 'Edit Playlists';
+const editRewardLevelLabel = 'Edit Reward Level';
+const featureContentsLabel = 'Feature Contents';
+const labelLabel = 'Label';
+const rewardLabel = 'Reward';
+const noAccountTypesLabel = 'No Account Types';
 
 export default function AccountTypes({ canManage }: { canManage: boolean }) {
   const tableHeaderRole = useRoleColor('tableHeader', { fallback: 'logoBlue' });

@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 
-const forEveryStarYouAddLabel = localize('forEveryStarYouAddSubject');
+const forEveryStarYouAddLabel = 'For every star you add, the maximum amount of XP that could be rewarded to each participant of this subject rises by 2,000 XP.';
 
 export default function Subject({
   rewardLevel,
@@ -17,11 +15,11 @@ export default function Subject({
   const rewardLevelExpectation = useMemo(() => {
     switch (rewardLevel) {
       case 3:
-        return localize('moderateEffort');
+        return 'Moderate Effort';
       case 4:
-        return localize('aLotOfEffort');
+        return 'A Lot of Effort';
       case 5:
-        return localize('hugeEffort');
+        return 'Huge Effort';
       default:
         return '';
     }
@@ -38,14 +36,6 @@ export default function Subject({
     }
   }, [rewardLevel]);
   const rewardLevelDescription = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <>
-          선생님 유저분들의 추천을 받으려면 {rewardLevelExpectation}을 기울여야
-          합니다
-        </>
-      );
-    }
     return (
       <>
         Users are expected to put{' '}

@@ -3,10 +3,9 @@ import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const logInLabel = localize('logIn');
+const logInLabel = 'Log In';
 
 export default function PleaseLogIn() {
   const loginRole = useRoleColor('login', {
@@ -60,13 +59,8 @@ export default function PleaseLogIn() {
         <span style={{ color: Color.vantaBlack(), fontWeight: 'bold' }}>
           vocabulary games & chess
         </span>{' '}
-        with{' '}
-        <span style={{ color: twinColor, fontWeight: 'bold' }}>
-          Twin
-        </span>
-        <span style={{ color: kleColor, fontWeight: 'bold' }}>
-          kle
-        </span>{' '}
+        with <span style={{ color: twinColor, fontWeight: 'bold' }}>Twin</span>
+        <span style={{ color: kleColor, fontWeight: 'bold' }}>kle</span>{' '}
         students and teachers?
       </p>
     );
@@ -95,7 +89,8 @@ export default function PleaseLogIn() {
       </div>
       <div style={{ marginTop: '2rem' }}>
         <Button
-          filled
+          variant="soft"
+          tone="raised"
           color={loginColor}
           style={{ fontSize: '3rem' }}
           onClick={onOpenSigninModal}

@@ -3,12 +3,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const cancelLabel = localize('cancel');
-const classroomChatLabel = localize('classroomChat');
-const regularChatLabel = localize('regularChat');
-const startNewChatLabel = localize('startNewChat');
+const cancelLabel = 'Cancel';
+const classroomChatLabel = 'Classroom';
+const regularChatLabel = 'Regular Chat';
+const startNewChatLabel = 'Start a New Chat';
 
 export default function SelectScreen({
   onHide,

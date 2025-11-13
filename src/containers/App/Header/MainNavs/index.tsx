@@ -16,13 +16,22 @@ import {
   useKeyContext
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-import localize from '~/constants/localize';
 
 const deviceIsTablet = isTablet(navigator);
-const homeLabel = localize('home');
-const exploreLabel = localize('explore');
-const missionsLabel = localize('missions');
-const chatLabel = localize('chat');
+const homeLabel = 'Home';
+const exploreLabel = 'Explore';
+const missionsLabel = 'Missions';
+const chatLabel = 'Chat';
+const contentLabels: Record<string, string> = {
+  comments: 'Comment',
+  links: 'Link',
+  missions: 'Mission',
+  playlists: 'Playlist',
+  subjects: 'Subject',
+  videos: 'Video',
+  'ai-cards': 'AI Card',
+  'ai-stories': 'AI Story'
+};
 
 export default function MainNavs({
   isAIChat,
@@ -75,8 +84,7 @@ export default function MainNavs({
 
   const contentLabel = useMemo(() => {
     if (!contentNav) return null;
-    if (contentNav === 'ai-stories') return 'AI Story';
-    return localize(contentNav.substring(0, contentNav.length - 1));
+    return contentLabels[contentNav] || null;
   }, [contentNav]);
 
   const displayedTwinkleCoins = useMemo(() => {

@@ -10,15 +10,13 @@ import Notification from '~/components/Notification';
 import SideMenu from '~/components/SideMenu';
 import Search from './Search';
 import Categories from './Categories';
-import Icon from '~/components/Icon';
-import localize from '~/constants/localize';
-import { debounce, isTablet } from '~/helpers';
+import Icon from '~/components/Icon';import { debounce, isTablet } from '~/helpers';
 
 const deviceIsTablet = isTablet(navigator);
-const aiCardsLabel = localize('aiCards');
-const subjectsLabel = localize('subjects');
-const videosLabel = localize('videos2');
-const linksLabel = localize('links');
+const aiCardsLabel = 'AI Cards';
+const subjectsLabel = 'Subjects';
+const videosLabel = 'Videos';
+const linksLabel = 'Links';
 
 export default function Explore({ category }: { category: string }) {
   const [isLandscape, setIsLandscape] = useState(

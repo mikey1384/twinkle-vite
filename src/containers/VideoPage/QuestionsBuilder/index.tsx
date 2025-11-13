@@ -12,7 +12,6 @@ import { css } from '@emotion/css';
 import { DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 import { useRoleColor } from '~/theme/useRoleColor';
 
@@ -51,17 +50,15 @@ const Styles = {
   `
 };
 
-const addLabel = localize('add');
-const pleaseClickDoneButtonBelowLabel = localize('pleaseClickDoneButtonBelow');
-const pleaseEnterTitleLabel = localize('pleaseEnterTitle');
-const pleaseMarkTheCorrectChoiceLabel = localize('pleaseMarkTheCorrectChoice');
-const reorderLabel = localize('reorder');
-const resetLabel = localize('reset');
-const saveLabel = localize('save');
-const submitLabel = localize('submit2');
-const thereMustBeAtLeastTwoChoicesLabel = localize(
-  'thereMustBeAtLeastTwoChoices'
-);
+const addLabel = 'Add';
+const pleaseClickDoneButtonBelowLabel = 'Please click the "Done" button below';
+const pleaseEnterTitleLabel = 'Please enter a title';
+const pleaseMarkTheCorrectChoiceLabel = 'Please mark the correct choice';
+const reorderLabel = 'Reorder';
+const resetLabel = 'Reset';
+const saveLabel = 'Save';
+const submitLabel = 'Submit';
+const thereMustBeAtLeastTwoChoicesLabel = 'There must be at least two choices';
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
 export default function QuestionsBuilder({
@@ -231,7 +228,8 @@ export default function QuestionsBuilder({
                     >
                       <Button
                         color="logoBlue"
-                        filled
+                        variant="soft"
+                        tone="raised"
                         onClick={handleSave}
                         style={{ fontSize: '2rem', marginRight: '1rem' }}
                       >
@@ -243,7 +241,8 @@ export default function QuestionsBuilder({
                       </Button>
                       <Button
                         color="blue"
-                        filled
+                        variant="soft"
+                        tone="raised"
                         onClick={() => handleSave({ isSubmit: true })}
                         style={{ fontSize: '2rem' }}
                       >

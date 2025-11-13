@@ -46,11 +46,9 @@ import {
 } from '~/contexts';
 import { User } from '~/types';
 import LocalContext from '../../Context';
-import localize from '~/constants/localize';
-
 const CALL_SCREEN_HEIGHT = '30%';
 const deviceIsMobile = isMobile(navigator);
-const leaveChatGroupLabel = localize('leaveChatGroup');
+const leaveChatGroupLabel = 'Leave Chat Group';
 
 export default function MessagesContainer({
   channelName,

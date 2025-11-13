@@ -2,13 +2,11 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { Color, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { isMobile, isTablet } from '~/helpers';
 
-const rewardLevelLabel = localize('effortLevel');
+const rewardLevelLabel = 'Effort Level';
 
 export default function RewardLevelBar({
   className,
@@ -51,9 +49,6 @@ export default function RewardLevelBar({
   }, [deviceIsMobile, deviceIsTablet, rewardLevel, starColor]);
 
   const earnUpToLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `최대 ${addCommasToNumber(rewardLevel * 2000)}XP 까지 획득가능`;
-    }
     return `Earn up to ${addCommasToNumber(rewardLevel * 2000)} XP`;
   }, [rewardLevel]);
 

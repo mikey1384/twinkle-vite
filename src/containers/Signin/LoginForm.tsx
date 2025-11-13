@@ -7,14 +7,12 @@ import { mobileMaxWidth } from '~/constants/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const enterYourUsernameLabel = localize('enterYourUsername');
-const enterYourPasswordLabel = localize('enterYourPassword');
-const iDontHaveAnAccountLabel = localize('iDontHaveAnAccount');
-const iForgotMyPasswordLabel = localize('iForgotMyPassword2');
-const logMeInLabel = localize('logMeIn');
-const yourUsernameAndPasswordLabel = localize('yourUsernameAndPassword');
+const enterYourUsernameLabel = 'Enter your username';
+const enterYourPasswordLabel = 'Enter your password';
+const iDontHaveAnAccountLabel = `I don't have an account`;
+const iForgotMyPasswordLabel = 'I forgot my password';
+const logMeInLabel = 'Log me in!';
+const yourUsernameAndPasswordLabel = `What's your username and password?`;
 
 export default function LoginForm({
   username,

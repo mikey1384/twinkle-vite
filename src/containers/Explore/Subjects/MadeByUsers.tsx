@@ -3,10 +3,8 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import ContentListItem from '~/components/ContentListItem';
 import { useAppContext, useExploreContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const madeByUsersLabel = localize('madeByUsers');
-const noUserMadeContentLabel = localize('noUserMadeContent');
+const madeByUsersLabel = 'Made By Twinkle Users';
+const noUserMadeContentLabel = 'No user made content';
 
 export default function MadeByUsers({
   expanded,

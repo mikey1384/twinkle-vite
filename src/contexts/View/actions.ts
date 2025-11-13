@@ -39,6 +39,12 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
         nav
       });
     },
+    onSetBoardNav(nav: string) {
+      return dispatch({
+        type: 'SET_BOARD_NAV',
+        nav
+      });
+    },
     onSetPageTitle(title: string) {
       return dispatch({
         type: 'SET_PAGE_TITLE',

@@ -15,11 +15,9 @@ import {
   SELECTED_LANGUAGE,
   MOD_LEVEL
 } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
-const fromTwinkleWebsiteLabel = localize('fromTwinkleWebsite');
-const videoLabel = localize('video');
-const linkLabel = localize('link');
+const fromTwinkleWebsiteLabel = 'from Twinkle Website';
+const videoLabel = 'Video';
+const linkLabel = 'Link';
 const deviceIsMobile = isMobile(navigator);
 
 export default function StartScreen({

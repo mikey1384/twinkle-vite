@@ -22,8 +22,7 @@ import {
   DEFAULT_PROFILE_THEME,
   localStorageKeys,
   wordleGuessReaction,
-  wordLevelHash,
-  SELECTED_LANGUAGE
+  wordLevelHash
 } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { levels } from '~/constants/userLevels';
@@ -551,9 +550,6 @@ export function useWordleLabels({
 }) {
   const displayedUserLabel = useMemo(() => {
     if (userId === myId) {
-      if (SELECTED_LANGUAGE === 'kr') {
-        return '회원';
-      }
       return 'You';
     }
     return (

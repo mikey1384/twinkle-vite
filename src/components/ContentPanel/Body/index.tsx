@@ -16,11 +16,9 @@ import { determineUserCanRewardThis } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import BottomInterface from './BottomInterface';
 
-const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
+const settingCannotBeChangedLabel = 'This setting cannot be changed';
 
 export default function Body({
   autoExpand = false,
@@ -346,13 +344,6 @@ export default function Body({
   }, [recommendations, userId]);
 
   const moderatorHasDisabledChangeLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <span>
-          <b>{moderatorName}</b>님이 이 설정을 변경하지 못하도록 설정하였습니다
-        </span>
-      );
-    }
     return (
       <span>
         <b>{moderatorName}</b> has disabled users from changing this setting for

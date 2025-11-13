@@ -4,9 +4,7 @@ import Icon from '~/components/Icon';
 import { validateUsername, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext } from '~/contexts';
 import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const usernameAlreadyTakenLabel = localize('usernameAlreadyTaken');
+const usernameAlreadyTakenLabel = 'That username is already taken';
 
 export default function Username({
   username,

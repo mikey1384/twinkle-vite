@@ -10,9 +10,7 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import BottomNavButtons from './BottomNavButtons';
-import localize from '~/constants/localize';
-
-const showAllLabel = localize('showAll');
+const showAllLabel = 'Show All';
 
 export default function Carousel({
   allowDrag = true,

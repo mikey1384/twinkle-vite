@@ -6,9 +6,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const xpAnalysisLabel = localize('xpAnalysis');
+const xpAnalysisLabel = 'XP Analysis';
 
 export default function XPAnalysis({
   selectedTheme,

@@ -33,6 +33,7 @@ const initialViewState: ViewState = {
   contentNav: '',
   pageTitle: '',
   profileNav: '',
+  boardNav: '/board',
   homeNav: '/',
   audioKey: ''
 };

@@ -1,10 +1,8 @@
 import React from 'react';
 import Button from '~/components/Button';
-import localize from '~/constants/localize';
-
-const logInLabel = localize('logIn2');
-const tapHereLabel = localize('tapHere');
-const toAccessAllFeaturesLabel = localize('toAccessAllFeatures');
+const logInLabel = 'Log in';
+const tapHereLabel = 'Tap Here';
+const toAccessAllFeaturesLabel = 'to access all features';
 
 export default function WelcomeMessage({
   userId,
@@ -31,7 +29,8 @@ export default function WelcomeMessage({
       ) : null}
       {!userId ? (
         <Button
-          filled
+          variant="soft"
+          tone="raised"
           color="green"
           style={{ marginTop: '1rem' }}
           onClick={openSigninModal}

@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import RankingsListItem from '~/components/RankingsListItem';
-import localize from '~/constants/localize';
-import FilterBar from '~/components/FilterBar';
+import RankingsListItem from '~/components/RankingsListItem';import FilterBar from '~/components/FilterBar';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
@@ -10,9 +8,9 @@ import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { notiFilterBar } from '../../Styles';
 import LeaderboardList from '~/components/LeaderboardList';
 
-const myRankingLabel = localize('myRanking');
-const top30Label = localize('top30');
-const notRankedDescriptionLabel = localize('notRankedDescription');
+const myRankingLabel = 'My Ranking';
+const top30Label = 'Top 30';
+const notRankedDescriptionLabel = 'Earn XP by completing missions, watching XP videos, or leaving comments to join the leaderboard';
 
 export default function AllTime({
   allRanks,

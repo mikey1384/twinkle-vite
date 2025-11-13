@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import VideoPlayer from '~/components/VideoPlayer';
+import Button from '~/components/Button';import VideoPlayer from '~/components/VideoPlayer';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 
-const closelLabel = localize('close');
+const closelLabel = 'Close';
 
 export default function YTVideoModal({
   messageId,

@@ -6,8 +6,6 @@ import { isSupermod } from '~/helpers';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { karmaMultiplier, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
 export default function KarmaExplanationModal({
   userLevel,
   displayedKarmaPoints,
@@ -29,7 +27,7 @@ export default function KarmaExplanationModal({
   userType: string;
   userTitle: string;
 }) {
-  const karmaPointsLabel = localize('karmaPoints');
+  const karmaPointsLabel = 'Karma Points';
   const displayedTitle = useMemo(() => {
     return userTitle || userType;
   }, [userTitle, userType]);

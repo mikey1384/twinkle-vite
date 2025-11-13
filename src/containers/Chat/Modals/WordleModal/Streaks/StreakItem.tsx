@@ -5,12 +5,10 @@ import UsernameText from '~/components/Texts/UsernameText';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { User } from '~/types';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { User } from '~/types';import { useRoleColor } from '~/theme/useRoleColor';
 import RankBadge from '~/components/RankBadge';
 
-const youLabel = localize('You');
+const youLabel = 'You';
 
 export default function StreakItem({
   myId,

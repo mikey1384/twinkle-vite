@@ -5,10 +5,8 @@ import MainForm from './MainForm';
 import StudentOrTeacher from './StudentOrTeacher';
 import SecretPassPhrase from './SecretPassPhrase';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const iAlreadyHaveAnAccountLabel = localize('iAlreadyHaveAnAccount');
-const letsSetUpYourAccountLabel = localize('letsSetUpYourAccount');
+const iAlreadyHaveAnAccountLabel = 'I already have an account';
+const letsSetUpYourAccountLabel = `Welcome to Twinkle! Let's set up your account`;
 
 export default function SignUpForm({
   branchName,

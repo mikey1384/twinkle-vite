@@ -5,11 +5,9 @@ import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { edit } from '~/constants/placeholders';
 import { useRoleColor } from '~/theme/useRoleColor';
-import localize from '~/constants/localize';
-
-const cancelLabel = localize('cancel');
-const doneLabel = localize('done');
-const noDescriptionLabel = localize('noDescription');
+const cancelLabel = 'Cancel';
+const doneLabel = 'Done';
+const noDescriptionLabel = 'No description';
 
 export default function Description({
   description,

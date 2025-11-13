@@ -19,12 +19,10 @@ import Button from '~/components/Button';
 import Textarea from '~/components/Texts/Textarea';
 import AlertModal from '~/components/Modals/AlertModal';
 import Attachment from '~/components/Attachment';
-import FullTextReveal from '~/components/Texts/FullTextReveal';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import FullTextReveal from '~/components/Texts/FullTextReveal';import { useRoleColor } from '~/theme/useRoleColor';
 
-const secretMessageLabel = localize('secretMessage');
-const enterSecretMessageLabel = localize('enterSecretMessage');
+const secretMessageLabel = 'Secret Message';
+const enterSecretMessageLabel = 'Enter Secret Message';
 
 export default function SecretMessageInput({
   autoFocus = true,

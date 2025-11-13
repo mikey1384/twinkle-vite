@@ -1,13 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import Details from './Details';
+import Button from '~/components/Button';import Details from './Details';
 import { useKeyContext } from '~/contexts';
 import { User } from '~/types';
 
-const cancelLabel = localize('cancel');
-const confirmLabel = localize('confirm');
+const cancelLabel = 'Cancel';
+const confirmLabel = 'Confirm';
 
 export default function ConfirmTransactionModal({
   isAICardModalShown,

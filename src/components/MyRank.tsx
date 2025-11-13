@@ -2,15 +2,13 @@ import React, { useMemo } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-import localize from '~/constants/localize';
 import Icon from '~/components/Icon';
 import RankBadge from '~/components/RankBadge';
 import { getRankDigitCount, getRankFontScale } from '~/helpers/rankHelpers';
 
-const unrankedLabel = localize('unranked');
+const unrankedLabel = 'Unranked';
 
 export default function MyRank({
   myId,
@@ -43,8 +41,7 @@ export default function MyRank({
         : null,
     [rank]
   );
-  const isKorean = SELECTED_LANGUAGE === 'kr';
-  const rankLabel = localize('rank');
+  const rankLabel = 'Rank';
   const rankDigitCount = useMemo(() => getRankDigitCount(rank), [rank]);
   const rankFontScale = useMemo(
     () => getRankFontScale(rankDigitCount),
@@ -192,11 +189,6 @@ export default function MyRank({
                   </span>
                 </div>
                 <RankBadge rank={rank} />
-                {isKorean ? (
-                  <span className="rank-suffix">
-                    <span style={{ fontSize: `${rankFontScale}em` }}>위</span>
-                  </span>
-                ) : null}
               </>
             ) : (
               unrankedLabel

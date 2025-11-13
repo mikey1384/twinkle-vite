@@ -9,12 +9,10 @@ import Button from '~/components/Button';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useOutsideClick } from '~/helpers/hooks';
-import localize from '~/constants/localize';
-import ScopedTheme from '~/theme/ScopedTheme';
+import { useOutsideClick } from '~/helpers/hooks';import ScopedTheme from '~/theme/ScopedTheme';
 import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
-const editLabel = localize('edit');
+const editLabel = 'Edit';
 
 export default function SectionPanel({
   button,

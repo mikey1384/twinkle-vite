@@ -15,20 +15,18 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
-const editLabel = localize('edit');
-const emailHasBeenSentLabel = localize('emailHasBeenSent');
-const memberSinceLabel = localize('memberSince');
-const pleaseVerifyEmailLabel = localize('pleaseVerifyEmail');
-const userEmailNotVerifiedLabel = localize('userEmailNotVerified');
-const wasLastActiveLabel = localize('wasLastActive');
-const websiteLabel = localize('Website');
-const youtubeLabel = localize('youtube');
+const editLabel = 'Edit';
+const emailHasBeenSentLabel = 'An email has been sent. Tap here to check your inbox';
+const memberSinceLabel = 'Member since';
+const pleaseVerifyEmailLabel = 'Please verify your email';
+const userEmailNotVerifiedLabel = `This user's email has not been verified, yet`;
+const wasLastActiveLabel = 'Was last active';
+const websiteLabel = 'Website';
+const youtubeLabel = 'YouTube';
 
 export default function BasicInfos({
   className,
@@ -134,16 +132,10 @@ export default function BasicInfos({
   );
 
   const displayedTime = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return moment.unix(joinDate).format('MM/DD/YYYY');
-    }
     return moment.unix(joinDate).format('LL');
   }, [joinDate]);
 
   const messageUserLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <span style={{ marginLeft: '0.7rem' }}>채팅하기</span>;
-    }
     return (
       <span style={{ marginLeft: '0.7rem' }}>
         {online ? 'Chat' : 'Message'}
@@ -454,18 +446,11 @@ export default function BasicInfos({
     website: string;
   }) {
     const unfilledItems = [
-      { label: localize('email'), value: email },
-      { label: localize('youtube'), value: youtubeUrl },
-      { label: localize('website'), value: website }
+      { label: 'email', value: email },
+      { label: 'YouTube', value: youtubeUrl },
+      { label: 'website', value: website }
     ].filter((item) => !item.value);
     const emptyItemsArray = unfilledItems.map((item) => item.label);
-    if (SELECTED_LANGUAGE === 'kr') {
-      const emptyItemsString =
-        emptyItemsArray.length === 3
-          ? `${emptyItemsArray[0]}, ${emptyItemsArray[1]}, ${emptyItemsArray[2]}`
-          : emptyItemsArray.join(', ');
-      return `아래 '수정' 버튼을 누르신 후 다음 정보를 등록하세요: ${emptyItemsString}`;
-    }
     const emptyItemsString =
       emptyItemsArray.length === 3
         ? `${emptyItemsArray[0]}, ${emptyItemsArray[1]}, and ${emptyItemsArray[2]}`

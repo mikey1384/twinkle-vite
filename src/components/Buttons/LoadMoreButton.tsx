@@ -2,14 +2,12 @@ import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-import ScopedTheme from '~/theme/ScopedTheme';
+import { useKeyContext } from '~/contexts';import ScopedTheme from '~/theme/ScopedTheme';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
-const loadMoreLabel = localize('loadMore');
-const loadingLabel = localize('loading');
+const loadMoreLabel = 'Load More';
+const loadingLabel = 'Loading';
 
 export default function LoadMoreButton({
   label,

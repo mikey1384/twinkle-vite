@@ -1,17 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Input from '~/components/Texts/Input';
 import EmailSection from './EmailSection';
-import Verifier from './Verifier';
-import localize from '~/constants/localize';
-import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
+import Verifier from './Verifier';import { stringIsEmpty, isValidEmailAddress } from '~/helpers/stringHelpers';
 import { Color, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const firstNameLabel = localize('firstName');
-const lastNameLabel = localize('lastName');
-const whatIsYourFirstNameLabel = localize('whatIsYourFirstName');
-const whatIsYourLastNameLabel = localize('whatIsYourLastName');
+const firstNameLabel = 'First Name';
+const lastNameLabel = 'Last Name';
+const whatIsYourFirstNameLabel = 'What is your first name?';
+const whatIsYourLastNameLabel = 'What is your last name?';
 
 export default function UsernamePassword({
   classLabel,

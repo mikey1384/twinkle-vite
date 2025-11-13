@@ -51,26 +51,20 @@ import {
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import LocalContext from '../Context';
-import {
-  SELECTED_LANGUAGE,
-  CIEL_TWINKLE_ID,
-  ZERO_TWINKLE_ID
-} from '~/constants/defaultValues';
-import { Content } from '~/types';
-import localize from '~/constants/localize';
-import { useThemeTokens } from '~/theme/useThemeTokens';
+import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
+import { Content } from '~/types';import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useRoleColor } from '~/theme/useRoleColor';
 import ScopedTheme from '~/theme/ScopedTheme';
 
-const commentWasDeletedLabel = localize('commentWasDeleted');
-const editLabel = localize('edit');
-const pinLabel = localize('pin');
-const pinnedLabel = localize('pinned');
-const peopleWhoLikeThisCommentLabel = localize('peopleWhoLikeThisComment');
-const unpinLabel = localize('unpin');
-const removeCommentLabel = localize('removeComment');
-const repliesLabel = localize('replies');
-const replyLabel = localize('reply');
+const commentWasDeletedLabel = 'this comment was deleted';
+const editLabel = 'Edit';
+const pinLabel = 'Pin';
+const pinnedLabel = 'Pinned';
+const peopleWhoLikeThisCommentLabel = 'People who like this comment';
+const unpinLabel = 'Unpin';
+const removeCommentLabel = 'Remove';
+const repliesLabel = 'Replies';
+const replyLabel = 'Reply';
 
 function Comment({
   comment,
@@ -506,9 +500,6 @@ function Comment({
   }, [parent.contentId, parent.contentType, commentId]);
 
   const viewedTheSecretMessageLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${uploader?.username}님이 비밀 메시지를 조회했습니다`;
-    }
     return `${uploader?.username} viewed the secret message`;
   }, [uploader?.username]);
 

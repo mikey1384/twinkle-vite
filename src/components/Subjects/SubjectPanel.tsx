@@ -33,14 +33,12 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE, charLimit } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-
-const commentLabel = localize('comment');
-const editLabel = localize('edit');
-const byLabel = localize('by');
-const removeLabel = localize('remove');
-const secretMessageLabel = localize('secretMessage');
-const postedLabel = localize('posted');
+const commentLabel = 'Comment';
+const editLabel = 'Edit';
+const byLabel = 'By';
+const removeLabel = 'Remove';
+const secretMessageLabel = 'Secret Message';
+const postedLabel = 'Posted';
 
 export default function SubjectPanel({
   rootId,

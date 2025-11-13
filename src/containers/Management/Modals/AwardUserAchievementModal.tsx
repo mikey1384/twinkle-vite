@@ -8,12 +8,10 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useAppContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
-import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-import AchievementBadges from '~/components/AchievementBadges';
+import { css } from '@emotion/css';import AchievementBadges from '~/components/AchievementBadges';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const searchUsersLabel = localize('searchUsers');
+const searchUsersLabel = 'Search Users';
 
 export default function AwardUserAchievementModal({
   achievementType,

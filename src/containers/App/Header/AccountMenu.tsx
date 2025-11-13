@@ -11,13 +11,12 @@ import {
 import { socket } from '~/constants/sockets/api';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useLocation, useNavigate } from 'react-router-dom';
-import localize from '~/constants/localize';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const logInLabel = localize('logIn');
-const profileLabel = localize('Profile');
-const managementLabel = localize('management');
-const logOutLabel = localize('logOut');
+const logInLabel = 'Log In';
+const profileLabel = 'Profile';
+const managementLabel = 'Management';
+const logOutLabel = 'Log out';
 
 export default function AccountMenu({
   className,
@@ -148,7 +147,8 @@ export default function AccountMenu({
           onClick={onOpenSigninModal}
           style={{ marginLeft: '1rem', height: '3.5rem' }}
           color={loginColorKey}
-          filled
+          variant="soft"
+          tone="raised"
         >
           {logInLabel}
         </Button>

@@ -32,19 +32,17 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
-import localize from '~/constants/localize';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const areYouSureLabel = localize('areYouSure');
-const commentsMightNotBeRewardedLabel = localize('commentsMightNotBeRewarded');
-const tapThisButtonToSubmitLabel = localize('tapThisButtonToSubmit');
-const viewWithoutRespondingLabel = localize('viewWithoutResponding');
-const viewSecretMessageWithoutRespondingLabel = localize(
-  'viewSecretMessageWithoutResponding'
-);
+const areYouSureLabel = 'Are you sure?';
+const commentsMightNotBeRewardedLabel = 'The comments you post on this subject might not be rewarded';
+const tapThisButtonToSubmitLabel = 'Tap this button to submit';
+const viewWithoutRespondingLabel = 'View without responding';
+const viewSecretMessageWithoutRespondingLabel =
+  'View secret message without responding';
 
 function InputForm({
   isComment,

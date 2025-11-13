@@ -3,9 +3,7 @@ import QuestionsListItem from './QuestionsListItem';
 import RoundList from '~/components/RoundList';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const reorderQuestionsLabel = localize('reorderQuestions');
+const reorderQuestionsLabel = 'Reorder Questions';
 
 export default function QuestionsListGroup({
   onReorderCancel,

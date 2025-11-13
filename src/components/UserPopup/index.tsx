@@ -13,12 +13,10 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
 import { getSectionFromPathname } from '~/helpers';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-import RankBadge from '~/components/RankBadge';
+import { css } from '@emotion/css';import RankBadge from '~/components/RankBadge';
 
-const chatLabel = localize('chat2');
-const profileLabel = localize('Profile');
+const chatLabel = 'Chat';
+const profileLabel = 'Profile';
 const xpRankBadgeWrapperClass = css`
   display: inline-flex;
   align-items: center;

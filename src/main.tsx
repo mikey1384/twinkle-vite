@@ -53,6 +53,7 @@ import { faCardsBlank } from '@fortawesome/pro-solid-svg-icons/faCardsBlank';
 import { faCaretDown } from '@fortawesome/pro-solid-svg-icons/faCaretDown';
 import { faCertificate } from '@fortawesome/pro-solid-svg-icons/faCertificate';
 import { faCertificate as farCertificate } from '@fortawesome/pro-regular-svg-icons/faCertificate';
+import { faChalkboard } from '@fortawesome/pro-solid-svg-icons/faChalkboard';
 import { faChalkboardTeacher } from '@fortawesome/pro-solid-svg-icons/faChalkboardTeacher';
 import { faChartLine } from '@fortawesome/pro-solid-svg-icons/faChartLine';
 import { faCheck } from '@fortawesome/pro-solid-svg-icons/faCheck';
@@ -250,6 +251,7 @@ library.add(
   faCaretDown,
   faCertificate,
   farCertificate,
+  faChalkboard,
   faChalkboardTeacher,
   faChartLine,
   faCheck,

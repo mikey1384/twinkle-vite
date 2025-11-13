@@ -14,10 +14,8 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
-import localize from '~/constants/localize';
-
-const addPlaylistLabel = localize('addPlaylist');
-const allPlaylistsLabel = localize('allPlaylists');
+const addPlaylistLabel = 'Add Playlist';
+const allPlaylistsLabel = 'All Playlists';
 
 export default function Videos() {
   const loadPlaylists = useAppContext((v) => v.requestHelpers.loadPlaylists);

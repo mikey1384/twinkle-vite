@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
-import localize from '~/constants/localize';
 import ChangePasswordModal from './ChangePasswordModal';
 
-const changeMyPasswordLabel = localize('changeMyPassword');
+const changeMyPasswordLabel = 'Change My Password';
 
 export default function ChangePassword({
   style
@@ -18,7 +17,8 @@ export default function ChangePassword({
         <Button
           onClick={() => setChangePasswordModalShown(true)}
           color="logoBlue"
-          filled
+          variant="soft"
+          tone="raised"
         >
           {changeMyPasswordLabel}
         </Button>

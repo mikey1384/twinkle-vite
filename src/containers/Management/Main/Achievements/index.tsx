@@ -1,14 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import SectionPanel from '~/components/SectionPanel';
-import Table from '../../Table';
-import localize from '~/constants/localize';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import Table from '../../Table';import ErrorBoundary from '~/components/ErrorBoundary';
 import AchievementListItem from './AchievementListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const achievementsLabel = localize('achievements');
+const achievementsLabel = 'Achievements';
 
 interface Achievement {
   id: string | number;

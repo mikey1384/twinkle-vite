@@ -7,17 +7,15 @@ import EditBanStatusModal from '../Modals/EditBanStatusModal';
 import AddBanModal from '../Modals/AddBanModal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import { useManagementContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useManagementContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
-const chatLabel = localize('chat');
-const chessLabel = localize('chess');
-const logInLabel = localize('logIn');
-const postingLabel = localize('posting');
-const restrictedAccountsLabel = localize('restrictedAccounts');
-const restrictAccountLabel = localize('restrictAccount');
-const userLabel = localize('user');
+const chatLabel = 'Chat';
+const chessLabel = 'Chess';
+const logInLabel = 'Log In';
+const postingLabel = 'Posting';
+const restrictedAccountsLabel = 'Restricted Accounts';
+const restrictAccountLabel = 'Restrict Account';
+const userLabel = 'User';
 
 export default function BannedUsers({ canManage }: { canManage: boolean }) {
   const bannedUsers = useManagementContext((v) => v.state.bannedUsers);

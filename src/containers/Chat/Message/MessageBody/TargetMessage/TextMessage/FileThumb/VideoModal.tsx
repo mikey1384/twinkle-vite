@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import VideoPlayer from '~/components/VideoPlayer';
+import Button from '~/components/Button';import VideoPlayer from '~/components/VideoPlayer';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
-const closelLabel = localize('close');
+const closelLabel = 'Close';
 
 export default function VideoModal({
   fileName,

@@ -13,14 +13,12 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { charLimit } from '~/constants/defaultValues';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
-import localize from '~/constants/localize';
-
-const byLabel = localize('by');
-const changeVideosLabel = localize('changeVideos');
-const editTitleLabel = localize('editTitle');
-const reorderVideosLabel = localize('reorderVideos');
-const removeLabel = localize('remove');
-const removePlaylistLabel = localize('removePlaylist');
+const byLabel = 'By';
+const changeVideosLabel = 'Change Videos';
+const editTitleLabel = 'Edit Title';
+const reorderVideosLabel = 'Reorder Videos';
+const removeLabel = 'Remove';
+const removePlaylistLabel = 'Remove Playlist';
 const cellSpacing = 12;
 const numSlides = 4;
 

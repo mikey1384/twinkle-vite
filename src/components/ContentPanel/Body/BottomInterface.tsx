@@ -17,14 +17,12 @@ import {
   isMobile,
   isTablet
 } from '~/helpers';
-import localize from '~/constants/localize';
-
-const editLabel = localize('edit');
-const removeLabel = localize('remove');
-const commentLabel = localize('comment');
-const copiedLabel = localize('copied');
-const replyLabel = localize('reply');
-const respondLabel = localize('respond');
+const editLabel = 'Edit';
+const removeLabel = 'Remove';
+const commentLabel = 'Comment';
+const copiedLabel = 'Copied!';
+const replyLabel = 'Reply';
+const respondLabel = 'Respond';
 const deviceIsMobile = isMobile(navigator);
 
 const bottomInterfaceCSS = css`

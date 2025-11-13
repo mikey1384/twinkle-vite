@@ -7,15 +7,11 @@ import RewardLevelModal from '~/components/Modals/RewardLevelModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import AlertModal from '~/components/Modals/AlertModal';
 import { useAppContext, useKeyContext } from '~/contexts';
-import {
-  DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL,
-  SELECTED_LANGUAGE
-} from '~/constants/defaultValues';
-import localize from '~/constants/localize';
+import { DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL } from '~/constants/defaultValues';
 import { User } from '~/types';
 
-const setRewardLevelLabel = localize('setRewardLevel');
-const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
+const setRewardLevelLabel = 'Set Effort Level';
+const settingCannotBeChangedLabel = 'This setting cannot be changed';
 
 export default function StarButton({
   byUser,
@@ -72,19 +68,6 @@ export default function StarButton({
   }, [contentType, filePath, uploader, writtenByButtonShown]);
   const StarButtonRef: React.RefObject<any> = useRef(null);
   const byUserLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      const makerLabel =
-        uploader?.id === userId ? '내가' : `${uploader?.username}님이`;
-      return (
-        <>
-          {byUser
-            ? `${makerLabel} ${
-                writtenByButtonShown ? '작성하지' : '제작하지'
-              } 않았음`
-            : `${makerLabel} ${writtenByButtonShown ? '작성했음' : '제작함'}`}
-        </>
-      );
-    }
     const makerLabel = uploader?.id === userId ? 'me' : uploader?.username;
     return (
       <>
@@ -99,13 +82,6 @@ export default function StarButton({
     );
   }, [byUser, uploader?.id, uploader?.username, userId, writtenByButtonShown]);
   const moderatorHasDisabledChangeLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <span>
-          <b>{moderatorName}</b>님이 이 설정을 변경하지 못하도록 설정하였습니다
-        </span>
-      );
-    }
     return (
       <span>
         <b>{moderatorName}</b> has disabled users from changing this setting for

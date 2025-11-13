@@ -1,14 +1,12 @@
 import React, { useRef, useState } from 'react';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import Icon from '~/components/Icon';
+import Button from '~/components/Button';import Icon from '~/components/Icon';
 import { useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { isMobile } from '~/helpers';
 import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 
-const rewardLabel = localize('reward');
+const rewardLabel = 'Reward';
 
 export default function RewardButton({
   className,

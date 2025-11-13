@@ -27,21 +27,19 @@ import {
   useContentContext,
   useKeyContext,
   useProfileContext
-} from '~/contexts';
-import localize from '~/constants/localize';
-import MessagesButton from './MessagesButton';
+} from '~/contexts';import MessagesButton from './MessagesButton';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { ThemeName } from '~/theme';
 import { themedCardBase } from '~/theme/themedCard';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 
-const chatLabel = localize('chat2');
-const changePicLabel = localize('changePic');
-const editBioLabel = localize('editBio');
-const imageTooLarge10MBLabel = localize('imageTooLarge10MB');
-const lastOnlineLabel = localize('lastOnline');
-const pleaseSelectSmallerImageLabel = localize('pleaseSelectSmallerImage');
-const profileLabel = localize('Profile');
+const chatLabel = 'Chat';
+const changePicLabel = 'Change Pic';
+const editBioLabel = 'Edit Bio';
+const imageTooLarge10MBLabel = 'Image is too large (limit: 10mb)';
+const lastOnlineLabel = 'Last online';
+const pleaseSelectSmallerImageLabel = 'Please select a smaller image';
+const profileLabel = 'Profile';
 const cardsLabel = 'Cards';
 
 const quickLinkThemes = {

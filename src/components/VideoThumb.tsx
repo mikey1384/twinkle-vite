@@ -11,10 +11,8 @@ import { mobileFullTextRevealShowDuration } from '~/constants/defaultValues';
 import { textIsOverflown, isMobile } from '~/helpers';
 import { useContentState } from '~/helpers/hooks';
 import { useRoleColor } from '~/theme/useRoleColor';
-import localize from '~/constants/localize';
-
 const deviceIsMobile = isMobile(navigator);
-const addedByLabel = localize('addedBy');
+const addedByLabel = 'Added by';
 
 export default function VideoThumb({
   className,

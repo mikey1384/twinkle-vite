@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import Details from './Details';
+import Button from '~/components/Button';import Details from './Details';
 import FinalConfirm from './FinalConfirm';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const cancelLabel = localize('cancel');
+const cancelLabel = 'Cancel';
 
 export default function ConfirmSelectionModal({
   isAICardModalShown,

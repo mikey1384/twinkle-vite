@@ -15,12 +15,10 @@ import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { isEqual } from 'lodash';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { isEqual } from 'lodash';import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
-const youLabel = localize('You');
+const youLabel = 'You';
 
 function Reaction({
   reaction,

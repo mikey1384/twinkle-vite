@@ -11,7 +11,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import XPBar from './XPBar';
 import Link from '~/components/Link';
 import playButtonImg from '~/assets/play-button-image.png';
-import { videoRewardHash, SELECTED_LANGUAGE } from '~/constants/defaultValues';
+import { videoRewardHash } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
@@ -309,9 +309,6 @@ function XPVideoPlayer({
   }, []);
 
   const thisVideoWasMadeByLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return <>{uploader?.username}님이 직접 제작한 동영상입니다</>;
-    }
     return (
       <>
         <Icon icon="check-circle" style={{ marginRight: '0.5rem' }} />

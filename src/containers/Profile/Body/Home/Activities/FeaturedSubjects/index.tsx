@@ -4,14 +4,12 @@ import ContentListItem from '~/components/ContentListItem';
 import SectionPanel from '~/components/SectionPanel';
 import SelectFeaturedSubjects from './SelectFeaturedSubjects';
 import ReorderFeaturedSubjects from './ReorderFeaturedSubjects';
-import Button from '~/components/Button';
-import localize from '~/constants/localize';
-import { useProfileContext, useKeyContext } from '~/contexts';
+import Button from '~/components/Button';import { useProfileContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
 
-const noFeaturedSubjectsLabel = localize('noFeaturedSubjects');
-const selectLabel = localize('select');
-const reorderLabel = localize('reorder');
+const noFeaturedSubjectsLabel = 'No Featured Subjects';
+const selectLabel = 'Select';
+const reorderLabel = 'Reorder';
 
 export default function FeaturedSubjects({
   loading,

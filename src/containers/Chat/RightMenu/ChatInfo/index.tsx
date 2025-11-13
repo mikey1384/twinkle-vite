@@ -13,15 +13,13 @@ import {
 } from '~/constants/defaultValues';
 import { checkMicrophoneAccess, objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import CallButton from './CallButton';
-import localize from '~/constants/localize';
-import LocalContext from '../../Context';
+import CallButton from './CallButton';import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
 
-const madeCallLabel = localize('madeCall');
-const onlineLabel = localize('online');
+const madeCallLabel = 'made a call';
+const onlineLabel = 'Online';
 
 function ChatInfo({
   topicId,

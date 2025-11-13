@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import FilterBar from '~/components/FilterBar';
-import localize from '~/constants/localize';
-import Loading from '~/components/Loading';
+import FilterBar from '~/components/FilterBar';import Loading from '~/components/Loading';
 import Leaderboard from './Leaderboard';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-const myRankingLabel = localize('myRanking');
-const top30Label = localize('top30');
+const myRankingLabel = 'My Ranking';
+const top30Label = 'Top 30';
 
 export default function Rankings({ isActive = true }: { isActive?: boolean }) {
   const loadChessRankings = useAppContext(

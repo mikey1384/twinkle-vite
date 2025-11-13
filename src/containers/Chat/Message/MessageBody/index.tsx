@@ -26,9 +26,7 @@ import MessageRewardModal from '../../Modals/MessageRewardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../../Context';
 import ReactionButton from './ReactionButton';
-import Reactions from './Reactions';
-import localize from '~/constants/localize';
-import moment from 'moment';
+import Reactions from './Reactions';import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
 import TopicMessagePreview from './TopicMessagePreview';
@@ -56,10 +54,10 @@ import {
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 
 const deviceIsMobile = isMobile(navigator);
-const replyLabel = localize('reply2');
-const rewardLabel = localize('reward');
-const removeLabel = localize('remove');
-const editLabel = localize('edit');
+const replyLabel = 'Reply';
+const rewardLabel = 'Reward';
+const removeLabel = 'Remove';
+const editLabel = 'Edit';
 
 function MessageBody({
   channelId,

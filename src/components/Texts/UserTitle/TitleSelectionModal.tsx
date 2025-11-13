@@ -2,13 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import Loading from '~/components/Loading';
-import localize from '~/constants/localize';
-import { capitalize } from '~/helpers/stringHelpers';
+import Loading from '~/components/Loading';import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
-const cancelLabel = localize('cancel');
-const confirmLabel = localize('confirm');
+const cancelLabel = 'Cancel';
+const confirmLabel = 'Confirm';
 
 export default function TitleSelectionModal({
   currentTitle,

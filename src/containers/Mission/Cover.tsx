@@ -5,13 +5,11 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { checkMultiMissionPassStatus } from '~/helpers/userDataHelpers';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import ProfilePic from '~/components/ProfilePic';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import ProfilePic from '~/components/ProfilePic';import { useRoleColor } from '~/theme/useRoleColor';
 import { resolveColorValue } from '~/theme/resolveColor';
 
-const completedLabel = localize('completed');
-const grammarRankLabel = localize('grammarRank');
+const completedLabel = 'Completed';
+const grammarRankLabel = 'Grammar Rank';
 
 export default function Cover({
   missionIds,

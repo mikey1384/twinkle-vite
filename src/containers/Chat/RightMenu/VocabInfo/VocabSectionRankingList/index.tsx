@@ -1,13 +1,11 @@
 import React, { useMemo } from 'react';
 import FilterBar from '~/components/FilterBar';
-import Collector from './Collector';
-import localize from '~/constants/localize';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import Collector from './Collector';import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import LeaderboardList from '~/components/LeaderboardList';
 
-const rankingsLabel = localize('rankings');
-const top30Label = localize('top30');
+const rankingsLabel = 'Rankings';
+const top30Label = 'Top 30';
 
 interface UserType {
   id: number;

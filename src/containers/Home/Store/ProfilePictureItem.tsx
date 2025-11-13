@@ -4,12 +4,10 @@ import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 
-const profilePicturesLabel = localize('profilePictures');
-const postPicturesOnYourProfilePageLabel = localize(
-  'postPicturesOnYourProfilePage'
-);
+const profilePicturesLabel = 'Profile Pictures';
+const postPicturesOnYourProfilePageLabel =
+  'Post pictures on your profile page';
 
 const item = {
   maxLvl: 7,

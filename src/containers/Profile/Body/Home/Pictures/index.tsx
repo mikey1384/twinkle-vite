@@ -12,14 +12,12 @@ import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ReorderInterface from './ReorderInterface';
 import NoPictures from './NoPictures';
-import localize from '~/constants/localize';
-
-const addPictureLabel = localize('addPicture');
-const deleteLabel = localize('delete');
-const deletePicturesLabel = localize('deletePictures');
-const picturesLabel = localize('pictures');
-const reorderLabel = localize('reorder');
-const reorderPicturesByDraggingLabel = localize('reorderPicturesByDragging');
+const addPictureLabel = 'Add Picture';
+const deleteLabel = 'Delete';
+const deletePicturesLabel = 'Delete Pictures';
+const picturesLabel = 'Pictures';
+const reorderLabel = 'Reorder';
+const reorderPicturesByDraggingLabel = 'Reorder Pictures by Dragging Them';
 
 export default function Pictures({
   numPics,

@@ -5,11 +5,9 @@ import ButtonGroup from '~/components/Buttons/ButtonGroup';
 import SelectFeaturedPlaylists from '../Modals/SelectFeaturedPlaylists';
 import ReorderFeaturedPlaylists from '../Modals/ReorderFeaturedPlaylists';
 import { useAppContext, useExploreContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-
-const featuredPlaylistsLabel = localize('featuredPlaylists');
-const selectLabel = localize('select');
-const reorderLabel = localize('reorder');
+const featuredPlaylistsLabel = 'Featured Playlists';
+const selectLabel = 'Select';
+const reorderLabel = 'Reorder';
 
 export default function FeaturedPlaylistsPanel() {
   const loadFeaturedPlaylists = useAppContext(

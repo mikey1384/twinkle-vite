@@ -12,9 +12,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import CustomBar from './Bar';
-import localize from '~/constants/localize';
-
-const monthlyXpGrowthLabel = localize('monthlyXpGrowth');
+const monthlyXpGrowthLabel = 'Monthly XP Growth';
 
 export default function MonthlyXPBarChart({ data = [] }: { data: any[] }) {
   const barData = useMemo(() => {

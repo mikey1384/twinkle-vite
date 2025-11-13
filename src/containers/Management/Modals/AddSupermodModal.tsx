@@ -17,11 +17,9 @@ import {
   roles
 } from '~/constants/defaultValues';
 import { useSearch } from '~/helpers/hooks';
-import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';import { useRoleColor } from '~/theme/useRoleColor';
 
-const searchUsersLabel = localize('searchUsers');
+const searchUsersLabel = 'Search Users';
 
 export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(false);

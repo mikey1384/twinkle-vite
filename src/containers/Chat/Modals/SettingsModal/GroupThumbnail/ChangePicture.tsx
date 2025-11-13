@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const changePictureLabel = localize('changePicture');
+const changePictureLabel = 'Change Picture';
 
 export default function ChangePicture({ shown }: { shown: boolean }) {
   const [opacity, setOpacity] = useState(0);

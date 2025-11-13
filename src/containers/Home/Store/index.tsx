@@ -12,20 +12,18 @@ import HomeLoginPrompt from '~/components/HomeLoginPrompt';
 import { isSupermod } from '~/helpers';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 import { priceTable, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import RewardBoostItem from './RewardBoostItem';
-import localize from '~/constants/localize';
-import { css } from '@emotion/css';
+import RewardBoostItem from './RewardBoostItem';import { css } from '@emotion/css';
 import HomeSectionHeader from '~/components/HomeSectionHeader';
 
-const changePasswordLabel = localize('changePassword');
-const changePasswordDescriptionLabel = localize('changePasswordDescription');
-const changeUsernameLabel = localize('changeUsername');
+const changePasswordLabel = 'Change your password';
+const changePasswordDescriptionLabel = 'Change your password anytime you want. This item is free';
+const changeUsernameLabel = 'Change your username';
 const changeUsernameDescriptionLabel =
   SELECTED_LANGUAGE === 'kr'
     ? `본 아이템을 잠금 해제 하시면 ${priceTable.username} 트윈클 코인 가격에 언제든 유저명을 바꾸실 수 있게 됩니다`
     : `Unlock this item to change your username anytime you want for ${priceTable.username} Twinkle Coins`;
-const moreToComeLabel = localize('moreToCome');
-const settingsLabel = localize('settings');
+const moreToComeLabel = 'More to come';
+const settingsLabel = 'Settings';
 
 const contentWrapperClass = css`
   display: flex;

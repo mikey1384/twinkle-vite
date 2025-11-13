@@ -19,20 +19,18 @@ import {
   useExploreContext,
   useNotiContext,
   useKeyContext
-} from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
-const hideWatchedLabel = localize('hideWatched');
-const videosLabel = localize('videos');
-const newsLabel = localize('news');
-const leaderboardLabel = localize('leaderboard');
-const rewardsLabel = localize('rewards');
-const newVideosLabel = localize('newVideos');
-const relatedVideosLabel = localize('relatedVideos');
-const upNextLabel = localize('upNext');
-const uploadedByLabel = localize('uploadedBy');
-const continueWatchingLabel = localize('continueWatching');
+const hideWatchedLabel = 'Hide Watched';
+const videosLabel = 'Videos';
+const newsLabel = 'News';
+const leaderboardLabel = 'Leaderboard';
+const rewardsLabel = 'Rewards';
+const newVideosLabel = 'New Videos';
+const relatedVideosLabel = 'Related Videos';
+const upNextLabel = 'Up Next';
+const uploadedByLabel = 'Uploaded by';
+const continueWatchingLabel = 'Continue Watching';
 
 export default function NavMenu({
   playlistId,

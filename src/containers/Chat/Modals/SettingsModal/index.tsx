@@ -21,9 +21,7 @@ import { User } from '~/types';
 import { css } from '@emotion/css';
 import TwinkleURL from '~/constants/URL';
 import request from 'axios';
-import localize from '~/constants/localize';
-
-const changeThemeLabel = localize('changeTheme');
+const changeThemeLabel = 'Change theme';
 
 export default function SettingsModal({
   channelId,

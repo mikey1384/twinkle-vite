@@ -17,16 +17,14 @@ import {
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { useContentState } from '~/helpers/hooks';
-import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+import { useContentContext, useInputContext, useKeyContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
-const addedByLabel = localize('addedBy');
-const editLabel = localize('edit');
-const deleteLabel = localize('delete');
-const enterDescriptionLabel = localize('enterDescription');
-const enterTitleLabel = localize('enterTitle');
-const enterUrlLabel = localize('enterUrl');
+const addedByLabel = 'Added by';
+const editLabel = 'Edit';
+const deleteLabel = 'Delete';
+const enterDescriptionLabel = 'Enter Description';
+const enterTitleLabel = 'Enter Title';
+const enterUrlLabel = 'Enter URL';
 
 export default function Description({
   description,

@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import Input from '~/components/Texts/Input';
-import localize from '~/constants/localize';
-import Icon from '~/components/Icon';
+import Input from '~/components/Texts/Input';import Icon from '~/components/Icon';
 import { useAppContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
 const WRONG_ANSWER = 'Wrong answer';
-const passphraseLabel = localize('passphrase');
+const passphraseLabel = `Who is Big Bad Wolf's brother?`;
 
 export default function SecretPassPhrase({
   onSetIsPassphraseValid,

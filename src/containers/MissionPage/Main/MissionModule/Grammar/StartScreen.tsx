@@ -3,12 +3,11 @@ import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useRoleColor } from '~/theme/useRoleColor';
-import localize from '~/constants/localize';
 import MissionStatusCard from '~/components/MissionStatusCard';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-const startLabel = localize('start');
-const whenReadyPressStartLabel = localize('whenReadyPressStart');
+const startLabel = 'Start';
+const whenReadyPressStartLabel = 'When you are ready, press "Start"';
 
 export default function StartScreen({
   isRepeating,
@@ -95,7 +94,8 @@ export default function StartScreen({
       >
         <Button
           color={successColor}
-          filled
+          variant="soft"
+          tone="raised"
           disabled={loading}
           style={{ fontSize: '2.3rem' }}
           onClick={onStartButtonClick}

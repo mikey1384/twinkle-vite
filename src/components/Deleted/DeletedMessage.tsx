@@ -3,16 +3,14 @@ import FileAttachment from './FileAttachment';
 import UsernameText from '~/components/Texts/UsernameText';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import Loading from '~/components/Loading';
-import localize from '~/constants/localize';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import Loading from '~/components/Loading';import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
-const deletedByLabel = localize('deletedBy');
-const deleteLabel = localize('delete');
-const deletePermanentlyLabel = localize('deletePermanently');
-const undoLabel = localize('undo');
+const deletedByLabel = 'Deleted by';
+const deleteLabel = 'Delete';
+const deletePermanentlyLabel = 'Delete Content Permanently';
+const undoLabel = 'Undo';
 
 export default function DeletedMessage({
   messageId,

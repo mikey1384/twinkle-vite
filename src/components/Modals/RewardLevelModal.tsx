@@ -6,15 +6,13 @@ import RewardLevelForm from '~/components/Forms/RewardLevelForm';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import AlertModal from '~/components/Modals/AlertModal';
 import { useAppContext } from '~/contexts';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const cancelLabel = localize('cancel');
-const setLabel = localize('set');
-const settingCannotBeChangedLabel = localize('settingCannotBeChanged');
-const setRewardLevelLabel = localize('setRewardLevel');
+const cancelLabel = 'Cancel';
+const setLabel = 'Set';
+const settingCannotBeChangedLabel = 'This setting cannot be changed';
+const setRewardLevelLabel = 'Set Effort Level';
 
 export default function RewardLevelModal({
   contentId,
@@ -41,13 +39,6 @@ export default function RewardLevelModal({
   const [rewardLevel, setRewardLevel] = useState(initialRewardLevel);
 
   const moderatorHasDisabledChangeLabel = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return (
-        <span>
-          <b>{moderatorName}</b>님이 이 설정을 변경하지 못하도록 설정하였습니다
-        </span>
-      );
-    }
     return (
       <span>
         <b>{moderatorName}</b> has disabled users from changing this setting for

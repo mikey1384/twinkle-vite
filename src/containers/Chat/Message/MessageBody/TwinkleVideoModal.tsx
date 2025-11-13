@@ -1,7 +1,6 @@
 import React from 'react';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
-import localize from '~/constants/localize';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { mobileMaxWidth } from '~/constants/css';
@@ -9,7 +8,7 @@ import { css } from '@emotion/css';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 
-const closelLabel = localize('close');
+const closelLabel = 'Close';
 
 export default function TwinkleVideoModal({
   videoId,
@@ -23,7 +22,7 @@ export default function TwinkleVideoModal({
   const onSetMediaStarted = useContentContext(
     (v) => v.actions.onSetMediaStarted
   );
-  const { loaded, notFound, content, rewardLevel } = useContentState({
+  const { notFound, content, rewardLevel } = useContentState({
     contentId: videoId,
     contentType: 'video'
   });

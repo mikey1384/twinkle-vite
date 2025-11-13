@@ -40,18 +40,17 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
-import localize from '~/constants/localize';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
-const enterDescriptionOptionalLabel = localize('enterDescriptionOptional');
-const postLabel = localize('post');
-const postSubjectLabel = localize('postSubject');
-const postSubjectPlaceholder = localize('postSubjectPlaceholder');
-const secretMessageLabel = localize('secretMessage');
+const enterDescriptionOptionalLabel = `Enter Description (Optional, you don't need to write this)`;
+const postLabel = 'Post!';
+const postSubjectLabel = 'Post a subject users can talk about';
+const postSubjectPlaceholder = 'A subject users can talk about';
+const secretMessageLabel = 'Secret Message';
 
 function SubjectInput({
   draftIdRef,
@@ -615,7 +614,8 @@ function SubjectInput({
                   style={{ marginRight: '1rem' }}
                 />
                 <Button
-                  filled
+                  variant="soft"
+                  tone="raised"
                   color={successColorKey}
                   loading={submittingSubject}
                   disabled={buttonDisabled}

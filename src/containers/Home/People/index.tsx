@@ -12,11 +12,9 @@ import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
-} from '~/constants/defaultValues';
-import localize from '~/constants/localize';
-import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/constants/defaultValues';import { useRoleColor } from '~/theme/useRoleColor';
 
-const searchUsersLabel = localize('searchUsers');
+const searchUsersLabel = 'Search Users';
 
 function People() {
   const lastUserIdRef = useRef(null);

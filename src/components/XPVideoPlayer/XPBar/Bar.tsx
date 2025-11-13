@@ -3,10 +3,8 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-
-const continueLabel = localize('continue');
-const perMinuteLabel = localize('perMinute');
+const continueLabel = 'Continue';
+const perMinuteLabel = 'per minute';
 
 interface BarProps {
   userId: number | undefined;

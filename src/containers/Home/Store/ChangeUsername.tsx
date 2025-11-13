@@ -8,13 +8,11 @@ import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { priceTable } from '~/constants/defaultValues';
 import { validateUsername, stringIsEmpty } from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-
-const changeLabel = localize('change');
-const notEnoughTwinkleCoinsLabel = localize('notEnoughTwinkleCoins');
-const enterNewUsernameLabel = localize('enterNewUsername');
-const usernameAvailableLabel = localize('usernameAvailable');
-const usernameAlreadyTakenLabel = localize('usernameAlreadyTaken');
+const changeLabel = 'Change';
+const notEnoughTwinkleCoinsLabel = `You don't have enough Twinkle Coins`;
+const enterNewUsernameLabel = 'Enter New Username';
+const usernameAvailableLabel = 'This username is available';
+const usernameAlreadyTakenLabel = 'That username is already taken';
 
 export default function ChangeUsername({
   style
@@ -109,7 +107,8 @@ export default function ChangeUsername({
           style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}
         >
           <Button
-            filled
+            variant="soft"
+            tone="raised"
             style={{ marginTop: '0.5rem' }}
             color="green"
             disabled={disabled || changing}

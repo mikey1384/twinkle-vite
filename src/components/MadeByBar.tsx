@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
-import { SELECTED_LANGUAGE } from '~/constants/defaultValues';
 import { useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 
@@ -36,9 +35,6 @@ export default function MadeByBar({
   const color = byUserIndicatorTextRole.getColor();
 
   const label = useMemo(() => {
-    if (SELECTED_LANGUAGE === 'kr') {
-      return `${username ?? ''}님이 직접 제작한 콘텐츠입니다`;
-    }
     const verb = contentType === 'subject' && !filePath ? 'written' : 'made';
     return `This was ${verb} by ${username ?? ''}`;
   }, [username, contentType, filePath]);

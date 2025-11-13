@@ -30,9 +30,7 @@ import {
   useExploreContext,
   useKeyContext
 } from '~/contexts';
-import localize from '~/constants/localize';
-
-const commentOnThisVideoLabel = localize('commentOnThisVideo');
+const commentOnThisVideoLabel = 'Comment on this video';
 
 export default function VideoPage() {
   const { search } = useLocation();

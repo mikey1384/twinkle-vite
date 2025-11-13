@@ -39,22 +39,20 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import {
   getFileInfoFromFileName,
   stringIsEmpty
-} from '~/helpers/stringHelpers';
-import localize from '~/constants/localize';
-import { Comment } from '~/types';
+} from '~/helpers/stringHelpers';import { Comment } from '~/types';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useRoleColor } from '~/theme/useRoleColor';
 
-const commentWasDeletedLabel = localize('commentWasDeleted');
-const editLabel = localize('edit');
-const pinLabel = localize('pin');
-const pinnedLabel = localize('pinned');
-const peopleWhoLikeThisReplyLabel = localize('peopleWhoLikeThisReply');
-const unpinLabel = localize('unpin');
-const removeReplyLabel = localize('removeReply');
-const repliesLabel = localize('replies');
-const replyLabel = localize('reply');
+const commentWasDeletedLabel = 'this comment was deleted';
+const editLabel = 'Edit';
+const pinLabel = 'Pin';
+const pinnedLabel = 'Pinned';
+const peopleWhoLikeThisReplyLabel = 'People who like this reply';
+const unpinLabel = 'Unpin';
+const removeReplyLabel = 'Remove';
+const repliesLabel = 'Replies';
+const replyLabel = 'Reply';
 
 function Reply({
   comment,

@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import FilterBar from '~/components/FilterBar';
-import localize from '~/constants/localize';
-import RankingsListItem from '~/components/RankingsListItem';
+import FilterBar from '~/components/FilterBar';import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 import LeaderboardList from '~/components/LeaderboardList';
 
-const myRankingLabel = localize('myRanking');
-const top30Label = localize('top30');
+const myRankingLabel = 'My Ranking';
+const top30Label = 'Top 30';
 
 export default function Rankings({
   channelId,

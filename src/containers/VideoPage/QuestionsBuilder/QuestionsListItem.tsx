@@ -3,9 +3,7 @@ import Icon from '~/components/Icon';
 import { useDrag, useDrop } from 'react-dnd';
 import ItemTypes from '~/constants/itemTypes';
 import { Color } from '~/constants/css';
-import localize from '~/constants/localize';
-
-const untitledQuestionLabel = localize('untitledQuestion');
+const untitledQuestionLabel = 'Untitled Question';
 
 export default function QuestionsListItem({
   item: listItem,

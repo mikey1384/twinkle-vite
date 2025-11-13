@@ -3,14 +3,12 @@ import ItemPanel from './ItemPanel';
 import Icon from '~/components/Icon';
 import MaxLevelItemInfo from './MaxLevelItemInfo';
 import { css } from '@emotion/css';
-import { Color, Theme, mobileMaxWidth } from '~/constants/css';
+import { Color, Theme } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { videoRewardHash, SELECTED_LANGUAGE } from '~/constants/defaultValues';
-import localize from '~/constants/localize';
 
-const boostRewardsFromWatchingXPVideosLabel = localize(
-  'boostRewardsFromWatchingXPVideos'
-);
+const boostRewardsFromWatchingXPVideosLabel =
+  'Boost rewards from watching XP Videos';
 
 const item = {
   maxLvl: 10,

@@ -15,12 +15,10 @@ import {
   useNavigate
 } from 'react-router-dom';
 import { css } from '@emotion/css';
-import localize from '~/constants/localize';
-
-const profileLabel = localize('Profile');
-const watchedLabel = localize('watched');
-const likesLabel = localize('likes');
-const postsLabel = localize('posts');
+const profileLabel = 'Profile';
+const watchedLabel = 'Watched';
+const likesLabel = 'Likes';
+const postsLabel = 'Posts';
 
 export default function Body({
   profile,

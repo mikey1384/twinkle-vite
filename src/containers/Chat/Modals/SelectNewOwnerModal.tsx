@@ -8,9 +8,7 @@ import { isSupermod } from '~/helpers';
 import { useSearch } from '~/helpers/hooks';
 import Loading from '~/components/Loading';
 import CheckListGroup from '~/components/CheckListGroup';
-import localize from '~/constants/localize';
-
-const searchUsersLabel = localize('searchUsers');
+const searchUsersLabel = 'Search Users';
 
 export default function SelectNewOwnerModal({
   andLeave = false,
