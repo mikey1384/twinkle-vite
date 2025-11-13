@@ -75,7 +75,7 @@ export default function DefaultComponent({
         border-radius: ${borderRadius};
         cursor: pointer;
         &:hover {
-          background: ${Color.highlightGray()};
+          border: 1px solid var(--ui-border-strong);
         }
         @media (max-width: ${mobileMaxWidth}) {
           .label {
@@ -106,10 +106,11 @@ export default function DefaultComponent({
       >
         <div
           className={css`
-            width: 25%;
+            width: 30%;
           `}
         >
           <ProfilePic
+            style={{ width: '100%' }}
             userId={profile.id}
             profilePicUrl={profile.profilePicUrl || ''}
             online={chatStatus[profile.id]?.isOnline}
