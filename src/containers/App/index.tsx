@@ -237,6 +237,9 @@ export default function App() {
   const onResetSubjectInput = useInputContext(
     (v) => v.actions.onResetSubjectInput
   );
+  const onResetContentInput = useInputContext(
+    (v) => v.actions.onResetContentInput
+  );
   const [loadingRankings, setLoadingRankings] = useState(false);
   const [mobileMenuShown, setMobileMenuShown] = useState(false);
   const visibilityChangeRef: React.RefObject<any> = useRef(null);
@@ -709,6 +712,7 @@ export default function App() {
         onLoadNewFeeds([data]);
       }
       onResetSubjectInput();
+      onResetContentInput();
       onSetSubmittingSubject(false);
       onClearFileUploadProgress();
       onSetInputModalShown({ shown: false });

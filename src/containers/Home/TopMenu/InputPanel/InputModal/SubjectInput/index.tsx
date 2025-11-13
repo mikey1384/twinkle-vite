@@ -116,8 +116,7 @@ function SubjectInput({
   });
   const successColorKey = successRole.colorKey;
   const buttonColorKey = buttonRole.colorKey;
-  const buttonHoverColorKey =
-    buttonHoverRole.colorKey || buttonColorKey;
+  const buttonHoverColorKey = buttonHoverRole.colorKey || buttonColorKey;
   const fileUploadProgress = useHomeContext((v) => v.state.fileUploadProgress);
   const secretAttachmentUploadProgress = useHomeContext(
     (v) => v.state.secretAttachmentUploadProgress
@@ -136,6 +135,9 @@ function SubjectInput({
   );
   const onResetSubjectInput = useInputContext(
     (v) => v.actions.onResetSubjectInput
+  );
+  const onResetContentInput = useInputContext(
+    (v) => v.actions.onResetContentInput
   );
   const onSetIsMadeByUser = useInputContext((v) => v.actions.onSetIsMadeByUser);
   const onSetSecretAnswer = useInputContext((v) => v.actions.onSetSecretAnswer);
@@ -224,14 +226,83 @@ function SubjectInput({
       const { id, title, description, secretAnswer, hasSecretAnswer } =
         subjectDraft;
       setDraftId(id);
-      onSetTitle(titleRef.current || title);
-      setDescription(descriptionRef.current || description);
-      setSecretAnswer(secretAnswerRef.current || secretAnswer || '');
-      setHasSecretAnswer(hasSecretAnswerRef.current || !!hasSecretAnswer);
-      setDescriptionFieldShown(!!title);
+      const nextTitle = titleRef.current || title || '';
+      onSetTitle(nextTitle);
+      titleRef.current = nextTitle;
+
+      const nextDescription = descriptionRef.current || description || '';
+      setDescription(nextDescription);
+      descriptionRef.current = nextDescription;
+
+      const nextSecretAnswer = secretAnswerRef.current || secretAnswer || '';
+      setSecretAnswer(nextSecretAnswer);
+      secretAnswerRef.current = nextSecretAnswer;
+
+      const nextHasSecretAnswer =
+        typeof hasSecretAnswerRef.current === 'boolean'
+          ? hasSecretAnswerRef.current
+          : !!hasSecretAnswer;
+      setHasSecretAnswer(nextHasSecretAnswer);
+      hasSecretAnswerRef.current = nextHasSecretAnswer;
+
+      setDescriptionFieldShown(!!nextTitle);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drafts]);
+
+  useEffect(() => {
+    if (!subject?.details) return;
+    const {
+      title: subjectTitle = '',
+      description: subjectDescription = '',
+      secretAnswer: subjectSecretAnswer = ''
+    } = subject.details;
+    const nextTitle = subjectTitle || '';
+    if (nextTitle !== titleRef.current) {
+      onSetTitle(nextTitle);
+      titleRef.current = nextTitle;
+    }
+    const nextDescription = subjectDescription || '';
+    if (nextDescription !== descriptionRef.current) {
+      setDescription(nextDescription);
+      descriptionRef.current = nextDescription;
+    }
+    const nextSecretAnswer = subjectSecretAnswer || '';
+    if (nextSecretAnswer !== secretAnswerRef.current) {
+      setSecretAnswer(nextSecretAnswer);
+      secretAnswerRef.current = nextSecretAnswer;
+    }
+    const nextHasSecretAnswer =
+      typeof subject.hasSecretAnswer === 'boolean'
+        ? subject.hasSecretAnswer
+        : !!subject.details.hasSecretAnswer;
+    if (nextHasSecretAnswer !== hasSecretAnswerRef.current) {
+      setHasSecretAnswer(nextHasSecretAnswer);
+      hasSecretAnswerRef.current = nextHasSecretAnswer;
+    }
+    const nextDescriptionFieldShown = !!subject.descriptionFieldShown;
+    if (nextDescriptionFieldShown !== descriptionFieldShownRef.current) {
+      setDescriptionFieldShown(nextDescriptionFieldShown);
+      descriptionFieldShownRef.current = nextDescriptionFieldShown;
+    }
+    const nextIsMadeByUser = !!subject.isMadeByUser;
+    if (nextIsMadeByUser !== isMadeByUserRef.current) {
+      setIsMadeByUser(nextIsMadeByUser);
+      isMadeByUserRef.current = nextIsMadeByUser;
+    }
+  }, [
+    subject?.descriptionFieldShown,
+    subject?.details?.title,
+    subject?.details?.description,
+    subject?.details?.secretAnswer,
+    subject?.details?.hasSecretAnswer,
+    subject.hasSecretAnswer,
+    subject?.isMadeByUser,
+    subject?.details,
+    titleRef,
+    descriptionRef,
+    onSetTitle
+  ]);
 
   useEffect(() => {
     if (inputModalType === 'file') {
@@ -706,6 +777,8 @@ function SubjectInput({
     if (draftIdRef.current) {
       try {
         await deleteDraft(draftIdRef.current);
+        setDraftId(null);
+        draftIdRef.current = null;
       } catch (error) {
         console.error('Failed to delete draft:', error);
       }
@@ -789,6 +862,7 @@ function SubjectInput({
         handleSetHasSecretAnswer(false);
         handleSetIsMadeByUser(false);
         onResetSubjectInput();
+        onResetContentInput();
       }
       onSetSubmittingSubject(false);
       onModalHide();
