@@ -844,7 +844,7 @@ export default function chatRequestHelpers({
             ...auth(),
             meta: {
               allowExtendedTimeout: true,
-              enforceTimeout: false // chat bootstrap can take a while on slow networks
+              enforceTimeout: false
             }
           }
         );
@@ -946,7 +946,9 @@ export default function chatRequestHelpers({
         const {
           data: { bookmarks, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId ?? ''}&lastBookmarkId=${lastBookmarkId}&view=${view}`,
+          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${
+            topicId ?? ''
+          }&lastBookmarkId=${lastBookmarkId}&view=${view}`,
           auth()
         );
         return { bookmarks, loadMoreShown };
