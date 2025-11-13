@@ -35,7 +35,7 @@ const rootContentCSS = css`
 
   .title {
     grid-area: title;
-    font-weight: bold;
+    font-weight: bold !important;
     margin-bottom: 0.5rem;
     > p {
       font-size: 2.2rem;

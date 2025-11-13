@@ -842,7 +842,10 @@ export default function chatRequestHelpers({
           }`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return data;
@@ -870,7 +873,10 @@ export default function chatRequestHelpers({
           }`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return data;
@@ -940,7 +946,9 @@ export default function chatRequestHelpers({
         const {
           data: { bookmarks, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${topicId ?? ''}&lastBookmarkId=${lastBookmarkId}&view=${view}`,
+          `${URL}/chat/ai/bookmark/more?channelId=${channelId}&topicId=${
+            topicId ?? ''
+          }&lastBookmarkId=${lastBookmarkId}&view=${view}`,
           auth()
         );
         return { bookmarks, loadMoreShown };
@@ -1110,7 +1118,10 @@ export default function chatRequestHelpers({
           }`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return { topicObj, messages, loadMoreShown, loadMoreShownAtBottom };
@@ -1134,7 +1145,10 @@ export default function chatRequestHelpers({
           `${URL}/chat/topic/messages/more/recent?channelId=${channelId}&topicId=${topicId}&lastMessageId=${lastMessageId}`,
           {
             ...auth(),
-            meta: { allowExtendedTimeout: true }
+            meta: {
+              allowExtendedTimeout: true,
+              enforceTimeout: false
+            }
           }
         );
         return { messages, loadMoreShownAtBottom };
