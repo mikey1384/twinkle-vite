@@ -34,6 +34,97 @@ import { throttle } from '~/helpers';
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
 
+type OutsideRef =
+  | React.RefObject<HTMLElement | null>
+  | HTMLElement
+  | null
+  | undefined;
+
+interface OutsideClickListener {
+  refs: OutsideRef[];
+  handler: () => void;
+}
+
+const outsideClickListeners = new Set<OutsideClickListener>();
+const globalOutsideHandlers: Array<{
+  eventName: string;
+  handler: (event: Event) => void;
+}> = [];
+
+const pointerEventsSupported =
+  typeof window !== 'undefined' && 'PointerEvent' in window;
+
+function collectNodes(refs: OutsideRef[]): Node[] {
+  const nodes: Node[] = [];
+  for (const ref of refs) {
+    if (!ref) continue;
+    const candidate =
+      typeof (ref as any)?.current !== 'undefined' ? (ref as any).current : ref;
+    if (
+      candidate &&
+      typeof candidate.contains === 'function' &&
+      (typeof Node === 'undefined' || candidate instanceof Node)
+    ) {
+      nodes.push(candidate);
+    }
+  }
+  return nodes;
+}
+
+function shouldTriggerOutside(
+  refs: OutsideRef[],
+  target: Node | null
+): boolean {
+  const nodes = collectNodes(refs);
+  if (!nodes.length) return false;
+  if (!target) return true;
+  return !nodes.some((node) => node.contains(target));
+}
+
+function handleGlobalPointerDown(event: Event) {
+  const listeners = Array.from(outsideClickListeners);
+  const target = event.target as Node | null;
+  for (const listener of listeners) {
+    if (shouldTriggerOutside(listener.refs, target)) {
+      listener.handler();
+    }
+  }
+}
+
+function ensureGlobalOutsideHandlers() {
+  if (typeof document === 'undefined') return;
+  if (globalOutsideHandlers.length > 0) return;
+  const downEvents = pointerEventsSupported
+    ? ['pointerdown']
+    : ['mousedown', 'touchstart'];
+  downEvents.forEach((eventName) => {
+    const handler = (event: Event) => handleGlobalPointerDown(event);
+    addEvent(document, eventName, handler, { capture: true });
+    globalOutsideHandlers.push({ eventName, handler });
+  });
+}
+
+function tearDownGlobalOutsideHandlers() {
+  if (typeof document === 'undefined') return;
+  if (!globalOutsideHandlers.length) return;
+  globalOutsideHandlers.forEach(({ eventName, handler }) => {
+    removeEvent(document, eventName, handler, { capture: true });
+  });
+  globalOutsideHandlers.length = 0;
+}
+
+function registerOutsideClickListener(listener: OutsideClickListener) {
+  outsideClickListeners.add(listener);
+  ensureGlobalOutsideHandlers();
+}
+
+function unregisterOutsideClickListener(listener: OutsideClickListener) {
+  outsideClickListeners.delete(listener);
+  if (!outsideClickListeners.size) {
+    tearDownGlobalOutsideHandlers();
+  }
+}
+
 export function useContentState({
   contentType,
   contentId,
@@ -250,47 +341,42 @@ export function useMyState() {
 }
 
 export function useOutsideClick(ref: any, callback?: () => any) {
-  const [insideClicked, setInsideClicked] = useState(false);
+  const callbackRef = useRef(callback);
   useEffect(() => {
-    function upListener(event: any) {
-      if (insideClicked) return setInsideClicked(false);
-      const refs = Array.isArray(ref) ? ref : [ref];
-      if (refs.some((r) => !r.current || r.current.contains(event.target))) {
-        return;
-      }
-      callback?.();
-    }
-    function downListener(event: any) {
-      const refs = Array.isArray(ref) ? ref : [ref];
-      if (refs.some((r) => r.current && r.current.contains(event.target))) {
-        setInsideClicked(true);
-      }
-    }
-    addEvent(document, 'mousedown', downListener);
-    addEvent(document, 'mouseup', upListener);
-    return function cleanUp() {
-      removeEvent(document, 'mousedown', downListener);
-      removeEvent(document, 'mouseup', upListener);
+    callbackRef.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    if (!callback || typeof document === 'undefined') return;
+    const refs = Array.isArray(ref) ? ref : [ref];
+    const listener: OutsideClickListener = {
+      refs,
+      handler: () => callbackRef.current?.()
     };
-  });
+    registerOutsideClickListener(listener);
+    return function cleanup() {
+      unregisterOutsideClickListener(listener);
+    };
+  }, [ref, callback]);
 }
 
 export function useOutsideTap(ref: any | any[], callback: () => any) {
+  useOutsideClick(ref, callback);
   useEffect(() => {
-    function downListener(event: any) {
-      const refs = Array.isArray(ref) ? ref : [ref];
-      if (refs.some((r) => !r.current || r.current.contains(event.target))) {
-        return;
-      }
+    if (!callback || typeof document === 'undefined') return;
+    const refs = Array.isArray(ref) ? ref : [ref];
+
+    function handleScroll(event: Event) {
+      const target = event.target as Node | null;
+      if (!shouldTriggerOutside(refs, target)) return;
       callback();
     }
-    addEvent(document, 'scroll', downListener);
-    addEvent(document, 'mousedown', downListener);
+
+    addEvent(document, 'scroll', handleScroll, { capture: true });
     return function cleanUp() {
-      removeEvent(document, 'scroll', downListener);
-      removeEvent(document, 'mousedown', downListener);
+      removeEvent(document, 'scroll', handleScroll, { capture: true });
     };
-  });
+  }, [ref, callback]);
 }
 
 export function useProfileState(username: string) {

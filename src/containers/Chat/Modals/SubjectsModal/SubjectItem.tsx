@@ -50,7 +50,15 @@ export default function SubjectItem({
   );
 
   const buttons = useMemo(() => {
-    const result = [];
+    const result: {
+      color: string;
+      opacity: number;
+      onClick: () => void;
+      variant: 'solid' | 'soft' | 'outline' | 'ghost';
+      tone: 'flat' | 'raised';
+      label: string;
+      disabled?: boolean;
+    }[] = [];
     if (
       (currentSubjectId !== id && isSupermod(level) && canDelete) ||
       userIsOwner
@@ -59,6 +67,8 @@ export default function SubjectItem({
         color: 'rose',
         opacity: 0.5,
         onClick: onDeleteSubject,
+        variant: 'soft',
+        tone: 'raised',
         label: 'Remove'
       });
     }
@@ -68,6 +78,8 @@ export default function SubjectItem({
         opacity: 0.5,
         onClick: handleSelectSubject,
         disabled: selectButtonDisabled,
+        variant: 'soft',
+        tone: 'raised',
         label: 'Select'
       });
     }

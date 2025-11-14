@@ -153,7 +153,8 @@ export default function EditSubjectForm({
           >
             <Button
               style={{ fontSize: '1.3rem' }}
-              filled
+              variant="soft"
+              tone="raised"
               color={displayedThemeColor}
               onClick={() => setSubjectsModalShown(true)}
             >

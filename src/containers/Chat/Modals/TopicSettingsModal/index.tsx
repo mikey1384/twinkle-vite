@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -8,7 +8,7 @@ import Icon from '~/components/Icon';
 import AIChatTopicMenu from './AIChatTopicMenu';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function TopicSettingsModal({
@@ -21,7 +21,8 @@ export default function TopicSettingsModal({
   onHide,
   onDeleteTopic,
   onEditTopic,
-  topicText
+  topicText,
+  isSharedWithOtherUsers
 }: {
   channelId: number;
   customInstructions: string;
@@ -35,8 +36,10 @@ export default function TopicSettingsModal({
     topicText: string;
     isOwnerPostingOnly: boolean;
     customInstructions?: string;
+    isSharedWithOtherUsers?: boolean;
   }) => void;
   topicText: string;
+  isSharedWithOtherUsers?: boolean;
 }) {
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
@@ -52,6 +55,9 @@ export default function TopicSettingsModal({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
+  const updateTopicShareState = useAppContext(
+    (v) => v.requestHelpers.updateTopicShareState
+  );
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [editedTopicText, setEditedTopicText] = useState(topicText);
   const [ownerOnlyPosting, setOwnerOnlyPosting] = useState(
@@ -64,33 +70,65 @@ export default function TopicSettingsModal({
   const [newCustomInstructions, setNewCustomInstructions] = useState(
     customInstructions || ''
   );
+  const [isShared, setIsShared] = useState(!!isSharedWithOtherUsers);
+
+  useEffect(() => {
+    setIsShared(!!isSharedWithOtherUsers);
+  }, [isSharedWithOtherUsers]);
+
+  const trimmedCustomInstructions = useMemo(
+    () => newCustomInstructions.trim(),
+    [newCustomInstructions]
+  );
+  const canShareTopic = useMemo(
+    () =>
+      isAIChannel &&
+      isCustomInstructionsOn &&
+      trimmedCustomInstructions.length > 0,
+    [isAIChannel, isCustomInstructionsOn, trimmedCustomInstructions]
+  );
+  const effectiveShareState = useMemo(
+    () => (canShareTopic ? isShared : false),
+    [canShareTopic, isShared]
+  );
 
   const isSubmitDisabled = useMemo(() => {
+    const trimmedTopicText = editedTopicText.trim();
     if (isAIChannel) {
+      const baseUnchanged =
+        topicText === editedTopicText &&
+        !!isOwnerPostingOnly === ownerOnlyPosting &&
+        !!customInstructions === isCustomInstructionsOn &&
+        customInstructions === newCustomInstructions;
+      const shareUnchanged =
+        !canShareTopic ||
+        effectiveShareState === !!isSharedWithOtherUsers;
+      const missingCustomInstructions =
+        isCustomInstructionsOn && trimmedCustomInstructions.length === 0;
       return (
-        (topicText === editedTopicText &&
-          !!isOwnerPostingOnly === ownerOnlyPosting &&
-          !!customInstructions === isCustomInstructionsOn &&
-          customInstructions === newCustomInstructions) ||
-        (isCustomInstructionsOn && newCustomInstructions.trim().length === 0) ||
-        editedTopicText.trim().length === 0
-      );
-    } else {
-      return (
-        (topicText === editedTopicText &&
-          !!isOwnerPostingOnly === ownerOnlyPosting) ||
-        editedTopicText.trim().length === 0
+        (baseUnchanged && shareUnchanged) ||
+        missingCustomInstructions ||
+        trimmedTopicText.length === 0
       );
     }
+    return (
+      (topicText === editedTopicText &&
+        !!isOwnerPostingOnly === ownerOnlyPosting) ||
+      trimmedTopicText.length === 0
+    );
   }, [
-    isAIChannel,
-    topicText,
-    editedTopicText,
-    isOwnerPostingOnly,
-    ownerOnlyPosting,
+    canShareTopic,
     customInstructions,
+    editedTopicText,
+    effectiveShareState,
+    isAIChannel,
     isCustomInstructionsOn,
-    newCustomInstructions
+    isOwnerPostingOnly,
+    isSharedWithOtherUsers,
+    newCustomInstructions,
+    ownerOnlyPosting,
+    topicText,
+    trimmedCustomInstructions
   ]);
 
   return (
@@ -186,14 +224,49 @@ export default function TopicSettingsModal({
           />
         </div>
         {isAIChannel ? (
-          <AIChatTopicMenu
-            topicText={editedTopicText}
-            isCustomInstructionsOn={isCustomInstructionsOn}
-            onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
-            newCustomInstructions={newCustomInstructions}
-            customInstructions={customInstructions}
-            onSetCustomInstructions={setNewCustomInstructions}
-          />
+          <>
+            <AIChatTopicMenu
+              topicText={editedTopicText}
+              isCustomInstructionsOn={isCustomInstructionsOn}
+              onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
+              newCustomInstructions={newCustomInstructions}
+              customInstructions={customInstructions}
+              onSetCustomInstructions={setNewCustomInstructions}
+            />
+            {canShareTopic && (
+              <div
+                className={css`
+                  margin-top: 1.5rem;
+                  width: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                `}
+              >
+                <SwitchButton
+                  checked={isShared}
+                  disabled={submitting}
+                  onChange={() => setIsShared((prev) => !prev)}
+                  label="Share with other AI chat users"
+                  labelStyle={{
+                    fontWeight: 'bold',
+                    fontSize: '1.3rem',
+                    color: '#333'
+                  }}
+                />
+                {isShared && (
+                  <small
+                    style={{
+                      marginTop: '0.5rem',
+                      color: Color.darkerGray()
+                    }}
+                  >
+                    Will be shareable with other users after saving
+                  </small>
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <div
             className={css`
@@ -296,13 +369,24 @@ export default function TopicSettingsModal({
             customInstructions: newCustomInstructions
           })
       });
+      if (isAIChannel) {
+        const prevShared = !!isSharedWithOtherUsers;
+        if (effectiveShareState !== prevShared) {
+          await updateTopicShareState({
+            channelId,
+            topicId,
+            shareWithOtherUsers: effectiveShareState
+          });
+        }
+      }
       onEditTopic({
         topicText: editedTopicText,
         isOwnerPostingOnly: ownerOnlyPosting,
         ...(isAIChannel &&
           isCustomInstructionsOn && {
             customInstructions: newCustomInstructions
-          })
+          }),
+        isSharedWithOtherUsers: effectiveShareState
       });
       socket.emit('new_topic_settings', {
         channelId,

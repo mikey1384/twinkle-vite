@@ -198,6 +198,7 @@ function Markdown({
   }: {
     string?: string;
   }): React.ReactNode {
+    let paragraphKeyCounter = -1;
     return (
       <ErrorBoundary componentPath={`${componentPath}/convertStringToJSX`}>
         {parse(string || '', {
@@ -312,13 +313,15 @@ function Markdown({
                   );
                 }
                 case 'p': {
+                  const paragraphIndex = ++paragraphKeyCounter;
+                  const paragraphKey = `${key}-paragraph-${paragraphIndex}`;
                   const parentTagName = getParentTagName(domNode);
                   const isWithinList = parentTagName === 'li';
-                const paragraphStyle = {
-                  width: '100%',
-                  marginInlineStart: '0px',
-                  marginInlineEnd: '0px'
-                };
+                  const paragraphStyle = {
+                    width: '100%',
+                    marginInlineStart: '0px',
+                    marginInlineEnd: '0px'
+                  };
                   const baseChildNodes = domNode.children || [];
                   const childNodes = isWithinList
                     ? stripLeadingBreakNodes(baseChildNodes)
@@ -363,7 +366,7 @@ function Markdown({
                     if (!hasMediaOrBlockChild) {
                       return (
                         <p
-                          key={`${key}-segment-${keySuffix}`}
+                          key={`${paragraphKey}-segment-${keySuffix}`}
                           className={paragraphClassName}
                           style={{
                             ...paragraphStyle
@@ -375,7 +378,7 @@ function Markdown({
                     }
                     return (
                       <div
-                        key={`${key}-segment-${keySuffix}`}
+                        key={`${paragraphKey}-segment-${keySuffix}`}
                         style={{
                           width: '100%',
                           marginInlineStart: '0px',
@@ -399,7 +402,7 @@ function Markdown({
                       const splitResult = splitLabelAndContent(nodes);
                       if (splitResult) {
                         return (
-                          <Fragment key={`${key}-segment-${keySuffix}`}>
+                          <Fragment key={`${paragraphKey}-segment-${keySuffix}`}>
                             {renderSegment(
                               splitResult.labelNodes,
                               `${keySuffix}-label`
@@ -419,7 +422,7 @@ function Markdown({
                     const segments = splitNodesByDoubleBreaks(childNodes);
                     if (segments.length > 1) {
                       return (
-                        <Fragment key={`${key}-segments`}>
+                        <Fragment key={`${paragraphKey}-segments`}>
                           {segments.map((segmentNodes, segmentIndex) =>
                             renderWithLabelSplit(
                               segmentNodes,
@@ -435,7 +438,7 @@ function Markdown({
                     const leadingChildren = childNodes.slice(0, breakIndex);
                     const trailingChildren = childNodes.slice(breakIndex + 1);
                     return (
-                      <Fragment key={`${key}-split`}>
+                      <Fragment key={`${paragraphKey}-split`}>
                         {renderSegment(leadingChildren, 'lead')}
                         {renderSegment(trailingChildren, 'body')}
                       </Fragment>
@@ -444,7 +447,7 @@ function Markdown({
 
                   if (labelSplit) {
                     return (
-                      <Fragment key={`${key}-label-split`}>
+                      <Fragment key={`${paragraphKey}-label-split`}>
                         {renderSegment(labelSplit.labelNodes, 'label')}
                         {renderSegment(labelSplit.contentNodes, 'body')}
                       </Fragment>

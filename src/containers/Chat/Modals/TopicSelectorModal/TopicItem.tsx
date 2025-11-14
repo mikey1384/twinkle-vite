@@ -46,11 +46,13 @@ function TopicItem({
   onEditTopic: ({
     topicText,
     isOwnerPostingOnly,
-    customInstructions
+    customInstructions,
+    isSharedWithOtherUsers
   }: {
     topicText: string;
     isOwnerPostingOnly: boolean;
     customInstructions?: string;
+    isSharedWithOtherUsers?: boolean;
   }) => void;
   onDeleteTopic: (id: number) => void;
   pinnedTopicIds: number[];
@@ -59,8 +61,9 @@ function TopicItem({
   username: string;
   timeStamp: number;
   settings: {
-    customInstructions: string;
-    isOwnerPostingOnly: boolean;
+    customInstructions?: string;
+    isOwnerPostingOnly?: boolean;
+    isSharedWithOtherUsers?: boolean;
   };
   style?: React.CSSProperties;
 }) {
@@ -70,6 +73,7 @@ function TopicItem({
   );
   const isOwnerPostingOnly = settings?.isOwnerPostingOnly || false;
   const customInstructions = settings?.customInstructions || '';
+  const isSharedWithOtherUsers = settings?.isSharedWithOtherUsers || false;
   const pinChatTopic = useAppContext((v) => v.requestHelpers.pinChatTopic);
   const onFeatureTopic = useChatContext((v) => v.actions.onFeatureTopic);
   const onPinTopic = useChatContext((v) => v.actions.onPinTopic);
@@ -226,6 +230,7 @@ function TopicItem({
           topicText={content}
           onEditTopic={onEditTopic}
           onDeleteTopic={() => onDeleteTopic(id)}
+          isSharedWithOtherUsers={isSharedWithOtherUsers}
         />
       )}
     </div>

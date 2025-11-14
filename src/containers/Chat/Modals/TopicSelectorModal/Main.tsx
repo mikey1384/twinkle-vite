@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
+import SharedTopicsList from './SharedTopicsList';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { useAppContext } from '~/contexts';
@@ -14,6 +15,7 @@ export default function Main({
   canAddTopic,
   myTopicObj,
   channelId,
+  channelName,
   currentTopic,
   displayedThemeColor,
   featuredTopic,
@@ -23,14 +25,19 @@ export default function Main({
   isAIChannel,
   onSetAllTopicObj,
   onSetMyTopicObj,
+  sharedTopicObj,
+  onSetSharedTopicObj,
   onSelectTopic,
   onDeleteTopic,
-  pinnedTopicIds
+  pinnedTopicIds,
+  pathId,
+  onHide
 }: {
   allTopicObj: any;
   canAddTopic: boolean;
   myTopicObj: any;
   channelId: number;
+  channelName: string;
   currentTopic: any;
   featuredTopic?: any;
   displayedThemeColor: string;
@@ -40,15 +47,44 @@ export default function Main({
   isAIChannel: boolean;
   onSetAllTopicObj: (v: any) => void;
   onSetMyTopicObj: (v: any) => void;
+  sharedTopicObj: any;
+  onSetSharedTopicObj: (v: any) => void;
   onSelectTopic: (v: number) => void;
   onDeleteTopic: (v: number) => void;
   pinnedTopicIds: number[];
+  pathId: string;
+  onHide: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState('all');
+  const hasMyTopics = useMemo(
+    () => !!(myTopicObj?.subjects || []).length,
+    [myTopicObj?.subjects]
+  );
+  const hasAllTopics = useMemo(
+    () => !!(allTopicObj?.subjects || []).length,
+    [allTopicObj?.subjects]
+  );
+  const showSharedOnly = useMemo(
+    () => isAIChannel && !hasMyTopics && !hasAllTopics,
+    [hasAllTopics, hasMyTopics, isAIChannel]
+  );
+  const [activeTab, setActiveTab] = useState<'all' | 'my' | 'shared'>(() =>
+    showSharedOnly ? 'shared' : 'all'
+  );
+  const sharedTabForcedRef = useRef(showSharedOnly);
   const loadMoreChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadMoreChatSubjects
   );
+  const loadMoreOtherUserTopics = useAppContext(
+    (v) => v.requestHelpers.loadMoreOtherUserTopics
+  );
   const [subjectObj, setSubjectObj] = useState<Record<string, Content>>({});
+  const shouldShowFilterBar = useMemo(() => {
+    if (showSharedOnly) {
+      return false;
+    }
+    if (isAIChannel) return true;
+    return canAddTopic && hasMyTopics;
+  }, [canAddTopic, hasMyTopics, isAIChannel, showSharedOnly]);
 
   useEffect(() => {
     const subjectObj: Record<string, Content> = {};
@@ -60,6 +96,33 @@ export default function Main({
     }
     setSubjectObj(subjectObj);
   }, [allTopicObj?.subjects, myTopicObj?.subjects]);
+
+  useEffect(() => {
+    if (showSharedOnly) {
+      sharedTabForcedRef.current = true;
+      if (activeTab !== 'shared') {
+        setActiveTab('shared');
+      }
+      return;
+    }
+    if (sharedTabForcedRef.current && activeTab === 'shared') {
+      sharedTabForcedRef.current = false;
+      setActiveTab('all');
+      return;
+    }
+    if (activeTab === 'shared' && !isAIChannel) {
+      sharedTabForcedRef.current = false;
+      setActiveTab('all');
+    } else if (activeTab === 'my' && !hasMyTopics) {
+      sharedTabForcedRef.current = false;
+      setActiveTab('all');
+    }
+  }, [activeTab, hasMyTopics, isAIChannel, showSharedOnly]);
+
+  const handleTabSelect = (tab: 'all' | 'my' | 'shared') => {
+    sharedTabForcedRef.current = false;
+    setActiveTab(tab);
+  };
 
   const effectivePinnedTopicIds = useMemo(
     () => (pinnedTopicIds || []).filter((id) => !!subjectObj[id]),
@@ -96,17 +159,20 @@ export default function Main({
               onEditTopic={({
                 topicText,
                 isOwnerPostingOnly,
-                customInstructions
+                customInstructions,
+                isSharedWithOtherUsers
               }: {
                 topicText: string;
                 isOwnerPostingOnly: boolean;
                 customInstructions?: string;
+                isSharedWithOtherUsers?: boolean;
               }) =>
                 handleEditTopic({
                   topicText,
                   isOwnerPostingOnly,
                   topicId: currentTopic.id,
-                  customInstructions
+                  customInstructions,
+                  isSharedWithOtherUsers
                 })
               }
               onDeleteTopic={onDeleteTopic}
@@ -137,26 +203,29 @@ export default function Main({
               onEditTopic={({
                 topicText,
                 isOwnerPostingOnly,
-                customInstructions
+                customInstructions,
+                isSharedWithOtherUsers
               }: {
                 topicText: string;
                 isOwnerPostingOnly: boolean;
                 customInstructions?: string;
+                isSharedWithOtherUsers?: boolean;
               }) =>
                 handleEditTopic({
                   topicText,
                   isOwnerPostingOnly,
                   topicId: featuredTopic?.id,
-                  customInstructions
+                  customInstructions,
+                  isSharedWithOtherUsers
                 })
               }
               onDeleteTopic={onDeleteTopic}
             />
           </>
         )}
-        {isLoaded && (
+        {isLoaded && !showSharedOnly && (
           <>
-            {canAddTopic && myTopicObj?.subjects?.length ? (
+            {shouldShowFilterBar ? (
               <FilterBar
                 className={css`
                   margin-top: 1rem;
@@ -170,20 +239,26 @@ export default function Main({
               >
                 <nav
                   className={activeTab === 'all' ? 'active' : ''}
-                  onClick={() => {
-                    setActiveTab('all');
-                  }}
+                  onClick={() => handleTabSelect('all')}
                 >
                   All Topics
                 </nav>
-                <nav
-                  className={activeTab === 'my' ? 'active' : ''}
-                  onClick={() => {
-                    setActiveTab('my');
-                  }}
-                >
-                  My Topics
-                </nav>
+                {hasMyTopics && (
+                  <nav
+                    className={activeTab === 'my' ? 'active' : ''}
+                    onClick={() => handleTabSelect('my')}
+                  >
+                    My Topics
+                  </nav>
+                )}
+                {isAIChannel && (
+                  <nav
+                    className={activeTab === 'shared' ? 'active' : ''}
+                    onClick={() => handleTabSelect('shared')}
+                  >
+                    Other Users' Topics
+                  </nav>
+                )}
               </FilterBar>
             ) : (
               <h3
@@ -198,7 +273,7 @@ export default function Main({
             )}
           </>
         )}
-        {activeTab === 'all' && (
+        {!showSharedOnly && activeTab === 'all' && (
           <div>
             {isLoaded && allTopicObj.subjects.length === 0 && (
               <div
@@ -240,17 +315,20 @@ export default function Main({
                   onEditTopic={({
                     topicText,
                     isOwnerPostingOnly,
-                    customInstructions
+                    customInstructions,
+                    isSharedWithOtherUsers
                   }: {
                     topicText: string;
                     isOwnerPostingOnly: boolean;
                     customInstructions?: string;
+                    isSharedWithOtherUsers?: boolean;
                   }) =>
                     handleEditTopic({
                       topicText,
                       isOwnerPostingOnly,
                       topicId: subject.id,
-                      customInstructions
+                      customInstructions,
+                      isSharedWithOtherUsers
                     })
                   }
                   onDeleteTopic={onDeleteTopic}
@@ -267,7 +345,7 @@ export default function Main({
             )}
           </div>
         )}
-        {activeTab === 'my' && (
+        {!showSharedOnly && activeTab === 'my' && (
           <div>
             {myTopicObj.subjects.map(
               (subject: {
@@ -293,17 +371,20 @@ export default function Main({
                   onEditTopic={({
                     topicText,
                     isOwnerPostingOnly,
-                    customInstructions
+                    customInstructions,
+                    isSharedWithOtherUsers
                   }: {
                     topicText: string;
                     isOwnerPostingOnly: boolean;
                     customInstructions?: string;
+                    isSharedWithOtherUsers?: boolean;
                   }) =>
                     handleEditTopic({
                       topicText,
                       isOwnerPostingOnly,
                       topicId: subject.id,
-                      customInstructions
+                      customInstructions,
+                      isSharedWithOtherUsers
                     })
                   }
                   onDeleteTopic={onDeleteTopic}
@@ -320,20 +401,32 @@ export default function Main({
             )}
           </div>
         )}
+        {(showSharedOnly || (activeTab === 'shared' && isAIChannel)) && (
+          <SharedTopicsList
+            channelId={channelId}
+            channelName={channelName}
+            displayedThemeColor={displayedThemeColor}
+            sharedTopicObj={sharedTopicObj}
+            pathId={pathId}
+            onHide={onHide}
+            onLoadMore={handleLoadMoreSharedTopics}
+          />
+        )}
       </div>
     </div>
   );
-
   function handleEditTopic({
     topicText,
     isOwnerPostingOnly,
     topicId,
-    customInstructions
+    customInstructions,
+    isSharedWithOtherUsers
   }: {
     topicText: string;
     isOwnerPostingOnly: boolean;
     topicId: number;
     customInstructions?: string;
+    isSharedWithOtherUsers?: boolean;
   }) {
     setSubjectObj((prev) => ({
       ...prev,
@@ -343,7 +436,12 @@ export default function Main({
         settings: {
           ...(prev[topicId]?.settings || {}),
           isOwnerPostingOnly,
-          customInstructions
+          ...(typeof customInstructions !== 'undefined' && {
+            customInstructions
+          }),
+          ...(typeof isSharedWithOtherUsers === 'boolean' && {
+            isSharedWithOtherUsers
+          })
         }
       }
     }));
@@ -365,7 +463,6 @@ export default function Main({
       lastSubject
     });
 
-    // Filter out current topic since it's already shown at the top
     const filteredSubjects = subjects.filter(
       (subject: { id: number }) => subject.id !== currentTopic?.id
     );
@@ -384,6 +481,29 @@ export default function Main({
         loadMoreButton,
         loading: false
       });
+    }
+  }
+
+  async function handleLoadMoreSharedTopics() {
+    if (!sharedTopicObj.subjects.length || sharedTopicObj.loading) {
+      return;
+    }
+    const lastSubject =
+      sharedTopicObj.subjects[sharedTopicObj.subjects.length - 1];
+    onSetSharedTopicObj({ ...sharedTopicObj, loading: true });
+    try {
+      const { subjects, loadMoreButton } = await loadMoreOtherUserTopics({
+        lastSubject
+      });
+      onSetSharedTopicObj({
+        ...sharedTopicObj,
+        subjects: sharedTopicObj.subjects.concat(subjects),
+        loadMoreButton,
+        loading: false
+      });
+    } catch (error) {
+      console.error(error);
+      onSetSharedTopicObj({ ...sharedTopicObj, loading: false });
     }
   }
 }

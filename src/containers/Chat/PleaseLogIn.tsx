@@ -7,9 +7,6 @@ import { useRoleColor } from '~/theme/useRoleColor';
 const logInLabel = 'Log In';
 
 export default function PleaseLogIn() {
-  const loginRole = useRoleColor('login', {
-    fallback: 'green'
-  });
   const twinRole = useRoleColor('logoTwin', {
     fallback: 'logoBlue'
   });
@@ -18,10 +15,6 @@ export default function PleaseLogIn() {
   });
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
-  );
-  const loginColor = useMemo(
-    () => loginRole.getColor() || Color.green(),
-    [loginRole]
   );
   const twinColor = useMemo(
     () => twinRole.getColor() || Color.logoBlue(),
@@ -75,7 +68,7 @@ export default function PleaseLogIn() {
         <Button
           variant="soft"
           tone="raised"
-          color={loginColor}
+          color="green"
           style={{ fontSize: '3rem' }}
           onClick={onOpenSigninModal}
         >
