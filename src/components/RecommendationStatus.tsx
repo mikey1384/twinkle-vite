@@ -184,6 +184,7 @@ export default function RecommendationStatus({
         )}
         {recommendationsByUsertypeExceptMe.length > 2 && (
           <>
+            {' '}
             and{' '}
             <a
               style={{
