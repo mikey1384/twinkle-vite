@@ -88,8 +88,7 @@ export default function YearItem({
       style={combinedStyle}
     >
       <p>
-        {year}
-        {leaderboardLabel}
+        {year} {leaderboardLabel}
       </p>
       {year === currentYear || leaderboardsObj?.[year]?.loaded ? (
         <div style={{ marginTop: '2rem', position: 'relative' }}>

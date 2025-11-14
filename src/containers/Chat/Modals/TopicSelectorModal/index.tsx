@@ -49,6 +49,9 @@ export default function TopicSelectorModal({
   const loadChatSubjects = useAppContext(
     (v) => v.requestHelpers.loadChatSubjects
   );
+  const loadOtherUserTopics = useAppContext(
+    (v) => v.requestHelpers.loadOtherUserTopics
+  );
   const [topicSearchText, setTopicSearchText] = useState('');
   const [searchedTopics, setSearchedTopics] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -59,6 +62,11 @@ export default function TopicSelectorModal({
     loading: false
   });
   const [allTopicObj, setAllTopicObj] = useState({
+    subjects: [],
+    loadMoreButton: false,
+    loading: false
+  });
+  const [sharedTopicObj, setSharedTopicObj] = useState({
     subjects: [],
     loadMoreButton: false,
     loading: false
@@ -91,6 +99,42 @@ export default function TopicSelectorModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadSharedTopics() {
+      if (!isAIChannel) {
+        setSharedTopicObj({
+          subjects: [],
+          loadMoreButton: false,
+          loading: false
+        });
+        return;
+      }
+      setSharedTopicObj((prev) => ({ ...prev, loading: true }));
+      try {
+        const { subjects, loadMoreButton } = await loadOtherUserTopics();
+        if (ignore) return;
+        setSharedTopicObj({
+          subjects,
+          loadMoreButton,
+          loading: false
+        });
+      } catch (error) {
+        console.error(error);
+        if (ignore) return;
+        setSharedTopicObj({
+          subjects: [],
+          loadMoreButton: false,
+          loading: false
+        });
+      }
+    }
+    loadSharedTopics();
+    return () => {
+      ignore = true;
+    };
+  }, [channelId, isAIChannel, loadOtherUserTopics]);
 
   useEffect(() => {
     setSearched(false);
@@ -129,8 +173,22 @@ export default function TopicSelectorModal({
   }, [mainSectionShown]);
 
   const noTopicPostedYet = useMemo(() => {
+    if (isAIChannel) {
+      return (
+        !allTopicObj?.subjects?.length &&
+        !sharedTopicObj.subjects.length &&
+        loaded &&
+        !sharedTopicObj.loading
+      );
+    }
     return !allTopicObj?.subjects?.length && loaded;
-  }, [allTopicObj?.subjects?.length, loaded]);
+  }, [
+    allTopicObj?.subjects?.length,
+    isAIChannel,
+    loaded,
+    sharedTopicObj.loading,
+    sharedTopicObj.subjects.length
+  ]);
 
   const canAddTopic = useMemo(() => {
     if (userId === creatorId || isTwoPeopleChat) {
@@ -181,6 +239,7 @@ export default function TopicSelectorModal({
           <Main
             canAddTopic={canAddTopic}
             channelId={channelId}
+            channelName={channelName}
             currentTopic={currentTopic}
             featuredTopic={featuredTopic}
             isOwner={isOwner}
@@ -190,11 +249,15 @@ export default function TopicSelectorModal({
             isLoaded={loaded}
             allTopicObj={allTopicObj}
             myTopicObj={myTopicObj}
+            sharedTopicObj={sharedTopicObj}
             onSelectTopic={onSelectTopic}
             onDeleteTopic={handleDeleteTopic}
             onSetAllTopicObj={setAllTopicObj}
             onSetMyTopicObj={setMyTopicObj}
+            onSetSharedTopicObj={setSharedTopicObj}
             pinnedTopicIds={pinnedTopicIds}
+            pathId={pathId}
+            onHide={onHide}
           />
         ) : (
           <Search

@@ -3,7 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
 import { resolveColorValue } from '~/theme/resolveColor';
@@ -131,6 +131,41 @@ function PinnedTopics({
       Color.logoBlue(0.5),
     [displayedThemeColor]
   );
+  const aiButtonClass = useMemo(() => {
+    if (!isAIChat) return '';
+    const themedBackground =
+      resolveColorValue(displayedThemeColor) ?? Color.logoBlue();
+    const themedHover =
+      resolveColorValue(displayedThemeColor, 0.8) ?? Color.logoBlue(0.8);
+    const themedBorder =
+      resolveColorValue(displayedThemeColor, 0.7) ?? Color.logoBlue(0.7);
+    return css`
+      background: ${themedBackground};
+      border: 1px solid ${themedBorder};
+      color: ${Color.white()};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      box-shadow: 0 0.4rem 0.8rem rgba(0, 0, 0, 0.12);
+      &:hover {
+        background: ${themedHover};
+      }
+      @media (max-width: ${mobileMaxWidth}) {
+        gap: 0.5rem;
+      }
+    `;
+  }, [displayedThemeColor, isAIChat]);
+  const aiIconClassName = useMemo(
+    () =>
+      isAIChat
+        ? css`
+            color: ${Color.white()};
+            filter: drop-shadow(0 0 0.15rem rgba(0, 0, 0, 0.3));
+          `
+        : '',
+    [isAIChat]
+  );
 
   if (!featuredTopic && !pinnedTopics.length && !lastTopic) return null;
 
@@ -222,8 +257,23 @@ function PinnedTopics({
           </button>
         )}
         {((!isTwoPeopleChat && isOwner) || isAIChat) && (
-          <button className={buttonStyle} onClick={handleAddTopicClick}>
-            <Icon icon="plus" />
+          <button
+            className={cx(buttonStyle, aiButtonClass)}
+            onClick={handleAddTopicClick}
+          >
+            {isAIChat ? (
+              <>
+                <Icon
+                  icon="robot"
+                  size="lg"
+                  className={aiIconClassName}
+                />
+                <Icon icon="plus" size="sm" className={aiIconClassName} />
+                <Icon icon="gear" size="lg" className={aiIconClassName} />
+              </>
+            ) : (
+              <Icon icon="plus" />
+            )}
           </button>
         )}
       </div>

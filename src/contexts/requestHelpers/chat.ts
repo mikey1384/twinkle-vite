@@ -379,6 +379,46 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async updateTopicShareState({
+      channelId,
+      topicId,
+      shareWithOtherUsers
+    }: {
+      channelId: number;
+      topicId: number;
+      shareWithOtherUsers: boolean;
+    }) {
+      try {
+        const {
+          data: { success }
+        } = await request.put(
+          `${URL}/chat/topic/share`,
+          { channelId, topicId, shareWithOtherUsers },
+          auth()
+        );
+        return success;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cloneSharedTopic({
+      channelId,
+      sharedTopicId
+    }: {
+      channelId: number;
+      sharedTopicId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/topic/cloneShared`,
+          { channelId, sharedTopicId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async editCanChangeTopic({
       channelId,
       canChangeTopic
@@ -1273,6 +1313,45 @@ export default function chatRequestHelpers({
           `${URL}/chat/chatSubject/modal/more?channelId=${channelId}&lastTimeStamp=${
             lastSubject.reloadTimeStamp || lastSubject.timeStamp
           }&lastId=${lastSubject.id}${mineOnly ? `&mineOnly=1` : ''}`,
+          auth()
+        );
+        return { subjects, loadMoreButton };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadOtherUserTopics() {
+      try {
+        const {
+          data: { subjects, loadMoreButton }
+        } = await request.get(
+          `${URL}/chat/chatSubject/otherUsers`,
+          auth()
+        );
+        return { subjects, loadMoreButton };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadMoreOtherUserTopics({
+      lastSubject
+    }: {
+      lastSubject: {
+        id: number;
+        timeStamp: number;
+        reloadTimeStamp?: number;
+      };
+    }) {
+      if (!lastSubject) {
+        return { subjects: [], loadMoreButton: false };
+      }
+      try {
+        const {
+          data: { subjects, loadMoreButton }
+        } = await request.get(
+          `${URL}/chat/chatSubject/otherUsers/more?lastTimeStamp=${
+            lastSubject.reloadTimeStamp || lastSubject.timeStamp
+          }&lastId=${lastSubject.id}`,
           auth()
         );
         return { subjects, loadMoreButton };

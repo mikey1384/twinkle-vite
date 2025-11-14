@@ -171,6 +171,7 @@ export default function RecommendationStatus({
         )}
         {recommendationsByUsertypeExceptMe.length === 2 && (
           <>
+            {' '}
             and{' '}
             <UsernameText
               color={isRewardable ? 'black' : 'darkBlueGray'}
@@ -183,6 +184,7 @@ export default function RecommendationStatus({
         )}
         {recommendationsByUsertypeExceptMe.length > 2 && (
           <>
+            {' '}
             and{' '}
             <a
               style={{
