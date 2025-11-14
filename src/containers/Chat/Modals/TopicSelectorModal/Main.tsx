@@ -56,8 +56,8 @@ export default function Main({
   onHide: () => void;
 }) {
   const hasMyTopics = useMemo(
-    () => !!(myTopicObj?.subjects || []).length,
-    [myTopicObj?.subjects]
+    () => !!(myTopicObj?.subjects || []).length && !isAIChannel,
+    [myTopicObj?.subjects, isAIChannel]
   );
   const hasAllTopics = useMemo(
     () => !!(allTopicObj?.subjects || []).length,
@@ -241,7 +241,7 @@ export default function Main({
                   className={activeTab === 'all' ? 'active' : ''}
                   onClick={() => handleTabSelect('all')}
                 >
-                  All Topics
+                  {hasMyTopics ? 'All Topics' : 'My Topics'}
                 </nav>
                 {hasMyTopics && (
                   <nav
