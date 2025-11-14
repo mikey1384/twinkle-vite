@@ -7,7 +7,7 @@ import request from 'axios';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
 
-if (typeof window === 'undefined') {
+if (import.meta.env.SSR) {
   import('source-map-support')
     .then(({ install }) => install())
     .catch(() => {});

@@ -556,16 +556,6 @@ function Markdown({
                   }
                   return null;
                 }
-                case 'hr': {
-                  return (
-                    <hr
-                      className={css`
-                        margin-top: 1.25em;
-                        margin-bottom: 1.25em;
-                      `}
-                    />
-                  );
-                }
 
                 default:
                   break;
