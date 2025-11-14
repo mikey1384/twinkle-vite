@@ -111,6 +111,7 @@ import { faHtml5 } from '@fortawesome/free-brands-svg-icons/faHtml5';
 import { faIndent } from '@fortawesome/pro-solid-svg-icons/faIndent';
 import { faInfoCircle } from '@fortawesome/pro-solid-svg-icons/faInfoCircle';
 import { faImage } from '@fortawesome/pro-solid-svg-icons/faImage';
+import { faGear } from '@fortawesome/pro-solid-svg-icons/faGear';
 import { faJs } from '@fortawesome/free-brands-svg-icons/faJs';
 import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
@@ -302,6 +303,7 @@ library.add(
   faHome,
   faHtml5,
   faImage,
+  faGear,
   faIndent,
   faInfoCircle,
   faJs,
