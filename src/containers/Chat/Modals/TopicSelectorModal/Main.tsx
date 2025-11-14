@@ -256,7 +256,7 @@ export default function Main({
                     className={activeTab === 'shared' ? 'active' : ''}
                     onClick={() => handleTabSelect('shared')}
                   >
-                    Other Users' Topics
+                    Shared Topics
                   </nav>
                 )}
               </FilterBar>
