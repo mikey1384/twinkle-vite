@@ -101,8 +101,7 @@ export default function TopicSettingsModal({
         !!customInstructions === isCustomInstructionsOn &&
         customInstructions === newCustomInstructions;
       const shareUnchanged =
-        !canShareTopic ||
-        effectiveShareState === !!isSharedWithOtherUsers;
+        !canShareTopic || effectiveShareState === !!isSharedWithOtherUsers;
       const missingCustomInstructions =
         isCustomInstructionsOn && trimmedCustomInstructions.length === 0;
       return (
@@ -247,7 +246,7 @@ export default function TopicSettingsModal({
                   checked={isShared}
                   disabled={submitting}
                   onChange={() => setIsShared((prev) => !prev)}
-                  label="Share with other AI chat users"
+                  label="Share with other users"
                   labelStyle={{
                     fontWeight: 'bold',
                     fontSize: '1.3rem',
