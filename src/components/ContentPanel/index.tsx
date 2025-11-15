@@ -343,8 +343,6 @@ export default function ContentPanel({
           <div
             className={css`
               width: 100%;
-              margin: 0;
-              padding: 0.6rem 0 0.8rem 0;
               &:not(:first-of-type) {
                 border-top: 1px solid var(--ui-border-strong);
               }
@@ -355,6 +353,8 @@ export default function ContentPanel({
                 ref={PanelRef}
                 className={css`
                   height: ${contentHeight};
+                  margin: 0;
+                  padding: 0.6rem 0 0.8rem 0;
                   position: relative;
                   z-index: ${zIndex};
                 `}
