@@ -30,6 +30,19 @@ const INLINE_LABEL_TAGS = new Set([
   'b',
   'small'
 ]);
+const INLINE_BREAK_TAGS = new Set([
+  'a',
+  'b',
+  'code',
+  'em',
+  'i',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'u'
+]);
 
 function Markdown({
   contentId,
@@ -1327,8 +1340,39 @@ function Markdown({
       const prev = findPreviousNonWhitespace(value, offset - 1);
       const next = findNextNonWhitespace(value, offset + 1);
       const isBetweenTags = prev === '>' && next === '<';
-      return isBetweenTags ? '' : '<br />';
+      if (isBetweenTags) {
+        return shouldPreserveBetweenInlineTags(value, offset)
+          ? '<br />'
+          : '';
+      }
+      return '<br />';
     });
+  }
+
+  function shouldPreserveBetweenInlineTags(
+    html: string,
+    newlineIndex: number
+  ) {
+    const prevTagName = getPreviousClosingTagName(html, newlineIndex);
+    const nextTagName = getNextOpeningTagName(html, newlineIndex);
+    if (!prevTagName || !nextTagName) {
+      return false;
+    }
+    return (
+      INLINE_BREAK_TAGS.has(prevTagName) && INLINE_BREAK_TAGS.has(nextTagName)
+    );
+  }
+
+  function getPreviousClosingTagName(html: string, newlineIndex: number) {
+    const before = html.slice(0, newlineIndex);
+    const match = before.match(/<\/([a-z0-9]+)\s*>\s*$/i);
+    return match ? match[1].toLowerCase() : null;
+  }
+
+  function getNextOpeningTagName(html: string, newlineIndex: number) {
+    const after = html.slice(newlineIndex + 1);
+    const match = after.match(/^\s*<([a-z0-9]+)(\s|>)/i);
+    return match ? match[1].toLowerCase() : null;
   }
 
   function findPreviousNonWhitespace(str: string, start: number) {
