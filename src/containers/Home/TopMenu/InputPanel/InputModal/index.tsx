@@ -57,6 +57,7 @@ export default function InputModal({
         onClose={handleClose}
         title="Post Something"
         size="lg"
+        allowOverflow
         closeOnBackdropClick={false}
         modalLevel={0}
         footer={
