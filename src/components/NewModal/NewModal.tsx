@@ -499,6 +499,7 @@ export const NewModal = forwardRef<
             <div
               className={css`
                 flex: 1;
+                min-height: 0;
                 overflow-y: ${allowOverflow ? 'visible' : 'auto'};
                 width: 100%;
                 display: flex;
