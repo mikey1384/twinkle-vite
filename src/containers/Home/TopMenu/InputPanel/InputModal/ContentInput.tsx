@@ -26,7 +26,8 @@ import {
   useHomeContext,
   useInputContext,
   useKeyContext
-} from '~/contexts';import RewardLevelExplainer from '~/components/RewardLevelExplainer';
+} from '~/contexts';
+import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -410,8 +411,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
           {descriptionFieldShown && (
             <div className="button-container">
               <Button
-                variant="soft"
-                tone="raised"
+                variant="solid"
                 color={successColorKey}
                 loading={submitting}
                 style={{ marginTop: '1rem' }}

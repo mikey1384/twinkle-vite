@@ -614,8 +614,7 @@ function SubjectInput({
                   style={{ marginRight: '1rem' }}
                 />
                 <Button
-                  variant="soft"
-                  tone="raised"
+                  variant="solid"
                   color={successColorKey}
                   loading={submittingSubject}
                   disabled={buttonDisabled}
