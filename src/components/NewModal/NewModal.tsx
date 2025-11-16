@@ -356,7 +356,7 @@ export const NewModal = forwardRef<
                 ? 'max-height: 100%;'
                 : allowOverflow
                 ? ''
-                : 'max-height: 95vh;'}
+                : 'max-height: 95%;'}
               background-color: white;
               border-radius: ${size === 'fullscreen'
                 ? '0'
