@@ -175,79 +175,93 @@ function PinnedTopics({
         className={css`
           margin-top: 1rem;
           width: CALC(100% - 2rem);
+          border: 1px solid ${borderColor};
+          display: flex;
+          flex-direction: column;
           ${isFixed
             ? `
             max-height: 15rem;
+            overflow: hidden;
+          `
+            : ''}
+        `}
+        style={{
+          padding: '0.5rem 0',
+          marginLeft: '1rem',
+          marginRight: '1rem',
+          marginBottom: 0
+        }}
+      >
+        <div
+          className={css`
+            width: 100%;
+            ${isFixed
+              ? `
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
           `
-            : `
+              : `
+            flex: 0 0 auto;
             height: auto;
             ${deviceIsMobileOrTablet ? 'max-height: 20vh;' : ''}
             overflow-y: ${deviceIsMobileOrTablet ? 'scroll' : 'visible'};
           `}
-          transition: height 0.3s ease-in-out;
-          a {
-            &:hover {
-              text-decoration: none;
+            transition: height 0.3s ease-in-out;
+            a {
+              &:hover {
+                text-decoration: none;
+              }
             }
-          }
-        `}
-        style={{
-          border: `1px solid ${borderColor}`,
-          padding: '0.5rem 0',
-          marginLeft: '1rem',
-          marginRight: '1rem',
-          marginBottom: 0,
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <TopicItem
-          icon="home"
-          onClick={handleMainNavClick}
-          isSelected={selectedTab !== 'topic'}
+          `}
         >
-          {channelName}
-        </TopicItem>
-        {featuredTopic && (
           <TopicItem
-            icon="star"
-            onClick={() => handleTopicNavClick(appliedFeaturedTopicId)}
-            isSelected={
-              selectedTab === 'topic' &&
-              selectedTopicId === appliedFeaturedTopicId
-            }
+            icon="home"
+            onClick={handleMainNavClick}
+            isSelected={selectedTab !== 'topic'}
           >
-            {featuredTopic.content}
+            {channelName}
           </TopicItem>
-        )}
-        {pinnedTopics.map((topic) => (
-          <TopicItem
-            key={topic.subjectId || topic.id}
-            icon="thumb-tack"
-            isSelected={
-              selectedTab === 'topic' &&
-              selectedTopicId === (topic.subjectId || topic.id)
-            }
-            onClick={() => handleTopicNavClick(topic.subjectId || topic.id)}
-          >
-            {topic.content}
-          </TopicItem>
-        ))}
-        {lastTopic && (
-          <TopicItem
-            icon="left-to-line"
-            onClick={() =>
-              handleTopicNavClick(lastTopic.subjectId || lastTopic.id)
-            }
-            isSelected={
-              selectedTab === 'topic' &&
-              selectedTopicId === (lastTopic.subjectId || lastTopic.id)
-            }
-          >
-            {lastTopic.content}
-          </TopicItem>
-        )}
+          {featuredTopic && (
+            <TopicItem
+              icon="star"
+              onClick={() => handleTopicNavClick(appliedFeaturedTopicId)}
+              isSelected={
+                selectedTab === 'topic' &&
+                selectedTopicId === appliedFeaturedTopicId
+              }
+            >
+              {featuredTopic.content}
+            </TopicItem>
+          )}
+          {pinnedTopics.map((topic) => (
+            <TopicItem
+              key={topic.subjectId || topic.id}
+              icon="thumb-tack"
+              isSelected={
+                selectedTab === 'topic' &&
+                selectedTopicId === (topic.subjectId || topic.id)
+              }
+              onClick={() => handleTopicNavClick(topic.subjectId || topic.id)}
+            >
+              {topic.content}
+            </TopicItem>
+          ))}
+          {lastTopic && (
+            <TopicItem
+              icon="left-to-line"
+              onClick={() =>
+                handleTopicNavClick(lastTopic.subjectId || lastTopic.id)
+              }
+              isSelected={
+                selectedTab === 'topic' &&
+                selectedTopicId === (lastTopic.subjectId || lastTopic.id)
+              }
+            >
+              {lastTopic.content}
+            </TopicItem>
+          )}
+        </div>
         {additionalTopics.length > 0 && !isOwner && !isAIChat && (
           <button
             className={buttonStyle}
@@ -263,11 +277,7 @@ function PinnedTopics({
           >
             {isAIChat ? (
               <>
-                <Icon
-                  icon="robot"
-                  size="lg"
-                  className={aiIconClassName}
-                />
+                <Icon icon="robot" size="lg" className={aiIconClassName} />
                 <Icon icon="plus" size="sm" className={aiIconClassName} />
                 <Icon icon="gear" size="lg" className={aiIconClassName} />
               </>
