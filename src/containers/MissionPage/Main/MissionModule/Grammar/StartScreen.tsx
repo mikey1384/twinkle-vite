@@ -1,7 +1,6 @@
 import React, { useLayoutEffect, useMemo } from 'react';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
 import MissionStatusCard from '~/components/MissionStatusCard';
 
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -23,11 +22,6 @@ export default function StartScreen({
   onInitMission: () => any;
   onStartButtonClick: () => any;
 }) {
-  const successRole = useRoleColor('success', { fallback: 'green' });
-  const successColor = useMemo(
-    () => successRole.getColor() || Color.green(),
-    [successRole]
-  );
   useLayoutEffect(() => {
     const appElement = document.getElementById('App');
     if (appElement) appElement.scrollTop = 0;
@@ -89,7 +83,7 @@ export default function StartScreen({
         }}
       >
         <Button
-          color={successColor}
+          color="green"
           variant="soft"
           tone="raised"
           disabled={loading}
