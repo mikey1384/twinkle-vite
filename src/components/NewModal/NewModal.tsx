@@ -76,12 +76,7 @@ export interface NewModalProps {
   preventBodyScroll?: boolean;
   animationDuration?: number;
   portalTarget?: HTMLElement;
-  // When true, allow the modal to naturally exceed viewport height
-  // so the backdrop scrolls (instead of constraining to 95vh and
-  // forcing an inner scroll region).
   allowOverflow?: boolean;
-  // Optional padding for the modal body content area.
-  // When provided, overrides the default responsive padding.
   bodyPadding?: string | number;
   'aria-label'?: string;
   'aria-labelledby'?: string;
@@ -180,9 +175,9 @@ export const NewModal = forwardRef<
 
       if (size === 'fullscreen') {
         return {
-          width: '100vw',
+          width: '100%',
           maxWidth: '100vw',
-          height: '100vh'
+          height: '100%'
         };
       }
 
@@ -358,7 +353,7 @@ export const NewModal = forwardRef<
               max-width: ${maxWidth};
               ${height !== 'auto' ? `height: ${height};` : ''}
               ${size === 'fullscreen'
-                ? 'max-height: 100vh;'
+                ? 'max-height: 100%;'
                 : allowOverflow
                 ? ''
                 : 'max-height: 95vh;'}
