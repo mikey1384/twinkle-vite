@@ -11,6 +11,7 @@ import HelloWorld from './HelloWorld';
 import Replit from './Replit';
 import WriteItYourself from './WriteItYourself';
 import LaunchTheWebsite from './LaunchTheWebsite';
+import SystemPromptMission from './SystemPrompt';
 
 export default function MissionModule({
   mission,
@@ -33,7 +34,17 @@ export default function MissionModule({
       )}
       {mission.missionType === 'username' && <TwinkleStore mission={mission} />}
       {mission.missionType === 'google' && (
-        <Googling mission={mission} onSetMissionState={onSetMissionState} />
+        <Googling
+          isDeprecated={Number(mission.isHidden) === 1}
+          mission={mission}
+          onSetMissionState={onSetMissionState}
+        />
+      )}
+      {mission.missionType === 'system-prompt' && (
+        <SystemPromptMission
+          mission={mission}
+          onSetMissionState={onSetMissionState}
+        />
       )}
       {mission.missionType === 'copy-and-paste' && (
         <CopyAndPaste mission={mission} onSetMissionState={onSetMissionState} />

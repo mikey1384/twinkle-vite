@@ -588,6 +588,30 @@ export default function missionRequestHelpers({
         return handleError(error);
       }
     },
+    async runSystemPromptPreview({
+      promptTitle,
+      systemPrompt,
+      messages
+    }: {
+      promptTitle: string;
+      systemPrompt: string;
+      messages: { role: string; content: string }[];
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/mission/systemPrompt/chat`,
+          {
+            promptTitle,
+            systemPrompt,
+            messages
+          },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadMissionAttempt({
       missionId,
       attempt

@@ -4,14 +4,17 @@ import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
+import { Color } from '~/constants/css';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
 export default function Googling({
+  isDeprecated = false,
   mission,
   onSetMissionState,
   style
 }: {
+  isDeprecated?: boolean;
   mission: any;
   onSetMissionState: (arg0: { missionId: any; newState: any }) => void;
   style?: React.CSSProperties;
@@ -45,6 +48,24 @@ export default function Googling({
 
   return (
     <div style={style}>
+      {isDeprecated && (
+        <div
+          style={{
+            background: Color.gold(0.12),
+            border: `1px solid ${Color.gold(0.5)}`,
+            borderRadius: '1rem',
+            color: Color.darkBrownOrange(),
+            fontSize: '1.5rem',
+            lineHeight: 1.6,
+            marginBottom: '2.5rem',
+            padding: '1.5rem'
+          }}
+        >
+          <strong>This mission has been deprecated.</strong> You can still
+          review the tutorial below, but new submissions are disabled and will
+          not be reviewed.
+        </div>
+      )}
       {mission.questions?.map((question: { id: number }) => (
         <Question
           key={question.id}
@@ -70,9 +91,9 @@ export default function Googling({
       >
         <Button
           style={{ fontSize: '1.7rem' }}
-          disabled={submitDisabled}
+          disabled={submitDisabled || isDeprecated}
           color={doneColor}
-          filled
+          variant="solid"
           onClick={handleSubmit}
         >
           Submit
@@ -117,6 +138,9 @@ export default function Googling({
   }
 
   async function handleSubmit() {
+    if (isDeprecated) {
+      return;
+    }
     setSubmitDisabled(true);
     for (const { id: questionId } of mission.questions) {
       if (!answers[questionId] || stringIsEmpty(answers[questionId])) {

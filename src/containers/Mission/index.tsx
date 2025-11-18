@@ -54,8 +54,9 @@ export default function Mission() {
           await loadMissionList();
         let displayedMissions = missions;
         if (!isAdmin) {
-          displayedMissions = missions.filter(
-            (mission: { isHidden: boolean }) => !mission.isHidden
+          displayedMissions = displayedMissions.filter(
+            (mission: { isHidden: number | string }) =>
+              Number(mission.isHidden) !== 1
           );
           onSetSelectedMissionsTab('missions');
         }
