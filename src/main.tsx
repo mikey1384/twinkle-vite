@@ -26,6 +26,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { faAlignJustify } from '@fortawesome/pro-solid-svg-icons/faAlignJustify';
 import { faAward } from '@fortawesome/pro-solid-svg-icons/faAward';
 import { faBullhorn } from '@fortawesome/pro-solid-svg-icons/faBullhorn';
+import { faBroom } from '@fortawesome/pro-solid-svg-icons/faBroom';
 import { faAndroid } from '@fortawesome/free-brands-svg-icons/faAndroid';
 import { faApple } from '@fortawesome/free-brands-svg-icons/faApple';
 import { faArchive } from '@fortawesome/pro-solid-svg-icons/faArchive';
@@ -238,6 +239,7 @@ library.add(
   faBatteryFull,
   faBatteryEmpty,
   faBolt,
+  faBroom,
   faBook,
   faBookOpen,
   faBookmark,

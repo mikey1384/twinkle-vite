@@ -126,6 +126,7 @@ function RichText({
   isStatusMsg,
   isProfileComponent,
   isAIMessage,
+  isAudioButtonShown = true,
   isShowMoreButtonCentered,
   voice,
   maxLines = 10,
@@ -141,6 +142,7 @@ function RichText({
   contentId?: number | string;
   contentType?: string;
   hideDictation?: boolean;
+  isAudioButtonShown?: boolean;
   isUseNewFormat?: boolean;
   isPreview?: boolean;
   isStatusMsg?: boolean;
@@ -276,8 +278,7 @@ function RichText({
   );
 
   const markerColor = useMemo(
-    () =>
-      isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor,
+    () => (isStatusMsg ? statusMsgListItemMarkerColor : listItemMarkerColor),
     [isStatusMsg, listItemMarkerColor, statusMsgListItemMarkerColor]
   );
 
@@ -480,11 +481,13 @@ function RichText({
           >
             <Icon icon={copySuccess ? 'check' : 'copy'} />
           </Button>
-          <AIAudioButton
-            contentKey={`${contentId}-${contentType}-${section}`}
-            text={text}
-            voice={voice}
-          />
+          {isAudioButtonShown && (
+            <AIAudioButton
+              contentKey={`${contentId}-${contentType}-${section}`}
+              text={text}
+              voice={voice}
+            />
+          )}
         </div>
       )}
     </ErrorBoundary>
