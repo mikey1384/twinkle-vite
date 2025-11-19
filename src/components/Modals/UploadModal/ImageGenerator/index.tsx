@@ -56,9 +56,6 @@ export default function ImageGenerator({
   const [progressStage, setProgressStage] = useState<string>('not_started');
   const [partialImageData, setPartialImageData] = useState<string | null>(null);
   const [isFollowUpGenerating, setIsFollowUpGenerating] = useState(false);
-  const generationTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const useImageHandlerRef = useRef<(() => void | Promise<void>) | null>(null);
 
@@ -148,11 +145,6 @@ export default function ImageGenerator({
             `data:image/png;base64,${status.partialImageB64}`
           );
         } else if (status.stage === 'completed') {
-          if (generationTimeoutId.current) {
-            clearTimeout(generationTimeoutId.current);
-            generationTimeoutId.current = null;
-          }
-
           if (status.imageUrl) {
             setGeneratedImageUrl(status.imageUrl);
             if (status.responseId) {
@@ -178,11 +170,6 @@ export default function ImageGenerator({
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
         } else if (status.stage === 'error') {
-          if (generationTimeoutId.current) {
-            clearTimeout(generationTimeoutId.current);
-            generationTimeoutId.current = null;
-          }
-
           const rawError =
             status.error ||
             status.message ||
@@ -233,9 +220,6 @@ export default function ImageGenerator({
         'image_generation_status_received',
         handleImageGenerationStatus
       );
-      if (generationTimeoutId.current) {
-        clearTimeout(generationTimeoutId.current);
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -451,11 +435,6 @@ export default function ImageGenerator({
       return;
     }
 
-    if (generationTimeoutId.current) {
-      clearTimeout(generationTimeoutId.current);
-      generationTimeoutId.current = null;
-    }
-
     setIsGenerating(true);
     setError(null);
     setGeneratedImageUrl(null);
@@ -464,16 +443,6 @@ export default function ImageGenerator({
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
     setIsFollowUpGenerating(false);
-
-    const timeoutId = setTimeout(() => {
-      const timeoutMessage = 'Image generation timed out. Please try again.';
-      setError(timeoutMessage);
-      setIsGenerating(false);
-      setIsFollowUpGenerating(false);
-      setProgressStage('not_started');
-      onError?.(timeoutMessage);
-    }, 180000);
-    generationTimeoutId.current = timeoutId;
 
     try {
       let referenceB64: string | undefined;
@@ -489,10 +458,6 @@ export default function ImageGenerator({
       });
 
       if (!result.success) {
-        if (generationTimeoutId.current) {
-          clearTimeout(generationTimeoutId.current);
-          generationTimeoutId.current = null;
-        }
         const rawError = result.error || 'Failed to generate image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
@@ -507,11 +472,6 @@ export default function ImageGenerator({
         onError?.(errorMessage);
       }
     } catch (err) {
-      if (generationTimeoutId.current) {
-        clearTimeout(generationTimeoutId.current);
-        generationTimeoutId.current = null;
-      }
-
       console.error('Image generation error:', err);
       const errorMessage =
         'Network error: Unable to connect to image generation service';
@@ -540,27 +500,11 @@ export default function ImageGenerator({
       return;
     }
 
-    if (generationTimeoutId.current) {
-      clearTimeout(generationTimeoutId.current);
-      generationTimeoutId.current = null;
-    }
-
     setIsGenerating(true);
     setIsFollowUpGenerating(true);
     setError(null);
     setPartialImageData(null);
     setProgressStage('prompt_ready');
-
-    const timeoutId = setTimeout(() => {
-      const timeoutMessage =
-        'Follow-up image generation timed out. Please try again.';
-      setError(timeoutMessage);
-      setIsGenerating(false);
-      setIsFollowUpGenerating(false);
-      setProgressStage('not_started');
-      onError?.(timeoutMessage);
-    }, 180000);
-    generationTimeoutId.current = timeoutId;
 
     try {
       const result = await generateAIImage({
@@ -570,10 +514,6 @@ export default function ImageGenerator({
       });
 
       if (!result.success) {
-        if (generationTimeoutId.current) {
-          clearTimeout(generationTimeoutId.current);
-          generationTimeoutId.current = null;
-        }
         const rawError = result.error || 'Failed to generate follow-up image';
         const errorMessage = safeErrorToString(rawError);
         setError(errorMessage);
@@ -589,11 +529,6 @@ export default function ImageGenerator({
         onError?.(errorMessage);
       }
     } catch (err) {
-      if (generationTimeoutId.current) {
-        clearTimeout(generationTimeoutId.current);
-        generationTimeoutId.current = null;
-      }
-
       console.error('Follow-up image generation error:', err);
       const errorMessage =
         'Network error: Unable to connect for follow-up generation';
