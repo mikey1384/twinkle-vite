@@ -612,6 +612,64 @@ export default function missionRequestHelpers({
         return handleError(error);
       }
     },
+    async applySystemPromptToAIChat({
+      promptTitle,
+      systemPrompt,
+      target,
+      topicId
+    }: {
+      promptTitle: string;
+      systemPrompt: string;
+      target: 'zero' | 'ciel';
+      topicId?: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/mission/systemPrompt/apply`,
+          {
+            promptTitle,
+            systemPrompt,
+            target,
+            topicId
+          },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async cloneSharedSystemPrompt({
+      sharedTopicId,
+      target
+    }: {
+      sharedTopicId: number;
+      target: 'zero' | 'ciel';
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/mission/systemPrompt/cloneShared`,
+          {
+            sharedTopicId,
+            target
+          },
+          auth()
+        );
+        return Promise.resolve(data);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadSystemPromptProgress() {
+      try {
+        const {
+          data: { progress }
+        } = await request.get(`${URL}/mission/systemPrompt/progress`, auth());
+        return Promise.resolve(progress);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadMissionAttempt({
       missionId,
       attempt

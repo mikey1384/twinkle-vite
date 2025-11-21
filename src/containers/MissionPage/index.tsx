@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Loading from '~/components/Loading';
 import Main from './Main';
 import RightMenu from './RightMenu';
+import SystemPromptMenu from './SystemPromptMenu';
+import SystemPromptShared from './SystemPromptShared';
 import InvalidPage from '~/components/InvalidPage';
 import Management from './Management';
 import FilterBar from '~/components/FilterBar';
@@ -118,6 +120,11 @@ export default function MissionPage() {
 
   const isManagementPage =
     location.pathname === `/missions/${missionType}/manage`;
+  const isSharedPage =
+    location.pathname === `/missions/${missionType}/shared`;
+  const isSystemPromptMission = missionType === 'system-prompt';
+  const allowManage = isAdmin && !isSystemPromptMission;
+  const hasSideMenu = isAdmin || isSystemPromptMission;
 
   return userId ? (
     mission.loaded ? (
@@ -125,7 +132,7 @@ export default function MissionPage() {
         componentPath="MissionPage/index"
         style={{ width: '100%', paddingBottom: '10rem' }}
       >
-        {isAdmin && (
+        {(isAdmin || isSystemPromptMission) && (
           <FilterBar
             className="mobile"
             style={{
@@ -134,25 +141,35 @@ export default function MissionPage() {
             }}
           >
             <nav
-              className={!isManagementPage ? 'active' : ''}
+              className={!isManagementPage && !isSharedPage ? 'active' : ''}
               onClick={() => navigate(`/missions/${missionType}`)}
             >
               Mission
             </nav>
-            <nav
-              className={isManagementPage ? 'active' : ''}
-              onClick={() => navigate(`/missions/${missionType}/manage`)}
-            >
-              Manage
-            </nav>
+            {isSystemPromptMission && (
+              <nav
+                className={isSharedPage ? 'active' : ''}
+                onClick={() => navigate(`/missions/${missionType}/shared`)}
+              >
+                Shared Prompts
+              </nav>
+            )}
+            {allowManage && (
+              <nav
+                className={isManagementPage ? 'active' : ''}
+                onClick={() => navigate(`/missions/${missionType}/manage`)}
+              >
+                Manage
+              </nav>
+            )}
           </FilterBar>
         )}
         <div
           className={css`
             padding-top: 1rem;
-            padding-right: ${isAdmin ? '23rem' : 0};
+            padding-right: ${hasSideMenu ? '23rem' : 0};
             @media (max-width: ${mobileMaxWidth}) {
-              padding-top: ${isAdmin ? '0.5rem' : 0};
+              padding-top: ${hasSideMenu ? '0.5rem' : 0};
               padding-right: 0;
             }
           `}
@@ -165,13 +182,9 @@ export default function MissionPage() {
           <div
             className={css`
               display: flex;
-              width: 60%;
-              margin-left: ${isAdmin
-                ? isManagementPage
-                  ? '1rem'
-                  : '25rem'
-                : 0};
-              flex-grow: ${isAdmin ? 1 : 0};
+              width: ${hasSideMenu ? '70%' : '60%'};
+              margin-left: ${hasSideMenu ? '1rem' : 0};
+              flex-grow: ${hasSideMenu ? 1 : 0};
               justify-content: center;
               flex-direction: column;
               @media (max-width: ${tabletMaxWidth}) {
@@ -185,16 +198,24 @@ export default function MissionPage() {
             `}
           >
             <Routes>
-              <Route
-                path={`/manage`}
-                element={
-                  <Management
-                    missionId={missionId}
-                    mission={mission}
-                    onSetMissionState={onSetMissionState}
-                  />
-                }
-              />
+              {allowManage && (
+                <Route
+                  path={`/manage`}
+                  element={
+                    <Management
+                      missionId={missionId}
+                      mission={mission}
+                      onSetMissionState={onSetMissionState}
+                    />
+                  }
+                />
+              )}
+              {isSystemPromptMission && (
+                <Route
+                  path="/shared"
+                  element={<SystemPromptShared />}
+                />
+              )}
               <Route
                 path="*"
                 element={
@@ -206,8 +227,15 @@ export default function MissionPage() {
               />
             </Routes>
           </div>
-          {isAdmin && (
-            <RightMenu className="desktop" missionType={missionType} />
+          {isSystemPromptMission ? (
+            <SystemPromptMenu
+              className="desktop"
+              missionType={missionType}
+            />
+          ) : (
+            isAdmin && (
+              <RightMenu className="desktop" missionType={missionType} />
+            )
           )}
         </div>
       </ErrorBoundary>
