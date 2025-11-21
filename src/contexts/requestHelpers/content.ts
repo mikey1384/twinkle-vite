@@ -676,12 +676,30 @@ export default function contentRequestHelpers({
     async loadAIStoryTopic(difficulty: number) {
       try {
         const {
-          data: { topic, topicKey, type, imageGeneratedCount, readCount }
+          data: {
+            topic,
+            topicKey,
+            type,
+            imageGeneratedCount,
+            readCount,
+            listenCount,
+            listeningImageGeneratedCount,
+            readingImageGeneratedCount
+          }
         } = await request.get(
           `${URL}/content/game/story/topic?difficulty=${difficulty}`,
           auth()
         );
-        return { topic, topicKey, type, imageGeneratedCount, readCount };
+        return {
+          topic,
+          topicKey,
+          type,
+          imageGeneratedCount,
+          readCount,
+          listenCount,
+          listeningImageGeneratedCount,
+          readingImageGeneratedCount
+        };
       } catch (error) {
         return handleError(error);
       }

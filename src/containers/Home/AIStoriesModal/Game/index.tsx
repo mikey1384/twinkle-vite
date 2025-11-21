@@ -5,6 +5,7 @@ import Reading from './Reading';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 const MAX_READ_ATTEMPTS = 5;
+const MAX_LISTEN_ATTEMPTS = 5;
 
 export default function Game({
   attemptId,
@@ -29,6 +30,7 @@ export default function Game({
   onSetTopicLoadError,
   onSetSolveObj,
   readCount,
+  listenCount,
   solveObj,
   questions,
   storyId,
@@ -59,6 +61,7 @@ export default function Game({
   onSetTopicLoadError: (v: boolean) => void;
   onSetSolveObj: (v: any) => void;
   readCount: number;
+  listenCount: number;
   solveObj: any;
   questions: any[];
   storyId: number;
@@ -112,6 +115,8 @@ export default function Game({
           }}
           maxReadAttempts={MAX_READ_ATTEMPTS}
           readCount={readCount}
+          maxListenAttempts={MAX_LISTEN_ATTEMPTS}
+          listenCount={listenCount}
         />
       ) : (
         <div style={{ height: '100%', width: '100%' }}>
@@ -152,6 +157,7 @@ export default function Game({
           ) : (
             <Listening
               difficulty={difficulty}
+              isDisabled={listenCount >= MAX_LISTEN_ATTEMPTS}
               isGrading={isGrading}
               onLoadQuestions={handleLoadQuestions}
               onGrade={handleGrade}

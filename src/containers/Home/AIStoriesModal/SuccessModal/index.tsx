@@ -171,7 +171,7 @@ export default function SuccessModal({
     };
   }, [storyId]);
 
-  const freeThreshold = isListening ? 10 : 3;
+  const freeThreshold = isListening ? 5 : 3;
   const imageGenerationCost = useMemo(() => {
     return imageGeneratedCount < freeThreshold ? 0 : 1000;
   }, [freeThreshold, imageGeneratedCount]);
@@ -190,8 +190,8 @@ export default function SuccessModal({
   }, [progressStage, canGenerateImage, callingOpenAITime]);
 
   const imageGenerationCostText = useMemo(() => {
-    return imageGeneratedCount < freeThreshold ? 'Free' : '1,000 coins';
-  }, [freeThreshold, imageGeneratedCount]);
+    return imageGenerationCost === 0 ? 'Free' : '1,000 coins';
+  }, [imageGenerationCost]);
 
   return (
     <Modal
@@ -331,8 +331,9 @@ export default function SuccessModal({
                 <div>
                   {isListening ? (
                     <>
-                      <div>First 10 image generations are free</div>
-                      <div>1,000 coins for 11th and subsequent generations</div>
+                      <div>
+                        Listening images are free for all 5 daily clears
+                      </div>
                     </>
                   ) : (
                     <>
@@ -344,6 +345,7 @@ export default function SuccessModal({
                 <div style={{ marginTop: '0.5rem' }}>
                   You generated {imageGeneratedCount} image
                   {imageGeneratedCount === 1 ? '' : 's'} today
+                  {isListening ? ' for listening' : ' for reading'}
                 </div>
               </div>
             </div>

@@ -11,6 +11,7 @@ const deviceIsMobile = isMobile(navigator);
 
 export default function ListenSection({
   difficulty,
+  isDisabled,
   isGrading,
   onLoadQuestions,
   onReset,
@@ -45,6 +46,7 @@ export default function ListenSection({
   topicKey: string;
   type: string;
   userChoiceObj: any;
+  isDisabled: boolean;
 }) {
   const loadAIStoryListeningAudio = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningAudio
@@ -59,6 +61,8 @@ export default function ListenSection({
   const [dotCount, setDotCount] = useState(0);
 
   useEffect(() => {
+    if (isDisabled) return;
+
     loadAudio();
 
     return () => {
@@ -98,11 +102,15 @@ export default function ListenSection({
         };
       } catch (error) {
         console.error('Error loading audio:', error);
-        setAudioError('Failed to load audio...');
+        const errorMessage =
+          (error as any)?.response?.data?.error ||
+          (error as Error)?.message ||
+          'Failed to load audio...';
+        setAudioError(errorMessage);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [difficulty]);
+  }, [difficulty, isDisabled]);
 
   useEffect(() => {
     socket.on('load_listening_status_updated', handleLoadingStatus);
@@ -176,6 +184,35 @@ export default function ListenSection({
             <GradientButton onClick={onReset}>New Story</GradientButton>
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (isDisabled) {
+    return (
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          gap: 1.5rem;
+        `}
+      >
+        <div
+          className={css`
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: ${Color.darkerGray()};
+            text-align: center;
+            padding: 0 1.5rem;
+          `}
+        >
+          Daily listening limit reached. Please try again tomorrow.
+        </div>
+        <GradientButton onClick={onReset}>Back</GradientButton>
       </div>
     );
   }

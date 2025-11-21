@@ -5,6 +5,7 @@ import { innerBorderRadius } from '~/constants/css';
 
 export default function Listening({
   difficulty,
+  isDisabled,
   isGrading,
   onGrade,
   onReset,
@@ -39,6 +40,7 @@ export default function Listening({
   topicKey: string;
   type: string;
   userChoiceObj: any;
+  isDisabled: boolean;
 }) {
   return (
     <div
@@ -72,6 +74,7 @@ export default function Listening({
         topicKey={topicKey}
         type={type}
         userChoiceObj={userChoiceObj}
+        isDisabled={isDisabled}
       />
     </div>
   );
