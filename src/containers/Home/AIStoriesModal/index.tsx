@@ -48,7 +48,12 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.loadAIStoryTopic
   );
   const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
+  const [listeningImageGeneratedCount, setListeningImageGeneratedCount] =
+    useState(0);
+  const [readingImageGeneratedCount, setReadingImageGeneratedCount] =
+    useState(0);
   const [readCount, setReadCount] = useState(0);
+  const [listenCount, setListenCount] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [topic, setTopic] = useState('');
@@ -199,6 +204,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
               onSetSuccessModalShown={setSuccessModalShown}
               onSetTopicLoadError={setTopicLoadError}
               readCount={readCount}
+              listenCount={listenCount}
               questions={questions}
               storyId={storyId}
               MainRef={MainRef}
@@ -229,7 +235,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         </div>
         {successModalShown && (
           <SuccessModal
-            imageGeneratedCount={imageGeneratedCount}
+            imageGeneratedCount={
+              gameMode === 'listen'
+                ? listeningImageGeneratedCount
+                : readingImageGeneratedCount
+            }
             isListening={gameMode === 'listen'}
             onHide={() => setSuccessModalShown(false)}
             numQuestions={questions.length}
@@ -264,7 +274,16 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     setLoadingTopic(true);
     try {
-      const { topic, topicKey, type, imageGeneratedCount, readCount } =
+      const {
+        topic,
+        topicKey,
+        type,
+        imageGeneratedCount,
+        readCount,
+        listenCount,
+        listeningImageGeneratedCount,
+        readingImageGeneratedCount
+      } =
         await tryLoadTopic({
           difficulty,
           retries: 3,
@@ -276,7 +295,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         setStoryType(type);
         setTopicKey(topicKey);
         setImageGeneratedCount(imageGeneratedCount);
+        setListeningImageGeneratedCount(listeningImageGeneratedCount);
+        setReadingImageGeneratedCount(readingImageGeneratedCount);
         setReadCount(readCount);
+        setListenCount(listenCount);
         setLoadingTopic(false);
       }
     } catch (error) {
@@ -298,10 +320,27 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   }) {
     for (let i = 0; i < retries; i++) {
       try {
-        const { topic, topicKey, type, imageGeneratedCount, readCount } =
-          await loadAIStoryTopic(difficulty);
+        const {
+          topic,
+          topicKey,
+          type,
+          imageGeneratedCount,
+          readCount,
+          listenCount,
+          listeningImageGeneratedCount,
+          readingImageGeneratedCount
+        } = await loadAIStoryTopic(difficulty);
         if (currentRequestId === requestRef.current) {
-          return { topic, topicKey, type, imageGeneratedCount, readCount };
+          return {
+            topic,
+            topicKey,
+            type,
+            imageGeneratedCount,
+            readCount,
+            listenCount,
+            listeningImageGeneratedCount,
+            readingImageGeneratedCount
+          };
         } else {
           return {};
         }
