@@ -772,26 +772,26 @@ export default function contentRequestHelpers({
     },
     async uploadAIStoryAttempt({
       attemptId,
-      difficulty,
-      result,
-      isPassed
+      answers
     }: {
       attemptId: number;
-      difficulty: number;
-      result: number;
-      isPassed: boolean;
+      answers: {
+        questionId: number;
+        selectedChoiceIndex: number | null;
+      }[];
     }) {
       try {
         const {
-          data: { newXp, newCoins }
+          data: { newXp, newCoins, isPassed }
         } = await request.post(
           `${URL}/content/game/story/attempt`,
-          { attemptId, difficulty, result, isPassed },
+          { attemptId, answers },
           auth()
         );
         return {
           newXp,
-          newCoins
+          newCoins,
+          isPassed
         };
       } catch (error) {
         return handleError(error);

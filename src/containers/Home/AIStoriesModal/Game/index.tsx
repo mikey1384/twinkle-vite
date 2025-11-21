@@ -177,25 +177,24 @@ export default function Game({
 
   async function handleGrade() {
     let numCorrect = 0;
-    const result = [];
-    for (const question of questions) {
-      const userChoice = userChoiceObj[question.id];
-      if (userChoice === question.answerIndex) {
+    const answers = questions.map((question) => {
+      const selectedChoiceIndex = userChoiceObj[question.id];
+      if (selectedChoiceIndex === question.answerIndex) {
         numCorrect++;
       }
-      result.push({
+      return {
         questionId: question.id,
-        isCorrect: userChoice === question.answerIndex
-      });
-    }
-    const isPassed = numCorrect === questions.length;
+        selectedChoiceIndex:
+          typeof selectedChoiceIndex === 'number'
+            ? selectedChoiceIndex
+            : null
+      };
+    });
     try {
       setIsGrading(true);
-      const { newXp, newCoins } = await uploadAIStoryAttempt({
+      const { newXp, newCoins, isPassed } = await uploadAIStoryAttempt({
         attemptId,
-        difficulty,
-        result,
-        isPassed
+        answers
       });
       if (newXp && newCoins) {
         onSetUserState({
