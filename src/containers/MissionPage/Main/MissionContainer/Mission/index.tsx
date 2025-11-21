@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import RichText from '~/components/Texts/RichText';
 import MissionModule from '../../MissionModule';
 import MultiMission from './MultiMission';
@@ -62,6 +62,8 @@ export default function Mission({
   );
   const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+  const hasCheckedStatusRef = useRef(false);
+  const skipPageVisibleReload = mission.missionType === 'system-prompt';
   const myAttempt = useMemo(
     () => myAttempts[missionId],
     [missionId, myAttempts]
@@ -81,6 +83,7 @@ export default function Mission({
     }
 
     async function handleCheckMissionStatus() {
+      if (skipPageVisibleReload && hasCheckedStatusRef.current) return;
       setLoading(true);
       const { filePath, feedback, status, reviewTimeStamp, reviewer } =
         await checkMissionStatus(missionId);
@@ -91,9 +94,14 @@ export default function Mission({
         });
       }
       setLoading(false);
+      hasCheckedStatusRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageVisible]);
+  }, [pageVisible, skipPageVisibleReload]);
+
+  useEffect(() => {
+    hasCheckedStatusRef.current = false;
+  }, [missionId]);
 
   useEffect(() => {
     if (title) {

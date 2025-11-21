@@ -105,21 +105,17 @@ export default function ImageGenerator({
     (v) => v.requestHelpers.generateAIImage
   );
 
-  // Coin-related state and logic
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  // Coin costs
-  const IMAGE_GENERATION_COST = 10000; // 10,000 coins for initial generation
-  const FOLLOW_UP_COST = 1000; // 1,000 coins for follow-up generation
+  const IMAGE_GENERATION_COST = 10000;
+  const FOLLOW_UP_COST = 1000;
 
-  // Check if user can afford generation
   const canAffordGeneration = useMemo(() => {
     return twinkleCoins >= IMAGE_GENERATION_COST;
   }, [twinkleCoins, IMAGE_GENERATION_COST]);
 
-  // Check if user can afford follow-up
   const canAffordFollowUp = useMemo(() => {
     return twinkleCoins >= FOLLOW_UP_COST;
   }, [twinkleCoins, FOLLOW_UP_COST]);
