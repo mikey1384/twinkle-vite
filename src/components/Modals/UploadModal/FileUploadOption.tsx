@@ -79,7 +79,9 @@ export default function FileUploadOption({
         variant="soft"
         tone="raised"
         color={
-          buttonColorKey && buttonColorKey in Color ? buttonColorKey : 'logoBlue'
+          buttonColorKey && buttonColorKey in Color
+            ? buttonColorKey
+            : 'logoBlue'
         }
         onClick={handleSelectFile}
         style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
@@ -127,7 +129,10 @@ export default function FileUploadOption({
   function handleDragLeave(event: React.DragEvent) {
     event.preventDefault();
     event.stopPropagation();
-    setIsDragOver(false);
+    const relatedTarget = event.relatedTarget as Node | null;
+    if (!relatedTarget || !event.currentTarget.contains(relatedTarget)) {
+      setIsDragOver(false);
+    }
   }
 
   function handleDrop(event: React.DragEvent) {
