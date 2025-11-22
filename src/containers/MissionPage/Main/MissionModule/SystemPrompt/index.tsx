@@ -351,6 +351,11 @@ export default function SystemPromptMission({
     []
   );
 
+  // Progressive reveal logic
+  const showEditor = true; // Always show title/prompt editor
+  const showPreview = !!(trimmedTitle && hasPrompt); // Only show preview if title & prompt exist
+  const showTargetSelector = !!(createdPrompt && chatMessages.length > 0); // Show export only after testing in preview
+
   return (
     <ErrorBoundary componentPath="MissionModule/SystemPrompt">
       <div className={layoutClass} style={style}>
@@ -365,57 +370,65 @@ export default function SystemPromptMission({
           className={sidebarClass}
         />
         <div className={contentClass}>
-          <Editor
-            title={title}
-            prompt={prompt}
-            improving={improving}
-            hasPrompt={hasPrompt}
-            onTitleChange={(text) =>
-              setSystemPromptState({
-                ...systemPromptState,
-                title: text
-              })
-            }
-            onPromptChange={(text) =>
-              setSystemPromptState({
-                ...systemPromptState,
-                prompt: text
-              })
-            }
-            onImprovePrompt={handleImprovePrompt}
-          />
-          <TargetSelector
-            hasPrompt={hasPrompt}
-            applyingTarget={applyingTarget}
-            sending={sending}
-            improving={improving}
-            progress={progress}
-            onApplyToAIChat={handleApplyToAIChat}
-          />
-          <Preview
-            chatMessages={chatMessages}
-            error={error}
-            userMessage={userMessage}
-            hasPrompt={hasPrompt}
-            canSend={canSend}
-            sending={sending}
-            trimmedTitle={trimmedTitle}
-            messageListRef={messageListRef}
-            onClear={() => {
-              setError('');
-              setSystemPromptState({
-                ...systemPromptState,
-                chatMessages: []
-              });
-            }}
-            onUserMessageChange={(text) =>
-              setSystemPromptState({
-                ...systemPromptState,
-                userMessage: text
-              })
-            }
-            onSendMessage={handleSendMessage}
-          />
+          {showEditor && (
+            <Editor
+              title={title}
+              prompt={prompt}
+              improving={improving}
+              hasPrompt={hasPrompt}
+              onTitleChange={(text) =>
+                setSystemPromptState({
+                  ...systemPromptState,
+                  title: text
+                })
+              }
+              onPromptChange={(text) =>
+                setSystemPromptState({
+                  ...systemPromptState,
+                  prompt: text
+                })
+              }
+              onImprovePrompt={handleImprovePrompt}
+            />
+          )}
+          
+          {showPreview && (
+            <Preview
+              chatMessages={chatMessages}
+              error={error}
+              userMessage={userMessage}
+              hasPrompt={hasPrompt}
+              canSend={canSend}
+              sending={sending}
+              trimmedTitle={trimmedTitle}
+              messageListRef={messageListRef}
+              onClear={() => {
+                setError('');
+                setSystemPromptState({
+                  ...systemPromptState,
+                  chatMessages: []
+                });
+              }}
+              onUserMessageChange={(text) =>
+                setSystemPromptState({
+                  ...systemPromptState,
+                  userMessage: text
+                })
+              }
+              onSendMessage={handleSendMessage}
+            />
+          )}
+
+          {showTargetSelector && (
+            <TargetSelector
+              hasPrompt={hasPrompt}
+              applyingTarget={applyingTarget}
+              sending={sending}
+              improving={improving}
+              progress={progress}
+              onApplyToAIChat={handleApplyToAIChat}
+            />
+          )}
         </div>
       </div>
     </ErrorBoundary>
