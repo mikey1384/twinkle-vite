@@ -48,6 +48,7 @@ export default function SystemPromptMission({
   const [progressLoading, setProgressLoading] = useState(true);
   const [progressError, setProgressError] = useState('');
   const [progress, setProgress] = useState<any | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const loadSystemPromptProgress = useAppContext(
     (v) => v.requestHelpers.loadSystemPromptProgress
@@ -82,6 +83,7 @@ export default function SystemPromptMission({
   }, [mission.systemPromptState]);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
+  const draftTimeoutRef = useRef<any>(null);
 
   const setSystemPromptState = useCallback(
     (nextState: SystemPromptState) => {
@@ -201,6 +203,23 @@ export default function SystemPromptMission({
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
   }, [chatMessages]);
+
+  useEffect(() => {
+    setSaving(true);
+    clearTimeout(draftTimeoutRef.current);
+    const isClearing = !trimmedTitle && !trimmedPrompt;
+    draftTimeoutRef.current = setTimeout(
+      () => {
+        socket.emit('save_system_prompt_draft', {
+          title: trimmedTitle,
+          prompt: trimmedPrompt
+        });
+        setSaving(false);
+      },
+      isClearing ? 0 : 1000
+    );
+    return () => clearTimeout(draftTimeoutRef.current);
+  }, [trimmedTitle, trimmedPrompt]);
 
   const handleImprovePrompt = useCallback(() => {
     if (!hasPrompt || improving) return;
@@ -376,6 +395,7 @@ export default function SystemPromptMission({
               prompt={prompt}
               improving={improving}
               hasPrompt={hasPrompt}
+              saving={saving}
               onTitleChange={(text) =>
                 setSystemPromptState({
                   ...systemPromptState,
@@ -391,7 +411,7 @@ export default function SystemPromptMission({
               onImprovePrompt={handleImprovePrompt}
             />
           )}
-          
+
           {showPreview && (
             <Preview
               chatMessages={chatMessages}
