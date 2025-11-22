@@ -77,11 +77,11 @@ export default function OfferPriceListItem({
             onMenuShownChange={onUserMenuShownChange}
             color={Color[userLinkColor]()}
             displayedName={
-              offerers[0].id === userId ? 'you' : offerers[0].username
+              offerers[0]?.id === userId ? 'you' : offerers[0]?.username
             }
             user={{
-              username: offerers[0].username,
-              id: offerers[0].id
+              username: offerers[0]?.username,
+              id: offerers[0]?.id
             }}
           />
           {offerers.length > 1 ? (

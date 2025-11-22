@@ -66,24 +66,24 @@ export default function Trade({
   const cancelReasonText = useMemo(() => {
     if (cancelReason === 'withdraw') {
       return `${
-        from.username === myUsername ? 'You' : from.username
+        from?.username === myUsername ? 'You' : from?.username
       } withdrew the trade proposal.`;
     }
     if (cancelReason === 'decline') {
       return `${
-        to.username === myUsername ? 'You' : to.username
+        to?.username === myUsername ? 'You' : to?.username
       } declined the trade proposal.`;
     }
-  }, [cancelReason, from.username, myUsername, to.username]);
+  }, [cancelReason, from?.username, myUsername, to?.username]);
 
   const acceptedText = useMemo(() => {
     if (isAccepted) {
       return `${
-        to.username === myUsername ? 'You' : to.username
+        to?.username === myUsername ? 'You' : to?.username
       } accepted the proposal. Trade has been completed.`;
     }
     return '';
-  }, [isAccepted, myUsername, to.username]);
+  }, [isAccepted, myUsername, to?.username]);
 
   return (
     <div

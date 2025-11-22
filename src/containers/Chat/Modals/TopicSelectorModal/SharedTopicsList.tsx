@@ -84,7 +84,7 @@ export default function SharedTopicsList({
                   `}
                 >
                   <UsernameText
-                    user={{ id: subject.userId, username: subject.username }}
+                    user={{ id: subject.userId, username: subject?.username }}
                   />
                   {subject.timeStamp && (
                     <small style={{ marginLeft: '0.5rem' }}>
