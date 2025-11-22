@@ -66,8 +66,9 @@ export default function SelectNewOwnerModal({
     }
     return members.filter((member) => {
       return (
+        member &&
         member.id !== userId &&
-        (stringIsEmpty(searchText) || member.username.includes(searchText)) &&
+        (stringIsEmpty(searchText) || member.username?.includes(searchText)) &&
         (!isClass || isSupermod(member.level))
       );
     });
@@ -91,8 +92,8 @@ export default function SelectNewOwnerModal({
               style={{ marginTop: '1.5rem' }}
               onSelect={(index: number) => setSelectedUser(shownMembers[index])}
               listItems={shownMembers.map((member) => ({
-                label: member.username,
-                checked: member.id === selectedUser?.id
+                label: member?.username,
+                checked: member?.id === selectedUser?.id
               }))}
             />
             {searching && (

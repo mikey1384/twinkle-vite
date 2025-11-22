@@ -85,7 +85,8 @@ export default function Offers({
                   onClick={() => onSetOfferModalShown(true)}
                   color="green"
                   disabled={!userId}
-                  filled
+                  variant="soft"
+                  tone="raised"
                 >
                   <span
                     className={css`

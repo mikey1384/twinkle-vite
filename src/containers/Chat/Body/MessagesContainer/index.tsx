@@ -1052,7 +1052,9 @@ export default function MessagesContainer({
             content: `sent ${
               users.length === 1 ? 'an ' : ''
             }invitation message${users.length > 1 ? 's' : ''} to ${
-              users.length > 1 ? `${users.length} users` : users[0].username
+              users.length > 1
+                ? `${users.length} users`
+                : users[0]?.username || 'User'
             }`,
             isNotification: true
           }
