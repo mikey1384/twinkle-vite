@@ -11,6 +11,7 @@ interface EditorProps {
   prompt: string;
   improving: boolean;
   hasPrompt: boolean;
+  saving?: boolean;
   onTitleChange: (text: string) => void;
   onPromptChange: (text: string) => void;
   onImprovePrompt: () => void;
@@ -22,6 +23,7 @@ export default function Editor({
   prompt,
   improving,
   hasPrompt,
+  saving = false,
   onTitleChange,
   onPromptChange,
   onImprovePrompt,
@@ -75,7 +77,14 @@ export default function Editor({
         `}`}
         style={style}
       >
-        <div className={labelClass}>System Prompt Title</div>
+        <div className={sectionHeaderClass}>
+          <div className={labelClass}>System Prompt Title</div>
+          {saving && (
+            <small style={{ color: Color.gray(), fontWeight: 'bold' }}>
+              Saving...
+            </small>
+          )}
+        </div>
         <Input
           value={title}
           placeholder="e.g., Ciel the encouraging grammar buddy"
