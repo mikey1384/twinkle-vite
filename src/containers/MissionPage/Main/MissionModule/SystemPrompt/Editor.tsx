@@ -137,7 +137,7 @@ export default function Editor({
         </div>
         <Textarea
           style={{ width: '100%' }}
-          placeholder={`Describe the agent's personality, boundaries, and priorities.\nInclude how Zero or Ciel should speak, what to avoid, and what success looks like.`}
+          placeholder="e.g., You are Ciel, a helpful grammar coach. Correct the user's mistakes gently and provide examples. Keep your tone encouraging."
           minRows={5}
           maxRows={16}
           disabled={improving}
