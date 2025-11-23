@@ -74,7 +74,7 @@ export default function Checklist({
     () =>
       css`
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 0.9rem;
         padding: 1rem 1.1rem;
         border-radius: ${borderRadius};

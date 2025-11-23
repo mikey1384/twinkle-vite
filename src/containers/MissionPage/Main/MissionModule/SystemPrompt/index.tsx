@@ -115,10 +115,11 @@ export default function SystemPromptMission({
   const hasPrompt = trimmedPrompt.length > 0;
   const canSend = Boolean(hasPrompt && trimmedMessage && !sending);
   const createdPrompt = useMemo(() => {
-    return (
-      progress?.previewed || !!progress?.systemPromptState?.prompt || hasPrompt
+    const hasPreviewedLocally = chatMessages.some(
+      (message) => message.role === 'assistant'
     );
-  }, [hasPrompt, progress?.previewed, progress?.systemPromptState?.prompt]);
+    return !!progress?.previewed || hasPreviewedLocally;
+  }, [chatMessages, progress?.previewed]);
 
   const aiMessageCount = progress?.aiTopic?.messageCount || 0;
   const sharedMessageCount = progress?.sharedTopic?.messageCount || 0;
@@ -373,7 +374,7 @@ export default function SystemPromptMission({
   // Progressive reveal logic
   const showEditor = true; // Always show title/prompt editor
   const showPreview = !!(trimmedTitle && hasPrompt); // Only show preview if title & prompt exist
-  const showTargetSelector = !!(createdPrompt && chatMessages.length > 0); // Show export only after testing in preview
+  const showTargetSelector = !!createdPrompt; // Show export only after testing in preview
 
   return (
     <ErrorBoundary componentPath="MissionModule/SystemPrompt">
