@@ -125,7 +125,8 @@ export default function TargetSelector({
 
           <Button
             color={appliedTarget === 'zero' ? 'logoBlue' : 'purple'}
-            filled
+            variant="solid"
+            tone="raised"
             style={{
               padding: '1rem 2rem',
               fontSize: '1.3rem',
