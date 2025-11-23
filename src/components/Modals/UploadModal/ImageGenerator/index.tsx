@@ -503,10 +503,16 @@ export default function ImageGenerator({
     setProgressStage('prompt_ready');
 
     try {
+      let referenceB64: string | undefined;
+      if (generatedImageUrl) {
+        referenceB64 = generatedImageUrl.split(',')[1]; // Extract base64 part
+      }
+
       const result = await generateAIImage({
         prompt: followUpPrompt.trim(),
-        previousResponseId: generatedResponseId,
-        previousImageId: generatedImageId
+        previousResponseId: generatedResponseId, // Keep for backend pricing logic
+        previousImageId: generatedImageId, // Keep for backend pricing logic
+        referenceImageB64: referenceB64 // Send previous image as reference for Gemini
       });
 
       if (!result.success) {
@@ -577,7 +583,7 @@ export default function ImageGenerator({
   function getProgressLabel() {
     switch (progressStage) {
       case 'prompt_ready':
-        return 'Preparing prompt...';
+        return 'Generating image...';
       case 'calling_openai':
         return 'Calling OpenAI...';
       case 'in_progress':
