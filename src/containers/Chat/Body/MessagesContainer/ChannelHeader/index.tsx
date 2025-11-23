@@ -339,9 +339,8 @@ export default function ChannelHeader({
               searchText={searchText}
               topicId={
                 currentChannel.selectedTopicId ||
-                (currentChannel.twoPeople
-                  ? currentChannel.lastTopicId
-                  : currentChannel.featuredTopicId)
+                currentChannel.lastTopicId ||
+                currentChannel.featuredTopicId
               }
             />
           ) : null}

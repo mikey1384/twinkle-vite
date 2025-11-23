@@ -1020,6 +1020,13 @@ export default function ChatReducer(
             numUnreads: 0,
             isReloadRequired: false,
             legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
+            topicHistory: state.channelsObj[loadedChannel.id]?.topicHistory || [],
+            currentTopicIndex:
+              state.channelsObj[loadedChannel.id]?.currentTopicIndex ?? -1,
+            topicObj: {
+              ...state.channelsObj[loadedChannel.id]?.topicObj,
+              ...loadedChannel.topicObj
+            },
             loaded: true,
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
@@ -1947,6 +1954,13 @@ export default function ChatReducer(
                 legacyTopicObj: {
                   ...action.data,
                   loaded: true
+                },
+                topicObj: {
+                  ...prevChannelObj?.topicObj,
+                  [action.data.id]: {
+                    ...prevChannelObj?.topicObj?.[action.data.id],
+                    ...action.data
+                  }
                 }
               }
         }
@@ -4120,6 +4134,14 @@ export default function ChatReducer(
         thinkHard: updatedThinkHard
       };
     }
+    case 'UPDATE_VISITED_CHANNEL':
+      return {
+        ...state,
+        visitedChannelIds: {
+          ...state.visitedChannelIds,
+          [action.channelId]: true
+        }
+      };
     default:
       return state;
   }

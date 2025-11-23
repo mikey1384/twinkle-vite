@@ -878,6 +878,7 @@ function MessageBody({
         onSetMessageToScrollTo={onSetMessageToScrollTo}
         topicObj={{ id: subjectId, title: message.content }}
         username={myId === userId ? 'You' : appliedUsername}
+        pathId={currentChannel.pathId}
       />
     );
   }
@@ -899,6 +900,7 @@ function MessageBody({
         nextMessageHasTopic={nextMessageHasTopic}
         prevMessageHasTopic={prevMessageHasTopic}
         username={myId === userId ? 'You' : appliedUsername}
+        pathId={currentChannel.pathId}
       />
     );
   }

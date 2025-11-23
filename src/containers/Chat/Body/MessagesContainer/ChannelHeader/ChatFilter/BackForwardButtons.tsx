@@ -2,16 +2,21 @@ import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import { useChatContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function BackForwardButtons({
   channelId,
   topicHistory,
-  currentTopicIndex
+  currentTopicIndex,
+  pathId
 }: {
   channelId: number;
   topicHistory: number[];
   currentTopicIndex: number;
+  pathId: string;
 }) {
+  const navigate = useNavigate();
+  const { subchannelPath } = useParams();
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const canGoBack = useMemo(() => currentTopicIndex > 0, [currentTopicIndex]);
   const canGoForward = useMemo(
@@ -66,9 +71,19 @@ export default function BackForwardButtons({
   );
 
   function handleClick(direction: 'back' | 'forward') {
-    onEnterTopic({
-      channelId,
-      direction
-    });
+    const newIndex =
+      direction === 'back' ? currentTopicIndex - 1 : currentTopicIndex + 1;
+    const topicId = topicHistory[newIndex];
+    if (topicId) {
+      onEnterTopic({
+        channelId,
+        direction
+      });
+      navigate(
+        `/chat/${pathId}${
+          subchannelPath ? `/${subchannelPath}` : ''
+        }/topic/${topicId}`
+      );
+    }
   }
 }

@@ -7,6 +7,7 @@ import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
 import { resolveColorValue } from '~/theme/resolveColor';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
@@ -44,7 +45,8 @@ function PinnedTopics({
   pinnedTopicIds = [],
   selectedTab,
   selectedTopicId,
-  onSetTopicSelectorModalShown
+  onSetTopicSelectorModalShown,
+  pathId
 }: {
   selectedTab: string;
   channelId: number;
@@ -60,11 +62,13 @@ function PinnedTopics({
   pinnedTopicIds: number[];
   selectedTopicId: number;
   onSetTopicSelectorModalShown: (v: boolean) => void;
+  pathId: string;
 }) {
+  const navigate = useNavigate();
+  const { subchannelPath } = useParams();
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
 
   const { featuredTopic, appliedFeaturedTopicId, pinnedTopics, lastTopic } =
@@ -291,10 +295,15 @@ function PinnedTopics({
   );
 
   function handleMainNavClick() {
+    updateLastTopicId({
+      channelId,
+      topicId: 0
+    });
     onSetChannelState({
       channelId,
       newState: { selectedTab: 'all' }
     });
+    navigate(`/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}`);
   }
 
   function handleTopicNavClick(topicId: number) {
@@ -302,7 +311,11 @@ function PinnedTopics({
       channelId,
       topicId
     });
-    onEnterTopic({ channelId, topicId });
+    navigate(
+      `/chat/${pathId}${
+        subchannelPath ? `/${subchannelPath}` : ''
+      }/topic/${topicId}`
+    );
   }
 
   function handleAddTopicClick() {

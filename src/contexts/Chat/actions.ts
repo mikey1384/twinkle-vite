@@ -2010,6 +2010,12 @@ export default function ChatActions(dispatch: Dispatch) {
         pathId
       });
     },
+    onUpdateVisitedChannel(channelId: number) {
+      return dispatch({
+        type: 'UPDATE_VISITED_CHANNEL',
+        channelId
+      });
+    },
     onUpdateLastSubchannelPath({
       channelId,
       path,

@@ -124,6 +124,7 @@ export default function Search({
                 onSelectTopic={onSelectTopic}
                 pinnedTopicIds={pinnedTopicIds}
                 results={searchedTopics}
+                pathId={pathId}
               />
             ) : (
               <div

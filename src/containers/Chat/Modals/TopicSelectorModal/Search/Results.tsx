@@ -10,7 +10,8 @@ export default function Results({
   featuredTopicId,
   onSelectTopic,
   pinnedTopicIds,
-  results
+  results,
+  pathId
 }: {
   channelId: number;
   currentTopicId: number;
@@ -21,6 +22,7 @@ export default function Results({
   onSelectTopic: (id: number) => void;
   pinnedTopicIds: number[];
   results: any[];
+  pathId: string;
 }) {
   return (
     <div style={{ width: '100%' }}>
@@ -35,6 +37,7 @@ export default function Results({
           isFeatured={featuredTopicId === topic.id}
           onSelectTopic={onSelectTopic}
           pinnedTopicIds={pinnedTopicIds}
+          pathId={pathId}
           style={{
             marginBottom: index === results.length - 1 ? '0.5rem' : '1rem'
           }}

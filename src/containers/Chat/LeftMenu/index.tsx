@@ -217,6 +217,7 @@ export default function LeftMenu({
             isOwner={currentChannel?.creatorId === userId}
             isFixed={isChannelsScrolling}
             onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
+            pathId={String(currentChannel?.pathId)}
           />
         ) : null}
         <Channels

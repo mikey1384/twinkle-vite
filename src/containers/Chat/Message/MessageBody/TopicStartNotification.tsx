@@ -3,8 +3,9 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useThemeTokens } from '~/theme/useThemeTokens';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function TopicStartNotification({
   channelId,
@@ -12,7 +13,8 @@ export default function TopicStartNotification({
   onSetMessageToScrollTo,
   topicObj,
   theme,
-  username
+  username,
+  pathId
 }: {
   channelId: number;
   messageId: number;
@@ -20,7 +22,10 @@ export default function TopicStartNotification({
   topicObj: { id: number; title: string };
   theme: string;
   username: string;
+  pathId: string;
 }) {
+  const navigate = useNavigate();
+  const { subchannelPath } = useParams();
   const { themeName, themeRoles } = useThemeTokens({ themeName: theme });
   const topicTextColor = useMemo(() => {
     const key = themeRoles.topicText?.color || themeName;
@@ -30,7 +35,6 @@ export default function TopicStartNotification({
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
@@ -108,7 +112,11 @@ export default function TopicStartNotification({
       channelId,
       topicId
     });
-    onEnterTopic({ channelId, topicId });
+    navigate(
+      `/chat/${pathId}${
+        subchannelPath ? `/${subchannelPath}` : ''
+      }/topic/${topicId}`
+    );
   }
 
   function truncateText(

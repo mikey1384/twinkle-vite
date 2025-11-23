@@ -155,6 +155,7 @@ export default function Main({
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
               pinnedTopicIds={effectivePinnedTopicIds}
+              pathId={pathId}
               {...((subjectObj[currentTopic?.id] || currentTopic) as any)}
               onEditTopic={({
                 topicText,
@@ -199,6 +200,7 @@ export default function Main({
               displayedThemeColor={displayedThemeColor}
               onSelectTopic={onSelectTopic}
               pinnedTopicIds={effectivePinnedTopicIds}
+              pathId={pathId}
               {...((subjectObj[featuredTopic?.id] || featuredTopic) as any)}
               onEditTopic={({
                 topicText,
@@ -311,6 +313,7 @@ export default function Main({
                   displayedThemeColor={displayedThemeColor}
                   onSelectTopic={onSelectTopic}
                   pinnedTopicIds={effectivePinnedTopicIds}
+                  pathId={pathId}
                   {...((subjectObj[subject.id] || subject) as any)}
                   onEditTopic={({
                     topicText,
@@ -367,6 +370,7 @@ export default function Main({
                   displayedThemeColor={displayedThemeColor}
                   pinnedTopicIds={effectivePinnedTopicIds}
                   onSelectTopic={onSelectTopic}
+                  pathId={pathId}
                   {...((subjectObj[subject?.id] || subject) as any)}
                   onEditTopic={({
                     topicText,

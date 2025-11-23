@@ -59,15 +59,15 @@ export default function ChannelDetail({
   );
   useEffect(() => {
     if (allMemberIds?.length > 3) {
-      setShownMembers(members.filter((member, index) => index < 3));
+      setShownMembers(members?.filter((member, index) => index < 3) || []);
       setMore(allMemberIds.length - 3);
     } else {
-      setShownMembers(members);
+      setShownMembers(members || []);
     }
   }, [allMemberIds?.length, members]);
   useEffect(() => {
-    setLoadMoreButtonShown(members.length < allMemberIds.length);
-  }, [allMemberIds?.length, members.length]);
+    setLoadMoreButtonShown((members?.length || 0) < (allMemberIds?.length || 0));
+  }, [allMemberIds?.length, members?.length]);
   const handleChannelEnter = useCallback(() => {
     if (alreadyJoined) {
       navigate(`/chat/${invitePath}`);
@@ -156,10 +156,12 @@ export default function ChannelDetail({
   );
 
   async function handleLoadMore() {
+    if (!members?.length) return;
     setLoadingMore(true);
+    const lastId = members[members.length - 1].id;
     const { members: loadedMembers } = await loadMoreChannelMembers({
       channelId,
-      lastId: members[members.length - 1].id
+      lastId
     });
     onLoadMoreChannelMembers({
       channelId,

@@ -10,6 +10,7 @@ import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useNavigate } from 'react-router-dom';
 
 export default function TopicSettingsModal({
   channelId,
@@ -22,7 +23,8 @@ export default function TopicSettingsModal({
   onDeleteTopic,
   onEditTopic,
   topicText,
-  isSharedWithOtherUsers
+  isSharedWithOtherUsers,
+  pathId
 }: {
   channelId: number;
   customInstructions: string;
@@ -40,7 +42,9 @@ export default function TopicSettingsModal({
   }) => void;
   topicText: string;
   isSharedWithOtherUsers?: boolean;
+  pathId: string;
 }) {
+  const navigate = useNavigate();
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
@@ -51,7 +55,6 @@ export default function TopicSettingsModal({
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );
-  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const editTopic = useAppContext((v) => v.requestHelpers.editTopic);
   const deleteTopic = useAppContext((v) => v.requestHelpers.deleteTopic);
@@ -355,7 +358,7 @@ export default function TopicSettingsModal({
           channelId,
           topicId
         });
-        onEnterTopic({ channelId, topicId });
+        navigate(`/chat/${pathId}/topic/${topicId}`);
       }
       await editTopic({
         channelId,

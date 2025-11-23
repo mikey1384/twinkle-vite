@@ -30,7 +30,8 @@ function TopicItem({
   username,
   timeStamp,
   settings,
-  style
+  style,
+  pathId
 }: {
   channelId: number;
   currentTopicId: number;
@@ -66,6 +67,7 @@ function TopicItem({
     isSharedWithOtherUsers?: boolean;
   };
   style?: React.CSSProperties;
+  pathId: string;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
   const updateFeaturedTopic = useAppContext(
@@ -231,6 +233,7 @@ function TopicItem({
           onEditTopic={onEditTopic}
           onDeleteTopic={() => onDeleteTopic(id)}
           isSharedWithOtherUsers={isSharedWithOtherUsers}
+          pathId={pathId}
         />
       )}
     </div>

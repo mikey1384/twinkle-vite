@@ -72,7 +72,12 @@ export default function TargetSelector({
   const handleGoToChat = () => {
     if (!appliedChannelId) return;
     const pathId = Number(appliedChannelId) + Number(CHAT_ID_BASE_NUMBER);
-    navigate(`/chat/${pathId}`);
+    const appliedTopicId = progress?.pendingPromptForChat?.topicId;
+    if (appliedTopicId) {
+      navigate(`/chat/${pathId}/topic/${appliedTopicId}`);
+    } else {
+      navigate(`/chat/${pathId}`);
+    }
   };
 
   const successSection =

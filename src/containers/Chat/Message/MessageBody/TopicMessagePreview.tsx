@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import Thumbnail from '~/components/Thumbnail';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
@@ -14,6 +14,7 @@ import {
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function TopicMessagePreview({
   channelId,
@@ -29,7 +30,8 @@ export default function TopicMessagePreview({
   filePath,
   thumbUrl,
   topicObj,
-  username
+  username,
+  pathId
 }: {
   channelId: number;
   content: string;
@@ -45,11 +47,13 @@ export default function TopicMessagePreview({
   fileName: string;
   topicObj: { id: number; content: string };
   username: string;
+  pathId: string;
 }) {
+  const navigate = useNavigate();
+  const { subchannelPath } = useParams();
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const { themeName, themeRoles } = useThemeTokens({ themeName: theme });
   const topicTextColor = useMemo(() => {
     const key = themeRoles.topicText?.color || themeName;
@@ -213,7 +217,11 @@ export default function TopicMessagePreview({
       channelId,
       topicId: topicObj.id
     });
-    onEnterTopic({ channelId, topicId: topicObj.id });
+    navigate(
+      `/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}/topic/${
+        topicObj.id
+      }`
+    );
   }
 
   function truncateText(

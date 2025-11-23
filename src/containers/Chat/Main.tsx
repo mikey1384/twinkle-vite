@@ -97,9 +97,11 @@ export default function Main({
   onFileUpload: (file: File) => void;
 }) {
   const {
-    subchannelPath
+    subchannelPath,
+    topicId
   }: {
     subchannelPath?: string;
+    topicId?: string;
   } = useParams();
   const { search, pathname } = useLocation();
   const isMounted = useRef(true);
@@ -188,6 +190,9 @@ export default function Main({
   const updateLastChannelId = useAppContext(
     (v) => v.requestHelpers.updateLastChannelId
   );
+  const updateLastTopicId = useAppContext(
+    (v) => v.requestHelpers.updateLastTopicId
+  );
   const updateUserXP = useAppContext((v) => v.requestHelpers.updateUserXP);
   const updateUserCoins = useAppContext(
     (v) => v.requestHelpers.updateUserCoins
@@ -240,6 +245,7 @@ export default function Main({
   const subjectSearchResults = useChatContext(
     (v) => v.state.subjectSearchResults
   );
+  const visitedChannelIds = useChatContext((v) => v.state.visitedChannelIds);
   const onSetWordleModalShown = useChatContext(
     (v) => v.actions.onSetWordleModalShown
   );
@@ -317,6 +323,8 @@ export default function Main({
   const onSetLoadingAICardChat = useChatContext(
     (v) => v.actions.onSetLoadingAICardChat
   );
+  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const onSetMessageState = useChatContext((v) => v.actions.onSetMessageState);
   const onSetChessGameState = useChatContext(
     (v) => v.actions.onSetChessGameState
@@ -340,6 +348,9 @@ export default function Main({
   );
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
+  );
+  const onUpdateVisitedChannel = useChatContext(
+    (v) => v.actions.onUpdateVisitedChannel
   );
   const onClearSubchannelUnreads = useChatContext(
     (v) => v.actions.onClearSubchannelUnreads
@@ -398,6 +409,12 @@ export default function Main({
   const currentPathIdRef = useRef(currentPathId);
   const MessagesRef: React.RefObject<any> = useRef(null);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
+  const prevTopicId = useRef(topicId);
+  const activeParamsRef = useRef({
+    pathId: currentPathId,
+    subchannelPath,
+    topicId
+  });
   const currentChannel: {
     id: number;
     pathId: number | string;
@@ -420,6 +437,14 @@ export default function Main({
   useEffect(() => {
     wordleModalShownRef.current = wordleModalShown;
   }, [wordleModalShown]);
+
+  useEffect(() => {
+    activeParamsRef.current = {
+      pathId: currentPathId,
+      subchannelPath,
+      topicId
+    };
+  }, [currentPathId, subchannelPath, topicId]);
 
   useEffect(() => {
     const { cardId } = queryString.parse(search);
@@ -520,13 +545,22 @@ export default function Main({
       } else if (
         ((currentPathId &&
           Number(currentPathId) !== Number(prevPathId.current)) ||
-          (subchannelPath && subchannelPath !== prevSubchannelPath.current)) &&
+          (subchannelPath && subchannelPath !== prevSubchannelPath.current) ||
+          topicId !== prevTopicId.current) &&
         userId &&
         loaded
       ) {
+        const isChannelChange =
+          Number(currentPathId) !== Number(prevPathId.current);
         prevPathId.current = currentPathId;
         prevSubchannelPath.current = subchannelPath || '';
-        handleChannelEnter({ pathId: currentPathId, subchannelPath });
+        prevTopicId.current = topicId;
+        handleChannelEnter({
+          pathId: currentPathId,
+          subchannelPath,
+          topicId,
+          isChannelChange
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -537,7 +571,8 @@ export default function Main({
     lastChatPath,
     navigate,
     userId,
-    selectedSubchannelId
+    selectedSubchannelId,
+    topicId
   ]);
 
   useEffect(() => {
@@ -598,11 +633,12 @@ export default function Main({
     if (userId && userId !== prevUserId && !isUsingCollectRef.current) {
       handleChannelEnter({
         pathId: currentPathId,
-        subchannelPath
+        subchannelPath,
+        topicId
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, currentPathId, subchannelPath]);
+  }, [userId, currentPathId, subchannelPath, topicId]);
 
   useEffect(() => {
     userIdRef.current = userId;
@@ -1117,31 +1153,55 @@ export default function Main({
 
   async function handleChannelEnter({
     pathId,
-    subchannelPath
+    subchannelPath,
+    topicId,
+    isChannelChange
   }: {
     pathId: string | number;
     subchannelPath?: string;
+    topicId?: string;
+    isChannelChange?: boolean;
   }) {
     if (!userIdRef.current || !pathId) {
       return;
     }
 
     const channelId = parseChannelPath(pathId);
-    if (loadingPromises[channelId]) {
-      return loadingPromises[channelId];
+    const channelVisited = visitedChannelIds[channelId];
+    if (!channelVisited) {
+      onUpdateVisitedChannel(channelId);
+    }
+    const requestKey = `${channelId}-${subchannelPath || ''}-${topicId || ''}`;
+
+    if (loadingPromises[requestKey]) {
+      return loadingPromises[requestKey];
     }
 
-    loadingPromises[channelId] = (async () => {
+    const isStale = () => {
+      const curr = activeParamsRef.current;
+      return (
+        String(curr.pathId) !== String(pathId) ||
+        curr.subchannelPath !== subchannelPath ||
+        curr.topicId !== topicId
+      );
+    };
+
+    loadingPromises[requestKey] = (async () => {
       try {
+        if (isStale()) return;
         onUpdateChatType(null);
 
         const { isAccessible, isPublic } = await checkChatAccessible(pathId);
+        if (isStale()) return;
+
         if (!isAccessible) {
           if (isPublic) {
             if (!channelPathIdHash[pathId]) {
               onUpdateChannelPathIdHash({ channelId, pathId });
             }
             const { channel, joinMessage } = await acceptInvitation(channelId);
+            if (isStale()) return;
+
             if (channel.id === channelId) {
               socket.emit('join_chat_group', channel.id);
               socket.emit('new_chat_message', {
@@ -1168,7 +1228,7 @@ export default function Main({
                 replace: true
               }
             );
-            delete loadingPromises[channelId];
+            delete loadingPromises[requestKey];
             return;
           }
         }
@@ -1182,43 +1242,84 @@ export default function Main({
             onUpdateSelectedChannelId(channelId);
           }
 
-          if (!subchannelPath) {
-            if (lastChatPath !== `/${pathId}`) {
-              updateLastChannelId(channelId);
-            }
-            delete loadingPromises[channelId];
-            return;
-          } else {
+          if (subchannelPath) {
             const subchannelLoaded =
               channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
                 ?.loaded;
-            if (subchannelLoaded) {
-              delete loadingPromises[channelId];
-              return;
-            }
+            if (!subchannelLoaded) {
+              const subchannel = await loadSubchannel({
+                channelId,
+                subchannelId: selectedSubchannelId
+              });
+              if (isStale()) return;
 
-            const subchannel = await loadSubchannel({
-              channelId,
-              subchannelId: selectedSubchannelId
-            });
-            if (subchannel.notFound) {
-              delete loadingPromises[channelId];
-              return;
+              if (subchannel.notFound) {
+                delete loadingPromises[requestKey];
+                return;
+              }
+              onSetSubchannel({ channelId, subchannel });
             }
-            onSetSubchannel({ channelId, subchannel });
-            delete loadingPromises[channelId];
-            return;
           }
+
+          if (topicId) {
+            const subjectId = Number(topicId);
+            if (subjectId) {
+              try {
+                const subjectData = await loadChatSubject(subjectId);
+                if (isStale()) return;
+
+                onLoadChatSubject(subjectData);
+                onSetChannelState({
+                  channelId,
+                  newState: { selectedTab: 'topic' }
+                });
+                onEnterTopic({ channelId, topicId: subjectId });
+                updateLastTopicId({
+                  channelId,
+                  topicId: subjectId
+                });
+              } catch (error) {
+                console.error('Failed to load topic:', error);
+                if (!isStale()) {
+                  navigate(`/chat/${pathId}`, { replace: true });
+                }
+              }
+            }
+          } else {
+            if (
+              isChannelChange &&
+              channelsObj[channelId].lastTopicId &&
+              channelVisited
+            ) {
+              const lastTopicId = channelsObj[channelId].lastTopicId;
+              const newPath = `/chat/${pathId}${
+                subchannelPath ? `/${subchannelPath}` : ''
+              }/topic/${lastTopicId}`;
+              navigate(newPath, { replace: true });
+            } else {
+              onSetChannelState({
+                channelId,
+                newState: { selectedTab: 'all', isSearchActive: false }
+              });
+            }
+          }
+
+          if (lastChatPath !== `/${pathId}`) {
+            updateLastChannelId(channelId);
+          }
+          delete loadingPromises[requestKey];
+          return;
         }
 
         const data = await loadChatChannel({ channelId, subchannelPath });
+        if (isStale()) return;
 
         const pathIdMismatch =
           !isNaN(Number(currentPathIdRef.current)) &&
           data.channel.pathId !== Number(currentPathIdRef.current);
 
         if (pathIdMismatch || isUsingCollectRef.current) {
-          delete loadingPromises[channelId];
+          delete loadingPromises[requestKey];
           return;
         }
 
@@ -1234,20 +1335,55 @@ export default function Main({
           Object.keys(data?.channel?.subchannelObj || {}).length > 0;
         const isEnteringSubchannel = subchannelPath && hasSubchannels;
 
+        if (topicId) {
+          const subjectId = Number(topicId);
+          if (subjectId) {
+            try {
+              const subjectData = await loadChatSubject(subjectId);
+              if (isStale()) return;
+
+              onLoadChatSubject(subjectData);
+              onSetChannelState({
+                channelId,
+                newState: { selectedTab: 'topic' }
+              });
+              onEnterTopic({ channelId, topicId: subjectId });
+              updateLastTopicId({
+                channelId,
+                topicId: subjectId
+              });
+            } catch (error) {
+              console.error('Failed to load topic:', error);
+              if (!isStale()) {
+                navigate(`/chat/${data.channel.pathId}`, { replace: true });
+              }
+            }
+          }
+        } else if (data.channel.lastTopicId && channelVisited) {
+          navigate(
+            `/chat/${data.channel.pathId}${
+              isEnteringSubchannel ? `/${subchannelPath}` : ''
+            }/topic/${data.channel.lastTopicId}`,
+            { replace: true }
+          );
+          delete loadingPromises[requestKey];
+          return;
+        }
+
         if (isMounted.current) {
           navigate(
             `/chat/${data?.channel?.pathId}${
               isEnteringSubchannel ? `/${subchannelPath}` : ''
-            }`,
+            }${topicId ? `/topic/${topicId}` : ''}`,
             { replace: true }
           );
         }
       } finally {
-        delete loadingPromises[channelId];
+        delete loadingPromises[requestKey];
       }
     })();
 
-    return loadingPromises[channelId];
+    return loadingPromises[requestKey];
   }
 
   async function handleScrollToBottom() {

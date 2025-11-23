@@ -15,6 +15,18 @@ export default function Router({
   return (
     <Routes>
       <Route
+        path="/:subchannelPath/topic/:topicId"
+        element={
+          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+        }
+      />
+      <Route
+        path="/topic/:topicId"
+        element={
+          <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />
+        }
+      />
+      <Route
         path="/:subchannelPath"
         element={
           <Main onFileUpload={onFileUpload} currentPathId={currentPathId} />

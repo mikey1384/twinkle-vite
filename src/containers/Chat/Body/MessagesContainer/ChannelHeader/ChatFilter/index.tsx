@@ -2,8 +2,9 @@ import React, { useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ChatFilterBar from './ChatFilterBar';
 import TopicSelectorModal from '../../../../Modals/TopicSelectorModal';
-import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function ChatFilter({
   canChangeTopic,
@@ -60,11 +61,12 @@ export default function ChatFilter({
   topicId: number;
   topicObj: Record<string, any>;
 }) {
+  const navigate = useNavigate();
+  const { subchannelPath } = useParams();
   const userId = useKeyContext((v) => v.myState.userId);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const currentTopicTitle = useMemo(() => {
     if (topicObj?.[topicId]) {
       return topicObj[topicId]?.content || '';
@@ -100,6 +102,7 @@ export default function ChatFilter({
           currentTopicIndex={currentTopicIndex}
           topicId={topicId}
           onSetIsSearchActive={onSetIsSearchActive}
+          pathId={pathId}
         />
       </div>
       {topicSelectorModalShown && (
@@ -127,7 +130,11 @@ export default function ChatFilter({
       channelId,
       topicId
     });
-    onEnterTopic({ channelId, topicId });
+    navigate(
+      `/chat/${pathId}${
+        subchannelPath ? `/${subchannelPath}` : ''
+      }/topic/${topicId}`
+    );
     onSetTopicSelectorModalShown(false);
   }
 }

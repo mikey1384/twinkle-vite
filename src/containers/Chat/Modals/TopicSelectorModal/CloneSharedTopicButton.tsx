@@ -5,6 +5,7 @@ import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { useNavigate } from 'react-router-dom';
 
 export default function CloneSharedTopicButton({
   channelId,
@@ -21,6 +22,7 @@ export default function CloneSharedTopicButton({
   themeColor: string;
   onStartTopic?: () => void;
 }) {
+  const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -123,6 +125,7 @@ export default function CloneSharedTopicButton({
           selectedTab: 'all'
         }
       });
+      navigate(`/chat/${pathId}`);
       onStartTopic?.();
     } catch (error) {
       console.error(error);

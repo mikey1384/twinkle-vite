@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import ScopedTheme from '~/theme/ScopedTheme';
+import { useNavigate } from 'react-router-dom';
 
 export default function StartTopicButton({
   channelId,
@@ -22,6 +23,7 @@ export default function StartTopicButton({
   onStartTopic?: () => void;
   pathId: string;
 }) {
+  const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
@@ -127,6 +129,7 @@ export default function StartTopicButton({
             selectedTab: 'all'
           }
         });
+        navigate(`/chat/${pathId}`);
         onStartTopic?.();
       } catch (error) {
         console.error(error);
