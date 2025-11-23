@@ -218,22 +218,15 @@ export default function TargetSelector({
             color="logoBlue"
             variant="soft"
             tone="raised"
+            loading={applyingTarget === 'zero'}
             disabled={
               !hasPrompt || applyingTarget === 'ciel' || sending || improving
             }
             onClick={() => onApplyToAIChat('zero')}
           >
-            {applyingTarget === 'zero' ? (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-                Exporting to Zero...
-              </>
-            ) : (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="robot" />
-                Use with Zero
-              </>
-            )}
+            {applyingTarget === 'zero'
+              ? 'Exporting to Zero...'
+              : 'Use with Zero'}
           </Button>
           <Button
             color="purple"
@@ -242,19 +235,12 @@ export default function TargetSelector({
             disabled={
               !hasPrompt || applyingTarget === 'zero' || sending || improving
             }
+            loading={applyingTarget === 'ciel'}
             onClick={() => onApplyToAIChat('ciel')}
           >
-            {applyingTarget === 'ciel' ? (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-                Exporting to Ciel...
-              </>
-            ) : (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="robot" />
-                Use with Ciel
-              </>
-            )}
+            {applyingTarget === 'ciel'
+              ? 'Exporting to Ciel...'
+              : 'Use with Ciel'}
           </Button>
         </div>
         <small

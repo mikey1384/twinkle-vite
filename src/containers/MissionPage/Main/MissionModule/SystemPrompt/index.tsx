@@ -124,6 +124,7 @@ export default function SystemPromptMission({
   const aiMessageCount = progress?.aiTopic?.messageCount || 0;
   const sharedMessageCount = progress?.sharedTopic?.messageCount || 0;
   const hasAiTopic = Boolean(progress?.aiTopic?.id);
+  const aiTopicId = progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
   const missionCleared =
     createdPrompt &&
@@ -144,8 +145,8 @@ export default function SystemPromptMission({
       {
         label: 'Use it with Zero or Ciel',
         complete: hasAiTopic && aiMessageCount >= 2,
-        detail: hasAiTopic
-          ? `${Math.min(aiMessageCount, 2)}/2 messages in your AI topic`
+        detail: aiTopicId
+          ? `${Math.min(aiMessageCount, 2)}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
           : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
       },
       {
@@ -163,6 +164,7 @@ export default function SystemPromptMission({
       aiMessageCount,
       createdPrompt,
       hasAiTopic,
+      aiTopicId,
       hasSharedTopic,
       sharedMessageCount
     ]
