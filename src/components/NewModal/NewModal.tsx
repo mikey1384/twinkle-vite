@@ -5,7 +5,8 @@ import React, {
   useRef,
   useState,
   useMemo,
-  PropsWithChildren
+  PropsWithChildren,
+  isValidElement
 } from 'react';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
@@ -14,6 +15,28 @@ import { Color } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
+
+function safeRender(node: React.ReactNode): React.ReactNode {
+  if (isValidElement(node)) return node;
+  if (
+    (node as any)?.$$typeof === Symbol.for('react.portal')
+  ) {
+    return node;
+  }
+  if (
+    typeof node === 'string' ||
+    typeof node === 'number' ||
+    typeof node === 'boolean'
+  )
+    return node;
+  if (!node) return null;
+  if (Array.isArray(node)) {
+    return node.map((n, i) => (
+      <React.Fragment key={i}>{safeRender(n)}</React.Fragment>
+    ));
+  }
+  return null;
+}
 
 const fadeIn = keyframes`
   from {
@@ -137,13 +160,7 @@ export const NewModal = forwardRef<
     const modalRef = useRef<HTMLDivElement>(null);
     const backdropRef = useRef<HTMLDivElement>(null);
     const previousActiveElement = useRef<HTMLElement | null>(null);
-    const modalIdRef = useRef<number | null>(null);
-
-    if (modalIdRef.current === null) {
-      modalIdRef.current = getNextModalId();
-    }
-
-    const modalId = modalIdRef.current;
+    const [modalId] = useState(getNextModalId);
 
     const currentLevel = useMemo(() => {
       if (modalLevel !== undefined) return modalLevel;
@@ -411,7 +428,7 @@ export const NewModal = forwardRef<
                   `}
                   id={ariaLabelledby}
                 >
-                  {header || title}
+                  {safeRender(header || title)}
                 </div>
 
                 {showCloseButton && (
@@ -544,7 +561,7 @@ export const NewModal = forwardRef<
                   flex-shrink: 0;
                 `}
               >
-                {footer}
+                {safeRender(footer)}
               </div>
             )}
           </div>
