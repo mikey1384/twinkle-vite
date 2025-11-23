@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
@@ -50,6 +50,10 @@ export default function UsernameHistoryModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const appliedUsernames = useMemo(() => {
+    return usernames || [];
+  }, [usernames]);
+
   return (
     <NewModal
       isOpen
@@ -68,7 +72,7 @@ export default function UsernameHistoryModal({
           {loading ? (
             <Loading />
           ) : (
-            usernames.map(({ id, username, timeStamp }) => {
+            appliedUsernames.map(({ id, username, timeStamp }) => {
               return (
                 <nav
                   key={id}

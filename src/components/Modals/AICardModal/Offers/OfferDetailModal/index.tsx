@@ -126,7 +126,7 @@ export default function OfferDetailModal({
                 {addCommasToNumber(price)}
               </b>{' '}
               offer for <b>Card #{cardId}</b> from{' '}
-              <b>{offerAcceptModalObj.username}</b>?
+              <b>{offerAcceptModalObj?.username}</b>?
             </div>
           }
           descriptionFontSize="1.7rem"

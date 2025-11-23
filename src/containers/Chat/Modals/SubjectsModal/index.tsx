@@ -86,7 +86,7 @@ export default function SubjectsModal({
             >
               My Topics
             </h3>
-            {mySubjects.subjects.map(
+            {(mySubjects.subjects || []).map(
               (subject: {
                 id: number;
                 content: string;
@@ -134,7 +134,7 @@ export default function SubjectsModal({
         {loaded && allSubjects.subjects.length === 0 && (
           <div>{`There aren't any subjects here, yet`}</div>
         )}
-        {allSubjects.subjects.map(
+        {(allSubjects.subjects || []).map(
           (subject: {
             id: number;
             content: string;

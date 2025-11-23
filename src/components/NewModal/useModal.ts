@@ -18,30 +18,6 @@ export interface UseNestedModalReturn extends UseModalReturn {
   modalLevel: number;
 }
 
-/**
- * Custom hook for managing modal state
- * 
- * @param initialOpen - Initial open state (default: false)
- * @returns Object with modal state and control functions
- * 
- * @example
- * ```tsx
- * const modal = useModal();
- * 
- * return (
- *   <>
- *     <Button onClick={modal.open}>Open Modal</Button>
- *     <NewModal 
- *       isOpen={modal.isOpen} 
- *       onClose={modal.close}
- *       modalLevel={modal.modalLevel}
- *     >
- *       Modal content
- *     </NewModal>
- *   </>
- * );
- * ```
- */
 export function useModal(initialOpen = false): UseModalReturn {
   const [isOpen, setIsOpen] = useState(initialOpen);
 
@@ -54,7 +30,7 @@ export function useModal(initialOpen = false): UseModalReturn {
   }, []);
 
   const toggle = useCallback(() => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
   }, []);
 
   return {
@@ -68,27 +44,27 @@ export function useModal(initialOpen = false): UseModalReturn {
 
 /**
  * Custom hook for managing nested modal state (modal-over-modal)
- * 
+ *
  * @param parentModalLevel - The modal level of the parent modal
  * @param initialOpen - Initial open state (default: false)
  * @returns Object with modal state and control functions for nested modal
- * 
+ *
  * @example
  * ```tsx
  * const parentModal = useModal();
  * const childModal = useNestedModal(parentModal.modalLevel);
- * 
+ *
  * return (
  *   <>
- *     <NewModal 
- *       isOpen={parentModal.isOpen} 
+ *     <NewModal
+ *       isOpen={parentModal.isOpen}
  *       onClose={parentModal.close}
  *       modalLevel={parentModal.modalLevel}
  *     >
  *       <Button onClick={childModal.open}>Open Nested Modal</Button>
- *       
- *       <NewModal 
- *         isOpen={childModal.isOpen} 
+ *
+ *       <NewModal
+ *         isOpen={childModal.isOpen}
  *         onClose={childModal.close}
  *         modalLevel={childModal.modalLevel}
  *       >
@@ -99,7 +75,10 @@ export function useModal(initialOpen = false): UseModalReturn {
  * );
  * ```
  */
-export function useNestedModal(parentModalLevel: number, initialOpen = false): UseNestedModalReturn {
+export function useNestedModal(
+  parentModalLevel: number,
+  initialOpen = false
+): UseNestedModalReturn {
   const [isOpen, setIsOpen] = useState(initialOpen);
 
   const open = useCallback(() => {
@@ -111,7 +90,7 @@ export function useNestedModal(parentModalLevel: number, initialOpen = false): U
   }, []);
 
   const toggle = useCallback(() => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
   }, []);
 
   return {

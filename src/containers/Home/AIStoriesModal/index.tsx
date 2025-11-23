@@ -47,7 +47,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
-  const [imageGeneratedCount, setImageGeneratedCount] = useState(0);
   const [listeningImageGeneratedCount, setListeningImageGeneratedCount] =
     useState(0);
   const [readingImageGeneratedCount, setReadingImageGeneratedCount] =
@@ -181,56 +180,56 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             }}
             ref={MainRef}
           >
-          {activeTab === 'game' && (
-            <Game
-              attemptId={attemptId}
-              difficulty={Number(difficulty)}
-              displayedSection={displayedSection}
-              gameMode={gameMode}
-              isGameStarted={isGameStarted}
-              onSetIsGameStarted={setIsGameStarted}
-              loadingTopic={loadingTopic}
-              onLoadTopic={handleLoadTopic}
-              onSetAttemptId={setAttemptId}
-              onSetDropdownShown={setDropdownShown}
-              onSetGameMode={setGameMode}
-              onSetResetNumber={setResetNumber}
-              onSetSolveObj={setSolveObj}
-              onSetStoryId={setStoryId}
-              onSetDifficulty={setDifficulty}
-              onSetDisplayedSection={setDisplayedSection}
-              onSetIsCloseLocked={setIsCloseLocked}
-              onSetQuestions={setQuestions}
-              onSetSuccessModalShown={setSuccessModalShown}
-              onSetTopicLoadError={setTopicLoadError}
-              readCount={readCount}
-              listenCount={listenCount}
-              questions={questions}
-              storyId={storyId}
-              MainRef={MainRef}
-              storyType={storyType}
-              topic={topic}
-              topicKey={topicKey}
-              topicLoadError={topicLoadError}
-              solveObj={solveObj}
-            />
-          )}
-          {activeTab === 'rankings' && (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center'
-              }}
-            >
-              <Rankings
-                onSetRankingsTab={setRankingsTab}
-                onSetUsermenuShown={setUsermenuShown}
-                rankingsTab={rankingsTab}
+            {activeTab === 'game' && (
+              <Game
+                attemptId={attemptId}
+                difficulty={Number(difficulty)}
+                displayedSection={displayedSection}
+                gameMode={gameMode}
+                isGameStarted={isGameStarted}
+                onSetIsGameStarted={setIsGameStarted}
+                loadingTopic={loadingTopic}
+                onLoadTopic={handleLoadTopic}
+                onSetAttemptId={setAttemptId}
+                onSetDropdownShown={setDropdownShown}
+                onSetGameMode={setGameMode}
+                onSetResetNumber={setResetNumber}
+                onSetSolveObj={setSolveObj}
+                onSetStoryId={setStoryId}
+                onSetDifficulty={setDifficulty}
+                onSetDisplayedSection={setDisplayedSection}
+                onSetIsCloseLocked={setIsCloseLocked}
+                onSetQuestions={setQuestions}
+                onSetSuccessModalShown={setSuccessModalShown}
+                onSetTopicLoadError={setTopicLoadError}
+                readCount={readCount}
+                listenCount={listenCount}
+                questions={questions}
+                storyId={storyId}
+                MainRef={MainRef}
+                storyType={storyType}
+                topic={topic}
+                topicKey={topicKey}
+                topicLoadError={topicLoadError}
+                solveObj={solveObj}
               />
-            </div>
-          )}
+            )}
+            {activeTab === 'rankings' && (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}
+              >
+                <Rankings
+                  onSetRankingsTab={setRankingsTab}
+                  onSetUsermenuShown={setUsermenuShown}
+                  rankingsTab={rankingsTab}
+                />
+              </div>
+            )}
           </div>
         </div>
         {successModalShown && (
@@ -278,23 +277,20 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         topic,
         topicKey,
         type,
-        imageGeneratedCount,
         readCount,
         listenCount,
         listeningImageGeneratedCount,
         readingImageGeneratedCount
-      } =
-        await tryLoadTopic({
-          difficulty,
-          retries: 3,
-          timeout: 1000,
-          currentRequestId
-        });
+      } = await tryLoadTopic({
+        difficulty,
+        retries: 3,
+        timeout: 1000,
+        currentRequestId
+      });
       if (currentRequestId === requestRef.current) {
         setTopic(topic);
         setStoryType(type);
         setTopicKey(topicKey);
-        setImageGeneratedCount(imageGeneratedCount);
         setListeningImageGeneratedCount(listeningImageGeneratedCount);
         setReadingImageGeneratedCount(readingImageGeneratedCount);
         setReadCount(readCount);

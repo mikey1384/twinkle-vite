@@ -90,7 +90,8 @@ export default function BuyTopicsModal({
                   onClick={() =>
                     insufficientFunds ? null : setConfirmModalShown(true)
                   }
-                  filled
+                  variant="soft"
+                  tone="raised"
                   onMouseEnter={() => setHovered(true)}
                   onMouseLeave={() => setHovered(false)}
                   color="logoBlue"
