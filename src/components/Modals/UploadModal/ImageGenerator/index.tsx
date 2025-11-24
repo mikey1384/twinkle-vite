@@ -7,7 +7,7 @@ import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
 import ImageArea from './ImageArea';
 import ImageEditor from './ImageEditor';
-import TabButton from './TabButton';
+import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
 
 interface ImageGeneratorProps {
@@ -259,21 +259,34 @@ export default function ImageGenerator({
   return (
     <div
       className={css`
-        padding: 2rem;
+        padding: 1rem;
         width: 100%;
         height: 100%;
         display: flex;
         flex-direction: column;
-        gap: 2rem;
-        min-height: 600px;
+        gap: 1rem;
+        min-height: 400px;
       `}
     >
+      <FilterBar>
+        <nav
+          className={mode === 'text' ? 'active' : ''}
+          onClick={() => handleModeChange('text')}
+        >
+          Tell the AI What to Generate
+        </nav>
+        <nav
+          className={mode === 'draw' ? 'active' : ''}
+          onClick={() => handleModeChange('draw')}
+        >
+          Draw
+        </nav>
+      </FilterBar>
       {mode === 'text' && (
         <div
           className={css`
             display: flex;
             justify-content: center;
-            margin-top: 1rem;
           `}
         >
           <label
@@ -282,54 +295,23 @@ export default function ImageGenerator({
               align-items: center;
               justify-content: center;
               gap: 1rem;
-              padding: 1.25rem 2.5rem;
+              padding: 1rem 2rem;
               background: transparent;
-              border: 3px dashed ${isShowingLoadingState ? '#ccc' : '#007bff'};
-              border-radius: 20px;
+              border: 2px dashed ${isShowingLoadingState ? '#ccc' : '#007bff'};
+              border-radius: 10px;
               cursor: ${isShowingLoadingState ? 'not-allowed' : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-              font-size: 1.1rem;
-              font-weight: 700;
+              font-size: 1rem;
+              font-weight: 600;
               color: ${isShowingLoadingState ? '#ccc' : '#007bff'};
               position: relative;
               overflow: hidden;
-              min-width: 220px;
+              min-width: 200px;
               opacity: ${isShowingLoadingState ? 0.5 : 1};
 
-              &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                  90deg,
-                  transparent,
-                  rgba(0, 123, 255, 0.1),
-                  transparent
-                );
-                transition: left 0.5s ease;
+              &:hover {
+                background: rgba(0, 123, 255, 0.05);
               }
-
-              ${!isShowingLoadingState &&
-              `
-                &:hover {
-                  border-color: #0056b3;
-                  color: #0056b3;
-                  transform: translateY(-3px) scale(1.02);
-                  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
-
-                  &::before {
-                    left: 100%;
-                  }
-                }
-
-                &:active {
-                  transform: translateY(-1px) scale(0.98);
-                  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15);
-                }
-              `}
             `}
           >
             <Icon icon="image" />
@@ -348,32 +330,9 @@ export default function ImageGenerator({
         </div>
       )}
 
-      <div
-        className={css`
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-        `}
-      >
-        <TabButton
-          onClick={() => handleModeChange('text')}
-          active={mode === 'text'}
-          disabled={isShowingLoadingState}
-        >
-          Text Prompt
-        </TabButton>
-        <TabButton
-          onClick={() => handleModeChange('draw')}
-          active={mode === 'draw'}
-          disabled={isShowingLoadingState}
-        >
-          Draw
-        </TabButton>
-      </div>
-
       {mode === 'draw' && (
         <ImageEditor
-          imageUrl=""
+          imageUrl={referenceImageUrl || ''}
           onSave={(dataUrl) => {
             handleCanvasSave(dataUrl);
             setMode('text'); // Switch back to text mode after saving
@@ -663,12 +622,11 @@ export default function ImageGenerator({
 
   function handleModeChange(newMode: 'text' | 'draw') {
     if (mode === 'draw' && newMode === 'text') {
-      setDrawingCanvasUrl(null);
-      setCanvasHasContent(false);
-    }
-    if (mode === 'text' && newMode === 'draw') {
-      setReferenceImage(null);
-      setReferenceImageUrl(null);
+      // If we switch back to text without saving, we might want to clear canvas state
+      // or keep it. Currently keeping it but if user cancels in Editor it handles resetting
+      if (!drawingCanvasUrl) {
+        setCanvasHasContent(false);
+      }
     }
     setMode(newMode);
   }

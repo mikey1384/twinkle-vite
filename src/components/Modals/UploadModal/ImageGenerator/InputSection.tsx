@@ -29,7 +29,6 @@ export default function InputSection({
         background: #ffffff;
         border-radius: 16px;
         padding: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         border: 1px solid var(--ui-border);
 
         @media (min-width: 768px) {
@@ -58,13 +57,13 @@ export default function InputSection({
           <label
             className={css`
               display: block;
-              font-size: 0.85rem;
+              font-size: 1rem;
               font-weight: 600;
               color: #333333;
               margin-bottom: 0.5rem;
 
               @media (min-width: 768px) {
-                font-size: 0.9rem;
+                font-size: 1.1rem;
               }
             `}
           >
@@ -73,11 +72,11 @@ export default function InputSection({
               className={css`
                 font-weight: 400;
                 color: #888888;
-                font-size: 0.75rem;
+                font-size: 0.8rem;
                 margin-left: 0.5rem;
 
                 @media (min-width: 768px) {
-                  font-size: 0.8rem;
+                  font-size: 0.9rem;
                 }
               `}
             >
@@ -96,7 +95,7 @@ export default function InputSection({
               padding: 0.875rem 1rem;
               border: 2px solid var(--ui-border);
               border-radius: 12px;
-              font-size: 0.95rem;
+              font-size: 1.1rem;
               outline: none;
               transition: all 0.2s ease;
               background: #f8fafc;
@@ -123,7 +122,7 @@ export default function InputSection({
               }
 
               @media (min-width: 768px) {
-                font-size: 1rem;
+                font-size: 1.2rem;
               }
             `}
           />
@@ -138,7 +137,7 @@ export default function InputSection({
               background: ${canAffordGeneration ? '#f0f9ff' : '#fef2f2'};
               border: 1px solid ${canAffordGeneration ? '#bae6fd' : '#fecaca'};
               border-radius: 8px;
-              font-size: 0.875rem;
+              font-size: 1rem;
               text-align: center;
               
               @media (min-width: 768px) {
@@ -159,7 +158,7 @@ export default function InputSection({
             <div
               className={css`
                 color: ${canAffordGeneration ? '#0284c7' : '#ef4444'};
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 margin-top: 0.25rem;
               `}
             >

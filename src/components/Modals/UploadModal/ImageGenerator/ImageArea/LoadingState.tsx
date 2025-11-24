@@ -3,14 +3,10 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 interface LoadingStateProps {
-  isGenerating: boolean;
   getProgressLabel: () => string;
 }
 
-export default function LoadingState({
-  isGenerating,
-  getProgressLabel
-}: LoadingStateProps) {
+export default function LoadingState({ getProgressLabel }: LoadingStateProps) {
   return (
     <div
       className={css`
@@ -41,77 +37,43 @@ export default function LoadingState({
           position: relative;
         `}
       >
-        {isGenerating ? (
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+          `}
+        >
           <div
             className={css`
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 1rem;
-            `}
-          >
-            <div
-              className={css`
-                width: 32px;
-                height: 32px;
-                border: 4px solid var(--ui-border);
-                border-top: 4px solid ${Color.logoBlue()};
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
+              width: 32px;
+              height: 32px;
+              border: 4px solid var(--ui-border);
+              border-top: 4px solid ${Color.logoBlue()};
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
 
-                @keyframes spin {
-                  0% {
-                    transform: rotate(0deg);
-                  }
-                  100% {
-                    transform: rotate(360deg);
-                  }
+              @keyframes spin {
+                0% {
+                  transform: rotate(0deg);
                 }
-              `}
-            />
-            <div
-              className={css`
-                font-weight: 600;
-                color: ${Color.black()};
-                font-size: 1.1rem;
-              `}
-            >
-              {getProgressLabel()}
-            </div>
-          </div>
-        ) : (
+                100% {
+                  transform: rotate(360deg);
+                }
+              }
+            `}
+          />
           <div
             className={css`
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 0.75rem;
+              font-weight: 600;
+              color: ${Color.black()};
+              font-size: 1.1rem;
             `}
           >
-            <div
-              className={css`
-                width: 48px;
-                height: 48px;
-                background: ${Color.logoBlue()};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-              `}
-            >
-              🎨
-            </div>
-            <span
-              className={css`
-                font-weight: 500;
-                font-size: 1rem;
-              `}
-            >
-              Your generated image will appear here
-            </span>
+            {getProgressLabel()}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

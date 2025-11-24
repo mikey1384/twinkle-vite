@@ -80,12 +80,14 @@ import { faDesktop } from '@fortawesome/pro-solid-svg-icons/faDesktop';
 import { faDownload } from '@fortawesome/pro-solid-svg-icons/faDownload';
 import { faEdit } from '@fortawesome/pro-solid-svg-icons/faEdit';
 import { faEllipsisH } from '@fortawesome/pro-solid-svg-icons/faEllipsisH';
+import { faEraser } from '@fortawesome/pro-solid-svg-icons/faEraser';
 import { faExclamationCircle } from '@fortawesome/pro-solid-svg-icons/faExclamationCircle';
 import { faExclamationTriangle } from '@fortawesome/pro-solid-svg-icons/faExclamationTriangle';
 import { faEye } from '@fortawesome/pro-solid-svg-icons/faEye';
 import { faEyeSlash } from '@fortawesome/pro-solid-svg-icons/faEyeSlash';
 import { faExchangeAlt } from '@fortawesome/pro-solid-svg-icons/faExchangeAlt';
 import { faExternalLinkAlt } from '@fortawesome/pro-solid-svg-icons/faExternalLinkAlt';
+import { faEyeDropper } from '@fortawesome/pro-solid-svg-icons/faEyeDropper';
 import { faFilm } from '@fortawesome/pro-solid-svg-icons/faFilm';
 import { faFile } from '@fortawesome/pro-solid-svg-icons/faFile';
 import { faFileArchive } from '@fortawesome/pro-solid-svg-icons/faFileArchive';
@@ -95,10 +97,12 @@ import { faFileText } from '@fortawesome/pro-solid-svg-icons/faFileText';
 import { faFileCsv } from '@fortawesome/pro-solid-svg-icons/faFileCsv';
 import { faFileVideo } from '@fortawesome/pro-solid-svg-icons/faFileVideo';
 import { faFileWord } from '@fortawesome/pro-solid-svg-icons/faFileWord';
+import { faFillDrip } from '@fortawesome/pro-solid-svg-icons/faFillDrip';
 import { faFlag } from '@fortawesome/pro-solid-svg-icons/faFlag';
 import { faLink } from '@fortawesome/pro-solid-svg-icons/faLink';
 import { faFire } from '@fortawesome/pro-solid-svg-icons/faFire';
 import { faFolderOpen } from '@fortawesome/pro-solid-svg-icons/faFolderOpen';
+import { faFont } from '@fortawesome/pro-solid-svg-icons/faFont';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
 import { faLayerGroup } from '@fortawesome/pro-solid-svg-icons/faLayerGroup';
@@ -279,10 +283,12 @@ library.add(
   faDownload,
   faEdit,
   faEllipsisH,
+  faEraser,
   faExchangeAlt,
   faExternalLinkAlt,
   faExclamationCircle,
   faExclamationTriangle,
+  faEyeDropper,
   faEyeSlash,
   faFile,
   faFileArchive,
@@ -292,10 +298,12 @@ library.add(
   faFileText,
   faFileVideo,
   faFileWord,
+  faFillDrip,
   faFilm,
   faFire,
   faFlag,
   faFolderOpen,
+  faFont,
   faGithub,
   faGlobe,
   faHandHolding,

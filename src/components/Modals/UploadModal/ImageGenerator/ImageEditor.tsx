@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import DrawingTools from './DrawingTools';
+import NewModal from '~/components/NewModal';
+import Button from '~/components/Button';
 
 interface ImageEditorProps {
   imageUrl?: string;
@@ -69,13 +71,17 @@ export default function ImageEditor({
       drawingCanvas.height = canvasHeight;
 
       // Set responsive display size
-      const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+      const maxDisplayWidth = Math.min(
+        600,
+        window.innerWidth * 0.8,
+        window.innerHeight * 0.6
+      );
       const aspectRatio = canvasHeight / canvasWidth;
       const maxDisplayHeight = window.innerHeight * 0.5;
-      
+
       let displayWidth = maxDisplayWidth;
       let displayHeight = displayWidth * aspectRatio;
-      
+
       // If height exceeds limit, scale down proportionally
       if (displayHeight > maxDisplayHeight) {
         displayHeight = maxDisplayHeight;
@@ -142,13 +148,17 @@ export default function ImageEditor({
         drawingCanvas.height = canvasHeight;
 
         // Set responsive display size
-        const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+        const maxDisplayWidth = Math.min(
+          600,
+          window.innerWidth * 0.8,
+          window.innerHeight * 0.6
+        );
         const aspectRatio = canvasHeight / canvasWidth;
         const maxDisplayHeight = window.innerHeight * 0.5;
-        
+
         let displayWidth = maxDisplayWidth;
         let displayHeight = displayWidth * aspectRatio;
-        
+
         // If height exceeds limit, scale down proportionally
         if (displayHeight > maxDisplayHeight) {
           displayHeight = maxDisplayHeight;
@@ -260,17 +270,21 @@ export default function ImageEditor({
       debounceTimeout = setTimeout(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        
+
         // Recalculate responsive display size
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        const maxDisplayWidth = Math.min(600, window.innerWidth * 0.8, window.innerHeight * 0.6);
+        const maxDisplayWidth = Math.min(
+          600,
+          window.innerWidth * 0.8,
+          window.innerHeight * 0.6
+        );
         const aspectRatio = canvasHeight / canvasWidth;
         const maxDisplayHeight = window.innerHeight * 0.5;
-        
+
         let displayWidth = maxDisplayWidth;
         let displayHeight = displayWidth * aspectRatio;
-        
+
         if (displayHeight > maxDisplayHeight) {
           displayHeight = maxDisplayHeight;
           displayWidth = displayHeight / aspectRatio;
@@ -278,7 +292,7 @@ export default function ImageEditor({
 
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
-        
+
         updateDisplay();
       }, 100);
     };
@@ -286,7 +300,7 @@ export default function ImageEditor({
     container.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
-    
+
     return () => {
       container.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
@@ -313,124 +327,55 @@ export default function ImageEditor({
   };
 
   return (
-    <div
-      className={css`
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 2rem;
-      `}
+    <NewModal
+      isOpen={true}
+      onClose={onCancel}
+      title="Edit Image"
+      size="lg"
+      modalLevel={3}
+      footer={
+        <>
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            style={{ marginRight: '0.7rem' }}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSave} color="blue">
+            Save Changes
+          </Button>
+        </>
+      }
     >
       <div
         className={css`
-          background: white;
-          border-radius: 12px;
-          padding: 1.5rem;
-          max-width: 90vw;
-          max-height: 90vh;
-          overflow: hidden;
           display: flex;
           flex-direction: column;
           gap: 1rem;
+          width: 100%;
+          height: 100%;
         `}
       >
-        <div
-          className={css`
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            gap: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--ui-border);
-          `}
-        >
-          <h3
+        {toolsUI}
+
+        {imageUrl && (
+          <div
             className={css`
-              margin: 0;
-              color: ${Color.darkGray()};
-              font-size: 1.1rem;
+              display: flex;
+              justify-content: flex-end;
+              padding-bottom: 0.5rem;
             `}
           >
-            Edit Image
-          </h3>
-          <button
-            onClick={onCancel}
-            className={css`
-              background: none;
-              border: none;
-              font-size: 1.2rem;
-              cursor: pointer;
-              color: ${Color.darkGray()};
-              padding: 0.25rem;
-              margin-left: auto;
-
-              &:hover {
-                color: ${Color.black()};
-              }
-            `}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div
-          className={css`
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-          `}
-        >
-          {toolsUI}
-
-          {imageUrl && (
-            <div
-              className={css`
-                display: flex;
-                justify-content: flex-end;
-                padding: 1rem;
-                background: white;
-                border: 1px solid var(--ui-border);
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-              `}
+            <Button
+              onClick={handleReset}
+              color="orange"
+              style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
             >
-              <button
-                onClick={handleReset}
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  padding: 0.75rem 1.25rem;
-                  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                  color: white;
-                  border: none;
-                  border-radius: 8px;
-                  cursor: pointer;
-                  font-weight: 600;
-                  font-size: 0.875rem;
-                  transition: all 0.2s ease;
-                  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
-
-                  &:hover {
-                    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
-                  }
-                `}
-              >
-                <span>↻</span>
-                Reset
-              </button>
-            </div>
-          )}
-        </div>
+              <span>↻</span> Reset
+            </Button>
+          </div>
+        )}
 
         <div
           ref={containerRef}
@@ -440,7 +385,7 @@ export default function ImageEditor({
             overflow: auto;
             max-height: 60vh;
             position: relative;
-            
+
             @media (max-width: 768px) {
               max-height: 55vh;
               overflow: visible;
@@ -513,57 +458,10 @@ export default function ImageEditor({
             </div>
           )}
         </div>
-
-        <div
-          className={css`
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            padding-top: 1rem;
-            border-top: 1px solid var(--ui-border);
-          `}
-        >
-          <button
-            onClick={onCancel}
-            className={css`
-              background: transparent;
-              color: ${Color.darkGray()};
-              border: 1px solid var(--ui-border);
-              padding: 0.75rem 1.5rem;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: 500;
-
-              &:hover {
-                background: ${Color.highlightGray()};
-              }
-            `}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className={css`
-              background: ${Color.logoBlue()};
-              color: white;
-              border: none;
-              padding: 0.75rem 1.5rem;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: 500;
-
-              &:hover {
-                background: ${Color.logoBlue(0.8)};
-              }
-            `}
-          >
-            Save Changes
-          </button>
-        </div>
       </div>
 
       <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
       <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
-    </div>
+    </NewModal>
   );
 }

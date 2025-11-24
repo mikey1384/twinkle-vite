@@ -85,12 +85,9 @@ export default function ImageArea({
           canAffordFollowUp={canAffordFollowUp}
           followUpCost={followUpCost}
         />
-      ) : (
-        <LoadingState
-          isGenerating={isGenerating}
-          getProgressLabel={getProgressLabel}
-        />
-      )}
+      ) : isGenerating ? (
+        <LoadingState getProgressLabel={getProgressLabel} />
+      ) : null}
     </div>
   );
 }

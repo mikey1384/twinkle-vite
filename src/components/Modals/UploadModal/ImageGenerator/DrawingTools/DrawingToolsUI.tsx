@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import type { ToolType } from './types';
 import { COMMON_COLORS } from './constants';
+import Icon from '~/components/Icon';
+import Button from '~/components/Button';
 
 interface DrawingToolsUIProps {
   tool: ToolType;
@@ -59,71 +61,46 @@ export default function DrawingToolsUI({
         <div
           className={css`
             display: flex;
+            justify-content: center;
             gap: 0.5rem;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 0.5rem;
             border: 1px solid var(--ui-border);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border-radius: 8px;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
           `}
         >
           {[
-            { value: 'pencil', icon: '✏️', label: 'Draw' },
-            { value: 'eraser', icon: '🧽', label: 'Erase' },
-            { value: 'text', icon: '📝', label: 'Text' },
-            { value: 'colorPicker', icon: '🎨', label: 'Pick' },
-            { value: 'fill', icon: '🪣', label: 'Fill' }
+            { value: 'pencil', icon: 'pencil-alt', label: 'Draw' },
+            { value: 'eraser', icon: 'eraser', label: 'Erase' },
+            { value: 'text', icon: 'font', label: 'Text' },
+            { value: 'colorPicker', icon: 'eye-dropper', label: 'Pick' },
+            { value: 'fill', icon: 'fill-drip', label: 'Fill' }
           ].map((toolOption) => (
-            <button
+            <Button
               key={toolOption.value}
               onClick={() => setTool(toolOption.value as ToolType)}
               disabled={disabled}
-              className={css`
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 0.25rem;
-                padding: 0.75rem 0.5rem;
-                min-width: 4rem;
-                background: ${tool === toolOption.value
-                  ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
-                  : 'transparent'};
-                color: ${tool === toolOption.value
-                  ? 'white'
-                  : Color.darkGray()};
-                border: 2px solid
-                  ${tool === toolOption.value ? '#3b82f6' : 'transparent'};
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 0.75rem;
-                font-weight: 500;
-                transition: all 0.2s ease;
-
-                &:hover:not(:disabled) {
-                  background: ${tool === toolOption.value
-                    ? 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)'
-                    : 'rgba(59, 130, 246, 0.1)'};
-                  border-color: ${tool === toolOption.value
-                    ? '#2563eb'
-                    : '#3b82f6'};
-                  transform: translateY(-1px);
-                  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-                }
-
-                &:disabled {
-                  opacity: 0.4;
-                  cursor: not-allowed;
-                }
-
-                .emoji {
-                  font-size: 1.25rem;
-                  line-height: 1;
-                }
-              `}
+              color={tool === toolOption.value ? 'blue' : 'white'}
+              variant="ghost"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.75rem',
+                minWidth: '5rem',
+                height: 'auto',
+                fontSize: '0.85rem',
+                fontWeight: 500
+              }}
             >
-              <span className="emoji">{toolOption.icon}</span>
+              <Icon icon={toolOption.icon} size="lg" />
               <span>{toolOption.label}</span>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -134,10 +111,8 @@ export default function DrawingToolsUI({
             align-items: center;
             flex-wrap: wrap;
             padding: 1rem;
-            background: white;
             border: 1px solid var(--ui-border);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border-radius: 8px;
           `}
         >
           <div
@@ -150,7 +125,7 @@ export default function DrawingToolsUI({
           >
             <label
               className={css`
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 font-weight: 600;
                 color: ${Color.darkGray()};
                 text-transform: uppercase;
@@ -171,38 +146,33 @@ export default function DrawingToolsUI({
               <div
                 className={css`
                   position: relative;
-                  width: 48px;
-                  height: 48px;
-                  border-radius: 12px;
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                  transition: transform 0.2s ease;
-
-                  &:hover {
-                    transform: scale(1.05);
-                  }
+                  width: 56px;
+                  height: 56px;
+                  border-radius: 8px;
+                  border: 1px solid var(--ui-border);
+                  overflow: hidden;
                 `}
               >
                 <input
                   type="color"
                   value={color}
                   onFocus={() => {
-                    // Color picker panel likely opened
-                    (pickerActiveRef.current = true);
+                    pickerActiveRef.current = true;
                   }}
                   onBlur={(e) => {
-                    // Commit final selection when picker closes
                     const v = (e.target as HTMLInputElement).value;
                     handleColorChange(v, true);
                     pickerActiveRef.current = false;
                   }}
                   onChange={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    // While picker is open, treat as preview only; commit on blur
-                    handleColorChange(v, pickerActiveRef.current ? false : true);
+                    handleColorChange(
+                      v,
+                      pickerActiveRef.current ? false : true
+                    );
                   }}
                   onInput={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    // Live preview; do not push to recent colors
                     handleColorChange(v, false);
                   }}
                   disabled={disabled}
@@ -210,24 +180,23 @@ export default function DrawingToolsUI({
                     width: 100%;
                     height: 100%;
                     border: none;
-                    border-radius: 12px;
+                    padding: 0;
                     cursor: pointer;
+                    background: none;
 
                     &::-webkit-color-swatch-wrapper {
                       padding: 0;
-                      border-radius: 12px;
                     }
 
                     &::-webkit-color-swatch {
                       border: none;
-                      border-radius: 12px;
                     }
                   `}
                 />
               </div>
               <div
                 className={css`
-                  font-size: 0.75rem;
+                  font-size: 0.8rem;
                   color: ${Color.darkGray()};
                   font-weight: 500;
                 `}
@@ -244,7 +213,7 @@ export default function DrawingToolsUI({
             >
               <div
                 className={css`
-                  font-size: 0.7rem;
+                  font-size: 0.8rem;
                   font-weight: 500;
                   color: ${Color.darkGray()};
                   text-align: center;
@@ -266,25 +235,24 @@ export default function DrawingToolsUI({
                     onClick={() => handleColorChange(commonColor, true)}
                     disabled={disabled}
                     className={css`
-                      width: 28px;
-                      height: 28px;
-                      border-radius: 8px;
-                      border: 2px solid
-                        ${color === commonColor ? '#3b82f6' : 'transparent'};
+                      width: 32px;
+                      height: 32px;
+                      border-radius: 4px;
+                      border: 1px solid
+                        ${color === commonColor
+                          ? Color.logoBlue()
+                          : 'var(--ui-border)'};
                       background: ${commonColor};
                       cursor: pointer;
-                      transition: all 0.2s ease;
-                      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
                       position: relative;
 
                       ${commonColor === '#ffffff'
-                        ? `box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1);`
+                        ? `box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);`
                         : ''}
 
                       &:hover:not(:disabled) {
                         transform: scale(1.1);
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                        border-color: #3b82f6;
+                        border-color: ${Color.logoBlue()};
                       }
 
                       &:disabled {
@@ -328,20 +296,19 @@ export default function DrawingToolsUI({
                       onClick={() => handleColorChange(recentColor, true)}
                       disabled={disabled}
                       className={css`
-                        width: 24px;
-                        height: 24px;
-                        border-radius: 6px;
-                        border: 2px solid
-                          ${color === recentColor ? '#3b82f6' : 'transparent'};
+                        width: 26px;
+                        height: 26px;
+                        border-radius: 4px;
+                        border: 1px solid
+                          ${color === recentColor
+                            ? Color.logoBlue()
+                            : 'var(--ui-border)'};
                         background: ${recentColor};
                         cursor: pointer;
-                        transition: all 0.2s ease;
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
                         &:hover:not(:disabled) {
                           transform: scale(1.15);
-                          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-                          border-color: #3b82f6;
+                          border-color: ${Color.logoBlue()};
                         }
 
                         &:disabled {
@@ -365,7 +332,7 @@ export default function DrawingToolsUI({
           >
             <label
               className={css`
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 font-weight: 600;
                 color: ${Color.darkGray()};
                 text-transform: uppercase;
@@ -392,47 +359,24 @@ export default function DrawingToolsUI({
                 className={css`
                   flex: 1;
                   height: 6px;
-                  background: linear-gradient(
-                    to right,
-                    #e2e8f0 0%,
-                    #3b82f6 100%
-                  );
-                  border-radius: 3px;
+                  background: ${Color.logoBlue(0.3)};
+                  border-radius: 2px;
                   outline: none;
                   cursor: pointer;
+                  -webkit-appearance: none;
 
                   &::-webkit-slider-thumb {
-                    appearance: none;
-                    width: 18px;
-                    height: 18px;
-                    background: linear-gradient(
-                      135deg,
-                      #3b82f6 0%,
-                      #1d4ed8 100%
-                    );
+                    -webkit-appearance: none;
+                    width: 20px;
+                    height: 20px;
+                    background: ${Color.logoBlue()};
                     border-radius: 50%;
                     cursor: pointer;
-                    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
-                    transition: all 0.2s ease;
+                    transition: transform 0.1s ease;
                   }
 
                   &::-webkit-slider-thumb:hover {
-                    transform: scale(1.1);
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-                  }
-
-                  &::-moz-range-thumb {
-                    width: 18px;
-                    height: 18px;
-                    background: linear-gradient(
-                      135deg,
-                      #3b82f6 0%,
-                      #1d4ed8 100%
-                    );
-                    border-radius: 50%;
-                    cursor: pointer;
-                    border: none;
-                    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+                    transform: scale(1.2);
                   }
                 `}
               />
@@ -487,47 +431,24 @@ export default function DrawingToolsUI({
                   className={css`
                     flex: 1;
                     height: 6px;
-                    background: linear-gradient(
-                      to right,
-                      #e2e8f0 0%,
-                      #10b981 100%
-                    );
-                    border-radius: 3px;
+                    background: ${Color.green(0.3)};
+                    border-radius: 2px;
                     outline: none;
                     cursor: pointer;
+                    -webkit-appearance: none;
 
                     &::-webkit-slider-thumb {
-                      appearance: none;
-                      width: 18px;
-                      height: 18px;
-                      background: linear-gradient(
-                        135deg,
-                        #10b981 0%,
-                        #059669 100%
-                      );
+                      -webkit-appearance: none;
+                      width: 20px;
+                      height: 20px;
+                      background: ${Color.green()};
                       border-radius: 50%;
                       cursor: pointer;
-                      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-                      transition: all 0.2s ease;
+                      transition: transform 0.1s ease;
                     }
 
                     &::-webkit-slider-thumb:hover {
-                      transform: scale(1.1);
-                      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-                    }
-
-                    &::-moz-range-thumb {
-                      width: 18px;
-                      height: 18px;
-                      background: linear-gradient(
-                        135deg,
-                        #10b981 0%,
-                        #059669 100%
-                      );
-                      border-radius: 50%;
-                      cursor: pointer;
-                      border: none;
-                      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+                      transform: scale(1.2);
                     }
                   `}
                 />
@@ -552,76 +473,24 @@ export default function DrawingToolsUI({
               margin-left: auto;
             `}
           >
-            <button
+            <Button
               onClick={handleUndo}
               disabled={disabled || canvasHistory.length === 0}
-              className={css`
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.75rem 1rem;
-                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 0.875rem;
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
-
-                &:hover:not(:disabled) {
-                  background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
-                  transform: translateY(-1px);
-                  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-                }
-
-                &:disabled {
-                  opacity: 0.4;
-                  cursor: not-allowed;
-                  transform: none;
-                  box-shadow: none;
-                }
-              `}
+              color="darkBlue"
+              style={{ padding: '0.75rem 1.25rem' }}
             >
-              <span>↶</span>
-              Undo
-            </button>
-            <button
+              <Icon icon="undo" />
+              <span style={{ marginLeft: '0.5rem' }}>Undo</span>
+            </Button>
+            <Button
               onClick={clearCanvas}
               disabled={disabled}
-              className={css`
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                padding: 0.75rem 1rem;
-                background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 0.875rem;
-                transition: all 0.2s ease;
-                box-shadow: 0 2px 8px rgba(100, 116, 139, 0.2);
-
-                &:hover:not(:disabled) {
-                  background: linear-gradient(135deg, #475569 0%, #334155 100%);
-                  transform: translateY(-1px);
-                  box-shadow: 0 4px 16px rgba(100, 116, 139, 0.3);
-                }
-
-                &:disabled {
-                  opacity: 0.4;
-                  cursor: not-allowed;
-                  transform: none;
-                  box-shadow: none;
-                }
-              `}
+              color="darkGray"
+              style={{ padding: '0.75rem 1.25rem' }}
             >
-              <span>🗑️</span>
-              Clear
-            </button>
+              <Icon icon="trash-alt" />
+              <span style={{ marginLeft: '0.5rem' }}>Clear</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -633,19 +502,20 @@ export default function DrawingToolsUI({
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
-            border: 2px solid var(--ui-border);
+            border: 1px solid var(--ui-border);
             border-radius: 8px;
-            padding: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             z-index: 1001;
-            min-width: 300px;
+            min-width: 320px;
           `}
         >
           <div
             className={css`
-              margin-bottom: 0.5rem;
-              font-weight: 500;
+              margin-bottom: 1rem;
+              font-weight: 600;
               color: ${Color.darkGray()};
+              font-size: 1.1rem;
             `}
           >
             Add Text
@@ -658,11 +528,16 @@ export default function DrawingToolsUI({
             autoFocus
             className={css`
               width: 100%;
-              padding: 0.5rem;
+              padding: 0.75rem;
               border: 1px solid var(--ui-border);
-              border-radius: 4px;
-              margin-bottom: 1rem;
+              border-radius: 8px;
+              margin-bottom: 1.5rem;
               font-size: 1rem;
+              outline: none;
+
+              &:focus {
+                border-color: ${Color.logoBlue()};
+              }
             `}
             onKeyDown={(e) => {
               if (e.key === 'Enter') addTextToCanvas();
@@ -671,7 +546,7 @@ export default function DrawingToolsUI({
           />
           <div
             className={css`
-              margin-bottom: 1rem;
+              margin-bottom: 1.5rem;
             `}
           >
             <div
@@ -712,35 +587,24 @@ export default function DrawingToolsUI({
               className={css`
                 width: 100%;
                 height: 6px;
-                background: linear-gradient(to right, #e2e8f0 0%, #10b981 100%);
-                border-radius: 3px;
+                background: ${Color.green(0.3)};
+                border-radius: 2px;
                 outline: none;
                 cursor: pointer;
+                -webkit-appearance: none;
 
                 &::-webkit-slider-thumb {
-                  appearance: none;
-                  width: 18px;
-                  height: 18px;
-                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                  -webkit-appearance: none;
+                  width: 20px;
+                  height: 20px;
+                  background: ${Color.green()};
                   border-radius: 50%;
                   cursor: pointer;
-                  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-                  transition: all 0.2s ease;
+                  transition: transform 0.1s ease;
                 }
 
                 &::-webkit-slider-thumb:hover {
-                  transform: scale(1.1);
-                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-                }
-
-                &::-moz-range-thumb {
-                  width: 18px;
-                  height: 18px;
-                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                  border-radius: 50%;
-                  cursor: pointer;
-                  border: none;
-                  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+                  transform: scale(1.2);
                 }
               `}
             />
@@ -752,48 +616,16 @@ export default function DrawingToolsUI({
               justify-content: flex-end;
             `}
           >
-            <button
-              onClick={cancelTextInput}
-              className={css`
-                background: transparent;
-                color: ${Color.darkGray()};
-                border: 1px solid var(--ui-border);
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.9rem;
-
-                &:hover {
-                  background: ${Color.highlightGray()};
-                }
-              `}
-            >
+            <Button onClick={cancelTextInput} variant="ghost">
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={addTextToCanvas}
               disabled={!textInput.trim()}
-              className={css`
-                background: ${Color.logoBlue()};
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.9rem;
-
-                &:hover:not(:disabled) {
-                  background: ${Color.logoBlue(0.8)};
-                }
-
-                &:disabled {
-                  opacity: 0.5;
-                  cursor: not-allowed;
-                }
-              `}
+              color="blue"
             >
               Add Text
-            </button>
+            </Button>
           </div>
         </div>
       )}
