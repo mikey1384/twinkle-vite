@@ -11,6 +11,8 @@ interface InputSectionProps {
   canAffordGeneration?: boolean;
   generationCost?: number;
   twinkleCoins?: number;
+  engine: 'gemini' | 'openai';
+  onEngineChange: (engine: 'gemini' | 'openai') => void;
 }
 
 export default function InputSection({
@@ -21,7 +23,9 @@ export default function InputSection({
   isGenerating,
   canAffordGeneration = true,
   generationCost = 0,
-  twinkleCoins = 0
+  twinkleCoins = 0,
+  engine,
+  onEngineChange
 }: InputSectionProps) {
   return (
     <div
@@ -83,6 +87,34 @@ export default function InputSection({
               (Ctrl+Enter to generate)
             </span>
           </label>
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              margin-bottom: 0.5rem;
+            `}
+          >
+            <select
+              value={engine}
+              onChange={(e) =>
+                onEngineChange(e.target.value as 'gemini' | 'openai')
+              }
+              disabled={isGenerating}
+              className={css`
+                padding: 0.25rem 0.5rem;
+                border: 1px solid var(--ui-border);
+                border-radius: 4px;
+                font-size: 0.8rem;
+                background: #fff;
+                outline: none;
+                color: #333;
+              `}
+            >
+              <option value="gemini">Nano Banana Pro</option>
+              <option value="openai">GPT Image-1</option>
+            </select>
+          </div>
           <textarea
             placeholder="A magical forest with glowing mushrooms and fireflies, Japanese anime style..."
             value={prompt}
@@ -127,7 +159,7 @@ export default function InputSection({
             `}
           />
         </div>
-        
+
         {/* Cost display */}
         {generationCost > 0 && (
           <div
@@ -139,7 +171,7 @@ export default function InputSection({
               border-radius: 8px;
               font-size: 1rem;
               text-align: center;
-              
+
               @media (min-width: 768px) {
                 margin-top: 0;
                 margin-left: 1rem;
@@ -166,7 +198,7 @@ export default function InputSection({
             </div>
           </div>
         )}
-        
+
         <ActionButton
           onClick={onGenerate}
           disabled={!prompt.trim() || isGenerating || !canAffordGeneration}
@@ -183,11 +215,11 @@ export default function InputSection({
             }
           `}
         >
-          {isGenerating 
-            ? 'Generating...' 
-            : !canAffordGeneration 
-              ? 'Insufficient Coins' 
-              : 'Generate'}
+          {isGenerating
+            ? 'Generating...'
+            : !canAffordGeneration
+            ? 'Insufficient Coins'
+            : 'Generate'}
         </ActionButton>
       </div>
     </div>

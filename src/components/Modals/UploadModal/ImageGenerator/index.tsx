@@ -43,6 +43,10 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
+  const [engine, setEngine] = useState<'gemini' | 'openai'>('gemini');
+  const [followUpEngine, setFollowUpEngine] = useState<'gemini' | 'openai'>(
+    'gemini'
+  );
   const [drawingCanvasUrl, setDrawingCanvasUrl] = useState<string | null>(null);
   const [canvasHasContent, setCanvasHasContent] = useState(false);
 
@@ -105,9 +109,28 @@ export default function ImageGenerator({
     (v) => v.requestHelpers.generateAIImage
   );
 
+  const updateImageGenerationSettings = useAppContext(
+    (v) => v.requestHelpers.updateImageGenerationSettings
+  );
+
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+
+  useEffect(() => {
+    const preferredEngine =
+      userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini';
+    setEngine(preferredEngine);
+
+    const preferredFollowUp =
+      userSettings?.aiImage?.followUpEngine ||
+      userSettings?.aiImage?.engine ||
+      null;
+    if (preferredFollowUp) {
+      setFollowUpEngine(preferredFollowUp === 'openai' ? 'openai' : 'gemini');
+    }
+  }, [userSettings?.aiImage?.engine, userSettings?.aiImage?.followUpEngine]);
 
   const IMAGE_GENERATION_COST = 10000;
   const FOLLOW_UP_COST = 1000;
@@ -232,6 +255,41 @@ export default function ImageGenerator({
 
   useImageHandlerRef.current = handleUseImage;
 
+  async function persistImageModelPreference({
+    engine: initialEngine,
+    followUpEngine: followUp
+  }: {
+    engine?: 'gemini' | 'openai';
+    followUpEngine?: 'gemini' | 'openai';
+  }) {
+    if (!userId) return;
+    try {
+      const result = await updateImageGenerationSettings({
+        engine: initialEngine,
+        followUpEngine: followUp
+      });
+      if (result?.settings) {
+        onSetUserState({
+          userId,
+          newState: { settings: result.settings }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save image model preference:', err);
+      setError('Failed to save image model preference');
+    }
+  }
+
+  function handleEngineChange(value: 'gemini' | 'openai') {
+    setEngine(value);
+    persistImageModelPreference({ engine: value });
+  }
+
+  function handleFollowUpEngineChange(value: 'gemini' | 'openai') {
+    setFollowUpEngine(value);
+    persistImageModelPreference({ followUpEngine: value });
+  }
+
   useEffect(() => {
     if (!onRegisterUseImageHandler) return;
 
@@ -350,6 +408,8 @@ export default function ImageGenerator({
         canAffordGeneration={canAffordGeneration}
         generationCost={IMAGE_GENERATION_COST}
         twinkleCoins={twinkleCoins}
+        engine={engine}
+        onEngineChange={handleEngineChange}
       />
 
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
@@ -375,6 +435,8 @@ export default function ImageGenerator({
         isShowingLoadingState={isShowingLoadingState}
         canAffordFollowUp={canAffordFollowUp}
         followUpCost={FOLLOW_UP_COST}
+        followUpEngine={followUpEngine}
+        onFollowUpEngineChange={handleFollowUpEngineChange}
       />
     </div>
   );
@@ -409,7 +471,8 @@ export default function ImageGenerator({
 
       const result = await generateAIImage({
         prompt: prompt.trim(),
-        referenceImageB64: referenceB64
+        referenceImageB64: referenceB64,
+        engine
       });
 
       if (!result.success) {
@@ -447,7 +510,6 @@ export default function ImageGenerator({
       return;
     }
 
-    // Check if user can afford follow-up generation
     if (!canAffordFollowUp) {
       const errorMessage = `Insufficient coins. You need ${FOLLOW_UP_COST.toLocaleString()} coins for follow-up generation.`;
       setError(errorMessage);
@@ -471,7 +533,8 @@ export default function ImageGenerator({
         prompt: followUpPrompt.trim(),
         previousResponseId: generatedResponseId, // Keep for backend pricing logic
         previousImageId: generatedImageId, // Keep for backend pricing logic
-        referenceImageB64: referenceB64 // Send previous image as reference for Gemini
+        referenceImageB64: referenceB64, // Send previous image as reference for Gemini
+        engine: followUpEngine
       });
 
       if (!result.success) {

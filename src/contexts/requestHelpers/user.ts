@@ -90,6 +90,24 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async updateImageGenerationSettings({
+      engine,
+      followUpEngine
+    }: {
+      engine?: 'gemini' | 'openai';
+      followUpEngine?: 'gemini' | 'openai';
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/settings/imageGeneration`,
+          { engine, followUpEngine },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async confirmPassword(password: string) {
       try {
         const {

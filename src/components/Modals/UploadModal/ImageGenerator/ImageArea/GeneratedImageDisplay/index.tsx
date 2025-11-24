@@ -28,6 +28,8 @@ interface GeneratedImageDisplayProps {
   canvasHasContent: boolean;
   canAffordFollowUp?: boolean;
   followUpCost?: number;
+  followUpEngine?: 'gemini' | 'openai';
+  onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
 }
 
 export default function GeneratedImageDisplay({
@@ -50,7 +52,9 @@ export default function GeneratedImageDisplay({
   onSetHasBeenEdited,
   canvasHasContent,
   canAffordFollowUp = true,
-  followUpCost = 0
+  followUpCost = 0,
+  followUpEngine = 'gemini',
+  onFollowUpEngineChange
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
@@ -110,7 +114,9 @@ export default function GeneratedImageDisplay({
       console.error('Download failed:', error);
       // Fallback: Open image in a new tab
       window.open(currentImageSrc, '_blank');
-      alert('Download failed. The image has been opened in a new tab. Long-press to save it.');
+      alert(
+        'Download failed. The image has been opened in a new tab. Long-press to save it.'
+      );
     }
   };
 
@@ -351,7 +357,7 @@ export default function GeneratedImageDisplay({
               <Icon icon="edit" />
               <span>Edit Image</span>
             </button>
-            
+
             <button
               onClick={handleDownload}
               className={css`
@@ -396,6 +402,8 @@ export default function GeneratedImageDisplay({
           isFollowUpGenerating={isFollowUpGenerating}
           canAffordFollowUp={canAffordFollowUp}
           followUpCost={followUpCost}
+          followUpEngine={followUpEngine}
+          onFollowUpEngineChange={onFollowUpEngineChange}
         />
       )}
 

@@ -14,6 +14,8 @@ interface FollowUpInputProps {
   isFollowUpGenerating: boolean;
   canAffordFollowUp?: boolean;
   followUpCost?: number;
+  followUpEngine?: 'gemini' | 'openai';
+  onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
 }
 
 export default function FollowUpInput({
@@ -23,7 +25,9 @@ export default function FollowUpInput({
   isGenerating,
   isFollowUpGenerating,
   canAffordFollowUp = true,
-  followUpCost = 0
+  followUpCost = 0,
+  followUpEngine = 'gemini',
+  onFollowUpEngineChange
 }: FollowUpInputProps) {
   return (
     <div
@@ -33,17 +37,45 @@ export default function FollowUpInput({
         margin-bottom: -0.5rem;
       `}
     >
-      <label
+      <div
         className={css`
-          display: block;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: ${Color.black()};
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           margin-bottom: 0.75rem;
         `}
       >
-        Modify this image
-      </label>
+        <label
+          className={css`
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: ${Color.black()};
+            margin-bottom: 0;
+          `}
+        >
+          Modify this image
+        </label>
+        <select
+          value={followUpEngine}
+          onChange={(e) =>
+            onFollowUpEngineChange(e.target.value as 'gemini' | 'openai')
+          }
+          disabled={isGenerating || isFollowUpGenerating}
+          className={css`
+            padding: 0.2rem 0.5rem;
+            border: 1px solid var(--ui-border);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background: #fff;
+            outline: none;
+            color: #333;
+          `}
+        >
+          <option value="gemini">Nano Banana Pro</option>
+          <option value="openai">GPT Image-1</option>
+        </select>
+      </div>
       <div
         className={css`
           display: flex;
@@ -87,7 +119,7 @@ export default function FollowUpInput({
             }
           `}
         />
-        
+
         {/* Cost display for follow-up */}
         {followUpCost > 0 && (
           <div
@@ -111,11 +143,14 @@ export default function FollowUpInput({
             </div>
           </div>
         )}
-        
+
         <ActionButton
           onClick={onFollowUpGenerate}
           disabled={
-            !followUpPrompt.trim() || isGenerating || isFollowUpGenerating || !canAffordFollowUp
+            !followUpPrompt.trim() ||
+            isGenerating ||
+            isFollowUpGenerating ||
+            !canAffordFollowUp
           }
           variant="secondary"
           className={css`
@@ -123,11 +158,11 @@ export default function FollowUpInput({
             border-radius: 10px;
           `}
         >
-          {isGenerating || isFollowUpGenerating 
-            ? 'Modifying...' 
-            : !canAffordFollowUp 
-              ? 'Insufficient Coins'
-              : 'Modify'}
+          {isGenerating || isFollowUpGenerating
+            ? 'Modifying...'
+            : !canAffordFollowUp
+            ? 'Insufficient Coins'
+            : 'Modify'}
         </ActionButton>
       </div>
     </div>

@@ -831,17 +831,19 @@ export default function contentRequestHelpers({
     },
     async generateAIStoryImage({
       storyId,
-      style
+      style,
+      engine
     }: {
       storyId: string;
       style?: string;
+      engine?: 'gemini' | 'openai';
     }) {
       try {
         const {
           data: { imageUrl, coins }
         } = await request.post(
           `${URL}/content/game/story/image`,
-          { storyId, style },
+          { storyId, style, engine },
           auth()
         );
         return { imageUrl, coins };
@@ -1964,17 +1966,25 @@ export default function contentRequestHelpers({
       prompt,
       previousImageId,
       previousResponseId,
-      referenceImageB64
+      referenceImageB64,
+      engine
     }: {
       prompt: string;
       previousResponseId?: string;
       previousImageId?: string;
       referenceImageB64?: string;
+      engine?: 'gemini' | 'openai';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/image/ai`,
-          { prompt, previousImageId, previousResponseId, referenceImageB64 },
+          {
+            prompt,
+            previousImageId,
+            previousResponseId,
+            referenceImageB64,
+            engine
+          },
           auth()
         );
         return {

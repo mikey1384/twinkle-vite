@@ -25,6 +25,8 @@ interface ImageAreaProps {
   canvasHasContent: boolean;
   canAffordFollowUp?: boolean;
   followUpCost?: number;
+  followUpEngine?: 'gemini' | 'openai';
+  onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
 }
 
 export default function ImageArea({
@@ -47,7 +49,9 @@ export default function ImageArea({
   onSetHasBeenEdited,
   canvasHasContent,
   canAffordFollowUp,
-  followUpCost
+  followUpCost,
+  followUpEngine = 'gemini',
+  onFollowUpEngineChange
 }: ImageAreaProps) {
   return (
     <div
@@ -84,6 +88,8 @@ export default function ImageArea({
           canvasHasContent={canvasHasContent}
           canAffordFollowUp={canAffordFollowUp}
           followUpCost={followUpCost}
+          followUpEngine={followUpEngine}
+          onFollowUpEngineChange={onFollowUpEngineChange}
         />
       ) : isGenerating ? (
         <LoadingState getProgressLabel={getProgressLabel} />

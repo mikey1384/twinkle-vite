@@ -29,6 +29,7 @@ interface ImageGenStatus {
     | 'validating_style'
     | 'prompt_ready'
     | 'calling_openai'
+    | 'calling_gemini'
     | 'downloading'
     | 'uploading'
     | 'error'
@@ -51,6 +52,7 @@ function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
     case 'prompt_ready':
       return 'Cooking up ideas…';
     case 'calling_openai':
+    case 'calling_gemini':
     case 'in_progress':
     case 'generating':
     case 'partial_image':
@@ -89,10 +91,14 @@ export default function SuccessModal({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userSettings = useKeyContext((v) => v.myState.settings);
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColorKey = xpNumberRole.colorKey;
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
+  );
+  const updateImageGenerationSettings = useAppContext(
+    (v) => v.requestHelpers.updateImageGenerationSettings
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
@@ -101,6 +107,9 @@ export default function SuccessModal({
   const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
+  const [imageEngine, setImageEngine] = useState<'gemini' | 'openai'>(
+    userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini'
+  );
 
   const [progressStage, setProgressStage] =
     useState<ImageGenStatus['stage']>('not_started');
@@ -116,9 +125,16 @@ export default function SuccessModal({
   }, []);
 
   useEffect(() => {
+    setImageEngine(
+      userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini'
+    );
+  }, [userSettings?.aiImage?.engine]);
+
+  useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
     const isActiveStage = [
       'calling_openai',
+      'calling_gemini',
       'in_progress',
       'generating',
       'partial_image'
@@ -295,6 +311,41 @@ export default function SuccessModal({
                 </div>
               )}
 
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginTop: '1rem'
+                }}
+              >
+                <label
+                  style={{
+                    fontWeight: 600,
+                    color: Color.darkerGray(),
+                    fontSize: '1rem'
+                  }}
+                >
+                  Image Model
+                </label>
+                <select
+                  value={imageEngine}
+                  onChange={(e) =>
+                    handleEngineChange(e.target.value as 'gemini' | 'openai')
+                  }
+                  disabled={generatingImage}
+                  style={{
+                    padding: '0.35rem 0.5rem',
+                    borderRadius: '8px',
+                    border: `1px solid ${Color.borderGray()}`,
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  <option value="gemini">Nano Banana Pro</option>
+                  <option value="openai">GPT Image-1</option>
+                </select>
+              </div>
+
               <GradientButton
                 theme={colorHash[difficulty] || 'default'}
                 loading={generatingImage}
@@ -387,12 +438,15 @@ export default function SuccessModal({
     setGeneratingImage(true);
     setImageUrl('');
     setPreviewImageUrl('');
-    setProgressStage('calling_openai');
+    setProgressStage(
+      imageEngine === 'openai' ? 'calling_openai' : 'calling_gemini'
+    );
 
     try {
       const { imageUrl, coins } = await generateAIStoryImage({
         storyId,
-        style: styleText
+        style: styleText,
+        engine: imageEngine
       });
 
       if (!isMountedRef.current) return;
@@ -408,6 +462,19 @@ export default function SuccessModal({
       if (isMountedRef.current) {
         setGeneratingImage(false);
       }
+    }
+  }
+
+  async function handleEngineChange(value: 'gemini' | 'openai') {
+    setImageEngine(value);
+    if (!userId) return;
+    try {
+      const result = await updateImageGenerationSettings({ engine: value });
+      if (result?.settings) {
+        onSetUserState({ userId, newState: { settings: result.settings } });
+      }
+    } catch (error) {
+      console.error('Failed to save image model preference:', error);
     }
   }
 }
