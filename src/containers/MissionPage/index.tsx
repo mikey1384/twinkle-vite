@@ -120,8 +120,7 @@ export default function MissionPage() {
 
   const isManagementPage =
     location.pathname === `/missions/${missionType}/manage`;
-  const isSharedPage =
-    location.pathname === `/missions/${missionType}/shared`;
+  const isSharedPage = location.pathname === `/missions/${missionType}/shared`;
   const isSystemPromptMission = missionType === 'system-prompt';
   const allowManage = isAdmin && !isSystemPromptMission;
   const hasSideMenu = isAdmin || isSystemPromptMission;
@@ -211,10 +210,7 @@ export default function MissionPage() {
                 />
               )}
               {isSystemPromptMission && (
-                <Route
-                  path="/shared"
-                  element={<SystemPromptShared />}
-                />
+                <Route path="/shared" element={<SystemPromptShared />} />
               )}
               <Route
                 path="*"
@@ -228,10 +224,7 @@ export default function MissionPage() {
             </Routes>
           </div>
           {isSystemPromptMission ? (
-            <SystemPromptMenu
-              className="desktop"
-              missionType={missionType}
-            />
+            <SystemPromptMenu className="desktop" missionType={missionType} />
           ) : (
             isAdmin && (
               <RightMenu className="desktop" missionType={missionType} />

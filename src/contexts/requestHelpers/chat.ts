@@ -379,6 +379,16 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadMyCustomInstructionTopics() {
+      try {
+        const {
+          data: { topics }
+        } = await request.get(`${URL}/chat/topic/myCustomInstructionTopics`, auth());
+        return topics;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateTopicShareState({
       channelId,
       topicId,
@@ -1320,12 +1330,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadOtherUserTopics() {
+    async loadOtherUserTopics({
+      sortBy
+    }: {
+      sortBy?: 'new' | 'cloned' | 'used';
+    } = {}) {
       try {
         const {
           data: { subjects, loadMoreButton }
         } = await request.get(
-          `${URL}/chat/chatSubject/otherUsers`,
+          `${URL}/chat/chatSubject/otherUsers${
+            sortBy ? `?sortBy=${sortBy}` : ''
+          }`,
           auth()
         );
         return { subjects, loadMoreButton };
@@ -1334,24 +1350,46 @@ export default function chatRequestHelpers({
       }
     },
     async loadMoreOtherUserTopics({
-      lastSubject
+      lastSubject,
+      sortBy
     }: {
       lastSubject: {
         id: number;
         timeStamp: number;
         reloadTimeStamp?: number;
+        cloneCount?: number;
+        messageCount?: number;
       };
+      sortBy?: 'new' | 'cloned' | 'used';
     }) {
       if (!lastSubject) {
         return { subjects: [], loadMoreButton: false };
       }
       try {
+        const params: string[] = [
+          `lastTimeStamp=${
+            lastSubject.reloadTimeStamp || lastSubject.timeStamp
+          }`,
+          `lastId=${lastSubject.id}`
+        ];
+
+        if (sortBy) {
+          params.push(`sortBy=${sortBy}`);
+        }
+
+        if (sortBy === 'cloned') {
+          params.push(`lastCloneCount=${lastSubject.cloneCount || 0}`);
+        }
+
+        if (sortBy === 'used') {
+          params.push(`lastCloneCount=${lastSubject.cloneCount || 0}`);
+          params.push(`lastMessageCount=${lastSubject.messageCount || 0}`);
+        }
+
         const {
           data: { subjects, loadMoreButton }
         } = await request.get(
-          `${URL}/chat/chatSubject/otherUsers/more?lastTimeStamp=${
-            lastSubject.reloadTimeStamp || lastSubject.timeStamp
-          }&lastId=${lastSubject.id}`,
+          `${URL}/chat/chatSubject/otherUsers/more?${params.join('&')}`,
           auth()
         );
         return { subjects, loadMoreButton };

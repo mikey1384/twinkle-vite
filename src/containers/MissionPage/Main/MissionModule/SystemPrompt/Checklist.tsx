@@ -42,6 +42,11 @@ export default function Checklist({
     (checklistCompletedCount / checklistItems.length) * 100
   );
 
+  // Find the current step (first incomplete item, or last item if all complete)
+  const currentStepIndex = checklistItems.findIndex((item) => !item.complete);
+  const activeStepIndex =
+    currentStepIndex === -1 ? checklistItems.length - 1 : currentStepIndex;
+
   const sectionHeaderClass = useMemo(
     () =>
       css`
@@ -137,30 +142,146 @@ export default function Checklist({
               {progressError}
             </div>
           )}
-          {checklistItems.map((item, idx) => (
-            <div key={idx} className={checklistItemClass}>
-              <Icon
-                icon={item.complete ? 'check-circle' : 'circle'}
-                style={{
-                  color: item.complete ? doneColor : Color.gray()
-                }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span
+          {!missionCleared && (
+            <div
+              className={css`
+                padding: 1rem 1.2rem;
+                border-radius: ${borderRadius};
+                background: ${Color.logoBlue(0.08)};
+                border: 1px solid ${Color.logoBlue(0.3)};
+                margin-bottom: 0.5rem;
+              `}
+            >
+              <div
+                className={css`
+                  display: flex;
+                  align-items: flex-start;
+                  gap: 0.7rem;
+                `}
+              >
+                <Icon
+                  icon="lightbulb"
                   style={{
-                    fontWeight: 700,
-                    color: Color.black(),
-                    fontSize: '1.45rem'
+                    color: Color.logoBlue(),
+                    fontSize: '1.5rem',
+                    marginTop: '0.1rem'
                   }}
-                >
-                  {item.label}
-                </span>
-                <small style={{ color: Color.darkerGray() }}>
-                  {item.detail}
-                </small>
+                />
+                <div>
+                  <div
+                    className={css`
+                      font-weight: 700;
+                      color: ${Color.logoBlue()};
+                      margin-bottom: 0.3rem;
+                      font-size: 1.2rem;
+                    `}
+                  >
+                    What to do next:
+                  </div>
+                  <div
+                    className={css`
+                      color: ${Color.darkerGray()};
+                      font-size: 1.2rem;
+                      line-height: 1.5;
+                    `}
+                  >
+                    {checklistItems[activeStepIndex]?.detail ||
+                      'Complete the remaining steps above'}
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+          )}
+          {checklistItems.map((item, idx) => {
+            const isCurrentStep = idx === activeStepIndex && !missionCleared;
+            return (
+              <div
+                key={idx}
+                className={css`
+                  ${checklistItemClass}
+                  ${isCurrentStep
+                    ? `
+                    border: 2px solid ${Color.logoBlue()};
+                    box-shadow: 0 2px 12px rgba(0, 123, 255, 0.12);
+                  `
+                    : ''}
+                `}
+              >
+                <div
+                  className={css`
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0.2rem;
+                  `}
+                >
+                  <Icon
+                    icon={item.complete ? 'check-circle' : 'circle'}
+                    style={{
+                      color: item.complete
+                        ? doneColor
+                        : isCurrentStep
+                          ? Color.logoBlue()
+                          : Color.gray(),
+                      fontSize: '1.8rem'
+                    }}
+                  />
+                  <span
+                    className={css`
+                      font-size: 0.95rem;
+                      font-weight: 700;
+                      color: ${item.complete ? doneColor : isCurrentStep ? Color.logoBlue() : Color.gray()};
+                    `}
+                  >
+                    {idx + 1}/{checklistItems.length}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      marginBottom: '0.2rem'
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: Color.black(),
+                        fontSize: '1.45rem'
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                    {isCurrentStep && (
+                      <span
+                        className={css`
+                          padding: 0.2rem 0.6rem;
+                          border-radius: 999px;
+                          background: ${Color.logoBlue()};
+                          color: ${Color.white()};
+                          font-size: 0.95rem;
+                          font-weight: 700;
+                        `}
+                      >
+                        Current
+                      </span>
+                    )}
+                  </div>
+                  <small style={{ color: Color.darkerGray() }}>
+                    {item.detail}
+                  </small>
+                </div>
+              </div>
+            );
+          })}
         </>
       )}
       {missionCleared && (

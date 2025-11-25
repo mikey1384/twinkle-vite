@@ -124,7 +124,8 @@ export default function SystemPromptMission({
   const aiMessageCount = progress?.aiTopic?.messageCount || 0;
   const sharedMessageCount = progress?.sharedTopic?.messageCount || 0;
   const hasAiTopic = Boolean(progress?.aiTopic?.id);
-  const aiTopicId = progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
+  const aiTopicId =
+    progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
   const missionCleared =
     createdPrompt &&
@@ -139,14 +140,17 @@ export default function SystemPromptMission({
         label: 'Draft and test a system prompt',
         complete: createdPrompt,
         detail: createdPrompt
-          ? 'Prompt saved and previewed'
-          : 'Save your prompt and run a chat preview'
+          ? 'Prompt created and previewed'
+          : 'Create a prompt and preview it with a test message'
       },
       {
         label: 'Use it with Zero or Ciel',
         complete: hasAiTopic && aiMessageCount >= 2,
         detail: aiTopicId
-          ? `${Math.min(aiMessageCount, 2)}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
+          ? `${Math.min(
+              aiMessageCount,
+              2
+            )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
           : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
       },
       {
@@ -200,6 +204,30 @@ export default function SystemPromptMission({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadSystemPromptProgress, mission.id]);
+
+  // Poll for progress updates while mission is not cleared
+  useEffect(() => {
+    if (missionCleared) return;
+
+    let mounted = true;
+    const pollInterval = setInterval(async () => {
+      try {
+        const data = await loadSystemPromptProgress();
+        if (!mounted) return;
+        setProgress(data || {});
+      } catch (error) {
+        // Silently fail on polling errors to avoid disrupting UX
+        if (mounted) {
+          console.error('Failed to poll mission progress:', error);
+        }
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => {
+      mounted = false;
+      clearInterval(pollInterval);
+    };
+  }, [loadSystemPromptProgress, missionCleared]);
 
   useEffect(() => {
     if (messageListRef.current) {
@@ -449,6 +477,10 @@ export default function SystemPromptMission({
               sending={sending}
               improving={improving}
               progress={progress}
+              hasAiTopic={hasAiTopic}
+              aiMessageCount={aiMessageCount}
+              hasSharedTopic={hasSharedTopic}
+              missionType={mission.missionType}
               onApplyToAIChat={handleApplyToAIChat}
             />
           )}

@@ -14,6 +14,10 @@ interface TargetSelectorProps {
   sending: boolean;
   improving: boolean;
   progress: any;
+  hasAiTopic: boolean;
+  aiMessageCount: number;
+  hasSharedTopic: boolean;
+  missionType: string;
   onApplyToAIChat: (target: 'zero' | 'ciel') => void;
   style?: React.CSSProperties;
 }
@@ -24,12 +28,32 @@ export default function TargetSelector({
   sending,
   improving,
   progress,
+  hasAiTopic,
+  aiMessageCount,
+  hasSharedTopic,
+  missionType,
   onApplyToAIChat,
   style
 }: TargetSelectorProps) {
   const navigate = useNavigate();
   const appliedTarget = progress?.pendingPromptForChat?.target;
   const appliedChannelId = progress?.pendingPromptForChat?.channelId;
+
+  // Step 2 complete: User has applied prompt and sent 2+ messages
+  const step2Complete = hasAiTopic && aiMessageCount >= 2;
+
+  // Shared topic info for navigation
+  const sharedTopicId = progress?.sharedTopic?.id;
+  const sharedTopicChannelId = progress?.sharedTopic?.channelId;
+
+  // Determine which AI the shared prompt was cloned to
+  // If channelIds match, same AI. If different, it's the other AI.
+  const sharedTarget =
+    sharedTopicChannelId === appliedChannelId
+      ? appliedTarget
+      : appliedTarget === 'ciel'
+      ? 'zero'
+      : 'ciel';
 
   const cardClass = useMemo(
     () =>
@@ -47,29 +71,7 @@ export default function TargetSelector({
     []
   );
 
-  const labelClass = useMemo(
-    () =>
-      css`
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: ${Color.darkerGray()};
-      `,
-    []
-  );
-
-  const sectionHeaderClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-      `,
-    []
-  );
-
-  const handleGoToChat = () => {
+  const handleGoToOwnPromptChat = () => {
     if (!appliedChannelId) return;
     const pathId = Number(appliedChannelId) + Number(CHAT_ID_BASE_NUMBER);
     const appliedTopicId = progress?.pendingPromptForChat?.topicId;
@@ -80,112 +82,289 @@ export default function TargetSelector({
     }
   };
 
-  const successSection =
-    appliedTarget && appliedChannelId ? (
-      <>
-        <section
-          className={`${cardClass} ${css`
+  const handleGoToSharedChat = () => {
+    if (!sharedTopicChannelId || !sharedTopicId) return;
+    const pathId = Number(sharedTopicChannelId) + Number(CHAT_ID_BASE_NUMBER);
+    navigate(`/chat/${pathId}/topic/${sharedTopicId}`);
+  };
+
+  // Show button to user's own prompt chat (before they clone a shared topic)
+  const ownPromptButtonSection =
+    !hasSharedTopic && appliedTarget && appliedChannelId ? (
+      <section
+        className={`${cardClass} ${css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+          text-align: center;
+          border-color: ${appliedTarget === 'zero'
+            ? Color.logoBlue()
+            : Color.pink()};
+          background: ${appliedTarget === 'zero'
+            ? Color.logoBlue(0.03)
+            : Color.pink(0.03)};
+        `}`}
+        style={{ marginTop: '1rem' }}
+      >
+        <div
+          className={css`
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
-            text-align: center;
-            border-color: ${appliedTarget === 'zero'
-              ? Color.logoBlue()
-              : Color.pink()};
-            box-shadow: 0 0 10px
-              ${appliedTarget === 'zero'
-                ? 'rgba(64, 152, 255, 0.15)'
-                : 'rgba(255, 105, 180, 0.15)'};
-          `}`}
-          style={{ marginTop: '1rem' }}
+            gap: 0.5rem;
+          `}
         >
           <div
             className={css`
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              gap: 0.5rem;
+              font-size: 1.3rem;
+              font-weight: 700;
+              color: ${Color.darkerGray()};
             `}
           >
-            <div
-              className={css`
-                font-size: 1.3rem;
-                font-weight: 700;
-                color: ${Color.darkerGray()};
-              `}
-            >
-              Success! Your prompt is ready.
-            </div>
-            <div
-              className={css`
-                font-size: 1.1rem;
-                color: ${Color.gray()};
-              `}
-            >
-              Chat with {appliedTarget === 'zero' ? 'Zero' : 'Ciel'} to see your
-              custom instructions in action.
-            </div>
+            Success! Your prompt is ready.
           </div>
-
-          <Button
-            color={appliedTarget === 'zero' ? 'logoBlue' : 'purple'}
-            variant="solid"
-            tone="raised"
-            style={{
-              padding: '1rem 2rem',
-              fontSize: '1.3rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              borderRadius: '15px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
-            }}
-            onClick={handleGoToChat}
+          <div
+            className={css`
+              font-size: 1.1rem;
+              color: ${Color.gray()};
+            `}
           >
-            <div
-              className={css`
-                width: 3.5rem;
-                height: 3.5rem;
-                border-radius: 50%;
-                background: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-                border: 2px solid rgba(255, 255, 255, 0.5);
-              `}
-            >
-              <img
-                src={appliedTarget === 'zero' ? zero : ciel}
-                alt={appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
-                style={{ width: '85%', height: '85%', objectFit: 'contain' }}
-              />
-            </div>
-            <div
+            Chat with {appliedTarget === 'zero' ? 'Zero' : 'Ciel'} to see your
+            custom instructions in action.
+          </div>
+        </div>
+
+        <Button
+          color={appliedTarget === 'zero' ? 'logoBlue' : 'purple'}
+          variant="solid"
+          tone="raised"
+          style={{
+            padding: '1rem 2rem',
+            fontSize: '1.3rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            borderRadius: '15px'
+          }}
+          onClick={handleGoToOwnPromptChat}
+        >
+          <div
+            className={css`
+              width: 3.5rem;
+              height: 3.5rem;
+              border-radius: 50%;
+              background: #fff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              border: 2px solid rgba(255, 255, 255, 0.5);
+            `}
+          >
+            <img
+              src={appliedTarget === 'zero' ? zero : ciel}
+              alt={appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
+              style={{ width: '85%', height: '85%', objectFit: 'contain' }}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start'
+            }}
+          >
+            <span
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start'
+                fontSize: '0.9rem',
+                opacity: 0.9,
+                fontWeight: 'normal'
               }}
             >
-              <span
-                style={{
-                  fontSize: '0.9rem',
-                  opacity: 0.9,
-                  fontWeight: 'normal'
-                }}
-              >
-                Start chatting with
-              </span>
-              <span style={{ fontWeight: 'bold' }}>
-                {appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
-              </span>
+              Start chatting with
+            </span>
+            <span style={{ fontWeight: 'bold' }}>
+              {appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
+            </span>
+          </div>
+          <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
+        </Button>
+      </section>
+    ) : null;
+
+  // Show "Browse shared topics" guidance when step 2 complete but shared topic not cloned yet
+  const browseSharedTopicsSection =
+    step2Complete && !hasSharedTopic ? (
+      <section
+        className={`${cardClass} ${css`
+          display: flex;
+          flex-direction: column;
+          gap: 1.2rem;
+          border-color: ${Color.logoBlue(0.4)};
+          background: ${Color.logoBlue(0.03)};
+        `}`}
+        style={{ marginTop: '1rem' }}
+      >
+        <div
+          className={css`
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+          `}
+        >
+          <Icon
+            icon="star"
+            style={{
+              color: Color.logoBlue(),
+              fontSize: '1.8rem',
+              marginTop: '0.2rem'
+            }}
+          />
+          <div>
+            <div
+              className={css`
+                font-size: 1.45rem;
+                font-weight: 700;
+                color: ${Color.darkerGray()};
+                margin-bottom: 0.5rem;
+              `}
+            >
+              Next: Browse shared prompts
             </div>
-            <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
-          </Button>
-        </section>
-      </>
+            <div
+              className={css`
+                font-size: 1.2rem;
+                color: ${Color.darkerGray()};
+                line-height: 1.6;
+              `}
+            >
+              Great job! Now go to the <strong>Shared Prompts</strong> tab to
+              explore what others have created. Clone one to your AI chat and
+              send a message to complete the mission.
+            </div>
+          </div>
+        </div>
+        <Button
+          color="logoBlue"
+          variant="soft"
+          tone="raised"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.7rem',
+            justifyContent: 'center'
+          }}
+          onClick={() => {
+            navigate(`/missions/${missionType}/shared`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        >
+          <Icon icon="users" />
+          Browse Shared Prompts
+        </Button>
+      </section>
+    ) : null;
+
+  // Show "Chat with cloned prompt" button when user has cloned a shared topic
+  const chatButtonSection =
+    hasSharedTopic && sharedTopicChannelId && sharedTopicId ? (
+      <section
+        className={`${cardClass} ${css`
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+          text-align: center;
+          border-color: ${Color.logoBlue()};
+          background: ${Color.logoBlue(0.03)};
+        `}`}
+        style={{ marginTop: '1rem' }}
+      >
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+          `}
+        >
+          <div
+            className={css`
+              font-size: 1.3rem;
+              font-weight: 700;
+              color: ${Color.darkerGray()};
+            `}
+          >
+            Cloned successfully!
+          </div>
+          <div
+            className={css`
+              font-size: 1.1rem;
+              color: ${Color.gray()};
+            `}
+          >
+            Now chat with your cloned prompt and send a message to complete the
+            mission.
+          </div>
+        </div>
+
+        <Button
+          color="logoBlue"
+          variant="solid"
+          tone="raised"
+          style={{
+            padding: '1rem 2rem',
+            fontSize: '1.3rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            borderRadius: '15px'
+          }}
+          onClick={handleGoToSharedChat}
+        >
+          <div
+            className={css`
+              width: 3.5rem;
+              height: 3.5rem;
+              border-radius: 50%;
+              background: #fff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              border: 2px solid rgba(255, 255, 255, 0.5);
+            `}
+          >
+            <img
+              src={sharedTarget === 'ciel' ? ciel : zero}
+              alt={sharedTarget === 'ciel' ? 'Ciel' : 'Zero'}
+              style={{ width: '85%', height: '85%', objectFit: 'contain' }}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start'
+            }}
+          >
+            <span
+              style={{
+                fontSize: '0.9rem',
+                opacity: 0.9,
+                fontWeight: 'normal'
+              }}
+            >
+              Go to chat
+            </span>
+            <span style={{ fontWeight: 'bold' }}>
+              {progress?.sharedTopic?.title || 'Cloned Topic'}
+            </span>
+          </div>
+          <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
+        </Button>
+      </section>
     ) : null;
 
   return (
@@ -197,16 +376,6 @@ export default function TargetSelector({
           gap: 1rem;
         `}`}
       >
-        <div className={sectionHeaderClass}>
-          <div className={labelClass}>Use with Zero or Ciel</div>
-          <small
-            style={{
-              color: Color.darkerGray()
-            }}
-          >
-            Apply this prompt directly to an AI chat
-          </small>
-        </div>
         <div
           className={css`
             display: flex;
@@ -224,6 +393,7 @@ export default function TargetSelector({
             }
             onClick={() => onApplyToAIChat('zero')}
           >
+            <Icon style={{ marginRight: '0.5rem' }} icon="robot" />
             {applyingTarget === 'zero'
               ? 'Exporting to Zero...'
               : 'Use with Zero'}
@@ -238,22 +408,16 @@ export default function TargetSelector({
             loading={applyingTarget === 'ciel'}
             onClick={() => onApplyToAIChat('ciel')}
           >
+            <Icon style={{ marginRight: '0.5rem' }} icon="robot" />
             {applyingTarget === 'ciel'
               ? 'Exporting to Ciel...'
               : 'Use with Ciel'}
           </Button>
         </div>
-        <small
-          style={{
-            color: Color.gray(),
-            lineHeight: 1.4
-          }}
-        >
-          We’ll tag the AI topic with this prompt so mission progress only
-          counts when you chat in that topic.
-        </small>
       </section>
-      {successSection}
+      {ownPromptButtonSection}
+      {browseSharedTopicsSection}
+      {chatButtonSection}
     </div>
   );
 }
