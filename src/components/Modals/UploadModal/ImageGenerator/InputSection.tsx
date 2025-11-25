@@ -87,34 +87,37 @@ export default function InputSection({
               (Ctrl+Enter to generate)
             </span>
           </label>
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              gap: 0.5rem;
-              margin-bottom: 0.5rem;
-            `}
-          >
-            <select
-              value={engine}
-              onChange={(e) =>
-                onEngineChange(e.target.value as 'gemini' | 'openai')
-              }
-              disabled={isGenerating}
+          {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+          {false && (
+            <div
               className={css`
-                padding: 0.25rem 0.5rem;
-                border: 1px solid var(--ui-border);
-                border-radius: 4px;
-                font-size: 0.8rem;
-                background: #fff;
-                outline: none;
-                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 0.5rem;
               `}
             >
-              <option value="gemini">Nano Banana Pro</option>
-              <option value="openai">GPT Image-1</option>
-            </select>
-          </div>
+              <select
+                value={engine}
+                onChange={(e) =>
+                  onEngineChange(e.target.value as 'gemini' | 'openai')
+                }
+                disabled={isGenerating}
+                className={css`
+                  padding: 0.25rem 0.5rem;
+                  border: 1px solid var(--ui-border);
+                  border-radius: 4px;
+                  font-size: 0.8rem;
+                  background: #fff;
+                  outline: none;
+                  color: #333;
+                `}
+              >
+                <option value="gemini">Nano Banana Pro</option>
+                <option value="openai">GPT Image-1</option>
+              </select>
+            </div>
+          )}
           <textarea
             placeholder="A magical forest with glowing mushrooms and fireflies, Japanese anime style..."
             value={prompt}

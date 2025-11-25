@@ -56,25 +56,28 @@ export default function FollowUpInput({
         >
           Modify this image
         </label>
-        <select
-          value={followUpEngine}
-          onChange={(e) =>
-            onFollowUpEngineChange(e.target.value as 'gemini' | 'openai')
-          }
-          disabled={isGenerating || isFollowUpGenerating}
-          className={css`
-            padding: 0.2rem 0.5rem;
-            border: 1px solid var(--ui-border);
-            border-radius: 4px;
-            font-size: 0.75rem;
-            background: #fff;
-            outline: none;
-            color: #333;
-          `}
-        >
-          <option value="gemini">Nano Banana Pro</option>
-          <option value="openai">GPT Image-1</option>
-        </select>
+        {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+        {false && (
+          <select
+            value={followUpEngine}
+            onChange={(e) =>
+              onFollowUpEngineChange(e.target.value as 'gemini' | 'openai')
+            }
+            disabled={isGenerating || isFollowUpGenerating}
+            className={css`
+              padding: 0.2rem 0.5rem;
+              border: 1px solid var(--ui-border);
+              border-radius: 4px;
+              font-size: 0.75rem;
+              background: #fff;
+              outline: none;
+              color: #333;
+            `}
+          >
+            <option value="gemini">Nano Banana Pro</option>
+            <option value="openai">GPT Image-1</option>
+          </select>
+        )}
       </div>
       <div
         className={css`

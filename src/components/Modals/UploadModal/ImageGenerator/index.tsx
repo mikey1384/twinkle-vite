@@ -43,9 +43,10 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
-  const [engine, setEngine] = useState<'gemini' | 'openai'>('gemini');
+  // Hardcoded to 'openai' (image-1) - Gemini is unstable
+  const [engine, setEngine] = useState<'gemini' | 'openai'>('openai');
   const [followUpEngine, setFollowUpEngine] = useState<'gemini' | 'openai'>(
-    'gemini'
+    'openai'
   );
   const [drawingCanvasUrl, setDrawingCanvasUrl] = useState<string | null>(null);
   const [canvasHasContent, setCanvasHasContent] = useState(false);
@@ -119,17 +120,22 @@ export default function ImageGenerator({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   useEffect(() => {
-    const preferredEngine =
-      userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini';
-    setEngine(preferredEngine);
+    // Always use 'openai' (image-1) - ignoring user preferences since Gemini is unstable
+    setEngine('openai');
+    setFollowUpEngine('openai');
 
-    const preferredFollowUp =
-      userSettings?.aiImage?.followUpEngine ||
-      userSettings?.aiImage?.engine ||
-      null;
-    if (preferredFollowUp) {
-      setFollowUpEngine(preferredFollowUp === 'openai' ? 'openai' : 'gemini');
-    }
+    // Original code kept for reference:
+    // const preferredEngine =
+    //   userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini';
+    // setEngine(preferredEngine);
+    //
+    // const preferredFollowUp =
+    //   userSettings?.aiImage?.followUpEngine ||
+    //   userSettings?.aiImage?.engine ||
+    //   null;
+    // if (preferredFollowUp) {
+    //   setFollowUpEngine(preferredFollowUp === 'openai' ? 'openai' : 'gemini');
+    // }
   }, [userSettings?.aiImage?.engine, userSettings?.aiImage?.followUpEngine]);
 
   const IMAGE_GENERATION_COST = 10000;

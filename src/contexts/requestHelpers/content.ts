@@ -831,19 +831,21 @@ export default function contentRequestHelpers({
     },
     async generateAIStoryImage({
       storyId,
-      style,
-      engine
-    }: {
+      style
+    }: // engine
+    {
       storyId: string;
       style?: string;
       engine?: 'gemini' | 'openai';
     }) {
       try {
+        // Hardcoded to 'openai' (image-1) - Gemini is unstable
+        const forcedEngine = 'openai';
         const {
           data: { imageUrl, coins }
         } = await request.post(
           `${URL}/content/game/story/image`,
-          { storyId, style, engine },
+          { storyId, style, engine: forcedEngine },
           auth()
         );
         return { imageUrl, coins };
@@ -1966,9 +1968,9 @@ export default function contentRequestHelpers({
       prompt,
       previousImageId,
       previousResponseId,
-      referenceImageB64,
-      engine
-    }: {
+      referenceImageB64
+    }: // engine
+    {
       prompt: string;
       previousResponseId?: string;
       previousImageId?: string;
@@ -1976,6 +1978,8 @@ export default function contentRequestHelpers({
       engine?: 'gemini' | 'openai';
     }) {
       try {
+        // Hardcoded to 'openai' (image-1) - Gemini is unstable
+        const forcedEngine = 'openai';
         const { data } = await request.post(
           `${URL}/content/image/ai`,
           {
@@ -1983,7 +1987,7 @@ export default function contentRequestHelpers({
             previousImageId,
             previousResponseId,
             referenceImageB64,
-            engine
+            engine: forcedEngine
           },
           auth()
         );

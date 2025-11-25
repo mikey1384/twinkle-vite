@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
 import FollowUpInput from './FollowUpInput';
-import UseThisImageButton from './UseThisImageButton';
 import ImageEditor from '../../ImageEditor';
 import Icon from '~/components/Icon';
 
@@ -18,14 +17,11 @@ interface GeneratedImageDisplayProps {
   followUpPrompt: string;
   onFollowUpPromptChange: (value: string) => void;
   onFollowUpGenerate: () => void;
-  onUseImage: () => void;
   getProgressLabel: () => string;
   onRemoveReference?: () => void;
   onImageEdited?: (dataUrl: string) => void;
   isShowingLoadingState: boolean;
-  hasBeenEdited: boolean;
   onSetHasBeenEdited: (value: boolean) => void;
-  canvasHasContent: boolean;
   canAffordFollowUp?: boolean;
   followUpCost?: number;
   followUpEngine?: 'gemini' | 'openai';
@@ -43,14 +39,11 @@ export default function GeneratedImageDisplay({
   followUpPrompt,
   onFollowUpPromptChange,
   onFollowUpGenerate,
-  onUseImage,
   getProgressLabel,
   onRemoveReference,
   onImageEdited,
   isShowingLoadingState,
-  hasBeenEdited,
   onSetHasBeenEdited,
-  canvasHasContent,
   canAffordFollowUp = true,
   followUpCost = 0,
   followUpEngine = 'gemini',
@@ -406,17 +399,6 @@ export default function GeneratedImageDisplay({
           onFollowUpEngineChange={onFollowUpEngineChange}
         />
       )}
-
-      {(generatedImageUrl ||
-        referenceImageUrl ||
-        hasBeenEdited ||
-        (canvasUrl && canvasHasContent)) &&
-        !isShowingLoadingState && (
-          <UseThisImageButton
-            onUseImage={onUseImage}
-            showFollowUp={showFollowUp}
-          />
-        )}
 
       {isEditing && currentImageSrc && (
         <ImageEditor

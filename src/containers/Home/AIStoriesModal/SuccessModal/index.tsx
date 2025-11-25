@@ -107,9 +107,8 @@ export default function SuccessModal({
   const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
-  const [imageEngine, setImageEngine] = useState<'gemini' | 'openai'>(
-    userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini'
-  );
+  // Hardcoded to 'openai' (image-1) - Gemini is unstable
+  const [imageEngine, setImageEngine] = useState<'gemini' | 'openai'>('openai');
 
   const [progressStage, setProgressStage] =
     useState<ImageGenStatus['stage']>('not_started');
@@ -125,9 +124,8 @@ export default function SuccessModal({
   }, []);
 
   useEffect(() => {
-    setImageEngine(
-      userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini'
-    );
+    // Always use 'openai' (image-1) - ignoring user preferences since Gemini is unstable
+    setImageEngine('openai');
   }, [userSettings?.aiImage?.engine]);
 
   useEffect(() => {
@@ -311,40 +309,43 @@ export default function SuccessModal({
                 </div>
               )}
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginTop: '1rem'
-                }}
-              >
-                <label
+              {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+              {false && (
+                <div
                   style={{
-                    fontWeight: 600,
-                    color: Color.darkerGray(),
-                    fontSize: '1rem'
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '1rem'
                   }}
                 >
-                  Image Model
-                </label>
-                <select
-                  value={imageEngine}
-                  onChange={(e) =>
-                    handleEngineChange(e.target.value as 'gemini' | 'openai')
-                  }
-                  disabled={generatingImage}
-                  style={{
-                    padding: '0.35rem 0.5rem',
-                    borderRadius: '8px',
-                    border: `1px solid ${Color.borderGray()}`,
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  <option value="gemini">Nano Banana Pro</option>
-                  <option value="openai">GPT Image-1</option>
-                </select>
-              </div>
+                  <label
+                    style={{
+                      fontWeight: 600,
+                      color: Color.darkerGray(),
+                      fontSize: '1rem'
+                    }}
+                  >
+                    Image Model
+                  </label>
+                  <select
+                    value={imageEngine}
+                    onChange={(e) =>
+                      handleEngineChange(e.target.value as 'gemini' | 'openai')
+                    }
+                    disabled={generatingImage}
+                    style={{
+                      padding: '0.35rem 0.5rem',
+                      borderRadius: '8px',
+                      border: `1px solid ${Color.borderGray()}`,
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    <option value="gemini">Nano Banana Pro</option>
+                    <option value="openai">GPT Image-1</option>
+                  </select>
+                </div>
+              )}
 
               <GradientButton
                 theme={colorHash[difficulty] || 'default'}
