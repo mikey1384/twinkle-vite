@@ -19,7 +19,7 @@ interface MyTopic {
 }
 
 export default function MyTopicsManager() {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [loading, setLoading] = useState(false);
   const [topics, setTopics] = useState<MyTopic[]>([]);
   const [updatingTopicId, setUpdatingTopicId] = useState<number | null>(null);

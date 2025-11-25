@@ -396,7 +396,7 @@ export default function Mission({
                     className={css`
                       font-size: 1.7rem;
                       font-weight: 700;
-                      color: ${Color.brownOrange()};
+                      color: ${Color.darkerGray()};
                     `}
                   >
                     {addCommasToNumber(coinReward)}
@@ -484,7 +484,7 @@ export default function Mission({
                         className={css`
                           font-size: 1.7rem;
                           font-weight: 700;
-                          color: ${Color.brownOrange()};
+                          color: ${Color.darkerGray()};
                         `}
                       >
                         {addCommasToNumber(repeatCoinReward)}
