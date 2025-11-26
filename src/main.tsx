@@ -118,6 +118,7 @@ import { faIndent } from '@fortawesome/pro-solid-svg-icons/faIndent';
 import { faInfoCircle } from '@fortawesome/pro-solid-svg-icons/faInfoCircle';
 import { faImage } from '@fortawesome/pro-solid-svg-icons/faImage';
 import { faGear } from '@fortawesome/pro-solid-svg-icons/faGear';
+import { faGift } from '@fortawesome/pro-solid-svg-icons/faGift';
 import { faJs } from '@fortawesome/free-brands-svg-icons/faJs';
 import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
@@ -133,6 +134,7 @@ import { faMobileAlt } from '@fortawesome/pro-solid-svg-icons/faMobileAlt';
 import { faPalette } from '@fortawesome/pro-solid-svg-icons/faPalette';
 import { faPaperclip } from '@fortawesome/pro-solid-svg-icons/faPaperclip';
 import { faPaperPlane } from '@fortawesome/pro-solid-svg-icons/faPaperPlane';
+import { faPartyHorn } from '@fortawesome/pro-solid-svg-icons/faPartyHorn';
 import { faPencilAlt } from '@fortawesome/pro-solid-svg-icons/faPencilAlt';
 import { faPhoneSlash } from '@fortawesome/pro-solid-svg-icons/faPhoneSlash';
 import { faPhoneVolume } from '@fortawesome/pro-solid-svg-icons/faPhoneVolume';
@@ -316,6 +318,7 @@ library.add(
   faHtml5,
   faImage,
   faGear,
+  faGift,
   faIndent,
   faInfoCircle,
   faJs,
@@ -334,6 +337,7 @@ library.add(
   faMobileAlt,
   faMoneyBillTrendUp,
   faPalette,
+  faPartyHorn,
   faPaperclip,
   faPaperPlane,
   faPencilAlt,

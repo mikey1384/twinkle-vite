@@ -14,6 +14,7 @@ interface TargetSelectorProps {
   applyingTarget: 'zero' | 'ciel' | null;
   sending: boolean;
   improving: boolean;
+  generating: boolean;
   progress: any;
   hasAiTopic: boolean;
   aiMessageCount: number;
@@ -28,6 +29,7 @@ export default function TargetSelector({
   applyingTarget,
   sending,
   improving,
+  generating,
   progress,
   hasAiTopic,
   aiMessageCount,
@@ -46,6 +48,7 @@ export default function TargetSelector({
   // Shared topic info for navigation
   const sharedTopicId = progress?.sharedTopic?.id;
   const sharedTopicChannelId = progress?.sharedTopic?.channelId;
+  const sharedMessageCount = progress?.sharedTopic?.messageCount || 0;
 
   // Determine which AI the shared prompt was cloned to
   // If channelIds match, same AI. If different, it's the other AI.
@@ -297,6 +300,10 @@ export default function TargetSelector({
     ) : null;
 
   // Show "Chat with cloned prompt" button when user has cloned a shared topic
+  const step3Complete = hasSharedTopic && sharedMessageCount >= 1;
+  const sharedProgress = Math.min(sharedMessageCount, 1);
+  const sharedProgressPercent = (sharedProgress / 1) * 100;
+
   const chatButtonSection =
     hasSharedTopic && sharedTopicChannelId && sharedTopicId ? (
       <section
@@ -306,8 +313,12 @@ export default function TargetSelector({
           align-items: center;
           gap: 1.5rem;
           text-align: center;
-          border-color: ${Color.logoBlue()};
-          background: ${Color.logoBlue(0.03)};
+          border-color: ${sharedTarget === 'ciel'
+            ? Color.pink()
+            : Color.logoBlue()};
+          background: ${sharedTarget === 'ciel'
+            ? Color.pink(0.03)
+            : Color.logoBlue(0.03)};
         `}`}
         style={{ marginTop: '1rem' }}
       >
@@ -317,6 +328,7 @@ export default function TargetSelector({
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
+            width: 100%;
           `}
         >
           <div
@@ -326,7 +338,17 @@ export default function TargetSelector({
               color: ${Color.darkerGray()};
             `}
           >
-            Cloned successfully!
+            {step3Complete ? (
+              <>
+                <Icon
+                  icon="check-circle"
+                  style={{ color: Color.limeGreen(), marginRight: '0.5rem' }}
+                />
+                Step complete!
+              </>
+            ) : (
+              'Cloned successfully!'
+            )}
           </div>
           <div
             className={css`
@@ -334,13 +356,27 @@ export default function TargetSelector({
               color: ${Color.gray()};
             `}
           >
-            Now chat with your cloned prompt and send a message to complete the
-            mission.
+            {step3Complete
+              ? `You've sent ${sharedMessageCount} message${sharedMessageCount === 1 ? '' : 's'} with your cloned prompt.`
+              : `Chat with ${sharedTarget === 'ciel' ? 'Ciel' : 'Zero'} to see your cloned prompt in action.`}
+          </div>
+          <div
+            className={css`
+              width: 100%;
+              max-width: 20rem;
+              margin-top: 0.5rem;
+            `}
+          >
+            <ProgressBar
+              progress={sharedProgressPercent}
+              color={sharedTarget === 'ciel' ? 'pink' : 'logoBlue'}
+              text={`${sharedProgress}/1 message`}
+            />
           </div>
         </div>
 
         <Button
-          color="logoBlue"
+          color={sharedTarget === 'ciel' ? 'purple' : 'logoBlue'}
           variant="solid"
           tone="raised"
           style={{
@@ -386,10 +422,10 @@ export default function TargetSelector({
                 fontWeight: 'normal'
               }}
             >
-              Go to chat
+              {step3Complete ? 'Continue chatting with' : 'Start chatting with'}
             </span>
             <span style={{ fontWeight: 'bold' }}>
-              {progress?.sharedTopic?.title || 'Cloned Topic'}
+              {progress?.sharedTopic?.title || (sharedTarget === 'ciel' ? 'Ciel' : 'Zero')}
             </span>
           </div>
           <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
@@ -415,30 +451,52 @@ export default function TargetSelector({
         >
           <Button
             color="logoBlue"
-            variant="soft"
+            variant="solid"
             tone="raised"
             loading={applyingTarget === 'zero'}
             disabled={
-              !hasPrompt || applyingTarget === 'ciel' || sending || improving
+              !hasPrompt || applyingTarget === 'ciel' || sending || improving || generating
             }
             onClick={() => onApplyToAIChat('zero')}
           >
-            <Icon style={{ marginRight: '0.5rem' }} icon="robot" />
+            <img
+              src={zero}
+              alt="Zero"
+              className={css`
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                margin-right: 0.5rem;
+                object-fit: contain;
+                background: #fff;
+              `}
+            />
             {applyingTarget === 'zero'
               ? 'Exporting to Zero...'
               : 'Use with Zero'}
           </Button>
           <Button
             color="purple"
-            variant="soft"
+            variant="solid"
             tone="raised"
             disabled={
-              !hasPrompt || applyingTarget === 'zero' || sending || improving
+              !hasPrompt || applyingTarget === 'zero' || sending || improving || generating
             }
             loading={applyingTarget === 'ciel'}
             onClick={() => onApplyToAIChat('ciel')}
           >
-            <Icon style={{ marginRight: '0.5rem' }} icon="robot" />
+            <img
+              src={ciel}
+              alt="Ciel"
+              className={css`
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                margin-right: 0.5rem;
+                object-fit: contain;
+                background: #fff;
+              `}
+            />
             {applyingTarget === 'ciel'
               ? 'Exporting to Ciel...'
               : 'Use with Ciel'}

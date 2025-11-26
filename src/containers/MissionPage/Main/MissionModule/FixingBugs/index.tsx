@@ -78,6 +78,7 @@ export default function FixingBugs({
         <TaskComplete
           style={{ marginTop: '10rem' }}
           taskId={task.id}
+          allTasksComplete
           passMessage="You made it!"
           passMessageFontSize="2.2rem"
         />

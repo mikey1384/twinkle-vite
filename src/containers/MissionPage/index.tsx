@@ -4,6 +4,7 @@ import Main from './Main';
 import RightMenu from './RightMenu';
 import SystemPromptMenu from './SystemPromptMenu';
 import SystemPromptShared from './SystemPromptShared';
+import WorkshopPage from './WorkshopPage';
 import InvalidPage from '~/components/InvalidPage';
 import Management from './Management';
 import FilterBar from '~/components/FilterBar';
@@ -45,6 +46,7 @@ export default function MissionPage() {
     (v) => v.actions.onSetMyMissionAttempts
   );
   const missionObj = useMissionContext((v) => v.state.missionObj);
+  const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const prevUserId = useMissionContext((v) => v.state.prevUserId);
   const missionTypeIdHash = useMissionContext((v) => v.state.missionTypeIdHash);
 
@@ -67,6 +69,11 @@ export default function MissionPage() {
   const mission = useMemo(
     () => missionObj[missionId] || {},
     [missionId, missionObj]
+  );
+
+  const missionCleared = useMemo(
+    () => myAttempts?.[missionId]?.status === 'pass',
+    [myAttempts, missionId]
   );
 
   useEffect(() => {
@@ -120,6 +127,7 @@ export default function MissionPage() {
 
   const isManagementPage =
     location.pathname === `/missions/${missionType}/manage`;
+  const isWorkshopPage = location.pathname === `/missions/${missionType}/workshop`;
   const isSharedPage = location.pathname === `/missions/${missionType}/shared`;
   const isSystemPromptMission = missionType === 'system-prompt';
   const allowManage = isAdmin && !isSystemPromptMission;
@@ -140,11 +148,19 @@ export default function MissionPage() {
             }}
           >
             <nav
-              className={!isManagementPage && !isSharedPage ? 'active' : ''}
+              className={!isManagementPage && !isSharedPage && !isWorkshopPage ? 'active' : ''}
               onClick={() => navigate(`/missions/${missionType}`)}
             >
               Mission
             </nav>
+            {isSystemPromptMission && missionCleared && (
+              <nav
+                className={isWorkshopPage ? 'active' : ''}
+                onClick={() => navigate(`/missions/${missionType}/workshop`)}
+              >
+                Workshop
+              </nav>
+            )}
             {isSystemPromptMission && (
               <nav
                 className={isSharedPage ? 'active' : ''}
@@ -209,8 +225,27 @@ export default function MissionPage() {
                   }
                 />
               )}
+              {isSystemPromptMission && missionCleared && (
+                <Route
+                  path="/workshop"
+                  element={
+                    <WorkshopPage
+                      mission={mission}
+                      onSetMissionState={onSetMissionState}
+                    />
+                  }
+                />
+              )}
               {isSystemPromptMission && (
-                <Route path="/shared" element={<SystemPromptShared />} />
+                <Route
+                  path="/shared"
+                  element={
+                    <SystemPromptShared
+                      mission={mission}
+                      missionCleared={missionCleared}
+                    />
+                  }
+                />
               )}
               <Route
                 path="*"
@@ -224,7 +259,11 @@ export default function MissionPage() {
             </Routes>
           </div>
           {isSystemPromptMission ? (
-            <SystemPromptMenu className="desktop" missionType={missionType} />
+            <SystemPromptMenu
+              className="desktop"
+              missionType={missionType}
+              missionCleared={missionCleared}
+            />
           ) : (
             isAdmin && (
               <RightMenu className="desktop" missionType={missionType} />

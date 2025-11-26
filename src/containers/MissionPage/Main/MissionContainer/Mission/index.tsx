@@ -504,21 +504,12 @@ export default function Mission({
       ) : (!mission.repeatable && myAttempt?.status === 'pass') ||
         (myAttempt?.status === 'fail' && !myAttempt?.tryingAgain) ? (
         mission.missionType === 'system-prompt' ? (
-          <>
-            <ApprovedStatus
-              missionId={mission.id}
-              xpReward={mission.xpReward}
-              coinReward={mission.coinReward}
-              myAttempt={myAttempt}
-              style={{ marginTop: '3rem' }}
-            />
-            <MissionModule
-              mission={mission}
-              isRepeating={isRepeating}
-              onSetMissionState={onSetMissionState}
-              style={{ marginTop: '4.5rem' }}
-            />
-          </>
+          <MissionModule
+            mission={mission}
+            isRepeating={isRepeating}
+            onSetMissionState={onSetMissionState}
+            style={{ marginTop: '1rem' }}
+          />
         ) : (
           <ApprovedStatus
             missionId={mission.id}

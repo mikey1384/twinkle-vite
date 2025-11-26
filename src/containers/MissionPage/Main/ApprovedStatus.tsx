@@ -15,6 +15,7 @@ export default function ApprovedStatus({
   coinReward,
   missionId,
   myAttempt,
+  passMessage,
   style
 }: {
   isTask?: boolean;
@@ -22,6 +23,7 @@ export default function ApprovedStatus({
   coinReward?: number;
   missionId: number;
   myAttempt: any;
+  passMessage?: string;
   style?: React.CSSProperties;
 }) {
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
@@ -78,7 +80,10 @@ export default function ApprovedStatus({
         }
         message={
           myAttempt.status === 'pass'
-            ? 'Great work! Your submission has been approved.'
+            ? passMessage ||
+              (isTask
+                ? 'You completed all the steps and earned your reward!'
+                : 'Great work! Your submission has been approved.')
             : myAttempt.status === 'fail'
             ? 'Take another look and give it another shot.'
             : undefined

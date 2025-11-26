@@ -9,12 +9,14 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext, useMissionContext } from '~/contexts';
 import useSystemPromptSockets from './useSystemPromptSockets';
 import Checklist from './Checklist';
 import Editor from './Editor';
 import TargetSelector from './TargetSelector';
 import Preview from './Preview';
+import TaskComplete from '../components/TaskComplete';
+import ApprovedStatus from '../../ApprovedStatus';
 
 interface ChatMessage {
   id: number;
@@ -61,8 +63,14 @@ export default function SystemPromptMission({
   const onSetThinkHardForTopic = useChatContext(
     (v) => v.actions.onSetThinkHardForTopic
   );
+  const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const contentColor = useKeyContext((v) => v.theme.content.color);
+
+  const myAttempt = useMemo(
+    () => myAttempts?.[mission.id],
+    [myAttempts, mission.id]
+  );
 
   const systemPromptState: SystemPromptState = useMemo(() => {
     const rawState = mission.systemPromptState || {};
@@ -147,44 +155,53 @@ export default function SystemPromptMission({
   const aiTopicId =
     progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
+
+  // myAttempt?.status === 'pass' is the authoritative source - if mission is
+  // marked complete, that overrides any local progress calculations
   const missionCleared =
-    createdPrompt &&
-    hasAiTopic &&
-    aiMessageCount >= 2 &&
-    hasSharedTopic &&
-    sharedMessageCount >= 1;
+    myAttempt?.status === 'pass' ||
+    (createdPrompt &&
+      hasAiTopic &&
+      aiMessageCount >= 2 &&
+      hasSharedTopic &&
+      sharedMessageCount >= 1);
+
+  const isMissionPassed = myAttempt?.status === 'pass';
 
   const checklistItems = useMemo(
     () => [
       {
         label: 'Draft and test a system prompt',
-        complete: createdPrompt,
-        detail: createdPrompt
-          ? 'Prompt created and previewed'
-          : 'Create a prompt and preview it with a test message'
+        complete: isMissionPassed || createdPrompt,
+        detail:
+          isMissionPassed || createdPrompt
+            ? 'Prompt created and previewed'
+            : 'Create a prompt and preview it with a test message'
       },
       {
         label: 'Use it with Zero or Ciel',
-        complete: hasAiTopic && aiMessageCount >= 2,
-        detail: aiTopicId
-          ? `${Math.min(
-              aiMessageCount,
-              2
-            )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
-          : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
+        complete: isMissionPassed || (hasAiTopic && aiMessageCount >= 2),
+        detail:
+          isMissionPassed || (hasAiTopic && aiMessageCount >= 2)
+            ? '2/2 messages in your AI topic'
+            : aiTopicId
+              ? `${Math.min(
+                  aiMessageCount,
+                  2
+                )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
+              : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
       },
       {
         label: `Clone a shared prompt`,
-        complete: hasSharedTopic && sharedMessageCount >= 1,
-        detail: hasSharedTopic
-          ? `${Math.min(
-              sharedMessageCount,
-              1
-            )}/1 message in your cloned shared prompt`
-          : 'Browse Shared Prompts, clone one, and send a message'
+        complete: isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1),
+        detail:
+          isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1)
+            ? '1/1 message in your cloned shared prompt'
+            : 'Browse Shared Prompts, clone one, and send a message'
       }
     ],
     [
+      isMissionPassed,
       aiMessageCount,
       createdPrompt,
       hasAiTopic,
@@ -201,16 +218,18 @@ export default function SystemPromptMission({
         const data = await loadSystemPromptProgress();
         if (!mounted) return;
         setProgress(data || {});
+        const newState: any = { systemPromptProgress: data || {} };
         if (
           data?.systemPromptState &&
           (!mission.systemPromptState?.prompt ||
             !mission.systemPromptState?.title)
         ) {
-          onSetMissionState({
-            missionId: mission.id,
-            newState: { systemPromptState: data.systemPromptState }
-          });
+          newState.systemPromptState = data.systemPromptState;
         }
+        onSetMissionState({
+          missionId: mission.id,
+          newState
+        });
       } catch {
         if (!mounted) return;
         setProgressError('Could not load your mission progress.');
@@ -235,6 +254,10 @@ export default function SystemPromptMission({
         const data = await loadSystemPromptProgress();
         if (!mounted) return;
         setProgress(data || {});
+        onSetMissionState({
+          missionId: mission.id,
+          newState: { systemPromptProgress: data || {} }
+        });
       } catch (error) {
         // Silently fail on polling errors to avoid disrupting UX
         if (mounted) {
@@ -247,7 +270,8 @@ export default function SystemPromptMission({
       mounted = false;
       clearInterval(pollInterval);
     };
-  }, [loadSystemPromptProgress, missionCleared]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadSystemPromptProgress, missionCleared, mission.id]);
 
   useEffect(() => {
     if (messageListRef.current) {
@@ -482,77 +506,95 @@ export default function SystemPromptMission({
           progressError={progressError}
           doneColor={doneColor}
           contentColor={contentColor}
-          missionId={mission.id}
           className={sidebarClass}
         />
         <div className={contentClass}>
-          {showEditor && (
-            <Editor
-              title={title}
-              prompt={prompt}
-              improving={improving}
-              generating={generating}
-              hasPrompt={hasPrompt}
-              promptEverGenerated={!!promptEverGenerated}
-              saving={saving}
-              onTitleChange={(text) =>
-                setSystemPromptState({
-                  ...systemPromptState,
-                  title: text
-                })
-              }
-              onPromptChange={(text) =>
-                setSystemPromptState({
-                  ...systemPromptState,
-                  prompt: text
-                })
-              }
-              onImprovePrompt={handleImprovePrompt}
-              onGeneratePrompt={handleGeneratePrompt}
+          {missionCleared && myAttempt && (
+            <ApprovedStatus
+              missionId={mission.id}
+              xpReward={mission.xpReward}
+              coinReward={mission.coinReward}
+              myAttempt={myAttempt}
+              passMessage="You've mastered creating and using custom system prompts!"
             />
           )}
+          {!missionCleared && (
+            <>
+              {showEditor && (
+                <Editor
+                  title={title}
+                  prompt={prompt}
+                  improving={improving}
+                  generating={generating}
+                  hasPrompt={hasPrompt}
+                  promptEverGenerated={!!promptEverGenerated}
+                  saving={saving}
+                  onTitleChange={(text) =>
+                    setSystemPromptState({
+                      ...systemPromptState,
+                      title: text
+                    })
+                  }
+                  onPromptChange={(text) =>
+                    setSystemPromptState({
+                      ...systemPromptState,
+                      prompt: text
+                    })
+                  }
+                  onImprovePrompt={handleImprovePrompt}
+                  onGeneratePrompt={handleGeneratePrompt}
+                />
+              )}
 
-          {showPreview && (
-            <Preview
-              chatMessages={chatMessages}
-              error={error}
-              userMessage={userMessage}
-              hasPrompt={hasPrompt}
-              canSend={canSend}
-              sending={sending}
-              trimmedTitle={trimmedTitle}
-              messageListRef={messageListRef}
-              onClear={() => {
-                setError('');
-                setSystemPromptState({
-                  ...systemPromptState,
-                  chatMessages: []
-                });
-              }}
-              onUserMessageChange={(text) =>
-                setSystemPromptState({
-                  ...systemPromptState,
-                  userMessage: text
-                })
-              }
-              onSendMessage={handleSendMessage}
-            />
-          )}
+              {showPreview && (
+                <Preview
+                  chatMessages={chatMessages}
+                  error={error}
+                  userMessage={userMessage}
+                  hasPrompt={hasPrompt}
+                  canSend={canSend}
+                  sending={sending}
+                  trimmedTitle={trimmedTitle}
+                  messageListRef={messageListRef}
+                  onClear={() => {
+                    setError('');
+                    setSystemPromptState({
+                      ...systemPromptState,
+                      chatMessages: []
+                    });
+                  }}
+                  onUserMessageChange={(text) =>
+                    setSystemPromptState({
+                      ...systemPromptState,
+                      userMessage: text
+                    })
+                  }
+                  onSendMessage={handleSendMessage}
+                />
+              )}
 
-          {showTargetSelector && (
-            <TargetSelector
-              hasPrompt={hasPrompt}
-              applyingTarget={applyingTarget}
-              sending={sending}
-              improving={improving}
-              progress={progress}
-              hasAiTopic={hasAiTopic}
-              aiMessageCount={aiMessageCount}
-              hasSharedTopic={hasSharedTopic}
-              missionType={mission.missionType}
-              onApplyToAIChat={handleApplyToAIChat}
-            />
+              {showTargetSelector && (
+                <TargetSelector
+                  hasPrompt={hasPrompt}
+                  applyingTarget={applyingTarget}
+                  sending={sending}
+                  improving={improving}
+                  generating={generating}
+                  progress={progress}
+                  hasAiTopic={hasAiTopic}
+                  aiMessageCount={aiMessageCount}
+                  hasSharedTopic={hasSharedTopic}
+                  missionType={mission.missionType}
+                  onApplyToAIChat={handleApplyToAIChat}
+                />
+              )}
+            </>
           )}
+          <TaskComplete
+            taskId={mission.id}
+            allTasksComplete={checklistItems.every((item) => item.complete)}
+            style={{ marginTop: '1rem' }}
+          />
         </div>
       </div>
     </ErrorBoundary>

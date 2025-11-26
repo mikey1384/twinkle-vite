@@ -379,12 +379,25 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async loadMyCustomInstructionTopics() {
+    async loadMyCustomInstructionTopics({
+      limit,
+      lastId
+    }: {
+      limit?: number;
+      lastId?: number;
+    } = {}) {
       try {
+        const params = new URLSearchParams();
+        if (limit) params.append('limit', String(limit));
+        if (lastId) params.append('lastId', String(lastId));
+        const queryString = params.toString();
         const {
-          data: { topics }
-        } = await request.get(`${URL}/chat/topic/myCustomInstructionTopics`, auth());
-        return topics;
+          data: { topics, loadMoreButton }
+        } = await request.get(
+          `${URL}/chat/topic/myCustomInstructionTopics${queryString ? `?${queryString}` : ''}`,
+          auth()
+        );
+        return { topics, loadMoreButton };
       } catch (error) {
         return handleError(error);
       }

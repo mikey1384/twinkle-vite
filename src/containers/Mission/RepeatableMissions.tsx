@@ -27,7 +27,7 @@ export default function RepeatableMissions({
     }, [missionObj, missions, myAttempts]);
 
   const repeatableMissionsLabel = useMemo(() => {
-    return `Repeatable Mission${repeatableMissions.length > 1 ? 's' : ''}`;
+    return `Pinned Mission${repeatableMissions.length > 1 ? 's' : ''}`;
   }, [repeatableMissions.length]);
 
   return repeatableMissions.length > 0 ? (

@@ -23,7 +23,7 @@ export default function Email({ taskId }: { taskId: number }) {
       style={{ width: '100%' }}
     >
       {conditionPassed ? (
-        <TaskComplete taskId={taskId} passMessage={passMessage} />
+        <TaskComplete taskId={taskId} allTasksComplete passMessage={passMessage} />
       ) : (
         <EmailVerifier />
       )}

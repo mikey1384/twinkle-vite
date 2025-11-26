@@ -72,6 +72,7 @@ export default function WriteItYourself({
         <TaskComplete
           style={{ marginTop: '10rem' }}
           taskId={task.id}
+          allTasksComplete
           passMessage="Congratulations! You are now ready to launch your website"
           passMessageFontSize="2.2rem"
         />

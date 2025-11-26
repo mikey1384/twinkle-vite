@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
@@ -8,9 +8,13 @@ import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import MyTopicsManager from './MyTopicsManager';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useNavigate } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import moment from 'moment';
+import zero from '~/assets/zero.png';
+import ciel from '~/assets/ciel.png';
 
 interface SharedTopic {
   id: number;
@@ -25,7 +29,13 @@ interface SharedTopic {
   messageCount?: number;
 }
 
-export default function SystemPromptShared() {
+export default function SystemPromptShared({
+  mission,
+  missionCleared
+}: {
+  mission: any;
+  missionCleared: boolean;
+}) {
   const userId = useKeyContext((v) => v.myState.userId);
   const loadOtherUserTopics = useAppContext(
     (v) => v.requestHelpers.loadOtherUserTopics
@@ -39,12 +49,19 @@ export default function SystemPromptShared() {
   const onSetThinkHardForTopic = useChatContext(
     (v) => v.actions.onSetThinkHardForTopic
   );
+  const navigate = useNavigate();
   const [topics, setTopics] = useState<SharedTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
+  const [clonedTopic, setClonedTopic] = useState<{
+    sharedTopicId: number;
+    target: 'zero' | 'ciel';
+    topicId: number;
+    channelId: number;
+    title: string;
+  } | null>(null);
   const [submitting, setSubmitting] = useState<{ [key: string]: boolean }>({});
   const [sortBy, setSortBy] = useState<'new' | 'cloned' | 'used'>('new');
 
@@ -53,7 +70,7 @@ export default function SystemPromptShared() {
     async function init() {
       setLoading(true);
       setError('');
-      setStatus('');
+      setClonedTopic(null);
       setTopics([]);
       setLoadMoreButton(false);
       try {
@@ -119,25 +136,32 @@ export default function SystemPromptShared() {
 
   const handleClone = async ({
     sharedTopicId,
-    target
+    target,
+    topicTitle
   }: {
     sharedTopicId: number;
     target: 'zero' | 'ciel';
+    topicTitle: string;
   }) => {
     if (!sharedTopicId || submitting[`${sharedTopicId}-${target}`]) return;
     setError('');
-    setStatus('');
+    setClonedTopic(null);
     setSubmitting((prev) => ({
       ...prev,
       [`${sharedTopicId}-${target}`]: true
     }));
     try {
       const data = await cloneSharedSystemPrompt({ sharedTopicId, target });
-      setStatus(
-        `Cloned to ${
-          target === 'ciel' ? 'Ciel' : 'Zero'
-        } chat. Open chat to start talking.`
-      );
+      // Store cloned topic info for navigation button
+      if (typeof data?.subjectId === 'number' && typeof data?.channelId === 'number') {
+        setClonedTopic({
+          sharedTopicId,
+          target,
+          topicId: data.subjectId,
+          channelId: data.channelId,
+          title: topicTitle
+        });
+      }
       // Set thinkHard to false for the new topic
       if (typeof data?.subjectId === 'number') {
         onSetThinkHardForTopic({
@@ -226,24 +250,7 @@ export default function SystemPromptShared() {
             Browse shared Zero/Ciel topics from other users and clone one into
             your AI chat to complete the mission checklist.
           </p>
-          {status && (
-            <div
-              className={css`
-                margin-top: 0.4rem;
-                padding: 0.8rem 1rem;
-                background: ${Color.green(0.1)};
-                border: 1px solid ${Color.green(0.3)};
-                border-radius: ${borderRadius};
-                color: ${Color.green()};
-                font-weight: 700;
-                font-size: 1.3rem;
-              `}
-            >
-              {status}
-            </div>
-          )}
         </header>
-        <MyTopicsManager />
         <FilterBar>
           {tabs.map((tab) => (
             <nav
@@ -337,78 +344,70 @@ export default function SystemPromptShared() {
               const isOwnTopic = topic.userId === userId;
               return (
                 <article key={topic.id} className={cardClass}>
-                  <div
-                    className={css`
-                      display: flex;
-                      justify-content: space-between;
-                      gap: 0.6rem;
-                      align-items: flex-start;
-                    `}
-                  >
-                    <div>
-                      <h3
-                        className={css`
-                          margin: 0;
-                          font-size: 1.8rem;
-                          color: ${Color.logoBlue()};
-                          font-weight: 700;
-                        `}
-                      >
-                        {topic.content}
-                      </h3>
-                      <div
-                        className={css`
-                          color: ${Color.darkerGray()};
-                          font-size: 1.3rem;
-                          margin-top: 0.3rem;
-                        `}
-                      >
-                        <UsernameText
-                          user={{ id: topic.userId, username: topic.username }}
-                        />
-                        {topic.timeStamp && (
-                          <small style={{ marginLeft: '0.5rem' }}>
-                            {moment.unix(topic.timeStamp).fromNow()}
-                          </small>
-                        )}
-                        {isOwnTopic && (
+                  <div>
+                    <h3
+                      className={css`
+                        margin: 0;
+                        font-size: 1.8rem;
+                        color: ${Color.logoBlue()};
+                        font-weight: 700;
+                      `}
+                    >
+                      {topic.content}
+                    </h3>
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        color: ${Color.darkerGray()};
+                        font-size: 1.3rem;
+                        margin-top: 0.3rem;
+                      `}
+                    >
+                      <UsernameText
+                        user={{ id: topic.userId, username: topic.username }}
+                      />
+                      {topic.timeStamp && (
+                        <small>{moment.unix(topic.timeStamp).fromNow()}</small>
+                      )}
+                      {isOwnTopic && (
+                        <span
+                          className={css`
+                            padding: 0.2rem 0.5rem;
+                            background: ${Color.logoBlue(0.1)};
+                            border: 1px solid ${Color.logoBlue(0.3)};
+                            border-radius: 4px;
+                            color: ${Color.logoBlue()};
+                            font-size: 1.1rem;
+                            font-weight: 700;
+                          `}
+                        >
+                          Your prompt
+                        </span>
+                      )}
+                      <div className={statsRowClass}>
+                        <div className={statPillClass}>
                           <span
                             className={css`
-                              margin-left: 0.5rem;
-                              padding: 0.2rem 0.5rem;
-                              background: ${Color.logoBlue(0.1)};
-                              border: 1px solid ${Color.logoBlue(0.3)};
-                              border-radius: 4px;
-                              color: ${Color.logoBlue()};
-                              font-size: 1.1rem;
                               font-weight: 700;
                             `}
                           >
-                            Your prompt
+                            {topic.cloneCount ?? 0}
                           </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className={statsRowClass}>
-                      <div className={statPillClass}>
-                        <span
-                          className={css`
-                            font-weight: 700;
-                          `}
-                        >
-                          {topic.cloneCount ?? 0}
-                        </span>
-                        clones
-                      </div>
-                      <div className={statPillClass}>
-                        <span
-                          className={css`
-                            font-weight: 700;
-                          `}
-                        >
-                          {topic.messageCount ?? 0}
-                        </span>
-                        messages
+                          clones
+                        </div>
+                        <div className={statPillClass}>
+                          <span
+                            className={css`
+                              font-weight: 700;
+                            `}
+                          >
+                            {topic.messageCount ?? 0}
+                          </span>
+                          messages
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -434,6 +433,82 @@ export default function SystemPromptShared() {
                       </RichText>
                     </div>
                   )}
+                  {clonedTopic?.sharedTopicId === (topic.subjectId || topic.id) && (
+                    <div
+                      className={css`
+                        padding: 1rem;
+                        background: ${clonedTopic.target === 'zero'
+                          ? Color.logoBlue(0.05)
+                          : Color.pink(0.05)};
+                        border: 1px solid
+                          ${clonedTopic.target === 'zero'
+                            ? Color.logoBlue(0.3)
+                            : Color.pink(0.3)};
+                        border-radius: ${borderRadius};
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.8rem;
+                      `}
+                    >
+                      <div
+                        className={css`
+                          display: flex;
+                          align-items: center;
+                          gap: 0.5rem;
+                        `}
+                      >
+                        <Icon
+                          icon="check-circle"
+                          style={{
+                            color: Color.limeGreen(),
+                            fontSize: '1.4rem'
+                          }}
+                        />
+                        <span
+                          className={css`
+                            font-weight: 700;
+                            font-size: 1.3rem;
+                            color: ${Color.darkerGray()};
+                          `}
+                        >
+                          Cloned to {clonedTopic.target === 'ciel' ? 'Ciel' : 'Zero'}!
+                        </span>
+                      </div>
+                      <Button
+                        color={clonedTopic.target === 'zero' ? 'logoBlue' : 'purple'}
+                        variant="solid"
+                        tone="raised"
+                        style={{
+                          padding: '0.8rem 1.2rem',
+                          fontSize: '1.2rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}
+                        onClick={() => {
+                          const pathId =
+                            Number(clonedTopic.channelId) + Number(CHAT_ID_BASE_NUMBER);
+                          navigate(`/chat/${pathId}/topic/${clonedTopic.topicId}`);
+                        }}
+                      >
+                        <img
+                          src={clonedTopic.target === 'zero' ? zero : ciel}
+                          alt={clonedTopic.target === 'zero' ? 'Zero' : 'Ciel'}
+                          className={css`
+                            width: 2rem;
+                            height: 2rem;
+                            border-radius: 50%;
+                            object-fit: contain;
+                            background: #fff;
+                          `}
+                        />
+                        Start chatting
+                        <Icon icon="chevron-right" />
+                      </Button>
+                    </div>
+                  )}
                   {!isOwnTopic && (
                     <div
                       className={css`
@@ -444,12 +519,13 @@ export default function SystemPromptShared() {
                     >
                       <Button
                         color="logoBlue"
-                        variant="soft"
+                        variant="solid"
                         tone="raised"
                         onClick={() =>
                           handleClone({
                             sharedTopicId: topic.subjectId || topic.id,
-                            target: 'zero'
+                            target: 'zero',
+                            topicTitle: topic.content
                           })
                         }
                         disabled={
@@ -468,9 +544,17 @@ export default function SystemPromptShared() {
                           </>
                         ) : (
                           <>
-                            <Icon
-                              style={{ marginRight: '0.5rem' }}
-                              icon="robot"
+                            <img
+                              src={zero}
+                              alt="Zero"
+                              className={css`
+                                width: 2rem;
+                                height: 2rem;
+                                border-radius: 50%;
+                                margin-right: 0.5rem;
+                                object-fit: contain;
+                                background: #fff;
+                              `}
                             />
                             Clone to Zero
                           </>
@@ -478,12 +562,13 @@ export default function SystemPromptShared() {
                       </Button>
                       <Button
                         color="purple"
-                        variant="soft"
+                        variant="solid"
                         tone="raised"
                         onClick={() =>
                           handleClone({
                             sharedTopicId: topic.subjectId || topic.id,
-                            target: 'ciel'
+                            target: 'ciel',
+                            topicTitle: topic.content
                           })
                         }
                         disabled={
@@ -502,9 +587,17 @@ export default function SystemPromptShared() {
                           </>
                         ) : (
                           <>
-                            <Icon
-                              style={{ marginRight: '0.5rem' }}
-                              icon="robot"
+                            <img
+                              src={ciel}
+                              alt="Ciel"
+                              className={css`
+                                width: 2rem;
+                                height: 2rem;
+                                border-radius: 50%;
+                                margin-right: 0.5rem;
+                                object-fit: contain;
+                                background: #fff;
+                              `}
                             />
                             Clone to Ciel
                           </>
@@ -547,6 +640,7 @@ export default function SystemPromptShared() {
             </Button>
           </div>
         )}
+        {!missionCleared && <MyTopicsManager />}
       </div>
     </ErrorBoundary>
   );

@@ -4,7 +4,6 @@ import { Color, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import Loading from '~/components/Loading';
-import TaskComplete from '../components/TaskComplete';
 
 interface ChecklistItem {
   label: string;
@@ -19,7 +18,6 @@ interface ChecklistProps {
   progressError: string;
   doneColor: string;
   contentColor: string;
-  missionId: number;
   style?: React.CSSProperties;
   className?: string;
 }
@@ -31,7 +29,6 @@ export default function Checklist({
   progressError,
   doneColor,
   contentColor,
-  missionId,
   style,
   className
 }: ChecklistProps) {
@@ -283,13 +280,6 @@ export default function Checklist({
             );
           })}
         </>
-      )}
-      {missionCleared && (
-        <TaskComplete
-          style={{ marginTop: '0.5rem' }}
-          taskId={missionId}
-          passMessage="Nice work! Collect your reward."
-        />
       )}
     </aside>
   );

@@ -22,6 +22,7 @@ export default function GitHub({
       {conditionPassed ? (
         <TaskComplete
           taskId={task.id}
+          allTasksComplete
           passMessage="Great job creating your GitHub account!"
         />
       ) : (

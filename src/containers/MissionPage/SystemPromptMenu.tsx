@@ -6,10 +6,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 export default function SystemPromptMenu({
   className,
   missionType,
+  missionCleared,
   style
 }: {
   className?: string;
   missionType: string;
+  missionCleared?: boolean;
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function SystemPromptMenu({
   const basePath = `/missions/${missionType}`;
 
   const isMission = location.pathname === basePath;
+  const isWorkshop = location.pathname === `${basePath}/workshop`;
   const isShared = location.pathname === `${basePath}/shared`;
 
   return (
@@ -37,6 +40,16 @@ export default function SystemPromptMenu({
         <Icon icon="clipboard-check" />
         <span style={{ marginLeft: '1.1rem' }}>Mission</span>
       </nav>
+      {missionCleared && (
+        <nav
+          className={isWorkshop ? 'active' : ''}
+          onClick={() => navigate(`${basePath}/workshop`)}
+          style={navStyle}
+        >
+          <Icon icon="wand-magic-sparkles" />
+          <span style={{ marginLeft: '1.1rem' }}>Workshop</span>
+        </nav>
+      )}
       <nav
         className={isShared ? 'active' : ''}
         onClick={() => navigate(`${basePath}/shared`)}

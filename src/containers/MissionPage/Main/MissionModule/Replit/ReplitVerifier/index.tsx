@@ -119,6 +119,7 @@ export default function ReplitVerifier({
         <TaskComplete
           innerRef={TaskCompleteRef}
           taskId={task.id}
+          allTasksComplete
           passMessage="That's it! Excellent work"
           passMessageFontSize="2.2rem"
         />
