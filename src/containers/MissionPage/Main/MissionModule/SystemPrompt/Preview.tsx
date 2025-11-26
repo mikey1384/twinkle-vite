@@ -1,10 +1,59 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Textarea from '~/components/Texts/Textarea';
 import RichText from '~/components/Texts/RichText';
+
+const cardClass = css`
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  padding: 1.4rem 1.6rem;
+  box-shadow: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.2rem;
+  }
+`;
+
+const sectionHeaderClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
+
+const labelClass = css`
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: ${Color.darkerGray()};
+`;
+
+const chatWindowClass = css`
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  background: ${Color.highlightGray(0.5)};
+  padding: 1.2rem;
+  min-height: 24rem;
+  max-height: 40rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  position: relative;
+`;
+
+const bubbleLabelClass = css`
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: ${Color.gray()};
+  margin-bottom: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+`;
 
 interface ChatMessage {
   id: number;
@@ -41,75 +90,6 @@ export default function SystemPromptPreview({
   onSendMessage,
   style
 }: PreviewProps) {
-  const cardClass = useMemo(
-    () =>
-      css`
-        width: 100%;
-        background: #fff;
-        border: 1px solid var(--ui-border);
-        border-radius: ${borderRadius};
-        padding: 1.4rem 1.6rem;
-        box-shadow: none;
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 1.2rem;
-        }
-      `,
-    []
-  );
-
-  const sectionHeaderClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-      `,
-    []
-  );
-
-  const labelClass = useMemo(
-    () =>
-      css`
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: ${Color.darkerGray()};
-      `,
-    []
-  );
-
-  const chatWindowClass = useMemo(
-    () =>
-      css`
-        border: 1px solid var(--ui-border);
-        border-radius: ${borderRadius};
-        background: ${Color.highlightGray(0.5)};
-        padding: 1.2rem;
-        min-height: 24rem;
-        max-height: 40rem;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.2rem;
-        position: relative;
-      `,
-    []
-  );
-
-  const bubbleLabelClass = useMemo(
-    () =>
-      css`
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: ${Color.gray()};
-        margin-bottom: 0.35rem;
-        display: inline-flex;
-        align-items: center;
-      `,
-    []
-  );
-
   return (
     <section
       className={`${cardClass} ${css`
@@ -254,7 +234,9 @@ export default function SystemPromptPreview({
           flex-direction: column;
           ${chatMessages.length === 0
             ? `
-            background: linear-gradient(135deg, ${Color.logoBlue(0.03)}, ${Color.magenta(0.03)});
+            background: linear-gradient(135deg, ${Color.logoBlue(
+              0.03
+            )}, ${Color.magenta(0.03)});
             border-radius: ${borderRadius};
             padding: 1rem;
             border: 1px dashed ${Color.logoBlue(0.3)};

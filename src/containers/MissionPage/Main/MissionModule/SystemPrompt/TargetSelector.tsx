@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
@@ -8,6 +8,18 @@ import { useNavigate } from 'react-router-dom';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
+
+const cardClass = css`
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  padding: 1.4rem 1.6rem;
+  box-shadow: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.2rem;
+  }
+`;
 
 interface TargetSelectorProps {
   hasPrompt: boolean;
@@ -42,16 +54,12 @@ export default function TargetSelector({
   const appliedTarget = progress?.pendingPromptForChat?.target;
   const appliedChannelId = progress?.pendingPromptForChat?.channelId;
 
-  // Step 2 complete: User has applied prompt and sent 2+ messages
   const step2Complete = hasAiTopic && aiMessageCount >= 2;
 
-  // Shared topic info for navigation
   const sharedTopicId = progress?.sharedTopic?.id;
   const sharedTopicChannelId = progress?.sharedTopic?.channelId;
   const sharedMessageCount = progress?.sharedTopic?.messageCount || 0;
 
-  // Determine which AI the shared prompt was cloned to
-  // If channelIds match, same AI. If different, it's the other AI.
   const sharedTarget =
     sharedTopicChannelId === appliedChannelId
       ? appliedTarget
@@ -59,44 +67,9 @@ export default function TargetSelector({
       ? 'zero'
       : 'ciel';
 
-  const cardClass = useMemo(
-    () =>
-      css`
-        width: 100%;
-        background: #fff;
-        border: 1px solid var(--ui-border);
-        border-radius: ${borderRadius};
-        padding: 1.4rem 1.6rem;
-        box-shadow: none;
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 1.2rem;
-        }
-      `,
-    []
-  );
-
-  const handleGoToOwnPromptChat = () => {
-    if (!appliedChannelId) return;
-    const pathId = Number(appliedChannelId) + Number(CHAT_ID_BASE_NUMBER);
-    const appliedTopicId = progress?.pendingPromptForChat?.topicId;
-    if (appliedTopicId) {
-      navigate(`/chat/${pathId}/topic/${appliedTopicId}`);
-    } else {
-      navigate(`/chat/${pathId}`);
-    }
-  };
-
-  const handleGoToSharedChat = () => {
-    if (!sharedTopicChannelId || !sharedTopicId) return;
-    const pathId = Number(sharedTopicChannelId) + Number(CHAT_ID_BASE_NUMBER);
-    navigate(`/chat/${pathId}/topic/${sharedTopicId}`);
-  };
-
-  // Calculate message progress for the progress bar
   const messageProgress = Math.min(aiMessageCount, 2);
   const messageProgressPercent = (messageProgress / 2) * 100;
 
-  // Show button to user's own prompt chat (before they clone a shared topic)
   const ownPromptButtonSection =
     !hasSharedTopic && appliedTarget && appliedChannelId ? (
       <section
@@ -151,7 +124,9 @@ export default function TargetSelector({
           >
             {step2Complete
               ? `You've sent ${aiMessageCount} messages with your custom prompt.`
-              : `Chat with ${appliedTarget === 'zero' ? 'Zero' : 'Ciel'} to see your custom instructions in action.`}
+              : `Chat with ${
+                  appliedTarget === 'zero' ? 'Zero' : 'Ciel'
+                } to see your custom instructions in action.`}
           </div>
           <div
             className={css`
@@ -226,7 +201,6 @@ export default function TargetSelector({
       </section>
     ) : null;
 
-  // Show "Browse shared topics" guidance when step 2 complete but shared topic not cloned yet
   const browseSharedTopicsSection =
     step2Complete && !hasSharedTopic ? (
       <section
@@ -357,8 +331,12 @@ export default function TargetSelector({
             `}
           >
             {step3Complete
-              ? `You've sent ${sharedMessageCount} message${sharedMessageCount === 1 ? '' : 's'} with your cloned prompt.`
-              : `Chat with ${sharedTarget === 'ciel' ? 'Ciel' : 'Zero'} to see your cloned prompt in action.`}
+              ? `You've sent ${sharedMessageCount} message${
+                  sharedMessageCount === 1 ? '' : 's'
+                } with your cloned prompt.`
+              : `Chat with ${
+                  sharedTarget === 'ciel' ? 'Ciel' : 'Zero'
+                } to see your cloned prompt in action.`}
           </div>
           <div
             className={css`
@@ -425,7 +403,8 @@ export default function TargetSelector({
               {step3Complete ? 'Continue chatting with' : 'Start chatting with'}
             </span>
             <span style={{ fontWeight: 'bold' }}>
-              {progress?.sharedTopic?.title || (sharedTarget === 'ciel' ? 'Ciel' : 'Zero')}
+              {progress?.sharedTopic?.title ||
+                (sharedTarget === 'ciel' ? 'Ciel' : 'Zero')}
             </span>
           </div>
           <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
@@ -455,7 +434,11 @@ export default function TargetSelector({
             tone="raised"
             loading={applyingTarget === 'zero'}
             disabled={
-              !hasPrompt || applyingTarget === 'ciel' || sending || improving || generating
+              !hasPrompt ||
+              applyingTarget === 'ciel' ||
+              sending ||
+              improving ||
+              generating
             }
             onClick={() => onApplyToAIChat('zero')}
           >
@@ -480,7 +463,11 @@ export default function TargetSelector({
             variant="solid"
             tone="raised"
             disabled={
-              !hasPrompt || applyingTarget === 'zero' || sending || improving || generating
+              !hasPrompt ||
+              applyingTarget === 'zero' ||
+              sending ||
+              improving ||
+              generating
             }
             loading={applyingTarget === 'ciel'}
             onClick={() => onApplyToAIChat('ciel')}
@@ -508,4 +495,21 @@ export default function TargetSelector({
       {chatButtonSection}
     </div>
   );
+
+  function handleGoToOwnPromptChat() {
+    if (!appliedChannelId) return;
+    const pathId = Number(appliedChannelId) + Number(CHAT_ID_BASE_NUMBER);
+    const appliedTopicId = progress?.pendingPromptForChat?.topicId;
+    if (appliedTopicId) {
+      navigate(`/chat/${pathId}/topic/${appliedTopicId}`);
+    } else {
+      navigate(`/chat/${pathId}`);
+    }
+  }
+
+  function handleGoToSharedChat() {
+    if (!sharedTopicChannelId || !sharedTopicId) return;
+    const pathId = Number(sharedTopicChannelId) + Number(CHAT_ID_BASE_NUMBER);
+    navigate(`/chat/${pathId}/topic/${sharedTopicId}`);
+  }
 }

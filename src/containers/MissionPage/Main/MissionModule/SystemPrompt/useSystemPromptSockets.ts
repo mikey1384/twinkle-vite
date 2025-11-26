@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 
@@ -18,20 +18,20 @@ interface SystemPromptState {
 
 interface UseSystemPromptSocketsProps {
   systemPromptState: SystemPromptState;
-  setSystemPromptState: (newState: SystemPromptState) => void;
-  setSending: (sending: boolean) => void;
-  setImproving: (improving: boolean) => void;
-  setGenerating: (generating: boolean) => void;
-  setError: (error: string) => void;
+  onSetSystemPromptState: (newState: SystemPromptState) => void;
+  onSetSending: (sending: boolean) => void;
+  onSetImproving: (improving: boolean) => void;
+  onSetGenerating: (generating: boolean) => void;
+  onSetError: (error: string) => void;
 }
 
 export default function useSystemPromptSockets({
   systemPromptState,
-  setSystemPromptState,
-  setSending,
-  setImproving,
-  setGenerating,
-  setError
+  onSetSystemPromptState,
+  onSetSending,
+  onSetImproving,
+  onSetGenerating,
+  onSetError
 }: UseSystemPromptSocketsProps) {
   const systemPromptStateRef = useRef<SystemPromptState>(systemPromptState);
   const previewRequestIdRef = useRef<string | null>(null);
@@ -44,54 +44,45 @@ export default function useSystemPromptSockets({
     systemPromptStateRef.current = systemPromptState;
   }, [systemPromptState]);
 
-  const updateStreamingContent = useCallback(
-    (content: string) => {
-      const currentState = systemPromptStateRef.current;
-      const messages = currentState.chatMessages || [];
-      const targetId = streamingMessageIdRef.current;
-      if (!targetId) return;
-      const index = messages.findIndex((message) => message.id === targetId);
-      if (index < 0) return;
-      const updatedMessages = [...messages];
-      updatedMessages[index] = {
-        ...updatedMessages[index],
-        content
-      };
-      setSystemPromptState({
-        ...currentState,
-        chatMessages: updatedMessages
-      });
-    },
-    [setSystemPromptState]
-  );
+  function handleUpdateStreamingContent(content: string) {
+    const currentState = systemPromptStateRef.current;
+    const messages = currentState.chatMessages || [];
+    const targetId = streamingMessageIdRef.current;
+    if (!targetId) return;
+    const index = messages.findIndex((message) => message.id === targetId);
+    if (index < 0) return;
+    const updatedMessages = [...messages];
+    updatedMessages[index] = {
+      ...updatedMessages[index],
+      content
+    };
+    onSetSystemPromptState({
+      ...currentState,
+      chatMessages: updatedMessages
+    });
+  }
 
-  const finalizeStreaming = useCallback(
-    (finalReply?: string) => {
-      if (typeof finalReply === 'string' && finalReply.length > 0) {
-        updateStreamingContent(finalReply);
-      }
-      streamingMessageIdRef.current = null;
-      previewRequestIdRef.current = null;
-      setSending(false);
-    },
-    [setSending, updateStreamingContent]
-  );
+  function handleFinalizeStreaming(finalReply?: string) {
+    if (typeof finalReply === 'string' && finalReply.length > 0) {
+      handleUpdateStreamingContent(finalReply);
+    }
+    streamingMessageIdRef.current = null;
+    previewRequestIdRef.current = null;
+    onSetSending(false);
+  }
 
-  const handleStreamingError = useCallback(
-    (message: string) => {
-      const fallbackMsg =
-        message || 'Unable to get a preview response. Please try again.';
-      updateStreamingContent(fallbackMsg);
-      setError(fallbackMsg);
-      streamingMessageIdRef.current = null;
-      previewRequestIdRef.current = null;
-      setSending(false);
-    },
-    [setError, setSending, updateStreamingContent]
-  );
+  function handleStreamingError(message: string) {
+    const fallbackMsg =
+      message || 'Unable to get a preview response. Please try again.';
+    handleUpdateStreamingContent(fallbackMsg);
+    onSetError(fallbackMsg);
+    streamingMessageIdRef.current = null;
+    previewRequestIdRef.current = null;
+    onSetSending(false);
+  }
 
   useEffect(() => {
-    function handlePreviewUpdate({
+    function onPreviewUpdate({
       requestId,
       reply
     }: {
@@ -99,10 +90,10 @@ export default function useSystemPromptSockets({
       reply?: string;
     }) {
       if (!requestId || requestId !== previewRequestIdRef.current) return;
-      updateStreamingContent(reply || '');
+      handleUpdateStreamingContent(reply || '');
     }
 
-    function handlePreviewComplete({
+    function onPreviewComplete({
       requestId,
       reply
     }: {
@@ -110,10 +101,10 @@ export default function useSystemPromptSockets({
       reply?: string;
     }) {
       if (!requestId || requestId !== previewRequestIdRef.current) return;
-      finalizeStreaming(reply);
+      handleFinalizeStreaming(reply);
     }
 
-    function handlePreviewError({
+    function onPreviewError({
       requestId,
       error: errorMessage
     }: {
@@ -124,19 +115,20 @@ export default function useSystemPromptSockets({
       handleStreamingError(errorMessage || '');
     }
 
-    socket.on('system_prompt_preview_update', handlePreviewUpdate);
-    socket.on('system_prompt_preview_complete', handlePreviewComplete);
-    socket.on('system_prompt_preview_error', handlePreviewError);
+    socket.on('system_prompt_preview_update', onPreviewUpdate);
+    socket.on('system_prompt_preview_complete', onPreviewComplete);
+    socket.on('system_prompt_preview_error', onPreviewError);
 
     return () => {
-      socket.off('system_prompt_preview_update', handlePreviewUpdate);
-      socket.off('system_prompt_preview_complete', handlePreviewComplete);
-      socket.off('system_prompt_preview_error', handlePreviewError);
+      socket.off('system_prompt_preview_update', onPreviewUpdate);
+      socket.off('system_prompt_preview_complete', onPreviewComplete);
+      socket.off('system_prompt_preview_error', onPreviewError);
     };
-  }, [finalizeStreaming, handleStreamingError, updateStreamingContent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    function handleImproveUpdate({
+    function onImproveUpdate({
       requestId,
       content,
       structuredContent
@@ -152,13 +144,13 @@ export default function useSystemPromptSockets({
         topicText: currentState.title,
         fallbackText: content || ''
       });
-      setSystemPromptState({
+      onSetSystemPromptState({
         ...currentState,
         prompt: formatted
       });
     }
 
-    function handleImproveComplete({
+    function onImproveComplete({
       requestId,
       content,
       structuredContent
@@ -174,15 +166,15 @@ export default function useSystemPromptSockets({
         topicText: currentState.title,
         fallbackText: content || currentState.prompt
       });
-      setSystemPromptState({
+      onSetSystemPromptState({
         ...currentState,
         prompt: formatted
       });
       improveRequestIdRef.current = null;
-      setImproving(false);
+      onSetImproving(false);
     }
 
-    function handleImproveError({
+    function onImproveError({
       requestId,
       error: errorMessage
     }: {
@@ -191,30 +183,31 @@ export default function useSystemPromptSockets({
     }) {
       if (!requestId || requestId !== improveRequestIdRef.current) return;
       const currentState = systemPromptStateRef.current;
-      setSystemPromptState({
+      onSetSystemPromptState({
         ...currentState,
         prompt: improveOriginalPromptRef.current
       });
       improveRequestIdRef.current = null;
-      setImproving(false);
-      setError(
+      onSetImproving(false);
+      onSetError(
         errorMessage || 'Unable to improve the prompt. Please try again.'
       );
     }
 
-    socket.on('improve_custom_instructions_update', handleImproveUpdate);
-    socket.on('improve_custom_instructions_complete', handleImproveComplete);
-    socket.on('improve_custom_instructions_error', handleImproveError);
+    socket.on('improve_custom_instructions_update', onImproveUpdate);
+    socket.on('improve_custom_instructions_complete', onImproveComplete);
+    socket.on('improve_custom_instructions_error', onImproveError);
 
     return () => {
-      socket.off('improve_custom_instructions_update', handleImproveUpdate);
-      socket.off('improve_custom_instructions_complete', handleImproveComplete);
-      socket.off('improve_custom_instructions_error', handleImproveError);
+      socket.off('improve_custom_instructions_update', onImproveUpdate);
+      socket.off('improve_custom_instructions_complete', onImproveComplete);
+      socket.off('improve_custom_instructions_error', onImproveError);
     };
-  }, [setImproving, setSystemPromptState, setError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    function handleGenerateUpdate({
+    function onGenerateUpdate({
       requestId,
       content
     }: {
@@ -223,13 +216,13 @@ export default function useSystemPromptSockets({
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
       const currentState = systemPromptStateRef.current;
-      setSystemPromptState({
+      onSetSystemPromptState({
         ...currentState,
         prompt: content || ''
       });
     }
 
-    function handleGenerateComplete({
+    function onGenerateComplete({
       requestId,
       content
     }: {
@@ -238,15 +231,15 @@ export default function useSystemPromptSockets({
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
       const currentState = systemPromptStateRef.current;
-      setSystemPromptState({
+      onSetSystemPromptState({
         ...currentState,
         prompt: content || ''
       });
       generateRequestIdRef.current = null;
-      setGenerating(false);
+      onSetGenerating(false);
     }
 
-    function handleGenerateError({
+    function onGenerateError({
       requestId,
       error: errorMessage
     }: {
@@ -255,22 +248,23 @@ export default function useSystemPromptSockets({
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
       generateRequestIdRef.current = null;
-      setGenerating(false);
-      setError(
+      onSetGenerating(false);
+      onSetError(
         errorMessage || 'Unable to generate the prompt. Please try again.'
       );
     }
 
-    socket.on('generate_custom_instructions_update', handleGenerateUpdate);
-    socket.on('generate_custom_instructions_complete', handleGenerateComplete);
-    socket.on('generate_custom_instructions_error', handleGenerateError);
+    socket.on('generate_custom_instructions_update', onGenerateUpdate);
+    socket.on('generate_custom_instructions_complete', onGenerateComplete);
+    socket.on('generate_custom_instructions_error', onGenerateError);
 
     return () => {
-      socket.off('generate_custom_instructions_update', handleGenerateUpdate);
-      socket.off('generate_custom_instructions_complete', handleGenerateComplete);
-      socket.off('generate_custom_instructions_error', handleGenerateError);
+      socket.off('generate_custom_instructions_update', onGenerateUpdate);
+      socket.off('generate_custom_instructions_complete', onGenerateComplete);
+      socket.off('generate_custom_instructions_error', onGenerateError);
     };
-  }, [setGenerating, setSystemPromptState, setError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     previewRequestIdRef,

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -47,7 +53,13 @@ export default function PromptWorkshop({
 
   // State from mission context
   const systemPromptState = useMemo(() => {
-    return mission?.systemPromptState || { title: '', prompt: '', promptEverGenerated: false };
+    return (
+      mission?.systemPromptState || {
+        title: '',
+        prompt: '',
+        promptEverGenerated: false
+      }
+    );
   }, [mission?.systemPromptState]);
 
   const title = systemPromptState.title || '';
@@ -59,7 +71,9 @@ export default function PromptWorkshop({
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [improving, setImproving] = useState(false);
-  const [applyingTarget, setApplyingTarget] = useState<'zero' | 'ciel' | null>(null);
+  const [applyingTarget, setApplyingTarget] = useState<'zero' | 'ciel' | null>(
+    null
+  );
   const [error, setError] = useState('');
 
   const messageListRef = useRef<HTMLDivElement>(null);
@@ -72,11 +86,16 @@ export default function PromptWorkshop({
   const canGenerate = trimmedTitle.length > 0 && !generating;
   const canSend = hasPrompt && userMessage.trim().length > 0 && !sending;
   const showPromptSection = hasPrompt || promptEverGenerated || generating;
-  const showTitleGenerateButton = !showPromptSection || (generating && !hasPrompt);
+  const showTitleGenerateButton =
+    !showPromptSection || (generating && !hasPrompt);
 
   // Update mission state helper
   const setSystemPromptState = useCallback(
-    (nextState: { title?: string; prompt?: string; promptEverGenerated?: boolean }) => {
+    (nextState: {
+      title?: string;
+      prompt?: string;
+      promptEverGenerated?: boolean;
+    }) => {
       onSetMissionState({
         missionId: mission.id,
         newState: {
@@ -89,20 +108,38 @@ export default function PromptWorkshop({
 
   // Socket listeners for generate_custom_instructions
   useEffect(() => {
-    function handleGenerateUpdate({ requestId, content }: { requestId: string; content: string }) {
+    function handleGenerateUpdate({
+      requestId,
+      content
+    }: {
+      requestId: string;
+      content: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setSystemPromptState({ prompt: content });
       }
     }
 
-    function handleGenerateComplete({ requestId, content }: { requestId: string; content: string }) {
+    function handleGenerateComplete({
+      requestId,
+      content
+    }: {
+      requestId: string;
+      content: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setSystemPromptState({ prompt: content });
         setGenerating(false);
       }
     }
 
-    function handleGenerateError({ requestId, error }: { requestId: string; error: string }) {
+    function handleGenerateError({
+      requestId,
+      error
+    }: {
+      requestId: string;
+      error: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setError(error || 'Failed to generate prompt');
         setGenerating(false);
@@ -115,27 +152,48 @@ export default function PromptWorkshop({
 
     return () => {
       socket.off('generate_custom_instructions_update', handleGenerateUpdate);
-      socket.off('generate_custom_instructions_complete', handleGenerateComplete);
+      socket.off(
+        'generate_custom_instructions_complete',
+        handleGenerateComplete
+      );
       socket.off('generate_custom_instructions_error', handleGenerateError);
     };
   }, [setSystemPromptState]);
 
   // Socket listeners for improve_custom_instructions
   useEffect(() => {
-    function handleImproveUpdate({ requestId, content }: { requestId: string; content: string }) {
+    function handleImproveUpdate({
+      requestId,
+      content
+    }: {
+      requestId: string;
+      content: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setSystemPromptState({ prompt: content });
       }
     }
 
-    function handleImproveComplete({ requestId, content }: { requestId: string; content: string }) {
+    function handleImproveComplete({
+      requestId,
+      content
+    }: {
+      requestId: string;
+      content: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setSystemPromptState({ prompt: content });
         setImproving(false);
       }
     }
 
-    function handleImproveError({ requestId, error }: { requestId: string; error: string }) {
+    function handleImproveError({
+      requestId,
+      error
+    }: {
+      requestId: string;
+      error: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setError(error || 'Failed to improve prompt');
         setImproving(false);
@@ -155,32 +213,56 @@ export default function PromptWorkshop({
 
   // Socket listeners for system_prompt_preview (test chat)
   useEffect(() => {
-    function handlePreviewUpdate({ requestId, reply }: { requestId: string; reply: string }) {
+    function handlePreviewUpdate({
+      requestId,
+      reply
+    }: {
+      requestId: string;
+      reply: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setChatMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
             return [...prev.slice(0, -1), { ...last, content: reply }];
           }
-          return [...prev, { id: Date.now(), role: 'assistant', content: reply }];
+          return [
+            ...prev,
+            { id: Date.now(), role: 'assistant', content: reply }
+          ];
         });
       }
     }
 
-    function handlePreviewComplete({ requestId, reply }: { requestId: string; reply: string }) {
+    function handlePreviewComplete({
+      requestId,
+      reply
+    }: {
+      requestId: string;
+      reply: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setChatMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
             return [...prev.slice(0, -1), { ...last, content: reply }];
           }
-          return [...prev, { id: Date.now(), role: 'assistant', content: reply }];
+          return [
+            ...prev,
+            { id: Date.now(), role: 'assistant', content: reply }
+          ];
         });
         setSending(false);
       }
     }
 
-    function handlePreviewError({ requestId, error }: { requestId: string; error: string }) {
+    function handlePreviewError({
+      requestId,
+      error
+    }: {
+      requestId: string;
+      error: string;
+    }) {
       if (requestId === requestIdRef.current) {
         setError(error || 'Failed to get response');
         setSending(false);
@@ -276,7 +358,8 @@ export default function PromptWorkshop({
           target
         });
         if (data?.channelId && data?.topicId) {
-          const recipientId = target === 'zero' ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
+          const recipientId =
+            target === 'zero' ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
           onOpenNewChatTab({
             user: { id: userId },
             recipient: { id: recipientId }
@@ -358,7 +441,10 @@ export default function PromptWorkshop({
             tone="raised"
             style={{ marginTop: '0.5rem', fontSize: '1.1rem' }}
           >
-            <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.5rem' }} />
+            <Icon
+              icon="wand-magic-sparkles"
+              style={{ marginRight: '0.5rem' }}
+            />
             Generate
           </Button>
         )}
@@ -383,7 +469,10 @@ export default function PromptWorkshop({
                 variant="ghost"
                 style={{ padding: '0.4rem 0.8rem', fontSize: '1rem' }}
               >
-                <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.4rem' }} />
+                <Icon
+                  icon="wand-magic-sparkles"
+                  style={{ marginRight: '0.4rem' }}
+                />
                 {improving ? 'Improving...' : 'Improve'}
               </Button>
             ) : (
@@ -396,12 +485,19 @@ export default function PromptWorkshop({
               >
                 {generating ? (
                   <>
-                    <Icon icon="spinner" pulse style={{ marginRight: '0.4rem' }} />
+                    <Icon
+                      icon="spinner"
+                      pulse
+                      style={{ marginRight: '0.4rem' }}
+                    />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <Icon icon="wand-magic-sparkles" style={{ marginRight: '0.4rem' }} />
+                    <Icon
+                      icon="wand-magic-sparkles"
+                      style={{ marginRight: '0.4rem' }}
+                    />
                     Generate
                   </>
                 )}
@@ -476,8 +572,12 @@ export default function PromptWorkshop({
                 <div
                   key={msg.id}
                   className={css`
-                    align-self: ${msg.role === 'assistant' ? 'flex-start' : 'flex-end'};
-                    background: ${msg.role === 'assistant' ? '#fff' : Color.skyBlue(0.1)};
+                    align-self: ${msg.role === 'assistant'
+                      ? 'flex-start'
+                      : 'flex-end'};
+                    background: ${msg.role === 'assistant'
+                      ? '#fff'
+                      : Color.skyBlue(0.1)};
                     border: 1px solid var(--ui-border);
                     border-radius: ${borderRadius};
                     padding: 0.6rem 0.8rem;

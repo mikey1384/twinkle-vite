@@ -1,10 +1,36 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Input from '~/components/Texts/Input';
 import Textarea from '~/components/Texts/Textarea';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+
+const cardClass = css`
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: ${borderRadius};
+  padding: 1.4rem 1.6rem;
+  box-shadow: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1.2rem;
+  }
+`;
+
+const labelClass = css`
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: ${Color.darkerGray()};
+`;
+
+const sectionHeaderClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+`;
 
 interface EditorProps {
   title: string;
@@ -39,54 +65,15 @@ export default function Editor({
   const trimmedTitle = title.trim();
   const canGenerate = trimmedTitle.length > 0 && !generating;
   const showPromptSection = hasPrompt || promptEverGenerated;
-  // Show generate button in title section when not yet generated OR when currently generating
+
   const showTitleGenerateButton =
     !showPromptSection || (generating && !hasPrompt);
 
-  // Auto-scroll textarea to bottom during generation/improvement
   useEffect(() => {
     if ((generating || improving) && textareaRef.current) {
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
     }
   }, [generating, improving, prompt]);
-
-  const cardClass = useMemo(
-    () =>
-      css`
-        width: 100%;
-        background: #fff;
-        border: 1px solid var(--ui-border);
-        border-radius: ${borderRadius};
-        padding: 1.4rem 1.6rem;
-        box-shadow: none;
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 1.2rem;
-        }
-      `,
-    []
-  );
-
-  const labelClass = useMemo(
-    () =>
-      css`
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: ${Color.darkerGray()};
-      `,
-    []
-  );
-
-  const sectionHeaderClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-      `,
-    []
-  );
 
   return (
     <>

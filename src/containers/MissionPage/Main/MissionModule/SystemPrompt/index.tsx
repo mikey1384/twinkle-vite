@@ -1,15 +1,14 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useChatContext, useKeyContext, useMissionContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useMissionContext
+} from '~/contexts';
 import useSystemPromptSockets from './useSystemPromptSockets';
 import Checklist from './Checklist';
 import Editor from './Editor';
@@ -17,6 +16,36 @@ import TargetSelector from './TargetSelector';
 import Preview from './Preview';
 import TaskComplete from '../components/TaskComplete';
 import MissionStatusCard from '~/components/MissionStatusCard';
+
+const layoutClass = css`
+  display: grid;
+  grid-template-columns: minmax(26rem, 30rem) 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
+  width: 100%;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+`;
+
+const sidebarClass = css`
+  position: sticky;
+  top: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    position: static;
+  }
+`;
+
+const contentClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+`;
 
 interface ChatMessage {
   id: number;
@@ -65,8 +94,7 @@ export default function SystemPromptMission({
   );
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
   const userId = useKeyContext((v) => v.myState.userId);
-  const doneColor = useKeyContext((v) => v.theme.done.color);
-  const contentColor = useKeyContext((v) => v.theme.content.color);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
 
   const myAttempt = useMemo(
     () => myAttempts?.[mission.id],
@@ -100,17 +128,6 @@ export default function SystemPromptMission({
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const draftTimeoutRef = useRef<any>(null);
 
-  const setSystemPromptState = useCallback(
-    (nextState: SystemPromptState) => {
-      onSetMissionState({
-        missionId: mission.id,
-        newState: { systemPromptState: nextState }
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mission.id]
-  );
-
   // Reset state when user changes
   useEffect(() => {
     if (userId && mission.prevUserId && userId !== mission.prevUserId) {
@@ -139,11 +156,11 @@ export default function SystemPromptMission({
     generateRequestIdRef
   } = useSystemPromptSockets({
     systemPromptState,
-    setSystemPromptState,
-    setSending,
-    setImproving,
-    setGenerating,
-    setError
+    onSetSystemPromptState: handleSetSystemPromptState,
+    onSetSending: setSending,
+    onSetImproving: setImproving,
+    onSetGenerating: setGenerating,
+    onSetError: setError
   });
 
   const { title, prompt, userMessage, chatMessages, promptEverGenerated } =
@@ -156,12 +173,13 @@ export default function SystemPromptMission({
   // If there's already a saved prompt, mark as ever generated
   useEffect(() => {
     if (hasPrompt && !promptEverGenerated) {
-      setSystemPromptState({
+      handleSetSystemPromptState({
         ...systemPromptState,
         promptEverGenerated: true
       });
     }
-  }, [hasPrompt, promptEverGenerated, systemPromptState, setSystemPromptState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPrompt, promptEverGenerated]);
   const canSend = Boolean(hasPrompt && trimmedMessage && !sending);
   const createdPrompt = useMemo(() => {
     const hasPreviewedLocally = chatMessages.some(
@@ -177,8 +195,6 @@ export default function SystemPromptMission({
     progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
 
-  // myAttempt?.status === 'pass' is the authoritative source - if mission is
-  // marked complete, that overrides any local progress calculations
   const missionCleared =
     myAttempt?.status === 'pass' ||
     (createdPrompt &&
@@ -206,15 +222,16 @@ export default function SystemPromptMission({
           isMissionPassed || (hasAiTopic && aiMessageCount >= 2)
             ? '2/2 messages in your AI topic'
             : aiTopicId
-              ? `${Math.min(
-                  aiMessageCount,
-                  2
-                )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
-              : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
+            ? `${Math.min(
+                aiMessageCount,
+                2
+              )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
+            : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
       },
       {
         label: `Clone a shared prompt`,
-        complete: isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1),
+        complete:
+          isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1),
         detail:
           isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1)
             ? '1/1 message in your cloned shared prompt'
@@ -292,7 +309,7 @@ export default function SystemPromptMission({
       clearInterval(pollInterval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSystemPromptProgress, missionCleared, mission.id]);
+  }, [missionCleared, mission.id]);
 
   useEffect(() => {
     if (messageListRef.current) {
@@ -317,201 +334,6 @@ export default function SystemPromptMission({
     return () => clearTimeout(draftTimeoutRef.current);
   }, [trimmedTitle, trimmedPrompt]);
 
-  const handleImprovePrompt = useCallback(() => {
-    if (!hasPrompt || improving) return;
-    setError('');
-    improveOriginalPromptRef.current = prompt;
-    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    improveRequestIdRef.current = requestId;
-    setImproving(true);
-    socket.emit('improve_custom_instructions', {
-      requestId,
-      topicText: trimmedTitle || 'Custom System Prompt',
-      customInstructions: trimmedPrompt
-    });
-  }, [
-    hasPrompt,
-    improving,
-    prompt,
-    trimmedTitle,
-    trimmedPrompt,
-    improveOriginalPromptRef,
-    improveRequestIdRef
-  ]);
-
-  const handleGeneratePrompt = useCallback(() => {
-    if (!trimmedTitle || generating) return;
-    setError('');
-    setGenerating(true);
-    setSystemPromptState({
-      ...systemPromptState,
-      promptEverGenerated: true
-    });
-    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    generateRequestIdRef.current = requestId;
-    socket.emit('generate_custom_instructions', {
-      requestId,
-      topicText: trimmedTitle
-    });
-  }, [
-    trimmedTitle,
-    generating,
-    generateRequestIdRef,
-    systemPromptState,
-    setSystemPromptState
-  ]);
-
-  const handleSendMessage = useCallback(() => {
-    if (!canSend) return;
-    setError('');
-    const userMessageObj: ChatMessage = {
-      id: Date.now(),
-      role: 'user',
-      content: trimmedMessage
-    };
-    const baseMessages = [...chatMessages, userMessageObj];
-    const assistantMessageId = Date.now() + 1;
-    const nextState: SystemPromptState = {
-      ...systemPromptState,
-      chatMessages: [
-        ...baseMessages,
-        { id: assistantMessageId, role: 'assistant', content: '' }
-      ],
-      userMessage: ''
-    };
-    setSystemPromptState(nextState);
-    streamingMessageIdRef.current = assistantMessageId;
-    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    previewRequestIdRef.current = requestId;
-    setSending(true);
-    socket.emit('system_prompt_preview', {
-      requestId,
-      promptTitle: trimmedTitle || 'Custom Agent',
-      systemPrompt: trimmedPrompt,
-      messages: baseMessages.map(({ role, content }) => ({
-        role,
-        content: typeof content === 'string' ? content : ''
-      }))
-    });
-  }, [
-    canSend,
-    chatMessages,
-    trimmedMessage,
-    systemPromptState,
-    setSystemPromptState,
-    streamingMessageIdRef,
-    previewRequestIdRef,
-    trimmedTitle,
-    trimmedPrompt
-  ]);
-
-  const handleApplyToAIChat = useCallback(
-    async (target: 'zero' | 'ciel') => {
-      if (!hasPrompt || applyingTarget) return;
-      setError('');
-      setApplyingTarget(target);
-      try {
-        const data = await applySystemPromptToAIChat({
-          promptTitle: trimmedTitle || 'Custom Agent',
-          systemPrompt: trimmedPrompt,
-          target
-        });
-        if (data?.progress) {
-          setProgress(data.progress);
-        }
-        if (typeof data?.missionPromptId === 'number') {
-          setSystemPromptState({
-            ...systemPromptState,
-            missionPromptId: data.missionPromptId
-          });
-        }
-        // Set thinkHard to false for the new topic
-        if (typeof data?.topicId === 'number') {
-          onSetThinkHardForTopic({
-            aiType: target,
-            topicId: data.topicId,
-            thinkHard: false
-          });
-          // Also persist to localStorage
-          try {
-            const stored = localStorage.getItem('thinkHard') || '{}';
-            const parsed = JSON.parse(stored);
-            const updated = {
-              ...parsed,
-              [target]: {
-                ...(parsed[target] || {}),
-                [data.topicId]: false
-              }
-            };
-            localStorage.setItem('thinkHard', JSON.stringify(updated));
-          } catch {
-            // Ignore localStorage errors
-          }
-        }
-      } catch (err: any) {
-        const message =
-          err?.response?.data?.error ||
-          err?.message ||
-          'Unable to export prompt to chat.';
-        setError(message);
-      } finally {
-        setApplyingTarget(null);
-      }
-    },
-    [
-      applyingTarget,
-      applySystemPromptToAIChat,
-      hasPrompt,
-      onSetThinkHardForTopic,
-      setSystemPromptState,
-      systemPromptState,
-      trimmedPrompt,
-      trimmedTitle
-    ]
-  );
-
-  const layoutClass = useMemo(
-    () =>
-      css`
-        display: grid;
-        grid-template-columns: minmax(26rem, 30rem) 1fr;
-        gap: 1.5rem;
-        align-items: flex-start;
-        width: 100%;
-        @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 1fr;
-          gap: 1.2rem;
-        }
-      `,
-    []
-  );
-
-  const sidebarClass = useMemo(
-    () =>
-      css`
-        position: sticky;
-        top: 1.4rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        @media (max-width: ${mobileMaxWidth}) {
-          position: static;
-        }
-      `,
-    []
-  );
-
-  const contentClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        width: 100%;
-      `,
-    []
-  );
-
   // Progressive reveal logic
   const showEditor = true; // Always show title/prompt editor
   const showPreview = !!(trimmedTitle && hasPrompt); // Only show preview if title & prompt exist
@@ -525,8 +347,7 @@ export default function SystemPromptMission({
           missionCleared={!!missionCleared}
           progressLoading={progressLoading}
           progressError={progressError}
-          doneColor={doneColor}
-          contentColor={contentColor}
+          themeColor={profileTheme}
           className={sidebarClass}
         />
         <div className={contentClass}>
@@ -561,13 +382,13 @@ export default function SystemPromptMission({
                   promptEverGenerated={!!promptEverGenerated}
                   saving={saving}
                   onTitleChange={(text) =>
-                    setSystemPromptState({
+                    handleSetSystemPromptState({
                       ...systemPromptState,
                       title: text
                     })
                   }
                   onPromptChange={(text) =>
-                    setSystemPromptState({
+                    handleSetSystemPromptState({
                       ...systemPromptState,
                       prompt: text
                     })
@@ -589,13 +410,13 @@ export default function SystemPromptMission({
                   messageListRef={messageListRef}
                   onClear={() => {
                     setError('');
-                    setSystemPromptState({
+                    handleSetSystemPromptState({
                       ...systemPromptState,
                       chatMessages: []
                     });
                   }}
                   onUserMessageChange={(text) =>
-                    setSystemPromptState({
+                    handleSetSystemPromptState({
                       ...systemPromptState,
                       userMessage: text
                     })
@@ -630,4 +451,128 @@ export default function SystemPromptMission({
       </div>
     </ErrorBoundary>
   );
+
+  function handleSendMessage() {
+    if (!canSend) return;
+    setError('');
+    const userMessageObj: ChatMessage = {
+      id: Date.now(),
+      role: 'user',
+      content: trimmedMessage
+    };
+    const baseMessages = [...chatMessages, userMessageObj];
+    const assistantMessageId = Date.now() + 1;
+    const nextState: SystemPromptState = {
+      ...systemPromptState,
+      chatMessages: [
+        ...baseMessages,
+        { id: assistantMessageId, role: 'assistant', content: '' }
+      ],
+      userMessage: ''
+    };
+    handleSetSystemPromptState(nextState);
+    streamingMessageIdRef.current = assistantMessageId;
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    previewRequestIdRef.current = requestId;
+    setSending(true);
+    socket.emit('system_prompt_preview', {
+      requestId,
+      promptTitle: trimmedTitle || 'Custom Agent',
+      systemPrompt: trimmedPrompt,
+      messages: baseMessages.map(({ role, content }) => ({
+        role,
+        content: typeof content === 'string' ? content : ''
+      }))
+    });
+  }
+
+  function handleImprovePrompt() {
+    if (!hasPrompt || improving) return;
+    setError('');
+    improveOriginalPromptRef.current = prompt;
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    improveRequestIdRef.current = requestId;
+    setImproving(true);
+    socket.emit('improve_custom_instructions', {
+      requestId,
+      topicText: trimmedTitle || 'Custom System Prompt',
+      customInstructions: trimmedPrompt
+    });
+  }
+
+  function handleGeneratePrompt() {
+    if (!trimmedTitle || generating) return;
+    setError('');
+    setGenerating(true);
+    handleSetSystemPromptState({
+      ...systemPromptState,
+      promptEverGenerated: true
+    });
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    generateRequestIdRef.current = requestId;
+    socket.emit('generate_custom_instructions', {
+      requestId,
+      topicText: trimmedTitle
+    });
+  }
+
+  async function handleApplyToAIChat(target: 'zero' | 'ciel') {
+    if (!hasPrompt || applyingTarget) return;
+    setError('');
+    setApplyingTarget(target);
+    try {
+      const data = await applySystemPromptToAIChat({
+        promptTitle: trimmedTitle || 'Custom Agent',
+        systemPrompt: trimmedPrompt,
+        target
+      });
+      if (data?.progress) {
+        setProgress(data.progress);
+      }
+      if (typeof data?.missionPromptId === 'number') {
+        handleSetSystemPromptState({
+          ...systemPromptState,
+          missionPromptId: data.missionPromptId
+        });
+      }
+      // Set thinkHard to false for the new topic
+      if (typeof data?.topicId === 'number') {
+        onSetThinkHardForTopic({
+          aiType: target,
+          topicId: data.topicId,
+          thinkHard: false
+        });
+        // Also persist to localStorage
+        try {
+          const stored = localStorage.getItem('thinkHard') || '{}';
+          const parsed = JSON.parse(stored);
+          const updated = {
+            ...parsed,
+            [target]: {
+              ...(parsed[target] || {}),
+              [data.topicId]: false
+            }
+          };
+          localStorage.setItem('thinkHard', JSON.stringify(updated));
+        } catch {
+          // Ignore localStorage errors
+        }
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        err?.message ||
+        'Unable to export prompt to chat.';
+      setError(message);
+    } finally {
+      setApplyingTarget(null);
+    }
+  }
+
+  function handleSetSystemPromptState(nextState: SystemPromptState) {
+    onSetMissionState({
+      missionId: mission.id,
+      newState: { systemPromptState: nextState }
+    });
+  }
 }
