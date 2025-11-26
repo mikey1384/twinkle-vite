@@ -271,7 +271,7 @@ export default function PromptWorkshop({
       setApplyingTarget(target);
       try {
         const data = await applySystemPromptToAIChat({
-          title: trimmedTitle,
+          promptTitle: trimmedTitle,
           systemPrompt: trimmedPrompt,
           target
         });
