@@ -31,6 +31,9 @@ export default function CloneSharedTopicButton({
   );
   const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onSetThinkHardForTopic = useChatContext(
+    (v) => v.actions.onSetThinkHardForTopic
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
@@ -125,6 +128,31 @@ export default function CloneSharedTopicButton({
           selectedTab: 'all'
         }
       });
+      // Set thinkHard to false for the cloned topic
+      if (subjectId) {
+        const aiType =
+          channelName?.toLowerCase() === 'ciel' ? 'ciel' : 'zero';
+        onSetThinkHardForTopic({
+          aiType,
+          topicId: subjectId,
+          thinkHard: false
+        });
+        // Also persist to localStorage
+        try {
+          const stored = localStorage.getItem('thinkHard') || '{}';
+          const parsed = JSON.parse(stored);
+          const updated = {
+            ...parsed,
+            [aiType]: {
+              ...(parsed[aiType] || {}),
+              [subjectId]: false
+            }
+          };
+          localStorage.setItem('thinkHard', JSON.stringify(updated));
+        } catch {
+          // Ignore localStorage errors
+        }
+      }
       navigate(`/chat/${pathId}`);
       onStartTopic?.();
     } catch (error) {

@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ProgressBar from '~/components/ProgressBar';
 import { useNavigate } from 'react-router-dom';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import zero from '~/assets/zero.png';
@@ -88,6 +89,10 @@ export default function TargetSelector({
     navigate(`/chat/${pathId}/topic/${sharedTopicId}`);
   };
 
+  // Calculate message progress for the progress bar
+  const messageProgress = Math.min(aiMessageCount, 2);
+  const messageProgressPercent = (messageProgress / 2) * 100;
+
   // Show button to user's own prompt chat (before they clone a shared topic)
   const ownPromptButtonSection =
     !hasSharedTopic && appliedTarget && appliedChannelId ? (
@@ -113,6 +118,7 @@ export default function TargetSelector({
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
+            width: 100%;
           `}
         >
           <div
@@ -122,7 +128,17 @@ export default function TargetSelector({
               color: ${Color.darkerGray()};
             `}
           >
-            Success! Your prompt is ready.
+            {step2Complete ? (
+              <>
+                <Icon
+                  icon="check-circle"
+                  style={{ color: Color.limeGreen(), marginRight: '0.5rem' }}
+                />
+                Step complete!
+              </>
+            ) : (
+              'Success! Your prompt is ready.'
+            )}
           </div>
           <div
             className={css`
@@ -130,8 +146,22 @@ export default function TargetSelector({
               color: ${Color.gray()};
             `}
           >
-            Chat with {appliedTarget === 'zero' ? 'Zero' : 'Ciel'} to see your
-            custom instructions in action.
+            {step2Complete
+              ? `You've sent ${aiMessageCount} messages with your custom prompt.`
+              : `Chat with ${appliedTarget === 'zero' ? 'Zero' : 'Ciel'} to see your custom instructions in action.`}
+          </div>
+          <div
+            className={css`
+              width: 100%;
+              max-width: 20rem;
+              margin-top: 0.5rem;
+            `}
+          >
+            <ProgressBar
+              progress={messageProgressPercent}
+              color={appliedTarget === 'zero' ? 'logoBlue' : 'pink'}
+              text={`${messageProgress}/2 messages`}
+            />
           </div>
         </div>
 

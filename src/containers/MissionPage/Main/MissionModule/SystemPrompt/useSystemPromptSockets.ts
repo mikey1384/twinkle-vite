@@ -21,6 +21,7 @@ interface UseSystemPromptSocketsProps {
   setSystemPromptState: (newState: SystemPromptState) => void;
   setSending: (sending: boolean) => void;
   setImproving: (improving: boolean) => void;
+  setGenerating: (generating: boolean) => void;
   setError: (error: string) => void;
 }
 
@@ -29,6 +30,7 @@ export default function useSystemPromptSockets({
   setSystemPromptState,
   setSending,
   setImproving,
+  setGenerating,
   setError
 }: UseSystemPromptSocketsProps) {
   const systemPromptStateRef = useRef<SystemPromptState>(systemPromptState);
@@ -36,6 +38,7 @@ export default function useSystemPromptSockets({
   const streamingMessageIdRef = useRef<number | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
   const improveOriginalPromptRef = useRef('');
+  const generateRequestIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     systemPromptStateRef.current = systemPromptState;
@@ -210,10 +213,70 @@ export default function useSystemPromptSockets({
     };
   }, [setImproving, setSystemPromptState, setError]);
 
+  useEffect(() => {
+    function handleGenerateUpdate({
+      requestId,
+      content
+    }: {
+      requestId?: string;
+      content?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      const currentState = systemPromptStateRef.current;
+      setSystemPromptState({
+        ...currentState,
+        prompt: content || ''
+      });
+    }
+
+    function handleGenerateComplete({
+      requestId,
+      content
+    }: {
+      requestId?: string;
+      content?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      const currentState = systemPromptStateRef.current;
+      setSystemPromptState({
+        ...currentState,
+        prompt: content || ''
+      });
+      generateRequestIdRef.current = null;
+      setGenerating(false);
+    }
+
+    function handleGenerateError({
+      requestId,
+      error: errorMessage
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      generateRequestIdRef.current = null;
+      setGenerating(false);
+      setError(
+        errorMessage || 'Unable to generate the prompt. Please try again.'
+      );
+    }
+
+    socket.on('generate_custom_instructions_update', handleGenerateUpdate);
+    socket.on('generate_custom_instructions_complete', handleGenerateComplete);
+    socket.on('generate_custom_instructions_error', handleGenerateError);
+
+    return () => {
+      socket.off('generate_custom_instructions_update', handleGenerateUpdate);
+      socket.off('generate_custom_instructions_complete', handleGenerateComplete);
+      socket.off('generate_custom_instructions_error', handleGenerateError);
+    };
+  }, [setGenerating, setSystemPromptState, setError]);
+
   return {
     previewRequestIdRef,
     streamingMessageIdRef,
     improveRequestIdRef,
-    improveOriginalPromptRef
+    improveOriginalPromptRef,
+    generateRequestIdRef
   };
 }

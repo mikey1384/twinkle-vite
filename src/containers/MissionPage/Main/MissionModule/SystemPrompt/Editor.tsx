@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Input from '~/components/Texts/Input';
@@ -10,11 +10,14 @@ interface EditorProps {
   title: string;
   prompt: string;
   improving: boolean;
+  generating: boolean;
   hasPrompt: boolean;
+  promptEverGenerated: boolean;
   saving?: boolean;
   onTitleChange: (text: string) => void;
   onPromptChange: (text: string) => void;
   onImprovePrompt: () => void;
+  onGeneratePrompt: () => void;
   style?: React.CSSProperties;
 }
 
@@ -22,13 +25,31 @@ export default function Editor({
   title,
   prompt,
   improving,
+  generating,
   hasPrompt,
+  promptEverGenerated,
   saving = false,
   onTitleChange,
   onPromptChange,
   onImprovePrompt,
+  onGeneratePrompt,
   style
 }: EditorProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const trimmedTitle = title.trim();
+  const canGenerate = trimmedTitle.length > 0 && !generating;
+  const showPromptSection = hasPrompt || promptEverGenerated;
+  // Show generate button in title section when not yet generated OR when currently generating
+  const showTitleGenerateButton =
+    !showPromptSection || (generating && !hasPrompt);
+
+  // Auto-scroll textarea to bottom during generation/improvement
+  useEffect(() => {
+    if ((generating || improving) && textareaRef.current) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+    }
+  }, [generating, improving, prompt]);
+
   const cardClass = useMemo(
     () =>
       css`
@@ -101,52 +122,115 @@ export default function Editor({
           Give your custom agent a memorable name or theme so you can share it
           later.
         </small>
-      </section>
-      <section
-        className={`${cardClass} ${css`
-          display: flex;
-          flex-direction: column;
-          gap: 0.8rem;
-        `}`}
-      >
-        <div className={sectionHeaderClass}>
-          <div className={labelClass}>System Prompt</div>
+        {showTitleGenerateButton && (
           <Button
-            onClick={onImprovePrompt}
-            disabled={!hasPrompt || improving}
-            color="magenta"
+            onClick={onGeneratePrompt}
+            disabled={!canGenerate}
+            loading={generating}
+            color="darkBlue"
             variant="soft"
             tone="raised"
-            style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }}
+            style={{
+              marginTop: '1.5rem',
+              padding: '1rem 2rem',
+              fontSize: '1.2rem',
+              alignSelf: 'flex-start'
+            }}
           >
-            {improving ? (
-              <>
-                <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-                Improving...
-              </>
-            ) : (
-              <>
-                <Icon
-                  style={{ marginRight: '0.5rem' }}
-                  icon="wand-magic-sparkles"
-                />
-                Improve Prompt
-              </>
-            )}
+            <Icon
+              style={{ marginRight: '0.5rem' }}
+              icon="wand-magic-sparkles"
+            />
+            Generate System Prompt
           </Button>
-        </div>
-        <Textarea
-          style={{ width: '100%' }}
-          placeholder="e.g., You are Ciel, a helpful grammar coach. Correct the user's mistakes gently and provide examples. Keep your tone encouraging."
-          minRows={5}
-          maxRows={16}
-          disabled={improving}
-          value={prompt}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-            onPromptChange(event.target.value)
-          }
-        />
+        )}
       </section>
+      {showPromptSection && (
+        <section
+          className={`${cardClass} ${css`
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+          `}`}
+        >
+          <div className={sectionHeaderClass}>
+            <div className={labelClass}>System Prompt</div>
+            {hasPrompt ? (
+              <Button
+                onClick={onImprovePrompt}
+                disabled={improving || generating}
+                color="magenta"
+                variant="soft"
+                tone="raised"
+                style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }}
+              >
+                {improving ? (
+                  <>
+                    <Icon
+                      style={{ marginRight: '0.5rem' }}
+                      icon="spinner"
+                      pulse
+                    />
+                    Improving...
+                  </>
+                ) : (
+                  <>
+                    <Icon
+                      style={{ marginRight: '0.5rem' }}
+                      icon="wand-magic-sparkles"
+                    />
+                    Improve Prompt
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={onGeneratePrompt}
+                disabled={!canGenerate}
+                color="darkBlue"
+                variant="soft"
+                tone="raised"
+                style={{ padding: '0.7rem 1.3rem', fontSize: '1rem' }}
+              >
+                {generating ? (
+                  <>
+                    <Icon
+                      style={{ marginRight: '0.5rem' }}
+                      icon="spinner"
+                      pulse
+                    />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Icon
+                      style={{ marginRight: '0.5rem' }}
+                      icon="wand-magic-sparkles"
+                    />
+                    Generate System Prompt
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          <Textarea
+            innerRef={textareaRef}
+            style={{
+              width: '100%',
+              minHeight: '5rem'
+            }}
+            placeholder="e.g., You are Ciel, a helpful grammar coach. Correct the user's mistakes gently and provide examples. Keep your tone encouraging."
+            minRows={5}
+            maxRows={10}
+            disabled={improving || generating}
+            disableAutoResize={generating || improving}
+            value={prompt}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              onPromptChange(event.target.value)
+            }
+          />
+        </section>
+      )}
     </>
   );
 }

@@ -135,9 +135,8 @@ export default function SystemPromptPreview({
         {chatMessages.length === 0 ? (
           <div
             className={css`
-              color: ${Color.gray()};
-              font-size: 1.4rem;
               display: flex;
+              flex-direction: column;
               align-items: center;
               justify-content: center;
               text-align: center;
@@ -145,10 +144,53 @@ export default function SystemPromptPreview({
               width: 100%;
               flex: 1 1 auto;
               margin: auto 0;
+              padding: 2rem;
+              gap: 1rem;
             `}
           >
-            Start chatting to test how your agent behaves with the current
-            system prompt.
+            <div
+              className={css`
+                width: 5rem;
+                height: 5rem;
+                border-radius: 50%;
+                background: linear-gradient(
+                  135deg,
+                  ${Color.logoBlue(0.15)},
+                  ${Color.magenta(0.15)}
+                );
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              `}
+            >
+              <Icon
+                icon="comments"
+                style={{ fontSize: '2rem', color: Color.logoBlue() }}
+              />
+            </div>
+            <div
+              className={css`
+                font-size: 1.6rem;
+                font-weight: 700;
+                color: ${Color.darkerGray()};
+              `}
+            >
+              Test Your Agent
+            </div>
+            <div
+              className={css`
+                font-size: 1.4rem;
+                color: ${Color.gray()};
+                max-width: 32rem;
+                line-height: 1.5;
+              `}
+            >
+              Send a message below to see how{' '}
+              <strong style={{ color: Color.darkerGray() }}>
+                {trimmedTitle || 'your agent'}
+              </strong>{' '}
+              responds with your system prompt.
+            </div>
           </div>
         ) : (
           chatMessages.map((message) => {
@@ -210,14 +252,37 @@ export default function SystemPromptPreview({
           display: flex;
           gap: 1rem;
           flex-direction: column;
+          ${chatMessages.length === 0
+            ? `
+            background: linear-gradient(135deg, ${Color.logoBlue(0.03)}, ${Color.magenta(0.03)});
+            border-radius: ${borderRadius};
+            padding: 1rem;
+            border: 1px dashed ${Color.logoBlue(0.3)};
+          `
+            : ''}
         `}
       >
+        {chatMessages.length === 0 && (
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 1.3rem;
+              color: ${Color.logoBlue()};
+              font-weight: 600;
+            `}
+          >
+            <Icon icon="arrow-down" />
+            Try it out
+          </div>
+        )}
         <Textarea
           minRows={2}
           maxRows={6}
           placeholder={
             hasPrompt
-              ? 'Ask a question or give a scenario for this agent.'
+              ? `e.g., "Hello, can you help me with..."`
               : 'Enter a system prompt before chatting.'
           }
           value={userMessage}

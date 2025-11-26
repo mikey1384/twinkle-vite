@@ -572,7 +572,10 @@ export default function chatRequestHelpers({
           data: { customInstructions }
         } = await request.get(
           `${URL}/chat/topic/customInstructions?topicText=${topicText}`,
-          auth()
+          {
+            ...auth(),
+            meta: { enforceTimeout: false }
+          }
         );
         return customInstructions;
       } catch (error) {

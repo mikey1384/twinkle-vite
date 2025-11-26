@@ -9,7 +9,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import useSystemPromptSockets from './useSystemPromptSockets';
 import Checklist from './Checklist';
 import Editor from './Editor';
@@ -28,6 +28,7 @@ interface SystemPromptState {
   userMessage: string;
   missionPromptId?: number | null;
   chatMessages: ChatMessage[];
+  promptEverGenerated?: boolean;
 }
 
 export default function SystemPromptMission({
@@ -40,6 +41,7 @@ export default function SystemPromptMission({
   style?: React.CSSProperties;
 }) {
   const [improving, setImproving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [applyingTarget, setApplyingTarget] = useState<null | 'zero' | 'ciel'>(
@@ -55,6 +57,9 @@ export default function SystemPromptMission({
   );
   const applySystemPromptToAIChat = useAppContext(
     (v) => v.requestHelpers.applySystemPromptToAIChat
+  );
+  const onSetThinkHardForTopic = useChatContext(
+    (v) => v.actions.onSetThinkHardForTopic
   );
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const contentColor = useKeyContext((v) => v.theme.content.color);
@@ -78,7 +83,8 @@ export default function SystemPromptMission({
         typeof rawState.missionPromptId === 'number'
           ? rawState.missionPromptId
           : null,
-      chatMessages: sanitizedMessages
+      chatMessages: sanitizedMessages,
+      promptEverGenerated: !!rawState.promptEverGenerated
     };
   }, [mission.systemPromptState]);
 
@@ -92,27 +98,41 @@ export default function SystemPromptMission({
         newState: { systemPromptState: nextState }
       });
     },
-    [mission.id, onSetMissionState]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mission.id]
   );
 
   const {
     previewRequestIdRef,
     streamingMessageIdRef,
     improveRequestIdRef,
-    improveOriginalPromptRef
+    improveOriginalPromptRef,
+    generateRequestIdRef
   } = useSystemPromptSockets({
     systemPromptState,
     setSystemPromptState,
     setSending,
     setImproving,
+    setGenerating,
     setError
   });
 
-  const { title, prompt, userMessage, chatMessages } = systemPromptState;
+  const { title, prompt, userMessage, chatMessages, promptEverGenerated } =
+    systemPromptState;
   const trimmedPrompt = prompt.trim();
   const trimmedMessage = userMessage.trim();
   const trimmedTitle = title.trim();
   const hasPrompt = trimmedPrompt.length > 0;
+
+  // If there's already a saved prompt, mark as ever generated
+  useEffect(() => {
+    if (hasPrompt && !promptEverGenerated) {
+      setSystemPromptState({
+        ...systemPromptState,
+        promptEverGenerated: true
+      });
+    }
+  }, [hasPrompt, promptEverGenerated, systemPromptState, setSystemPromptState]);
   const canSend = Boolean(hasPrompt && trimmedMessage && !sending);
   const createdPrompt = useMemo(() => {
     const hasPreviewedLocally = chatMessages.some(
@@ -274,6 +294,28 @@ export default function SystemPromptMission({
     improveRequestIdRef
   ]);
 
+  const handleGeneratePrompt = useCallback(() => {
+    if (!trimmedTitle || generating) return;
+    setError('');
+    setGenerating(true);
+    setSystemPromptState({
+      ...systemPromptState,
+      promptEverGenerated: true
+    });
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    generateRequestIdRef.current = requestId;
+    socket.emit('generate_custom_instructions', {
+      requestId,
+      topicText: trimmedTitle
+    });
+  }, [
+    trimmedTitle,
+    generating,
+    generateRequestIdRef,
+    systemPromptState,
+    setSystemPromptState
+  ]);
+
   const handleSendMessage = useCallback(() => {
     if (!canSend) return;
     setError('');
@@ -338,6 +380,29 @@ export default function SystemPromptMission({
             missionPromptId: data.missionPromptId
           });
         }
+        // Set thinkHard to false for the new topic
+        if (typeof data?.topicId === 'number') {
+          onSetThinkHardForTopic({
+            aiType: target,
+            topicId: data.topicId,
+            thinkHard: false
+          });
+          // Also persist to localStorage
+          try {
+            const stored = localStorage.getItem('thinkHard') || '{}';
+            const parsed = JSON.parse(stored);
+            const updated = {
+              ...parsed,
+              [target]: {
+                ...(parsed[target] || {}),
+                [data.topicId]: false
+              }
+            };
+            localStorage.setItem('thinkHard', JSON.stringify(updated));
+          } catch {
+            // Ignore localStorage errors
+          }
+        }
       } catch (err: any) {
         const message =
           err?.response?.data?.error ||
@@ -352,6 +417,7 @@ export default function SystemPromptMission({
       applyingTarget,
       applySystemPromptToAIChat,
       hasPrompt,
+      onSetThinkHardForTopic,
       setSystemPromptState,
       systemPromptState,
       trimmedPrompt,
@@ -425,7 +491,9 @@ export default function SystemPromptMission({
               title={title}
               prompt={prompt}
               improving={improving}
+              generating={generating}
               hasPrompt={hasPrompt}
+              promptEverGenerated={!!promptEverGenerated}
               saving={saving}
               onTitleChange={(text) =>
                 setSystemPromptState({
@@ -440,6 +508,7 @@ export default function SystemPromptMission({
                 })
               }
               onImprovePrompt={handleImprovePrompt}
+              onGeneratePrompt={handleGeneratePrompt}
             />
           )}
 

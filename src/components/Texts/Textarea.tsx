@@ -29,6 +29,7 @@ export default function Textarea({
   style,
   theme,
   disableFocusGlow,
+  disableAutoResize = false,
   ...rest
 }: Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onDrop' | 'ref'> & {
   draggedFile?: File;
@@ -39,6 +40,7 @@ export default function Textarea({
   onDrop?: (filePath: string) => void;
   theme?: string;
   disableFocusGlow?: boolean;
+  disableAutoResize?: boolean;
 }) {
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -63,8 +65,6 @@ export default function Textarea({
     const el = textareaRef.current;
     if (!el) return;
 
-    el.style.height = 'auto';
-
     const computed = window.getComputedStyle(el);
     const paddingTop = parseFloat(computed.paddingTop || '0');
     const paddingBottom = parseFloat(computed.paddingBottom || '0');
@@ -76,9 +76,20 @@ export default function Textarea({
       lineHeight = fontSize * 1.2;
     }
 
+    const baseMinHeight = lineHeight * (minRows || 1) + padding;
+
+    if (disableAutoResize) {
+      el.style.height = '';
+      el.style.minHeight = `${baseMinHeight}px`;
+      el.style.overflowY = 'auto';
+      return;
+    }
+
+    el.style.minHeight = `${baseMinHeight}px`;
+    el.style.height = '0';
+
     const contentHeight = el.scrollHeight;
-    const minHeight = lineHeight * (minRows || 1) + padding;
-    let nextHeight = Math.max(contentHeight, minHeight);
+    let nextHeight = Math.max(contentHeight, baseMinHeight);
 
     if (maxRows) {
       const maxHeight = lineHeight * maxRows + padding;
@@ -89,12 +100,13 @@ export default function Textarea({
     }
 
     el.style.height = `${nextHeight}px`;
-  }, [maxRows, minRows]);
+    el.style.minHeight = '';
+  }, [maxRows, minRows, disableAutoResize]);
 
   useLayoutEffect(() => {
     autoResize();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rest.value, maxRows, minRows]);
+  }, [rest.value, maxRows, minRows, disableAutoResize]);
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -209,7 +221,9 @@ export default function Textarea({
               ? '2px dashed #00aaff'
               : style?.border
             : style?.border,
-          pointerEvents: uploading ? 'none' : style?.pointerEvents
+          pointerEvents: uploading ? 'none' : style?.pointerEvents,
+          minHeight: style?.minHeight,
+          height: style?.height
         }}
         className={`${className} ${css`
           opacity: ${uploading ? 0.2 : 1};
@@ -224,6 +238,7 @@ export default function Textarea({
           background: #fff;
           resize: none;
           touch-action: manipulation;
+          overflow-anchor: none;
           transition: border-color 0.18s ease, box-shadow 0.18s ease,
             background 0.18s ease;
           &:focus {

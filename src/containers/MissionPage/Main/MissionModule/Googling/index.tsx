@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Question from './Question';
 import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { scrollElementToCenter } from '~/helpers';
 import { useAppContext, useMissionContext, useKeyContext } from '~/contexts';
-import { Color } from '~/constants/css';
+import { Color, borderRadius } from '~/constants/css';
 
 const BodyRef = document.scrollingElement || document.documentElement;
 
@@ -51,19 +52,32 @@ export default function Googling({
       {isDeprecated && (
         <div
           style={{
-            background: Color.gold(0.12),
-            border: `1px solid ${Color.gold(0.5)}`,
-            borderRadius: '1rem',
-            color: Color.darkBrownOrange(),
+            background: Color.darkerGray(0.9),
+            border: `1px solid ${Color.darkerGray()}`,
+            borderRadius,
+            color: '#fff',
             fontSize: '1.5rem',
-            lineHeight: 1.6,
+            lineHeight: 1.7,
             marginBottom: '2.5rem',
-            padding: '1.5rem'
+            padding: '2rem',
+            textAlign: 'center'
           }}
         >
-          <strong>This mission has been deprecated.</strong> You can still
-          review the tutorial below, but new submissions are disabled and will
-          not be reviewed.
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.7rem',
+              marginBottom: '1rem'
+            }}
+          >
+            <Icon icon="archive" style={{ fontSize: '1.8rem' }} />
+            <strong style={{ fontSize: '1.8rem' }}>Legacy Mission</strong>
+          </div>
+          <div style={{ opacity: 0.9 }}>
+            This mission is no longer available for completion.
+          </div>
         </div>
       )}
       {mission.questions?.map((question: { id: number }) => (
@@ -81,24 +95,26 @@ export default function Googling({
           }}
         />
       ))}
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: '-1rem'
-        }}
-      >
-        <Button
-          style={{ fontSize: '1.7rem' }}
-          disabled={submitDisabled || isDeprecated}
-          color={doneColor}
-          variant="solid"
-          onClick={handleSubmit}
+      {!isDeprecated && (
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginBottom: '-1rem'
+          }}
         >
-          Submit
-        </Button>
-      </div>
+          <Button
+            style={{ fontSize: '1.7rem' }}
+            disabled={submitDisabled}
+            color={doneColor}
+            variant="solid"
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        </div>
+      )}
     </div>
   );
 

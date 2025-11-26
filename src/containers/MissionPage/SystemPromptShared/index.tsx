@@ -7,7 +7,7 @@ import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import MyTopicsManager from './MyTopicsManager';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import moment from 'moment';
@@ -35,6 +35,9 @@ export default function SystemPromptShared() {
   );
   const cloneSharedSystemPrompt = useAppContext(
     (v) => v.requestHelpers.cloneSharedSystemPrompt
+  );
+  const onSetThinkHardForTopic = useChatContext(
+    (v) => v.actions.onSetThinkHardForTopic
   );
   const [topics, setTopics] = useState<SharedTopic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,12 +132,35 @@ export default function SystemPromptShared() {
       [`${sharedTopicId}-${target}`]: true
     }));
     try {
-      await cloneSharedSystemPrompt({ sharedTopicId, target });
+      const data = await cloneSharedSystemPrompt({ sharedTopicId, target });
       setStatus(
         `Cloned to ${
           target === 'ciel' ? 'Ciel' : 'Zero'
         } chat. Open chat to start talking.`
       );
+      // Set thinkHard to false for the new topic
+      if (typeof data?.subjectId === 'number') {
+        onSetThinkHardForTopic({
+          aiType: target,
+          topicId: data.subjectId,
+          thinkHard: false
+        });
+        // Also persist to localStorage
+        try {
+          const stored = localStorage.getItem('thinkHard') || '{}';
+          const parsed = JSON.parse(stored);
+          const updated = {
+            ...parsed,
+            [target]: {
+              ...(parsed[target] || {}),
+              [data.subjectId]: false
+            }
+          };
+          localStorage.setItem('thinkHard', JSON.stringify(updated));
+        } catch {
+          // Ignore localStorage errors
+        }
+      }
     } catch (err: any) {
       setError(
         err?.response?.data?.error ||
