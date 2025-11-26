@@ -193,9 +193,51 @@ export default function useInitSocket({
   }, [latestPathId]);
 
   useEffect(() => {
+    let socketHealthCheckTimer: number | null = null;
+    let currentPongHandler: (() => void) | null = null;
+    let pongReceived = false;
+
+    function checkSocketHealth() {
+      if (!socket.connected) {
+        return;
+      }
+
+      if (socketHealthCheckTimer) {
+        clearTimeout(socketHealthCheckTimer);
+        socketHealthCheckTimer = null;
+      }
+      if (currentPongHandler) {
+        socket.off('pong_received', currentPongHandler);
+        currentPongHandler = null;
+      }
+
+      pongReceived = false;
+
+      const handlePong = () => {
+        pongReceived = true;
+      };
+      currentPongHandler = handlePong;
+      socket.once('pong_received', handlePong);
+
+      socket.emit('socket_health_ping');
+
+      socketHealthCheckTimer = window.setTimeout(() => {
+        socket.off('pong_received', handlePong);
+        currentPongHandler = null;
+        if (!pongReceived && socket.connected) {
+          logForAdmin({
+            message: 'Socket health check failed - forcing reconnect'
+          });
+          socket.disconnect();
+          socket.connect();
+        }
+      }, 3000);
+    }
+
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
         checkFeedsOutdated();
+        checkSocketHealth();
       }
     }
 
@@ -204,6 +246,7 @@ export default function useInitSocket({
         socket.emit('presence_ping');
       } catch {}
       void checkFeedsOutdated();
+      checkSocketHealth();
       try {
         const data = await checkVersion();
         onCheckVersion(data);
@@ -212,6 +255,7 @@ export default function useInitSocket({
 
     const onFocus = () => {
       void checkFeedsOutdated();
+      checkSocketHealth();
     };
     const onOnline = () => {
       void checkFeedsOutdated();
@@ -225,6 +269,9 @@ export default function useInitSocket({
       window.removeEventListener('online', onOnline);
       window.removeEventListener('pageshow', onPageShow);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (socketHealthCheckTimer) {
+        clearTimeout(socketHealthCheckTimer);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkFeedsOutdated]);

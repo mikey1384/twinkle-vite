@@ -75,7 +75,8 @@ export default function OmokModal({
       return true;
     }
     const userIsTheLastMoveViewer =
-      currentChannel.lastOmokMoveViewerId === myId;
+      currentChannel.lastOmokMoveViewerId === myId &&
+      message?.id === currentChannel.lastOmokMessageId;
     const isOlderMessage =
       message?.id &&
       currentChannel.lastOmokMessageId &&

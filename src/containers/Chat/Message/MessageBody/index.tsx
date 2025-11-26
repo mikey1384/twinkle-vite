@@ -26,7 +26,8 @@ import MessageRewardModal from '../../Modals/MessageRewardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LocalContext from '../../Context';
 import ReactionButton from './ReactionButton';
-import Reactions from './Reactions';import moment from 'moment';
+import Reactions from './Reactions';
+import moment from 'moment';
 import FileAttachment from './FileAttachment';
 import TargetChessPosition from './TargetChessPosition';
 import TopicMessagePreview from './TopicMessagePreview';
@@ -245,9 +246,7 @@ function MessageBody({
   const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   const isAIChat = useMemo(() => {
-    return (
-      partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID
-    );
+    return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
   }, [partner?.id]);
 
   // Check if this AI message has an error
@@ -475,9 +474,10 @@ function MessageBody({
       return true;
     }
     const userMadeThisMove = chessState?.move?.by === myId;
-    const userIsTheLastMoveViewer =
-      currentChannel?.lastChessMoveViewerId === myId;
     const lastMessageId = currentChannel?.lastChessMessageId;
+    const userIsTheLastMoveViewer =
+      currentChannel?.lastChessMoveViewerId === myId &&
+      messageId === lastMessageId;
     if (
       userMadeThisMove ||
       userIsTheLastMoveViewer ||
@@ -504,9 +504,10 @@ function MessageBody({
       return true;
     }
     const userMadeThisMove = omokState?.move?.by === myId;
-    const userIsTheLastMoveViewer =
-      currentChannel?.lastOmokMoveViewerId === myId;
     const lastMessageId = currentChannel?.lastOmokMessageId;
+    const userIsTheLastMoveViewer =
+      currentChannel?.lastOmokMoveViewerId === myId &&
+      messageId === lastMessageId;
     if (
       userMadeThisMove ||
       userIsTheLastMoveViewer ||
