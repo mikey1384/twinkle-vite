@@ -420,7 +420,7 @@ export const cardProps: {
   superior: ['glowy'],
   rare: ['glowy', 'glossy'],
   elite: ['glowy', 'glossy', 'grad'],
-  legendary: ['glowy', 'glossy', 'sparky', 'grad']
+  legendary: ['glowy', 'glossy', 'sparky', 'grad', 'prism']
 };
 export const karmaMultiplier = {
   post: 2,
