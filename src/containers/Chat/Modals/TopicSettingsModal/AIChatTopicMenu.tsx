@@ -4,7 +4,6 @@ import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
-import { useAppContext } from '~/contexts';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 import { css } from '@emotion/css';
@@ -26,15 +25,21 @@ export default function AIChatTopicMenu({
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const getCustomInstructionsForTopic = useAppContext(
-    (v) => v.requestHelpers.getCustomInstructionsForTopic
-  );
-  const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [improving, setImproving] = useState(false);
   const [error, setError] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const generateRequestIdRef = useRef<string | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
   const originalInstructionsRef = useRef('');
   const topicTextRef = useRef(topicText);
+
+  // Auto-scroll textarea to bottom during generation/improvement
+  useEffect(() => {
+    if ((generating || improving) && textareaRef.current) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+    }
+  }, [generating, improving, newCustomInstructions]);
 
   const commentExceedsCharLimit = useMemo(
     () =>
@@ -46,28 +51,73 @@ export default function AIChatTopicMenu({
   );
 
   useEffect(() => {
-    init();
-    async function init() {
-      if (!customInstructions) {
-        setLoading(true);
-        try {
-          const generatedCustomInstructions =
-            await getCustomInstructionsForTopic(topicText);
-          onSetCustomInstructions(generatedCustomInstructions);
-        } catch (error) {
-          console.error('Failed to load custom instructions:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
+    if (!customInstructions) {
+      handleGenerateCustomInstructions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customInstructions]);
+  }, []);
 
   useEffect(() => {
     topicTextRef.current = topicText;
   }, [topicText]);
 
+  // Socket listeners for generating custom instructions
+  useEffect(() => {
+    function handleGenerateUpdate({
+      requestId,
+      content
+    }: {
+      requestId?: string;
+      content?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      onSetCustomInstructions(content || '');
+    }
+
+    function handleGenerateComplete({
+      requestId,
+      content
+    }: {
+      requestId?: string;
+      content?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      onSetCustomInstructions(content || '');
+      generateRequestIdRef.current = null;
+      setGenerating(false);
+    }
+
+    function handleGenerateError({
+      requestId,
+      error: errorMessage
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      generateRequestIdRef.current = null;
+      setGenerating(false);
+      setError(
+        errorMessage ||
+          'Unable to generate custom instructions. Please try again.'
+      );
+    }
+
+    socket.on('generate_custom_instructions_update', handleGenerateUpdate);
+    socket.on('generate_custom_instructions_complete', handleGenerateComplete);
+    socket.on('generate_custom_instructions_error', handleGenerateError);
+
+    return () => {
+      socket.off('generate_custom_instructions_update', handleGenerateUpdate);
+      socket.off(
+        'generate_custom_instructions_complete',
+        handleGenerateComplete
+      );
+      socket.off('generate_custom_instructions_error', handleGenerateError);
+    };
+  }, [onSetCustomInstructions]);
+
+  // Socket listeners for improving custom instructions
   useEffect(() => {
     function handleImproveUpdate({
       requestId,
@@ -119,7 +169,8 @@ export default function AIChatTopicMenu({
       improveRequestIdRef.current = null;
       setImproving(false);
       setError(
-        errorMessage || 'Unable to improve custom instructions. Please try again.'
+        errorMessage ||
+          'Unable to improve custom instructions. Please try again.'
       );
     }
 
@@ -168,18 +219,18 @@ export default function AIChatTopicMenu({
             `}
           >
             <Button
-              onClick={handleLoadCustomInstructions}
+              onClick={handleGenerateCustomInstructions}
               color="darkBlue"
               variant="soft"
               tone="raised"
-              disabled={loading || improving}
+              disabled={generating || improving}
               style={{
                 fontSize: '1rem',
                 padding: '1rem',
                 marginRight: '1rem'
               }}
             >
-              {loading ? (
+              {generating ? (
                 <>
                   <Icon
                     style={{ marginRight: '0.5rem' }}
@@ -201,7 +252,7 @@ export default function AIChatTopicMenu({
                 color="magenta"
                 variant="soft"
                 tone="raised"
-                disabled={loading || improving}
+                disabled={generating || improving}
                 style={{
                   fontSize: '1rem',
                   padding: '1rem'
@@ -241,18 +292,22 @@ export default function AIChatTopicMenu({
             {error}
           </div>
         )}
-        {!loading && isCustomInstructionsOn && (
+        {isCustomInstructionsOn && (
           <div style={{ width: '100%', marginTop: '2rem' }}>
             <Textarea
+              innerRef={textareaRef}
               placeholder="Enter instructions..."
               style={{
                 width: '100%',
-                position: 'relative'
+                position: 'relative',
+                minHeight: '5rem'
               }}
               hasError={!!commentExceedsCharLimit}
               minRows={3}
+              maxRows={10}
               value={newCustomInstructions}
-              disabled={loading || improving}
+              disabled={generating || improving}
+              disableAutoResize={generating || improving}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 onSetCustomInstructions(event.target.value)
               }
@@ -264,18 +319,16 @@ export default function AIChatTopicMenu({
     </ErrorBoundary>
   );
 
-  async function handleLoadCustomInstructions() {
-    setLoading(true);
-    try {
-      const generatedCustomInstructions = await getCustomInstructionsForTopic(
-        topicText
-      );
-      onSetCustomInstructions(generatedCustomInstructions);
-    } catch (error) {
-      console.error('Failed to load custom instructions:', error);
-    } finally {
-      setLoading(false);
-    }
+  function handleGenerateCustomInstructions() {
+    if (generating) return;
+    setError('');
+    setGenerating(true);
+    const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    generateRequestIdRef.current = requestId;
+    socket.emit('generate_custom_instructions', {
+      requestId,
+      topicText
+    });
   }
 
   function handleImproveCustomInstructions() {
