@@ -37,7 +37,6 @@ export default function Checklist({
     (checklistCompletedCount / checklistItems.length) * 100
   );
 
-  // Find the current step (first incomplete item, or last item if all complete)
   const currentStepIndex = checklistItems.findIndex((item) => !item.complete);
   const activeStepIndex =
     currentStepIndex === -1 ? checklistItems.length - 1 : currentStepIndex;
@@ -195,8 +194,8 @@ export default function Checklist({
                       color: item.complete
                         ? Color[themeColor]()
                         : isCurrentStep
-                          ? Color[themeColor](0.7)
-                          : Color.gray(),
+                        ? Color[themeColor](0.7)
+                        : Color.gray(),
                       fontSize: '1.6rem'
                     }}
                   />
@@ -207,8 +206,8 @@ export default function Checklist({
                       color: ${item.complete
                         ? Color[themeColor]()
                         : isCurrentStep
-                          ? Color[themeColor]()
-                          : Color.gray()};
+                        ? Color[themeColor]()
+                        : Color.gray()};
                     `}
                   >
                     {idx + 1}/{checklistItems.length}
