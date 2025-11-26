@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
@@ -23,6 +23,7 @@ interface SharedTopic {
   userId: number;
   username: string;
   timeStamp?: number;
+  sharedAt?: number;
   customInstructions?: string;
   settings?: any;
   cloneCount?: number;
@@ -30,10 +31,8 @@ interface SharedTopic {
 }
 
 export default function SystemPromptShared({
-  mission,
   missionCleared
 }: {
-  mission: any;
   missionCleared: boolean;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -116,6 +115,7 @@ export default function SystemPromptShared({
           lastSubject: {
             id: last.id,
             timeStamp: last.timeStamp || 0,
+            sharedAt: last.sharedAt,
             cloneCount: last.cloneCount,
             messageCount: last.messageCount
           },
@@ -153,7 +153,10 @@ export default function SystemPromptShared({
     try {
       const data = await cloneSharedSystemPrompt({ sharedTopicId, target });
       // Store cloned topic info for navigation button
-      if (typeof data?.subjectId === 'number' && typeof data?.channelId === 'number') {
+      if (
+        typeof data?.subjectId === 'number' &&
+        typeof data?.channelId === 'number'
+      ) {
         setClonedTopic({
           sharedTopicId,
           target,
@@ -433,7 +436,8 @@ export default function SystemPromptShared({
                       </RichText>
                     </div>
                   )}
-                  {clonedTopic?.sharedTopicId === (topic.subjectId || topic.id) && (
+                  {clonedTopic?.sharedTopicId ===
+                    (topic.subjectId || topic.id) && (
                     <div
                       className={css`
                         padding: 1rem;
@@ -471,11 +475,14 @@ export default function SystemPromptShared({
                             color: ${Color.darkerGray()};
                           `}
                         >
-                          Cloned to {clonedTopic.target === 'ciel' ? 'Ciel' : 'Zero'}!
+                          Cloned to{' '}
+                          {clonedTopic.target === 'ciel' ? 'Ciel' : 'Zero'}!
                         </span>
                       </div>
                       <Button
-                        color={clonedTopic.target === 'zero' ? 'logoBlue' : 'purple'}
+                        color={
+                          clonedTopic.target === 'zero' ? 'logoBlue' : 'purple'
+                        }
                         variant="solid"
                         tone="raised"
                         style={{
@@ -489,8 +496,11 @@ export default function SystemPromptShared({
                         }}
                         onClick={() => {
                           const pathId =
-                            Number(clonedTopic.channelId) + Number(CHAT_ID_BASE_NUMBER);
-                          navigate(`/chat/${pathId}/topic/${clonedTopic.topicId}`);
+                            Number(clonedTopic.channelId) +
+                            Number(CHAT_ID_BASE_NUMBER);
+                          navigate(
+                            `/chat/${pathId}/topic/${clonedTopic.topicId}`
+                          );
                         }}
                       >
                         <img

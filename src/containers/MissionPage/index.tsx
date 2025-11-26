@@ -127,7 +127,8 @@ export default function MissionPage() {
 
   const isManagementPage =
     location.pathname === `/missions/${missionType}/manage`;
-  const isWorkshopPage = location.pathname === `/missions/${missionType}/workshop`;
+  const isWorkshopPage =
+    location.pathname === `/missions/${missionType}/workshop`;
   const isSharedPage = location.pathname === `/missions/${missionType}/shared`;
   const isSystemPromptMission = missionType === 'system-prompt';
   const allowManage = isAdmin && !isSystemPromptMission;
@@ -148,7 +149,11 @@ export default function MissionPage() {
             }}
           >
             <nav
-              className={!isManagementPage && !isSharedPage && !isWorkshopPage ? 'active' : ''}
+              className={
+                !isManagementPage && !isSharedPage && !isWorkshopPage
+                  ? 'active'
+                  : ''
+              }
               onClick={() => navigate(`/missions/${missionType}`)}
             >
               Mission
@@ -240,10 +245,7 @@ export default function MissionPage() {
                 <Route
                   path="/shared"
                   element={
-                    <SystemPromptShared
-                      mission={mission}
-                      missionCleared={missionCleared}
-                    />
+                    <SystemPromptShared missionCleared={missionCleared} />
                   }
                 />
               )}

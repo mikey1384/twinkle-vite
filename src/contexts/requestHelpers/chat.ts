@@ -1372,6 +1372,7 @@ export default function chatRequestHelpers({
       lastSubject: {
         id: number;
         timeStamp: number;
+        sharedAt?: number;
         reloadTimeStamp?: number;
         cloneCount?: number;
         messageCount?: number;
@@ -1382,15 +1383,20 @@ export default function chatRequestHelpers({
         return { subjects: [], loadMoreButton: false };
       }
       try {
-        const params: string[] = [
-          `lastTimeStamp=${
-            lastSubject.reloadTimeStamp || lastSubject.timeStamp
-          }`,
-          `lastId=${lastSubject.id}`
-        ];
+        const params: string[] = [`lastId=${lastSubject.id}`];
 
         if (sortBy) {
           params.push(`sortBy=${sortBy}`);
+        }
+
+        if (sortBy === 'new') {
+          params.push(
+            `lastSharedAt=${lastSubject.sharedAt || lastSubject.timeStamp}`
+          );
+        } else {
+          params.push(
+            `lastTimeStamp=${lastSubject.reloadTimeStamp || lastSubject.timeStamp}`
+          );
         }
 
         if (sortBy === 'cloned') {
