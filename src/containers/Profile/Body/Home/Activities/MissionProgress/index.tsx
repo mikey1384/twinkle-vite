@@ -10,6 +10,7 @@ import { useAppContext } from '~/contexts';
 const missionProgressLabel = 'Mission Progress';
 const completeLabel = 'Complete';
 const incompleteLabel = 'Incomplete';
+const legacyLabel = 'Legacy';
 
 export default function MissionProgress({
   missionsLoaded,
@@ -39,19 +40,33 @@ export default function MissionProgress({
     return `${username} has not completed any missions yet`;
   }, [username]);
 
-  const completedMissions = useMemo(() => {
-    return missions.filter((mission) => mission.status === 'pass');
+  const regularMissions = useMemo(() => {
+    return missions.filter((mission) => !mission.isHidden);
   }, [missions]);
 
+  const completedMissions = useMemo(() => {
+    return regularMissions.filter((mission) => mission.status === 'pass');
+  }, [regularMissions]);
+
   const incompleteMissions = useMemo(() => {
-    return missions.filter((mission) => mission.status !== 'pass');
+    return regularMissions.filter((mission) => mission.status !== 'pass');
+  }, [regularMissions]);
+
+  const legacyMissions = useMemo(() => {
+    return missions.filter(
+      (mission) => mission.isHidden && mission.status === 'pass'
+    );
   }, [missions]);
 
   const filteredMissions = useMemo(() => {
-    return selectedMissionListTab === 'complete'
-      ? completedMissions
-      : incompleteMissions;
-  }, [completedMissions, incompleteMissions, selectedMissionListTab]);
+    if (selectedMissionListTab === 'complete') {
+      return completedMissions;
+    }
+    if (selectedMissionListTab === 'legacy') {
+      return legacyMissions;
+    }
+    return incompleteMissions;
+  }, [completedMissions, incompleteMissions, legacyMissions, selectedMissionListTab]);
 
   useEffect(() => {
     if (userId) {
@@ -108,7 +123,8 @@ export default function MissionProgress({
               })
             }
           >
-            {`${completedMissions.length}/${missions.length}`} {completeLabel}
+            {`${completedMissions.length}/${regularMissions.length}`}{' '}
+            {completeLabel}
           </nav>
           <nav
             className={selectedMissionListTab === 'ongoing' ? 'active' : ''}
@@ -121,6 +137,19 @@ export default function MissionProgress({
           >
             {incompleteLabel}
           </nav>
+          {legacyMissions.length > 0 && (
+            <nav
+              className={selectedMissionListTab === 'legacy' ? 'active' : ''}
+              onClick={() =>
+                onSetUserState({
+                  userId,
+                  newState: { selectedMissionListTab: 'legacy' }
+                })
+              }
+            >
+              {legacyLabel}
+            </nav>
+          )}
         </FilterBar>
         <div
           style={{
@@ -145,7 +174,10 @@ export default function MissionProgress({
                   <MissionItem
                     key={mission.key}
                     style={{ marginRight: '1rem', marginBottom: '1rem' }}
-                    completed={selectedMissionListTab === 'complete'}
+                    completed={
+                      selectedMissionListTab === 'complete' ||
+                      selectedMissionListTab === 'legacy'
+                    }
                     taskProgress={mission.taskProgress}
                     missionName={mission.name}
                     missionType={mission.key}
