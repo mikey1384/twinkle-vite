@@ -64,6 +64,7 @@ export default function SystemPromptMission({
     (v) => v.actions.onSetThinkHardForTopic
   );
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
+  const userId = useKeyContext((v) => v.myState.userId);
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const contentColor = useKeyContext((v) => v.theme.content.color);
 
@@ -109,6 +110,26 @@ export default function SystemPromptMission({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [mission.id]
   );
+
+  // Reset state when user changes
+  useEffect(() => {
+    if (userId && mission.prevUserId && userId !== mission.prevUserId) {
+      onSetMissionState({
+        missionId: mission.id,
+        newState: {
+          systemPromptState: {
+            title: '',
+            prompt: '',
+            userMessage: '',
+            chatMessages: [],
+            missionPromptId: null,
+            promptEverGenerated: false
+          }
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, mission.prevUserId, mission.id]);
 
   const {
     previewRequestIdRef,
@@ -510,15 +531,23 @@ export default function SystemPromptMission({
         />
         <div className={contentClass}>
           {missionCleared && myAttempt?.status === 'pass' && (
-            <MissionStatusCard
-              status="success"
-              title="Mission Accomplished"
-              message="You've mastered creating and using custom system prompts!"
-              rewards={{
-                xp: mission.xpReward,
-                coins: mission.coinReward
-              }}
-            />
+            <div
+              className={css`
+                display: flex;
+                justify-content: center;
+                width: 100%;
+              `}
+            >
+              <MissionStatusCard
+                status="success"
+                title="Mission Accomplished"
+                message="You've mastered creating and using custom system prompts!"
+                rewards={{
+                  xp: mission.xpReward,
+                  coins: mission.coinReward
+                }}
+              />
+            </div>
           )}
           {!missionCleared && (
             <>
