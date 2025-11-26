@@ -360,7 +360,11 @@ export default function ChatFilterBar({
     }
     onSetChannelState({
       channelId,
-      newState: { selectedTab: tabName, isSearchActive: false }
+      newState: {
+        selectedTab: tabName,
+        isSearchActive: false,
+        ...(tabName === 'all' ? { lastTopicId: 0 } : {})
+      }
     });
     if (tabName === 'all') {
       updateLastTopicId({

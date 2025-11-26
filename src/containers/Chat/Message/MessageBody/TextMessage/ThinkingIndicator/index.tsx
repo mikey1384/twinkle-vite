@@ -103,7 +103,7 @@ export default function ThinkingIndicator({
                   font-style: italic;
                 `}
               >
-                Thinking really hard...
+                Thinking Hard...
               </div>
             )}
           </>

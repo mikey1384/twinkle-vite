@@ -26,7 +26,7 @@ export default function StreamingThoughtContent({
           margin-bottom: 0.5rem;
         `}
       >
-        {isThinkingHard ? 'Thinking Really Hard...' : 'Thinking Hard...'}
+        Thinking Hard...
       </div>
       <div
         ref={scrollRef}

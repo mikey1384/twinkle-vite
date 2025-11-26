@@ -2,7 +2,7 @@ import { Color } from '~/constants/css';
 
 export const STATUS_META = {
   thinking_hard: {
-    text: 'Thinking really hard...',
+    text: 'Thinking Hard...',
     icon: 'brain',
     color: Color.orange()
   },

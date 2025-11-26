@@ -1299,7 +1299,7 @@ export default function Main({
             } else {
               onSetChannelState({
                 channelId,
-                newState: { selectedTab: 'all', isSearchActive: false }
+                newState: { selectedTab: 'all', isSearchActive: false, lastTopicId: 0 }
               });
             }
           }
@@ -1368,6 +1368,11 @@ export default function Main({
           );
           delete loadingPromises[requestKey];
           return;
+        } else {
+          onSetChannelState({
+            channelId,
+            newState: { selectedTab: 'all', isSearchActive: false, lastTopicId: 0 }
+          });
         }
 
         if (isMounted.current) {

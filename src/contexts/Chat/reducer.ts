@@ -1089,24 +1089,30 @@ export default function ChatReducer(
         }
       }
 
+      const effectiveTopicId = action.topicId ?? topicHistory[newTopicIndex];
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
             ...prevChannelObj,
-            lastTopicId: action.topicId,
+            lastTopicId: effectiveTopicId,
             selectedTab: 'topic',
             selectedTopicId: topicHistory[newTopicIndex],
             topicHistory,
             currentTopicIndex: newTopicIndex,
-            topicObj: {
-              ...prevChannelObj?.topicObj,
-              [action.topicId]: {
-                ...prevChannelObj?.topicObj?.[action.topicId],
-                isSearchActive: false
-              }
-            }
+            ...(effectiveTopicId
+              ? {
+                  topicObj: {
+                    ...prevChannelObj?.topicObj,
+                    [effectiveTopicId]: {
+                      ...prevChannelObj?.topicObj?.[effectiveTopicId],
+                      isSearchActive: false
+                    }
+                  }
+                }
+              : {})
           }
         }
       };
