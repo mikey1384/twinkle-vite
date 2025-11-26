@@ -16,7 +16,7 @@ import Editor from './Editor';
 import TargetSelector from './TargetSelector';
 import Preview from './Preview';
 import TaskComplete from '../components/TaskComplete';
-import ApprovedStatus from '../../ApprovedStatus';
+import MissionStatusCard from '~/components/MissionStatusCard';
 
 interface ChatMessage {
   id: number;
@@ -509,13 +509,15 @@ export default function SystemPromptMission({
           className={sidebarClass}
         />
         <div className={contentClass}>
-          {missionCleared && myAttempt && (
-            <ApprovedStatus
-              missionId={mission.id}
-              xpReward={mission.xpReward}
-              coinReward={mission.coinReward}
-              myAttempt={myAttempt}
-              passMessage="You've mastered creating and using custom system prompts!"
+          {missionCleared && myAttempt?.status === 'pass' && (
+            <MissionStatusCard
+              status="success"
+              title="Mission Accomplished"
+              message="You've mastered creating and using custom system prompts!"
+              rewards={{
+                xp: mission.xpReward,
+                coins: mission.coinReward
+              }}
             />
           )}
           {!missionCleared && (
