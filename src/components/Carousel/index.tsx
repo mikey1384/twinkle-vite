@@ -3,13 +3,11 @@ import NavButton from './NavButton';
 import Button from '~/components/Button';
 import ProgressBar from '~/components/ProgressBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import * as d3Ease from 'd3-ease';
-import { Animate } from 'react-move';
 import { Color } from '~/constants/css';
-import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import BottomNavButtons from './BottomNavButtons';
+
 const showAllLabel = 'Show All';
 
 export default function Carousel({
@@ -29,7 +27,6 @@ export default function Carousel({
   slideIndex = 0,
   slidesToScroll = 1,
   slidesToShow = 1,
-  slideWidthMultiplier = 1,
   showAllButton,
   style,
   title
@@ -50,7 +47,6 @@ export default function Carousel({
   slideIndex?: number;
   slidesToScroll?: number;
   slidesToShow?: number;
-  slideWidthMultiplier?: number;
   showAllButton?: boolean;
   style?: any;
   title?: any;
@@ -61,43 +57,71 @@ export default function Carousel({
   const carouselProgressCompleteColor = useKeyContext(
     (v) => v.theme.carouselProgressComplete.color
   );
-  const DEFAULT_DURATION = 300;
-  const DEFAULT_EASING = 'easeCircleOut';
-  const DEFAULT_EDGE_EASING = 'easeElasticOut';
-  const [left, setLeft] = useState(0);
-  const [easing, setEasing] = useState(DEFAULT_EASING);
+
   const [currentSlide, setCurrentSlide] = useState(slideIndex);
-  const [dragging, setDragging] = useState(false);
-  const [slideWidth, setSlideWidth] = useState(0);
-  const [slideCount, setSlideCount] = useState(Children.count(children));
-  const [touchObject, setTouchObject] = useState<any>({});
-  const FrameRef = useRef(null);
-  const scrollYRef: React.RefObject<any> = useRef(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const slideCount = Children.count(children);
+
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchDeltaX = useRef(0);
 
   useEffect(() => {
-    addEvent(window, 'resize', onResize);
-    addEvent(document, 'readystatechange', onReadyStateChange);
-    renderDimensions(FrameRef);
-    return function cleanUp() {
-      removeEvent(window, 'resize', onResize);
-      removeEvent(document, 'readystatechange', onReadyStateChange);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slidesToShow, cellSpacing, slideWidthMultiplier]);
+    setCurrentSlide(slideIndex);
+  }, [slideIndex]);
 
-  useEffect(() => {
-    if (slideWidth === 0 && FrameRef.current) {
-      const timer = setTimeout(() => {
-        renderDimensions(FrameRef);
-      }, 100);
-      return () => clearTimeout(timer);
+  function goToSlide(index: number) {
+    if (index < 0 || index >= slideCount || index === currentSlide) return;
+    beforeSlide(currentSlide, index);
+    setIsTransitioning(true);
+    setCurrentSlide(index);
+    afterSlide(index);
+    setTimeout(() => setIsTransitioning(false), 300);
+  }
+
+  function handleGoToNextSlide() {
+    if (currentSlide < slideCount - slidesToShow) {
+      goToSlide(Math.min(currentSlide + slidesToScroll, slideCount - slidesToShow));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideWidth]);
+  }
 
-  useEffect(() => {
-    setSlideCount(Children.count(children));
-  }, [children]);
+  function handleGoToPreviousSlide() {
+    if (currentSlide > 0) {
+      goToSlide(Math.max(0, currentSlide - slidesToScroll));
+    }
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    if (!allowDrag) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchDeltaX.current = 0;
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!allowDrag) return;
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+
+    // Only handle horizontal swipes
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+      touchDeltaX.current = deltaX;
+    }
+  }
+
+  function handleTouchEnd() {
+    if (!allowDrag) return;
+    const threshold = 50;
+    if (touchDeltaX.current > threshold) {
+      handleGoToPreviousSlide();
+    } else if (touchDeltaX.current < -threshold) {
+      handleGoToNextSlide();
+    }
+    touchDeltaX.current = 0;
+  }
+
+  const slideWidthPercent = 100 / slidesToShow;
 
   return (
     <ErrorBoundary componentPath="Carousel/index">
@@ -113,7 +137,6 @@ export default function Carousel({
           fontSize: '1.5rem',
           height: 'auto',
           boxSizing: 'border-box',
-          visibility: slideWidth ? 'visible' : 'hidden',
           ...style
         }}
       >
@@ -142,146 +165,40 @@ export default function Carousel({
         )}
         <div
           className="slider-frame"
-          ref={FrameRef}
           style={{
             position: 'relative',
-            display: 'block',
             overflow: 'hidden',
-            height: 'auto',
             margin: framePadding,
             padding: '6px',
-            transform: 'translate3d(0, 0, 0)',
             boxSizing: 'border-box'
           }}
-          onTouchStart={(e) => {
-            if (allowDrag) {
-              setTouchObject({
-                startX: e.touches[0].pageX,
-                startY: e.touches[0].pageY
-              });
-            }
-          }}
-          onTouchMove={(e) => {
-            if (!scrollYRef.current) {
-              scrollYRef.current = (
-                document.scrollingElement || document.documentElement
-              ).scrollTop;
-            }
-            const direction = swipeDirection(
-              touchObject.startX,
-              e.touches[0].pageX,
-              touchObject.startY,
-              e.touches[0].pageY
-            );
-            if (direction !== 0) {
-              e.preventDefault();
-              if (scrollYRef.current) {
-                window.scroll(0, scrollYRef.current);
-              }
-            }
-            const length = Math.round(
-              Math.sqrt(Math.pow(e.touches[0].pageX - touchObject.startX, 2))
-            );
-            setTouchObject({
-              ...touchObject,
-              endX: e.touches[0].pageX,
-              endY: e.touches[0].pageY,
-              length,
-              direction
-            });
-          }}
-          onTouchEnd={handleSwipe}
-          onTouchCancel={handleSwipe}
-          onMouseDown={(e) => {
-            if (allowDrag) {
-              setTouchObject({
-                startX: e.clientX,
-                startY: e.clientY
-              });
-              setDragging(true);
-            }
-          }}
-          onMouseMove={(e) => {
-            if (dragging) {
-              const direction = swipeDirection(
-                touchObject.startX,
-                e.clientX,
-                touchObject.startY,
-                e.clientY
-              );
-              if (direction !== 0) {
-                e.preventDefault();
-              }
-              const length = Math.round(
-                Math.sqrt(Math.pow(e.clientX - touchObject.startX, 2))
-              );
-              setTouchObject({
-                ...touchObject,
-                endX: e.clientX,
-                endY: e.clientY,
-                length,
-                direction
-              });
-            }
-          }}
-          onMouseUp={() => {
-            if (dragging) {
-              handleSwipe();
-            }
-          }}
-          onMouseLeave={() => {
-            if (dragging) {
-              handleSwipe();
-            }
-          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          <Animate
-            show
-            start={{ tx: 0, ty: 0 }}
-            update={() => {
-              const { tx, ty } = getOffsetDeltas();
-              return {
-                tx,
-                ty,
-                timing: {
-                  duration: DEFAULT_DURATION,
-                  ease: d3Ease[easing as keyof typeof d3Ease]
-                },
-                events: {
-                  end: () => {
-                    const newLeft = getTargetLeft();
-                    if (newLeft !== left) {
-                      setLeft(newLeft);
-                    }
-                  }
-                }
-              };
+          <div
+            className={css`
+              display: flex;
+              transition: ${isTransitioning ? 'transform 0.3s ease-out' : 'none'};
+            `}
+            style={{
+              transform: `translateX(-${currentSlide * slideWidthPercent}%)`
             }}
           >
-            {({ tx, ty }) => (
-              <ul
-                style={{
-                  position: 'relative',
-                  transform: `translate3d(${tx}px, ${ty}px, 0)`,
-                  display: 'block',
-                  margin: `0px ${(cellSpacing / 2) * -1}px`,
-                  padding: 0,
-                  height: 'auto',
-                  width: slideWidth * slideCount + cellSpacing * slideCount,
-                  cursor: dragging ? 'pointer' : 'inherit',
-                  boxSizing: 'border-box'
-                }}
+            {Children.map(children, (child, index) => (
+              <div
+                key={index}
+                className={css`
+                  flex: 0 0 ${slideWidthPercent}%;
+                  min-width: ${slideWidthPercent}%;
+                  box-sizing: border-box;
+                  padding: 0 ${cellSpacing / 2}px;
+                `}
               >
-                {slideCount > 1
-                  ? formatChildren({
-                      children,
-                      slideWidth,
-                      cellSpacing
-                    })
-                  : children}
-              </ul>
-            )}
-          </Animate>
+                {child}
+              </div>
+            ))}
+          </div>
         </div>
         {!progressBar && (
           <>
@@ -334,143 +251,4 @@ export default function Carousel({
       </div>
     </ErrorBoundary>
   );
-
-  function formatChildren({
-    children,
-    slideWidth,
-    cellSpacing
-  }: {
-    children: React.ReactNode;
-    slideWidth: number;
-    cellSpacing: number;
-  }) {
-    return Children.map(children, (child, index) => (
-      <li
-        style={{
-          display: 'inline-block',
-          listStyleType: 'none',
-          verticalAlign: 'top',
-          width: slideWidth,
-          height: 'auto',
-          boxSizing: 'border-box',
-          MozBoxSizing: 'border-box',
-          marginLeft: cellSpacing / 2 - 0.5,
-          marginRight: cellSpacing / 2 - 0.5,
-          marginTop: 'auto',
-          marginBottom: 'auto'
-        }}
-        key={index}
-      >
-        {child}
-      </li>
-    ));
-  }
-
-  function getTargetLeft(touchOffset?: number, slide?: number) {
-    const target = slide || currentSlide;
-    const offset = 0 - cellSpacing * target - (touchOffset || 0);
-    const left = slideWidth * target;
-    return (left - offset) * -1;
-  }
-
-  function getOffsetDeltas() {
-    const offset = getTargetLeft(touchObject.length * touchObject.direction);
-    return {
-      tx: [offset],
-      ty: [0]
-    };
-  }
-
-  function goToSlide(index: number) {
-    if (index >= slideCount || index < 0 || currentSlide === index) {
-      return;
-    }
-    setEasing(DEFAULT_EASING);
-    beforeSlide(currentSlide, index);
-    setLeft(getTargetLeft(slideWidth, currentSlide));
-    setCurrentSlide(index);
-    afterSlide(index);
-  }
-
-  function handleSwipe() {
-    if (touchObject.length > slideWidth / slidesToShow / 5) {
-      if (touchObject.direction === 1) {
-        if (currentSlide >= slideCount - slidesToShow) {
-          setEasing(DEFAULT_EDGE_EASING);
-        } else {
-          handleGoToNextSlide();
-        }
-      } else if (touchObject.direction === -1) {
-        if (currentSlide <= 0) {
-          setEasing(DEFAULT_EDGE_EASING);
-        } else {
-          handleGoToPreviousSlide();
-        }
-      }
-    } else {
-      goToSlide(currentSlide);
-    }
-    setTouchObject({});
-    setDragging(false);
-    scrollYRef.current = null;
-  }
-
-  function handleGoToNextSlide() {
-    if (currentSlide < slideCount - slidesToShow) {
-      goToSlide(
-        Math.min(currentSlide + slidesToScroll, slideCount - slidesToShow)
-      );
-    }
-  }
-
-  function handleGoToPreviousSlide() {
-    if (currentSlide > 0) {
-      goToSlide(Math.max(0, currentSlide - slidesToScroll));
-    }
-  }
-
-  function onResize() {
-    renderDimensions(FrameRef);
-  }
-
-  function onReadyStateChange() {
-    renderDimensions(FrameRef);
-  }
-
-  function renderDimensions(ref: React.RefObject<any>) {
-    if (!ref.current) return;
-    const firstSlide = ref.current.childNodes?.[0]?.childNodes?.[0];
-    if (firstSlide) {
-      firstSlide.style.height = 'auto';
-    }
-    const offsetWidth = ref.current.offsetWidth;
-    if (offsetWidth > 0) {
-      setSlideWidth(
-        (offsetWidth / slidesToShow - cellSpacing * (1 - 1 / slidesToShow)) *
-          slideWidthMultiplier
-      );
-    }
-  }
-
-  function swipeDirection(x1: number, x2: number, y1: number, y2: number) {
-    const xDist = x1 - x2;
-    const yDist = y1 - y2;
-    const r = Math.atan2(yDist, xDist);
-    const maxAngle = 10;
-
-    let swipeAngle = Math.round((r * 180) / Math.PI);
-    if (swipeAngle < 0) {
-      swipeAngle = 360 - Math.abs(swipeAngle);
-    }
-    if (swipeAngle >= 0 && swipeAngle <= maxAngle) {
-      return 1;
-    }
-    if (swipeAngle <= 360 && swipeAngle >= 360 - maxAngle) {
-      return 1;
-    }
-    if (swipeAngle >= 180 - maxAngle && swipeAngle <= 180 + maxAngle) {
-      return -1;
-    }
-    return 0;
-  }
 }
