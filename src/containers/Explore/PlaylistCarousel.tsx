@@ -177,7 +177,6 @@ export default function PlaylistCarousel({
         slidesToShow={numSlides}
         slidesToScroll={numSlides}
         cellSpacing={cellSpacing}
-        slideWidthMultiplier={0.99}
         showAllButton={showAllButton}
         onShowAll={() => setPlaylistModalShown(true)}
       >

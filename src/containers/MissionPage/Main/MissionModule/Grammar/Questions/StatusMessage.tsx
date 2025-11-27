@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import Button from '~/components/Button';
 import MissionStatusCard from '~/components/MissionStatusCard';
-import RichText from '~/components/Texts/RichText';
-import { Color } from '~/constants/css';
+import AnswerFeedback from './AnswerFeedback';
 
 export default function StatusMessage({
   mission,
@@ -56,16 +55,21 @@ export default function StatusMessage({
           style={{ margin: '0 auto' }}
         />
       ) : (
-        <MissionStatusCard
-          status={status === 'pass' ? 'success' : 'fail'}
-          title={status === 'pass' ? 'Correct!' : 'Not Quite'}
-          message={
-            status === 'pass'
-              ? passMessage
-              : 'Review the explanation below and try again.'
-          }
-          footer={
-            status === 'fail' ? (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            width: '100%',
+            maxWidth: '40rem'
+          }}
+        >
+          <AnswerFeedback
+            isCorrect={status === 'pass'}
+            explanation={status === 'fail' ? failMessage : ''}
+          />
+          {status === 'fail' && (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <Button
                 onClick={onBackToStart}
                 variant="soft"
@@ -74,21 +78,9 @@ export default function StatusMessage({
               >
                 Back to Start Screen
               </Button>
-            ) : null
-          }
-          style={{ margin: '0 auto' }}
-        >
-          {status === 'fail' ? (
-            <RichText style={{ fontSize: '1.6rem', color: Color.darkGray() }}>
-              {failMessage}
-            </RichText>
-          ) : null}
-          {status === 'pass' ? (
-            <RichText style={{ fontSize: '1.6rem', color: Color.darkGray() }}>
-              {passMessage}
-            </RichText>
-          ) : null}
-        </MissionStatusCard>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
