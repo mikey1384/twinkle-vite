@@ -51,7 +51,6 @@ export default function BottomNavButtons({
           </Button>
           <Button
             variant="soft"
-            tone="raised"
             disabled={nextButtonDisabled}
             style={{ fontSize: '1.7rem' }}
             onClick={currentSlide + 1 === slideCount ? onFinish : onNext}
