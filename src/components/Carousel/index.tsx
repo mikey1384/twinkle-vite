@@ -174,7 +174,6 @@ export default function Carousel({
             position: 'relative',
             overflow: 'hidden',
             margin: framePadding,
-            padding: '6px',
             boxSizing: 'border-box',
             width: '100%'
           }}
