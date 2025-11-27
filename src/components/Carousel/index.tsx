@@ -82,7 +82,18 @@ export default function Carousel({
       removeEvent(window, 'resize', onResize);
       removeEvent(document, 'readystatechange', onReadyStateChange);
     };
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slidesToShow, cellSpacing, slideWidthMultiplier]);
+
+  useEffect(() => {
+    if (slideWidth === 0 && FrameRef.current) {
+      const timer = setTimeout(() => {
+        renderDimensions(FrameRef);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slideWidth]);
 
   useEffect(() => {
     setSlideCount(Children.count(children));
@@ -135,7 +146,7 @@ export default function Carousel({
           style={{
             position: 'relative',
             display: 'block',
-            overflowX: 'hidden',
+            overflow: 'hidden',
             height: 'auto',
             margin: framePadding,
             padding: '6px',
@@ -427,15 +438,18 @@ export default function Carousel({
   }
 
   function renderDimensions(ref: React.RefObject<any>) {
-    const firstSlide = ref.current.childNodes[0].childNodes[0];
+    if (!ref.current) return;
+    const firstSlide = ref.current.childNodes?.[0]?.childNodes?.[0];
     if (firstSlide) {
       firstSlide.style.height = 'auto';
     }
-    setSlideWidth(
-      (ref.current.offsetWidth / slidesToShow -
-        cellSpacing * (1 - 1 / slidesToShow)) *
-        slideWidthMultiplier
-    );
+    const offsetWidth = ref.current.offsetWidth;
+    if (offsetWidth > 0) {
+      setSlideWidth(
+        (offsetWidth / slidesToShow - cellSpacing * (1 - 1 / slidesToShow)) *
+          slideWidthMultiplier
+      );
+    }
   }
 
   function swipeDirection(x1: number, x2: number, y1: number, y2: number) {
