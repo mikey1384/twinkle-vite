@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Carousel from '~/components/Carousel';
 import Button from '~/components/Button';
 import XPVideoPlayer from '~/components/XPVideoPlayer';
-import PageTab from './PageTab';import CheckListGroup from '~/components/CheckListGroup';
+import PageTab from './PageTab';
+import ChoiceList from '~/components/ChoiceList';
 import QuestionsBuilder from './QuestionsBuilder';
 import ResultModal from './Modals/ResultModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, tabletMaxWidth } from '~/constants/css';
+import { borderRadius, tabletMaxWidth, Color } from '~/constants/css';
 
 const addEditQuestionsLabel = 'Add/Edit Questions';
 const addQuestionsLabel = 'Add Questions';
@@ -113,17 +114,30 @@ export default function Content({
             </div>
           )}
           {!watchTabActive && questions.length > 0 && (
-            <Carousel
-              allowDrag={false}
-              progressBar
-              slidesToShow={1}
-              slidesToScroll={1}
-              slideIndex={currentSlide}
-              afterSlide={setCurrentSlide}
-              onFinish={() => setResultModalShown(true)}
+            <div
+              className={css`
+                background: #fff;
+                border-radius: ${borderRadius};
+                padding: 1.25rem;
+                margin-top: 1rem;
+                @media (max-width: ${tabletMaxWidth}) {
+                  padding: 1rem;
+                  border-radius: 0;
+                }
+              `}
             >
-              {handleRenderSlides()}
-            </Carousel>
+              <Carousel
+                allowDrag={false}
+                progressBar
+                slidesToShow={1}
+                slidesToScroll={1}
+                slideIndex={currentSlide}
+                afterSlide={setCurrentSlide}
+                onFinish={() => setResultModalShown(true)}
+              >
+                {handleRenderSlides()}
+              </Carousel>
+            </div>
           )}
           {!watchTabActive && questions.length === 0 && (
             <div
@@ -216,18 +230,28 @@ export default function Content({
       );
 
       return (
-        <div key={questionIndex}>
-          <div>
-            <h3
-              style={{ marginTop: '1rem' }}
-              dangerouslySetInnerHTML={{ __html: question.title }}
-            />
-          </div>
-          <CheckListGroup
-            inputType="radio"
+        <div
+          key={questionIndex}
+          className={css`
+            overflow: hidden;
+            padding: 0.5rem;
+          `}
+        >
+          <div
+            className={css`
+              font-size: 1.6rem;
+              font-weight: 600;
+              color: ${Color.darkerGray()};
+              margin-bottom: 1rem;
+              line-height: 1.4;
+            `}
+            dangerouslySetInnerHTML={{ __html: question.title }}
+          />
+          <ChoiceList
+            answerIndex={question.correctChoice - 1}
+            conditionPassStatus=""
             listItems={listItems}
             onSelect={handleSelectChoice}
-            style={{ marginTop: '1.5rem', paddingRight: '1rem' }}
           />
         </div>
       );
