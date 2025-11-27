@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '2.0.13';
+export const clientVersion = '2.0.14';
 
 export const BOOKMARK_VIEWS = {
   AI: 'ai',

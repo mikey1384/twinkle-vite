@@ -97,14 +97,14 @@ export default function MainForm({
   const isEmailAndNamePageIncomplete = useMemo(() => {
     const isTeacherRequirementMet =
       !stringIsEmpty(branchName) &&
-      !stringIsEmpty(classLabel) &&
-      !stringIsEmpty(email) &&
-      isEmailVerified;
+      !stringIsEmpty(classLabel);
     return (
       hasEmailError ||
       hasNameError ||
       stringIsEmpty(firstname) ||
       stringIsEmpty(lastname) ||
+      stringIsEmpty(email) ||
+      !isEmailVerified ||
       (userType === 'mentor' && !isTeacherRequirementMet)
     );
   }, [

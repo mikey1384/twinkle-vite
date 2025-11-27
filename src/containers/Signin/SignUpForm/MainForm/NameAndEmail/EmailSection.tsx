@@ -38,7 +38,7 @@ export default function EmailSection({
           setEmailErrorMsg('Invalid email address');
           onSetHasEmailError(true);
         } else {
-          setSendVerificationButtonShown(userType === 'mentor');
+          setSendVerificationButtonShown(true);
         }
       }
     }, 1000);
