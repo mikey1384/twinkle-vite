@@ -121,7 +121,10 @@ export default function Carousel({
     touchDeltaX.current = 0;
   }
 
-  const slideWidthPercent = 100 / slidesToShow;
+  // Each slide takes up (100 / slidesToShow)% of the visible area
+  // The track is slideCount * (100 / slidesToShow)% wide
+  const slideWidth = 100 / slidesToShow;
+  const trackWidth = slideCount * slideWidth;
 
   return (
     <ErrorBoundary componentPath="Carousel/index">
@@ -137,6 +140,8 @@ export default function Carousel({
           fontSize: '1.5rem',
           height: 'auto',
           boxSizing: 'border-box',
+          overflow: 'hidden',
+          maxWidth: '100%',
           ...style
         }}
       >
@@ -170,7 +175,8 @@ export default function Carousel({
             overflow: 'hidden',
             margin: framePadding,
             padding: '6px',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            width: '100%'
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -182,18 +188,20 @@ export default function Carousel({
               transition: ${isTransitioning ? 'transform 0.3s ease-out' : 'none'};
             `}
             style={{
-              transform: `translateX(-${currentSlide * slideWidthPercent}%)`
+              width: `${trackWidth}%`,
+              transform: `translateX(-${currentSlide * (100 / slideCount)}%)`
             }}
           >
             {Children.map(children, (child, index) => (
               <div
                 key={index}
-                className={css`
-                  flex: 0 0 ${slideWidthPercent}%;
-                  min-width: ${slideWidthPercent}%;
-                  box-sizing: border-box;
-                  padding: 0 ${cellSpacing / 2}px;
-                `}
+                style={{
+                  flex: `0 0 ${100 / slideCount}%`,
+                  width: `${100 / slideCount}%`,
+                  boxSizing: 'border-box',
+                  padding: `0 ${cellSpacing / 2}px`,
+                  overflow: 'hidden'
+                }}
               >
                 {child}
               </div>
