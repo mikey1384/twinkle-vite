@@ -362,15 +362,10 @@ export default function ChatFilterBar({
       channelId,
       newState: {
         selectedTab: tabName,
-        isSearchActive: false,
-        ...(tabName === 'all' ? { lastTopicId: 0 } : {})
+        isSearchActive: false
       }
     });
     if (tabName === 'all') {
-      updateLastTopicId({
-        channelId,
-        topicId: 0
-      });
       navigate(`/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}`);
     }
   }

@@ -1289,7 +1289,8 @@ export default function Main({
             if (
               isChannelChange &&
               channelsObj[channelId].lastTopicId &&
-              channelVisited
+              channelVisited &&
+              channelsObj[channelId].selectedTab === 'topic'
             ) {
               const lastTopicId = channelsObj[channelId].lastTopicId;
               const newPath = `/chat/${pathId}${
@@ -1299,7 +1300,7 @@ export default function Main({
             } else {
               onSetChannelState({
                 channelId,
-                newState: { selectedTab: 'all', isSearchActive: false, lastTopicId: 0 }
+                newState: { selectedTab: 'all', isSearchActive: false }
               });
             }
           }
@@ -1359,19 +1360,10 @@ export default function Main({
               }
             }
           }
-        } else if (data.channel.lastTopicId && channelVisited) {
-          navigate(
-            `/chat/${data.channel.pathId}${
-              isEnteringSubchannel ? `/${subchannelPath}` : ''
-            }/topic/${data.channel.lastTopicId}`,
-            { replace: true }
-          );
-          delete loadingPromises[requestKey];
-          return;
         } else {
           onSetChannelState({
             channelId,
-            newState: { selectedTab: 'all', isSearchActive: false, lastTopicId: 0 }
+            newState: { selectedTab: 'all', isSearchActive: false }
           });
         }
 
