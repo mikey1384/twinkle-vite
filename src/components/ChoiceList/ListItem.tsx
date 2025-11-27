@@ -154,10 +154,13 @@ export default function ListItem({
       <div
         className={css`
           flex: 1;
+          min-width: 0;
           text-align: left;
           font-size: 1.6rem;
           color: ${Color.darkerGray()};
           line-height: 1.55;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 1.5rem;
           }

@@ -67,6 +67,7 @@ export default function Content({
       <div
         className={css`
           width: 100%;
+          min-width: 0;
           margin-bottom: 1rem;
           padding: 0;
         `}
@@ -233,8 +234,9 @@ export default function Content({
         <div
           key={questionIndex}
           className={css`
-            overflow: hidden;
             padding: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
           `}
         >
           <div
@@ -244,9 +246,12 @@ export default function Content({
               color: ${Color.darkerGray()};
               margin-bottom: 1rem;
               line-height: 1.4;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             `}
-            dangerouslySetInnerHTML={{ __html: question.title }}
-          />
+          >
+            {question.title}
+          </div>
           <ChoiceList
             answerIndex={question.correctChoice - 1}
             conditionPassStatus=""

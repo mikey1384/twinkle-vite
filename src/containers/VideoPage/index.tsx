@@ -268,7 +268,7 @@ export default function VideoPage() {
           row-gap: 1.5rem;
           align-items: start;
           @media (max-width: ${tabletMaxWidth}) {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             width: 100%;
             margin: 0;
             row-gap: 1rem;
@@ -279,6 +279,7 @@ export default function VideoPage() {
           <div
             className={css`
               grid-column: 1;
+              min-width: 0;
             `}
           >
             <Routes>
