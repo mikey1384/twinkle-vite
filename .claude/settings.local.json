@@ -29,7 +29,8 @@
       "Bash(npm update:*)",
       "Bash(claude --version)",
       "Bash(npm run lint:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

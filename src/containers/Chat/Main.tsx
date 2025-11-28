@@ -1264,20 +1264,20 @@ export default function Main({
           if (topicId) {
             const subjectId = Number(topicId);
             if (subjectId) {
+              onSetChannelState({
+                channelId,
+                newState: { selectedTab: 'topic' }
+              });
+              onEnterTopic({ channelId, topicId: subjectId });
+              updateLastTopicId({
+                channelId,
+                topicId: subjectId
+              });
               try {
                 const subjectData = await loadChatSubject(subjectId);
                 if (isStale()) return;
 
                 onLoadChatSubject(subjectData);
-                onSetChannelState({
-                  channelId,
-                  newState: { selectedTab: 'topic' }
-                });
-                onEnterTopic({ channelId, topicId: subjectId });
-                updateLastTopicId({
-                  channelId,
-                  topicId: subjectId
-                });
               } catch (error) {
                 console.error('Failed to load topic:', error);
                 if (!isStale()) {
@@ -1339,20 +1339,21 @@ export default function Main({
         if (topicId) {
           const subjectId = Number(topicId);
           if (subjectId) {
+            // Set topic state immediately so it persists even if user navigates away
+            onSetChannelState({
+              channelId,
+              newState: { selectedTab: 'topic' }
+            });
+            onEnterTopic({ channelId, topicId: subjectId });
+            updateLastTopicId({
+              channelId,
+              topicId: subjectId
+            });
             try {
               const subjectData = await loadChatSubject(subjectId);
               if (isStale()) return;
 
               onLoadChatSubject(subjectData);
-              onSetChannelState({
-                channelId,
-                newState: { selectedTab: 'topic' }
-              });
-              onEnterTopic({ channelId, topicId: subjectId });
-              updateLastTopicId({
-                channelId,
-                topicId: subjectId
-              });
             } catch (error) {
               console.error('Failed to load topic:', error);
               if (!isStale()) {
