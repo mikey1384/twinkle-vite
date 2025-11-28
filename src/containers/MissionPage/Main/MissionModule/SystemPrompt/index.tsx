@@ -170,16 +170,15 @@ export default function SystemPromptMission({
   const trimmedTitle = title.trim();
   const hasPrompt = trimmedPrompt.length > 0;
 
-  // If there's already a saved prompt, mark as ever generated
   useEffect(() => {
-    if (hasPrompt && !promptEverGenerated) {
+    if (hasPrompt && !promptEverGenerated && !generating && !improving) {
       handleSetSystemPromptState({
         ...systemPromptState,
         promptEverGenerated: true
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasPrompt, promptEverGenerated]);
+  }, [hasPrompt, promptEverGenerated, generating, improving]);
   const canSend = Boolean(hasPrompt && trimmedMessage && !sending);
   const createdPrompt = useMemo(() => {
     const hasPreviewedLocally = chatMessages.some(

@@ -14,6 +14,7 @@ interface SystemPromptState {
   userMessage: string;
   missionPromptId?: number | null;
   chatMessages: ChatMessage[];
+  promptEverGenerated?: boolean;
 }
 
 interface UseSystemPromptSocketsProps {
