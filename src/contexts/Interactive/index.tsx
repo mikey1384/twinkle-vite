@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import InteractiveActions from './actions';
 import InteractiveReducer from './reducer';
@@ -15,12 +15,16 @@ export function InteractiveContextProvider({
     InteractiveReducer,
     initialInteractiveState
   );
+  const memoizedActions = useMemo(
+    () => InteractiveActions(interactiveDispatch),
+    [interactiveDispatch]
+  );
 
   return (
     <InteractiveContext.Provider
       value={{
         state: interactiveState,
-        actions: InteractiveActions(interactiveDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

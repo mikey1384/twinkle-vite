@@ -27,7 +27,9 @@
       "Bash(npm cache clean:*)",
       "Bash(npm --version)",
       "Bash(npm update:*)",
-      "Bash(claude --version)"
+      "Bash(claude --version)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": []
   }

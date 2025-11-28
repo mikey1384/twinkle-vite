@@ -280,7 +280,7 @@ export default function SystemPromptMission({
       mounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSystemPromptProgress, mission.id]);
+  }, [mission.id]);
 
   // Poll for progress updates while mission is not cleared
   useEffect(() => {

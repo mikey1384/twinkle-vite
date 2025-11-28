@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import HomeActions from './actions';
 import HomeReducer from './reducer';
@@ -34,11 +34,15 @@ export const initialHomeState = {
 
 export function HomeContextProvider({ children }: { children: ReactNode }) {
   const [homeState, homeDispatch] = useReducer(HomeReducer, initialHomeState);
+  const memoizedActions = useMemo(
+    () => HomeActions(homeDispatch),
+    [homeDispatch]
+  );
   return (
     <HomeContext.Provider
       value={{
         state: homeState,
-        actions: HomeActions(homeDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

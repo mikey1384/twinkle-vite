@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import ProfileActions from './actions';
 import ProfileReducer from './reducer';
@@ -11,11 +11,15 @@ export function ProfileContextProvider({ children }: { children: ReactNode }) {
     ProfileReducer,
     initialProfileState
   );
+  const memoizedActions = useMemo(
+    () => ProfileActions(profileDispatch),
+    [profileDispatch]
+  );
   return (
     <ProfileContext.Provider
       value={{
         state: profileState,
-        actions: ProfileActions(profileDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

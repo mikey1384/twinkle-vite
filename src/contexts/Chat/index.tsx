@@ -1,4 +1,4 @@
-import React, { ReactNode, useReducer } from 'react';
+import React, { ReactNode, useReducer, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
@@ -207,12 +207,16 @@ export function ChatContextProvider({ children }: { children: ReactNode }) {
     ChatReducer,
     getInitialChatState()
   );
+  const memoizedActions = useMemo(
+    () => ChatActions(chatDispatch),
+    [chatDispatch]
+  );
 
   return (
     <ChatContext.Provider
       value={{
         state: chatState,
-        actions: ChatActions(chatDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

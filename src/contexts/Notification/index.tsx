@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import NotiActions from './actions';
 import NotiReducer from './reducer';
@@ -43,11 +43,15 @@ export const initialNotiState = {
 
 export function NotiContextProvider({ children }: { children: ReactNode }) {
   const [notiState, notiDispatch] = useReducer(NotiReducer, initialNotiState);
+  const memoizedActions = useMemo(
+    () => NotiActions(notiDispatch),
+    [notiDispatch]
+  );
   return (
     <NotiContext.Provider
       value={{
         state: notiState,
-        actions: NotiActions(notiDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

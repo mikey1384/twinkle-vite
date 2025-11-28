@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useTransition } from 'react';
 import BackForwardButtons from './BackForwardButtons';
 import { css } from '@emotion/css';
 import {
@@ -84,6 +84,7 @@ export default function ChatFilterBar({
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const [, startTransition] = useTransition();
 
   outsideClickMethod([searchInputRef, searchButtonRef, topicButtonRef], () => {
     if (!stringIsEmpty(searchText)) {
@@ -348,22 +349,28 @@ export default function ChatFilterBar({
       return onShowTopicSelectorModal();
     }
     if (tabName === 'topic') {
+      // Fire-and-forget: don't block UI on this API call
       updateLastTopicId({
         channelId,
         topicId
+      }).catch(() => {
+        // Silently ignore - this is just a preference update
       });
-      return navigate(
+      navigate(
         `/chat/${pathId}${
           subchannelPath ? `/${subchannelPath}` : ''
         }/topic/${topicId}`
       );
+      return;
     }
-    onSetChannelState({
-      channelId,
-      newState: {
-        selectedTab: tabName,
-        isSearchActive: false
-      }
+    startTransition(() => {
+      onSetChannelState({
+        channelId,
+        newState: {
+          selectedTab: tabName,
+          isSearchActive: false
+        }
+      });
     });
     if (tabName === 'all') {
       navigate(`/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}`);

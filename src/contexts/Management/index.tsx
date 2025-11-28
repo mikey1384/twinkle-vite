@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import ManagementActions from './actions';
 import ManagementReducer from './reducer';
@@ -51,11 +51,15 @@ export function ManagementContextProvider({
     ManagementReducer,
     initialManagementState
   );
+  const memoizedActions = useMemo(
+    () => ManagementActions(managementDispatch),
+    [managementDispatch]
+  );
   return (
     <ManagementContext.Provider
       value={{
         state: managementState,
-        actions: ManagementActions(managementDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

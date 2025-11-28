@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import ExploreActions from './actions';
 import ExploreReducer from './reducer';
@@ -83,11 +83,15 @@ export function ExploreContextProvider({ children }: { children: ReactNode }) {
     ExploreReducer,
     initialExploreState
   );
+  const memoizedActions = useMemo(
+    () => ExploreActions(exploreDispatch),
+    [exploreDispatch]
+  );
   return (
     <ExploreContext.Provider
       value={{
         state: exploreState,
-        actions: ExploreActions(exploreDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

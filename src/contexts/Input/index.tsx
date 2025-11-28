@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import InputActions from './actions';
 import InputReducer from './reducer';
@@ -41,11 +41,15 @@ export function InputContextProvider({ children }: { children: ReactNode }) {
     InputReducer,
     initialInputState
   );
+  const memoizedActions = useMemo(
+    () => InputActions(inputDispatch),
+    [inputDispatch]
+  );
   return (
     <InputContext.Provider
       value={{
         state: inputState,
-        actions: InputActions(inputDispatch)
+        actions: memoizedActions
       }}
     >
       {children}

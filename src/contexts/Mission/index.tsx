@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode } from 'react';
+import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import MissionActions from './actions';
 import MissionReducer from './reducer';
@@ -24,11 +24,15 @@ export function MissionContextProvider({ children }: { children: ReactNode }) {
     MissionReducer,
     initialMissionState
   );
+  const memoizedActions = useMemo(
+    () => MissionActions(missionDispatch),
+    [missionDispatch]
+  );
   return (
     <MissionContext.Provider
       value={{
         state: missionState,
-        actions: MissionActions(missionDispatch)
+        actions: memoizedActions
       }}
     >
       {children}
