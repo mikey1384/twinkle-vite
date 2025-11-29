@@ -84,11 +84,21 @@ function NotiMessage({
   );
   const displayedContent = useMemo(() => {
     let result = '';
-    if (targetObj.contentType === 'pass') {
-      if (targetObj.passType === 'mission') {
+    if (
+      targetObj.contentType === 'pass' ||
+      targetObj.contentType === 'missionPass' ||
+      targetObj.contentType === 'achievementPass'
+    ) {
+      if (
+        targetObj.passType === 'mission' ||
+        targetObj.contentType === 'missionPass'
+      ) {
         result = targetObj.missionTitle;
       }
-      if (targetObj.passType === 'achievement') {
+      if (
+        targetObj.passType === 'achievement' ||
+        targetObj.contentType === 'achievementPass'
+      ) {
         result = targetObj.achievementTitle;
       }
     } else {
@@ -108,8 +118,11 @@ function NotiMessage({
         ? 'AI Story'
         : targetObj.contentType === 'url'
         ? 'link'
-        : targetObj.contentType === 'pass'
+        : targetObj.contentType === 'pass' ||
+          targetObj.contentType === 'achievementPass'
         ? 'achievement'
+        : targetObj.contentType === 'missionPass'
+        ? 'mission'
         : targetObj.contentType
     } ${
       !stringIsEmpty(displayedContent)
@@ -516,8 +529,11 @@ function NotiMessage({
                 ? 'profile'
                 : targetObj.contentType === 'url'
                 ? 'link'
-                : targetObj.contentType === 'pass'
+                : targetObj.contentType === 'pass' ||
+                  targetObj.contentType === 'missionPass'
                 ? 'mission completion'
+                : targetObj.contentType === 'achievementPass'
+                ? 'achievement'
                 : targetObj.contentType
             }${
               (!isReply && targetObj.contentType === 'user') ||
@@ -561,7 +577,13 @@ function NotiMessage({
             content={{
               id: targetObj.id,
               title: `${
-                targetObj.contentType === 'url' ? 'link' : targetObj.contentType
+                targetObj.contentType === 'url'
+                  ? 'link'
+                  : targetObj.contentType === 'missionPass'
+                  ? 'mission completion'
+                  : targetObj.contentType === 'achievementPass'
+                  ? 'achievement'
+                  : targetObj.contentType
               } (${truncatedTargetObjectText})`
             }}
             label=""
