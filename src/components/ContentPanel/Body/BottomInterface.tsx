@@ -334,9 +334,8 @@ export default function BottomInterface({
         style={{ marginTop: secretHidden ? '0.5rem' : '1.5rem' }}
         className={bottomInterfaceCSS}
       >
-        {contentType !== 'pass' && contentType !== 'xpChange' && (
-          <div className="left">
-            {!secretHidden && (
+        <div className="left">
+            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && (
               <LikeButton
                 contentType={contentType}
                 contentId={contentId}
@@ -357,7 +356,10 @@ export default function BottomInterface({
                 <Icon icon="comment-alt" />
                 {!deviceIsTablet && (
                   <span className="button-label" style={{ marginLeft: '0.7rem' }}>
-                    {contentType === 'video' || contentType === 'url'
+                    {contentType === 'video' ||
+                    contentType === 'url' ||
+                    contentType === 'pass' ||
+                    contentType === 'xpChange'
                       ? commentLabel
                       : contentType === 'subject'
                       ? respondLabel
@@ -377,7 +379,9 @@ export default function BottomInterface({
             )}
             {userCanRewardThis &&
               !secretHidden &&
-              contentType !== 'aiStory' && (
+              contentType !== 'aiStory' &&
+              contentType !== 'pass' &&
+              contentType !== 'xpChange' && (
                 <RewardButton
                   labelClassName="reward-button-label"
                   hideLabel={deviceIsTablet}
@@ -387,7 +391,7 @@ export default function BottomInterface({
                   theme={theme}
                 />
               )}
-            {!secretHidden && (
+            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && (
               <div style={{ position: 'relative' }}>
                 <Button
                   onClick={() => {
@@ -416,7 +420,7 @@ export default function BottomInterface({
                 </div>
               </div>
             )}
-            {editButtonShown ? (
+            {editButtonShown && contentType !== 'pass' && contentType !== 'xpChange' ? (
               <DropdownButton
                 variant="solid"
                 tone="raised"
@@ -425,8 +429,7 @@ export default function BottomInterface({
                 menuProps={editMenuItems}
               />
             ) : null}
-          </div>
-        )}
+        </div>
         {!secretHidden && (
           <div
             className={`right ${css`

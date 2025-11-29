@@ -13,9 +13,13 @@ export default function ContentPage() {
   const location = useLocation();
   const { contentId: initialContentId } = useParams();
   const contentId = Number(initialContentId);
-  const contentType = useMemo(() => {
+  const { contentType, rootType } = useMemo(() => {
     const rawContentType = location.pathname.split('/')[1].slice(0, -1);
-    return rawContentType === 'ai-storie' ? 'aiStory' : rawContentType;
+    if (rawContentType === 'ai-storie') return { contentType: 'aiStory', rootType: undefined };
+    if (rawContentType === 'mission-passe') return { contentType: 'pass', rootType: 'mission' };
+    if (rawContentType === 'achievement-unlock') return { contentType: 'pass', rootType: 'achievement' };
+    if (rawContentType === 'daily-reward') return { contentType: 'xpChange', rootType: undefined };
+    return { contentType: rawContentType, rootType: undefined };
   }, [location.pathname]);
   const { isDeleted, isDeleteNotification } = useContentState({
     contentType,
@@ -30,7 +34,9 @@ export default function ContentPage() {
         const {
           data: { exists }
         } = await request.get(
-          `${URL}/content/check?contentId=${contentId}&contentType=${contentType}`
+          `${URL}/content/check?contentId=${contentId}&contentType=${contentType}${
+            rootType ? `&rootType=${rootType}` : ''
+          }`
         );
         setExists(exists);
       } catch (error) {
@@ -39,7 +45,7 @@ export default function ContentPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentId, location.pathname]);
+  }, [contentId, location.pathname, rootType]);
 
   return (
     <ErrorBoundary
@@ -83,6 +89,7 @@ export default function ContentPage() {
               commentsLoadLimit={5}
               contentId={Number(contentId)}
               contentType={contentType}
+              rootType={rootType}
             />
           ) : (
             <InvalidPage />

@@ -14,11 +14,12 @@ export default function ContentLink({
     rootMissionType,
     title,
     topic,
-    username
+    username,
+    word
   },
   contentType,
   label,
-  rootType = 'mission',
+  rootType: _rootType = 'mission',
   theme
 }: {
   style?: any;
@@ -39,21 +40,30 @@ export default function ContentLink({
     themeName: theme,
     fallback: 'logoBlue'
   });
+  const isPassType =
+    contentType === 'pass' ||
+    contentType === 'missionPass' ||
+    contentType === 'achievementPass';
+  const isAchievementPass =
+    contentType === 'achievementPass' || _rootType === 'achievement';
   const rootPath = useMemo(() => {
     let result = '';
     if (contentType === 'aiStory') {
       result = 'ai-stories';
     } else if (contentType === 'url') {
       result = 'links';
-    } else if (contentType === 'pass') {
-      result = `${rootType}s`;
+    } else if (isPassType) {
+      result = isAchievementPass ? 'achievement-unlocks' : 'mission-passes';
+    } else if (contentType === 'xpChange') {
+      result = 'daily-rewards';
     } else {
       result = contentType + 's';
     }
     return result;
-  }, [contentType, rootType]);
+  }, [contentType, isPassType, isAchievementPass]);
   const subPath = useMemo(() => {
     if (contentType === 'achievement') return '';
+    if (isPassType) return id ? `/${id}` : '';
     const path =
       contentType === 'user'
         ? username
@@ -61,13 +71,13 @@ export default function ContentLink({
         ? rootMissionType || missionType
         : id;
     return path ? `/${path}` : '';
-  }, [contentType, id, missionType, rootMissionType, username]);
+  }, [contentType, id, isPassType, missionType, rootMissionType, username]);
 
   const appliedLabel = useMemo(() => {
     return !label && contentType === 'user'
       ? username
-      : label || title || content || truncatedTopic;
-  }, [content, contentType, label, title, truncatedTopic, username]);
+      : label || title || word || content || truncatedTopic;
+  }, [content, contentType, label, title, truncatedTopic, username, word]);
 
   return appliedLabel ? (
     <Link

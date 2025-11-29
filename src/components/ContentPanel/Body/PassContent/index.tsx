@@ -44,8 +44,7 @@ export default function PassContent({
       isNotification
       achievement={rootObj}
       style={{
-        marginTop: '2.5rem',
-        marginBottom: '-4rem'
+        marginTop: '2.5rem'
       }}
     />
   );

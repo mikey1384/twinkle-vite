@@ -33,6 +33,12 @@ export default function HeadingText({
     userLink: { color: userLinkColor },
     content: { color: contentColor }
   } = useMemo(() => returnTheme(theme || profileTheme), [profileTheme, theme]);
+  const isPassType =
+    rootType === 'pass' ||
+    rootType === 'missionPass' ||
+    rootType === 'achievementPass';
+  const isAchievementPass =
+    rootType === 'achievementPass' || rootObj?.rootType === 'achievement';
   let contentLabel =
     rootType === 'aiStory'
       ? 'AI Story'
@@ -40,6 +46,12 @@ export default function HeadingText({
       ? 'link'
       : rootType === 'subject'
       ? 'subject'
+      : isPassType
+      ? isAchievementPass
+        ? 'achievement unlock'
+        : 'mission accomplishment'
+      : rootType === 'xpChange'
+      ? 'daily goals completion'
       : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
@@ -77,10 +89,20 @@ export default function HeadingText({
           {renderTargetAction()}{' '}
           {rootType !== 'user' ? (
             <>
+              {(isPassType || rootType === 'xpChange') && rootObj?.uploader ? (
+                <>
+                  <UsernameText
+                    user={rootObj.uploader}
+                    color={Color[linkColor]()}
+                  />
+                  {"'s "}
+                </>
+              ) : null}
               {contentLabel}:{' '}
               <ContentLink
                 content={isSubjectComment ? targetObj?.subject : rootObj}
                 contentType={isSubjectComment ? 'subject' : rootType}
+                rootType={isPassType ? rootObj?.rootType : undefined}
                 theme={theme}
                 label=""
               />{' '}
@@ -132,7 +154,7 @@ export default function HeadingText({
         return (
           <>
             <UsernameText user={uploader} color={Color[linkColor]()} />{' '}
-            completed a{' '}
+            completed a {rootObj.isTask ? 'task' : 'mission'}:{' '}
             <ContentLink
               content={{
                 id: rootObj.id,
@@ -142,7 +164,7 @@ export default function HeadingText({
               contentType="mission"
               style={{ color: Color.orange() }}
               theme={theme}
-              label={`${rootObj.isTask ? 'task' : 'mission'}: ${rootObj.title}`}
+              label={rootObj.title}
             />{' '}
           </>
         );
@@ -152,13 +174,12 @@ export default function HeadingText({
             <UsernameText user={uploader} color={Color[linkColor]()} /> unlocked
             an{' '}
             <ContentLink
-              content={{
-                title: 'achievement'
-              }}
-              contentType="achievement"
+              content={{ id }}
+              contentType="pass"
+              rootType="achievement"
               style={{ color: Color.orange() }}
               theme={theme}
-              label=""
+              label="achievement"
             />{' '}
           </>
         );

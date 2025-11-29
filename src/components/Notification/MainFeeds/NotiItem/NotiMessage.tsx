@@ -399,6 +399,8 @@ function NotiMessage({
             ? 'profile'
             : threadContentType === 'url'
             ? 'link'
+            : threadContentType === 'pass'
+            ? 'mission completion'
             : threadContentType;
         const threadLabelSuffix =
           threadContentType === 'subject'
@@ -514,6 +516,8 @@ function NotiMessage({
                 ? 'profile'
                 : targetObj.contentType === 'url'
                 ? 'link'
+                : targetObj.contentType === 'pass'
+                ? 'mission completion'
                 : targetObj.contentType
             }${
               (!isReply && targetObj.contentType === 'user') ||
@@ -573,11 +577,10 @@ function NotiMessage({
         <>
           <b style={{ color: Color.brownOrange() }}>{message}</b>{' '}
           <ContentLink
-            contentType={targetObj.contentType}
+            contentType="pass"
             rootType={targetObj.contentType}
             content={{
-              id: targetObj.id,
-              missionType: rootMissionType || targetObj.missionType,
+              id: actionObj.id,
               title: `(${truncatedTargetObjectText})`
             }}
             style={{ color: targetLinkColor }}

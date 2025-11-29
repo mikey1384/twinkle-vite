@@ -12,7 +12,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { determineUserCanRewardThis, isMobile } from '~/helpers';
+import { determineUserCanRewardThis } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -55,7 +55,6 @@ export default function Body({
   onChangeSpoilerStatus: (params: object) => void;
   theme: string;
 }) {
-  const deviceIsMobile = isMobile(navigator);
   const closeContent = useAppContext((v) => v.requestHelpers.closeContent);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -92,8 +91,13 @@ export default function Body({
     contentId
   });
 
+  // Normalize pass types for content state lookup
+  const normalizedRootType =
+    rootType === 'missionPass' || rootType === 'achievementPass'
+      ? 'pass'
+      : rootType;
   const rootObj = useContentState({
-    contentType: rootType,
+    contentType: normalizedRootType,
     contentId: rootId
   });
 
@@ -137,7 +141,7 @@ export default function Body({
 
   const { secretShown: rootSecretShown } = useContentState({
     contentId: rootId,
-    contentType: rootType
+    contentType: normalizedRootType
   });
   const { secretShown: subjectSecretShown } = useContentState({
     contentId: subjectId,
@@ -182,18 +186,18 @@ export default function Body({
   }, []);
 
   useEffect(() => {
-    if (rootId && rootType && !rootObj?.loaded) {
+    if (rootId && normalizedRootType && !rootObj?.loaded) {
       initRoot();
     }
     async function initRoot() {
       const data = await loadContent({
         contentId: rootId,
-        contentType: rootType
+        contentType: normalizedRootType
       });
       onInitContent(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rootId, rootType]);
+  }, [rootId, normalizedRootType]);
 
   useEffect(() => {
     if (
@@ -459,7 +463,7 @@ export default function Body({
         {!isNotification && (
           <Comments
             theme={theme}
-            alwaysShowInput={deviceIsMobile && !autoExpand}
+            alwaysShowInput={!autoExpand}
             autoExpand={
               (autoExpand && !secretHidden) ||
               (contentType === 'subject' && secretHidden)
@@ -467,7 +471,7 @@ export default function Body({
             comments={comments}
             commentsLoadLimit={commentsLoadLimit}
             commentsShown={commentsShown && !secretHidden}
-            numInputRows={deviceIsMobile && !autoExpand ? 1 : undefined}
+            numInputRows={!commentsShown && !autoExpand ? 1 : undefined}
             disableReason={disableReason}
             inputAreaInnerRef={CommentInputAreaRef}
             inputAtBottom={inputAtBottom}

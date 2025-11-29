@@ -491,6 +491,9 @@ export default function App() {
             <Route path="/users/:username/*" element={<Profile />} />
             <Route path="/ai-stories/:contentId" element={<ContentPage />} />
             <Route path="/comments/:contentId" element={<ContentPage />} />
+            <Route path="/mission-passes/:contentId" element={<ContentPage />} />
+            <Route path="/achievement-unlocks/:contentId" element={<ContentPage />} />
+            <Route path="/daily-rewards/:contentId" element={<ContentPage />} />
             <Route path="/videos/:videoId" element={<VideoPage />} />
             <Route path="/videos/:videoId/*" element={<VideoPage />} />
             <Route path="/links/:linkId" element={<LinkPage />} />

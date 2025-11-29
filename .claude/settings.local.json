@@ -30,7 +30,8 @@
       "Bash(claude --version)",
       "Bash(npm run lint:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

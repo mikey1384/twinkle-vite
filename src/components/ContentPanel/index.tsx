@@ -8,6 +8,8 @@ import Body from './Body';
 import TargetContent from './TargetContent';
 import Embedly from '~/components/Embedly';
 import Profile from './Profile';
+import TargetPassContent from './TargetPassContent';
+import TargetDailyGoalsContent from './TargetDailyGoalsContent';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
@@ -150,8 +152,16 @@ export default function ContentPanel({
     () => rootTypeFromState || rootType,
     [rootType, rootTypeFromState]
   );
+  // Normalize pass types for content state lookup
+  const normalizedRootType = useMemo(
+    () =>
+      appliedRootType === 'missionPass' || appliedRootType === 'achievementPass'
+        ? 'pass'
+        : appliedRootType,
+    [appliedRootType]
+  );
   const rootObj = useContentState({
-    contentType: appliedRootType,
+    contentType: normalizedRootType,
     contentId: rootId
   });
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
@@ -171,7 +181,7 @@ export default function ContentPanel({
   const loading = useRef(false);
   const inputAtBottom = contentType === 'comment';
   const { started: rootStarted } = useContentState({
-    contentType: appliedRootType,
+    contentType: normalizedRootType,
     contentId: rootId
   });
 
@@ -237,7 +247,6 @@ export default function ContentPanel({
       }
 
       .heading {
-        user-select: none;
         display: flex;
         align-items: center;
         gap: 0.9rem;
@@ -475,6 +484,32 @@ export default function ContentPanel({
                         <Loading theme={theme || profileTheme} />
                       )}
                     </div>
+                  )}
+                {contentType === 'comment' &&
+                  (appliedRootType === 'pass' ||
+                    appliedRootType === 'missionPass' ||
+                    appliedRootType === 'achievementPass') &&
+                  rootObj?.id && (
+                    <TargetPassContent
+                      passContent={rootObj}
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                    />
+                  )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'xpChange' &&
+                  rootObj?.id && (
+                    <TargetDailyGoalsContent
+                      dailyGoalsContent={rootObj}
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                    />
                   )}
                 {contentType === 'comment' && appliedRootType === 'user' ? (
                   <div

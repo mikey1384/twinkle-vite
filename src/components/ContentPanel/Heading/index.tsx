@@ -27,45 +27,37 @@ function Heading({
   theme: string;
   contentObj: Content;
 }) {
+  // Normalize pass types for content state lookup
+  const normalizedRootType =
+    rootType === 'missionPass' || rootType === 'achievementPass'
+      ? 'pass'
+      : rootType;
   const rootObj = useContentState({
-    contentType: rootType,
+    contentType: normalizedRootType,
     contentId: rootId
   });
   const navigate = useNavigate();
+  // For pass content, contentObj.rootType tells us if it's mission or achievement
+  const passRootType = contentObj?.rootType;
   const timeStampLink = useMemo(() => {
-    let subPath;
     if (contentType === 'pass') {
-      if (rootType === 'achievement') {
-        subPath = '';
-      } else {
-        if (rootObj.isTask && rootObj.rootMission) {
-          subPath = `/${rootObj.rootMission.missionType}`;
-        } else {
-          subPath = `/${rootObj.missionType}`;
-        }
-      }
-    } else {
-      subPath = `/${id}`;
+      const isAchievement = passRootType === 'achievement';
+      return isAchievement
+        ? `/achievement-unlocks/${id}`
+        : `/mission-passes/${id}`;
     }
+    if (contentType === 'xpChange') {
+      return `/daily-rewards/${id}`;
+    }
+    const subPath = `/${id}`;
     return `/${
-      contentType === 'pass'
-        ? rootType
-        : contentType === 'url'
+      contentType === 'url'
         ? 'link'
         : contentType === 'aiStory'
         ? 'ai-storie'
         : contentType
     }s${subPath}`;
-  }, [
-    contentType,
-    id,
-    rootObj.isTask,
-    rootObj.missionType,
-    rootObj.rootMission,
-    rootType
-  ]);
-
-  const isXpChange = contentType === 'xpChange';
+  }, [contentType, id, passRootType]);
 
   const formattedTime = useMemo(() => {
     if (!timeStamp) return '';
@@ -98,17 +90,13 @@ function Heading({
           </span>
           {formattedTime ? (
             <small
-              className={`timestamp ${
-                !isXpChange
-                  ? css`
-                      cursor: pointer;
-                      &:hover {
-                        text-decoration: underline;
-                      }
-                    `
-                  : ''
-              }`}
-              onClick={!isXpChange ? () => navigate(timeStampLink) : undefined}
+              className={`timestamp ${css`
+                cursor: pointer;
+                &:hover {
+                  text-decoration: underline;
+                }
+              `}`}
+              onClick={() => navigate(timeStampLink)}
             >
               {formattedTime}
             </small>
