@@ -8,6 +8,7 @@ import { useAppContext } from '~/contexts';
 import { Content } from '~/types';
 
 export default function Main({
+  alwaysShowInput,
   autoExpand,
   autoFocus,
   banned,
@@ -41,6 +42,7 @@ export default function Main({
   uploadComment,
   rootContent
 }: {
+  alwaysShowInput?: boolean;
   autoExpand?: boolean;
   autoFocus?: boolean;
   banned?: {
@@ -197,7 +199,7 @@ export default function Main({
     >
       {!inputAtBottom &&
         !noInput &&
-        (commentsShown || autoExpand) &&
+        (commentsShown || autoExpand || alwaysShowInput) &&
         renderInputArea()}
       {(commentsShown || autoExpand || (numPreviews || 0) > 0) &&
       !commentsHidden ? (
@@ -237,7 +239,7 @@ export default function Main({
       ) : null}
       {inputAtBottom &&
         !noInput &&
-        (commentsShown || autoExpand) &&
+        (commentsShown || autoExpand || alwaysShowInput) &&
         renderInputArea({ marginTop: comments.length > 0 ? '1rem' : 0 })}
     </div>
   );

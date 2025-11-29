@@ -25,6 +25,7 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { ThemeName } from '~/theme';
 
 function Comments({
+  alwaysShowInput,
   autoFocus,
   autoExpand,
   comments = [],
@@ -60,6 +61,7 @@ function Comments({
   theme,
   userId
 }: {
+  alwaysShowInput?: boolean;
   autoFocus?: boolean;
   autoExpand?: boolean;
   comments?: Comment[];
@@ -408,6 +410,7 @@ function Comments({
             onClick={isPreview ? onPreviewClick : () => null}
           >
             <Container
+              alwaysShowInput={alwaysShowInput}
               autoFocus={autoFocus}
               autoExpand={autoExpand}
               banned={banned}

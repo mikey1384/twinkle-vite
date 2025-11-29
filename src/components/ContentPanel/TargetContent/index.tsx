@@ -602,18 +602,20 @@ export default function TargetContent({
                   onCommentEdit={onEditRewardComment}
                   rewards={comment.rewards}
                 />
-                {replyInputShown && !contentHidden && !uploadingFile && (
-                  <InputForm
-                    innerRef={InputFormRef}
-                    style={{
-                      padding: '0 1rem'
-                    }}
-                    onSubmit={handleSubmit}
-                    parent={{ contentType: 'comment', contentId: comment.id }}
-                    rows={4}
-                    placeholder={`Write a reply...`}
-                  />
-                )}
+                {(replyInputShown || deviceIsMobile) &&
+                  !contentHidden &&
+                  !uploadingFile && (
+                    <InputForm
+                      innerRef={InputFormRef}
+                      style={{
+                        padding: '0 1rem'
+                      }}
+                      onSubmit={handleSubmit}
+                      parent={{ contentType: 'comment', contentId: comment.id }}
+                      rows={deviceIsMobile ? 1 : 4}
+                      placeholder={`Write a reply...`}
+                    />
+                  )}
                 {uploadingFile && (
                   <FileUploadStatusIndicator
                     theme={theme}

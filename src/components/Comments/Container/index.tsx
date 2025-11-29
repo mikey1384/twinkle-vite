@@ -8,6 +8,7 @@ import { useContentContext } from '~/contexts';
 import { Comment, Content, Subject } from '~/types';
 
 export default function Container({
+  alwaysShowInput,
   autoExpand,
   autoFocus,
   banned,
@@ -40,6 +41,7 @@ export default function Container({
   uploadComment,
   rootContent
 }: {
+  alwaysShowInput?: boolean;
   autoExpand?: boolean;
   autoFocus?: boolean;
   banned?: object;
@@ -125,6 +127,7 @@ export default function Container({
         />
       ) : (
         <Main
+          alwaysShowInput={alwaysShowInput}
           autoFocus={autoFocus}
           autoExpand={autoExpand}
           banned={banned}

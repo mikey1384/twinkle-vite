@@ -12,7 +12,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import AlertModal from '~/components/Modals/AlertModal';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { determineUserCanRewardThis } from '~/helpers';
+import { determineUserCanRewardThis, isMobile } from '~/helpers';
 import { useContentState, useMyLevel } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -55,6 +55,7 @@ export default function Body({
   onChangeSpoilerStatus: (params: object) => void;
   theme: string;
 }) {
+  const deviceIsMobile = isMobile(navigator);
   const closeContent = useAppContext((v) => v.requestHelpers.closeContent);
   const deleteContent = useAppContext((v) => v.requestHelpers.deleteContent);
   const loadComments = useAppContext((v) => v.requestHelpers.loadComments);
@@ -458,6 +459,7 @@ export default function Body({
         {!isNotification && (
           <Comments
             theme={theme}
+            alwaysShowInput={deviceIsMobile && !autoExpand}
             autoExpand={
               (autoExpand && !secretHidden) ||
               (contentType === 'subject' && secretHidden)
@@ -465,6 +467,7 @@ export default function Body({
             comments={comments}
             commentsLoadLimit={commentsLoadLimit}
             commentsShown={commentsShown && !secretHidden}
+            numInputRows={deviceIsMobile && !autoExpand ? 1 : undefined}
             disableReason={disableReason}
             inputAreaInnerRef={CommentInputAreaRef}
             inputAtBottom={inputAtBottom}
