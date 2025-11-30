@@ -127,10 +127,12 @@ export default function SystemPromptMission({
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const draftTimeoutRef = useRef<any>(null);
+  const hasSetPromptEverGeneratedRef = useRef(false);
 
   // Reset state when user changes
   useEffect(() => {
     if (userId && mission.prevUserId && userId !== mission.prevUserId) {
+      hasSetPromptEverGeneratedRef.current = false;
       onSetMissionState({
         missionId: mission.id,
         newState: {
@@ -171,7 +173,18 @@ export default function SystemPromptMission({
   const hasPrompt = trimmedPrompt.length > 0;
 
   useEffect(() => {
-    if (hasPrompt && !promptEverGenerated && !generating && !improving) {
+    // Sync ref with state if already true (e.g., loaded from server)
+    if (promptEverGenerated) {
+      hasSetPromptEverGeneratedRef.current = true;
+      return;
+    }
+    if (
+      hasPrompt &&
+      !generating &&
+      !improving &&
+      !hasSetPromptEverGeneratedRef.current
+    ) {
+      hasSetPromptEverGeneratedRef.current = true;
       handleSetSystemPromptState({
         ...systemPromptState,
         promptEverGenerated: true
@@ -341,14 +354,16 @@ export default function SystemPromptMission({
   return (
     <ErrorBoundary componentPath="MissionModule/SystemPrompt">
       <div className={layoutClass} style={style}>
-        <Checklist
-          checklistItems={checklistItems}
-          missionCleared={!!missionCleared}
-          progressLoading={progressLoading}
-          progressError={progressError}
-          themeColor={profileTheme}
-          className={sidebarClass}
-        />
+        <ErrorBoundary componentPath="MissionModule/SystemPrompt/Checklist">
+          <Checklist
+            checklistItems={checklistItems}
+            missionCleared={!!missionCleared}
+            progressLoading={progressLoading}
+            progressError={progressError}
+            themeColor={profileTheme}
+            className={sidebarClass}
+          />
+        </ErrorBoundary>
         <div className={contentClass}>
           {missionCleared && myAttempt?.status === 'pass' && (
             <div
@@ -372,72 +387,78 @@ export default function SystemPromptMission({
           {!missionCleared && (
             <>
               {showEditor && (
-                <Editor
-                  title={title}
-                  prompt={prompt}
-                  improving={improving}
-                  generating={generating}
-                  hasPrompt={hasPrompt}
-                  promptEverGenerated={!!promptEverGenerated}
-                  saving={saving}
-                  onTitleChange={(text) =>
-                    handleSetSystemPromptState({
-                      ...systemPromptState,
-                      title: text
-                    })
-                  }
-                  onPromptChange={(text) =>
-                    handleSetSystemPromptState({
-                      ...systemPromptState,
-                      prompt: text
-                    })
-                  }
-                  onImprovePrompt={handleImprovePrompt}
-                  onGeneratePrompt={handleGeneratePrompt}
-                />
+                <ErrorBoundary componentPath="MissionModule/SystemPrompt/Editor">
+                  <Editor
+                    title={title}
+                    prompt={prompt}
+                    improving={improving}
+                    generating={generating}
+                    hasPrompt={hasPrompt}
+                    promptEverGenerated={!!promptEverGenerated}
+                    saving={saving}
+                    onTitleChange={(text) =>
+                      handleSetSystemPromptState({
+                        ...systemPromptState,
+                        title: text
+                      })
+                    }
+                    onPromptChange={(text) =>
+                      handleSetSystemPromptState({
+                        ...systemPromptState,
+                        prompt: text
+                      })
+                    }
+                    onImprovePrompt={handleImprovePrompt}
+                    onGeneratePrompt={handleGeneratePrompt}
+                  />
+                </ErrorBoundary>
               )}
 
               {showPreview && (
-                <Preview
-                  chatMessages={chatMessages}
-                  error={error}
-                  userMessage={userMessage}
-                  hasPrompt={hasPrompt}
-                  canSend={canSend}
-                  sending={sending}
-                  trimmedTitle={trimmedTitle}
-                  messageListRef={messageListRef}
-                  onClear={() => {
-                    setError('');
-                    handleSetSystemPromptState({
-                      ...systemPromptState,
-                      chatMessages: []
-                    });
-                  }}
-                  onUserMessageChange={(text) =>
-                    handleSetSystemPromptState({
-                      ...systemPromptState,
-                      userMessage: text
-                    })
-                  }
-                  onSendMessage={handleSendMessage}
-                />
+                <ErrorBoundary componentPath="MissionModule/SystemPrompt/Preview">
+                  <Preview
+                    chatMessages={chatMessages}
+                    error={error}
+                    userMessage={userMessage}
+                    hasPrompt={hasPrompt}
+                    canSend={canSend}
+                    sending={sending}
+                    trimmedTitle={trimmedTitle}
+                    messageListRef={messageListRef}
+                    onClear={() => {
+                      setError('');
+                      handleSetSystemPromptState({
+                        ...systemPromptState,
+                        chatMessages: []
+                      });
+                    }}
+                    onUserMessageChange={(text) =>
+                      handleSetSystemPromptState({
+                        ...systemPromptState,
+                        userMessage: text
+                      })
+                    }
+                    onSendMessage={handleSendMessage}
+                  />
+                </ErrorBoundary>
               )}
 
               {showTargetSelector && (
-                <TargetSelector
-                  hasPrompt={hasPrompt}
-                  applyingTarget={applyingTarget}
-                  sending={sending}
-                  improving={improving}
-                  generating={generating}
-                  progress={progress}
-                  hasAiTopic={hasAiTopic}
-                  aiMessageCount={aiMessageCount}
-                  hasSharedTopic={hasSharedTopic}
-                  missionType={mission.missionType}
-                  onApplyToAIChat={handleApplyToAIChat}
-                />
+                <ErrorBoundary componentPath="MissionModule/SystemPrompt/TargetSelector">
+                  <TargetSelector
+                    hasPrompt={hasPrompt}
+                    applyingTarget={applyingTarget}
+                    sending={sending}
+                    improving={improving}
+                    generating={generating}
+                    progress={progress}
+                    hasAiTopic={hasAiTopic}
+                    aiMessageCount={aiMessageCount}
+                    hasSharedTopic={hasSharedTopic}
+                    missionType={mission.missionType}
+                    onApplyToAIChat={handleApplyToAIChat}
+                  />
+                </ErrorBoundary>
               )}
             </>
           )}

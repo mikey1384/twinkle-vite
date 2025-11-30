@@ -500,7 +500,9 @@ export default function Mission({
       {loading ? (
         <Loading />
       ) : myAttempt?.status === 'pending' ? (
-        <PendingStatus style={{ marginTop: '7rem' }} />
+        <ErrorBoundary componentPath="MissionPage/PendingStatus">
+          <PendingStatus style={{ marginTop: '7rem' }} />
+        </ErrorBoundary>
       ) : (!mission.repeatable && myAttempt?.status === 'pass') ||
         (myAttempt?.status === 'fail' && !myAttempt?.tryingAgain) ? (
         mission.missionType === 'system-prompt' ? (
@@ -511,16 +513,20 @@ export default function Mission({
             style={{ marginTop: '1rem' }}
           />
         ) : (
-          <ApprovedStatus
-            missionId={mission.id}
-            xpReward={mission.xpReward}
-            coinReward={mission.coinReward}
-            myAttempt={myAttempt}
-            style={{ marginTop: '3rem' }}
-          />
+          <ErrorBoundary componentPath="MissionPage/ApprovedStatus">
+            <ApprovedStatus
+              missionId={mission.id}
+              xpReward={mission.xpReward}
+              coinReward={mission.coinReward}
+              myAttempt={myAttempt}
+              style={{ marginTop: '3rem' }}
+            />
+          </ErrorBoundary>
         )
       ) : mission.isMultiMission ? (
-        <MultiMission myAttempts={myAttempts} mission={mission} />
+        <ErrorBoundary componentPath="MissionPage/MultiMission">
+          <MultiMission myAttempts={myAttempts} mission={mission} />
+        </ErrorBoundary>
       ) : (
         <MissionModule
           mission={mission}
