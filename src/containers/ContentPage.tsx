@@ -19,6 +19,7 @@ export default function ContentPage() {
     if (rawContentType === 'mission-passe') return { contentType: 'pass', rootType: 'mission' };
     if (rawContentType === 'achievement-unlock') return { contentType: 'pass', rootType: 'achievement' };
     if (rawContentType === 'daily-reward') return { contentType: 'xpChange', rootType: undefined };
+    if (rawContentType === 'shared-prompt') return { contentType: 'sharedTopic', rootType: undefined };
     return { contentType: rawContentType, rootType: undefined };
   }, [location.pathname]);
   const { isDeleted, isDeleteNotification } = useContentState({

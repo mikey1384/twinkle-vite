@@ -49,6 +49,9 @@ function Heading({
     if (contentType === 'xpChange') {
       return `/daily-rewards/${id}`;
     }
+    if (contentType === 'sharedTopic') {
+      return `/shared-prompts/${id}`;
+    }
     const subPath = `/${id}`;
     return `/${
       contentType === 'url'

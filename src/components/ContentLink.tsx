@@ -56,6 +56,8 @@ export default function ContentLink({
       result = isAchievementPass ? 'achievement-unlocks' : 'mission-passes';
     } else if (contentType === 'xpChange') {
       result = 'daily-rewards';
+    } else if (contentType === 'sharedTopic') {
+      result = 'shared-prompts';
     } else {
       result = contentType + 's';
     }

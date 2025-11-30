@@ -52,6 +52,8 @@ export default function HeadingText({
         : 'mission accomplishment'
       : rootType === 'xpChange'
       ? 'daily goals completion'
+      : rootType === 'sharedTopic'
+      ? 'shared prompt'
       : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
@@ -221,6 +223,19 @@ export default function HeadingText({
         </>
       );
     }
+    case 'sharedTopic':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
+          system prompt:{' '}
+          <ContentLink
+            content={contentObj}
+            contentType={contentType}
+            theme={theme}
+            label=""
+          />{' '}
+        </>
+      );
     default:
       return <span>Error</span>;
   }

@@ -6,6 +6,7 @@ import {
   GENERAL_CHAT_PATH_ID
 } from '~/constants/defaultValues';
 import { logForAdmin, parseChannelPath } from '~/helpers';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 import {
   useAppContext,
   useHomeContext,
@@ -318,10 +319,20 @@ export default function useInitSocket({
       void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
       if (userId) {
+        const token = getStoredItem('token');
         socket.emit(
           'bind_uid_to_socket',
-          { userId, username, profilePicUrl },
-          () => {
+          { userId, username, profilePicUrl, token },
+          (result?: { authError?: boolean }) => {
+            if (result?.authError) {
+              // Token is invalid (e.g., password was changed)
+              // Trigger logout by reloading the page - the invalid token will cause logout
+              console.log(
+                '[bind_uid_to_socket] Auth error - token invalid, reloading'
+              );
+              window.location.reload();
+              return;
+            }
             socket.emit('change_busy_status', !usingChatRef.current);
             userActionAckedRef.current = false;
             userActionAttemptsRef.current = 0;

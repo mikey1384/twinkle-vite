@@ -261,6 +261,40 @@ export default function Content({
           </div>
         );
       }
+      case 'sharedTopic':
+        return (
+          <div style={{ width: '100%' }}>
+            {contentObj?.customInstructions && (
+              <div
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '1rem',
+                  borderRadius,
+                  border: `1px solid ${Color.borderGray()}`,
+                  background: Color.wellGray()
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    marginBottom: '0.5rem',
+                    color: Color.darkerGray()
+                  }}
+                >
+                  System Prompt:
+                </div>
+                <RichText
+                  contentId={contentId}
+                  contentType={contentType}
+                  section="content"
+                  theme={theme}
+                >
+                  {contentObj.customInstructions}
+                </RichText>
+              </div>
+            )}
+          </div>
+        );
       default:
         return Description ? (
           <div

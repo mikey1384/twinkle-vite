@@ -10,6 +10,7 @@ import Embedly from '~/components/Embedly';
 import Profile from './Profile';
 import TargetPassContent from './TargetPassContent';
 import TargetDailyGoalsContent from './TargetDailyGoalsContent';
+import TargetSharedTopicContent from './TargetSharedTopicContent';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
@@ -510,6 +511,18 @@ export default function ContentPanel({
                   rootObj?.id && (
                     <TargetDailyGoalsContent
                       dailyGoalsContent={rootObj}
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                    />
+                  )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'sharedTopic' &&
+                  rootObj?.id && (
+                    <TargetSharedTopicContent
+                      sharedTopicContent={rootObj}
                       style={{
                         position: 'relative',
                         zIndex: 1,

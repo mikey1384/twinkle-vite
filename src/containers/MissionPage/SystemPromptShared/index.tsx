@@ -28,6 +28,7 @@ interface SharedTopic {
   settings?: any;
   cloneCount?: number;
   messageCount?: number;
+  numComments?: number;
 }
 
 export default function SystemPromptShared({
@@ -354,7 +355,15 @@ export default function SystemPromptShared({
                         font-size: 1.8rem;
                         color: ${Color.logoBlue()};
                         font-weight: 700;
+                        cursor: pointer;
+                        &:hover {
+                          text-decoration: underline;
+                        }
                       `}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/shared-prompts/${topic.id}`);
+                      }}
                     >
                       {topic.content}
                     </h3>
@@ -410,6 +419,24 @@ export default function SystemPromptShared({
                             {topic.messageCount ?? 0}
                           </span>
                           messages
+                        </div>
+                        <div
+                          className={statPillClass}
+                          style={{ cursor: 'pointer' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/shared-prompts/${topic.id}`);
+                          }}
+                        >
+                          <Icon icon="comment" />
+                          <span
+                            className={css`
+                              font-weight: 700;
+                            `}
+                          >
+                            {topic.numComments ?? 0}
+                          </span>
+                          comments
                         </div>
                       </div>
                     </div>
@@ -666,7 +693,6 @@ const cardClass = css`
   flex-direction: column;
   gap: 0.8rem;
   transition: border-color 0.18s ease;
-  cursor: pointer;
   &:hover {
     border-color: var(--ui-border-strong);
   }
