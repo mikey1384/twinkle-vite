@@ -414,6 +414,10 @@ function NotiMessage({
             ? 'link'
             : threadContentType === 'pass'
             ? 'mission completion'
+            : threadContentType === 'xpChange'
+            ? 'daily goals completion'
+            : threadContentType === 'sharedTopic'
+            ? 'shared prompt'
             : threadContentType;
         const threadLabelSuffix =
           threadContentType === 'subject'
@@ -534,6 +538,10 @@ function NotiMessage({
                 ? 'mission completion'
                 : targetObj.contentType === 'achievementPass'
                 ? 'achievement'
+                : targetObj.contentType === 'xpChange'
+                ? 'daily goals completion'
+                : targetObj.contentType === 'sharedTopic'
+                ? 'shared prompt'
                 : targetObj.contentType
             }${
               (!isReply && targetObj.contentType === 'user') ||

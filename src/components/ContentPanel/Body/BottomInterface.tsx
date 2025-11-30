@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import LikeButton from '~/components/Buttons/LikeButton';
 import StarButton from '~/components/Buttons/StarButton';
+import CloneButtons from '~/components/Buttons/CloneButtons';
 import Button from '~/components/Button';
 import Likers from '~/components/Likers';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -335,7 +336,7 @@ export default function BottomInterface({
         className={bottomInterfaceCSS}
       >
         <div className="left">
-            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && (
+            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && contentType !== 'sharedTopic' && (
               <LikeButton
                 contentType={contentType}
                 contentId={contentId}
@@ -359,7 +360,8 @@ export default function BottomInterface({
                     {contentType === 'video' ||
                     contentType === 'url' ||
                     contentType === 'pass' ||
-                    contentType === 'xpChange'
+                    contentType === 'xpChange' ||
+                    contentType === 'sharedTopic'
                       ? commentLabel
                       : contentType === 'subject'
                       ? respondLabel
@@ -377,11 +379,19 @@ export default function BottomInterface({
                 ) : null}
               </Button>
             )}
+            {contentType === 'sharedTopic' && (
+              <CloneButtons
+                sharedTopicId={contentId}
+                sharedTopicTitle={contentObj.content}
+                uploaderId={uploader.id}
+              />
+            )}
             {userCanRewardThis &&
               !secretHidden &&
               contentType !== 'aiStory' &&
               contentType !== 'pass' &&
-              contentType !== 'xpChange' && (
+              contentType !== 'xpChange' &&
+              contentType !== 'sharedTopic' && (
                 <RewardButton
                   labelClassName="reward-button-label"
                   hideLabel={deviceIsTablet}
@@ -391,7 +401,7 @@ export default function BottomInterface({
                   theme={theme}
                 />
               )}
-            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && (
+            {!secretHidden && contentType !== 'pass' && contentType !== 'xpChange' && contentType !== 'sharedTopic' && (
               <div style={{ position: 'relative' }}>
                 <Button
                   onClick={() => {
@@ -531,6 +541,8 @@ export default function BottomInterface({
         ? 'ai-storie'
         : contentType === 'url'
         ? 'link'
+        : contentType === 'sharedTopic'
+        ? 'shared-prompt'
         : contentType
     }s/${contentId}`;
     try {

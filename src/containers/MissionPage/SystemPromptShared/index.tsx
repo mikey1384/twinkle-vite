@@ -2,16 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
+import CloneButtons from '~/components/Buttons/CloneButtons';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
+import Input from '~/components/Texts/Input';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import MyTopicsManager from './MyTopicsManager';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+import { stringIsEmpty } from '~/helpers/stringHelpers';
 import moment from 'moment';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
@@ -43,12 +46,7 @@ export default function SystemPromptShared({
   const loadMoreOtherUserTopics = useAppContext(
     (v) => v.requestHelpers.loadMoreOtherUserTopics
   );
-  const cloneSharedSystemPrompt = useAppContext(
-    (v) => v.requestHelpers.cloneSharedSystemPrompt
-  );
-  const onSetThinkHardForTopic = useChatContext(
-    (v) => v.actions.onSetThinkHardForTopic
-  );
+  const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const navigate = useNavigate();
   const [topics, setTopics] = useState<SharedTopic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,8 +60,13 @@ export default function SystemPromptShared({
     channelId: number;
     title: string;
   } | null>(null);
-  const [submitting, setSubmitting] = useState<{ [key: string]: boolean }>({});
   const [sortBy, setSortBy] = useState<'new' | 'cloned' | 'used'>('new');
+  const [commentTexts, setCommentTexts] = useState<{ [key: number]: string }>(
+    {}
+  );
+  const [commentSubmitting, setCommentSubmitting] = useState<{
+    [key: number]: boolean;
+  }>({});
 
   useEffect(() => {
     let ignore = false;
@@ -135,71 +138,43 @@ export default function SystemPromptShared({
     }
   };
 
-  const handleClone = async ({
-    sharedTopicId,
-    target,
-    topicTitle
-  }: {
+  const handleCloneSuccess = (data: {
     sharedTopicId: number;
     target: 'zero' | 'ciel';
-    topicTitle: string;
+    topicId: number;
+    channelId: number;
+    title: string;
   }) => {
-    if (!sharedTopicId || submitting[`${sharedTopicId}-${target}`]) return;
-    setError('');
-    setClonedTopic(null);
-    setSubmitting((prev) => ({
-      ...prev,
-      [`${sharedTopicId}-${target}`]: true
-    }));
+    setClonedTopic(data);
+  };
+
+  const handleCommentSubmit = async (topicId: number) => {
+    const text = commentTexts[topicId]?.trim();
+    if (!text || commentSubmitting[topicId]) return;
+
+    setCommentSubmitting((prev) => ({ ...prev, [topicId]: true }));
     try {
-      const data = await cloneSharedSystemPrompt({ sharedTopicId, target });
-      // Store cloned topic info for navigation button
-      if (
-        typeof data?.subjectId === 'number' &&
-        typeof data?.channelId === 'number'
-      ) {
-        setClonedTopic({
-          sharedTopicId,
-          target,
-          topicId: data.subjectId,
-          channelId: data.channelId,
-          title: topicTitle
-        });
-      }
-      // Set thinkHard to false for the new topic
-      if (typeof data?.subjectId === 'number') {
-        onSetThinkHardForTopic({
-          aiType: target,
-          topicId: data.subjectId,
-          thinkHard: false
-        });
-        // Also persist to localStorage
-        try {
-          const stored = localStorage.getItem('thinkHard') || '{}';
-          const parsed = JSON.parse(stored);
-          const updated = {
-            ...parsed,
-            [target]: {
-              ...(parsed[target] || {}),
-              [data.subjectId]: false
-            }
-          };
-          localStorage.setItem('thinkHard', JSON.stringify(updated));
-        } catch {
-          // Ignore localStorage errors
+      await uploadComment({
+        content: text,
+        parent: {
+          contentType: 'sharedTopic',
+          contentId: topicId
         }
-      }
+      });
+      setCommentTexts((prev) => ({ ...prev, [topicId]: '' }));
+      setTopics((prev) =>
+        prev.map((topic) =>
+          topic.id === topicId
+            ? { ...topic, numComments: (topic.numComments || 0) + 1 }
+            : topic
+        )
+      );
     } catch (err: any) {
       setError(
-        err?.response?.data?.error ||
-          err?.message ||
-          'Failed to clone shared prompt'
+        err?.response?.data?.error || err?.message || 'Failed to post comment'
       );
     } finally {
-      setSubmitting((prev) => ({
-        ...prev,
-        [`${sharedTopicId}-${target}`]: false
-      }));
+      setCommentSubmitting((prev) => ({ ...prev, [topicId]: false }));
     }
   };
 
@@ -406,9 +381,9 @@ export default function SystemPromptShared({
                               font-weight: 700;
                             `}
                           >
-                            {topic.cloneCount ?? 0}
+                            {topic.cloneCount || 0}
                           </span>
-                          clones
+                          {(topic.cloneCount || 0) === 1 ? 'clone' : 'clones'}
                         </div>
                         <div className={statPillClass}>
                           <span
@@ -416,9 +391,11 @@ export default function SystemPromptShared({
                               font-weight: 700;
                             `}
                           >
-                            {topic.messageCount ?? 0}
+                            {topic.messageCount || 0}
                           </span>
-                          messages
+                          {(topic.messageCount || 0) === 1
+                            ? 'message'
+                            : 'messages'}
                         </div>
                         <div
                           className={statPillClass}
@@ -434,9 +411,11 @@ export default function SystemPromptShared({
                               font-weight: 700;
                             `}
                           >
-                            {topic.numComments ?? 0}
+                            {topic.numComments || 0}
                           </span>
-                          comments
+                          {(topic.numComments || 0) === 1
+                            ? 'comment'
+                            : 'comments'}
                         </div>
                       </div>
                     </div>
@@ -546,98 +525,50 @@ export default function SystemPromptShared({
                       </Button>
                     </div>
                   )}
-                  {!isOwnTopic && (
+                  <CloneButtons
+                    sharedTopicId={topic.subjectId || topic.id}
+                    sharedTopicTitle={topic.content}
+                    uploaderId={topic.userId}
+                    onCloneSuccess={handleCloneSuccess}
+                  />
+                  {userId && (
                     <div
                       className={css`
                         display: flex;
-                        gap: 0.6rem;
-                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        margin-top: 0.5rem;
                       `}
                     >
+                      <Input
+                        placeholder="Write a comment..."
+                        value={commentTexts[topic.id] || ''}
+                        onChange={(text: string) =>
+                          setCommentTexts((prev) => ({
+                            ...prev,
+                            [topic.id]: text
+                          }))
+                        }
+                        onKeyDown={(event: React.KeyboardEvent) => {
+                          if (event.key === 'Enter') {
+                            handleCommentSubmit(topic.id);
+                          }
+                        }}
+                        style={{ flex: 1 }}
+                      />
                       <Button
                         color="logoBlue"
-                        variant="solid"
+                        variant="soft"
                         tone="raised"
-                        onClick={() =>
-                          handleClone({
-                            sharedTopicId: topic.subjectId || topic.id,
-                            target: 'zero',
-                            topicTitle: topic.content
-                          })
-                        }
                         disabled={
-                          submitting[`${topic.id}-zero`] ||
-                          submitting[`${topic.id}-ciel`]
+                          stringIsEmpty(commentTexts[topic.id]) ||
+                          commentSubmitting[topic.id]
                         }
+                        onClick={() => handleCommentSubmit(topic.id)}
                       >
-                        {submitting[`${topic.id}-zero`] ? (
-                          <>
-                            <Icon
-                              style={{ marginRight: '0.5rem' }}
-                              icon="spinner"
-                              pulse
-                            />
-                            Cloning to Zero...
-                          </>
+                        {commentSubmitting[topic.id] ? (
+                          <Icon icon="spinner" pulse />
                         ) : (
-                          <>
-                            <img
-                              src={zero}
-                              alt="Zero"
-                              className={css`
-                                width: 2rem;
-                                height: 2rem;
-                                border-radius: 50%;
-                                margin-right: 0.5rem;
-                                object-fit: contain;
-                                background: #fff;
-                              `}
-                            />
-                            Clone to Zero
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        color="purple"
-                        variant="solid"
-                        tone="raised"
-                        onClick={() =>
-                          handleClone({
-                            sharedTopicId: topic.subjectId || topic.id,
-                            target: 'ciel',
-                            topicTitle: topic.content
-                          })
-                        }
-                        disabled={
-                          submitting[`${topic.id}-zero`] ||
-                          submitting[`${topic.id}-ciel`]
-                        }
-                      >
-                        {submitting[`${topic.id}-ciel`] ? (
-                          <>
-                            <Icon
-                              style={{ marginRight: '0.5rem' }}
-                              icon="spinner"
-                              pulse
-                            />
-                            Cloning to Ciel...
-                          </>
-                        ) : (
-                          <>
-                            <img
-                              src={ciel}
-                              alt="Ciel"
-                              className={css`
-                                width: 2rem;
-                                height: 2rem;
-                                border-radius: 50%;
-                                margin-right: 0.5rem;
-                                object-fit: contain;
-                                background: #fff;
-                              `}
-                            />
-                            Clone to Ciel
-                          </>
+                          <Icon icon="paper-plane" />
                         )}
                       </Button>
                     </div>
