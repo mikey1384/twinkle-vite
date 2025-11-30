@@ -383,7 +383,7 @@ export default function SystemPromptShared({
                           >
                             {topic.cloneCount || 0}
                           </span>
-                          {(topic.cloneCount || 0) === 1 ? 'clone' : 'clones'}
+                          {Number(topic.cloneCount) === 1 ? 'clone' : 'clones'}
                         </div>
                         <div className={statPillClass}>
                           <span
@@ -393,7 +393,7 @@ export default function SystemPromptShared({
                           >
                             {topic.messageCount || 0}
                           </span>
-                          {(topic.messageCount || 0) === 1
+                          {Number(topic.messageCount) === 1
                             ? 'message'
                             : 'messages'}
                         </div>
@@ -413,7 +413,7 @@ export default function SystemPromptShared({
                           >
                             {topic.numComments || 0}
                           </span>
-                          {(topic.numComments || 0) === 1
+                          {Number(topic.numComments) === 1
                             ? 'comment'
                             : 'comments'}
                         </div>
