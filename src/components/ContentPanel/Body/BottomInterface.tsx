@@ -24,6 +24,7 @@ const copiedLabel = 'Copied!';
 const replyLabel = 'Reply';
 const respondLabel = 'Respond';
 const deviceIsMobile = isMobile(navigator);
+const nonEditableContentTypes = ['pass', 'xpChange', 'sharedTopic'];
 
 const bottomInterfaceCSS = css`
   display: flex;
@@ -430,7 +431,7 @@ export default function BottomInterface({
                 </div>
               </div>
             )}
-            {editButtonShown && contentType !== 'pass' && contentType !== 'xpChange' ? (
+            {editButtonShown && !isNotification && !nonEditableContentTypes.includes(contentType) ? (
               <DropdownButton
                 variant="solid"
                 tone="raised"
