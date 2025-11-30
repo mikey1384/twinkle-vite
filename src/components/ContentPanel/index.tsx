@@ -308,7 +308,6 @@ export default function ContentPanel({
     []
   );
 
-  // this block MUST always come before the return statement
   if (
     contentState.notFound ||
     contentState.isDeleted ||
@@ -366,6 +365,13 @@ export default function ContentPanel({
                   padding: 0.6rem 0 0.8rem 0;
                   position: relative;
                   z-index: ${zIndex};
+                  ${isContentPage
+                    ? `
+                    @media (max-width: ${mobileMaxWidth}) {
+                      padding-top: 0;
+                    }
+                  `
+                    : ''}
                 `}
               >
                 <div
