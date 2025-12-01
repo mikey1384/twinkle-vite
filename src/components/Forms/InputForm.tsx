@@ -37,8 +37,10 @@ import { inputStates } from '~/constants/state';
 import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import { useRoleColor } from '~/theme/useRoleColor';
 
+const recentlySubmittedContent: Record<string, number> = {};
 const areYouSureLabel = 'Are you sure?';
-const commentsMightNotBeRewardedLabel = 'The comments you post on this subject might not be rewarded';
+const commentsMightNotBeRewardedLabel =
+  'The comments you post on this subject might not be rewarded';
 const tapThisButtonToSubmitLabel = 'Tap this button to submit';
 const viewWithoutRespondingLabel = 'View without responding';
 const viewSecretMessageWithoutRespondingLabel =
@@ -634,6 +636,11 @@ function InputForm({
   }
 
   async function loadDraftForComment() {
+    const contentKey = `${parent.contentType}${parent.contentId}`;
+
+    if (recentlySubmittedContent[contentKey]) {
+      return;
+    }
     try {
       const drafts = await checkDrafts({
         contentType: 'comment',
@@ -642,6 +649,10 @@ function InputForm({
       });
 
       if (disableReason) return;
+
+      if (recentlySubmittedContent[contentKey]) {
+        return;
+      }
       const commentDraft = drafts.find(
         (draft: {
           type: string;
@@ -673,6 +684,8 @@ function InputForm({
       clearTimeout(saveTimeoutRef.current);
     }
     setSubmitting(true);
+    const contentKey = `${parent.contentType}${parent.contentId}`;
+    recentlySubmittedContent[contentKey] = Date.now();
     try {
       await onSubmit(finalizeEmoji(text));
       handleSetText('');
@@ -683,8 +696,10 @@ function InputForm({
         await deleteDraft(draftIdRef.current);
         setDraftId(null);
       }
+      delete recentlySubmittedContent[contentKey];
     } catch (error: any) {
       console.error('Error submitting form:', error.message);
+      delete recentlySubmittedContent[contentKey];
     } finally {
       setSubmitting(false);
     }
