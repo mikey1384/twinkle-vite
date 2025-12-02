@@ -115,6 +115,7 @@ export default function MessagesContainer({
       onLeaveChannel,
       onReceiveMessageOnDifferentChannel,
       onCreateNewDMChannel,
+      onRegisterSaveScrollPositionForAll,
       onSeachChatMessages,
       onSetChessTarget,
       onSetChessGameState,
@@ -215,12 +216,13 @@ export default function MessagesContainer({
   const [selectingNewOwner, setSelectingNewOwner] = useState(false);
   const leavingRef = useRef(false);
   const selectingNewOwnerRef = useRef(false);
-  const MessageToScrollToFromAll = useRef(null);
-  const MessageToScrollToFromTopic = useRef(null);
+  const MessageToScrollToFromAll = useRef<number | null>(null);
+  const MessageToScrollToFromTopic = useRef<number | null>(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const messageInputSetTextRef = useRef<((text: string) => void) | null>(null);
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
+  const visibleMessageIdRef = useRef<number | null>(null);
   const [searchText, setSearchText] = useState('');
 
   const { handleSearch, searching } = useSearch({
@@ -465,10 +467,13 @@ export default function MessagesContainer({
     if (!deviceIsMobile) {
       ChatInputRef.current?.focus();
     }
-    if (
-      (selectedTab !== 'topic' && !MessageToScrollToFromAll.current) ||
-      (selectedTab === 'topic' && !MessageToScrollToFromTopic.current)
-    ) {
+    const hasMessageToScrollTo =
+      (selectedTab !== 'topic' && MessageToScrollToFromAll.current) ||
+      (selectedTab === 'topic' && MessageToScrollToFromTopic.current);
+
+    if (hasMessageToScrollTo) {
+      shouldScrollToBottomRef.current = false;
+    } else {
       shouldScrollToBottomRef.current = true;
     }
   }, [selectedTab, selectedChannelId]);
@@ -641,6 +646,24 @@ export default function MessagesContainer({
     onSetWordleModalShown(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChannel?.id]);
+
+  const handleSaveScrollPositionForAll = useCallback(() => {
+    if (visibleMessageIdRef.current) {
+      MessageToScrollToFromAll.current = visibleMessageIdRef.current;
+    }
+  }, []);
+
+  const handleSetVisibleMessageId = useCallback((messageId: number) => {
+    visibleMessageIdRef.current = messageId;
+  }, []);
+
+  useEffect(() => {
+    // Register the save scroll position function with the parent context
+    onRegisterSaveScrollPositionForAll?.(handleSaveScrollPositionForAll);
+    return () => {
+      onRegisterSaveScrollPositionForAll?.(null);
+    };
+  }, [onRegisterSaveScrollPositionForAll, handleSaveScrollPositionForAll]);
 
   const handleHideChat = useCallback(async () => {
     await hideChat(selectedChannelId);
@@ -1394,6 +1417,7 @@ export default function MessagesContainer({
             isAIChannel={isAIChannel}
             isSearchActive={isSearchActive}
             onInputFocus={() => ChatInputRef.current?.focus()}
+            onSaveScrollPositionForAll={handleSaveScrollPositionForAll}
             onSetInviteUsersModalShown={setInviteUsersModalShown}
             onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
             onSetBuyTopicModalShown={setBuyTopicModalShown}
@@ -1451,6 +1475,7 @@ export default function MessagesContainer({
           onSetSubjectMsgsModalShown={setSubjectMsgsModal}
           onSetTransactionModalShown={setTransactionModalShown}
           onScrollToBottom={onScrollToBottom}
+          onSetVisibleMessageId={handleSetVisibleMessageId}
           partner={partner}
           searchText={searchText}
           selectedTab={selectedTab}

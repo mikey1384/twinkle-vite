@@ -16,6 +16,7 @@ export default function ChatFilter({
   isAIChannel,
   isSearchActive,
   featuredTopicId,
+  onSaveScrollPositionForAll,
   onSearch,
   onSetBuyTopicModalShown,
   onSetIsSearchActive,
@@ -41,6 +42,7 @@ export default function ChatFilter({
   isAIChannel: boolean;
   isSearchActive: boolean;
   featuredTopicId: number;
+  onSaveScrollPositionForAll?: () => void;
   onSearch: (text: string) => void;
   onSetTopicSelectorModalShown: (shown: boolean) => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
@@ -92,6 +94,7 @@ export default function ChatFilter({
           themeColor={themeColor}
           channelId={channelId}
           canChangeTopic={canChangeTopic}
+          onSaveScrollPositionForAll={onSaveScrollPositionForAll}
           onShowTopicSelectorModal={() => onSetTopicSelectorModalShown(true)}
           searchText={searchText}
           selectedTab={selectedTab}
@@ -126,6 +129,9 @@ export default function ChatFilter({
   );
 
   function handleSelectTopic(topicId: number) {
+    if (selectedTab !== 'topic') {
+      onSaveScrollPositionForAll?.();
+    }
     updateLastTopicId({
       channelId,
       topicId

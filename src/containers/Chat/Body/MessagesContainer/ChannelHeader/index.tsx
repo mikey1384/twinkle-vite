@@ -27,6 +27,7 @@ export default function ChannelHeader({
   isSearchActive,
   onFavoriteClick,
   onInputFocus,
+  onSaveScrollPositionForAll,
   onSearch,
   onSetHideModalShown,
   onSetInviteUsersModalShown,
@@ -45,6 +46,7 @@ export default function ChannelHeader({
   isSearchActive: boolean;
   onFavoriteClick: (arg0: any) => void;
   onInputFocus: () => void;
+  onSaveScrollPositionForAll?: () => void;
   onSearch: (arg0: string) => void;
   onSetHideModalShown: (arg0: boolean) => void;
   onSetInviteUsersModalShown: (arg0: boolean) => void;
@@ -332,6 +334,7 @@ export default function ChannelHeader({
               topicSelectorModalShown={topicSelectorModalShown}
               currentTopicIndex={currentChannel.currentTopicIndex}
               featuredTopicId={currentChannel.featuredTopicId}
+              onSaveScrollPositionForAll={onSaveScrollPositionForAll}
               onSearch={onSearch}
               onSetBuyTopicModalShown={onSetBuyTopicModalShown}
               onSetIsSearchActive={onSetIsSearchActive}

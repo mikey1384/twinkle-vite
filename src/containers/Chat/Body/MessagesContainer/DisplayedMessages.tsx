@@ -61,6 +61,7 @@ export default function DisplayedMessages({
   onSetTransactionModalShown,
   onScrollToBottom,
   onReplyTargetSelected,
+  onSetVisibleMessageId,
   partner,
   searchText,
   selectedTab,
@@ -112,6 +113,7 @@ export default function DisplayedMessages({
   onSetTransactionModalShown: (shown: boolean) => void;
   onScrollToBottom: () => void;
   onReplyTargetSelected: (target: any) => void;
+  onSetVisibleMessageId?: (messageId: number) => void;
   partner?: {
     id: number;
     username: string;
@@ -581,24 +583,68 @@ export default function DisplayedMessages({
     }
   });
 
+  const prevSelectedTabRef = useRef(selectedTab);
+  const prevMessageRefsRef = useRef<{
+    all: number | null;
+    topic: number | null;
+  }>({
+    all: MessageToScrollToFromAll.current,
+    topic: MessageToScrollToFromTopic.current
+  });
+
   useEffect(() => {
+    const prevTab = prevSelectedTabRef.current;
+    const prevAllRef = prevMessageRefsRef.current.all;
+    const prevTopicRef = prevMessageRefsRef.current.topic;
+
+    prevSelectedTabRef.current = selectedTab;
+    prevMessageRefsRef.current = {
+      all: MessageToScrollToFromAll.current,
+      topic: MessageToScrollToFromTopic.current
+    };
+
+    const tabChanged = prevTab !== selectedTab;
     const currentMessageToScrollTo =
       selectedTab === 'topic'
         ? MessageToScrollToFromTopic.current
         : MessageToScrollToFromAll.current;
+    const prevRef = selectedTab === 'topic' ? prevTopicRef : prevAllRef;
 
-    if (MessagesDomRef.current?.[currentMessageToScrollTo]) {
-      const messageElement = MessagesDomRef.current[currentMessageToScrollTo];
-      messageElement.scrollIntoView({ block: 'center' });
-      setTimeout(() => {
-        messageElement.scrollIntoView({ block: 'center' });
-      }, 10);
+    const refJustSet = prevRef === null && currentMessageToScrollTo !== null;
+    if (refJustSet && !tabChanged) return;
 
-      if (selectedTab === 'topic') {
-        MessageToScrollToFromTopic.current = null;
-      } else {
-        MessageToScrollToFromAll.current = null;
+    if (!currentMessageToScrollTo) return;
+
+    function attemptScroll() {
+      const domRef = MessagesDomRef.current?.[currentMessageToScrollTo];
+      if (domRef) {
+        domRef.scrollIntoView({ block: 'center' });
+        setTimeout(() => {
+          domRef.scrollIntoView({ block: 'center' });
+        }, 10);
+
+        if (selectedTab === 'topic') {
+          MessageToScrollToFromTopic.current = null;
+        } else {
+          MessageToScrollToFromAll.current = null;
+        }
+        return true;
       }
+      return false;
+    }
+
+    if (!attemptScroll()) {
+      const delays = [50, 150, 300];
+      let attempt = 0;
+
+      function retryScroll() {
+        if (!attemptScroll() && attempt < delays.length) {
+          setTimeout(retryScroll, delays[attempt]);
+          attempt++;
+        }
+      }
+
+      requestAnimationFrame(retryScroll);
     }
   }, [
     MessageToScrollToFromAll,
@@ -606,7 +652,11 @@ export default function DisplayedMessages({
     MessagesRef,
     selectedTab,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    messagesObj[MessageToScrollToFromTopic.current]?.isLoaded
+    messagesObj[MessageToScrollToFromTopic.current]?.isLoaded,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    messagesObj[MessageToScrollToFromAll.current]?.isLoaded,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    messages[0]?.id
   ]);
 
   return (
@@ -753,6 +803,7 @@ export default function DisplayedMessages({
                     onSetVisibleMessageIndex={(index) =>
                       (visibleMessageIndexRef.current = index)
                     }
+                    onSetVisibleMessageId={onSetVisibleMessageId}
                     onSetMessageHeightObj={({ messageId, height }) => {
                       MessageHeights[messageId] = height;
                     }}

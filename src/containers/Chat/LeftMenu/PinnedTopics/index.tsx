@@ -1,7 +1,8 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useContext, useMemo } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
+import LocalContext from '../../Context';
 import { useAppContext, useChatContext } from '~/contexts';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -66,6 +67,9 @@ function PinnedTopics({
 }) {
   const navigate = useNavigate();
   const { subchannelPath } = useParams();
+  const {
+    actions: { onSaveScrollPositionForAll }
+  } = useContext(LocalContext);
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
@@ -307,6 +311,10 @@ function PinnedTopics({
   }
 
   function handleTopicNavClick(topicId: number) {
+    // Save scroll position when switching from 'all' to 'topic'
+    if (selectedTab !== 'topic') {
+      onSaveScrollPositionForAll?.();
+    }
     updateLastTopicId({
       channelId,
       topicId

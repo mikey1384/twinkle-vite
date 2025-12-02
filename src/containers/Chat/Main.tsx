@@ -434,6 +434,8 @@ export default function Main({
   const prevSubchannelPath = useRef(subchannelPath);
 
   const wordleModalShownRef = useRef(false);
+  const saveScrollPositionForAllRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     wordleModalShownRef.current = wordleModalShown;
   }, [wordleModalShown]);
@@ -651,6 +653,17 @@ export default function Main({
   useEffect(() => {
     profilePicUrlRef.current = profilePicUrl;
   }, [profilePicUrl]);
+
+  const handleRegisterSaveScrollPositionForAll = useCallback(
+    (saveFunction: (() => void) | null) => {
+      saveScrollPositionForAllRef.current = saveFunction;
+    },
+    []
+  );
+
+  const handleSaveScrollPositionForAll = useCallback(() => {
+    saveScrollPositionForAllRef.current?.();
+  }, []);
 
   const handleEnterVocabulary = useCallback(async () => {
     if (chatType === VOCAB_CHAT_TYPE) return;
@@ -958,6 +971,8 @@ export default function Main({
           onSetFavoriteChannel,
           onSetMediaStarted,
           onSetMessageState,
+          onRegisterSaveScrollPositionForAll: handleRegisterSaveScrollPositionForAll,
+          onSaveScrollPositionForAll: handleSaveScrollPositionForAll,
           onSetReplyTarget,
           onSetSiteUrl,
           onSetThumbUrl,

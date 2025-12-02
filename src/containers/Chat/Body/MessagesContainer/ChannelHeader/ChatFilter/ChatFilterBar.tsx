@@ -24,6 +24,7 @@ export default function ChatFilterBar({
   channelId,
   isOwner,
   isSearchActive,
+  onSaveScrollPositionForAll,
   onSearch,
   onShowTopicSelectorModal,
   onSetBuyTopicModalShown,
@@ -41,6 +42,7 @@ export default function ChatFilterBar({
   channelId: number;
   isOwner: boolean;
   isSearchActive: boolean;
+  onSaveScrollPositionForAll?: () => void;
   onSearch: (text: string) => void;
   onShowTopicSelectorModal: () => void;
   onSetBuyTopicModalShown: (shown: boolean) => void;
@@ -349,6 +351,10 @@ export default function ChatFilterBar({
       return onShowTopicSelectorModal();
     }
     if (tabName === 'topic') {
+      // Save scroll position when switching from 'all' to 'topic'
+      if (selectedTab !== 'topic') {
+        onSaveScrollPositionForAll?.();
+      }
       // Fire-and-forget: don't block UI on this API call
       updateLastTopicId({
         channelId,

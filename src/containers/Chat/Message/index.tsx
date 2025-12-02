@@ -57,6 +57,7 @@ function Message({
   onSetMessageHeightObj,
   onSetTransactionModalShown,
   onSetVisibleMessageIndex,
+  onSetVisibleMessageId,
   onSetMessageToScrollTo,
   onShowSubjectMsgsModal,
   zIndex
@@ -105,6 +106,7 @@ function Message({
   onSetMessageHeightObj: (v: { messageId: number; height: number }) => void;
   onSetTransactionModalShown: (v: boolean) => void;
   onSetVisibleMessageIndex: (v: number) => void;
+  onSetVisibleMessageId?: (v: number) => void;
   onSetMessageToScrollTo: (v: number) => void;
   onRewardMessageSubmit: (v: any) => void;
   onShowSubjectMsgsModal: (v: any) => void;
@@ -132,8 +134,11 @@ function Message({
   useEffect(() => {
     if (inView) {
       onSetVisibleMessageIndex(index);
+      if (onSetVisibleMessageId && message?.id) {
+        onSetVisibleMessageId(message.id);
+      }
     }
-  }, [index, onSetVisibleMessageIndex, inView]);
+  }, [index, onSetVisibleMessageIndex, onSetVisibleMessageId, inView, message?.id]);
 
   useEffect(() => {
     if (!message?.isLoaded && message?.id && !message?.isNotification) {
