@@ -292,7 +292,7 @@ export default function Channel({
   );
 
   const handleChannelClick = useCallback(async () => {
-    if (pathIdMatches && !chatType) return;
+    if (pathIdMatches && !chatType && channelId === selectedChannelId) return;
     if (pathId) {
       onUpdateSelectedChannelId(channelId);
       return navigate(
@@ -307,7 +307,8 @@ export default function Channel({
     pathId,
     navigate,
     channelId,
-    lastSubchannelPath
+    lastSubchannelPath,
+    selectedChannelId
   ]);
 
   const lastSenderId = useMemo(

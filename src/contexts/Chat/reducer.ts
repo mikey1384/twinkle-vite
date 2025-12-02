@@ -1033,7 +1033,7 @@ export default function ChatReducer(
               : {})
           }
         },
-        selectedChannelId: state.selectedChannelId || loadedChannel.id
+        selectedChannelId: loadedChannel.id
       };
     }
     case 'ENTER_EMPTY_CHAT':

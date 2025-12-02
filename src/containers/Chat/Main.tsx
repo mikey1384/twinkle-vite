@@ -1238,7 +1238,7 @@ export default function Main({
         }
 
         if (channelsObj[channelId]?.loaded) {
-          if (!currentSelectedChannelIdRef.current) {
+          if (currentSelectedChannelIdRef.current !== channelId) {
             onUpdateSelectedChannelId(channelId);
           }
 
