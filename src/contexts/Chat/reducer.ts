@@ -1698,6 +1698,29 @@ export default function ChatReducer(
         };
       }
     }
+    case 'LOAD_TOPIC_BOOKMARKS': {
+      const channelState = state.channelsObj[action.channelId] || {};
+      const topicState = channelState.topicObj?.[action.topicId] || {};
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...channelState,
+            topicObj: {
+              ...channelState.topicObj,
+              [action.topicId]: {
+                ...topicState,
+                bookmarkedMessages: action.bookmarkedMessages,
+                loadMoreBookmarksShown: action.loadMoreBookmarksShown,
+                bookmarksLoaded: true
+              }
+            }
+          }
+        }
+      };
+    }
     case 'LOAD_MORE_CHANNEL_MEMBERS': {
       return {
         ...state,

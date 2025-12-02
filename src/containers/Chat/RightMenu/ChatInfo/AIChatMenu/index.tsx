@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import BookmarkModal from './BookmarkModal';
 import Bookmarks from './Bookmarks';
 import { mobileMaxWidth } from '~/constants/css';
@@ -6,7 +6,7 @@ import { css } from '@emotion/css';
 import FileSelector from './FileSelector';
 import ThinkHardToggle from './ThinkHardToggle';
 import { FileData } from '~/types';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
 import FilterBar from '~/components/FilterBar';
 
@@ -34,21 +34,29 @@ function AIChatMenu({
   topicObj: Record<
     number,
     {
-      bookmarkedMessages: Record<'ai' | 'me', any[]> | any[];
-      loadMoreBookmarksShown:
+      bookmarkedMessages?: Record<'ai' | 'me', any[]> | any[];
+      loadMoreBookmarksShown?:
         | { ai: boolean; me: boolean }
         | boolean
         | undefined;
+      bookmarksLoaded?: boolean;
     }
   >;
   files: FileData[];
   hasMoreFiles: boolean;
 }) {
+  const loadBookmarksForTopic = useAppContext(
+    (v) => v.requestHelpers.loadBookmarksForTopic
+  );
+  const onLoadTopicBookmarks = useChatContext(
+    (v) => v.actions.onLoadTopicBookmarks
+  );
   const username = useKeyContext((v) => v.myState.username);
   const currentTopic = useMemo(() => {
     if (!topicId || !topicObj) return null;
     return topicObj?.[topicId] || null;
   }, [topicId, topicObj]);
+  const bookmarksLoaded = currentTopic?.bookmarksLoaded;
   const appliedBookmarkedMessages = useMemo(() => {
     if (currentTopic) {
       return normalizeBookmarkMap(currentTopic.bookmarkedMessages);
@@ -80,6 +88,28 @@ function AIChatMenu({
   const onSetThinkHardForTopic = useChatContext(
     (v) => v.actions.onSetThinkHardForTopic
   );
+
+  useEffect(() => {
+    async function loadBookmarks() {
+      if (topicId && !bookmarksLoaded) {
+        const { bookmarkedMessages, loadMoreBookmarksShown } =
+          await loadBookmarksForTopic({ channelId, topicId });
+        onLoadTopicBookmarks({
+          channelId,
+          topicId,
+          bookmarkedMessages,
+          loadMoreBookmarksShown
+        });
+      }
+    }
+    loadBookmarks();
+  }, [
+    topicId,
+    channelId,
+    bookmarksLoaded,
+    loadBookmarksForTopic,
+    onLoadTopicBookmarks
+  ]);
 
   const aiType = isCielChat ? 'ciel' : 'zero';
   const key = topicId ? topicId.toString() : 'global';

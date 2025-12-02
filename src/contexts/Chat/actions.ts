@@ -809,6 +809,25 @@ export default function ChatActions(dispatch: Dispatch) {
         view
       });
     },
+    onLoadTopicBookmarks({
+      channelId,
+      topicId,
+      bookmarkedMessages,
+      loadMoreBookmarksShown
+    }: {
+      channelId: number;
+      topicId: number;
+      bookmarkedMessages: { ai: object[]; me: object[] };
+      loadMoreBookmarksShown: { ai: boolean; me: boolean };
+    }) {
+      return dispatch({
+        type: 'LOAD_TOPIC_BOOKMARKS',
+        channelId,
+        topicId,
+        bookmarkedMessages,
+        loadMoreBookmarksShown
+      });
+    },
     onLoadMoreChannels({
       type,
       channels

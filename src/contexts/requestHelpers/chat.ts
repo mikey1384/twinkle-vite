@@ -997,6 +997,27 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadBookmarksForTopic({
+      channelId,
+      topicId
+    }: {
+      channelId: number;
+      topicId?: number;
+    }) {
+      try {
+        const {
+          data: { bookmarkedMessages, loadMoreBookmarksShown }
+        } = await request.get(
+          `${URL}/chat/ai/bookmark?channelId=${channelId}&topicId=${
+            topicId ?? ''
+          }`,
+          auth()
+        );
+        return { bookmarkedMessages, loadMoreBookmarksShown };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadMoreBookmarks({
       channelId,
       topicId,
