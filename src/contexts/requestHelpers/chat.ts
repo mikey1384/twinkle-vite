@@ -157,13 +157,13 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { notificationMsg }
+          data: { notificationMsg, messageId }
         } = await request.put(
           `${URL}/chat/owner`,
           { channelId, newOwner },
           auth()
         );
-        return notificationMsg;
+        return { notificationMsg, messageId };
       } catch (error) {
         return handleError(error);
       }

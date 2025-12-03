@@ -48,8 +48,8 @@ export default function useChatSocket({
   const onChangeBusyStatus = useChatContext(
     (v) => v.actions.onChangeBusyStatus
   );
-  const onChangeChannelOwner = useChatContext(
-    (v) => v.actions.onChangeChannelOwner
+  const onSetChannelOwner = useChatContext(
+    (v) => v.actions.onSetChannelOwner
   );
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
@@ -188,15 +188,14 @@ export default function useChatSocket({
 
     function handleChangeChannelOwner({
       channelId,
-      message,
       newOwner
     }: {
       channelId: number;
-      message: any;
       newOwner: any;
     }) {
       updateChatLastRead(channelId);
-      onChangeChannelOwner({ channelId, message, newOwner });
+      // Only update the owner, message is delivered via new_chat_message
+      onSetChannelOwner({ channelId, newOwner });
     }
 
     function handleChatInvitation({

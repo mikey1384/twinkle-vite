@@ -248,7 +248,9 @@ export default function SettingsModal({
                 display: none;
               `}
             />
-            {(currentThumbUrl || newThumbUri) && !isSubmitting && (
+            {userIsChannelOwner &&
+              (currentThumbUrl || newThumbUri) &&
+              !isSubmitting && (
               <div
                 style={{
                   width: '100%',

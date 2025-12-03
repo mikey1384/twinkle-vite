@@ -1328,18 +1328,45 @@ export default function MessagesContainer({
       setSelectingNewOwner(true);
       selectingNewOwnerRef.current = true;
       try {
-        const notificationMsg = await changeChannelOwner({
+        const { notificationMsg, messageId } = await changeChannelOwner({
           channelId: selectedChannelId,
           newOwner
         });
 
-        socket.emit('new_channel_owner', {
+        // Update local state using the same pattern as chess/omok
+        const timeStamp = Math.floor(Date.now() / 1000);
+        const messagePayload = {
+          id: messageId,
           channelId: selectedChannelId,
           userId,
           username,
           profilePicUrl,
+          content: notificationMsg,
+          isNotification: true,
+          notificationType: 'owner_change',
           newOwner,
-          notificationMsg
+          timeStamp
+        };
+
+        onSubmitMessage({
+          messageId,
+          message: messagePayload
+        });
+
+        // Broadcast message to other clients using proven flow
+        socket.emit('new_chat_message', {
+          message: messagePayload,
+          channel: {
+            id: selectedChannelId,
+            channelName,
+            pathId: currentChannel.pathId
+          }
+        });
+
+        // Broadcast owner change to update creatorId on other clients
+        socket.emit('new_channel_owner', {
+          channelId: selectedChannelId,
+          newOwner
         });
 
         if (andLeave) {
