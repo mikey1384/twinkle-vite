@@ -1060,6 +1060,14 @@ export default function ChatReducer(
             loaded: true,
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
+              : {}),
+            // Compute partnerUsername for DM channels
+            ...(loadedChannel.twoPeople && loadedChannel.members && state.prevUserId
+              ? {
+                  partnerUsername: loadedChannel.members.find(
+                    (m: { id: number }) => m.id !== state.prevUserId
+                  )?.username
+                }
               : {})
           }
         },
@@ -1375,6 +1383,21 @@ export default function ChatReducer(
           Number(channelId) !== Number(state.selectedChannelId)
         ) {
           newChannelsObj[channelId].loaded = false;
+        }
+      }
+      // Compute partnerUsername for DM channels to avoid render-time computation issues
+      for (const channelId in newChannelsObj) {
+        const channel = newChannelsObj[channelId];
+        if (channel?.twoPeople && channel?.members && action.userId) {
+          const partner = channel.members.find(
+            (m: { id: number }) => m.id !== action.userId
+          );
+          if (partner?.username) {
+            newChannelsObj[channelId] = {
+              ...channel,
+              partnerUsername: partner.username
+            };
+          }
         }
       }
       const aiCardsLoaded =
@@ -2892,7 +2915,18 @@ export default function ChatReducer(
                     : prevChannelObj?.lastOmokMoveViewerId,
                 numUnreads: action.isMyMessage
                   ? Number(prevChannelObj?.numUnreads || 0)
-                  : Number(prevChannelObj?.numUnreads || 0) + 1
+                  : Number(prevChannelObj?.numUnreads || 0) + 1,
+                // Preserve or compute partnerUsername for DM channels
+                ...(prevChannelObj?.twoPeople || action.channel?.twoPeople
+                  ? {
+                      partnerUsername:
+                        prevChannelObj?.partnerUsername ||
+                        (state.prevUserId &&
+                          (prevChannelObj?.members || []).find(
+                            (m: { id: number }) => m.id !== state.prevUserId
+                          )?.username)
+                    }
+                  : {})
               }
         },
         numUnreads:

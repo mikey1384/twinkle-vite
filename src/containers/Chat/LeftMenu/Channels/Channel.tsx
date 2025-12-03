@@ -21,6 +21,7 @@ export default function Channel({
     twoPeople,
     members,
     numUnreads,
+    partnerUsername,
     pathId,
     subchannelObj = {}
   },
@@ -45,6 +46,7 @@ export default function Channel({
     twoPeople?: boolean;
     members?: { id: number; username: string }[];
     numUnreads?: number;
+    partnerUsername?: string;
     pathId?: number;
     subchannelObj?: object;
   };
@@ -272,6 +274,11 @@ export default function Channel({
   }, [numUnreads, subchannelObj]);
 
   const ChannelName = useMemo(() => {
+    // For DMs, prefer pre-computed partnerUsername (computed at load time with known userId)
+    // This avoids issues when userId is temporarily undefined during app initialization
+    if (twoPeople && partnerUsername) {
+      return partnerUsername;
+    }
     const result = otherMember || effectiveChannelName;
     if (!result) {
       if (process.env.NODE_ENV === 'development') return `(${deletedLabel})`;
@@ -284,7 +291,7 @@ export default function Channel({
     }
     return result || `(${deletedLabel})`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveChannelName, otherMember]);
+  }, [effectiveChannelName, otherMember, partnerUsername, twoPeople]);
 
   const lastSubchannelPath = useMemo(
     () => lastSubchannelPaths[channelId],

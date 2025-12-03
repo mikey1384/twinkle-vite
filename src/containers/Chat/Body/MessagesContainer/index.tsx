@@ -746,12 +746,11 @@ export default function MessagesContainer({
             channelId: selectedChannelId,
             timeStamp
           };
-          // Broadcast message to opponent
           socket.emit('new_chat_message', {
             message: messagePayload,
             channel: {
               id: selectedChannelId,
-              channelName,
+              ...(currentChannel.twoPeople ? {} : { channelName }),
               pathId: currentChannel.pathId
             }
           });
@@ -851,12 +850,11 @@ export default function MessagesContainer({
             channelId: selectedChannelId,
             timeStamp
           };
-          // Broadcast message to opponent
           socket.emit('new_chat_message', {
             message: messagePayload,
             channel: {
               id: selectedChannelId,
-              channelName,
+              ...(currentChannel.twoPeople ? {} : { channelName }),
               pathId: currentChannel.pathId
             }
           });
@@ -1353,12 +1351,11 @@ export default function MessagesContainer({
           message: messagePayload
         });
 
-        // Broadcast message to other clients using proven flow
         socket.emit('new_chat_message', {
           message: messagePayload,
           channel: {
             id: selectedChannelId,
-            channelName,
+            ...(currentChannel.twoPeople ? {} : { channelName }),
             pathId: currentChannel.pathId
           }
         });
