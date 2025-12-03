@@ -1,9 +1,10 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import Icon from '~/components/Icon';
 import PromptWorkshop from './PromptWorkshop';
-import MyTopicsManager from './SystemPromptShared/MyTopicsManager';
+import MyTopicsManager from '../SystemPromptShared/MyTopicsManager';
 
 export default function WorkshopPage({
   mission,
@@ -128,10 +129,12 @@ export default function WorkshopPage({
             }
           `}
         >
-          <PromptWorkshop
-            mission={mission}
-            onSetMissionState={onSetMissionState}
-          />
+          <ErrorBoundary componentPath="MissionPage/WorkshopPage/PromptWorkshop">
+            <PromptWorkshop
+              mission={mission}
+              onSetMissionState={onSetMissionState}
+            />
+          </ErrorBoundary>
         </div>
       </div>
       <MyTopicsManager />

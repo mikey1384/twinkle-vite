@@ -103,7 +103,8 @@ export default function PromptWorkshop({
         }
       });
     },
-    [mission.id, systemPromptState, onSetMissionState]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [mission.id, systemPromptState]
   );
 
   // Socket listeners for generate_custom_instructions
@@ -160,7 +161,6 @@ export default function PromptWorkshop({
     };
   }, [setSystemPromptState]);
 
-  // Socket listeners for improve_custom_instructions
   useEffect(() => {
     function handleImproveUpdate({
       requestId,

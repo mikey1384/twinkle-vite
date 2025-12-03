@@ -97,7 +97,8 @@ export default function CopyAndPaste({
               disabled={submitDisabled}
               onClick={handleSuccess}
               color={successColor}
-              filled
+              variant="solid"
+              tone="raised"
             >
               Success!
             </Button>
