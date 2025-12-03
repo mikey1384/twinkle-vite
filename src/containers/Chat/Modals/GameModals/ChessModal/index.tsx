@@ -436,15 +436,23 @@ export default function ChessModal({
     if (!submittingRef.current) {
       submittingRef.current = true;
       setSubmitting(true);
-      await onConfirmChessMove({
-        ...newChessState,
-        previousState: initialState
-          ? {
-              ...initialState,
-              previousState: null
-            }
-          : null
-      });
+      try {
+        await onConfirmChessMove({
+          ...newChessState,
+          previousState: initialState
+            ? {
+                ...initialState,
+                previousState: null
+              }
+            : null
+        });
+      } catch (error) {
+        console.error(error);
+        throw error;
+      } finally {
+        submittingRef.current = false;
+        setSubmitting(false);
+      }
     }
   }
 

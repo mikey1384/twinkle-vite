@@ -101,6 +101,9 @@ export default function MessagesContainer({
   const loadTopicMessages = useAppContext(
     (v) => v.requestHelpers.loadTopicMessages
   );
+  const saveChatMessage = useAppContext(
+    (v) => v.requestHelpers.saveChatMessage
+  );
   const onLoadTopicMessages = useChatContext(
     (v) => v.actions.onLoadTopicMessages
   );
@@ -699,59 +702,65 @@ export default function MessagesContainer({
       state,
       isCheckmate,
       isStalemate,
-      moveNumber,
       previousState
     }: {
       state: any;
       isCheckmate: boolean;
       isStalemate: boolean;
-      moveNumber: number;
       previousState: any;
     }) => {
       const gameWinnerId = isCheckmate ? userId : isStalemate ? 0 : null;
-      const params = {
-        userId,
-        chessState: {
-          ...state,
-          previousState: previousState
-            ? {
-                ...previousState,
-                previousState: null
-              }
-            : null
-        },
-        isChessMsg: 1,
-        gameWinnerId
+      const chessState = {
+        ...state,
+        previousState: previousState
+          ? {
+              ...previousState,
+              previousState: null
+            }
+          : null
       };
       const content = 'Made a chess move';
       try {
         if (selectedChannelId) {
           onSetReplyTarget({ channelId: selectedChannelId, target: null });
-          socket.emit(
-            'user_made_a_move',
-            {
+          // Save via HTTP API - this also triggers socket broadcast on the server
+          const { messageId, timeStamp } = await saveChatMessage({
+            message: {
               userId,
+              content,
               channelId: selectedChannelId,
-              moveNumber
-            },
-            (success: boolean) => {
-              if (success) {
-                const messageId = uuidv1();
-                onSubmitMessage({
-                  messageId,
-                  message: {
-                    ...params,
-                    profilePicUrl,
-                    username,
-                    content,
-                    channelId: selectedChannelId
-                  }
-                });
-                onScrollToBottom();
-              }
-              onSetChessModalShown(false);
+              chessState,
+              isChessMsg: true,
+              gameWinnerId
             }
-          );
+          });
+          const messagePayload = {
+            id: messageId,
+            userId,
+            chessState,
+            isChessMsg: 1,
+            gameWinnerId,
+            profilePicUrl,
+            username,
+            content,
+            channelId: selectedChannelId,
+            timeStamp
+          };
+          // Broadcast message to opponent
+          socket.emit('new_chat_message', {
+            message: messagePayload,
+            channel: {
+              id: selectedChannelId,
+              channelName,
+              pathId: currentChannel.pathId
+            }
+          });
+          onSubmitMessage({
+            messageId,
+            message: messagePayload
+          });
+          onScrollToBottom();
+          onSetChessModalShown(false);
         } else {
           if (selectedChannelId === 0 && !partner?.id) {
             reportError({
@@ -762,7 +771,10 @@ export default function MessagesContainer({
           }
           const { alreadyExists, channel, message, pathId } =
             await startNewDMChannel({
-              ...params,
+              userId,
+              chessState,
+              isChessMsg: 1,
+              gameWinnerId,
               content,
               recipientId: partner?.id
             });
@@ -780,87 +792,92 @@ export default function MessagesContainer({
           onCreateNewDMChannel({ channel, withoutMessage: true });
           navigate(`/chat/${pathId}`, { replace: true });
           onSetChessModalShown(false);
-          return;
         }
       } catch (error) {
         console.error(error);
+        throw error;
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [profilePicUrl, partner?.id, selectedChannelId, userId, username]
+    [partner?.id, profilePicUrl, selectedChannelId, userId, username]
   );
 
   const handleConfirmOmokMove = useCallback(
     async ({
       state,
       isWinning,
-      moveNumber,
+      moveNumber: _moveNumber,
       previousState
     }: {
       state: any;
       isWinning: boolean;
-      moveNumber: number;
+      moveNumber?: number;
       previousState?: any;
     }) => {
-      const params = {
-        userId,
-        omokState: {
-          ...state,
-          previousState: previousState
-            ? {
-                ...previousState,
-                previousState: null
-              }
-            : null
-        },
-        isChessMsg: 1,
-        gameWinnerId: isWinning ? userId : null
+      const omokState = {
+        ...state,
+        previousState: previousState
+          ? {
+              ...previousState,
+              previousState: null
+            }
+          : null
       };
+      const gameWinnerId = isWinning ? userId : null;
       const content = 'Made an omok move';
       try {
         if (selectedChannelId) {
           onSetReplyTarget({ channelId: selectedChannelId, target: null });
-          socket.emit(
-            'user_made_a_move',
-            {
+          // Save via HTTP API - this also triggers socket broadcast on the server
+          const { messageId, timeStamp } = await saveChatMessage({
+            message: {
               userId,
+              content,
               channelId: selectedChannelId,
-              moveNumber,
-              gameType: 'omok'
-            },
-            (success: boolean) => {
-              if (!success) return;
-              const messageId = uuidv1();
-              const messagePayload = {
-                ...params,
-                profilePicUrl,
-                username,
-                content,
-                channelId: selectedChannelId
-              };
-              onSubmitMessage({
-                messageId,
-                message: messagePayload
-              });
-              onUpdateLastOmokMessageId({
-                channelId: selectedChannelId,
-                messageId
-              });
-              onUpdateLastOmokMoveViewerId({
-                channelId: selectedChannelId,
-                viewerId: userId
-              });
-              onUpdateRecentOmokMessage({
-                channelId: selectedChannelId,
-                message: {
-                  ...messagePayload,
-                  id: messageId
-                }
-              });
-              onSetOmokModalShown(false);
-              onScrollToBottom();
+              omokState,
+              isChessMsg: true,
+              gameWinnerId
             }
-          );
+          });
+          const messagePayload = {
+            id: messageId,
+            userId,
+            omokState,
+            isChessMsg: 1,
+            gameWinnerId,
+            profilePicUrl,
+            username,
+            content,
+            channelId: selectedChannelId,
+            timeStamp
+          };
+          // Broadcast message to opponent
+          socket.emit('new_chat_message', {
+            message: messagePayload,
+            channel: {
+              id: selectedChannelId,
+              channelName,
+              pathId: currentChannel.pathId
+            }
+          });
+          onSubmitMessage({
+            messageId,
+            message: messagePayload
+          });
+          onUpdateLastOmokMessageId({
+            channelId: selectedChannelId,
+            messageId
+          });
+          onUpdateLastOmokMoveViewerId({
+            channelId: selectedChannelId,
+            viewerId: userId
+          });
+          onUpdateRecentOmokMessage({
+            channelId: selectedChannelId,
+            message: messagePayload
+          });
+          onSetOmokModalShown(false);
+          onScrollToBottom();
         } else {
           if (selectedChannelId === 0 && !partner?.id) {
             reportError({
@@ -872,7 +889,10 @@ export default function MessagesContainer({
           }
           const { alreadyExists, channel, message, pathId } =
             await startNewDMChannel({
-              ...params,
+              userId,
+              omokState,
+              isChessMsg: 1,
+              gameWinnerId,
               content,
               recipientId: partner?.id
             });
@@ -893,28 +913,11 @@ export default function MessagesContainer({
         }
       } catch (error) {
         console.error(error);
+        throw error;
       }
     },
-    [
-      currentChannel.members,
-      navigate,
-      onCreateNewDMChannel,
-      onScrollToBottom,
-      onSetOmokModalShown,
-      onSetReplyTarget,
-      onSubmitMessage,
-      onUpdateChannelPathIdHash,
-      onUpdateLastOmokMessageId,
-      onUpdateLastOmokMoveViewerId,
-      onUpdateRecentOmokMessage,
-      partner?.id,
-      profilePicUrl,
-      selectedChannelId,
-      startNewDMChannel,
-      reportError,
-      userId,
-      username
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [partner?.id, profilePicUrl, selectedChannelId, userId, username]
   );
 
   const handleDelete = useCallback(async () => {

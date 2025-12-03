@@ -115,6 +115,7 @@ export default function OmokModal({
       });
     } catch (error) {
       console.error(error);
+      throw error;
     } finally {
       setSubmitting(false);
     }

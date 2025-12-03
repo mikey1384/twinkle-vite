@@ -40,7 +40,7 @@ export default function GameModalFooter({
   onClose: () => void;
   onCancelMove?: () => void;
   onStartNewGame?: () => void;
-  onDone?: () => void;
+  onDone?: () => void | Promise<void>;
   onHowToPlay?: () => void;
   doneDisabled?: boolean;
   warningColor?: string;
@@ -118,11 +118,14 @@ export default function GameModalFooter({
     </>
   );
 
-  function handleDone() {
+  async function handleDone() {
     if (onDone) {
       setLoading(true);
-      onDone();
+      try {
+        await onDone();
+      } catch {
+        setLoading(false);
+      }
     }
-    noop();
   }
 }
