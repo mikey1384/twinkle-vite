@@ -360,9 +360,8 @@ function Markdown({
                     keySuffix: string | number
                   ) => {
                     const normalizedNodes =
-                      (isWithinList
-                        ? stripLeadingBreakNodes(nodes)
-                        : nodes) || [];
+                      (isWithinList ? stripLeadingBreakNodes(nodes) : nodes) ||
+                      [];
                     if (!normalizedNodes.length) {
                       return null;
                     }
@@ -371,8 +370,7 @@ function Markdown({
                       ['img', 'table', 'pre', 'div', 'iframe']
                     );
                     const isLabelParagraph =
-                      !isWithinList &&
-                      isSectionLabelParagraph(normalizedNodes);
+                      !isWithinList && isSectionLabelParagraph(normalizedNodes);
                     const paragraphClassName = isLabelParagraph
                       ? SECTION_LABEL_CLASS
                       : undefined;
@@ -415,7 +413,9 @@ function Markdown({
                       const splitResult = splitLabelAndContent(nodes);
                       if (splitResult) {
                         return (
-                          <Fragment key={`${paragraphKey}-segment-${keySuffix}`}>
+                          <Fragment
+                            key={`${paragraphKey}-segment-${keySuffix}`}
+                          >
                             {renderSegment(
                               splitResult.labelNodes,
                               `${keySuffix}-label`
@@ -840,9 +840,7 @@ function Markdown({
               pathSuffix: string
             ) => {
               const normalizedNodes =
-                (isWithinList
-                  ? stripLeadingBreakNodes(nodes)
-                  : nodes) || [];
+                (isWithinList ? stripLeadingBreakNodes(nodes) : nodes) || [];
               if (!normalizedNodes.length) {
                 return null;
               }
@@ -887,22 +885,22 @@ function Markdown({
               return (
                 <ErrorBoundary
                   componentPath={`${componentPath}/convertToJSX/p/Block${pathSuffix}`}
+                  key={`${key}-${keySuffix}`}
+                >
+                  <div
+                    {...restProps}
+                    style={{
+                      ...sharedStyle,
+                      display: 'block',
+                      ...style
+                    }}
                     key={`${key}-${keySuffix}`}
                   >
-                    <div
-                      {...restProps}
-                      style={{
-                        ...sharedStyle,
-                        display: 'block',
-                        ...style
-                      }}
-                      key={`${key}-${keySuffix}`}
-                    >
-                      {convertToJSX(normalizedNodes)}
-                    </div>
-                  </ErrorBoundary>
-                );
-              };
+                    {convertToJSX(normalizedNodes)}
+                  </div>
+                </ErrorBoundary>
+              );
+            };
 
             const renderWithLabelSplit = (
               nodes: any[],
@@ -1250,9 +1248,7 @@ function Markdown({
       return typeof node.data === 'string' ? node.data : '';
     }
     if (Array.isArray(node.children)) {
-      return node.children
-        .map((child: any) => extractNodeText(child))
-        .join('');
+      return node.children.map((child: any) => extractNodeText(child)).join('');
     }
     return '';
   }
@@ -1261,14 +1257,22 @@ function Markdown({
     if (!text) {
       return text;
     }
-    const baseText = text.includes('＠') ? text.replace(/＠/g, '@') : text;
+    // Fullwidth ＠ (U+FF20) indicates invalid/non-existent users.
+    // These should display as plain @username text, not links.
+    const FAKE_AT_PLACEHOLDER = '\uE000';
+    const hasFakeAt = text.includes('＠');
+    const baseText = hasFakeAt
+      ? text.replace(/＠/g, FAKE_AT_PLACEHOLDER)
+      : text;
     const containsAngleBrackets = /[<>]/.test(baseText);
     if (baseText.indexOf('@') === -1 && !containsAngleBrackets) {
-      return applyLineBreaks(baseText);
+      const result = applyLineBreaks(baseText);
+      return hasFakeAt ? result.replace(/\uE000/g, '@') : result;
     }
     const mentionTestRegex = /@[A-Za-z0-9_%]{3,}/;
     if (!mentionTestRegex.test(baseText) && !containsAngleBrackets) {
-      return applyLineBreaks(baseText);
+      const result = applyLineBreaks(baseText);
+      return hasFakeAt ? result.replace(/\uE000/g, '@') : result;
     }
     const mentionReplaceRegex = /@[A-Za-z0-9_%]{3,}/g;
     const mentionReplacer = (match: string) => {
@@ -1276,7 +1280,10 @@ function Markdown({
       return `<a class="mention" href="/users/${path}">@${path}</a>`;
     };
     if (!containsAngleBrackets) {
-      const replaced = baseText.replace(mentionReplaceRegex, mentionReplacer);
+      let replaced = baseText.replace(mentionReplaceRegex, mentionReplacer);
+      if (hasFakeAt) {
+        replaced = replaced.replace(/\uE000/g, '@');
+      }
       return applyLineBreaks(replaced);
     }
 
@@ -1285,6 +1292,9 @@ function Markdown({
 
     traverse(doc.body);
     let result = doc.body.innerHTML;
+    if (hasFakeAt) {
+      result = result.replace(/\uE000/g, '@');
+    }
     return applyLineBreaks(result);
 
     function traverse(node: Node) {
@@ -1341,18 +1351,13 @@ function Markdown({
       const next = findNextNonWhitespace(value, offset + 1);
       const isBetweenTags = prev === '>' && next === '<';
       if (isBetweenTags) {
-        return shouldPreserveBetweenInlineTags(value, offset)
-          ? '<br />'
-          : '';
+        return shouldPreserveBetweenInlineTags(value, offset) ? '<br />' : '';
       }
       return '<br />';
     });
   }
 
-  function shouldPreserveBetweenInlineTags(
-    html: string,
-    newlineIndex: number
-  ) {
+  function shouldPreserveBetweenInlineTags(html: string, newlineIndex: number) {
     const prevTagName = getPreviousClosingTagName(html, newlineIndex);
     const nextTagName = getNextOpeningTagName(html, newlineIndex);
     if (!prevTagName || !nextTagName) {
@@ -1532,48 +1537,45 @@ function Markdown({
     let lastLineWasList = false;
     const startsWithBoundaryNewline =
       !options?.isAtStart && text.startsWith('\n');
-    const endsWithBoundaryNewline =
-      !options?.isAtEnd && text.endsWith('\n');
+    const endsWithBoundaryNewline = !options?.isAtEnd && text.endsWith('\n');
 
     const listLineRegex = /^\s*(?:[*+\-]|•|\d+\.)\s+/;
-    const processedLines = processedText
-      .split('\n')
-      .map((line, index, arr) => {
-        const trimmedLine = line.trim();
-        const isList = listLineRegex.test(trimmedLine);
-        const isLeadingBoundaryLine =
-          startsWithBoundaryNewline && index === 0 && trimmedLine === '';
-        const isTrailingBoundaryLine =
-          endsWithBoundaryNewline &&
-          index === arr.length - 1 &&
-          trimmedLine === '';
-        const shouldPreserveBoundaryLine =
-          isLeadingBoundaryLine || isTrailingBoundaryLine;
+    const processedLines = processedText.split('\n').map((line, index, arr) => {
+      const trimmedLine = line.trim();
+      const isList = listLineRegex.test(trimmedLine);
+      const isLeadingBoundaryLine =
+        startsWithBoundaryNewline && index === 0 && trimmedLine === '';
+      const isTrailingBoundaryLine =
+        endsWithBoundaryNewline &&
+        index === arr.length - 1 &&
+        trimmedLine === '';
+      const shouldPreserveBoundaryLine =
+        isLeadingBoundaryLine || isTrailingBoundaryLine;
 
-        if (isList) {
-          inList = true;
-          lastLineWasList = true;
-        } else if (trimmedLine === '' && inList) {
-          inList = false;
-          lastLineWasList = true;
-        } else if (trimmedLine !== '') {
-          lastLineWasList = false;
-        }
+      if (isList) {
+        inList = true;
+        lastLineWasList = true;
+      } else if (trimmedLine === '' && inList) {
+        inList = false;
+        lastLineWasList = true;
+      } else if (trimmedLine !== '') {
+        lastLineWasList = false;
+      }
 
-        if (
-          trimmedLine === '' &&
-          !shouldPreserveBoundaryLine &&
-          !lastLineWasList &&
-          nbspCount < maxNbsp
-        ) {
-          if (line === '') {
-            nbspCount++;
-            return '&nbsp;';
-          }
-          return line;
+      if (
+        trimmedLine === '' &&
+        !shouldPreserveBoundaryLine &&
+        !lastLineWasList &&
+        nbspCount < maxNbsp
+      ) {
+        if (line === '') {
+          nbspCount++;
+          return '&nbsp;';
         }
         return line;
-      });
+      }
+      return line;
+    });
 
     return processedLines.join('\n');
   }
