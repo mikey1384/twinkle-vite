@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import ImageModal from '~/components/Modals/ImageModal';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+
+const STATIC_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'bmp'];
+const TRUSTED_DOMAINS = ['cloudfront.net', 's3.amazonaws.com'];
 
 export default function ImageComponent({
   src,
@@ -14,6 +18,32 @@ export default function ImageComponent({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [imageModalShown, setImageModalShown] = useState(false);
+
+  const isSecret = alt === 'secret';
+
+  const isInternalImage = useMemo(() => {
+    try {
+      const hostname = new URL(src).hostname.toLowerCase();
+      return TRUSTED_DOMAINS.some(
+        (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+      );
+    } catch {
+      return false;
+    }
+  }, [src]);
+
+  const isStaticImage = useMemo(() => {
+    const url = (src || '').split('?')[0].split('#')[0];
+    const fileName = url.split('/').pop() || '';
+    const dotIdx = fileName.lastIndexOf('.');
+    const ext = dotIdx > -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
+    return STATIC_IMAGE_EXTS.includes(ext);
+  }, [src]);
+
+  const isClickable =
+    isInternalImage && isStaticImage && (!isSecret || isRevealed);
+
   return (
     <div
       className={css`
@@ -23,13 +53,21 @@ export default function ImageComponent({
     >
       <img
         {...commonProps}
+        className={css`
+          cursor: ${isClickable ? 'pointer' : 'default'};
+        `}
         src={src}
         alt={alt}
         loading="lazy"
         onLoad={() => setLoaded(true)}
         onError={() => onSetErrorLoadingImage(true)}
+        onClick={() => {
+          if (isClickable) {
+            setImageModalShown(true);
+          }
+        }}
       />
-      {alt === 'secret' && !isRevealed && (
+      {isSecret && !isRevealed && (
         <div
           className={`unselectable ${css`
             position: absolute;
@@ -60,6 +98,13 @@ export default function ImageComponent({
         >
           {loaded ? 'Tap to reveal image' : ''}
         </div>
+      )}
+      {imageModalShown && (
+        <ImageModal
+          onHide={() => setImageModalShown(false)}
+          src={src}
+          downloadable
+        />
       )}
     </div>
   );
