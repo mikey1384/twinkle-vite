@@ -79,6 +79,7 @@ export default function ReplyInputArea({
           />
         ) : (
           <InputForm
+            isComment
             innerRef={innerRef}
             disableReason={disableReason}
             onSubmit={handleSubmit}

@@ -16,6 +16,7 @@ import {
 } from '~/contexts';
 export { default as useScrollToBottom } from './useScrollToBottom';
 export { default as useInfiniteScroll } from './useInfiniteScroll';
+export { default as useDraft } from './useDraft';
 import {
   ADMIN_MANAGEMENT_LEVEL,
   defaultContentState,

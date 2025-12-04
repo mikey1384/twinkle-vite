@@ -4,35 +4,66 @@ import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
+import { useDraft } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
+import { useKeyContext } from '~/contexts';
 
 export default function AIChatTopicMenu({
   newCustomInstructions,
   customInstructions,
   isCustomInstructionsOn,
+  topicId,
   topicText,
   onSetCustomInstructions,
-  onSetIsCustomInstructionsOn
+  onSetIsCustomInstructionsOn,
+  onSetDeleteDraft
 }: {
   newCustomInstructions: string;
   customInstructions: string;
   isCustomInstructionsOn: boolean;
+  topicId: number;
   topicText: string;
   onSetCustomInstructions: (customInstructions: string) => void;
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
+  onSetDeleteDraft?: (deleteFn: () => Promise<void>) => void;
 }) {
+  const userId = useKeyContext((v) => v.myState.userId);
   const [generating, setGenerating] = useState(false);
   const [improving, setImproving] = useState(false);
   const [error, setError] = useState('');
+  const [savedDraftContent, setSavedDraftContent] = useState<string | null>(
+    null
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const generateRequestIdRef = useRef<string | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
   const originalInstructionsRef = useRef('');
   const topicTextRef = useRef(topicText);
+
+  const { savingState, saveDraft, deleteDraft, loadDraft } = useDraft({
+    contentType: 'customInstructions',
+    rootType: 'topic',
+    rootId: topicId,
+    enabled: !!userId && isCustomInstructionsOn
+  });
+
+  const hasDraftToRestore = useMemo(() => {
+    if (!savedDraftContent) return false;
+    // Show restore button if draft differs from current content
+    return savedDraftContent.trim() !== newCustomInstructions.trim();
+  }, [savedDraftContent, newCustomInstructions]);
+
+  // Expose deleteDraft to parent for cleanup after save
+  useEffect(() => {
+    if (onSetDeleteDraft) {
+      onSetDeleteDraft(deleteDraft);
+    }
+  }, [deleteDraft, onSetDeleteDraft]);
 
   // Auto-scroll textarea to bottom during generation/improvement
   useEffect(() => {
@@ -49,6 +80,19 @@ export default function AIChatTopicMenu({
       }),
     [newCustomInstructions]
   );
+
+  useEffect(() => {
+    if (isCustomInstructionsOn && userId) {
+      handleCheckForDraft();
+    }
+    async function handleCheckForDraft() {
+      const draft = await loadDraft();
+      if (draft?.content) {
+        setSavedDraftContent(draft.content);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCustomInstructionsOn, userId]);
 
   useEffect(() => {
     if (!customInstructions) {
@@ -308,11 +352,36 @@ export default function AIChatTopicMenu({
               value={newCustomInstructions}
               disabled={generating || improving}
               disableAutoResize={generating || improving}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                onSetCustomInstructions(event.target.value)
-              }
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+                const value = event.target.value;
+                onSetCustomInstructions(value);
+                saveDraft({ content: value });
+              }}
               onKeyUp={handleKeyUp}
             />
+            <div
+              className={css`
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 0.5rem;
+              `}
+            >
+              {hasDraftToRestore ? (
+                <Button
+                  color="orange"
+                  variant="ghost"
+                  onClick={handleRestoreDraft}
+                  style={{ padding: '0.5rem 1rem', fontSize: '1.1rem' }}
+                >
+                  <Icon icon="rotate-left" style={{ marginRight: '0.5rem' }} />
+                  Restore draft
+                </Button>
+              ) : (
+                <div />
+              )}
+              <DraftSaveIndicator savingState={savingState} />
+            </div>
           </div>
         )}
       </div>
@@ -350,6 +419,14 @@ export default function AIChatTopicMenu({
   function handleKeyUp(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === ' ') {
       onSetCustomInstructions(addEmoji(event.currentTarget.value));
+    }
+  }
+
+  function handleRestoreDraft() {
+    if (savedDraftContent) {
+      onSetCustomInstructions(savedDraftContent);
+
+      setSavedDraftContent(null);
     }
   }
 }

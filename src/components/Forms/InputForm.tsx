@@ -14,6 +14,7 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ProgressBar from '~/components/ProgressBar';
 import AlertModal from '~/components/Modals/AlertModal';
+import DraftSaveIndicator from '~/components/DraftSaveIndicator';
 import { Buffer } from 'buffer';
 import { Color } from '~/constants/css';
 import {
@@ -31,10 +32,10 @@ import {
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useInputContext, useKeyContext, useAppContext } from '~/contexts';
+import { useInputContext, useKeyContext } from '~/contexts';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
-import DraftSaveIndicator from '~/components/DraftSaveIndicator';
+import { useDraft } from '~/helpers/hooks';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const recentlySubmittedContent: Record<string, number> = {};
@@ -85,9 +86,6 @@ function InputForm({
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
-  const checkDrafts = useAppContext((v) => v.requestHelpers.checkDrafts);
-  const saveDraft = useAppContext((v) => v.requestHelpers.saveDraft);
-  const deleteDraft = useAppContext((v) => v.requestHelpers.deleteDraft);
   const { colorKey: buttonColor } = useRoleColor('button', {
     themeName: theme,
     fallback: 'logoBlue'
@@ -119,13 +117,30 @@ function InputForm({
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const secretViewMessageSubmittingRef = useRef(false);
-  const [draftId, setDraftId] = useState<number | null>(null);
-  const draftIdRef = useRef<number | null>(null);
-  const [savingState, setSavingState] = useState<'idle' | 'saved'>('idle');
   const [onHover, setOnHover] = useState(false);
-  const saveTimeoutRef = useRef<number | null>(null);
-  const savedIndicatorTimeoutRef = useRef<number | null>(null);
   const emojiDeferTimerRef = useRef<number | null>(null);
+
+  const contentType = useMemo(
+    () => (targetCommentId ? 'comment' : parent.contentType),
+    [parent, targetCommentId]
+  );
+  const contentId = useMemo(
+    () => targetCommentId || parent.contentId,
+    [parent.contentId, targetCommentId]
+  );
+
+  const {
+    savingState,
+    saveDraft,
+    deleteDraft,
+    loadDraft,
+    cancelPendingSave
+  } = useDraft({
+    contentType: 'comment',
+    rootType: targetCommentId ? 'comment' : parent.contentType,
+    rootId: targetCommentId || parent.contentId,
+    enabled: !!isComment && !!userId && !disableReason
+  });
 
   useEffect(() => {
     return () => {
@@ -140,14 +155,6 @@ function InputForm({
     (v) => v.actions.onSetCommentAttachment
   );
 
-  const contentType = useMemo(
-    () => (targetCommentId ? 'comment' : parent.contentType),
-    [parent, targetCommentId]
-  );
-  const contentId = useMemo(
-    () => targetCommentId || parent.contentId,
-    [parent.contentId, targetCommentId]
-  );
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = disableReason ? '' : inputState?.text || '';
   const attachment = useInputContext(
@@ -206,7 +213,18 @@ function InputForm({
 
   useEffect(() => {
     if (isComment && userId && !disableReason) {
-      loadDraftForComment();
+      handleLoadDraft();
+    }
+    async function handleLoadDraft() {
+      const contentKey = `${parent.contentType}${parent.contentId}`;
+      if (recentlySubmittedContent[contentKey]) {
+        return;
+      }
+      const draft = await loadDraft();
+      if (draft && !textRef.current && !disableReason) {
+        setText(draft.content || '');
+        textRef.current = draft.content || '';
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disableReason, isComment, userId]);
@@ -227,10 +245,6 @@ function InputForm({
       }
     }
   }, [contentId, contentType, disableReason]);
-
-  useEffect(() => {
-    draftIdRef.current = draftId;
-  }, [draftId]);
 
   const handleUpload = useCallback(
     (fileObj: File) => {
@@ -349,17 +363,6 @@ function InputForm({
         : effortBarColor,
     [cleansedContentLength, effortBarColor, expectedContentLength]
   );
-
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (savedIndicatorTimeoutRef.current) {
-        clearTimeout(savedIndicatorTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div
@@ -581,44 +584,6 @@ function InputForm({
     handleSetText(event.target.value);
   }
 
-  function saveDraftWithTimeout(draftData: any) {
-    if (!isComment) return;
-
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    if (savedIndicatorTimeoutRef.current) {
-      clearTimeout(savedIndicatorTimeoutRef.current);
-    }
-
-    setSavingState('idle');
-
-    saveTimeoutRef.current = window.setTimeout(async () => {
-      try {
-        const result = await saveDraft({
-          content: draftData.content,
-          contentType: 'comment',
-          draftId: draftIdRef.current,
-          rootId: parent.contentId,
-          rootType: parent.contentType
-        });
-
-        if (result?.draftId) {
-          setDraftId(result.draftId);
-          draftIdRef.current = result.draftId;
-        }
-
-        setSavingState('saved');
-        savedIndicatorTimeoutRef.current = window.setTimeout(() => {
-          setSavingState('idle');
-        }, 3000);
-      } catch (error) {
-        console.error('Failed to save draft:', error);
-        setSavingState('idle');
-      }
-    }, 3000);
-  }
-
   function handleSetText(newText: string) {
     if (newText !== textRef.current || newText === '') {
       setText(newText);
@@ -627,74 +592,20 @@ function InputForm({
         ...(inputStates[`${contentType}${contentId}`] as any),
         text: newText
       };
-      if (isComment && userId && !disableReason) {
-        saveDraftWithTimeout({
-          content: newText
-        });
-      }
-    }
-  }
-
-  async function loadDraftForComment() {
-    const contentKey = `${parent.contentType}${parent.contentId}`;
-
-    if (recentlySubmittedContent[contentKey]) {
-      return;
-    }
-    try {
-      const drafts = await checkDrafts({
-        contentType: 'comment',
-        rootType: parent.contentType,
-        rootId: parent.contentId
-      });
-
-      if (disableReason) return;
-
-      if (recentlySubmittedContent[contentKey]) {
-        return;
-      }
-      const commentDraft = drafts.find(
-        (draft: {
-          type: string;
-          rootType: string;
-          rootId: number;
-          id: number;
-          content: string;
-        }) =>
-          draft.type === 'comment' &&
-          draft.rootType === parent.contentType &&
-          draft.rootId === parent.contentId
-      );
-      if (commentDraft) {
-        const { id, content } = commentDraft;
-        if (disableReason) return;
-        setDraftId(id);
-        if (!textRef.current && !disableReason) {
-          setText(content);
-          textRef.current = content;
-        }
-      }
-    } catch (error) {
-      console.error('Error loading draft:', error);
+      saveDraft({ content: newText });
     }
   }
 
   async function handleSubmit() {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
+    cancelPendingSave();
     setSubmitting(true);
     const contentKey = `${parent.contentType}${parent.contentId}`;
     recentlySubmittedContent[contentKey] = Date.now();
     try {
       await onSubmit(finalizeEmoji(text));
       handleSetText('');
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      if (isComment && draftIdRef.current) {
-        await deleteDraft(draftIdRef.current);
-        setDraftId(null);
+      if (isComment) {
+        await deleteDraft();
       }
       delete recentlySubmittedContent[contentKey];
     } catch (error: any) {

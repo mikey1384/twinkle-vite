@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
@@ -74,6 +74,7 @@ export default function TopicSettingsModal({
     customInstructions || ''
   );
   const [isShared, setIsShared] = useState(!!isSharedWithOtherUsers);
+  const deleteDraftRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     setIsShared(!!isSharedWithOtherUsers);
@@ -228,12 +229,16 @@ export default function TopicSettingsModal({
         {isAIChannel ? (
           <>
             <AIChatTopicMenu
+              topicId={topicId}
               topicText={editedTopicText}
               isCustomInstructionsOn={isCustomInstructionsOn}
               onSetIsCustomInstructionsOn={setIsCustomInstructionsOn}
               newCustomInstructions={newCustomInstructions}
               customInstructions={customInstructions}
               onSetCustomInstructions={setNewCustomInstructions}
+              onSetDeleteDraft={(fn) => {
+                deleteDraftRef.current = fn;
+              }}
             />
             {canShareTopic && (
               <div
@@ -396,6 +401,9 @@ export default function TopicSettingsModal({
         topicTitle: editedTopicText,
         isOwnerPostingOnly: ownerOnlyPosting
       });
+      if (isAIChannel && deleteDraftRef.current) {
+        deleteDraftRef.current();
+      }
       onHide();
     } catch (error) {
       console.error(error);
