@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
+import { dataUrlToBlob, fileToBase64 } from '~/helpers/imageHelpers';
 
 import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
@@ -722,27 +723,6 @@ export default function ImageGenerator({
     } catch (err) {
       console.error('Failed to convert partial image to reference:', err);
     }
-  }
-
-  function dataUrlToBlob(dataUrl: string): Blob {
-    const parts = dataUrl.split(',');
-    const byteString = atob(parts[1]);
-    const mimeString = parts[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([ab], { type: mimeString });
-  }
-
-  async function fileToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = (error) => reject(error);
-    });
   }
 }
 

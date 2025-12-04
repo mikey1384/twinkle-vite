@@ -567,6 +567,20 @@ export default function useDrawingTools({
       rasterCanvas.height
     );
     setTextElements([]);
+    updateDisplay();
+    onHasContent?.(false);
+  };
+
+  const clearDrawingOverlay = () => {
+    // Clear the raster canvas buffer to prevent stale strokes
+    if (rasterCanvas) {
+      const rasterCtx = rasterCanvas.getContext('2d');
+      if (rasterCtx) {
+        rasterCtx.clearRect(0, 0, rasterCanvas.width, rasterCanvas.height);
+      }
+    }
+    originalDrawingContentRef.current = null;
+    setTextElements([]);
     setCanvasHistory([]);
     updateDisplay();
     onHasContent?.(false);
@@ -594,6 +608,7 @@ export default function useDrawingTools({
     cancelTextInput,
     handleUndo,
     clearCanvas,
+    clearDrawingOverlay,
     handleColorChange,
     recentColors,
     updateDisplay

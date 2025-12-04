@@ -7,14 +7,12 @@ export default function StatusMessage({
   mission,
   missionComplete,
   status,
-  passMessage,
   failMessage,
   onBackToStart
 }: {
   mission: any;
   missionComplete: boolean;
   status: string;
-  passMessage: string;
   failMessage: string;
   onBackToStart: () => any;
 }) {

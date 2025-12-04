@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import NewModal from '~/components/NewModal';
 import Caption from './Caption';
+import ImageEditModal from './ImageEditModal';
 import Icon from '~/components/Icon';
 import { useAppContext, useContentContext } from '~/contexts';
 import { Color } from '~/constants/css';
@@ -56,6 +57,7 @@ export default function ImageModal({
   const [editedCaption, setEditedCaption] = useState(caption || '');
   const [isEditing, setIsEditing] = useState(false);
   const [replacing, setReplacing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const captionExceedChatLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -114,6 +116,13 @@ export default function ImageModal({
                 </Button>
               </>
             )}
+          <Button
+            color="blue"
+            onClick={() => setIsEditModalOpen(true)}
+          >
+            <Icon icon="pencil-alt" />
+            <span style={{ marginLeft: '0.5rem' }}>Edit Image</span>
+          </Button>
           {hasCaption &&
             !stringIsEmpty(caption) &&
             userIsUploader &&
@@ -230,6 +239,12 @@ export default function ImageModal({
           </div>
         )}
       </div>
+      {isEditModalOpen && (
+        <ImageEditModal
+          imageUrl={src}
+          onClose={() => setIsEditModalOpen(false)}
+        />
+      )}
     </NewModal>
   );
 

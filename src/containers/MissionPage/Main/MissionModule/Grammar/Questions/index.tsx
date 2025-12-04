@@ -113,7 +113,6 @@ export default function Questions({
             mission={mission}
             missionComplete={repeatMissionComplete}
             status={conditionPassStatus}
-            passMessage="*Correct!*"
             failMessage={questionObj[currentSlideIndex].failMessage}
             onBackToStart={() =>
               onSetMissionState({

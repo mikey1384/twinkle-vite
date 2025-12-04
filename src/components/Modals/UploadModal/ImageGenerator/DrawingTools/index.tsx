@@ -31,6 +31,7 @@ export default function DrawingTools(props: DrawingToolsProps) {
     cancelTextInput,
     handleUndo,
     clearCanvas,
+    clearDrawingOverlay,
     setTool,
     handleColorChange,
     setLineWidth,
@@ -64,7 +65,8 @@ export default function DrawingTools(props: DrawingToolsProps) {
     addTextToCanvas,
     cancelTextInput,
     handleUndo,
-    clearCanvas
+    clearCanvas,
+    clearDrawingOverlay
   };
 
   const toolsUI = (
