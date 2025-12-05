@@ -14,7 +14,7 @@ const reorderLabel = 'Reorder';
 export default function FeaturedSubjects({
   loading,
   selectedTheme,
-  subjects,
+  subjects = [],
   username,
   userId
 }: {

@@ -48,7 +48,7 @@ export default function XPAnalysis({
   }, [userId]);
 
   return (
-    <ErrorBoundary componentPath="Profile/Body/Home/Achievements/XPAnalysis">
+    <ErrorBoundary componentPath="Profile/Body/Home/Activities/XPAnalysis">
       <SectionPanel
         elevated
         customColorTheme={selectedTheme}

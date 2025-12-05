@@ -19,7 +19,7 @@ const notableActivitiesLabel = 'Notable Activities';
 const showMoreLabel = 'Show More';
 
 export default function NotableActivities({
-  posts,
+  posts = [],
   profile,
   selectedTheme,
   loading,

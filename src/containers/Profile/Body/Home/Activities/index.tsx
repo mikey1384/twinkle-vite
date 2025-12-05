@@ -78,7 +78,7 @@ export default function Activities({
   }, [profile.id, profile?.state?.profile?.subjects?.length, userId]);
 
   return (
-    <ErrorBoundary componentPath="Profile/Body/Home/Achievements/index">
+    <ErrorBoundary componentPath="Profile/Body/Home/Activities/index">
       {isSubjectSectionShown && (
         <FeaturedSubjects
           userId={id}

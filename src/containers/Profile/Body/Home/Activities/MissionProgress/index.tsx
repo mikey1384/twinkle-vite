@@ -102,7 +102,7 @@ export default function MissionProgress({
   }, [userId]);
 
   return (
-    <ErrorBoundary componentPath="Profile/Body/Home/Achievements/MissionProgress/index">
+    <ErrorBoundary componentPath="Profile/Body/Home/Activities/MissionProgress/index">
       <SectionPanel
         elevated
         customColorTheme={selectedTheme}
