@@ -186,6 +186,8 @@ function XPVideoPlayer({
   } | null>(null);
 
   const [playing, setPlaying] = useState(false);
+  const [playerActivated, setPlayerActivated] = useState(false);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const [reachedDailyLimit, setReachedDailyLimit] = useState(false);
   const [reachedMaxWatchDuration, setReachedMaxWatchDuration] = useState(false);
   const [startingPosition, setStartingPosition] = useState(0);
@@ -214,6 +216,10 @@ function XPVideoPlayer({
         if (typeof currentTime === 'number') {
           setStartingPosition(currentTime);
           setCurrentInitialTime(currentTime);
+          // Auto-activate player if user has existing progress
+          if (currentTime > 0) {
+            setPlayerActivated(true);
+          }
         } else {
           setCurrentInitialTime(0);
         }
@@ -414,41 +420,90 @@ function XPVideoPlayer({
                 </div>
               </Link>
             )}
-            {!isLink && currentInitialTime !== null && videoCode && (
-              <VideoPlayer
-                ref={(ref: any) => {
-                  if (ref) {
-                    playerStateRef.current = ref;
+            {!isLink && !playerActivated && videoCode && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setPlayerActivated(true);
+                  setShouldAutoPlay(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setPlayerActivated(true);
+                    setShouldAutoPlay(true);
                   }
                 }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  zIndex: 1,
-                  display: isEditing ? 'none' : 'block' // Hide instead of unmount
-                }}
-                width="100%"
-                height="100%"
-                src={videoCode || ''}
-                fileType="youtube"
-                playing={playing && !isEditing}
-                initialTime={currentInitialTime}
-                onPlay={() => {
-                  onPlay?.();
-                  handleVideoPlay({ userId: userIdRef.current });
-                }}
-                onPause={handleVideoStop}
-                onPlayerReady={handlePlayerInit}
-                onEnded={() => {
-                  handleVideoStop();
-                  onVideoEnd?.();
-                  if (userIdRef.current) {
-                    finishWatchingVideo(videoId);
+                className={css`
+                  position: absolute;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  top: 0;
+                  left: 0;
+                  z-index: 1;
+                  width: 100%;
+                  height: 100%;
+                  background: url(https://img.youtube.com/vi/${videoCode}/hqdefault.jpg)
+                    no-repeat center;
+                  background-size: cover;
+                  cursor: pointer;
+                  &:hover img {
+                    transform: scale(1.1);
                   }
-                }}
-              />
+                `}
+              >
+                <img
+                  loading="lazy"
+                  style={{
+                    width: '68px',
+                    height: '68px',
+                    transition: 'transform 0.2s ease'
+                  }}
+                  src={playButtonImg}
+                  alt="Click to play video"
+                />
+              </div>
             )}
+            {!isLink &&
+              playerActivated &&
+              currentInitialTime !== null &&
+              videoCode && (
+                <VideoPlayer
+                  ref={(ref: any) => {
+                    if (ref) {
+                      playerStateRef.current = ref;
+                    }
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    zIndex: 1,
+                    display: isEditing ? 'none' : 'block'
+                  }}
+                  width="100%"
+                  height="100%"
+                  src={videoCode || ''}
+                  fileType="youtube"
+                  autoPlay={shouldAutoPlay}
+                  playing={playing && !isEditing}
+                  initialTime={currentInitialTime}
+                  onPlay={() => {
+                    onPlay?.();
+                    handleVideoPlay({ userId: userIdRef.current });
+                  }}
+                  onPause={handleVideoStop}
+                  onPlayerReady={handlePlayerInit}
+                  onEnded={() => {
+                    handleVideoStop();
+                    onVideoEnd?.();
+                    if (userIdRef.current) {
+                      finishWatchingVideo(videoId);
+                    }
+                  }}
+                />
+              )}
           </div>
           {(!!rewardLevel || (startingPosition > 0 && !started)) && (
             <XPBar
