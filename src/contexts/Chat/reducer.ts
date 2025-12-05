@@ -2922,7 +2922,11 @@ export default function ChatReducer(
                       partnerUsername:
                         prevChannelObj?.partnerUsername ||
                         (state.prevUserId &&
-                          (prevChannelObj?.members || []).find(
+                          (
+                            prevChannelObj?.members ||
+                            action.channel?.members ||
+                            []
+                          ).find(
                             (m: { id: number }) => m.id !== state.prevUserId
                           )?.username)
                     }

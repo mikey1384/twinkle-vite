@@ -750,7 +750,9 @@ export default function MessagesContainer({
             message: messagePayload,
             channel: {
               id: selectedChannelId,
-              ...(currentChannel.twoPeople ? {} : { channelName }),
+              ...(currentChannel.twoPeople
+                ? { twoPeople: true, members: currentChannel.members }
+                : { channelName }),
               pathId: currentChannel.pathId
             }
           });
@@ -854,7 +856,9 @@ export default function MessagesContainer({
             message: messagePayload,
             channel: {
               id: selectedChannelId,
-              ...(currentChannel.twoPeople ? {} : { channelName }),
+              ...(currentChannel.twoPeople
+                ? { twoPeople: true, members: currentChannel.members }
+                : { channelName }),
               pathId: currentChannel.pathId
             }
           });
