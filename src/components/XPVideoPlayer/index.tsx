@@ -420,7 +420,7 @@ function XPVideoPlayer({
                 </div>
               </Link>
             )}
-            {!isLink && !playerActivated && videoCode && (
+            {!isLink && !deviceIsMobile && !playerActivated && videoCode && (
               <div
                 role="button"
                 tabIndex={0}
@@ -466,7 +466,7 @@ function XPVideoPlayer({
               </div>
             )}
             {!isLink &&
-              playerActivated &&
+              (deviceIsMobile || playerActivated) &&
               currentInitialTime !== null &&
               videoCode && (
                 <VideoPlayer
