@@ -34,11 +34,13 @@ export default function TopMenu({
   onInputModalButtonClick,
   onPlayAIStories,
   onPlayGrammarGame,
+  onDailyQuestionClick,
   style
 }: {
   onInputModalButtonClick: (v?: string) => void;
   onPlayAIStories: () => void;
   onPlayGrammarGame: () => void;
+  onDailyQuestionClick: () => void;
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
@@ -243,6 +245,9 @@ export default function TopMenu({
             flex-wrap: wrap;
             gap: 1rem;
             justify-content: space-between;
+            @media (max-width: 1100px) {
+              justify-content: center;
+            }
           `}
         >
           <div style={{ display: 'flex', gap: '1rem' }}>
@@ -280,6 +285,17 @@ export default function TopMenu({
               >
                 W{allGoalsAchieved ? '' : 'ordle'}
                 {isAchieved('W') ? ' ✓' : ''}
+              </GameCTAButton>
+            </ErrorBoundary>
+            <ErrorBoundary componentPath="Home/Stories/TopMenu/DailyQuestionButton">
+              <GameCTAButton
+                icon="lightbulb"
+                variant="purple"
+                size="md"
+                shiny={true}
+                onClick={handleDailyQuestionClick}
+              >
+                {allGoalsAchieved ? 'Q' : "Today's Q"}
               </GameCTAButton>
             </ErrorBoundary>
             {allGoalsAchieved && (
@@ -368,6 +384,14 @@ export default function TopMenu({
     chessTimerIdRef.current = null;
     setLoadingChess(false);
     onPlayGrammarGame();
+  }
+
+  function handleDailyQuestionClick() {
+    if (!userId) {
+      onOpenSigninModal();
+      return;
+    }
+    onDailyQuestionClick();
   }
 
   function handleWordleButtonClick({ isRetry = false } = {}) {

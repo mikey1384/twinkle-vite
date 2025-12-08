@@ -122,6 +122,11 @@ export default function HomeReducer(
         ...state,
         aiStoriesModalShown: action.shown
       };
+    case 'SET_DAILY_QUESTION_MODAL_SHOWN':
+      return {
+        ...state,
+        dailyQuestionModalShown: action.shown
+      };
     case 'LOAD_GROUPS':
       return {
         ...state,

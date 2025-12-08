@@ -13,6 +13,7 @@ import LocalContext from './Context';
 import AIStoriesModal from './AIStoriesModal';
 import GrammarGameModal from './GrammarGameModal';
 import ChessPuzzleModal from './ChessPuzzleModal';
+import DailyQuestionModal from './DailyQuestionModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
 import { container, Left, Center, Right } from './Styles';
@@ -33,6 +34,9 @@ function Home({
   const chessPuzzleModalShown = useHomeContext(
     (v) => v.state.chessPuzzleModalShown
   );
+  const dailyQuestionModalShown = useHomeContext(
+    (v) => v.state.dailyQuestionModalShown
+  );
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
@@ -41,6 +45,9 @@ function Home({
   );
   const onSetChessPuzzleModalShown = useHomeContext(
     (v) => v.actions.onSetChessPuzzleModalShown
+  );
+  const onSetDailyQuestionModalShown = useHomeContext(
+    (v) => v.actions.onSetDailyQuestionModalShown
   );
   const [alertModalShown, setAlertModalShown] = useState(false);
 
@@ -85,6 +92,11 @@ function Home({
           {chessPuzzleModalShown && (
             <ChessPuzzleModal
               onHide={() => onSetChessPuzzleModalShown(false)}
+            />
+          )}
+          {dailyQuestionModalShown && (
+            <DailyQuestionModal
+              onHide={() => onSetDailyQuestionModalShown(false)}
             />
           )}
         </div>

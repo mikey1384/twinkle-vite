@@ -60,6 +60,7 @@ import { faChartLine } from '@fortawesome/pro-solid-svg-icons/faChartLine';
 import { faCheck } from '@fortawesome/pro-solid-svg-icons/faCheck';
 import { faCheckCircle } from '@fortawesome/pro-solid-svg-icons/faCheckCircle';
 import { faChess } from '@fortawesome/pro-solid-svg-icons/faChess';
+import { faChild } from '@fortawesome/pro-solid-svg-icons/faChild';
 import { faChevronUp } from '@fortawesome/pro-solid-svg-icons/faChevronUp';
 import { faChevronDown } from '@fortawesome/pro-solid-svg-icons/faChevronDown';
 import { faChevronLeft } from '@fortawesome/pro-solid-svg-icons/faChevronLeft';
@@ -158,6 +159,7 @@ import { faSearch } from '@fortawesome/pro-solid-svg-icons/faSearch';
 import { faSchool } from '@fortawesome/pro-solid-svg-icons/faSchool';
 import { faShoppingCart } from '@fortawesome/pro-solid-svg-icons/faShoppingCart';
 import { faShoppingBag } from '@fortawesome/pro-solid-svg-icons/faShoppingBag';
+import { faShare } from '@fortawesome/pro-solid-svg-icons/faShare';
 import { faSignOutAlt } from '@fortawesome/pro-solid-svg-icons/faSignOutAlt';
 import { faSlidersH } from '@fortawesome/pro-solid-svg-icons/faSlidersH';
 import { faSort } from '@fortawesome/pro-solid-svg-icons/faSort';
@@ -267,6 +269,7 @@ library.add(
   faCheck,
   faCheckCircle,
   faChess,
+  faChild,
   faChevronUp,
   faChevronDown,
   faChevronLeft,
@@ -363,6 +366,7 @@ library.add(
   faShoppingBag,
   faSave,
   faSearch,
+  faShare,
   faSignOutAlt,
   faSlidersH,
   faSort,

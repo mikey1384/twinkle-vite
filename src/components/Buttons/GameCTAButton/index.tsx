@@ -28,7 +28,8 @@ export default function GameCTAButton({
     | 'logoBlue'
     | 'pink'
     | 'orange'
-    | 'gold';
+    | 'gold'
+    | 'purple';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   shiny?: boolean;
   toggled?: boolean;
@@ -66,7 +67,8 @@ function getButtonCls({
     | 'logoBlue'
     | 'pink'
     | 'orange'
-    | 'gold';
+    | 'gold'
+    | 'purple';
   size: 'sm' | 'md' | 'lg' | 'xl';
   shiny: boolean;
   toggled: boolean;
@@ -131,6 +133,13 @@ function getButtonCls({
       hover: '#FFCB32', // gold
       active: '#FAC132',
       shadow: '#FAC132'
+    },
+    purple: {
+      bg: '#9333ea',
+      border: '#7e22ce',
+      hover: '#7e22ce',
+      active: '#6b21a8',
+      shadow: '#6b21a8'
     }
   } as const;
   const sz = {

@@ -60,6 +60,9 @@ export default function Stories() {
   const onSetGrammarGameModalShown = useHomeContext(
     (v) => v.actions.onSetGrammarGameModalShown
   );
+  const onSetDailyQuestionModalShown = useHomeContext(
+    (v) => v.actions.onSetDailyQuestionModalShown
+  );
   const category = useHomeContext((v) => v.state.category);
   const displayOrder = useHomeContext((v) => v.state.displayOrder);
   const feeds = useHomeContext((v) => v.state.feeds);
@@ -240,6 +243,7 @@ export default function Stories() {
           }
           onPlayAIStories={() => onSetAIStoriesModalShown(true)}
           onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}
+          onDailyQuestionClick={() => onSetDailyQuestionModalShown(true)}
         />
         <Featured />
         <HomeFilter

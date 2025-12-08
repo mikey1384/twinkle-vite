@@ -15,6 +15,7 @@ export const initialHomeState = {
   aiStoriesModalShown: false,
   grammarGameModalShown: false,
   chessPuzzleModalShown: false,
+  dailyQuestionModalShown: false,
   groupIds: [],
   groupsObj: {},
   searchedGroupIds: [],

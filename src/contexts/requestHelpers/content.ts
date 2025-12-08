@@ -2040,6 +2040,121 @@ export default function contentRequestHelpers({
           reason
         };
       }
+    },
+    async getDailyQuestion() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitDailyQuestionResponse({
+      questionId,
+      response
+    }: {
+      questionId: number;
+      response: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/response`,
+          { questionId, response },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async saveDailyQuestionDraft({ response }: { response: string }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/draft`,
+          { response },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadDailyQuestionDraft() {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/draft`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async shareDailyQuestionResponse({
+      responseId,
+      responseText
+    }: {
+      responseId: number;
+      responseText: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/share`,
+          { responseId, responseText },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async refineDailyQuestionResponse({ responseId }: { responseId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/refine`,
+          { responseId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async simplifyDailyQuestion({ questionId }: { questionId: number }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/simplify`,
+          { questionId },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async getDailyQuestionHistory({
+      limit,
+      offset
+    }: {
+      limit?: number;
+      offset?: number;
+    } = {}) {
+      try {
+        const params = new URLSearchParams();
+        if (limit) params.append('limit', String(limit));
+        if (offset) params.append('offset', String(offset));
+        const queryString = params.toString();
+        const { data } = await request.get(
+          `${URL}/content/daily-question/history${queryString ? `?${queryString}` : ''}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
     }
   };
 }
