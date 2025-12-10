@@ -110,7 +110,7 @@ export default function OfferDetail({
         }}
       >
         <span style={{ marginRight: '1rem' }}>
-          {actionLabel} {partner.username}...
+          {actionLabel} {partner?.username}...
         </span>
         <Icon
           icon="arrow-up"

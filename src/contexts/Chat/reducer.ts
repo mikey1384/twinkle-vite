@@ -2852,7 +2852,14 @@ export default function ChatReducer(
               }
             : {
                 ...prevChannelObj,
-                ...action.channel,
+                // Preserve existing channel metadata when incoming data is incomplete
+                id: action.channel.id,
+                pathId: action.channel.pathId ?? prevChannelObj?.pathId,
+                channelName:
+                  action.channel.channelName ?? prevChannelObj?.channelName,
+                twoPeople:
+                  action.channel.twoPeople ?? prevChannelObj?.twoPeople,
+                members: action.channel.members ?? prevChannelObj?.members,
                 ...(prevChannelObj?.members && action.newMembers.length > 0
                   ? {
                       allMemberIds: (prevChannelObj?.allMemberIds || []).concat(
@@ -2928,7 +2935,11 @@ export default function ChatReducer(
                             []
                           ).find(
                             (m: { id: number }) => m.id !== state.prevUserId
-                          )?.username)
+                          )?.username) ||
+                        // Fallback: for DM channels, the message sender is the partner
+                        (action.message.userId !== state.prevUserId
+                          ? action.message.username
+                          : undefined)
                     }
                   : {})
               }

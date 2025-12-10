@@ -18,7 +18,7 @@ import { socket } from '~/constants/sockets/api';
 
 type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
 
-const INACTIVITY_LIMIT = 7; // seconds
+const INACTIVITY_LIMIT = 7;
 
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
@@ -54,7 +54,6 @@ export default function DailyQuestionPanel({
     feedback: string;
     responseId: number;
     isShared: boolean;
-    refinedResponse: string | null;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,8 +62,9 @@ export default function DailyQuestionPanel({
   const hasStartedRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isSubmittingRef = useRef(false);
+  const lastActivityRef = useRef<number>(Date.now());
+  const handleSubmitRef = useRef<() => void>(() => {});
 
-  // Load question on mount using socket
   useEffect(() => {
     if (!userId) return;
 
@@ -103,8 +103,7 @@ export default function DailyQuestionPanel({
           xpAwarded: data.response.xpAwarded,
           feedback: data.response.feedback,
           responseId: data.response.id,
-          isShared: data.response.isShared,
-          refinedResponse: null
+          isShared: data.response.isShared
         });
         setResponse(data.response.response || '');
         setScreen('result');
@@ -131,32 +130,30 @@ export default function DailyQuestionPanel({
     };
   }, [userId]);
 
-  // Inactivity timer countdown
   useEffect(() => {
-    if (screen !== 'writing' || inactivityTimer <= 0) return;
+    if (screen !== 'writing') return;
 
-    timerRef.current = setTimeout(() => {
-      setInactivityTimer((prev) => prev - 1);
-    }, 1000);
+    lastActivityRef.current = Date.now();
+    setInactivityTimer(INACTIVITY_LIMIT);
+
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - lastActivityRef.current) / 1000);
+      const remaining = Math.max(0, INACTIVITY_LIMIT - elapsed);
+      setInactivityTimer(remaining);
+
+      if (remaining === 0 && !isSubmittingRef.current) {
+        clearInterval(interval);
+        handleSubmitRef.current();
+      }
+    }, 200);
+
+    timerRef.current = interval as unknown as NodeJS.Timeout;
 
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearInterval(interval);
     };
-  }, [screen, inactivityTimer]);
+  }, [screen]);
 
-  // Auto-submit when inactivity timer hits 0
-  useEffect(() => {
-    if (
-      screen === 'writing' &&
-      inactivityTimer === 0 &&
-      !isSubmittingRef.current
-    ) {
-      handleSubmit();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inactivityTimer, screen]);
-
-  // Socket listeners for grading progress
   useEffect(() => {
     if (screen !== 'grading') return;
 
@@ -181,13 +178,11 @@ export default function DailyQuestionPanel({
       grade?: string;
       xpAwarded?: number;
       feedback?: string;
-      refinedResponse?: string | null;
       newXP?: number;
     }) {
       gradingCompleteRef.current = true;
       setGradingProgress(100);
 
-      // Update user's XP in real time if awarded
       if (result.newXP && userId) {
         onSetUserState({
           userId,
@@ -195,17 +190,16 @@ export default function DailyQuestionPanel({
         });
       }
 
-      // Small delay to show 100%
       setTimeout(() => {
         setGradingResult({
-          grade: result.isThoughtful ? (result.grade || 'Pass') : 'Fail',
+          grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
           xpAwarded: result.xpAwarded || 0,
           feedback: result.isThoughtful
-            ? (result.feedback || '')
-            : (result.rejectionReason || 'Please try again tomorrow with more effort.'),
+            ? result.feedback || ''
+            : result.rejectionReason ||
+              'Please try again tomorrow with more effort.',
           responseId: result.responseId || 0,
-          isShared: false,
-          refinedResponse: result.refinedResponse || null
+          isShared: false
         });
         setScreen('result');
       }, 500);
@@ -225,32 +219,24 @@ export default function DailyQuestionPanel({
       socket.off('daily_question_graded', handleGraded);
       socket.off('daily_question_grading_error', handleGradingError);
     };
-  }, [screen, userId, onSetUserState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, userId]);
 
-  // Handle modal close as submission
   useEffect(() => {
-    const handleBeforeClose = () => {
+    return () => {
       if (
         screen === 'writing' &&
         hasStartedRef.current &&
         !isSubmittingRef.current
       ) {
-        handleSubmit();
+        handleSubmitRef.current();
       }
     };
-
-    // This will be called when parent tries to close
-    return () => {
-      handleBeforeClose();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
   const handleStart = useCallback(() => {
     hasStartedRef.current = true;
-    setInactivityTimer(INACTIVITY_LIMIT);
     setScreen('writing');
-    // Focus textarea after transition
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 100);
@@ -281,20 +267,17 @@ export default function DailyQuestionPanel({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Block deletion keys
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
         return;
       }
 
-      // Block cut and select-all delete patterns
       if ((e.ctrlKey || e.metaKey) && (e.key === 'x' || e.key === 'a')) {
         e.preventDefault();
         return;
       }
 
-      // Reset inactivity timer on any valid keypress
-      setInactivityTimer(INACTIVITY_LIMIT);
+      lastActivityRef.current = Date.now();
     },
     []
   );
@@ -302,10 +285,9 @@ export default function DailyQuestionPanel({
   const handleInput = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
-      // Only allow adding characters, not removing
       if (newValue.length >= response.length) {
         setResponse(newValue);
-        setInactivityTimer(INACTIVITY_LIMIT);
+        lastActivityRef.current = Date.now();
       }
     },
     [response.length]
@@ -330,6 +312,10 @@ export default function DailyQuestionPanel({
     });
   }, [questionId, response]);
 
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
   const wordCount = useMemo(() => {
     return response
       .trim()
@@ -351,7 +337,6 @@ export default function DailyQuestionPanel({
     );
   }
 
-  // Error screen
   if (error) {
     return (
       <div className={containerCls}>
@@ -365,14 +350,12 @@ export default function DailyQuestionPanel({
     );
   }
 
-  // Start screen
   if (screen === 'start') {
     return (
       <ErrorBoundary componentPath="DailyQuestionPanel/Start">
         <div className={containerCls}>
           <p className={questionTextCls}>{question}</p>
 
-          {/* Simplify / Show Original button */}
           <div
             className={css`
               margin-bottom: 1.5rem;
@@ -400,7 +383,9 @@ export default function DailyQuestionPanel({
                 uppercase={false}
               >
                 <Icon icon="child" style={{ marginRight: '0.5rem' }} />
-                {isSimplifying ? 'Simplifying...' : 'Make question easier to understand'}
+                {isSimplifying
+                  ? 'Simplifying...'
+                  : 'Make question easier to understand'}
               </Button>
             )}
           </div>
@@ -455,7 +440,6 @@ export default function DailyQuestionPanel({
     );
   }
 
-  // Writing screen
   if (screen === 'writing') {
     return (
       <ErrorBoundary componentPath="DailyQuestionPanel/Writing">
@@ -502,7 +486,6 @@ export default function DailyQuestionPanel({
     );
   }
 
-  // Grading screen
   if (screen === 'grading') {
     return (
       <div className={containerCls}>
@@ -514,7 +497,6 @@ export default function DailyQuestionPanel({
     );
   }
 
-  // Result screen
   if (screen === 'result' && gradingResult) {
     return (
       <ErrorBoundary componentPath="DailyQuestionPanel/GradingResult">
@@ -526,7 +508,6 @@ export default function DailyQuestionPanel({
           feedback={gradingResult.feedback}
           responseId={gradingResult.responseId}
           isShared={gradingResult.isShared}
-          refinedResponse={gradingResult.refinedResponse}
           onClose={onClose}
         />
       </ErrorBoundary>

@@ -59,7 +59,7 @@ export default function Rewind({
       onDeclineRewind={onDeclineRewind}
       rewindRequestId={rewindRequestId}
       senderId={rewindRequestMessage.userId}
-      senderName={rewindRequestMessage.username}
+      senderName={rewindRequestMessage?.username}
       style={{ width: '100%' }}
       squareColors={squareColors}
     />

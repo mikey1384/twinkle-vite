@@ -83,8 +83,8 @@ export default function SelectGroupsModal({
   const isSearched = useMemo(() => searchText.trim() !== '', [searchText]);
 
   const headerLabel = useMemo(
-    () => `${type === 'want' ? `${partner.username}'s` : 'My'} groups`,
-    [type, partner.username]
+    () => `${type === 'want' ? `${partner?.username}'s` : 'My'} groups`,
+    [type, partner?.username]
   );
 
   async function onSearch(text: string) {
@@ -162,8 +162,8 @@ export default function SelectGroupsModal({
             onSetSelectedGroupIds={setSelectedGroupIds}
             successColor={successColor}
             type={type}
-            partnerName={partner.username}
-            partnerId={partner.id}
+            partnerName={partner?.username}
+            partnerId={partner?.id}
           />
         )}
       </main>

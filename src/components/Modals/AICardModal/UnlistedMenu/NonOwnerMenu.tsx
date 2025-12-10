@@ -77,8 +77,8 @@ export default function NonOwnerMenu({
               onMenuShownChange={onUserMenuShownChange}
               color={Color[userLinkColor]()}
               user={{
-                username: owner.username,
-                id: owner.id
+                username: owner?.username,
+                id: owner?.id
               }}
             />
           </div>

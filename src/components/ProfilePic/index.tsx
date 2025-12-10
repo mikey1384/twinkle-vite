@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ChangePicture from './ChangePicture';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { useAppContext, useKeyContext } from '~/contexts';
-import { isPhone } from '~/helpers';
+import { isMobile } from '~/helpers';
 import StatusTag from './StatusTag';
 import { css, cx } from '@emotion/css';
 
-const deviceIsPhone = isPhone(navigator);
+const deviceIsMobile = isMobile(navigator);
 
 function toCssSize(value?: number | string) {
   if (typeof value === 'number') {
@@ -159,7 +159,7 @@ export default function ProfilePic({
           }
           onError={() => setHasError(true)}
         />
-        {!deviceIsPhone && (
+        {!deviceIsMobile && (
           <ChangePicture
             shown={
               myId === userId && isProfilePage && changePictureShown

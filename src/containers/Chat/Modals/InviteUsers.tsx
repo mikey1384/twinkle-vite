@@ -61,8 +61,8 @@ export default function InviteUsersModal({
           onSubmit={selectedUsers.length > 0 ? handleDone : undefined}
           renderDropdownLabel={(item) => (
             <span>
-              {item.username}{' '}
-              {item.realName && <small>{`(${item.realName})`}</small>}
+              {item?.username}{' '}
+              {item?.realName && <small>{`(${item.realName})`}</small>}
             </span>
           )}
           searchPlaceholder="Search for people you want to chat with"

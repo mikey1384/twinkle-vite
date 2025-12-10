@@ -236,6 +236,13 @@ export default function HeadingText({
           />{' '}
         </>
       );
+    case 'dailyReflection':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
+          daily reflection
+        </>
+      );
     default:
       return <span>Error</span>;
   }

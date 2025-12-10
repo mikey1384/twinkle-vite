@@ -39,11 +39,21 @@ function getProxiedUrl(imageUrl: string): string {
 interface ImageEditModalProps {
   imageUrl: string;
   onClose: () => void;
+  embedded?: boolean;
+  onConfirm?: (imageDataUrl: string) => void;
+  onUseImageAvailabilityChange?: (available: boolean) => void;
+  onRegisterUseImageHandler?: (
+    handler: (() => void | Promise<void>) | null
+  ) => void;
 }
 
 export default function ImageEditModal({
   imageUrl,
-  onClose
+  onClose,
+  embedded = false,
+  onConfirm,
+  onUseImageAvailabilityChange,
+  onRegisterUseImageHandler
 }: ImageEditModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,6 +80,27 @@ export default function ImageEditModal({
   const canAffordGeneration = useMemo(() => {
     return twinkleCoins >= IMAGE_GENERATION_COST;
   }, [twinkleCoins]);
+
+  // Handle "Use This Image" for embedded mode
+  const handleUseThisImage = useCallback(() => {
+    if (!canvasRef.current || !onConfirm) return;
+    const dataUrl = canvasRef.current.toDataURL('image/png');
+    onConfirm(dataUrl);
+  }, [onConfirm]);
+
+  // Notify parent about image availability and register handler
+  useEffect(() => {
+    if (embedded) {
+      onUseImageAvailabilityChange?.(isImageReady && !isGenerating);
+    }
+  }, [embedded, isImageReady, isGenerating, onUseImageAvailabilityChange]);
+
+  useEffect(() => {
+    if (embedded && onRegisterUseImageHandler) {
+      onRegisterUseImageHandler(handleUseThisImage);
+      return () => onRegisterUseImageHandler(null);
+    }
+  }, [embedded, onRegisterUseImageHandler, handleUseThisImage]);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -468,33 +499,8 @@ export default function ImageEditModal({
     }
   };
 
-  return (
-    <NewModal
-      isOpen
-      onClose={onClose}
-      title="Edit Image"
-      size="lg"
-      modalLevel={2}
-      footer={
-        <>
-          <Button
-            color="orange"
-            onClick={handleDownload}
-            disabled={!isImageReady}
-          >
-            <Icon icon="download" />
-            <span style={{ marginLeft: '0.5rem' }}>Download</span>
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            style={{ marginLeft: '0.7rem' }}
-          >
-            Close
-          </Button>
-        </>
-      }
-    >
+  const content = (
+    <>
       <div
         className={css`
           display: flex;
@@ -740,6 +746,41 @@ export default function ImageEditModal({
       {/* Hidden canvases for drawing operations */}
       <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
       <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
+    </>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <NewModal
+      isOpen
+      onClose={onClose}
+      title="Edit Image"
+      size="lg"
+      modalLevel={2}
+      footer={
+        <>
+          <Button
+            color="orange"
+            onClick={handleDownload}
+            disabled={!isImageReady}
+          >
+            <Icon icon="download" />
+            <span style={{ marginLeft: '0.5rem' }}>Download</span>
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            style={{ marginLeft: '0.7rem' }}
+          >
+            Close
+          </Button>
+        </>
+      }
+    >
+      {content}
     </NewModal>
   );
 }

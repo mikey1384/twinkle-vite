@@ -42,7 +42,6 @@ export default function GradingResult({
   feedback,
   responseId,
   isShared: initialIsShared,
-  refinedResponse,
   onClose
 }: {
   question: string;
@@ -52,21 +51,79 @@ export default function GradingResult({
   feedback: string;
   responseId: number;
   isShared: boolean;
-  refinedResponse: string | null;
   onClose: () => void;
 }) {
   const shareDailyQuestionResponse = useAppContext(
     (v) => v.requestHelpers.shareDailyQuestionResponse
   );
+  const refineDailyQuestionResponse = useAppContext(
+    (v) => v.requestHelpers.refineDailyQuestionResponse
+  );
 
   const [sharing, setSharing] = useState(false);
   const [isShared, setIsShared] = useState(initialIsShared);
   const [shareError, setShareError] = useState<string | null>(null);
-  const [selectedVersion, setSelectedVersion] = useState<'original' | 'refined'>(
-    refinedResponse ? 'refined' : 'original'
-  );
+  const [refinedResponse, setRefinedResponse] = useState<string | null>(null);
+  const [refining, setRefining] = useState(false);
+  const [showVersionSelector, setShowVersionSelector] = useState(false);
+  const [selectedVersion, setSelectedVersion] = useState<
+    'original' | 'refined'
+  >('refined');
 
-  const handleShare = useCallback(async () => {
+  const handleRefine = useCallback(async () => {
+    if (refinedResponse || refining) return;
+
+    try {
+      setRefining(true);
+      setShareError(null);
+
+      const result = await refineDailyQuestionResponse({ responseId });
+
+      if (result.error) {
+        setShareError(result.error);
+        return;
+      }
+
+      setRefinedResponse(result.refinedText);
+    } catch (err) {
+      console.error('Failed to refine:', err);
+      setShareError('Failed to refine response. Please try again.');
+    } finally {
+      setRefining(false);
+    }
+  }, [responseId, refineDailyQuestionResponse, refinedResponse, refining]);
+
+  const handleShareClick = useCallback(async () => {
+    // If we haven't refined yet, fetch refinement first
+    if (!refinedResponse && !refining) {
+      try {
+        setRefining(true);
+        setShareError(null);
+
+        const result = await refineDailyQuestionResponse({ responseId });
+
+        if (result.error) {
+          setShareError(result.error);
+          setRefining(false);
+          return;
+        }
+
+        setRefinedResponse(result.refinedText);
+        setRefining(false);
+        setShowVersionSelector(true);
+      } catch (err) {
+        console.error('Failed to refine:', err);
+        setShareError('Failed to prepare share options. Please try again.');
+        setRefining(false);
+      }
+      return;
+    }
+
+    // If already refined, show version selector
+    setShowVersionSelector(true);
+  }, [responseId, refineDailyQuestionResponse, refinedResponse, refining]);
+
+  const handleConfirmShare = useCallback(async () => {
     try {
       setSharing(true);
       setShareError(null);
@@ -87,13 +144,20 @@ export default function GradingResult({
       }
 
       setIsShared(true);
+      setShowVersionSelector(false);
     } catch (err) {
       console.error('Failed to share:', err);
       setShareError('Failed to share. Please try again.');
     } finally {
       setSharing(false);
     }
-  }, [responseId, shareDailyQuestionResponse, selectedVersion, refinedResponse, response]);
+  }, [
+    responseId,
+    shareDailyQuestionResponse,
+    selectedVersion,
+    refinedResponse,
+    response
+  ]);
 
   const gradeColor = gradeColors[grade] || Color.darkerGray();
   const gradeLabel = gradeLabels[grade] || '';
@@ -217,8 +281,8 @@ export default function GradingResult({
         </p>
       </div>
 
-      {/* Version Selector - only show if we have a refined version and can share */}
-      {canShare && refinedResponse && (
+      {/* Version Selector - shown after clicking Share */}
+      {showVersionSelector && refinedResponse && (
         <div
           className={css`
             margin-bottom: 1.5rem;
@@ -245,10 +309,17 @@ export default function GradingResult({
               className={css`
                 flex: 1;
                 padding: 0.75rem;
-                border: 2px solid ${selectedVersion === 'original' ? Color.logoBlue() : Color.borderGray()};
+                border: 2px solid
+                  ${selectedVersion === 'original'
+                    ? Color.logoBlue()
+                    : Color.borderGray()};
                 border-radius: 8px;
-                background: ${selectedVersion === 'original' ? Color.logoBlue() + '10' : 'white'};
-                color: ${selectedVersion === 'original' ? Color.logoBlue() : Color.darkerGray()};
+                background: ${selectedVersion === 'original'
+                  ? Color.logoBlue() + '10'
+                  : 'white'};
+                color: ${selectedVersion === 'original'
+                  ? Color.logoBlue()
+                  : Color.darkerGray()};
                 font-weight: ${selectedVersion === 'original' ? 600 : 400};
                 cursor: pointer;
                 transition: all 0.2s;
@@ -265,10 +336,17 @@ export default function GradingResult({
               className={css`
                 flex: 1;
                 padding: 0.75rem;
-                border: 2px solid ${selectedVersion === 'refined' ? Color.logoBlue() : Color.borderGray()};
+                border: 2px solid
+                  ${selectedVersion === 'refined'
+                    ? Color.logoBlue()
+                    : Color.borderGray()};
                 border-radius: 8px;
-                background: ${selectedVersion === 'refined' ? Color.logoBlue() + '10' : 'white'};
-                color: ${selectedVersion === 'refined' ? Color.logoBlue() : Color.darkerGray()};
+                background: ${selectedVersion === 'refined'
+                  ? Color.logoBlue() + '10'
+                  : 'white'};
+                color: ${selectedVersion === 'refined'
+                  ? Color.logoBlue()
+                  : Color.darkerGray()};
                 font-weight: ${selectedVersion === 'refined' ? 600 : 400};
                 cursor: pointer;
                 transition: all 0.2s;
@@ -286,7 +364,7 @@ export default function GradingResult({
           <div
             className={css`
               padding: 1rem;
-              background: ${Color.wellBackground()};
+              background: ${Color.wellGray()};
               border-radius: 8px;
               max-height: 200px;
               overflow-y: auto;
@@ -316,8 +394,8 @@ export default function GradingResult({
         </div>
       )}
 
-      {/* Original response only (no refined version available or failed) */}
-      {(!refinedResponse || grade === 'Fail') && (
+      {/* View Response - shown when not in version selector mode */}
+      {!showVersionSelector && (
         <details
           className={css`
             margin-bottom: 1.5rem;
@@ -340,7 +418,7 @@ export default function GradingResult({
             className={css`
               margin-top: 1rem;
               padding: 1rem;
-              background: ${Color.wellBackground()};
+              background: ${Color.wellGray()};
               border-radius: 8px;
             `}
           >
@@ -364,6 +442,57 @@ export default function GradingResult({
             >
               {response}
             </p>
+
+            {/* Refine button inside the details */}
+            {canShare && !refinedResponse && (
+              <div
+                className={css`
+                  margin-top: 1rem;
+                `}
+              >
+                <Button
+                  variant="soft"
+                  color="logoBlue"
+                  onClick={handleRefine}
+                  disabled={refining}
+                  loading={refining}
+                >
+                  <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                  {refining ? 'Polishing...' : 'See AI-polished version'}
+                </Button>
+              </div>
+            )}
+
+            {refinedResponse && (
+              <div
+                className={css`
+                  margin-top: 1rem;
+                  padding-top: 1rem;
+                  border-top: 1px solid ${Color.borderGray()};
+                `}
+              >
+                <h5
+                  className={css`
+                    font-size: 1.2rem;
+                    color: ${Color.logoBlue()};
+                    margin-bottom: 0.5rem;
+                  `}
+                >
+                  <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                  AI-Polished Version:
+                </h5>
+                <p
+                  className={css`
+                    font-size: 1.3rem;
+                    color: ${Color.black()};
+                    line-height: 1.6;
+                    white-space: pre-wrap;
+                  `}
+                >
+                  {refinedResponse}
+                </p>
+              </div>
+            )}
           </div>
         </details>
       )}
@@ -389,21 +518,42 @@ export default function GradingResult({
           justify-content: center;
           gap: 1rem;
           flex-wrap: wrap;
+          padding-top: 1.5rem;
         `}
       >
-        {canShare && (
+        {canShare && !showVersionSelector && (
           <Button
             variant="solid"
             color="logoBlue"
-            onClick={handleShare}
-            disabled={sharing}
-            loading={sharing}
+            onClick={handleShareClick}
+            disabled={refining}
+            loading={refining}
           >
             <Icon icon="share" style={{ marginRight: '0.5rem' }} />
-            {sharing ? 'Sharing...' : 'Share to Feed'}
+            {refining ? 'Preparing...' : 'Share to Feed'}
           </Button>
         )}
-        {isShared && (
+        {showVersionSelector && (
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => setShowVersionSelector(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="solid"
+              color="logoBlue"
+              onClick={handleConfirmShare}
+              disabled={sharing}
+              loading={sharing}
+            >
+              <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+              {sharing ? 'Sharing...' : 'Confirm Share'}
+            </Button>
+          </>
+        )}
+        {!!isShared && (
           <span
             className={css`
               display: flex;
@@ -416,10 +566,13 @@ export default function GradingResult({
             Shared to Feed
           </span>
         )}
-        <Button variant="solid" color="green" onClick={onClose}>
-          Done
-        </Button>
+        {!showVersionSelector && (
+          <Button variant="solid" color="green" onClick={onClose}>
+            Done
+          </Button>
+        )}
       </div>
+      <div style={{ minHeight: '3rem', flexShrink: 0 }} />
     </div>
   );
 }

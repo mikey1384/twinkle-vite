@@ -295,6 +295,41 @@ export default function Content({
             )}
           </div>
         );
+      case 'dailyReflection':
+        return (
+          <div style={{ width: '100%' }}>
+            {contentObj?.question && (
+              <div
+                style={{
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  borderRadius,
+                  border: `1px solid ${Color.borderGray()}`,
+                  background: Color.wellGray()
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    marginBottom: '0.5rem',
+                    color: Color.darkerGray()
+                  }}
+                >
+                  Question:
+                </div>
+                <div style={{ fontStyle: 'italic' }}>{contentObj.question}</div>
+              </div>
+            )}
+            <RichText
+              contentId={contentId}
+              contentType={contentType}
+              section="description"
+              theme={theme}
+            >
+              {description || ''}
+            </RichText>
+          </div>
+        );
       default:
         return Description ? (
           <div

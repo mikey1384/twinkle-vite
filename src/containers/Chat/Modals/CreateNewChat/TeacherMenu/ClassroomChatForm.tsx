@@ -85,8 +85,8 @@ export default function ClassroomChatForm({
           onRemoveItem={onRemoveUser}
           renderDropdownLabel={(item) => (
             <span>
-              {item.username}{' '}
-              {item.realName && <small>{`(${item.realName})`}</small>}
+              {item?.username}{' '}
+              {item?.realName && <small>{`(${item.realName})`}</small>}
             </span>
           )}
           searchPlaceholder={addMembersOfClassLabel}

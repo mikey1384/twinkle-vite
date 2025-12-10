@@ -5,6 +5,8 @@ import UsernameText from '~/components/Texts/UsernameText';
 import RankBadge from '~/components/RankBadge';
 
 export default function Item({ user, myId }: { user: any; myId: number }) {
+  if (!user?.username) return null;
+
   const isMe = user.id === myId;
   const rank = Number(user.rank) || 0;
   const clears = Number(user.currentLevelClears ?? 0);

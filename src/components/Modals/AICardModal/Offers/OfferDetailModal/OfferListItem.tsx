@@ -79,10 +79,10 @@ export default function OfferListItem({
               <UsernameText
                 onMenuShownChange={onUserMenuShownChange}
                 color={Color[userLinkColor]()}
-                displayedName={offer.userId === userId ? 'you' : offer.username}
+                displayedName={offer.userId === userId ? 'you' : offer?.username}
                 user={{
-                  username: offer.username,
-                  id: offer.userId
+                  username: offer?.username,
+                  id: offer?.userId
                 }}
               />{' '}
               <span

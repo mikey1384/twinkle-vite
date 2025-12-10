@@ -1,14 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Icon from '~/components/Icon';
-import { Color } from '~/constants/css';
 const changePictureLabel = 'Change Picture';
 
 export default function ChangePicture({ shown }: { shown: boolean }) {
-  const [opacity, setOpacity] = useState(0);
-  useEffect(() => {
-    setOpacity(shown ? 1 : 0);
-  }, [shown]);
-
   return (
     <div
       style={{
@@ -17,18 +11,21 @@ export default function ChangePicture({ shown }: { shown: boolean }) {
         alignItems: 'center',
         width: '100%',
         height: '50%',
-        marginTop: '50%',
+        bottom: 0,
+        left: 0,
         position: 'absolute',
-        borderBottomRightRadius: '11rem',
-        borderBottomLeftRadius: '11rem',
-        transition: 'background 0.5s',
-        background: Color.black(Math.max(opacity - 0.3, 0))
+        borderBottomRightRadius: '50%',
+        borderBottomLeftRadius: '50%',
+        background: shown ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0)',
+        opacity: shown ? 1 : 0,
+        transition: 'opacity 0.3s ease-in-out, background 0.3s ease-in-out',
+        zIndex: 9999
       }}
     >
       <div
         style={{
           display: 'flex',
-          color: Color.white(opacity),
+          color: '#fff',
           justifyContent: 'center',
           alignItems: 'center',
           flexDirection: 'column'

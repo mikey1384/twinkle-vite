@@ -56,7 +56,7 @@ export default function SelectAICardModal({
       try {
         const { cards, loadMoreShown } = await loadFilteredAICards({
           filters: {
-            owner: aiCardModalType === 'want' ? partner.username : username
+            owner: aiCardModalType === 'want' ? partner?.username : username
           }
         });
         setCardIds(cards.map((card: { id: number }) => card.id));
@@ -77,12 +77,12 @@ export default function SelectAICardModal({
 
   const headerLabel = useMemo(() => {
     if (aiCardModalType === 'want') {
-      return `${partner.username}'s AI Cards`;
+      return `${partner?.username}'s AI Cards`;
     }
     if (aiCardModalType === 'offer') {
       return `My AI Cards`;
     }
-  }, [aiCardModalType, partner.username]);
+  }, [aiCardModalType, partner?.username]);
 
   const isFiltered = useMemo(() => {
     return (
@@ -176,8 +176,8 @@ export default function SelectAICardModal({
             onUpdateAICard={onUpdateAICard}
             onSetSelectedCardIds={setSelectedCardIds}
             onSetAICardModalCardId={onSetAICardModalCardId}
-            partnerId={partner.id}
-            partnerName={partner.username}
+            partnerId={partner?.id}
+            partnerName={partner?.username}
             quality={filters.quality}
             cardStyle={filters.style}
             word={filters.word}
@@ -196,7 +196,7 @@ export default function SelectAICardModal({
             onSetLoadMoreShown={setLoadMoreShown}
             onSetSelectedCardIds={setSelectedCardIds}
             onUpdateAICard={onUpdateAICard}
-            partnerName={partner.username}
+            partnerName={partner?.username}
             selectedCardIds={selectedCardIds}
             successColor={successColor}
             onSetAICardModalCardId={onSetAICardModalCardId}

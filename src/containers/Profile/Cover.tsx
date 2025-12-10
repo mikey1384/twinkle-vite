@@ -5,6 +5,7 @@ import Button from '~/components/Button';
 import AlertModal from '~/components/Modals/AlertModal';
 import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
+import ProfilePicModal from '~/components/Modals/ProfilePicModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from '~/components/AchievementBadges';
@@ -48,7 +49,8 @@ export default function Cover({
   const [colorSelectorShown, setColorSelectorShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
-  const [imageUri, setImageUri] = useState(null);
+  const [profilePicModalShown, setProfilePicModalShown] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
@@ -305,7 +307,7 @@ export default function Cover({
             userId={profile.id}
             onClick={
               userId === profile.id
-                ? () => FileInputRef.current.click()
+                ? () => setProfilePicModalShown(true)
                 : profilePicUrl
                 ? () => setImageModalShown(true)
                 : undefined
@@ -334,6 +336,19 @@ export default function Cover({
             onHide={() => {
               setImageUri(null);
               setImageEditModalShown(false);
+            }}
+          />
+        )}
+        {profilePicModalShown && (
+          <ProfilePicModal
+            currentPicUrl={
+              profilePicUrl ? `${cloudFrontURL}${profilePicUrl}` : undefined
+            }
+            onHide={() => setProfilePicModalShown(false)}
+            onSelectImage={(selectedImageUri) => {
+              setProfilePicModalShown(false);
+              setImageUri(selectedImageUri);
+              setImageEditModalShown(true);
             }}
           />
         )}

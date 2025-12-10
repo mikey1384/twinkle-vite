@@ -800,7 +800,17 @@ export default function MessagesContainer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [partner?.id, profilePicUrl, selectedChannelId, userId, username]
+    [
+      currentChannel?.members,
+      currentChannel?.pathId,
+      currentChannel?.twoPeople,
+      channelName,
+      partner?.id,
+      profilePicUrl,
+      selectedChannelId,
+      userId,
+      username
+    ]
   );
 
   const handleConfirmOmokMove = useCallback(
@@ -919,7 +929,17 @@ export default function MessagesContainer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [partner?.id, profilePicUrl, selectedChannelId, userId, username]
+    [
+      currentChannel?.members,
+      currentChannel?.pathId,
+      currentChannel?.twoPeople,
+      channelName,
+      partner?.id,
+      profilePicUrl,
+      selectedChannelId,
+      userId,
+      username
+    ]
   );
 
   const handleDelete = useCallback(async () => {
@@ -1359,7 +1379,9 @@ export default function MessagesContainer({
           message: messagePayload,
           channel: {
             id: selectedChannelId,
-            ...(currentChannel.twoPeople ? {} : { channelName }),
+            ...(currentChannel.twoPeople
+              ? { twoPeople: true, members: currentChannel.members }
+              : { channelName }),
             pathId: currentChannel.pathId
           }
         });
@@ -1382,7 +1404,17 @@ export default function MessagesContainer({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleLeaveChannel, profilePicUrl, selectedChannelId, userId, username]
+    [
+      currentChannel?.members,
+      currentChannel?.pathId,
+      currentChannel?.twoPeople,
+      channelName,
+      handleLeaveChannel,
+      profilePicUrl,
+      selectedChannelId,
+      userId,
+      username
+    ]
   );
 
   const isSearchActive = useMemo(() => {

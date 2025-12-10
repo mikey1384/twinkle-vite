@@ -40,7 +40,7 @@ export default function MessageRewardModal({
           font-weight: bold;
         `}
       >
-        Reward {userToReward.username}
+        Reward {userToReward?.username}
       </header>
       <main>
         <div style={{ width: '100%' }}>
