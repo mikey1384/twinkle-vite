@@ -1,10 +1,10 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
-import UploadButton from '~/components/Buttons/UploadButton';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
 import BioEditModal from '~/components/Modals/BioEditModal';
 import AlertModal from '~/components/Modals/AlertModal';
+import ProfilePicModal from '~/components/Modals/ProfilePicModal';
 import RankBar from '~/components/RankBar';
 import Icon from '~/components/Icon';
 import Comments from '~/components/Comments';
@@ -14,7 +14,7 @@ import Loading from '~/components/Loading';
 import AchievementBadges from '~/components/AchievementBadges';
 import { useNavigate } from 'react-router-dom';
 import { placeholderHeights } from '~/constants/state';
-import { MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, tabletMaxWidth, borderRadius } from '~/constants/css';
 import { css, cx } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -463,6 +463,7 @@ function ProfilePanel({
   const [loadingComments, setLoadingComments] = useState(false);
   const [imageUri, setImageUri] = useState<any>(null);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
+  const [profilePicModalShown, setProfilePicModalShown] = useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const CommentInputAreaRef: React.RefObject<any> = useRef(null);
   const loading = useRef(false);
@@ -727,23 +728,21 @@ function ProfilePanel({
                                     justifyContent: 'flex-start'
                                   }}
                                 >
-                                  <UploadButton
-                                    onFileSelect={handlePicture}
-                                    accept="image/*"
-                                    icon="upload"
-                                    text={changePicLabel}
+                                  <Button
+                                    onClick={() => setProfilePicModalShown(true)}
                                     className={cx(
                                       actionButtonClass,
                                       actionButtonFlexLargeClass
                                     )}
                                     color="logoBlue"
                                     hoverColor="mediumBlue"
-                                    buttonProps={{
-                                      variant: 'solid',
-                                      tone: 'raised',
-                                      uppercase: false
-                                    }}
-                                  />
+                                    variant="solid"
+                                    tone="raised"
+                                    uppercase={false}
+                                  >
+                                    <Icon icon="camera" />
+                                    <span>{changePicLabel}</span>
+                                  </Button>
                                   <Button
                                     onClick={() => {
                                       if (banned?.posting) {
@@ -932,6 +931,21 @@ function ProfilePanel({
                             }}
                           />
                         )}
+                        {profilePicModalShown && (
+                          <ProfilePicModal
+                            currentPicUrl={
+                              profilePicUrl
+                                ? `${cloudFrontURL}${profilePicUrl}`
+                                : undefined
+                            }
+                            onHide={() => setProfilePicModalShown(false)}
+                            onSelectImage={(selectedImageUri) => {
+                              setProfilePicModalShown(false);
+                              setImageUri(selectedImageUri);
+                              setImageEditModalShown(true);
+                            }}
+                          />
+                        )}
                       </>
                     ) : (
                       <div
@@ -1022,18 +1036,6 @@ function ProfilePanel({
       });
     }
     setImageEditModalShown(false);
-  }
-
-  function handlePicture(file: File) {
-    const reader = new FileReader();
-    if (file.size / 1000 > MAX_PROFILE_PIC_SIZE) {
-      return setAlertModalShown(true);
-    }
-    reader.onload = (upload) => {
-      setImageEditModalShown(true);
-      setImageUri(upload.target?.result);
-    };
-    reader.readAsDataURL(file);
   }
 
   function handleReloadProfile() {

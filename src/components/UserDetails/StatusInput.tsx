@@ -31,10 +31,7 @@ export default function StatusInput({
   setColor: (color: string) => void;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(
-    () => doneRole.getColor() || Color.blue(),
-    [doneRole]
-  );
+  const doneColorKey = doneRole.colorKey || 'blue';
   const statusExceedsCharLimit = useMemo(
     () =>
       exceedsCharLimit({
@@ -146,8 +143,8 @@ export default function StatusInput({
               Cancel
             </Button>
             <Button
-              color={doneColor}
-              variant="soft"
+              color={doneColorKey}
+              variant="solid"
               tone="raised"
               disabled={
                 !!exceedsCharLimit({
