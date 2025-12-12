@@ -2070,29 +2070,6 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
-    async saveDailyQuestionDraft({ response }: { response: string }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/content/daily-question/draft`,
-          { response },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-    async loadDailyQuestionDraft() {
-      try {
-        const { data } = await request.get(
-          `${URL}/content/daily-question/draft`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
     async shareDailyQuestionResponse({
       responseId,
       responseText
@@ -2104,6 +2081,48 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/daily-question/share`,
           { responseId, responseText },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async shareDailyQuestionWithAI({
+      responseId,
+      questionId,
+      question,
+      target,
+      version,
+      responseText,
+      originalResponse,
+      grade,
+      feedback
+    }: {
+      responseId?: number;
+      questionId?: number | null;
+      question?: string;
+      target: 'zero' | 'ciel';
+      version: 'original' | 'refined' | 'both';
+      responseText?: string;
+      originalResponse?: string;
+      grade?: string;
+      feedback?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/share-ai`,
+          {
+            responseId,
+            questionId,
+            question,
+            target,
+            version,
+            responseText,
+            originalResponse,
+            grade,
+            feedback
+          },
           auth()
         );
         return data;

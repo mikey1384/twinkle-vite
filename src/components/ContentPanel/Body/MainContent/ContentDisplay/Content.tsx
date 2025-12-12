@@ -328,6 +328,21 @@ export default function Content({
             >
               {description || ''}
             </RichText>
+            {contentObj?.isRefined && (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  fontSize: '1.2rem',
+                  color: Color.darkerGray()
+                }}
+              >
+                <span style={{ color: Color.logoBlue() }}>✨</span>
+                <span style={{ fontStyle: 'italic' }}>AI-polished</span>
+              </div>
+            )}
           </div>
         );
       default:

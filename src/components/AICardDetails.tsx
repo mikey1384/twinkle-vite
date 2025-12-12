@@ -111,7 +111,7 @@ export default function AICardDetails({
               }
             `}
           >
-            {card.style}
+            {card.imagePath ? card.style : '???'}
           </div>
           {(engine === 'DALL-E 3' || engine === 'image-1') && (
             <div

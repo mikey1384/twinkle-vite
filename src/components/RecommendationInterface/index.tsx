@@ -90,12 +90,18 @@ export default function RecommendationInterface({
   }, [isRecommendedByUser, twinkleCoins]);
 
   const switchButtonShown = useMemo(() => {
+    const isPassContent =
+      contentType === 'pass' ||
+      contentType === 'missionPass' ||
+      contentType === 'achievementPass';
     return (
       !isRecommendedByUser &&
       isSupermod(level) &&
-      contentType !== 'pass' &&
+      !isPassContent &&
       contentType !== 'aiStory' &&
-      contentType !== 'xpChange'
+      contentType !== 'xpChange' &&
+      contentType !== 'dailyReflection' &&
+      contentType !== 'sharedTopic'
     );
   }, [isRecommendedByUser, level, contentType]);
 

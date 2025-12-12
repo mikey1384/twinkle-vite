@@ -54,6 +54,8 @@ export default function HeadingText({
       ? 'daily goals completion'
       : rootType === 'sharedTopic'
       ? 'shared prompt'
+      : rootType === 'dailyReflection'
+      ? 'daily reflection'
       : rootType;
   const isSubjectComment =
     contentType === 'comment' &&
@@ -100,14 +102,28 @@ export default function HeadingText({
                   {"'s "}
                 </>
               ) : null}
-              {contentLabel}:{' '}
-              <ContentLink
-                content={isSubjectComment ? targetObj?.subject : rootObj}
-                contentType={isSubjectComment ? 'subject' : rootType}
-                rootType={isPassType ? rootObj?.rootType : undefined}
-                theme={theme}
-                label=""
-              />{' '}
+              {rootType === 'dailyReflection' ? (
+                <>
+                  a{' '}
+                  <ContentLink
+                    content={rootObj}
+                    contentType={rootType}
+                    theme={theme}
+                    label="daily reflection"
+                  />
+                </>
+              ) : (
+                <>
+                  {contentLabel}:{' '}
+                  <ContentLink
+                    content={isSubjectComment ? targetObj?.subject : rootObj}
+                    contentType={isSubjectComment ? 'subject' : rootType}
+                    rootType={isPassType ? rootObj?.rootType : undefined}
+                    theme={theme}
+                    label=""
+                  />{' '}
+                </>
+              )}
             </>
           ) : null}
         </>
@@ -239,8 +255,13 @@ export default function HeadingText({
     case 'dailyReflection':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
-          daily reflection
+          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a{' '}
+          <ContentLink
+            content={contentObj}
+            contentType={contentType}
+            theme={theme}
+            label="daily reflection"
+          />
         </>
       );
     default:

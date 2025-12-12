@@ -30,7 +30,12 @@ const contentLabels: Record<string, string> = {
   subjects: 'Subject',
   videos: 'Video',
   'ai-cards': 'AI Card',
-  'ai-stories': 'AI Story'
+  'ai-stories': 'AI Story',
+  'daily-reflections': 'Daily Reflection',
+  'mission-passes': 'Mission Pass',
+  'achievement-unlocks': 'Achievement',
+  'daily-rewards': 'Daily Goal',
+  'shared-prompts': 'Shared Prompt'
 };
 
 export default function MainNavs({
@@ -229,6 +234,36 @@ export default function MainNavs({
       },
       pathname
     );
+    const dailyReflectionPageMatch = matchPath(
+      {
+        path: '/daily-reflections/:id'
+      },
+      pathname
+    );
+    const missionPassPageMatch = matchPath(
+      {
+        path: '/mission-passes/:id'
+      },
+      pathname
+    );
+    const achievementUnlockPageMatch = matchPath(
+      {
+        path: '/achievement-unlocks/:id'
+      },
+      pathname
+    );
+    const dailyRewardPageMatch = matchPath(
+      {
+        path: '/daily-rewards/:id'
+      },
+      pathname
+    );
+    const sharedPromptPageMatch = matchPath(
+      {
+        path: '/shared-prompts/:id'
+      },
+      pathname
+    );
 
     return (
       !!cardPageMatch ||
@@ -239,7 +274,12 @@ export default function MainNavs({
       !!videoQuestionPageMatch ||
       !!linkPageMatch ||
       !!commentPageMatch ||
-      !!missionPageMatch
+      !!missionPageMatch ||
+      !!dailyReflectionPageMatch ||
+      !!missionPassPageMatch ||
+      !!achievementUnlockPageMatch ||
+      !!dailyRewardPageMatch ||
+      !!sharedPromptPageMatch
     );
   }, [pathname]);
 
@@ -311,6 +351,16 @@ export default function MainNavs({
         ? 'bolt'
         : contentNav === 'missions'
         ? 'clipboard-check'
+        : contentNav === 'achievement-unlocks'
+        ? 'trophy'
+        : contentNav === 'mission-passes'
+        ? 'check-circle'
+        : contentNav === 'daily-rewards'
+        ? 'check-circle'
+        : contentNav === 'daily-reflections'
+        ? 'pencil-alt'
+        : contentNav === 'shared-prompts'
+        ? 'share'
         : 'comment-alt',
     [contentNav]
   );

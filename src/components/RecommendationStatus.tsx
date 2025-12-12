@@ -78,6 +78,7 @@ export default function RecommendationStatus({
     return (
       contentType !== 'pass' &&
       contentType !== 'aiStory' &&
+      contentType !== 'dailyReflection' &&
       ((isSupermod(myRecommendation?.level) &&
         !myRecommendation?.rewardDisabled) ||
         (isSupermod(mostRecentRewardEnabledRecommenderOtherThanMe?.level) &&

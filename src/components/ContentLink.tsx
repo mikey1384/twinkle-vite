@@ -58,6 +58,8 @@ export default function ContentLink({
       result = 'daily-rewards';
     } else if (contentType === 'sharedTopic') {
       result = 'shared-prompts';
+    } else if (contentType === 'dailyReflection') {
+      result = 'daily-reflections';
     } else {
       result = contentType + 's';
     }

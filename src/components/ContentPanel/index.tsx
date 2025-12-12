@@ -11,6 +11,7 @@ import Profile from './Profile';
 import TargetPassContent from './TargetPassContent';
 import TargetDailyGoalsContent from './TargetDailyGoalsContent';
 import TargetSharedTopicContent from './TargetSharedTopicContent';
+import TargetDailyReflectionContent from './TargetDailyReflectionContent';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
@@ -523,6 +524,18 @@ export default function ContentPanel({
                   rootObj?.id && (
                     <TargetSharedTopicContent
                       sharedTopicContent={rootObj}
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                    />
+                  )}
+                {contentType === 'comment' &&
+                  appliedRootType === 'dailyReflection' &&
+                  rootObj?.id && (
+                    <TargetDailyReflectionContent
+                      dailyReflectionContent={rootObj}
                       style={{
                         position: 'relative',
                         zIndex: 1,

@@ -18,7 +18,8 @@ import { socket } from '~/constants/sockets/api';
 
 type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
 
-const INACTIVITY_LIMIT = 7;
+const INACTIVITY_LIMIT = 10;
+const MIN_RESPONSE_LENGTH = 50;
 
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
@@ -54,6 +55,10 @@ export default function DailyQuestionPanel({
     feedback: string;
     responseId: number;
     isShared: boolean;
+    sharedWithZero: boolean;
+    sharedWithCiel: boolean;
+    originalResponse: string;
+    sharedResponse: string | null;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,14 +103,20 @@ export default function DailyQuestionPanel({
       setOriginalQuestion(data.question);
 
       if (data.hasResponded && data.response) {
+        const storedResponseText =
+          data.response.sharedResponse || data.response.response || '';
         setGradingResult({
           grade: data.response.grade,
           xpAwarded: data.response.xpAwarded,
           feedback: data.response.feedback,
           responseId: data.response.id,
-          isShared: data.response.isShared
+          isShared: data.response.isShared,
+          sharedWithZero: !!data.response.sharedWithZero,
+          sharedWithCiel: !!data.response.sharedWithCiel,
+          originalResponse: data.response.response || '',
+          sharedResponse: data.response.sharedResponse || null
         });
-        setResponse(data.response.response || '');
+        setResponse(storedResponseText);
         setScreen('result');
       } else {
         setScreen('start');
@@ -197,9 +208,13 @@ export default function DailyQuestionPanel({
           feedback: result.isThoughtful
             ? result.feedback || ''
             : result.rejectionReason ||
-              'Please try again tomorrow with more effort.',
+              'Nice try — you can start over and try again right away.',
           responseId: result.responseId || 0,
-          isShared: false
+          isShared: false,
+          sharedWithZero: false,
+          sharedWithCiel: false,
+          originalResponse: response.trim(),
+          sharedResponse: null
         });
         setScreen('result');
       }, 500);
@@ -221,18 +236,6 @@ export default function DailyQuestionPanel({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, userId]);
-
-  useEffect(() => {
-    return () => {
-      if (
-        screen === 'writing' &&
-        hasStartedRef.current &&
-        !isSubmittingRef.current
-      ) {
-        handleSubmitRef.current();
-      }
-    };
-  }, [screen]);
 
   const handleStart = useCallback(() => {
     hasStartedRef.current = true;
@@ -276,8 +279,6 @@ export default function DailyQuestionPanel({
         e.preventDefault();
         return;
       }
-
-      lastActivityRef.current = Date.now();
     },
     []
   );
@@ -322,6 +323,30 @@ export default function DailyQuestionPanel({
       .split(/\s+/)
       .filter((w) => w.length > 0).length;
   }, [response]);
+
+  const trimmedResponseLength = useMemo(
+    () => response.trim().length,
+    [response]
+  );
+  const minLengthMet = trimmedResponseLength >= MIN_RESPONSE_LENGTH;
+  const remainingChars = Math.max(
+    0,
+    MIN_RESPONSE_LENGTH - trimmedResponseLength
+  );
+  const minEffortProgress = useMemo(
+    () => Math.min(100 * (trimmedResponseLength / MIN_RESPONSE_LENGTH), 100),
+    [trimmedResponseLength]
+  );
+  const minEffortDisplayLabel = useMemo(() => {
+    if (trimmedResponseLength < MIN_RESPONSE_LENGTH) {
+      return `${Math.floor(minEffortProgress)}%`;
+    }
+    return <Icon icon="check" />;
+  }, [minEffortProgress, trimmedResponseLength]);
+  const minEffortColor = useMemo(
+    () => (minLengthMet ? Color.green() : Color.rose()),
+    [minLengthMet]
+  );
 
   const timeWarning = inactivityTimer <= 3 && inactivityTimer > 0;
 
@@ -397,8 +422,13 @@ export default function DailyQuestionPanel({
             </h4>
             <ul className={instructionListCls}>
               <li>
-                <strong>Keep typing</strong> - if you stop for more than 7
+                <strong>Keep typing</strong> - if you stop for more than 10
                 seconds, your response auto-submits
+              </li>
+              <li>
+                <strong>Minimum length</strong> - write at least{' '}
+                {MIN_RESPONSE_LENGTH} characters before the timer runs out, or
+                it's an automatic fail
               </li>
               <li>
                 <strong>No going back</strong> - backspace and delete are
@@ -408,8 +438,8 @@ export default function DailyQuestionPanel({
                 <strong>No copy-paste</strong> - write in your own words
               </li>
               <li>
-                <strong>Closing this window = submit</strong> - once you start,
-                you're committed
+                <strong>Closing this window cancels</strong> - your response
+                won't be saved, so you'll need to start over
               </li>
             </ul>
             <p
@@ -478,8 +508,22 @@ export default function DailyQuestionPanel({
           <div className={statsRowCls}>
             <span style={{ color: Color.lightGray() }}>{wordCount} words</span>
             <span style={{ color: Color.lightGray(), fontSize: '1.1rem' }}>
-              No backspace allowed - keep going!
+              {minLengthMet ? 'Minimum met' : `${remainingChars} chars to go`}
             </span>
+          </div>
+          <ProgressBar
+            text={minEffortDisplayLabel}
+            color={minEffortColor}
+            progress={minEffortProgress}
+          />
+          <div
+            style={{
+              color: Color.lightGray(),
+              fontSize: '1.1rem',
+              marginTop: '0.3rem'
+            }}
+          >
+            No backspace allowed - keep going!
           </div>
         </div>
       </ErrorBoundary>
@@ -503,11 +547,16 @@ export default function DailyQuestionPanel({
         <GradingResult
           question={question}
           response={response}
+          questionId={questionId}
           grade={gradingResult.grade}
           xpAwarded={gradingResult.xpAwarded}
           feedback={gradingResult.feedback}
           responseId={gradingResult.responseId}
           isShared={gradingResult.isShared}
+          sharedWithZero={gradingResult.sharedWithZero}
+          sharedWithCiel={gradingResult.sharedWithCiel}
+          originalResponse={gradingResult.originalResponse}
+          initialRefinedResponse={gradingResult.sharedResponse}
           onClose={onClose}
         />
       </ErrorBoundary>

@@ -122,6 +122,9 @@ export const charLimit: {
     title: 300,
     description: 20000
   },
+  dailyReflection: {
+    description: 10000
+  },
   rewardComment: 5000,
   statusMsg: 1000,
   url: {

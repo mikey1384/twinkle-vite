@@ -10,6 +10,7 @@ import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth, desktopMinWidth } from '~/constants/css';
+import { ADMIN_USER_ID } from '~/constants/defaultValues';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineXpButtonDisabled,
@@ -182,6 +183,10 @@ export default function BottomInterface({
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
     if (userId === uploader.id) return true;
+    // dailyReflection can only be deleted by the uploader or admin
+    if (contentType === 'dailyReflection') {
+      return userId === ADMIN_USER_ID;
+    }
     return (canDelete || canEdit) && userLevel > uploader.level;
   }, [
     contentType,
@@ -218,6 +223,7 @@ export default function BottomInterface({
 
   const userCanEditThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
+    if (contentType === 'dailyReflection') return false;
     if (userId === uploader.id || (canEdit && userLevel > uploader.level)) {
       return (
         !isCommentForSecretSubject ||
@@ -392,7 +398,8 @@ export default function BottomInterface({
               contentType !== 'aiStory' &&
               contentType !== 'pass' &&
               contentType !== 'xpChange' &&
-              contentType !== 'sharedTopic' && (
+              contentType !== 'sharedTopic' &&
+              contentType !== 'dailyReflection' && (
                 <RewardButton
                   labelClassName="reward-button-label"
                   hideLabel={deviceIsTablet}
@@ -544,6 +551,8 @@ export default function BottomInterface({
         ? 'link'
         : contentType === 'sharedTopic'
         ? 'shared-prompt'
+        : contentType === 'dailyReflection'
+        ? 'daily-reflection'
         : contentType
     }s/${contentId}`;
     try {

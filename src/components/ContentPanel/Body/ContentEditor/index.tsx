@@ -18,7 +18,8 @@ import {
   isValidUrl,
   isValidYoutubeUrl,
   replaceFakeAtSymbol
-} from '~/helpers/stringHelpers';import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 
 const cancelLabel = 'Cancel';
