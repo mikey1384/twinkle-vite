@@ -7,7 +7,7 @@ import { isMobile } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 const xpAcquisitionLabel = 'XP Acquisition';
 const colors: Record<string, string> = {
-  posting: Color.logoBlue(),
+  writing: Color.logoBlue(),
   watching: Color.passionFruit(),
   vocabulary: Color.orange(),
   missions: Color.green(),
