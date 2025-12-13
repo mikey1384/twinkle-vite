@@ -1236,15 +1236,26 @@ export default function Main({
               });
             }
           } else {
-            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            navigate(
-              `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
-              {
-                replace: true
-              }
-            );
-            delete loadingPromises[requestKey];
-            return;
+            // Check if this is an AI DM channel before forcing navigation to general
+            const existingChannel = channelsObj[channelId];
+            const isAIDM =
+              existingChannel?.twoPeople &&
+              existingChannel?.members?.some(
+                (m: { id: number }) =>
+                  m.id === ZERO_TWINKLE_ID || m.id === CIEL_TWINKLE_ID
+              );
+            if (!isAIDM) {
+              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+              navigate(
+                `/chat${userIdRef.current ? `/${GENERAL_CHAT_PATH_ID}` : ''}`,
+                {
+                  replace: true
+                }
+              );
+              delete loadingPromises[requestKey];
+              return;
+            }
+            // For AI DM channels, don't redirect - they should always be accessible
           }
         }
 

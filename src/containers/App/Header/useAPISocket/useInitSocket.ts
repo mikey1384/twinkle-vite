@@ -3,7 +3,9 @@ import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
   GENERAL_CHAT_ID,
-  GENERAL_CHAT_PATH_ID
+  GENERAL_CHAT_PATH_ID,
+  ZERO_TWINKLE_ID,
+  CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
 import { logForAdmin, parseChannelPath } from '~/helpers';
 import { getStoredItem } from '~/helpers/userDataHelpers';
@@ -37,6 +39,7 @@ export default function useInitSocket({
 
   const category = useHomeContext((v) => v.state.category);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
+  const channelsObj = useChatContext((v) => v.state.channelsObj);
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
@@ -104,12 +107,16 @@ export default function useInitSocket({
   const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
   const checkFeedsRerunRequestedRef = useRef(false);
   const categoryRef = useRef(category);
+  const channelsObjRef = useRef(channelsObj);
   const feedsRef = useRef(feeds);
   const subFilterRef = useRef(subFilter);
 
   useEffect(() => {
     categoryRef.current = category;
   }, [category]);
+  useEffect(() => {
+    channelsObjRef.current = channelsObj;
+  }, [channelsObj]);
   useEffect(() => {
     feedsRef.current = feeds;
   }, [feeds]);
@@ -446,13 +453,24 @@ export default function useInitSocket({
                 });
               }
             } else {
-              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-              if (usingChatRef.current) {
-                navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
-                  replace: true
-                });
+              // Check if this is an AI DM channel before forcing navigation to general
+              const channel = channelsObjRef.current[channelId];
+              const isAIDM =
+                channel?.twoPeople &&
+                channel?.members?.some(
+                  (m: { id: number }) =>
+                    m.id === ZERO_TWINKLE_ID || m.id === CIEL_TWINKLE_ID
+                );
+              if (!isAIDM) {
+                onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+                if (usingChatRef.current) {
+                  navigate(`/chat/${GENERAL_CHAT_PATH_ID}`, {
+                    replace: true
+                  });
+                }
+                return;
               }
-              return;
+              // For AI DM channels, continue loading - don't redirect
             }
           }
 
@@ -520,10 +538,21 @@ export default function useInitSocket({
               });
             }
           } else {
-            onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-            if (usingChatRef.current) {
-              navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+            // Check if this is an AI DM channel before forcing navigation to general
+            const channel = channelsObjRef.current[currentChannelId];
+            const isAIDM =
+              channel?.twoPeople &&
+              channel?.members?.some(
+                (m: { id: number }) =>
+                  m.id === ZERO_TWINKLE_ID || m.id === CIEL_TWINKLE_ID
+              );
+            if (!isAIDM) {
+              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
+              if (usingChatRef.current) {
+                navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
+              }
             }
+            // For AI DM channels, don't redirect
           }
         }
       } catch (error) {
