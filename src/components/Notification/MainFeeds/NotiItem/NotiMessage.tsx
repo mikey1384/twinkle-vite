@@ -123,6 +123,10 @@ function NotiMessage({
         ? 'achievement'
         : targetObj.contentType === 'missionPass'
         ? 'mission'
+        : targetObj.contentType === 'dailyReflection'
+        ? 'reflection'
+        : targetObj.contentType === 'sharedTopic'
+        ? 'shared prompt'
         : targetObj.contentType
     } ${
       !stringIsEmpty(displayedContent)
@@ -418,6 +422,8 @@ function NotiMessage({
             ? 'daily goals completion'
             : threadContentType === 'sharedTopic'
             ? 'shared prompt'
+            : threadContentType === 'dailyReflection'
+            ? 'reflection'
             : threadContentType;
         const threadLabelSuffix =
           threadContentType === 'subject'
@@ -542,6 +548,8 @@ function NotiMessage({
                 ? 'daily goals completion'
                 : targetObj.contentType === 'sharedTopic'
                 ? 'shared prompt'
+                : targetObj.contentType === 'dailyReflection'
+                ? 'reflection'
                 : targetObj.contentType
             }${
               (!isReply && targetObj.contentType === 'user') ||
