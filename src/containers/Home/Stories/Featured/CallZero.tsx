@@ -13,7 +13,7 @@ import Icon from '~/components/Icon';
 import { checkMicrophoneAccess } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
-import Countdown from 'react-countdown';
+import NextDayCountdown from '~/components/NextDayCountdown';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 interface RGBA {
@@ -207,8 +207,8 @@ export default function CallZero({
     (v) => v.actions.onUpdateTodayStats
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const { nextDayTimeStamp, timeDifference } = useNotiContext(
-    (v) => v.state.todayStats
+  const nextDayTimeStamp = useNotiContext(
+    (v) => v.state.todayStats.nextDayTimeStamp
   );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
   const actionRole = useRoleColor('action', { fallback: 'green' });
@@ -445,20 +445,15 @@ export default function CallZero({
               >
                 Time until reset:
               </p>
-              <Countdown
-                key={nextDayTimeStamp}
-                className={css`
+              <NextDayCountdown
+                inline
+                nextDayTimeStamp={nextDayTimeStamp}
+                onComplete={handleCountdownComplete}
+                timerClassName={css`
                   font-size: 1.3rem;
                   color: ${Color.darkBlue()};
                   font-weight: 600;
                 `}
-                date={nextDayTimeStamp}
-                now={() => {
-                  const now = Date.now() + timeDifference;
-                  return now;
-                }}
-                daysInHours={true}
-                onComplete={handleCountdownComplete}
               />
             </div>
           </>

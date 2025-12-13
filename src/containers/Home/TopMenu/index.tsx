@@ -156,6 +156,8 @@ export default function TopMenu({
     todayStats?.dailyHasBonus
   ]);
   const achievedDailyGoals = todayStats.achievedDailyGoals;
+  const dailyQuestionCompleted = !!todayStats?.dailyQuestionCompleted;
+  const dailyQuestionShiny = !dailyQuestionCompleted;
   const allGoalsAchieved = useMemo(
     () => achievedDailyGoals.length === 3,
     [achievedDailyGoals.length]
@@ -292,10 +294,11 @@ export default function TopMenu({
                 icon="lightbulb"
                 variant="purple"
                 size="md"
-                shiny={true}
+                shiny={dailyQuestionShiny}
                 onClick={handleDailyQuestionClick}
               >
                 {allGoalsAchieved ? 'Q' : "Today's Q"}
+                {dailyQuestionCompleted ? ' ✓' : ''}
               </GameCTAButton>
             </ErrorBoundary>
             {allGoalsAchieved && (

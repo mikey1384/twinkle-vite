@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import FilterBar from '~/components/FilterBar';
+import NextDayCountdown from '~/components/NextDayCountdown';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useHomeContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
+import { socket } from '~/constants/sockets/api';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
 
@@ -75,6 +79,7 @@ export default function GradingResult({
     (v) => v.requestHelpers.refineDailyQuestionResponse
   );
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
+  const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
 
   const [sharing, setSharing] = useState(false);
   const [isShared, setIsShared] = useState(initialIsShared);
@@ -83,6 +88,9 @@ export default function GradingResult({
   const [sharingWithZero, setSharingWithZero] = useState(false);
   const [sharingWithCiel, setSharingWithCiel] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [preparingAIVersionTarget, setPreparingAIVersionTarget] = useState<
+    'zero' | 'ciel' | null
+  >(null);
   const [refinedResponse, setRefinedResponse] = useState<string | null>(
     initialRefinedResponse || null
   );
@@ -191,11 +199,12 @@ export default function GradingResult({
   const gradeColor = gradeColors[grade] || Color.darkerGray();
   const gradeLabel = gradeLabels[grade] || '';
   const gradeSymbol = gradeSymbols[grade] || '?';
-  const canShareToFeed = grade !== 'Fail' && !isShared;
+  const canShareToFeed = grade !== 'Fail';
+  const canShareToFeedNow = canShareToFeed && !isShared;
   const hasResponseText = !!(originalResponse || response);
   const canShareToAI = hasResponseText;
-  const canShareWithZero = canShareToAI && (!responseId || !sharedWithZero);
-  const canShareWithCiel = canShareToAI && (!responseId || !sharedWithCiel);
+  const canShareWithZero = canShareToAI && !sharedWithZero;
+  const canShareWithCiel = canShareToAI && !sharedWithCiel;
 
   return (
     <div
@@ -330,68 +339,27 @@ export default function GradingResult({
           >
             Choose version to share:
           </h4>
-          <div
-            className={css`
-              display: flex;
-              gap: 0.5rem;
-              margin-bottom: 1rem;
-            `}
+          <FilterBar
+            style={{
+              fontSize: '1.3rem',
+              height: '3.8rem'
+            }}
           >
-            <button
+            <nav
+              className={selectedVersion === 'original' ? 'active' : ''}
               onClick={() => setSelectedVersion('original')}
-              className={css`
-                flex: 1;
-                padding: 0.75rem;
-                border: 2px solid
-                  ${selectedVersion === 'original'
-                    ? Color.logoBlue()
-                    : Color.borderGray()};
-                border-radius: 8px;
-                background: ${selectedVersion === 'original'
-                  ? Color.logoBlue() + '10'
-                  : 'white'};
-                color: ${selectedVersion === 'original'
-                  ? Color.logoBlue()
-                  : Color.darkerGray()};
-                font-weight: ${selectedVersion === 'original' ? 600 : 400};
-                cursor: pointer;
-                transition: all 0.2s;
-                &:hover {
-                  border-color: ${Color.logoBlue()};
-                }
-              `}
             >
               <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
               My Original
-            </button>
-            <button
+            </nav>
+            <nav
+              className={selectedVersion === 'refined' ? 'active' : ''}
               onClick={() => setSelectedVersion('refined')}
-              className={css`
-                flex: 1;
-                padding: 0.75rem;
-                border: 2px solid
-                  ${selectedVersion === 'refined'
-                    ? Color.logoBlue()
-                    : Color.borderGray()};
-                border-radius: 8px;
-                background: ${selectedVersion === 'refined'
-                  ? Color.logoBlue() + '10'
-                  : 'white'};
-                color: ${selectedVersion === 'refined'
-                  ? Color.logoBlue()
-                  : Color.darkerGray()};
-                font-weight: ${selectedVersion === 'refined' ? 600 : 400};
-                cursor: pointer;
-                transition: all 0.2s;
-                &:hover {
-                  border-color: ${Color.logoBlue()};
-                }
-              `}
             >
               <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
               AI Polished
-            </button>
-          </div>
+            </nav>
+          </FilterBar>
 
           {/* Preview of selected version */}
           <div
@@ -445,99 +413,37 @@ export default function GradingResult({
             Choose version to share with{' '}
             {aiShareTarget === 'ciel' ? 'Ciel' : 'Zero'}:
           </h4>
-          <div
-            className={css`
-              display: flex;
-              gap: 0.5rem;
-              margin-bottom: 1rem;
-              flex-wrap: wrap;
-            `}
+          <FilterBar
+            style={{
+              fontSize: '1.3rem',
+              height: '3.8rem'
+            }}
           >
-            <button
+            <nav
+              className={aiSelectedVersion === 'original' ? 'active' : ''}
               onClick={() => setAiSelectedVersion('original')}
-              className={css`
-                flex: 1;
-                min-width: 9rem;
-                padding: 0.75rem;
-                border: 2px solid
-                  ${aiSelectedVersion === 'original'
-                    ? Color.logoBlue()
-                    : Color.borderGray()};
-                border-radius: 8px;
-                background: ${aiSelectedVersion === 'original'
-                  ? Color.logoBlue() + '10'
-                  : 'white'};
-                color: ${aiSelectedVersion === 'original'
-                  ? Color.logoBlue()
-                  : Color.darkerGray()};
-                font-weight: ${aiSelectedVersion === 'original' ? 600 : 400};
-                cursor: pointer;
-                transition: all 0.2s;
-                &:hover {
-                  border-color: ${Color.logoBlue()};
-                }
-              `}
+              style={{ minWidth: '9rem' }}
             >
               <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
               Original (raw)
-            </button>
-            <button
+            </nav>
+            <nav
+              className={aiSelectedVersion === 'refined' ? 'active' : ''}
               onClick={() => setAiSelectedVersion('refined')}
-              className={css`
-                flex: 1;
-                min-width: 9rem;
-                padding: 0.75rem;
-                border: 2px solid
-                  ${aiSelectedVersion === 'refined'
-                    ? Color.logoBlue()
-                    : Color.borderGray()};
-                border-radius: 8px;
-                background: ${aiSelectedVersion === 'refined'
-                  ? Color.logoBlue() + '10'
-                  : 'white'};
-                color: ${aiSelectedVersion === 'refined'
-                  ? Color.logoBlue()
-                  : Color.darkerGray()};
-                font-weight: ${aiSelectedVersion === 'refined' ? 600 : 400};
-                cursor: pointer;
-                transition: all 0.2s;
-                &:hover {
-                  border-color: ${Color.logoBlue()};
-                }
-              `}
+              style={{ minWidth: '9rem' }}
             >
               <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
               AI‑polished
-            </button>
-            <button
+            </nav>
+            <nav
+              className={aiSelectedVersion === 'both' ? 'active' : ''}
               onClick={() => setAiSelectedVersion('both')}
-              className={css`
-                flex: 1;
-                min-width: 9rem;
-                padding: 0.75rem;
-                border: 2px solid
-                  ${aiSelectedVersion === 'both'
-                    ? Color.logoBlue()
-                    : Color.borderGray()};
-                border-radius: 8px;
-                background: ${aiSelectedVersion === 'both'
-                  ? Color.logoBlue() + '10'
-                  : 'white'};
-                color: ${aiSelectedVersion === 'both'
-                  ? Color.logoBlue()
-                  : Color.darkerGray()};
-                font-weight: ${aiSelectedVersion === 'both' ? 600 : 400};
-                cursor: pointer;
-                transition: all 0.2s;
-                &:hover {
-                  border-color: ${Color.logoBlue()};
-                }
-              `}
+              style={{ minWidth: '9rem' }}
             >
               <Icon icon="copy" style={{ marginRight: '0.5rem' }} />
               Both
-            </button>
-          </div>
+            </nav>
+          </FilterBar>
 
           <div
             className={css`
@@ -681,10 +587,12 @@ export default function GradingResult({
                   color="logoBlue"
                   onClick={handleRefine}
                   disabled={refining}
-                  loading={refining}
+                  loading={refining && !preparingAIVersionTarget}
                 >
                   <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
-                  {refining ? 'Polishing...' : 'See AI-polished version'}
+                  {refining && !preparingAIVersionTarget
+                    ? 'Polishing...'
+                    : 'See AI-polished version'}
                 </Button>
               </div>
             )}
@@ -752,93 +660,106 @@ export default function GradingResult({
             variant="solid"
             color="logoBlue"
             onClick={handleShareClick}
-            disabled={refining}
-            loading={refining}
+            disabled={!canShareToFeedNow || refining}
+            loading={canShareToFeedNow && refining && !preparingAIVersionTarget}
           >
             <Icon icon="share" style={{ marginRight: '0.5rem' }} />
-            {refining ? 'Preparing...' : 'Share to Feed'}
+            {!canShareToFeedNow ? (
+              <>
+                <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                Shared to Feed
+              </>
+            ) : refining && !preparingAIVersionTarget ? (
+              'Preparing...'
+            ) : (
+              'Share to Feed'
+            )}
           </Button>
         )}
-        {!showVersionSelector && !showAIVersionSelector && (
+        {!showVersionSelector && !showAIVersionSelector && canShareToAI && (
           <>
-            {canShareWithZero ? (
-              <Button
-                color="logoBlue"
-                variant="solid"
-                tone="raised"
-                onClick={() => handleShareWithAI('zero')}
-                disabled={sharingWithCiel || sharingWithZero}
-                loading={sharingWithZero}
-              >
-                <img
-                  src={zero}
-                  alt="Zero"
-                  className={css`
-                    width: 2rem;
-                    height: 2rem;
-                    border-radius: 50%;
-                    margin-right: 0.5rem;
-                    object-fit: contain;
-                    background: #fff;
-                  `}
-                />
-                {sharingWithZero ? 'Sharing with Zero...' : 'Share with Zero'}
-              </Button>
-            ) : (
-              sharedWithZero && (
-                <span
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    color: ${Color.logoBlue()};
-                    font-size: 1.2rem;
-                    font-weight: 600;
-                  `}
-                >
+            <Button
+              color="logoBlue"
+              variant="solid"
+              tone="raised"
+              onClick={() => handleShareWithAI('zero')}
+              disabled={
+                !canShareWithZero ||
+                sharingWithCiel ||
+                sharingWithZero ||
+                preparingAIVersionTarget !== null
+              }
+              loading={
+                sharingWithZero ||
+                (preparingAIVersionTarget === 'zero' &&
+                  refining &&
+                  !refinedResponse)
+              }
+            >
+              <img
+                src={zero}
+                alt="Zero"
+                className={css`
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 50%;
+                  margin-right: 0.5rem;
+                  object-fit: contain;
+                  background: #fff;
+                `}
+              />
+              {!canShareWithZero ? (
+                <>
                   <Icon icon="check" style={{ marginRight: '0.5rem' }} />
                   Shared with Zero
-                </span>
-              )
-            )}
-            {canShareWithCiel ? (
-              <Button
-                color="purple"
-                variant="solid"
-                tone="raised"
-                onClick={() => handleShareWithAI('ciel')}
-                disabled={sharingWithCiel || sharingWithZero}
-                loading={sharingWithCiel}
-              >
-                <img
-                  src={ciel}
-                  alt="Ciel"
-                  className={css`
-                    width: 2rem;
-                    height: 2rem;
-                    border-radius: 50%;
-                    margin-right: 0.5rem;
-                    object-fit: contain;
-                    background: #fff;
-                  `}
-                />
-                {sharingWithCiel ? 'Sharing with Ciel...' : 'Share with Ciel'}
-              </Button>
-            ) : (
-              sharedWithCiel && (
-                <span
-                  className={css`
-                    display: flex;
-                    align-items: center;
-                    color: ${Color.purple()};
-                    font-size: 1.2rem;
-                    font-weight: 600;
-                  `}
-                >
+                </>
+              ) : sharingWithZero ? (
+                'Sharing with Zero...'
+              ) : (
+                'Share with Zero'
+              )}
+            </Button>
+            <Button
+              color="purple"
+              variant="solid"
+              tone="raised"
+              onClick={() => handleShareWithAI('ciel')}
+              disabled={
+                !canShareWithCiel ||
+                sharingWithCiel ||
+                sharingWithZero ||
+                preparingAIVersionTarget !== null
+              }
+              loading={
+                sharingWithCiel ||
+                (preparingAIVersionTarget === 'ciel' &&
+                  refining &&
+                  !refinedResponse)
+              }
+            >
+              <img
+                src={ciel}
+                alt="Ciel"
+                className={css`
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 50%;
+                  margin-right: 0.5rem;
+                  object-fit: contain;
+                  background: #fff;
+                `}
+              />
+              {!canShareWithCiel ? (
+                <>
                   <Icon icon="check" style={{ marginRight: '0.5rem' }} />
                   Shared with Ciel
-                </span>
-              )
-            )}
+                </>
+              ) : sharingWithCiel ? (
+                'Sharing with Ciel...'
+              ) : (
+                'Share with Ciel'
+              )}
+            </Button>
           </>
         )}
         {showVersionSelector && (
@@ -886,26 +807,45 @@ export default function GradingResult({
             </Button>
           </>
         )}
-        {!!isShared && (
-          <span
-            className={css`
-              display: flex;
-              align-items: center;
-              color: ${Color.green()};
-              font-size: 1.3rem;
-            `}
-          >
-            <Icon icon="check" style={{ marginRight: '0.5rem' }} />
-            Shared to Feed
-          </span>
-        )}
-        {!showVersionSelector && !showAIVersionSelector && (
-          <Button variant="solid" color="green" onClick={onClose}>
+      </div>
+
+      <NextDayCountdown
+        label="Next Daily Reflection"
+        className={css`
+          margin-top: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          color: ${Color.darkerGray()};
+          font-size: 1.3rem;
+        `}
+        labelClassName={css`
+          font-weight: 700;
+          margin-bottom: 0.3rem;
+          color: ${Color.black()};
+        `}
+        timerClassName={css`
+          font-size: 1.4rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          color: ${Color.logoBlue()};
+        `}
+      />
+
+      {/* Done button - below countdown */}
+      {!showVersionSelector && !showAIVersionSelector && (
+        <div
+          className={css`
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+          `}
+        >
+          <Button variant="solid" color={doneColor} onClick={onClose}>
             Done
           </Button>
-        )}
-      </div>
-      <div style={{ minHeight: '3rem', flexShrink: 0 }} />
+        </div>
+      )}
     </div>
   );
 
@@ -915,8 +855,10 @@ export default function GradingResult({
     setShareError(null);
 
     let refinedTextForOpen = refinedResponse;
-    if (!refinedTextForOpen && responseId) {
+    const needsRefineForAI = !refinedTextForOpen && responseId > 0;
+    if (needsRefineForAI) {
       try {
+        setPreparingAIVersionTarget(target);
         setRefining(true);
         const result = await refineDailyQuestionResponse({ responseId });
         if (result.error) {
@@ -931,6 +873,7 @@ export default function GradingResult({
         return;
       } finally {
         setRefining(false);
+        setPreparingAIVersionTarget(null);
       }
     }
 
@@ -966,6 +909,10 @@ export default function GradingResult({
       if (result.error) {
         setShareError(result.error);
         return;
+      }
+
+      if (result.channelId) {
+        socket.emit('join_chat_group', result.channelId);
       }
 
       if (aiShareTarget === 'zero') setSharedWithZero(true);

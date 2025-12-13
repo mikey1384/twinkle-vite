@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Countdown from 'react-countdown';
+import NextDayCountdown from '~/components/NextDayCountdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Marble from '../Marble';import TodayResult from './TodayResult';
 import {
@@ -479,15 +479,9 @@ export default function StartScreen({
                 nextDayTimeStamp ? (
                   <span>
                     Next game in{' '}
-                    <Countdown
-                      date={new Date(nextDayTimeStamp)}
-                      renderer={({ hours, minutes, seconds }) => (
-                        <span>
-                          {String(hours).padStart(2, '0')}:
-                          {String(minutes).padStart(2, '0')}:
-                          {String(seconds).padStart(2, '0')}
-                        </span>
-                      )}
+                    <NextDayCountdown
+                      inline
+                      nextDayTimeStamp={nextDayTimeStamp}
                     />
                   </span>
                 ) : (

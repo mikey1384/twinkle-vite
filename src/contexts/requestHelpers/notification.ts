@@ -36,31 +36,33 @@ export default function notificationRequestHelpers({
     async fetchTodayStats() {
       try {
         const {
-          data: {
-            achievedDailyGoals,
-            aiCallDuration,
-            dailyHasBonus,
-            dailyBonusAttempted,
-            dailyRewardResultViewed,
-            xpEarned,
-            coinsEarned,
-            nextDayTimeStamp,
-            nextMission,
-            standardTimeStamp
+	          data: {
+	            achievedDailyGoals,
+	            aiCallDuration,
+	            dailyHasBonus,
+	            dailyBonusAttempted,
+	            dailyRewardResultViewed,
+	            dailyQuestionCompleted,
+	            xpEarned,
+	            coinsEarned,
+	            nextDayTimeStamp,
+	            nextMission,
+	            standardTimeStamp
           }
         } = await request.get(`${URL}/notification/today`, auth());
         return {
           achievedDailyGoals,
           aiCallDuration,
-          dailyHasBonus,
-          dailyBonusAttempted,
-          dailyRewardResultViewed,
-          xpEarned,
-          coinsEarned,
-          nextDayTimeStamp,
-          nextMission,
-          standardTimeStamp
-        };
+	          dailyHasBonus,
+	          dailyBonusAttempted,
+	          dailyRewardResultViewed,
+	          dailyQuestionCompleted,
+	          xpEarned,
+	          coinsEarned,
+	          nextDayTimeStamp,
+	          nextMission,
+	          standardTimeStamp
+	        };
       } catch (error) {
         return handleError(error);
       }

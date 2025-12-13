@@ -151,16 +151,17 @@ export default function NotiReducer(
           loaded: true
         }
       };
-    case 'RESET_TODAY_STATS':
-      return {
-        ...state,
-        todayStats: {
-          myAchievementsObj: {},
-          achievedDailyGoals: [],
-          loaded: false,
-          xpEarned: 0,
-          coinsEarned: 0,
-          showXPRankings: false,
+	    case 'RESET_TODAY_STATS':
+	      return {
+	        ...state,
+	        todayStats: {
+	          myAchievementsObj: {},
+	          achievedDailyGoals: [],
+	          dailyQuestionCompleted: false,
+	          loaded: false,
+	          xpEarned: 0,
+	          coinsEarned: 0,
+	          showXPRankings: false,
           todayXPRankingLoaded: false,
           todayXPRanking: [],
           todayXPRankingHasMore: false

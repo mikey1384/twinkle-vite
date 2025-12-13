@@ -4,7 +4,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import AICard from '~/components/AICard';
-import Countdown from 'react-countdown';
+import NextDayCountdown from '~/components/NextDayCountdown';
 import AICardModal from '~/components/Modals/AICardModal';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import SanitizedHTML from 'react-sanitized-html';
@@ -72,8 +72,8 @@ export default function DailyRewardModal({
     linkColorKey && linkColorKey in Color ? linkColorKey : 'logoBlue';
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
-  const { timeDifference, nextDayTimeStamp } = useNotiContext(
-    (v) => v.state.todayStats
+  const nextDayTimeStamp = useNotiContext(
+    (v) => v.state.todayStats.nextDayTimeStamp
   );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -684,20 +684,13 @@ export default function DailyRewardModal({
                 icon="sparkles"
                 style={{ color: Color.gold(), fontSize: '1.8rem' }}
               />
-              <span className="countdown-label">
-                <span>Next Daily Reward</span>
-                <Countdown
-                  key={nextDayTimeStamp}
-                  className="countdown-timer"
-                  date={nextDayTimeStamp}
-                  now={() => {
-                    const now = Date.now() + timeDifference;
-                    return now;
-                  }}
-                  daysInHours={true}
-                  onComplete={handleCountdownComplete}
-                />
-              </span>
+              <NextDayCountdown
+                label="Next Daily Reward"
+                nextDayTimeStamp={nextDayTimeStamp}
+                onComplete={handleCountdownComplete}
+                className="countdown-label"
+                timerClassName="countdown-timer"
+              />
             </>
           )}
         </div>

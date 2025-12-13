@@ -25,14 +25,15 @@ export const initialNotiState = {
   top30s: [],
   top30sMonthly: [],
   socketConnected: false,
-  todayStats: {
-    aiCallDuration: 0,
-    myAchievementsObj: {},
-    achievedDailyGoals: [],
-    loaded: false,
-    xpEarned: 0,
-    coinsEarned: 0,
-    showXPRankings: false,
+	  todayStats: {
+	    aiCallDuration: 0,
+	    myAchievementsObj: {},
+	    achievedDailyGoals: [],
+	    dailyQuestionCompleted: false,
+	    loaded: false,
+	    xpEarned: 0,
+	    coinsEarned: 0,
+	    showXPRankings: false,
     todayXPRankingLoaded: false,
     todayXPRanking: [],
     todayXPRankingHasMore: false

@@ -1,15 +1,9 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import Game from './Game';
 import OverviewModal from './OverviewModal';
-import Countdown from 'react-countdown';
+import NextDayCountdown from '~/components/NextDayCountdown';
 import FilterBar from '~/components/FilterBar';
 import Streaks from './Streaks';
 import Rankings from './Rankings';
@@ -54,9 +48,6 @@ export default function WordleModal({
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
-  const timeDifference = useNotiContext(
-    (v) => v.state.todayStats.timeDifference
-  );
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [streaksTab, setStreaksTab] = useState(isStrictMode ? 'double' : 'win');
@@ -100,10 +91,6 @@ export default function WordleModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nextDayTimeStamp]);
-
-  const now = useCallback(() => {
-    return Date.now() + timeDifference;
-  }, [timeDifference]);
 
   useEffect(() => {
     if (activeTab !== 'game') return;
@@ -187,21 +174,25 @@ export default function WordleModal({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'column'
+          justifyContent: 'center'
         }}
       >
-        <p style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>Next Wordle</p>
-        <Countdown
-          key={nextDayTimeStamp}
+        <NextDayCountdown
+          label="Next Wordle"
+          onComplete={handleCountdownComplete}
           className={css`
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+          `}
+          labelClassName={css`
+            font-weight: bold;
+            font-size: 1.5rem;
+          `}
+          timerClassName={css`
             font-size: 1.3rem;
           `}
-          date={nextDayTimeStamp}
-          now={now}
-          daysInHours={true}
-          onComplete={handleCountdownComplete}
         />
       </div>
       <div
@@ -232,7 +223,12 @@ export default function WordleModal({
       >
         <div
           ref={bodyRef}
-          style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
         >
           <div ref={filterBarRef}>
             <FilterBar

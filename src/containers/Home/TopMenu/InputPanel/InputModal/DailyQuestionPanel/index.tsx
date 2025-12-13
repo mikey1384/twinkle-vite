@@ -13,7 +13,7 @@ import GradingResult from './GradingResult';
 import Icon from '~/components/Icon';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 
 type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
@@ -36,6 +36,9 @@ export default function DailyQuestionPanel({
     (v) => v.requestHelpers.simplifyDailyQuestion
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
 
   const [screen, setScreen] = useState<Screen>('loading');
   const [questionId, setQuestionId] = useState<number | null>(null);
@@ -201,6 +204,12 @@ export default function DailyQuestionPanel({
         });
       }
 
+      if (result.isThoughtful) {
+        onUpdateTodayStats({
+          newStats: { dailyQuestionCompleted: true }
+        });
+      }
+
       setTimeout(() => {
         setGradingResult({
           grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
@@ -298,6 +307,14 @@ export default function DailyQuestionPanel({
     e.preventDefault();
   }, []);
 
+  function handleDragOver(e: React.DragEvent<HTMLTextAreaElement>) {
+    e.preventDefault();
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLTextAreaElement>) {
+    e.preventDefault();
+  }
+
   const handleSubmit = useCallback(() => {
     if (!questionId || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -328,6 +345,7 @@ export default function DailyQuestionPanel({
     () => response.trim().length,
     [response]
   );
+  const minEffortBarShown = trimmedResponseLength > 0;
   const minLengthMet = trimmedResponseLength >= MIN_RESPONSE_LENGTH;
   const remainingChars = Math.max(
     0,
@@ -422,38 +440,61 @@ export default function DailyQuestionPanel({
             </h4>
             <ul className={instructionListCls}>
               <li>
-                <strong>Keep typing</strong> - if you stop for more than 10
-                seconds, your response auto-submits
+                <span className={ruleTitleCls}>Keep typing</span> — if you stop
+                for more than{' '}
+                <span className={ruleWarningCls}>
+                  {INACTIVITY_LIMIT} seconds
+                </span>
+                , your response auto-submits
               </li>
               <li>
-                <strong>Minimum length</strong> - write at least{' '}
-                {MIN_RESPONSE_LENGTH} characters before the timer runs out, or
-                it's an automatic fail
+                <span className={ruleSuccessCls}>Typos are fine</span> —
+                spelling, grammar, and even language don't affect your grade.
+                Write in whatever language you're comfortable with!
+                <p
+                  className={css`
+                    margin-top: 1rem;
+                    font-size: 1.2rem;
+                    color: ${Color.darkerGray()};
+                    line-height: 1.5;
+                  `}
+                >
+                  After grading, you'll get a{' '}
+                  <span className={ruleSuccessCls}>
+                    polished English version
+                  </span>{' '}
+                  you can choose to share instead.
+                </p>
               </li>
               <li>
-                <strong>No going back</strong> - backspace and delete are
-                disabled. Just keep moving forward!
+                <span className={ruleTitleCls}>Minimum length</span> — write at
+                least{' '}
+                <span className={ruleSuccessCls}>
+                  {MIN_RESPONSE_LENGTH} characters
+                </span>{' '}
+                before the timer runs out, or it's an{' '}
+                <span className={ruleWarningCls}>automatic fail</span>
               </li>
               <li>
-                <strong>No copy-paste</strong> - write in your own words
+                <span className={ruleTitleCls}>No going back</span> —{' '}
+                <span className={ruleWarningCls}>
+                  backspace and delete are disabled
+                </span>
+                . Just keep moving forward!
               </li>
               <li>
-                <strong>Closing this window cancels</strong> - your response
-                won't be saved, so you'll need to start over
+                <span className={ruleTitleCls}>No copy‑paste</span> — write in
+                your own words
+              </li>
+              <li>
+                <span className={ruleTitleCls}>
+                  Closing this window cancels
+                </span>{' '}
+                — your response{' '}
+                <span className={ruleWarningCls}>won't be saved</span>, so
+                you'll need to start over
               </li>
             </ul>
-            <p
-              className={css`
-                margin-top: 1rem;
-                font-size: 1.2rem;
-                color: ${Color.darkerGray()};
-                line-height: 1.5;
-              `}
-            >
-              Don't worry about spelling, grammar, or even language - write in
-              whatever language you're comfortable with. After grading, you'll
-              get a polished English version you can choose to share instead.
-            </p>
           </div>
 
           <div className={buttonContainerCls}>
@@ -500,6 +541,8 @@ export default function DailyQuestionPanel({
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
             placeholder="Just start typing... don't stop to think, just write..."
             className={textareaCls}
             autoFocus
@@ -511,11 +554,15 @@ export default function DailyQuestionPanel({
               {minLengthMet ? 'Minimum met' : `${remainingChars} chars to go`}
             </span>
           </div>
-          <ProgressBar
-            text={minEffortDisplayLabel}
-            color={minEffortColor}
-            progress={minEffortProgress}
-          />
+          {minEffortBarShown && (
+            <div style={{ width: '100%' }}>
+              <ProgressBar
+                text={minEffortDisplayLabel}
+                color={minEffortColor}
+                progress={minEffortProgress}
+              />
+            </div>
+          )}
           <div
             style={{
               color: Color.lightGray(),
@@ -619,6 +666,21 @@ const instructionListCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.2rem;
   }
+`;
+
+const ruleTitleCls = css`
+  font-weight: 700;
+  color: ${Color.black()};
+`;
+
+const ruleWarningCls = css`
+  font-weight: 700;
+  color: ${Color.rose()};
+`;
+
+const ruleSuccessCls = css`
+  font-weight: 700;
+  color: ${Color.green()};
 `;
 
 const timerContainerCls = css`
