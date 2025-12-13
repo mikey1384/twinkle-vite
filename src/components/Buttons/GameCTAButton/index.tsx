@@ -195,8 +195,6 @@ function getButtonCls({
     `
       : ''}
 
-    ${shiny
-      ? `
     &::after {
       content: '';
       position: absolute;
@@ -206,7 +204,8 @@ function getButtonCls({
       height: 100%;
       background: linear-gradient(120deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.12) 100%);
       transform: skewX(-20deg);
-      animation: shine 1.8s linear infinite;
+      animation: ${shiny ? 'shine 1.8s linear infinite' : 'none'};
+      display: ${shiny ? 'block' : 'none'};
     }
     &:disabled::after {
       display: none;
@@ -215,8 +214,6 @@ function getButtonCls({
       0% { left: -150%; }
       100% { left: 200%; }
     }
-    `
-      : ''}
 
     @media (max-width: ${tabletMaxWidth}) {
       font-size: calc(${s.fs} - 0.1rem);
