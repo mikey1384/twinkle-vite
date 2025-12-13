@@ -24,7 +24,9 @@ export default function ContentPreview({
     contentType,
     uploader,
     content = '',
+    description = '',
     story,
+    question,
     fileName = '',
     filePath,
     fileSize,
@@ -46,7 +48,9 @@ export default function ContentPreview({
       profilePicUrl: string;
     };
     content?: string;
+    description?: string;
     story?: string;
+    question?: string;
     fileName?: string;
     filePath?: string;
     fileSize?: number;
@@ -222,31 +226,29 @@ export default function ContentPreview({
     gap: 1.1rem;
   `;
 
+  const getContentPath = useCallback(() => {
+    if (contentType === 'aiStory') return 'ai-storie';
+    if (contentType === 'dailyReflection') return 'daily-reflection';
+    return contentType;
+  }, [contentType]);
+
   const handleNavigate = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement;
       if (target.closest('a, button, video, audio')) return;
-      navigate(
-        `/${
-          contentType === 'aiStory' ? 'ai-storie' : contentType
-        }s/${contentId}`
-      );
+      navigate(`/${getContentPath()}s/${contentId}`);
     },
-    [contentId, contentType, navigate]
+    [contentId, getContentPath, navigate]
   );
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        navigate(
-          `/${
-            contentType === 'aiStory' ? 'ai-storie' : contentType
-          }s/${contentId}`
-        );
+        navigate(`/${getContentPath()}s/${contentId}`);
       }
     },
-    [contentId, contentType, navigate]
+    [contentId, getContentPath, navigate]
   );
 
   const renderStoryContent = () => {
@@ -311,6 +313,36 @@ export default function ContentPreview({
       );
     }
 
+    if (contentType === 'dailyReflection') {
+      return (
+        <div className={previewContentClass}>
+          {question && (
+            <div
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: ${Color.darkerGray()};
+                font-style: italic;
+                line-height: 1.4;
+              `}
+            >
+              {question}
+            </div>
+          )}
+          <RichText
+            isPreview
+            maxLines={8}
+            contentId={contentId}
+            contentType={contentType}
+            section="preview"
+            style={{ color: Color.black() }}
+          >
+            {description || content || ''}
+          </RichText>
+        </div>
+      );
+    }
+
     return (
       <RichText
         isPreview
@@ -358,9 +390,11 @@ export default function ContentPreview({
           </div>
         </div>
       )}
-      {contentType !== 'aiStory' && topic && (
-        <strong className={topicLabelClass}>{truncateTopic(topic)}</strong>
-      )}
+      {contentType !== 'aiStory' &&
+        contentType !== 'dailyReflection' &&
+        topic && (
+          <strong className={topicLabelClass}>{truncateTopic(topic)}</strong>
+        )}
       {renderContent()}
       {filePath && (
         <div
