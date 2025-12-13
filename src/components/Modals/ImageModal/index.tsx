@@ -5,8 +5,6 @@ import Caption from './Caption';
 import ImageEditModal from './ImageEditModal';
 import Icon from '~/components/Icon';
 import { useAppContext, useContentContext } from '~/contexts';
-import { Color } from '~/constants/css';
-import { useRoleColor } from '~/theme/useRoleColor';
 import {
   exceedsCharLimit,
   stringIsEmpty,
@@ -40,9 +38,6 @@ export default function ImageModal({
   contentId?: number;
   isReplaceable?: boolean;
 }) {
-  const { colorKey: doneColorKey } = useRoleColor('done', {
-    fallback: 'blue'
-  });
   const uploadFile = useAppContext((v) => v.requestHelpers.uploadFile);
   const saveFileData = useAppContext((v) => v.requestHelpers.saveFileData);
   const replaceSubjectAttachment = useAppContext(
@@ -116,10 +111,7 @@ export default function ImageModal({
                 </Button>
               </>
             )}
-          <Button
-            color="blue"
-            onClick={() => setIsEditModalOpen(true)}
-          >
+          <Button color="blue" onClick={() => setIsEditModalOpen(true)}>
             <Icon icon="pencil-alt" />
             <span style={{ marginLeft: '0.5rem' }}>Edit Image</span>
           </Button>
@@ -164,9 +156,6 @@ export default function ImageModal({
           <Button
             style={{ marginLeft: '1rem' }}
             variant="ghost"
-            color={
-              doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
-            }
             onClick={onHide}
           >
             Close
