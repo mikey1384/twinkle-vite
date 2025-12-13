@@ -104,6 +104,9 @@ export default function ActionBlock({
       if (target === 'aiStory') {
         return 'recommended an AI Story';
       }
+      if (target === 'dailyReflection') {
+        return 'recommended a daily reflection';
+      }
       if (target === 'xpChange') {
         return 'recommended a daily goal completion';
       }
