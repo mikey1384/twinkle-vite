@@ -12,6 +12,7 @@ import {
   ZERO_PFP_URL,
   ZERO_TWINKLE_ID,
   CIEL_PFP_URL,
+  CIEL_TWINKLE_ID,
   CHAT_ID_BASE_NUMBER
 } from '~/constants/defaultValues';
 
@@ -388,6 +389,10 @@ export default function useAISocket({
 	        const computedPathId =
 	          prevChannelObj?.pathId ??
 	          Number(channelId) + Number(CHAT_ID_BASE_NUMBER);
+	        const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
+	        const aiUsername = isZeroMessage ? 'Zero' : 'Ciel';
+	        const aiUserId = isZeroMessage ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
+	        const aiProfilePicUrl = isZeroMessage ? ZERO_PFP_URL : CIEL_PFP_URL;
 	        onReceiveMessageOnDifferentChannel({
 	          pageVisible,
 	          usingChat: usingChatRef.current,
@@ -396,9 +401,11 @@ export default function useAISocket({
 	          channel: {
 	            id: channelId,
 	            pathId: computedPathId,
-	            channelName: prevChannelObj?.channelName,
-	            twoPeople: prevChannelObj?.twoPeople,
-	            members: prevChannelObj?.members,
+	            channelName: prevChannelObj?.channelName || aiUsername,
+	            twoPeople: prevChannelObj?.twoPeople ?? true,
+	            members: prevChannelObj?.members || [
+	              { id: aiUserId, username: aiUsername, profilePicUrl: aiProfilePicUrl }
+	            ],
 	            isHidden: false,
 	            numUnreads: 1
 	          }

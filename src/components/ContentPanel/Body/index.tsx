@@ -425,7 +425,12 @@ export default function Body({
           />
         )}
 
-        {xpRewardInterfaceShown && contentType !== 'aiStory' && (
+        {xpRewardInterfaceShown &&
+          contentType !== 'aiStory' &&
+          contentType !== 'pass' &&
+          contentType !== 'xpChange' &&
+          contentType !== 'sharedTopic' &&
+          contentType !== 'dailyReflection' && (
           <XPRewardInterface
             innerRef={RewardInterfaceRef}
             contentType={contentType}
