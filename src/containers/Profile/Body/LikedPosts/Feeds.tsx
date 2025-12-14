@@ -87,6 +87,8 @@ export default function Feeds({
         return `${username} has not liked any link so far`;
       case 'videos':
         return `${username} has not liked any video so far`;
+      case 'reflections':
+        return `${username} has not liked any daily reflection so far`;
     }
   }, [section, username]);
 
@@ -104,6 +106,7 @@ export default function Feeds({
             { key: 'all', label: 'All' },
             { key: 'video', label: 'Videos' },
             { key: 'subject', label: 'Subjects' },
+            { key: 'dailyReflection', label: 'Reflections' },
             { key: 'aiStory', label: 'AI Stories' },
             { key: 'comment', label: 'Comments' },
             { key: 'url', label: 'Links' }
@@ -213,6 +216,7 @@ export default function Feeds({
               { key: 'all', label: 'All' },
               { key: 'video', label: 'Videos' },
               { key: 'subject', label: 'Subjects' },
+              { key: 'dailyReflection', label: 'Reflections' },
               { key: 'aiStory', label: 'AI Stories' },
               { key: 'comment', label: 'Comments' },
               { key: 'url', label: 'Links' }
@@ -228,7 +232,13 @@ export default function Feeds({
   function handleClickPostsMenu({ item }: { item: string }) {
     navigate(
       `/users/${username}/likes/${
-        item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item
+        item === 'url'
+          ? 'link'
+          : item === 'aiStory'
+          ? 'ai-storie'
+          : item === 'dailyReflection'
+          ? 'reflection'
+          : item
       }${item === 'all' ? '' : 's'}`
     );
   }

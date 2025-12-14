@@ -21,6 +21,20 @@ type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
 const INACTIVITY_LIMIT = 10;
 const MIN_RESPONSE_LENGTH = 50;
 
+// Typing metadata for anti-cheat
+interface KeystrokeEvent {
+  timestamp: number;
+  charCount: number; // chars added in this event
+}
+
+interface TypingMetadata {
+  startTime: number;
+  endTime: number;
+  keystrokeEvents: KeystrokeEvent[];
+  totalCharsTyped: number;
+  maxBurstSize: number; // largest single burst of chars
+}
+
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -72,6 +86,15 @@ export default function DailyQuestionPanel({
   const isSubmittingRef = useRef(false);
   const lastActivityRef = useRef<number>(Date.now());
   const handleSubmitRef = useRef<() => void>(() => {});
+
+  // Typing metadata for anti-cheat verification
+  const typingMetadataRef = useRef<TypingMetadata>({
+    startTime: 0,
+    endTime: 0,
+    keystrokeEvents: [],
+    totalCharsTyped: 0,
+    maxBurstSize: 0
+  });
 
   useEffect(() => {
     if (!userId) return;
@@ -248,6 +271,14 @@ export default function DailyQuestionPanel({
 
   const handleStart = useCallback(() => {
     hasStartedRef.current = true;
+    // Initialize typing metadata
+    typingMetadataRef.current = {
+      startTime: Date.now(),
+      endTime: 0,
+      keystrokeEvents: [],
+      totalCharsTyped: 0,
+      maxBurstSize: 0
+    };
     setScreen('writing');
     setTimeout(() => {
       textareaRef.current?.focus();
@@ -296,8 +327,23 @@ export default function DailyQuestionPanel({
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
       if (newValue.length >= response.length) {
+        const charsAdded = newValue.length - response.length;
+        const now = Date.now();
+
+        // Track keystroke event for anti-cheat
+        if (charsAdded > 0) {
+          typingMetadataRef.current.keystrokeEvents.push({
+            timestamp: now,
+            charCount: charsAdded
+          });
+          typingMetadataRef.current.totalCharsTyped += charsAdded;
+          if (charsAdded > typingMetadataRef.current.maxBurstSize) {
+            typingMetadataRef.current.maxBurstSize = charsAdded;
+          }
+        }
+
         setResponse(newValue);
-        lastActivityRef.current = Date.now();
+        lastActivityRef.current = now;
       }
     },
     [response.length]
@@ -319,6 +365,32 @@ export default function DailyQuestionPanel({
     if (!questionId || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
+    // Finalize typing metadata
+    typingMetadataRef.current.endTime = Date.now();
+    const metadata = typingMetadataRef.current;
+
+    // Calculate summary stats for backend validation
+    const typingDurationMs = metadata.endTime - metadata.startTime;
+    const keystrokeCount = metadata.keystrokeEvents.length;
+
+    // Calculate average interval between keystrokes
+    let avgIntervalMs = 0;
+    if (keystrokeCount > 1) {
+      const intervals: number[] = [];
+      for (let i = 1; i < metadata.keystrokeEvents.length; i++) {
+        intervals.push(
+          metadata.keystrokeEvents[i].timestamp -
+            metadata.keystrokeEvents[i - 1].timestamp
+        );
+      }
+      avgIntervalMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    }
+
+    // Count "bursts" - events where multiple chars appeared at once
+    const burstEvents = metadata.keystrokeEvents.filter(
+      (e) => e.charCount > 1
+    ).length;
+
     setScreen('grading');
     setGradingProgress(0);
     setGradingMessage('Starting...');
@@ -326,7 +398,15 @@ export default function DailyQuestionPanel({
 
     socket.emit('grade_daily_question_response', {
       questionId,
-      response: response.trim() || '(no response)'
+      response: response.trim() || '(no response)',
+      typingMetadata: {
+        typingDurationMs,
+        totalCharsTyped: metadata.totalCharsTyped,
+        keystrokeCount,
+        avgIntervalMs: Math.round(avgIntervalMs),
+        maxBurstSize: metadata.maxBurstSize,
+        burstEventCount: burstEvents
+      }
     });
   }, [questionId, response]);
 

@@ -132,6 +132,8 @@ export default function Feeds({
         return `${username} has not posted a comment, yet`;
       case 'links':
         return `${username} has not posted a link, yet`;
+      case 'reflections':
+        return `${username} has not shared any daily reflection, yet`;
       case 'videos':
         return `${username} has not posted a video, yet`;
       case 'watched':
@@ -197,6 +199,7 @@ export default function Feeds({
               { key: 'all', label: 'All' },
               { key: 'comment', label: 'Comments' },
               { key: 'subject', label: 'Subjects' },
+              { key: 'dailyReflection', label: 'Reflections' },
               { key: 'aiStory', label: 'AI Stories' },
               { key: 'video', label: 'Videos' },
               { key: 'url', label: 'Links' }
@@ -338,6 +341,7 @@ export default function Feeds({
                 { key: 'all', label: 'All' },
                 { key: 'comment', label: 'Comments' },
                 { key: 'subject', label: 'Subjects' },
+                { key: 'dailyReflection', label: 'Reflections' },
                 { key: 'aiStory', label: 'AI Stories' },
                 { key: 'video', label: 'Videos' },
                 { key: 'url', label: 'Links' }
@@ -353,7 +357,13 @@ export default function Feeds({
 
   function handleClickPostsMenu({ item }: { item: string }) {
     const appliedNav = `${
-      item === 'url' ? 'link' : item === 'aiStory' ? 'ai-storie' : item
+      item === 'url'
+        ? 'link'
+        : item === 'aiStory'
+        ? 'ai-storie'
+        : item === 'dailyReflection'
+        ? 'reflection'
+        : item
     }${item === 'all' ? '' : 's'}`;
     navigate(`/users/${username}/${appliedNav}`);
     if (section === appliedNav) {

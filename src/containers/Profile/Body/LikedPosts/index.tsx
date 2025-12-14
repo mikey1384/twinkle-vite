@@ -8,6 +8,7 @@ const filterTable = {
   all: 'all',
   ['ai-stories']: 'aiStory',
   comments: 'comment',
+  reflections: 'dailyReflection',
   subjects: 'subject',
   videos: 'video',
   links: 'url'

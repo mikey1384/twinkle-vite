@@ -55,6 +55,8 @@ function getIconForKey(key: string) {
       return 'list';
     case 'comment':
       return 'comments';
+    case 'dailyReflection':
+      return 'lightbulb';
     case 'subject':
       return 'bolt';
     case 'aiStory':
