@@ -483,27 +483,40 @@ export default function ImageGenerator({
       });
 
       if (!result.success) {
-        const rawError = result.error || 'Failed to generate image';
-        const errorMessage = safeErrorToString(rawError);
-        setError(errorMessage);
-        if (typeof result.coins === 'number' && userId) {
-          onSetUserState({
-            userId,
-            newState: { twinkleCoins: result.coins }
-          });
+        const isStreamingActive =
+          progressStage === 'partial_image' || partialImageData !== null;
+
+        if (!isStreamingActive) {
+          const rawError = result.error || 'Failed to generate image';
+          const errorMessage = safeErrorToString(rawError);
+          setError(errorMessage);
+          if (typeof result.coins === 'number' && userId) {
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: result.coins }
+            });
+          }
+          setIsGenerating(false);
+          setProgressStage('not_started');
+          onError?.(errorMessage);
         }
+        // If streaming is active, don't show error - let socket determine final state
+      }
+    } catch (err) {
+      console.error('Image generation error:', err);
+      // Only show network error if socket streaming hasn't started
+      const isStreamingActive =
+        progressStage === 'partial_image' || partialImageData !== null;
+
+      if (!isStreamingActive) {
+        const errorMessage =
+          'Network error: Unable to connect to image generation service';
+        setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
-    } catch (err) {
-      console.error('Image generation error:', err);
-      const errorMessage =
-        'Network error: Unable to connect to image generation service';
-      setError(errorMessage);
-      setIsGenerating(false);
-      setProgressStage('not_started');
-      onError?.(errorMessage);
+      // If streaming is active, socket will handle final state
     }
   }
 
@@ -545,29 +558,40 @@ export default function ImageGenerator({
       });
 
       if (!result.success) {
-        const rawError = result.error || 'Failed to generate follow-up image';
-        const errorMessage = safeErrorToString(rawError);
-        setError(errorMessage);
-        if (typeof result.coins === 'number' && userId) {
-          onSetUserState({
-            userId,
-            newState: { twinkleCoins: result.coins }
-          });
+        // Only show error if socket streaming hasn't started
+        const isStreamingActive =
+          progressStage === 'partial_image' || partialImageData !== null;
+
+        if (!isStreamingActive) {
+          const rawError = result.error || 'Failed to generate follow-up image';
+          const errorMessage = safeErrorToString(rawError);
+          setError(errorMessage);
+          if (typeof result.coins === 'number' && userId) {
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: result.coins }
+            });
+          }
+          setIsGenerating(false);
+          setIsFollowUpGenerating(false);
+          setProgressStage('not_started');
+          onError?.(errorMessage);
         }
+      }
+    } catch (err) {
+      console.error('Follow-up image generation error:', err);
+      const isStreamingActive =
+        progressStage === 'partial_image' || partialImageData !== null;
+
+      if (!isStreamingActive) {
+        const errorMessage =
+          'Network error: Unable to connect for follow-up generation';
+        setError(errorMessage);
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
         onError?.(errorMessage);
       }
-    } catch (err) {
-      console.error('Follow-up image generation error:', err);
-      const errorMessage =
-        'Network error: Unable to connect for follow-up generation';
-      setError(errorMessage);
-      setIsGenerating(false);
-      setIsFollowUpGenerating(false);
-      setProgressStage('not_started');
-      onError?.(errorMessage);
     }
   }
 

@@ -225,87 +225,84 @@ export default function ImageEditModal({
     loadImage();
   }, [imageUrl]);
 
-  const loadImageOntoCanvas = useCallback(
-    (newImageUrl: string) => {
-      // Use proxied URL for CloudFront images
-      const proxiedUrl = getProxiedUrl(newImageUrl);
+  const loadImageOntoCanvas = useCallback((newImageUrl: string) => {
+    // Use proxied URL for CloudFront images
+    const proxiedUrl = getProxiedUrl(newImageUrl);
 
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
 
-      img.onload = () => {
-        const canvas = canvasRef.current;
-        const originalCanvas = originalCanvasRef.current;
-        const drawingCanvas = drawingCanvasRef.current;
-        if (!canvas || !originalCanvas || !drawingCanvas) return;
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      const originalCanvas = originalCanvasRef.current;
+      const drawingCanvas = drawingCanvasRef.current;
+      if (!canvas || !originalCanvas || !drawingCanvas) return;
 
-        const originalCtx = originalCanvas.getContext('2d');
-        const drawingCtx = drawingCanvas.getContext('2d');
-        if (!originalCtx || !drawingCtx) return;
+      const originalCtx = originalCanvas.getContext('2d');
+      const drawingCtx = drawingCanvas.getContext('2d');
+      if (!originalCtx || !drawingCtx) return;
 
-        // Use AI image's natural dimensions
-        const maxCanvasSize = 2048;
-        let canvasWidth = img.naturalWidth;
-        let canvasHeight = img.naturalHeight;
+      // Use AI image's natural dimensions
+      const maxCanvasSize = 2048;
+      let canvasWidth = img.naturalWidth;
+      let canvasHeight = img.naturalHeight;
 
-        if (canvasWidth > maxCanvasSize || canvasHeight > maxCanvasSize) {
-          const scale = Math.min(
-            maxCanvasSize / canvasWidth,
-            maxCanvasSize / canvasHeight
-          );
-          canvasWidth = Math.floor(canvasWidth * scale);
-          canvasHeight = Math.floor(canvasHeight * scale);
-        }
-
-        // Resize all canvases to match AI image dimensions
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        originalCanvas.width = canvasWidth;
-        originalCanvas.height = canvasHeight;
-        drawingCanvas.width = canvasWidth;
-        drawingCanvas.height = canvasHeight;
-
-        // Update display size
-        const maxDisplayWidth = Math.min(
-          600,
-          window.innerWidth * 0.8,
-          window.innerHeight * 0.5
+      if (canvasWidth > maxCanvasSize || canvasHeight > maxCanvasSize) {
+        const scale = Math.min(
+          maxCanvasSize / canvasWidth,
+          maxCanvasSize / canvasHeight
         );
-        const aspectRatio = canvasHeight / canvasWidth;
-        const maxDisplayHeight = window.innerHeight * 0.4;
+        canvasWidth = Math.floor(canvasWidth * scale);
+        canvasHeight = Math.floor(canvasHeight * scale);
+      }
 
-        let displayWidth = maxDisplayWidth;
-        let displayHeight = displayWidth * aspectRatio;
+      // Resize all canvases to match AI image dimensions
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      originalCanvas.width = canvasWidth;
+      originalCanvas.height = canvasHeight;
+      drawingCanvas.width = canvasWidth;
+      drawingCanvas.height = canvasHeight;
 
-        if (displayHeight > maxDisplayHeight) {
-          displayHeight = maxDisplayHeight;
-          displayWidth = displayHeight / aspectRatio;
-        }
+      // Update display size
+      const maxDisplayWidth = Math.min(
+        600,
+        window.innerWidth * 0.8,
+        window.innerHeight * 0.5
+      );
+      const aspectRatio = canvasHeight / canvasWidth;
+      const maxDisplayHeight = window.innerHeight * 0.4;
 
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
+      let displayWidth = maxDisplayWidth;
+      let displayHeight = displayWidth * aspectRatio;
 
-        // Draw AI image at its natural size
-        originalCtx.fillStyle = '#ffffff';
-        originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-        originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+      if (displayHeight > maxDisplayHeight) {
+        displayHeight = maxDisplayHeight;
+        displayWidth = displayHeight / aspectRatio;
+      }
 
-        // Clear drawing canvas
-        drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+      canvas.style.width = `${displayWidth}px`;
+      canvas.style.height = `${displayHeight}px`;
 
-        requestAnimationFrame(() => {
-          updateDisplayRef.current();
-        });
-      };
+      // Draw AI image at its natural size
+      originalCtx.fillStyle = '#ffffff';
+      originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+      originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
 
-      img.onerror = () => {
-        setError('Failed to load AI-generated image');
-      };
+      // Clear drawing canvas
+      drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-      img.src = proxiedUrl;
-    },
-    []
-  );
+      requestAnimationFrame(() => {
+        updateDisplayRef.current();
+      });
+    };
+
+    img.onerror = () => {
+      setError('Failed to load AI-generated image');
+    };
+
+    img.src = proxiedUrl;
+  }, []);
 
   // Socket listener for AI generation status
   useEffect(() => {
@@ -416,33 +413,49 @@ export default function ImageEditModal({
       });
 
       if (!result.success) {
-        const errorMessage = result.error || 'Failed to generate image';
-        setError(errorMessage);
+        const isStreamingActive =
+          progressStage === 'partial_image' || partialImageData !== null;
 
-        if (typeof result.coins === 'number' && userId) {
-          onSetUserState({
-            userId,
-            newState: { twinkleCoins: result.coins }
-          });
+        if (!isStreamingActive) {
+          const errorMessage = result.error || 'Failed to generate image';
+          setError(errorMessage);
+
+          if (typeof result.coins === 'number' && userId) {
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: result.coins }
+            });
+          }
+
+          isGeneratingRef.current = false;
+          setIsGenerating(false);
+          setProgressStage('not_started');
         }
+        // If streaming is active, don't show error - let socket determine final state
+      }
+    } catch (err) {
+      console.error('Image generation error:', err);
+      // Only show network error if socket streaming hasn't started
+      const isStreamingActive =
+        progressStage === 'partial_image' || partialImageData !== null;
 
+      if (!isStreamingActive) {
+        setError(
+          'Network error: Unable to connect to image generation service'
+        );
         isGeneratingRef.current = false;
         setIsGenerating(false);
         setProgressStage('not_started');
       }
-    } catch (err) {
-      console.error('Image generation error:', err);
-      setError('Network error: Unable to connect to image generation service');
-      isGeneratingRef.current = false;
-      setIsGenerating(false);
-      setProgressStage('not_started');
+      // If streaming is active, socket will handle final state
     }
   };
 
   const handleDownload = async () => {
     try {
       // If streaming partial image, download that instead
-      const dataUrl = partialImageData || canvasRef.current?.toDataURL('image/png');
+      const dataUrl =
+        partialImageData || canvasRef.current?.toDataURL('image/png');
       if (!dataUrl) return;
 
       const blob = dataUrlToBlob(dataUrl);
