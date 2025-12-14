@@ -145,6 +145,12 @@ export default function ActionBlock({
     if (action === 'watch') {
       return 'watched a video';
     }
+    if (action === 'dailyReflectionSharePublic') {
+      return 'shared a daily reflection';
+    }
+    if (action === 'dailyReflectionShareAI') {
+      return 'shared a daily reflection with AI';
+    }
     return `${action} ${target}`;
   }, [action, target, type, username]);
   return <div style={style}>{displayedAction}</div>;

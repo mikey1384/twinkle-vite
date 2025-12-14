@@ -5,7 +5,7 @@ import FilterBar from '~/components/FilterBar';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useHomeContext } from '~/contexts';
+import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { socket } from '~/constants/sockets/api';
 import zero from '~/assets/zero.png';
@@ -78,7 +78,9 @@ export default function GradingResult({
   const refineDailyQuestionResponse = useAppContext(
     (v) => v.requestHelpers.refineDailyQuestionResponse
   );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
+  const { userId } = useKeyContext((v) => v.myState);
   const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
 
   const [sharing, setSharing] = useState(false);
@@ -186,6 +188,11 @@ export default function GradingResult({
         onLoadNewFeeds([result.feed]);
       }
 
+      // Update user's coin balance in real-time
+      if (result.newCoins !== undefined && userId) {
+        onSetUserState({ userId, newState: { twinkleCoins: result.newCoins } });
+      }
+
       setIsShared(true);
       setShowVersionSelector(false);
     } catch (err) {
@@ -205,6 +212,12 @@ export default function GradingResult({
   const canShareToAI = hasResponseText;
   const canShareWithZero = canShareToAI && !sharedWithZero;
   const canShareWithCiel = canShareToAI && !sharedWithCiel;
+
+  // Coin rewards: 1,000 for Pass, 10,000 for Masterpiece (Fail gets nothing)
+  const shareCoinsReward = grade === 'Masterpiece' ? 10000 : 1000;
+  // AI share reward is only available if passed AND not already shared with either bot
+  const alreadySharedWithAnyAI = sharedWithZero || sharedWithCiel;
+  const canGetAIShareCoins = grade !== 'Fail' && !alreadySharedWithAnyAI;
 
   return (
     <div
@@ -656,110 +669,172 @@ export default function GradingResult({
         `}
       >
         {canShareToFeed && !showVersionSelector && !showAIVersionSelector && (
-          <Button
-            variant="solid"
-            color="logoBlue"
-            onClick={handleShareClick}
-            disabled={!canShareToFeedNow || refining}
-            loading={canShareToFeedNow && refining && !preparingAIVersionTarget}
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            `}
           >
-            <Icon icon="share" style={{ marginRight: '0.5rem' }} />
-            {!canShareToFeedNow ? (
-              <>
-                <Icon icon="check" style={{ marginRight: '0.5rem' }} />
-                Shared to Feed
-              </>
-            ) : refining && !preparingAIVersionTarget ? (
-              'Preparing...'
-            ) : (
-              'Share to Feed'
+            <Button
+              variant="solid"
+              color="logoBlue"
+              onClick={handleShareClick}
+              disabled={!canShareToFeedNow || refining}
+              loading={
+                canShareToFeedNow && refining && !preparingAIVersionTarget
+              }
+            >
+              <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+              {!canShareToFeedNow ? (
+                <>
+                  <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                  Shared to Feed
+                </>
+              ) : refining && !preparingAIVersionTarget ? (
+                'Preparing...'
+              ) : (
+                'Share to Feed'
+              )}
+            </Button>
+            {canShareToFeedNow && (
+              <span
+                className={css`
+                  margin-top: 0.4rem;
+                  font-size: 1.1rem;
+                  color: ${Color.orange()};
+                  font-weight: 600;
+                `}
+              >
+                +{shareCoinsReward.toLocaleString()} coins
+              </span>
             )}
-          </Button>
+          </div>
         )}
         {!showVersionSelector && !showAIVersionSelector && canShareToAI && (
           <>
-            <Button
-              color="logoBlue"
-              variant="solid"
-              tone="raised"
-              onClick={() => handleShareWithAI('zero')}
-              disabled={
-                !canShareWithZero ||
-                sharingWithCiel ||
-                sharingWithZero ||
-                preparingAIVersionTarget !== null
-              }
-              loading={
-                sharingWithZero ||
-                (preparingAIVersionTarget === 'zero' &&
-                  refining &&
-                  !refinedResponse)
-              }
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              `}
             >
-              <img
-                src={zero}
-                alt="Zero"
-                className={css`
-                  width: 2rem;
-                  height: 2rem;
-                  border-radius: 50%;
-                  margin-right: 0.5rem;
-                  object-fit: contain;
-                  background: #fff;
-                `}
-              />
-              {!canShareWithZero ? (
-                <>
-                  <Icon icon="check" style={{ marginRight: '0.5rem' }} />
-                  Shared with Zero
-                </>
-              ) : sharingWithZero ? (
-                'Sharing with Zero...'
-              ) : (
-                'Share with Zero'
+              <Button
+                color="logoBlue"
+                variant="solid"
+                tone="raised"
+                onClick={() => handleShareWithAI('zero')}
+                disabled={
+                  !canShareWithZero ||
+                  sharingWithCiel ||
+                  sharingWithZero ||
+                  preparingAIVersionTarget !== null
+                }
+                loading={
+                  sharingWithZero ||
+                  (preparingAIVersionTarget === 'zero' &&
+                    refining &&
+                    !refinedResponse)
+                }
+              >
+                <img
+                  src={zero}
+                  alt="Zero"
+                  className={css`
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 50%;
+                    margin-right: 0.5rem;
+                    object-fit: contain;
+                    background: #fff;
+                  `}
+                />
+                {!canShareWithZero ? (
+                  <>
+                    <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                    Shared with Zero
+                  </>
+                ) : sharingWithZero ? (
+                  'Sharing with Zero...'
+                ) : (
+                  'Share with Zero'
+                )}
+              </Button>
+              {canShareWithZero && canGetAIShareCoins && (
+                <span
+                  className={css`
+                    margin-top: 0.4rem;
+                    font-size: 1.1rem;
+                    color: ${Color.orange()};
+                    font-weight: 600;
+                  `}
+                >
+                  +{shareCoinsReward.toLocaleString()} coins
+                </span>
               )}
-            </Button>
-            <Button
-              color="purple"
-              variant="solid"
-              tone="raised"
-              onClick={() => handleShareWithAI('ciel')}
-              disabled={
-                !canShareWithCiel ||
-                sharingWithCiel ||
-                sharingWithZero ||
-                preparingAIVersionTarget !== null
-              }
-              loading={
-                sharingWithCiel ||
-                (preparingAIVersionTarget === 'ciel' &&
-                  refining &&
-                  !refinedResponse)
-              }
+            </div>
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              `}
             >
-              <img
-                src={ciel}
-                alt="Ciel"
-                className={css`
-                  width: 2rem;
-                  height: 2rem;
-                  border-radius: 50%;
-                  margin-right: 0.5rem;
-                  object-fit: contain;
-                  background: #fff;
-                `}
-              />
-              {!canShareWithCiel ? (
-                <>
-                  <Icon icon="check" style={{ marginRight: '0.5rem' }} />
-                  Shared with Ciel
-                </>
-              ) : sharingWithCiel ? (
-                'Sharing with Ciel...'
-              ) : (
-                'Share with Ciel'
+              <Button
+                color="purple"
+                variant="solid"
+                tone="raised"
+                onClick={() => handleShareWithAI('ciel')}
+                disabled={
+                  !canShareWithCiel ||
+                  sharingWithCiel ||
+                  sharingWithZero ||
+                  preparingAIVersionTarget !== null
+                }
+                loading={
+                  sharingWithCiel ||
+                  (preparingAIVersionTarget === 'ciel' &&
+                    refining &&
+                    !refinedResponse)
+                }
+              >
+                <img
+                  src={ciel}
+                  alt="Ciel"
+                  className={css`
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 50%;
+                    margin-right: 0.5rem;
+                    object-fit: contain;
+                    background: #fff;
+                  `}
+                />
+                {!canShareWithCiel ? (
+                  <>
+                    <Icon icon="check" style={{ marginRight: '0.5rem' }} />
+                    Shared with Ciel
+                  </>
+                ) : sharingWithCiel ? (
+                  'Sharing with Ciel...'
+                ) : (
+                  'Share with Ciel'
+                )}
+              </Button>
+              {canShareWithCiel && canGetAIShareCoins && (
+                <span
+                  className={css`
+                    margin-top: 0.4rem;
+                    font-size: 1.1rem;
+                    color: ${Color.orange()};
+                    font-weight: 600;
+                  `}
+                >
+                  +{shareCoinsReward.toLocaleString()} coins
+                </span>
               )}
-            </Button>
+            </div>
           </>
         )}
         {showVersionSelector && (
@@ -913,6 +988,11 @@ export default function GradingResult({
 
       if (result.channelId) {
         socket.emit('join_chat_group', result.channelId);
+      }
+
+      // Update user's coin balance in real-time
+      if (result.newCoins !== undefined && userId) {
+        onSetUserState({ userId, newState: { twinkleCoins: result.newCoins } });
       }
 
       if (aiShareTarget === 'zero') setSharedWithZero(true);

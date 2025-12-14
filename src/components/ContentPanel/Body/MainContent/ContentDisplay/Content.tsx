@@ -89,19 +89,20 @@ export default function Content({
     themeName: theme,
     fallback: 'logoGreen'
   });
-  const { bonusQuestion, word, level, xpEarned, coinEarned, card } = useMemo(() => {
-    if (contentType !== 'xpChange') {
-      return {
-        bonusQuestion: null,
-        word: '',
-        level: 0,
-        xpEarned: 0,
-        coinEarned: 0,
-        card: null
-      };
-    }
-    return contentObj;
-  }, [contentObj, contentType]);
+  const { bonusQuestion, word, level, xpEarned, coinEarned, card } =
+    useMemo(() => {
+      if (contentType !== 'xpChange') {
+        return {
+          bonusQuestion: null,
+          word: '',
+          level: 0,
+          xpEarned: 0,
+          coinEarned: 0,
+          card: null
+        };
+      }
+      return contentObj;
+    }, [contentObj, contentType]);
 
   const displayedXPEarned = useMemo(() => {
     return addCommasToNumber(xpEarned);
@@ -240,8 +241,8 @@ export default function Content({
               style={{ marginBottom: '2rem' }}
             />
             <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <UsernameText user={uploader} color={linkColor} />{' '}
-              correctly answered this bonus question and earned{' '}
+              <UsernameText user={uploader} color={linkColor} /> correctly
+              answered this bonus question and earned{' '}
               <b>
                 <span
                   style={{
@@ -328,10 +329,51 @@ export default function Content({
             >
               {description || ''}
             </RichText>
-            {contentObj?.isRefined && (
+            {contentObj?.grade === 'Masterpiece' && (
               <div
                 style={{
                   marginTop: '1rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 0.8rem',
+                  background: `linear-gradient(135deg, ${Color.gold()}20, ${Color.orange()}20)`,
+                  border: `1px solid ${Color.gold()}`,
+                  borderRadius: '1rem',
+                  fontSize: '1.2rem',
+                  fontWeight: 600,
+                  color: Color.gold()
+                }}
+              >
+                <span>★</span>
+                <span>Masterpiece</span>
+              </div>
+            )}
+            {!!contentObj?.shareCoinsAwarded && (
+              <div
+                style={{
+                  marginTop: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  fontSize: '1.2rem',
+                  color: Color.darkerGray()
+                }}
+              >
+                <span>
+                  <UsernameText user={uploader} color={linkColor} /> was
+                  rewarded{' '}
+                  <b style={{ color: Color.orange() }}>
+                    {addCommasToNumber(contentObj?.shareCoinsAwarded)} coins
+                  </b>{' '}
+                  for sharing this
+                </span>
+              </div>
+            )}
+            {contentObj?.isRefined && (
+              <div
+                style={{
+                  marginTop: '0.5rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.3rem',
@@ -436,10 +478,7 @@ export default function Content({
         />
       )}
       {cardModalShown && card?.id && (
-        <AICardModal
-          cardId={card.id}
-          onHide={() => setCardModalShown(false)}
-        />
+        <AICardModal cardId={card.id} onHide={() => setCardModalShown(false)} />
       )}
     </div>
   );
