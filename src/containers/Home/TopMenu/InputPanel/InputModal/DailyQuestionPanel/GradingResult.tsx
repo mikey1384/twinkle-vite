@@ -658,6 +658,23 @@ export default function GradingResult({
         </p>
       )}
 
+      {/* Share hint text */}
+      {!showVersionSelector &&
+        !showAIVersionSelector &&
+        (canShareToFeedNow || canShareWithZero || canShareWithCiel) && (
+          <p
+            className={css`
+              text-align: center;
+              font-size: 1.2rem;
+              color: ${Color.darkerGray()};
+              margin-bottom: 0.5rem;
+            `}
+          >
+            You can choose to share your original response or an AI-polished
+            version
+          </p>
+        )}
+
       {/* Actions */}
       <div
         className={css`

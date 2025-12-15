@@ -882,11 +882,20 @@ export default function DailyRewardModal({
                       {showBonusLine1 && (
                         <div
                           className={`fadeIn ${summaryHeadlineClass}`}
-                          style={{ color: levelColorHex, fontWeight: 700 }}
+                          style={{
+                            color: bonusIsCorrect
+                              ? levelColorHex
+                              : Color.rose(),
+                            fontWeight: 700,
+                            ...(!bonusIsCorrect && {
+                              fontSize: '1.8rem',
+                              whiteSpace: 'normal'
+                            })
+                          }}
                         >
                           {bonusIsCorrect
                             ? 'Correct!'
-                            : 'Oops! Wrong answer... Better luck next time'}
+                            : 'Oops, wrong answer... Better luck next time!'}
                         </div>
                       )}
                       {showBonusLine2 && (
