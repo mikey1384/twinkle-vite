@@ -129,8 +129,6 @@ export default function DailyQuestionPanel({
       setOriginalQuestion(data.question);
 
       if (data.hasResponded && data.response) {
-        const storedResponseText =
-          data.response.sharedResponse || data.response.response || '';
         setGradingResult({
           grade: data.response.grade,
           xpAwarded: data.response.xpAwarded,
@@ -142,7 +140,7 @@ export default function DailyQuestionPanel({
           originalResponse: data.response.response || '',
           sharedResponse: data.response.sharedResponse || null
         });
-        setResponse(storedResponseText);
+        setResponse(data.response.response || '');
         setScreen('result');
       } else {
         setScreen('start');
