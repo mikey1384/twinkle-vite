@@ -2043,10 +2043,11 @@ export default function contentRequestHelpers({
     },
     async getDailyQuestion() {
       try {
-        const { data } = await request.get(
-          `${URL}/content/daily-question`,
-          auth()
-        );
+        const { data } = await request.get(`${URL}/content/daily-question`, {
+          ...auth(),
+          timeout: 180000,
+          meta: { allowExtendedTimeout: true, enforceTimeout: false }
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -2063,7 +2064,7 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content/daily-question/response`,
           { questionId, response },
-          auth()
+          { ...auth(), timeout: 180000, meta: { enforceTimeout: false } }
         );
         return data;
       } catch (error) {
@@ -2167,7 +2168,9 @@ export default function contentRequestHelpers({
         if (offset) params.append('offset', String(offset));
         const queryString = params.toString();
         const { data } = await request.get(
-          `${URL}/content/daily-question/history${queryString ? `?${queryString}` : ''}`,
+          `${URL}/content/daily-question/history${
+            queryString ? `?${queryString}` : ''
+          }`,
           auth()
         );
         return data;
