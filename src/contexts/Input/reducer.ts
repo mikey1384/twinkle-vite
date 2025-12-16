@@ -39,6 +39,14 @@ export default function InputReducer(
             : null
         }
       };
+    case 'SET_COMMENT_AGE_RESTRICTION':
+      return {
+        ...state,
+        [contentKey]: {
+          ...state[contentKey],
+          ageRestriction: action.ageRestriction
+        }
+      };
     case 'SET_CONTENT_ALREADY_POSTED':
       return {
         ...state,
@@ -85,6 +93,17 @@ export default function InputReducer(
           form: {
             ...state.content.form,
             rewardLevel: action.rewardLevel
+          }
+        }
+      };
+    case 'SET_CONTENT_AGE_RESTRICTION':
+      return {
+        ...state,
+        content: {
+          ...state.content,
+          form: {
+            ...state.content.form,
+            ageRestriction: action.ageRestriction
           }
         }
       };
@@ -344,6 +363,17 @@ export default function InputReducer(
           details: {
             ...state.subject.details,
             rewardLevel: action.rewardLevel
+          }
+        }
+      };
+    case 'SET_SUBJECT_AGE_RESTRICTION':
+      return {
+        ...state,
+        subject: {
+          ...state.subject,
+          details: {
+            ...state.subject.details,
+            ageRestriction: action.ageRestriction
           }
         }
       };

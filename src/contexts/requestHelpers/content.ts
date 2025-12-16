@@ -1612,7 +1612,8 @@ export default function contentRequestHelpers({
       fileName,
       fileSize,
       isNotification,
-      thumbUrl
+      thumbUrl,
+      ageRestriction
     }: {
       content: string;
       parent: object;
@@ -1625,6 +1626,7 @@ export default function contentRequestHelpers({
       fileSize: number;
       isNotification: boolean;
       thumbUrl: string;
+      ageRestriction?: 'teenager' | 'adult' | null;
     }) {
       try {
         const { data } = await request.post(
@@ -1640,7 +1642,8 @@ export default function contentRequestHelpers({
             fileName,
             fileSize,
             isNotification,
-            thumbUrl
+            thumbUrl,
+            ageRestriction
           },
           auth()
         );
@@ -1650,6 +1653,7 @@ export default function contentRequestHelpers({
       }
     },
     async uploadContent({
+      ageRestriction,
       byUser,
       url,
       isVideo,
@@ -1669,6 +1673,7 @@ export default function contentRequestHelpers({
       thumbUrl,
       ytDetails
     }: {
+      ageRestriction?: 'teenager' | 'adult' | null;
       byUser: boolean;
       url: string;
       isVideo: boolean;
@@ -1692,6 +1697,7 @@ export default function contentRequestHelpers({
         const { data } = await request.post(
           `${URL}/content`,
           {
+            ageRestriction,
             byUser,
             url,
             isVideo,
@@ -1711,6 +1717,26 @@ export default function contentRequestHelpers({
             thumbUrl,
             ytDetails
           },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateAgeRestriction({
+      contentId,
+      contentType,
+      ageRestriction
+    }: {
+      contentId: number;
+      contentType: string;
+      ageRestriction: 'teenager' | 'adult' | null;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/content/ageRestriction`,
+          { contentId, contentType, ageRestriction },
           auth()
         );
         return data;
@@ -2072,15 +2098,17 @@ export default function contentRequestHelpers({
     },
     async shareDailyQuestionResponse({
       responseId,
-      responseText
+      responseText,
+      ageRestriction
     }: {
       responseId: number;
       responseText: string;
+      ageRestriction?: 'teenager' | 'adult' | null;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/daily-question/share`,
-          { responseId, responseText },
+          { responseId, responseText, ageRestriction },
           auth()
         );
         return data;

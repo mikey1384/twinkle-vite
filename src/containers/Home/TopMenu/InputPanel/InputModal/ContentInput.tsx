@@ -4,6 +4,7 @@ import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Banner from '~/components/Banner';
 import RewardLevelForm from '~/components/Forms/RewardLevelForm';
+import AgeRestrictionSelector from '~/components/Forms/AgeRestrictionSelector';
 import Link from '~/components/Link';
 import Checkbox from '~/components/Checkbox';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -92,6 +93,9 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   );
   const onSetContentRewardLevel = useInputContext(
     (v) => v.actions.onSetContentRewardLevel
+  );
+  const onSetContentAgeRestriction = useInputContext(
+    (v) => v.actions.onSetContentAgeRestriction
   );
   const onSetContentTitle = useInputContext((v) => v.actions.onSetContentTitle);
   const onSetContentTitleFieldShown = useInputContext(
@@ -409,6 +413,13 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
               </div>
             )}
           {descriptionFieldShown && (
+            <AgeRestrictionSelector
+              ageRestriction={form.ageRestriction}
+              onChange={onSetContentAgeRestriction}
+              style={{ marginTop: '1.5rem' }}
+            />
+          )}
+          {descriptionFieldShown && (
             <div className="button-container">
               <Button
                 variant="solid"
@@ -445,6 +456,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
     setSubmitting(true);
     try {
       const data = await uploadContent({
+        ageRestriction: form.ageRestriction,
         isVideo: contentIsVideo,
         url: url.trim(),
         rewardLevel: form.rewardLevel,

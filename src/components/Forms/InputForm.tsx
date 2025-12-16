@@ -10,6 +10,7 @@ import Textarea from '~/components/Texts/Textarea';
 import Icon from '../Icon';
 import UploadButton from '~/components/Buttons/UploadButton';
 import Attachment from '~/components/Attachment';
+import AgeRestrictionSelector from '~/components/Forms/AgeRestrictionSelector';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import ProgressBar from '~/components/ProgressBar';
@@ -154,11 +155,17 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
+  const onSetCommentAgeRestriction = useInputContext(
+    (v) => v.actions.onSetCommentAgeRestriction
+  );
 
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = disableReason ? '' : inputState?.text || '';
   const attachment = useInputContext(
     (v) => v.state[contentType + contentId]?.attachment
+  );
+  const ageRestriction = useInputContext(
+    (v) => v.state[contentType + contentId]?.ageRestriction ?? null
   );
   const textRef = useRef(initialText);
   const [text, setText] = useState(initialText);
@@ -423,6 +430,18 @@ function InputForm({
             `}
           >
             {isComment && <DraftSaveIndicator savingState={savingState} />}
+            {isComment && (
+              <AgeRestrictionSelector
+                ageRestriction={ageRestriction}
+                onChange={(value) =>
+                  onSetCommentAgeRestriction({
+                    ageRestriction: value,
+                    contentType,
+                    contentId
+                  })
+                }
+              />
+            )}
             <Button
               variant="soft"
               tone="raised"

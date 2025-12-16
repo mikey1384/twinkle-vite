@@ -12,6 +12,7 @@ export const initialInputState = {
       description: '',
       secretAnswer: '',
       rewardLevel: 0,
+      ageRestriction: null,
       thumbnail: ''
     },
     hasSecretAnswer: false
@@ -24,7 +25,8 @@ export const initialInputState = {
       isVideo: false,
       title: '',
       description: '',
-      rewardLevel: 0
+      rewardLevel: 0,
+      ageRestriction: null
     },
     titleFieldShown: false,
     urlHelper: '',

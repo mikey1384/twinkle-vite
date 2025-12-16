@@ -8,7 +8,7 @@ import EmptyStateMessage from '~/components/EmptyStateMessage';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
-import { useAppContext, useProfileContext } from '~/contexts';
+import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 
@@ -36,6 +36,7 @@ export default function Feeds({
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(loadingMore);
   const selectedSection = useRef('all');
+  const myUsername = useKeyContext((v) => v.myState.username);
   const loadLikedFeeds = useAppContext((v) => v.requestHelpers.loadLikedFeeds);
   const onLoadLikedPosts = useProfileContext((v) => v.actions.onLoadLikedPosts);
   const onLoadMoreLikedPosts = useProfileContext(
@@ -73,24 +74,28 @@ export default function Feeds({
     [loaded, loadingFeeds]
   );
 
+  const isOwnProfile = myUsername === username;
+  const displayName = isOwnProfile ? 'You' : username;
+  const haveOrHas = isOwnProfile ? 'have' : 'has';
+
   const noFeedLabel = useMemo(() => {
     switch (section) {
       case 'all':
-        return `${username} has not liked any content so far`;
+        return `${displayName} ${haveOrHas} not liked any content so far`;
       case 'ai-stories':
-        return `${username} has not liked any AI Story so far`;
+        return `${displayName} ${haveOrHas} not liked any AI Story so far`;
       case 'subjects':
-        return `${username} has not liked any subject so far`;
+        return `${displayName} ${haveOrHas} not liked any subject so far`;
       case 'comments':
-        return `${username} has not liked any comment so far`;
+        return `${displayName} ${haveOrHas} not liked any comment so far`;
       case 'links':
-        return `${username} has not liked any link so far`;
+        return `${displayName} ${haveOrHas} not liked any link so far`;
       case 'videos':
-        return `${username} has not liked any video so far`;
+        return `${displayName} ${haveOrHas} not liked any video so far`;
       case 'reflections':
-        return `${username} has not liked any daily reflection so far`;
+        return `${displayName} ${haveOrHas} not liked any daily reflection so far`;
     }
-  }, [section, username]);
+  }, [section, displayName, haveOrHas]);
 
   return (
     <ErrorBoundary componentPath="Profile/Body/LikedPosts/Feeds">
@@ -104,9 +109,9 @@ export default function Feeds({
         >
           {[
             { key: 'all', label: 'All' },
+            { key: 'dailyReflection', label: 'Reflections' },
             { key: 'video', label: 'Videos' },
             { key: 'subject', label: 'Subjects' },
-            { key: 'dailyReflection', label: 'Reflections' },
             { key: 'aiStory', label: 'AI Stories' },
             { key: 'comment', label: 'Comments' },
             { key: 'url', label: 'Links' }
@@ -214,9 +219,9 @@ export default function Feeds({
             style={{ alignSelf: 'flex-start' }}
             menuItems={[
               { key: 'all', label: 'All' },
+              { key: 'dailyReflection', label: 'Reflections' },
               { key: 'video', label: 'Videos' },
               { key: 'subject', label: 'Subjects' },
-              { key: 'dailyReflection', label: 'Reflections' },
               { key: 'aiStory', label: 'AI Stories' },
               { key: 'comment', label: 'Comments' },
               { key: 'url', label: 'Links' }

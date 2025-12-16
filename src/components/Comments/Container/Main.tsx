@@ -248,12 +248,14 @@ export default function Main({
     content,
     rootCommentId,
     subjectId,
-    targetCommentId
+    targetCommentId,
+    ageRestriction
   }: {
     content: string;
     rootCommentId?: number | null;
     subjectId?: number;
     targetCommentId?: number | null;
+    ageRestriction?: 'teenager' | 'adult' | null;
   }) {
     if (banned?.posting) {
       return;
@@ -265,7 +267,8 @@ export default function Main({
         parent,
         rootCommentId,
         subjectId,
-        targetCommentId
+        targetCommentId,
+        ageRestriction
       });
       await onCommentSubmit({
         ...comment,

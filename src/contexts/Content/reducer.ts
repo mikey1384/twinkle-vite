@@ -1821,6 +1821,49 @@ export default function ContentReducer(
           }
         }
       };
+    case 'UPDATE_CONTENT_AGE_RESTRICTION': {
+      const newState = { ...state };
+      const contentKeys = Object.keys(newState);
+      for (const contentKey of contentKeys) {
+        const prevContentState = newState[contentKey];
+        const contentMatches =
+          prevContentState.contentId === action.contentId &&
+          prevContentState.contentType === action.contentType;
+        newState[contentKey] = {
+          ...prevContentState,
+          ageRestriction: contentMatches
+            ? action.ageRestriction
+            : prevContentState.ageRestriction,
+          subjects: prevContentState.subjects?.map((subject: Subject) => {
+            const subjectMatches =
+              subject.id === action.contentId &&
+              action.contentType === 'subject';
+            return {
+              ...subject,
+              ageRestriction: subjectMatches
+                ? action.ageRestriction
+                : subject.ageRestriction
+            };
+          }),
+          targetObj: prevContentState.targetObj
+            ? {
+                ...prevContentState.targetObj,
+                subject: prevContentState.targetObj.subject
+                  ? {
+                      ...prevContentState.targetObj.subject,
+                      ageRestriction:
+                        prevContentState.targetObj.subject.id ===
+                          action.contentId && action.contentType === 'subject'
+                          ? action.ageRestriction
+                          : prevContentState.targetObj.subject.ageRestriction
+                    }
+                  : undefined
+              }
+            : undefined
+        };
+      }
+      return newState;
+    }
     default:
       return state;
   }

@@ -146,7 +146,8 @@ function Comments({
       rootCommentId,
       subjectId,
       targetCommentId,
-      isReply
+      isReply,
+      ageRestriction
     }: {
       attachment: any;
       commentContent: string;
@@ -158,6 +159,7 @@ function Comments({
       subjectId: number;
       targetCommentId: number | null;
       isReply: boolean;
+      ageRestriction: 'teenager' | 'adult' | null;
     }) => {
       if (banned?.posting) {
         return;
@@ -221,7 +223,8 @@ function Comments({
           filePath,
           fileName: appliedFileName,
           fileSize: file.size,
-          thumbUrl
+          thumbUrl,
+          ageRestriction
         });
         if (isReply) {
           onReplySubmit({
@@ -276,11 +279,13 @@ function Comments({
     async ({
       content,
       rootCommentId,
-      targetCommentId
+      targetCommentId,
+      ageRestriction
     }: {
       content: string;
       rootCommentId: number | null;
       targetCommentId: number | null;
+      ageRestriction?: 'teenager' | 'adult' | null;
     }) => {
       if (banned?.posting) {
         return;
@@ -291,7 +296,8 @@ function Comments({
           content,
           parent,
           rootCommentId,
-          targetCommentId
+          targetCommentId,
+          ageRestriction
         });
         onReplySubmit({
           ...comment,

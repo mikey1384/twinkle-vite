@@ -24,6 +24,7 @@ import {
 import { v1 as uuidv1 } from 'uuid';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import RewardLevelForm from '~/components/Forms/RewardLevelForm';
+import AgeRestrictionSelector from '~/components/Forms/AgeRestrictionSelector';
 import Icon from '~/components/Icon';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import SecretMessageInput from '~/components/Forms/SecretMessageInput';
@@ -80,6 +81,7 @@ function SubjectInput({
       hasSecretAnswer: boolean;
       attachment: any;
       rewardLevel: number;
+      ageRestriction: 'teenager' | 'adult' | null;
     };
   };
   title: string;
@@ -155,10 +157,13 @@ function SubjectInput({
   const onSetSubjectRewardLevel = useInputContext(
     (v) => v.actions.onSetSubjectRewardLevel
   );
+  const onSetSubjectAgeRestriction = useInputContext(
+    (v) => v.actions.onSetSubjectAgeRestriction
+  );
   const onSetSubjectTitle = useInputContext((v) => v.actions.onSetSubjectTitle);
 
   const { details } = subject;
-  const { attachment, secretAttachment, rewardLevel } = details;
+  const { attachment, secretAttachment, rewardLevel, ageRestriction } = details;
 
   const [attachContentModalShown, setAttachContentModalShown] = useState(false);
   const [description, setDescription] = useState(details.description);
@@ -289,6 +294,7 @@ function SubjectInput({
       setIsMadeByUser(nextIsMadeByUser);
       isMadeByUserRef.current = nextIsMadeByUser;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     subject?.descriptionFieldShown,
     subject?.details?.title,
@@ -297,7 +303,6 @@ function SubjectInput({
     subject?.details?.hasSecretAnswer,
     subject.hasSecretAnswer,
     subject?.isMadeByUser,
-    subject?.details,
     titleRef,
     descriptionRef,
     onSetTitle
@@ -606,6 +611,11 @@ function SubjectInput({
                   />
                 </div>
               )}
+              <AgeRestrictionSelector
+                ageRestriction={ageRestriction}
+                onChange={onSetSubjectAgeRestriction}
+                style={{ marginTop: '1.5rem' }}
+              />
               <div style={{ marginTop: '1rem' }} className="button-container">
                 <SwitchButton
                   checked={hasSecretAnswer}
@@ -844,6 +854,7 @@ function SubjectInput({
     }
     try {
       const data = await uploadContent({
+        ageRestriction,
         rootId: attachment?.id,
         rootType: attachment?.contentType,
         title,

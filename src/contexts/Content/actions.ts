@@ -163,6 +163,22 @@ export default function ContentActions(dispatch: Dispatch) {
         data
       });
     },
+    onUpdateContentAgeRestriction({
+      contentId,
+      contentType,
+      ageRestriction
+    }: {
+      contentId: number;
+      contentType: string;
+      ageRestriction: 'teenager' | 'adult' | null;
+    }) {
+      return dispatch({
+        type: 'UPDATE_CONTENT_AGE_RESTRICTION',
+        contentId,
+        contentType,
+        ageRestriction
+      });
+    },
     onEditRewardComment({ id, text }: { id: number; text: string }) {
       return dispatch({
         type: 'EDIT_REWARD_COMMENT',

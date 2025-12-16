@@ -7,7 +7,7 @@ import Loading from '~/components/Loading';
 import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
-import { useAppContext, useProfileContext } from '~/contexts';
+import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import EmptyStateMessage from '~/components/EmptyStateMessage';
@@ -40,6 +40,7 @@ export default function Feeds({
   const loadingMoreRef = useRef(false);
   const selectedSection = useRef('all');
   const byUserSelected = useRef(false);
+  const myUsername = useKeyContext((v) => v.myState.username);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadFeedsByUser = useAppContext(
     (v) => v.requestHelpers.loadFeedsByUser
@@ -120,38 +121,43 @@ export default function Feeds({
     }
   }, [filterBarShown, filter, section, username, navigate]);
 
+  const isOwnProfile = myUsername === username;
+  const displayName = isOwnProfile ? 'You' : username;
+  const haveOrHas = isOwnProfile ? 'have' : 'has';
+  const haventOrHasnt = isOwnProfile ? "haven't" : "hasn't";
+
   const noFeedLabel = useMemo(() => {
     switch (section) {
       case 'all':
-        return `${username} has not posted anything, yet`;
+        return `${displayName} ${haveOrHas} not posted anything, yet`;
       case 'ai-stories':
-        return `${username} has not cleared any AI Story, yet`;
+        return `${displayName} ${haveOrHas} not cleared any AI Story, yet`;
       case 'subjects':
-        return `${username} has not posted a subject, yet`;
+        return `${displayName} ${haveOrHas} not posted a subject, yet`;
       case 'comments':
-        return `${username} has not posted a comment, yet`;
+        return `${displayName} ${haveOrHas} not posted a comment, yet`;
       case 'links':
-        return `${username} has not posted a link, yet`;
+        return `${displayName} ${haveOrHas} not posted a link, yet`;
       case 'reflections':
-        return `${username} has not shared any daily reflection, yet`;
+        return `${displayName} ${haveOrHas} not shared any daily reflection, yet`;
       case 'videos':
-        return `${username} has not posted a video, yet`;
+        return `${displayName} ${haveOrHas} not posted a video, yet`;
       case 'watched':
-        return `${username} has not watched any XP video so far`;
+        return `${displayName} ${haveOrHas} not watched any XP video so far`;
     }
-  }, [section, username]);
+  }, [section, displayName, haveOrHas]);
   const noFeedByUserLabel = useMemo(() => {
     switch (section) {
       case 'all':
-        return `${username} hasn't posted anything to show here`;
+        return `${displayName} ${haventOrHasnt} posted anything to show here`;
       case 'subjects':
-        return `${username} hasn't posted any subject to show here`;
+        return `${displayName} ${haventOrHasnt} posted any subject to show here`;
       case 'links':
-        return `${username} hasn't posted any link to show here`;
+        return `${displayName} ${haventOrHasnt} posted any link to show here`;
       case 'videos':
-        return `${username} hasn't posted any video to show here`;
+        return `${displayName} ${haventOrHasnt} posted any video to show here`;
     }
-  }, [section, username]);
+  }, [section, displayName, haventOrHasnt]);
   const emptyMessage = useMemo(() => {
     return filter === 'byuser' ? noFeedByUserLabel : noFeedLabel;
   }, [filter, noFeedByUserLabel, noFeedLabel]);
@@ -197,9 +203,9 @@ export default function Feeds({
           >
             {[
               { key: 'all', label: 'All' },
+              { key: 'dailyReflection', label: 'Reflections' },
               { key: 'comment', label: 'Comments' },
               { key: 'subject', label: 'Subjects' },
-              { key: 'dailyReflection', label: 'Reflections' },
               { key: 'aiStory', label: 'AI Stories' },
               { key: 'video', label: 'Videos' },
               { key: 'url', label: 'Links' }
@@ -339,9 +345,9 @@ export default function Feeds({
               style={{ alignSelf: 'flex-start' }}
               menuItems={[
                 { key: 'all', label: 'All' },
+                { key: 'dailyReflection', label: 'Reflections' },
                 { key: 'comment', label: 'Comments' },
                 { key: 'subject', label: 'Subjects' },
-                { key: 'dailyReflection', label: 'Reflections' },
                 { key: 'aiStory', label: 'AI Stories' },
                 { key: 'video', label: 'Videos' },
                 { key: 'url', label: 'Links' }

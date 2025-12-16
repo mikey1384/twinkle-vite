@@ -86,8 +86,14 @@ export default function CommentInputArea({
   const attachment = useInputContext(
     (v) => v.state[contentType + contentId]?.attachment
   );
+  const ageRestriction = useInputContext(
+    (v) => v.state[contentType + contentId]?.ageRestriction ?? null
+  );
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
+  );
+  const onSetCommentAgeRestriction = useInputContext(
+    (v) => v.actions.onSetCommentAgeRestriction
   );
   const onSetUploadingFile = useContentContext(
     (v) => v.actions.onSetUploadingFile
@@ -158,7 +164,8 @@ export default function CommentInputArea({
           file: attachment.file,
           rootCommentId,
           subjectId,
-          targetCommentId
+          targetCommentId,
+          ageRestriction
         });
         onSetCommentAttachment({
           attachment: null,
@@ -171,10 +178,16 @@ export default function CommentInputArea({
           content: text,
           rootCommentId,
           subjectId,
-          targetCommentId
+          targetCommentId,
+          ageRestriction
         });
         setUploading(false);
       }
+      onSetCommentAgeRestriction({
+        ageRestriction: null,
+        contentType,
+        contentId
+      });
       onSetUploadingFile({
         contentId,
         contentType,

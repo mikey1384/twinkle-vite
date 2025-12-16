@@ -3,6 +3,9 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import NextDayCountdown from '~/components/NextDayCountdown';
+import AgeRestrictionSelector, {
+  AgeRestriction
+} from '~/components/Forms/AgeRestrictionSelector';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
@@ -108,6 +111,7 @@ export default function GradingResult({
   const [aiSelectedVersion, setAiSelectedVersion] = useState<
     'original' | 'refined' | 'both'
   >('refined');
+  const [ageRestriction, setAgeRestriction] = useState<AgeRestriction>(null);
 
   async function handleRefine() {
     if (refinedResponse || refining) return;
@@ -175,7 +179,8 @@ export default function GradingResult({
 
       const result = await shareDailyQuestionResponse({
         responseId,
-        responseText: textToShare
+        responseText: textToShare,
+        ageRestriction
       });
 
       if (result.error) {
@@ -195,6 +200,7 @@ export default function GradingResult({
 
       setIsShared(true);
       setShowVersionSelector(false);
+      setAgeRestriction(null);
     } catch (err) {
       console.error('Failed to share:', err);
       setShareError('Failed to share. Please try again.');
@@ -407,6 +413,13 @@ export default function GradingResult({
                 : originalResponse || response}
             </p>
           </div>
+
+          {/* Age Restriction Selector */}
+          <AgeRestrictionSelector
+            ageRestriction={ageRestriction}
+            onChange={setAgeRestriction}
+            style={{ marginTop: '1rem' }}
+          />
         </div>
       )}
 

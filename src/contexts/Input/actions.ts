@@ -51,6 +51,22 @@ export default function InputActions(dispatch: Dispatch) {
         contentId
       });
     },
+    onSetCommentAgeRestriction({
+      ageRestriction,
+      contentType,
+      contentId
+    }: {
+      ageRestriction: 'teenager' | 'adult' | null;
+      contentType: string;
+      contentId: number;
+    }) {
+      return dispatch({
+        type: 'SET_COMMENT_AGE_RESTRICTION',
+        ageRestriction,
+        contentType,
+        contentId
+      });
+    },
     onSetContentAlreadyPosted(alreadyPosted: boolean) {
       return dispatch({
         type: 'SET_CONTENT_ALREADY_POSTED',
@@ -73,6 +89,12 @@ export default function InputActions(dispatch: Dispatch) {
       return dispatch({
         type: 'SET_CONTENT_REWARD_LEVEL',
         rewardLevel
+      });
+    },
+    onSetContentAgeRestriction(ageRestriction: 'teenager' | 'adult' | null) {
+      return dispatch({
+        type: 'SET_CONTENT_AGE_RESTRICTION',
+        ageRestriction
       });
     },
     onSetContentTitle(title: string) {
@@ -289,6 +311,12 @@ export default function InputActions(dispatch: Dispatch) {
       return dispatch({
         type: 'SET_SUBJECT_REWARD_LEVEL',
         rewardLevel
+      });
+    },
+    onSetSubjectAgeRestriction(ageRestriction: 'teenager' | 'adult' | null) {
+      return dispatch({
+        type: 'SET_SUBJECT_AGE_RESTRICTION',
+        ageRestriction
       });
     },
     onSetSubjectTitle(title: string) {

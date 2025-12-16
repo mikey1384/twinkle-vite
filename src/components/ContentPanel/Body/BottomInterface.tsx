@@ -8,6 +8,10 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
 import Icon from '~/components/Icon';
+import NewModal from '~/components/NewModal';
+import AgeRestrictionSelector, {
+  AgeRestriction
+} from '~/components/Forms/AgeRestrictionSelector';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth, desktopMinWidth } from '~/constants/css';
 import { ADMIN_USER_ID } from '~/constants/defaultValues';
@@ -18,6 +22,7 @@ import {
   isMobile,
   isTablet
 } from '~/helpers';
+import { useAppContext, useContentContext } from '~/contexts';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 const commentLabel = 'Comment';
@@ -148,6 +153,16 @@ export default function BottomInterface({
     views
   } = contentObj;
   const [copiedShown, setCopiedShown] = useState(false);
+  const [ageRestrictionModalShown, setAgeRestrictionModalShown] = useState(false);
+  const [selectedAgeRestriction, setSelectedAgeRestriction] =
+    useState<AgeRestriction>(contentObj.ageRestriction || null);
+  const [updatingAgeRestriction, setUpdatingAgeRestriction] = useState(false);
+  const updateAgeRestriction = useAppContext(
+    (v) => v.requestHelpers.updateAgeRestriction
+  );
+  const onUpdateContentAgeRestriction = useContentContext(
+    (v) => v.actions.onUpdateContentAgeRestriction
+  );
   const isRewardedByUser = useMemo(() => {
     return (
       rewards.filter(
@@ -267,6 +282,20 @@ export default function BottomInterface({
           </>
         ),
         onClick: () => onSetDeleteConfirmModalShown(true)
+      });
+    }
+    if (userCanEditThis && ['video', 'url', 'subject', 'comment'].includes(contentType)) {
+      items.push({
+        label: (
+          <>
+            <Icon icon="eye" />
+            <span style={{ marginLeft: '1rem' }}>Visibility</span>
+          </>
+        ),
+        onClick: () => {
+          setSelectedAgeRestriction(contentObj.ageRestriction || null);
+          setAgeRestrictionModalShown(true);
+        }
       });
     }
     if (userCanCloseThis) {
@@ -513,8 +542,60 @@ export default function BottomInterface({
           </div>
         )}
       </div>
+      {ageRestrictionModalShown && (
+        <NewModal
+          isOpen={ageRestrictionModalShown}
+          onClose={() => setAgeRestrictionModalShown(false)}
+          title="Set Visibility"
+          size="sm"
+          footer={
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button
+                variant="ghost"
+                onClick={() => setAgeRestrictionModalShown(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="solid"
+                color="logoBlue"
+                loading={updatingAgeRestriction}
+                onClick={handleUpdateAgeRestriction}
+              >
+                Save
+              </Button>
+            </div>
+          }
+        >
+          <AgeRestrictionSelector
+            ageRestriction={selectedAgeRestriction}
+            onChange={setSelectedAgeRestriction}
+          />
+        </NewModal>
+      )}
     </div>
   );
+
+  async function handleUpdateAgeRestriction() {
+    try {
+      setUpdatingAgeRestriction(true);
+      await updateAgeRestriction({
+        contentId,
+        contentType,
+        ageRestriction: selectedAgeRestriction
+      });
+      onUpdateContentAgeRestriction({
+        contentId,
+        contentType,
+        ageRestriction: selectedAgeRestriction
+      });
+      setAgeRestrictionModalShown(false);
+    } catch (error) {
+      console.error('Failed to update age restriction:', error);
+    } finally {
+      setUpdatingAgeRestriction(false);
+    }
+  }
 
   async function handleCommentButtonClick() {
     if (!commentsShown && !(autoExpand && !secretHidden)) {
