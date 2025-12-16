@@ -346,6 +346,9 @@ export default function Main({
   const onTrimSubchannelMessages = useChatContext(
     (v) => v.actions.onTrimSubchannelMessages
   );
+  const onTrimTopicMessages = useChatContext(
+    (v) => v.actions.onTrimTopicMessages
+  );
   const onUpdateChannelPathIdHash = useChatContext(
     (v) => v.actions.onUpdateChannelPathIdHash
   );
@@ -409,6 +412,8 @@ export default function Main({
   const currentPathIdRef = useRef(currentPathId);
   const MessagesRef: React.RefObject<any> = useRef(null);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
+  const channelsObjRef = useRef(channelsObj);
+  const currentTopicIdRef = useRef(topicId);
   const prevTopicId = useRef(topicId);
   const activeParamsRef = useRef({
     pathId: currentPathId,
@@ -439,6 +444,14 @@ export default function Main({
   useEffect(() => {
     wordleModalShownRef.current = wordleModalShown;
   }, [wordleModalShown]);
+
+  useEffect(() => {
+    channelsObjRef.current = channelsObj;
+  }, [channelsObj]);
+
+  useEffect(() => {
+    currentTopicIdRef.current = topicId;
+  }, [topicId]);
 
   useEffect(() => {
     activeParamsRef.current = {
@@ -552,6 +565,23 @@ export default function Main({
         userId &&
         loaded
       ) {
+        if (
+          prevTopicId.current &&
+          topicId &&
+          prevTopicId.current !== topicId &&
+          selectedChannelId
+        ) {
+          const channel = channelsObjRef.current[selectedChannelId];
+          const topicData = channel?.topicObj?.[prevTopicId.current];
+          const topicMessageIds = topicData?.messageIds || [];
+          const messageIdsToRemove =
+            topicMessageIds.length > 20 ? topicMessageIds.slice(21) : [];
+          onTrimTopicMessages({
+            channelId: selectedChannelId,
+            topicId: prevTopicId.current,
+            messageIdsToRemove
+          });
+        }
         const isChannelChange =
           Number(currentPathId) !== Number(prevPathId.current);
         prevPathId.current = currentPathId;
@@ -839,13 +869,40 @@ export default function Main({
     socket.emit('change_away_status', pageVisible);
     return function cleanUp() {
       if (selectedChannelId) {
+        const channel = channelsObjRef.current[selectedChannelId];
         if (selectedSubchannelId) {
+          const subchannel = channel?.subchannelObj?.[selectedSubchannelId];
+          const subchannelMessageIds = subchannel?.messageIds || [];
+          const messageIdsToRemove =
+            subchannelMessageIds.length > 20
+              ? subchannelMessageIds.slice(21)
+              : [];
           onTrimSubchannelMessages({
             channelId: selectedChannelId,
-            subchannelId: selectedSubchannelId
+            subchannelId: selectedSubchannelId,
+            messageIdsToRemove
           });
         } else {
-          onTrimMessages(selectedChannelId);
+          const messageIds = channel?.messageIds || [];
+          const messageIdsToRemove =
+            messageIds.length > 20 ? messageIds.slice(21) : [];
+          onTrimMessages({
+            channelId: selectedChannelId,
+            messageIdsToRemove
+          });
+        }
+
+        const currentTopicId = currentTopicIdRef.current;
+        if (currentTopicId) {
+          const topicData = channel?.topicObj?.[currentTopicId];
+          const topicMessageIds = topicData?.messageIds || [];
+          const topicMessageIdsToRemove =
+            topicMessageIds.length > 20 ? topicMessageIds.slice(21) : [];
+          onTrimTopicMessages({
+            channelId: selectedChannelId,
+            topicId: Number(currentTopicId),
+            messageIdsToRemove: topicMessageIdsToRemove
+          });
         }
       }
     };
@@ -971,7 +1028,8 @@ export default function Main({
           onSetFavoriteChannel,
           onSetMediaStarted,
           onSetMessageState,
-          onRegisterSaveScrollPositionForAll: handleRegisterSaveScrollPositionForAll,
+          onRegisterSaveScrollPositionForAll:
+            handleRegisterSaveScrollPositionForAll,
           onSaveScrollPositionForAll: handleSaveScrollPositionForAll,
           onSetReplyTarget,
           onSetSiteUrl,

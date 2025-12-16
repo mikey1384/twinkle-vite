@@ -1,4 +1,5 @@
 import { Dispatch } from '~/types';
+import { cleanupMessageCaches } from '~/constants/state';
 
 export default function ChatActions(dispatch: Dispatch) {
   return {
@@ -1904,7 +1905,17 @@ export default function ChatActions(dispatch: Dispatch) {
         replyTarget
       });
     },
-    onTrimMessages(channelId: number) {
+    onTrimMessages({
+      channelId,
+      messageIdsToRemove
+    }: {
+      channelId: number;
+      messageIdsToRemove?: number[];
+    }) {
+      // Clean up global caches for removed messages
+      if (messageIdsToRemove?.length) {
+        cleanupMessageCaches(messageIdsToRemove);
+      }
       return dispatch({
         type: 'TRIM_MESSAGES',
         channelId
@@ -1912,15 +1923,39 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onTrimSubchannelMessages({
       channelId,
-      subchannelId
+      subchannelId,
+      messageIdsToRemove
     }: {
       channelId: number;
       subchannelId: number;
+      messageIdsToRemove?: number[];
     }) {
+      // Clean up global caches for removed messages
+      if (messageIdsToRemove?.length) {
+        cleanupMessageCaches(messageIdsToRemove);
+      }
       return dispatch({
         type: 'TRIM_SUBCHANNEL_MESSAGES',
         channelId,
         subchannelId
+      });
+    },
+    onTrimTopicMessages({
+      channelId,
+      topicId,
+      messageIdsToRemove
+    }: {
+      channelId: number;
+      topicId: number;
+      messageIdsToRemove?: number[];
+    }) {
+      if (messageIdsToRemove?.length) {
+        cleanupMessageCaches(messageIdsToRemove);
+      }
+      return dispatch({
+        type: 'TRIM_TOPIC_MESSAGES',
+        channelId,
+        topicId
       });
     },
     onUpdateAICard({

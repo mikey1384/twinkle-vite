@@ -3,6 +3,7 @@ import DefaultButtons from './DefaultButtons';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext } from '~/contexts';
+import { getMessage } from '~/constants/state';
 
 export default function RightButtons({
   buttonColor,
@@ -51,17 +52,13 @@ export default function RightButtons({
     (v) => v.requestHelpers.cancelAIMessage
   );
   const onCancelAIMessage = useChatContext((v) => v.actions.onCancelAIMessage);
-  const channelState = useChatContext(
-    (v) => v.state.channelsObj[selectedChannelId]
-  );
   return isCielChannel || isZeroChannel ? (
     currentlyStreamingAIMsgId ? (
       <Button
         color={buttonColor}
         filled
         onClick={() => {
-          const aiMessage =
-            channelState?.messagesObj?.[currentlyStreamingAIMsgId];
+          const aiMessage = getMessage(currentlyStreamingAIMsgId);
           const hasContent =
             aiMessage?.content && aiMessage.content.trim().length > 0;
 

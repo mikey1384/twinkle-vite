@@ -6,7 +6,8 @@ import NewModal from '~/components/NewModal';
 import ModalContentWrapper from '../ModalContentWrapper';
 import GameModalFooter from '../GameModalFooter';
 import Game from './ChessGame';
-import Rewind from './Rewind';import { socket } from '~/constants/sockets/api';
+import Rewind from './Rewind';
+import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
   useChatContext,
@@ -15,6 +16,7 @@ import {
 } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
+import { getMessage } from '~/constants/state';
 
 const acceptDrawLabel = 'Accept Draw';
 const chessLabel = 'Chess';
@@ -119,11 +121,10 @@ export default function ChessModal({
 
   const latestChessRelevantMessage = useMemo(() => {
     const messageIds: any[] = currentChannel?.messageIds || [];
-    const messagesObj: Record<string, any> = currentChannel?.messagesObj || {};
     const getMessageById = (id: any) =>
-      messagesObj[id] ??
-      messagesObj[String(id)] ??
-      messagesObj[Number(id)] ??
+      getMessage(id) ??
+      getMessage(String(id)) ??
+      getMessage(Number(id)) ??
       null;
 
     for (const rawId of messageIds) {
@@ -169,7 +170,6 @@ export default function ChessModal({
     return null;
   }, [
     currentChannel?.messageIds,
-    currentChannel?.messagesObj,
     currentChannel?.recentChessMessage
   ]);
 

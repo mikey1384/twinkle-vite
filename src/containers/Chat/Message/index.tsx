@@ -15,7 +15,7 @@ import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
 import { useAppContext } from '~/contexts';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { MessageHeights } from '~/constants/state';
+import { MessageHeights, setMessage } from '~/constants/state';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Message({
@@ -130,6 +130,13 @@ function Message({
   const [ComponentRef, inView] = useInView();
   const PanelRef = useRef(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [localMessage, setLocalMessage] = useState(message);
+
+  useEffect(() => {
+    if (message?.isLoaded) {
+      setLocalMessage(message);
+    }
+  }, [message]);
 
   useEffect(() => {
     if (inView) {
@@ -141,22 +148,20 @@ function Message({
   }, [index, onSetVisibleMessageIndex, onSetVisibleMessageId, inView, message?.id]);
 
   useEffect(() => {
-    if (!message?.isLoaded && message?.id && !message?.isNotification) {
+    if (!localMessage?.isLoaded && message?.id && !message?.isNotification) {
       (async function init() {
         try {
           const data = await loadChatMessage({ messageId: message?.id });
-          onSetMessageState({
-            channelId,
-            messageId: message?.id,
-            newState: { ...data, isLoaded: true }
-          });
+          const loadedMessage = { ...message, ...data, isLoaded: true };
+          setMessage(message.id, loadedMessage);
+          setLocalMessage(loadedMessage);
         } catch (_error) {
           setLoadFailed(true);
         }
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [message?.isLoaded, message?.isNotification, message?.id]);
+  }, [localMessage?.isLoaded, message?.isNotification, message?.id]);
 
   useLazyLoad({
     PanelRef,
@@ -254,7 +259,7 @@ function Message({
             `}
             ref={PanelRef}
           >
-            {!message?.isLoaded && !message?.isNotification ? (
+            {!localMessage?.isLoaded && !message?.isNotification ? (
               <LoadingPlaceholder />
             ) : contentShown || isOneOfVisibleMessages ? (
               <MessageBody
@@ -271,7 +276,7 @@ function Message({
                 isModificationNotice={isModificationNotice}
                 groupObjs={groupObjs}
                 onSetGroupObjs={onSetGroupObjs}
-                message={message}
+                message={localMessage}
                 nextMessageHasTopic={nextMessageHasTopic}
                 prevMessageHasTopic={prevMessageHasTopic}
                 onDelete={onDelete}

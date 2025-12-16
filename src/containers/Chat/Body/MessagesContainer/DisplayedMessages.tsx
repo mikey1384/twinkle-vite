@@ -13,7 +13,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Message from '../../Message';
 import LocalContext from '../../Context';
-import { MessageHeights } from '~/constants/state';
+import { MessageHeights, getMessage } from '~/constants/state';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -155,6 +155,7 @@ export default function DisplayedMessages({
   const searchChatMessages = useAppContext(
     (v) => v.requestHelpers.searchChatMessages
   );
+  const messagesVersion = useChatContext((v) => v.state.messagesVersion);
   const onLoadMoreTopicMessages = useChatContext(
     (v) => v.actions.onLoadMoreTopicMessages
   );
@@ -166,7 +167,6 @@ export default function DisplayedMessages({
   );
   const {
     messageIds = [],
-    messagesObj = {},
     messagesLoadMoreButton = false,
     searchedLoadMoreButton = false,
     searchedMessageIds = [],
@@ -221,17 +221,11 @@ export default function DisplayedMessages({
     } else {
       displayedMessageIds = isSearchActive ? searchedMessageIds : messageIds;
     }
-    let displayedMessagesObj: Record<string, any> = {};
-    if (subchannel?.messagesObj) {
-      displayedMessagesObj = subchannel.messagesObj;
-    } else {
-      displayedMessagesObj = messagesObj;
-    }
     const result = [];
     const dupe: Record<string, any> = {};
     for (const messageId of displayedMessageIds) {
       if (!dupe[messageId]) {
-        const message = displayedMessagesObj[messageId];
+        const message = getMessage(messageId);
         if (message) {
           result.push(message);
           dupe[messageId] = true;
@@ -239,14 +233,14 @@ export default function DisplayedMessages({
       }
     }
     return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appliedTopicId,
-    currentChannel.topicObj,
+    currentChannel?.topicObj,
     messageIds,
-    messagesObj,
+    messagesVersion,
     selectedTab,
     subchannel?.messageIds,
-    subchannel?.messagesObj,
     isSearchActive,
     searchedMessageIds
   ]);
@@ -652,9 +646,9 @@ export default function DisplayedMessages({
     MessagesRef,
     selectedTab,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    messagesObj[MessageToScrollToFromTopic.current]?.isLoaded,
+    getMessage(MessageToScrollToFromTopic.current)?.isLoaded,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    messagesObj[MessageToScrollToFromAll.current]?.isLoaded,
+    getMessage(MessageToScrollToFromAll.current)?.isLoaded,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     messages[0]?.id
   ]);

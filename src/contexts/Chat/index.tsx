@@ -157,6 +157,7 @@ export const initialChatState = {
   isGeneratingAICard: false,
   latestPathId: null,
   lastSubchannelPaths: {},
+  messagesVersion: 0,
   listedCardIds: [],
   listedCardsLoadMoreButton: false,
   loadingAICardChat: false,
