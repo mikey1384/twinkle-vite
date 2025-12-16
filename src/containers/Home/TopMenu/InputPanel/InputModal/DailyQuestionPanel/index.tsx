@@ -46,6 +46,12 @@ export default function DailyQuestionPanel({
   onClose: () => void;
 }) {
   const { userId, profileTheme } = useKeyContext((v) => v.myState);
+  const getDailyQuestion = useAppContext(
+    (v) => v.requestHelpers.getDailyQuestion
+  );
+  const submitDailyQuestionResponse = useAppContext(
+    (v) => v.requestHelpers.submitDailyQuestionResponse
+  );
   const simplifyDailyQuestion = useAppContext(
     (v) => v.requestHelpers.simplifyDailyQuestion
   );
@@ -96,74 +102,186 @@ export default function DailyQuestionPanel({
     maxBurstSize: 0
   });
 
+  // Refs for smooth progress animation
+  const loadingProgressRef = useRef(0);
+  const loadingTargetRef = useRef(0);
+  const gradingProgressRef = useRef(0);
+  const gradingTargetRef = useRef(0);
+  const loadingAnimationRef = useRef<NodeJS.Timeout | null>(null);
+  const gradingAnimationRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Socket event listeners for progress updates with smooth animation
+  useEffect(() => {
+    function animateProgress(
+      currentRef: React.MutableRefObject<number>,
+      targetRef: React.MutableRefObject<number>,
+      newTarget: number,
+      setter: React.Dispatch<React.SetStateAction<number>>,
+      animationRef: React.MutableRefObject<NodeJS.Timeout | null>,
+      duration: number = 10000
+    ) {
+      // Clear any existing animation
+      if (animationRef.current) {
+        clearInterval(animationRef.current);
+        animationRef.current = null;
+      }
+
+      // If going backwards, jump immediately
+      if (newTarget <= currentRef.current) {
+        currentRef.current = newTarget;
+        targetRef.current = newTarget;
+        setter(newTarget);
+        return;
+      }
+
+      // Jump to the previous target first (complete the previous stage)
+      const previousTarget = targetRef.current;
+      if (previousTarget > currentRef.current) {
+        currentRef.current = previousTarget;
+        setter(previousTarget);
+      }
+
+      // Now animate from the previous target to the new target
+      const startValue = currentRef.current;
+      targetRef.current = newTarget;
+      const difference = newTarget - startValue;
+      const steps = 60; // 60 steps for smooth animation
+      const stepDuration = duration / steps;
+      let currentStep = 0;
+
+      animationRef.current = setInterval(() => {
+        currentStep++;
+        // Ease-out curve for more natural feel
+        const easeProgress = 1 - Math.pow(1 - currentStep / steps, 2);
+        const newValue = Math.round(startValue + difference * easeProgress);
+
+        currentRef.current = newValue;
+        setter(newValue);
+
+        if (currentStep >= steps) {
+          if (animationRef.current) {
+            clearInterval(animationRef.current);
+            animationRef.current = null;
+          }
+          currentRef.current = newTarget;
+          setter(newTarget);
+        }
+      }, stepDuration);
+    }
+
+    function handleQuestionProgress({
+      step,
+      progress
+    }: {
+      step: string;
+      progress: number;
+    }) {
+      setLoadingMessage(step);
+      animateProgress(
+        loadingProgressRef,
+        loadingTargetRef,
+        progress,
+        setLoadingProgress,
+        loadingAnimationRef
+      );
+    }
+
+    function handleGradingProgress({
+      step,
+      progress
+    }: {
+      step: string;
+      progress: number;
+    }) {
+      setGradingMessage(step);
+      animateProgress(
+        gradingProgressRef,
+        gradingTargetRef,
+        progress,
+        setGradingProgress,
+        gradingAnimationRef
+      );
+    }
+
+    socket.on('daily_question_progress', handleQuestionProgress);
+    socket.on('daily_question_grading_progress', handleGradingProgress);
+
+    return () => {
+      socket.off('daily_question_progress', handleQuestionProgress);
+      socket.off('daily_question_grading_progress', handleGradingProgress);
+      if (loadingAnimationRef.current) {
+        clearInterval(loadingAnimationRef.current);
+      }
+      if (gradingAnimationRef.current) {
+        clearInterval(gradingAnimationRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
+
+    let isMounted = true;
+
+    // Reset progress refs
+    loadingProgressRef.current = 0;
+    loadingTargetRef.current = 0;
+    if (loadingAnimationRef.current) {
+      clearInterval(loadingAnimationRef.current);
+      loadingAnimationRef.current = null;
+    }
 
     setScreen('loading');
     setError(null);
     setLoadingProgress(0);
-    setLoadingMessage('Starting...');
+    setLoadingMessage('Loading...');
 
-    function handleProgress({
-      step,
-      totalSteps,
-      message
-    }: {
-      step: number;
-      totalSteps: number;
-      status: string;
-      message: string;
-    }) {
-      setLoadingProgress(Math.floor((step / totalSteps) * 100));
-      setLoadingMessage(message);
-    }
+    async function loadDailyQuestion() {
+      try {
+        const data = await getDailyQuestion();
 
-    function handleGenerated(data: {
-      questionId: number;
-      question: string;
-      hasResponded: boolean;
-      response: any;
-    }) {
-      setQuestionId(data.questionId);
-      setQuestion(data.question);
-      setOriginalQuestion(data.question);
+        if (!isMounted) return;
 
-      if (data.hasResponded && data.response) {
-        setGradingResult({
-          grade: data.response.grade,
-          xpAwarded: data.response.xpAwarded,
-          feedback: data.response.feedback,
-          responseId: data.response.id,
-          isShared: data.response.isShared,
-          sharedWithZero: !!data.response.sharedWithZero,
-          sharedWithCiel: !!data.response.sharedWithCiel,
-          originalResponse: data.response.response || '',
-          sharedResponse: data.response.sharedResponse || null
-        });
-        setResponse(data.response.response || '');
-        setScreen('result');
-      } else {
-        setScreen('start');
+        if (data.error) {
+          setError(data.error);
+          return;
+        }
+
+        setLoadingProgress(100);
+        setQuestionId(data.questionId);
+        setQuestion(data.question);
+        setOriginalQuestion(data.question);
+
+        if (data.hasResponded && data.response) {
+          setGradingResult({
+            grade: data.response.grade,
+            xpAwarded: data.response.xpAwarded,
+            feedback: data.response.feedback,
+            responseId: data.response.id,
+            isShared: data.response.isShared,
+            sharedWithZero: !!data.response.sharedWithZero,
+            sharedWithCiel: !!data.response.sharedWithCiel,
+            originalResponse: data.response.response || '',
+            sharedResponse: data.response.sharedResponse || null
+          });
+          setResponse(data.response.response || '');
+          setScreen('result');
+        } else {
+          setScreen('start');
+        }
+      } catch (err: any) {
+        if (!isMounted) return;
+        console.error('Failed to load daily question:', err);
+        setError(err?.message || 'Failed to load daily question. Please try again.');
       }
     }
 
-    function handleError({ error: errorMsg }: { error: string }) {
-      console.error('Failed to load daily question:', errorMsg);
-      setError(errorMsg || 'Failed to load daily question. Please try again.');
-    }
-
-    socket.on('daily_question_progress', handleProgress);
-    socket.on('daily_question_generated', handleGenerated);
-    socket.on('daily_question_error', handleError);
-
-    socket.emit('generate_daily_question');
+    loadDailyQuestion();
 
     return () => {
-      socket.off('daily_question_progress', handleProgress);
-      socket.off('daily_question_generated', handleGenerated);
-      socket.off('daily_question_error', handleError);
+      isMounted = false;
     };
-  }, [userId]);
+  }, [userId, getDailyQuestion]);
 
   useEffect(() => {
     if (screen !== 'writing') return;
@@ -189,84 +307,7 @@ export default function DailyQuestionPanel({
     };
   }, [screen]);
 
-  useEffect(() => {
-    if (screen !== 'grading') return;
-
-    function handleGradingProgress({
-      step,
-      totalSteps,
-      message
-    }: {
-      step: number;
-      totalSteps: number;
-      status: string;
-      message: string;
-    }) {
-      setGradingProgress(Math.floor((step / totalSteps) * 100));
-      setGradingMessage(message);
-    }
-
-    function handleGraded(result: {
-      isThoughtful: boolean;
-      rejectionReason?: string;
-      responseId?: number;
-      grade?: string;
-      xpAwarded?: number;
-      feedback?: string;
-      newXP?: number;
-    }) {
-      gradingCompleteRef.current = true;
-      setGradingProgress(100);
-
-      if (result.newXP && userId) {
-        onSetUserState({
-          userId,
-          newState: { twinkleXP: result.newXP }
-        });
-      }
-
-      if (result.isThoughtful) {
-        onUpdateTodayStats({
-          newStats: { dailyQuestionCompleted: true }
-        });
-      }
-
-      setTimeout(() => {
-        setGradingResult({
-          grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
-          xpAwarded: result.xpAwarded || 0,
-          feedback: result.isThoughtful
-            ? result.feedback || ''
-            : result.rejectionReason ||
-              'Nice try — you can start over and try again right away.',
-          responseId: result.responseId || 0,
-          isShared: false,
-          sharedWithZero: false,
-          sharedWithCiel: false,
-          originalResponse: response.trim(),
-          sharedResponse: null
-        });
-        setScreen('result');
-      }, 500);
-    }
-
-    function handleGradingError({ error: errorMsg }: { error: string }) {
-      console.error('Failed to grade response:', errorMsg);
-      setError(errorMsg || 'Failed to submit. Please try again.');
-    }
-
-    socket.on('daily_question_grading_progress', handleGradingProgress);
-    socket.on('daily_question_graded', handleGraded);
-    socket.on('daily_question_grading_error', handleGradingError);
-
-    return () => {
-      socket.off('daily_question_grading_progress', handleGradingProgress);
-      socket.off('daily_question_graded', handleGraded);
-      socket.off('daily_question_grading_error', handleGradingError);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, userId]);
-
+  
   const handleStart = useCallback(() => {
     hasStartedRef.current = true;
     // Initialize typing metadata
@@ -359,54 +400,74 @@ export default function DailyQuestionPanel({
     e.preventDefault();
   }
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!questionId || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
-    // Finalize typing metadata
-    typingMetadataRef.current.endTime = Date.now();
-    const metadata = typingMetadataRef.current;
-
-    // Calculate summary stats for backend validation
-    const typingDurationMs = metadata.endTime - metadata.startTime;
-    const keystrokeCount = metadata.keystrokeEvents.length;
-
-    // Calculate average interval between keystrokes
-    let avgIntervalMs = 0;
-    if (keystrokeCount > 1) {
-      const intervals: number[] = [];
-      for (let i = 1; i < metadata.keystrokeEvents.length; i++) {
-        intervals.push(
-          metadata.keystrokeEvents[i].timestamp -
-            metadata.keystrokeEvents[i - 1].timestamp
-        );
-      }
-      avgIntervalMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    // Reset grading progress refs
+    gradingProgressRef.current = 0;
+    gradingTargetRef.current = 0;
+    if (gradingAnimationRef.current) {
+      clearInterval(gradingAnimationRef.current);
+      gradingAnimationRef.current = null;
     }
-
-    // Count "bursts" - events where multiple chars appeared at once
-    const burstEvents = metadata.keystrokeEvents.filter(
-      (e) => e.charCount > 1
-    ).length;
 
     setScreen('grading');
     setGradingProgress(0);
-    setGradingMessage('Starting...');
+    setGradingMessage('Submitting...');
     gradingCompleteRef.current = false;
 
-    socket.emit('grade_daily_question_response', {
-      questionId,
-      response: response.trim() || '(no response)',
-      typingMetadata: {
-        typingDurationMs,
-        totalCharsTyped: metadata.totalCharsTyped,
-        keystrokeCount,
-        avgIntervalMs: Math.round(avgIntervalMs),
-        maxBurstSize: metadata.maxBurstSize,
-        burstEventCount: burstEvents
+    try {
+      const result = await submitDailyQuestionResponse({
+        questionId,
+        response: response.trim() || '(no response)'
+      });
+
+      if (result.error) {
+        setError(result.error);
+        isSubmittingRef.current = false;
+        return;
       }
-    });
-  }, [questionId, response]);
+
+      gradingCompleteRef.current = true;
+      setGradingProgress(100);
+
+      if (result.newXP && userId) {
+        onSetUserState({
+          userId,
+          newState: { twinkleXP: result.newXP }
+        });
+      }
+
+      if (result.isThoughtful) {
+        onUpdateTodayStats({
+          newStats: { dailyQuestionCompleted: true }
+        });
+      }
+
+      setTimeout(() => {
+        setGradingResult({
+          grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
+          xpAwarded: result.xpAwarded || 0,
+          feedback: result.isThoughtful
+            ? result.feedback || ''
+            : result.rejectionReason ||
+              'Nice try — you can start over and try again right away.',
+          responseId: result.responseId || 0,
+          isShared: false,
+          sharedWithZero: false,
+          sharedWithCiel: false,
+          originalResponse: response.trim(),
+          sharedResponse: null
+        });
+        setScreen('result');
+      }, 500);
+    } catch (err: any) {
+      console.error('Failed to submit response:', err);
+      setError(err?.message || 'Failed to submit. Please try again.');
+      isSubmittingRef.current = false;
+    }
+  }, [questionId, response, userId, submitDailyQuestionResponse, onSetUserState, onUpdateTodayStats]);
 
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
