@@ -13,7 +13,6 @@ export default function ConditionalButton({
   return conditionPassStatus === 'fail' ? null : (
     <Button
       disabled={nextButtonDisabled}
-      filled
       color={conditionPassStatus ? 'green' : 'logoBlue'}
       onClick={onCheckNavCondition}
     >

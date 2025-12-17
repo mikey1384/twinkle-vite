@@ -56,7 +56,6 @@ export default function NonOwnerMenu({
           disabled={disabled}
           onClick={() => setConfirmModalShown(true)}
           color="oceanBlue"
-          filled
         >
           {!disabled && (
             <Icon

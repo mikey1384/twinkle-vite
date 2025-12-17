@@ -9,7 +9,12 @@ import {
 import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
-import { setMessage, setMessages, getMessage, deleteMessage } from '~/constants/state';
+import {
+  setMessage,
+  setMessages,
+  getMessage,
+  deleteMessage
+} from '~/constants/state';
 
 interface BookmarkListMap {
   ai?: any[];
@@ -368,7 +373,11 @@ export default function ChatReducer(
       const updatedAllMemberIds = [action.newOwner.id, ...filteredMemberIds];
 
       // Store notification in global store
-      setMessage(notificationId, { ...action.message, id: notificationId, isLoaded: true });
+      setMessage(notificationId, {
+        ...action.message,
+        id: notificationId,
+        isLoaded: true
+      });
 
       return {
         ...state,
@@ -936,6 +945,27 @@ export default function ChatReducer(
         });
       }
 
+      const existingTopicObj =
+        state.channelsObj[loadedChannel.id]?.topicObj || {};
+      const mergedTopicObj: Record<string, any> = { ...existingTopicObj };
+      if (loadedChannel.topicObj) {
+        for (const topicId in loadedChannel.topicObj) {
+          const existingTopic = existingTopicObj[topicId];
+          const serverTopic = loadedChannel.topicObj[topicId];
+          mergedTopicObj[topicId] = {
+            ...existingTopic,
+            ...serverTopic,
+            // Preserve critical client-side state if topic was already loaded
+            ...(existingTopic?.loaded
+              ? {
+                  loaded: true,
+                  messageIds: existingTopic.messageIds
+                }
+              : {})
+          };
+        }
+      }
+
       return {
         ...state,
         selectedChatTab: determineSelectedChatTab({
@@ -967,10 +997,10 @@ export default function ChatReducer(
               state.channelsObj[loadedChannel.id]?.topicHistory || [],
             currentTopicIndex:
               state.channelsObj[loadedChannel.id]?.currentTopicIndex ?? -1,
-            topicObj: {
-              ...state.channelsObj[loadedChannel.id]?.topicObj,
-              ...loadedChannel.topicObj
-            },
+            selectedTab: state.channelsObj[loadedChannel.id]?.selectedTab,
+            selectedTopicId:
+              state.channelsObj[loadedChannel.id]?.selectedTopicId,
+            topicObj: mergedTopicObj,
             loaded: true,
             ...(action.data.currentSubchannelId
               ? { subchannelObj: newSubchannelObj }
@@ -1219,10 +1249,44 @@ export default function ChatReducer(
         vocabFeedsLoadMoreButton = true;
       }
       action.data.vocabFeeds?.reverse?.();
-      const newChannelsObj = {
-        ...state.channelsObj,
-        ...action.data.channelsObj
+      const newChannelsObj: Record<string, any> = {
+        ...state.channelsObj
       };
+      // Merge server channels while preserving client-side UI state (selectedTab, selectedTopicId, topicObj)
+      for (const channelId in action.data.channelsObj) {
+        const existingChannel = state.channelsObj[channelId];
+        const serverChannel = action.data.channelsObj[channelId];
+        // Deep merge topicObj to preserve each topic's loaded state and messageIds
+        const mergedTopicObj: Record<string, any> = {
+          ...existingChannel?.topicObj
+        };
+        if (serverChannel?.topicObj) {
+          for (const topicId in serverChannel.topicObj) {
+            const existingTopic = existingChannel?.topicObj?.[topicId];
+            const serverTopic = serverChannel.topicObj[topicId];
+            mergedTopicObj[topicId] = {
+              ...existingTopic,
+              ...serverTopic,
+              // Preserve critical client-side state if topic was already loaded
+              ...(existingTopic?.loaded
+                ? {
+                    loaded: true,
+                    messageIds: existingTopic.messageIds
+                  }
+                : {})
+            };
+          }
+        }
+        newChannelsObj[channelId] = {
+          ...serverChannel,
+          // Preserve client-side UI state
+          selectedTab: existingChannel?.selectedTab,
+          selectedTopicId: existingChannel?.selectedTopicId,
+          topicHistory: existingChannel?.topicHistory || [],
+          currentTopicIndex: existingChannel?.currentTopicIndex ?? -1,
+          topicObj: mergedTopicObj
+        };
+      }
       const newSubchannelObj: {
         messageIds: number[];
         subchannelObj: Record<number, { id: number }>;
@@ -1241,6 +1305,29 @@ export default function ChatReducer(
           };
         }
       }
+      const existingCurrentChannel =
+        state.channelsObj[action.data.currentChannelId];
+      // Deep merge topicObj for current channel
+      const mergedCurrentTopicObj: Record<string, any> = {
+        ...existingCurrentChannel?.topicObj
+      };
+      if (newCurrentChannel?.topicObj) {
+        for (const topicId in newCurrentChannel.topicObj) {
+          const existingTopic = existingCurrentChannel?.topicObj?.[topicId];
+          const serverTopic = newCurrentChannel.topicObj[topicId];
+          mergedCurrentTopicObj[topicId] = {
+            ...existingTopic,
+            ...serverTopic,
+            // Preserve critical client-side state if topic was already loaded
+            ...(existingTopic?.loaded
+              ? {
+                  loaded: true,
+                  messageIds: existingTopic.messageIds
+                }
+              : {})
+          };
+        }
+      }
       newChannelsObj[action.data.currentChannelId] = {
         ...(action.data.channelsObj[action.data.currentChannelId] || {}),
         allMemberIds:
@@ -1251,6 +1338,12 @@ export default function ChatReducer(
         messageIds: newMessageIds,
         recentChessMessage: null,
         loaded: true,
+        // Preserve client-side UI state
+        selectedTab: existingCurrentChannel?.selectedTab,
+        selectedTopicId: existingCurrentChannel?.selectedTopicId,
+        topicHistory: existingCurrentChannel?.topicHistory || [],
+        currentTopicIndex: existingCurrentChannel?.currentTopicIndex ?? -1,
+        topicObj: mergedCurrentTopicObj,
         ...(action.data.currentSubchannelId
           ? {
               subchannelObj: {
@@ -1459,7 +1552,10 @@ export default function ChatReducer(
 
     case 'INVITE_USERS_TO_CHANNEL': {
       // Store invite message in global store
-      setMessage(action.data.message.id, { ...action.data.message, isLoaded: true });
+      setMessage(action.data.message.id, {
+        ...action.data.message,
+        isLoaded: true
+      });
       return {
         ...state,
         messagesVersion: (state.messagesVersion || 0) + 1,
@@ -2406,13 +2502,10 @@ export default function ChatReducer(
             numUnreads: 0,
             members: (
               state.channelsObj[action.channelId]?.members || []
-            )?.filter(
-              (member: { id: number }) => member.id !== action.userId
-            )
+            )?.filter((member: { id: number }) => member.id !== action.userId)
           }
         }
       };
-      // this will mean that if the channel where the user has left is not loaded in the left channel list initially, it will not appear in the list when user scrolls down and triggers "load more" event (because load more event only loads channels with older update time than the bottom item) and because this is new update. but is that really that bad? this channel will surface when user reloads the website anyway and user wasn't really interested in this channel to keep it bumped up in the first place.
     }
     case 'OPEN_NEW_TAB':
       return {
@@ -2536,7 +2629,11 @@ export default function ChatReducer(
     case 'RECEIVE_MESSAGE': {
       const messageId = action.message.id || uuidv1();
       // Populate global messages store
-      setMessage(messageId, { ...action.message, id: messageId, isLoaded: true });
+      setMessage(messageId, {
+        ...action.message,
+        id: messageId,
+        isLoaded: true
+      });
       const subchannelId = action.message.subchannelId;
       const numUnreads =
         action.pageVisible && action.usingChat
@@ -2690,7 +2787,11 @@ export default function ChatReducer(
     case 'RECEIVE_MSG_ON_DIFF_CHANNEL': {
       const messageId = action.message.id || uuidv1();
       // Store message in global store
-      setMessage(messageId, { ...action.message, id: messageId, isLoaded: true });
+      setMessage(messageId, {
+        ...action.message,
+        id: messageId,
+        isLoaded: true
+      });
       const prevChannelObj = state.channelsObj[action.channel.id];
       const subchannelId = action.message.subchannelId;
       const subchannelObj = subchannelId

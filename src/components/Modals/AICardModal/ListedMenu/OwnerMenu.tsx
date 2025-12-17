@@ -36,7 +36,6 @@ export default function OwnerMenu({
         loading={delisting}
         onClick={handleCancelListing}
         color="rose"
-        filled
       >
         <Icon
           className={css`
