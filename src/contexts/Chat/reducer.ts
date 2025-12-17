@@ -1014,7 +1014,9 @@ export default function ChatReducer(
         };
       }
 
-      const messagesObj: any = {};
+      const messagesObj: any = {
+        ...state.channelsObj[loadedChannel.id]?.messagesObj
+      };
       for (const message of action.data.messages) {
         messagesObj[message.id] = {
           ...message,
@@ -1072,7 +1074,8 @@ export default function ChatReducer(
             numUnreads: 0,
             isReloadRequired: false,
             legacyTopicObj: state.channelsObj[loadedChannel.id]?.legacyTopicObj,
-            topicHistory: state.channelsObj[loadedChannel.id]?.topicHistory || [],
+            topicHistory:
+              state.channelsObj[loadedChannel.id]?.topicHistory || [],
             currentTopicIndex:
               state.channelsObj[loadedChannel.id]?.currentTopicIndex ?? -1,
             selectedTab: state.channelsObj[loadedChannel.id]?.selectedTab,
@@ -1084,7 +1087,9 @@ export default function ChatReducer(
               ? { subchannelObj: newSubchannelObj }
               : {}),
             // Compute partnerUsername for DM channels
-            ...(loadedChannel.twoPeople && loadedChannel.members && state.prevUserId
+            ...(loadedChannel.twoPeople &&
+            loadedChannel.members &&
+            state.prevUserId
               ? {
                   partnerUsername: loadedChannel.members.find(
                     (m: { id: number }) => m.id !== state.prevUserId
