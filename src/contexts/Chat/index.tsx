@@ -42,6 +42,7 @@ function getInitialChatState() {
     allFavoriteChannelIds: {},
     cardObj: {},
     channelLoading: false,
+    channelMessagesVersions: {} as Record<number, number>,
     channelOnCall: {},
     channelPathIdHash: {},
     channelsObj: {},
