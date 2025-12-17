@@ -1005,10 +1005,15 @@ export default function ChatReducer(
               action.data.channel?.subchannelObj[
                 action.data.currentSubchannelId
               ]?.messageIds,
-            messagesObj:
-              action.data.channel?.subchannelObj[
+            // Merge with existing messagesObj to preserve loaded messages
+            messagesObj: {
+              ...state.channelsObj[loadedChannel.id]?.subchannelObj?.[
                 action.data.currentSubchannelId
               ]?.messagesObj,
+              ...action.data.channel?.subchannelObj[
+                action.data.currentSubchannelId
+              ]?.messagesObj
+            },
             loaded: true
           }
         };
@@ -1388,7 +1393,12 @@ export default function ChatReducer(
           selectedTopicId: existingChannel?.selectedTopicId,
           topicHistory: existingChannel?.topicHistory || [],
           currentTopicIndex: existingChannel?.currentTopicIndex ?? -1,
-          topicObj: mergedTopicObj
+          topicObj: mergedTopicObj,
+          // Preserve existing messagesObj (topic messages)
+          messagesObj: {
+            ...existingChannel?.messagesObj,
+            ...serverChannel?.messagesObj
+          }
         };
       }
       const newSubchannelObj: {
