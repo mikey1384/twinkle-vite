@@ -61,7 +61,10 @@ export default function RecommendationInterface({
     return (
       cleanedContent.length > expectedContentLength &&
       contentType !== 'pass' &&
-      contentType !== 'xpChange'
+      contentType !== 'xpChange' &&
+      contentType !== 'sharedTopic' &&
+      contentType !== 'aiStory' &&
+      contentType !== 'dailyReflection'
     );
   }, [content, contentType, expectedContentLength]);
 

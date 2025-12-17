@@ -76,7 +76,6 @@ export default function CodeSandbox({
         <div style={{ display: 'flex' }}>
           <Button
             style={{ fontSize: '1.3rem' }}
-            filled
             color="logoBlue"
             onClick={handleFormatCode}
           >
@@ -85,7 +84,6 @@ export default function CodeSandbox({
           </Button>
           <Button
             style={{ marginLeft: '1rem', fontSize: '1.3rem' }}
-            filled
             color="orange"
             onClick={handleReset}
           >
@@ -97,7 +95,6 @@ export default function CodeSandbox({
           {onRunCode && !passed && (
             <Button
               disabled={runButtonDisabled || hasError}
-              filled
               color={hasError ? 'cranberry' : 'green'}
               onClick={handleRunCode}
             >

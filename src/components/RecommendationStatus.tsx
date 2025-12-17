@@ -79,6 +79,8 @@ export default function RecommendationStatus({
       contentType !== 'pass' &&
       contentType !== 'aiStory' &&
       contentType !== 'dailyReflection' &&
+      contentType !== 'sharedTopic' &&
+      contentType !== 'xpChange' &&
       ((isSupermod(myRecommendation?.level) &&
         !myRecommendation?.rewardDisabled) ||
         (isSupermod(mostRecentRewardEnabledRecommenderOtherThanMe?.level) &&

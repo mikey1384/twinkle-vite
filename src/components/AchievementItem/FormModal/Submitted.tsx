@@ -72,7 +72,7 @@ export default function Submitted({
                 justifyContent: 'center'
               }}
             >
-              <Button filled color="logoBlue" onClick={onTryAgain}>
+              <Button color="logoBlue" onClick={onTryAgain}>
                 Try again
               </Button>
             </div>

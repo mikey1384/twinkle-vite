@@ -33,7 +33,6 @@ export default function MakeOffer({
         onClick={() => onSetOfferModalShown(true)}
         color="green"
         disabled={!myId}
-        filled
       >
         <span
           className={css`
