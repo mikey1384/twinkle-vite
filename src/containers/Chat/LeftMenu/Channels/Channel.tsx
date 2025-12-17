@@ -118,6 +118,7 @@ export default function Channel({
       }
     }
     return mostRecentMessage;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messageIds, channelMessagesVersion, subchannelObj]);
 
   const otherMember = useMemo(() => {
