@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import TeenagerBadge from '~/assets/teenager.png';
 import AdultBadge from '~/assets/adult.png';
 
@@ -8,100 +8,80 @@ export type AgeRestriction = 'teenager' | 'adult' | null;
 
 const containerClass = css`
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: stretch;
+  gap: 0.7rem;
   @media (max-width: ${mobileMaxWidth}) {
-    gap: 0.7rem;
+    gap: 0.5rem;
+  }
+`;
+
+const baseButtonClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1rem;
+  border-radius: ${borderRadius};
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  border: 1px solid ${Color.borderGray()};
+  background: #fff;
+  font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: ${Color.darkerGray()};
+
+  &:hover {
+    background: ${Color.highlightGray()};
+    border-color: ${Color.darkerBorderGray()};
+  }
+
+  &.selected {
+    border-color: ${Color.black()};
+    background: ${Color.highlightGray()};
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.5rem 0.7rem;
+    font-size: 1.2rem;
   }
 `;
 
 const badgeButtonClass = css`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
-  background: ${Color.wellGray()};
-  min-width: 5rem;
-
-  &:hover {
-    background: ${Color.highlightGray()};
-  }
-
-  &.selected {
-    border-color: ${Color.darkGray()};
-    background: ${Color.highlightGray()};
-  }
-
-  &.none-selected {
-    border-color: ${Color.darkGray()};
-    background: ${Color.highlightGray()};
-  }
+  min-width: 4.5rem;
+  overflow: visible;
 
   img {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3.5rem;
+    height: 3.5rem;
     object-fit: contain;
-    opacity: 0.5;
-    transition: opacity 0.2s ease;
   }
 
-  &.selected img,
-  &:hover img {
-    opacity: 1;
-  }
-
-  span {
-    font-size: 1.1rem;
-    margin-top: 0.3rem;
-    color: ${Color.darkerGray()};
+  .badge-label {
+    position: absolute;
+    bottom: 0.3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
   }
 
   @media (max-width: ${mobileMaxWidth}) {
-    min-width: 4rem;
+    min-width: 3.5rem;
     padding: 0.4rem;
     img {
       width: 2rem;
       height: 2rem;
     }
-    span {
-      font-size: 1rem;
+    .badge-label {
+      font-size: 0.8rem;
+      bottom: 0.2rem;
     }
-  }
-`;
-
-const noneButtonClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
-  background: ${Color.wellGray()};
-  font-size: 1.2rem;
-  color: ${Color.darkerGray()};
-  height: 100%;
-  min-height: 4.5rem;
-
-  &:hover {
-    background: ${Color.highlightGray()};
-  }
-
-  &.selected {
-    border-color: ${Color.darkGray()};
-    background: ${Color.highlightGray()};
-  }
-
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.4rem 0.7rem;
-    font-size: 1.1rem;
-    min-height: 3.8rem;
   }
 `;
 
@@ -118,7 +98,7 @@ export default function AgeRestrictionSelector({
     <div style={style}>
       <div className={containerClass}>
         <div
-          className={`${noneButtonClass} ${
+          className={`${baseButtonClass} ${
             ageRestriction === null ? 'selected' : ''
           }`}
           onClick={() => onChange(null)}
@@ -127,24 +107,24 @@ export default function AgeRestrictionSelector({
           Everyone
         </div>
         <div
-          className={`${badgeButtonClass} ${
+          className={`${baseButtonClass} ${badgeButtonClass} ${
             ageRestriction === 'teenager' ? 'selected' : ''
           }`}
           onClick={() => onChange('teenager')}
           title="Only visible to users aged 13+"
         >
+          <span className="badge-label">13+</span>
           <img src={TeenagerBadge} alt="13+" />
-          <span>13+</span>
         </div>
         <div
-          className={`${badgeButtonClass} ${
+          className={`${baseButtonClass} ${badgeButtonClass} ${
             ageRestriction === 'adult' ? 'selected' : ''
           }`}
           onClick={() => onChange('adult')}
           title="Only visible to users aged 18+"
         >
+          <span className="badge-label">18+</span>
           <img src={AdultBadge} alt="18+" />
-          <span>18+</span>
         </div>
       </div>
     </div>
