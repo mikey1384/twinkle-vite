@@ -155,9 +155,6 @@ export default function DisplayedMessages({
   const searchChatMessages = useAppContext(
     (v) => v.requestHelpers.searchChatMessages
   );
-  const channelMessagesVersion = useChatContext(
-    (v) => v.state.channelMessagesVersions?.[selectedChannelId]
-  );
   const onLoadMoreTopicMessages = useChatContext(
     (v) => v.actions.onLoadMoreTopicMessages
   );
@@ -235,12 +232,10 @@ export default function DisplayedMessages({
       }
     }
     return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appliedTopicId,
     currentChannel?.topicObj,
     messageIds,
-    channelMessagesVersion,
     selectedTab,
     subchannel?.messageIds,
     isSearchActive,

@@ -61,8 +61,22 @@ export default function Channel({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const channelMessagesVersion = useChatContext(
-    (v) => v.state.channelMessagesVersions?.[channelId]
+  // Determine which message ID is actually the "last" for preview
+  const displayedLastMessageId = useMemo(() => {
+    let lastId = messageIds?.[0];
+    if (Object.values(subchannelObj).length > 0) {
+      for (const subchannel of Object.values(subchannelObj)) {
+        const subMsgId = subchannel?.messageIds?.[0];
+        if (subMsgId && Number(subMsgId) > Number(lastId || 0)) {
+          lastId = subMsgId;
+        }
+      }
+    }
+    return lastId;
+  }, [messageIds, subchannelObj]);
+  // Subscribe to that specific message's version for preview updates
+  const lastMessageVersion = useChatContext(
+    (v) => v.state.messageVersions?.[displayedLastMessageId]
   );
   const generalChatRole = useRoleColor('generalChat', {
     fallback: 'logoBlue'
@@ -100,26 +114,9 @@ export default function Channel({
   const lastMessage: {
     [key: string]: any;
   } = useMemo(() => {
-    const lastMessageId = messageIds?.[0];
-    let mostRecentMessage = getMessage(lastMessageId);
-    if (Object.values(subchannelObj).length > 0) {
-      let mostRecentSubchannelMessageId = 0;
-      for (const subchannel of Object.values(subchannelObj)) {
-        if (
-          subchannel?.messageIds?.[0] &&
-          Number(subchannel?.messageIds?.[0]) >
-            Number(mostRecentSubchannelMessageId)
-        ) {
-          mostRecentSubchannelMessageId = Number(subchannel?.messageIds?.[0]);
-          if (mostRecentSubchannelMessageId > lastMessageId) {
-            mostRecentMessage = getMessage(mostRecentSubchannelMessageId);
-          }
-        }
-      }
-    }
-    return mostRecentMessage;
+    return getMessage(displayedLastMessageId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messageIds, channelMessagesVersion, subchannelObj]);
+  }, [displayedLastMessageId, lastMessageVersion]);
 
   const otherMember = useMemo(() => {
     return twoPeople

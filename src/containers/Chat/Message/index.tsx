@@ -13,9 +13,9 @@ import SystemErrorMessage from './MessageBody/SystemErrorMessage';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useChatContext } from '~/contexts';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { MessageHeights, setMessage } from '~/constants/state';
+import { MessageHeights, setMessage, getMessage } from '~/constants/state';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Message({
@@ -118,6 +118,10 @@ function Message({
   const {
     actions: { onSetMessageState }
   } = useContext(LocalContext);
+  // Subscribe to this message's version for fine-grained updates
+  const messageVersion = useChatContext(
+    (v) => v.state.messageVersions?.[message?.id]
+  );
 
   const {
     thumbUrl: recentThumbUrl,
@@ -132,11 +136,22 @@ function Message({
   const [loadFailed, setLoadFailed] = useState(false);
   const [localMessage, setLocalMessage] = useState(message);
 
+  // Sync from prop when parent passes new message data
   useEffect(() => {
     if (message?.isLoaded) {
       setLocalMessage(message);
     }
   }, [message]);
+
+  // Re-fetch message data when its version changes (content updates)
+  useEffect(() => {
+    if (messageVersion !== undefined && message?.id) {
+      const freshMessage = getMessage(message.id);
+      if (freshMessage) {
+        setLocalMessage(freshMessage);
+      }
+    }
+  }, [messageVersion, message?.id]);
 
   useEffect(() => {
     if (inView) {
