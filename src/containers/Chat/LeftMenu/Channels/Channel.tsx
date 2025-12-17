@@ -5,10 +5,8 @@ import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
-import LocalContext from '../../Context';
-import ErrorBoundary from '~/components/ErrorBoundary';
+import LocalContext from '../../Context';import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { getMessage } from '~/constants/state';
 
 const deletedLabel = 'Deleted';
 
@@ -19,6 +17,7 @@ export default function Channel({
     id: channelId,
     channelName,
     messageIds = [],
+    messagesObj = {},
     twoPeople,
     members,
     numUnreads,
@@ -38,6 +37,12 @@ export default function Channel({
     id: number;
     channelName?: string;
     messageIds?: number[];
+    messagesObj?: {
+      [key: number]: {
+        id: number;
+        [key: string]: any;
+      };
+    };
     twoPeople?: boolean;
     members?: { id: number; username: string }[];
     numUnreads?: number;
@@ -60,23 +65,6 @@ export default function Channel({
   });
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
-  );
-  // Determine which message ID is actually the "last" for preview
-  const displayedLastMessageId = useMemo(() => {
-    let lastId = messageIds?.[0];
-    if (Object.values(subchannelObj).length > 0) {
-      for (const subchannel of Object.values(subchannelObj)) {
-        const subMsgId = subchannel?.messageIds?.[0];
-        if (subMsgId && Number(subMsgId) > Number(lastId || 0)) {
-          lastId = subMsgId;
-        }
-      }
-    }
-    return lastId;
-  }, [messageIds, subchannelObj]);
-  // Subscribe to that specific message's version for preview updates
-  const lastMessageVersion = useChatContext(
-    (v) => v.state.messageVersions?.[displayedLastMessageId]
   );
   const generalChatRole = useRoleColor('generalChat', {
     fallback: 'logoBlue'
@@ -114,9 +102,26 @@ export default function Channel({
   const lastMessage: {
     [key: string]: any;
   } = useMemo(() => {
-    return getMessage(displayedLastMessageId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayedLastMessageId, lastMessageVersion]);
+    const lastMessageId = messageIds?.[0];
+    let mostRecentMessage = messagesObj?.[lastMessageId];
+    if (Object.values(subchannelObj).length > 0) {
+      let mostRecentSubchannelMessageId = 0;
+      for (const subchannel of Object.values(subchannelObj)) {
+        if (
+          subchannel?.messageIds?.[0] &&
+          Number(subchannel?.messageIds?.[0]) >
+            Number(mostRecentSubchannelMessageId)
+        ) {
+          mostRecentSubchannelMessageId = Number(subchannel?.messageIds?.[0]);
+          if (mostRecentSubchannelMessageId > lastMessageId) {
+            mostRecentMessage =
+              subchannel?.messagesObj?.[mostRecentSubchannelMessageId];
+          }
+        }
+      }
+    }
+    return mostRecentMessage;
+  }, [messageIds, messagesObj, subchannelObj]);
 
   const otherMember = useMemo(() => {
     return twoPeople

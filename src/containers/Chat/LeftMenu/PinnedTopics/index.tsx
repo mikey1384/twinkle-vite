@@ -74,7 +74,6 @@ function PinnedTopics({
     (v) => v.requestHelpers.updateLastTopicId
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
 
   const { featuredTopic, appliedFeaturedTopicId, pinnedTopics, lastTopic } =
     useMemo(() => {
@@ -320,15 +319,6 @@ function PinnedTopics({
       channelId,
       topicId
     });
-
-    if (selectedTopicId === topicId && selectedTab !== 'topic') {
-      onSetChannelState({
-        channelId,
-        newState: { selectedTab: 'topic' }
-      });
-      onEnterTopic({ channelId, topicId });
-    }
-
     navigate(
       `/chat/${pathId}${
         subchannelPath ? `/${subchannelPath}` : ''

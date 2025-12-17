@@ -95,47 +95,5 @@ export function cleanupMessageCaches(messageIds: (number | string)[]) {
     const chatKey = `chat-${messageId}`;
     delete fullTextStates[chatKey];
     delete richTextHeights[chatKey];
-
-    // Clean from global messages store
-    delete messagesStore[messageId];
   }
-}
-
-// Global messages store - stores message content outside React state
-// This allows for better memory management and avoids React overhead
-// No eviction needed - plain JS objects are much more memory-efficient than React state
-export const messagesStore: Record<string | number, any> = {};
-
-// Get a message from the store
-export function getMessage(messageId: string | number): any {
-  return messagesStore[messageId];
-}
-
-// Store a message (or update existing)
-export function setMessage(messageId: string | number, message: any): void {
-  messagesStore[messageId] = message;
-}
-
-// Store multiple messages at once
-export function setMessages(messages: Record<string | number, any>): void {
-  for (const [id, message] of Object.entries(messages)) {
-    setMessage(id, message);
-  }
-}
-
-// Delete a message from the store
-export function deleteMessage(messageId: string | number): void {
-  delete messagesStore[messageId];
-}
-
-// Get multiple messages by IDs
-export function getMessages(messageIds: (string | number)[]): Record<string | number, any> {
-  const result: Record<string | number, any> = {};
-  for (const id of messageIds) {
-    const message = getMessage(id);
-    if (message) {
-      result[id] = message;
-    }
-  }
-  return result;
 }

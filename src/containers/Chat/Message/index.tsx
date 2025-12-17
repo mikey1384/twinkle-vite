@@ -13,9 +13,9 @@ import SystemErrorMessage from './MessageBody/SystemErrorMessage';
 import LocalContext from '../Context';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
-import { MessageHeights, setMessage, getMessage } from '~/constants/state';
+import { MessageHeights } from '~/constants/state';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Message({
@@ -118,10 +118,6 @@ function Message({
   const {
     actions: { onSetMessageState }
   } = useContext(LocalContext);
-  // Subscribe to this message's version for fine-grained updates
-  const messageVersion = useChatContext(
-    (v) => v.state.messageVersions?.[message?.id]
-  );
 
   const {
     thumbUrl: recentThumbUrl,
@@ -134,24 +130,6 @@ function Message({
   const [ComponentRef, inView] = useInView();
   const PanelRef = useRef(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [localMessage, setLocalMessage] = useState(message);
-
-  // Sync from prop when parent passes new message data
-  useEffect(() => {
-    if (message?.isLoaded) {
-      setLocalMessage(message);
-    }
-  }, [message]);
-
-  // Re-fetch message data when its version changes (content updates)
-  useEffect(() => {
-    if (messageVersion !== undefined && message?.id) {
-      const freshMessage = getMessage(message.id);
-      if (freshMessage) {
-        setLocalMessage(freshMessage);
-      }
-    }
-  }, [messageVersion, message?.id]);
 
   useEffect(() => {
     if (inView) {
@@ -163,20 +141,22 @@ function Message({
   }, [index, onSetVisibleMessageIndex, onSetVisibleMessageId, inView, message?.id]);
 
   useEffect(() => {
-    if (!localMessage?.isLoaded && message?.id && !message?.isNotification) {
+    if (!message?.isLoaded && message?.id && !message?.isNotification) {
       (async function init() {
         try {
           const data = await loadChatMessage({ messageId: message?.id });
-          const loadedMessage = { ...message, ...data, isLoaded: true };
-          setMessage(message.id, loadedMessage);
-          setLocalMessage(loadedMessage);
+          onSetMessageState({
+            channelId,
+            messageId: message?.id,
+            newState: { ...data, isLoaded: true }
+          });
         } catch (_error) {
           setLoadFailed(true);
         }
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localMessage?.isLoaded, message?.isNotification, message?.id]);
+  }, [message?.isLoaded, message?.isNotification, message?.id]);
 
   useLazyLoad({
     PanelRef,
@@ -274,7 +254,7 @@ function Message({
             `}
             ref={PanelRef}
           >
-            {!localMessage?.isLoaded && !message?.isNotification ? (
+            {!message?.isLoaded && !message?.isNotification ? (
               <LoadingPlaceholder />
             ) : contentShown || isOneOfVisibleMessages ? (
               <MessageBody
@@ -291,7 +271,7 @@ function Message({
                 isModificationNotice={isModificationNotice}
                 groupObjs={groupObjs}
                 onSetGroupObjs={onSetGroupObjs}
-                message={localMessage}
+                message={message}
                 nextMessageHasTopic={nextMessageHasTopic}
                 prevMessageHasTopic={prevMessageHasTopic}
                 onDelete={onDelete}

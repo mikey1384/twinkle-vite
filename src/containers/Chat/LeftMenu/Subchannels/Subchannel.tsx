@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useKeyContext } from '~/contexts';
 import { Link } from 'react-router-dom';
-import { getMessage } from '~/constants/state';
 
 export default function Subchannel({
   chatUnreadColor,
@@ -29,20 +28,15 @@ export default function Subchannel({
   }) => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const lastMessageId = subchannel?.messageIds?.[0];
-  // Subscribe to this message's version for preview updates
-  const lastMessageVersion = useChatContext(
-    (v) => v.state.messageVersions?.[lastMessageId]
-  );
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]
   );
 
   const lastMessage = useMemo(() => {
-    return getMessage(lastMessageId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastMessageId, lastMessageVersion]);
+    const lastMessageId = subchannel?.messageIds?.[0];
+    return subchannel?.messagesObj?.[lastMessageId];
+  }, [subchannel?.messageIds, subchannel?.messagesObj]);
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
   const badgeShown = useMemo(() => {
     return (

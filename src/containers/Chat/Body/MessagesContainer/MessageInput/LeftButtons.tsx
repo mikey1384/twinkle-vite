@@ -5,7 +5,6 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
-import { getMessage } from '~/constants/state';
 
 export default function LeftButtons({
   buttonColor,
@@ -228,14 +227,15 @@ export default function LeftButtons({
 
 function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
   if (!channelState) return null;
+  const messagesObj = channelState.messagesObj || {};
   const lastId =
     game === 'chess'
       ? channelState.lastChessMessageId
       : channelState.lastOmokMessageId;
   const getMessageById = (id: any) =>
-    getMessage(id) ||
+    messagesObj[id] ||
     (typeof id === 'number' || typeof id === 'string'
-      ? getMessage(String(id)) || getMessage(Number(id))
+      ? messagesObj[String(id)] || messagesObj[Number(id)]
       : null);
 
   if (lastId !== null && lastId !== undefined) {
@@ -263,16 +263,28 @@ function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
       : channelState.recentOmokMessage || null;
   if (recent) return recent;
 
+  const messageList = Object.values(messagesObj);
+  for (let i = messageList.length - 1; i >= 0; i--) {
+    const message = messageList[i];
+    if (
+      (game === 'chess' && (message as any)?.chessState) ||
+      (game === 'omok' && (message as any)?.omokState)
+    ) {
+      return message;
+    }
+  }
+
   return null;
 }
 
 function getLatestOmokGameOverMessage(channelState: any) {
   if (!channelState) return null;
+  const messagesObj = channelState.messagesObj || {};
   const messageIds: any[] = channelState.messageIds || [];
   const getMessageById = (id: any) =>
-    getMessage(id) ||
+    messagesObj[id] ||
     (typeof id === 'number' || typeof id === 'string'
-      ? getMessage(String(id)) || getMessage(Number(id))
+      ? messagesObj[String(id)] || messagesObj[Number(id)]
       : null);
 
   for (let i = 0; i < messageIds.length; i++) {
@@ -301,11 +313,12 @@ function getMessageIndex(channelState: any, id: any) {
 
 function getLatestChessGameOverMessage(channelState: any) {
   if (!channelState) return null;
+  const messagesObj = channelState.messagesObj || {};
   const messageIds: any[] = channelState.messageIds || [];
   const getMessageById = (id: any) =>
-    getMessage(id) ||
+    messagesObj[id] ||
     (typeof id === 'number' || typeof id === 'string'
-      ? getMessage(String(id)) || getMessage(Number(id))
+      ? messagesObj[String(id)] || messagesObj[Number(id)]
       : null);
   for (let i = 0; i < messageIds.length; i++) {
     const id = messageIds[i];
