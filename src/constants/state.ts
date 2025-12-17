@@ -84,16 +84,3 @@ export const subtitlesState: {
   lastEdited: 0,
   videoId: null
 };
-
-// Helper to clean up message-related caches when messages are trimmed
-export function cleanupMessageCaches(messageIds: (number | string)[]) {
-  for (const messageId of messageIds) {
-    // Clean MessageHeights (keyed by messageId)
-    delete MessageHeights[messageId];
-
-    // Clean fullTextStates and richTextHeights (keyed by "chat-{messageId}")
-    const chatKey = `chat-${messageId}`;
-    delete fullTextStates[chatKey];
-    delete richTextHeights[chatKey];
-  }
-}
