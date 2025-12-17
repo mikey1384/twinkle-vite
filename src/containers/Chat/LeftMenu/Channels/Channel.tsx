@@ -61,7 +61,9 @@ export default function Channel({
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
   );
-  const messagesVersion = useChatContext((v) => v.state.messagesVersion);
+  const channelMessagesVersion = useChatContext(
+    (v) => v.state.channelMessagesVersions?.[channelId]
+  );
   const generalChatRole = useRoleColor('generalChat', {
     fallback: 'logoBlue'
   });
@@ -116,7 +118,7 @@ export default function Channel({
       }
     }
     return mostRecentMessage;
-  }, [messageIds, messagesVersion, subchannelObj]);
+  }, [messageIds, channelMessagesVersion, subchannelObj]);
 
   const otherMember = useMemo(() => {
     return twoPeople

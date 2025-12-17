@@ -29,7 +29,9 @@ export default function Subchannel({
   }) => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const messagesVersion = useChatContext((v) => v.state.messagesVersion);
+  const channelMessagesVersion = useChatContext(
+    (v) => v.state.channelMessagesVersions?.[selectedChannelId]
+  );
   const subchannelSelected = useMemo(
     () => subchannelPath === subchannel.path,
     [subchannel.path, subchannelPath]
@@ -39,7 +41,7 @@ export default function Subchannel({
     const lastMessageId = subchannel?.messageIds?.[0];
     return getMessage(lastMessageId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subchannel?.messageIds, messagesVersion]);
+  }, [subchannel?.messageIds, channelMessagesVersion]);
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
   const badgeShown = useMemo(() => {
     return (

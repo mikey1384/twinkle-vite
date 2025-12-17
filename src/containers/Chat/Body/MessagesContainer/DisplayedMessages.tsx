@@ -155,7 +155,9 @@ export default function DisplayedMessages({
   const searchChatMessages = useAppContext(
     (v) => v.requestHelpers.searchChatMessages
   );
-  const messagesVersion = useChatContext((v) => v.state.messagesVersion);
+  const channelMessagesVersion = useChatContext(
+    (v) => v.state.channelMessagesVersions?.[selectedChannelId]
+  );
   const onLoadMoreTopicMessages = useChatContext(
     (v) => v.actions.onLoadMoreTopicMessages
   );
@@ -238,7 +240,7 @@ export default function DisplayedMessages({
     appliedTopicId,
     currentChannel?.topicObj,
     messageIds,
-    messagesVersion,
+    channelMessagesVersion,
     selectedTab,
     subchannel?.messageIds,
     isSearchActive,

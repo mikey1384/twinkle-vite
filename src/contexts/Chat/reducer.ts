@@ -16,6 +16,18 @@ import {
   deleteMessage
 } from '~/constants/state';
 
+// Helper to increment a channel's message version (for localized re-renders)
+function bumpChannelMessagesVersion(
+  state: any,
+  channelId: number | string
+): Record<number, number> {
+  const id = Number(channelId);
+  return {
+    ...state.channelMessagesVersions,
+    [id]: (state.channelMessagesVersions?.[id] || 0) + 1
+  };
+}
+
 interface BookmarkListMap {
   ai?: any[];
   me?: any[];
@@ -207,7 +219,10 @@ export default function ChatReducer(
       setMessage(action.messageId, { ...message, reactions });
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        )
       };
     }
     case 'CLEAR_SUBCHANNEL_UNREADS': {
@@ -245,7 +260,10 @@ export default function ChatReducer(
       setMessage(action.messageId, { ...message, reactions });
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        )
       };
     }
     case 'EDIT_CHANNEL_SETTINGS':
@@ -381,7 +399,10 @@ export default function ChatReducer(
 
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -770,7 +791,10 @@ export default function ChatReducer(
         : prevChannelObj?.subchannelObj;
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -791,6 +815,7 @@ export default function ChatReducer(
       }
       const prevChannelObj = state.channelsObj[action.channelId];
       if (!prevChannelObj) return state;
+
       const subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
@@ -810,7 +835,10 @@ export default function ChatReducer(
         : prevChannelObj?.subchannelObj;
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: action.subchannelId
@@ -1192,7 +1220,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        )
       };
     }
     case 'HIDE_CHAT':
@@ -1558,7 +1589,10 @@ export default function ChatReducer(
       });
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          state.selectedChannelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [state.selectedChannelId]: {
@@ -2099,7 +2133,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -2130,7 +2167,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -2163,7 +2203,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -2239,7 +2282,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        )
       };
     }
     case 'UPDATE_AI_THOUGHT_STREAM': {
@@ -2255,7 +2301,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        )
       };
     }
     case 'UPDATE_LAST_USED_FILES': {
@@ -2425,7 +2474,10 @@ export default function ChatReducer(
         : prevChannelObj?.subchannelObj;
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         homeChannelIds: [
           action.channelId,
           ...state.homeChannelIds.filter(
@@ -2488,7 +2540,10 @@ export default function ChatReducer(
 
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channelId]: {
@@ -2709,7 +2764,10 @@ export default function ChatReducer(
 
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.message.channelId
+        ),
         numUnreads,
         channelsObj: {
           ...state.channelsObj,
@@ -2756,7 +2814,10 @@ export default function ChatReducer(
       });
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.message.channelId
+        ),
         numUnreads:
           action.isDuplicate && action.pageVisible
             ? state.numUnreads
@@ -2812,7 +2873,10 @@ export default function ChatReducer(
 
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channel.id
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channel.id]: subchannelId
@@ -3031,7 +3095,10 @@ export default function ChatReducer(
         : prevChannelObj?.subchannelObj;
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        ),
         homeChannelIds: [
           action.channelId,
           ...state.homeChannelIds.filter(
@@ -3457,7 +3524,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1,
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channel.id
+        ),
         channelsObj: {
           ...state.channelsObj,
           [action.channel.id]: {
@@ -3548,7 +3618,10 @@ export default function ChatReducer(
       }
       return {
         ...state,
-        messagesVersion: (state.messagesVersion || 0) + 1
+        channelMessagesVersions: bumpChannelMessagesVersion(
+          state,
+          action.channelId
+        )
       };
     }
     case 'SET_MEMBERS_ON_CALL':
