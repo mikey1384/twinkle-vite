@@ -7,6 +7,7 @@ function ImagePreview({
   isThumb,
   userIsUploader,
   src,
+  originalSrc,
   fileName,
   contentType,
   contentId,
@@ -15,6 +16,7 @@ function ImagePreview({
   isThumb?: boolean;
   userIsUploader?: boolean;
   src: string;
+  originalSrc?: string;
   fileName: string;
   contentType?: string;
   contentId?: number;
@@ -57,6 +59,7 @@ function ImagePreview({
           userIsUploader={userIsUploader}
           fileName={fileName}
           src={src}
+          downloadSrc={originalSrc || src}
           contentType={contentType}
           contentId={contentId}
           isReplaceable={isReplaceable}
