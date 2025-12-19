@@ -77,7 +77,8 @@ export default function FileAttachment({
       {fileType === 'image' ? (
         imageWorks ? (
           <ImagePreview
-            src={src}
+            src={thumbUrl || src}
+            originalSrc={src}
             fileName={fileName}
             onSetImageWorks={setImageWorks}
           />
