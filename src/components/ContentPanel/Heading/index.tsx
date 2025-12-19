@@ -52,6 +52,9 @@ function Heading({
     if (contentType === 'sharedTopic') {
       return `/shared-prompts/${id}`;
     }
+    if (contentType === 'dailyReflection') {
+      return `/daily-reflections/${id}`;
+    }
     const subPath = `/${id}`;
     return `/${
       contentType === 'url'
