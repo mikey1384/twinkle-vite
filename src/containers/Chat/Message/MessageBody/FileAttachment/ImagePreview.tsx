@@ -6,10 +6,12 @@ import { css } from '@emotion/css';
 
 export default function ImagePreview({
   src,
+  originalSrc,
   fileName,
   onSetImageWorks
 }: {
   src: string;
+  originalSrc?: string;
   fileName: string;
   onSetImageWorks: (works: boolean) => void;
 }) {
@@ -49,6 +51,7 @@ export default function ImagePreview({
             onHide={() => setImageModalShown(false)}
             fileName={fileName}
             src={src}
+            downloadSrc={originalSrc || src}
           />
         )}
       </div>
