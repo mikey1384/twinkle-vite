@@ -483,13 +483,6 @@ export default function MessageInput({
           handleSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           onSetText={handleSetText}
-          onSetAlertModalShown={(shown: boolean) => {
-            if (shown) {
-              setAlertModalContent('');
-            }
-            setAlertModalShown(shown);
-          }}
-          maxSize={maxSize}
         />
         {!textIsEmpty && isRightButtonsShown && (
           <div

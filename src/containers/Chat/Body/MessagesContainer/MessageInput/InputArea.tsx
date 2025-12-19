@@ -4,7 +4,7 @@ import {
   addEmoji,
   exceedsCharLimit,
   stringIsEmpty
-} from '~/helpers/stringHelpers';import { mb } from '~/constants/defaultValues';
+} from '~/helpers/stringHelpers';
 import { isMobile, debounce } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
@@ -26,9 +26,7 @@ export default function InputArea({
   partner,
   handleSendMsg,
   onHeightChange,
-  onSetText,
-  onSetAlertModalShown,
-  maxSize
+  onSetText
 }: {
   currentTopic: any;
   isBanned: boolean;
@@ -48,8 +46,6 @@ export default function InputArea({
   handleSendMsg: () => any;
   onHeightChange: (v: number) => any;
   onSetText: (v: string) => any;
-  onSetAlertModalShown: (v: boolean) => any;
-  maxSize: number;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
 
@@ -124,7 +120,6 @@ export default function InputArea({
         value={inputText}
         onChange={handleChange}
         onKeyUp={handleKeyUp}
-        onPaste={handlePaste}
         onDrop={handleDrop}
         hasError={isExceedingCharLimit}
         style={{
@@ -194,20 +189,6 @@ export default function InputArea({
       const text: string = event.target.value || '';
       if (deviceIsMobileOS && text.length > 20000) return;
       onSetText(addEmoji(text));
-    }
-  }
-
-  function handlePaste(event: any) {
-    const { items } = event.clipboardData;
-    for (let i = 0; i < items.length; i++) {
-      if (!items[i].type.includes('image')) continue;
-      const file = items[i].getAsFile();
-      if (!file) continue;
-      if (file.size / mb > maxSize) {
-        event.preventDefault();
-        onSetAlertModalShown(true);
-        return;
-      }
     }
   }
 
