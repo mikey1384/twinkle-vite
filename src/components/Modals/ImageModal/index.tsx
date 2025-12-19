@@ -20,6 +20,7 @@ export default function ImageModal({
   onHide,
   fileName,
   src,
+  downloadSrc,
   downloadable = true,
   userIsUploader = false,
   contentType,
@@ -32,6 +33,7 @@ export default function ImageModal({
   onHide: () => void;
   fileName?: string;
   src: string;
+  downloadSrc?: string;
   downloadable?: boolean;
   userIsUploader?: boolean;
   contentType?: string;
@@ -84,7 +86,7 @@ export default function ImageModal({
       footer={
         <>
           {downloadable && (
-            <Button color="orange" onClick={() => window.open(src)}>
+            <Button color="orange" onClick={() => window.open(downloadSrc || src)}>
               <Icon icon="download" />
               <span style={{ marginLeft: '0.5rem' }}>Download</span>
             </Button>

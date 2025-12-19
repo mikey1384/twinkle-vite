@@ -86,7 +86,8 @@ export default function ContentFileViewer({
             <ImagePreview
               isThumb={isThumb}
               userIsUploader={userIsUploader}
-              src={src}
+              src={thumbUrl || src}
+              originalSrc={src}
               fileName={fileName || ''}
               contentType={contentType}
               contentId={contentId}
