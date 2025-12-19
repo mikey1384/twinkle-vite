@@ -177,12 +177,15 @@ export default function DailyQuestionPanel({
       progress: number;
     }) {
       setLoadingMessage(step);
+
+      const duration = step.toLowerCase().includes('analyzing') ? 30000 : 10000;
       animateProgress(
         loadingProgressRef,
         loadingTargetRef,
         progress,
         setLoadingProgress,
-        loadingAnimationRef
+        loadingAnimationRef,
+        duration
       );
     }
 
@@ -272,7 +275,9 @@ export default function DailyQuestionPanel({
       } catch (err: any) {
         if (!isMounted) return;
         console.error('Failed to load daily question:', err);
-        setError(err?.message || 'Failed to load daily question. Please try again.');
+        setError(
+          err?.message || 'Failed to load daily question. Please try again.'
+        );
       }
     }
 
@@ -307,7 +312,6 @@ export default function DailyQuestionPanel({
     };
   }, [screen]);
 
-  
   const handleStart = useCallback(() => {
     hasStartedRef.current = true;
     // Initialize typing metadata
@@ -467,7 +471,14 @@ export default function DailyQuestionPanel({
       setError(err?.message || 'Failed to submit. Please try again.');
       isSubmittingRef.current = false;
     }
-  }, [questionId, response, userId, submitDailyQuestionResponse, onSetUserState, onUpdateTodayStats]);
+  }, [
+    questionId,
+    response,
+    userId,
+    submitDailyQuestionResponse,
+    onSetUserState,
+    onUpdateTodayStats
+  ]);
 
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;
