@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import playButtonImg from '~/assets/play-button-image.png';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 
 export default function Thumbnail({
   className,
@@ -22,6 +23,10 @@ export default function Thumbnail({
     () => contentType === 'subject' || contentType === 'comment',
     [contentType]
   );
+  const isVideo = useMemo(() => {
+    const { fileType } = getFileInfoFromFileName(fileName || '');
+    return fileType === 'video';
+  }, [fileName]);
   const src = useMemo(
     () =>
       thumbUrl ||
@@ -55,7 +60,7 @@ export default function Thumbnail({
             cursor: 'pointer'
           }}
         >
-          {playButtonShown && (
+          {playButtonShown && isVideo && (
             <img
               loading="lazy"
               style={{
