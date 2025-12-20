@@ -38,7 +38,7 @@ export default function SuccessMessage({
           style={{ color: Color.gold(), marginLeft: '1rem' }}
         />
       </div>
-      <Button onClick={onNextClick} color="gold" filled>
+      <Button onClick={onNextClick} color="gold" variant="solid">
         Next
       </Button>
     </div>

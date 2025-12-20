@@ -25,7 +25,7 @@ export default function ApprovalButtons({
       >
         <Button
           color="rose"
-          filled
+          variant="solid"
           disabled={submitting}
           loading={submitting && !isApproved}
           onClick={() =>
@@ -40,7 +40,7 @@ export default function ApprovalButtons({
         <Button
           style={{ marginLeft: '1.5rem' }}
           color="green"
-          filled
+          variant="solid"
           disabled={submitting}
           loading={submitting && isApproved}
           onClick={() =>

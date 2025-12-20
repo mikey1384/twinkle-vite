@@ -58,7 +58,7 @@ export default function RightButtons({
     currentlyStreamingAIMsgId ? (
       <Button
         color={buttonColor}
-        filled
+        variant="solid"
         onClick={() => {
           const aiMessage =
             channelState?.messagesObj?.[currentlyStreamingAIMsgId];

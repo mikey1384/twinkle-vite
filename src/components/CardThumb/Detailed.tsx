@@ -41,7 +41,7 @@ export default function CardThumb({
   borderColor?: string;
   cardColor?: string;
   style?: React.CSSProperties;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   xpNumberColor: string;
 }) {
   return isLoading ? (

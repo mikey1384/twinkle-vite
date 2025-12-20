@@ -160,7 +160,7 @@ export default function TransactionHandler({
             </div>
             <Button
               style={{ marginTop: '1rem', marginBottom: '1rem' }}
-              filled
+              variant="solid"
               color="blue"
               onClick={() => {
                 setCancelReason('');

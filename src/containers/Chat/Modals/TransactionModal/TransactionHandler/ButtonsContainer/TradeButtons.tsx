@@ -101,7 +101,7 @@ export default function TradeButtons({
           onClick={() => onWithdrawTransaction({ cancelReason: 'decline' })}
           loading={isDeclining}
           color="darkGray"
-          filled
+          variant="solid"
         >
           <Icon icon="xmark" />
           <span style={{ marginLeft: '0.7rem' }}>Decline</span>
@@ -110,7 +110,7 @@ export default function TradeButtons({
           onClick={onCounterPropose}
           style={{ marginLeft: '1rem' }}
           color="pink"
-          filled
+          variant="solid"
         >
           <Icon icon="sparkles" />
           <span style={{ marginLeft: '0.7rem' }}>Counter</span>
@@ -121,7 +121,7 @@ export default function TradeButtons({
           disabled={isDisabled}
           onClick={() => setConfirmModalShown(true)}
           color="green"
-          filled
+          variant="solid"
         >
           <Icon icon="check" />
           <span style={{ marginLeft: '0.7rem' }}>Accept</span>

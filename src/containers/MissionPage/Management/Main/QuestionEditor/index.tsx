@@ -66,7 +66,7 @@ export default function QuestionEditor({ missionId }: { missionId: number }) {
             loading={isAdding}
             disabled={inputDisabled}
             color="blue"
-            filled
+            variant="solid"
             onClick={handleNewQuestionSubmit}
           >
             <Icon icon="plus" />

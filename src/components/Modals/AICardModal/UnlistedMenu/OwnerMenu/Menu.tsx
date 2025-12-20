@@ -62,7 +62,7 @@ export default function Menu({
         <Button
           onClick={() => onSetSellModalShown(true)}
           color="oceanBlue"
-          filled
+          variant="solid"
         >
           <Icon icon="shopping-cart" />
           <span style={{ marginLeft: '0.7rem' }}>List for sale</span>
@@ -106,7 +106,7 @@ export default function Menu({
           onClick={() => setConfirmModalShown(true)}
           color="redOrange"
           disabled={!hasEnoughTwinkleCoins || isBurning}
-          filled
+          variant="solid"
         >
           <Icon icon="fire" />
           <div style={{ marginLeft: '0.7rem' }}>

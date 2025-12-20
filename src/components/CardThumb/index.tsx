@@ -20,7 +20,7 @@ export default function CardThumb({
   card: Card;
   detailed?: boolean;
   style?: React.CSSProperties;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }) {
   const cardObj = useChatContext((v) => v.state.cardObj);
   const loadAICard = useAppContext((v) => v.requestHelpers.loadAICard);

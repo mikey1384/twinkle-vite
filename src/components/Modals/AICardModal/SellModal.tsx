@@ -83,7 +83,7 @@ export default function SellModal({
             </div>
           )}
           <Button
-            filled
+            variant="solid"
             color="oceanBlue"
             onClick={handleCompleteListing}
             loading={posting}

@@ -57,7 +57,7 @@ export default function EmailSubmitForm({
           disabled={!emailIsValid}
           loading={sendingEmail}
           style={{ fontSize: '1.7rem' }}
-          filled
+          variant="solid"
           color={submitButtonColor}
           onClick={() => handleConfirmEmail(email)}
         >

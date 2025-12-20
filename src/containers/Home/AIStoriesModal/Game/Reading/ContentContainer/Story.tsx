@@ -108,7 +108,7 @@ export default function Story({
           }}
         >
           {isGraded ? (
-            <Button filled color="orange" onClick={onFinishRead}>
+            <Button variant="solid" color="orange" onClick={onFinishRead}>
               Review Questions
             </Button>
           ) : (

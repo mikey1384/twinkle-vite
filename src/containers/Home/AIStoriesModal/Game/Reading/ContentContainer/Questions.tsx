@@ -167,7 +167,7 @@ export default function Questions({
                     {solveObj.numCorrect === questions.length ? '!' : ''}
                   </div>
                   <div style={{ marginTop: '2rem' }}>
-                    <Button filled color="logoBlue" onClick={onReadAgain}>
+                    <Button variant="solid" color="logoBlue" onClick={onReadAgain}>
                       Read Again
                     </Button>
                   </div>
@@ -187,7 +187,7 @@ export default function Questions({
                     Finish
                   </GradientButton>
                   <div style={{ marginTop: '2rem' }}>
-                    <Button filled color="logoBlue" onClick={onReadAgain}>
+                    <Button variant="solid" color="logoBlue" onClick={onReadAgain}>
                       Read Again
                     </Button>
                   </div>

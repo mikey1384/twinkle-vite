@@ -201,19 +201,19 @@ export default function QuestionsBuilder({
                       buttons={[
                         {
                           label: `+ ${addLabel}`,
-                          filled: true,
+                          variant: 'solid',
                           onClick: onAddQuestion,
                           color: successColor
                         },
                         {
                           label: reorderLabel,
-                          filled: true,
+                          variant: 'solid',
                           onClick: () => setReorderModeOn(true),
                           color: infoColor
                         },
                         {
                           label: resetLabel,
-                          filled: true,
+                          variant: 'solid',
                           onClick: onReset,
                           color: 'orange'
                         }

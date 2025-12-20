@@ -70,7 +70,7 @@ export default function MyOffer({
           `}
           onClick={() => onSetWithdrawOfferModalShown(true)}
           color="orange"
-          filled
+          variant="solid"
         >
           <Icon
             className={css`

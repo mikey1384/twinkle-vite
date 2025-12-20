@@ -209,7 +209,7 @@ export default function GrammarQuestionGenerator({
             disabled={submitDisabled}
             style={{ fontSize: '2rem' }}
             color="logoBlue"
-            filled
+            variant="solid"
             onClick={handleSubmitQuestion}
           >
             Submit
