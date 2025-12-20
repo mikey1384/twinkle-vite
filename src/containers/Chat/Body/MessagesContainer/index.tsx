@@ -1375,6 +1375,7 @@ export default function MessagesContainer({
           message: messagePayload
         });
 
+        // Broadcast the message - the reducer will update creatorId from newOwner
         socket.emit('new_chat_message', {
           message: messagePayload,
           channel: {
@@ -1384,12 +1385,6 @@ export default function MessagesContainer({
               : { channelName }),
             pathId: currentChannel.pathId
           }
-        });
-
-        // Broadcast owner change to update creatorId on other clients
-        socket.emit('new_channel_owner', {
-          channelId: selectedChannelId,
-          newOwner
         });
 
         if (andLeave) {

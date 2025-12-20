@@ -247,19 +247,6 @@ export default function ChatActions(dispatch: Dispatch) {
         newOwner
       });
     },
-    onSetChannelOwner({
-      channelId,
-      newOwner
-    }: {
-      channelId: number;
-      newOwner: any;
-    }) {
-      return dispatch({
-        type: 'SET_CHANNEL_OWNER',
-        channelId,
-        newOwner
-      });
-    },
     onChangeTopicSettings({
       channelId,
       topicId,
