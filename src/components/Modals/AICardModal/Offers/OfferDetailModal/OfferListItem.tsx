@@ -103,7 +103,7 @@ export default function OfferListItem({
               <Button
                 onClick={handleAcceptClick}
                 color="oceanBlue"
-                filled
+                variant="solid"
                 mobilePadding="0.5rem"
                 mobileBorderRadius="3px"
                 loading={accepting}

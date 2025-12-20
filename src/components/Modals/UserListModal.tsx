@@ -117,7 +117,7 @@ export default function UserListModal({
                     <div style={{ display: 'flex' }}>
                       <Button
                         color="logoBlue"
-                        filled
+                        variant="solid"
                         style={{ fontSize: '1.5rem', marginRight: '1rem' }}
                         onClick={() => navigate(`/users/${user.username}`)}
                       >
@@ -125,7 +125,7 @@ export default function UserListModal({
                       </Button>
                       <Button
                         color="green"
-                        filled
+                        variant="solid"
                         style={{ fontSize: '1.5rem' }}
                         onClick={() => handleTalkClick(user)}
                       >

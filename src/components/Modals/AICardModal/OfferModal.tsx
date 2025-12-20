@@ -73,7 +73,7 @@ export default function OfferModal({
             }}
           />
           <Button
-            filled
+            variant="solid"
             color="oceanBlue"
             loading={posting}
             onClick={handlePostOffer}

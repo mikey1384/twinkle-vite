@@ -37,7 +37,7 @@ export default function CategoryInput({
           onClick={onSubmit}
           loading={uploading}
           color="blue"
-          filled
+          variant="solid"
           style={{ marginLeft: '1rem' }}
         >
           <Icon icon="plus" />

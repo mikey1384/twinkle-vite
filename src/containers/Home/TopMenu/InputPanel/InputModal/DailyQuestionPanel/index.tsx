@@ -521,10 +521,21 @@ export default function DailyQuestionPanel({
   // Loading screen
   if (screen === 'loading') {
     return (
-      <div className={containerCls}>
-        <Loading text={loadingMessage || "Loading today's question..."} />
-        <div style={{ width: '60%', marginTop: '1rem' }}>
-          <ProgressBar progress={loadingProgress} />
+      <div className={centeredContainerCls}>
+        <div
+          className={css`
+            margin-top: -7rem;
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+          `}
+        >
+          <Loading text={loadingMessage || "Loading today's question..."} />
+          <div style={{ width: '60%', marginTop: 0 }}>
+            <ProgressBar progress={loadingProgress} />
+          </div>
         </div>
       </div>
     );
@@ -729,7 +740,7 @@ export default function DailyQuestionPanel({
 
   if (screen === 'grading') {
     return (
-      <div className={containerCls}>
+      <div className={centeredContainerCls}>
         <Loading text={gradingMessage || 'Evaluating your response...'} />
         <div style={{ width: '60%', marginTop: '1rem' }}>
           <ProgressBar progress={gradingProgress} />
@@ -768,6 +779,16 @@ const containerCls = css`
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-height: 300px;
+`;
+
+const centeredContainerCls = css`
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   min-height: 300px;
 `;
 

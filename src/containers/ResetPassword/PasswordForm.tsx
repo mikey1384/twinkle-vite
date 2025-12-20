@@ -59,7 +59,7 @@ export default function PasswordForm({
         <Button
           style={{ fontSize: '2rem' }}
           disabled={!!errorMsg || stringIsEmpty(password)}
-          filled
+          variant="solid"
           color="blue"
           onClick={handleSubmit}
         >

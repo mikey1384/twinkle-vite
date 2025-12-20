@@ -47,7 +47,10 @@ export default function Tooltip({
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
-              onClick={onShowAllReactedUsers}
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowAllReactedUsers();
+              }}
             >
               and {otherReactedUserNumber} other
               {otherReactedUserNumber === 1 ? '' : 's'}

@@ -60,7 +60,7 @@ export default function ApproveModal({
           >
             <Button
               color="rose"
-              filled
+              variant="solid"
               disabled={submitting}
               loading={submitting && !isApproved}
               onClick={() =>
@@ -74,7 +74,7 @@ export default function ApproveModal({
             </Button>
             <Button
               style={{ marginLeft: '1.5rem' }}
-              filled
+              variant="solid"
               color="green"
               disabled={submitting}
               loading={submitting && isApproved}

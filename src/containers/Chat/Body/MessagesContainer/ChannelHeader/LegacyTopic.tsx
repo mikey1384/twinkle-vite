@@ -213,7 +213,7 @@ export default function LegacyTopic({
           <Button
             color={buttonColor}
             hoverColor={buttonHoverColor}
-            filled
+            variant="solid"
             onClick={() => {
               onSetIsRespondingToSubject({
                 channelId: selectedChannelId,

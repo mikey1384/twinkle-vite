@@ -86,7 +86,7 @@ export default function PromotionModal({
             {pieceChoices.map(({ type, icon }) => (
               <Button
                 key={type}
-                filled
+                variant="solid"
                 color={color === 'white' ? 'darkerGray' : 'lighterGray'}
                 onClick={() => onPromote(type)}
                 className={css`

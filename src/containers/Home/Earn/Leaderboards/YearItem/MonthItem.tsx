@@ -28,7 +28,7 @@ export default function MonthItem({
   }, [top30]);
   const { cardVars } = useThemedCardVars({
     role: 'sectionPanel',
-    blendWeight: 0.94
+    intensity: 0.94
   });
 
   return (

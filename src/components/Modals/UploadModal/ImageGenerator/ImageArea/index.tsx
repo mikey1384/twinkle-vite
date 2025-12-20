@@ -40,14 +40,11 @@ export default function ImageArea({
   followUpPrompt,
   onFollowUpPromptChange,
   onFollowUpGenerate,
-  onUseImage,
   getProgressLabel,
   onRemoveReference,
   onImageEdited,
   isShowingLoadingState,
-  hasBeenEdited,
   onSetHasBeenEdited,
-  canvasHasContent,
   canAffordFollowUp,
   followUpCost,
   followUpEngine = 'gemini',
@@ -78,14 +75,11 @@ export default function ImageArea({
           followUpPrompt={followUpPrompt}
           onFollowUpPromptChange={onFollowUpPromptChange}
           onFollowUpGenerate={onFollowUpGenerate}
-          onUseImage={onUseImage}
           getProgressLabel={getProgressLabel}
           onRemoveReference={onRemoveReference}
           onImageEdited={onImageEdited}
           isShowingLoadingState={isShowingLoadingState}
-          hasBeenEdited={hasBeenEdited}
           onSetHasBeenEdited={onSetHasBeenEdited}
-          canvasHasContent={canvasHasContent}
           canAffordFollowUp={canAffordFollowUp}
           followUpCost={followUpCost}
           followUpEngine={followUpEngine}

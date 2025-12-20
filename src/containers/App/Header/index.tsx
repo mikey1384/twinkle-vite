@@ -214,7 +214,6 @@ export default function Header({
             bottom: 0;
             box-shadow: none;
             height: var(--mobile-nav-height, 7rem);
-            border-top: 1px solid var(--ui-border);
             padding-bottom: env(safe-area-inset-bottom, 0px);
           }
         `}`}

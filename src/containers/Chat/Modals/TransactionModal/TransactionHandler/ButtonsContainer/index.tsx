@@ -68,7 +68,7 @@ export default function ButtonsContainer({
             loading={withdrawing}
             onClick={() => handleCloseTransaction({ cancelReason: 'withdraw' })}
             color={withdrawColor}
-            filled
+            variant="solid"
           >
             <Icon icon={withdrawIcon} />
             <span style={{ marginLeft: '0.7rem' }}>{withdrawLabel}</span>
@@ -93,7 +93,7 @@ export default function ButtonsContainer({
               loading={withdrawing}
               onClick={handleCloseTransaction}
               color="blue"
-              filled
+              variant="solid"
             >
               <Icon icon="check" />
               <span style={{ marginLeft: '0.7rem' }}>Got it</span>

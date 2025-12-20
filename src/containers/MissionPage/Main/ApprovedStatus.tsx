@@ -99,7 +99,7 @@ export default function ApprovedStatus({
                   newState: { tryingAgain: true }
                 })
               }
-              filled
+              variant="solid"
               style={{ fontSize: '1.6rem', padding: '1.1rem 2.2rem' }}
             >
               Try Again
