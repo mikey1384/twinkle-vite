@@ -55,6 +55,9 @@ export default function DailyQuestionPanel({
   const simplifyDailyQuestion = useAppContext(
     (v) => v.requestHelpers.simplifyDailyQuestion
   );
+  const purchaseDailyQuestionRepair = useAppContext(
+    (v) => v.requestHelpers.purchaseDailyQuestionRepair
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
@@ -82,7 +85,14 @@ export default function DailyQuestionPanel({
     sharedWithCiel: boolean;
     originalResponse: string;
     sharedResponse: string | null;
+    streak?: number;
+    streakMultiplier?: number;
+    usedRepair?: boolean;
   } | null>(null);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [streakRepairAvailable, setStreakRepairAvailable] = useState(false);
+  const [streakAtRisk, setStreakAtRisk] = useState(false);
+  const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -255,6 +265,11 @@ export default function DailyQuestionPanel({
         setQuestion(data.question);
         setOriginalQuestion(data.question);
 
+        // Save streak info
+        setCurrentStreak(data.currentStreak || 0);
+        setStreakRepairAvailable(!!data.streakRepairAvailable);
+        setStreakAtRisk(!!data.streakAtRisk);
+
         if (data.hasResponded && data.response) {
           setGradingResult({
             grade: data.response.grade,
@@ -265,7 +280,9 @@ export default function DailyQuestionPanel({
             sharedWithZero: !!data.response.sharedWithZero,
             sharedWithCiel: !!data.response.sharedWithCiel,
             originalResponse: data.response.response || '',
-            sharedResponse: data.response.sharedResponse || null
+            sharedResponse: data.response.sharedResponse || null,
+            streak: data.response.streakAtTime || data.currentStreak || 1,
+            streakMultiplier: Math.min(data.response.streakAtTime || 1, 10)
           });
           setResponse(data.response.response || '');
           setScreen('result');
@@ -350,6 +367,37 @@ export default function DailyQuestionPanel({
     setQuestion(originalQuestion);
     setIsSimplified(false);
   }, [originalQuestion]);
+
+  async function handlePurchaseRepair() {
+    if (purchasingRepair || streakRepairAvailable) return;
+
+    try {
+      setPurchasingRepair(true);
+      const result = await purchaseDailyQuestionRepair();
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      if (result.success) {
+        setStreakRepairAvailable(true);
+        setStreakAtRisk(false);
+        // Update user's coin balance
+        if (userId && result.newBalance !== undefined) {
+          onSetUserState({
+            userId,
+            newState: { twinkleCoins: result.newBalance }
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to purchase repair:', err);
+      setError(err?.message || 'Failed to purchase repair. Please try again.');
+    } finally {
+      setPurchasingRepair(false);
+    }
+  }
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -462,7 +510,10 @@ export default function DailyQuestionPanel({
           sharedWithZero: false,
           sharedWithCiel: false,
           originalResponse: response.trim(),
-          sharedResponse: null
+          sharedResponse: null,
+          streak: result.streak || 1,
+          streakMultiplier: result.streakMultiplier || 1,
+          usedRepair: result.usedRepair || false
         });
         setScreen('result');
       }, 500);
@@ -522,16 +573,7 @@ export default function DailyQuestionPanel({
   if (screen === 'loading') {
     return (
       <div className={centeredContainerCls}>
-        <div
-          className={css`
-            margin-top: -7rem;
-            display: flex;
-            width: 100%;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-          `}
-        >
+        <div className={innerContainerCls}>
           <Loading text={loadingMessage || "Loading today's question..."} />
           <div style={{ width: '60%', marginTop: 0 }}>
             <ProgressBar progress={loadingProgress} />
@@ -558,6 +600,141 @@ export default function DailyQuestionPanel({
     return (
       <ErrorBoundary componentPath="DailyQuestionPanel/Start">
         <div className={containerCls}>
+          {/* Streak Display */}
+          {currentStreak > 0 && (
+            <div
+              className={css`
+                text-align: center;
+                margin-bottom: 1.5rem;
+                padding: 1rem 1.5rem;
+                background: ${currentStreak >= 10
+                  ? '#FFD700'
+                  : currentStreak >= 7
+                  ? '#E53935'
+                  : currentStreak >= 4
+                  ? '#FF9800'
+                  : '#9E9E9E'}15;
+                border: 2px solid
+                  ${currentStreak >= 10
+                    ? '#FFD700'
+                    : currentStreak >= 7
+                    ? '#E53935'
+                    : currentStreak >= 4
+                    ? '#FF9800'
+                    : '#9E9E9E'}40;
+                border-radius: 12px;
+              `}
+            >
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.5rem;
+                `}
+              >
+                <span
+                  className={css`
+                    font-size: 1.8rem;
+                  `}
+                >
+                  🔥
+                </span>
+                <span
+                  className={css`
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    color: ${currentStreak >= 10
+                      ? '#FFD700'
+                      : currentStreak >= 7
+                      ? '#E53935'
+                      : currentStreak >= 4
+                      ? '#FF9800'
+                      : '#9E9E9E'};
+                  `}
+                >
+                  {currentStreak}-day streak
+                </span>
+              </div>
+              <p
+                className={css`
+                  font-size: 1.2rem;
+                  color: ${Color.darkerGray()};
+                  margin-top: 0.3rem;
+                `}
+              >
+                Keep it going for {Math.min(currentStreak + 1, 10)}x XP!
+              </p>
+            </div>
+          )}
+
+          {/* Streak At Risk Warning */}
+          {streakAtRisk && currentStreak > 0 && (
+            <div
+              className={css`
+                text-align: center;
+                margin-bottom: 1.5rem;
+                padding: 1rem 1.5rem;
+                background: ${Color.rose()}15;
+                border: 2px solid ${Color.rose()}40;
+                border-radius: 12px;
+              `}
+            >
+              <p
+                className={css`
+                  font-size: 1.3rem;
+                  font-weight: bold;
+                  color: ${Color.rose()};
+                  margin-bottom: 0.5rem;
+                `}
+              >
+                ⚠️ Your {currentStreak}-day streak is at risk!
+              </p>
+              <p
+                className={css`
+                  font-size: 1.2rem;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: 0.75rem;
+                `}
+              >
+                You missed yesterday. Answer today or your streak resets to 1.
+              </p>
+              <Button
+                variant="solid"
+                color="orange"
+                onClick={handlePurchaseRepair}
+                disabled={purchasingRepair}
+                loading={purchasingRepair}
+              >
+                <Icon icon="wrench" style={{ marginRight: '0.5rem' }} />
+                Buy Streak Repair (100,000 coins)
+              </Button>
+            </div>
+          )}
+
+          {/* Streak Repair Available */}
+          {streakRepairAvailable && !streakAtRisk && currentStreak > 0 && (
+            <div
+              className={css`
+                text-align: center;
+                margin-bottom: 1rem;
+                padding: 0.75rem 1rem;
+                background: ${Color.green()}15;
+                border-radius: 8px;
+              `}
+            >
+              <p
+                className={css`
+                  font-size: 1.2rem;
+                  color: ${Color.green()};
+                  font-weight: 600;
+                `}
+              >
+                ✨ Streak repair ready - your streak is protected!
+              </p>
+            </div>
+          )}
+
           <p className={questionTextCls}>{question}</p>
 
           <div
@@ -741,9 +918,11 @@ export default function DailyQuestionPanel({
   if (screen === 'grading') {
     return (
       <div className={centeredContainerCls}>
-        <Loading text={gradingMessage || 'Evaluating your response...'} />
-        <div style={{ width: '60%', marginTop: '1rem' }}>
-          <ProgressBar progress={gradingProgress} />
+        <div className={innerContainerCls}>
+          <Loading text={gradingMessage || 'Evaluating your response...'} />
+          <div style={{ width: '60%' }}>
+            <ProgressBar progress={gradingProgress} />
+          </div>
         </div>
       </div>
     );
@@ -760,6 +939,9 @@ export default function DailyQuestionPanel({
           xpAwarded={gradingResult.xpAwarded}
           feedback={gradingResult.feedback}
           responseId={gradingResult.responseId}
+          streak={gradingResult.streak}
+          streakMultiplier={gradingResult.streakMultiplier}
+          usedRepair={gradingResult.usedRepair}
           isShared={gradingResult.isShared}
           sharedWithZero={gradingResult.sharedWithZero}
           sharedWithCiel={gradingResult.sharedWithCiel}
@@ -790,6 +972,15 @@ const centeredContainerCls = css`
   justify-content: center;
   height: 100%;
   min-height: 300px;
+`;
+
+const innerContainerCls = css`
+  margin-top: -7rem;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 `;
 
 const questionTextCls = css`

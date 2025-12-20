@@ -7,9 +7,13 @@ import AgeRestrictionSelector, {
   AgeRestriction
 } from '~/components/Forms/AgeRestrictionSelector';
 import { css, keyframes } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth, getStreakColor } from '~/constants/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
+
+const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
+const DEFAULT_REWARD_COLOR = 'rgba(255, 203, 50, 1)';
 import { socket } from '~/constants/sockets/api';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
@@ -32,15 +36,15 @@ const gradeSymbols: Record<string, string> = {
   Fail: '✗'
 };
 
+const fireAnimation = keyframes`
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50% { transform: scale(1.1) rotate(3deg); }
+`;
+
 const pulseAnimation = keyframes`
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
-`;
-
-const shimmerAnimation = keyframes`
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
 `;
 
 export default function GradingResult({
@@ -53,6 +57,9 @@ export default function GradingResult({
   xpAwarded,
   feedback,
   responseId,
+  streak = 1,
+  streakMultiplier = 1,
+  usedRepair = false,
   isShared: initialIsShared,
   sharedWithZero: initialSharedWithZero,
   sharedWithCiel: initialSharedWithCiel,
@@ -67,6 +74,9 @@ export default function GradingResult({
   xpAwarded: number;
   feedback: string;
   responseId: number;
+  streak?: number;
+  streakMultiplier?: number;
+  usedRepair?: boolean;
   isShared: boolean;
   sharedWithZero: boolean;
   sharedWithCiel: boolean;
@@ -85,6 +95,9 @@ export default function GradingResult({
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const { userId } = useKeyContext((v) => v.myState);
   const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
+  const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
+  const xpNumberColor = xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
+  const rewardColor = DEFAULT_REWARD_COLOR;
 
   const [sharing, setSharing] = useState(false);
   const [isShared, setIsShared] = useState(initialIsShared);
@@ -282,31 +295,89 @@ export default function GradingResult({
           className={css`
             text-align: center;
             margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: linear-gradient(
-              90deg,
-              transparent,
-              ${Color.gold()}20,
-              transparent
-            );
-            background-size: 200% 100%;
-            animation: ${shimmerAnimation} 2s linear infinite;
-            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
           `}
         >
-          <Icon
-            icon="star"
-            style={{ color: Color.gold(), marginRight: '0.5rem' }}
-          />
-          <span
+          <span style={{ color: xpNumberColor }}>
+            +{addCommasToNumber(xpAwarded)}
+          </span>{' '}
+          <span style={{ color: rewardColor }}>XP</span>
+        </div>
+      )}
+
+      {/* Streak Display */}
+      {streak > 0 && grade !== 'Fail' && (
+        <div
+          className={css`
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.5rem;
+            background: ${getStreakColor(streak)}15;
+            border-radius: 12px;
+          `}
+        >
+          <div
             className={css`
-              font-size: 1.5rem;
-              font-weight: bold;
-              color: ${Color.gold()};
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
             `}
           >
-            +{xpAwarded.toLocaleString()} XP
-          </span>
+            <span
+              className={css`
+                font-size: ${streak >= 10
+                  ? '2.5rem'
+                  : streak >= 5
+                  ? '2.2rem'
+                  : '2rem'};
+                animation: ${streak >= 5 ? fireAnimation : 'none'} 0.6s
+                  ease-in-out infinite;
+              `}
+            >
+              🔥
+            </span>
+            <span
+              className={css`
+                font-size: ${streak >= 10
+                  ? '2rem'
+                  : streak >= 5
+                  ? '1.8rem'
+                  : '1.6rem'};
+                font-weight: bold;
+                color: ${getStreakColor(streak)};
+              `}
+            >
+              {streak}-day streak
+            </span>
+          </div>
+          {streakMultiplier > 1 && (
+            <p
+              className={css`
+                font-size: 1.3rem;
+                color: ${getStreakColor(streak)};
+                margin-top: 0.5rem;
+                font-weight: 600;
+              `}
+            >
+              {streakMultiplier >= 10
+                ? '10x MAX!'
+                : `${streakMultiplier}x XP multiplier!`}
+            </p>
+          )}
+          {usedRepair && (
+            <p
+              className={css`
+                font-size: 1.2rem;
+                color: ${Color.green()};
+                margin-top: 0.5rem;
+                font-weight: 600;
+              `}
+            >
+              ✨ Streak saved with repair!
+            </p>
+          )}
         </div>
       )}
 
@@ -715,19 +786,26 @@ export default function GradingResult({
                 canShareToFeedNow && refining && !preparingAIVersionTarget
               }
             >
-              <Icon icon="share" style={{ marginRight: '0.5rem' }} />
               {!canShareToFeedNow ? (
                 <>
                   <Icon icon="check" style={{ marginRight: '0.5rem' }} />
                   Shared to Feed
                 </>
               ) : refining && !preparingAIVersionTarget ? (
-                'Preparing...'
+                'Polishing...'
+              ) : refinedResponse ? (
+                <>
+                  <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+                  Share to Feed
+                </>
               ) : (
-                'Share to Feed'
+                <>
+                  <Icon icon="magic" style={{ marginRight: '0.5rem' }} />
+                  See AI Polished Version
+                </>
               )}
             </Button>
-            {canShareToFeedNow && (
+            {canShareToFeedNow && refinedResponse && (
               <span
                 className={css`
                   margin-top: 0.4rem;
@@ -870,27 +948,46 @@ export default function GradingResult({
         {showVersionSelector && (
           <>
             <Button
+              style={{ marginRight: '2rem' }}
               variant="ghost"
               onClick={() => setShowVersionSelector(false)}
             >
-              Cancel
+              Go Back
             </Button>
-            <Button
-              variant="solid"
-              color="logoBlue"
-              onClick={handleConfirmShare}
-              disabled={sharing}
-              loading={sharing}
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              `}
             >
-              <Icon icon="share" style={{ marginRight: '0.5rem' }} />
-              {sharing ? 'Sharing...' : 'Confirm Share'}
-            </Button>
+              <Button
+                variant="solid"
+                color="logoBlue"
+                onClick={handleConfirmShare}
+                disabled={sharing}
+                loading={sharing}
+              >
+                <Icon icon="share" style={{ marginRight: '0.5rem' }} />
+                {sharing ? 'Sharing...' : 'Share to Feed'}
+              </Button>
+              <span
+                className={css`
+                  margin-top: 0.4rem;
+                  font-size: 1.1rem;
+                  color: ${Color.orange()};
+                  font-weight: 600;
+                `}
+              >
+                +{shareCoinsReward.toLocaleString()} coins
+              </span>
+            </div>
           </>
         )}
         {showAIVersionSelector && aiShareTarget && (
           <>
             <Button variant="ghost" onClick={handleCancelAIVersionSelector}>
-              Cancel
+              Go Back
             </Button>
             <Button
               variant="solid"
@@ -951,6 +1048,7 @@ export default function GradingResult({
           </Button>
         </div>
       )}
+      <div style={{ height: '2rem' }} />
     </div>
   );
 

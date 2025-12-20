@@ -22,6 +22,7 @@ import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
 import { useRoleColor } from '~/theme/useRoleColor';
+import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
 
 export default function Content({
   audioPath,
@@ -349,6 +350,11 @@ export default function Content({
                 <span>Masterpiece</span>
               </div>
             )}
+            <XPAndStreakDisplay
+              xpAwarded={contentObj?.xpAwarded}
+              streak={contentObj?.streakAtTime}
+              style={{ marginTop: '1rem' }}
+            />
             {!!contentObj?.shareCoinsAwarded && (
               <div
                 style={{
