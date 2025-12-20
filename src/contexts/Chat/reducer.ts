@@ -462,36 +462,6 @@ export default function ChatReducer(
         }
       };
     }
-    case 'SET_CHANNEL_OWNER': {
-      if (!state.channelsObj[action.channelId]) return state;
-
-      const channel = state.channelsObj[action.channelId];
-      let members = [...(channel.members || [])];
-      const memberIds = new Set(members.map((member) => member.id));
-      const allMemberIds = [...(channel.allMemberIds || [])];
-
-      if (!memberIds.has(action.newOwner.id) && action.newOwner.username) {
-        members = [action.newOwner, ...members];
-      }
-
-      const filteredMemberIds = allMemberIds.filter(
-        (id) => id !== action.newOwner.id
-      );
-      const updatedAllMemberIds = [action.newOwner.id, ...filteredMemberIds];
-
-      return {
-        ...state,
-        channelsObj: {
-          ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            creatorId: action.newOwner.id,
-            members,
-            allMemberIds: updatedAllMemberIds
-          }
-        }
-      };
-    }
     case 'CHANGE_TOPIC_SETTINGS': {
       return {
         ...state,
@@ -2870,7 +2840,12 @@ export default function ChatReducer(
                 : Number(prevChannelObj.numUnreads) + 1,
             gameState,
             isHidden: false,
-            ...(subchannelObj ? { subchannelObj } : {})
+            ...(subchannelObj ? { subchannelObj } : {}),
+            // Update creatorId when receiving an owner_change message
+            ...(action.message.notificationType === 'owner_change' &&
+            action.message.newOwner?.id
+              ? { creatorId: action.message.newOwner.id }
+              : {})
           }
         }
       };
@@ -3006,6 +2981,11 @@ export default function ChatReducer(
                     isLoaded: true
                   }
                 },
+                // Update creatorId when receiving an owner_change message
+                ...(action.message.notificationType === 'owner_change' &&
+                action.message.newOwner?.id
+                  ? { creatorId: action.message.newOwner.id }
+                  : {}),
                 lastChessMoveViewerId:
                   action.message.isChessMsg &&
                   !!action.message.chessState &&

@@ -250,7 +250,7 @@ export default function Channel({
       if (notificationType === 'owner_change' && newOwner) {
         return (
           <span>
-            transferred ownership of this channel to {newOwner.username}
+            {messageSender}: transferred ownership to {newOwner.username}
           </span>
         );
       }

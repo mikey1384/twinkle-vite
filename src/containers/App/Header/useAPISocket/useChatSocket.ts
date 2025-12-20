@@ -48,9 +48,6 @@ export default function useChatSocket({
   const onChangeBusyStatus = useChatContext(
     (v) => v.actions.onChangeBusyStatus
   );
-  const onSetChannelOwner = useChatContext(
-    (v) => v.actions.onSetChannelOwner
-  );
   const onChangeChannelSettings = useChatContext(
     (v) => v.actions.onChangeChannelSettings
   );
@@ -118,7 +115,6 @@ export default function useChatSocket({
     socket.on('ai_thought_streamed', handleAIThoughtStream);
     socket.on('away_status_changed', handleAwayStatusChange);
     socket.on('busy_status_changed', handleBusyStatusChange);
-    socket.on('channel_owner_changed', handleChangeChannelOwner);
     socket.on('channel_settings_changed', onChangeChannelSettings);
     socket.on('chat_invitation_received', handleChatInvitation);
     socket.on('chat_message_deleted', onDeleteMessage);
@@ -142,7 +138,6 @@ export default function useChatSocket({
       socket.off('ai_thought_streamed', handleAIThoughtStream);
       socket.off('away_status_changed', handleAwayStatusChange);
       socket.off('busy_status_changed', handleBusyStatusChange);
-      socket.off('channel_owner_changed', handleChangeChannelOwner);
       socket.off('channel_settings_changed', onChangeChannelSettings);
       socket.off('chat_invitation_received', handleChatInvitation);
       socket.off('chat_message_deleted', onDeleteMessage);
@@ -184,18 +179,6 @@ export default function useChatSocket({
       if (chatStatus[userId] && chatStatus[userId].isBusy !== isBusy) {
         onChangeBusyStatus({ userId, isBusy });
       }
-    }
-
-    function handleChangeChannelOwner({
-      channelId,
-      newOwner
-    }: {
-      channelId: number;
-      newOwner: any;
-    }) {
-      updateChatLastRead(channelId);
-      // Only update the owner, message is delivered via new_chat_message
-      onSetChannelOwner({ channelId, newOwner });
     }
 
     function handleChatInvitation({
