@@ -93,6 +93,13 @@ export const Color: {
   yellow: (opacity = 1) => `rgba(255,255,55,${opacity})`
 };
 
+export function getStreakColor(streak: number): string {
+  if (streak >= 10) return Color.gold();
+  if (streak >= 7) return Color.red();
+  if (streak >= 4) return Color.orange();
+  return Color.gray();
+}
+
 export function Theme(color = 'logoBlue'): RoleTokens {
   return getThemeRoles((color || 'logoBlue') as ThemeName);
 }

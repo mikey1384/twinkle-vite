@@ -2155,6 +2155,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async purchaseDailyQuestionRepair() {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/purchase-repair`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async getDailyQuestionHistory({
       limit,
       offset
