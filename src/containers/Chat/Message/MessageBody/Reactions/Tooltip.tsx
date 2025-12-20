@@ -5,7 +5,6 @@ import { css } from '@emotion/css';
 import { createPortal } from 'react-dom';
 
 export default function Tooltip({
-  myId: _myId,
   parentContext,
   onMouseEnter,
   onMouseLeave,
@@ -13,7 +12,6 @@ export default function Tooltip({
   reactedUserIds,
   onShowAllReactedUsers
 }: {
-  myId: number;
   parentContext: any;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -47,6 +45,11 @@ export default function Tooltip({
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onShowAllReactedUsers();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 onShowAllReactedUsers();
@@ -59,11 +62,7 @@ export default function Tooltip({
         ) : null}
       </>
     );
-  }, [
-    displayedReactedUsers,
-    onShowAllReactedUsers,
-    otherReactedUserNumber
-  ]);
+  }, [displayedReactedUsers, onShowAllReactedUsers, otherReactedUserNumber]);
 
   return createPortal(
     <ErrorBoundary

@@ -15,7 +15,8 @@ import { reactionsObj } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { Color, borderRadius, innerBorderRadius } from '~/constants/css';
 import { isMobile } from '~/helpers';
-import { isEqual } from 'lodash';import { useRoleColor } from '~/theme/useRoleColor';
+import { isEqual } from 'lodash';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
 const youLabel = 'You';
@@ -219,7 +220,6 @@ function Reaction({
       </div>
       {tooltipContext && reactedUsers.length > 0 && (
         <Tooltip
-          myId={userId}
           onMouseEnter={() => {
             clearTimeout(hideTimerRef.current);
             clearTimeout(hideTimerRef2.current);
