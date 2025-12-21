@@ -120,9 +120,19 @@ export default function useAICardSocket() {
         'uploading'
       ]);
 
-      const inProgress = activeStages.has(stage);
       const hasPartial = !!status?.partialImageB64;
       const rawImageUrl: string | undefined = status?.imageUrl;
+      const rawImagePath: string | undefined = status?.imagePath;
+      const isDataUrl =
+        typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
+
+      const hasActualImagePath =
+        !!rawImagePath || (!!rawImageUrl && !isDataUrl);
+
+      const inProgress =
+        activeStages.has(stage) ||
+        (stage === 'completed' && !hasActualImagePath);
+
       const previewUrl = hasPartial
         ? `data:image/png;base64,${status.partialImageB64}`
         : !inProgress && stage === 'completed'
@@ -134,13 +144,12 @@ export default function useAICardSocket() {
         imageGenerationInProgress: inProgress
       };
 
-      if (stage === 'completed' && rawImageUrl) {
-        const isDataUrl =
-          typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
-        if (!isDataUrl) {
-          newState.imagePath = normalizeToPath(rawImageUrl);
+      if (stage === 'completed') {
+        const finalImagePath = rawImagePath || (isDataUrl ? '' : rawImageUrl);
+        if (finalImagePath && !finalImagePath.startsWith('data:')) {
+          newState.imagePath = normalizeToPath(finalImagePath);
           newState.imageGenerationPreviewUrl = '';
-        } else {
+        } else if (isDataUrl && rawImageUrl) {
           newState.imageGenerationPreviewUrl = rawImageUrl;
         }
       } else if (previewUrl) {
@@ -153,16 +162,15 @@ export default function useAICardSocket() {
 
     function normalizeToPath(url: string): string {
       if (!url) return '';
-      // If already a relative path, ensure it starts with '/'
+
       if (url.startsWith('/')) return url;
-      // Do not ever persist data URIs as imagePath
+
       if (url.startsWith('data:')) return '';
       try {
         const u = new URL(url);
         const path = u.pathname + (u.search || '');
         return path.startsWith('/') ? path : `/${path}`;
       } catch {
-        // Fallback: best-effort to make it a path
         return url.startsWith('/') ? url : `/${url}`;
       }
     }

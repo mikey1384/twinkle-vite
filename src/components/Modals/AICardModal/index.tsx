@@ -69,7 +69,7 @@ function labelFromStage(stage: CardImageStage, callingOpenAITime: number) {
     case 'completed':
       return 'Finishing touches...';
     default:
-      return 'Sprinkling magic...';
+      return 'Generating...';
   }
 }
 
@@ -664,7 +664,6 @@ export default function AICardModal({
       offerId: card.myOffer.id,
       cardId: card.id
     });
-    // the following three lines are redundant with the websocket but are here in case the websocket fails
     onWithdrawOutgoingOffer(card.myOffer.id);
     setOffers((prevOffers) => {
       return prevOffers.reduce((acc, offer) => {

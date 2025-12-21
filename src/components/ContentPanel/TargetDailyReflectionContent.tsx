@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
-import Button from '~/components/Button';
-import Icon from '~/components/Icon';
-import DailyQuestionModal from '~/containers/Home/DailyQuestionModal';
+import AnswerDailyQuestionButton from '~/components/AnswerDailyQuestionButton';
 import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
-import { useKeyContext, useNotiContext } from '~/contexts';
 import { Content, User } from '~/types';
 
 export default function TargetDailyReflectionContent({
@@ -22,19 +19,12 @@ export default function TargetDailyReflectionContent({
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
-  const { userId } = useKeyContext((v) => v.myState);
-  const todayStats = useNotiContext((v) => v.state.todayStats);
-  const [dailyQuestionModalShown, setDailyQuestionModalShown] = useState(false);
 
   const uploader = dailyReflectionContent.uploader as User;
   const reflectionId = dailyReflectionContent.id;
 
   const linkRole = useRoleColor('link', { fallback: 'logoBlue' });
   const linkColor = linkRole.getColor();
-
-  // Check if current user has already answered today's question
-  const hasAnsweredToday = todayStats?.dailyQuestionCompleted;
-  const showAnswerButton = userId && !hasAnsweredToday;
 
   // Get XP and streak from the content
   const xpAwarded = dailyReflectionContent.xpAwarded || 0;
@@ -175,32 +165,8 @@ export default function TargetDailyReflectionContent({
           style={{ marginTop: '1rem' }}
         />
 
-        {/* Answer Today's Question Button */}
-        {showAnswerButton && (
-          <div
-            className={css`
-              margin-top: 1.2rem;
-              padding-top: 1rem;
-              border-top: 1px solid ${Color.borderGray()};
-            `}
-          >
-            <Button
-              variant="solid"
-              color="green"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                setDailyQuestionModalShown(true);
-              }}
-            >
-              <Icon icon="pencil-alt" style={{ marginRight: '0.5rem' }} />
-              Answer Today's Question
-            </Button>
-          </div>
-        )}
+        <AnswerDailyQuestionButton />
       </div>
-      {dailyQuestionModalShown && (
-        <DailyQuestionModal onHide={() => setDailyQuestionModalShown(false)} />
-      )}
     </div>
   );
 }

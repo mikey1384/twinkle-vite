@@ -9,6 +9,7 @@ import XPVideo from './XPVideo';
 import RewardLevelDisplay from './RewardLevelDisplay';
 import ContentDisplay from './ContentDisplay';
 import BottomRewardLevelDisplay from './BottomRewardLevelDisplay';
+import AnswerDailyQuestionButton from '~/components/AnswerDailyQuestionButton';
 import { scrollElementToCenter } from '~/helpers';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useContentState } from '~/helpers/hooks';
@@ -213,6 +214,9 @@ export default function MainContent({
             loadingHeight="30rem"
             mobileLoadingHeight="25rem"
           />
+        )}
+        {contentType === 'dailyReflection' && (
+          <AnswerDailyQuestionButton />
         )}
         <ErrorBoundary componentPath="ContentPanel/Body/MainContent/BottomRewardLevelDisplay">
           <BottomRewardLevelDisplay
