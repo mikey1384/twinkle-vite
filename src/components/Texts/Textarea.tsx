@@ -2,8 +2,6 @@ import React, {
   useMemo,
   useState,
   useRef,
-  useLayoutEffect,
-  useCallback,
   useEffect
 } from 'react';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
@@ -17,6 +15,10 @@ import {
   returnMaxUploadSize
 } from '~/constants/defaultValues';
 import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
+
+const isIOS =
+  typeof navigator !== 'undefined' &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 export default function Textarea({
   className,
@@ -55,27 +57,45 @@ export default function Textarea({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const isPastingRef = useRef(false);
+  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cachedStylesRef = useRef<{
+    padding: number;
+    lineHeight: number;
+  } | null>(null);
+
   const normalizedProgress = useMemo(() => {
     if (!Number.isFinite(uploadProgress) || uploadProgress <= 0) return 0;
     if (uploadProgress >= 1) return 1;
     return uploadProgress;
   }, [uploadProgress]);
 
-  const autoResize = useCallback(() => {
+  // Cache computed styles to avoid repeated style recalculations
+  const getCachedStyles = (el: HTMLTextAreaElement) => {
+    if (!cachedStylesRef.current) {
+      const computed = window.getComputedStyle(el);
+      const paddingTop = parseFloat(computed.paddingTop || '0');
+      const paddingBottom = parseFloat(computed.paddingBottom || '0');
+      let lineHeight = parseFloat(computed.lineHeight || '0');
+      if (!lineHeight || Number.isNaN(lineHeight)) {
+        const fontSize = parseFloat(computed.fontSize || '16');
+        lineHeight = fontSize * 1.2;
+      }
+      cachedStylesRef.current = {
+        padding: paddingTop + paddingBottom,
+        lineHeight
+      };
+    }
+    return cachedStylesRef.current;
+  };
+
+  // Core resize logic - separated to avoid recreating on every render
+  const doResize = () => {
     const el = textareaRef.current;
     if (!el) return;
 
-    const computed = window.getComputedStyle(el);
-    const paddingTop = parseFloat(computed.paddingTop || '0');
-    const paddingBottom = parseFloat(computed.paddingBottom || '0');
-    const padding = paddingTop + paddingBottom;
-
-    let lineHeight = parseFloat(computed.lineHeight || '0');
-    if (!lineHeight || Number.isNaN(lineHeight)) {
-      const fontSize = parseFloat(computed.fontSize || '16');
-      lineHeight = fontSize * 1.2;
-    }
-
+    const { padding, lineHeight } = getCachedStyles(el);
     const baseMinHeight = lineHeight * (minRows || 1) + padding;
 
     if (disableAutoResize) {
@@ -85,12 +105,12 @@ export default function Textarea({
       return;
     }
 
+    // Read scrollHeight with height set to 0
     el.style.minHeight = `${baseMinHeight}px`;
     el.style.height = '0';
-
     const contentHeight = el.scrollHeight;
-    let nextHeight = Math.max(contentHeight, baseMinHeight);
 
+    let nextHeight = Math.max(contentHeight, baseMinHeight);
     if (maxRows) {
       const maxHeight = lineHeight * maxRows + padding;
       nextHeight = Math.min(nextHeight, maxHeight);
@@ -101,57 +121,84 @@ export default function Textarea({
 
     el.style.height = `${nextHeight}px`;
     el.style.minHeight = '';
-  }, [maxRows, minRows, disableAutoResize]);
+  };
 
-  useLayoutEffect(() => {
-    autoResize();
+  // Debounced resize for iOS - prevents UI freeze during rapid updates
+  const scheduleResize = (immediate = false) => {
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    if (resizeTimeoutRef.current) {
+      clearTimeout(resizeTimeoutRef.current);
+      resizeTimeoutRef.current = null;
+    }
+
+    if (immediate && !isIOS) {
+      // Non-iOS: immediate resize is fine
+      rafIdRef.current = requestAnimationFrame(() => {
+        doResize();
+        rafIdRef.current = null;
+      });
+    } else {
+      // iOS or deferred: use setTimeout to break out of the input event loop
+      const delay = isPastingRef.current ? 100 : isIOS ? 50 : 0;
+      resizeTimeoutRef.current = setTimeout(() => {
+        rafIdRef.current = requestAnimationFrame(() => {
+          doResize();
+          rafIdRef.current = null;
+          isPastingRef.current = false;
+        });
+      }, delay);
+    }
+  };
+
+  // Initial resize and value change handling
+  useEffect(() => {
+    scheduleResize(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rest.value, maxRows, minRows, disableAutoResize]);
+
+  // ResizeObserver for container width changes
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     const container = el.parentElement || el;
-
-    let rafId: number | null = null;
-    const schedule = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        autoResize();
-        rafId = null;
-      });
-    };
 
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       let lastWidth = container.clientWidth;
       ro = new ResizeObserver((entries) => {
         const entry = entries[entries.length - 1];
-        // Only react to width changes to avoid loops from height mutations
         const nextWidth = Math.round(entry.contentRect.width);
         if (nextWidth !== Math.round(lastWidth)) {
           lastWidth = nextWidth;
-          schedule();
+          // Invalidate cached styles on width change
+          cachedStylesRef.current = null;
+          scheduleResize(false);
         }
       });
       ro.observe(container);
     } else {
-      const handler = () => schedule();
-      window.addEventListener('orientationchange', handler, {
-        passive: true
-      } as any);
-      window.addEventListener('resize', handler, { passive: true } as any);
+      const handler = () => {
+        cachedStylesRef.current = null;
+        scheduleResize(false);
+      };
+      window.addEventListener('orientationchange', handler, { passive: true });
+      window.addEventListener('resize', handler, { passive: true });
       return () => {
-        if (rafId) cancelAnimationFrame(rafId);
-        window.removeEventListener('orientationchange', handler as any);
-        window.removeEventListener('resize', handler as any);
+        window.removeEventListener('orientationchange', handler);
+        window.removeEventListener('resize', handler);
       };
     }
 
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
       ro?.disconnect();
     };
-  }, [autoResize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const errorModalContent = useMemo(() => {
     switch (uploadErrorType) {
@@ -199,11 +246,20 @@ export default function Textarea({
           }
         }}
         onDrop={onDrop ? handleDrop : undefined}
-        onPaste={
-          onDrop || (rest as any).onPaste ? handleCombinedPaste : undefined
-        }
+        onPaste={(e) => {
+          // Mark that we're pasting so resize uses longer delay
+          isPastingRef.current = true;
+          if (onDrop || (rest as any).onPaste) {
+            handleCombinedPaste(e);
+          }
+          // Schedule resize after paste completes with delay
+          scheduleResize(false);
+        }}
         onInput={(e) => {
-          autoResize();
+          // Don't resize during paste - let the paste handler's delay take over
+          if (!isPastingRef.current) {
+            scheduleResize(false);
+          }
           if (rest.onInput) (rest.onInput as any)(e);
         }}
         onDragEnter={() => {
