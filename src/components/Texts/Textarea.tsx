@@ -1,9 +1,4 @@
-import React, {
-  useMemo,
-  useState,
-  useRef,
-  useEffect
-} from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -64,6 +59,7 @@ export default function Textarea({
     padding: number;
     lineHeight: number;
   } | null>(null);
+  const scheduleResizeRef = useRef<(immediate?: boolean) => void>(() => {});
 
   const normalizedProgress = useMemo(() => {
     if (!Number.isFinite(uploadProgress) || uploadProgress <= 0) return 0;
@@ -153,11 +149,27 @@ export default function Textarea({
     }
   };
 
+  // Keep ref in sync so ResizeObserver always uses latest resize logic
+  scheduleResizeRef.current = scheduleResize;
+
+  // Invalidate cached styles when style-affecting props change
+  useEffect(() => {
+    cachedStylesRef.current = null;
+  }, [className, style, theme]);
+
   // Initial resize and value change handling
   useEffect(() => {
     scheduleResize(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rest.value, maxRows, minRows, disableAutoResize]);
+  }, [
+    rest.value,
+    maxRows,
+    minRows,
+    disableAutoResize,
+    className,
+    style,
+    theme
+  ]);
 
   // ResizeObserver for container width changes
   useEffect(() => {
@@ -166,6 +178,8 @@ export default function Textarea({
     const container = el.parentElement || el;
 
     let ro: ResizeObserver | null = null;
+    let fallbackHandler: (() => void) | null = null;
+
     if (typeof ResizeObserver !== 'undefined') {
       let lastWidth = container.clientWidth;
       ro = new ResizeObserver((entries) => {
@@ -175,29 +189,30 @@ export default function Textarea({
           lastWidth = nextWidth;
           // Invalidate cached styles on width change
           cachedStylesRef.current = null;
-          scheduleResize(false);
+          scheduleResizeRef.current(false);
         }
       });
       ro.observe(container);
     } else {
-      const handler = () => {
+      fallbackHandler = () => {
         cachedStylesRef.current = null;
-        scheduleResize(false);
+        scheduleResizeRef.current(false);
       };
-      window.addEventListener('orientationchange', handler, { passive: true });
-      window.addEventListener('resize', handler, { passive: true });
-      return () => {
-        window.removeEventListener('orientationchange', handler);
-        window.removeEventListener('resize', handler);
-      };
+      window.addEventListener('orientationchange', fallbackHandler, {
+        passive: true
+      });
+      window.addEventListener('resize', fallbackHandler, { passive: true });
     }
 
     return () => {
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
       ro?.disconnect();
+      if (fallbackHandler) {
+        window.removeEventListener('orientationchange', fallbackHandler);
+        window.removeEventListener('resize', fallbackHandler);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const errorModalContent = useMemo(() => {
