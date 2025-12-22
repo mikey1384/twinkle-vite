@@ -1056,7 +1056,8 @@ export default function Main({
                 position: relative;
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
-                  height: calc(100% - var(--mobile-nav-total-height));
+                  /* Use dvh (dynamic viewport height) for iOS Safari compatibility */
+                  height: calc(100dvh - var(--mobile-nav-total-height));
                 }
               `}
             >
