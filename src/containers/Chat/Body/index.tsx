@@ -57,6 +57,7 @@ export default function Body({
           background: #fff;
           @media (max-width: ${mobileMaxWidth}) {
             width: ${isUsingCollectSection ? '100vw' : '90vw'};
+            touch-action: pan-y;
           }
         `}
       >
