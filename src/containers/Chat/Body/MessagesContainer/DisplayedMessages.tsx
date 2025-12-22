@@ -581,7 +581,7 @@ export default function DisplayedMessages({
       }
       setShowGoToBottom(scrollTop < -10000);
     }
-  }, [MessagesRef, handleLoadMore, loadMoreShownAtBottom, loadingMoreRecent, handleLoadMoreRecentMessages]);
+  });
 
   const prevSelectedTabRef = useRef(selectedTab);
   const prevMessageRefsRef = useRef<{
