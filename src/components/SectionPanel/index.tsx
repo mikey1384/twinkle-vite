@@ -81,11 +81,12 @@ export default function SectionPanel({
   const TitleInputRef = useRef<HTMLInputElement | null>(null);
 
   useOutsideClick(
-    onEdit ? [TitleInputRef, TitleInputContainerRef] : [{ current: null }],
+    [TitleInputRef, TitleInputContainerRef],
     () => {
       setOnEdit(false);
       setEditedTitle(typeof title === 'string' ? title : '');
-    }
+    },
+    { enabled: onEdit }
   );
 
   const paddingTop = useMemo(() => {

@@ -5,7 +5,7 @@ import { reactionsObj } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
-import { useOutsideTap } from '~/helpers/hooks';
+import { useOutsideClick } from '~/helpers/hooks';
 import Icon from '~/components/Icon';
 
 const deviceIsMobile = isMobile(navigator);
@@ -34,16 +34,16 @@ export default function ReactionButton({
   const BarRef = useRef(null);
   const coolDownRef: React.RefObject<any> = useRef(null);
 
-  // Only register outside-tap listener on mobile when menu is shown
-  useOutsideTap(
-    deviceIsMobile && reactionsMenuShown ? BarRef : { current: null },
+  useOutsideClick(
+    BarRef,
     () => {
       coolDownRef.current = true;
       onSetReactionsMenuShown(false);
       setTimeout(() => {
         coolDownRef.current = false;
       }, 100);
-    }
+    },
+    { enabled: deviceIsMobile && reactionsMenuShown, closeOnScroll: true }
   );
 
   return (

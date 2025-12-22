@@ -57,7 +57,7 @@ export default function TagInput({
     return searchResults.filter((item) => !selectedItems[item.id]);
   }, [searchResults, selectedItems]);
 
-  useOutsideClick(TagInputRef, onClickOutSide);
+  useOutsideClick(TagInputRef, onClickOutSide, { enabled: true });
 
   return (
     <ErrorBoundary componentPath="TagForm/TagInput">
@@ -79,7 +79,9 @@ export default function TagInput({
           dropdownFooter={dropdownFooter}
         />
         {loading && (
-          <Loading style={{ position: 'absolute', top: '1rem', right: '1rem' }} />
+          <Loading
+            style={{ position: 'absolute', top: '1rem', right: '1rem' }}
+          />
         )}
       </div>
       {dropdownFooter && (

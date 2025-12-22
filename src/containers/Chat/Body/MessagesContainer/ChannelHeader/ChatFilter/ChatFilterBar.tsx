@@ -9,7 +9,7 @@ import {
 import { useAppContext, useChatContext } from '~/contexts';
 import Icon from '~/components/Icon';
 import SearchInput from './SearchInput';
-import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
+import { useOutsideClick } from '~/helpers/hooks';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
@@ -17,7 +17,6 @@ import { useRoleColor } from '~/theme/useRoleColor';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const deviceIsMobile = isMobile(navigator);
-const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
 export default function ChatFilterBar({
   canChangeTopic,
@@ -88,10 +87,8 @@ export default function ChatFilterBar({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [, startTransition] = useTransition();
 
-  outsideClickMethod(
-    isSearchActive
-      ? [searchInputRef, searchButtonRef, topicButtonRef]
-      : [{ current: null }],
+  useOutsideClick(
+    [searchInputRef, searchButtonRef, topicButtonRef],
     () => {
       if (!stringIsEmpty(searchText)) {
         return;
@@ -100,7 +97,8 @@ export default function ChatFilterBar({
         channelId,
         isActive: false
       });
-    }
+    },
+    { enabled: isSearchActive, closeOnScroll: deviceIsMobile }
   );
 
   return (
