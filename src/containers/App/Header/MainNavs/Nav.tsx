@@ -144,6 +144,7 @@ function Nav({
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        touch-action: manipulation;
         a {
           text-decoration: none;
           font-weight: 600;

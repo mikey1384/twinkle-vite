@@ -109,6 +109,7 @@ export default function HomeMenuItems({
             margin: 0.6rem 0;
             width: 100%;
             cursor: pointer;
+            touch-action: manipulation;
             display: flex;
             align-items: center;
             color: ${Color.gray()};

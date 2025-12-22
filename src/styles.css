@@ -153,6 +153,13 @@ ul {
   -webkit-overflow-scrolling: touch;
 }
 
+/* iOS mobile: disable native scroll layer to prevent tap interception */
+@media (max-width: 767px) {
+  .momentum-scroll-enabled {
+    -webkit-overflow-scrolling: auto;
+  }
+}
+
 .unselectable {
   -moz-user-select: none;
   -khtml-user-select: none;
