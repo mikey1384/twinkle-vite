@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import {
   addEmoji,
@@ -48,6 +48,7 @@ export default function InputArea({
   onSetText: (v: string) => any;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
+  const isPastingRef = useRef(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -120,6 +121,7 @@ export default function InputArea({
         value={inputText}
         onChange={handleChange}
         onKeyUp={handleKeyUp}
+        onPaste={handlePaste}
         onDrop={handleDrop}
         hasError={isExceedingCharLimit}
         style={{
@@ -176,19 +178,28 @@ export default function InputArea({
     }
   }
 
+  function handlePaste() {
+    isPastingRef.current = true;
+  }
+
   function handleChange(event: any) {
     const nextValue = event.target.value;
-    const prevLength = inputText.length;
-    const lengthDiff = Math.abs(nextValue.length - prevLength);
-    // Detect paste: large text change at once needs longer delay for textarea resize
-    const isPaste = lengthDiff > 10;
-    const delay = isPaste ? 150 : 0;
+    const isPaste = isPastingRef.current;
+    isPastingRef.current = false;
 
-    setTimeout(() => {
+    if (isPaste) {
+      // Paste needs delay for textarea to finish resizing
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          onHeightChange(innerRef.current?.clientHeight);
+        });
+      }, 150);
+    } else {
+      // Immediate update for typing/line breaks
       requestAnimationFrame(() => {
         onHeightChange(innerRef.current?.clientHeight);
       });
-    }, delay);
+    }
     onSetText(nextValue);
   }
 
