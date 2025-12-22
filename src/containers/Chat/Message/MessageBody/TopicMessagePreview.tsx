@@ -116,6 +116,7 @@ export default function TopicMessagePreview({
             border-top: 1px solid var(--chat-border);
             border-bottom: 1px solid var(--chat-border);
             cursor: pointer;
+            touch-action: manipulation;
             padding: 1rem 0;
             margin-top: ${prevMessageHasTopic ? '0.5rem' : '1rem'};
             margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};

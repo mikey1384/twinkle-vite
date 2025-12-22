@@ -107,6 +107,7 @@ export default function UsernameText({
             display: 'inline',
             cursor: 'pointer',
             fontWeight: 'bold',
+            touchAction: 'manipulation',
             ...(wordBreakEnabled
               ? { overflowWrap: 'break-word', wordBreak: 'break-word' }
               : {}),

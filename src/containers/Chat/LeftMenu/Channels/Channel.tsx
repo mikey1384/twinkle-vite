@@ -346,6 +346,7 @@ export default function Channel({
           cursor: 'pointer',
           padding: '1rem',
           height: '6.5rem',
+          touchAction: 'manipulation',
           ...(selected ? { backgroundColor: Color.highlightGray() } : {})
         }}
         onClick={handleChannelClick}

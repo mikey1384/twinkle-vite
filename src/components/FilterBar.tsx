@@ -108,6 +108,7 @@ export default function FilterBar({
       color: ${navTextColor};
       background: transparent;
       cursor: pointer;
+      touch-action: manipulation;
       transition: color 0.2s ease;
       white-space: nowrap;
       border-bottom: 2px solid transparent;

@@ -129,6 +129,7 @@ export default function ChatFilterBar({
               align-items: center;
               background: #fff;
               cursor: pointer;
+              touch-action: manipulation;
               border: 1px solid var(--ui-border);
               box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
               transition: background 0.18s ease, color 0.18s ease,
@@ -200,6 +201,7 @@ export default function ChatFilterBar({
                 }}
                 className={css`
                   cursor: pointer;
+                  touch-action: manipulation;
                   background: #fff;
                   height: 100%;
                   display: flex;
@@ -238,6 +240,7 @@ export default function ChatFilterBar({
               <div
                 className={css`
                   cursor: pointer;
+                  touch-action: manipulation;
                   display: flex;
                   justify-content: center;
                   align-items: center;
@@ -267,6 +270,7 @@ export default function ChatFilterBar({
               <div
                 className={css`
                   cursor: pointer;
+                  touch-action: manipulation;
                   display: flex;
                   font-weight: bold;
                   justify-content: center;
@@ -316,6 +320,7 @@ export default function ChatFilterBar({
               align-items: center;
               background: #fff;
               cursor: pointer;
+              touch-action: manipulation;
               border: 1px solid var(--ui-border);
               box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.16);
               transition: background 0.18s ease, color 0.18s ease,
