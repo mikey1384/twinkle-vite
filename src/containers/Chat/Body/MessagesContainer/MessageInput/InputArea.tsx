@@ -5,7 +5,7 @@ import {
   exceedsCharLimit,
   stringIsEmpty
 } from '~/helpers/stringHelpers';
-import { isMobile, debounce } from '~/helpers';
+import { isMobile } from '~/helpers';
 import { useKeyContext } from '~/contexts';
 
 const enterMessageLabel = 'Enter a message';
@@ -48,19 +48,33 @@ export default function InputArea({
   onSetText: (v: string) => any;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const isPastingRef = useRef(false);
+  const lastHeightRef = useRef(0);
 
+  // Use ResizeObserver to detect when textarea actually changes size
   useEffect(() => {
-    const handleResize = () => {
-      if (innerRef.current) {
-        onHeightChange(innerRef.current.clientHeight);
-      }
+    const el = innerRef.current;
+    if (!el) return;
+
+    let ro: ResizeObserver | null = null;
+
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver((entries) => {
+        const entry = entries[entries.length - 1];
+        const newHeight = Math.round(entry.contentRect.height);
+        if (newHeight !== lastHeightRef.current) {
+          lastHeightRef.current = newHeight;
+          onHeightChange(el.clientHeight);
+        }
+      });
+      ro.observe(el);
+    }
+
+    // Initial height report
+    onHeightChange(el.clientHeight);
+
+    return () => {
+      ro?.disconnect();
     };
-
-    const debouncedResize = debounce(handleResize, 150);
-
-    window.addEventListener('resize', debouncedResize as any);
-    return () => window.removeEventListener('resize', debouncedResize as any);
   }, [onHeightChange, innerRef]);
 
   const isExceedingCharLimit = useMemo(() => {
@@ -121,7 +135,6 @@ export default function InputArea({
         value={inputText}
         onChange={handleChange}
         onKeyUp={handleKeyUp}
-        onPaste={handlePaste}
         onDrop={handleDrop}
         hasError={isExceedingCharLimit}
         style={{
@@ -173,34 +186,11 @@ export default function InputArea({
       event.preventDefault();
       handleSendMsg();
     }
-    if (enterKeyPressed && shiftKeyPressed) {
-      onHeightChange(innerRef.current?.clientHeight + 20);
-    }
-  }
-
-  function handlePaste() {
-    isPastingRef.current = true;
   }
 
   function handleChange(event: any) {
-    const nextValue = event.target.value;
-    const isPaste = isPastingRef.current;
-    isPastingRef.current = false;
-
-    if (isPaste) {
-      // Paste needs delay for textarea to finish resizing
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          onHeightChange(innerRef.current?.clientHeight);
-        });
-      }, 150);
-    } else {
-      // Immediate update for typing/line breaks
-      requestAnimationFrame(() => {
-        onHeightChange(innerRef.current?.clientHeight);
-      });
-    }
-    onSetText(nextValue);
+    // ResizeObserver handles height updates automatically
+    onSetText(event.target.value);
   }
 
   function handleKeyUp(event: any) {
@@ -215,9 +205,7 @@ export default function InputArea({
     const newText = stringIsEmpty(inputText)
       ? `![](${url})`
       : `${inputText}\n![](${url})`;
+    // ResizeObserver handles height updates automatically
     onSetText(newText);
-    setTimeout(() => {
-      onHeightChange(innerRef.current?.clientHeight);
-    }, 0);
   }
 }
