@@ -71,11 +71,12 @@ export default function TopicItem({
     }
   }, []);
 
-  useOutsideTap(topicRef, () => {
-    if (deviceIsMobile && showFullText) {
-      setShowFullText(false);
-    }
-  });
+  // Only register outside-tap listener when tooltip is visible
+  // to avoid interfering with other tap events
+  useOutsideTap(
+    deviceIsMobile && showFullText ? topicRef : { current: null },
+    () => setShowFullText(false)
+  );
 
   return (
     <div style={{ position: 'relative' }} ref={topicRef}>
