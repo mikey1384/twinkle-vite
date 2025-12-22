@@ -49,6 +49,12 @@ export default function InputArea({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const lastHeightRef = useRef(0);
+  const onHeightChangeRef = useRef(onHeightChange);
+
+  // Keep callback ref up to date without triggering effect re-runs
+  useEffect(() => {
+    onHeightChangeRef.current = onHeightChange;
+  }, [onHeightChange]);
 
   // Use ResizeObserver to detect when textarea actually changes size
   useEffect(() => {
@@ -63,19 +69,20 @@ export default function InputArea({
         const newHeight = Math.round(entry.contentRect.height);
         if (newHeight !== lastHeightRef.current) {
           lastHeightRef.current = newHeight;
-          onHeightChange(el.clientHeight);
+          onHeightChangeRef.current(el.clientHeight);
         }
       });
       ro.observe(el);
     }
 
     // Initial height report
-    onHeightChange(el.clientHeight);
+    onHeightChangeRef.current(el.clientHeight);
 
     return () => {
       ro?.disconnect();
     };
-  }, [onHeightChange, innerRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isExceedingCharLimit = useMemo(() => {
     return !!exceedsCharLimit({
