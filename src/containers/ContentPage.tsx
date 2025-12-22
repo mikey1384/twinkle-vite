@@ -28,19 +28,23 @@ export default function ContentPage() {
     contentId
   });
   const [exists, setExists] = useState(true);
+  const [restricted, setRestricted] = useState(false);
+  const [restrictionLevel, setRestrictionLevel] = useState<string | null>(null);
 
   useEffect(() => {
     checkExists();
     async function checkExists() {
       try {
         const {
-          data: { exists }
+          data: { exists, restricted, restrictionLevel }
         } = await request.get(
           `${URL}/content/check?contentId=${contentId}&contentType=${contentType}${
             rootType ? `&rootType=${rootType}` : ''
           }`
         );
         setExists(exists);
+        setRestricted(!!restricted);
+        setRestrictionLevel(restrictionLevel || null);
       } catch (error) {
         console.error(error);
         setExists(false);
@@ -76,7 +80,12 @@ export default function ContentPage() {
             }
           `}
         >
-          {exists && !isDeleted && !isDeleteNotification ? (
+          {restricted ? (
+            <InvalidPage
+              title="Age Restricted"
+              text={`You must be ${restrictionLevel === 'adult' ? '18' : '13'}+ to view this content`}
+            />
+          ) : exists && !isDeleted && !isDeleteNotification ? (
             <ContentPanel
               key={contentType + contentId}
               isContentPage

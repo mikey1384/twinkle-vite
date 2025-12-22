@@ -181,22 +181,22 @@ export default function CommentInputArea({
           targetCommentId,
           ageRestriction
         });
-        setUploading(false);
       }
       onSetCommentAgeRestriction({
         ageRestriction: null,
         contentType,
         contentId
       });
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    } finally {
+      setUploading(false);
       onSetUploadingFile({
         contentId,
         contentType,
         isUploading: false
       });
-      return Promise.resolve();
-    } catch (error) {
-      setUploading(false);
-      return Promise.reject(error);
     }
   }
 }

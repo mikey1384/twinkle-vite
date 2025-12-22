@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import TeenagerBadge from '~/assets/teenager.png';
@@ -9,6 +9,7 @@ export type AgeRestriction = 'teenager' | 'adult' | null;
 const containerClass = css`
   display: flex;
   align-items: stretch;
+  flex-wrap: wrap;
   gap: 0.7rem;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.5rem;
@@ -22,7 +23,7 @@ const baseButtonClass = css`
   padding: 0.7rem 1rem;
   border-radius: ${borderRadius};
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   border: 1px solid ${Color.borderGray()};
   background: #fff;
   font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
@@ -33,6 +34,11 @@ const baseButtonClass = css`
   &:hover {
     background: ${Color.highlightGray()};
     border-color: ${Color.darkerBorderGray()};
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px ${Color.logoBlue()};
   }
 
   &.selected {
@@ -85,7 +91,7 @@ const badgeButtonClass = css`
   }
 `;
 
-export default function AgeRestrictionSelector({
+function AgeRestrictionSelector({
   ageRestriction,
   onChange,
   style
@@ -94,15 +100,30 @@ export default function AgeRestrictionSelector({
   onChange: (value: AgeRestriction) => void;
   style?: React.CSSProperties;
 }) {
+  function handleKeyDown(e: React.KeyboardEvent, value: AgeRestriction) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onChange(value);
+    }
+  }
+
   return (
     <div style={style}>
-      <div className={containerClass}>
+      <div
+        className={containerClass}
+        role="radiogroup"
+        aria-label="Content visibility"
+      >
         <div
           className={`${baseButtonClass} ${
             ageRestriction === null ? 'selected' : ''
           }`}
+          role="radio"
+          aria-checked={ageRestriction === null}
+          tabIndex={0}
           onClick={() => onChange(null)}
-          title="Visible to everyone"
+          onKeyDown={(e) => handleKeyDown(e, null)}
+          aria-label="Visible to everyone"
         >
           Everyone
         </div>
@@ -110,23 +131,33 @@ export default function AgeRestrictionSelector({
           className={`${baseButtonClass} ${badgeButtonClass} ${
             ageRestriction === 'teenager' ? 'selected' : ''
           }`}
+          role="radio"
+          aria-checked={ageRestriction === 'teenager'}
+          tabIndex={0}
           onClick={() => onChange('teenager')}
-          title="Only visible to users aged 13+"
+          onKeyDown={(e) => handleKeyDown(e, 'teenager')}
+          aria-label="Only visible to users aged 13 and above"
         >
           <span className="badge-label">13+</span>
-          <img src={TeenagerBadge} alt="13+" />
+          <img src={TeenagerBadge} alt="" aria-hidden="true" />
         </div>
         <div
           className={`${baseButtonClass} ${badgeButtonClass} ${
             ageRestriction === 'adult' ? 'selected' : ''
           }`}
+          role="radio"
+          aria-checked={ageRestriction === 'adult'}
+          tabIndex={0}
           onClick={() => onChange('adult')}
-          title="Only visible to users aged 18+"
+          onKeyDown={(e) => handleKeyDown(e, 'adult')}
+          aria-label="Only visible to users aged 18 and above"
         >
           <span className="badge-label">18+</span>
-          <img src={AdultBadge} alt="18+" />
+          <img src={AdultBadge} alt="" aria-hidden="true" />
         </div>
       </div>
     </div>
   );
 }
+
+export default memo(AgeRestrictionSelector);

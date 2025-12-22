@@ -157,6 +157,7 @@ export default function BottomInterface({
   const [selectedAgeRestriction, setSelectedAgeRestriction] =
     useState<AgeRestriction>(contentObj.ageRestriction || null);
   const [updatingAgeRestriction, setUpdatingAgeRestriction] = useState(false);
+  const [ageRestrictionError, setAgeRestrictionError] = useState('');
   const updateAgeRestriction = useAppContext(
     (v) => v.requestHelpers.updateAgeRestriction
   );
@@ -284,7 +285,7 @@ export default function BottomInterface({
         onClick: () => onSetDeleteConfirmModalShown(true)
       });
     }
-    if (userCanEditThis && ['video', 'url', 'subject', 'comment'].includes(contentType)) {
+    if (userCanEditThis && ['video', 'url', 'subject', 'comment', 'aiStory', 'dailyReflection'].includes(contentType)) {
       items.push({
         label: (
           <>
@@ -294,6 +295,7 @@ export default function BottomInterface({
         ),
         onClick: () => {
           setSelectedAgeRestriction(contentObj.ageRestriction || null);
+          setAgeRestrictionError('');
           setAgeRestrictionModalShown(true);
         }
       });
@@ -571,12 +573,18 @@ export default function BottomInterface({
             ageRestriction={selectedAgeRestriction}
             onChange={setSelectedAgeRestriction}
           />
+          {ageRestrictionError && (
+            <p style={{ color: 'red', marginTop: '1rem', fontSize: '1.3rem' }}>
+              {ageRestrictionError}
+            </p>
+          )}
         </NewModal>
       )}
     </div>
   );
 
   async function handleUpdateAgeRestriction() {
+    setAgeRestrictionError('');
     try {
       setUpdatingAgeRestriction(true);
       await updateAgeRestriction({
@@ -592,6 +600,7 @@ export default function BottomInterface({
       setAgeRestrictionModalShown(false);
     } catch (error) {
       console.error('Failed to update age restriction:', error);
+      setAgeRestrictionError('Failed to update visibility. Please try again.');
     } finally {
       setUpdatingAgeRestriction(false);
     }
