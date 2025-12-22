@@ -17,6 +17,16 @@ body {
   right: 0;
 }
 
+/* iOS Safari: use dynamic viewport height to fix touch target misalignment */
+@supports (height: 100dvh) {
+  @media (max-width: 767px) {
+    html,
+    body {
+      height: 100dvh;
+    }
+  }
+}
+
 :root {
   /* Default CSS variables for theme; will be overridden at runtime */
   --page-bg: rgb(255, 255, 255);
@@ -109,6 +119,18 @@ ul {
   height: 100%;
   overflow-y: scroll;
   -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safari: use dynamic viewport height to fix touch target misalignment */
+@supports (height: 100dvh) {
+  @media (max-width: 767px) {
+    #react-view {
+      height: 100dvh;
+    }
+    #App {
+      height: 100dvh;
+    }
+  }
 }
 
 .hidden {
