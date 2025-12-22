@@ -85,11 +85,15 @@ function shouldTriggerOutside(
 function handleGlobalPointerDown(event: Event) {
   const listeners = Array.from(outsideClickListeners);
   const target = event.target as Node | null;
-  for (const listener of listeners) {
-    if (shouldTriggerOutside(listener.refs, target)) {
-      listener.handler();
+  // Defer execution to avoid blocking tap/click events on iOS
+  // This allows the click to reach its target first, then outside-click handlers fire
+  requestAnimationFrame(() => {
+    for (const listener of listeners) {
+      if (shouldTriggerOutside(listener.refs, target)) {
+        listener.handler();
+      }
     }
-  }
+  });
 }
 
 function ensureGlobalOutsideHandlers() {
