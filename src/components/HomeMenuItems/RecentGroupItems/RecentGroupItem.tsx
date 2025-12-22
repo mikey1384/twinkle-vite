@@ -59,6 +59,7 @@ export default function RecentGroupItem({
         border: 1px solid transparent;
         box-shadow: none;
         cursor: pointer;
+        touch-action: manipulation;
         transition: background 0.2s ease, border-color 0.2s ease,
           transform 0.15s ease;
         &:hover {

@@ -1,7 +1,7 @@
 import React, { RefObject, useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
-import { borderRadius, Color } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Content from './Content';
 import { isMobile, isTablet, debounce } from '~/helpers';
@@ -166,6 +166,9 @@ export default function Modal({
             background: ${Color.black(0.5)};
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
+            @media (max-width: ${mobileMaxWidth}) {
+              -webkit-overflow-scrolling: auto;
+            }
           `}
           style={style}
         >
