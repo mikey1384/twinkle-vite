@@ -368,7 +368,8 @@ export function useOutsideClick(
     return function cleanup() {
       unregisterOutsideClickListener(listener);
     };
-  }, [ref, callback, enabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref, enabled]);
 
   useEffect(() => {
     if (
@@ -390,7 +391,8 @@ export function useOutsideClick(
     return function cleanUp() {
       removeEvent(document, 'scroll', handleScroll, { capture: true });
     };
-  }, [ref, callback, enabled, closeOnScroll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref, enabled, closeOnScroll]);
 }
 
 export function useProfileState(username: string) {
