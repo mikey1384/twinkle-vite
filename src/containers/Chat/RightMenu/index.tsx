@@ -86,6 +86,7 @@ function RightMenu({
               ? '48vw'
               : '40vw'};
             max-height: none;
+            -webkit-overflow-scrolling: auto;
           }
         `}
       >
