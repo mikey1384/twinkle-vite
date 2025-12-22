@@ -8,6 +8,8 @@ import React, {
 import Channel from './Channel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext } from '~/contexts';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 
@@ -183,14 +185,17 @@ export default function Channels({
       <div
         ref={ChannelsRef}
         key={selectedChatTab}
-        style={{
-          overflow: 'scroll',
-          width: '100%',
-          flex: 1,
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch',
-          ...style
-        }}
+        className={css`
+          overflow: scroll;
+          width: 100%;
+          flex: 1;
+          touch-action: pan-y;
+          -webkit-overflow-scrolling: touch;
+          @media (max-width: ${mobileMaxWidth}) {
+            -webkit-overflow-scrolling: auto;
+          }
+        `}
+        style={style}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
