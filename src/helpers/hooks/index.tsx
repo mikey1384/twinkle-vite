@@ -104,7 +104,8 @@ function ensureGlobalOutsideHandlers() {
     : ['mousedown', 'touchstart'];
   downEvents.forEach((eventName) => {
     const handler = (event: Event) => handleGlobalPointerDown(event);
-    addEvent(document, eventName, handler, { capture: true });
+    // Use bubble phase instead of capture to avoid interfering with iOS tap events
+    addEvent(document, eventName, handler, { capture: false });
     globalOutsideHandlers.push({ eventName, handler });
   });
 }
@@ -113,7 +114,7 @@ function tearDownGlobalOutsideHandlers() {
   if (typeof document === 'undefined') return;
   if (!globalOutsideHandlers.length) return;
   globalOutsideHandlers.forEach(({ eventName, handler }) => {
-    removeEvent(document, eventName, handler, { capture: true });
+    removeEvent(document, eventName, handler, { capture: false });
   });
   globalOutsideHandlers.length = 0;
 }
