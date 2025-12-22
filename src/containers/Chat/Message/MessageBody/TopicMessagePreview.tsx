@@ -126,8 +126,12 @@ export default function TopicMessagePreview({
             justify-content: center;
             position: relative;
             min-height: ${appliedThumbUrl ? '8rem' : '6rem'};
-            &:hover {
-              background-color: var(--chat-hover-bg);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            @media (min-width: ${mobileMaxWidth}) {
+              &:hover {
+                background-color: var(--chat-hover-bg);
+              }
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 1rem 3rem;

@@ -666,7 +666,8 @@ export default function DisplayedMessages({
           height: '100%',
           display: 'flex',
           flexDirection: 'column-reverse',
-          overflowY: 'scroll'
+          overflowY: 'scroll',
+          WebkitOverflowScrolling: 'touch'
         }}
         ref={MessagesRef}
       >
