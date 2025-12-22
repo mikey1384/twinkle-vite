@@ -67,8 +67,8 @@ export default function EditSubjectForm({
       Color.logoBlue(),
     [displayedThemeColor]
   );
-  useOutsideClick(EditSubjectFormRef, () => {
-    if (!subjectsModalShown) onClickOutSide();
+  useOutsideClick(EditSubjectFormRef, onClickOutSide, {
+    enabled: !subjectsModalShown
   });
 
   useEffect(() => {

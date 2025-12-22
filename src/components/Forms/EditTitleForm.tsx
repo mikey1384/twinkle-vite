@@ -35,7 +35,8 @@ export default function EditTitleForm({
   });
   const [title, setTitle] = useState(props.title);
   const FormRef = useRef(null);
-  useOutsideClick(FormRef, onClickOutSide);
+
+  useOutsideClick(FormRef, onClickOutSide, { enabled: true });
 
   return (
     <div style={style} ref={FormRef}>

@@ -3,11 +3,10 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { createPortal } from 'react-dom';
-import { useOutsideTap, useOutsideClick } from '~/helpers/hooks';
+import { useOutsideClick } from '~/helpers/hooks';
 import { isMobile } from '~/helpers';
 
 const deviceIsMobile = isMobile(navigator);
-const outsideClickMethod = deviceIsMobile ? useOutsideTap : useOutsideClick;
 
 export default function Popup({
   children,
@@ -31,7 +30,7 @@ export default function Popup({
 }) {
   const MenuRef = useRef(null);
   const { x, y, width, height } = popupContext;
-  outsideClickMethod(MenuRef, onHideMenu);
+  useOutsideClick(MenuRef, onHideMenu, { closeOnScroll: deviceIsMobile });
   const displaysToTheRight = useMemo(() => {
     return window.innerWidth / 2 - x > 0;
   }, [x]);

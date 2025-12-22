@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import Icon from '~/components/Icon';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
 import { textIsOverflown, isMobile } from '~/helpers';
-import { useOutsideTap } from '~/helpers/hooks';
+import { useOutsideClick } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 
@@ -71,12 +71,10 @@ export default function TopicItem({
     }
   }, []);
 
-  // Only register outside-tap listener when tooltip is visible
-  // to avoid interfering with other tap events
-  useOutsideTap(
-    deviceIsMobile && showFullText ? topicRef : { current: null },
-    () => setShowFullText(false)
-  );
+  useOutsideClick(topicRef, () => setShowFullText(false), {
+    enabled: deviceIsMobile && showFullText,
+    closeOnScroll: true
+  });
 
   return (
     <div style={{ position: 'relative' }} ref={topicRef}>

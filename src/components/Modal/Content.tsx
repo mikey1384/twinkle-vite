@@ -20,9 +20,11 @@ export default function Content({
   style?: object;
 }) {
   const ContentRef = useRef(null);
-  useOutsideClick(ContentRef, () =>
-    closeWhenClickedOutside ? onHide?.() : null
-  );
+
+  useOutsideClick(ContentRef, () => onHide?.(), {
+    enabled: !!closeWhenClickedOutside
+  });
+
   return (
     <div style={style} className={className} ref={ContentRef}>
       <button

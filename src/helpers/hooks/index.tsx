@@ -346,14 +346,19 @@ export function useMyState() {
   return result;
 }
 
-export function useOutsideClick(ref: any, callback?: () => any) {
+export function useOutsideClick(
+  ref: any,
+  callback?: () => any,
+  options?: { enabled?: boolean; closeOnScroll?: boolean }
+) {
+  const { enabled = true, closeOnScroll = false } = options || {};
   const callbackRef = useRef(callback);
   useEffect(() => {
     callbackRef.current = callback;
   }, [callback]);
 
   useEffect(() => {
-    if (!callback || typeof document === 'undefined') return;
+    if (!enabled || !callback || typeof document === 'undefined') return;
     const refs = Array.isArray(ref) ? ref : [ref];
     const listener: OutsideClickListener = {
       refs,
@@ -363,26 +368,29 @@ export function useOutsideClick(ref: any, callback?: () => any) {
     return function cleanup() {
       unregisterOutsideClickListener(listener);
     };
-  }, [ref, callback]);
-}
+  }, [ref, callback, enabled]);
 
-export function useOutsideTap(ref: any | any[], callback: () => any) {
-  useOutsideClick(ref, callback);
   useEffect(() => {
-    if (!callback || typeof document === 'undefined') return;
+    if (
+      !enabled ||
+      !closeOnScroll ||
+      !callback ||
+      typeof document === 'undefined'
+    )
+      return;
     const refs = Array.isArray(ref) ? ref : [ref];
 
     function handleScroll(event: Event) {
       const target = event.target as Node | null;
       if (!shouldTriggerOutside(refs, target)) return;
-      callback();
+      callbackRef.current?.();
     }
 
     addEvent(document, 'scroll', handleScroll, { capture: true });
     return function cleanUp() {
       removeEvent(document, 'scroll', handleScroll, { capture: true });
     };
-  }, [ref, callback]);
+  }, [ref, callback, enabled, closeOnScroll]);
 }
 
 export function useProfileState(username: string) {
