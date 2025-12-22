@@ -154,7 +154,7 @@ export default function Channels({
     return function cleanUp() {
       removeEvent(ChannelList, 'scroll', onListScroll);
     };
-  }, [loadMoreButtonShown, handleLoadMoreChannels]);
+  });
 
   useEffect(() => {
     clearTimeout(timeoutRef.current);
