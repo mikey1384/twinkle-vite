@@ -178,9 +178,17 @@ export default function InputArea({
 
   function handleChange(event: any) {
     const nextValue = event.target.value;
-    requestAnimationFrame(() => {
-      onHeightChange(innerRef.current?.clientHeight);
-    });
+    const prevLength = inputText.length;
+    const lengthDiff = Math.abs(nextValue.length - prevLength);
+    // Detect paste: large text change at once needs longer delay for textarea resize
+    const isPaste = lengthDiff > 10;
+    const delay = isPaste ? 150 : 0;
+
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        onHeightChange(innerRef.current?.clientHeight);
+      });
+    }, delay);
     onSetText(nextValue);
   }
 
