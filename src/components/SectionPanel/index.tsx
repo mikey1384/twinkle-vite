@@ -9,7 +9,8 @@ import Button from '~/components/Button';
 import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useOutsideClick } from '~/helpers/hooks';import ScopedTheme from '~/theme/ScopedTheme';
+import { useOutsideClick } from '~/helpers/hooks';
+import ScopedTheme from '~/theme/ScopedTheme';
 import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
 const editLabel = 'Edit';
@@ -79,10 +80,13 @@ export default function SectionPanel({
   const TitleInputContainerRef = useRef<HTMLDivElement | null>(null);
   const TitleInputRef = useRef<HTMLInputElement | null>(null);
 
-  useOutsideClick([TitleInputRef, TitleInputContainerRef], () => {
-    setOnEdit(false);
-    setEditedTitle(typeof title === 'string' ? title : '');
-  });
+  useOutsideClick(
+    onEdit ? [TitleInputRef, TitleInputContainerRef] : [{ current: null }],
+    () => {
+      setOnEdit(false);
+      setEditedTitle(typeof title === 'string' ? title : '');
+    }
+  );
 
   const paddingTop = useMemo(() => {
     return inverted ? '1.7rem' : '1rem';
