@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import FilterBar from '~/components/FilterBar';import RankingsListItem from '~/components/RankingsListItem';
+import FilterBar from '~/components/FilterBar';
+import RankingsListItem from '~/components/RankingsListItem';
 import Loading from '~/components/Loading';
 import { useAppContext, useKeyContext } from '~/contexts';
 import LeaderboardList from '~/components/LeaderboardList';
+import { css } from '@emotion/css';
 
 const myRankingLabel = 'My Ranking';
 const top30Label = 'Top 30';
@@ -46,18 +48,21 @@ export default function Rankings({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const containerClass = css`
+    height: calc(100vh - 30rem);
+    @supports (height: 100dvh) {
+      height: calc(100dvh - 30rem);
+    }
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+  `;
+
   return loading ? (
-    <Loading style={{ height: 'CALC(100vh - 30rem)' }} />
+    <Loading className={containerClass} />
   ) : (
-    <div
-      style={{
-        height: 'CALC(100vh - 30rem)',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'column'
-      }}
-    >
+    <div className={containerClass}>
       {!!myRank && (
         <FilterBar
           style={{

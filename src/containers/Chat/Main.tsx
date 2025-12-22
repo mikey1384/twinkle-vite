@@ -1061,6 +1061,8 @@ export default function Main({
                   @supports (height: 100dvh) {
                     height: calc(100dvh - var(--mobile-nav-total-height));
                   }
+                  /* iOS Safari: allow horizontal pan but don't delay taps */
+                  touch-action: pan-x pan-y;
                 }
               `}
             >

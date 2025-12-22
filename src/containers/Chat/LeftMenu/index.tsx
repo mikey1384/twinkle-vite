@@ -118,6 +118,7 @@ export default function LeftMenu({
           -webkit-overflow-scrolling: touch;
           @media (max-width: ${mobileMaxWidth}) {
             width: 40vw;
+            touch-action: pan-y;
           }
         `}
       >

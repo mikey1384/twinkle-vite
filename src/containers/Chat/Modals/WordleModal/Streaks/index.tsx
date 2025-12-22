@@ -21,13 +21,16 @@ export default function Streaks({
 
   return (
     <div
-      style={{
-        height: 'calc(100vh - 30rem)',
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'column'
-      }}
+      className={css`
+        height: calc(100vh - 30rem);
+        @supports (height: 100dvh) {
+          height: calc(100dvh - 30rem);
+        }
+        width: 100%;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+      `}
     >
       <FilterBar
         style={{

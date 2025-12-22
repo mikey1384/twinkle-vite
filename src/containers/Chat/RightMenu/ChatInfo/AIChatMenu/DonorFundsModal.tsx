@@ -127,18 +127,28 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
       }
     >
       {loading ? (
-        <Loading style={{ height: 'CALC(100vh - 30rem)' }} />
+        <Loading
+          className={css`
+            height: calc(100vh - 30rem);
+            @supports (height: 100dvh) {
+              height: calc(100dvh - 30rem);
+            }
+          `}
+        />
       ) : (
         <div
           ref={scrollContainerRef}
-          style={{
-            minHeight: 'CALC(100vh - 30rem)',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            flexDirection: 'column',
-            overflowY: 'auto'
-          }}
+          className={css`
+            min-height: calc(100vh - 30rem);
+            @supports (height: 100dvh) {
+              min-height: calc(100dvh - 30rem);
+            }
+            width: 100%;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            overflow-y: auto;
+          `}
         >
           <FilterBar
             style={{
