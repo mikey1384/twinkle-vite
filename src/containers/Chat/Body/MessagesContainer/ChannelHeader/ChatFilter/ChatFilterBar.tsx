@@ -88,15 +88,20 @@ export default function ChatFilterBar({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const [, startTransition] = useTransition();
 
-  outsideClickMethod([searchInputRef, searchButtonRef, topicButtonRef], () => {
-    if (!stringIsEmpty(searchText)) {
-      return;
+  outsideClickMethod(
+    isSearchActive
+      ? [searchInputRef, searchButtonRef, topicButtonRef]
+      : [{ current: null }],
+    () => {
+      if (!stringIsEmpty(searchText)) {
+        return;
+      }
+      onSetIsSearchActive({
+        channelId,
+        isActive: false
+      });
     }
-    onSetIsSearchActive({
-      channelId,
-      isActive: false
-    });
-  });
+  );
 
   return (
     <ScopedTheme theme={themeName} roles={['chatTopic', 'chatTopicText']}>
