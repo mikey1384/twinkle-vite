@@ -187,7 +187,6 @@ export default function Channels({
           overflow: 'scroll',
           width: '100%',
           flex: 1,
-          WebkitOverflowScrolling: 'touch',
           ...style
         }}
         onMouseEnter={onMouseEnter}

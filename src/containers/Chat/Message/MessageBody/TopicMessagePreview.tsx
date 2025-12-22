@@ -14,7 +14,7 @@ import {
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { cloudFrontURL } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function TopicMessagePreview({
   channelId,
@@ -49,14 +49,10 @@ export default function TopicMessagePreview({
   username: string;
   pathId: string;
 }) {
+  const navigate = useNavigate();
   const { subchannelPath } = useParams();
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
-  );
-  const topicPath = useMemo(
-    () =>
-      `/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}/topic/${topicObj.id}`,
-    [pathId, subchannelPath, topicObj.id]
   );
   const { themeName, themeRoles } = useThemeTokens({ themeName: theme });
   const topicTextColor = useMemo(() => {
@@ -82,7 +78,7 @@ export default function TopicMessagePreview({
 
   const contentRef = useRef<HTMLSpanElement>(null);
   const topicRef = useRef<HTMLSpanElement>(null);
-  const containerRef = useRef<HTMLAnchorElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [truncatedContent, setTruncatedContent] = useState('\u200B');
   const [truncatedTopic, setTruncatedTopic] = useState(topicObj.content);
@@ -110,15 +106,9 @@ export default function TopicMessagePreview({
   return (
     <ErrorBoundary componentPath="Chat/Message/MessageBody/TopicMessagePreview">
       <ScopedTheme theme={theme as any}>
-        <Link
-          to={topicPath}
+        <div
           ref={containerRef}
           className={css`
-            display: flex;
-            text-decoration: none;
-            &:hover {
-              text-decoration: none;
-            }
             font-family: 'Roboto', sans-serif;
             font-size: ${contentPreviewShown ? '1.5rem' : '1.7rem'};
             color: var(--chat-text);
@@ -131,16 +121,13 @@ export default function TopicMessagePreview({
             margin-bottom: ${nextMessageHasTopic ? '0.5rem' : '1rem'};
             transition: background 0.3s ease;
             width: 100%;
+            display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             min-height: ${appliedThumbUrl ? '8rem' : '6rem'};
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            @media (min-width: ${mobileMaxWidth}) {
-              &:hover {
-                background-color: var(--chat-hover-bg);
-              }
+            &:hover {
+              background-color: var(--chat-hover-bg);
             }
             @media (max-width: ${mobileMaxWidth}) {
               padding: 1rem 3rem;
@@ -219,7 +206,7 @@ export default function TopicMessagePreview({
               </div>
             )}
           </div>
-        </Link>
+        </div>
       </ScopedTheme>
     </ErrorBoundary>
   );
@@ -230,6 +217,11 @@ export default function TopicMessagePreview({
       channelId,
       topicId: topicObj.id
     });
+    navigate(
+      `/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}/topic/${
+        topicObj.id
+      }`
+    );
   }
 
   function truncateText(

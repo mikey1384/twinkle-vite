@@ -1,10 +1,10 @@
-import React, { useContext, useMemo, useRef } from 'react';
+import React, { useContext, useCallback, useMemo, useRef } from 'react';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
 import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/useRoleColor';
 
@@ -58,6 +58,7 @@ export default function Channel({
     state: { lastSubchannelPaths }
   } = useContext(LocalContext);
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
+  const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const chatUnreadRole = useRoleColor('chatUnread', {
     fallback: 'logoBlue'
@@ -297,17 +298,25 @@ export default function Channel({
     [channelId, lastSubchannelPaths]
   );
 
-  const channelPath = useMemo(() => {
-    if (pathId) {
-      return `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}`;
-    }
-    return '/chat/new';
-  }, [pathId, lastSubchannelPath]);
-
-  function handleChannelClick() {
+  const handleChannelClick = useCallback(async () => {
     if (pathIdMatches && !chatType && channelId === selectedChannelId) return;
-    onUpdateSelectedChannelId(channelId);
-  }
+    if (pathId) {
+      onUpdateSelectedChannelId(channelId);
+      return navigate(
+        `/chat/${pathId}${lastSubchannelPath ? `/${lastSubchannelPath}` : ''}`
+      );
+    }
+    navigate('/chat/new');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    pathIdMatches,
+    chatType,
+    pathId,
+    navigate,
+    channelId,
+    lastSubchannelPath,
+    selectedChannelId
+  ]);
 
   const lastSenderId = useMemo(
     () => (lastMessage as any)?.sender?.id ?? (lastMessage as any)?.userId,
@@ -324,15 +333,8 @@ export default function Channel({
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">
-      <Link
-        to={channelPath}
+      <div
         className={css`
-          display: block;
-          text-decoration: none;
-          color: inherit;
-          &:hover {
-            text-decoration: none;
-          }
           @media (min-width: ${desktopMinWidth}) {
             &:hover {
               background: ${Color.checkboxAreaGray()};
@@ -344,8 +346,6 @@ export default function Channel({
           cursor: 'pointer',
           padding: '1rem',
           height: '6.5rem',
-          touchAction: 'manipulation',
-          WebkitTapHighlightColor: 'transparent',
           ...(selected ? { backgroundColor: Color.highlightGray() } : {})
         }}
         onClick={handleChannelClick}
@@ -425,7 +425,7 @@ export default function Channel({
             />
           )}
         </div>
-      </Link>
+      </div>
     </ErrorBoundary>
   );
 }
