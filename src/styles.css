@@ -121,6 +121,13 @@ ul {
   -webkit-overflow-scrolling: touch;
 }
 
+/* iOS mobile: disable native scroll layer to prevent tap interception */
+@media (max-width: 767px) {
+  #App {
+    -webkit-overflow-scrolling: auto;
+  }
+}
+
 /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
 @supports (height: 100dvh) {
   @media (max-width: 767px) {
