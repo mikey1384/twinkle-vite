@@ -1056,8 +1056,11 @@ export default function Main({
                 position: relative;
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
-                  /* Use dvh (dynamic viewport height) for iOS Safari compatibility */
-                  height: calc(100dvh - var(--mobile-nav-total-height));
+                  height: calc(100% - var(--mobile-nav-total-height));
+                  /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
+                  @supports (height: 100dvh) {
+                    height: calc(100dvh - var(--mobile-nav-total-height));
+                  }
                 }
               `}
             >

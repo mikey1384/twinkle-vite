@@ -455,6 +455,10 @@ export default function App() {
         width: 100%;
         @media (max-width: ${mobileMaxWidth}) {
           height: 100%;
+          /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
+          @supports (height: 100dvh) {
+            height: 100dvh;
+          }
         }
       `}
     >
@@ -486,6 +490,11 @@ export default function App() {
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 0;
               padding-top: 0;
+              /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
+              @supports (height: 100dvh) {
+                height: 100dvh;
+                min-height: 100dvh;
+              }
             }
           `}`}
         >
