@@ -48,7 +48,14 @@ export default function SearchInput({
 }) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
-  useOutsideClick(SearchInputRef, onClickOutSide);
+
+  // Only register outside-click listener when callback is provided and results exist
+  useOutsideClick(
+    onClickOutSide && searchResults.length > 0
+      ? SearchInputRef
+      : { current: null },
+    onClickOutSide
+  );
   const { colorKey: searchColor } = useRoleColor('search', {
     fallback: 'logoBlue'
   });
