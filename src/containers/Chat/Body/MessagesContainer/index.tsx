@@ -23,6 +23,7 @@ import BuyTopicsModal from '../../Modals/BuyTopicsModal';
 import HumanCallScreen from './CallScreen/Human';
 import AICallScreen from './CallScreen/AI';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { countdownStore } from '~/contexts/GameCountdown';
 import { v1 as uuidv1 } from 'uuid';
 import {
   GENERAL_CHAT_PATH_ID,
@@ -540,6 +541,8 @@ export default function MessagesContainer({
       channelId: number;
       gameType?: 'chess' | 'omok';
     }) {
+      // Clear the countdown store so CountdownDisplay stops showing the value
+      countdownStore.set(channelId, gameType, null);
       setBoardCountdownObj((prev) => ({
         ...prev,
         [channelId]: {
@@ -566,13 +569,28 @@ export default function MessagesContainer({
           onSetOmokModalShown(false);
         }
       }
-      setBoardCountdownObj((prev) => ({
-        ...prev,
-        [channelId]: {
-          ...(prev[channelId] || {}),
-          [gameType]: number
+      // Update store for countdown display (triggers only display re-render)
+      countdownStore.set(channelId, gameType, number);
+      // Only update React state when countdown activity changes (starts/ends)
+      // This prevents game board re-renders on every tick
+      setBoardCountdownObj((prev) => {
+        const wasActive =
+          typeof prev[channelId]?.[gameType] === 'number' &&
+          (prev[channelId]?.[gameType] ?? 0) > 0;
+        const isActive = typeof number === 'number' && number > 0;
+        if (wasActive !== isActive) {
+          return {
+            ...prev,
+            [channelId]: {
+              ...(prev[channelId] || {}),
+              // When countdown expires (0), keep it as 0 to block modal reopening
+              // Only timer-cleared events set this to null
+              [gameType]: isActive ? number : 0
+            }
+          };
         }
-      }));
+        return prev;
+      });
     }
 
     function handleReceiveMessage({ message }: { message: any }) {
@@ -591,6 +609,8 @@ export default function MessagesContainer({
         } else {
           gameType = 'chess';
         }
+        // Clear the countdown store so CountdownDisplay stops showing the value
+        countdownStore.set(message.channelId, gameType, null);
         setBoardCountdownObj((prev) => ({
           ...prev,
           [message.channelId]: {
@@ -1646,7 +1666,7 @@ export default function MessagesContainer({
         <ChessModal
           currentChannel={currentChannel}
           channelId={selectedChannelId}
-          countdownNumber={boardCountdownObj[selectedChannelId]?.chess || null}
+          isCountdownActive={!!boardCountdownObj[selectedChannelId]?.chess}
           myId={userId}
           onConfirmChessMove={handleConfirmChessMove}
           onHide={() => onSetChessModalShown(false)}
@@ -1664,7 +1684,7 @@ export default function MessagesContainer({
         <OmokModal
           currentChannel={currentChannel}
           channelId={selectedChannelId}
-          countdownNumber={boardCountdownObj[selectedChannelId]?.omok || null}
+          isCountdownActive={!!boardCountdownObj[selectedChannelId]?.omok}
           myId={userId}
           opponentId={partner.id}
           opponentName={partner.username}

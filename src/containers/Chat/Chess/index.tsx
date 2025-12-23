@@ -36,7 +36,7 @@ import { mapThemeToColors } from './helpers/theme';
 const deviceIsMobile = isMobile(navigator);
 
 export default function Chess({
-  countdownNumber,
+  isCountdownActive,
   channelId,
   gameWinnerId,
   interactable,
@@ -67,7 +67,7 @@ export default function Chess({
 }: {
   channelId: number;
   rewindRequestMessageSenderId?: number;
-  countdownNumber?: number | null;
+  isCountdownActive?: boolean;
   gameWinnerId?: number;
   interactable?: boolean;
   initialState: any;
@@ -791,13 +791,12 @@ export default function Chess({
   );
 
   const statusMsgShown = useMemo(() => {
-    const isCountdownShown = !!countdownNumber;
     const isLastChessMessage =
       lastChessMessageId && (messageId || 0) >= lastChessMessageId;
     const isGameOver = isCheckmate || isDraw || isStalemate;
     const shouldHideStatus = isGameOver || isDiscussion || moveViewed;
 
-    if (isCountdownShown) {
+    if (isCountdownActive) {
       return true;
     }
 
@@ -809,7 +808,7 @@ export default function Chess({
 
     return isActiveGame;
   }, [
-    countdownNumber,
+    isCountdownActive,
     isCheckmate,
     isDiscussion,
     isDraw,
@@ -1091,7 +1090,8 @@ export default function Chess({
         }}
         timerData={{
           shown: !isCompact && statusMsgShown && !isRewinded,
-          countdownNumber,
+          channelId,
+          gameType: 'chess',
           awaitingOpponentName: opponentName,
           showAwaitingStatus: !isFromModal
         }}

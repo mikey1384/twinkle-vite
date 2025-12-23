@@ -5,7 +5,7 @@ import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
 export default function ChessGame({
   boardState,
-  countdownNumber,
+  isCountdownActive,
   channelId,
   currentChannel,
   initialState,
@@ -26,7 +26,7 @@ export default function ChessGame({
   interactableOverride
 }: {
   boardState: any;
-  countdownNumber: number | null;
+  isCountdownActive?: boolean;
   channelId: number;
   currentChannel: any;
   initialState: any;
@@ -87,7 +87,7 @@ export default function ChessGame({
   }, []);
 
   const spoilerOff = useMemo(() => {
-    if (typeof countdownNumber === 'number') {
+    if (isCountdownActive) {
       return true;
     }
 
@@ -107,7 +107,7 @@ export default function ChessGame({
       isOlderMessage
     );
   }, [
-    countdownNumber,
+    isCountdownActive,
     initialState?.move?.number,
     currentChannel?.lastChessMessageId,
     currentChannel?.lastChessMoveViewerId,
@@ -120,7 +120,7 @@ export default function ChessGame({
     <Chess
       isFromModal
       channelId={channelId}
-      countdownNumber={countdownNumber}
+      isCountdownActive={isCountdownActive}
       interactable={
         typeof interactableOverride === 'boolean'
           ? interactableOverride

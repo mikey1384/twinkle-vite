@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { useCountdownValue } from '~/contexts/GameCountdown';
 
 interface ChessTopInfo {
   type: 'chess';
@@ -31,6 +32,80 @@ interface OmokTopInfo {
 
 type TopInfo = ChessTopInfo | OmokTopInfo;
 
+// Separate component for countdown display - only this re-renders on timer ticks
+const CountdownDisplay = memo(function CountdownDisplay({
+  channelId,
+  gameType,
+  awaitingOpponentName,
+  showAwaitingStatus,
+  isCompact
+}: {
+  channelId?: number;
+  gameType?: 'chess' | 'omok';
+  awaitingOpponentName?: string;
+  showAwaitingStatus?: boolean;
+  isCompact: boolean;
+}) {
+  const countdownNumber = useCountdownValue(channelId, gameType || 'chess');
+
+  const countdownLargeFont = isCompact ? '2.5rem' : '3.5rem';
+  const countdownRegularFont = isCompact ? '1.8rem' : '2.5rem';
+  const mobileCountdownLargeFont = isCompact ? '1.75rem' : '2.5rem';
+  const mobileCountdownRegularFont = isCompact ? '1.2rem' : '1.5rem';
+
+  const label = useMemo(() => {
+    if (typeof countdownNumber === 'number') {
+      const n = countdownNumber;
+      return n >= 110
+        ? `${Math.floor(n / 600)}:${String(Math.floor((n % 600) / 10)).padStart(
+            2,
+            '0'
+          )}`
+        : Number((n % 600) / 10).toFixed(1);
+    }
+    if (showAwaitingStatus === false) {
+      return null;
+    }
+    return (
+      <>
+        <span>Awaiting</span>
+        {awaitingOpponentName ? (
+          <span>{` ${awaitingOpponentName}'s move`}</span>
+        ) : (
+          <span>{` opponent's move`}</span>
+        )}
+      </>
+    );
+  }, [countdownNumber, awaitingOpponentName, showAwaitingStatus]);
+
+  if (!label) return null;
+
+  return (
+    <div
+      className={css`
+        padding: 0.5rem 1rem;
+        background: ${Color.white(0.9)};
+        border: 1px solid ${Color.darkGray()};
+        font-size: ${typeof countdownNumber === 'number' && countdownNumber < 110
+          ? countdownLargeFont
+          : countdownRegularFont};
+        font-weight: bold;
+        color: ${typeof countdownNumber === 'number' && countdownNumber < 110
+          ? 'red'
+          : ''};
+        @media (max-width: ${mobileMaxWidth}) {
+          font-size: ${typeof countdownNumber === 'number' &&
+          countdownNumber < 110
+            ? mobileCountdownLargeFont
+            : mobileCountdownRegularFont};
+        }
+      `}
+    >
+      {label}
+    </div>
+  );
+});
+
 export default function BoardWrapper({
   children,
   statusShown,
@@ -47,7 +122,8 @@ export default function BoardWrapper({
   gameInfo?: TopInfo;
   timerData?: {
     shown?: boolean;
-    countdownNumber?: number | null;
+    channelId?: number;
+    gameType?: 'chess' | 'omok';
     awaitingOpponentName?: string;
     showAwaitingStatus?: boolean;
   };
@@ -65,40 +141,6 @@ export default function BoardWrapper({
   const boardStatusMarginTop = isCompact ? '0.35rem' : '0.5rem';
   const rowGap = isCompact ? '0.5rem' : '0.75rem';
   const mobileRowGap = isCompact ? '0.35rem' : '0.5rem';
-  const countdownLargeFont = isCompact ? '2.5rem' : '3.5rem';
-  const countdownRegularFont = isCompact ? '1.8rem' : '2.5rem';
-  const mobileCountdownLargeFont = isCompact ? '1.75rem' : '2.5rem';
-  const mobileCountdownRegularFont = isCompact ? '1.2rem' : '1.5rem';
-  const awaitingMoveLabel = useMemo(() => {
-    if (!timerData?.shown) return null;
-    if (typeof timerData?.countdownNumber === 'number') {
-      const n = timerData.countdownNumber;
-      return n >= 110
-        ? `${Math.floor(n / 600)}:${String(Math.floor((n % 600) / 10)).padStart(
-            2,
-            '0'
-          )}`
-        : Number((n % 600) / 10).toFixed(1);
-    }
-    if (timerData?.showAwaitingStatus === false) {
-      return null;
-    }
-    return (
-      <>
-        <span>Awaiting</span>
-        {timerData?.awaitingOpponentName ? (
-          <span>{` ${timerData.awaitingOpponentName}'s move`}</span>
-        ) : (
-          <span>{` opponent's move`}</span>
-        )}
-      </>
-    );
-  }, [
-    timerData?.awaitingOpponentName,
-    timerData?.countdownNumber,
-    timerData?.showAwaitingStatus,
-    timerData?.shown
-  ]);
 
   function renderTopLeft() {
     if (!statusShown) return null;
@@ -297,32 +339,15 @@ export default function BoardWrapper({
               justifySelf: 'end'
             }}
           >
-            {timerData?.shown && awaitingMoveLabel ? (
-              <div
-                className={css`
-                  padding: 0.5rem 1rem;
-                  background: ${Color.white(0.9)};
-                  border: 1px solid ${Color.darkGray()};
-                  font-size: ${typeof timerData?.countdownNumber === 'number' &&
-                  (timerData?.countdownNumber as number) < 110
-                    ? countdownLargeFont
-                    : countdownRegularFont};
-                  font-weight: bold;
-                  color: ${typeof timerData?.countdownNumber === 'number' &&
-                  (timerData?.countdownNumber as number) < 110
-                    ? 'red'
-                    : ''};
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: ${typeof timerData?.countdownNumber ===
-                      'number' && (timerData?.countdownNumber as number) < 110
-                      ? mobileCountdownLargeFont
-                      : mobileCountdownRegularFont};
-                  }
-                `}
-              >
-                {awaitingMoveLabel}
-              </div>
-            ) : null}
+            {timerData?.shown && (
+              <CountdownDisplay
+                channelId={timerData.channelId}
+                gameType={timerData.gameType}
+                awaitingOpponentName={timerData.awaitingOpponentName}
+                showAwaitingStatus={timerData.showAwaitingStatus}
+                isCompact={isCompact}
+              />
+            )}
           </div>
         ) : (
           <div />
@@ -338,32 +363,15 @@ export default function BoardWrapper({
             zIndex: 6
           }}
         >
-          {timerData?.shown && awaitingMoveLabel ? (
-            <div
-              className={css`
-                padding: 0.5rem 1rem;
-                background: ${Color.white(0.9)};
-                border: 1px solid ${Color.darkGray()};
-                font-size: ${typeof timerData?.countdownNumber === 'number' &&
-                timerData.countdownNumber < 110
-                  ? countdownLargeFont
-                  : countdownRegularFont};
-                font-weight: bold;
-                color: ${typeof timerData?.countdownNumber === 'number' &&
-                timerData.countdownNumber < 110
-                  ? 'red'
-                  : ''};
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: ${typeof timerData?.countdownNumber === 'number' &&
-                  timerData.countdownNumber < 110
-                    ? mobileCountdownLargeFont
-                    : mobileCountdownRegularFont};
-                }
-              `}
-            >
-              {awaitingMoveLabel}
-            </div>
-          ) : null}
+          {timerData?.shown && (
+            <CountdownDisplay
+              channelId={timerData.channelId}
+              gameType={timerData.gameType}
+              awaitingOpponentName={timerData.awaitingOpponentName}
+              showAwaitingStatus={timerData.showAwaitingStatus}
+              isCompact={isCompact}
+            />
+          )}
         </div>
       ) : null}
     </div>

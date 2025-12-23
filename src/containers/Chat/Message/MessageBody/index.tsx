@@ -62,8 +62,8 @@ const editLabel = 'Edit';
 
 function MessageBody({
   channelId,
-  chessCountdownNumber,
-  omokCountdownNumber,
+  isChessCountdownActive,
+  isOmokCountdownActive,
   partner,
   currentChannel,
   displayedThemeColor,
@@ -146,8 +146,8 @@ function MessageBody({
   recentThumbUrl,
   zIndex
 }: {
-  chessCountdownNumber?: number | null;
-  omokCountdownNumber?: number | null;
+  isChessCountdownActive?: boolean;
+  isOmokCountdownActive?: boolean;
   partner: any;
   channelId: number;
   currentChannel: any;
@@ -470,7 +470,7 @@ function MessageBody({
   }, []);
 
   const chessSpoilerOff = useMemo(() => {
-    if (typeof chessCountdownNumber === 'number') {
+    if (isChessCountdownActive) {
       return true;
     }
     const userMadeThisMove = chessState?.move?.by === myId;
@@ -490,7 +490,7 @@ function MessageBody({
     }
     return false;
   }, [
-    chessCountdownNumber,
+    isChessCountdownActive,
     chessState?.move?.by,
     currentChannel?.lastChessMessageId,
     currentChannel?.lastChessMoveViewerId,
@@ -500,7 +500,7 @@ function MessageBody({
   ]);
 
   const omokSpoilerOff = useMemo(() => {
-    if (typeof omokCountdownNumber === 'number') {
+    if (isOmokCountdownActive) {
       return true;
     }
     const userMadeThisMove = omokState?.move?.by === myId;
@@ -525,7 +525,7 @@ function MessageBody({
     messageId,
     moveViewTimeStamp,
     myId,
-    omokCountdownNumber,
+    isOmokCountdownActive,
     omokState?.move?.by
   ]);
 
@@ -1074,7 +1074,7 @@ function MessageBody({
               ) : isOmokMsg ? (
                 <Omok
                   channelId={channelId}
-                  countdownNumber={omokCountdownNumber}
+                  isCountdownActive={isOmokCountdownActive}
                   gameWinnerId={gameWinnerId}
                   initialState={omokState}
                   lastOmokMessageId={currentChannel.lastOmokMessageId}
@@ -1098,7 +1098,7 @@ function MessageBody({
                   loaded
                   moveViewed={!!moveViewTimeStamp}
                   channelId={channelId}
-                  countdownNumber={chessCountdownNumber}
+                  isCountdownActive={isChessCountdownActive}
                   gameWinnerId={gameWinnerId}
                   spoilerOff={chessSpoilerOff}
                   messageId={messageId}

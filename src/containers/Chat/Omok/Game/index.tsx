@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Loading from '~/components/Loading';
 import BoardSpoiler from '../../BoardSpoiler';
 import { css } from '@emotion/css';
@@ -115,7 +115,7 @@ interface GameProps {
   boardToRender: OmokCellType[][];
 }
 
-export default function Game({
+function Game({
   boardSizeStyle,
   boardVisible,
   colLabels,
@@ -223,3 +223,5 @@ export default function Game({
     </BoardSpoiler>
   );
 }
+
+export default memo(Game);

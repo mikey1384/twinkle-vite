@@ -38,7 +38,7 @@ interface OmokProps {
   opponentId?: number;
   opponentName?: string;
   initialState?: any;
-  countdownNumber?: number | null;
+  isCountdownActive?: boolean;
   gameWinnerId?: number;
   moveViewed?: boolean;
   spoilerOff?: boolean;
@@ -114,13 +114,14 @@ const resultOverlayClass = css`
 `;
 
 export default function Omok({
+  channelId,
   messageId,
   myId,
   senderId,
   opponentId,
   opponentName,
   initialState,
-  countdownNumber,
+  isCountdownActive,
   gameWinnerId,
   moveViewed,
   spoilerOff,
@@ -362,8 +363,7 @@ export default function Omok({
   }
 
   const statusMsgShown = useMemo(() => {
-    const isCountdownShown = typeof countdownNumber === 'number';
-    if (isCountdownShown) return true;
+    if (isCountdownActive) return true;
     const isLastOmokMessage =
       lastOmokMessageId && (messageId || 0) >= lastOmokMessageId;
     const shouldHideStatus = !!winnerId || !!moveViewed;
@@ -374,7 +374,7 @@ export default function Omok({
       !!userMadeLastMove;
     return isActiveGame;
   }, [
-    countdownNumber,
+    isCountdownActive,
     isFromModal,
     lastOmokMessageId,
     loaded,
@@ -503,8 +503,8 @@ export default function Omok({
         }}
         timerData={{
           shown: statusMsgShown,
-          countdownNumber:
-            typeof countdownNumber === 'number' ? countdownNumber : null,
+          channelId,
+          gameType: 'omok',
           awaitingOpponentName: opponentName,
           showAwaitingStatus: !isFromModal
         }}

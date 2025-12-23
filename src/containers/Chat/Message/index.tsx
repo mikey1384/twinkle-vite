@@ -20,8 +20,8 @@ import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
 
 function Message({
   channelId,
-  chessCountdownNumber,
-  omokCountdownNumber,
+  isChessCountdownActive,
+  isOmokCountdownActive,
   partner,
   currentChannel,
   displayedThemeColor,
@@ -63,8 +63,8 @@ function Message({
   zIndex
 }: {
   channelId: number;
-  chessCountdownNumber?: number | null;
-  omokCountdownNumber?: number | null;
+  isChessCountdownActive?: boolean;
+  isOmokCountdownActive?: boolean;
   partner: any;
   currentChannel: any;
   displayedThemeColor: string;
@@ -259,8 +259,8 @@ function Message({
             ) : contentShown || isOneOfVisibleMessages ? (
               <MessageBody
                 channelId={channelId}
-                chessCountdownNumber={chessCountdownNumber}
-                omokCountdownNumber={omokCountdownNumber}
+                isChessCountdownActive={isChessCountdownActive}
+                isOmokCountdownActive={isOmokCountdownActive}
                 partner={partner}
                 currentChannel={currentChannel}
                 displayedThemeColor={displayedThemeColor}

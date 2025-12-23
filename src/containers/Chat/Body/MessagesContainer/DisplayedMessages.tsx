@@ -193,12 +193,12 @@ export default function DisplayedMessages({
   const scrolledToBottomRef = useRef(true);
   const loadMoreButtonLock = useRef(false);
   const prevScrollPosition = useRef(null);
-  const chessCountdownNumber = useMemo(
-    () => boardCountdownObj[selectedChannelId]?.chess,
+  const isChessCountdownActive = useMemo(
+    () => !!boardCountdownObj[selectedChannelId]?.chess,
     [boardCountdownObj, selectedChannelId]
   );
-  const omokCountdownNumber = useMemo(
-    () => boardCountdownObj[selectedChannelId]?.omok,
+  const isOmokCountdownActive = useMemo(
+    () => !!boardCountdownObj[selectedChannelId]?.omok,
     [boardCountdownObj, selectedChannelId]
   );
 
@@ -757,8 +757,8 @@ export default function DisplayedMessages({
                         : false
                     }
                     channelId={selectedChannelId}
-                    chessCountdownNumber={chessCountdownNumber}
-                    omokCountdownNumber={omokCountdownNumber}
+                    isChessCountdownActive={isChessCountdownActive}
+                    isOmokCountdownActive={isOmokCountdownActive}
                     groupObjs={groupObjs}
                     onSetGroupObjs={onSetGroupObjs}
                     partner={partner}

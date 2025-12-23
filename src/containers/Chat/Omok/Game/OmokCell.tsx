@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
 import { OmokCell as OmokCellType } from '../helpers';
@@ -23,7 +23,7 @@ interface CellProps {
   onClick: () => void;
 }
 
-export default function OmokCell({
+function OmokCell({
   value,
   isLastMove,
   isWinCell,
@@ -109,3 +109,5 @@ export default function OmokCell({
     </div>
   );
 }
+
+export default memo(OmokCell);

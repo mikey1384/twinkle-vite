@@ -28,7 +28,7 @@ export default function ChessModal({
   myId,
   onConfirmChessMove,
   onHide,
-  countdownNumber,
+  isCountdownActive,
   onCancelRewindRequest,
   onAcceptRewind,
   onDeclineRewind,
@@ -43,7 +43,7 @@ export default function ChessModal({
   myId: number;
   onConfirmChessMove: (arg0: any) => void;
   onHide: () => void;
-  countdownNumber: number | null;
+  isCountdownActive?: boolean;
   onCancelRewindRequest: () => void;
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
@@ -365,7 +365,7 @@ export default function ChessModal({
               <Game
                 boardState={boardState}
                 channelId={channelId}
-                countdownNumber={countdownNumber}
+                isCountdownActive={isCountdownActive}
                 currentChannel={currentChannel}
                 initialState={initialState}
                 message={message}
@@ -387,7 +387,7 @@ export default function ChessModal({
             </>
           ) : (
             <Rewind
-              countdownNumber={countdownNumber}
+              isCountdownActive={isCountdownActive}
               channelId={channelId}
               myId={myId}
               onAcceptRewind={onAcceptRewind}

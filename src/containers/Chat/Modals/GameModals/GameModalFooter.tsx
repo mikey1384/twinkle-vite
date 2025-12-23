@@ -49,6 +49,7 @@ export default function GameModalFooter({
 }) {
   const [loading, setLoading] = useState(false);
   const noop = () => {};
+
   return (
     <>
       {showHowToPlay && (

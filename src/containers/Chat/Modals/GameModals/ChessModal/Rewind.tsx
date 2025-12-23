@@ -5,7 +5,7 @@ import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
 
 export default function Rewind({
   channelId,
-  countdownNumber,
+  isCountdownActive,
   myId,
   onAcceptRewind,
   onCancelRewindRequest,
@@ -13,7 +13,7 @@ export default function Rewind({
   rewindRequestId
 }: {
   channelId: number;
-  countdownNumber: number | null;
+  isCountdownActive?: boolean;
   myId: number;
   onAcceptRewind: (v: any) => void;
   onCancelRewindRequest: () => void;
@@ -48,7 +48,7 @@ export default function Rewind({
   return (
     <Chess
       key={chessThemeVersion}
-      countdownNumber={countdownNumber}
+      isCountdownActive={isCountdownActive}
       loaded={rewindRequestMessage.chessState && loaded}
       myId={myId}
       channelId={channelId}

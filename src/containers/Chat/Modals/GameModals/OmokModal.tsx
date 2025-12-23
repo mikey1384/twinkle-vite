@@ -14,7 +14,7 @@ interface OmokModalProps {
   myId: number;
   opponentId: number;
   opponentName: string;
-  countdownNumber?: number | null;
+  isCountdownActive?: boolean;
   onConfirmOmokMove: (params: {
     state: any;
     moveNumber: number;
@@ -34,7 +34,7 @@ export default function OmokModal({
   myId,
   opponentId,
   opponentName,
-  countdownNumber,
+  isCountdownActive,
   onConfirmOmokMove,
   onHide,
   onSpoilerClick,
@@ -71,7 +71,7 @@ export default function OmokModal({
   );
 
   const spoilerOff = useMemo(() => {
-    if (typeof countdownNumber === 'number') {
+    if (isCountdownActive) {
       return true;
     }
     const userIsTheLastMoveViewer =
@@ -85,7 +85,7 @@ export default function OmokModal({
       userMadeLastMove || userIsTheLastMoveViewer || Boolean(isOlderMessage)
     );
   }, [
-    countdownNumber,
+    isCountdownActive,
     currentChannel.lastOmokMessageId,
     currentChannel.lastOmokMoveViewerId,
     message?.id,
@@ -229,7 +229,7 @@ export default function OmokModal({
             opponentId={opponentId}
             opponentName={opponentName}
             initialState={initialState}
-            countdownNumber={countdownNumber}
+            isCountdownActive={isCountdownActive}
             spoilerOff={spoilerOff}
             interactable
             loaded={loaded && socketConnected}
