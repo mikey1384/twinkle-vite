@@ -1,6 +1,7 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { useKeyContext } from '~/contexts';
 import TeenagerBadge from '~/assets/teenager.png';
 import AdultBadge from '~/assets/adult.png';
 
@@ -13,42 +14,6 @@ const containerClass = css`
   gap: 0.7rem;
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.5rem;
-  }
-`;
-
-const baseButtonClass = css`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.7rem 1rem;
-  border-radius: ${borderRadius};
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-  border: 1px solid ${Color.borderGray()};
-  background: #fff;
-  font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
-  font-weight: 600;
-  font-size: 1.3rem;
-  color: ${Color.darkerGray()};
-
-  &:hover {
-    background: ${Color.highlightGray()};
-    border-color: ${Color.darkerBorderGray()};
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px ${Color.logoBlue()};
-  }
-
-  &.selected {
-    border-color: ${Color.black()};
-    background: ${Color.highlightGray()};
-  }
-
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.5rem 0.7rem;
-    font-size: 1.2rem;
   }
 `;
 
@@ -94,12 +59,54 @@ const badgeButtonClass = css`
 function AgeRestrictionSelector({
   ageRestriction,
   onChange,
+  showAdultOption = false,
   style
 }: {
   ageRestriction: AgeRestriction;
   onChange: (value: AgeRestriction) => void;
+  showAdultOption?: boolean;
   style?: React.CSSProperties;
 }) {
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+
+  const baseButtonClass = useMemo(
+    () => css`
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.7rem 1rem;
+      border-radius: ${borderRadius};
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease,
+        box-shadow 0.18s ease;
+      border: 1px solid ${Color.borderGray()};
+      background: #fff;
+      font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
+      font-weight: 600;
+      font-size: 1.3rem;
+      color: ${Color.darkerGray()};
+
+      &:hover {
+        background: ${Color.highlightGray()};
+        border-color: ${Color.darkerBorderGray()};
+      }
+
+      &:focus {
+        outline: none;
+      }
+
+      &.selected {
+        border: 2px solid ${Color[profileTheme]()};
+      }
+
+      @media (max-width: ${mobileMaxWidth}) {
+        padding: 0.5rem 0.7rem;
+        font-size: 1.2rem;
+      }
+    `,
+    [profileTheme]
+  );
+
   function handleKeyDown(e: React.KeyboardEvent, value: AgeRestriction) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -116,10 +123,14 @@ function AgeRestrictionSelector({
       >
         <div
           className={`${baseButtonClass} ${
-            ageRestriction === null ? 'selected' : ''
+            !ageRestriction || (ageRestriction === 'adult' && !showAdultOption)
+              ? 'selected'
+              : ''
           }`}
           role="radio"
-          aria-checked={ageRestriction === null}
+          aria-checked={
+            !ageRestriction || (ageRestriction === 'adult' && !showAdultOption)
+          }
           tabIndex={0}
           onClick={() => onChange(null)}
           onKeyDown={(e) => handleKeyDown(e, null)}
@@ -141,20 +152,22 @@ function AgeRestrictionSelector({
           <span className="badge-label">13+</span>
           <img src={TeenagerBadge} alt="" aria-hidden="true" />
         </div>
-        <div
-          className={`${baseButtonClass} ${badgeButtonClass} ${
-            ageRestriction === 'adult' ? 'selected' : ''
-          }`}
-          role="radio"
-          aria-checked={ageRestriction === 'adult'}
-          tabIndex={0}
-          onClick={() => onChange('adult')}
-          onKeyDown={(e) => handleKeyDown(e, 'adult')}
-          aria-label="Only visible to users aged 18 and above"
-        >
-          <span className="badge-label">18+</span>
-          <img src={AdultBadge} alt="" aria-hidden="true" />
-        </div>
+        {showAdultOption && (
+          <div
+            className={`${baseButtonClass} ${badgeButtonClass} ${
+              ageRestriction === 'adult' ? 'selected' : ''
+            }`}
+            role="radio"
+            aria-checked={ageRestriction === 'adult'}
+            tabIndex={0}
+            onClick={() => onChange('adult')}
+            onKeyDown={(e) => handleKeyDown(e, 'adult')}
+            aria-label="Only visible to users aged 18 and above"
+          >
+            <span className="badge-label">18+</span>
+            <img src={AdultBadge} alt="" aria-hidden="true" />
+          </div>
+        )}
       </div>
     </div>
   );

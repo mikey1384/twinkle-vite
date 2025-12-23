@@ -14,7 +14,7 @@ import AgeRestrictionSelector, {
 } from '~/components/Forms/AgeRestrictionSelector';
 import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth, desktopMinWidth } from '~/constants/css';
-import { ADMIN_USER_ID } from '~/constants/defaultValues';
+import { ADMIN_USER_ID, TEENAGER_ACHIEVEMENT_ID } from '~/constants/defaultValues';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineXpButtonDisabled,
@@ -22,7 +22,7 @@ import {
   isMobile,
   isTablet
 } from '~/helpers';
-import { useAppContext, useContentContext } from '~/contexts';
+import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 const commentLabel = 'Comment';
@@ -164,6 +164,12 @@ export default function BottomInterface({
   const onUpdateContentAgeRestriction = useContentContext(
     (v) => v.actions.onUpdateContentAgeRestriction
   );
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
+  const hasTeenagerAchievement = unlockedAchievementIds?.includes(
+    TEENAGER_ACHIEVEMENT_ID
+  );
   const isRewardedByUser = useMemo(() => {
     return (
       rewards.filter(
@@ -285,7 +291,7 @@ export default function BottomInterface({
         onClick: () => onSetDeleteConfirmModalShown(true)
       });
     }
-    if (userCanEditThis && ['video', 'url', 'subject', 'comment', 'aiStory', 'dailyReflection'].includes(contentType)) {
+    if (userCanEditThis && hasTeenagerAchievement && ['video', 'url', 'subject', 'aiStory', 'dailyReflection'].includes(contentType)) {
       items.push({
         label: (
           <>

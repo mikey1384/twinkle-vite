@@ -28,6 +28,7 @@ import {
   useInputContext,
   useKeyContext
 } from '~/contexts';
+import { TEENAGER_ACHIEVEMENT_ID } from '~/constants/defaultValues';
 import RewardLevelExplainer from '~/components/RewardLevelExplainer';
 import { useRoleColor } from '~/theme/useRoleColor';
 
@@ -62,6 +63,12 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const banned = useKeyContext((v) => v.myState.banned);
   const userId = useKeyContext((v) => v.myState.userId);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
+  const hasTeenagerAchievement = unlockedAchievementIds?.includes(
+    TEENAGER_ACHIEVEMENT_ID
+  );
   const warningRole = useRoleColor('warning', { fallback: 'redOrange' });
   const successRole = useRoleColor('success', { fallback: 'green' });
   const alreadyPostedByThisUserRole = useRoleColor('alreadyPostedByThisUser', {
@@ -412,7 +419,7 @@ function ContentInput({ onModalHide }: { onModalHide: () => void }) {
                 />
               </div>
             )}
-          {descriptionFieldShown && (
+          {descriptionFieldShown && hasTeenagerAchievement && (
             <AgeRestrictionSelector
               ageRestriction={form.ageRestriction}
               onChange={onSetContentAgeRestriction}

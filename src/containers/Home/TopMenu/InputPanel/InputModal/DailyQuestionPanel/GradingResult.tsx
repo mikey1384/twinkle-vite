@@ -8,6 +8,7 @@ import AgeRestrictionSelector, {
 } from '~/components/Forms/AgeRestrictionSelector';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth, getStreakColor } from '~/constants/css';
+import { TEENAGER_ACHIEVEMENT_ID } from '~/constants/defaultValues';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
@@ -93,7 +94,10 @@ export default function GradingResult({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
-  const { userId } = useKeyContext((v) => v.myState);
+  const { userId, unlockedAchievementIds } = useKeyContext((v) => v.myState);
+  const hasTeenagerAchievement = unlockedAchievementIds?.includes(
+    TEENAGER_ACHIEVEMENT_ID
+  );
   const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
@@ -486,11 +490,13 @@ export default function GradingResult({
           </div>
 
           {/* Age Restriction Selector */}
-          <AgeRestrictionSelector
-            ageRestriction={ageRestriction}
-            onChange={setAgeRestriction}
-            style={{ marginTop: '1rem' }}
-          />
+          {hasTeenagerAchievement && (
+            <AgeRestrictionSelector
+              ageRestriction={ageRestriction}
+              onChange={setAgeRestriction}
+              style={{ marginTop: '1rem' }}
+            />
+          )}
         </div>
       )}
 

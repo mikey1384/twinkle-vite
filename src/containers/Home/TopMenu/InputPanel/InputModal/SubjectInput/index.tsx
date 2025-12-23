@@ -33,7 +33,8 @@ import { css } from '@emotion/css';
 import { PanelStyle } from '../Styles';
 import {
   charLimit,
-  DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL
+  DESCRIPTION_LENGTH_FOR_EXTRA_REWARD_LEVEL,
+  TEENAGER_ACHIEVEMENT_ID
 } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -110,6 +111,12 @@ function SubjectInput({
   const uploadContent = useAppContext((v) => v.requestHelpers.uploadContent);
   const canEditRewardLevel = useKeyContext((v) => v.myState.canEditRewardLevel);
   const banned = useKeyContext((v) => v.myState.banned);
+  const unlockedAchievementIds = useKeyContext(
+    (v) => v.myState.unlockedAchievementIds
+  );
+  const hasTeenagerAchievement = unlockedAchievementIds?.includes(
+    TEENAGER_ACHIEVEMENT_ID
+  );
   const successRole = useRoleColor('success', { fallback: 'green' });
   const buttonRole = useRoleColor('button', { fallback: 'logoBlue' });
   const buttonHoverRole = useRoleColor('buttonHovered', {
@@ -611,11 +618,13 @@ function SubjectInput({
                   />
                 </div>
               )}
-              <AgeRestrictionSelector
-                ageRestriction={ageRestriction}
-                onChange={onSetSubjectAgeRestriction}
-                style={{ marginTop: '1.5rem' }}
-              />
+              {hasTeenagerAchievement && (
+                <AgeRestrictionSelector
+                  ageRestriction={ageRestriction}
+                  onChange={onSetSubjectAgeRestriction}
+                  style={{ marginTop: '1.5rem' }}
+                />
+              )}
               <div style={{ marginTop: '1rem' }} className="button-container">
                 <SwitchButton
                   checked={hasSecretAnswer}
