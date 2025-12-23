@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useAppContext, useExploreContext, useHomeContext } from '~/contexts';
 import ContentListItem from '~/components/ContentListItem';
 import { Content } from '~/types';
@@ -34,6 +34,12 @@ export default function FeaturedSubject({
     (v) => v.actions.onSetCurrentFeaturedIndex
   );
 
+  // Use ref to track current index for interval - avoids recreating interval on every tick
+  const currentIndexRef = useRef(currentFeaturedIndex);
+  useEffect(() => {
+    currentIndexRef.current = currentFeaturedIndex;
+  }, [currentFeaturedIndex]);
+
   useEffect(() => {
     if (!featuredSubjectsLoaded) {
       init();
@@ -54,19 +60,15 @@ export default function FeaturedSubject({
   }, []);
 
   useEffect(() => {
+    if (featureds.length === 0) return;
+
     const intervalId = setInterval(() => {
-      if (featureds.length === 0) {
-        onSetCurrentFeaturedIndex(0);
-      } else {
-        onSetCurrentFeaturedIndex(
-          (currentFeaturedIndex + 1) % featureds.length
-        );
-      }
+      const nextIndex = (currentIndexRef.current + 1) % featureds.length;
+      onSetCurrentFeaturedIndex(nextIndex);
     }, 5000);
 
     return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFeaturedIndex, featureds.length]);
+  }, [featureds.length, onSetCurrentFeaturedIndex]);
 
   useEffect(() => {
     if (currentFeaturedIndex >= featureds.length) {

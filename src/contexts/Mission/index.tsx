@@ -28,13 +28,12 @@ export function MissionContextProvider({ children }: { children: ReactNode }) {
     () => MissionActions(missionDispatch),
     [missionDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: missionState, actions: memoizedActions }),
+    [missionState, memoizedActions]
+  );
   return (
-    <MissionContext.Provider
-      value={{
-        state: missionState,
-        actions: memoizedActions
-      }}
-    >
+    <MissionContext.Provider value={contextValue}>
       {children}
     </MissionContext.Provider>
   );

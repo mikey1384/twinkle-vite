@@ -659,6 +659,45 @@ export default function DisplayedMessages({
     messages[0]?.id
   ]);
 
+  // Stable callbacks for Message component - prevents re-renders of all messages
+  const handleSetMessageToScrollTo = useCallback(
+    (messageId: number) => {
+      MessageToScrollToFromAll.current = messageId;
+      MessageToScrollToFromTopic.current = messageId;
+    },
+    [MessageToScrollToFromAll, MessageToScrollToFromTopic]
+  );
+
+  const handleReplyClick = useCallback(
+    (target: any) => {
+      onReplyTargetSelected(target);
+      ChatInputRef.current?.focus();
+    },
+    [onReplyTargetSelected, ChatInputRef]
+  );
+
+  const handleSetVisibleMessageIndex = useCallback((index: number) => {
+    visibleMessageIndexRef.current = index;
+  }, []);
+
+  const handleSetMessageHeightObj = useCallback(
+    ({ messageId, height }: { messageId: number; height: number }) => {
+      MessageHeights[messageId] = height;
+    },
+    []
+  );
+
+  const handleShowSubjectMsgsModal = useCallback(
+    ({ subjectId, content }: { subjectId: number; content: string }) => {
+      onSetSubjectMsgsModalShown({
+        shown: true,
+        subjectId,
+        content
+      });
+    },
+    [onSetSubjectMsgsModalShown]
+  );
+
   return (
     <ErrorBoundary componentPath="Chat/Body/MessagesContainer/DisplayedMessages">
       <div
@@ -776,10 +815,7 @@ export default function DisplayedMessages({
                     isBanned={!!banned?.chat}
                     isRestricted={isRestrictedChannel}
                     loading={pageLoading}
-                    onSetMessageToScrollTo={(messageId) => {
-                      MessageToScrollToFromAll.current = messageId;
-                      MessageToScrollToFromTopic.current = messageId;
-                    }}
+                    onSetMessageToScrollTo={handleSetMessageToScrollTo}
                     message={message}
                     onAcceptGroupInvitation={handleAcceptGroupInvitation}
                     onChessBoardClick={onChessModalShown}
@@ -791,29 +827,16 @@ export default function DisplayedMessages({
                     onDeclineRewind={onDeclineRewind}
                     onDelete={handleShowDeleteModal}
                     onReceiveNewMessage={handleReceiveNewMessage}
-                    onReplyClick={(target: any) => {
-                      onReplyTargetSelected(target);
-                      ChatInputRef.current?.focus();
-                    }}
+                    onReplyClick={handleReplyClick}
                     onRequestRewind={handleRequestChessRewind}
                     onRewardMessageSubmit={handleRewardMessageSubmit}
                     onSetAICardModalCardId={onSetAICardModalCardId}
                     onSetChessTarget={handleSetChessTarget}
                     onSetTransactionModalShown={onSetTransactionModalShown}
-                    onSetVisibleMessageIndex={(index) =>
-                      (visibleMessageIndexRef.current = index)
-                    }
+                    onSetVisibleMessageIndex={handleSetVisibleMessageIndex}
                     onSetVisibleMessageId={onSetVisibleMessageId}
-                    onSetMessageHeightObj={({ messageId, height }) => {
-                      MessageHeights[messageId] = height;
-                    }}
-                    onShowSubjectMsgsModal={({ subjectId, content }) =>
-                      onSetSubjectMsgsModalShown({
-                        shown: true,
-                        subjectId,
-                        content
-                      })
-                    }
+                    onSetMessageHeightObj={handleSetMessageHeightObj}
+                    onShowSubjectMsgsModal={handleShowSubjectMsgsModal}
                   />
                 </div>
               ) : null;

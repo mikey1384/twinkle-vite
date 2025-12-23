@@ -39,14 +39,11 @@ export function HomeContextProvider({ children }: { children: ReactNode }) {
     () => HomeActions(homeDispatch),
     [homeDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: homeState, actions: memoizedActions }),
+    [homeState, memoizedActions]
+  );
   return (
-    <HomeContext.Provider
-      value={{
-        state: homeState,
-        actions: memoizedActions
-      }}
-    >
-      {children}
-    </HomeContext.Provider>
+    <HomeContext.Provider value={contextValue}>{children}</HomeContext.Provider>
   );
 }

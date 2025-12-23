@@ -19,14 +19,12 @@ export function InteractiveContextProvider({
     () => InteractiveActions(interactiveDispatch),
     [interactiveDispatch]
   );
-
+  const contextValue = useMemo(
+    () => ({ state: interactiveState, actions: memoizedActions }),
+    [interactiveState, memoizedActions]
+  );
   return (
-    <InteractiveContext.Provider
-      value={{
-        state: interactiveState,
-        actions: memoizedActions
-      }}
-    >
+    <InteractiveContext.Provider value={contextValue}>
       {children}
     </InteractiveContext.Provider>
   );

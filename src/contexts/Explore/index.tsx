@@ -87,13 +87,12 @@ export function ExploreContextProvider({ children }: { children: ReactNode }) {
     () => ExploreActions(exploreDispatch),
     [exploreDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: exploreState, actions: memoizedActions }),
+    [exploreState, memoizedActions]
+  );
   return (
-    <ExploreContext.Provider
-      value={{
-        state: exploreState,
-        actions: memoizedActions
-      }}
-    >
+    <ExploreContext.Provider value={contextValue}>
       {children}
     </ExploreContext.Provider>
   );

@@ -15,14 +15,12 @@ export function ContentContextProvider({ children }: { children: ReactNode }) {
     () => ContentActions(contentDispatch),
     [contentDispatch]
   );
-
+  const contextValue = useMemo(
+    () => ({ state: contentState, actions: memoizedActions }),
+    [contentState, memoizedActions]
+  );
   return (
-    <ContentContext.Provider
-      value={{
-        state: contentState,
-        actions: memoizedActions
-      }}
-    >
+    <ContentContext.Provider value={contextValue}>
       {children}
     </ContentContext.Provider>
   );

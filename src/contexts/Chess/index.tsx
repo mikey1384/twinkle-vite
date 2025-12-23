@@ -16,13 +16,12 @@ export function ChessContextProvider({ children }: { children: ReactNode }) {
     () => ChessActions(chessDispatch),
     [chessDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: chessState, actions: memoizedActions }),
+    [chessState, memoizedActions]
+  );
   return (
-    <ChessContext.Provider
-      value={{
-        state: chessState,
-        actions: memoizedActions
-      }}
-    >
+    <ChessContext.Provider value={contextValue}>
       {children}
     </ChessContext.Provider>
   );

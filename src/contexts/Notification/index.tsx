@@ -48,14 +48,11 @@ export function NotiContextProvider({ children }: { children: ReactNode }) {
     () => NotiActions(notiDispatch),
     [notiDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: notiState, actions: memoizedActions }),
+    [notiState, memoizedActions]
+  );
   return (
-    <NotiContext.Provider
-      value={{
-        state: notiState,
-        actions: memoizedActions
-      }}
-    >
-      {children}
-    </NotiContext.Provider>
+    <NotiContext.Provider value={contextValue}>{children}</NotiContext.Provider>
   );
 }

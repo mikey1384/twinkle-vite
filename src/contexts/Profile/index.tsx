@@ -15,13 +15,12 @@ export function ProfileContextProvider({ children }: { children: ReactNode }) {
     () => ProfileActions(profileDispatch),
     [profileDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: profileState, actions: memoizedActions }),
+    [profileState, memoizedActions]
+  );
   return (
-    <ProfileContext.Provider
-      value={{
-        state: profileState,
-        actions: memoizedActions
-      }}
-    >
+    <ProfileContext.Provider value={contextValue}>
       {children}
     </ProfileContext.Provider>
   );

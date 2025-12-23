@@ -45,14 +45,11 @@ export function InputContextProvider({ children }: { children: ReactNode }) {
     () => InputActions(inputDispatch),
     [inputDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: inputState, actions: memoizedActions }),
+    [inputState, memoizedActions]
+  );
   return (
-    <InputContext.Provider
-      value={{
-        state: inputState,
-        actions: memoizedActions
-      }}
-    >
-      {children}
-    </InputContext.Provider>
+    <InputContext.Provider value={contextValue}>{children}</InputContext.Provider>
   );
 }

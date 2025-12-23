@@ -212,14 +212,15 @@ export function ChatContextProvider({ children }: { children: ReactNode }) {
     [chatDispatch]
   );
 
+  const contextValue = useMemo(
+    () => ({
+      state: chatState,
+      actions: memoizedActions
+    }),
+    [chatState, memoizedActions]
+  );
+
   return (
-    <ChatContext.Provider
-      value={{
-        state: chatState,
-        actions: memoizedActions
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
+    <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
   );
 }

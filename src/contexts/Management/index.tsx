@@ -55,13 +55,12 @@ export function ManagementContextProvider({
     () => ManagementActions(managementDispatch),
     [managementDispatch]
   );
+  const contextValue = useMemo(
+    () => ({ state: managementState, actions: memoizedActions }),
+    [managementState, memoizedActions]
+  );
   return (
-    <ManagementContext.Provider
-      value={{
-        state: managementState,
-        actions: memoizedActions
-      }}
-    >
+    <ManagementContext.Provider value={contextValue}>
       {children}
     </ManagementContext.Provider>
   );
