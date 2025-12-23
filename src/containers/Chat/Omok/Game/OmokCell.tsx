@@ -46,6 +46,7 @@ export default function OmokCell({
         width: 100%;
         height: 100%;
         position: relative;
+        touch-action: manipulation;
         background: linear-gradient(
           135deg,
           rgba(222, 184, 135, 0.65),
