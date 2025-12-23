@@ -358,6 +358,7 @@ export const NewModal = forwardRef<
                 };`
               : ''}
             overflow-y: auto;
+            touch-action: manipulation;
           `}
           onClick={handleBackdropClick}
           aria-hidden="true"

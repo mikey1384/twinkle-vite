@@ -69,6 +69,7 @@ const boardPlaneClass = css`
   border-top-right-radius: ${borderRadius};
   box-shadow: inset 0 0 0 2px ${Color.lightBrown()};
   box-sizing: border-box;
+  touch-action: manipulation;
   background: repeating-linear-gradient(
       to right,
       rgba(0, 0, 0, 0.18) 0 1px,
@@ -92,6 +93,7 @@ const cellsGridClass = css`
   display: grid;
   grid-template-columns: repeat(${BOARD_SIZE}, 1fr);
   grid-template-rows: repeat(${BOARD_SIZE}, 1fr);
+  touch-action: manipulation;
 `;
 
 interface GameProps {

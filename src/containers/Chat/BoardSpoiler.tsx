@@ -36,6 +36,8 @@ export default function BoardSpoiler({
     color: rgba(115, 115, 115, 1);
     box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.08);
     font-size: 1.5rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     transition: transform 150ms ease, box-shadow 200ms ease, border-color 200ms ease;
 
     /* Desktop-only hover affordance */
@@ -53,7 +55,17 @@ export default function BoardSpoiler({
   return (
     <div style={style}>
       <div
-        onClick={onReveal}
+        onPointerDown={(e) => {
+          if (onReveal && e.pointerType !== 'mouse') {
+            e.preventDefault();
+            onReveal();
+          }
+        }}
+        onClick={(e) => {
+          if (onReveal && (e.nativeEvent as PointerEvent).pointerType !== 'touch') {
+            onReveal();
+          }
+        }}
         className={overlayClass}
         style={{ cursor: onReveal ? 'pointer' : 'default' }}
       >

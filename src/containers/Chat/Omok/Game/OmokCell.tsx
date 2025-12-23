@@ -47,18 +47,31 @@ export default function OmokCell({
         height: 100%;
         position: relative;
         touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         background: linear-gradient(
           135deg,
           rgba(222, 184, 135, 0.65),
           rgba(245, 222, 179, 0.78)
         );
         transition: background 0.2s ease, transform 0.15s ease;
-        &:hover {
-          transform: translateZ(0);
+        @media (hover: hover) and (pointer: fine) {
+          &:hover {
+            transform: translateZ(0);
+          }
         }
       `}
       style={{ cursor: canInteract ? 'pointer' : undefined }}
-      onClick={onClick}
+      onPointerDown={(e) => {
+        if (canInteract && e.pointerType !== 'mouse') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      onClick={(e) => {
+        if ((e.nativeEvent as PointerEvent).pointerType !== 'touch') {
+          onClick();
+        }
+      }}
       onKeyDown={handleKeyDown}
     >
       {value === 'black' && (
