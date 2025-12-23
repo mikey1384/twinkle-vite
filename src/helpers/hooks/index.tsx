@@ -30,6 +30,7 @@ import { levels } from '~/constants/userLevels';
 import { User, UserLevel } from '~/types';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import { scrollPositions } from '~/constants/state';
+import { throttle } from '~/helpers';
 
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
@@ -197,66 +198,50 @@ export function useLazyLoad({
   delay?: number;
 }) {
   const timerRef = useRef<any>(null);
-  const hasRecordedHeight = useRef(false);
-  const visibilityChangedAt = useRef(0);
-  const onSetPlaceholderHeightRef = useRef(onSetPlaceholderHeight);
-  const onSetIsVisibleRef = useRef(onSetIsVisible);
-  onSetPlaceholderHeightRef.current = onSetPlaceholderHeight;
-  onSetIsVisibleRef.current = onSetIsVisible;
+  const inViewRef = useRef(inView);
 
-  // Measure height once on first paint
-  useLayoutEffect(() => {
-    if (PanelRef.current && !hasRecordedHeight.current) {
-      const height = PanelRef.current.clientHeight;
-      if (height > 0) {
-        onSetPlaceholderHeight?.(height);
-        hasRecordedHeight.current = true;
-      }
-    }
-  });
-
-  // Observe resizes, but ignore events within 500ms of visibility change
   useEffect(() => {
-    if (!PanelRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      const timeSinceVisibilityChange = Date.now() - visibilityChangedAt.current;
-      if (timeSinceVisibilityChange < 500) return; // Ignore resize during visibility transition
-
-      if (entries.length > 0) {
-        const height = entries[0].target.clientHeight;
-        if (height > 0) {
-          onSetPlaceholderHeightRef.current?.(height);
-        }
-      }
-    });
-
-    resizeObserver.observe(PanelRef.current);
-    return () => resizeObserver.disconnect();
-  }, [PanelRef, inView]);
-
-  // Handle visibility with delay for hiding
-  useEffect(() => {
-    visibilityChangedAt.current = Date.now();
-
-    if (inView) {
+    inViewRef.current = inView;
+    if (!inView) {
+      timerRef.current = setTimeout(() => {
+        onSetIsVisible?.(false);
+      }, delay);
+    } else {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
-        timerRef.current = null;
       }
-      onSetIsVisibleRef.current?.(true);
-    } else {
-      timerRef.current = setTimeout(() => {
-        onSetIsVisibleRef.current?.(false);
-      }, delay);
+      onSetIsVisible?.(true);
+    }
+  }, [inView, delay, onSetIsVisible]);
+
+  useEffect(() => {
+    const handleResize = throttle((entries: ResizeObserverEntry[]) => {
+      if (entries.length > 0) {
+        const clientHeight = entries[0].target.clientHeight;
+        onSetPlaceholderHeight?.(clientHeight);
+      }
+    }, 100);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (PanelRef.current) {
+      resizeObserver.observe(PanelRef.current);
     }
 
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
+  }, [onSetPlaceholderHeight, PanelRef]);
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
     };
-  }, [inView, delay]);
+  }, []);
 }
 
 export function useMyState() {
