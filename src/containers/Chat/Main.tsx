@@ -971,7 +971,8 @@ export default function Main({
           onSetFavoriteChannel,
           onSetMediaStarted,
           onSetMessageState,
-          onRegisterSaveScrollPositionForAll: handleRegisterSaveScrollPositionForAll,
+          onRegisterSaveScrollPositionForAll:
+            handleRegisterSaveScrollPositionForAll,
           onSaveScrollPositionForAll: handleSaveScrollPositionForAll,
           onSetReplyTarget,
           onSetSiteUrl,
@@ -1057,10 +1058,6 @@ export default function Main({
                 @media (max-width: ${mobileMaxWidth}) {
                   width: 170vw;
                   height: calc(100% - var(--mobile-nav-total-height));
-                  /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
-                  @supports (height: 100dvh) {
-                    height: calc(100dvh - var(--mobile-nav-total-height));
-                  }
                   /* iOS Safari: allow horizontal pan but don't delay taps */
                   touch-action: pan-x pan-y;
                 }

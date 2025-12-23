@@ -130,9 +130,6 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
         <Loading
           className={css`
             height: calc(100vh - 30rem);
-            @supports (height: 100dvh) {
-              height: calc(100dvh - 30rem);
-            }
           `}
         />
       ) : (
@@ -140,9 +137,6 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
           ref={scrollContainerRef}
           className={css`
             min-height: calc(100vh - 30rem);
-            @supports (height: 100dvh) {
-              min-height: calc(100dvh - 30rem);
-            }
             width: 100%;
             display: flex;
             align-items: center;

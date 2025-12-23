@@ -455,10 +455,6 @@ export default function App() {
         width: 100%;
         @media (max-width: ${mobileMaxWidth}) {
           height: 100%;
-          /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
-          @supports (height: 100dvh) {
-            height: 100dvh;
-          }
         }
       `}
     >
@@ -490,11 +486,6 @@ export default function App() {
             @media (max-width: ${mobileMaxWidth}) {
               margin-top: 0;
               padding-top: 0;
-              /* iOS Safari: use dynamic viewport height to fix touch target misalignment */
-              @supports (height: 100dvh) {
-                height: 100dvh;
-                min-height: 100dvh;
-              }
             }
           `}`}
         >
@@ -502,11 +493,23 @@ export default function App() {
             <Route path="/users/:username/*" element={<Profile />} />
             <Route path="/ai-stories/:contentId" element={<ContentPage />} />
             <Route path="/comments/:contentId" element={<ContentPage />} />
-            <Route path="/mission-passes/:contentId" element={<ContentPage />} />
-            <Route path="/achievement-unlocks/:contentId" element={<ContentPage />} />
+            <Route
+              path="/mission-passes/:contentId"
+              element={<ContentPage />}
+            />
+            <Route
+              path="/achievement-unlocks/:contentId"
+              element={<ContentPage />}
+            />
             <Route path="/daily-rewards/:contentId" element={<ContentPage />} />
-            <Route path="/shared-prompts/:contentId" element={<ContentPage />} />
-            <Route path="/daily-reflections/:contentId" element={<ContentPage />} />
+            <Route
+              path="/shared-prompts/:contentId"
+              element={<ContentPage />}
+            />
+            <Route
+              path="/daily-reflections/:contentId"
+              element={<ContentPage />}
+            />
             <Route path="/videos/:videoId" element={<VideoPage />} />
             <Route path="/videos/:videoId/*" element={<VideoPage />} />
             <Route path="/links/:linkId" element={<LinkPage />} />

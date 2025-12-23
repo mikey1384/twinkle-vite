@@ -55,8 +55,6 @@ export default function PromptMessage({
     if (!isSearching) return '4rem';
     if (showLoading) return '8rem';
     if (searchedWord?.content || wordRegisterStatus) {
-      // Keep vh here - dvh can't have a fallback in JS strings
-      // The parent containers already use dvh with proper @supports fallbacks
       return 'min(300%, calc(100vh - 20rem))';
     }
     return '25rem';
