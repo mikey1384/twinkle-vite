@@ -122,12 +122,6 @@ export default function UserActions(dispatch: Dispatch) {
         loaded
       });
     },
-    onSetProfilesVisibleCount(count: number) {
-      return dispatch({
-        type: 'SET_PROFILES_VISIBLE_COUNT',
-        count
-      });
-    },
     onSetSessionLoaded() {
       return dispatch({
         type: 'SET_SESSION_LOADED'

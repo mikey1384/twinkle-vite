@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import Banner from '~/components/Banner';
@@ -81,10 +81,6 @@ export default function Stories() {
   const onLoadMoreFeeds = useHomeContext((v) => v.actions.onLoadMoreFeeds);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const onSetDisplayOrder = useHomeContext((v) => v.actions.onSetDisplayOrder);
-  const feedsVisibleCount = useHomeContext((v) => v.state.feedsVisibleCount);
-  const onSetFeedsVisibleCount = useHomeContext(
-    (v) => v.actions.onSetFeedsVisibleCount
-  );
 
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingFilteredFeeds, setLoadingFilteredFeeds] = useState(false);
@@ -96,18 +92,6 @@ export default function Stories() {
   const hideWatchedRef = useRef(null);
   const subFilterRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
-
-  // Progressive rendering - gradually show more items to prevent crash on mount
-  useEffect(() => {
-    if (feeds?.length > feedsVisibleCount) {
-      const timer = setTimeout(() => {
-        startTransition(() => {
-          onSetFeedsVisibleCount(Math.min(feedsVisibleCount + 10, feeds.length));
-        });
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [feeds?.length, feedsVisibleCount, onSetFeedsVisibleCount]);
 
   const loadingPosts = useMemo(
     () => loadingFeeds || loadingFilteredFeeds || loadingCategorizedFeeds,
@@ -321,7 +305,7 @@ export default function Stories() {
                 )
               )}
               <div className={feedListClass}>
-                {(feeds || []).slice(0, feedsVisibleCount).map(
+                {(feeds || []).map(
                   (feed: { [key: string]: any } = {}, index: number) => {
                     const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
                     return feed.contentId ? (

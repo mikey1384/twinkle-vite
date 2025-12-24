@@ -11,7 +11,6 @@ export const initialHomeState = {
   topMenuSection: 'start',
   feeds: [],
   feedsOutdated: false,
-  feedsVisibleCount: 15,
   fileUploadProgress: null,
   aiStoriesModalShown: false,
   grammarGameModalShown: false,

@@ -105,7 +105,7 @@ function ContentListItem({
   });
 
   const contentShown = useMemo(() => {
-    return isVisible || (shouldUpdate && inView);
+    return shouldUpdate && (isVisible || inView);
   }, [shouldUpdate, inView, isVisible]);
 
   return (
