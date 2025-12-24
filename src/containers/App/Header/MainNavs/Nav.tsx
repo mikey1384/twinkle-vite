@@ -145,6 +145,7 @@ function Nav({
         justify-content: center;
         cursor: pointer;
         touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
         a {
           text-decoration: none;
           font-weight: 600;
@@ -156,6 +157,7 @@ function Nav({
           background: transparent;
           box-shadow: none;
           border-bottom: 2px solid transparent;
+          -webkit-tap-highlight-color: transparent;
         }
         > a.active {
           color: ${highlightColor}!important;

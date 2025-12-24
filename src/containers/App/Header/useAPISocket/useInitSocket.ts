@@ -93,6 +93,7 @@ export default function useInitSocket({
 
   const latestChatTypeRef = useRef(chatType);
   const latestPathIdRef = useRef(latestPathId);
+  const selectedChannelIdRef = useRef(selectedChannelId);
   const isLoadingChatRef = useRef(false);
   const disconnectedDuringLoadRef = useRef(false);
   const heartbeatTimerRef = useRef<number | null>(null);
@@ -199,6 +200,10 @@ export default function useInitSocket({
   useEffect(() => {
     latestPathIdRef.current = latestPathId;
   }, [latestPathId]);
+
+  useEffect(() => {
+    selectedChannelIdRef.current = selectedChannelId;
+  }, [selectedChannelId]);
 
   useEffect(() => {
     let socketHealthCheckTimer: number | null = null;
@@ -321,7 +326,7 @@ export default function useInitSocket({
         disconnectedDuringLoadRef.current = false;
       }
 
-      onClearRecentChessMessage(selectedChannelId);
+      onClearRecentChessMessage(selectedChannelIdRef.current);
       handleCheckVersion();
       void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
@@ -355,7 +360,7 @@ export default function useInitSocket({
 
         if (!shouldSkipReload) {
           handleGetNumberOfUnreadMessages();
-          handleLoadChat({ selectedChannelId });
+          handleLoadChat({ selectedChannelId: selectedChannelIdRef.current });
         }
         // Start heartbeat to keep presence accurate (handles sleep/network drops)
         if (heartbeatTimerRef.current) {
