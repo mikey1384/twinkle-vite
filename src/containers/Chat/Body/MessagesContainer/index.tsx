@@ -671,10 +671,18 @@ export default function MessagesContainer({
   }, [currentChannel?.id]);
 
   const handleSaveScrollPositionForAll = useCallback(() => {
+    // If user is at the bottom, don't save a scroll position
+    // This allows the default "scroll to bottom" behavior to work when returning
+    const scrollTop = MessagesRef.current?.scrollTop ?? 0;
+    const isAtBottom = scrollTop >= -1;
+    if (isAtBottom) {
+      MessageToScrollToFromAll.current = null;
+      return;
+    }
     if (visibleMessageIdRef.current) {
       MessageToScrollToFromAll.current = visibleMessageIdRef.current;
     }
-  }, []);
+  }, [MessagesRef]);
 
   const handleSetVisibleMessageId = useCallback((messageId: number) => {
     visibleMessageIdRef.current = messageId;
