@@ -12,6 +12,7 @@ import Body from './Body';
 import Loading from '~/components/Loading';
 import PleaseLogIn from './PleaseLogIn';
 import LocalContext from './Context';
+import { UpdateModeProvider } from './UpdateModeContext';
 import AICardModal from '~/components/Modals/AICardModal';
 import queryString from 'query-string';
 import loading from './loading.jpeg';
@@ -933,9 +934,10 @@ export default function Main({
   }, []);
 
   return (
-    <LocalContext.Provider
-      value={{
-        actions: {
+    <UpdateModeProvider>
+      <LocalContext.Provider
+        value={{
+          actions: {
           onClearSubjectSearchResults,
           onDeleteMessage,
           onAddBookmarkedMessage,
@@ -1166,7 +1168,8 @@ export default function Main({
           />
         )}
       </ErrorBoundary>
-    </LocalContext.Provider>
+      </LocalContext.Provider>
+    </UpdateModeProvider>
   );
 
   async function handleChannelEnter({

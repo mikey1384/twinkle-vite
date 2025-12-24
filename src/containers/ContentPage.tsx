@@ -72,7 +72,7 @@ export default function ContentPage() {
             width: 65%;
             @media (max-width: ${mobileMaxWidth}) {
               width: 100%;
-              min-height: 100vh;
+              min-height: auto;
             }
           `}
         >

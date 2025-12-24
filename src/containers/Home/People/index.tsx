@@ -8,6 +8,7 @@ import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useInputContext } from '~/contexts';
+import { useUpdateMode } from '~/contexts/UpdateMode';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import {
   LAST_ONLINE_FILTER_LABEL,
@@ -17,6 +18,7 @@ import {
 const searchUsersLabel = 'Search Users';
 
 function People() {
+  const { onScrollStart } = useUpdateMode();
   const lastUserIdRef = useRef(null);
   const loadUsers = useAppContext((v) => v.requestHelpers.loadUsers);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
@@ -61,7 +63,8 @@ function People() {
   useInfiniteScroll({
     scrollable: profiles.length > 0 && stringIsEmpty(searchText),
     feedsLength: profiles.length,
-    onScrollToBottom: handleLoadMoreProfiles
+    onScrollToBottom: handleLoadMoreProfiles,
+    onScrollStart
   });
 
   useEffect(() => {

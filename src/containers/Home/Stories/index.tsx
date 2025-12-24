@@ -17,6 +17,7 @@ import {
   useNotiContext,
   useKeyContext
 } from '~/contexts';
+import { useUpdateMode } from '~/contexts/UpdateMode';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { useHomePanelVars } from '~/theme/useHomePanelVars';
 
@@ -43,6 +44,7 @@ const categoryObj: Record<string, any> = {
 };
 
 export default function Stories() {
+  const { onScrollStart } = useUpdateMode();
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
@@ -142,7 +144,8 @@ export default function Stories() {
   useInfiniteScroll({
     scrollable: feeds?.length > 0 && !loadingMoreRef.current,
     feedsLength: feeds?.length,
-    onScrollToBottom: handleLoadMoreFeeds
+    onScrollToBottom: handleLoadMoreFeeds,
+    onScrollStart
   });
 
   useEffect(() => {

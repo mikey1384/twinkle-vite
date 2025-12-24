@@ -11,6 +11,7 @@ import LoadingPlaceholder from '~/components/LoadingPlaceholder';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SystemErrorMessage from './MessageBody/SystemErrorMessage';
 import LocalContext from '../Context';
+import { useShouldUpdate } from '../UpdateModeContext';
 import { css } from '@emotion/css';
 import { useInView } from 'react-intersection-observer';
 import { useAppContext } from '~/contexts';
@@ -131,6 +132,10 @@ function Message({
   const PanelRef = useRef(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
+  // Optimization: during scrolling, only update messages that are in view
+  // During transitions or idle, all messages can update
+  const shouldUpdate = useShouldUpdate(inView);
+
   useEffect(() => {
     if (inView) {
       onSetVisibleMessageIndex(index);
@@ -170,8 +175,8 @@ function Message({
   });
 
   const contentShown = useMemo(
-    () => inView || started || !MessageHeights[message?.id],
-    [inView, message?.id, started]
+    () => shouldUpdate && (inView || started || !MessageHeights[message?.id]),
+    [shouldUpdate, inView, message?.id, started]
   );
 
   const isApprovalRequest = useMemo(() => {
@@ -256,7 +261,7 @@ function Message({
           >
             {!message?.isLoaded && !message?.isNotification ? (
               <LoadingPlaceholder />
-            ) : contentShown || isOneOfVisibleMessages ? (
+            ) : contentShown || (shouldUpdate && isOneOfVisibleMessages) ? (
               <MessageBody
                 channelId={channelId}
                 isChessCountdownActive={isChessCountdownActive}

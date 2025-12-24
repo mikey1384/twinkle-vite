@@ -6,11 +6,13 @@ const BodyRef = document.scrollingElement || document.documentElement;
 export default function useInfiniteScroll({
   feedsLength,
   scrollable,
-  onScrollToBottom
+  onScrollToBottom,
+  onScrollStart
 }: {
   feedsLength: number;
   scrollable: boolean;
   onScrollToBottom: () => void;
+  onScrollStart?: () => void;
 }) {
   const loadingRef = useRef(false);
   const prevFeedsLength = useRef(0);
@@ -23,6 +25,9 @@ export default function useInfiniteScroll({
     addEvent(document.getElementById('App'), 'scroll', onScroll);
 
     async function onScroll() {
+      // Signal scroll start for update mode optimization
+      onScrollStart?.();
+
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(async () => {
         if (
@@ -60,7 +65,7 @@ export default function useInfiniteScroll({
       removeEvent(window, 'scroll', onScroll);
       removeEvent(document.getElementById('App'), 'scroll', onScroll);
     };
-  }, [onScrollToBottom, scrollable]);
+  }, [onScrollToBottom, onScrollStart, scrollable]);
 
   useEffect(() => {
     if (feedsLength < prevFeedsLength.current) {

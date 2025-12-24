@@ -4,6 +4,7 @@ import RootContent from './RootContent';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useKeyContext } from '~/contexts';
+import { useShouldUpdate } from '~/contexts/UpdateMode';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { useInView } from 'react-intersection-observer';
 
@@ -32,6 +33,7 @@ function ContentListItem({
   noTopBorderRadius?: boolean;
 }) {
   const [ComponentRef, inView] = useInView();
+  const shouldUpdate = useShouldUpdate(inView);
   const navigate = useNavigate();
   const PanelRef = useRef(null);
   const userId = useKeyContext((v) => v.myState.userId);
@@ -103,8 +105,8 @@ function ContentListItem({
   });
 
   const contentShown = useMemo(() => {
-    return isVisible || inView;
-  }, [inView, isVisible]);
+    return shouldUpdate && (isVisible || inView);
+  }, [shouldUpdate, inView, isVisible]);
 
   return (
     <div

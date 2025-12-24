@@ -11,6 +11,7 @@ import {
   useProfileContext,
   useKeyContext
 } from '~/contexts';
+import { UpdateModeProvider } from '~/contexts/UpdateMode';
 import { useProfileState } from '~/helpers/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
@@ -146,49 +147,51 @@ export default function Profile() {
 
   return (
     <ErrorBoundary componentPath="Profile/index" style={{ minHeight: '10rem' }}>
-      {!notExist ? (
-        <>
-          {loading && (
-            <Loading style={{ marginTop: '5rem' }} text="Loading Profile..." />
-          )}
-          {!loading && profile.id && (
-            <div
-              className={css`
-                a {
-                  white-space: pre-wrap;
-                  overflow-wrap: break-word;
-                  word-break: break-word;
-                }
-              `}
-              style={{
-                position: 'relative'
-              }}
-            >
-              <Cover
-                profile={profile}
-                onSelectTheme={(theme) => {
-                  setSelectedTheme(theme);
+      <UpdateModeProvider>
+        {!notExist ? (
+          <>
+            {loading && (
+              <Loading style={{ marginTop: '5rem' }} text="Loading Profile..." />
+            )}
+            {!loading && profile.id && (
+              <div
+                className={css`
+                  a {
+                    white-space: pre-wrap;
+                    overflow-wrap: break-word;
+                    word-break: break-word;
+                  }
+                `}
+                style={{
+                  position: 'relative'
                 }}
-                selectedTheme={selectedTheme}
-                onSetTheme={handleSetTheme}
-              />
-              <Body profile={profile} selectedTheme={selectedTheme} />
-            </div>
-          )}
-        </>
-      ) : (
-        <InvalidPage
-          title={!userId ? 'For Registered Users Only' : ''}
-          text={!userId ? 'Please Log In or Sign Up' : ''}
+              >
+                <Cover
+                  profile={profile}
+                  onSelectTheme={(theme) => {
+                    setSelectedTheme(theme);
+                  }}
+                  selectedTheme={selectedTheme}
+                  onSetTheme={handleSetTheme}
+                />
+                <Body profile={profile} selectedTheme={selectedTheme} />
+              </div>
+            )}
+          </>
+        ) : (
+          <InvalidPage
+            title={!userId ? 'For Registered Users Only' : ''}
+            text={!userId ? 'Please Log In or Sign Up' : ''}
+          />
+        )}
+        <Global
+          styles={{
+            body: {
+              background: `var(--page-bg, ${backgroundColor})`
+            }
+          }}
         />
-      )}
-      <Global
-        styles={{
-          body: {
-            background: `var(--page-bg, ${backgroundColor})`
-          }
-        }}
-      />
+      </UpdateModeProvider>
     </ErrorBoundary>
   );
 

@@ -8,6 +8,7 @@ import SideMenu from '../SideMenu';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import { useAppContext, useKeyContext, useProfileContext } from '~/contexts';
+import { useUpdateMode } from '~/contexts/UpdateMode';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import EmptyStateMessage from '~/components/EmptyStateMessage';
@@ -35,6 +36,7 @@ export default function Feeds({
   const { filter } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { onScrollStart } = useUpdateMode();
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
@@ -57,7 +59,8 @@ export default function Feeds({
   useInfiniteScroll({
     feedsLength: feeds.length,
     scrollable: feeds.length > 0,
-    onScrollToBottom: handleLoadMoreFeeds
+    onScrollToBottom: handleLoadMoreFeeds,
+    onScrollStart
   });
 
   useEffect(() => {

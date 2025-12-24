@@ -16,6 +16,7 @@ import ChessPuzzleModal from './ChessPuzzleModal';
 import DailyQuestionModal from './DailyQuestionModal';
 import Achievements from './Achievements';
 import { useHomeContext } from '~/contexts';
+import { UpdateModeProvider } from '~/contexts/UpdateMode';
 import { container, Left, Center, Right } from './Styles';
 
 function Home({
@@ -53,11 +54,12 @@ function Home({
 
   return (
     <ErrorBoundary componentPath="Home/index">
-      <LocalContext.Provider
-        value={{
-          onFileUpload
-        }}
-      >
+      <UpdateModeProvider>
+        <LocalContext.Provider
+          value={{
+            onFileUpload
+          }}
+        >
         <div className={container}>
           <div className={Left}>
             <ProfileWidget />
@@ -100,7 +102,8 @@ function Home({
             />
           )}
         </div>
-      </LocalContext.Provider>
+        </LocalContext.Provider>
+      </UpdateModeProvider>
     </ErrorBoundary>
   );
 }

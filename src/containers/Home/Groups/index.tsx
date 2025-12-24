@@ -7,6 +7,7 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import { css } from '@emotion/css';
 import { useAppContext, useHomeContext, useKeyContext } from '~/contexts/';
+import { useUpdateMode } from '~/contexts/UpdateMode';
 import SearchInput from '~/components/Texts/SearchInput';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -24,6 +25,7 @@ interface GroupsProps {
 }
 
 export default function Groups() {
+  const { onScrollStart } = useUpdateMode();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadPublicGroups = useAppContext(
     (v) => v.requestHelpers.loadPublicGroups
@@ -70,7 +72,8 @@ export default function Groups() {
   useInfiniteScroll({
     scrollable: groups.length > 0 && stringIsEmpty(searchText),
     feedsLength: groups.length,
-    onScrollToBottom: handleLoadMore
+    onScrollToBottom: handleLoadMore,
+    onScrollStart
   });
 
   useEffect(() => {
