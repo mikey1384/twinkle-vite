@@ -29,5 +29,6 @@ export default function useCommunitySocket() {
     }) {
       onUpdateCommunityFunds({ totalFunds, change });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

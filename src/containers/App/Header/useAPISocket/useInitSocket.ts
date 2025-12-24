@@ -585,7 +585,8 @@ export default function useInitSocket({
         }, 1000);
       }
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Inform server of away/visible status — helps server detect long-away sessions reliably
   useEffect(() => {

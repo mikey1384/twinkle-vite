@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 export default function useUserSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
 
   useEffect(() => {
     socket.on('approval_result_received', handleApprovalResultReceived);
@@ -26,18 +29,18 @@ export default function useUserSocket() {
     function handleApprovalResultReceived({ type }: { type: string }) {
       if (type === 'mentor') {
         onSetUserState({
-          userId,
+          userId: userIdRef.current,
           newState: { title: 'teacher' }
         });
       }
     }
 
     function handleBanStatusUpdate(banStatus: any) {
-      onSetUserState({ userId, newState: { banned: banStatus } });
+      onSetUserState({ userId: userIdRef.current, newState: { banned: banStatus } });
     }
 
     function handleNewTitle(title: string) {
-      onSetUserState({ userId, newState: { title } });
+      onSetUserState({ userId: userIdRef.current, newState: { title } });
     }
 
     function handleProfilePicChange({
@@ -71,5 +74,6 @@ export default function useUserSocket() {
     }) {
       onSetUserState({ userId, newState: { userType, ...userTypeProps } });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

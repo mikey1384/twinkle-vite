@@ -15,6 +15,18 @@ export default function useCallSocket({
   const myStream = useChatContext((v) => v.state.myStream);
   const channelOnCall = useChatContext((v) => v.state.channelOnCall);
 
+  // Refs for values used in socket handlers
+  const selectedChannelIdRef = useRef(selectedChannelId);
+  const channelsObjRef = useRef(channelsObj);
+  const channelOnCallRef = useRef(channelOnCall);
+  const userIdRef = useRef(userId);
+  const myStreamRef = useRef(myStream);
+  selectedChannelIdRef.current = selectedChannelId;
+  channelsObjRef.current = channelsObj;
+  channelOnCallRef.current = channelOnCall;
+  userIdRef.current = userId;
+  myStreamRef.current = myStream;
+
   const onCallReceptionConfirm = useChatContext(
     (v) => v.actions.onCallReceptionConfirm
   );
@@ -139,7 +151,7 @@ export default function useCallSocket({
       signal: any;
       to: number;
     }) {
-      if (to === userId && peersRef.current[peerId]) {
+      if (to === userIdRef.current && peersRef.current[peerId]) {
         if (peersRef.current[peerId].signal) {
           try {
             peersRef.current[peerId].signal(signal);
@@ -171,19 +183,23 @@ export default function useCallSocket({
       channelId: number;
       peerId: string;
     }) {
-      if (!channelOnCall.id) {
-        if (memberId !== userId && !membersOnCall.current[peerId]) {
+      const currentChannelOnCall = channelOnCallRef.current;
+      const currentUserId = userIdRef.current;
+      const currentSelectedChannelId = selectedChannelIdRef.current;
+      const currentChannelsObj = channelsObjRef.current;
+      if (!currentChannelOnCall.id) {
+        if (memberId !== currentUserId && !membersOnCall.current[peerId]) {
           onSetCall({
             channelId,
-            isClass: channelsObj[selectedChannelId]?.isClass
+            isClass: currentChannelsObj[currentSelectedChannelId]?.isClass
           });
         }
       }
       if (
-        !channelOnCall.id ||
-        (channelOnCall.id === channelId && channelOnCall.imCalling)
+        !currentChannelOnCall.id ||
+        (currentChannelOnCall.id === channelId && currentChannelOnCall.imCalling)
       ) {
-        if (!channelOnCall.members?.[memberId]) {
+        if (!currentChannelOnCall.members?.[memberId]) {
           onSetMembersOnCall({ [memberId]: peerId });
         }
         membersOnCall.current[peerId] = true;
@@ -197,12 +213,14 @@ export default function useCallSocket({
       socketId: string;
       memberId: number;
     }) {
-      if (!channelOnCall.members?.[memberId]) {
+      const currentChannelOnCall = channelOnCallRef.current;
+      if (!currentChannelOnCall.members?.[memberId]) {
         onSetMembersOnCall({ [memberId]: socketId });
       }
       membersOnCall.current[socketId] = true;
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleNewPeer({
     peerId,
@@ -215,7 +233,9 @@ export default function useCallSocket({
     initiator?: boolean;
     stream?: MediaStream;
   }) {
-    if (initiator || channelOnCall.members[userId]) {
+    const currentChannelOnCall = channelOnCallRef.current;
+    const currentUserId = userIdRef.current;
+    if (initiator || currentChannelOnCall.members[currentUserId]) {
       peersRef.current[peerId] = new Peer({
         config: {
           iceServers: [
@@ -269,12 +289,12 @@ export default function useCallSocket({
     to: number;
     peerId: string;
   }) {
-    if (to === userId) {
+    if (to === userIdRef.current) {
       try {
         handleNewPeer({
           peerId,
           channelId,
-          stream: myStream
+          stream: myStreamRef.current
         });
       } catch (error) {
         console.error(error);
@@ -292,11 +312,11 @@ export default function useCallSocket({
     peerId: string;
   }) {
     if (
-      Number(channelId) === Number(channelOnCall.id) &&
+      Number(channelId) === Number(channelOnCallRef.current.id) &&
       membersOnCall.current[peerId]
     ) {
       delete membersOnCall.current[peerId];
-      onHangUp({ peerId, memberId, iHungUp: memberId === userId });
+      onHangUp({ peerId, memberId, iHungUp: memberId === userIdRef.current });
     }
   }
 }

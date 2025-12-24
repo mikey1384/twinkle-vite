@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { User } from '~/types';
 import {
@@ -15,6 +15,9 @@ export default function useNotiSocket({
 }: {
   onUpdateMyXp: () => void;
 }) {
+  const onUpdateMyXpRef = useRef(onUpdateMyXp);
+  onUpdateMyXpRef.current = onUpdateMyXp;
+
   const userId = useKeyContext((v) => v.myState.userId);
   const onAddAdminLog = useManagementContext((v) => v.actions.onAddAdminLog);
   const onAttachReward = useContentContext((v) => v.actions.onAttachReward);
@@ -49,6 +52,8 @@ export default function useNotiSocket({
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
   const contentState = useContentContext((v) => v.state);
+  const contentStateRef = useRef(contentState);
+  contentStateRef.current = contentState;
 
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
@@ -134,7 +139,7 @@ export default function useNotiSocket({
         handleUpdateMyCoins();
       }
       if (includesXpReward) {
-        onUpdateMyXp();
+        onUpdateMyXpRef.current();
       }
       onUpdateMissionAttempt({
         missionId,
@@ -222,13 +227,14 @@ export default function useNotiSocket({
     }) {
       const { contentId, contentType } = target;
       const targetKey = `${contentType}${contentId}`;
-      if (contentState[targetKey]) {
+      const currentContentState = contentStateRef.current;
+      if (currentContentState[targetKey]) {
         return true;
       }
       if (contentType === 'comment') {
         return commentExistsInState(Number(contentId));
       }
-      return Object.values(contentState).some((value: any) => {
+      return Object.values(currentContentState).some((value: any) => {
         if (!value || typeof value !== 'object') return false;
         if (
           value.contentType === contentType &&
@@ -251,7 +257,8 @@ export default function useNotiSocket({
 
     function commentExistsInState(commentId: number) {
       const id = Number(commentId);
-      return Object.values(contentState).some((value: any) =>
+      const currentContentState = contentStateRef.current;
+      return Object.values(currentContentState).some((value: any) =>
         commentIsNested(value, id, new Set<any>())
       );
     }
@@ -367,5 +374,6 @@ export default function useNotiSocket({
       const coins = await loadCoins();
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 }

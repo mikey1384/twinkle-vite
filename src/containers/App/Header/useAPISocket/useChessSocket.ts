@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useChatContext } from '~/contexts';
 
@@ -7,6 +7,9 @@ export default function useChessSocket({
 }: {
   selectedChannelId: number;
 }) {
+  const selectedChannelIdRef = useRef(selectedChannelId);
+  selectedChannelIdRef.current = selectedChannelId;
+
   const onSetChessGameState = useChatContext(
     (v) => v.actions.onSetChessGameState
   );
@@ -45,7 +48,7 @@ export default function useChessSocket({
       channelId: number;
       gameType?: 'chess' | 'omok';
     }) {
-      if (channelId !== selectedChannelId) return;
+      if (channelId !== selectedChannelIdRef.current) return;
       if (gameType === 'omok') {
         onSetOmokModalShown(false);
       } else {
@@ -145,5 +148,6 @@ export default function useChessSocket({
         messageId: message.id
       });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

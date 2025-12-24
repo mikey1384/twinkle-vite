@@ -1,10 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
 export default function useAICardSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+
+  const userIdRef = useRef(userId);
+  const twinkleCoinsRef = useRef(twinkleCoins);
+  userIdRef.current = userId;
+  twinkleCoinsRef.current = twinkleCoins;
   const onAcceptTransaction = useChatContext(
     (v) => v.actions.onAcceptTransaction
   );
@@ -188,6 +193,7 @@ export default function useAICardSocket() {
       buyerId: number;
       sellerId: number;
     }) {
+      const currentUserId = userIdRef.current;
       onRemoveListedAICard(card.id);
       onUpdateAICard({
         cardId: card.id,
@@ -197,13 +203,13 @@ export default function useAICardSocket() {
         feed,
         card
       });
-      if (buyerId === userId) {
+      if (buyerId === currentUserId) {
         onAddMyAICard(card);
       }
-      if (sellerId === userId) {
+      if (sellerId === currentUserId) {
         onDelistAICard(card.id);
         onRemoveMyAICard(card.id);
-        onSetUserState({ userId, newState: { twinkleCoins: sellerCoins } });
+        onSetUserState({ userId: currentUserId, newState: { twinkleCoins: sellerCoins } });
       }
     }
 
@@ -223,7 +229,7 @@ export default function useAICardSocket() {
     }
 
     function handleAICardListed(card: any) {
-      if (card.ownerId !== userId) {
+      if (card.ownerId !== userIdRef.current) {
         onAddListedAICard(card);
       }
     }
@@ -241,23 +247,25 @@ export default function useAICardSocket() {
       offerId: number;
       offererId: number;
     }) {
+      const currentUserId = userIdRef.current;
       onAICardOfferWithdrawal(feedId);
-      if (offererId === userId) {
+      if (offererId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
-        onSetUserState({ userId, newState: { twinkleCoins: coins } });
+        onSetUserState({ userId: currentUserId, newState: { twinkleCoins: coins } });
         onUpdateAICard({ cardId, newState: { myOffer: null } });
       }
     }
 
     function handleAICardOfferPosted({ card, feed }: { card: any; feed: any }) {
+      const currentUserId = userIdRef.current;
       onPostAICardFeed({
         feed,
         card
       });
-      if (card.ownerId === userId) {
+      if (card.ownerId === currentUserId) {
         onUpdateMostRecentAICardOfferTimeStamp(feed.timeStamp);
       }
-      if (feed.offer?.user?.id === userId) {
+      if (feed.offer?.user?.id === currentUserId) {
         onMakeOutgoingOffer({ ...feed.offer, card });
         onUpdateAICard({
           cardId: card.id,
@@ -277,11 +285,12 @@ export default function useAICardSocket() {
       offerId: number;
       sellerId: number;
     }) {
-      if (card.ownerId === userId) {
+      const currentUserId = userIdRef.current;
+      if (card.ownerId === currentUserId) {
         onWithdrawOutgoingOffer(offerId);
         onAddMyAICard(card);
       }
-      if (sellerId === userId) {
+      if (sellerId === currentUserId) {
         onDelistAICard(card.id);
         onRemoveMyAICard(card.id);
       }
@@ -307,24 +316,26 @@ export default function useAICardSocket() {
       from: number;
       to: number;
     }) {
-      if (from === userId && !!coins) {
+      const currentUserId = userIdRef.current;
+      const currentTwinkleCoins = twinkleCoinsRef.current;
+      if (from === currentUserId && !!coins) {
         onSetUserState({
-          userId,
-          newState: { twinkleCoins: twinkleCoins - coins }
+          userId: currentUserId,
+          newState: { twinkleCoins: currentTwinkleCoins - coins }
         });
       }
-      if (to === userId && !!coins) {
+      if (to === currentUserId && !!coins) {
         onSetUserState({
-          userId,
-          newState: { twinkleCoins: twinkleCoins + coins }
+          userId: currentUserId,
+          newState: { twinkleCoins: currentTwinkleCoins + coins }
         });
       }
       for (const card of cards) {
-        if (from === userId) {
+        if (from === currentUserId) {
           onDelistAICard(card.id);
           onRemoveMyAICard(card.id);
         }
-        if (to === userId) {
+        if (to === currentUserId) {
           onAddMyAICard(card);
         }
         onUpdateAICard({
@@ -343,7 +354,7 @@ export default function useAICardSocket() {
       senderId: number;
       transactionId: number;
     }) {
-      if (senderId !== userId) {
+      if (senderId !== userIdRef.current) {
         onUpdateCurrentTransactionId({ channelId, transactionId });
       }
     }
@@ -357,7 +368,7 @@ export default function useAICardSocket() {
       card: any;
       isBlack: boolean;
     }) {
-      const senderIsNotTheUser = card.creator.id !== userId;
+      const senderIsNotTheUser = card.creator.id !== userIdRef.current;
       if (senderIsNotTheUser) {
         onNewAICardSummon({ card, feed });
       }
@@ -383,5 +394,6 @@ export default function useAICardSocket() {
     }) {
       onCancelTransaction({ transactionId, reason: cancelReason });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }

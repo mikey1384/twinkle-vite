@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -32,6 +32,21 @@ export default function useChatSocket({
 
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+
+  // Refs for frequently changing values to avoid effect re-runs
+  const channelsObjRef = useRef(channelsObj);
+  const onUpdateMyXpRef = useRef(onUpdateMyXp);
+  const selectedChannelIdRef = useRef(selectedChannelId);
+  const subchannelIdRef = useRef(subchannelId);
+  const chatStatusRef = useRef(chatStatus);
+  const pageVisibleRef = useRef(pageVisible);
+
+  channelsObjRef.current = channelsObj;
+  onUpdateMyXpRef.current = onUpdateMyXp;
+  selectedChannelIdRef.current = selectedChannelId;
+  subchannelIdRef.current = subchannelId;
+  chatStatusRef.current = chatStatus;
+  pageVisibleRef.current = pageVisible;
 
   const onAddReactionToMessage = useChatContext(
     (v) => v.actions.onAddReactionToMessage
@@ -164,7 +179,8 @@ export default function useChatSocket({
       userId: number;
       isAway: boolean;
     }) {
-      if (chatStatus[userId] && chatStatus[userId].isAway !== isAway) {
+      const currentChatStatus = chatStatusRef.current;
+      if (currentChatStatus[userId] && currentChatStatus[userId].isAway !== isAway) {
         onChangeAwayStatus({ userId, isAway });
       }
     }
@@ -176,7 +192,8 @@ export default function useChatSocket({
       userId: number;
       isBusy: boolean;
     }) {
-      if (chatStatus[userId] && chatStatus[userId].isBusy !== isBusy) {
+      const currentChatStatus = chatStatusRef.current;
+      if (currentChatStatus[userId] && currentChatStatus[userId].isBusy !== isBusy) {
         onChangeBusyStatus({ userId, isBusy });
       }
     }
@@ -195,10 +212,12 @@ export default function useChatSocket({
       pathId: number;
     }) {
       let isDuplicate = false;
-      if (selectedChannelId === 0) {
+      const currentSelectedChannelId = selectedChannelIdRef.current;
+      const currentChannelsObj = channelsObjRef.current;
+      if (currentSelectedChannelId === 0) {
         if (
           members.filter((member) => member.id !== userId)[0].id ===
-          channelsObj[selectedChannelId].members.filter(
+          currentChannelsObj[currentSelectedChannelId].members.filter(
             (member: { id: number }) => member.id !== userId
           )[0].id
         ) {
@@ -211,13 +230,13 @@ export default function useChatSocket({
         isDuplicate,
         isTwoPeople,
         isClass,
-        pageVisible,
+        pageVisible: pageVisibleRef.current,
         pathId
       });
     }
 
     async function handleLeftChatFromAnotherTab(channelId: number) {
-      if (selectedChannelId === channelId) {
+      if (selectedChannelIdRef.current === channelId) {
         onLeaveChannel({ channelId, userId });
         if (usingChatRef.current) {
           navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
@@ -243,14 +262,15 @@ export default function useChatSocket({
       message: any;
       pathId: string;
     }) {
-      const isForCurrentChannel = channelId === selectedChannelId;
+      const currentPageVisible = pageVisibleRef.current;
+      const isForCurrentChannel = channelId === selectedChannelIdRef.current;
       if (isForCurrentChannel) {
         if (usingChatRef.current) {
           updateChatLastRead(channelId);
         }
         onReceiveMessage({
           message,
-          pageVisible,
+          pageVisible: currentPageVisible,
           usingChat: usingChatRef.current
         });
       }
@@ -262,12 +282,12 @@ export default function useChatSocket({
             channelName,
             pathId
           },
-          pageVisible,
+          pageVisible: currentPageVisible,
           usingChat: usingChatRef.current
         });
       }
       if (user.id === userId && user.newXp) {
-        onUpdateMyXp();
+        onUpdateMyXpRef.current();
       }
     }
 
@@ -300,30 +320,32 @@ export default function useChatSocket({
       newMembers: any[];
       isNotification: boolean;
     }) {
+      const currentPageVisible = pageVisibleRef.current;
+      const currentSubchannelId = subchannelIdRef.current;
       const messageIsForCurrentChannel =
-        message.channelId === selectedChannelId;
+        message.channelId === selectedChannelIdRef.current;
       const senderIsUser = message.userId === userId && !isNotification;
-      if (senderIsUser && pageVisible) return;
+      if (senderIsUser && currentPageVisible) return;
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
           updateChatLastRead(message.channelId);
-          if (message.subchannelId === subchannelId) {
+          if (message.subchannelId === currentSubchannelId) {
             updateSubchannelLastRead(message.subchannelId);
           }
         }
         onReceiveMessage({
           message,
-          pageVisible,
+          pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
           newMembers,
-          currentSubchannelId: subchannelId
+          currentSubchannelId
         });
       }
       if (!messageIsForCurrentChannel && channel) {
         onReceiveMessageOnDifferentChannel({
           message,
           channel,
-          pageVisible,
+          pageVisible: currentPageVisible,
           usingChat: usingChatRef.current,
           newMembers
         });
@@ -335,7 +357,7 @@ export default function useChatSocket({
         });
       }
       if (message.targetMessage?.userId === userId && message.rewardAmount) {
-        onUpdateMyXp();
+        onUpdateMyXpRef.current();
       }
     }
 
@@ -408,8 +430,9 @@ export default function useChatSocket({
       topicObj: any;
       isFeatured: boolean;
     }) {
+      const currentPageVisible = pageVisibleRef.current;
       const messageIsForCurrentChannel =
-        message.channelId === selectedChannelId;
+        message.channelId === selectedChannelIdRef.current;
       const senderIsUser = message.userId === userId;
 
       if (senderIsUser) return;
@@ -427,10 +450,10 @@ export default function useChatSocket({
       });
 
       if (messageIsForCurrentChannel) {
-        onReceiveMessage({ message, pageVisible });
+        onReceiveMessage({ message, pageVisible: currentPageVisible });
       } else {
         onReceiveMessageOnDifferentChannel({
-          pageVisible,
+          pageVisible: currentPageVisible,
           message,
           channel: {
             id: channelId,
@@ -477,5 +500,6 @@ export default function useChatSocket({
         isThinkingHard
       });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 }

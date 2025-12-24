@@ -34,6 +34,14 @@ export default function useAISocket({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+
+  // Refs for frequently changing values
+  const selectedChannelIdRef = useRef(selectedChannelId);
+  const channelsObjRef = useRef(channelsObj);
+  const pageVisibleRef = useRef(pageVisible);
+  selectedChannelIdRef.current = selectedChannelId;
+  channelsObjRef.current = channelsObj;
+  pageVisibleRef.current = pageVisible;
   const onUpdateLastUsedFiles = useChatContext(
     (v) => v.actions.onUpdateLastUsedFiles
   );
@@ -350,68 +358,70 @@ export default function useAISocket({
       });
     }
 
-	    function handleReceiveAIMessage({
-	      message,
-	      channelId
-	    }: {
-	      message: any;
-	      channelId: number;
-	    }) {
-	      const channelState = channelsObj[channelId];
-	      if (channelState?.cancelledMessageIds?.has(message.id)) {
-	        return;
-	      }
+    function handleReceiveAIMessage({
+      message,
+      channelId
+    }: {
+      message: any;
+      channelId: number;
+    }) {
+      const currentChannelsObj = channelsObjRef.current;
+      const currentPageVisible = pageVisibleRef.current;
+      const channelState = currentChannelsObj[channelId];
+      if (channelState?.cancelledMessageIds?.has(message.id)) {
+        return;
+      }
 
-	      onSetChannelState({
-	        channelId,
-	        newState: {
-	          currentlyStreamingAIMsgId: message.id
-	        }
-	      });
-	      const messageIsForCurrentChannel = channelId === selectedChannelId;
-	      const appliedMessage = {
-	        ...message,
-	        channelId,
-	        profilePicUrl:
-	          message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
-	      };
-	      if (messageIsForCurrentChannel) {
-	        if (usingChatRef.current) {
-	          updateChatLastRead(channelId);
-	        }
-	        onReceiveMessage({
-	          message: appliedMessage,
-	          pageVisible,
-	          usingChat: usingChatRef.current
-	        });
-	      } else {
-	        const prevChannelObj = channelsObj[channelId];
-	        const computedPathId =
-	          prevChannelObj?.pathId ??
-	          Number(channelId) + Number(CHAT_ID_BASE_NUMBER);
-	        const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
-	        const aiUsername = isZeroMessage ? 'Zero' : 'Ciel';
-	        const aiUserId = isZeroMessage ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
-	        const aiProfilePicUrl = isZeroMessage ? ZERO_PFP_URL : CIEL_PFP_URL;
-	        onReceiveMessageOnDifferentChannel({
-	          pageVisible,
-	          usingChat: usingChatRef.current,
-	          isMyMessage: false,
-	          message: appliedMessage,
-	          channel: {
-	            id: channelId,
-	            pathId: computedPathId,
-	            channelName: prevChannelObj?.channelName || aiUsername,
-	            twoPeople: prevChannelObj?.twoPeople ?? true,
-	            members: prevChannelObj?.members || [
-	              { id: aiUserId, username: aiUsername, profilePicUrl: aiProfilePicUrl }
-	            ],
-	            isHidden: false,
-	            numUnreads: 1
-	          }
-	        });
-	      }
-	    }
+      onSetChannelState({
+        channelId,
+        newState: {
+          currentlyStreamingAIMsgId: message.id
+        }
+      });
+      const messageIsForCurrentChannel = channelId === selectedChannelIdRef.current;
+      const appliedMessage = {
+        ...message,
+        channelId,
+        profilePicUrl:
+          message.userId === ZERO_TWINKLE_ID ? ZERO_PFP_URL : CIEL_PFP_URL
+      };
+      if (messageIsForCurrentChannel) {
+        if (usingChatRef.current) {
+          updateChatLastRead(channelId);
+        }
+        onReceiveMessage({
+          message: appliedMessage,
+          pageVisible: currentPageVisible,
+          usingChat: usingChatRef.current
+        });
+      } else {
+        const prevChannelObj = currentChannelsObj[channelId];
+        const computedPathId =
+          prevChannelObj?.pathId ??
+          Number(channelId) + Number(CHAT_ID_BASE_NUMBER);
+        const isZeroMessage = message.userId === ZERO_TWINKLE_ID;
+        const aiUsername = isZeroMessage ? 'Zero' : 'Ciel';
+        const aiUserId = isZeroMessage ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
+        const aiProfilePicUrl = isZeroMessage ? ZERO_PFP_URL : CIEL_PFP_URL;
+        onReceiveMessageOnDifferentChannel({
+          pageVisible: currentPageVisible,
+          usingChat: usingChatRef.current,
+          isMyMessage: false,
+          message: appliedMessage,
+          channel: {
+            id: channelId,
+            pathId: computedPathId,
+            channelName: prevChannelObj?.channelName || aiUsername,
+            twoPeople: prevChannelObj?.twoPeople ?? true,
+            members: prevChannelObj?.members || [
+              { id: aiUserId, username: aiUsername, profilePicUrl: aiProfilePicUrl }
+            ],
+            isHidden: false,
+            numUnreads: 1
+          }
+        });
+      }
+    }
 
     function handleAIMessageError({
       channelId,
@@ -449,7 +459,8 @@ export default function useAISocket({
         }
       });
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function sendAIUIInformation() {
     if (!aiCallChannelId) {
