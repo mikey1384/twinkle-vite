@@ -95,6 +95,12 @@ export default function HomeActions(dispatch: Dispatch) {
         outdated
       });
     },
+    onSetFeedsVisibleCount(count: number) {
+      return dispatch({
+        type: 'SET_FEEDS_VISIBLE_COUNT',
+        count
+      });
+    },
     onSetLeaderboardsExpanded({
       expanded,
       year

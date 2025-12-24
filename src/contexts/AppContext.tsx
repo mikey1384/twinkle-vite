@@ -77,6 +77,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     orderUsersBy: LAST_ONLINE_FILTER_LABEL,
     profiles: [],
     profilesLoaded: false,
+    profilesVisibleCount: 15,
     searchedProfiles: [],
     signinModalShown: false,
     userObj: {},

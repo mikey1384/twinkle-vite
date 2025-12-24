@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import ProfilePanel from '~/components/ProfilePanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -13,7 +13,8 @@ import { useInfiniteScroll, useSearch } from '~/helpers/hooks';
 import {
   LAST_ONLINE_FILTER_LABEL,
   RANKING_FILTER_LABEL
-} from '~/constants/defaultValues';import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/constants/defaultValues';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
 
@@ -37,6 +38,12 @@ function People() {
   const profiles = useAppContext((v) => v.user.state.profiles);
   const orderUsersBy = useAppContext((v) => v.user.state.orderUsersBy);
   const searchedProfiles = useAppContext((v) => v.user.state.searchedProfiles);
+  const profilesVisibleCount = useAppContext(
+    (v) => v.user.state.profilesVisibleCount
+  );
+  const onSetProfilesVisibleCount = useAppContext(
+    (v) => v.user.actions.onSetProfilesVisibleCount
+  );
 
   const userSearchText = useInputContext((v) => v.state.userSearchText);
   const onSetSearchText = useInputContext((v) => v.actions.onSetSearchText);
@@ -45,6 +52,21 @@ function People() {
   const searchColor = searchRole.color;
   const [loading, setLoading] = useState(false);
   const searchTextRef = useRef(userSearchText);
+
+  // Progressive rendering - gradually show more items to prevent crash on mount
+  useEffect(() => {
+    if (profiles?.length > profilesVisibleCount) {
+      const timer = setTimeout(() => {
+        startTransition(() => {
+          onSetProfilesVisibleCount(
+            Math.min(profilesVisibleCount + 10, profiles.length)
+          );
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [profiles?.length, profilesVisibleCount, onSetProfilesVisibleCount]);
+
   const [searchText, setSearchText] = useState(userSearchText);
   const { handleSearch, searching } = useSearch({
     onSearch: handleSearchUsers,
@@ -133,7 +155,7 @@ function People() {
         )}
         {profilesLoaded &&
           stringIsEmpty(searchText) &&
-          profiles.map((profile: { id: number }, index: number) => (
+          profiles.slice(0, profilesVisibleCount).map((profile: { id: number }, index: number) => (
             <ProfilePanel
               style={{ marginTop: index === 0 ? 0 : '1rem' }}
               expandable
