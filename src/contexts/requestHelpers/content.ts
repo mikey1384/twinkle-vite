@@ -1095,7 +1095,14 @@ export default function contentRequestHelpers({
           `${URL}/content/newFeeds?lastInteraction=${lastInteraction}`
         );
         return data;
-      } catch (error) {
+      } catch (error: any) {
+        console.error('[loadNewFeeds] Raw error:', {
+          message: error?.message,
+          code: error?.code,
+          name: error?.name,
+          response: error?.response?.status,
+          isCancel: error?.constructor?.name
+        });
         return handleError(error);
       }
     },
