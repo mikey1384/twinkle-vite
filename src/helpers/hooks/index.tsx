@@ -214,26 +214,42 @@ export function useLazyLoad({
     }
   }, [inView, delay, onSetIsVisible]);
 
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const observedElementRef = useRef<Element | null>(null);
+  const callbackRef = useRef(onSetPlaceholderHeight);
+
+  // Keep callback ref updated
+  useEffect(() => {
+    callbackRef.current = onSetPlaceholderHeight;
+  });
+
+  // Create ResizeObserver once (stable - no callback dependency)
   useEffect(() => {
     const handleResize = throttle((entries: ResizeObserverEntry[]) => {
       if (entries.length > 0) {
         const clientHeight = entries[0].target.clientHeight;
-        onSetPlaceholderHeight?.(clientHeight);
+        callbackRef.current?.(clientHeight);
       }
     }, 100);
 
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (PanelRef.current) {
-      resizeObserver.observe(PanelRef.current);
-    }
+    resizeObserverRef.current = new ResizeObserver(handleResize);
 
     return () => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
+      resizeObserverRef.current?.disconnect();
     };
-  }, [onSetPlaceholderHeight, PanelRef]);
+  }, []);
+
+  // Re-observe when element changes (runs after every render, but work is minimal)
+  useEffect(() => {
+    const element = PanelRef.current;
+    if (element && element !== observedElementRef.current) {
+      if (observedElementRef.current && resizeObserverRef.current) {
+        resizeObserverRef.current.unobserve(observedElementRef.current);
+      }
+      resizeObserverRef.current?.observe(element);
+      observedElementRef.current = element;
+    }
+  });
 
   useEffect(() => {
     return () => {
