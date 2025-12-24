@@ -3,7 +3,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import TopicItem from './TopicItem';
 import Icon from '~/components/Icon';
 import LocalContext from '../../Context';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext } from '~/contexts';
 import { css, cx } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { isMobile, isTablet } from '~/helpers';
@@ -77,7 +77,6 @@ function PinnedTopics({
   const updateLastTopicId = useAppContext(
     (v) => v.requestHelpers.updateLastTopicId
   );
-  const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
 
   const { featuredTopic, appliedFeaturedTopicId, pinnedTopics, lastTopic } =
     useMemo(() => {
@@ -308,10 +307,6 @@ function PinnedTopics({
     updateLastTopicId({
       channelId,
       topicId: 0
-    });
-    onSetChannelState({
-      channelId,
-      newState: { selectedTab: 'all' }
     });
     navigate(`/chat/${pathId}${subchannelPath ? `/${subchannelPath}` : ''}`);
   }
