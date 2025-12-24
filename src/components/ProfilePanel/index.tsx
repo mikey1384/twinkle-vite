@@ -1,4 +1,11 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import Button from '~/components/Button';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
@@ -409,14 +416,17 @@ function ProfilePanel({
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [isVisible, setIsVisible] = useState(false);
+
+  const handleSetPlaceholderHeight = useCallback((height: number) => {
+    setPlaceholderHeight(height);
+    placeholderHeightRef.current = height;
+  }, []);
+
   useLazyLoad({
     inView,
     PanelRef,
     onSetIsVisible: setIsVisible,
-    onSetPlaceholderHeight: (height: number) => {
-      setPlaceholderHeight(height);
-      placeholderHeightRef.current = height;
-    }
+    onSetPlaceholderHeight: handleSetPlaceholderHeight
   });
 
   useEffect(() => {
@@ -732,7 +742,9 @@ function ProfilePanel({
                                   }}
                                 >
                                   <Button
-                                    onClick={() => setProfilePicModalShown(true)}
+                                    onClick={() =>
+                                      setProfilePicModalShown(true)
+                                    }
                                     className={cx(
                                       actionButtonClass,
                                       actionButtonFlexLargeClass

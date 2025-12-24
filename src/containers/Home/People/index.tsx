@@ -1,4 +1,11 @@
-import React, { memo, useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import React, {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  startTransition
+} from 'react';
 import SearchInput from '~/components/Texts/SearchInput';
 import ProfilePanel from '~/components/ProfilePanel';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -154,14 +161,16 @@ function People() {
         )}
         {profilesLoaded &&
           stringIsEmpty(searchText) &&
-          profiles.slice(0, profilesVisibleCount).map((profile: { id: number }, index: number) => (
-            <ProfilePanel
-              style={{ marginTop: index === 0 ? 0 : '1rem' }}
-              expandable
-              key={profile.id}
-              profileId={profile.id}
-            />
-          ))}
+          profiles
+            .slice(0, profilesVisibleCount)
+            .map((profile: { id: number }, index: number) => (
+              <ProfilePanel
+                style={{ marginTop: index === 0 ? 0 : '1rem' }}
+                expandable
+                key={profile.id}
+                profileId={profile.id}
+              />
+            ))}
         {profilesLoaded &&
           !stringIsEmpty(searchText) &&
           !searching &&

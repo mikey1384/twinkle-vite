@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Context from './Context';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Heading from './Heading';
@@ -173,14 +179,17 @@ export default function ContentPanel({
     previousPlaceholderHeight
   );
   const [isVisible, setIsVisible] = useState(false);
+
+  const handleSetPlaceholderHeight = useCallback((height: number) => {
+    setPlaceholderHeight(height);
+    placeholderHeightRef.current = height;
+  }, []);
+
   useLazyLoad({
     inView,
     PanelRef,
     onSetIsVisible: setIsVisible,
-    onSetPlaceholderHeight: (height: number) => {
-      setPlaceholderHeight(height);
-      placeholderHeightRef.current = height;
-    }
+    onSetPlaceholderHeight: handleSetPlaceholderHeight
   });
   const loading = useRef(false);
   const inputAtBottom = contentType === 'comment';
@@ -223,7 +232,12 @@ export default function ContentPanel({
   }, [loaded]);
 
   const contentShown = useMemo(
-    () => alwaysShow || isVisible || started || rootStarted || (shouldUpdate && inView),
+    () =>
+      alwaysShow ||
+      isVisible ||
+      started ||
+      rootStarted ||
+      (shouldUpdate && inView),
     [alwaysShow, shouldUpdate, inView, isVisible, rootStarted, started]
   );
 

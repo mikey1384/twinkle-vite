@@ -60,48 +60,52 @@ function Home({
             onFileUpload
           }}
         >
-        <div className={container}>
-          <div className={Left}>
-            <ProfileWidget />
-            <HomeMenuItems style={{ marginTop: '1rem' }} />
-          </div>
-          <div className={Center}>
-            <div style={{ maxWidth: '700px', width: '100%' }}>
-              {section === 'group' && <Groups />}
-              {section === 'people' && <People />}
-              {section === 'earn' && <Earn />}
-              {section === 'achievement' && <Achievements />}
-              {section === 'store' && <Store />}
-              {section === 'story' && <Stories />}
+          <div className={container}>
+            <div className={Left}>
+              <ProfileWidget />
+              <HomeMenuItems style={{ marginTop: '1rem' }} />
             </div>
+            <div className={Center}>
+              <div style={{ maxWidth: '700px', width: '100%' }}>
+                {section === 'group' && <Groups />}
+                {section === 'people' && <People />}
+                {section === 'earn' && <Earn />}
+                {section === 'achievement' && <Achievements />}
+                {section === 'store' && <Store />}
+                {section === 'story' && <Stories />}
+              </div>
+            </div>
+            <Notification
+              trackScrollPosition
+              className={Right}
+              location="home"
+            />
+            {alertModalShown && (
+              <AlertModal
+                title="Image is too large (limit: 10mb)"
+                content="Please select a smaller image"
+                onHide={() => setAlertModalShown(false)}
+              />
+            )}
+            {grammarGameModalShown && (
+              <GrammarGameModal
+                onHide={() => onSetGrammarGameModalShown(false)}
+              />
+            )}
+            {aiStoriesModalShown && (
+              <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
+            )}
+            {chessPuzzleModalShown && (
+              <ChessPuzzleModal
+                onHide={() => onSetChessPuzzleModalShown(false)}
+              />
+            )}
+            {dailyQuestionModalShown && (
+              <DailyQuestionModal
+                onHide={() => onSetDailyQuestionModalShown(false)}
+              />
+            )}
           </div>
-          <Notification trackScrollPosition className={Right} location="home" />
-          {alertModalShown && (
-            <AlertModal
-              title="Image is too large (limit: 10mb)"
-              content="Please select a smaller image"
-              onHide={() => setAlertModalShown(false)}
-            />
-          )}
-          {grammarGameModalShown && (
-            <GrammarGameModal
-              onHide={() => onSetGrammarGameModalShown(false)}
-            />
-          )}
-          {aiStoriesModalShown && (
-            <AIStoriesModal onHide={() => onSetAIStoriesModalShown(false)} />
-          )}
-          {chessPuzzleModalShown && (
-            <ChessPuzzleModal
-              onHide={() => onSetChessPuzzleModalShown(false)}
-            />
-          )}
-          {dailyQuestionModalShown && (
-            <DailyQuestionModal
-              onHide={() => onSetDailyQuestionModalShown(false)}
-            />
-          )}
-        </div>
         </LocalContext.Provider>
       </UpdateModeProvider>
     </ErrorBoundary>

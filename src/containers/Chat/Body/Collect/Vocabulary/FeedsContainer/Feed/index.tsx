@@ -1,5 +1,6 @@
 import React, {
   memo,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -56,20 +57,24 @@ function Feed({
     previousPlaceholderHeight
   );
 
+  const handleSetIsVisible = useCallback((visible: boolean) => {
+    startTransition(() => {
+      setIsVisible(visible);
+    });
+  }, []);
+
+  const handleSetPlaceholderHeight = useCallback((height: number) => {
+    startTransition(() => {
+      setPlaceholderHeight(height);
+      placeholderHeightRef.current = height;
+    });
+  }, []);
+
   useLazyLoad({
     inView,
     PanelRef: feedRef,
-    onSetIsVisible: (visible: boolean) => {
-      startTransition(() => {
-        setIsVisible(visible);
-      });
-    },
-    onSetPlaceholderHeight: (height: number) => {
-      startTransition(() => {
-        setPlaceholderHeight(height);
-        placeholderHeightRef.current = height;
-      });
-    }
+    onSetIsVisible: handleSetIsVisible,
+    onSetPlaceholderHeight: handleSetPlaceholderHeight
   });
 
   const displayedTime = useMemo(() => {
