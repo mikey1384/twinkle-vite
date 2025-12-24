@@ -681,9 +681,7 @@ export default function TargetContent({
 
   function handleReplyClick() {
     if (!replyInputShown) onShowTCReplyInput({ contentId, contentType });
-    if (!deviceIsMobile) {
-      setTimeout(() => InputFormRef.current.focus(), 0);
-    }
+    setTimeout(() => InputFormRef.current.focus(), 0);
   }
 
   async function handleSubmit(text: string) {

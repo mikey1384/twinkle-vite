@@ -15,7 +15,6 @@ import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import {
   determineXpButtonDisabled,
   scrollElementToCenter,
-  isMobile,
   isTablet
 } from '~/helpers';
 const editLabel = 'Edit';
@@ -24,7 +23,6 @@ const commentLabel = 'Comment';
 const copiedLabel = 'Copied!';
 const replyLabel = 'Reply';
 const respondLabel = 'Respond';
-const deviceIsMobile = isMobile(navigator);
 const nonEditableContentTypes = ['pass', 'xpChange', 'sharedTopic'];
 
 const bottomInterfaceCSS = css`
@@ -520,9 +518,7 @@ export default function BottomInterface({
     if (!commentsShown && !(autoExpand && !secretHidden)) {
       await onExpandComments();
     }
-    if (!deviceIsMobile) {
-      CommentInputAreaRef.current?.focus?.();
-    }
+    CommentInputAreaRef.current?.focus?.();
     scrollElementToCenter(CommentInputAreaRef.current);
   }
 
