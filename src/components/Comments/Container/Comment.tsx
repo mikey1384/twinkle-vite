@@ -1,6 +1,5 @@
 import React, {
   memo,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -189,16 +188,14 @@ function Comment({
   const [visible, setVisible] = useState(false);
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
 
-  const handleSetPlaceholderHeight = useCallback((height: number) => {
-    setPlaceholderHeight(height);
-    placeholderHeightRef.current = height;
-  }, []);
-
   useLazyLoad({
     PanelRef,
     inView,
     onSetIsVisible: setVisible,
-    onSetPlaceholderHeight: handleSetPlaceholderHeight
+    onSetPlaceholderHeight: (height: number) => {
+      setPlaceholderHeight(height);
+      placeholderHeightRef.current = height;
+    }
   });
 
   const [isPostingReply, setIsPostingReply] = useState(false);

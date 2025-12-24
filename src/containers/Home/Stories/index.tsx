@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  startTransition
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
 import Banner from '~/components/Banner';
@@ -108,9 +102,7 @@ export default function Stories() {
     if (feeds?.length > feedsVisibleCount) {
       const timer = setTimeout(() => {
         startTransition(() => {
-          onSetFeedsVisibleCount(
-            Math.min(feedsVisibleCount + 10, feeds.length)
-          );
+          onSetFeedsVisibleCount(Math.min(feedsVisibleCount + 10, feeds.length));
         });
       }, 100);
       return () => clearTimeout(timer);
@@ -329,9 +321,8 @@ export default function Stories() {
                 )
               )}
               <div className={feedListClass}>
-                {(feeds || [])
-                  .slice(0, feedsVisibleCount)
-                  .map((feed: { [key: string]: any } = {}, index: number) => {
+                {(feeds || []).slice(0, feedsVisibleCount).map(
+                  (feed: { [key: string]: any } = {}, index: number) => {
                     const panelKey = `${category}-${subFilter}-${feed.contentId}-${feed.contentType}-${index}`;
                     return feed.contentId ? (
                       <div
@@ -351,7 +342,8 @@ export default function Stories() {
                         />
                       </div>
                     ) : null;
-                  })}
+                  }
+                )}
                 {loadMoreButton ? (
                   <LoadMoreButton
                     style={{ marginTop: '0.6rem' }}

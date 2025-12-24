@@ -1,6 +1,5 @@
 import React, {
   memo,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -164,20 +163,15 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message?.isLoaded, message?.isNotification, message?.id]);
 
-  const handleSetPlaceholderHeight = useCallback(
-    (height: number) => {
+  useLazyLoad({
+    PanelRef,
+    inView,
+    onSetPlaceholderHeight: (height: number) => {
       onSetMessageHeightObj({
         messageId: message?.id,
         height
       });
-    },
-    [message?.id, onSetMessageHeightObj]
-  );
-
-  useLazyLoad({
-    PanelRef,
-    inView,
-    onSetPlaceholderHeight: handleSetPlaceholderHeight
+    }
   });
 
   const contentShown = useMemo(
