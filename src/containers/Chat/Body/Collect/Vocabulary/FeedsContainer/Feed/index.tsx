@@ -50,20 +50,15 @@ function Feed({
     () => vocabFeedHeight[`${feed.id}`],
     [feed.id]
   );
-  const [isVisible, setIsVisible] = useState(false);
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
 
-  useLazyLoad({
+  const isVisible = useLazyLoad({
+    id: `vocab-feed-${feed.id}`,
     inView,
     PanelRef: feedRef,
-    onSetIsVisible: (visible: boolean) => {
-      startTransition(() => {
-        setIsVisible(visible);
-      });
-    },
     onSetPlaceholderHeight: (height: number) => {
       startTransition(() => {
         setPlaceholderHeight(height);

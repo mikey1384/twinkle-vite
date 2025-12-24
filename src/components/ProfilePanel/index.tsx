@@ -406,11 +406,10 @@ function ProfilePanel({
     previousPlaceholderHeight
   );
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const [isVisible, setIsVisible] = useState(false);
-  useLazyLoad({
+  const isVisible = useLazyLoad({
+    id: `profile-${profileId}`,
     inView,
     PanelRef,
-    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;

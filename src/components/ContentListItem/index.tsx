@@ -41,7 +41,6 @@ function ContentListItem({
   const itemSelectedColor = itemSelectedRole.colorKey || 'logoBlue';
   const itemSelectedOpacity = itemSelectedRole.defaultOpacity ?? 0.8;
 
-  const [isVisible, setIsVisible] = useState(false);
   const [currentContent, setCurrentContent] = useState<any>(contentObj || {});
   const [rootContent, setRootContent] = useState<any>(
     contentObj?.rootObj || {}
@@ -96,10 +95,10 @@ function ContentListItem({
     uploader = {}
   } = currentContent;
 
-  useLazyLoad({
+  const isVisible = useLazyLoad({
+    id: `list-item-${contentType}-${contentId}`,
     inView,
-    PanelRef,
-    onSetIsVisible: setIsVisible
+    PanelRef
   });
 
   const contentShown = useMemo(() => {

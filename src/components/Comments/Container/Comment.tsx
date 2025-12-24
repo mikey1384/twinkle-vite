@@ -185,13 +185,12 @@ function Comment({
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
-  const [visible, setVisible] = useState(false);
   const placeholderHeightRef = useRef(previousPlaceholderHeight);
 
-  useLazyLoad({
+  const visible = useLazyLoad({
+    id: `comment-${parent.contentType}-${parent.contentId}-${commentId}`,
     PanelRef,
     inView,
-    onSetIsVisible: setVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;

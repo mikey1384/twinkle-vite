@@ -158,7 +158,8 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message?.isLoaded, message?.isNotification, message?.id]);
 
-  useLazyLoad({
+  const isVisible = useLazyLoad({
+    id: `message-${channelId}-${message?.id}`,
     PanelRef,
     inView,
     onSetPlaceholderHeight: (height: number) => {
@@ -170,8 +171,8 @@ function Message({
   });
 
   const contentShown = useMemo(
-    () => inView || started || !MessageHeights[message?.id],
-    [inView, message?.id, started]
+    () => isVisible || inView || started || !MessageHeights[message?.id],
+    [isVisible, inView, message?.id, started]
   );
 
   const isApprovalRequest = useMemo(() => {

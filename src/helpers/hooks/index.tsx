@@ -1,10 +1,13 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useLayoutEffect,
   useRef,
-  useState
+  useState,
+  useSyncExternalStore
 } from 'react';
+import { lazyLoadStore } from './lazyLoadStore';
 import UsernameText from '~/components/Texts/UsernameText';
 import { addEvent, removeEvent } from '../listenerHelpers';
 import { stringIsEmpty, addCommasToNumber } from '../stringHelpers';
@@ -185,35 +188,33 @@ export function useLazyLoadForImage(selector: string, setClass: string) {
 }
 
 export function useLazyLoad({
+  id,
   PanelRef,
   inView,
   onSetPlaceholderHeight,
-  onSetIsVisible,
   delay = 1000
 }: {
+  id: string;
   PanelRef: React.RefObject<any>;
   inView: boolean;
   onSetPlaceholderHeight?: (height: number) => void;
-  onSetIsVisible?: (visible: boolean) => void;
   delay?: number;
-}) {
-  const timerRef = useRef<any>(null);
-  const inViewRef = useRef(inView);
+}): boolean {
+  // Subscribe to visibility changes for this specific id only
+  const subscribe = useCallback(
+    (callback: () => void) => lazyLoadStore.subscribe(id, callback),
+    [id]
+  );
+  const getSnapshot = useCallback(() => lazyLoadStore.getVisibility(id), [id]);
 
+  const isVisible = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  // Update store when inView changes
   useEffect(() => {
-    inViewRef.current = inView;
-    if (!inView) {
-      timerRef.current = setTimeout(() => {
-        onSetIsVisible?.(false);
-      }, delay);
-    } else {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      onSetIsVisible?.(true);
-    }
-  }, [inView, delay, onSetIsVisible]);
+    lazyLoadStore.setVisibility(id, inView, inView ? 0 : delay);
+  }, [id, inView, delay]);
 
+  // Handle placeholder height measurement (unchanged - doesn't cause parent re-renders)
   useEffect(() => {
     const handleResize = throttle((entries: ResizeObserverEntry[]) => {
       if (entries.length > 0) {
@@ -235,13 +236,7 @@ export function useLazyLoad({
     };
   }, [onSetPlaceholderHeight, PanelRef]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
+  return isVisible;
 }
 
 export function useMyState() {

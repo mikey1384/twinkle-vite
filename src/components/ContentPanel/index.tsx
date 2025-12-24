@@ -170,11 +170,10 @@ export default function ContentPanel({
   const [placeholderHeight, setPlaceholderHeight] = useState(
     previousPlaceholderHeight
   );
-  const [isVisible, setIsVisible] = useState(false);
-  useLazyLoad({
+  const isVisible = useLazyLoad({
+    id: `content-${contentType}-${contentId}`,
     inView,
     PanelRef,
-    onSetIsVisible: setIsVisible,
     onSetPlaceholderHeight: (height: number) => {
       setPlaceholderHeight(height);
       placeholderHeightRef.current = height;
