@@ -1035,7 +1035,6 @@ export default function GradingResult({
           </Button>
         </div>
       )}
-      <div style={{ height: '2rem' }} />
     </div>
   );
 
