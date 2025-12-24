@@ -523,7 +523,7 @@ function ProfilePanel({
     [profile.username, profileName]
   );
   const contentShown = useMemo(
-    () => !profileLoaded || (shouldUpdate && (inView || isVisible)),
+    () => !profileLoaded || isVisible || (shouldUpdate && inView),
     [shouldUpdate, inView, isVisible, profileLoaded]
   );
   const profileStatus = chatStatus[profileId] || {};

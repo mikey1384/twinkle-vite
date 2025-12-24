@@ -175,7 +175,7 @@ function Message({
   });
 
   const contentShown = useMemo(
-    () => shouldUpdate && (inView || started || !MessageHeights[message?.id]),
+    () => started || !MessageHeights[message?.id] || (shouldUpdate && inView),
     [shouldUpdate, inView, message?.id, started]
   );
 

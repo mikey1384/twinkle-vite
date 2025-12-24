@@ -23,12 +23,14 @@ export default function HomeReducer(
     case 'CHANGE_CATEGORY':
       return {
         ...state,
-        category: action.category
+        category: action.category,
+        feedsVisibleCount: 15
       };
     case 'CHANGE_SUB_FILTER':
       return {
         ...state,
-        subFilter: action.subFilter
+        subFilter: action.subFilter,
+        feedsVisibleCount: 15
       };
     case 'CLEAR_FILE_UPLOAD_PROGRESS':
       return {
@@ -116,6 +118,11 @@ export default function HomeReducer(
       return {
         ...state,
         feedsOutdated: action.outdated
+      };
+    case 'SET_FEEDS_VISIBLE_COUNT':
+      return {
+        ...state,
+        feedsVisibleCount: action.count
       };
     case 'SET_AI_STORIES_MODAL_SHOWN':
       return {

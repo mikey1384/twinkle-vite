@@ -101,7 +101,22 @@ export default function Textarea({
       return;
     }
 
-    // Read scrollHeight with height set to 0
+    // While focused, avoid the height=0 measurement trick - it causes layout
+    // thrashing and scroll jumps (especially on iOS). Just check if content overflows.
+    const isFocused = document.activeElement === el;
+    if (isFocused) {
+      const currentHeight = el.offsetHeight;
+      // Only grow while typing, shrink happens on blur
+      if (el.scrollHeight > currentHeight) {
+        const maxHeight = maxRows ? lineHeight * maxRows + padding : Infinity;
+        const nextHeight = Math.min(el.scrollHeight, maxHeight);
+        el.style.height = `${nextHeight}px`;
+        el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden';
+      }
+      return;
+    }
+
+    // Non-iOS or not focused: use standard measurement
     el.style.minHeight = `${baseMinHeight}px`;
     el.style.height = '0';
     const contentHeight = el.scrollHeight;
@@ -135,6 +150,7 @@ export default function Textarea({
       rafIdRef.current = requestAnimationFrame(() => {
         doResize();
         rafIdRef.current = null;
+        isPastingRef.current = false;
       });
     } else {
       // iOS or deferred: use setTimeout to break out of the input event loop
@@ -276,6 +292,11 @@ export default function Textarea({
             scheduleResize(false);
           }
           if (rest.onInput) (rest.onInput as any)(e);
+        }}
+        onBlur={(e) => {
+          // Do a full resize when focus leaves to handle shrinking
+          scheduleResize(true);
+          if (rest.onBlur) (rest.onBlur as any)(e);
         }}
         onDragEnter={() => {
           setIsDragging(true);

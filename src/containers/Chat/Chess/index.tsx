@@ -975,6 +975,10 @@ export default function Chess({
     loaded
   ]);
 
+  const themeButtonShown = useMemo(() => {
+    return chessBoardShown && loaded && allowedThemeValues.length > 1;
+  }, [chessBoardShown, loaded, allowedThemeValues.length]);
+
   return (
     <div
       className={css`
@@ -1016,8 +1020,7 @@ export default function Chess({
           </div>
         </NewModal>
       ) : null}
-      {gameDropdownButtonShown ||
-      (isFromModal && allowedThemeValues.length > 1) ? (
+      {gameDropdownButtonShown || themeButtonShown ? (
         <div
           className={css`
             position: absolute;
@@ -1066,6 +1069,23 @@ export default function Chess({
                 onDropdownShown={setHighlighted}
               />
             ) : null
+          ) : null}
+          {themeButtonShown &&
+          !gameDropdownButtonShown &&
+          !(isFromModal && !deviceIsMobile) ? (
+            <DropdownButton
+              variant="solid"
+              tone="raised"
+              buttonStyle={{
+                fontSize: '1rem',
+                lineHeight: 1
+              }}
+              className={isFromModal ? undefined : 'menu-button'}
+              color="darkerGray"
+              icon="palette"
+              menuProps={getThemeMenu()}
+              onDropdownShown={setHighlighted}
+            />
           ) : null}
         </div>
       ) : null}

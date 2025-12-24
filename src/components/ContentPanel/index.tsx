@@ -223,7 +223,7 @@ export default function ContentPanel({
   }, [loaded]);
 
   const contentShown = useMemo(
-    () => alwaysShow || (shouldUpdate && (inView || isVisible || started || rootStarted)),
+    () => alwaysShow || isVisible || started || rootStarted || (shouldUpdate && inView),
     [alwaysShow, shouldUpdate, inView, isVisible, rootStarted, started]
   );
 
