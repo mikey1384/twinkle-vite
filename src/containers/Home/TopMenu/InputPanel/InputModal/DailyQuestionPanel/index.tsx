@@ -844,6 +844,7 @@ export default function DailyQuestionPanel({
               Start Writing
             </Button>
           </div>
+          <div style={{ height: '2rem' }} />
         </div>
       </ErrorBoundary>
     );
