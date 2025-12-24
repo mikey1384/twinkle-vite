@@ -11,7 +11,6 @@ import {
   useProfileContext,
   useKeyContext
 } from '~/contexts';
-import { UpdateModeProvider } from '~/contexts/UpdateMode';
 import { useProfileState } from '~/helpers/hooks';
 import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
@@ -147,8 +146,7 @@ export default function Profile() {
 
   return (
     <ErrorBoundary componentPath="Profile/index" style={{ minHeight: '10rem' }}>
-      <UpdateModeProvider>
-        {!notExist ? (
+      {!notExist ? (
           <>
             {loading && (
               <Loading style={{ marginTop: '5rem' }} text="Loading Profile..." />
@@ -184,14 +182,13 @@ export default function Profile() {
             text={!userId ? 'Please Log In or Sign Up' : ''}
           />
         )}
-        <Global
-          styles={{
-            body: {
-              background: `var(--page-bg, ${backgroundColor})`
-            }
-          }}
-        />
-      </UpdateModeProvider>
+      <Global
+        styles={{
+          body: {
+            background: `var(--page-bg, ${backgroundColor})`
+          }
+        }}
+      />
     </ErrorBoundary>
   );
 

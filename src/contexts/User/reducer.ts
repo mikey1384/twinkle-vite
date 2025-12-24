@@ -174,18 +174,12 @@ export default function UserReducer(
     case 'SET_ORDER_USERS_BY':
       return {
         ...state,
-        orderUsersBy: action.label,
-        profilesVisibleCount: 15
+        orderUsersBy: action.label
       };
     case 'SET_PROFILES_LOADED':
       return {
         ...state,
         profilesLoaded: action.loaded
-      };
-    case 'SET_PROFILES_VISIBLE_COUNT':
-      return {
-        ...state,
-        profilesVisibleCount: action.count
       };
     case 'SET_IS_ACHIEVEMENTS_LOADED':
       return {

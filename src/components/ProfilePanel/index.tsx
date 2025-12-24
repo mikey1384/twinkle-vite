@@ -28,7 +28,6 @@ import {
   useKeyContext,
   useProfileContext
 } from '~/contexts';
-import { useShouldUpdate } from '~/contexts/UpdateMode';
 import MessagesButton from './MessagesButton';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { ThemeName } from '~/theme';
@@ -397,7 +396,6 @@ function ProfilePanel({
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
 
   const [ComponentRef, inView] = useInView();
-  const shouldUpdate = useShouldUpdate(inView);
   const PanelRef = useRef(null);
   const ContainerRef = useRef(null);
   const previousPlaceholderHeight = useMemo(
@@ -523,8 +521,8 @@ function ProfilePanel({
     [profile.username, profileName]
   );
   const contentShown = useMemo(
-    () => !profileLoaded || (shouldUpdate && (inView || isVisible)),
-    [shouldUpdate, inView, isVisible, profileLoaded]
+    () => !profileLoaded || inView || isVisible,
+    [inView, isVisible, profileLoaded]
   );
   const profileStatus = chatStatus[profileId] || {};
   const { isOnline = false, isBusy = false, isAway = false } = profileStatus;

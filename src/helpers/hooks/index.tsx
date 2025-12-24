@@ -214,38 +214,26 @@ export function useLazyLoad({
     }
   }, [inView, delay, onSetIsVisible]);
 
-  const callbackRef = useRef(onSetPlaceholderHeight);
-  callbackRef.current = onSetPlaceholderHeight;
-
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const observedElementRef = useRef<Element | null>(null);
-
   useEffect(() => {
-    if (!resizeObserverRef.current) {
-      const handleResize = throttle((entries: ResizeObserverEntry[]) => {
-        if (entries.length > 0) {
-          callbackRef.current?.(entries[0].target.clientHeight);
-        }
-      }, 100);
-      resizeObserverRef.current = new ResizeObserver(handleResize);
-    }
-
-    const element = PanelRef.current;
-    if (element && element !== observedElementRef.current) {
-      if (observedElementRef.current) {
-        resizeObserverRef.current.unobserve(observedElementRef.current);
+    const handleResize = throttle((entries: ResizeObserverEntry[]) => {
+      if (entries.length > 0) {
+        const clientHeight = entries[0].target.clientHeight;
+        onSetPlaceholderHeight?.(clientHeight);
       }
-      resizeObserverRef.current.observe(element);
-      observedElementRef.current = element;
+    }, 100);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (PanelRef.current) {
+      resizeObserver.observe(PanelRef.current);
     }
 
     return () => {
-      if (observedElementRef.current && resizeObserverRef.current) {
-        resizeObserverRef.current.unobserve(observedElementRef.current);
-        observedElementRef.current = null;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
       }
     };
-  }, [PanelRef, inView]);
+  }, [onSetPlaceholderHeight, PanelRef]);
 
   useEffect(() => {
     return () => {

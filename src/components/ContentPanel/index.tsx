@@ -17,7 +17,6 @@ import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { placeholderHeights } from '~/constants/state';
 import { useContentState, useLazyLoad } from '~/helpers/hooks';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
-import { useShouldUpdate } from '~/contexts/UpdateMode';
 import { useNavigate } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 const urlCss = css`
@@ -94,7 +93,6 @@ export default function ContentPanel({
     [contentId, contentType]
   );
   const [ComponentRef, inView] = useInView();
-  const shouldUpdate = useShouldUpdate(inView);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const PanelRef = useRef(null);
   const navigate = useNavigate();
@@ -223,8 +221,8 @@ export default function ContentPanel({
   }, [loaded]);
 
   const contentShown = useMemo(
-    () => alwaysShow || (shouldUpdate && (inView || isVisible || started || rootStarted)),
-    [alwaysShow, shouldUpdate, inView, isVisible, rootStarted, started]
+    () => alwaysShow || inView || isVisible || started || rootStarted,
+    [alwaysShow, inView, isVisible, rootStarted, started]
   );
 
   const componentHeight = useMemo(() => {

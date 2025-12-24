@@ -11,7 +11,6 @@ export const initialHomeState = {
   topMenuSection: 'start',
   feeds: [],
   feedsOutdated: false,
-  feedsVisibleCount: 15,
   fileUploadProgress: null,
   aiStoriesModalShown: false,
   grammarGameModalShown: false,
@@ -40,11 +39,14 @@ export function HomeContextProvider({ children }: { children: ReactNode }) {
     () => HomeActions(homeDispatch),
     [homeDispatch]
   );
-  const contextValue = useMemo(
-    () => ({ state: homeState, actions: memoizedActions }),
-    [homeState, memoizedActions]
-  );
   return (
-    <HomeContext.Provider value={contextValue}>{children}</HomeContext.Provider>
+    <HomeContext.Provider
+      value={{
+        state: homeState,
+        actions: memoizedActions
+      }}
+    >
+      {children}
+    </HomeContext.Provider>
   );
 }

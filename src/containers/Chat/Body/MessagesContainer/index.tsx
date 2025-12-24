@@ -47,7 +47,6 @@ import {
 } from '~/contexts';
 import { User } from '~/types';
 import LocalContext from '../../Context';
-import { useUpdateMode } from '../../UpdateModeContext';
 const CALL_SCREEN_HEIGHT = '30%';
 const deviceIsMobile = isMobile(navigator);
 const leaveChatGroupLabel = 'Leave Chat Group';
@@ -163,7 +162,6 @@ export default function MessagesContainer({
   const { banned, profilePicUrl, userId, isAdmin, username } = useKeyContext(
     (v) => v.myState
   );
-  const { onTransitionStart, onTransitionEnd } = useUpdateMode();
 
   const {
     currentTransactionId,
@@ -470,9 +468,6 @@ export default function MessagesContainer({
   ]);
 
   useEffect(() => {
-    // Signal that a transition is starting (channel or tab change)
-    onTransitionStart();
-
     if (!deviceIsMobile) {
       ChatInputRef.current?.focus();
     }
@@ -485,7 +480,7 @@ export default function MessagesContainer({
     } else {
       shouldScrollToBottomRef.current = true;
     }
-  }, [selectedTab, selectedChannelId, onTransitionStart]);
+  }, [selectedTab, selectedChannelId]);
 
   useEffect(() => {
     if (selectedChannelId === channelOnCall.id) {
@@ -498,11 +493,7 @@ export default function MessagesContainer({
       onScrollToBottom();
       shouldScrollToBottomRef.current = false;
     }
-    // Signal that the transition is complete when loading finishes
-    if (!pageLoading) {
-      onTransitionEnd();
-    }
-  }, [pageLoading, onScrollToBottom, selectedTab, onTransitionEnd]);
+  }, [pageLoading, onScrollToBottom, selectedTab]);
 
   useEffect(() => {
     onSetChessModalShown(false);

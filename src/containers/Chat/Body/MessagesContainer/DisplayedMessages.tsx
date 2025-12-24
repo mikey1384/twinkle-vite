@@ -13,7 +13,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Message from '../../Message';
 import LocalContext from '../../Context';
-import { useUpdateMode } from '../../UpdateModeContext';
 import { MessageHeights } from '~/constants/state';
 import { v1 as uuidv1 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
@@ -181,7 +180,6 @@ export default function DisplayedMessages({
     themeName: loadMoreThemeName,
     fallback: 'lightBlue'
   });
-  const { onScrollStart } = useUpdateMode();
 
   const visibleMessageIndexRef = useRef(10);
   useEffect(() => {
@@ -558,9 +556,6 @@ export default function DisplayedMessages({
     };
 
     function handleScroll() {
-      // Signal that scrolling is happening for update mode optimization
-      onScrollStart();
-
       const {
         scrollTop = 0,
         scrollHeight = 0,
