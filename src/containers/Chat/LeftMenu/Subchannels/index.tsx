@@ -89,8 +89,12 @@ function SubChannels({
             text-align: left;
             font-size: 1.4rem;
             font-family: Helvetica;
-            &:hover {
-              background: ${Color.checkboxAreaGray()};
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            @media (hover: hover) and (pointer: fine) {
+              &:hover {
+                background: ${Color.checkboxAreaGray()};
+              }
             }
             &.active {
               color: ${Color.vantaBlack()};

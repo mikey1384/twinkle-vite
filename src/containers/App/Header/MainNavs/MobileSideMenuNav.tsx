@@ -36,6 +36,8 @@ export default function MobileSideMenuNav({
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
         .chat {
           color: ${Color.lightGray()};
         }

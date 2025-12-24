@@ -23,8 +23,12 @@ const buttonStyle = css`
   font-family: Roboto, sans-serif;
   border: none;
   cursor: pointer;
-  &:hover {
-    background: ${Color.highlightGray()};
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: ${Color.highlightGray()};
+    }
   }
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0.7rem 1rem;
@@ -156,8 +160,10 @@ function PinnedTopics({
       justify-content: center;
       gap: 1rem;
       box-shadow: 0 0.4rem 0.8rem rgba(0, 0, 0, 0.12);
-      &:hover {
-        background: ${themedHover};
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          background: ${themedHover};
+        }
       }
       @media (max-width: ${mobileMaxWidth}) {
         gap: 0.5rem;
