@@ -111,7 +111,19 @@ export default function useInitSocket({
   const channelsObjRef = useRef(channelsObj);
   const feedsRef = useRef(feeds);
   const subFilterRef = useRef(subFilter);
+  const userIdRef = useRef(userId);
+  const usernameRef = useRef(username);
+  const profilePicUrlRef = useRef(profilePicUrl);
 
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
+  useEffect(() => {
+    usernameRef.current = username;
+  }, [username]);
+  useEffect(() => {
+    profilePicUrlRef.current = profilePicUrl;
+  }, [profilePicUrl]);
   useEffect(() => {
     categoryRef.current = category;
   }, [category]);
@@ -330,11 +342,16 @@ export default function useInitSocket({
       handleCheckVersion();
       void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
-      if (userId) {
+      if (userIdRef.current) {
         const token = getStoredItem('token');
         socket.emit(
           'bind_uid_to_socket',
-          { userId, username, profilePicUrl, token },
+          {
+            userId: userIdRef.current,
+            username: usernameRef.current,
+            profilePicUrl: profilePicUrlRef.current,
+            token
+          },
           (result?: { authError?: boolean }) => {
             if (result?.authError) {
               // Token is invalid (e.g., password was changed)
@@ -356,7 +373,7 @@ export default function useInitSocket({
             });
           }
         );
-        socket.emit('enter_my_notification_channel', userId);
+        socket.emit('enter_my_notification_channel', userIdRef.current);
 
         if (!shouldSkipReload) {
           handleGetNumberOfUnreadMessages();
@@ -367,7 +384,7 @@ export default function useInitSocket({
           clearInterval(heartbeatTimerRef.current);
         }
         heartbeatTimerRef.current = window.setInterval(() => {
-          if (userId) socket.emit('user_heartbeat');
+          if (userIdRef.current) socket.emit('user_heartbeat');
         }, 15000);
       }
 
@@ -397,7 +414,7 @@ export default function useInitSocket({
         let currentChannelIsPublic = false;
         let currentChannelId = 0;
 
-        if (!isNaN(pathId) && userId) {
+        if (!isNaN(pathId) && userIdRef.current) {
           const { isAccessible, isPublic, channelId } =
             await checkChatAccessible(pathId);
           currentChannelIsAccessible = isAccessible;
@@ -423,12 +440,12 @@ export default function useInitSocket({
           message: `Chat loaded in ${chatLoadingTime} seconds`
         });
 
-        onInitChat({ data, userId });
+        onInitChat({ data, userId: userIdRef.current });
 
         if (
           latestPathIdRef.current &&
           (data.currentPathId !== latestPathIdRef.current || data.chatType) &&
-          userId
+          userIdRef.current
         ) {
           const channelId = parseChannelPath(latestPathIdRef.current);
           const { isAccessible, isPublic } = await checkChatAccessible(
@@ -454,7 +471,7 @@ export default function useInitSocket({
                     channelName: channel.channelName,
                     pathId: channel.pathId
                   },
-                  newMembers: [{ id: userId, username, profilePicUrl }]
+                  newMembers: [{ id: userIdRef.current, username: usernameRef.current, profilePicUrl: profilePicUrlRef.current }]
                 });
               }
             } else {
@@ -619,6 +636,42 @@ export default function useInitSocket({
       window.removeEventListener('online', onOnline);
     };
   }, []);
+
+  // Track previous userId to properly leave old notification channel
+  const prevUserIdRef = useRef<number | undefined>(undefined);
+
+  // Rebind socket when user changes (login/logout/switch account)
+  useEffect(() => {
+    if (!socket.connected) {
+      prevUserIdRef.current = userId;
+      return;
+    }
+
+    // Leave previous user's notification channel if switching users
+    if (prevUserIdRef.current && prevUserIdRef.current !== userId) {
+      socket.emit('leave_my_notification_channel', prevUserIdRef.current);
+    }
+
+    if (userId) {
+      // User logged in - bind socket to new user
+      const token = getStoredItem('token');
+      socket.emit(
+        'bind_uid_to_socket',
+        { userId, username, profilePicUrl, token },
+        (result?: { authError?: boolean }) => {
+          if (result?.authError) {
+            console.log('[userId change] Auth error - token invalid, reloading');
+            window.location.reload();
+            return;
+          }
+        }
+      );
+      socket.emit('enter_my_notification_channel', userId);
+    }
+
+    prevUserIdRef.current = userId;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   function handleStartUserActionCapture() {
     if (userActionAckedRef.current) return;
