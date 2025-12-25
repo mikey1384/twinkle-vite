@@ -3744,11 +3744,24 @@ export default function ChatReducer(
         };
       }
 
+      const hasOfflineUsers = action.recentOfflineUsers !== undefined;
+      let newRecentOfflineUsers = state.recentOfflineUsers;
+
+      if (hasOfflineUsers) {
+        const incomingOffline = action.recentOfflineUsers || [];
+        const seenIds = new Set<number>();
+        newRecentOfflineUsers = incomingOffline.filter((u: any) => {
+          const id = Number(u.id);
+          if (seenIds.has(id)) return false;
+          seenIds.add(id);
+          return true;
+        });
+      }
+
       return {
         ...state,
         chatStatus: mergedStatus,
-        recentOfflineUsers:
-          action.recentOfflineUsers || state.recentOfflineUsers || []
+        recentOfflineUsers: newRecentOfflineUsers
       };
     }
     case 'SET_MY_STREAM':

@@ -13,7 +13,8 @@ import {
 } from '~/constants/defaultValues';
 import { checkMicrophoneAccess, objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import CallButton from './CallButton';import LocalContext from '../../Context';
+import CallButton from './CallButton';
+import LocalContext from '../../Context';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import RichText from '~/components/Texts/RichText';
@@ -197,16 +198,21 @@ function ChatInfo({
     allMemberIds?.length
   ]);
 
-  // For General Chat, include recent offline users (within 30 minutes) after online list
   const recentOfflineUsers = useChatContext((v) => v.state.recentOfflineUsers);
   const generalRecentOffline = useMemo(() => {
     if (currentChannel?.id !== GENERAL_CHAT_ID) return [];
     // Exclude anyone currently online; assume backend already sorted by lastActive desc
     const onlineIds = new Set(onlineChannelMembers.map((m) => m.id));
     const oneDayAgoSec = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+    const seenIds = new Set<number>();
     return (recentOfflineUsers || [])
       .filter((u: any) => !onlineIds.has(u.id))
-      .filter((u: any) => Number(u.lastActive) >= oneDayAgoSec);
+      .filter((u: any) => Number(u.lastActive) >= oneDayAgoSec)
+      .filter((u: any) => {
+        if (seenIds.has(u.id)) return false;
+        seenIds.add(u.id);
+        return true;
+      });
   }, [currentChannel?.id, onlineChannelMembers, recentOfflineUsers]);
 
   const displayedChannelMembers = useMemo(() => {
