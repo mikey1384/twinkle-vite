@@ -278,6 +278,9 @@ export default function MessageInput({
       return;
     }
 
+    // Lock immediately to prevent race condition with rapid clicks
+    inputCoolingDown.current = true;
+
     if (isAICallOngoing) {
       socket.emit('ai_call_message_submit', {
         message: finalizeEmoji(inputText),
@@ -291,13 +294,18 @@ export default function MessageInput({
       return;
     }
 
-    if (isExceedingCharLimit) return;
+    if (isExceedingCharLimit) {
+      inputCoolingDown.current = false;
+      return;
+    }
 
     if (!socketConnected || isAIActuallyStreaming) {
+      inputCoolingDown.current = false;
       return;
     }
 
     if (hasInsufficientCoinsForThinkHard) {
+      inputCoolingDown.current = false;
       const userCoins = twinkleCoins || 0;
       const availableFunds = communityFunds || 0;
       setAlertModalContent(
