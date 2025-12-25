@@ -21,18 +21,10 @@ type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
 const INACTIVITY_LIMIT = 10;
 const MIN_RESPONSE_LENGTH = 50;
 
-// Typing metadata for anti-cheat
-interface KeystrokeEvent {
-  timestamp: number;
-  charCount: number; // chars added in this event
-}
-
+// Typing metadata for anti-cheat - keep it simple, calculate at submit
 interface TypingMetadata {
   startTime: number;
-  endTime: number;
-  keystrokeEvents: KeystrokeEvent[];
-  totalCharsTyped: number;
-  maxBurstSize: number; // largest single burst of chars
+  keystrokeTimestamps: number[]; // just raw timestamps
 }
 
 const pulseAnimation = keyframes`
@@ -45,7 +37,10 @@ export default function DailyQuestionPanel({
 }: {
   onClose: () => void;
 }) {
-  const { userId, profileTheme } = useKeyContext((v) => v.myState);
+  const { userId, profileTheme, twinkleCoins } = useKeyContext(
+    (v) => v.myState
+  );
+  const STREAK_REPAIR_COST = 100000;
   const getDailyQuestion = useAppContext(
     (v) => v.requestHelpers.getDailyQuestion
   );
@@ -106,10 +101,7 @@ export default function DailyQuestionPanel({
   // Typing metadata for anti-cheat verification
   const typingMetadataRef = useRef<TypingMetadata>({
     startTime: 0,
-    endTime: 0,
-    keystrokeEvents: [],
-    totalCharsTyped: 0,
-    maxBurstSize: 0
+    keystrokeTimestamps: []
   });
 
   // Refs for smooth progress animation
@@ -123,11 +115,11 @@ export default function DailyQuestionPanel({
   // Socket event listeners for progress updates with smooth animation
   useEffect(() => {
     function animateProgress(
-      currentRef: React.MutableRefObject<number>,
-      targetRef: React.MutableRefObject<number>,
+      currentRef: React.RefObject<number>,
+      targetRef: React.RefObject<number>,
       newTarget: number,
       setter: React.Dispatch<React.SetStateAction<number>>,
-      animationRef: React.MutableRefObject<NodeJS.Timeout | null>,
+      animationRef: React.RefObject<NodeJS.Timeout | null>,
       duration: number = 10000
     ) {
       // Clear any existing animation
@@ -231,10 +223,23 @@ export default function DailyQuestionPanel({
     };
   }, []);
 
+  // Use a ref to track mount state - survives across effect re-runs
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Store getDailyQuestion in a ref to avoid dependency issues
+  const getDailyQuestionRef = useRef(getDailyQuestion);
+  useEffect(() => {
+    getDailyQuestionRef.current = getDailyQuestion;
+  }, [getDailyQuestion]);
+
   useEffect(() => {
     if (!userId) return;
-
-    let isMounted = true;
 
     // Reset progress refs
     loadingProgressRef.current = 0;
@@ -249,11 +254,31 @@ export default function DailyQuestionPanel({
     setLoadingProgress(0);
     setLoadingMessage('Loading...');
 
+    // Track this specific request to avoid race conditions
+    const requestId = Date.now();
+    const currentRequestRef = { id: requestId, cancelled: false };
+
+    // Fallback progress in case socket events don't arrive
+    // This ensures user sees activity even without socket connection
+    const fallbackTimer = setTimeout(() => {
+      if (!currentRequestRef.cancelled && isMountedRef.current) {
+        setLoadingMessage('Generating your question...');
+        setLoadingProgress(30);
+      }
+    }, 2000);
+
+    const fallbackTimer2 = setTimeout(() => {
+      if (!currentRequestRef.cancelled && isMountedRef.current) {
+        setLoadingProgress(60);
+      }
+    }, 5000);
+
     async function loadDailyQuestion() {
       try {
-        const data = await getDailyQuestion();
+        const data = await getDailyQuestionRef.current();
 
-        if (!isMounted) return;
+        // Skip if component unmounted or this request was superseded
+        if (!isMountedRef.current || currentRequestRef.cancelled) return;
 
         if (data.error) {
           setError(data.error);
@@ -290,7 +315,7 @@ export default function DailyQuestionPanel({
           setScreen('start');
         }
       } catch (err: any) {
-        if (!isMounted) return;
+        if (!isMountedRef.current || currentRequestRef.cancelled) return;
         console.error('Failed to load daily question:', err);
         setError(
           err?.message || 'Failed to load daily question. Please try again.'
@@ -301,9 +326,11 @@ export default function DailyQuestionPanel({
     loadDailyQuestion();
 
     return () => {
-      isMounted = false;
+      currentRequestRef.cancelled = true;
+      clearTimeout(fallbackTimer);
+      clearTimeout(fallbackTimer2);
     };
-  }, [userId, getDailyQuestion]);
+  }, [userId]);
 
   useEffect(() => {
     if (screen !== 'writing') return;
@@ -334,10 +361,7 @@ export default function DailyQuestionPanel({
     // Initialize typing metadata
     typingMetadataRef.current = {
       startTime: Date.now(),
-      endTime: 0,
-      keystrokeEvents: [],
-      totalCharsTyped: 0,
-      maxBurstSize: 0
+      keystrokeTimestamps: []
     };
     setScreen('writing');
     setTimeout(() => {
@@ -368,15 +392,21 @@ export default function DailyQuestionPanel({
     setIsSimplified(false);
   }, [originalQuestion]);
 
+  const hasEnoughCoins = (twinkleCoins || 0) >= STREAK_REPAIR_COST;
+
   async function handlePurchaseRepair() {
-    if (purchasingRepair || streakRepairAvailable) return;
+    if (purchasingRepair || streakRepairAvailable || !hasEnoughCoins) return;
 
     try {
       setPurchasingRepair(true);
       const result = await purchaseDailyQuestionRepair();
 
       if (result.error) {
-        setError(result.error);
+        // "Not enough coins" is expected if client data is stale - button will disable
+        // Other errors should be shown to the user
+        if (!result.error.toLowerCase().includes('not enough coins')) {
+          setError(result.error);
+        }
         return;
       }
 
@@ -392,8 +422,13 @@ export default function DailyQuestionPanel({
         }
       }
     } catch (err: any) {
-      console.error('Failed to purchase repair:', err);
-      setError(err?.message || 'Failed to purchase repair. Please try again.');
+      // "Not enough coins" from API is expected if client data is stale
+      // Other errors (network, server) should be shown
+      const errorMessage = err?.message || '';
+      if (!errorMessage.toLowerCase().includes('not enough coins')) {
+        console.error('Failed to purchase repair:', err);
+        setError('Failed to purchase repair. Please try again.');
+      }
     } finally {
       setPurchasingRepair(false);
     }
@@ -418,20 +453,10 @@ export default function DailyQuestionPanel({
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
       if (newValue.length >= response.length) {
-        const charsAdded = newValue.length - response.length;
         const now = Date.now();
 
-        // Track keystroke event for anti-cheat
-        if (charsAdded > 0) {
-          typingMetadataRef.current.keystrokeEvents.push({
-            timestamp: now,
-            charCount: charsAdded
-          });
-          typingMetadataRef.current.totalCharsTyped += charsAdded;
-          if (charsAdded > typingMetadataRef.current.maxBurstSize) {
-            typingMetadataRef.current.maxBurstSize = charsAdded;
-          }
-        }
+        // Track keystroke for anti-cheat (just push timestamp)
+        typingMetadataRef.current.keystrokeTimestamps.push(now);
 
         setResponse(newValue);
         lastActivityRef.current = now;
@@ -456,6 +481,42 @@ export default function DailyQuestionPanel({
     if (!questionId || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
+    // Calculate typing metrics from raw timestamps
+    const metadata = typingMetadataRef.current;
+    const endTime = Date.now();
+    const timestamps = metadata.keystrokeTimestamps;
+
+    // Calculate burst metrics (chars typed within 500ms of each other)
+    let maxBurstSize = 0;
+    let burstCount = 0;
+    const BURST_PAUSE_THRESHOLD = 500;
+
+    if (timestamps.length > 0) {
+      let currentBurst = 1;
+      for (let i = 1; i < timestamps.length; i++) {
+        const gap = timestamps[i] - timestamps[i - 1];
+        if (gap <= BURST_PAUSE_THRESHOLD) {
+          currentBurst++;
+        } else {
+          // End of a burst
+          if (currentBurst > 1) {
+            burstCount++;
+            if (currentBurst > maxBurstSize) {
+              maxBurstSize = currentBurst;
+            }
+          }
+          currentBurst = 1;
+        }
+      }
+      // Check final burst
+      if (currentBurst > 1) {
+        burstCount++;
+        if (currentBurst > maxBurstSize) {
+          maxBurstSize = currentBurst;
+        }
+      }
+    }
+
     // Reset grading progress refs
     gradingProgressRef.current = 0;
     gradingTargetRef.current = 0;
@@ -472,7 +533,15 @@ export default function DailyQuestionPanel({
     try {
       const result = await submitDailyQuestionResponse({
         questionId,
-        response: response.trim() || '(no response)'
+        response: response.trim() || '(no response)',
+        typingMetadata: {
+          startTime: metadata.startTime,
+          endTime,
+          keystrokeCount: timestamps.length,
+          totalCharsTyped: response.trim().length,
+          maxBurstSize,
+          burstCount
+        }
       });
 
       if (result.error) {
@@ -703,11 +772,15 @@ export default function DailyQuestionPanel({
                 variant="solid"
                 color="orange"
                 onClick={handlePurchaseRepair}
-                disabled={purchasingRepair}
+                disabled={purchasingRepair || !hasEnoughCoins}
                 loading={purchasingRepair}
               >
                 <Icon icon="wrench" style={{ marginRight: '0.5rem' }} />
-                Buy Streak Repair (100,000 coins)
+                {hasEnoughCoins
+                  ? `Buy Streak Repair (100,000 coins)`
+                  : `Need 100,000 coins (you have ${(
+                      twinkleCoins || 0
+                    ).toLocaleString()})`}
               </Button>
             </div>
           )}

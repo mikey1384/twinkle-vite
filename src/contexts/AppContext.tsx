@@ -106,7 +106,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
         return Promise.reject({
           status,
-          message: data?.message || 'An unexpected error occurred'
+          message: data?.error || data?.message || 'An unexpected error occurred'
         });
       }
 

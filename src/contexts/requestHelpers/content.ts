@@ -2062,15 +2062,24 @@ export default function contentRequestHelpers({
     },
     async submitDailyQuestionResponse({
       questionId,
-      response
+      response,
+      typingMetadata
     }: {
       questionId: number;
       response: string;
+      typingMetadata?: {
+        startTime: number;
+        endTime: number;
+        keystrokeCount: number;
+        totalCharsTyped: number;
+        maxBurstSize: number;
+        burstCount: number;
+      };
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/daily-question/response`,
-          { questionId, response },
+          { questionId, response, typingMetadata },
           { ...auth(), timeout: 180000, meta: { enforceTimeout: false } }
         );
         return data;
