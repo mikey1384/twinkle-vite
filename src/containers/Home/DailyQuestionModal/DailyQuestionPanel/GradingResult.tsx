@@ -356,8 +356,8 @@ export default function GradingResult({
               `}
             >
               {streakMultiplier >= 10
-                ? '10x MAX!'
-                : `${streakMultiplier}x XP multiplier!`}
+                ? 'x10 MAX!'
+                : `x${streakMultiplier} XP multiplier!`}
             </p>
           )}
           {usedRepair && (

@@ -663,7 +663,7 @@ export default function DailyQuestionPanel({
                   margin-top: 0.3rem;
                 `}
               >
-                Keep it going for {Math.min(currentStreak + 1, 10)}x XP!
+                Keep it going for x{Math.min(currentStreak + 1, 10)} XP!
               </p>
             </div>
           )}
