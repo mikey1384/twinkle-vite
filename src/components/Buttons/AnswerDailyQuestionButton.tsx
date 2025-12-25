@@ -19,32 +19,32 @@ export default function AnswerDailyQuestionButton({
   const hasAnsweredToday = todayStats?.dailyQuestionCompleted;
   const showButton = userId && !hasAnsweredToday;
 
-  if (!showButton) {
-    return null;
-  }
-
+  // Keep modal open even after hasAnsweredToday becomes true (to show grading result)
+  // Only hide the button, not the modal
   return (
     <>
-      <div
-        className={css`
-          margin-top: 1.2rem;
-          padding-top: 1rem;
-          display: flex;
-          justify-content: center;
-          ${noBorderTop ? '' : `border-top: 1px solid ${Color.borderGray()};`}
-        `}
-        style={style}
-      >
-        <GameCTAButton
-          icon="lightbulb"
-          variant="purple"
-          size="md"
-          shiny
-          onClick={() => setDailyQuestionModalShown(true)}
+      {showButton && (
+        <div
+          className={css`
+            margin-top: 1.2rem;
+            padding-top: 1rem;
+            display: flex;
+            justify-content: center;
+            ${noBorderTop ? '' : `border-top: 1px solid ${Color.borderGray()};`}
+          `}
+          style={style}
         >
-          Answer Today's Question
-        </GameCTAButton>
-      </div>
+          <GameCTAButton
+            icon="lightbulb"
+            variant="purple"
+            size="md"
+            shiny
+            onClick={() => setDailyQuestionModalShown(true)}
+          >
+            Answer Today's Question
+          </GameCTAButton>
+        </div>
+      )}
       {dailyQuestionModalShown && (
         <DailyQuestionModal onHide={() => setDailyQuestionModalShown(false)} />
       )}

@@ -5,7 +5,7 @@ import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
-import AnswerDailyQuestionButton from '~/components/AnswerDailyQuestionButton';
+import AnswerDailyQuestionButton from '~/components/Buttons/AnswerDailyQuestionButton';
 import XPAndStreakDisplay from '~/components/XPAndStreakDisplay';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
