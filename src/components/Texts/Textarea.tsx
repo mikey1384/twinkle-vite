@@ -101,12 +101,13 @@ export default function Textarea({
       return;
     }
 
-    // While focused, avoid the height=0 measurement trick - it causes layout
-    // thrashing and scroll jumps (especially on iOS). Just check if content overflows.
+    // On iOS while focused, avoid the height=0 measurement trick - it causes layout
+    // thrashing and scroll jumps. Just check if content overflows.
+    // On desktop, we can do full resize even while focused.
     const isFocused = document.activeElement === el;
-    if (isFocused) {
+    if (isIOS && isFocused) {
       const currentHeight = el.offsetHeight;
-      // Only grow while typing, shrink happens on blur
+      // Only grow while typing on iOS, shrink happens on blur
       if (el.scrollHeight > currentHeight) {
         const maxHeight = maxRows ? lineHeight * maxRows + padding : Infinity;
         const nextHeight = Math.min(el.scrollHeight, maxHeight);

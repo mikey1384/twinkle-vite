@@ -255,25 +255,35 @@ export default function DonorLicenseItem({
           className={css`
             width: 100%;
             font-size: 1.6rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: linear-gradient(
                 180deg,
                 rgba(255, 255, 255, 0.2) 0%,
                 rgba(0, 0, 0, 0.05) 100%
               ),
-              ${Color.rose()};
+              ${Color.pinkOrange()};
             border: 1px solid rgba(0, 0, 0, 0.05);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
               inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+            &:hover:not(:disabled) {
+              color: #fff;
+            }
 
             &:active:not(:disabled) {
               transform: translateY(1px);
               box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
                 inset 0 1px 3px rgba(0, 0, 0, 0.2);
+              color: #fff;
             }
 
             &:disabled {
               background: ${Color.borderGray()};
               box-shadow: none;
+              color: ${Color.gray()};
             }
           `}
         >
