@@ -286,6 +286,27 @@ export default function Textarea({
           }
           // Schedule resize after paste completes with delay
           scheduleResize(false);
+
+          // iOS workaround: After paste, iOS's touch hit-testing can get stuck.
+          // Force a layout recalculation to reset iOS gesture recognizer state.
+          if (isIOS) {
+            const el = textareaRef.current;
+            if (el) {
+              // Force reflow by reading offsetHeight then toggling a property
+              setTimeout(() => {
+                if (el) {
+                  el.offsetHeight; // Force reflow
+                  // Toggle transform to force layer recalculation
+                  el.style.transform = 'translateZ(0)';
+                  requestAnimationFrame(() => {
+                    if (el) {
+                      el.style.transform = '';
+                    }
+                  });
+                }
+              }, 150);
+            }
+          }
         }}
         onInput={(e) => {
           // Don't resize during paste - let the paste handler's delay take over

@@ -1,7 +1,11 @@
-import React, { CSSProperties, ReactNode, useMemo } from 'react';
+import React, { CSSProperties, ReactNode, useMemo, useRef } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import Icon from '~/components/Icon';
+
+const isIOS =
+  typeof navigator !== 'undefined' &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 type Variant = 'solid' | 'soft' | 'outline' | 'ghost';
 type Shape = 'rounded' | 'pill';
@@ -64,6 +68,11 @@ export default function Button(props: ButtonProps) {
     () => React.Children.toArray(children),
     [children]
   );
+
+  // iOS workaround: track if touch started on this button
+  // to fire onClick on touchend if click event doesn't fire
+  const touchStartedRef = useRef(false);
+  const clickFiredRef = useRef(false);
 
   // Resolve variant: 'solid' | 'soft' | 'outline' (ghost when transparent)
   const resolvedVariant: Variant = useMemo(() => {
@@ -252,9 +261,52 @@ export default function Button(props: ButtonProps) {
       disabled={isDisabled}
       style={{ ...style, ...(stretch ? { width: '100%' } : {}) }}
       className={`${cssClass} ${className} unselectable`}
-      onClick={isDisabled ? undefined : onClick}
+      onClick={
+        isDisabled
+          ? undefined
+          : (e) => {
+              clickFiredRef.current = true;
+              onClick(e);
+            }
+      }
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      // iOS workaround: After certain operations (like paste in textareas),
+      // iOS's click events can fail to fire. Use touch events as fallback.
+      onTouchStart={
+        isIOS && !isDisabled
+          ? () => {
+              touchStartedRef.current = true;
+              clickFiredRef.current = false;
+            }
+          : undefined
+      }
+      onTouchEnd={
+        isIOS && !isDisabled
+          ? () => {
+              // Only fire if touch started on this button and click hasn't fired
+              if (touchStartedRef.current && !clickFiredRef.current) {
+                // Small delay to let click fire if it will
+                setTimeout(() => {
+                  if (!clickFiredRef.current) {
+                    // Don't pass event - it would be stale/pooled by now
+                    onClick();
+                  }
+                  touchStartedRef.current = false;
+                }, 50);
+              } else {
+                touchStartedRef.current = false;
+              }
+            }
+          : undefined
+      }
+      onTouchCancel={
+        isIOS
+          ? () => {
+              touchStartedRef.current = false;
+            }
+          : undefined
+      }
     >
       {finalChildren}
       {loading && (
