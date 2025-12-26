@@ -36,9 +36,9 @@ const categoryObj: Record<string, any> = {
     filter: 'comment',
     orderBy: 'totalRewards'
   },
-  videos: {
-    filter: 'video',
-    orderBy: 'totalViewDuration'
+  dailyReflections: {
+    filter: 'dailyReflection',
+    orderBy: 'lastInteraction'
   }
 };
 
@@ -46,7 +46,6 @@ export default function Stories() {
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
-  const hideWatched = useKeyContext((v) => v.myState.hideWatched);
   const username = useKeyContext((v) => v.myState.username);
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
   const alertColorKey = alertRole.colorKey;
@@ -87,7 +86,6 @@ export default function Stories() {
   const [loadingNewFeeds, setLoadingNewFeeds] = useState(false);
   const categoryRef: React.RefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
-  const hideWatchedRef = useRef(null);
   const subFilterRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
 
@@ -145,34 +143,6 @@ export default function Stories() {
     onScrollToBottom: handleLoadMoreFeeds
   });
 
-  useEffect(() => {
-    if (
-      category === 'videos' &&
-      loaded &&
-      typeof hideWatchedRef.current === 'number' &&
-      hideWatchedRef.current !== hideWatched
-    ) {
-      filterVideos();
-    }
-
-    async function filterVideos() {
-      try {
-        const { data } = await loadFeeds({
-          order: 'desc',
-          filter: categoryObj.videos.filter,
-          orderBy: categoryObj.videos.orderBy
-        });
-        if (mountedRef.current && category === 'videos') {
-          onLoadFeeds(data);
-        }
-      } catch (error) {
-        console.error('Error filtering videos:', error);
-      }
-    }
-
-    hideWatchedRef.current = hideWatched;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hideWatched]);
 
   useEffect(() => {
     const maxRetries = 3;

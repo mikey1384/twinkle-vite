@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import SwitchButton from '~/components/Buttons/SwitchButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useAppContext, useKeyContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
 
 const allPostsLabel = 'All Posts';
 const subjectsLabel = 'Subjects';
@@ -13,8 +11,7 @@ const postsLabel = 'Posts';
 const newToOldLabel = 'New to Old';
 const oldToNewLabel = 'Old to New';
 const recommendedLabel = 'Recommended';
-const xpVideosLabel = 'XP Videos';
-const hideWatchedLabel = 'Hide Watched';
+const dailyReflectionsLabel = 'Daily Reflections';
 const categoryObj: Record<string, any> = {
   uploads: {
     label: postsLabel,
@@ -24,8 +21,8 @@ const categoryObj: Record<string, any> = {
   recommended: {
     label: recommendedLabel
   },
-  videos: {
-    label: xpVideosLabel
+  dailyReflections: {
+    label: dailyReflectionsLabel
   }
 };
 
@@ -44,73 +41,7 @@ export default function HomeFilter({
   setDisplayOrder: (arg0: string) => void;
   selectedFilter: string;
 }) {
-  const onToggleHideWatched = useAppContext(
-    (v) => v.user.actions.onToggleHideWatched
-  );
-  const toggleHideWatched = useAppContext(
-    (v) => v.requestHelpers.toggleHideWatched
-  );
-  const hideWatched = useKeyContext((v) => v.myState.hideWatched);
-  const userId = useKeyContext((v) => v.myState.userId);
   const [activeTab, setActiveTab] = useState('');
-  const filterRole = useRoleColor('filter', { fallback: 'logoBlue' });
-
-  const videoContainerTone = useMemo(() => {
-    const base = '#fff';
-    const border = 'var(--ui-border)';
-    const hoverBorder = 'var(--ui-border-strong)';
-    const label = '#0f172a';
-    const helper = 'rgba(71, 85, 105, 0.9)';
-    const icon = filterRole.getColor() || Color.logoBlue();
-    const shadow = 'none';
-    return {
-      base,
-      border,
-      hoverBorder,
-      label,
-      helper,
-      icon,
-      shadow
-    };
-  }, [filterRole]);
-
-  const videoContainerClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1.4rem;
-        width: 100%;
-        padding: 1.2rem 1.6rem;
-        border-radius: ${borderRadius};
-        border: 1px solid ${videoContainerTone.border};
-        background: ${videoContainerTone.base};
-        box-shadow: none;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        @media (max-width: ${mobileMaxWidth}) {
-          border-radius: 0;
-          border: 0;
-        }
-      `,
-    [videoContainerTone]
-  );
-
-  const videoInfoClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.8rem;
-        color: ${videoContainerTone.label};
-        .label {
-          font-weight: 700;
-          font-size: 1.4rem;
-        }
-      `,
-    [videoContainerTone]
-  );
 
   useEffect(() => {
     setActiveTab(category);
@@ -124,7 +55,7 @@ export default function HomeFilter({
           fontSize: '1.6rem'
         }}
       >
-        {['uploads', 'recommended', 'videos'].map((elem) => (
+        {['uploads', 'recommended', 'dailyReflections'].map((elem) => (
           <nav
             key={elem}
             className={activeTab === elem ? 'active' : ''}
@@ -139,7 +70,7 @@ export default function HomeFilter({
           </nav>
         ))}
       </FilterBar>
-      {(activeTab === 'uploads' || (category === 'videos' && userId)) && (
+      {activeTab === 'uploads' && (
         <nav
           style={{
             display: 'flex',
@@ -156,75 +87,54 @@ export default function HomeFilter({
               width: '100%'
             }}
           >
-            {category === 'uploads' && (
-              <FilterBar
-                style={{
-                  height: '5rem',
-                  fontSize: '1.6rem',
-                  marginBottom: 0
-                }}
-              >
-                {['all', 'subject'].map((type) => {
-                  const displayLabel =
-                    type === 'all' ? allPostsLabel : subjectsLabel;
-                  return (
-                    <nav
-                      key={type}
-                      className={selectedFilter === type ? 'active' : ''}
-                      onClick={() => applyFilter(type)}
-                    >
-                      {`${displayLabel
-                        .charAt(0)
-                        .toUpperCase()}${displayLabel.slice(1)}`}
-                    </nav>
-                  );
-                })}
-                <DropdownButton
-                  variant="solid"
-                  tone="raised"
-                  color="darkerGray"
-                  className={css`
-                    @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.2rem !important;
-                    }
-                  `}
-                  style={{ marginLeft: 'auto' }}
-                  icon="caret-down"
-                  text={categoryObj.uploads[displayOrder]}
-                  menuProps={[
-                    {
-                      label:
-                        displayOrder === 'desc'
-                          ? categoryObj.uploads['asc']
-                          : categoryObj.uploads['desc'],
-                      onClick: setDisplayOrder
-                    }
-                  ]}
-                />
-              </FilterBar>
-            )}
-            {category === 'videos' && (
-              <div className={videoContainerClass}>
-                {userId && (
-                  <div className={videoInfoClass}>
-                    <div className="label">{hideWatchedLabel}</div>
-                    <SwitchButton
-                      ariaLabel="Toggle hide watched videos"
-                      checked={!!hideWatched}
-                      onChange={handleToggleHideWatched}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+            <FilterBar
+              style={{
+                height: '5rem',
+                fontSize: '1.6rem',
+                marginBottom: 0
+              }}
+            >
+              {['all', 'subject'].map((type) => {
+                const displayLabel =
+                  type === 'all' ? allPostsLabel : subjectsLabel;
+                return (
+                  <nav
+                    key={type}
+                    className={selectedFilter === type ? 'active' : ''}
+                    onClick={() => applyFilter(type)}
+                  >
+                    {`${displayLabel
+                      .charAt(0)
+                      .toUpperCase()}${displayLabel.slice(1)}`}
+                  </nav>
+                );
+              })}
+              <DropdownButton
+                variant="solid"
+                tone="raised"
+                color="darkerGray"
+                className={css`
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.2rem !important;
+                  }
+                `}
+                style={{ marginLeft: 'auto' }}
+                icon="caret-down"
+                text={categoryObj.uploads[displayOrder]}
+                menuProps={[
+                  {
+                    label:
+                      displayOrder === 'desc'
+                        ? categoryObj.uploads['asc']
+                        : categoryObj.uploads['desc'],
+                    onClick: setDisplayOrder
+                  }
+                ]}
+              />
+            </FilterBar>
           </div>
         </nav>
       )}
     </ErrorBoundary>
   );
-
-  async function handleToggleHideWatched() {
-    const hideWatched = await toggleHideWatched();
-    onToggleHideWatched(hideWatched);
-  }
 }
