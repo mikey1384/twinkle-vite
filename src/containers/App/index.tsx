@@ -382,21 +382,26 @@ export default function App() {
   }, [twinkleXP, twinkleCoins, userId]);
 
   useEffect(() => {
+    const token = auth()?.headers?.authorization;
+    const prevToken = authRef.current?.headers?.authorization;
+
     if (!achievementsObj || Object.keys(achievementsObj).length === 0) {
       initAchievements();
     }
-    if (!auth()?.headers?.authorization && !signinModalShown) {
-      onLogout();
-      socket.emit('ai_end_ai_voice_conversation');
-      onResetChat(userId);
-      onSetSessionLoaded();
-    } else {
-      if (
-        auth()?.headers?.authorization ===
-        authRef.current?.headers?.authorization
-      ) {
+    if (!token) {
+      // Clear authRef so next login triggers handleInit even if token is the same
+      authRef.current = null;
+      if (!signinModalShown) {
+        onLogout();
+        socket.emit('ai_end_ai_voice_conversation');
+        onResetChat(userId);
         onSetSessionLoaded();
-      } else if (authRef.current?.headers?.authorization) {
+      }
+    } else {
+      if (token === prevToken) {
+        onSetSessionLoaded();
+      } else {
+        // Token exists and is different from previous (including first load where prevToken is undefined)
         handleInit();
       }
       authRef.current = auth();

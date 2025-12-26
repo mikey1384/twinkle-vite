@@ -79,7 +79,7 @@ export default function VerificationInput({
             text-decoration: underline;
           }
         `}
-      >{`Didn't receive an email? Tap here to retry`}</p>
+      >{`Didn't receive an email? Make sure your email is correct and that your inbox isn't full. Tap here and we'll resend the email.`}</p>
     </ErrorBoundary>
   );
 

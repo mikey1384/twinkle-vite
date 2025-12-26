@@ -355,10 +355,6 @@ export default function useInitSocket({
           (result?: { authError?: boolean }) => {
             if (result?.authError) {
               // Token is invalid (e.g., password was changed)
-              // Trigger logout by reloading the page - the invalid token will cause logout
-              console.log(
-                '[bind_uid_to_socket] Auth error - token invalid, reloading'
-              );
               window.location.reload();
               return;
             }
@@ -660,7 +656,6 @@ export default function useInitSocket({
         { userId, username, profilePicUrl, token },
         (result?: { authError?: boolean }) => {
           if (result?.authError) {
-            console.log('[userId change] Auth error - token invalid, reloading');
             window.location.reload();
             return;
           }
