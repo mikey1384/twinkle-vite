@@ -137,6 +137,10 @@ export default function Stories() {
     subFilterRef.current = subFilter;
   }, [subFilter]);
 
+  useEffect(() => {
+    categoryRef.current = category;
+  }, [category]);
+
   useInfiniteScroll({
     scrollable: feeds?.length > 0 && !loadingMoreRef.current,
     feedsLength: feeds?.length,
@@ -448,10 +452,11 @@ export default function Stories() {
         if (data) {
           onResetNumNewPosts();
           onChangeSubFilter('all');
+          const currentCategory = categoryRef.current;
           if (
-            category !== 'uploads' ||
+            currentCategory !== 'uploads' ||
             displayOrder === 'asc' ||
-            (category === 'uploads' && subFilter === 'subject')
+            (currentCategory === 'uploads' && subFilterRef.current === 'subject')
           ) {
             categoryRef.current = 'uploads';
             onChangeCategory('uploads');
