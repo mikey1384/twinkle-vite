@@ -258,21 +258,6 @@ export default function DailyQuestionPanel({
     const requestId = Date.now();
     const currentRequestRef = { id: requestId, cancelled: false };
 
-    // Fallback progress in case socket events don't arrive
-    // This ensures user sees activity even without socket connection
-    const fallbackTimer = setTimeout(() => {
-      if (!currentRequestRef.cancelled && isMountedRef.current) {
-        setLoadingMessage('Generating your question...');
-        setLoadingProgress(30);
-      }
-    }, 2000);
-
-    const fallbackTimer2 = setTimeout(() => {
-      if (!currentRequestRef.cancelled && isMountedRef.current) {
-        setLoadingProgress(60);
-      }
-    }, 5000);
-
     async function loadDailyQuestion() {
       try {
         const data = await getDailyQuestionRef.current();
@@ -327,8 +312,6 @@ export default function DailyQuestionPanel({
 
     return () => {
       currentRequestRef.cancelled = true;
-      clearTimeout(fallbackTimer);
-      clearTimeout(fallbackTimer2);
     };
   }, [userId]);
 
