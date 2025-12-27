@@ -55,6 +55,9 @@ export default function Textarea({
   const rafIdRef = useRef<number | null>(null);
   const isPastingRef = useRef(false);
   const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastValueRef = useRef<string | undefined>(undefined);
+  const allowShrinkRef = useRef(false);
   const cachedStylesRef = useRef<{
     padding: number;
     lineHeight: number;
@@ -104,10 +107,11 @@ export default function Textarea({
     // On iOS while focused, avoid the height=0 measurement trick - it causes layout
     // thrashing and scroll jumps. Just check if content overflows.
     // On desktop, we can do full resize even while focused.
+    // Exception: Allow full resize on iOS if allowShrinkRef is true (idle timer expired or value cleared)
     const isFocused = document.activeElement === el;
-    if (isIOS && isFocused) {
+    if (isIOS && isFocused && !allowShrinkRef.current) {
       const currentHeight = el.offsetHeight;
-      // Only grow while typing on iOS, shrink happens on blur
+      // Only grow while typing on iOS, shrink happens on blur or after idle timeout
       if (el.scrollHeight > currentHeight) {
         const maxHeight = maxRows ? lineHeight * maxRows + padding : Infinity;
         const nextHeight = Math.min(el.scrollHeight, maxHeight);
@@ -116,6 +120,8 @@ export default function Textarea({
       }
       return;
     }
+    // Reset allowShrink after using it
+    allowShrinkRef.current = false;
 
     // Non-iOS or not focused: use standard measurement
     el.style.minHeight = `${baseMinHeight}px`;
@@ -176,6 +182,15 @@ export default function Textarea({
 
   // Initial resize and value change handling
   useEffect(() => {
+    const currentValue = String(rest.value ?? '');
+    const previousValue = lastValueRef.current ?? '';
+
+    // On iOS: if value was cleared or shortened significantly, allow shrinking
+    if (isIOS && currentValue.length < previousValue.length) {
+      allowShrinkRef.current = true;
+    }
+
+    lastValueRef.current = currentValue;
     scheduleResize(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -224,6 +239,7 @@ export default function Textarea({
     return () => {
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
       if (resizeTimeoutRef.current) clearTimeout(resizeTimeoutRef.current);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       ro?.disconnect();
       if (fallbackHandler) {
         window.removeEventListener('orientationchange', fallbackHandler);
@@ -313,10 +329,28 @@ export default function Textarea({
           if (!isPastingRef.current) {
             scheduleResize(false);
           }
+
+          // iOS idle timer: after 3 seconds of no typing, allow shrinking
+          if (isIOS) {
+            if (idleTimerRef.current) {
+              clearTimeout(idleTimerRef.current);
+            }
+            idleTimerRef.current = setTimeout(() => {
+              allowShrinkRef.current = true;
+              scheduleResize(true);
+            }, 3000);
+          }
+
           if (rest.onInput) (rest.onInput as any)(e);
         }}
         onBlur={(e) => {
+          // Clear idle timer on blur
+          if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+            idleTimerRef.current = null;
+          }
           // Do a full resize when focus leaves to handle shrinking
+          allowShrinkRef.current = true;
           scheduleResize(true);
           if (rest.onBlur) (rest.onBlur as any)(e);
         }}
