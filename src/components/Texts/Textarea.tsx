@@ -185,8 +185,9 @@ export default function Textarea({
     const currentValue = String(rest.value ?? '');
     const previousValue = lastValueRef.current ?? '';
 
-    // On iOS: if value was cleared or shortened significantly, allow shrinking
-    if (isIOS && currentValue.length < previousValue.length) {
+    // On iOS: only allow immediate shrinking when value is CLEARED (submission)
+    // Normal character deletion should wait for idle timer
+    if (isIOS && previousValue.length > 0 && currentValue.length === 0) {
       allowShrinkRef.current = true;
     }
 
