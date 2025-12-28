@@ -2339,6 +2339,28 @@ export default function ChatReducer(
         }
       };
     }
+    case 'UPDATE_AI_GENERATED_FILE': {
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...state.channelsObj[action.channelId],
+            messagesObj: {
+              ...state.channelsObj[action.channelId]?.messagesObj,
+              [action.messageId]: {
+                ...state.channelsObj[action.channelId]?.messagesObj?.[
+                  action.messageId
+                ],
+                fileName: action.fileName,
+                filePath: action.filePath,
+                fileSize: action.fileSize
+              }
+            }
+          }
+        }
+      };
+    }
     case 'UPDATE_LAST_USED_FILES': {
       const channel = state.channelsObj[action.channelId] || ({} as any);
       const fileList = action.topicId

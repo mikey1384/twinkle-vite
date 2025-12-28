@@ -1,11 +1,4 @@
-import React, {
-  memo,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  useMemo
-} from 'react';
+import React, { memo, useContext, useCallback, useMemo } from 'react';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -35,6 +28,7 @@ function TextMessage({
   extractedUrl,
   isCielMessage,
   isCallMsg,
+  isCurrentlyStreaming,
   isNotification,
   isReloadedSubject,
   isSubject,
@@ -63,6 +57,7 @@ function TextMessage({
   extractedUrl: string;
   isCielMessage?: boolean;
   isCallMsg: boolean;
+  isCurrentlyStreaming?: boolean;
   isNotification: boolean;
   isReloadedSubject: boolean;
   isSubject: boolean;
@@ -86,27 +81,45 @@ function TextMessage({
     actions: { onHideAttachment }
   } = useContext(LocalContext);
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const isContentContainsLink = useMemo(() => {
     return regex.test(content);
   }, [content]);
 
-  useEffect(() => {
-    let timeout: any;
-    if (content) {
-      setIsLoading(false);
+  // Show full indicator when AI message has no content yet
+  const showFullIndicator = useMemo(
+    () => isAIMessage && !content && (isLastMsg || isCurrentlyStreaming),
+    [isAIMessage, content, isLastMsg, isCurrentlyStreaming]
+  );
+
+  // Show compact indicator when content exists but there's an active tool/thinking status
+  const showCompactIndicator = useMemo(() => {
+    if (!isAIMessage || !content) return false;
+
+    // Show compact indicator for tool statuses only (not 'responding' which means text is streaming)
+    const toolStatuses = [
+      'thinking',
+      'thinking_hard',
+      'searching_web',
+      'analyzing_code',
+      'saving_file',
+      'reading_file',
+      'reading',
+      'recalling',
+      'retrieving_memory'
+    ];
+
+    // 'responding' means text is actively streaming - don't show indicator
+    if (
+      !aiThinkingStatus ||
+      aiThinkingStatus === 'responding' ||
+      !toolStatuses.includes(aiThinkingStatus)
+    ) {
+      return false;
     }
-    if (isAIMessage && !content && isLastMsg) {
-      setIsLoading(true);
-      timeout = setTimeout(() => {
-        setIsLoading(false);
-      }, 300000);
-    }
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [isAIMessage, isLastMsg, content]);
+
+    // Show for currently streaming OR last message (status updates continue after streaming ends)
+    return isCurrentlyStreaming || isLastMsg;
+  }, [isAIMessage, content, isCurrentlyStreaming, isLastMsg, aiThinkingStatus]);
 
   const Prefix = useMemo(() => {
     let prefix = null;
@@ -174,7 +187,7 @@ function TextMessage({
           <>
             <div className={MessageStyle.messageWrapper}>
               <div>{Prefix}</div>
-              {isLoading ? (
+              {showFullIndicator ? (
                 <ThinkingIndicator
                   status={aiThinkingStatus}
                   thoughtContent={aiThoughtContent}
@@ -186,24 +199,29 @@ function TextMessage({
               ) : isSpoiler ? (
                 <Spoiler content={content} />
               ) : stringIsEmpty(content) ? null : (
-                <RichText
-                  isAIMessage={isAIMessage}
-                  voice={isCielMessage ? 'nova' : ''}
-                  readMoreHeightFixed
-                  contentId={richTextId}
-                  contentType="chat"
-                  section="main"
-                  theme={displayedThemeColor}
-                  maxLines={isAIMessage ? 5000 : undefined}
-                  style={{
-                    marginTop: isSubject ? '0.5rem' : 0,
-                    marginBottom: isSubject ? '0.5rem' : 0,
-                    color:
-                      isNotification || isCallMsg ? Color.gray() : undefined
-                  }}
-                >
-                  {(content || '').trimEnd()}
-                </RichText>
+                <>
+                  <RichText
+                    isAIMessage={isAIMessage}
+                    voice={isCielMessage ? 'nova' : ''}
+                    readMoreHeightFixed
+                    contentId={richTextId}
+                    contentType="chat"
+                    section="main"
+                    theme={displayedThemeColor}
+                    maxLines={isAIMessage ? 5000 : undefined}
+                    style={{
+                      marginTop: isSubject ? '0.5rem' : 0,
+                      marginBottom: isSubject ? '0.5rem' : 0,
+                      color:
+                        isNotification || isCallMsg ? Color.gray() : undefined
+                    }}
+                  >
+                    {(content || '').trimEnd()}
+                  </RichText>
+                  {showCompactIndicator && (
+                    <ThinkingIndicator status={aiThinkingStatus} compact />
+                  )}
+                </>
               )}
             </div>
             {!!isReloadedSubject && !!numMsgs && numMsgs > 0 && (

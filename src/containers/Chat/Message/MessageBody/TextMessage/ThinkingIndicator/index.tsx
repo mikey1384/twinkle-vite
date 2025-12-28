@@ -13,18 +13,48 @@ export interface ThinkingIndicatorProps {
   thoughtContent?: string;
   isStreamingThoughts?: boolean;
   isThinkingHard?: boolean;
+  compact?: boolean;
 }
 
 export default function ThinkingIndicator({
   status,
   thoughtContent,
   isStreamingThoughts,
-  isThinkingHard
+  isThinkingHard,
+  compact
 }: ThinkingIndicatorProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   useAutoFollow(scrollRef, !!isStreamingThoughts);
 
   const { text, color } = metaFor(status);
+
+  if (compact) {
+    return (
+      <div
+        className={css`
+          margin-top: 1rem;
+          padding: 0.6rem 1rem;
+          background: ${Color.wellGray(0.15)};
+          border-radius: 8px;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.6rem;
+        `}
+      >
+        <StatusIcon status={status} size="small" />
+        <span
+          className={css`
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: ${color};
+          `}
+        >
+          {text}
+        </span>
+        {status !== 'thinking_complete' && <StatusDots color={color} small />}
+      </div>
+    );
+  }
 
   return (
     <div

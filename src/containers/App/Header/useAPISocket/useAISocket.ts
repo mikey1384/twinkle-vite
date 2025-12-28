@@ -34,6 +34,9 @@ export default function useAISocket({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onUpdateAIGeneratedFile = useChatContext(
+    (v) => v.actions.onUpdateAIGeneratedFile
+  );
 
   // Refs for frequently changing values
   const selectedChannelIdRef = useRef(selectedChannelId);
@@ -177,6 +180,7 @@ export default function useAISocket({
     socket.on('grammar_generation_progress_update', handleGrammarProgress);
     socket.on('subtitle_translation_progress_update', handleSubtitleProgress);
     socket.on('subtitle_merge_progress_update', handleSubtitleMergeProgress);
+    socket.on('ai_file_generated', handleAIFileGenerated);
 
     return function cleanUp() {
       socket.off('ai_realtime_audio', handleOpenAIAudio);
@@ -200,6 +204,7 @@ export default function useAISocket({
         handleSubtitleProgress
       );
       socket.off('subtitle_merge_progress_update', handleSubtitleMergeProgress);
+      socket.off('ai_file_generated', handleAIFileGenerated);
     };
 
     function handleSubtitleProgress(data: {
@@ -457,6 +462,28 @@ export default function useAISocket({
         newStats: {
           aiCallDuration: totalDuration
         }
+      });
+    }
+
+    function handleAIFileGenerated({
+      channelId,
+      messageId,
+      file
+    }: {
+      channelId: number;
+      messageId: number;
+      file: {
+        fileName: string;
+        filePath: string;
+        fileSize: number;
+      };
+    }) {
+      onUpdateAIGeneratedFile({
+        channelId,
+        messageId,
+        fileName: file.fileName,
+        filePath: file.filePath,
+        fileSize: file.fileSize
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

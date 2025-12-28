@@ -57,13 +57,17 @@ export default function ContentFileViewer({
     () => getFileInfoFromFileName(fileName || ''),
     [fileName]
   );
-  const src = useMemo(
-    () =>
-      `${cloudFrontURL}/attachments/${
-        isDisplayedOnHome ? 'feed' : contentType
-      }/${filePath}/${encodeURIComponent(fileName || '')}`,
-    [contentType, fileName, filePath, isDisplayedOnHome]
-  );
+  const src = useMemo(() => {
+    // Handle AI-generated files which have a different path structure
+    if (filePath.startsWith('ai-generated/')) {
+      return `${cloudFrontURL}/attachments/${filePath}/${encodeURIComponent(
+        fileName || ''
+      )}`;
+    }
+    return `${cloudFrontURL}/attachments/${
+      isDisplayedOnHome ? 'feed' : contentType
+    }/${filePath}/${encodeURIComponent(fileName || '')}`;
+  }, [contentType, fileName, filePath, isDisplayedOnHome]);
 
   return (
     <ErrorBoundary componentPath="ContentFileViewer/index">

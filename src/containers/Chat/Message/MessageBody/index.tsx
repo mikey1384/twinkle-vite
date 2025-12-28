@@ -695,9 +695,16 @@ function MessageBody({
     [timeStamp]
   );
 
+  const isCurrentlyStreaming = useMemo(
+    () =>
+      currentChannel?.currentlyStreamingAIMsgId &&
+      currentChannel.currentlyStreamingAIMsgId === messageId,
+    [currentChannel?.currentlyStreamingAIMsgId, messageId]
+  );
+
   const dropdownButtonShown = useMemo(
-    () => dropdownMenuItems?.length > 0,
-    [dropdownMenuItems?.length]
+    () => dropdownMenuItems?.length > 0 && !isCurrentlyStreaming,
+    [dropdownMenuItems?.length, isCurrentlyStreaming]
   );
 
   const isMenuButtonsAllowed = useMemo(
@@ -1198,6 +1205,7 @@ function MessageBody({
                       displayedThemeColor={displayedThemeColor}
                       extractedUrl={extractedUrl}
                       isAIMessage={isAIMessage}
+                      isCurrentlyStreaming={isCurrentlyStreaming}
                       messageId={messageId}
                       numMsgs={numMsgs}
                       isCielMessage={isCielMessage}

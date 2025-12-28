@@ -56,6 +56,7 @@ function RightMenu({
         className={css`
           flex-grow: 1;
           width: 10vw;
+          min-width: 0;
           height: 100%;
           position: relative;
           background: #fff;
@@ -63,6 +64,7 @@ function RightMenu({
           display: flex;
           flex-direction: column;
           max-height: 100vh;
+          overflow-x: hidden;
           overflow-y: ${
             chatType === AI_CARD_CHAT_TYPE
               ? 'hidden'

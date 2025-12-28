@@ -1,6 +1,11 @@
 import { Color } from '~/constants/css';
 
 export const STATUS_META = {
+  thinking: {
+    text: 'Thinking...',
+    icon: 'lightbulb',
+    color: Color.gray()
+  },
   thinking_hard: {
     text: 'Thinking Hard...',
     icon: 'brain',
@@ -30,6 +35,11 @@ export const STATUS_META = {
     text: 'Searching the web...',
     icon: 'search',
     color: Color.pink()
+  },
+  saving_file: {
+    text: 'Saving file...',
+    icon: 'download',
+    color: Color.logoGreen()
   },
   reading: {
     text: 'Reading and thinking...',

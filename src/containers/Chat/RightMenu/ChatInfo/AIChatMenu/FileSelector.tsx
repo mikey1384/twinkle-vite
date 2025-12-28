@@ -105,6 +105,8 @@ export default function FileSelector({
         border-top: 1px solid var(--ui-border);
         padding: 1rem 0;
         width: 100%;
+        min-width: 0;
+        overflow: hidden;
       `}
     >
       <div
@@ -141,6 +143,8 @@ export default function FileSelector({
         className={css`
           margin-top: 1rem;
           margin-bottom: 1rem;
+          min-width: 0;
+          overflow: hidden;
         `}
       >
         <div
@@ -151,6 +155,7 @@ export default function FileSelector({
             padding: 0.5rem;
             height: 100px;
             overflow-y: auto;
+            overflow-x: hidden;
             font-family: 'Courier New', Courier, monospace;
             color: #00ff00;
             font-size: 1.1rem;
@@ -205,9 +210,13 @@ export default function FileSelector({
                     onClick={() => handleFileSelect(file)}
                     className={css`
                       cursor: pointer;
-                      flex-grow: 1;
+                      flex: 1;
+                      min-width: 0;
                       display: flex;
                       align-items: center;
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
                       &:hover {
                         color: #00ff00;
                       }
@@ -219,18 +228,28 @@ export default function FileSelector({
                           color: #00ff00;
                           margin-right: 0.5rem;
                           font-weight: bold;
+                          flex-shrink: 0;
                         `}
                       >
                         ●
                       </span>
                     )}
-                    {`> ${displayedFileName}`}
+                    <span
+                      className={css`
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                      `}
+                    >
+                      {`> ${displayedFileName}`}
+                    </span>
                     {isMostRecentlyUsed && (
                       <span
                         className={css`
                           color: #00aa00;
                           margin-left: 0.5rem;
                           font-size: 0.9rem;
+                          flex-shrink: 0;
                         `}
                       >
                         [ACTIVE]
@@ -242,6 +261,7 @@ export default function FileSelector({
                       transition: opacity 0.2s;
                       margin-left: 1rem;
                       color: #00aa00;
+                      flex-shrink: 0;
                     `}
                   >
                     <span

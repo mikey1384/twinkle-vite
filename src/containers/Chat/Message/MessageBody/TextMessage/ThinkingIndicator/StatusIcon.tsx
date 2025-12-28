@@ -6,10 +6,15 @@ import { pulseAnimation } from '~/components/StreamingThoughtContent/animations'
 
 interface StatusIconProps {
   status?: string;
+  size?: 'small' | 'normal';
 }
 
-export default function StatusIcon({ status }: StatusIconProps) {
+export default function StatusIcon({
+  status,
+  size = 'normal'
+}: StatusIconProps) {
   const { icon, color } = metaFor(status);
+  const isSmall = size === 'small';
 
   return (
     <div
@@ -17,12 +22,12 @@ export default function StatusIcon({ status }: StatusIconProps) {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: ${isSmall ? '20px' : '32px'};
+        height: ${isSmall ? '20px' : '32px'};
         border-radius: 50%;
         background: ${color};
         color: #fff;
-        font-size: 1.4rem;
+        font-size: ${isSmall ? '1rem' : '1.4rem'};
         animation: ${status === 'thinking_complete' ? 'none' : pulseAnimation}
           2s infinite;
         z-index: 1;

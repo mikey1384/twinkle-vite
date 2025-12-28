@@ -41,13 +41,17 @@ export default function FileAttachment({
     () => getFileInfoFromFileName(fileName),
     [fileName]
   );
-  const src = useMemo(
-    () =>
-      `${cloudFrontURL}/attachments/chat/${filePath}/${encodeURIComponent(
+  const src = useMemo(() => {
+    // Handle AI-generated files which have a different path structure
+    if (filePath.startsWith('ai-generated/')) {
+      return `${cloudFrontURL}/attachments/${filePath}/${encodeURIComponent(
         fileName
-      )}`,
-    [fileName, filePath]
-  );
+      )}`;
+    }
+    return `${cloudFrontURL}/attachments/chat/${filePath}/${encodeURIComponent(
+      fileName
+    )}`;
+  }, [fileName, filePath]);
   const [imageWorks, setImageWorks] = useState(true);
 
   useEffect(() => {

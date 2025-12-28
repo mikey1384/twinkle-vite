@@ -123,6 +123,7 @@ function AIChatMenu({
           ? 'CALC(100% - 11.9rem)'
           : 'CALC(100% - 5.8rem)'};
         width: 100%;
+        min-width: 0;
         border-top: 1px solid var(--ui-border);
         padding: 1rem 1rem 0 1rem;
         background-color: #fff;
@@ -131,6 +132,7 @@ function AIChatMenu({
         margin: 0 auto;
         display: grid;
         grid-template-rows: auto 1fr;
+        overflow: hidden;
         @media (max-width: ${mobileMaxWidth}) {
           height: ${isCallButtonShown
             ? 'CALC(100% - 10.9rem)'

@@ -78,6 +78,28 @@ export default function ChatActions(dispatch: Dispatch) {
         isThinkingHard
       });
     },
+    onUpdateAIGeneratedFile({
+      channelId,
+      messageId,
+      fileName,
+      filePath,
+      fileSize
+    }: {
+      channelId: number;
+      messageId: number;
+      fileName: string;
+      filePath: string;
+      fileSize: number;
+    }) {
+      return dispatch({
+        type: 'UPDATE_AI_GENERATED_FILE',
+        channelId,
+        messageId,
+        fileName,
+        filePath,
+        fileSize
+      });
+    },
     onDeleteAIChatFile({
       channelId,
       topicId,
