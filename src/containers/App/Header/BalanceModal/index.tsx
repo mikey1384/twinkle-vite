@@ -23,7 +23,8 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   );
   const [changes, setChanges] = useState<any[]>([]);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [currentBalance, setCurrentBalance] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
       setLoading(true);
       try {
         const { totalCoins, changes, loadMoreShown } = await loadCoinHistory();
+        setCurrentBalance(totalCoins);
         onSetUserState({ userId, newState: { twinkleCoins: totalCoins } });
         setChanges(changes);
         setLoadMoreShown(loadMoreShown);
@@ -103,7 +105,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
         >
           <p style={{ color: Color.black() }}>Current Balance</p>
           <p style={{ color: Color.darkerGray() }}>
-            {addCommasToNumber(twinkleCoins)}
+            {addCommasToNumber(currentBalance ?? twinkleCoins)}
           </p>
         </div>
         {loading ? (
@@ -140,11 +142,12 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
                     return acc + v.amount;
                   }
                 }, 0);
+              const balance = currentBalance ?? twinkleCoins;
               return (
                 <ChangeListItem
                   key={change.id}
                   change={change}
-                  balance={twinkleCoins + accumulatedChanges}
+                  balance={balance + accumulatedChanges}
                 />
               );
             })}
