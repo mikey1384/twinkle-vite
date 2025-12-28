@@ -13,7 +13,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useInfiniteScroll } from '~/helpers/hooks';
 import {
   useAppContext,
-  useContentContext,
   useHomeContext,
   useNotiContext,
   useKeyContext
@@ -47,7 +46,6 @@ export default function Stories() {
   const loadingMoreRef = useRef(false);
   const loadFeeds = useAppContext((v) => v.requestHelpers.loadFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
-  const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const username = useKeyContext((v) => v.myState.username);
   const alertRole = useRoleColor('alert', { fallback: 'gold' });
   const alertColorKey = alertRole.colorKey;
@@ -168,14 +166,8 @@ export default function Stories() {
         onChangeSubFilter('all');
         onResetNumNewPosts();
 
-        const { data } = await loadFeeds({ isRecommended: true, includeContent: true });
+        const { data } = await loadFeeds({ isRecommended: true });
         if (mountedRef.current) {
-          // Initialize content for feeds that have full data (from includeContent=true)
-          for (const feed of data.feeds || []) {
-            if (feed.uploader) {
-              onInitContent({ ...feed, loaded: true });
-            }
-          }
           onLoadFeeds(data);
         }
       } catch (error: any) {
@@ -388,7 +380,6 @@ export default function Stories() {
         order: displayOrder,
         orderBy: categoryObj[category].orderBy,
         isRecommended: categoryObj[category].isRecommended,
-        includeContent: categoryObj[category].isRecommended,
         lastFeedId,
         lastRewardLevel:
           feeds?.length > 0 ? feeds[feeds?.length - 1].rewardLevel : null,
@@ -397,12 +388,6 @@ export default function Stories() {
         lastViewDuration:
           feeds?.length > 0 ? feeds[feeds?.length - 1].totalViewDuration : null
       });
-      // Initialize content for feeds with full data
-      for (const feed of data.feeds || []) {
-        if (feed.uploader) {
-          onInitContent({ ...feed, loaded: true });
-        }
-      }
       onLoadMoreFeeds(data);
     } catch (error) {
       console.error(error);
@@ -431,20 +416,13 @@ export default function Stories() {
           order: 'desc',
           filter: categoryObj[newCategory].filter,
           orderBy: categoryObj[newCategory].orderBy,
-          isRecommended: categoryObj[newCategory].isRecommended,
-          includeContent: categoryObj[newCategory].isRecommended
+          isRecommended: categoryObj[newCategory].isRecommended
         });
 
         if (
           loadedFilter === categoryObj[categoryRef.current].filter &&
           categoryRef.current === newCategory
         ) {
-          // Initialize content for feeds with full data
-          for (const feed of data.feeds || []) {
-            if (feed.uploader) {
-              onInitContent({ ...feed, loaded: true });
-            }
-          }
           onLoadFeeds(data);
           onSetDisplayOrder('desc');
           success = true;

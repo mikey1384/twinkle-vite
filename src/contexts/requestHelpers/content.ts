@@ -642,7 +642,6 @@ export default function contentRequestHelpers({
       lastRewardLevel,
       lastViewDuration,
       isRecommended,
-      includeContent,
       filter = 'all',
       order = 'desc',
       orderBy = 'lastInteraction',
@@ -653,7 +652,6 @@ export default function contentRequestHelpers({
       lastRewardLevel?: number;
       lastViewDuration?: number;
       isRecommended?: boolean;
-      includeContent?: boolean;
       filter?: string;
       order?: string;
       orderBy?: string;
@@ -663,8 +661,6 @@ export default function contentRequestHelpers({
         const { data } = await request.get(
           `${URL}/content/feeds?filter=${filter}&username=${username}&order=${order}&orderByLabel=${orderBy}${
             isRecommended ? `&isRecommended=1` : ''
-          }${
-            includeContent ? `&includeContent=1` : ''
           }${
             lastFeedId
               ? `&lastFeedId=${lastFeedId}&lastTimeStamp=${lastTimeStamp}&lastRewardLevel=${lastRewardLevel}&lastViewDuration=${lastViewDuration}`
