@@ -174,6 +174,15 @@ export default function Stories() {
           for (const feed of data.feeds || []) {
             if (feed.uploader) {
               onInitContent({ ...feed, loaded: true });
+              // Also initialize rootObj so ContentPanel can find it via useContentState
+              if (feed.rootObj && feed.rootType && feed.rootId) {
+                onInitContent({
+                  ...feed.rootObj,
+                  contentType: feed.rootType,
+                  contentId: feed.rootId,
+                  loaded: true
+                });
+              }
             }
           }
           onLoadFeeds(data);
@@ -401,6 +410,15 @@ export default function Stories() {
       for (const feed of data.feeds || []) {
         if (feed.uploader) {
           onInitContent({ ...feed, loaded: true });
+          // Also initialize rootObj so ContentPanel can find it via useContentState
+          if (feed.rootObj && feed.rootType && feed.rootId) {
+            onInitContent({
+              ...feed.rootObj,
+              contentType: feed.rootType,
+              contentId: feed.rootId,
+              loaded: true
+            });
+          }
         }
       }
       onLoadMoreFeeds(data);
@@ -443,6 +461,15 @@ export default function Stories() {
           for (const feed of data.feeds || []) {
             if (feed.uploader) {
               onInitContent({ ...feed, loaded: true });
+              // Also initialize rootObj so ContentPanel can find it via useContentState
+              if (feed.rootObj && feed.rootType && feed.rootId) {
+                onInitContent({
+                  ...feed.rootObj,
+                  contentType: feed.rootType,
+                  contentId: feed.rootId,
+                  loaded: true
+                });
+              }
             }
           }
           onLoadFeeds(data);
