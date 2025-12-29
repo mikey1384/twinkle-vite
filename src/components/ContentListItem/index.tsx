@@ -86,6 +86,7 @@ function ContentListItem({
     fileName,
     filePath,
     fileSize,
+    question,
     rewardLevel,
     siteUrl,
     story,
@@ -141,6 +142,7 @@ function ContentListItem({
               filePath={filePath}
               fileSize={fileSize}
               onClick={onClick}
+              question={question}
               rootType={rootContent.contentType}
               expandable={expandable}
               selected={selected}

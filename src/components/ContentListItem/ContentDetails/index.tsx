@@ -3,12 +3,14 @@ import VideoDetails from './VideoDetails';
 import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
+import DailyReflectionDetails from './DailyReflectionDetails';
 import { User } from '~/types';
 
 export default function ContentDetails({
   contentType,
   description = '',
   isListening,
+  question,
   story,
   title = '',
   uploader,
@@ -23,6 +25,7 @@ export default function ContentDetails({
   contentType: string;
   description?: string;
   isListening?: boolean;
+  question?: string;
   story?: string;
   title?: string;
   uploader: User;
@@ -61,6 +64,13 @@ export default function ContentDetails({
       )}
       {contentType === 'aiStory' && story && topic && (
         <AIStoryDetails isListening={isListening} topic={topic} story={story} />
+      )}
+      {contentType === 'dailyReflection' && (
+        <DailyReflectionDetails
+          description={description}
+          question={question}
+          uploader={uploader}
+        />
       )}
     </>
   );

@@ -22,6 +22,9 @@ export default function MainContentComponent({
     if (contentType === 'ai-storie') {
       return 'aiStory';
     }
+    if (contentType === 'daily-reflection') {
+      return 'dailyReflection';
+    }
     return contentType === 'link' ? 'url' : contentType;
   }, [contentType]);
   const contentState = useContentState({
@@ -88,6 +91,7 @@ export default function MainContentComponent({
     case 'subject':
     case 'comment':
     case 'aiStory':
+    case 'dailyReflection':
       return (
         <ContentListItem
           style={{ minWidth: displayIsMobile ? '100%' : '80%' }}

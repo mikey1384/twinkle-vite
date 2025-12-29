@@ -221,6 +221,7 @@ export default function RootContent({
   isListening,
   navigate,
   onClick,
+  question,
   rewardLevel,
   rootContent,
   rootRewardLevel,
@@ -254,6 +255,7 @@ export default function RootContent({
   modalOverModal?: boolean;
   navigate: (path: string) => void;
   onClick?: () => void;
+  question?: string;
   rewardLevel: number;
   rootContent?: any;
   rootRewardLevel?: number;
@@ -353,6 +355,7 @@ export default function RootContent({
         isListening={isListening}
         contentType={contentType}
         description={description}
+        question={question}
         story={story}
         topic={topic}
         title={title}
@@ -439,8 +442,10 @@ export default function RootContent({
         contentType === 'url'
           ? 'link'
           : contentType === 'aiStory'
-          ? 'ai-storie'
-          : contentType
+            ? 'ai-storie'
+            : contentType === 'dailyReflection'
+              ? 'daily-reflection'
+              : contentType
       }s/${contentId}`
     );
   }

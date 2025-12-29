@@ -27,7 +27,8 @@ export default function InternalComponent({
       'links',
       'subjects',
       'comments',
-      'ai-stories'
+      'ai-stories',
+      'daily-reflections'
     ];
     if (isProfileComponent) {
       return <DefaultComponent linkType={linkType} src={src} />;
