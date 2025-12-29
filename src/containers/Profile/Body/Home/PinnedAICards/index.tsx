@@ -4,7 +4,7 @@ import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
-import SelectAICardModal from '~/containers/Chat/Modals/TransactionModal/SelectAICardModal';
+import SelectAICardModal from '~/components/Modals/SelectAICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 
@@ -53,6 +53,7 @@ export default function PinnedAICards({
 
   useEffect(() => {
     setDisplayedCardIds(pinnedCardIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinnedCardIdsKey]);
 
   useEffect(() => {
@@ -85,7 +86,13 @@ export default function PinnedAICards({
     return () => {
       isMounted = false;
     };
-  }, [loadPinnedAICardsOnProfile, onUpdateAICard, pinnedCardIdsKey, profile.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    loadPinnedAICardsOnProfile,
+    onUpdateAICard,
+    pinnedCardIdsKey,
+    profile.id
+  ]);
 
   const hasPinnedCards = displayedCardIds.length > 0;
   const buttonLabel = isOwnProfile
@@ -158,9 +165,7 @@ export default function PinnedAICards({
   async function handlePinAICards(cardIds: number[]) {
     try {
       const data = await pinAICardsOnProfile({ cardIds });
-      const nextCardIds = Array.isArray(data?.cardIds)
-        ? data.cardIds
-        : cardIds;
+      const nextCardIds = Array.isArray(data?.cardIds) ? data.cardIds : cardIds;
       const nextState = {
         ...(profile.state || {}),
         profile: {

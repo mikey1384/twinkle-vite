@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
+import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
 
@@ -25,6 +27,7 @@ export default function CloneButtons({
   }) => void;
   style?: React.CSSProperties;
 }) {
+  const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const cloneSharedSystemPrompt = useAppContext(
     (v) => v.requestHelpers.cloneSharedSystemPrompt
@@ -32,6 +35,10 @@ export default function CloneButtons({
   const onSetThinkHardForTopic = useChatContext(
     (v) => v.actions.onSetThinkHardForTopic
   );
+  const onUpdateSelectedChannelId = useChatContext(
+    (v) => v.actions.onUpdateSelectedChannelId
+  );
+  const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const [submitting, setSubmitting] = useState<{ [key: string]: boolean }>({});
   const [error, setError] = useState('');
 
@@ -142,9 +149,8 @@ export default function CloneButtons({
           channelId: data.channelId,
           title: sharedTopicTitle || ''
         });
-      }
-      // Set thinkHard to false for the new topic
-      if (typeof data?.subjectId === 'number') {
+
+        // Set thinkHard to false for the new topic
         onSetThinkHardForTopic({
           aiType: target,
           topicId: data.subjectId,
@@ -165,6 +171,12 @@ export default function CloneButtons({
         } catch {
           // Ignore localStorage errors
         }
+
+        // Navigate to the topic chat
+        const pathId = Number(data.channelId) + Number(CHAT_ID_BASE_NUMBER);
+        onUpdateSelectedChannelId(data.channelId);
+        onEnterTopic({ channelId: data.channelId, topicId: data.subjectId });
+        navigate(`/chat/${pathId}/topic/${data.subjectId}`);
       }
     } catch (err: any) {
       setError(

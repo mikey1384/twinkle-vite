@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import Modal from '~/components/Modal';
+import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
@@ -126,15 +126,41 @@ export default function SelectAICardModal({
   const maxCards = Number.isFinite(maxSelectedCards)
     ? maxSelectedCards
     : Infinity;
-  const overLimit = selectedCardIds.length > maxCards;
+  const overLimit = selectedCardIds.length > (maxCards || 0);
   const doneLabel = overLimit
     ? `${selectedCardIds.length} cards selected. Maximum is ${maxCards}`
     : 'Done';
 
   return (
-    <Modal large wrapped modalOverModal onHide={onHide}>
-      <header>{headerLabel}</header>
-      <main>
+    <NewModal
+      isOpen
+      onClose={onHide}
+      size="xl"
+      title={headerLabel || 'AI Cards'}
+      footer={
+        <>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={
+              overLimit || (!allowEmptySelection && !selectedCardIds?.length)
+            }
+            color={doneColor}
+            onClick={() => {
+              onSelectDone(selectedCardIds);
+            }}
+          >
+            {doneLabel}
+          </Button>
+        </>
+      }
+    >
+      <div style={{ width: '100%' }}>
         {filterPanelShown && (
           <FilterPanel
             filters={filters}
@@ -213,21 +239,8 @@ export default function SelectAICardModal({
             onSetAICardModalCardId={onSetAICardModalCardId}
           />
         )}
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          disabled={overLimit || (!allowEmptySelection && !selectedCardIds?.length)}
-          color={doneColor}
-          onClick={() => {
-            onSelectDone(selectedCardIds);
-          }}
-        >
-          {doneLabel}
-        </Button>
-      </footer>
-    </Modal>
+        <div style={{ height: '2rem' }} />
+      </div>
+    </NewModal>
   );
 }

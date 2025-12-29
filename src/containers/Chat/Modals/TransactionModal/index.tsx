@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
-import SelectAICardModal from './SelectAICardModal';
+import SelectAICardModal from '../../../../components/Modals/SelectAICardModal';
 import SelectGroupsModal from './SelectGroupsModal';
 import ConfirmTransactionModal from './ConfirmTransactionModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
