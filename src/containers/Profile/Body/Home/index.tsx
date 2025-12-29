@@ -4,13 +4,21 @@ import Comments from '~/components/Comments';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Intro from './Intro';
-import Activities from './Activities';
+import FeaturedSubjects from './Activities/FeaturedSubjects';
+import NotableActivities from './Activities/NotableActivities';
+import XPAnalysis from './Activities/XPAnalysis';
+import MissionProgress from './Activities/MissionProgress';
 import Pictures from './Pictures';
 import PinnedAICards from './PinnedAICards';
 import ReorderSectionsModal from './ReorderSectionsModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useContentState } from '~/helpers/hooks';
-import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
+import { useContentState, useProfileState } from '~/helpers/hooks';
+import {
+  useAppContext,
+  useContentContext,
+  useKeyContext,
+  useProfileContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 const messageBoardLabel = 'Message Board';
@@ -19,14 +27,26 @@ const profileSectionKeys = [
   'intro',
   'pictures',
   'pinnedAICards',
-  'activities'
+  'featuredSubjects',
+  'notableActivities',
+  'xpAnalysis',
+  'missionProgress'
 ];
 const profileSectionLabels: Record<string, string> = {
   intro: 'Intro',
   pictures: 'Pictures',
   pinnedAICards: 'Pinned AI Cards',
-  activities: 'Activities'
+  featuredSubjects: 'Featured Subjects',
+  notableActivities: 'Notable Activities',
+  xpAnalysis: 'XP Analysis',
+  missionProgress: 'Mission Progress'
 };
+const legacyActivitySectionKeys = [
+  'featuredSubjects',
+  'notableActivities',
+  'xpAnalysis',
+  'missionProgress'
+];
 
 function normalizeSectionOrder(sectionOrder: any) {
   const allowed = new Set(profileSectionKeys);
@@ -35,6 +55,14 @@ function normalizeSectionOrder(sectionOrder: any) {
   if (Array.isArray(sectionOrder)) {
     for (const rawKey of sectionOrder) {
       const key = String(rawKey);
+      if (key === 'activities') {
+        for (const activityKey of legacyActivitySectionKeys) {
+          if (seen.has(activityKey)) continue;
+          seen.add(activityKey);
+          normalized.push(activityKey);
+        }
+        continue;
+      }
       if (!allowed.has(key) || seen.has(key)) continue;
       seen.add(key);
       normalized.push(key);
@@ -81,20 +109,54 @@ export default function Home({
   );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
+  const loadNotableContent = useAppContext(
+    (v) => v.requestHelpers.loadNotableContent
+  );
+  const loadFeaturedSubjectsOnProfile = useAppContext(
+    (v) => v.requestHelpers.loadFeaturedSubjectsOnProfile
+  );
+  const onLoadNotables = useProfileContext((v) => v.actions.onLoadNotables);
+  const onLoadFeaturedSubjects = useProfileContext(
+    (v) => v.actions.onLoadFeaturedSubjects
+  );
 
-  const { id, numPics, username, pictures } = profile;
+  const {
+    id,
+    numPics,
+    username,
+    pictures,
+    selectedMissionListTab,
+    missions,
+    missionsLoaded
+  } = profile;
+  const {
+    notables: {
+      feeds: notables,
+      loaded: isNotablesLoaded,
+      loadMoreButton: isNotablesLoadMoreButtonShown
+    },
+    subjects: { posts: featuredSubjects, loaded: isSubjectsLoaded }
+  } = useProfileState(username);
   const { comments, commentsLoaded, commentsLoadMoreButton, pinnedCommentId } =
     useContentState({
       contentType: 'user',
       contentId: profile.id
     });
   const [loadingComments, setLoadingComments] = useState(false);
+  const [isNotablesLoading, setIsNotablesLoading] = useState(false);
+  const [isSubjectsLoading, setIsSubjectsLoading] = useState(false);
   const [reorderModalShown, setReorderModalShown] = useState(false);
   const CommentInputAreaRef = useRef(null);
   const sectionOrder = useMemo(
     () => normalizeSectionOrder(profile?.state?.profile?.sectionOrder),
     [profile?.state?.profile?.sectionOrder]
   );
+  const isSubjectSectionShown = useMemo(() => {
+    if (profile.id === userId) {
+      return true;
+    }
+    return profile?.state?.profile?.subjects?.length > 0;
+  }, [profile.id, profile?.state?.profile?.subjects?.length, userId]);
   const sectionContentByKey: Record<string, React.ReactNode> = {
     intro: <Intro profile={profile} selectedTheme={selectedTheme} />,
     pictures: userId ? (
@@ -108,7 +170,36 @@ export default function Home({
     pinnedAICards: (
       <PinnedAICards profile={profile} selectedTheme={selectedTheme} />
     ),
-    activities: <Activities selectedTheme={selectedTheme} profile={profile} />
+    featuredSubjects: isSubjectSectionShown ? (
+      <FeaturedSubjects
+        userId={id}
+        username={username}
+        subjects={featuredSubjects}
+        selectedTheme={selectedTheme}
+        loading={isSubjectsLoading}
+      />
+    ) : null,
+    notableActivities: (
+      <NotableActivities
+        loading={isNotablesLoading}
+        loadMoreButtonShown={isNotablesLoadMoreButtonShown}
+        posts={notables}
+        username={username}
+        profile={profile}
+        selectedTheme={selectedTheme}
+      />
+    ),
+    xpAnalysis: <XPAnalysis userId={id} selectedTheme={selectedTheme} />,
+    missionProgress: (
+      <MissionProgress
+        missionsLoaded={missionsLoaded}
+        missions={missions || []}
+        userId={id}
+        username={username}
+        selectedTheme={selectedTheme}
+        selectedMissionListTab={selectedMissionListTab}
+      />
+    )
   };
 
   useEffect(() => {
@@ -136,6 +227,40 @@ export default function Home({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!isNotablesLoaded) {
+      initNotables();
+    }
+    if (!isSubjectsLoaded) {
+      initSubjects();
+    }
+    async function initNotables() {
+      setIsNotablesLoading(true);
+      try {
+        const { results, loadMoreButton } = await loadNotableContent({
+          userId: id
+        });
+        onLoadNotables({ username, feeds: results, loadMoreButton });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsNotablesLoading(false);
+      }
+    }
+    async function initSubjects() {
+      setIsSubjectsLoading(true);
+      try {
+        const subjects = await loadFeaturedSubjectsOnProfile(id);
+        onLoadFeaturedSubjects({ username, subjects });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsSubjectsLoading(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isNotablesLoaded, isSubjectsLoaded, username]);
 
   return (
     <ErrorBoundary
