@@ -398,6 +398,10 @@ export function useProfileState(username: string) {
     subjects = {
       posts: []
     },
+    pinnedAICards = {
+      cardIds: [],
+      loaded: false
+    },
     likes = {
       all: [],
       comments: [],
@@ -415,7 +419,15 @@ export function useProfileState(username: string) {
     },
     profileId
   } = userState;
-  return { likes, subjects, notables, posts, notExist, profileId };
+  return {
+    likes,
+    subjects,
+    pinnedAICards,
+    notables,
+    posts,
+    notExist,
+    profileId
+  };
 }
 
 export function useSearch({

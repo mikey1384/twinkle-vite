@@ -16,6 +16,10 @@ export default function ProfileReducer(
       loaded: false,
       loadMoreButton: false
     },
+    pinnedAICards: {
+      cardIds: [],
+      loaded: false
+    },
     likes: {
       ['ai-stories']: [],
       all: [],
@@ -110,6 +114,18 @@ export default function ProfileReducer(
             ...prevContentState.notables,
             feeds: action.feeds,
             loadMoreButton: action.loadMoreButton,
+            loaded: true
+          }
+        }
+      };
+    case 'LOAD_PINNED_AI_CARDS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          pinnedAICards: {
+            ...prevContentState.pinnedAICards,
+            cardIds: action.cardIds,
             loaded: true
           }
         }
@@ -253,6 +269,18 @@ export default function ProfileReducer(
           subjects: {
             ...prevContentState.subjects,
             posts: action.subjects
+          }
+        }
+      };
+    case 'SET_PINNED_AI_CARDS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          pinnedAICards: {
+            ...prevContentState.pinnedAICards,
+            cardIds: action.cardIds,
+            loaded: true
           }
         }
       };

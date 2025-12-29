@@ -31,6 +31,19 @@ export default function ProfileActions(dispatch: Dispatch) {
         username
       });
     },
+    onLoadPinnedAICards({
+      cardIds,
+      username
+    }: {
+      cardIds: number[];
+      username: string;
+    }) {
+      return dispatch({
+        type: 'LOAD_PINNED_AI_CARDS',
+        cardIds,
+        username
+      });
+    },
     onLoadMoreNotables({
       feeds,
       loadMoreButton,
@@ -177,6 +190,19 @@ export default function ProfileActions(dispatch: Dispatch) {
       return dispatch({
         type: 'SET_FEATURED_SUBJECTS',
         subjects,
+        username
+      });
+    },
+    onSetPinnedAICards({
+      cardIds,
+      username
+    }: {
+      cardIds: number[];
+      username: string;
+    }) {
+      return dispatch({
+        type: 'SET_PINNED_AI_CARDS',
+        cardIds,
         username
       });
     },

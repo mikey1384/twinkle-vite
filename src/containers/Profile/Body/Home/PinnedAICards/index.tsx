@@ -6,7 +6,13 @@ import AICardsPreview from '~/components/AICardsPreview';
 import AICardModal from '~/components/Modals/AICardModal';
 import SelectAICardModal from '~/components/Modals/SelectAICardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useProfileContext
+} from '~/contexts';
+import { useProfileState } from '~/helpers/hooks';
 
 const pinnedLabel = 'Pinned AI Cards';
 const editPinsLabel = 'Edit Pins';
@@ -24,6 +30,9 @@ export default function PinnedAICards({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const isOwnProfile = userId === profile.id;
+  const { pinnedAICards: cachedPinnedAICards } = useProfileState(
+    profile.username
+  );
   const loadPinnedAICardsOnProfile = useAppContext(
     (v) => v.requestHelpers.loadPinnedAICardsOnProfile
   );
@@ -31,6 +40,12 @@ export default function PinnedAICards({
     (v) => v.requestHelpers.pinAICardsOnProfile
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onLoadPinnedAICards = useProfileContext(
+    (v) => v.actions.onLoadPinnedAICards
+  );
+  const onSetPinnedAICards = useProfileContext(
+    (v) => v.actions.onSetPinnedAICards
+  );
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const [aiCardModalCardId, setAICardModalCardId] = useState<number | null>(
@@ -50,15 +65,49 @@ export default function PinnedAICards({
     () => pinnedCardIds.join(','),
     [pinnedCardIds]
   );
+  const cachedCardIds = useMemo(() => {
+    const ids = cachedPinnedAICards?.cardIds;
+    if (!Array.isArray(ids)) return [];
+    return ids
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id) && id > 0);
+  }, [cachedPinnedAICards?.cardIds]);
+  const cachedCardIdsKey = useMemo(
+    () => cachedCardIds.join(','),
+    [cachedCardIds]
+  );
+  const hasCachedPinnedCards =
+    cachedPinnedAICards?.loaded && cachedCardIdsKey === pinnedCardIdsKey;
 
   useEffect(() => {
+    if (hasCachedPinnedCards) {
+      setDisplayedCardIds(cachedCardIds);
+      return;
+    }
     setDisplayedCardIds(pinnedCardIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pinnedCardIdsKey]);
+  }, [
+    cachedCardIds,
+    cachedCardIdsKey,
+    hasCachedPinnedCards,
+    pinnedCardIds,
+    pinnedCardIdsKey
+  ]);
 
   useEffect(() => {
     let isMounted = true;
-    if (!profile?.id || pinnedCardIds.length === 0) {
+    if (!profile?.id) {
+      setLoading(false);
+      return;
+    }
+    if (pinnedCardIds.length === 0) {
+      setLoading(false);
+      if (!hasCachedPinnedCards) {
+        onLoadPinnedAICards({ username: profile.username, cardIds: [] });
+      }
+      return;
+    }
+    if (hasCachedPinnedCards) {
       setLoading(false);
       return;
     }
@@ -72,6 +121,10 @@ export default function PinnedAICards({
           ? data.cardIds
           : pinnedCardIds;
         setDisplayedCardIds(nextCardIds);
+        onLoadPinnedAICards({
+          username: profile.username,
+          cardIds: nextCardIds
+        });
         for (const card of data?.cards || []) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
@@ -88,10 +141,14 @@ export default function PinnedAICards({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    hasCachedPinnedCards,
     loadPinnedAICardsOnProfile,
+    onLoadPinnedAICards,
     onUpdateAICard,
+    pinnedCardIds,
     pinnedCardIdsKey,
-    profile.id
+    profile.id,
+    profile.username
   ]);
 
   const hasPinnedCards = displayedCardIds.length > 0;
@@ -177,6 +234,11 @@ export default function PinnedAICards({
         userId: profile.id,
         newState: { state: nextState }
       });
+      onSetPinnedAICards({
+        username: profile.username,
+        cardIds: nextCardIds
+      });
+      setDisplayedCardIds(nextCardIds);
       setSelectModalShown(false);
     } catch (error) {
       console.error(error);
