@@ -4,10 +4,12 @@ import ContentListItem from '~/components/ContentListItem';
 import SectionPanel from '~/components/SectionPanel';
 import SelectFeaturedSubjects from './SelectFeaturedSubjects';
 import ReorderFeaturedSubjects from './ReorderFeaturedSubjects';
-import Button from '~/components/Button';import { useProfileContext, useKeyContext } from '~/contexts';
+import Button from '~/components/Button';
+import { useProfileContext, useKeyContext } from '~/contexts';
 import { User } from '~/types';
 
-const noFeaturedSubjectsLabel = 'No Featured Subjects';
+const emptyOwnLabel = 'Feature your favorite subjects to show them here';
+const emptyVisitorLabel = 'No featured subjects yet';
 const selectLabel = 'Select';
 const reorderLabel = 'Reorder';
 
@@ -25,6 +27,7 @@ export default function FeaturedSubjects({
   userId: number;
 }) {
   const myId = useKeyContext((v) => v.myState.userId);
+  const isOwnProfile = myId === userId;
   const [reorderModalShown, setReorderModalShown] = useState(false);
   const [selectModalShown, setSelectModalShown] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -48,7 +51,7 @@ export default function FeaturedSubjects({
         onLoadMore={() => setIsExpanded(true)}
         customColorTheme={selectedTheme}
         button={
-          myId === userId ? (
+          isOwnProfile ? (
             <div style={{ display: 'flex' }}>
               <Button
                 variant="solid"
@@ -72,7 +75,7 @@ export default function FeaturedSubjects({
           ) : null
         }
         isEmpty={subjects.length === 0}
-        emptyMessage={noFeaturedSubjectsLabel}
+        emptyMessage={isOwnProfile ? emptyOwnLabel : emptyVisitorLabel}
       >
         {shownSubjects.map(
           (subject: { id: number; contentType: string; uploader: User }) => (

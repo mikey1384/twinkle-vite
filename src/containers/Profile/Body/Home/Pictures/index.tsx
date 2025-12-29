@@ -51,6 +51,7 @@ export default function Pictures({
   const addPictureButtonDisabled = useMemo(() => {
     return pictures.length >= numPics;
   }, [numPics, pictures]);
+
   useEffect(() => {
     setReorderedPictureIds(pictures.map((picture) => Number(picture.id)));
     setRemainingPictures(pictures);
@@ -190,6 +191,10 @@ export default function Pictures({
     reorderedPictureIds,
     saveDisabled
   ]);
+
+  if (profileId !== userId && (!pictures || pictures.length === 0)) {
+    return null;
+  }
 
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/index">

@@ -1,7 +1,5 @@
-import React from 'react';
-import SortableListItem from '~/components/SortableListItem';
-import { borderRadius } from '~/constants/css';
-import { css } from '@emotion/css';
+import React, { useMemo } from 'react';
+import SortableListGroup from '~/components/SortableListGroup';
 
 export default function PartOfSpeechBlock({
   deletedDefIds,
@@ -18,6 +16,10 @@ export default function PartOfSpeechBlock({
   posObject: { [key: number]: any };
   style?: React.CSSProperties;
 }) {
+  const filteredDefIds = useMemo(
+    () => defIds.filter((id) => !deletedDefIds.includes(id)),
+    [defIds, deletedDefIds]
+  );
   return defIds?.length > 0 ? (
     <div style={style}>
       <p
@@ -25,46 +27,14 @@ export default function PartOfSpeechBlock({
       >
         {type}
       </p>
-      <div
-        className={css`
-          width: 100%;
-          cursor: ns-resize;
-          display: flex;
-          flex-direction: column;
-          nav {
-            align-items: center;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: -1px;
-            border: 1px solid var(--ui-border);
-          }
-          nav:first-of-type {
-            border-top-left-radius: ${borderRadius};
-            border-top-right-radius: ${borderRadius};
-          }
-          nav:last-child {
-            border-bottom-left-radius: ${borderRadius};
-            border-bottom-right-radius: ${borderRadius};
-          }
-        `}
-      >
-        {defIds
-          .filter((id) => !deletedDefIds.includes(id))
-          .map((id, index) => {
-            return (
-              <SortableListItem
-                numbered
-                key={id}
-                index={index}
-                listItemId={id}
-                listItemLabel={posObject[id]?.title}
-                listItemType={type}
-                onMove={onListItemMove}
-              />
-            );
-          })}
-      </div>
+      <SortableListGroup
+        numbered
+        listItemLabel="title"
+        listItemObj={posObject}
+        itemIds={filteredDefIds}
+        listItemType={type}
+        onMove={onListItemMove}
+      />
     </div>
   ) : null;
 }

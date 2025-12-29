@@ -203,6 +203,42 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadPinnedAICardsOnProfile(userId: number) {
+      try {
+        const config = token?.() ? auth() : undefined;
+        const { data } = await request.get(
+          `${URL}/user/profile/pinnedAICards?userId=${userId}`,
+          config
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async pinAICardsOnProfile({ cardIds }: { cardIds: number[] }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/profile/pinnedAICards`,
+          { cardIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async updateProfileSectionOrder(sectionOrder: string[]) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/profile/sections`,
+          { sectionOrder },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async revokeReward(rewardId: number) {
       try {
         const {

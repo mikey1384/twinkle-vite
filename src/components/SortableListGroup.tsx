@@ -3,7 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import SortableListItem from './SortableListItem';
-import { borderRadius } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 
@@ -14,6 +14,7 @@ export default function SortableListGroup({
   listItemLabel = 'label',
   onMove,
   itemIds,
+  listItemType,
   numbered,
   style
 }: {
@@ -21,6 +22,7 @@ export default function SortableListGroup({
   listItemLabel?: string;
   onMove: (arg0: { sourceId: number; targetId: number }) => void;
   itemIds: any[];
+  listItemType?: string;
   numbered?: boolean;
   style?: React.CSSProperties;
 }) {
@@ -30,35 +32,28 @@ export default function SortableListGroup({
         style={style}
         className={css`
           width: 100%;
-          cursor: ns-resize;
           display: flex;
           flex-direction: column;
-          nav {
-            align-items: center;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: -1px;
-            border: 1px solid var(--ui-border);
-          }
-          nav:first-of-type {
-            border-top-left-radius: ${borderRadius};
-            border-top-right-radius: ${borderRadius};
-          }
-          nav:last-child {
-            border-bottom-left-radius: ${borderRadius};
-            border-bottom-right-radius: ${borderRadius};
+          gap: 0.9rem;
+          padding: 0.2rem 0.1rem;
+          @media (max-width: ${mobileMaxWidth}) {
+            gap: 0.7rem;
           }
         `}
       >
         {itemIds.map((id, index) => {
+          const label =
+            listItemObj[id]?.[listItemLabel] ??
+            listItemObj[id]?.label ??
+            id;
           return (
             <SortableListItem
               numbered={numbered}
               key={id}
               index={index}
               listItemId={id}
-              listItemLabel={listItemObj[id]?.[listItemLabel]}
+              listItemLabel={label}
+              listItemType={listItemType}
               onMove={onMove}
             />
           );

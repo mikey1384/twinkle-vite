@@ -13,6 +13,8 @@ import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 export default function SelectAICardModal({
   aiCardModalType,
   currentlySelectedCardIds,
+  maxSelectedCards,
+  allowEmptySelection = false,
   onHide,
   onSetAICardModalCardId,
   onSelectDone,
@@ -29,6 +31,8 @@ export default function SelectAICardModal({
     username: string;
     id: number;
   };
+  maxSelectedCards?: number;
+  allowEmptySelection?: boolean;
 }) {
   const onUpdateAICard = useChatContext((v) => v.actions.onUpdateAICard);
   const cardObj = useChatContext((v) => v.state.cardObj);
@@ -119,6 +123,13 @@ export default function SelectAICardModal({
     );
     return totalBv ? `${addCommasToNumber(totalBv)} XP` : '';
   }, [cardObj, selectedCardIds]);
+  const maxCards = Number.isFinite(maxSelectedCards)
+    ? maxSelectedCards
+    : Infinity;
+  const overLimit = selectedCardIds.length > maxCards;
+  const doneLabel = overLimit
+    ? `${selectedCardIds.length} cards selected. Maximum is ${maxCards}`
+    : 'Done';
 
   return (
     <Modal large wrapped modalOverModal onHide={onHide}>
@@ -208,13 +219,13 @@ export default function SelectAICardModal({
           Cancel
         </Button>
         <Button
-          disabled={!selectedCardIds?.length}
+          disabled={overLimit || (!allowEmptySelection && !selectedCardIds?.length)}
           color={doneColor}
           onClick={() => {
             onSelectDone(selectedCardIds);
           }}
         >
-          Done
+          {doneLabel}
         </Button>
       </footer>
     </Modal>
