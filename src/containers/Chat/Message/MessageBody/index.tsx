@@ -1097,6 +1097,7 @@ function MessageBody({
                   spoilerOff={omokSpoilerOff}
                   isDraw={!!isDraw}
                   isAbort={!!isAbort}
+                  displaySize="inline"
                   style={{ marginTop: '1rem', width: '100%' }}
                 />
               ) : isChessBoardMsg ? (
@@ -1136,6 +1137,7 @@ function MessageBody({
                   opponentId={partner?.id}
                   opponentName={partner?.username}
                   senderId={userId}
+                  displaySize="inline"
                   style={{ marginTop: '1rem', width: '100%' }}
                   squareColors={getUserChatSquareColors(myId)}
                 />

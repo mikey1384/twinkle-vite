@@ -18,8 +18,8 @@ const loadingContainerClass = css`
 
 const alignGridClass = css`
   display: grid;
-  grid-template-columns: 2rem repeat(${BOARD_SIZE}, 1fr);
-  grid-template-rows: repeat(${BOARD_SIZE}, 1fr) 2rem;
+  grid-template-columns: var(--omok-axis-size, 2rem) repeat(${BOARD_SIZE}, minmax(0, 1fr));
+  grid-template-rows: repeat(${BOARD_SIZE}, minmax(0, 1fr)) var(--omok-axis-size, 2rem);
   align-items: stretch;
   justify-items: stretch;
   background: ${Color.white(0.95)};
@@ -27,17 +27,16 @@ const alignGridClass = css`
   border-radius: ${borderRadius};
   box-shadow: 0 0.5rem 2rem ${Color.black(0.08)};
   position: relative;
-  width: calc(var(--omok-board-size) + 2rem);
-  height: calc(var(--omok-board-size) + 2rem);
+  width: calc(var(--omok-board-size) + var(--omok-axis-size, 2rem));
+  height: calc(var(--omok-board-size) + var(--omok-axis-size, 2rem));
   transition: box-shadow 0.3s ease;
   font: 14px 'Century Gothic', Futura, sans-serif;
-  aspect-ratio: 1 / 1;
   box-sizing: border-box;
   @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1.25rem repeat(${BOARD_SIZE}, 1fr);
-    grid-template-rows: repeat(${BOARD_SIZE}, 1fr) 1.25rem;
-    width: calc(var(--omok-board-size) + 1.25rem);
-    height: calc(var(--omok-board-size) + 1.25rem);
+    grid-template-columns: var(--omok-axis-size, 1.25rem) repeat(${BOARD_SIZE}, minmax(0, 1fr));
+    grid-template-rows: repeat(${BOARD_SIZE}, minmax(0, 1fr)) var(--omok-axis-size, 1.25rem);
+    width: calc(var(--omok-board-size) + var(--omok-axis-size, 1.25rem));
+    height: calc(var(--omok-board-size) + var(--omok-axis-size, 1.25rem));
   }
 `;
 
@@ -47,8 +46,11 @@ const rowLabelClass = css`
   justify-content: center;
   color: ${Color.darkGray()};
   font-weight: bold;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 0.7rem;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 0.55rem;
   }
 `;
 
@@ -58,8 +60,11 @@ const colLabelClass = css`
   justify-content: center;
   color: ${Color.darkGray()};
   font-weight: bold;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.7rem;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.9rem;
+    font-size: 0.55rem;
   }
 `;
 

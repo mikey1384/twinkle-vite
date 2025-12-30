@@ -60,6 +60,7 @@ export default function TargetChessPosition({
         messageId={messageId}
         channelId={channelId}
         initialState={chessState}
+        displaySize="inline"
         onCancelRewindRequest={onCancelRewindRequest}
         onAcceptRewind={onAcceptRewind}
         onDeclineRewind={onDeclineRewind}

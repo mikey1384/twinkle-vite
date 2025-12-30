@@ -92,11 +92,13 @@ export default function Chess({
   senderId?: number;
   senderName?: string;
   spoilerOff?: boolean;
-  displaySize?: 'regular' | 'compact';
+  displaySize?: 'regular' | 'compact' | 'inline';
   style?: React.CSSProperties;
   squareColors?: { light?: string; dark?: string };
 }) {
-  const isCompact = displaySize === 'compact';
+  const isCompact = displaySize !== 'regular';
+  const boardSize =
+    displaySize === 'inline' ? 'inline' : (displaySize as 'regular' | 'compact');
   const userId = useKeyContext((v) => v.myState.userId);
   const onBumpChessThemeVersion = useChatContext(
     (v) => v.actions.onBumpChessThemeVersion
@@ -820,6 +822,7 @@ export default function Chess({
     moveViewed,
     userMadeLastMove
   ]);
+  const timerShown = statusMsgShown && !isRewinded && displaySize !== 'compact';
 
   const gameStatusMessageShown = useMemo(() => {
     return (
@@ -1091,7 +1094,9 @@ export default function Chess({
       ) : null}
       <BoardWrapper
         statusShown={gameStatusMessageShown}
-        timerPlacement={isFromModal ? 'overlay' : 'inline'}
+        timerPlacement={
+          isFromModal || displaySize === 'inline' ? 'overlay' : 'inline'
+        }
         size={isCompact ? 'compact' : 'regular'}
         gameInfo={{
           type: 'chess',
@@ -1109,7 +1114,7 @@ export default function Chess({
           isDraw
         }}
         timerData={{
-          shown: !isCompact && statusMsgShown && !isRewinded,
+          shown: timerShown,
           channelId,
           gameType: 'chess',
           awaitingOpponentName: opponentName,
@@ -1313,7 +1318,7 @@ export default function Chess({
             onCastling={handleCastling}
             onSpoilerClick={handleSpoilerClick}
             opponentName={opponentName}
-            size={isCompact ? 'compact' : 'regular'}
+            size={boardSize}
           />
         </div>
       </BoardWrapper>

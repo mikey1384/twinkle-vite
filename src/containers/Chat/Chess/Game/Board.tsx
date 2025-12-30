@@ -9,6 +9,10 @@ import BoardSpoiler from '../../BoardSpoiler';
 
 const deviceIsTablet = isTablet(navigator);
 const defaultBoardWidth = deviceIsTablet ? '25vh' : '50vh';
+const inlineBoardWidth = deviceIsTablet
+  ? 'clamp(14rem, 40vw, 20rem)'
+  : 'clamp(14rem, 30vw, 22rem)';
+const inlineMobileBoardWidth = 'clamp(11rem, 50vw, 16rem)';
 
 export default function Board({
   interactable,
@@ -31,20 +35,32 @@ export default function Board({
   opponentName: string;
   spoilerOff: boolean;
   squares: any[];
-  size?: 'regular' | 'compact';
+  size?: 'regular' | 'compact' | 'inline';
 }) {
   const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   if (myColor === 'black') letters.reverse();
 
   // Smaller axis fonts for compact view on mobile
   const axisFontClass =
-    size === 'compact'
+    size !== 'regular'
       ? css`
           @media (max-width: ${mobileMaxWidth}) {
             font-size: 0.8rem;
           }
         `
       : '';
+  const boardWidth =
+    size === 'compact'
+      ? '16rem'
+      : size === 'inline'
+      ? inlineBoardWidth
+      : defaultBoardWidth;
+  const mobileBoardWidth =
+    size === 'compact'
+      ? 'min(90vw, 14rem)'
+      : size === 'inline'
+      ? inlineMobileBoardWidth
+      : '50vw';
 
   const board = useMemo(() => {
     const result = [];
@@ -85,18 +101,12 @@ export default function Board({
         grid-template-areas:
           'num chess'
           'num letter';
-        grid-template-columns: 2rem ${size === 'compact'
-            ? '16rem'
-            : defaultBoardWidth};
-        grid-template-rows: ${size === 'compact' ? '16rem' : defaultBoardWidth} 2.5rem;
+        grid-template-columns: 2rem ${boardWidth};
+        grid-template-rows: ${boardWidth} 2.5rem;
         background: #fff;
         @media (max-width: ${mobileMaxWidth}) {
-          grid-template-columns: 2rem ${size === 'compact'
-              ? 'min(90vw, 14rem)'
-              : '50vw'};
-          grid-template-rows: ${size === 'compact'
-              ? 'min(90vw, 14rem)'
-              : '50vw'} 2.5rem;
+          grid-template-columns: 2rem ${mobileBoardWidth};
+          grid-template-rows: ${mobileBoardWidth} 2.5rem;
         }
       `}
     >

@@ -62,6 +62,7 @@ interface OmokProps {
   onSetNewOmokState?: (state: any | null) => void;
   // modal context hint for status visibility parity with chess
   isFromModal?: boolean;
+  displaySize?: 'regular' | 'inline';
 }
 
 const deviceIsMobile = isMobile(navigator);
@@ -72,6 +73,11 @@ const ROW_LABELS = Array.from(
   { length: BOARD_SIZE },
   (_, index) => BOARD_SIZE - index
 );
+
+// Inline board sizes using viewport units (like Chess) for consistent sizing
+const inlineBoardSize = deviceIsMobile
+  ? 'clamp(11rem, 50vw, 16rem)'
+  : 'clamp(14rem, 30vw, 22rem)';
 
 const containerClass = css`
   position: relative;
@@ -137,22 +143,35 @@ export default function Omok({
   style,
   newOmokState,
   onSetNewOmokState,
-  isFromModal
+  isFromModal,
+  displaySize = 'regular'
 }: OmokProps) {
+  const isInline = displaySize === 'inline';
+  const axisSize = isInline
+    ? deviceIsMobile
+      ? '0.95rem'
+      : '1.2rem'
+    : deviceIsMobile
+    ? '1.25rem'
+    : '2rem';
   const boardSize = useMemo(() => {
+    if (isInline) {
+      return inlineBoardSize;
+    }
     if (isFromModal) {
       return deviceIsMobile ? 'min(78vw, 40vh)' : 'min(50vh, 60vw)';
     }
     return deviceIsMobile ? 'min(65vw, 38vh)' : 'min(60vh, 60vw)';
-  }, [isFromModal]);
+  }, [isFromModal, isInline]);
   const boardSizeStyle = useMemo(
     () =>
       ({
         '--omok-board-size': boardSize,
-        width: 'calc(var(--omok-board-size) + 2rem)',
-        height: 'calc(var(--omok-board-size) + 2rem)'
+        '--omok-axis-size': axisSize,
+        width: 'calc(var(--omok-board-size) + var(--omok-axis-size))',
+        height: 'calc(var(--omok-board-size) + var(--omok-axis-size))'
       } as React.CSSProperties),
-    [boardSize]
+    [axisSize, boardSize]
   );
 
   const baseBoard = useMemo(
@@ -466,8 +485,14 @@ export default function Omok({
   return (
     <div className={containerClass} style={{ ...style }}>
       <BoardWrapper
-        style={{ paddingTop: '0.5rem', paddingBottom: '0.5rem' }}
-        timerPlacement={isFromModal ? 'overlay' : 'inline'}
+        style={{
+          paddingTop: isInline ? '0.25rem' : '0.5rem',
+          paddingBottom: isInline ? '0.25rem' : '0.5rem'
+        }}
+        timerPlacement={
+          isFromModal || isInline ? 'overlay' : 'inline'
+        }
+        size={isInline ? 'compact' : 'regular'}
         statusShown={topInfoShown}
         gameInfo={{
           type: 'omok',

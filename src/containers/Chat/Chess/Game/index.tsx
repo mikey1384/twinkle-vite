@@ -42,13 +42,21 @@ export default function Game({
   opponentName: string;
   onBoardClick?: () => void;
   onSpoilerClick: () => void;
-  size?: 'regular' | 'compact';
+  size?: 'regular' | 'compact' | 'inline';
 }) {
   const { desktopBoardSize, mobileBoardSize } = useMemo(() => {
     if (size === 'compact') {
       return {
         desktopBoardSize: '9rem',
         mobileBoardSize: '8rem'
+      };
+    }
+    if (size === 'inline') {
+      return {
+        desktopBoardSize: deviceIsTablet
+          ? 'clamp(14rem, 40vw, 20rem)'
+          : 'clamp(14rem, 30vw, 22rem)',
+        mobileBoardSize: 'clamp(11rem, 50vw, 16rem)'
       };
     }
     return {
