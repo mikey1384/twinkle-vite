@@ -87,6 +87,7 @@ export default function DailyQuestionPanel({
   const [currentStreak, setCurrentStreak] = useState(0);
   const [streakRepairAvailable, setStreakRepairAvailable] = useState(false);
   const [streakAtRisk, setStreakAtRisk] = useState(false);
+  const [streakBroken, setStreakBroken] = useState(false);
   const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -279,6 +280,7 @@ export default function DailyQuestionPanel({
         setCurrentStreak(data.currentStreak || 0);
         setStreakRepairAvailable(!!data.streakRepairAvailable);
         setStreakAtRisk(!!data.streakAtRisk);
+        setStreakBroken(!!data.streakBroken);
 
         if (data.hasResponded && data.response) {
           setGradingResult({
@@ -395,7 +397,6 @@ export default function DailyQuestionPanel({
 
       if (result.success) {
         setStreakRepairAvailable(true);
-        setStreakAtRisk(false);
         // Update user's coin balance
         if (userId && result.newBalance !== undefined) {
           onSetUserState({
@@ -653,7 +654,7 @@ export default function DailyQuestionPanel({
       <ErrorBoundary componentPath="DailyQuestionPanel/Start">
         <div className={containerCls}>
           {/* Streak Display */}
-          {currentStreak > 0 && (
+          {currentStreak > 0 && !streakBroken && !streakAtRisk && (
             <div
               className={css`
                 text-align: center;
@@ -720,7 +721,7 @@ export default function DailyQuestionPanel({
             </div>
           )}
 
-          {/* Streak At Risk Warning */}
+          {/* Missed Yesterday Warning */}
           {streakAtRisk && currentStreak > 0 && (
             <div
               className={css`
@@ -740,7 +741,7 @@ export default function DailyQuestionPanel({
                   margin-bottom: 0.5rem;
                 `}
               >
-                ⚠️ Your {currentStreak}-day streak is at risk!
+                ⚠️ You missed yesterday
               </p>
               <p
                 className={css`
@@ -749,27 +750,81 @@ export default function DailyQuestionPanel({
                   margin-bottom: 0.75rem;
                 `}
               >
-                You missed yesterday. Answer today or your streak resets to 1.
+                Your {currentStreak}-day streak is broken. Use a repair today to
+                restore it and continue to {currentStreak + 1} days when you
+                answer.
               </p>
-              <Button
-                variant="solid"
-                color="orange"
-                onClick={handlePurchaseRepair}
-                disabled={purchasingRepair || !hasEnoughCoins}
-                loading={purchasingRepair}
+              {streakRepairAvailable ? (
+                <p
+                  className={css`
+                    font-size: 1.2rem;
+                    color: ${Color.green()};
+                    font-weight: 600;
+                    margin-bottom: 0;
+                  `}
+                >
+                  ✨ Repair ready — answer today to restore your{' '}
+                  {currentStreak}-day streak and continue to{' '}
+                  {currentStreak + 1} days.
+                </p>
+              ) : (
+                <Button
+                  variant="solid"
+                  color="orange"
+                  onClick={handlePurchaseRepair}
+                  disabled={purchasingRepair || !hasEnoughCoins}
+                  loading={purchasingRepair}
+                >
+                  <Icon icon="wrench" style={{ marginRight: '0.5rem' }} />
+                  {hasEnoughCoins
+                    ? `Restore Streak (100,000 coins)`
+                    : `Need 100,000 coins (you have ${(
+                        twinkleCoins || 0
+                      ).toLocaleString()})`}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Streak Broken Warning */}
+          {streakBroken && (
+            <div
+              className={css`
+                text-align: center;
+                margin-bottom: 1.5rem;
+                padding: 1rem 1.5rem;
+                background: ${Color.gray()}10;
+                border: 2px solid ${Color.borderGray()};
+                border-radius: 12px;
+              `}
+            >
+              <p
+                className={css`
+                  font-size: 1.3rem;
+                  font-weight: bold;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: 0.5rem;
+                `}
               >
-                <Icon icon="wrench" style={{ marginRight: '0.5rem' }} />
-                {hasEnoughCoins
-                  ? `Buy Streak Repair (100,000 coins)`
-                  : `Need 100,000 coins (you have ${(
-                      twinkleCoins || 0
-                    ).toLocaleString()})`}
-              </Button>
+                Your streak has already reset
+              </p>
+              <p
+                className={css`
+                  font-size: 1.2rem;
+                  color: ${Color.darkerGray()};
+                  margin-bottom: 0;
+                `}
+              >
+                Start a new streak by answering today.
+              </p>
             </div>
           )}
 
           {/* Streak Repair Available */}
-          {streakRepairAvailable && !streakAtRisk && currentStreak > 0 && (
+          {streakRepairAvailable &&
+            !streakAtRisk &&
+            !streakBroken &&
+            currentStreak > 0 && (
             <div
               className={css`
                 text-align: center;

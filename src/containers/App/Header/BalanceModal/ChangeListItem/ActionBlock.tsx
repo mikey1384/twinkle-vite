@@ -151,6 +151,9 @@ export default function ActionBlock({
     if (action === 'dailyReflectionShareAI') {
       return 'shared a daily reflection with AI';
     }
+    if (action === 'dailyReflectionStreakRepair') {
+      return 'purchased a daily reflection streak repair';
+    }
     return `${action} ${target}`;
   }, [action, target, type, username]);
   return <div style={style}>{displayedAction}</div>;
