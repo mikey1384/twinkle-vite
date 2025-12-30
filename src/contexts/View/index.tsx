@@ -31,6 +31,7 @@ const initialViewState: ViewState = {
   exploreCategory: 'subjects',
   contentPath: '',
   contentNav: '',
+  missionNav: '/missions',
   pageTitle: '',
   profileNav: '',
   boardNav: '/board',

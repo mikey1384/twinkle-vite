@@ -6,6 +6,7 @@ import SystemPromptMenu from './SystemPromptMenu';
 import SystemPromptShared from './SystemPromptShared';
 import WorkshopPage from './WorkshopPage';
 import InvalidPage from '~/components/InvalidPage';
+import GoBack from '~/components/GoBack';
 import Management from './Management';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -140,50 +141,119 @@ export default function MissionPage() {
         componentPath="MissionPage/index"
         style={{ width: '100%', paddingBottom: '10rem' }}
       >
-        {(isAdmin || isSystemPromptMission) && (
-          <FilterBar
-            className="mobile"
-            style={{
-              fontSize: '1.6rem',
-              height: '5rem'
-            }}
-          >
-            <nav
-              className={
-                !isManagementPage && !isSharedPage && !isWorkshopPage
-                  ? 'active'
-                  : ''
+        <div
+          className={css`
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            padding-right: ${hasSideMenu ? '23rem' : 0};
+            @media (max-width: ${mobileMaxWidth}) {
+              padding-right: 0;
+            }
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
+              width: ${hasSideMenu ? '85%' : '75%'};
+              margin: 1rem 1.5rem 0 1.5rem;
+              @media (max-width: ${tabletMaxWidth}) {
+                width: 100%;
+                margin: 1rem 1rem 0 1rem;
               }
-              onClick={() => navigate(`/missions/${missionType}`)}
-            >
-              Mission
-            </nav>
-            {isSystemPromptMission && missionCleared && (
-              <nav
-                className={isWorkshopPage ? 'active' : ''}
-                onClick={() => navigate(`/missions/${missionType}/workshop`)}
+              @media (max-width: ${mobileMaxWidth}) {
+                margin: 0 0 1.5rem 0;
+                width: 100%;
+              }
+            `}
+          >
+            <GoBack
+              isAtTop
+              bordered
+              balancedPadding
+              to="/missions"
+              text="Missions"
+            />
+          </div>
+        </div>
+        <div
+          className={css`
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            padding-right: ${hasSideMenu ? '23rem' : 0};
+            @media (max-width: ${mobileMaxWidth}) {
+              padding-right: 0;
+            }
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
+              width: ${hasSideMenu ? '70%' : '60%'};
+              margin-left: ${hasSideMenu ? '1rem' : 0};
+              @media (max-width: ${tabletMaxWidth}) {
+                width: 100%;
+                margin-left: 1rem;
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-left: 0;
+                width: 100%;
+              }
+            `}
+          >
+            {(isAdmin || isSystemPromptMission) && (
+              <FilterBar
+                className="mobile"
+                style={{
+                  fontSize: '1.6rem',
+                  height: '5rem'
+                }}
               >
-                Workshop
-              </nav>
+                <nav
+                  className={
+                    !isManagementPage && !isSharedPage && !isWorkshopPage
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() => navigate(`/missions/${missionType}`)}
+                >
+                  Mission
+                </nav>
+                {isSystemPromptMission && missionCleared && (
+                  <nav
+                    className={isWorkshopPage ? 'active' : ''}
+                    onClick={() =>
+                      navigate(`/missions/${missionType}/workshop`)
+                    }
+                  >
+                    Workshop
+                  </nav>
+                )}
+                {isSystemPromptMission && (
+                  <nav
+                    className={isSharedPage ? 'active' : ''}
+                    onClick={() => navigate(`/missions/${missionType}/shared`)}
+                  >
+                    Shared Prompts
+                  </nav>
+                )}
+                {allowManage && (
+                  <nav
+                    className={isManagementPage ? 'active' : ''}
+                    onClick={() => navigate(`/missions/${missionType}/manage`)}
+                  >
+                    Manage
+                  </nav>
+                )}
+              </FilterBar>
             )}
-            {isSystemPromptMission && (
-              <nav
-                className={isSharedPage ? 'active' : ''}
-                onClick={() => navigate(`/missions/${missionType}/shared`)}
-              >
-                Shared Prompts
-              </nav>
-            )}
-            {allowManage && (
-              <nav
-                className={isManagementPage ? 'active' : ''}
-                onClick={() => navigate(`/missions/${missionType}/manage`)}
-              >
-                Manage
-              </nav>
-            )}
-          </FilterBar>
-        )}
+          </div>
+        </div>
         <div
           className={css`
             padding-top: 1rem;

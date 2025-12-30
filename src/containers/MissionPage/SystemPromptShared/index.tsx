@@ -161,14 +161,7 @@ export default function SystemPromptShared({
           contentId: topicId
         }
       });
-      setCommentTexts((prev) => ({ ...prev, [topicId]: '' }));
-      setTopics((prev) =>
-        prev.map((topic) =>
-          topic.id === topicId
-            ? { ...topic, numComments: (topic.numComments || 0) + 1 }
-            : topic
-        )
-      );
+      navigate(`/shared-prompts/${topicId}`);
     } catch (err: any) {
       setError(
         err?.response?.data?.error || err?.message || 'Failed to post comment'

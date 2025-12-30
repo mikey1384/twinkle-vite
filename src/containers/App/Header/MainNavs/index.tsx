@@ -69,6 +69,7 @@ export default function MainNavs({
   const exploreCategory = useViewContext((v) => v.state.exploreCategory);
   const contentPath = useViewContext((v) => v.state.contentPath);
   const contentNav = useViewContext((v) => v.state.contentNav);
+  const missionNav = useViewContext((v) => v.state.missionNav);
   const profileNav = useViewContext((v) => v.state.profileNav);
   const homeNav = useViewContext((v) => v.state.homeNav);
   const onSetExploreCategory = useViewContext(
@@ -76,6 +77,7 @@ export default function MainNavs({
   );
   const onSetContentPath = useViewContext((v) => v.actions.onSetContentPath);
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
+  const onSetMissionNav = useViewContext((v) => v.actions.onSetMissionNav);
   const onSetProfileNav = useViewContext((v) => v.actions.onSetProfileNav);
   const onSetHomeNav = useViewContext((v) => v.actions.onSetHomeNav);
 
@@ -86,6 +88,14 @@ export default function MainNavs({
   const chatType = useChatContext((v) => v.state.chatType);
   const chatLoaded = useChatContext((v) => v.state.loaded);
   const loaded = useRef(false);
+  const isMissionSection = useMemo(
+    () => pathname.startsWith('/missions'),
+    [pathname]
+  );
+  const missionLinkTarget = useMemo(
+    () => (isMissionSection ? '/missions' : missionNav || '/missions'),
+    [isMissionSection, missionNav]
+  );
 
   const contentLabel = useMemo(() => {
     if (!contentNav) return null;
@@ -228,12 +238,6 @@ export default function MainNavs({
       },
       pathname
     );
-    const missionPageMatch = matchPath(
-      {
-        path: '/missions/:missionType/*'
-      },
-      pathname
-    );
     const dailyReflectionPageMatch = matchPath(
       {
         path: '/daily-reflections/:id'
@@ -274,7 +278,6 @@ export default function MainNavs({
       !!videoQuestionPageMatch ||
       !!linkPageMatch ||
       !!commentPageMatch ||
-      !!missionPageMatch ||
       !!dailyReflectionPageMatch ||
       !!missionPassPageMatch ||
       !!achievementUnlockPageMatch ||
@@ -317,6 +320,12 @@ export default function MainNavs({
         onSetContentNav(section);
       }
       onSetContentPath(pathname.substring(1) + search || '');
+    }
+    if (section === 'missions') {
+      const nextMissionNav = `${pathname}${search || ''}`;
+      if (missionNav !== nextMissionNav) {
+        onSetMissionNav(nextMissionNav);
+      }
     }
 
     if (profilePageMatch) {
@@ -428,7 +437,7 @@ export default function MainNavs({
           imgLabel={contentIconType}
         />
       )}
-      <Nav to={`/missions`} className="mobile" imgLabel="tasks" />
+      <Nav to={missionLinkTarget} className="mobile" imgLabel="tasks" />
       <Nav
         to={chatButtonPath}
         className="mobile"
@@ -478,7 +487,7 @@ export default function MainNavs({
         </Nav>
       )}
       <Nav
-        to={`/missions`}
+        to={missionLinkTarget}
         className="desktop"
         style={{ marginLeft: '2rem' }}
         imgLabel="tasks"

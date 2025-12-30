@@ -8,6 +8,7 @@ export default function GoBack({
   isAtTop = true,
   bordered,
   isMobile,
+  balancedPadding = false,
   to,
   style,
   text
@@ -15,6 +16,7 @@ export default function GoBack({
   isAtTop?: boolean;
   bordered?: boolean;
   isMobile?: boolean;
+  balancedPadding?: boolean;
   to: string;
   style?: React.CSSProperties;
   text: string;
@@ -40,7 +42,7 @@ export default function GoBack({
           : ''}
         @media (max-width: ${mobileMaxWidth}) {
           font-size: 1.7rem;
-          ${isAtTop ? `` : 'padding-top: 1.5rem;'}
+          ${balancedPadding || !isAtTop ? 'padding-top: 1.5rem;' : ''}
           padding-bottom: 1.5rem;
           border-radius: 0;
           ${isAtTop ? `border-top: 0;` : ''}

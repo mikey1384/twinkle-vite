@@ -3,6 +3,7 @@ export interface ViewState {
   exploreCategory: 'subjects' | 'videos' | 'links' | 'ai-cards';
   contentPath: string;
   contentNav: string;
+  missionNav: string;
   pageTitle: string;
   profileNav: string;
   boardNav: string;
@@ -17,6 +18,7 @@ export interface ViewAction {
     | 'SET_EXPLORE_CATEGORY'
     | 'SET_CONTENT_PATH'
     | 'SET_CONTENT_NAV'
+    | 'SET_MISSION_NAV'
     | 'SET_BOARD_NAV'
     | 'SET_HOME_NAV'
     | 'SET_PAGE_TITLE'
@@ -58,6 +60,11 @@ export default function ViewReducer(
       return {
         ...state,
         contentNav: action.nav!
+      };
+    case 'SET_MISSION_NAV':
+      return {
+        ...state,
+        missionNav: action.nav!
       };
     case 'SET_BOARD_NAV':
       return {
