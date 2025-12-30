@@ -164,6 +164,7 @@ const filtersGridClass = css`
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   align-items: start;
   @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
 `;
