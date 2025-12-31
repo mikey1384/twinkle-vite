@@ -31,7 +31,7 @@ export default function Selected({
       if (card.isBurned) return false;
       if (color && color !== 'any') {
         const cardDetailObj = cardLevelHash[card?.level];
-        if (cardDetailObj.color !== appliedColor) return false;
+        if (cardDetailObj?.color !== appliedColor) return false;
       }
       if (quality && quality !== 'any') {
         if (card.quality !== quality) return false;

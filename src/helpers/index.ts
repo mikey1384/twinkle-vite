@@ -19,7 +19,7 @@ import URL from '~/constants/URL';
 export function calculateTotalBurnValue(cards: Card[]) {
   let totalBv = 0;
   for (const card of cards) {
-    if (card.level && card.quality) {
+    if (card?.level && card?.quality) {
       totalBv += returnCardBurnXP({
         cardLevel: card.level,
         cardQuality: card.quality
