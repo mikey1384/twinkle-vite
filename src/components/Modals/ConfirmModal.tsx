@@ -17,7 +17,8 @@ export default function ConfirmModal({
   confirmButtonColor = '',
   confirmButtonLabel = confirmLabel,
   isReverseButtonOrder,
-  modalOverModal = false
+  modalOverModal = false,
+  modalLevel
 }: {
   disabled?: boolean;
   description?: any;
@@ -29,6 +30,7 @@ export default function ConfirmModal({
   confirmButtonLabel?: string;
   isReverseButtonOrder?: boolean;
   modalOverModal?: boolean;
+  modalLevel?: number;
 }) {
   const { colorKey: doneColorKey } = useRoleColor('done', {
     fallback: 'blue'
@@ -44,7 +46,7 @@ export default function ConfirmModal({
       hasHeader
       title={title}
       size="md"
-      modalLevel={modalOverModal ? 2 : undefined}
+      modalLevel={modalLevel ?? (modalOverModal ? 2 : undefined)}
       priority={modalOverModal}
       closeOnBackdropClick
       footer={

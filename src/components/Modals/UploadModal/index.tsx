@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 import UploadModalContent from './Content';
 
 const useThisImageButtonStyle = {
@@ -30,6 +31,7 @@ export default function UploadModal({
     'select' | 'upload' | 'generate'
   >('select');
   const [canUseGeneratedImage, setCanUseGeneratedImage] = useState(false);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
   const useGeneratedImageHandlerRef = useRef<
     (() => void | Promise<void>) | null
   >(null);
@@ -58,7 +60,7 @@ export default function UploadModal({
             Use This Image
           </Button>
         )}
-        <Button variant="ghost" onClick={() => handleChangeOption('select')}>
+        <Button variant="ghost" onClick={handleBackFromGenerate}>
           Back
         </Button>
       </>
@@ -72,28 +74,43 @@ export default function UploadModal({
   }
 
   return (
-    <NewModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={getModalTitle()}
-      size="lg"
-      closeOnBackdropClick={selectedOption === 'select'}
-      modalLevel={2}
-      preventBodyScroll={false}
-      footer={footerContent}
-    >
-      <UploadModalContent
-        selectedOption={selectedOption}
-        onFileSelect={handleFileSelection}
-        onFileUploadSelect={() => handleChangeOption('upload')}
-        onAIGenerateSelect={() => handleChangeOption('generate')}
-        onGeneratedImage={handleGeneratedImage}
-        onSetSelectedOption={handleChangeOption}
-        onUseImageAvailabilityChange={setCanUseGeneratedImage}
-        onRegisterUseImageHandler={handleRegisterUseImageHandler}
-        accept={accept || '*/*'}
-      />
-    </NewModal>
+    <>
+      <NewModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={getModalTitle()}
+        size="lg"
+        closeOnBackdropClick={selectedOption === 'select'}
+        modalLevel={2}
+        preventBodyScroll={false}
+        footer={footerContent}
+      >
+        <UploadModalContent
+          selectedOption={selectedOption}
+          onFileSelect={handleFileSelection}
+          onFileUploadSelect={() => handleChangeOption('upload')}
+          onAIGenerateSelect={() => handleChangeOption('generate')}
+          onGeneratedImage={handleGeneratedImage}
+          onSetSelectedOption={handleChangeOption}
+          onUseImageAvailabilityChange={setCanUseGeneratedImage}
+          onRegisterUseImageHandler={handleRegisterUseImageHandler}
+          accept={accept || '*/*'}
+        />
+      </NewModal>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          modalLevel={3}
+          title="Discard Image?"
+          description="You have an image ready to use. Are you sure you want to go back?"
+          onHide={() => setConfirmModalShown(false)}
+          onConfirm={() => {
+            setConfirmModalShown(false);
+            handleChangeOption('select');
+          }}
+        />
+      )}
+    </>
   );
 
   function handleClose() {
@@ -126,6 +143,14 @@ export default function UploadModal({
   function handleChangeOption(option: 'select' | 'upload' | 'generate') {
     resetUseImageState();
     setSelectedOption(option);
+  }
+
+  function handleBackFromGenerate() {
+    if (canUseGeneratedImage) {
+      setConfirmModalShown(true);
+    } else {
+      handleChangeOption('select');
+    }
   }
 
   function resetUseImageState() {

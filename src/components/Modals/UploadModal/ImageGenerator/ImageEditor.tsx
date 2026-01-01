@@ -4,6 +4,7 @@ import { Color } from '~/constants/css';
 import DrawingTools from './DrawingTools';
 import NewModal from '~/components/NewModal';
 import Button from '~/components/Button';
+import ConfirmModal from '~/components/Modals/ConfirmModal';
 
 interface ImageEditorProps {
   imageUrl?: string;
@@ -21,6 +22,7 @@ export default function ImageEditor({
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isImageReady, setIsImageReady] = useState(false);
+  const [confirmModalShown, setConfirmModalShown] = useState(false);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -252,6 +254,15 @@ export default function ImageEditor({
     }
   };
 
+  const handleCancel = () => {
+    // Check if user has made any changes (canvas history has entries)
+    if (toolsAPI.canvasHistory.length > 0) {
+      setConfirmModalShown(true);
+    } else {
+      onCancel();
+    }
+  };
+
   // Handle scroll and resize to trigger redraw and canvas resizing
   useEffect(() => {
     const container = containerRef.current;
@@ -327,141 +338,156 @@ export default function ImageEditor({
   };
 
   return (
-    <NewModal
-      isOpen={true}
-      onClose={onCancel}
-      title="Edit Image"
-      size="lg"
-      modalLevel={3}
-      footer={
-        <>
-          <Button
-            variant="ghost"
-            onClick={onCancel}
-            style={{ marginRight: '0.7rem' }}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSave} color="blue">
-            Save Changes
-          </Button>
-        </>
-      }
-    >
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          width: 100%;
-          height: 100%;
-        `}
-      >
-        {toolsUI}
-
-        {imageUrl && (
-          <div
-            className={css`
-              display: flex;
-              justify-content: flex-end;
-              padding-bottom: 0.5rem;
-            `}
-          >
+    <>
+      <NewModal
+        isOpen={true}
+        onClose={handleCancel}
+        title="Edit Image"
+        size="lg"
+        modalLevel={3}
+        footer={
+          <>
             <Button
-              onClick={handleReset}
-              color="orange"
-              style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+              variant="ghost"
+              onClick={handleCancel}
+              style={{ marginRight: '0.7rem' }}
             >
-              <span>↻</span> Reset
+              Cancel
             </Button>
-          </div>
-        )}
-
+            <Button onClick={handleSave} color="blue">
+              Save Changes
+            </Button>
+          </>
+        }
+      >
         <div
-          ref={containerRef}
           className={css`
             display: flex;
-            justify-content: center;
-            overflow: auto;
-            max-height: 60vh;
-            position: relative;
-
-            @media (max-width: 768px) {
-              max-height: 55vh;
-              overflow: visible;
-            }
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            height: 100%;
           `}
         >
-          <canvas
-            ref={canvasRef}
-            onMouseDown={toolsAPI.handleCanvasClick}
-            onMouseMove={toolsAPI.draw}
-            onMouseUp={toolsAPI.stopDrawing}
-            onMouseLeave={toolsAPI.stopDrawing}
-            onTouchStart={toolsAPI.handleTouchStart}
-            onTouchMove={toolsAPI.handleTouchMove}
-            onTouchEnd={toolsAPI.handleTouchEnd}
-            className={css`
-              background: white;
-              cursor: ${getCursor()};
-              border: 2px solid var(--ui-border);
-              border-radius: 8px;
-              max-width: 100%;
-              max-height: 100%;
-              opacity: ${isImageReady ? 1 : 0};
-              transition: opacity 0.2s ease;
-              touch-action: none;
-            `}
-          />
+          {toolsUI}
 
-          {!isImageReady && (
+          {imageUrl && (
             <div
               className={css`
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
                 display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 0.75rem;
-                color: ${Color.darkGray()};
+                justify-content: flex-end;
+                padding-bottom: 0.5rem;
               `}
             >
-              <div
-                className={css`
-                  width: 24px;
-                  height: 24px;
-                  border: 2px solid var(--ui-border);
-                  border-top: 2px solid ${Color.logoBlue()};
-                  border-radius: 50%;
-                  animation: spin 0.8s linear infinite;
-
-                  @keyframes spin {
-                    0% {
-                      transform: rotate(0deg);
-                    }
-                    100% {
-                      transform: rotate(360deg);
-                    }
-                  }
-                `}
-              />
-              <div
-                className={css`
-                  font-size: 0.875rem;
-                  font-weight: 500;
-                `}
+              <Button
+                onClick={handleReset}
+                color="orange"
+                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
               >
-                Getting ready...
-              </div>
+                <span>↻</span> Reset
+              </Button>
             </div>
           )}
-        </div>
-      </div>
 
-      <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
-      <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
-    </NewModal>
+          <div
+            ref={containerRef}
+            className={css`
+              display: flex;
+              justify-content: center;
+              overflow: auto;
+              max-height: 60vh;
+              position: relative;
+
+              @media (max-width: 768px) {
+                max-height: 55vh;
+                overflow: visible;
+              }
+            `}
+          >
+            <canvas
+              ref={canvasRef}
+              onMouseDown={toolsAPI.handleCanvasClick}
+              onMouseMove={toolsAPI.draw}
+              onMouseUp={toolsAPI.stopDrawing}
+              onMouseLeave={toolsAPI.stopDrawing}
+              onTouchStart={toolsAPI.handleTouchStart}
+              onTouchMove={toolsAPI.handleTouchMove}
+              onTouchEnd={toolsAPI.handleTouchEnd}
+              className={css`
+                background: white;
+                cursor: ${getCursor()};
+                border: 2px solid var(--ui-border);
+                border-radius: 8px;
+                max-width: 100%;
+                max-height: 100%;
+                opacity: ${isImageReady ? 1 : 0};
+                transition: opacity 0.2s ease;
+                touch-action: none;
+              `}
+            />
+
+            {!isImageReady && (
+              <div
+                className={css`
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 0.75rem;
+                  color: ${Color.darkGray()};
+                `}
+              >
+                <div
+                  className={css`
+                    width: 24px;
+                    height: 24px;
+                    border: 2px solid var(--ui-border);
+                    border-top: 2px solid ${Color.logoBlue()};
+                    border-radius: 50%;
+                    animation: spin 0.8s linear infinite;
+
+                    @keyframes spin {
+                      0% {
+                        transform: rotate(0deg);
+                      }
+                      100% {
+                        transform: rotate(360deg);
+                      }
+                    }
+                  `}
+                />
+                <div
+                  className={css`
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                  `}
+                >
+                  Getting ready...
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
+        <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
+      </NewModal>
+      {confirmModalShown && (
+        <ConfirmModal
+          modalOverModal
+          modalLevel={4}
+          title="Discard Drawing?"
+          description="Are you sure you want to discard your drawing?"
+          onHide={() => setConfirmModalShown(false)}
+          onConfirm={() => {
+            setConfirmModalShown(false);
+            onCancel();
+          }}
+        />
+      )}
+    </>
   );
 }

@@ -394,7 +394,6 @@ export default function useDrawingTools({
 
   const startDrawing = (coords: { x: number; y: number }) => {
     if (disabled) return;
-    saveToHistory();
     currentStrokePointsRef.current = [coords];
     setIsDrawing(true);
   };
@@ -439,6 +438,7 @@ export default function useDrawingTools({
     }
     if (isDrawing) {
       if (currentStrokePointsRef.current.length > 1 && rasterCanvas) {
+        saveToHistory();
         const rasterCtx = rasterCanvas.getContext('2d');
         if (rasterCtx) {
           rasterCtx.globalCompositeOperation =
