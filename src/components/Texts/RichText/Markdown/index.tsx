@@ -114,6 +114,7 @@ function Markdown({
           .replace(/\\\(([\s\S]*?)\\\)/g, (_, p1: string) => {
             return '$' + p1.trim() + '$';
           });
+
       }
 
       const preprocessedText = preprocessText(textToProcess);
@@ -122,8 +123,9 @@ function Markdown({
       let textForMarkdown = preprocessedText;
       if (isAIMessage) {
         // Replace simple currency patterns with a temporary placeholder
+        // Use negative lookahead to avoid matching math like $2(a+b)$ or $2x$
         textForMarkdown = preprocessedText.replace(
-          /\$(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)\b/g,
+          /\$(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)(?![a-zA-Z(^_{}])/g,
           'TWINKLECURRENCY$1ENDTWINKLECURRENCY'
         );
       }
@@ -1436,8 +1438,12 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
+    // Protection regex for code blocks and math blocks
+    // For inline math $...$, we match content that contains at least one "math character"
+    // (letter, backslash, caret, underscore, braces, parens, or math operators)
+    // This avoids matching currency like $100 while allowing math like $2x$ or $2(a+b)$
     const protectedBlockRegex =
-      /```[\s\S]*?```|`[^`\n]*`|\$\$[\s\S]*?\$\$|\$(?!\d)[^$\n]+\$/g;
+      /```[\s\S]*?```|`[^`\n]*`|\$\$[\s\S]*?\$\$|\$[^$\n]*[a-zA-Z_{}()+*/<>=\\^][^$\n]*\$/g;
     const matches = [...text.matchAll(protectedBlockRegex)];
 
     if (!matches.length) {

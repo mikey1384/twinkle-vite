@@ -52,6 +52,7 @@ export default function UserListModal({
   );
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const allUsers = useMemo(() => {
+    if (!users) return [];
     const otherUsers = users.filter((user) => user.id !== userId);
     const userArray = [];
     for (let i = 0; i < users.length; i++) {
