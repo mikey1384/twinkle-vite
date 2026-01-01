@@ -18,7 +18,9 @@ interface DrawingToolsUIProps {
   disabled: boolean;
   recentColors: string[];
   handleUndo: () => void;
+  handleRedo: () => void;
   canvasHistory: any[];
+  redoHistory: any[];
   clearCanvas: () => void;
   isAddingText: boolean;
   textInput: string;
@@ -39,7 +41,9 @@ export default function DrawingToolsUI({
   disabled,
   recentColors,
   handleUndo,
+  handleRedo,
   canvasHistory,
+  redoHistory,
   clearCanvas,
   isAddingText,
   textInput,
@@ -481,6 +485,15 @@ export default function DrawingToolsUI({
             >
               <Icon icon="undo" />
               <span style={{ marginLeft: '0.5rem' }}>Undo</span>
+            </Button>
+            <Button
+              onClick={handleRedo}
+              disabled={disabled || !redoHistory || redoHistory.length === 0}
+              color="darkBlue"
+              style={{ padding: '0.75rem 1.25rem' }}
+            >
+              <Icon icon="redo" />
+              <span style={{ marginLeft: '0.5rem' }}>Redo</span>
             </Button>
             <Button
               onClick={clearCanvas}

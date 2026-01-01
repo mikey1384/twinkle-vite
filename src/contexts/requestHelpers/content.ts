@@ -819,7 +819,10 @@ export default function contentRequestHelpers({
       try {
         const {
           data: { all, top30s, myRank }
-        } = await request.get(`${URL}/content/game/story/leaderBoard`, auth());
+        } = await request.get(
+          `${URL}/content/game/story/leaderBoard?_t=${Date.now()}`,
+          auth()
+        );
         return {
           all,
           top30s,
@@ -902,7 +905,7 @@ export default function contentRequestHelpers({
         const {
           data: { all, top30s, myRank }
         } = await request.get(
-          `${URL}/content/game/grammar/leaderBoard`,
+          `${URL}/content/game/grammar/leaderBoard?_t=${Date.now()}`,
           auth()
         );
         return {

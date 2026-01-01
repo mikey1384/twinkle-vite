@@ -1562,7 +1562,10 @@ export default function chatRequestHelpers({
       try {
         const {
           data: { collectorRankings, monthlyVocabRankings, yearlyVocabRankings }
-        } = await request.get(`${URL}/chat/vocabulary/leaderboards`, auth());
+        } = await request.get(
+          `${URL}/chat/vocabulary/leaderboards?_t=${Date.now()}`,
+          auth()
+        );
         return {
           collectorRankings,
           monthlyVocabRankings,
@@ -1594,7 +1597,7 @@ export default function chatRequestHelpers({
         const {
           data: { all, top30s, myRank }
         } = await request.get(
-          `${URL}/chat/wordle/leaderBoard?channelId=${channelId}`,
+          `${URL}/chat/wordle/leaderBoard?channelId=${channelId}&_t=${Date.now()}`,
           auth()
         );
         return {
@@ -1611,7 +1614,7 @@ export default function chatRequestHelpers({
         const {
           data: { bestStreaks, bestStreakObj }
         } = await request.get(
-          `${URL}/chat/wordle/leaderBoard/streak?channelId=${channelId}`,
+          `${URL}/chat/wordle/leaderBoard/streak?channelId=${channelId}&_t=${Date.now()}`,
           auth()
         );
         return { bestStreaks, bestStreakObj };
@@ -1624,7 +1627,7 @@ export default function chatRequestHelpers({
         const {
           data: { bestStreaks, bestStreakObj }
         } = await request.get(
-          `${URL}/chat/wordle/leaderBoard/streak/double?channelId=${channelId}`,
+          `${URL}/chat/wordle/leaderBoard/streak/double?channelId=${channelId}&_t=${Date.now()}`,
           auth()
         );
         return { bestStreaks, bestStreakObj };

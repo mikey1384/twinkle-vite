@@ -335,7 +335,7 @@ export default function missionRequestHelpers({
     async loadMissionRankings(missionId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/mission/ranking?missionId=${missionId}`,
+          `${URL}/mission/ranking?missionId=${missionId}&_t=${Date.now()}`,
           auth()
         );
         return Promise.resolve(data);

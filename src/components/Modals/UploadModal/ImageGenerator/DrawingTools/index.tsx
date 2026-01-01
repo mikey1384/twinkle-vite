@@ -4,6 +4,7 @@ import DrawingToolsUI from './DrawingToolsUI';
 
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
+  drawingCanvasRef?: React.RefObject<HTMLCanvasElement>;
   originalCanvasRef?: React.RefObject<HTMLCanvasElement>;
   referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
@@ -24,12 +25,14 @@ export default function DrawingTools(props: DrawingToolsProps) {
     lineWidth,
     fontSize,
     canvasHistory,
+    redoHistory,
     isAddingText,
     textInput,
     setTextInput,
     addTextToCanvas,
     cancelTextInput,
     handleUndo,
+    handleRedo,
     clearCanvas,
     clearDrawingOverlay,
     setTool,
@@ -40,6 +43,7 @@ export default function DrawingTools(props: DrawingToolsProps) {
     updateDisplay
   } = useDrawingTools({
     canvasRef: props.canvasRef,
+    drawingCanvasRef: props.drawingCanvasRef,
     referenceImageCanvasRef:
       props.referenceImageCanvasRef || props.originalCanvasRef,
     disabled: props.disabled,
@@ -82,7 +86,9 @@ export default function DrawingTools(props: DrawingToolsProps) {
       disabled={!!props.disabled}
       recentColors={recentColors}
       handleUndo={handleUndo}
+      handleRedo={handleRedo}
       canvasHistory={canvasHistory}
+      redoHistory={redoHistory}
       clearCanvas={clearCanvas}
       isAddingText={isAddingText}
       textInput={textInput}

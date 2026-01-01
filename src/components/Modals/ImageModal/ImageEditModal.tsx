@@ -118,6 +118,7 @@ export default function ImageEditModal({
 
   const { toolsAPI, toolsUI, updateDisplay } = DrawingTools({
     canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
+    drawingCanvasRef: drawingCanvasRef as React.RefObject<HTMLCanvasElement>,
     referenceImageCanvasRef:
       originalCanvasRef as React.RefObject<HTMLCanvasElement>,
     getCanvasCoordinates,

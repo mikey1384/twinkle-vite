@@ -23,6 +23,7 @@ export default function ImageEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isImageReady, setIsImageReady] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const updateDisplayRef = useRef<() => void>(() => {});
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -40,12 +41,18 @@ export default function ImageEditor({
 
   const { toolsAPI, toolsUI, updateDisplay } = DrawingTools({
     canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
+    drawingCanvasRef: drawingCanvasRef as React.RefObject<HTMLCanvasElement>,
     referenceImageCanvasRef:
       originalCanvasRef as React.RefObject<HTMLCanvasElement>,
     getCanvasCoordinates
   });
 
-  // Load image and draw to canvases
+  // Keep the ref updated with the latest updateDisplay function
+  useEffect(() => {
+    updateDisplayRef.current = updateDisplay;
+  }, [updateDisplay]);
+
+  // Load image and draw to canvases - only runs when imageUrl changes
   useEffect(() => {
     setIsImageReady(false);
 
@@ -102,7 +109,7 @@ export default function ImageEditor({
 
       // Update display after a brief delay to ensure everything is ready
       requestAnimationFrame(() => {
-        updateDisplay();
+        updateDisplayRef.current();
         setIsImageReady(true);
       });
 
@@ -180,7 +187,7 @@ export default function ImageEditor({
 
         // Update display after a brief delay to ensure everything is ready
         requestAnimationFrame(() => {
-          updateDisplay();
+          updateDisplayRef.current();
           setIsImageReady(true);
         });
       };
@@ -193,7 +200,7 @@ export default function ImageEditor({
     };
 
     loadImage();
-  }, [imageUrl, updateDisplay]);
+  }, [imageUrl]);
 
   const handleSave = () => {
     const canvas = canvasRef.current;
@@ -237,14 +244,14 @@ export default function ImageEditor({
               originalCanvas.height
             );
             requestAnimationFrame(() => {
-              updateDisplay();
+              updateDisplayRef.current();
             });
           };
           img.src = imageUrl;
         } else {
           // Just white background for blank canvas
           requestAnimationFrame(() => {
-            updateDisplay();
+            updateDisplayRef.current();
           });
         }
 
@@ -266,13 +273,13 @@ export default function ImageEditor({
   // Handle scroll and resize to trigger redraw and canvas resizing
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !updateDisplay) return;
+    if (!container) return;
 
     let debounceTimeout: ReturnType<typeof setTimeout>;
     const handleScroll = () => {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
-        updateDisplay();
+        updateDisplayRef.current();
       }, 50);
     };
 
@@ -304,7 +311,7 @@ export default function ImageEditor({
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
 
-        updateDisplay();
+        updateDisplayRef.current();
       }, 100);
     };
 
@@ -318,7 +325,7 @@ export default function ImageEditor({
       window.removeEventListener('orientationchange', handleResize);
       clearTimeout(debounceTimeout);
     };
-  }, [updateDisplay]);
+  }, []);
 
   const getCursor = () => {
     switch (toolsAPI.tool) {

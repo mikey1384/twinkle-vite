@@ -1,9 +1,16 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect
+} from 'react';
 import type { ToolType, TextElement } from './types';
 import { COMMON_COLORS } from './constants';
 
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
+  drawingCanvasRef?: React.RefObject<HTMLCanvasElement>;
   referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
@@ -12,6 +19,7 @@ interface DrawingToolsProps {
 
 export default function useDrawingTools({
   canvasRef,
+  drawingCanvasRef,
   referenceImageCanvasRef,
   disabled = false,
   onHasContent,
@@ -23,6 +31,9 @@ export default function useDrawingTools({
   const [tool, setTool] = useState<ToolType>('pencil');
   const [fontSize, setFontSize] = useState(20);
   const [canvasHistory, setCanvasHistory] = useState<
+    Array<{ drawingData: ImageData; textState: TextElement[] }>
+  >([]);
+  const [redoHistory, setRedoHistory] = useState<
     Array<{ drawingData: ImageData; textState: TextElement[] }>
   >([]);
   const [isAddingText, setIsAddingText] = useState(false);
@@ -78,24 +89,37 @@ export default function useDrawingTools({
     onHasContent?.(hasContent);
   }, [canvasRef, onHasContent]);
 
-  const rasterCanvas = canvasRef.current;
-  const displayCanvas = canvasRef.current;
-  const hasReferenceImage = !!referenceImageCanvasRef?.current;
+  const getRasterCanvas = useCallback(
+    () => (drawingCanvasRef ? drawingCanvasRef.current : canvasRef.current),
+    [drawingCanvasRef, canvasRef]
+  );
+
+  const cloneImageData = useCallback(
+    (imageData: ImageData) =>
+      new ImageData(
+        new Uint8ClampedArray(imageData.data),
+        imageData.width,
+        imageData.height
+      ),
+    []
+  );
 
   const updateDisplay = useCallback(() => {
-    if (!displayCanvas || !rasterCanvas) return;
+    const displayCanvas = canvasRef.current;
+    if (!displayCanvas) return;
     const displayCtx = displayCanvas.getContext('2d');
     if (!displayCtx) return;
+    const rasterCanvas = getRasterCanvas();
+    const referenceCanvas = referenceImageCanvasRef?.current;
+    const hasReferenceImage = !!referenceCanvas;
     const w = displayCanvas.width;
     const h = displayCanvas.height;
+    displayCtx.globalCompositeOperation = 'source-over';
     displayCtx.clearRect(0, 0, w, h);
 
     // Draw reference image backdrop if exists
     if (hasReferenceImage) {
-      const referenceCanvas = referenceImageCanvasRef?.current;
-      if (referenceCanvas) {
-        displayCtx.drawImage(referenceCanvas, 0, 0);
-      }
+      displayCtx.drawImage(referenceCanvas, 0, 0);
     } else {
       // White background for empty canvas
       displayCtx.fillStyle = '#ffffff';
@@ -103,7 +127,10 @@ export default function useDrawingTools({
     }
 
     // Draw all drawing operations on top
-    if (originalDrawingContentRef.current) {
+    if (rasterCanvas && rasterCanvas !== displayCanvas) {
+      displayCtx.globalCompositeOperation = 'source-over';
+      displayCtx.drawImage(rasterCanvas, 0, 0);
+    } else if (originalDrawingContentRef.current) {
       displayCtx.putImageData(originalDrawingContentRef.current, 0, 0);
     }
 
@@ -151,9 +178,8 @@ export default function useDrawingTools({
 
     checkAndNotifyContent();
   }, [
-    displayCanvas,
-    rasterCanvas,
-    hasReferenceImage,
+    canvasRef,
+    getRasterCanvas,
     textElements,
     isDraggingText,
     draggedTextId,
@@ -164,17 +190,20 @@ export default function useDrawingTools({
     checkAndNotifyContent
   ]);
 
-  // Initial canvas setup
-  useEffect(() => {
+  // Initial canvas setup - useLayoutEffect ensures this runs before user can interact
+  useLayoutEffect(() => {
     const initCanvas = () => {
+      const rasterCanvas = getRasterCanvas();
       if (!rasterCanvas) return;
       const rasterCtx = rasterCanvas.getContext('2d');
       if (!rasterCtx) return;
+      // Wait until canvas has valid dimensions
+      if (rasterCanvas.width === 0 || rasterCanvas.height === 0) return;
 
-      // Initialize with white background for empty canvas workflow
-      if (!hasReferenceImage && !originalDrawingContentRef.current) {
-        rasterCtx.fillStyle = '#ffffff';
-        rasterCtx.fillRect(0, 0, rasterCanvas.width, rasterCanvas.height);
+      // Initialize originalDrawingContentRef for both cases
+      if (!originalDrawingContentRef.current) {
+        // Start with a transparent drawing layer
+        rasterCtx.clearRect(0, 0, rasterCanvas.width, rasterCanvas.height);
         originalDrawingContentRef.current = rasterCtx.getImageData(
           0,
           0,
@@ -185,32 +214,44 @@ export default function useDrawingTools({
       updateDisplay();
     };
     initCanvas();
-  }, [rasterCanvas, hasReferenceImage, updateDisplay]);
+  }, [getRasterCanvas, updateDisplay]);
 
   // Auto-redraw on state changes (text, tool, etc.)
   useEffect(() => {
-    if (displayCanvas) {
+    if (canvasRef.current) {
       updateDisplay();
     }
-  }, [textElements, tool, updateDisplay, displayCanvas]);
+  }, [textElements, tool, updateDisplay, canvasRef]);
 
   const saveToHistory = useCallback(() => {
+    const rasterCanvas = getRasterCanvas();
     if (!rasterCanvas) return;
     const rasterCtx = rasterCanvas.getContext('2d');
     if (!rasterCtx) return;
-    const drawingData = rasterCtx.getImageData(
-      0,
-      0,
-      rasterCanvas.width,
-      rasterCanvas.height
-    );
+    if (rasterCanvas.width === 0 || rasterCanvas.height === 0) return;
+    const displayCanvas = canvasRef.current;
+    const currentData =
+      displayCanvas && rasterCanvas !== displayCanvas
+        ? rasterCtx.getImageData(
+            0,
+            0,
+            rasterCanvas.width,
+            rasterCanvas.height
+          )
+        : originalDrawingContentRef.current;
+    if (!currentData) return;
+    // Clone the ImageData to avoid reference issues
+    const drawingData = cloneImageData(currentData);
     setCanvasHistory((prev) =>
       [...prev, { drawingData, textState: [...textElements] }].slice(-10)
     );
-  }, [rasterCanvas, textElements]);
+    // Clear redo history when a new action is performed
+    setRedoHistory([]);
+  }, [getRasterCanvas, canvasRef, textElements, cloneImageData]);
 
   const floodFill = useCallback(
     (startX: number, startY: number, fillColor: string) => {
+      const rasterCanvas = getRasterCanvas();
       if (!rasterCanvas) return;
       const rasterCtx = rasterCanvas.getContext('2d');
       if (!rasterCtx) return;
@@ -270,7 +311,7 @@ export default function useDrawingTools({
       );
       updateDisplay();
     },
-    [rasterCanvas, updateDisplay]
+    [getRasterCanvas, updateDisplay]
   );
 
   const defaultGetCanvasCoordinates = (e: React.MouseEvent) => {
@@ -336,6 +377,7 @@ export default function useDrawingTools({
   };
 
   const getTextElementAtPosition = (x: number, y: number) => {
+    const rasterCanvas = getRasterCanvas();
     if (!rasterCanvas) return null;
     const ctx = rasterCanvas.getContext('2d');
     if (!ctx) return null;
@@ -394,6 +436,19 @@ export default function useDrawingTools({
 
   const startDrawing = (coords: { x: number; y: number }) => {
     if (disabled) return;
+    // Lazy initialization if not already set (fallback for timing issues)
+    const rasterCanvas = getRasterCanvas();
+    if (!originalDrawingContentRef.current && rasterCanvas) {
+      const rasterCtx = rasterCanvas.getContext('2d');
+      if (rasterCtx && rasterCanvas.width > 0 && rasterCanvas.height > 0) {
+        originalDrawingContentRef.current = rasterCtx.getImageData(
+          0,
+          0,
+          rasterCanvas.width,
+          rasterCanvas.height
+        );
+      }
+    }
     currentStrokePointsRef.current = [coords];
     setIsDrawing(true);
   };
@@ -437,6 +492,7 @@ export default function useDrawingTools({
       return;
     }
     if (isDrawing) {
+      const rasterCanvas = getRasterCanvas();
       if (currentStrokePointsRef.current.length > 1 && rasterCanvas) {
         saveToHistory();
         const rasterCtx = rasterCanvas.getContext('2d');
@@ -540,19 +596,71 @@ export default function useDrawingTools({
   };
 
   const handleUndo = () => {
+    const rasterCanvas = getRasterCanvas();
     if (canvasHistory.length === 0 || !rasterCanvas) return;
+    const rasterCtx = rasterCanvas.getContext('2d');
+    if (!rasterCtx) return;
+    // Save current state to redo history before undoing
+    const displayCanvas = canvasRef.current;
+    const currentData =
+      displayCanvas && rasterCanvas !== displayCanvas
+        ? rasterCtx.getImageData(
+            0,
+            0,
+            rasterCanvas.width,
+            rasterCanvas.height
+          )
+        : originalDrawingContentRef.current;
+    if (currentData) {
+      setRedoHistory((prev) =>
+        [...prev, { drawingData: cloneImageData(currentData), textState: [...textElements] }].slice(-10)
+      );
+    }
     const previous = canvasHistory[canvasHistory.length - 1];
     setCanvasHistory((prev) => prev.slice(0, -1));
-    const rasterCtx = rasterCanvas.getContext('2d');
     if (rasterCtx && previous) {
-      rasterCtx.putImageData(previous.drawingData, 0, 0);
-      setTextElements(previous.textState);
-      originalDrawingContentRef.current = previous.drawingData;
+      const restoredData = cloneImageData(previous.drawingData);
+      rasterCtx.putImageData(restoredData, 0, 0);
+      setTextElements([...previous.textState]);
+      originalDrawingContentRef.current = restoredData;
+      updateDisplay();
+    }
+  };
+
+  const handleRedo = () => {
+    const rasterCanvas = getRasterCanvas();
+    if (redoHistory.length === 0 || !rasterCanvas) return;
+    const rasterCtx = rasterCanvas.getContext('2d');
+    if (!rasterCtx) return;
+    // Save current state to undo history before redoing
+    const displayCanvas = canvasRef.current;
+    const currentData =
+      displayCanvas && rasterCanvas !== displayCanvas
+        ? rasterCtx.getImageData(
+            0,
+            0,
+            rasterCanvas.width,
+            rasterCanvas.height
+          )
+        : originalDrawingContentRef.current;
+    if (currentData) {
+      setCanvasHistory((prev) =>
+        [...prev, { drawingData: cloneImageData(currentData), textState: [...textElements] }].slice(-10)
+      );
+    }
+    const next = redoHistory[redoHistory.length - 1];
+    setRedoHistory((prev) => prev.slice(0, -1));
+    if (rasterCtx && next) {
+      const restoredData = cloneImageData(next.drawingData);
+      rasterCtx.putImageData(restoredData, 0, 0);
+      setTextElements([...next.textState]);
+      originalDrawingContentRef.current = restoredData;
       updateDisplay();
     }
   };
 
   const clearCanvas = () => {
+    const rasterCanvas = getRasterCanvas();
     if (!rasterCanvas) return;
     saveToHistory();
     const rasterCtx = rasterCanvas.getContext('2d');
@@ -573,6 +681,7 @@ export default function useDrawingTools({
 
   const clearDrawingOverlay = () => {
     // Clear the raster canvas buffer to prevent stale strokes
+    const rasterCanvas = getRasterCanvas();
     if (rasterCanvas) {
       const rasterCtx = rasterCanvas.getContext('2d');
       if (rasterCtx) {
@@ -582,6 +691,7 @@ export default function useDrawingTools({
     originalDrawingContentRef.current = null;
     setTextElements([]);
     setCanvasHistory([]);
+    setRedoHistory([]);
     updateDisplay();
     onHasContent?.(false);
   };
@@ -601,12 +711,14 @@ export default function useDrawingTools({
     fontSize,
     setFontSize,
     canvasHistory,
+    redoHistory,
     isAddingText,
     textInput,
     setTextInput,
     addTextToCanvas,
     cancelTextInput,
     handleUndo,
+    handleRedo,
     clearCanvas,
     clearDrawingOverlay,
     handleColorChange,

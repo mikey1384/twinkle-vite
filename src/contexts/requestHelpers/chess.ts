@@ -229,7 +229,7 @@ export default function chessRequestHelpers({
     async loadChessRankings() {
       try {
         const { data } = await request.get(
-          `${URL}/content/game/chess/leaderBoard`,
+          `${URL}/content/game/chess/leaderBoard?_t=${Date.now()}`,
           auth()
         );
         return data;

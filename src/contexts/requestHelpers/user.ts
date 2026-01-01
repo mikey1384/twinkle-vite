@@ -471,7 +471,10 @@ export default function userRequestHelpers({
             myAllTimeXP,
             myMonthlyXP
           }
-        } = await request.get(`${URL}/user/leaderBoard`, auth());
+        } = await request.get(
+          `${URL}/user/leaderBoard?_t=${Date.now()}`,
+          auth()
+        );
         return {
           all,
           top30s,
@@ -490,7 +493,10 @@ export default function userRequestHelpers({
       try {
         const {
           data: { all, hasMore, myTodayRank, myTodayXP }
-        } = await request.get(`${URL}/user/leaderBoard/today`, auth());
+        } = await request.get(
+          `${URL}/user/leaderBoard/today?_t=${Date.now()}`,
+          auth()
+        );
         return {
           all,
           hasMore,
@@ -505,7 +511,10 @@ export default function userRequestHelpers({
       try {
         const {
           data: { all, myTodayRank, myTodayXP }
-        } = await request.get(`${URL}/user/leaderBoard/today/all`, auth());
+        } = await request.get(
+          `${URL}/user/leaderBoard/today/all?_t=${Date.now()}`,
+          auth()
+        );
         return {
           all,
           myTodayRank,
@@ -519,7 +528,10 @@ export default function userRequestHelpers({
       try {
         const {
           data: { all, myTodayRank, myTodayXP }
-        } = await request.get(`${URL}/user/leaderBoard/today/top30`, auth());
+        } = await request.get(
+          `${URL}/user/leaderBoard/today/top30?_t=${Date.now()}`,
+          auth()
+        );
         return {
           all,
           myTodayRank,
