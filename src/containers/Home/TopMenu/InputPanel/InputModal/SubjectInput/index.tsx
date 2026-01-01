@@ -787,6 +787,7 @@ function SubjectInput({
   function handleSetTitle(text: string) {
     onSetTitle(text);
     titleRef.current = text;
+    onSetSubjectTitle(text);
     saveDraftWithTimeout({
       title: text,
       description,
@@ -800,6 +801,7 @@ function SubjectInput({
   function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
+    onSetSubjectDescription(text);
     saveDraftWithTimeout({
       title,
       description: text,
