@@ -102,7 +102,21 @@ function Markdown({
     }
 
     try {
-      const preprocessedText = preprocessText(children);
+      // For AI messages, convert LaTeX math delimiters BEFORE preprocessing
+      let textToProcess = children;
+      if (isAIMessage) {
+        textToProcess = children
+          .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1: string) => {
+            // Replace newlines with space - KaTeX handles single-line better
+            const content = p1.trim().replace(/\n/g, ' ');
+            return '\n\n$$' + content + '$$\n\n';
+          })
+          .replace(/\\\(([\s\S]*?)\\\)/g, (_, p1: string) => {
+            return '$' + p1.trim() + '$';
+          });
+      }
+
+      const preprocessedText = preprocessText(textToProcess);
 
       // For AI messages, protect currency from being interpreted as math
       let textForMarkdown = preprocessedText;
@@ -122,14 +136,7 @@ function Markdown({
             .use(remarkRehype)
             .use(rehypeKatex)
             .use(rehypeStringify)
-            .processSync(
-              textForMarkdown
-                .replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$${p1}$`)
-                .replace(
-                  /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g,
-                  (_, p1, p2) => `$${p1 || p2}$`
-                )
-            )
+            .processSync(textForMarkdown)
             .toString()
         : unified()
             .use(remarkParse)
@@ -1429,8 +1436,9 @@ function Markdown({
   }
 
   function preprocessText(text: string) {
-    const codeBlockRegex = /```[\s\S]*?```|`[^`\n]*`/g;
-    const matches = [...text.matchAll(codeBlockRegex)];
+    const protectedBlockRegex =
+      /```[\s\S]*?```|`[^`\n]*`|\$\$[\s\S]*?\$\$|\$(?!\d)[^$\n]+\$/g;
+    const matches = [...text.matchAll(protectedBlockRegex)];
 
     if (!matches.length) {
       return preprocessNonCode(text, { isAtStart: true, isAtEnd: true });

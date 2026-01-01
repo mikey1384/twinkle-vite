@@ -28,6 +28,12 @@ const RichTextCss = css`
   .katex-html {
     display: none !important;
   }
+  .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    padding: 0.5em 0;
+  }
   p {
     margin: 0;
   }
