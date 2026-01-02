@@ -36,8 +36,7 @@ function Feed({
 }) {
   const feedRef = useRef<HTMLDivElement>(null);
   const { ref, inView } = useInView({
-    rootMargin: '200px 0px',
-    triggerOnce: true
+    rootMargin: '200px 0px'
   });
 
   useEffect(() => {
