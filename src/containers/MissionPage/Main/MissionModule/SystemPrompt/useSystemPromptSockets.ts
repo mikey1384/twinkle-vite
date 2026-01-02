@@ -59,7 +59,9 @@ export default function useSystemPromptSockets({
     };
     onSetSystemPromptState({
       ...currentState,
-      chatMessages: updatedMessages
+      chatMessages: updatedMessages,
+      // Always true - these handlers only fire when prompt actions are happening
+      promptEverGenerated: true
     });
   }
 
@@ -147,7 +149,8 @@ export default function useSystemPromptSockets({
       });
       onSetSystemPromptState({
         ...currentState,
-        prompt: formatted
+        prompt: formatted,
+        promptEverGenerated: true
       });
     }
 
@@ -169,7 +172,8 @@ export default function useSystemPromptSockets({
       });
       onSetSystemPromptState({
         ...currentState,
-        prompt: formatted
+        prompt: formatted,
+        promptEverGenerated: true
       });
       improveRequestIdRef.current = null;
       onSetImproving(false);
@@ -186,7 +190,8 @@ export default function useSystemPromptSockets({
       const currentState = systemPromptStateRef.current;
       onSetSystemPromptState({
         ...currentState,
-        prompt: improveOriginalPromptRef.current
+        prompt: improveOriginalPromptRef.current,
+        promptEverGenerated: true
       });
       improveRequestIdRef.current = null;
       onSetImproving(false);
@@ -219,7 +224,8 @@ export default function useSystemPromptSockets({
       const currentState = systemPromptStateRef.current;
       onSetSystemPromptState({
         ...currentState,
-        prompt: content || ''
+        prompt: content || '',
+        promptEverGenerated: true
       });
     }
 
@@ -234,7 +240,8 @@ export default function useSystemPromptSockets({
       const currentState = systemPromptStateRef.current;
       onSetSystemPromptState({
         ...currentState,
-        prompt: content || ''
+        prompt: content || '',
+        promptEverGenerated: true
       });
       generateRequestIdRef.current = null;
       onSetGenerating(false);

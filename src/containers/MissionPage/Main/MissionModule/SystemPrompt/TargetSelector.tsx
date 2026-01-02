@@ -32,6 +32,7 @@ interface TargetSelectorProps {
   aiMessageCount: number;
   hasSharedTopic: boolean;
   missionType: string;
+  isMissionPassed?: boolean;
   onApplyToAIChat: (target: 'zero' | 'ciel') => void;
   style?: React.CSSProperties;
 }
@@ -47,6 +48,7 @@ export default function TargetSelector({
   aiMessageCount,
   hasSharedTopic,
   missionType,
+  isMissionPassed,
   onApplyToAIChat,
   style
 }: TargetSelectorProps) {
@@ -71,7 +73,7 @@ export default function TargetSelector({
   const messageProgressPercent = (messageProgress / 2) * 100;
 
   const ownPromptButtonSection =
-    !hasSharedTopic && appliedTarget && appliedChannelId ? (
+    !isMissionPassed && !hasSharedTopic && appliedTarget && appliedChannelId ? (
       <section
         className={`${cardClass} ${css`
           display: flex;
@@ -202,7 +204,7 @@ export default function TargetSelector({
     ) : null;
 
   const browseSharedTopicsSection =
-    step2Complete && !hasSharedTopic ? (
+    !isMissionPassed && step2Complete && !hasSharedTopic ? (
       <section
         className={`${cardClass} ${css`
           display: flex;
@@ -279,7 +281,7 @@ export default function TargetSelector({
   const sharedProgressPercent = (sharedProgress / 1) * 100;
 
   const chatButtonSection =
-    hasSharedTopic && sharedTopicChannelId && sharedTopicId ? (
+    !isMissionPassed && hasSharedTopic && sharedTopicChannelId && sharedTopicId ? (
       <section
         className={`${cardClass} ${css`
           display: flex;

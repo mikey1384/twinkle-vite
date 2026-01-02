@@ -9,15 +9,18 @@ import Input from '~/components/Texts/Input';
 import RichText from '~/components/Texts/RichText';
 import UsernameText from '~/components/Texts/UsernameText';
 import MyTopicsManager from './MyTopicsManager';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import moment from 'moment';
-import zero from '~/assets/zero.png';
-import ciel from '~/assets/ciel.png';
+
+interface CloneEntry {
+  target: 'zero' | 'ciel';
+  channelId: number;
+  topicId: number;
+}
 
 interface SharedTopic {
   id: number;
@@ -32,6 +35,7 @@ interface SharedTopic {
   cloneCount?: number;
   messageCount?: number;
   numComments?: number;
+  myClones?: CloneEntry[];
 }
 
 export default function SystemPromptShared({
@@ -48,19 +52,37 @@ export default function SystemPromptShared({
   );
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const navigate = useNavigate();
-  const [topics, setTopics] = useState<SharedTopic[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const topics = useMissionContext(
+    (v) => v.state.sharedPrompts
+  ) as SharedTopic[];
+  const sharedPromptsLoaded = useMissionContext(
+    (v) => v.state.sharedPromptsLoaded
+  );
+  const loadMoreButton = useMissionContext(
+    (v) => v.state.sharedPromptsLoadMoreButton
+  );
+  const sortBy = useMissionContext((v) => v.state.sharedPromptsSortBy) as
+    | 'new'
+    | 'cloned'
+    | 'used';
+  const onLoadSharedPrompts = useMissionContext(
+    (v) => v.actions.onLoadSharedPrompts
+  );
+  const onLoadMoreSharedPrompts = useMissionContext(
+    (v) => v.actions.onLoadMoreSharedPrompts
+  );
+  const onSetSharedPromptsSortBy = useMissionContext(
+    (v) => v.actions.onSetSharedPromptsSortBy
+  );
+  const onUpdateSharedPromptCloneCount = useMissionContext(
+    (v) => v.actions.onUpdateSharedPromptCloneCount
+  );
+
+  // Local state (doesn't need to persist)
+  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadMoreButton, setLoadMoreButton] = useState(false);
   const [error, setError] = useState('');
-  const [clonedTopic, setClonedTopic] = useState<{
-    sharedTopicId: number;
-    target: 'zero' | 'ciel';
-    topicId: number;
-    channelId: number;
-    title: string;
-  } | null>(null);
-  const [sortBy, setSortBy] = useState<'new' | 'cloned' | 'used'>('new');
   const [commentTexts, setCommentTexts] = useState<{ [key: number]: string }>(
     {}
   );
@@ -71,25 +93,31 @@ export default function SystemPromptShared({
   useEffect(() => {
     let ignore = false;
     async function init() {
-      setLoading(true);
+      // Only show loading spinner if we don't have cached data
+      if (!sharedPromptsLoaded) {
+        setLoading(true);
+      }
       setError('');
-      setClonedTopic(null);
-      setTopics([]);
-      setLoadMoreButton(false);
       try {
         const { subjects, loadMoreButton: hasMore } = await loadOtherUserTopics(
           { sortBy }
         );
         if (ignore) return;
-        setTopics(subjects || []);
-        setLoadMoreButton(Boolean(hasMore));
+        onLoadSharedPrompts({
+          prompts: subjects || [],
+          loadMoreButton: Boolean(hasMore),
+          sortBy
+        });
       } catch (err: any) {
         if (ignore) return;
-        setError(
-          err?.response?.data?.error ||
-            err?.message ||
-            'Failed to load shared prompts'
-        );
+        // Only show error if we don't have cached data to fall back on
+        if (!sharedPromptsLoaded) {
+          setError(
+            err?.response?.data?.error ||
+              err?.message ||
+              'Failed to load shared prompts'
+          );
+        }
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -98,7 +126,8 @@ export default function SystemPromptShared({
     return () => {
       ignore = true;
     };
-  }, [loadOtherUserTopics, sortBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy]);
 
   const tabs = useMemo(
     () => [
@@ -125,8 +154,10 @@ export default function SystemPromptShared({
           },
           sortBy
         });
-      setTopics((prev) => prev.concat(subjects || []));
-      setLoadMoreButton(Boolean(hasMore));
+      onLoadMoreSharedPrompts({
+        prompts: subjects || [],
+        loadMoreButton: Boolean(hasMore)
+      });
     } catch (err: any) {
       setError(
         err?.response?.data?.error ||
@@ -145,7 +176,7 @@ export default function SystemPromptShared({
     channelId: number;
     title: string;
   }) => {
-    setClonedTopic(data);
+    onUpdateSharedPromptCloneCount(data.sharedTopicId);
   };
 
   const handleCommentSubmit = async (topicId: number) => {
@@ -228,7 +259,7 @@ export default function SystemPromptShared({
             <nav
               key={tab.key}
               className={sortBy === tab.key ? 'active' : ''}
-              onClick={() => setSortBy(tab.key as typeof sortBy)}
+              onClick={() => onSetSharedPromptsSortBy(tab.key as typeof sortBy)}
             >
               {tab.label}
             </nav>
@@ -244,7 +275,7 @@ export default function SystemPromptShared({
             {error}
           </div>
         )}
-        {loading ? (
+        {loading || !sharedPromptsLoaded ? (
           <Loading />
         ) : topics.length === 0 ? (
           <div
@@ -435,93 +466,11 @@ export default function SystemPromptShared({
                       </RichText>
                     </div>
                   )}
-                  {clonedTopic?.sharedTopicId ===
-                    (topic.subjectId || topic.id) && (
-                    <div
-                      className={css`
-                        padding: 1rem;
-                        background: ${clonedTopic.target === 'zero'
-                          ? Color.logoBlue(0.05)
-                          : Color.pink(0.05)};
-                        border: 1px solid
-                          ${clonedTopic.target === 'zero'
-                            ? Color.logoBlue(0.3)
-                            : Color.pink(0.3)};
-                        border-radius: ${borderRadius};
-                        display: flex;
-                        flex-direction: column;
-                        gap: 0.8rem;
-                      `}
-                    >
-                      <div
-                        className={css`
-                          display: flex;
-                          align-items: center;
-                          gap: 0.5rem;
-                        `}
-                      >
-                        <Icon
-                          icon="check-circle"
-                          style={{
-                            color: Color.limeGreen(),
-                            fontSize: '1.4rem'
-                          }}
-                        />
-                        <span
-                          className={css`
-                            font-weight: 700;
-                            font-size: 1.3rem;
-                            color: ${Color.darkerGray()};
-                          `}
-                        >
-                          Cloned to{' '}
-                          {clonedTopic.target === 'ciel' ? 'Ciel' : 'Zero'}!
-                        </span>
-                      </div>
-                      <Button
-                        color={
-                          clonedTopic.target === 'zero' ? 'logoBlue' : 'purple'
-                        }
-                        variant="solid"
-                        tone="raised"
-                        style={{
-                          padding: '0.8rem 1.2rem',
-                          fontSize: '1.2rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.6rem',
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}
-                        onClick={() => {
-                          const pathId =
-                            Number(clonedTopic.channelId) +
-                            Number(CHAT_ID_BASE_NUMBER);
-                          navigate(
-                            `/chat/${pathId}/topic/${clonedTopic.topicId}`
-                          );
-                        }}
-                      >
-                        <img
-                          src={clonedTopic.target === 'zero' ? zero : ciel}
-                          alt={clonedTopic.target === 'zero' ? 'Zero' : 'Ciel'}
-                          className={css`
-                            width: 2rem;
-                            height: 2rem;
-                            border-radius: 50%;
-                            object-fit: contain;
-                            background: #fff;
-                          `}
-                        />
-                        Start chatting
-                        <Icon icon="chevron-right" />
-                      </Button>
-                    </div>
-                  )}
                   <CloneButtons
                     sharedTopicId={topic.subjectId || topic.id}
                     sharedTopicTitle={topic.content}
                     uploaderId={topic.userId}
+                    myClones={topic.myClones}
                     onCloneSuccess={handleCloneSuccess}
                   />
                   {userId && (

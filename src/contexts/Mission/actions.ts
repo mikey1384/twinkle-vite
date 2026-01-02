@@ -114,6 +114,47 @@ export default function MissionActions(dispatch: Dispatch) {
         missionId,
         newState
       });
+    },
+    onLoadSharedPrompts({
+      prompts,
+      loadMoreButton,
+      sortBy
+    }: {
+      prompts: object[];
+      loadMoreButton: boolean;
+      sortBy: 'new' | 'cloned' | 'used';
+    }) {
+      return dispatch({
+        type: 'LOAD_SHARED_PROMPTS',
+        prompts,
+        loadMoreButton,
+        sortBy
+      });
+    },
+    onLoadMoreSharedPrompts({
+      prompts,
+      loadMoreButton
+    }: {
+      prompts: object[];
+      loadMoreButton: boolean;
+    }) {
+      return dispatch({
+        type: 'LOAD_MORE_SHARED_PROMPTS',
+        prompts,
+        loadMoreButton
+      });
+    },
+    onSetSharedPromptsSortBy(sortBy: 'new' | 'cloned' | 'used') {
+      return dispatch({
+        type: 'SET_SHARED_PROMPTS_SORT_BY',
+        sortBy
+      });
+    },
+    onUpdateSharedPromptCloneCount(promptId: number) {
+      return dispatch({
+        type: 'UPDATE_SHARED_PROMPT_CLONE_COUNT',
+        promptId
+      });
     }
   };
 }

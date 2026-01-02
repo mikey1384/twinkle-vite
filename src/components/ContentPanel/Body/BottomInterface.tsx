@@ -137,6 +137,7 @@ export default function BottomInterface({
     filePath,
     isNotification,
     likes,
+    myClones,
     numComments,
     numReplies,
     rewards,
@@ -389,6 +390,7 @@ export default function BottomInterface({
                 sharedTopicId={contentId}
                 sharedTopicTitle={contentObj.content}
                 uploaderId={uploader.id}
+                myClones={myClones}
               />
             )}
             {userCanRewardThis &&

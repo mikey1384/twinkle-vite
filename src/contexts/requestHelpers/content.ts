@@ -595,7 +595,8 @@ export default function contentRequestHelpers({
         const { data } = await request.get(
           `${URL}/content?contentId=${contentId}&contentType=${contentType}${
             rootType ? `&rootType=${rootType}` : ''
-          }${isPinnedComment ? '&isPinnedComment=1' : ''}`
+          }${isPinnedComment ? '&isPinnedComment=1' : ''}`,
+          auth()
         );
         return data;
       } catch (error) {

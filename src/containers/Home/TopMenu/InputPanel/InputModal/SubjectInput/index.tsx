@@ -289,15 +289,14 @@ function SubjectInput({
       setIsMadeByUser(nextIsMadeByUser);
       isMadeByUserRef.current = nextIsMadeByUser;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     subject?.descriptionFieldShown,
-    subject?.details?.title,
     subject?.details?.description,
     subject?.details?.secretAnswer,
     subject?.details?.hasSecretAnswer,
     subject.hasSecretAnswer,
     subject?.isMadeByUser,
-    subject?.details,
     titleRef,
     descriptionRef,
     onSetTitle
@@ -787,7 +786,6 @@ function SubjectInput({
   function handleSetTitle(text: string) {
     onSetTitle(text);
     titleRef.current = text;
-    onSetSubjectTitle(text);
     saveDraftWithTimeout({
       title: text,
       description,
@@ -801,7 +799,6 @@ function SubjectInput({
   function handleSetDescription(text: string) {
     setDescription(text);
     descriptionRef.current = text;
-    onSetSubjectDescription(text);
     saveDraftWithTimeout({
       title,
       description: text,

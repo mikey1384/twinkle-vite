@@ -9,7 +9,7 @@ import { css } from '@emotion/css';
 
 const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 
-export default function SortableListGroup({
+export default function SortableListGroup<T extends number | string = number>({
   listItemObj,
   listItemLabel = 'label',
   onMove,
@@ -20,8 +20,8 @@ export default function SortableListGroup({
 }: {
   listItemObj: any;
   listItemLabel?: string;
-  onMove: (arg0: { sourceId: number; targetId: number }) => void;
-  itemIds: any[];
+  onMove: (arg0: { sourceId: T; targetId: T }) => void;
+  itemIds: T[];
   listItemType?: string;
   numbered?: boolean;
   style?: React.CSSProperties;

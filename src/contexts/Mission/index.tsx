@@ -16,7 +16,11 @@ export const initialMissionState = {
   prevUserId: null,
   selectedManagementTab: 'pending',
   selectedMissionsTab: 'missions',
-  selectedMissionListTab: ''
+  selectedMissionListTab: '',
+  sharedPrompts: [] as any[],
+  sharedPromptsLoaded: false,
+  sharedPromptsLoadMoreButton: false,
+  sharedPromptsSortBy: 'new' as 'new' | 'cloned' | 'used'
 };
 
 export function MissionContextProvider({ children }: { children: ReactNode }) {

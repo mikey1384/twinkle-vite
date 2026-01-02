@@ -128,6 +128,35 @@ export default function MissionReducer(
         }
       };
     }
+    case 'LOAD_SHARED_PROMPTS':
+      return {
+        ...state,
+        sharedPrompts: action.prompts,
+        sharedPromptsLoaded: true,
+        sharedPromptsLoadMoreButton: action.loadMoreButton,
+        sharedPromptsSortBy: action.sortBy
+      };
+    case 'LOAD_MORE_SHARED_PROMPTS':
+      return {
+        ...state,
+        sharedPrompts: state.sharedPrompts.concat(action.prompts),
+        sharedPromptsLoadMoreButton: action.loadMoreButton
+      };
+    case 'SET_SHARED_PROMPTS_SORT_BY':
+      return {
+        ...state,
+        sharedPromptsSortBy: action.sortBy,
+        sharedPromptsLoaded: false
+      };
+    case 'UPDATE_SHARED_PROMPT_CLONE_COUNT':
+      return {
+        ...state,
+        sharedPrompts: state.sharedPrompts.map((prompt: any) =>
+          prompt.id === action.promptId || prompt.subjectId === action.promptId
+            ? { ...prompt, cloneCount: (prompt.cloneCount || 0) + 1 }
+            : prompt
+        )
+      };
     default:
       return state;
   }

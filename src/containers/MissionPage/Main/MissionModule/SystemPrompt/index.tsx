@@ -207,57 +207,63 @@ export default function SystemPromptMission({
     progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
 
+  // Mission is cleared when step 3 is complete
+  // (step 3 completion implies steps 1 and 2 were done at some point)
   const missionCleared =
-    myAttempt?.status === 'pass' ||
-    (createdPrompt &&
-      hasAiTopic &&
-      aiMessageCount >= 2 &&
-      hasSharedTopic &&
-      sharedMessageCount >= 1);
+    myAttempt?.status === 'pass' || (hasSharedTopic && sharedMessageCount >= 1);
 
   const isMissionPassed = myAttempt?.status === 'pass';
+
+  // Progress on later steps implies earlier steps are complete
+  // (you can't reach step 3 without doing steps 1 and 2)
+  const step3HasProgress = hasSharedTopic;
+  const step2HasProgress =
+    hasAiTopic || Boolean(progress?.pendingPromptForChat?.topicId);
+
+  const step1Complete =
+    isMissionPassed || createdPrompt || step2HasProgress || step3HasProgress;
+  const step2Complete =
+    isMissionPassed ||
+    (hasAiTopic && aiMessageCount >= 2) ||
+    step3HasProgress;
+  const step3Complete =
+    isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1);
 
   const checklistItems = useMemo(
     () => [
       {
         label: 'Draft and test a system prompt',
-        complete: isMissionPassed || createdPrompt,
-        detail:
-          isMissionPassed || createdPrompt
-            ? 'Prompt created and previewed'
-            : 'Create a prompt and preview it with a test message'
+        complete: step1Complete,
+        detail: step1Complete
+          ? 'Prompt created and previewed'
+          : 'Create a prompt and preview it with a test message'
       },
       {
         label: 'Use it with Zero or Ciel',
-        complete: isMissionPassed || (hasAiTopic && aiMessageCount >= 2),
-        detail:
-          isMissionPassed || (hasAiTopic && aiMessageCount >= 2)
-            ? '2/2 messages in your AI topic'
-            : aiTopicId
-            ? `${Math.min(
-                aiMessageCount,
-                2
-              )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
-            : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
+        complete: step2Complete,
+        detail: step2Complete
+          ? '2/2 messages in your AI topic'
+          : aiTopicId
+          ? `${Math.min(
+              aiMessageCount,
+              2
+            )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
+          : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
       },
       {
         label: `Clone a shared prompt`,
-        complete:
-          isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1),
-        detail:
-          isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1)
-            ? '1/1 message in your cloned shared prompt'
-            : 'Browse Shared Prompts, clone one, and send a message'
+        complete: step3Complete,
+        detail: step3Complete
+          ? '1/1 message in your cloned shared prompt'
+          : 'Browse Shared Prompts, clone one, and send a message'
       }
     ],
     [
-      isMissionPassed,
-      aiMessageCount,
-      createdPrompt,
-      hasAiTopic,
+      step1Complete,
+      step2Complete,
+      step3Complete,
       aiTopicId,
-      hasSharedTopic,
-      sharedMessageCount
+      aiMessageCount
     ]
   );
 
@@ -365,12 +371,88 @@ export default function SystemPromptMission({
           />
         </ErrorBoundary>
         <div className={contentClass}>
-          {missionCleared && myAttempt?.status === 'pass' && (
+          {showEditor && (
+            <ErrorBoundary componentPath="MissionModule/SystemPrompt/Editor">
+              <Editor
+                title={title}
+                prompt={prompt}
+                improving={improving}
+                generating={generating}
+                hasPrompt={hasPrompt}
+                promptEverGenerated={!!promptEverGenerated}
+                saving={saving}
+                onTitleChange={(text) =>
+                  handleSetSystemPromptState({
+                    ...systemPromptState,
+                    title: text
+                  })
+                }
+                onPromptChange={(text) =>
+                  handleSetSystemPromptState({
+                    ...systemPromptState,
+                    prompt: text
+                  })
+                }
+                onImprovePrompt={handleImprovePrompt}
+                onGeneratePrompt={handleGeneratePrompt}
+              />
+            </ErrorBoundary>
+          )}
+
+          {showPreview && (
+            <ErrorBoundary componentPath="MissionModule/SystemPrompt/Preview">
+              <Preview
+                chatMessages={chatMessages}
+                error={error}
+                userMessage={userMessage}
+                hasPrompt={hasPrompt}
+                canSend={canSend}
+                sending={sending}
+                trimmedTitle={trimmedTitle}
+                messageListRef={messageListRef}
+                onClear={() => {
+                  setError('');
+                  handleSetSystemPromptState({
+                    ...systemPromptState,
+                    chatMessages: []
+                  });
+                }}
+                onUserMessageChange={(text) =>
+                  handleSetSystemPromptState({
+                    ...systemPromptState,
+                    userMessage: text
+                  })
+                }
+                onSendMessage={handleSendMessage}
+              />
+            </ErrorBoundary>
+          )}
+
+          {showTargetSelector && (
+            <ErrorBoundary componentPath="MissionModule/SystemPrompt/TargetSelector">
+              <TargetSelector
+                hasPrompt={hasPrompt}
+                applyingTarget={applyingTarget}
+                sending={sending}
+                improving={improving}
+                generating={generating}
+                progress={progress}
+                hasAiTopic={hasAiTopic}
+                aiMessageCount={aiMessageCount}
+                hasSharedTopic={hasSharedTopic}
+                missionType={mission.missionType}
+                isMissionPassed={isMissionPassed}
+                onApplyToAIChat={handleApplyToAIChat}
+              />
+            </ErrorBoundary>
+          )}
+          {isMissionPassed && (
             <div
               className={css`
                 display: flex;
                 justify-content: center;
                 width: 100%;
+                margin-top: 1rem;
               `}
             >
               <MissionStatusCard
@@ -383,84 +465,6 @@ export default function SystemPromptMission({
                 }}
               />
             </div>
-          )}
-          {!missionCleared && (
-            <>
-              {showEditor && (
-                <ErrorBoundary componentPath="MissionModule/SystemPrompt/Editor">
-                  <Editor
-                    title={title}
-                    prompt={prompt}
-                    improving={improving}
-                    generating={generating}
-                    hasPrompt={hasPrompt}
-                    promptEverGenerated={!!promptEverGenerated}
-                    saving={saving}
-                    onTitleChange={(text) =>
-                      handleSetSystemPromptState({
-                        ...systemPromptState,
-                        title: text
-                      })
-                    }
-                    onPromptChange={(text) =>
-                      handleSetSystemPromptState({
-                        ...systemPromptState,
-                        prompt: text
-                      })
-                    }
-                    onImprovePrompt={handleImprovePrompt}
-                    onGeneratePrompt={handleGeneratePrompt}
-                  />
-                </ErrorBoundary>
-              )}
-
-              {showPreview && (
-                <ErrorBoundary componentPath="MissionModule/SystemPrompt/Preview">
-                  <Preview
-                    chatMessages={chatMessages}
-                    error={error}
-                    userMessage={userMessage}
-                    hasPrompt={hasPrompt}
-                    canSend={canSend}
-                    sending={sending}
-                    trimmedTitle={trimmedTitle}
-                    messageListRef={messageListRef}
-                    onClear={() => {
-                      setError('');
-                      handleSetSystemPromptState({
-                        ...systemPromptState,
-                        chatMessages: []
-                      });
-                    }}
-                    onUserMessageChange={(text) =>
-                      handleSetSystemPromptState({
-                        ...systemPromptState,
-                        userMessage: text
-                      })
-                    }
-                    onSendMessage={handleSendMessage}
-                  />
-                </ErrorBoundary>
-              )}
-
-              {showTargetSelector && (
-                <ErrorBoundary componentPath="MissionModule/SystemPrompt/TargetSelector">
-                  <TargetSelector
-                    hasPrompt={hasPrompt}
-                    applyingTarget={applyingTarget}
-                    sending={sending}
-                    improving={improving}
-                    generating={generating}
-                    progress={progress}
-                    hasAiTopic={hasAiTopic}
-                    aiMessageCount={aiMessageCount}
-                    hasSharedTopic={hasSharedTopic}
-                    missionType={mission.missionType}
-                    onApplyToAIChat={handleApplyToAIChat}
-                  />
-                </ErrorBoundary>
-              )}
-            </>
           )}
           <TaskComplete
             taskId={mission.id}
@@ -524,9 +528,12 @@ export default function SystemPromptMission({
     if (!trimmedTitle || generating) return;
     setError('');
     setGenerating(true);
+    // Clear chatMessages so user must re-preview the new prompt
     handleSetSystemPromptState({
       ...systemPromptState,
-      promptEverGenerated: true
+      promptEverGenerated: true,
+      chatMessages: [],
+      userMessage: ''
     });
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     generateRequestIdRef.current = requestId;

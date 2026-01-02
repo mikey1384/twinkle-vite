@@ -46,6 +46,7 @@ export default function SearchView({
   const prevFilters = useExploreContext((v) => v.state.aiCards.prevFilters);
 
   useEffect(() => {
+    let cancelled = false;
     init();
     async function init() {
       const filterChanged =
@@ -67,17 +68,22 @@ export default function SearchView({
           await loadFilteredAICards({
             filters
           });
+        if (cancelled) return;
         onSetTotalBv(totalBv);
         onSetNumCards(numCards);
         if (!filteredLoaded || filterChanged) {
           onLoadFilteredAICards({ cards, loadMoreShown });
         }
       }
+      if (cancelled) return;
       setLoading(false);
       if (filterChanged && Object.keys(filters)?.length) {
         onSetPrevAICardFilters(filters);
       }
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters?.owner,

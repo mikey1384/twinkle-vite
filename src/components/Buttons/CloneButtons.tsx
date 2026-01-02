@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -8,16 +8,26 @@ import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
 
+type CloneTarget = 'zero' | 'ciel';
+
+interface CloneEntry {
+  target: CloneTarget;
+  channelId: number;
+  topicId: number;
+}
+
 export default function CloneButtons({
   sharedTopicId,
   sharedTopicTitle,
   uploaderId,
+  myClones = [],
   onCloneSuccess,
   style
 }: {
   sharedTopicId: number;
   sharedTopicTitle?: string;
   uploaderId: number;
+  myClones?: CloneEntry[];
   onCloneSuccess?: (data: {
     sharedTopicId: number;
     target: 'zero' | 'ciel';
@@ -40,13 +50,44 @@ export default function CloneButtons({
   );
   const onEnterTopic = useChatContext((v) => v.actions.onEnterTopic);
   const [submitting, setSubmitting] = useState<{ [key: string]: boolean }>({});
+  const [newClones, setNewClones] = useState<CloneEntry[]>([]);
   const [error, setError] = useState('');
 
   const isOwnTopic = uploaderId === userId;
 
+  // Combine API clones with newly created clones from this session
+  const existingClones = useMemo(() => {
+    const cloneMap: Partial<Record<CloneTarget, { channelId: number; topicId: number }>> = {};
+    for (const clone of myClones) {
+      cloneMap[clone.target] = { channelId: clone.channelId, topicId: clone.topicId };
+    }
+    for (const clone of newClones) {
+      cloneMap[clone.target] = { channelId: clone.channelId, topicId: clone.topicId };
+    }
+    return cloneMap;
+  }, [myClones, newClones]);
+
   if (!userId || isOwnTopic) {
     return null;
   }
+
+  const targetConfig = {
+    zero: { label: 'Zero', color: 'logoBlue', icon: zero },
+    ciel: { label: 'Ciel', color: 'purple', icon: ciel }
+  } as const;
+  const cloneTargets: CloneTarget[] = ['zero', 'ciel'];
+  const hasCloneForTarget = (clone?: { channelId: number; topicId: number }) =>
+    typeof clone?.channelId === 'number' && typeof clone?.topicId === 'number';
+  const existingCloneTargets = cloneTargets.filter((target) =>
+    hasCloneForTarget(existingClones[target])
+  );
+  const hasAnyClone = existingCloneTargets.length > 0;
+  const compactRowClass = css`
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  `;
 
   return (
     <div
@@ -69,70 +110,110 @@ export default function CloneButtons({
           {error}
         </div>
       )}
-      <Button
-        color="logoBlue"
-        variant="solid"
-        tone="raised"
-        onClick={() => handleClone('zero')}
-        disabled={submitting.zero || submitting.ciel}
-      >
-        {submitting.zero ? (
-          <>
-            <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-            Cloning to Zero...
-          </>
-        ) : (
-          <>
-            <img
-              src={zero}
-              alt="Zero"
-              className={css`
-                width: 2rem;
-                height: 2rem;
-                border-radius: 50%;
-                margin-right: 0.5rem;
-                object-fit: contain;
-                background: #fff;
-              `}
-            />
-            Clone to Zero
-          </>
-        )}
-      </Button>
-      <Button
-        color="purple"
-        variant="solid"
-        tone="raised"
-        onClick={() => handleClone('ciel')}
-        disabled={submitting.zero || submitting.ciel}
-      >
-        {submitting.ciel ? (
-          <>
-            <Icon style={{ marginRight: '0.5rem' }} icon="spinner" pulse />
-            Cloning to Ciel...
-          </>
-        ) : (
-          <>
-            <img
-              src={ciel}
-              alt="Ciel"
-              className={css`
-                width: 2rem;
-                height: 2rem;
-                border-radius: 50%;
-                margin-right: 0.5rem;
-                object-fit: contain;
-                background: #fff;
-              `}
-            />
-            Clone to Ciel
-          </>
-        )}
-      </Button>
+      {hasAnyClone ? (
+        <>
+          {existingCloneTargets.map((target) => renderChatButton(target))}
+          <div className={compactRowClass}>
+            {cloneTargets.map((target) => renderCloneButton(target, true))}
+          </div>
+        </>
+      ) : (
+        <>
+          {cloneTargets.map((target) => renderCloneButton(target, false))}
+        </>
+      )}
     </div>
   );
 
-  async function handleClone(target: 'zero' | 'ciel') {
+  function renderChatButton(target: CloneTarget) {
+    const clone = existingClones[target];
+    if (!hasCloneForTarget(clone)) return null;
+    const { color, icon, label } = targetConfig[target];
+    return (
+      <Button
+        key={`chat-${target}`}
+        color={color}
+        variant="solid"
+        tone="raised"
+        onClick={() => handleGoToClone(target)}
+        disabled={submitting.zero || submitting.ciel}
+      >
+        <img
+          src={icon}
+          alt={label}
+          className={css`
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            object-fit: contain;
+            background: #fff;
+          `}
+        />
+        Chat with {label}
+        <Icon icon="chevron-right" />
+      </Button>
+    );
+  }
+
+  function renderCloneButton(target: CloneTarget, compact: boolean) {
+    const { color, icon, label } = targetConfig[target];
+    const isSubmitting = submitting[target];
+    const labelText = `Clone to ${label}`;
+    const loadingText = `Cloning to ${label}...`;
+    return (
+      <Button
+        key={`${compact ? 'compact' : 'main'}-${target}`}
+        color={color}
+        variant={compact ? 'ghost' : 'solid'}
+        tone={compact ? 'flat' : 'raised'}
+        size={compact ? 'sm' : 'md'}
+        uppercase={!compact}
+        onClick={() => handleClone(target)}
+        disabled={submitting.zero || submitting.ciel}
+      >
+        {isSubmitting ? (
+          <>
+            <Icon
+              style={{ marginRight: compact ? '0.4rem' : '0.5rem' }}
+              icon="spinner"
+              pulse
+            />
+            {loadingText}
+          </>
+        ) : compact ? (
+          labelText
+        ) : (
+          <>
+            <img
+              src={icon}
+              alt={label}
+              className={css`
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                margin-right: 0.5rem;
+                object-fit: contain;
+                background: #fff;
+              `}
+            />
+            {labelText}
+          </>
+        )}
+      </Button>
+    );
+  }
+
+  function handleGoToClone(target: CloneTarget) {
+    const clone = existingClones[target];
+    if (!hasCloneForTarget(clone)) return;
+    const pathId = Number(clone!.channelId) + Number(CHAT_ID_BASE_NUMBER);
+    onUpdateSelectedChannelId(clone!.channelId);
+    onEnterTopic({ channelId: clone!.channelId, topicId: clone!.topicId });
+    navigate(`/chat/${pathId}/topic/${clone!.topicId}`);
+  }
+
+  async function handleClone(target: CloneTarget) {
     if (!sharedTopicId || submitting[target]) return;
     setError('');
     setSubmitting((prev) => ({ ...prev, [target]: true }));
@@ -142,6 +223,12 @@ export default function CloneButtons({
         typeof data?.subjectId === 'number' &&
         typeof data?.channelId === 'number'
       ) {
+        // Store new clone in local state
+        setNewClones((prev) => [
+          ...prev.filter((c) => c.target !== target),
+          { target, channelId: data.channelId, topicId: data.subjectId }
+        ]);
+
         onCloneSuccess?.({
           sharedTopicId,
           target,
