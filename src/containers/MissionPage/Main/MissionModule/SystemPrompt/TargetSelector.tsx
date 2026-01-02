@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import zero from '~/assets/zero.png';
@@ -53,6 +55,44 @@ export default function TargetSelector({
   style
 }: TargetSelectorProps) {
   const navigate = useNavigate();
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const scopedTheme = useMemo(() => profileTheme as any, [profileTheme]);
+
+  const [exportProgress, setExportProgress] = useState<{
+    [key: string]: number;
+  }>({});
+  const progressIntervalRef = useRef<{ [key: string]: number }>({});
+
+  // Progress bar animation for export buttons
+  useEffect(() => {
+    const targets = ['zero', 'ciel'] as const;
+    const currentIntervals = progressIntervalRef.current;
+    for (const target of targets) {
+      const isApplying = applyingTarget === target;
+      if (isApplying && !currentIntervals[target]) {
+        setExportProgress((prev) => ({ ...prev, [target]: 0 }));
+        currentIntervals[target] = window.setInterval(() => {
+          setExportProgress((prev) => {
+            const current = prev[target] || 0;
+            const increment = current < 50 ? 1.6 : current < 75 ? 1 : 0.5;
+            return { ...prev, [target]: Math.min(current + increment, 90) };
+          });
+        }, 1000);
+      } else if (!isApplying && currentIntervals[target]) {
+        clearInterval(currentIntervals[target]);
+        delete currentIntervals[target];
+        setExportProgress((prev) => ({ ...prev, [target]: 0 }));
+      }
+    }
+    return () => {
+      for (const target of targets) {
+        if (currentIntervals[target]) {
+          clearInterval(currentIntervals[target]);
+        }
+      }
+    };
+  }, [applyingTarget]);
+
   const appliedTarget = progress?.pendingPromptForChat?.target;
   const appliedChannelId = progress?.pendingPromptForChat?.channelId;
 
@@ -433,66 +473,134 @@ export default function TargetSelector({
               flex-wrap: wrap;
             `}
           >
-            <Button
-              color="logoBlue"
-              variant="solid"
-              tone="raised"
-              loading={applyingTarget === 'zero'}
-              disabled={
-                !hasPrompt ||
-                applyingTarget === 'ciel' ||
-                sending ||
-                improving ||
-                generating
-              }
-              onClick={() => onApplyToAIChat('zero')}
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+              `}
             >
-              <img
-                src={zero}
-                alt="Zero"
-                className={css`
-                  width: 2rem;
-                  height: 2rem;
-                  border-radius: 50%;
-                  margin-right: 0.5rem;
-                  object-fit: contain;
-                  background: #fff;
-                `}
-              />
-              {applyingTarget === 'zero'
-                ? 'Exporting to Zero...'
-                : 'Use with Zero'}
-            </Button>
-            <Button
-              color="purple"
-              variant="solid"
-              tone="raised"
-              disabled={
-                !hasPrompt ||
-                applyingTarget === 'zero' ||
-                sending ||
-                improving ||
-                generating
-              }
-              loading={applyingTarget === 'ciel'}
-              onClick={() => onApplyToAIChat('ciel')}
+              <Button
+                color="logoBlue"
+                variant="solid"
+                tone="raised"
+                loading={applyingTarget === 'zero'}
+                disabled={
+                  !hasPrompt ||
+                  applyingTarget === 'ciel' ||
+                  sending ||
+                  improving ||
+                  generating
+                }
+                onClick={() => onApplyToAIChat('zero')}
+              >
+                <img
+                  src={zero}
+                  alt="Zero"
+                  className={css`
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 50%;
+                    margin-right: 0.5rem;
+                    object-fit: contain;
+                    background: #fff;
+                  `}
+                />
+                {applyingTarget === 'zero'
+                  ? 'Exporting to Zero...'
+                  : 'Use with Zero'}
+              </Button>
+              {applyingTarget === 'zero' && (
+                <ScopedTheme theme={scopedTheme} roles={['cloneProgress']}>
+                  <div
+                    className={css`
+                      width: 100%;
+                      height: 4px;
+                      background: ${Color.highlightGray()};
+                      border-radius: 2px;
+                      overflow: hidden;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        height: 100%;
+                        background: var(
+                          --role-cloneProgress-color,
+                          ${Color.logoBlue()}
+                        );
+                        border-radius: 2px;
+                        transition: width 0.3s ease-out;
+                      `}
+                      style={{ width: `${exportProgress.zero || 0}%` }}
+                    />
+                  </div>
+                </ScopedTheme>
+              )}
+            </div>
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+              `}
             >
-              <img
-                src={ciel}
-                alt="Ciel"
-                className={css`
-                  width: 2rem;
-                  height: 2rem;
-                  border-radius: 50%;
-                  margin-right: 0.5rem;
-                  object-fit: contain;
-                  background: #fff;
-                `}
-              />
-              {applyingTarget === 'ciel'
-                ? 'Exporting to Ciel...'
-                : 'Use with Ciel'}
-            </Button>
+              <Button
+                color="purple"
+                variant="solid"
+                tone="raised"
+                disabled={
+                  !hasPrompt ||
+                  applyingTarget === 'zero' ||
+                  sending ||
+                  improving ||
+                  generating
+                }
+                loading={applyingTarget === 'ciel'}
+                onClick={() => onApplyToAIChat('ciel')}
+              >
+                <img
+                  src={ciel}
+                  alt="Ciel"
+                  className={css`
+                    width: 2rem;
+                    height: 2rem;
+                    border-radius: 50%;
+                    margin-right: 0.5rem;
+                    object-fit: contain;
+                    background: #fff;
+                  `}
+                />
+                {applyingTarget === 'ciel'
+                  ? 'Exporting to Ciel...'
+                  : 'Use with Ciel'}
+              </Button>
+              {applyingTarget === 'ciel' && (
+                <ScopedTheme theme={scopedTheme} roles={['cloneProgress']}>
+                  <div
+                    className={css`
+                      width: 100%;
+                      height: 4px;
+                      background: ${Color.highlightGray()};
+                      border-radius: 2px;
+                      overflow: hidden;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        height: 100%;
+                        background: var(
+                          --role-cloneProgress-color,
+                          ${Color.logoBlue()}
+                        );
+                        border-radius: 2px;
+                        transition: width 0.3s ease-out;
+                      `}
+                      style={{ width: `${exportProgress.ciel || 0}%` }}
+                    />
+                  </div>
+                </ScopedTheme>
+              )}
+            </div>
           </div>
         </section>
       )}

@@ -352,10 +352,10 @@ export default function SystemPromptMission({
     return () => clearTimeout(draftTimeoutRef.current);
   }, [trimmedTitle, trimmedPrompt]);
 
-  // Progressive reveal logic
-  const showEditor = true; // Always show title/prompt editor
-  const showPreview = !!(trimmedTitle && hasPrompt); // Only show preview if title & prompt exist
-  const showTargetSelector = !!createdPrompt; // Show export only after testing in preview
+  // Progressive reveal logic (hide everything except checklist after mission is passed)
+  const showEditor = !missionCleared;
+  const showPreview = !missionCleared && !!(trimmedTitle && hasPrompt);
+  const showTargetSelector = !missionCleared && !!createdPrompt;
 
   return (
     <ErrorBoundary componentPath="MissionModule/SystemPrompt">
