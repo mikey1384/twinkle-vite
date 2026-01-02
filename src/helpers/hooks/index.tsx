@@ -195,7 +195,7 @@ export function useLazyLoad({
   delay = 1000
 }: {
   id: string;
-  PanelRef: React.RefObject<any>;
+  PanelRef?: React.RefObject<any>;
   inView: boolean;
   onSetPlaceholderHeight?: (height: number) => void;
   delay?: number;
@@ -216,10 +216,12 @@ export function useLazyLoad({
 
   // Handle placeholder height measurement (unchanged - doesn't cause parent re-renders)
   useEffect(() => {
+    if (!PanelRef || !onSetPlaceholderHeight) return;
+
     const handleResize = throttle((entries: ResizeObserverEntry[]) => {
       if (entries.length > 0) {
         const clientHeight = entries[0].target.clientHeight;
-        onSetPlaceholderHeight?.(clientHeight);
+        onSetPlaceholderHeight(clientHeight);
       }
     }, 100);
 

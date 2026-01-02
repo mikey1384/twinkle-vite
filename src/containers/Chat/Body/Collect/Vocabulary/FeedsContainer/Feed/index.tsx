@@ -1,19 +1,12 @@
-import React, {
-  memo,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  startTransition
-} from 'react';
+import React, { memo, useMemo, useRef } from 'react';
 import SpellLayout from './SpellLayout';
 import RewardLayout from './RewardLayout';
 import moment from 'moment';
-import { css } from '@emotion/css';
 import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import DefaultLayout from './DefaultLayout';
+import { css } from '@emotion/css';
 
 function Feed({
   feed,
@@ -34,37 +27,15 @@ function Feed({
 }: {
   feed: any;
 }) {
-  const feedRef = useRef<HTMLDivElement>(null);
-  const { ref, inView } = useInView({
-    rootMargin: '200px 0px',
-    triggerOnce: true
+  const placeholderHeightRef = useRef(vocabFeedHeight[feed.id]);
+  const [inViewRef, inView] = useInView({
+    rootMargin: '200px 0px'
   });
-
-  useEffect(() => {
-    if (feedRef.current) {
-      ref(feedRef.current);
-    }
-  }, [ref]);
-
-  const previousPlaceholderHeight = useMemo(
-    () => vocabFeedHeight[`${feed.id}`],
-    [feed.id]
-  );
-  const placeholderHeightRef = useRef(previousPlaceholderHeight);
-  const [placeholderHeight, setPlaceholderHeight] = useState(
-    previousPlaceholderHeight
-  );
 
   const isVisible = useLazyLoad({
     id: `vocab-feed-${feed.id}`,
     inView,
-    PanelRef: feedRef,
-    onSetPlaceholderHeight: (height: number) => {
-      startTransition(() => {
-        setPlaceholderHeight(height);
-        placeholderHeightRef.current = height;
-      });
-    }
+    delay: 2000
   });
 
   const displayedTime = useMemo(() => {
@@ -72,29 +43,24 @@ function Feed({
   }, [timeStamp]);
 
   const feedShown = useMemo(() => inView || isVisible, [inView, isVisible]);
-  const componentHeight = useMemo(
-    () => placeholderHeight || '60px',
-    [placeholderHeight]
-  );
+  const componentHeight = placeholderHeightRef.current || '60px';
 
-  useEffect(() => {
-    return function cleanup() {
-      startTransition(() => {
-        vocabFeedHeight[`${feed.id}`] = placeholderHeightRef.current;
-      });
-    };
-  }, [feed.id]);
+  function handleHeightMeasured(height: number) {
+    placeholderHeightRef.current = height;
+    vocabFeedHeight[feed.id] = height;
+  }
 
   if (!feedShown) {
     return (
-      <div style={{ width: '100%', height: componentHeight }} ref={feedRef} />
+      <div style={{ width: '100%', height: componentHeight }} ref={inViewRef} />
     );
   }
 
   if (action === 'spell') {
     return (
       <SpellLayout
-        feedRef={feedRef}
+        inViewRef={inViewRef}
+        onHeightMeasured={handleHeightMeasured}
         userId={userId}
         username={username}
         profilePicUrl={profilePicUrl}
@@ -114,7 +80,8 @@ function Feed({
   } else if (action === 'reward') {
     return (
       <RewardLayout
-        feedRef={feedRef}
+        inViewRef={inViewRef}
+        onHeightMeasured={handleHeightMeasured}
         userId={userId}
         username={username}
         profilePicUrl={profilePicUrl}
@@ -134,7 +101,8 @@ function Feed({
   } else {
     return (
       <DefaultLayout
-        feedRef={feedRef}
+        inViewRef={inViewRef}
+        onHeightMeasured={handleHeightMeasured}
         userId={userId}
         username={username}
         profilePicUrl={profilePicUrl}
