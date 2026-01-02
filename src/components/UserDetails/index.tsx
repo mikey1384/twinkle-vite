@@ -118,11 +118,13 @@ export default function UserDetails({
             noLink
               ? ''
               : css`
-                  transition: color 0.2s;
-                  &:hover {
-                    color: ${Color[
-                      profile.profileTheme || 'logoBlue'
-                    ]()}!important;
+                  @media (hover: hover) and (pointer: fine) {
+                    transition: color 0.2s;
+                    &:hover {
+                      color: ${Color[
+                        profile.profileTheme || 'logoBlue'
+                      ]()}!important;
+                    }
                   }
                 `
           }
