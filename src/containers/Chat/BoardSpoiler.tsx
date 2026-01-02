@@ -1,6 +1,7 @@
 import React from 'react';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
+import { tabletMaxWidth } from '~/constants/css';
 
 export default function BoardSpoiler({
   revealed,
@@ -36,6 +37,11 @@ export default function BoardSpoiler({
     color: rgba(115, 115, 115, 1);
     box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.08);
     font-size: 1.5rem;
+    @media (max-width: ${tabletMaxWidth}) {
+      font-size: 1.2rem;
+      padding: 1rem;
+      gap: 0.7rem;
+    }
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     transition: transform 150ms ease, box-shadow 200ms ease, border-color 200ms ease;
