@@ -118,7 +118,6 @@ export default function UserDetails({
             noLink
               ? ''
               : css`
-                  -webkit-tap-highlight-color: transparent;
                   @media (hover: hover) and (pointer: fine) {
                     transition: color 0.2s;
                     &:hover {
