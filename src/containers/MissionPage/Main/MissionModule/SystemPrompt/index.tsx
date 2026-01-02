@@ -380,6 +380,7 @@ export default function SystemPromptMission({
                 generating={generating}
                 hasPrompt={hasPrompt}
                 promptEverGenerated={!!promptEverGenerated}
+                missionCleared={!!missionCleared}
                 saving={saving}
                 onTitleChange={(text) =>
                   handleSetSystemPromptState({

@@ -145,61 +145,63 @@ export default function TargetSelector({
           </div>
         </div>
 
-        <Button
-          color={appliedTarget === 'zero' ? 'logoBlue' : 'purple'}
-          variant="solid"
-          tone="raised"
-          style={{
-            padding: '1rem 2rem',
-            fontSize: '1.3rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            borderRadius: '15px'
-          }}
-          onClick={handleGoToOwnPromptChat}
-        >
-          <div
-            className={css`
-              width: 3.5rem;
-              height: 3.5rem;
-              border-radius: 50%;
-              background: #fff;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              overflow: hidden;
-              border: 2px solid rgba(255, 255, 255, 0.5);
-            `}
-          >
-            <img
-              src={appliedTarget === 'zero' ? zero : ciel}
-              alt={appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
-              style={{ width: '85%', height: '85%', objectFit: 'contain' }}
-            />
-          </div>
-          <div
+        {!step2Complete && (
+          <Button
+            color={appliedTarget === 'zero' ? 'logoBlue' : 'purple'}
+            variant="solid"
+            tone="raised"
             style={{
+              padding: '1rem 2rem',
+              fontSize: '1.3rem',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start'
+              alignItems: 'center',
+              gap: '1rem',
+              borderRadius: '15px'
             }}
+            onClick={handleGoToOwnPromptChat}
           >
-            <span
+            <div
+              className={css`
+                width: 3.5rem;
+                height: 3.5rem;
+                border-radius: 50%;
+                background: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+              `}
+            >
+              <img
+                src={appliedTarget === 'zero' ? zero : ciel}
+                alt={appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
+                style={{ width: '85%', height: '85%', objectFit: 'contain' }}
+              />
+            </div>
+            <div
               style={{
-                fontSize: '0.9rem',
-                opacity: 0.9,
-                fontWeight: 'normal'
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start'
               }}
             >
-              Start chatting with
-            </span>
-            <span style={{ fontWeight: 'bold' }}>
-              {appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
-            </span>
-          </div>
-          <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
-        </Button>
+              <span
+                style={{
+                  fontSize: '0.9rem',
+                  opacity: 0.9,
+                  fontWeight: 'normal'
+                }}
+              >
+                Start chatting with
+              </span>
+              <span style={{ fontWeight: 'bold' }}>
+                {appliedTarget === 'zero' ? 'Zero' : 'Ciel'}
+              </span>
+            </div>
+            <Icon icon="chevron-right" style={{ marginLeft: '0.5rem' }} />
+          </Button>
+        )}
       </section>
     ) : null;
 
@@ -416,82 +418,84 @@ export default function TargetSelector({
 
   return (
     <div style={style}>
-      <section
-        className={`${cardClass} ${css`
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        `}`}
-      >
-        <div
-          className={css`
+      {!isMissionPassed && (
+        <section
+          className={`${cardClass} ${css`
             display: flex;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-          `}
+            flex-direction: column;
+            gap: 1rem;
+          `}`}
         >
-          <Button
-            color="logoBlue"
-            variant="solid"
-            tone="raised"
-            loading={applyingTarget === 'zero'}
-            disabled={
-              !hasPrompt ||
-              applyingTarget === 'ciel' ||
-              sending ||
-              improving ||
-              generating
-            }
-            onClick={() => onApplyToAIChat('zero')}
+          <div
+            className={css`
+              display: flex;
+              gap: 0.8rem;
+              flex-wrap: wrap;
+            `}
           >
-            <img
-              src={zero}
-              alt="Zero"
-              className={css`
-                width: 2rem;
-                height: 2rem;
-                border-radius: 50%;
-                margin-right: 0.5rem;
-                object-fit: contain;
-                background: #fff;
-              `}
-            />
-            {applyingTarget === 'zero'
-              ? 'Exporting to Zero...'
-              : 'Use with Zero'}
-          </Button>
-          <Button
-            color="purple"
-            variant="solid"
-            tone="raised"
-            disabled={
-              !hasPrompt ||
-              applyingTarget === 'zero' ||
-              sending ||
-              improving ||
-              generating
-            }
-            loading={applyingTarget === 'ciel'}
-            onClick={() => onApplyToAIChat('ciel')}
-          >
-            <img
-              src={ciel}
-              alt="Ciel"
-              className={css`
-                width: 2rem;
-                height: 2rem;
-                border-radius: 50%;
-                margin-right: 0.5rem;
-                object-fit: contain;
-                background: #fff;
-              `}
-            />
-            {applyingTarget === 'ciel'
-              ? 'Exporting to Ciel...'
-              : 'Use with Ciel'}
-          </Button>
-        </div>
-      </section>
+            <Button
+              color="logoBlue"
+              variant="solid"
+              tone="raised"
+              loading={applyingTarget === 'zero'}
+              disabled={
+                !hasPrompt ||
+                applyingTarget === 'ciel' ||
+                sending ||
+                improving ||
+                generating
+              }
+              onClick={() => onApplyToAIChat('zero')}
+            >
+              <img
+                src={zero}
+                alt="Zero"
+                className={css`
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 50%;
+                  margin-right: 0.5rem;
+                  object-fit: contain;
+                  background: #fff;
+                `}
+              />
+              {applyingTarget === 'zero'
+                ? 'Exporting to Zero...'
+                : 'Use with Zero'}
+            </Button>
+            <Button
+              color="purple"
+              variant="solid"
+              tone="raised"
+              disabled={
+                !hasPrompt ||
+                applyingTarget === 'zero' ||
+                sending ||
+                improving ||
+                generating
+              }
+              loading={applyingTarget === 'ciel'}
+              onClick={() => onApplyToAIChat('ciel')}
+            >
+              <img
+                src={ciel}
+                alt="Ciel"
+                className={css`
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 50%;
+                  margin-right: 0.5rem;
+                  object-fit: contain;
+                  background: #fff;
+                `}
+              />
+              {applyingTarget === 'ciel'
+                ? 'Exporting to Ciel...'
+                : 'Use with Ciel'}
+            </Button>
+          </div>
+        </section>
+      )}
       {ownPromptButtonSection}
       {browseSharedTopicsSection}
       {chatButtonSection}

@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
+import ScopedTheme from '~/theme/ScopedTheme';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
+import { Color } from '~/constants/css';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
 
@@ -39,6 +41,8 @@ export default function CloneButtons({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const scopedTheme = useMemo(() => profileTheme as any, [profileTheme]);
   const cloneSharedSystemPrompt = useAppContext(
     (v) => v.requestHelpers.cloneSharedSystemPrompt
   );
@@ -52,6 +56,40 @@ export default function CloneButtons({
   const [submitting, setSubmitting] = useState<{ [key: string]: boolean }>({});
   const [newClones, setNewClones] = useState<CloneEntry[]>([]);
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState<{ [key: string]: number }>({});
+  const progressIntervalRef = useRef<{ [key: string]: number }>({});
+
+  // Progress bar animation - rises slowly over ~50 seconds
+  useEffect(() => {
+    const targets: CloneTarget[] = ['zero', 'ciel'];
+    const currentIntervals = progressIntervalRef.current;
+    for (const target of targets) {
+      if (submitting[target] && !currentIntervals[target]) {
+        setProgress((prev) => ({ ...prev, [target]: 0 }));
+        // Increment ~1.6% every second to reach ~80% in 50 seconds
+        // (we never reach 100% - that happens on success)
+        currentIntervals[target] = window.setInterval(() => {
+          setProgress((prev) => {
+            const current = prev[target] || 0;
+            // Slow down as we approach 90%
+            const increment = current < 50 ? 1.6 : current < 75 ? 1 : 0.5;
+            return { ...prev, [target]: Math.min(current + increment, 90) };
+          });
+        }, 1000);
+      } else if (!submitting[target] && currentIntervals[target]) {
+        clearInterval(currentIntervals[target]);
+        delete currentIntervals[target];
+        setProgress((prev) => ({ ...prev, [target]: 0 }));
+      }
+    }
+    return () => {
+      for (const target of targets) {
+        if (currentIntervals[target]) {
+          clearInterval(currentIntervals[target]);
+        }
+      }
+    };
+  }, [submitting]);
 
   const isOwnTopic = uploaderId === userId;
 
@@ -159,48 +197,83 @@ export default function CloneButtons({
   function renderCloneButton(target: CloneTarget, compact: boolean) {
     const { color, icon, label } = targetConfig[target];
     const isSubmitting = submitting[target];
+    const currentProgress = progress[target] || 0;
     const labelText = `Clone to ${label}`;
     const loadingText = `Cloning to ${label}...`;
+
     return (
-      <Button
+      <div
         key={`${compact ? 'compact' : 'main'}-${target}`}
-        color={color}
-        variant={compact ? 'ghost' : 'solid'}
-        tone={compact ? 'flat' : 'raised'}
-        size={compact ? 'sm' : 'md'}
-        uppercase={!compact}
-        onClick={() => handleClone(target)}
-        disabled={submitting.zero || submitting.ciel}
+        className={css`
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+          ${compact ? 'flex: 1;' : ''}
+        `}
       >
-        {isSubmitting ? (
-          <>
-            <Icon
-              style={{ marginRight: compact ? '0.4rem' : '0.5rem' }}
-              icon="spinner"
-              pulse
-            />
-            {loadingText}
-          </>
-        ) : compact ? (
-          labelText
-        ) : (
-          <>
-            <img
-              src={icon}
-              alt={label}
+        <Button
+          color={color}
+          variant={compact ? 'ghost' : 'solid'}
+          tone={compact ? 'flat' : 'raised'}
+          size={compact ? 'sm' : 'md'}
+          uppercase={!compact}
+          onClick={() => handleClone(target)}
+          disabled={submitting.zero || submitting.ciel}
+          style={{ width: compact ? '100%' : undefined }}
+        >
+          {isSubmitting ? (
+            <>
+              <Icon
+                style={{ marginRight: compact ? '0.4rem' : '0.5rem' }}
+                icon="spinner"
+                pulse
+              />
+              {loadingText}
+            </>
+          ) : compact ? (
+            labelText
+          ) : (
+            <>
+              <img
+                src={icon}
+                alt={label}
+                className={css`
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 50%;
+                  margin-right: 0.5rem;
+                  object-fit: contain;
+                  background: #fff;
+                `}
+              />
+              {labelText}
+            </>
+          )}
+        </Button>
+        {isSubmitting && (
+          <ScopedTheme theme={scopedTheme} roles={['cloneProgress']}>
+            <div
               className={css`
-                width: 2rem;
-                height: 2rem;
-                border-radius: 50%;
-                margin-right: 0.5rem;
-                object-fit: contain;
-                background: #fff;
+                width: 100%;
+                height: 4px;
+                background: ${Color.highlightGray()};
+                border-radius: 2px;
+                overflow: hidden;
               `}
-            />
-            {labelText}
-          </>
+            >
+              <div
+                className={css`
+                  height: 100%;
+                  background: var(--role-cloneProgress-color, ${Color.logoBlue()});
+                  border-radius: 2px;
+                  transition: width 0.3s ease-out;
+                `}
+                style={{ width: `${currentProgress}%` }}
+              />
+            </div>
+          </ScopedTheme>
         )}
-      </Button>
+      </div>
     );
   }
 

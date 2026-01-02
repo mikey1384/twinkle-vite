@@ -75,14 +75,15 @@ export default function SystemPromptShared({
   const onSetSharedPromptsSortBy = useMissionContext(
     (v) => v.actions.onSetSharedPromptsSortBy
   );
-  const onUpdateSharedPromptCloneCount = useMissionContext(
-    (v) => v.actions.onUpdateSharedPromptCloneCount
+  const onUpdateSharedPromptClone = useMissionContext(
+    (v) => v.actions.onUpdateSharedPromptClone
   );
 
   // Local state (doesn't need to persist)
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
+  const [newPromptsAvailable, setNewPromptsAvailable] = useState(false);
   const [commentTexts, setCommentTexts] = useState<{ [key: number]: string }>(
     {}
   );
@@ -90,14 +91,17 @@ export default function SystemPromptShared({
     [key: number]: boolean;
   }>({});
 
+  // Track the previous sortBy to detect actual sort changes
+  const prevSortByRef = React.useRef(sortBy);
+
   useEffect(() => {
     let ignore = false;
+    const sortByChanged = prevSortByRef.current !== sortBy;
+    prevSortByRef.current = sortBy;
+
     async function init() {
-      // Only show loading spinner if we don't have cached data
-      if (!sharedPromptsLoaded) {
-        setLoading(true);
-      }
       setError('');
+      setLoading(true);
       try {
         const { subjects, loadMoreButton: hasMore } = await loadOtherUserTopics(
           { sortBy }
@@ -108,26 +112,87 @@ export default function SystemPromptShared({
           loadMoreButton: Boolean(hasMore),
           sortBy
         });
+        setNewPromptsAvailable(false);
       } catch (err: any) {
         if (ignore) return;
-        // Only show error if we don't have cached data to fall back on
-        if (!sharedPromptsLoaded) {
-          setError(
-            err?.response?.data?.error ||
-              err?.message ||
-              'Failed to load shared prompts'
-          );
-        }
+        setError(
+          err?.response?.data?.error ||
+            err?.message ||
+            'Failed to load shared prompts'
+        );
       } finally {
         if (!ignore) setLoading(false);
       }
     }
-    init();
+
+    async function checkForNewPrompts() {
+      try {
+        const { subjects } = await loadOtherUserTopics({ sortBy });
+        if (ignore) return;
+        // Check if the first item is different from what we have
+        if (subjects?.length > 0 && topics?.length > 0) {
+          const newestFetched = subjects[0].id;
+          const newestCached = topics[0].id;
+          if (newestFetched !== newestCached) {
+            setNewPromptsAvailable(true);
+          }
+        } else if (subjects?.length > 0 && topics?.length === 0) {
+          setNewPromptsAvailable(true);
+        }
+      } catch {
+        // Silently fail background check
+      }
+    }
+
+    // If no cached data or sort changed, do full load
+    if (!sharedPromptsLoaded || sortByChanged) {
+      init();
+    } else {
+      // Data exists and sort didn't change - delay background check to avoid blocking render
+      const timeoutId = setTimeout(checkForNewPrompts, 1000);
+      return () => {
+        ignore = true;
+        clearTimeout(timeoutId);
+      };
+    }
+
     return () => {
       ignore = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy]);
+
+  function handleRefresh() {
+    setNewPromptsAvailable(false);
+    setLoading(true);
+    setError('');
+    loadOtherUserTopics({ sortBy })
+      .then(
+        ({
+          subjects,
+          loadMoreButton: hasMore
+        }: {
+          subjects: SharedTopic[];
+          loadMoreButton: boolean;
+        }) => {
+          onLoadSharedPrompts({
+            prompts: subjects || [],
+            loadMoreButton: Boolean(hasMore),
+            sortBy
+          });
+        }
+      )
+      .catch((err: any) => {
+        setError(
+          err?.response?.data?.error ||
+            err?.message ||
+            'Failed to load shared prompts'
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
 
   const tabs = useMemo(
     () => [
@@ -176,7 +241,12 @@ export default function SystemPromptShared({
     channelId: number;
     title: string;
   }) => {
-    onUpdateSharedPromptCloneCount(data.sharedTopicId);
+    onUpdateSharedPromptClone({
+      promptId: data.sharedTopicId,
+      target: data.target,
+      channelId: data.channelId,
+      topicId: data.topicId
+    });
   };
 
   const handleCommentSubmit = async (topicId: number) => {
@@ -265,6 +335,22 @@ export default function SystemPromptShared({
             </nav>
           ))}
         </FilterBar>
+        {newPromptsAvailable && (
+          <Button
+            color="logoBlue"
+            variant="soft"
+            tone="raised"
+            onClick={handleRefresh}
+            style={{
+              alignSelf: 'center',
+              padding: '0.8rem 1.5rem',
+              fontSize: '1.3rem'
+            }}
+          >
+            <Icon icon="arrow-rotate-right" style={{ marginRight: '0.7rem' }} />
+            New prompts available - tap to refresh
+          </Button>
+        )}
         {error && (
           <div
             className={css`
@@ -328,17 +414,7 @@ export default function SystemPromptShared({
             </p>
           </div>
         ) : (
-          <section
-            className={css`
-              display: grid;
-              grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
-              gap: 1rem;
-              width: 100%;
-              @media (max-width: ${mobileMaxWidth}) {
-                grid-template-columns: 1fr;
-              }
-            `}
-          >
+          <section className={gridClass}>
             {topics.map((topic) => {
               const instructions =
                 topic.customInstructions ||
@@ -349,16 +425,7 @@ export default function SystemPromptShared({
                 <article key={topic.id} className={cardClass}>
                   <div>
                     <h3
-                      className={css`
-                        margin: 0;
-                        font-size: 1.8rem;
-                        color: ${Color.logoBlue()};
-                        font-weight: 700;
-                        cursor: pointer;
-                        &:hover {
-                          text-decoration: underline;
-                        }
-                      `}
+                      className={titleClass}
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/shared-prompts/${topic.id}`);
@@ -366,17 +433,7 @@ export default function SystemPromptShared({
                     >
                       {topic.content}
                     </h3>
-                    <div
-                      className={css`
-                        display: flex;
-                        align-items: center;
-                        flex-wrap: wrap;
-                        gap: 0.5rem;
-                        color: ${Color.darkerGray()};
-                        font-size: 1.3rem;
-                        margin-top: 0.3rem;
-                      `}
-                    >
+                    <div className={metaRowClass}>
                       <UsernameText
                         user={{ id: topic.userId, username: topic.username }}
                       />
@@ -384,37 +441,17 @@ export default function SystemPromptShared({
                         <small>{moment.unix(topic.timeStamp).fromNow()}</small>
                       )}
                       {isOwnTopic && (
-                        <span
-                          className={css`
-                            padding: 0.2rem 0.5rem;
-                            background: ${Color.logoBlue(0.1)};
-                            border: 1px solid ${Color.logoBlue(0.3)};
-                            border-radius: 4px;
-                            color: ${Color.logoBlue()};
-                            font-size: 1.1rem;
-                            font-weight: 700;
-                          `}
-                        >
-                          Your prompt
-                        </span>
+                        <span className={ownBadgeClass}>Your prompt</span>
                       )}
                       <div className={statsRowClass}>
                         <div className={statPillClass}>
-                          <span
-                            className={css`
-                              font-weight: 700;
-                            `}
-                          >
+                          <span className={boldClass}>
                             {topic.cloneCount || 0}
                           </span>
                           {Number(topic.cloneCount) === 1 ? 'clone' : 'clones'}
                         </div>
                         <div className={statPillClass}>
-                          <span
-                            className={css`
-                              font-weight: 700;
-                            `}
-                          >
+                          <span className={boldClass}>
                             {topic.messageCount || 0}
                           </span>
                           {Number(topic.messageCount) === 1
@@ -430,11 +467,7 @@ export default function SystemPromptShared({
                           }}
                         >
                           <Icon icon="comment" />
-                          <span
-                            className={css`
-                              font-weight: 700;
-                            `}
-                          >
+                          <span className={boldClass}>
                             {topic.numComments || 0}
                           </span>
                           {Number(topic.numComments) === 1
@@ -445,17 +478,7 @@ export default function SystemPromptShared({
                     </div>
                   </div>
                   {instructions && (
-                    <div
-                      className={css`
-                        margin: 0.8rem 0;
-                        padding: 1rem;
-                        border-radius: ${borderRadius};
-                        border: 1px solid var(--ui-border);
-                        background: #fff;
-                        font-size: 1.3rem;
-                        line-height: 1.6;
-                      `}
-                    >
+                    <div className={instructionsClass}>
                       <RichText
                         contentType="sharedTopic"
                         contentId={topic.id}
@@ -598,4 +621,59 @@ const statPillClass = css`
   border: 1px solid var(--ui-border);
   font-size: 1.1rem;
   font-weight: 500;
+`;
+
+const gridClass = css`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+  gap: 1rem;
+  width: 100%;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const titleClass = css`
+  margin: 0;
+  font-size: 1.8rem;
+  color: ${Color.logoBlue()};
+  font-weight: 700;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const metaRowClass = css`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: ${Color.darkerGray()};
+  font-size: 1.3rem;
+  margin-top: 0.3rem;
+`;
+
+const ownBadgeClass = css`
+  padding: 0.2rem 0.5rem;
+  background: ${Color.logoBlue(0.1)};
+  border: 1px solid ${Color.logoBlue(0.3)};
+  border-radius: 4px;
+  color: ${Color.logoBlue()};
+  font-size: 1.1rem;
+  font-weight: 700;
+`;
+
+const instructionsClass = css`
+  margin: 0.8rem 0;
+  padding: 1rem;
+  border-radius: ${borderRadius};
+  border: 1px solid var(--ui-border);
+  background: #fff;
+  font-size: 1.3rem;
+  line-height: 1.6;
+`;
+
+const boldClass = css`
+  font-weight: 700;
 `;

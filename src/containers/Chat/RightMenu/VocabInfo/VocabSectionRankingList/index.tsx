@@ -33,10 +33,18 @@ export default function VocabSectionRankingList({
     [allSelected, allUsers, top30Users]
   );
 
-  const filteredUsers = useMemo(
-    () => (users || []).filter((user) => Number(user[target]) > 0),
-    [users, target]
-  );
+  const filteredUsers = useMemo(() => {
+    const seen = new Set<number>();
+    return (users || []).filter((user) => {
+      // Skip invalid user ids
+      if (!user?.id || typeof user.id !== 'number') return false;
+      // Skip if already seen (dedupe)
+      if (seen.has(user.id)) return false;
+      seen.add(user.id);
+      // Skip users with no activity
+      return Number(user[target]) > 0;
+    });
+  }, [users, target]);
 
   return (
     <ErrorBoundary componentPath="Chat/RightMenu/VocabInfo/CollectorRankingList">
@@ -72,7 +80,7 @@ export default function VocabSectionRankingList({
             {filteredUsers.map((user) => {
               return (
                 <Collector
-                  key={user.username}
+                  key={user.id}
                   collectedLabel={
                     target === 'totalPoints'
                       ? `pt${Number(user[target]) === 1 ? '' : 's'}`

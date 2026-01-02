@@ -57,6 +57,7 @@ import {
   useNotiContext,
   useChatContext,
   useChessContext,
+  useMissionContext,
   KeyContext
 } from '~/contexts';
 import AICallWindow from './AICallWindow';
@@ -166,6 +167,7 @@ export default function App() {
     (v) => v.actions.onPostUploadComplete
   );
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
+  const onResetTodayStats = useNotiContext((v) => v.actions.onResetTodayStats);
   const onCreateNewDMChannel = useChatContext(
     (v) => v.actions.onCreateNewDMChannel
   );
@@ -199,6 +201,9 @@ export default function App() {
   );
   const onSetUploadingFile = useHomeContext(
     (v) => v.actions.onSetUploadingFile
+  );
+  const onResetSharedPrompts = useMissionContext(
+    (v) => v.actions.onResetSharedPrompts
   );
   const updateDetail = useNotiContext((v) => v.state.updateDetail);
   const getCurrentNextDayTimeStamp = useAppContext(
@@ -448,6 +453,8 @@ export default function App() {
     onSetSubmittingSubject(false);
     onClearFileUploadProgress();
     onSetUploadingFile(false);
+    onResetSharedPrompts();
+    onResetTodayStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 

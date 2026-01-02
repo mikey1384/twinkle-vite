@@ -150,10 +150,28 @@ export default function MissionActions(dispatch: Dispatch) {
         sortBy
       });
     },
-    onUpdateSharedPromptCloneCount(promptId: number) {
+    onUpdateSharedPromptClone({
+      promptId,
+      target,
+      channelId,
+      topicId
+    }: {
+      promptId: number;
+      target: 'zero' | 'ciel';
+      channelId: number;
+      topicId: number;
+    }) {
       return dispatch({
-        type: 'UPDATE_SHARED_PROMPT_CLONE_COUNT',
-        promptId
+        type: 'UPDATE_SHARED_PROMPT_CLONE',
+        promptId,
+        target,
+        channelId,
+        topicId
+      });
+    },
+    onResetSharedPrompts() {
+      return dispatch({
+        type: 'RESET_SHARED_PROMPTS'
       });
     }
   };

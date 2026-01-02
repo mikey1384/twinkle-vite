@@ -6,6 +6,7 @@ import {
   useAppContext,
   useChatContext,
   useKeyContext,
+  useMissionContext,
   useNotiContext
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
@@ -43,6 +44,9 @@ export default function AccountMenu({
   );
   const onResetChat = useChatContext((v) => v.actions.onResetChat);
   const onResetTodayStats = useNotiContext((v) => v.actions.onResetTodayStats);
+  const onResetSharedPrompts = useMissionContext(
+    (v) => v.actions.onResetSharedPrompts
+  );
 
   const menuProps = useMemo(() => {
     const result = [
@@ -161,6 +165,7 @@ export default function AccountMenu({
     socket.disconnect();
     onLogout();
     onResetChat(userId);
+    onResetSharedPrompts();
     onResetTodayStats();
     setTimeout(() => {
       socket.connect();

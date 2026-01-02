@@ -148,14 +148,32 @@ export default function MissionReducer(
         sharedPromptsSortBy: action.sortBy,
         sharedPromptsLoaded: false
       };
-    case 'UPDATE_SHARED_PROMPT_CLONE_COUNT':
+    case 'UPDATE_SHARED_PROMPT_CLONE':
       return {
         ...state,
         sharedPrompts: state.sharedPrompts.map((prompt: any) =>
           prompt.id === action.promptId || prompt.subjectId === action.promptId
-            ? { ...prompt, cloneCount: (prompt.cloneCount || 0) + 1 }
+            ? {
+                ...prompt,
+                cloneCount: (prompt.cloneCount || 0) + 1,
+                myClones: [
+                  ...(prompt.myClones || []),
+                  {
+                    target: action.target,
+                    channelId: action.channelId,
+                    topicId: action.topicId
+                  }
+                ]
+              }
             : prompt
         )
+      };
+    case 'RESET_SHARED_PROMPTS':
+      return {
+        ...state,
+        sharedPrompts: [],
+        sharedPromptsLoaded: false,
+        sharedPromptsLoadMoreButton: false
       };
     default:
       return state;

@@ -39,6 +39,7 @@ interface EditorProps {
   generating: boolean;
   hasPrompt: boolean;
   promptEverGenerated: boolean;
+  missionCleared?: boolean;
   saving?: boolean;
   onTitleChange: (text: string) => void;
   onPromptChange: (text: string) => void;
@@ -54,6 +55,7 @@ export default function Editor({
   generating,
   hasPrompt,
   promptEverGenerated,
+  missionCleared = false,
   saving = false,
   onTitleChange,
   onPromptChange,
@@ -77,61 +79,63 @@ export default function Editor({
 
   return (
     <>
-      <section
-        className={`${cardClass} ${css`
-          display: flex;
-          flex-direction: column;
-          gap: 0.8rem;
-        `}`}
-        style={style}
-      >
-        <div className={sectionHeaderClass}>
-          <div className={labelClass}>System Prompt Title</div>
-          {saving && (
-            <small style={{ color: Color.gray(), fontWeight: 'bold' }}>
-              Saving...
-            </small>
-          )}
-        </div>
-        <Input
-          value={title}
-          placeholder="e.g., Ciel the encouraging grammar buddy"
-          maxLength={200}
-          onChange={onTitleChange}
-        />
-        <small
-          style={{
-            marginTop: '0.5rem',
-            color: Color.gray(),
-            display: 'block'
-          }}
+      {!missionCleared && (
+        <section
+          className={`${cardClass} ${css`
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+          `}`}
+          style={style}
         >
-          Give your custom agent a memorable name or theme so you can share it
-          later.
-        </small>
-        {showTitleGenerateButton && (
-          <Button
-            onClick={onGeneratePrompt}
-            disabled={!canGenerate}
-            loading={generating}
-            color="darkBlue"
-            variant="soft"
-            tone="raised"
+          <div className={sectionHeaderClass}>
+            <div className={labelClass}>System Prompt Title</div>
+            {saving && (
+              <small style={{ color: Color.gray(), fontWeight: 'bold' }}>
+                Saving...
+              </small>
+            )}
+          </div>
+          <Input
+            value={title}
+            placeholder="e.g., Ciel the encouraging grammar buddy"
+            maxLength={200}
+            onChange={onTitleChange}
+          />
+          <small
             style={{
-              marginTop: '1.5rem',
-              padding: '1rem 2rem',
-              fontSize: '1.2rem',
-              alignSelf: 'flex-start'
+              marginTop: '0.5rem',
+              color: Color.gray(),
+              display: 'block'
             }}
           >
-            <Icon
-              style={{ marginRight: '0.5rem' }}
-              icon="wand-magic-sparkles"
-            />
-            Generate System Prompt
-          </Button>
-        )}
-      </section>
+            Give your custom agent a memorable name or theme so you can share it
+            later.
+          </small>
+          {showTitleGenerateButton && (
+            <Button
+              onClick={onGeneratePrompt}
+              disabled={!canGenerate}
+              loading={generating}
+              color="darkBlue"
+              variant="soft"
+              tone="raised"
+              style={{
+                marginTop: '1.5rem',
+                padding: '1rem 2rem',
+                fontSize: '1.2rem',
+                alignSelf: 'flex-start'
+              }}
+            >
+              <Icon
+                style={{ marginRight: '0.5rem' }}
+                icon="wand-magic-sparkles"
+              />
+              Generate System Prompt
+            </Button>
+          )}
+        </section>
+      )}
       {showPromptSection && (
         <section
           className={`${cardClass} ${css`

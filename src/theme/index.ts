@@ -604,6 +604,7 @@ function buildThemeRoles(color: ThemeName): RoleTokens {
     showMeAnotherPostButton: { color: 'green' },
     skeuomorphicDisabled: { color, opacity: 0.2 },
     spinner: { color },
+    cloneProgress: { color },
     statusMsgLink: {
       color: pickColor({ orange: 'yellow', red: 'yellow' }, 'gold')
     },
