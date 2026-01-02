@@ -867,6 +867,8 @@ export default function Chess({
     isRewinded,
     isDraw
   ]);
+  const fallenPiecesShown =
+    loaded && chessBoardShown && displaySize !== 'compact';
 
   const dropdownProps = useMemo(() => {
     const result = [
@@ -1121,7 +1123,7 @@ export default function Chess({
           showAwaitingStatus: !isFromModal
         }}
         beforeBoard={
-          !isCompact && loaded && chessBoardShown ? (
+          fallenPiecesShown ? (
             <div
               className={css`
                 display: flex;
@@ -1144,7 +1146,7 @@ export default function Chess({
         }
         afterBoard={
           <>
-            {!isCompact && loaded && chessBoardShown && (
+            {fallenPiecesShown && (
               <div
                 className={css`
                   display: flex;

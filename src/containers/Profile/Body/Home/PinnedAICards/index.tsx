@@ -85,7 +85,6 @@ export default function PinnedAICards({
       return;
     }
     setDisplayedCardIds(pinnedCardIds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     cachedCardIds,
     cachedCardIdsKey,
@@ -142,13 +141,10 @@ export default function PinnedAICards({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasCachedPinnedCards,
-    loadPinnedAICardsOnProfile,
-    onLoadPinnedAICards,
-    onUpdateAICard,
     pinnedCardIds,
     pinnedCardIdsKey,
-    profile.id,
-    profile.username
+    profile?.id,
+    profile?.username
   ]);
 
   const hasPinnedCards = displayedCardIds.length > 0;
