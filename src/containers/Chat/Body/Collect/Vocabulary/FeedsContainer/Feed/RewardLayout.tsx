@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import WordModal from '../../WordModal';
 
 export default function RewardLayout({
-  inViewRef,
   onHeightMeasured,
   userId,
   username,
@@ -28,7 +27,6 @@ export default function RewardLayout({
   badgeStyle,
   rewardType
 }: {
-  inViewRef: (node?: Element | null) => void;
   onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
@@ -91,10 +89,9 @@ export default function RewardLayout({
   }, [rewardType]);
 
   return (
-    <div ref={inViewRef}>
-      <div
-        ref={panelRef}
-        className={css`
+    <div
+      ref={panelRef}
+      className={css`
           opacity: 0;
           transform: translateY(20px);
           animation: fadeInUp 0.5s forwards;
@@ -237,7 +234,6 @@ export default function RewardLayout({
             onHide={() => setWordModalShown(false)}
           />
         )}
-      </div>
     </div>
   );
 }

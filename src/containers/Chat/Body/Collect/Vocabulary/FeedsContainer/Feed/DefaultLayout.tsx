@@ -9,7 +9,6 @@ import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
 
 export default function DefaultLayout({
-  inViewRef,
   onHeightMeasured,
   userId,
   username,
@@ -25,7 +24,6 @@ export default function DefaultLayout({
   getActionColor,
   badgeStyle
 }: {
-  inViewRef: (node?: Element | null) => void;
   onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
@@ -129,10 +127,9 @@ export default function DefaultLayout({
   }, [action, content]);
 
   return (
-    <div ref={inViewRef}>
-      <div
-        ref={panelRef}
-        className={css`
+    <div
+      ref={panelRef}
+      className={css`
           opacity: 0;
           transform: translateY(20px);
           animation: fadeInUp 0.5s forwards;
@@ -402,7 +399,6 @@ export default function DefaultLayout({
             onHide={() => setWordModalShown(false)}
           />
         )}
-      </div>
     </div>
   );
 }

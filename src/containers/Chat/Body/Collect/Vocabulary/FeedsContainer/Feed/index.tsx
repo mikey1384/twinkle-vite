@@ -50,75 +50,66 @@ function Feed({
     vocabFeedHeight[feed.id] = height;
   }
 
-  if (!feedShown) {
-    return (
-      <div style={{ width: '100%', height: componentHeight }} ref={inViewRef} />
-    );
-  }
-
-  if (action === 'spell') {
-    return (
-      <SpellLayout
-        inViewRef={inViewRef}
-        onHeightMeasured={handleHeightMeasured}
-        userId={userId}
-        username={username}
-        profilePicUrl={profilePicUrl}
-        action={action}
-        wordLevel={wordLevel}
-        aiCard={aiCard}
-        content={content}
-        xpReward={xpReward}
-        coinReward={coinReward}
-        totalPoints={totalPoints}
-        displayedTime={displayedTime}
-        getRGBA={getRGBA}
-        getActionColor={getActionColor}
-        badgeStyle={badgeStyle}
-      />
-    );
-  } else if (action === 'reward') {
-    return (
-      <RewardLayout
-        inViewRef={inViewRef}
-        onHeightMeasured={handleHeightMeasured}
-        userId={userId}
-        username={username}
-        profilePicUrl={profilePicUrl}
-        action={action}
-        wordLevel={wordLevel}
-        xpReward={xpReward}
-        coinReward={coinReward}
-        displayedTime={displayedTime}
-        aiCard={aiCard}
-        content={content}
-        getRGBA={getRGBA}
-        getActionColor={getActionColor}
-        badgeStyle={badgeStyle}
-        rewardType={rewardType}
-      />
-    );
-  } else {
-    return (
-      <DefaultLayout
-        inViewRef={inViewRef}
-        onHeightMeasured={handleHeightMeasured}
-        userId={userId}
-        username={username}
-        profilePicUrl={profilePicUrl}
-        action={action}
-        content={content}
-        wordLevel={wordLevel}
-        xpReward={xpReward}
-        coinReward={coinReward}
-        totalPoints={totalPoints}
-        displayedTime={displayedTime}
-        getRGBA={getRGBA}
-        getActionColor={getActionColor}
-        badgeStyle={badgeStyle}
-      />
-    );
-  }
+  return (
+    <div ref={inViewRef}>
+      {!feedShown ? (
+        <div style={{ width: '100%', height: componentHeight }} />
+      ) : action === 'spell' ? (
+        <SpellLayout
+          onHeightMeasured={handleHeightMeasured}
+          userId={userId}
+          username={username}
+          profilePicUrl={profilePicUrl}
+          action={action}
+          wordLevel={wordLevel}
+          aiCard={aiCard}
+          content={content}
+          xpReward={xpReward}
+          coinReward={coinReward}
+          totalPoints={totalPoints}
+          displayedTime={displayedTime}
+          getRGBA={getRGBA}
+          getActionColor={getActionColor}
+          badgeStyle={badgeStyle}
+        />
+      ) : action === 'reward' ? (
+        <RewardLayout
+          onHeightMeasured={handleHeightMeasured}
+          userId={userId}
+          username={username}
+          profilePicUrl={profilePicUrl}
+          action={action}
+          wordLevel={wordLevel}
+          xpReward={xpReward}
+          coinReward={coinReward}
+          displayedTime={displayedTime}
+          aiCard={aiCard}
+          content={content}
+          getRGBA={getRGBA}
+          getActionColor={getActionColor}
+          badgeStyle={badgeStyle}
+          rewardType={rewardType}
+        />
+      ) : (
+        <DefaultLayout
+          onHeightMeasured={handleHeightMeasured}
+          userId={userId}
+          username={username}
+          profilePicUrl={profilePicUrl}
+          action={action}
+          content={content}
+          wordLevel={wordLevel}
+          xpReward={xpReward}
+          coinReward={coinReward}
+          totalPoints={totalPoints}
+          displayedTime={displayedTime}
+          getRGBA={getRGBA}
+          getActionColor={getActionColor}
+          badgeStyle={badgeStyle}
+        />
+      )}
+    </div>
+  );
 }
 
 function getRGBA(colorName: string, opacity = 1) {

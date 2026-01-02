@@ -10,7 +10,6 @@ import Icon from '~/components/Icon';
 import WordModal from '../../WordModal';
 
 export default function SpellLayout({
-  inViewRef,
   onHeightMeasured,
   userId,
   username,
@@ -27,7 +26,6 @@ export default function SpellLayout({
   getActionColor,
   badgeStyle
 }: {
-  inViewRef: (node?: Element | null) => void;
   onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
@@ -61,10 +59,9 @@ export default function SpellLayout({
   const actionLabel = 'Spelled'; // or you could use your switch from above
 
   return (
-    <div ref={inViewRef}>
-      <div
-        ref={panelRef}
-        className={css`
+    <div
+      ref={panelRef}
+      className={css`
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -249,7 +246,6 @@ export default function SpellLayout({
             onHide={() => setWordModalShown(false)}
           />
         )}
-      </div>
     </div>
   );
 }
