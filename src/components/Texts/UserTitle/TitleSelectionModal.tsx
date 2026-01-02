@@ -51,7 +51,7 @@ export default function TitleSelectionModal({
     async function init() {
       setLoading(true);
       const titles = await loadUserTitles();
-      setLoadedTitles(titles);
+      setLoadedTitles(titles || []);
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

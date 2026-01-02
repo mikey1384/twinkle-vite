@@ -194,18 +194,23 @@ export default function DailyQuestionPanel({
 
     function handleGradingProgress({
       step,
-      progress
+      progress,
+      durationMs
     }: {
       step: string;
       progress: number;
+      durationMs?: number;
     }) {
       setGradingMessage(step);
+      const duration =
+        typeof durationMs === 'number' && durationMs > 0 ? durationMs : 10000;
       animateProgress(
         gradingProgressRef,
         gradingTargetRef,
         progress,
         setGradingProgress,
-        gradingAnimationRef
+        gradingAnimationRef,
+        duration
       );
     }
 
@@ -563,7 +568,7 @@ export default function DailyQuestionPanel({
           sharedWithZero: false,
           sharedWithCiel: false,
           originalResponse: response.trim(),
-          sharedResponse: null,
+          sharedResponse: result.sharedResponse || null,
           streak: result.streak || 1,
           streakMultiplier: result.streakMultiplier || 1,
           usedRepair: result.usedRepair || false
@@ -763,9 +768,8 @@ export default function DailyQuestionPanel({
                     margin-bottom: 0;
                   `}
                 >
-                  ✨ Repair ready — answer today to restore your{' '}
-                  {currentStreak}-day streak and continue to{' '}
-                  {currentStreak + 1} days.
+                  ✨ Repair ready — answer today to restore your {currentStreak}
+                  -day streak and continue to {currentStreak + 1} days.
                 </p>
               ) : (
                 <Button
@@ -786,7 +790,6 @@ export default function DailyQuestionPanel({
             </div>
           )}
 
-          {/* Streak Broken Warning */}
           {streakBroken && (
             <div
               className={css`
@@ -806,7 +809,7 @@ export default function DailyQuestionPanel({
                   margin-bottom: 0.5rem;
                 `}
               >
-                Your streak has already reset
+                Your streak was broken
               </p>
               <p
                 className={css`
@@ -820,31 +823,30 @@ export default function DailyQuestionPanel({
             </div>
           )}
 
-          {/* Streak Repair Available */}
           {streakRepairAvailable &&
             !streakAtRisk &&
             !streakBroken &&
             currentStreak > 0 && (
-            <div
-              className={css`
-                text-align: center;
-                margin-bottom: 1rem;
-                padding: 0.75rem 1rem;
-                background: ${Color.green()}15;
-                border-radius: 8px;
-              `}
-            >
-              <p
+              <div
                 className={css`
-                  font-size: 1.2rem;
-                  color: ${Color.green()};
-                  font-weight: 600;
+                  text-align: center;
+                  margin-bottom: 1rem;
+                  padding: 0.75rem 1rem;
+                  background: ${Color.green()}15;
+                  border-radius: 8px;
                 `}
               >
-                ✨ Streak repair ready - your streak is protected!
-              </p>
-            </div>
-          )}
+                <p
+                  className={css`
+                    font-size: 1.2rem;
+                    color: ${Color.green()};
+                    font-weight: 600;
+                  `}
+                >
+                  ✨ Streak repair ready - your streak is protected!
+                </p>
+              </div>
+            )}
 
           <p className={questionTextCls}>{question}</p>
 
