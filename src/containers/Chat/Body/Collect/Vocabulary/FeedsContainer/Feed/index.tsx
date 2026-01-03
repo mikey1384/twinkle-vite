@@ -10,7 +10,14 @@ import { css } from '@emotion/css';
 
 function Feed({
   feed,
-  feed: {
+  wordMasterBlocked,
+  onWordMasterBreak
+}: {
+  feed: any;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
+}) {
+  const {
     action,
     content,
     userId,
@@ -23,10 +30,7 @@ function Feed({
     totalPoints = 0,
     aiCard,
     rewardType
-  }
-}: {
-  feed: any;
-}) {
+  } = feed;
   const placeholderHeightRef = useRef(vocabFeedHeight[feed.id]);
   const [inViewRef, inView] = useInView({
     rootMargin: '200px 0px'
@@ -71,6 +75,8 @@ function Feed({
           getRGBA={getRGBA}
           getActionColor={getActionColor}
           badgeStyle={badgeStyle}
+          wordMasterBlocked={wordMasterBlocked}
+          onWordMasterBreak={onWordMasterBreak}
         />
       ) : action === 'reward' ? (
         <RewardLayout
@@ -89,6 +95,8 @@ function Feed({
           getActionColor={getActionColor}
           badgeStyle={badgeStyle}
           rewardType={rewardType}
+          wordMasterBlocked={wordMasterBlocked}
+          onWordMasterBreak={onWordMasterBreak}
         />
       ) : (
         <DefaultLayout
@@ -106,6 +114,8 @@ function Feed({
           getRGBA={getRGBA}
           getActionColor={getActionColor}
           badgeStyle={badgeStyle}
+          wordMasterBlocked={wordMasterBlocked}
+          onWordMasterBreak={onWordMasterBreak}
         />
       )}
     </div>

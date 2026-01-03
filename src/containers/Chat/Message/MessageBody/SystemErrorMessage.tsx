@@ -5,16 +5,28 @@ import { Color } from '~/constants/css';
 
 export default function SystemErrorMessage({
   error: _error,
+  errorType,
   canDelete = false,
   onDelete,
   aiName = 'the AI assistant'
 }: {
   error?: string;
+  errorType?: 'moderation' | 'general';
   canDelete?: boolean;
   onDelete?: () => void;
   aiName?: string;
 } = {}) {
+  const isModeration = errorType === 'moderation';
   const getColors = () => {
+    // Moderation errors use neutral gray - not associated with any AI
+    if (isModeration) {
+      return {
+        background: Color.darkerGray(0.08),
+        border: Color.darkerGray(0.3),
+        icon: Color.darkerGray(),
+        text: Color.darkerGray()
+      };
+    }
     if (aiName === 'Ciel') {
       return {
         background: Color.pink(0.08),
@@ -72,7 +84,7 @@ export default function SystemErrorMessage({
       )}
       <div style={{ marginBottom: '0.5rem' }}>
         <Icon
-          icon="robot"
+          icon={isModeration ? 'shield-alt' : 'robot'}
           style={{
             color: colors.icon,
             fontSize: '2rem',
@@ -88,7 +100,9 @@ export default function SystemErrorMessage({
           marginBottom: '0.5rem'
         }}
       >
-        Oops, there seems to have been an error while talking with {aiName}
+        {isModeration
+          ? "This message couldn't be processed"
+          : `Oops, there seems to have been an error while talking with ${aiName}`}
       </div>
       <div
         style={{
@@ -97,9 +111,9 @@ export default function SystemErrorMessage({
           lineHeight: 1.4
         }}
       >
-        Try sending{' '}
-        {aiName === 'Zero' ? 'him' : aiName === 'Ciel' ? 'her' : 'them'} another
-        message and if this keeps happening tell mikey
+        {isModeration
+          ? 'Please try rephrasing your question differently'
+          : `Try sending ${aiName === 'Zero' ? 'him' : aiName === 'Ciel' ? 'her' : 'them'} another message and if this keeps happening tell mikey`}
       </div>
     </div>
   );

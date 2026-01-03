@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import Definition from '../../Definition';
@@ -20,6 +20,8 @@ interface PromptMessageProps {
   wordRegisterStatus?: any;
   statusMessage: string;
   canHit?: boolean;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }
 
 const gradientAnimation = keyframes`
@@ -34,6 +36,26 @@ const gradientAnimation = keyframes`
   }
 `;
 
+const bubbleBounce = keyframes`
+  0%, 100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -8px);
+  }
+`;
+
+const bubbleFadeOut = keyframes`
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+`;
+
 export default function PromptMessage({
   isSearching,
   isCensored,
@@ -44,21 +66,43 @@ export default function PromptMessage({
   isSubmitting,
   wordRegisterStatus,
   statusMessage,
-  canHit
+  canHit,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: PromptMessageProps) {
   const [wordModalShown, setWordModalShown] = useState(false);
+  const [promptVisible, setPromptVisible] = useState(true);
+  const [promptExiting, setPromptExiting] = useState(false);
+
+  useEffect(() => {
+    const exitTimer = setTimeout(() => {
+      setPromptExiting(true);
+    }, 3000);
+
+    const hideTimer = setTimeout(() => {
+      setPromptVisible(false);
+    }, 3500);
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
   const showLoading = isSearching && (!searchedWord || !socketConnected);
   const showContent =
     isSearching && searchedWord && socketConnected && !vocabErrorMessage;
 
   const heightStyle = useMemo(() => {
-    if (!isSearching) return '4rem';
+    if (!isSearching) {
+      return promptVisible ? '4rem' : '0';
+    }
     if (showLoading) return '8rem';
     if (searchedWord?.content || wordRegisterStatus) {
       return 'min(300%, calc(100vh - 20rem))';
     }
     return '25rem';
-  }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus]);
+  }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus, promptVisible]);
 
   const showStatusBar = useMemo(
     () => isSearching && (vocabErrorMessage || statusMessage || isSubmitting),
@@ -95,13 +139,16 @@ export default function PromptMessage({
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: ${isSearching ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'};
             z-index: 1;
             width: ${isSearching ? '90%' : 'auto'};
             max-width: ${isSearching ? '600px' : 'none'};
             height: ${heightStyle};
             overflow: hidden;
             transform-origin: bottom center;
+            ${!isSearching && promptVisible
+              ? `animation: ${promptExiting ? bubbleFadeOut : bubbleBounce} ${promptExiting ? '0.5s ease forwards' : '1s ease-in-out infinite'};`
+              : ''}
 
             @media (max-width: ${mobileMaxWidth}) {
               font-size: 1.3rem;
@@ -126,7 +173,7 @@ export default function PromptMessage({
                 background={statusBarBackground}
               />
             )}
-            {!showContent && !showLoading && !showStatusBar && (
+            {!showContent && !showLoading && !showStatusBar && promptVisible && (
               <div
                 className={css`
                   height: 100%;
@@ -201,6 +248,8 @@ export default function PromptMessage({
                         wordObj={searchedWord}
                         isNewWord={isNewWord}
                         canHit={canHit}
+                        wordMasterBlocked={wordMasterBlocked}
+                        onWordMasterBreak={onWordMasterBreak}
                       />
                     </>
                   ) : (
@@ -266,6 +315,8 @@ export default function PromptMessage({
               key={wordRegisterStatus?.content}
               word={wordRegisterStatus?.content}
               onHide={() => setWordModalShown(false)}
+              wordMasterBlocked={wordMasterBlocked}
+              onWordMasterBreak={onWordMasterBreak}
             />
           )}
         </div>

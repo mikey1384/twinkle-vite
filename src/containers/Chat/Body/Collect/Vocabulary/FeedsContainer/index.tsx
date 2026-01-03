@@ -16,11 +16,15 @@ const deviceIsTablet = isTablet(navigator);
 function FeedsContainer({
   displayedThemeColor,
   style,
-  contentRef
+  contentRef,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: {
   displayedThemeColor: string;
   style?: React.CSSProperties;
   contentRef: React.RefObject<any>;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }) {
   const loadVocabularyFeeds = useAppContext(
     (v) => v.requestHelpers.loadVocabularyFeeds
@@ -130,7 +134,12 @@ function FeedsContainer({
           ref={contentRef}
         >
           {vocabFeeds.map((feed: any) => (
-            <Feed key={feed.id} feed={feed} />
+            <Feed
+              key={feed.id}
+              feed={feed}
+              wordMasterBlocked={wordMasterBlocked}
+              onWordMasterBreak={onWordMasterBreak}
+            />
           ))}
         </div>
 

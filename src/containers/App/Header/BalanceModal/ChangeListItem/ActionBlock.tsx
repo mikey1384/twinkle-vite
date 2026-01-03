@@ -154,6 +154,9 @@ export default function ActionBlock({
     if (action === 'dailyReflectionStreakRepair') {
       return 'purchased a daily reflection streak repair';
     }
+    if (action === 'wordMasterBreakBypass') {
+      return 'bypassed a Word Master break';
+    }
     return `${action} ${target}`;
   }, [action, target, type, username]);
   return <div style={style}>{displayedAction}</div>;

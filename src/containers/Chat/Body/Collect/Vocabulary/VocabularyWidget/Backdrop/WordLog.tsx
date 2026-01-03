@@ -57,7 +57,7 @@ export default function WordRegisterStatus({ entry }: { entry: WordLogEntry }) {
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [entry, onRemoveNewLogState]);
+  }, [entry]);
 
   const containerStyle = css`
     padding: 0.5rem 1rem;

@@ -431,11 +431,13 @@ export default function useAISocket({
     function handleAIMessageError({
       channelId,
       messageId,
-      error
+      error,
+      errorType
     }: {
       channelId: number;
       messageId: number;
-      error: string;
+      error?: string;
+      errorType?: 'moderation' | 'general';
     }) {
       // Stop the streaming state for this message
       onSetChannelState({
@@ -447,8 +449,9 @@ export default function useAISocket({
       onSetChannelState({
         channelId,
         newState: {
-          [`aiMessageError_${messageId}`]: error,
-          [`hasErrorMessage_${messageId}`]: true
+          [`aiMessageError_${messageId}`]: error || 'An error occurred',
+          [`hasErrorMessage_${messageId}`]: true,
+          [`aiMessageErrorType_${messageId}`]: errorType || 'general'
         }
       });
     }

@@ -13,7 +13,9 @@ export default function DictionaryTab({
   onHide,
   posObj,
   posOrder,
-  word
+  word,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: {
   deletedDefIds: number[];
   definitionOrder: { [key: string]: number[] };
@@ -21,6 +23,8 @@ export default function DictionaryTab({
   posObj: { [key: string]: { [key: number]: { title: string } } };
   posOrder: string[];
   word: string;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }) {
   const [pendingAIDefinitions, setPendingAIDefinitions] = useState<{
     partOfSpeechOrder: string[];
@@ -49,6 +53,8 @@ export default function DictionaryTab({
             <EmptyDictionary
               word={word}
               onAIDefinitionsGenerated={setPendingAIDefinitions}
+              wordMasterBlocked={wordMasterBlocked}
+              onWordMasterBreak={onWordMasterBreak}
             />
           ) : (
             posOrder.map((pos, index) => {

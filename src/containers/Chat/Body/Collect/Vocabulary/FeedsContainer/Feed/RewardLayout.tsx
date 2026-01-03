@@ -25,7 +25,9 @@ export default function RewardLayout({
   getRGBA,
   getActionColor,
   badgeStyle,
-  rewardType
+  rewardType,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: {
   onHeightMeasured: (height: number) => void;
   userId: number;
@@ -42,6 +44,8 @@ export default function RewardLayout({
   getActionColor: (action: string) => string;
   badgeStyle: (colorName: string, bgOpacity: number) => string;
   rewardType?: 'monthly' | 'yearly';
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -232,6 +236,8 @@ export default function RewardLayout({
             key={content}
             word={content}
             onHide={() => setWordModalShown(false)}
+            wordMasterBlocked={wordMasterBlocked}
+            onWordMasterBreak={onWordMasterBreak}
           />
         )}
     </div>

@@ -654,9 +654,10 @@ export default function DailyRewardModal({
       grid-auto-rows: max-content;
       row-gap: 0.35rem;
       font-size: 1.45rem;
+      font-weight: bold;
       color: ${Color.black(0.75)};
       line-height: 1.2;
-      text-align: left;
+      text-align: center;
     }
 
     .countdown-timer {

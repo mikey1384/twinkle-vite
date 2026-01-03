@@ -178,13 +178,17 @@ const costTextStyles = css`
 
 function BonusRoulette({
   word,
-  onAIDefinitionsGenerated
+  onAIDefinitionsGenerated,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: {
   word: string;
   onAIDefinitionsGenerated: (data: {
     partOfSpeechOrder: string[];
     partOfSpeeches: any;
   }) => void;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -375,7 +379,7 @@ function BonusRoulette({
             <button
               className={spinButtonStyles}
               onClick={handleSpin}
-              disabled={twinkleCoins < 500}
+              disabled={twinkleCoins < 500 || wordMasterBlocked}
             >
               {twinkleCoins < 500 ? (
                 <>
@@ -402,6 +406,9 @@ function BonusRoulette({
   );
 
   async function handleSpin() {
+    if (wordMasterBlocked) {
+      return;
+    }
     startTransition(() => {
       setHasSpun(true);
       messageRef.current = '';
@@ -450,18 +457,14 @@ function BonusRoulette({
 
     try {
       const result = await getVocabRouletteResult({ word });
+      if (result?.wordMasterBreak) {
+        resetSpinState();
+        onWordMasterBreak?.(result.wordMasterBreak);
+        return;
+      }
       ({ coins, message, outcome, partOfSpeechOrder, partOfSpeeches } = result);
     } catch (error: any) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = 0;
-      }
-      setWheelBlur(0);
-      setWhiteOverlay(0);
-      setLabelOpacity(1);
-      setCurrentAngle(0);
-      setResultMessage(null);
-      setHasSpun(false);
+      resetSpinState();
       onInsertBlackAICardUpdateLog(error?.message || 'Something went wrong');
       return;
     }
@@ -554,6 +557,19 @@ function BonusRoulette({
 
     const randomFactor = 0.2 + Math.random() * 0.6;
     return -(startAngle + segments[index].size * randomFactor);
+  }
+
+  function resetSpinState() {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = 0;
+    }
+    setWheelBlur(0);
+    setWhiteOverlay(0);
+    setLabelOpacity(1);
+    setCurrentAngle(0);
+    setResultMessage(null);
+    setHasSpun(false);
   }
 }
 

@@ -7,13 +7,17 @@ import Icon from '~/components/Icon';
 
 export default function EmptyDictionary({
   word,
-  onAIDefinitionsGenerated
+  onAIDefinitionsGenerated,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: {
   word: string;
   onAIDefinitionsGenerated: (data: {
     partOfSpeechOrder: string[];
     partOfSpeeches: any;
   }) => void;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }) {
   const [showRoulette, setShowRoulette] = useState(false);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
@@ -83,7 +87,7 @@ export default function EmptyDictionary({
             }
           `}
           onClick={() => setShowRoulette(true)}
-          disabled={twinkleCoins < 500}
+          disabled={wordMasterBlocked || twinkleCoins < 500}
         >
           Bonus Chance (<Icon icon={['far', 'badge-dollar']} /> 500)
         </button>
@@ -91,6 +95,8 @@ export default function EmptyDictionary({
         <BonusRoulette
           word={word}
           onAIDefinitionsGenerated={onAIDefinitionsGenerated}
+          wordMasterBlocked={wordMasterBlocked}
+          onWordMasterBreak={onWordMasterBreak}
         />
       )}
     </div>

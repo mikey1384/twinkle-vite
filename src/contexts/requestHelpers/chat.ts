@@ -8,6 +8,16 @@ export default function chatRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
+  function getWordMasterBreakPayload(error: any) {
+    if (
+      error?.response?.status === 423 &&
+      error?.response?.data?.wordMasterBreak
+    ) {
+      return error.response.data;
+    }
+    return null;
+  }
+
   return {
     async acceptInvitation(channelId: number) {
       try {
@@ -737,6 +747,54 @@ export default function chatRequestHelpers({
           auth()
         );
         return { coins, message, outcome, partOfSpeechOrder, partOfSpeeches };
+      } catch (error) {
+        const wordMasterBreakPayload = getWordMasterBreakPayload(error);
+        if (wordMasterBreakPayload) return wordMasterBreakPayload;
+        return handleError(error);
+      }
+    },
+    async fetchWordMasterBreakStatus() {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/break/status`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async clearWordMasterBreak(method: 'requirement' | 'pay') {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/break/clear`,
+          { method },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadWordMasterQuizQuestion() {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/vocabulary/break/quiz`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitWordMasterQuizAnswer(selectedIndex: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/break/quiz/answer`,
+          { selectedIndex },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -1668,6 +1726,8 @@ export default function chatRequestHelpers({
         );
         return data;
       } catch (error) {
+        const wordMasterBreakPayload = getWordMasterBreakPayload(error);
+        if (wordMasterBreakPayload) return wordMasterBreakPayload;
         return handleError(error);
       }
     },
@@ -1801,6 +1861,8 @@ export default function chatRequestHelpers({
         );
         return data;
       } catch (error) {
+        const wordMasterBreakPayload = getWordMasterBreakPayload(error);
+        if (wordMasterBreakPayload) return wordMasterBreakPayload;
         return handleError(error);
       }
     },

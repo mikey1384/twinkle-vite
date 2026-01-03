@@ -15,6 +15,11 @@ interface VocabularyWidgetProps {
   isSubmitting?: boolean;
   statusMessage: string;
   canHit?: boolean;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
+  wordMasterBreak?: any;
+  wordMasterBreakLoading?: boolean;
+  onOpenBreaks?: () => void;
 }
 
 export default function VocabularyWidget({
@@ -28,7 +33,12 @@ export default function VocabularyWidget({
   isSubmitting,
   isCensored,
   statusMessage,
-  canHit
+  canHit,
+  wordMasterBlocked,
+  onWordMasterBreak,
+  wordMasterBreak,
+  wordMasterBreakLoading,
+  onOpenBreaks
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -43,7 +53,11 @@ export default function VocabularyWidget({
         overflow: visible;
       `}
     >
-      <Backdrop />
+      <Backdrop
+        breakStatus={wordMasterBreak}
+        breakLoading={wordMasterBreakLoading}
+        onOpenBreaks={onOpenBreaks}
+      />
       <PromptMessage
         isSearching={isSearching}
         searchedWord={searchedWord}
@@ -55,6 +69,8 @@ export default function VocabularyWidget({
         wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
         statusMessage={statusMessage}
         canHit={canHit}
+        wordMasterBlocked={wordMasterBlocked}
+        onWordMasterBreak={onWordMasterBreak}
       />
     </div>
   );

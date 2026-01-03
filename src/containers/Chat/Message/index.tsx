@@ -85,7 +85,7 @@ function Message({
     rootType?: string | null;
     userId?: number;
     isNotification?: boolean;
-    settings?: { hasError?: boolean };
+    settings?: { hasError?: boolean; errorType?: 'moderation' | 'general' };
   };
   nextMessageHasTopic: boolean;
   prevMessageHasTopic: boolean;
@@ -200,6 +200,10 @@ function Message({
     return message?.settings?.hasError === true;
   }, [isAIMessage, message?.id, message?.settings]);
 
+  const errorType = useMemo(() => {
+    return message?.settings?.errorType;
+  }, [message?.settings?.errorType]);
+
   const isOneOnOneAIChat = useMemo(() => {
     if (!currentChannel?.twoPeople) return false;
     return (
@@ -235,6 +239,7 @@ function Message({
               canDelete={isOneOnOneAIChat}
               onDelete={isOneOnOneAIChat ? handleDeleteErrorMessage : undefined}
               aiName={aiName}
+              errorType={errorType}
             />
           </div>
         </div>

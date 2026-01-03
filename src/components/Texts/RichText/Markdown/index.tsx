@@ -1353,7 +1353,8 @@ function Markdown({
     }
     const lowerValue = value.toLowerCase();
     return value.replace(/\n/g, (_, offset) => {
-      if (isWithinPreservedTag(lowerValue, offset, ['pre', 'code'])) {
+      // Preserve newlines inside pre, code, and svg tags to avoid corrupting content
+      if (isWithinPreservedTag(lowerValue, offset, ['pre', 'code', 'svg'])) {
         return '\n';
       }
       const prev = findPreviousNonWhitespace(value, offset - 1);

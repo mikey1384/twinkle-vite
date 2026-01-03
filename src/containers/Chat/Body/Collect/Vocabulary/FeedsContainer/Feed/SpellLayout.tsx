@@ -24,7 +24,9 @@ export default function SpellLayout({
   aiCard,
   getRGBA,
   getActionColor,
-  badgeStyle
+  badgeStyle,
+  wordMasterBlocked,
+  onWordMasterBreak
 }: {
   onHeightMeasured: (height: number) => void;
   userId: number;
@@ -41,6 +43,8 @@ export default function SpellLayout({
   getRGBA: (colorName: string, opacity: number) => string;
   getActionColor: (action: string) => string;
   badgeStyle: (colorName: string, bgOpacity: number) => string;
+  wordMasterBlocked?: boolean;
+  onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -244,6 +248,8 @@ export default function SpellLayout({
             key={content}
             word={content}
             onHide={() => setWordModalShown(false)}
+            wordMasterBlocked={wordMasterBlocked}
+            onWordMasterBreak={onWordMasterBreak}
           />
         )}
     </div>
