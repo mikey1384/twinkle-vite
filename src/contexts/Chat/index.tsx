@@ -103,6 +103,7 @@ function getInitialChatState() {
     collectorRankings: { all: [], top30s: [] },
     monthlyVocabRankings: { all: [], top30s: [] },
     yearlyVocabRankings: { all: [], top30s: [] },
+    vocabRankingsLoaded: false,
     vocabLeaderboardTab: 'month',
     vocabLeaderboardAllSelected: {
       month: false,
@@ -189,6 +190,7 @@ export const initialChatState = {
   collectorRankings: { all: [], top30s: [] },
   monthlyVocabRankings: { all: [], top30s: [] },
   yearlyVocabRankings: { all: [], top30s: [] },
+  vocabRankingsLoaded: false,
   vocabLeaderboardTab: 'month',
   vocabLeaderboardAllSelected: {
     month: false,

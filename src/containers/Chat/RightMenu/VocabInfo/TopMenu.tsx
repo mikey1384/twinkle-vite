@@ -9,7 +9,14 @@ import Loading from '~/components/Loading';
 export default function TopMenu() {
   const { all, top30s } = useChatContext((v) => v.state.collectorRankings);
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
+  const vocabRankingsLoaded = useChatContext(
+    (v) => v.state.vocabRankingsLoaded
+  );
   const [allSelected, setAllSelected] = useState(all?.length > 0);
+
+  // Show loading if vocabulary is loading OR if rankings haven't been loaded yet
+  const showLoading =
+    loadingVocabulary || (!vocabRankingsLoaded && !all?.length && !top30s?.length);
 
   return (
     <div
@@ -22,7 +29,7 @@ export default function TopMenu() {
         minHeight: 0
       }}
     >
-      {loadingVocabulary ? (
+      {showLoading ? (
         <Loading style={{ height: '100%' }} />
       ) : (
         <>

@@ -1614,6 +1614,9 @@ export default function ChatReducer(
         yearlyVocabRankings: vocabActivitiesLoaded
           ? action.data.yearlyVocabRankings
           : state.yearlyVocabRankings,
+        vocabRankingsLoaded: vocabActivitiesLoaded
+          ? true
+          : state.vocabRankingsLoaded,
         wordsObj: {
           ...state.wordsObj,
           ...action.data.wordsObj
@@ -2428,7 +2431,8 @@ export default function ChatReducer(
         wordsObj: action.wordsObj,
         collectorRankings: action.collectorRankings,
         monthlyVocabRankings: action.monthlyVocabRankings,
-        yearlyVocabRankings: action.yearlyVocabRankings
+        yearlyVocabRankings: action.yearlyVocabRankings,
+        vocabRankingsLoaded: true
       };
     }
     case 'LOAD_VOCAB_RANKINGS': {
@@ -2436,7 +2440,8 @@ export default function ChatReducer(
         ...state,
         collectorRankings: action.collectorRankings,
         monthlyVocabRankings: action.monthlyVocabRankings,
-        yearlyVocabRankings: action.yearlyVocabRankings
+        yearlyVocabRankings: action.yearlyVocabRankings,
+        vocabRankingsLoaded: true
       };
     }
     case 'LOAD_MORE_VOCABULARY': {
