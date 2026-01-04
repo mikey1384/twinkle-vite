@@ -847,10 +847,25 @@ export default function WordMasterBreakModal({
       ? requirement.recommendedUsers
       : [];
     const hasSuggestions = recommendedUsers.length > 0;
+    const hasRecentPlayers =
+      typeof requirement?.hasRecentPlayers === 'boolean'
+        ? requirement.hasRecentPlayers
+        : hasSuggestions;
+    const firstMoveComplete =
+      typeof requirement?.firstMoveRequirementComplete === 'boolean'
+        ? requirement.firstMoveRequirementComplete
+        : sentMove || !hasRecentPlayers;
+    const firstMoveLabel = sentMove
+      ? 'First omok move sent'
+      : hasRecentPlayers
+      ? 'Send a first omok move to a recent player'
+      : 'No recent players available';
+    const description = hasRecentPlayers
+      ? 'Clear pending omok moves and send a first omok move to a user active within 7 days.'
+      : 'Clear pending omok moves. No recent players are available for a first move today.';
     return renderRequirementSection({
       title: 'Omok Moves',
-      description:
-        'Clear pending omok moves and send a first omok move to a user active within 7 days.',
+      description,
       rows: [
         {
           label: omokPending
@@ -863,16 +878,15 @@ export default function WordMasterBreakModal({
               : undefined
         },
         {
-          label: sentMove
-            ? 'First omok move sent'
-            : 'Send a first omok move to a recent player',
-          done: sentMove,
-          onClick: sentMove || hasSuggestions ? undefined : onOpenOmokStart
+          label: firstMoveLabel,
+          done: firstMoveComplete,
+          onClick:
+            firstMoveComplete || hasSuggestions ? undefined : onOpenOmokStart
         }
       ],
       extra: (
         <SuggestedOmokPlayers
-          hidden={sentMove}
+          hidden={firstMoveComplete}
           users={recommendedUsers}
           onSelectUser={onStartOmokWithUser}
           onBrowse={onOpenOmokStart}
