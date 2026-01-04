@@ -110,6 +110,7 @@ export default function Vocabulary({
   const inputRef = useRef(null);
   const timerRef = useRef<any>(null);
   const lastStrikeSyncRef = useRef(0);
+  const breakStatusLoadedRef = useRef(false);
 
   const inputTextIsEmpty = useMemo(() => stringIsEmpty(inputText), [inputText]);
   const wordMasterBlocked = useMemo(
@@ -209,6 +210,8 @@ export default function Vocabulary({
   });
 
   useEffect(() => {
+    if (breakStatusLoadedRef.current) return;
+    breakStatusLoadedRef.current = true;
     refreshWordMasterBreakStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
