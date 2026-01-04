@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
@@ -760,7 +760,7 @@ export default function DailyRewardModal({
 
   return (
     <>
-      <NewModal
+      <Modal
         isOpen
         onClose={handleHide}
         title={modalTitle}
@@ -1259,7 +1259,7 @@ export default function DailyRewardModal({
             </div>
           )}
         </div>
-      </NewModal>
+      </Modal>
       {cardModalShown && (
         <AICardModal
           cardId={chosenCardId}

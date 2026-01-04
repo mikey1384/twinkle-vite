@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -17,14 +18,18 @@ import {
   roles
 } from '~/constants/defaultValues';
 import { useSearch } from '~/helpers/hooks';
-import { Color } from '~/constants/css';import { useRoleColor } from '~/theme/useRoleColor';
+import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
 
 export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   const [loading, setLoading] = useState(false);
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const level = useKeyContext((v) => v.myState.level);
   const addSupermods = useAppContext((v) => v.requestHelpers.addSupermods);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
@@ -138,72 +143,85 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
   }, [selectedUsers]);
 
   return (
-    <Modal closeWhenClickedOutside={!dropdownShown} wrapped onHide={onHide}>
-      <header>Add / Edit Supermods</header>
-      <main>
-        <SearchInput
-          autoFocus
-          onChange={handleSearch}
-          onSelect={handleSelectUser}
-          placeholder={`${searchUsersLabel}...`}
-          onClickOutSide={() => {
-            setSearchText('');
-            setSearchedUsers([]);
-          }}
-          renderItemLabel={(item) => (
-            <span>
-              {item.username} <small>{`(${item.realName})`}</small>
-            </span>
-          )}
-          searchResults={searchedUsers.filter(
-            (user: { unlockedAchievementIds: number[] }) => {
-              const supermodAchievementIds = [
-                MENTOR_ACHIEVEMENT_ID,
-                SAGE_ACHIEVEMENT_ID,
-                TWINKLE_FOUNDER_ACHIEVEMENT_ID
-              ];
-              return !(user.unlockedAchievementIds || []).some((id: number) =>
-                supermodAchievementIds.includes(id)
-              );
-            }
-          )}
-          value={searchText}
-        />
-        {selectedUsers.length > 0 && (
-          <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Account Type</th>
-              </tr>
-            </thead>
-            <tbody>{TableContent}</tbody>
-          </Table>
-        )}
-        {selectedUsers.length === 0 && (
-          <div
-            style={{
-              marginTop: '5rem',
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              paddingBottom: '3.5rem'
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={!dropdownShown}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>Add / Edit Supermods</header>
+        <main>
+          <SearchInput
+            autoFocus
+            onChange={handleSearch}
+            onSelect={handleSelectUser}
+            placeholder={`${searchUsersLabel}...`}
+            onClickOutSide={() => {
+              setSearchText('');
+              setSearchedUsers([]);
             }}
+            renderItemLabel={(item) => (
+              <span>
+                {item.username} <small>{`(${item.realName})`}</small>
+              </span>
+            )}
+            searchResults={searchedUsers.filter(
+              (user: { unlockedAchievementIds: number[] }) => {
+                const supermodAchievementIds = [
+                  MENTOR_ACHIEVEMENT_ID,
+                  SAGE_ACHIEVEMENT_ID,
+                  TWINKLE_FOUNDER_ACHIEVEMENT_ID
+                ];
+                return !(user.unlockedAchievementIds || []).some((id: number) =>
+                  supermodAchievementIds.includes(id)
+                );
+              }
+            )}
+            value={searchText}
+          />
+          {selectedUsers.length > 0 && (
+            <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Account Type</th>
+                </tr>
+              </thead>
+              <tbody>{TableContent}</tbody>
+            </Table>
+          )}
+          {selectedUsers.length === 0 && (
+            <div
+              style={{
+                marginTop: '5rem',
+                fontSize: '2.5rem',
+                fontWeight: 'bold',
+                paddingBottom: '3.5rem'
+              }}
+            >
+              No users selected
+            </div>
+          )}
+          {searching && (
+            <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            onClick={onHide}
+            style={{ marginRight: '0.7rem' }}
           >
-            No users selected
-          </div>
-        )}
-        {searching && (
-          <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
-        )}
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Cancel
-        </Button>
-        <Button loading={loading} color={doneColor} onClick={handleSubmit}>
-          Done
-        </Button>
-      </footer>
+            Cancel
+          </Button>
+          <Button loading={loading} color={doneColor} onClick={handleSubmit}>
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

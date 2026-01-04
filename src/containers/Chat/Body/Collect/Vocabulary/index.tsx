@@ -104,6 +104,7 @@ export default function Vocabulary({
   const [wordMasterBreakLoading, setWordMasterBreakLoading] = useState(false);
   const [wordMasterBreakModalShown, setWordMasterBreakModalShown] =
     useState(false);
+  const [strikeAnimationKey, setStrikeAnimationKey] = useState(0);
   const feedsContentRef = useRef<any>(null);
   const text = useRef<string>('');
   const inputRef = useRef(null);
@@ -130,6 +131,17 @@ export default function Vocabulary({
       if (word?.wordMasterBreak) {
         handleWordMasterBreakUpdate(word.wordMasterBreak, false);
       }
+      const shouldTriggerStrikeAnimation = Boolean(
+        word?.wordMasterBreak &&
+          word?.content &&
+          word.content === text.current &&
+          !word?.isNew &&
+          !word?.canHit &&
+          !word?.isCensored
+      );
+      if (shouldTriggerStrikeAnimation) {
+        setStrikeAnimationKey((prev) => prev + 1);
+      }
       maybeSyncStrikeCount(word);
       if (word.notFound || (word.content && word.content === text.current)) {
         onSetWordsObj(word);
@@ -152,8 +164,15 @@ export default function Vocabulary({
   );
 
   const isCensored = useMemo(() => !!searchedWord?.isCensored, [searchedWord]);
+  const maskWordMasterStatus = useMemo(
+    () => Boolean(wordMasterBlocked && searchedWord),
+    [wordMasterBlocked, searchedWord]
+  );
 
   const statusMessage = useMemo(() => {
+    if (maskWordMasterStatus) {
+      return 'Break active';
+    }
     if (searchedWord?.notFound) return `No results for "${inputText}"`;
     if (isCensored)
       return 'This word has already been discovered and it is a type of word that cannot be collected';
@@ -168,7 +187,8 @@ export default function Vocabulary({
     isNewWord,
     canHit,
     wordIsAlreadyDiscovered,
-    isCensored
+    isCensored,
+    maskWordMasterStatus
   ]);
 
   useEffect(() => {
@@ -253,6 +273,8 @@ export default function Vocabulary({
         wordMasterBreak={wordMasterBreak}
         wordMasterBreakLoading={wordMasterBreakLoading}
         onOpenBreaks={() => setWordMasterBreakModalShown(true)}
+        strikeAnimationKey={strikeAnimationKey}
+        maskWordMasterStatus={maskWordMasterStatus}
       />
       <div
         style={{
@@ -271,7 +293,9 @@ export default function Vocabulary({
           }}
           onSubmit={handleSubmit}
           innerRef={inputRef}
-          registerButtonShown={(isNewWord || canHit) && !isCensored && !wordMasterBlocked}
+          registerButtonShown={
+            (isNewWord || canHit) && !isCensored && !wordMasterBlocked
+          }
           isSubmitting={isSubmitting}
         />
       </div>
@@ -436,12 +460,33 @@ export default function Vocabulary({
 
   function handleWordMasterBreakUpdate(nextBreak: any, showModal = true): void {
     if (!nextBreak) return;
-    setWordMasterBreak(nextBreak);
-    if (nextBreak.blocked) {
-      if (showModal) {
+    setWordMasterBreak((prev: any) => {
+      // Show modal when break is newly triggered (transition from not-blocked to blocked)
+      const wasBlocked = Boolean(prev?.blocked);
+      const isNowBlocked = Boolean(nextBreak.blocked);
+      if (!wasBlocked && isNowBlocked) {
+        setWordMasterBreakModalShown(true);
+      } else if (isNowBlocked && showModal) {
         setWordMasterBreakModalShown(true);
       }
-    }
+
+      if (!prev?.quiz?.question) return nextBreak;
+      const sameQuizBreak =
+        prev.breakType === 'vocab_quiz' &&
+        nextBreak.breakType === 'vocab_quiz' &&
+        prev.activeBreakIndex === nextBreak.activeBreakIndex &&
+        !nextBreak.locked;
+      if (!sameQuizBreak) return nextBreak;
+      if (nextBreak.quiz?.question) return nextBreak;
+      return {
+        ...nextBreak,
+        quiz: {
+          ...prev.quiz,
+          ...(nextBreak.quiz || {}),
+          question: prev.quiz.question
+        }
+      };
+    });
   }
 
   async function handleClearWordMasterBreak() {

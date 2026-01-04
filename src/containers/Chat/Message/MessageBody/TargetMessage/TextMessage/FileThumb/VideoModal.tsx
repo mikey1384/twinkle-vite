@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';import VideoPlayer from '~/components/VideoPlayer';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
+import Button from '~/components/Button';
+import VideoPlayer from '~/components/VideoPlayer';
 import { useContentContext } from '~/contexts';
 import { useContentState } from '~/helpers/hooks';
 import { mobileMaxWidth } from '~/constants/css';
@@ -43,80 +45,86 @@ export default function VideoModal({
   }, []);
 
   return (
-    <Modal large onHide={onHide}>
-      <header>Video Player</header>
-      <main
-        style={{
-          fontSize: '3rem',
-          paddingTop: 0
-        }}
-      >
-        <div
+    <Modal isOpen size="xl" onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Video Player</header>
+        <main
           style={{
-            display: 'block',
-            height: '100%'
+            fontSize: '3rem',
+            paddingTop: 0
           }}
-          className={css`
-            width: 85%;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
         >
           <div
             style={{
-              width: '100%'
+              display: 'block',
+              height: '100%'
             }}
-          >
-            <a
-              className={css`
-                font-weight: bold;
-                font-size: 1.7rem;
-                @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1.5rem;
-                }
-              `}
-              href={src}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {fileName}
-            </a>
-          </div>
-          <div
             className={css`
-              position: relative;
-              padding-top: 56.25%;
+              width: 85%;
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+              }
             `}
           >
-            <VideoPlayer
+            <div
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                zIndex: 1
+                width: '100%'
               }}
-              width="100%"
-              height="100%"
-              fileType="video"
-              src={src}
-              playing={playing}
-              initialTime={currentTime}
-              onPlay={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
-              onProgress={(currentTime) => {
-                timeAtRef.current = currentTime;
-              }}
-              playsInline
-            />
+            >
+              <a
+                className={css`
+                  font-weight: bold;
+                  font-size: 1.7rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    font-size: 1.5rem;
+                  }
+                `}
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {fileName}
+              </a>
+            </div>
+            <div
+              className={css`
+                position: relative;
+                padding-top: 56.25%;
+              `}
+            >
+              <VideoPlayer
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 1
+                }}
+                width="100%"
+                height="100%"
+                fileType="video"
+                src={src}
+                playing={playing}
+                initialTime={currentTime}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                onProgress={(currentTime) => {
+                  timeAtRef.current = currentTime;
+                }}
+                playsInline
+              />
+            </div>
           </div>
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {closelLabel}
-        </Button>
-      </footer>
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            {closelLabel}
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SortableThumb from '~/components/SortableThumb';
 import { DndProvider } from 'react-dnd';
@@ -120,171 +121,178 @@ export default function AddPlaylistModal({
   return (
     <DndProvider backend={Backend}>
       <Modal
-        modalOverModal={modalOverModal}
-        onHide={onHide}
-        large={section > 0}
+        isOpen
+        size={section > 0 ? 'xl' : 'md'}
+        onClose={onHide}
+        modalLevel={modalOverModal ? 2 : undefined}
+        hasHeader={false}
+        bodyPadding={0}
       >
-        <header>{header}</header>
-        <main style={{ paddingBottom: '1rem' }}>
-          {section === 0 && (
-            <form
-              className={css`
-                width: 100%;
-              `}
-              onSubmit={(event) => event.preventDefault()}
-            >
-              <section>
-                <Input
+        <LegacyModalLayout>
+          <header>{header}</header>
+          <main style={{ paddingBottom: '1rem' }}>
+            {section === 0 && (
+              <form
+                className={css`
+                  width: 100%;
+                `}
+                onSubmit={(event) => event.preventDefault()}
+              >
+                <section>
+                  <Input
+                    autoFocus
+                    placeholder="Enter Playlist Title"
+                    value={title}
+                    onChange={(text) => setTitle(text)}
+                    onKeyUp={(event: any) => {
+                      if (event.key === ' ') {
+                        setTitle(addEmoji(event.target.value));
+                      }
+                    }}
+                    style={titleExceedsCharLimit?.style}
+                  />
+                  {titleExceedsCharLimit && (
+                    <small style={{ color: 'red', fontSize: '1.3rem' }}>
+                      {titleExceedsCharLimit.message}
+                    </small>
+                  )}
+                </section>
+                <section style={{ marginTop: '1.5rem' }}>
+                  <Textarea
+                    name="description"
+                    placeholder="Enter Description (Optional)"
+                    minRows={4}
+                    value={description}
+                    onChange={(event: any) =>
+                      setDescription(event.target.value)
+                    }
+                    onKeyUp={(event: any) => {
+                      if (event.key === ' ') {
+                        setDescription(addEmoji(event.target.value));
+                      }
+                    }}
+                    hasError={!!descriptionExceedsCharLimit}
+                  />
+                  {descriptionExceedsCharLimit && (
+                    <small style={{ color: 'red', fontSize: '1.3rem' }}>
+                      {descriptionExceedsCharLimit.message}
+                    </small>
+                  )}
+                </section>
+              </form>
+            )}
+            {section === 1 && (
+              <div style={{ width: '100%' }}>
+                <SearchInput
+                  placeholder="Search videos..."
                   autoFocus
-                  placeholder="Enter Playlist Title"
-                  value={title}
-                  onChange={(text) => setTitle(text)}
-                  onKeyUp={(event: any) => {
-                    if (event.key === ' ') {
-                      setTitle(addEmoji(event.target.value));
-                    }
+                  style={{
+                    marginBottom: '2em',
+                    width: '50%'
                   }}
-                  style={titleExceedsCharLimit?.style}
+                  value={searchText}
+                  onChange={handleSearch}
                 />
-                {titleExceedsCharLimit && (
-                  <small style={{ color: 'red', fontSize: '1.3rem' }}>
-                    {titleExceedsCharLimit.message}
-                  </small>
-                )}
-              </section>
-              <section style={{ marginTop: '1.5rem' }}>
-                <Textarea
-                  name="description"
-                  placeholder="Enter Description (Optional)"
-                  minRows={4}
-                  value={description}
-                  onChange={(event: any) => setDescription(event.target.value)}
-                  onKeyUp={(event: any) => {
-                    if (event.key === ' ') {
-                      setDescription(addEmoji(event.target.value));
-                    }
-                  }}
-                  hasError={!!descriptionExceedsCharLimit}
-                />
-                {descriptionExceedsCharLimit && (
-                  <small style={{ color: 'red', fontSize: '1.3rem' }}>
-                    {descriptionExceedsCharLimit.message}
-                  </small>
-                )}
-              </section>
-            </form>
-          )}
-          {section === 1 && (
-            <div style={{ width: '100%' }}>
-              <SearchInput
-                placeholder="Search videos..."
-                autoFocus
-                style={{
-                  marginBottom: '2em',
-                  width: '50%'
-                }}
-                value={searchText}
-                onChange={handleSearch}
-              />
-              <SelectUploadsForm
-                contentObjs={playlistVideoObjects.current}
-                uploads={
-                  !stringIsEmpty(searchText) ? searchedVideos : allVideos
-                }
-                selectedUploads={selectedVideos}
-                loaded={loaded}
-                loading={searching}
-                loadingMore={loadingMore}
-                loadMoreButton={
-                  !stringIsEmpty(searchText)
-                    ? searchLoadMoreButton
-                    : loadMoreButton
-                }
-                onSelect={(selectedVideoId) =>
-                  setSelectedVideos((selectedVideos) =>
-                    selectedVideos.concat(selectedVideoId)
-                  )
-                }
-                onDeselect={(deselectedVideoId) =>
-                  setSelectedVideos((selectedVideos) =>
-                    selectedVideos.filter(
-                      (videoId) => videoId !== deselectedVideoId
+                <SelectUploadsForm
+                  contentObjs={playlistVideoObjects.current}
+                  uploads={
+                    !stringIsEmpty(searchText) ? searchedVideos : allVideos
+                  }
+                  selectedUploads={selectedVideos}
+                  loaded={loaded}
+                  loading={searching}
+                  loadingMore={loadingMore}
+                  loadMoreButton={
+                    !stringIsEmpty(searchText)
+                      ? searchLoadMoreButton
+                      : loadMoreButton
+                  }
+                  onSelect={(selectedVideoId) =>
+                    setSelectedVideos((selectedVideos) =>
+                      selectedVideos.concat(selectedVideoId)
                     )
-                  )
-                }
-                loadMoreUploads={loadMoreVideos}
-              />
-            </div>
-          )}
-          {section === 2 && (
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'flex-start',
-                width: '100%'
-              }}
-            >
-              {selectedVideos.map((videoId) => (
-                <SortableThumb
-                  key={videoId}
-                  id={videoId}
-                  video={playlistVideoObjects.current[videoId]}
-                  onMove={({ sourceId, targetId }) => {
-                    const selected = [...selectedVideos];
-                    const sourceIndex = selected.indexOf(sourceId);
-                    const targetIndex = selected.indexOf(targetId);
-                    selected.splice(sourceIndex, 1);
-                    selected.splice(targetIndex, 0, sourceId);
-                    setSelectedVideos(selected);
-                  }}
+                  }
+                  onDeselect={(deselectedVideoId) =>
+                    setSelectedVideos((selectedVideos) =>
+                      selectedVideos.filter(
+                        (videoId) => videoId !== deselectedVideoId
+                      )
+                    )
+                  }
+                  loadMoreUploads={loadMoreVideos}
                 />
-              ))}
-            </div>
-          )}
-        </main>
-        <footer>
-          {section === 0 ? (
-            <Button
-              style={{ marginRight: '0.7rem' }}
-              variant="ghost"
-              onClick={onHide}
-            >
-              Cancel
-            </Button>
-          ) : (
-            <Button
-              style={{ marginRight: '0.7rem' }}
-              variant="ghost"
-              onClick={handlePrev}
-            >
-              Prev
-            </Button>
-          )}
-          {section === 2 ? (
-            <Button
-              color={doneColor}
-              disabled={isUploading}
-              onClick={handleFinish}
-            >
-              Finish
-            </Button>
-          ) : (
-            <Button
-              color={doneColor}
-              disabled={
-                (section === 0 &&
-                  (stringIsEmpty(title) ||
-                    !!titleExceedsCharLimit ||
-                    !!descriptionExceedsCharLimit)) ||
-                (section === 1 && selectedVideos.length === 0)
-              }
-              onClick={handleNext}
-            >
-              Next
-            </Button>
-          )}
-        </footer>
+              </div>
+            )}
+            {section === 2 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-start',
+                  width: '100%'
+                }}
+              >
+                {selectedVideos.map((videoId) => (
+                  <SortableThumb
+                    key={videoId}
+                    id={videoId}
+                    video={playlistVideoObjects.current[videoId]}
+                    onMove={({ sourceId, targetId }) => {
+                      const selected = [...selectedVideos];
+                      const sourceIndex = selected.indexOf(sourceId);
+                      const targetIndex = selected.indexOf(targetId);
+                      selected.splice(sourceIndex, 1);
+                      selected.splice(targetIndex, 0, sourceId);
+                      setSelectedVideos(selected);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </main>
+          <footer>
+            {section === 0 ? (
+              <Button
+                style={{ marginRight: '0.7rem' }}
+                variant="ghost"
+                onClick={onHide}
+              >
+                Cancel
+              </Button>
+            ) : (
+              <Button
+                style={{ marginRight: '0.7rem' }}
+                variant="ghost"
+                onClick={handlePrev}
+              >
+                Prev
+              </Button>
+            )}
+            {section === 2 ? (
+              <Button
+                color={doneColor}
+                disabled={isUploading}
+                onClick={handleFinish}
+              >
+                Finish
+              </Button>
+            ) : (
+              <Button
+                color={doneColor}
+                disabled={
+                  (section === 0 &&
+                    (stringIsEmpty(title) ||
+                      !!titleExceedsCharLimit ||
+                      !!descriptionExceedsCharLimit)) ||
+                  (section === 1 && selectedVideos.length === 0)
+                }
+                onClick={handleNext}
+              >
+                Next
+              </Button>
+            )}
+          </footer>
+        </LegacyModalLayout>
       </Modal>
     </DndProvider>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Icon from '~/components/Icon';
 import Dob from './Dob';
 import Mentor from './Mentor';
@@ -33,115 +34,123 @@ export default function ApproveModal({
   );
 
   return (
-    <Modal onHide={onHide}>
-      <header>Approve Request</header>
-      <main>
-        <div
-          style={{
-            width: '100%',
-            marginTop: '1rem',
-            lineHeight: 1.7,
-            textAlign: 'center'
-          }}
-        >
-          {target.type === 'dob' && (
-            <Dob username={target.username} content={target.content} />
-          )}
-          {target.type === 'mentor' && <Mentor content={target.content} />}
-        </div>
-        {target.status === 'pending' ? (
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Approve Request</header>
+        <main>
           <div
             style={{
-              marginTop: '3rem',
               width: '100%',
-              display: 'flex',
-              justifyContent: 'center'
+              marginTop: '1rem',
+              lineHeight: 1.7,
+              textAlign: 'center'
             }}
           >
-            <Button
-              color="rose"
-              variant="solid"
-              disabled={submitting}
-              loading={submitting && !isApproved}
-              onClick={() =>
-                handleSubmit({
-                  isApproved: false,
-                  userId: target.userId
-                })
-              }
-            >
-              Reject
-            </Button>
-            <Button
-              style={{ marginLeft: '1.5rem' }}
-              variant="solid"
-              color="green"
-              disabled={submitting}
-              loading={submitting && isApproved}
-              onClick={() =>
-                handleSubmit({
-                  isApproved: true,
-                  userId: target.userId
-                })
-              }
-            >
-              Approve
-            </Button>
+            {target.type === 'dob' && (
+              <Dob username={target.username} content={target.content} />
+            )}
+            {target.type === 'mentor' && <Mentor content={target.content} />}
           </div>
-        ) : (
-          <div>
+          {target.status === 'pending' ? (
             <div
               style={{
-                marginTop: '2.5rem',
+                marginTop: '3rem',
+                width: '100%',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '1rem',
-                borderRadius,
-                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
-                background:
-                  Color[
-                    target.status === 'approved' ? 'limeGreen' : 'redOrange'
-                  ](),
-                color: '#fff',
-                fontWeight: 'bold'
+                justifyContent: 'center'
               }}
             >
-              <Icon
-                icon={target.status === 'approved' ? 'check' : 'times'}
-                style={{ marginRight: '0.7rem' }}
-              />
-              {target.status.toUpperCase()}
+              <Button
+                color="rose"
+                variant="solid"
+                disabled={submitting}
+                loading={submitting && !isApproved}
+                onClick={() =>
+                  handleSubmit({
+                    isApproved: false,
+                    userId: target.userId
+                  })
+                }
+              >
+                Reject
+              </Button>
+              <Button
+                style={{ marginLeft: '1.5rem' }}
+                variant="solid"
+                color="green"
+                disabled={submitting}
+                loading={submitting && isApproved}
+                onClick={() =>
+                  handleSubmit({
+                    isApproved: true,
+                    userId: target.userId
+                  })
+                }
+              >
+                Approve
+              </Button>
             </div>
-            <div
-              className={css`
-                margin-top: 1rem;
-                font-size: 1.3rem;
-                color: ${reverting ? Color.lightGray() : Color.darkerGray()};
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              `}
-            >
-              <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-              <span
-                onClick={handleRevert}
+          ) : (
+            <div>
+              <div
+                style={{
+                  marginTop: '2.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '1rem',
+                  borderRadius,
+                  boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)',
+                  background:
+                    Color[
+                      target.status === 'approved' ? 'limeGreen' : 'redOrange'
+                    ](),
+                  color: '#fff',
+                  fontWeight: 'bold'
+                }}
+              >
+                <Icon
+                  icon={target.status === 'approved' ? 'check' : 'times'}
+                  style={{ marginRight: '0.7rem' }}
+                />
+                {target.status.toUpperCase()}
+              </div>
+              <div
                 className={css`
-                  cursor: ${reverting ? 'default' : 'pointer'};
-                  ${reverting ? '' : '&:hover { text-decoration: underline; }'}
+                  margin-top: 1rem;
+                  font-size: 1.3rem;
+                  color: ${reverting ? Color.lightGray() : Color.darkerGray()};
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
                 `}
               >
-                revert
-              </span>
+                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
+                <span
+                  onClick={handleRevert}
+                  className={css`
+                    cursor: ${reverting ? 'default' : 'pointer'};
+                    ${reverting
+                      ? ''
+                      : '&:hover { text-decoration: underline; }'}
+                  `}
+                >
+                  revert
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Close
-        </Button>
-      </footer>
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            onClick={onHide}
+            style={{ marginRight: '0.7rem' }}
+          >
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

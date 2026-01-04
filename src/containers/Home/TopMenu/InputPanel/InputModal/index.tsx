@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ContentInput from './ContentInput';
 import SubjectInput from './SubjectInput';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useInputContext, useKeyContext } from '~/contexts';
@@ -52,7 +52,7 @@ export default function InputModal({
 
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
-      <NewModal
+      <Modal
         isOpen={isOpen}
         onClose={handleClose}
         title="Post Something"
@@ -79,7 +79,7 @@ export default function InputModal({
           />
           <ContentInput onModalHide={onHide} />
         </div>
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 

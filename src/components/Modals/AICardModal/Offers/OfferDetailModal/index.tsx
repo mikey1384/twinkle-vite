@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import OfferListItem from './OfferListItem';
@@ -61,7 +61,7 @@ export default function OfferDetailModal({
   }, []);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       size="md"
@@ -133,7 +133,7 @@ export default function OfferDetailModal({
           onConfirm={handleConfirmAcceptOffer}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   async function handleConfirmAcceptOffer() {

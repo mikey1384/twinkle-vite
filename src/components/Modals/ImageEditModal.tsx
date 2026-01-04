@@ -1,6 +1,6 @@
 import 'react-image-crop/dist/ReactCrop.css';
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -87,7 +87,7 @@ export default function ImageEditModal({
 
   return (
     <ErrorBoundary componentPath="ImageEditModal">
-      <NewModal
+      <Modal
         isOpen={true}
         onClose={onHide}
         title="Edit your picture"
@@ -187,7 +187,7 @@ export default function ImageEditModal({
             )}
           </div>
         </div>
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 

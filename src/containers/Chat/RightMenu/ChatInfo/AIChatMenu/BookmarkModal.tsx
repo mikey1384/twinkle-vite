@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import RichText from '~/components/Texts/RichText';
 import Icon from '~/components/Icon';
@@ -54,61 +55,63 @@ export default function BookmarkModal({
     : bookmark.username;
 
   return (
-    <Modal onHide={onHide}>
-      <main>
-        <div style={{ height: '100%', width: '100%', padding: '3rem 1rem' }}>
-          <RichText
-            isAIMessage={isAIMessage}
-            voice={isAIMessage ? (isCielChat ? 'nova' : '') : ''}
-            theme={displayedThemeColor}
-            contentType="chat"
-            contentId={bookmark.id}
-            section="main"
-          >
-            {(bookmark.content || '').trimEnd()}
-          </RichText>
-        </div>
-      </main>
-      <footer style={{ justifyContent: 'space-between' }}>
-        <div>
-          {isCurrentlyBookmarked && (
-            <Button
-              loading={removingBookmark}
-              color="red"
-              variant="ghost"
-              onClick={handleRemoveBookmark}
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <main>
+          <div style={{ height: '100%', width: '100%', padding: '3rem 1rem' }}>
+            <RichText
+              isAIMessage={isAIMessage}
+              voice={isAIMessage ? (isCielChat ? 'nova' : '') : ''}
+              theme={displayedThemeColor}
+              contentType="chat"
+              contentId={bookmark.id}
+              section="main"
             >
-              <Icon icon={['far', 'bookmark']} />
-              <span style={{ marginLeft: '1rem' }}>Remove</span>
+              {(bookmark.content || '').trimEnd()}
+            </RichText>
+          </div>
+        </main>
+        <footer style={{ justifyContent: 'space-between' }}>
+          <div>
+            {isCurrentlyBookmarked && (
+              <Button
+                loading={removingBookmark}
+                color="red"
+                variant="ghost"
+                onClick={handleRemoveBookmark}
+              >
+                <Icon icon={['far', 'bookmark']} />
+                <span style={{ marginLeft: '1rem' }}>Remove</span>
+              </Button>
+            )}
+          </div>
+          <div style={{ display: 'flex' }}>
+            {!isCurrentlyBookmarked && (
+              <Button
+                style={{ marginRight: '0.7rem' }}
+                loading={addingBookmark}
+                variant="ghost"
+                color={doneColor}
+                onClick={handleAddBookmark}
+              >
+                <Icon icon="bookmark" />
+                <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+              </Button>
+            )}
+            <Button color={successColor} onClick={handleReplyClick}>
+              <Icon icon="comment-alt" />
+              <span style={{ marginLeft: '1rem' }}>Reply</span>
             </Button>
-          )}
-        </div>
-        <div style={{ display: 'flex' }}>
-          {!isCurrentlyBookmarked && (
             <Button
-              style={{ marginRight: '0.7rem' }}
-              loading={addingBookmark}
+              style={{ marginLeft: '0.7rem' }}
               variant="ghost"
-              color={doneColor}
-              onClick={handleAddBookmark}
+              onClick={onHide}
             >
-              <Icon icon="bookmark" />
-              <span style={{ marginLeft: '1rem' }}>Bookmark</span>
+              Close
             </Button>
-          )}
-          <Button color={successColor} onClick={handleReplyClick}>
-            <Icon icon="comment-alt" />
-            <span style={{ marginLeft: '1rem' }}>Reply</span>
-          </Button>
-          <Button
-            style={{ marginLeft: '0.7rem' }}
-            variant="ghost"
-            onClick={onHide}
-          >
-            Close
-          </Button>
-        </div>
-      </footer>
+          </div>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

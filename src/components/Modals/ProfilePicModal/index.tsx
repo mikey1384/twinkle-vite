@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import FileUploadOption from '../UploadModal/FileUploadOption';
@@ -104,7 +104,7 @@ export default function ProfilePicModal({
 
   return (
     <>
-      <NewModal
+      <Modal
         isOpen
         onClose={handleClose}
         title={modalTitle}
@@ -132,7 +132,7 @@ export default function ProfilePicModal({
             onRegisterUseImageHandler={handleRegisterUseImageHandler}
           />
         )}
-      </NewModal>
+      </Modal>
       {alertModalShown && (
         <AlertModal
           title="Image is too large (limit: 10mb)"

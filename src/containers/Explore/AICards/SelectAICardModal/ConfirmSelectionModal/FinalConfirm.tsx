@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';import AICardsPreview from '~/components/AICardsPreview';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
+import Button from '~/components/Button';
+import AICardsPreview from '~/components/AICardsPreview';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -60,72 +62,89 @@ export default function ConfirmSelectionModal({
   }, [price]);
 
   return (
-    <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
-      <header>Final Confirmation</header>
-      <main
-        className={css`
-          font-family: 'Helvetica Neue', Arial, sans-serif;
-          text-align: center;
-          color: #333;
-          background-color: #fff;
-          border-radius: 8px;
-          p {
-            margin-bottom: 1rem;
-          }
-          .card-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 3rem;
-          }
-        `}
-      >
-        {!!higherBidCardIds?.length && (
-          <div className="card-section">
-            <p>
-              The following cards have bids higher than {displayedPrice} and
-              will be sold immediately:
-            </p>
-            <AICardsPreview
-              isOnModal
-              isAICardModalShown={isAICardModalShown}
-              cardIds={higherBidCardIds}
-              onSetAICardModalCardId={onSetAICardModalCardId}
-            />
-            <div
-              className={css`
-                margin-top: 1rem;
-                font-weight: bold;
-                color: ${Color.logoBlue()};
-              `}
-            >
-              You will receive {totalCoinsReceivableFromSelling} coins
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Final Confirmation</header>
+        <main
+          className={css`
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
+            color: #333;
+            background-color: #fff;
+            border-radius: 8px;
+            p {
+              margin-bottom: 1rem;
+            }
+            .card-section {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              margin-bottom: 3rem;
+            }
+          `}
+        >
+          {!!higherBidCardIds?.length && (
+            <div className="card-section">
+              <p>
+                The following cards have bids higher than {displayedPrice} and
+                will be sold immediately:
+              </p>
+              <AICardsPreview
+                isOnModal
+                isAICardModalShown={isAICardModalShown}
+                cardIds={higherBidCardIds}
+                onSetAICardModalCardId={onSetAICardModalCardId}
+              />
+              <div
+                className={css`
+                  margin-top: 1rem;
+                  font-weight: bold;
+                  color: ${Color.logoBlue()};
+                `}
+              >
+                You will receive {totalCoinsReceivableFromSelling} coins
+              </div>
             </div>
-          </div>
-        )}
-        {!!restOfTheCardIds?.length && (
-          <div className="card-section">
-            <p>
-              The following cards will be listed on the market for{' '}
-              {displayedPrice}:
-            </p>
-            <AICardsPreview
-              isOnModal
-              isAICardModalShown={isAICardModalShown}
-              cardIds={restOfTheCardIds}
-              onSetAICardModalCardId={onSetAICardModalCardId}
-            />
-          </div>
-        )}
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {cancelLabel}
-        </Button>
-        <Button loading={confirming} color={doneColor} onClick={handleConfirm}>
-          Confirm
-        </Button>
-      </footer>
+          )}
+          {!!restOfTheCardIds?.length && (
+            <div className="card-section">
+              <p>
+                The following cards will be listed on the market for{' '}
+                {displayedPrice}:
+              </p>
+              <AICardsPreview
+                isOnModal
+                isAICardModalShown={isAICardModalShown}
+                cardIds={restOfTheCardIds}
+                onSetAICardModalCardId={onSetAICardModalCardId}
+              />
+            </div>
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            {cancelLabel}
+          </Button>
+          <Button
+            loading={confirming}
+            color={doneColor}
+            onClick={handleConfirm}
+          >
+            Confirm
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

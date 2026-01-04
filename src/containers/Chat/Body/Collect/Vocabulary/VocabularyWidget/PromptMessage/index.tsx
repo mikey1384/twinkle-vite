@@ -22,6 +22,8 @@ interface PromptMessageProps {
   canHit?: boolean;
   wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
+  strikeAnimationKey?: number;
+  maskWordMasterStatus?: boolean;
 }
 
 const gradientAnimation = keyframes`
@@ -56,6 +58,48 @@ const bubbleFadeOut = keyframes`
   }
 `;
 
+const strikeFlash = keyframes`
+  0% {
+    background-color: ${Color.redOrange()};
+  }
+  25% {
+    background-color: ${Color.orange()};
+  }
+  50% {
+    background-color: ${Color.redOrange()};
+  }
+  75% {
+    background-color: ${Color.orange()};
+  }
+  100% {
+    background-color: ${Color.darkerGray()};
+  }
+`;
+
+const strikeTremble = keyframes`
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+  40% {
+    transform: translate3d(2px, -1px, 0);
+  }
+  60% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  80% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+`;
+
+const STRIKE_FLASH_DURATION_MS = 900;
+const STRIKE_TREMBLE_DURATION_MS = 420;
+
 export default function PromptMessage({
   isSearching,
   isCensored,
@@ -68,11 +112,15 @@ export default function PromptMessage({
   statusMessage,
   canHit,
   wordMasterBlocked,
-  onWordMasterBreak
+  onWordMasterBreak,
+  strikeAnimationKey,
+  maskWordMasterStatus
 }: PromptMessageProps) {
   const [wordModalShown, setWordModalShown] = useState(false);
   const [promptVisible, setPromptVisible] = useState(true);
   const [promptExiting, setPromptExiting] = useState(false);
+  const [strikeFlashActive, setStrikeFlashActive] = useState(false);
+  const [strikeTrembleActive, setStrikeTrembleActive] = useState(false);
 
   useEffect(() => {
     const exitTimer = setTimeout(() => {
@@ -88,6 +136,25 @@ export default function PromptMessage({
       clearTimeout(hideTimer);
     };
   }, []);
+
+  useEffect(() => {
+    if (!strikeAnimationKey) return;
+    setStrikeFlashActive(true);
+    setStrikeTrembleActive(true);
+
+    const flashTimer = setTimeout(() => {
+      setStrikeFlashActive(false);
+    }, STRIKE_FLASH_DURATION_MS);
+
+    const trembleTimer = setTimeout(() => {
+      setStrikeTrembleActive(false);
+    }, STRIKE_TREMBLE_DURATION_MS);
+
+    return () => {
+      clearTimeout(flashTimer);
+      clearTimeout(trembleTimer);
+    };
+  }, [strikeAnimationKey]);
 
   const showLoading = isSearching && (!searchedWord || !socketConnected);
   const showContent =
@@ -110,6 +177,13 @@ export default function PromptMessage({
   );
 
   const statusBarBackground = useMemo(() => {
+    if (strikeFlashActive) {
+      return {
+        background: Color.redOrange(),
+        animation: `${strikeFlash} ${STRIKE_FLASH_DURATION_MS}ms ease-out forwards`
+      };
+    }
+    if (maskWordMasterStatus) return Color.darkerGray();
     if (isCensored) return Color.rose();
     if (vocabErrorMessage) return Color.rose();
     if (isNewWord)
@@ -120,7 +194,14 @@ export default function PromptMessage({
       };
     if (canHit) return Color.green();
     return Color.darkerGray();
-  }, [vocabErrorMessage, isNewWord, canHit, isCensored]);
+  }, [
+    vocabErrorMessage,
+    isNewWord,
+    canHit,
+    isCensored,
+    strikeFlashActive,
+    maskWordMasterStatus
+  ]);
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/VocabularyWidget/PromptMessage">
@@ -158,14 +239,22 @@ export default function PromptMessage({
           `}
         >
           <div
-            className={css`
+            className={`${css`
               display: flex;
               flex-direction: column;
               width: 100%;
               height: 100%;
               min-height: 0;
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            `}
+            `} ${
+              strikeTrembleActive
+                ? css`
+                    animation: ${strikeTremble} ${STRIKE_TREMBLE_DURATION_MS}ms
+                      ease-in-out;
+                    will-change: transform;
+                  `
+                : ''
+            }`}
           >
             {showStatusBar && (
               <StatusBar

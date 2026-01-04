@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Check from '../Check';
@@ -21,7 +21,10 @@ export default function EditAccountTypeModal({
   target: any;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const accountTypeObj = useMemo(() => {
     return target;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,7 +79,7 @@ export default function EditAccountTypeModal({
 
   return (
     <ErrorBoundary componentPath="Management/Modals/EditAccountTypeModal">
-      <NewModal
+      <Modal
         isOpen
         onClose={onHide}
         title="Edit Account Type:"
@@ -263,7 +266,7 @@ export default function EditAccountTypeModal({
             title="Remove Account Type"
           />
         )}
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 

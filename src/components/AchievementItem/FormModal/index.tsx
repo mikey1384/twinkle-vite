@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Form from './Form';
 import Loading from '~/components/Loading';
@@ -102,49 +103,51 @@ export default function FormModal({
   }
 
   return (
-    <Modal onHide={onHide}>
-      <header>{header}</header>
-      <main style={{ justifyContent: 'center', minHeight: '20vh' }}>
-        {managementLevel >= ADMIN_MANAGEMENT_LEVEL ? (
-          <div style={{ fontSize: '1.7rem' }}>
-            {`You run this website. You don't need verification`}
-          </div>
-        ) : approvalItem.isSubmitted === null ? (
-          <Loading />
-        ) : approvalItem.isSubmitted && !tryingAgain ? (
-          <Submitted
-            status={approvalItem.submitStatus}
-            value={approvalItem.submittedValue}
-            onTryAgain={handleTryAgain}
-          />
-        ) : (
-          <Form
-            type={config.inputType}
-            label={config.label}
-            value={approvalItem.value}
-            onChange={(value) =>
-              setApprovalItem((prev) => ({ ...prev, value }))
-            }
-          />
-        )}
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Close
-        </Button>
-        <Button
-          loading={isSubmitting}
-          disabled={!(approvalItem.value && !approvalItem.isSubmitted)}
-          color={doneColor}
-          onClick={handleSubmit}
-        >
-          Submit
-        </Button>
-      </footer>
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>{header}</header>
+        <main style={{ justifyContent: 'center', minHeight: '20vh' }}>
+          {managementLevel >= ADMIN_MANAGEMENT_LEVEL ? (
+            <div style={{ fontSize: '1.7rem' }}>
+              {`You run this website. You don't need verification`}
+            </div>
+          ) : approvalItem.isSubmitted === null ? (
+            <Loading />
+          ) : approvalItem.isSubmitted && !tryingAgain ? (
+            <Submitted
+              status={approvalItem.submitStatus}
+              value={approvalItem.submittedValue}
+              onTryAgain={handleTryAgain}
+            />
+          ) : (
+            <Form
+              type={config.inputType}
+              label={config.label}
+              value={approvalItem.value}
+              onChange={(value) =>
+                setApprovalItem((prev) => ({ ...prev, value }))
+              }
+            />
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Close
+          </Button>
+          <Button
+            loading={isSubmitting}
+            disabled={!(approvalItem.value && !approvalItem.isSubmitted)}
+            color={doneColor}
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

@@ -780,7 +780,11 @@ export default function chatRequestHelpers({
       try {
         const { data } = await request.get(
           `${URL}/chat/vocabulary/break/quiz`,
-          auth()
+          {
+            ...auth(),
+            timeout: 180000,
+            meta: { allowExtendedTimeout: true, enforceTimeout: false }
+          }
         );
         return data;
       } catch (error) {

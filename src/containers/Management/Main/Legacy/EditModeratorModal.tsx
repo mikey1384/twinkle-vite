@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
@@ -19,7 +20,10 @@ export default function EditModeratorModal({
 }) {
   const [submitting, setSubmitting] = useState(false);
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const changeAccountType = useAppContext(
     (v) => v.requestHelpers.changeAccountType
   );
@@ -55,45 +59,57 @@ export default function EditModeratorModal({
   }, [accountTypes, selectedAccountType]);
 
   return (
-    <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
-      <header
-        style={{ display: 'block' }}
-      >{`Change Moderator Account Type:`}</header>
-      <main>
-        <div
-          style={{
-            marginTop: '1rem',
-            fontWeight: 'bold',
-            fontSize: '2rem',
-            color: Color.logoBlue()
-          }}
-        >
-          {target.username}
-        </div>
-        <DropdownButton
-          style={{ marginTop: '1rem' }}
-          icon="chevron-down"
-          variant="solid"
-          tone="raised"
-          text={selectedAccountType || 'Not Selected'}
-          color="darkerGray"
-          menuProps={editMenuItems}
-          onDropdownShown={setDropdownShown}
-        />
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Cancel
-        </Button>
-        <Button
-          color={doneColor}
-          loading={submitting}
-          disabled={target.userType === selectedAccountType}
-          onClick={handleSubmit}
-        >
-          Done
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={!dropdownShown}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header
+          style={{ display: 'block' }}
+        >{`Change Moderator Account Type:`}</header>
+        <main>
+          <div
+            style={{
+              marginTop: '1rem',
+              fontWeight: 'bold',
+              fontSize: '2rem',
+              color: Color.logoBlue()
+            }}
+          >
+            {target.username}
+          </div>
+          <DropdownButton
+            style={{ marginTop: '1rem' }}
+            icon="chevron-down"
+            variant="solid"
+            tone="raised"
+            text={selectedAccountType || 'Not Selected'}
+            color="darkerGray"
+            menuProps={editMenuItems}
+            onDropdownShown={setDropdownShown}
+          />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            onClick={onHide}
+            style={{ marginRight: '0.7rem' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            color={doneColor}
+            loading={submitting}
+            disabled={target.userType === selectedAccountType}
+            onClick={handleSubmit}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

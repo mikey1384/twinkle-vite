@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import request from 'axios';
 import Message from './Message';
@@ -58,39 +59,42 @@ export default function SubjectMsgsModal({
 
   return (
     <Modal
-      modalOverModal
-      closeWhenClickedOutside={!usermenuShown}
-      onHide={onHide}
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={!usermenuShown}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
     >
-      <header>
-        <span style={{ color: headerColor }}>
-          {subjectTitle}
-        </span>
-      </header>
-      <main>
-        {loadMoreButtonShown && (
-          <LoadMoreButton
-            color={loadMoreButtonColor}
-            filled
-            onClick={onLoadMoreButtonClick}
-            loading={loading}
-          />
-        )}
-        {messages.length === 0 && <Loading />}
-        {messages.map((message) => (
-          <Message
-            key={message.id}
-            displayedThemeColor={displayedThemeColor}
-            onUsermenuShownChange={setUsermenuShown}
-            {...message}
-          />
-        ))}
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+      <LegacyModalLayout>
+        <header>
+          <span style={{ color: headerColor }}>{subjectTitle}</span>
+        </header>
+        <main>
+          {loadMoreButtonShown && (
+            <LoadMoreButton
+              color={loadMoreButtonColor}
+              filled
+              onClick={onLoadMoreButtonClick}
+              loading={loading}
+            />
+          )}
+          {messages.length === 0 && <Loading />}
+          {messages.map((message) => (
+            <Message
+              key={message.id}
+              displayedThemeColor={displayedThemeColor}
+              onUsermenuShownChange={setUsermenuShown}
+              {...message}
+            />
+          ))}
+        </main>
+        <footer>
+          <Button variant="ghost" onClick={onHide}>
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

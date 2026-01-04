@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import SubjectItem from './SubjectItem';
@@ -63,7 +63,7 @@ export default function SubjectsModal({
   }, []);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       title="View Topics"
@@ -171,7 +171,7 @@ export default function SubjectsModal({
           title="Remove Subject"
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   async function handleDeleteSubject(subjectId: number) {

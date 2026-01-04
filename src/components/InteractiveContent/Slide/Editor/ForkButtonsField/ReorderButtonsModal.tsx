@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import SortableListGroup from '~/components/SortableListGroup';
 import Button from '~/components/Button';
 import { isEqual } from 'lodash';
@@ -33,31 +34,39 @@ export default function ReorderButtonsModal({
   return (
     <ErrorBoundary componentPath="ForkButtonsField/ReorderButtonsModal">
       <DndProvider backend={Backend}>
-        <Modal small onHide={onHide}>
-          <header>Reorder Buttons</header>
-          <main>
-            <SortableListGroup
-              listItemObj={forkButtonsObj}
-              onMove={handleMove}
-              itemIds={forkButtonIds}
-            />
-          </main>
-          <footer>
-            <Button
-              variant="ghost"
-              style={{ marginRight: '0.7rem' }}
-              onClick={onHide}
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={isEqual(initialButtonIds, forkButtonIds)}
-              color={doneColor}
-              onClick={handleSubmit}
-            >
-              Done
-            </Button>
-          </footer>
+        <Modal
+          isOpen
+          size="sm"
+          onClose={onHide}
+          hasHeader={false}
+          bodyPadding={0}
+        >
+          <LegacyModalLayout>
+            <header>Reorder Buttons</header>
+            <main>
+              <SortableListGroup
+                listItemObj={forkButtonsObj}
+                onMove={handleMove}
+                itemIds={forkButtonIds}
+              />
+            </main>
+            <footer>
+              <Button
+                variant="ghost"
+                style={{ marginRight: '0.7rem' }}
+                onClick={onHide}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isEqual(initialButtonIds, forkButtonIds)}
+                color={doneColor}
+                onClick={handleSubmit}
+              >
+                Done
+              </Button>
+            </footer>
+          </LegacyModalLayout>
         </Modal>
       </DndProvider>
     </ErrorBoundary>

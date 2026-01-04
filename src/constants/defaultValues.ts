@@ -4,7 +4,7 @@ import { Color } from '~/constants/css';
 // General Configurations
 // ===========================
 
-export const clientVersion = '2.0.36';
+export const clientVersion = '2.0.37';
 
 export const BOOKMARK_VIEWS = {
   AI: 'ai',
@@ -53,7 +53,7 @@ export const GENERAL_CHAT_PATH_ID =
   Number(GENERAL_CHAT_ID) + Number(CHAT_ID_BASE_NUMBER);
 export const VOCAB_CHAT_TYPE = 'vocabulary';
 export const AI_CARD_CHAT_TYPE = 'ai-cards';
-export const WORD_MASTER_BREAK_INTERVAL = 50;
+export const WORD_MASTER_BREAK_INTERVAL = 30;
 export const MAX_AI_CALL_DURATION = 60 * 15;
 export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 export const defaultChatSubject = 'Welcome!';

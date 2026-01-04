@@ -1,5 +1,6 @@
 import React, { memo, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import AddPlaylistModal from '~/components/Modals/AddPlaylistModal';
@@ -57,67 +58,75 @@ function TagModal({
   );
 
   return (
-    <Modal wrapped onHide={onHide}>
-      <header>{title}</header>
-      <main>
-        <TagForm
-          autoFocus
-          title="Search Playlists"
-          subTitle="(e.g., crash course, story of the world)"
-          dropdownFooter={dropdownFooter}
-          inputRef={InputRef}
-          itemLabel="title"
-          searchResults={searchResults}
-          filter={(result) => !currentPlaylists.includes(result.id)}
-          onSearch={onSearchPlaylists}
-          onClear={onClearSearchResults}
-          onAddItem={(playlist) => {
-            setAddPlaylistModalShown(false);
-            setNotFoundMessageShown(false);
-            setSelectedPlaylists(selectedPlaylists.concat(playlist));
-          }}
-          onNotFound={({ messageShown }) =>
-            setNotFoundMessageShown(messageShown)
-          }
-          onRemoveItem={onRemovePlaylist}
-          onSubmit={selectedPlaylists.length > 0 ? handleSubmit : undefined}
-          renderDropdownLabel={(item) => <span>{item.title}</span>}
-          renderTagLabel={(label) => hashify(label)}
-          searchPlaceholder="Search for playlists here..."
-          selectedItems={selectedPlaylists}
-          style={{ width: '80%' }}
-        />
-        {addPlaylistModalShown && (
-          <AddPlaylistModal
-            modalOverModal
-            existingVideoIds={[videoId]}
-            onUploadPlaylist={handleAddPlaylist}
-            onHide={() => {
-              setNotFoundMessageShown(false);
+    <Modal
+      isOpen
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>{title}</header>
+        <main>
+          <TagForm
+            autoFocus
+            title="Search Playlists"
+            subTitle="(e.g., crash course, story of the world)"
+            dropdownFooter={dropdownFooter}
+            inputRef={InputRef}
+            itemLabel="title"
+            searchResults={searchResults}
+            filter={(result) => !currentPlaylists.includes(result.id)}
+            onSearch={onSearchPlaylists}
+            onClear={onClearSearchResults}
+            onAddItem={(playlist) => {
               setAddPlaylistModalShown(false);
-              InputRef.current.focus();
+              setNotFoundMessageShown(false);
+              setSelectedPlaylists(selectedPlaylists.concat(playlist));
             }}
-            title={searchText}
+            onNotFound={({ messageShown }) =>
+              setNotFoundMessageShown(messageShown)
+            }
+            onRemoveItem={onRemovePlaylist}
+            onSubmit={selectedPlaylists.length > 0 ? handleSubmit : undefined}
+            renderDropdownLabel={(item) => <span>{item.title}</span>}
+            renderTagLabel={(label) => hashify(label)}
+            searchPlaceholder="Search for playlists here..."
+            selectedItems={selectedPlaylists}
+            style={{ width: '80%' }}
           />
-        )}
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Cancel
-        </Button>
-        <Button
-          disabled={selectedPlaylists.length === 0}
-          loading={posting}
-          color={doneColor}
-          onClick={handleSubmit}
-        >
-          Done
-        </Button>
-      </footer>
+          {addPlaylistModalShown && (
+            <AddPlaylistModal
+              modalOverModal
+              existingVideoIds={[videoId]}
+              onUploadPlaylist={handleAddPlaylist}
+              onHide={() => {
+                setNotFoundMessageShown(false);
+                setAddPlaylistModalShown(false);
+                InputRef.current.focus();
+              }}
+              title={searchText}
+            />
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={selectedPlaylists.length === 0}
+            loading={posting}
+            color={doneColor}
+            onClick={handleSubmit}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

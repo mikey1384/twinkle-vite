@@ -20,6 +20,8 @@ interface VocabularyWidgetProps {
   wordMasterBreak?: any;
   wordMasterBreakLoading?: boolean;
   onOpenBreaks?: () => void;
+  strikeAnimationKey?: number;
+  maskWordMasterStatus?: boolean;
 }
 
 export default function VocabularyWidget({
@@ -38,7 +40,9 @@ export default function VocabularyWidget({
   onWordMasterBreak,
   wordMasterBreak,
   wordMasterBreakLoading,
-  onOpenBreaks
+  onOpenBreaks,
+  strikeAnimationKey,
+  maskWordMasterStatus
 }: VocabularyWidgetProps) {
   const hasWordRegisterStatus = Boolean(wordRegisterStatus);
   const isSearching = !inputTextIsEmpty;
@@ -71,6 +75,8 @@ export default function VocabularyWidget({
         canHit={canHit}
         wordMasterBlocked={wordMasterBlocked}
         onWordMasterBreak={onWordMasterBreak}
+        strikeAnimationKey={strikeAnimationKey}
+        maskWordMasterStatus={maskWordMasterStatus}
       />
     </div>
   );

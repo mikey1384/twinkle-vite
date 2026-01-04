@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import TopicInput from './TopicInput';
 import Main from './Main';
@@ -198,7 +198,7 @@ export default function TopicSelectorModal({
   }, [canChangeSubject, creatorId, isTwoPeopleChat, userId]);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       title="Topics"
@@ -280,7 +280,7 @@ export default function TopicSelectorModal({
           />
         )}
       </div>
-    </NewModal>
+    </Modal>
   );
 
   function handleDeleteTopic(topicId: number) {

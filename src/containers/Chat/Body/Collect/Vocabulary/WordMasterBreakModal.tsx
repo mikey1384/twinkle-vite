@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { css } from '@emotion/css';
-import NewModal from '~/components/NewModal';
+import { css, keyframes } from '@emotion/css';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
@@ -11,6 +11,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { WORD_MASTER_BREAK_INTERVAL } from '~/constants/defaultValues';
 import { timeSinceShort } from '~/helpers/timeStampHelpers';
+import { socket } from '~/constants/sockets/api';
 
 interface WordMasterBreakModalProps {
   breakStatus: any;
@@ -37,6 +38,21 @@ interface WordMasterBreakModalProps {
   }) => void;
 }
 
+const timerPulse = keyframes`
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 ${Color.rose(0)};
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 12px ${Color.rose(0.4)};
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 ${Color.rose(0)};
+  }
+`;
+
 export default function WordMasterBreakModal({
   breakStatus,
   isOpen,
@@ -58,12 +74,18 @@ export default function WordMasterBreakModal({
 }: WordMasterBreakModalProps) {
   const [actionLoading, setActionLoading] = useState(false);
   const [quizLoading, setQuizLoading] = useState(false);
+  const [quizLoadProgress, setQuizLoadProgress] = useState(0);
+  const [quizLoadStep, setQuizLoadStep] = useState('');
+  const [readyCountdown, setReadyCountdown] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [quizResult, setQuizResult] = useState<any>(null);
   const [statusMessage, setStatusMessage] = useState('');
+  const [statusIsError, setStatusIsError] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [confirmBypassShown, setConfirmBypassShown] = useState(false);
   const refreshOnceRef = useRef(false);
+  const readyCountdownTimerRef = useRef<any>(null);
+  const readyCountdownKeyRef = useRef<number | null>(null);
 
   const breakType = breakStatus?.breakType;
   const breakIndex = Number(breakStatus?.activeBreakIndex || 0);
@@ -71,6 +93,10 @@ export default function WordMasterBreakModal({
     breakStatus?.breakInterval || WORD_MASTER_BREAK_INTERVAL;
   const hasActiveBreak = Boolean(breakIndex && breakType);
   const isLocked = Boolean(breakStatus?.locked);
+  const lockReason = breakStatus?.lockReason || null;
+  const failedBreaks = Array.isArray(breakStatus?.failedBreaks)
+    ? breakStatus.failedBreaks
+    : [];
   const requirement = breakStatus?.requirement || {};
   const quiz = breakStatus?.quiz || null;
   const quizQuestion = quiz?.question || null;
@@ -92,6 +118,14 @@ export default function WordMasterBreakModal({
     setStatusMessage('');
     setSelectedIndex(null);
     setQuizResult(null);
+    setQuizLoadProgress(0);
+    setQuizLoadStep('');
+    setReadyCountdown(0);
+    readyCountdownKeyRef.current = null;
+    if (readyCountdownTimerRef.current) {
+      clearInterval(readyCountdownTimerRef.current);
+      readyCountdownTimerRef.current = null;
+    }
     refreshOnceRef.current = false;
   }, [breakIndex, breakType, questionId, isOpen]);
 
@@ -101,19 +135,72 @@ export default function WordMasterBreakModal({
       return;
     }
     const initial = Number(quiz?.timeRemainingSec ?? 0);
-    setTimeRemaining(initial);
-    if (initial <= 0) return;
+    setTimeRemaining(Number.isFinite(initial) ? initial : null);
+  }, [questionId, quiz?.timeRemainingSec, isLocked, quizQuestion]);
 
-    const interval = window.setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (typeof prev !== 'number') return 0;
-        return Math.max(0, prev - 1);
+  useEffect(() => {
+    if (!quizStarted || !quizQuestion) {
+      setReadyCountdown(0);
+      readyCountdownKeyRef.current = null;
+      if (readyCountdownTimerRef.current) {
+        clearInterval(readyCountdownTimerRef.current);
+        readyCountdownTimerRef.current = null;
+      }
+      return;
+    }
+    if (quiz?.currentIndex !== 1) return;
+    if (readyCountdownKeyRef.current === quizQuestion.id) return;
+
+    const initialCountdown = Math.max(0, Number(quiz?.readyCountdownSec ?? 0));
+    if (!initialCountdown) return;
+
+    readyCountdownKeyRef.current = quizQuestion.id;
+    setReadyCountdown(initialCountdown);
+    if (readyCountdownTimerRef.current) {
+      clearInterval(readyCountdownTimerRef.current);
+    }
+    readyCountdownTimerRef.current = setInterval(() => {
+      setReadyCountdown((prev) => {
+        if (prev <= 1) {
+          if (readyCountdownTimerRef.current) {
+            clearInterval(readyCountdownTimerRef.current);
+            readyCountdownTimerRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
       });
     }, 1000);
+  }, [quizStarted, quizQuestion, quiz?.currentIndex, quiz?.readyCountdownSec]);
 
-    return () => window.clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionId, quiz?.timeRemainingSec, isLocked]);
+  useEffect(() => {
+    function handleQuizProgress({
+      progress,
+      step
+    }: {
+      progress: number;
+      step: string;
+    }) {
+      setQuizLoadProgress(progress);
+      setQuizLoadStep(step);
+    }
+
+    function handleQuizTimer({
+      timeRemainingSec
+    }: {
+      timeRemainingSec: number;
+    }) {
+      setTimeRemaining(timeRemainingSec);
+    }
+
+    socket.on('word_master_quiz_progress', handleQuizProgress);
+    socket.on('word_master_quiz_timer', handleQuizTimer);
+
+    return () => {
+      socket.off('word_master_quiz_progress', handleQuizProgress);
+      socket.off('word_master_quiz_timer', handleQuizTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (
@@ -152,29 +239,19 @@ export default function WordMasterBreakModal({
     return 'green';
   }, [hasActiveBreak, isLocked]);
 
-  const timeBadge = useMemo(() => {
-    if (!quizStarted || typeof timeRemaining !== 'number') return null;
-    const isLow = timeRemaining <= 3;
-    const accent = getBreakAccent(breakType);
-    return (
-      <div
-        className={css`
-          padding: 0.4rem 0.9rem;
-          border-radius: 999px;
-          font-weight: 700;
-          font-size: 1.2rem;
-          color: ${isLow ? Color.rose() : accent.main};
-          background: ${isLow ? Color.rose(0.12) : accent.soft};
-        `}
-      >
-        {timeRemaining}s
-      </div>
-    );
-  }, [quizStarted, timeRemaining, breakType]);
+  const quizTimeRemaining = useMemo(() => {
+    if (!quizStarted) return null;
+    if (typeof timeRemaining === 'number') return timeRemaining;
+    const fallback = Number(quiz?.timeRemainingSec ?? NaN);
+    if (!Number.isFinite(fallback)) return null;
+    return fallback;
+  }, [quizStarted, timeRemaining, quiz?.timeRemainingSec]);
+  const showReadyCountdown = quizStarted && readyCountdown > 0;
+  const showQuizQuestion = quizStarted && readyCountdown === 0;
 
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordMasterBreakModal">
-      <NewModal
+      <Modal
         isOpen={isOpen}
         onClose={handleModalClose}
         title={modalTitle}
@@ -271,9 +348,18 @@ export default function WordMasterBreakModal({
             <div
               className={css`
                 font-size: 1.3rem;
-                color: ${Color.darkerGray()};
+                color: ${statusIsError ? Color.rose() : Color.darkerGray()};
                 font-weight: 600;
                 text-align: center;
+                ${statusIsError
+                  ? `
+                  background: ${Color.rose(0.1)};
+                  padding: 0.8rem 1rem;
+                  border-radius: 8px;
+                  border: 1px solid ${Color.rose(0.3)};
+                  margin: 0.5rem 0;
+                `
+                  : ''}
               `}
             >
               {statusMessage}
@@ -369,9 +455,9 @@ export default function WordMasterBreakModal({
             )}
           </div>
         </div>
-      </NewModal>
+      </Modal>
       {confirmBypassShown && (
-        <NewModal
+        <Modal
           isOpen={confirmBypassShown}
           onClose={() => setConfirmBypassShown(false)}
           title="Confirm Bypass"
@@ -425,7 +511,7 @@ export default function WordMasterBreakModal({
               </GameCTAButton>
             </div>
           </div>
-        </NewModal>
+        </Modal>
       )}
     </ErrorBoundary>
   );
@@ -446,11 +532,14 @@ export default function WordMasterBreakModal({
   function renderBreakBody() {
     const breaksCleared = Number(breakStatus?.clearedThrough || 0);
     if (!hasActiveBreak) {
-      return renderGuide(false, 0, breaksCleared);
+      return renderGuide(false, 0, breaksCleared, failedBreaks);
     }
 
     let breakPanel = null;
-    if (isLocked) {
+    // If user just failed quiz, keep showing the quiz with the result
+    const justFailedQuiz =
+      quizResult && !quizResult.isCorrect && quizResult.locked;
+    if (isLocked && !justFailedQuiz) {
       breakPanel = renderLockedPanel();
     } else {
       switch (breakType) {
@@ -480,7 +569,7 @@ export default function WordMasterBreakModal({
     return (
       <>
         {breakPanel}
-        {renderGuide(true, breakIndex, breaksCleared)}
+        {renderGuide(true, breakIndex, breaksCleared, failedBreaks)}
       </>
     );
   }
@@ -488,7 +577,8 @@ export default function WordMasterBreakModal({
   function renderGuide(
     isCompact: boolean,
     activeBreakIdx = 0,
-    breaksCleared = 0
+    breaksCleared = 0,
+    failedBreaksList: number[] = []
   ) {
     const guideRows = [
       {
@@ -509,7 +599,7 @@ export default function WordMasterBreakModal({
         breakNum: 3,
         label: 'Break 3',
         title: 'Chess Puzzle',
-        description: 'Solve a chess puzzle at your highest level.',
+        description: 'Solve a chess puzzle (your current highest level).',
         tone: 'darkOceanBlue'
       },
       {
@@ -533,7 +623,7 @@ export default function WordMasterBreakModal({
         label: 'Break 6+',
         title: 'Timed Vocab Quiz',
         description:
-          'Quiz length grows from 1 to 5 questions. Timer drops to 3s minimum. Wrong answer locks Word Master for the day.',
+          'Quiz length grows from 1 to 5 questions (30s per question). Wrong answer locks Word Master for the day.',
         tone: 'rose'
       }
     ];
@@ -597,6 +687,7 @@ export default function WordMasterBreakModal({
               (row.breakNum === activeBreakIdx ||
                 (row.breakNum === 6 && activeBreakIdx >= 6));
             const isCleared = row.breakNum <= breaksCleared && !isActive;
+            const isFailed = failedBreaksList.includes(row.breakNum);
             const quizzesClearedCount =
               row.breakNum === 6 && breaksCleared >= 6
                 ? activeBreakIdx >= 6
@@ -612,6 +703,7 @@ export default function WordMasterBreakModal({
                 tone={row.tone}
                 isActive={isActive}
                 isCleared={isCleared}
+                isFailed={isFailed}
                 clearedCount={quizzesClearedCount}
               />
             );
@@ -622,6 +714,7 @@ export default function WordMasterBreakModal({
   }
 
   function renderLockedPanel() {
+    const failureLabel = getFailureLabel();
     return (
       <section
         className={css`
@@ -656,6 +749,25 @@ export default function WordMasterBreakModal({
         >
           You can wait until the next day or pay to clear this break.
         </div>
+        {failureLabel ? (
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.6rem;
+              padding: 0.8rem 1rem;
+              border-radius: 0.9rem;
+              background: ${Color.red(0.08)};
+              border: 1px solid ${Color.red(0.2)};
+              color: ${Color.red()};
+              font-size: 1.25rem;
+              font-weight: 700;
+            `}
+          >
+            <Icon icon="times" />
+            <span>{failureLabel}</span>
+          </div>
+        ) : null}
       </section>
     );
   }
@@ -755,8 +867,7 @@ export default function WordMasterBreakModal({
             ? 'First omok move sent'
             : 'Send a first omok move to a recent player',
           done: sentMove,
-          onClick:
-            sentMove || hasSuggestions ? undefined : onOpenOmokStart
+          onClick: sentMove || hasSuggestions ? undefined : onOpenOmokStart
         }
       ],
       extra: (
@@ -773,7 +884,6 @@ export default function WordMasterBreakModal({
 
   function renderGrammarbles() {
     const passes = Number(requirement?.passes || 0);
-    const attempts = Number(requirement?.attempts || 0);
     const done = passes >= 5;
     return renderRequirementSection({
       title: 'Grammarbles Full Run',
@@ -787,98 +897,297 @@ export default function WordMasterBreakModal({
           onClick: done ? undefined : onOpenGrammarGame
         }
       ],
-      footer: `Attempts used: ${attempts}/5`,
       tone: 'gold'
     });
   }
 
+  function getFailureLabel() {
+    if (!lockReason) return '';
+    if (lockReason === 'grammarbles')
+      return 'You failed to complete the Grammarbles full run';
+    if (lockReason === 'quiz') return 'You failed timed vocab quiz';
+    return '';
+  }
+
   function renderQuiz() {
+    const justFailedQuiz =
+      quizResult && !quizResult.isCorrect && quizResult.locked;
+
     return (
       <section
         className={css`
           padding: 1.8rem;
           border-radius: 1.2rem;
-          border: 1px solid ${Color.borderGray()};
-          background: ${Color.white()};
+          border: 1px solid
+            ${justFailedQuiz ? Color.rose(0.4) : Color.borderGray()};
+          background: ${justFailedQuiz ? Color.rose(0.04) : Color.white()};
           display: flex;
           flex-direction: column;
           gap: 1.4rem;
           box-shadow: 0 10px 20px ${Color.black(0.04)};
         `}
       >
-        <div
-          className={css`
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            justify-content: space-between;
-          `}
-        >
-          <SectionHeader
-            title="Timed Vocabulary Quiz"
-            description={`Questions: ${
-              quiz?.questionCount ?? 1
-            } | Time per question: ${quiz?.timeLimitSec ?? 0}s`}
-            tone="rose"
-          />
-          {timeBadge}
-        </div>
-
-        {!quizStarted ? (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              gap: 1rem;
-              font-size: 1.3rem;
-              color: ${Color.darkerGray()};
-            `}
-          >
-            <div>
-              Answer every question before the timer runs out. A wrong answer
-              locks Word Master for today.
-            </div>
-            <div>
-              <Button
-                variant="solid"
-                color="logoBlue"
-                disabled={quizLoading || loading}
-                onClick={handleStartQuiz}
-              >
-                Start Quiz
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              gap: 1.2rem;
-            `}
-          >
+        {justFailedQuiz ? (
+          <>
             <div
               className={css`
-                font-size: 1.2rem;
-                color: ${Color.gray()};
-                font-weight: 600;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.8rem;
+                padding: 1.2rem;
+                border-radius: 1rem;
+                background: ${Color.rose(0.1)};
+                border: 1px solid ${Color.rose(0.3)};
               `}
             >
-              {`Question ${quiz?.currentIndex ?? 1} of ${
-                quiz?.totalQuestions ?? quiz?.questionCount ?? 1
-              }`}
+              <Icon
+                icon="times-circle"
+                style={{ fontSize: '3rem', color: Color.rose() }}
+              />
+              <div
+                className={css`
+                  font-size: 1.8rem;
+                  font-weight: 800;
+                  color: ${Color.rose()};
+                `}
+              >
+                Quiz Failed
+              </div>
+              <div
+                className={css`
+                  font-size: 1.3rem;
+                  color: ${Color.darkerGray()};
+                  text-align: center;
+                `}
+              >
+                Word Master is locked for today. You can wait until tomorrow or
+                pay to bypass.
+              </div>
             </div>
-            <MultipleChoiceQuestion
-              question={quizQuestion?.question || ''}
-              choices={quizQuestion?.choices || []}
-              isGraded={Boolean(quizResult)}
-              selectedChoiceIndex={selectedIndex}
-              answerIndex={Number(quizResult?.answerIndex || 0)}
-              onSelectChoice={handleQuizSelect}
-              allowReselect={false}
-            />
-          </div>
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 1.2rem;
+              `}
+            >
+              <div
+                className={css`
+                  font-size: 1.2rem;
+                  color: ${Color.gray()};
+                  font-weight: 600;
+                `}
+              >
+                {`Question ${quiz?.currentIndex ?? 1} of ${
+                  quiz?.totalQuestions ?? quiz?.questionCount ?? 1
+                }`}
+              </div>
+              <MultipleChoiceQuestion
+                question={quizQuestion?.question || ''}
+                choices={quizQuestion?.choices || []}
+                isGraded={true}
+                selectedChoiceIndex={selectedIndex}
+                answerIndex={Number(quizResult?.answerIndex || 0)}
+                onSelectChoice={() => {}}
+                allowReselect={false}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div
+              className={css`
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1rem;
+                align-items: center;
+                justify-content: space-between;
+              `}
+            >
+              <SectionHeader
+                title="Timed Vocabulary Quiz"
+                description={`Questions: ${quiz?.questionCount ?? 1} | Time: ${
+                  quiz?.timeLimitSec ?? 0
+                }s total`}
+                tone="rose"
+              />
+            </div>
+
+            {showQuizQuestion && typeof quizTimeRemaining === 'number' ? (
+              <div
+                className={css`
+                  display: flex;
+                  flex-wrap: wrap;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 1rem;
+                  padding: 1rem 1.4rem;
+                  border-radius: 1.2rem;
+                  background: ${quizTimeRemaining <= 3
+                    ? Color.rose(0.12)
+                    : Color.logoBlue(0.12)};
+                  border: 1px solid
+                    ${quizTimeRemaining <= 3
+                      ? Color.rose(0.4)
+                      : Color.logoBlue(0.3)};
+                  ${quizTimeRemaining <= 3
+                    ? `animation: ${timerPulse} 0.8s ease-in-out infinite;`
+                    : ''}
+                `}
+              >
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    gap: 0.6rem;
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                    color: ${quizTimeRemaining <= 3
+                      ? Color.rose()
+                      : Color.logoBlue()};
+                  `}
+                >
+                  <Icon icon="clock" />
+                  Time left
+                </div>
+                <div
+                  className={css`
+                    font-size: 3rem;
+                    font-weight: 800;
+                    color: ${quizTimeRemaining <= 3
+                      ? Color.rose()
+                      : Color.black()};
+                  `}
+                >
+                  {quizTimeRemaining}s
+                </div>
+              </div>
+            ) : null}
+
+            {!quizStarted || showReadyCountdown ? (
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 1rem;
+                  font-size: 1.3rem;
+                  color: ${Color.darkerGray()};
+                `}
+              >
+                <div>
+                  Answer every question before the timer runs out. A wrong
+                  answer locks Word Master for today.
+                </div>
+                <div>
+                  <div
+                    className={css`
+                      display: flex;
+                      justify-content: center;
+                      padding-top: 0.4rem;
+                    `}
+                  >
+                    <GameCTAButton
+                      variant="magenta"
+                      icon="bolt"
+                      shiny
+                      size="xl"
+                      disabled={quizLoading || loading || showReadyCountdown}
+                      loading={quizLoading}
+                      onClick={handleStartQuiz}
+                      style={{ width: 'min(100%, 320px)' }}
+                    >
+                      {showReadyCountdown
+                        ? `Ready? ${readyCountdown}`
+                        : 'Start Quiz'}
+                    </GameCTAButton>
+                  </div>
+                </div>
+                {quizLoading ? (
+                  <div
+                    className={css`
+                      display: flex;
+                      flex-direction: column;
+                      gap: 0.6rem;
+                      padding: 0.8rem 0.9rem;
+                      border-radius: 0.9rem;
+                      border: 1px solid ${Color.borderGray()};
+                      background: ${Color.whiteGray()};
+                    `}
+                  >
+                    <div
+                      className={css`
+                        font-size: 1.2rem;
+                        font-weight: 600;
+                        color: ${Color.darkerGray()};
+                      `}
+                    >
+                      {quizLoadStep || 'Preparing quiz...'}
+                    </div>
+                    <div
+                      className={css`
+                        width: 100%;
+                        height: 0.5rem;
+                        border-radius: 999px;
+                        background: ${Color.borderGray()};
+                        overflow: hidden;
+                      `}
+                    >
+                      <div
+                        className={css`
+                          height: 100%;
+                          border-radius: 999px;
+                          background: linear-gradient(
+                            90deg,
+                            ${Color.logoBlue()} 0%,
+                            ${Color.oceanBlue()} 100%
+                          );
+                          transition: width 0.3s ease;
+                        `}
+                        style={{
+                          width: `${Math.max(
+                            0,
+                            Math.min(100, quizLoadProgress)
+                          )}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 1.2rem;
+                `}
+              >
+                <div
+                  className={css`
+                    font-size: 1.2rem;
+                    color: ${Color.gray()};
+                    font-weight: 600;
+                  `}
+                >
+                  {`Question ${quiz?.currentIndex ?? 1} of ${
+                    quiz?.totalQuestions ?? quiz?.questionCount ?? 1
+                  }`}
+                </div>
+                <MultipleChoiceQuestion
+                  question={quizQuestion?.question || ''}
+                  choices={quizQuestion?.choices || []}
+                  isGraded={Boolean(quizResult)}
+                  selectedChoiceIndex={selectedIndex}
+                  answerIndex={Number(quizResult?.answerIndex || 0)}
+                  onSelectChoice={handleQuizSelect}
+                  allowReselect={false}
+                />
+              </div>
+            )}
+          </>
         )}
       </section>
     );
@@ -980,13 +1289,26 @@ export default function WordMasterBreakModal({
   function handleStartQuiz() {
     setQuizLoading(true);
     setStatusMessage('');
+    setStatusIsError(false);
+    setQuizLoadProgress(0);
+    setQuizLoadStep('Starting quiz...');
     onLoadQuizQuestion()
       .then((result) => {
-        if (result?.message) setStatusMessage(result.message);
+        if (result?.message) {
+          setStatusMessage(result.message);
+          setStatusIsError(false);
+        }
+        if (result?.wordMasterBreak?.quiz?.question) {
+          setQuizLoadProgress(100);
+          setQuizLoadStep('Quiz ready');
+        }
       })
       .catch((error) => {
         console.error(error);
-        setStatusMessage('Unable to load the quiz right now.');
+        setStatusMessage(
+          'Failed to load quiz. Please try again or check your connection.'
+        );
+        setStatusIsError(true);
       })
       .finally(() => setQuizLoading(false));
   }
@@ -1010,10 +1332,9 @@ export default function WordMasterBreakModal({
         }
         if (result?.quizResult) {
           setQuizResult(result.quizResult);
+          // Don't show status message for wrong answers - the Quiz Failed banner handles it
           if (result.quizResult.isCorrect) {
-            setStatusMessage('Correct.');
-          } else if (result.quizResult.locked) {
-            setStatusMessage('Incorrect. Word Master is locked for today.');
+            setStatusMessage('Correct!');
           }
         }
       })
@@ -1311,6 +1632,7 @@ function GuideRow({
   tone,
   isActive,
   isCleared,
+  isFailed,
   clearedCount
 }: {
   label: string;
@@ -1319,11 +1641,16 @@ function GuideRow({
   tone?: string;
   isActive?: boolean;
   isCleared?: boolean;
+  isFailed?: boolean;
   clearedCount?: number;
 }) {
   const toneColor = getToneColor(tone);
   const toneSoft = getToneColor(tone, 0.12);
-  const showCleared = !!(isCleared || (clearedCount && clearedCount > 0));
+  const showFailed = Boolean(isFailed);
+  const showCleared =
+    !showFailed &&
+    !isActive &&
+    !!(isCleared || (clearedCount && clearedCount > 0));
   return (
     <div
       className={css`
@@ -1333,11 +1660,17 @@ function GuideRow({
         padding: 0.6rem 0.8rem;
         margin: -0.6rem -0.8rem;
         border-radius: 0.8rem;
-        background: ${isActive ? toneSoft : 'transparent'};
-        border-left: ${isActive
+        background: ${showFailed
+          ? Color.red(0.08)
+          : isActive
+          ? toneSoft
+          : 'transparent'};
+        border-left: ${showFailed
+          ? `3px solid ${Color.red()}`
+          : isActive
           ? `3px solid ${toneColor}`
           : '3px solid transparent'};
-        opacity: ${isCleared && !clearedCount ? 0.6 : 1};
+        opacity: ${isCleared && !clearedCount && !showFailed ? 0.6 : 1};
       `}
     >
       <div
@@ -1351,12 +1684,16 @@ function GuideRow({
           className={css`
             padding: 0.3rem 0.8rem;
             border-radius: 999px;
-            background: ${showCleared
+            background: ${showFailed
+              ? Color.red(0.15)
+              : showCleared
               ? Color.green(0.15)
               : isActive
               ? toneColor
               : toneSoft};
-            color: ${showCleared
+            color: ${showFailed
+              ? Color.red()
+              : showCleared
               ? Color.green()
               : isActive
               ? Color.white()
@@ -1368,6 +1705,20 @@ function GuideRow({
         >
           {label}
         </div>
+        {showFailed && (
+          <span
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.2rem;
+              color: ${Color.red()};
+              font-size: 1.1rem;
+              font-weight: 700;
+            `}
+          >
+            <Icon icon="times" />
+          </span>
+        )}
         {showCleared && (
           <span
             className={css`

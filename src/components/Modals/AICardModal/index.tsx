@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import GradientButton from '~/components/Buttons/GradientButton';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import AICard from '~/components/AICard';
 import OfferModal from './OfferModal';
@@ -339,7 +339,7 @@ export default function AICardModal({
   );
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       size="lg"
@@ -647,7 +647,7 @@ export default function AICardModal({
           onConfirm={handleWithdrawOffer}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   async function handleCopyToClipboard() {

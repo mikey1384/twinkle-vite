@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
@@ -101,103 +102,113 @@ export default function SelectAICardModal({
   }, [cardObj, selectedCardIds]);
 
   return (
-    <Modal large wrapped closeWhenClickedOutside={false} onHide={onHide}>
-      <header>{headerLabel}</header>
-      <main>
-        <FilterPanel
-          filters={filters}
-          onSetFilters={setFilters}
-          onDropdownShown={onDropdownShown}
-        />
-        <FilterBar style={{ marginBottom: '2rem' }}>
-          <nav
-            className={isSelectedTab ? '' : 'active'}
-            onClick={() => {
-              setIsSelectedTab(false);
-            }}
-          >
-            All
-          </nav>
-          <nav
-            className={isSelectedTab ? 'active' : ''}
-            onClick={() => {
-              setIsSelectedTab(true);
-            }}
-          >
-            Selected
-            {totalBvOfSelectedCards ? ` (${totalBvOfSelectedCards})` : ''}
-          </nav>
-        </FilterBar>
-        {isSelectedTab ? (
-          <Selected
-            cardObj={cardObj}
-            cardIds={selectedCardIds}
-            onSetAICardModalCardId={setAICardModalCardId}
-            onSetSelectedCardIds={setSelectedCardIds}
-            color={filters.color}
-            quality={filters.quality}
-            successColor={successColor}
-            isBuy={isBuy}
-          />
-        ) : (
-          <Main
-            isBuy={isBuy}
+    <Modal
+      isOpen
+      size="xl"
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>{headerLabel}</header>
+        <main>
+          <FilterPanel
             filters={filters}
-            cards={cards}
-            loading={loading}
-            loadFilteredAICards={loadFilteredAICards}
-            loadMoreShown={loadMoreShown}
-            onSetCardIds={setCardIds}
-            onSetLoadMoreShown={setLoadMoreShown}
-            onSetSelectedCardIds={setSelectedCardIds}
-            onUpdateAICard={onUpdateAICard}
+            onSetFilters={setFilters}
+            onDropdownShown={onDropdownShown}
+          />
+          <FilterBar style={{ marginBottom: '2rem' }}>
+            <nav
+              className={isSelectedTab ? '' : 'active'}
+              onClick={() => {
+                setIsSelectedTab(false);
+              }}
+            >
+              All
+            </nav>
+            <nav
+              className={isSelectedTab ? 'active' : ''}
+              onClick={() => {
+                setIsSelectedTab(true);
+              }}
+            >
+              Selected
+              {totalBvOfSelectedCards ? ` (${totalBvOfSelectedCards})` : ''}
+            </nav>
+          </FilterBar>
+          {isSelectedTab ? (
+            <Selected
+              cardObj={cardObj}
+              cardIds={selectedCardIds}
+              onSetAICardModalCardId={setAICardModalCardId}
+              onSetSelectedCardIds={setSelectedCardIds}
+              color={filters.color}
+              quality={filters.quality}
+              successColor={successColor}
+              isBuy={isBuy}
+            />
+          ) : (
+            <Main
+              isBuy={isBuy}
+              filters={filters}
+              cards={cards}
+              loading={loading}
+              loadFilteredAICards={loadFilteredAICards}
+              loadMoreShown={loadMoreShown}
+              onSetCardIds={setCardIds}
+              onSetLoadMoreShown={setLoadMoreShown}
+              onSetSelectedCardIds={setSelectedCardIds}
+              onUpdateAICard={onUpdateAICard}
+              selectedCardIds={selectedCardIds}
+              successColor={successColor}
+              onSetAICardModalCardId={setAICardModalCardId}
+            />
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={
+              !selectedCardIds?.length ||
+              selectedCardIds?.length > MAX_SELECTED_CARDS
+            }
+            color={doneColor}
+            onClick={() => setConfirmModalShown(true)}
+          >
+            {selectedCardIds?.length > MAX_SELECTED_CARDS
+              ? `${selectedCardIds?.length} cards selected. Maximum is ${MAX_SELECTED_CARDS}`
+              : 'Done'}
+          </Button>
+        </footer>
+        {confirmModalShown && (
+          <ConfirmSelectionModal
             selectedCardIds={selectedCardIds}
-            successColor={successColor}
+            isAICardModalShown={!!aiCardModalCardId}
             onSetAICardModalCardId={setAICardModalCardId}
+            onHide={() => {
+              setConfirmModalShown(false);
+            }}
+            onConfirm={onConfirm}
           />
         )}
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Cancel
-        </Button>
-        <Button
-          disabled={
-            !selectedCardIds?.length ||
-            selectedCardIds?.length > MAX_SELECTED_CARDS
-          }
-          color={doneColor}
-          onClick={() => setConfirmModalShown(true)}
-        >
-          {selectedCardIds?.length > MAX_SELECTED_CARDS
-            ? `${selectedCardIds?.length} cards selected. Maximum is ${MAX_SELECTED_CARDS}`
-            : 'Done'}
-        </Button>
-      </footer>
-      {confirmModalShown && (
-        <ConfirmSelectionModal
-          selectedCardIds={selectedCardIds}
-          isAICardModalShown={!!aiCardModalCardId}
-          onSetAICardModalCardId={setAICardModalCardId}
-          onHide={() => {
-            setConfirmModalShown(false);
-          }}
-          onConfirm={onConfirm}
-        />
-      )}
-      {aiCardModalCardId && (
-        <AICardModal
-          modalOverModal
-          cardId={aiCardModalCardId}
-          onHide={() => {
-            setAICardModalCardId(null);
-          }}
-        />
-      )}
+        {aiCardModalCardId && (
+          <AICardModal
+            modalOverModal
+            cardId={aiCardModalCardId}
+            onHide={() => {
+              setAICardModalCardId(null);
+            }}
+          />
+        )}
+      </LegacyModalLayout>
     </Modal>
   );
 }

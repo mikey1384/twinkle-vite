@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import TagForm from '~/components/Forms/TagForm';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -38,54 +39,62 @@ export default function InviteUsersModal({
   const [inviting, setInviting] = useState(false);
 
   return (
-    <Modal wrapped onHide={onHide}>
-      <header>Invite people to this channel</header>
-      <main>
-        <TagForm
-          autoFocus
-          title="Invite People"
-          itemLabel="username"
-          searchResults={userSearchResults}
-          filter={(result) =>
-            !currentChannel?.allMemberIds?.includes?.(result.id)
-          }
-          onSearch={(text) =>
-            handleSearchUserToInvite({
-              channelId: selectedChannelId,
-              searchText: text
-            })
-          }
-          onClear={onClearUserSearchResults}
-          onAddItem={onAddUser}
-          onRemoveItem={onRemoveUser}
-          onSubmit={selectedUsers.length > 0 ? handleDone : undefined}
-          renderDropdownLabel={(item) => (
-            <span>
-              {item?.username}{' '}
-              {item?.realName && <small>{`(${item.realName})`}</small>}
-            </span>
-          )}
-          searchPlaceholder="Search for people you want to chat with"
-          selectedItems={selectedUsers}
-          style={{ width: '80%' }}
-        />
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Cancel
-        </Button>
-        <Button
-          color={doneColor}
-          onClick={handleDone}
-          disabled={selectedUsers.length === 0 || inviting}
-        >
-          Invite
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>Invite people to this channel</header>
+        <main>
+          <TagForm
+            autoFocus
+            title="Invite People"
+            itemLabel="username"
+            searchResults={userSearchResults}
+            filter={(result) =>
+              !currentChannel?.allMemberIds?.includes?.(result.id)
+            }
+            onSearch={(text) =>
+              handleSearchUserToInvite({
+                channelId: selectedChannelId,
+                searchText: text
+              })
+            }
+            onClear={onClearUserSearchResults}
+            onAddItem={onAddUser}
+            onRemoveItem={onRemoveUser}
+            onSubmit={selectedUsers.length > 0 ? handleDone : undefined}
+            renderDropdownLabel={(item) => (
+              <span>
+                {item?.username}{' '}
+                {item?.realName && <small>{`(${item.realName})`}</small>}
+              </span>
+            )}
+            searchPlaceholder="Search for people you want to chat with"
+            selectedItems={selectedUsers}
+            style={{ width: '80%' }}
+          />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            color={doneColor}
+            onClick={handleDone}
+            disabled={selectedUsers.length === 0 || inviting}
+          >
+            Invite
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

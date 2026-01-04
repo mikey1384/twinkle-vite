@@ -93,6 +93,9 @@ export default function SystemPromptMission({
     (v) => v.actions.onSetThinkHardForTopic
   );
   const myAttempts = useMissionContext((v) => v.state.myAttempts);
+  const onResetSystemPromptStateForUser = useMissionContext(
+    (v) => v.actions.onResetSystemPromptStateForUser
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
 
@@ -133,19 +136,7 @@ export default function SystemPromptMission({
   useEffect(() => {
     if (userId && mission.prevUserId && userId !== mission.prevUserId) {
       hasSetPromptEverGeneratedRef.current = false;
-      onSetMissionState({
-        missionId: mission.id,
-        newState: {
-          systemPromptState: {
-            title: '',
-            prompt: '',
-            userMessage: '',
-            chatMessages: [],
-            missionPromptId: null,
-            promptEverGenerated: false
-          }
-        }
-      });
+      onResetSystemPromptStateForUser({ missionId: mission.id, userId });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, mission.prevUserId, mission.id]);

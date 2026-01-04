@@ -1,245 +1,576 @@
-import React, { RefObject, useState, useEffect, useMemo } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  PropsWithChildren,
+  isValidElement
+} from 'react';
 import { createPortal } from 'react-dom';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { keyframes } from '@emotion/react';
+import { Color } from '~/constants/css';
+import { isMobile, isTablet } from '~/helpers';
+import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Content from './Content';
-import { isMobile, isTablet, debounce } from '~/helpers';
 
-type Size = 'small' | 'medium' | 'large' | 'default';
-type Orientation = 'landscape' | 'portrait';
-type DeviceType = 'desktop' | 'tablet' | 'mobile';
+function safeRender(node: React.ReactNode): React.ReactNode {
+  if (isValidElement(node)) return node;
+  if ((node as any)?.$$typeof === Symbol.for('react.portal')) {
+    return node;
+  }
+  if (
+    typeof node === 'string' ||
+    typeof node === 'number' ||
+    typeof node === 'boolean'
+  )
+    return node;
+  if (!node) return null;
+  if (Array.isArray(node)) {
+    return node.map((n, i) => (
+      <React.Fragment key={i}>{safeRender(n)}</React.Fragment>
+    ));
+  }
+  return null;
+}
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const slideIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+`;
+
+const fadeOut = keyframes`
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+`;
+
+const slideOut = keyframes`
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+`;
+
+type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen';
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  size?: ModalSize;
+  showCloseButton?: boolean;
+  hasHeader?: boolean;
+  closeOnBackdropClick?: boolean;
+  closeOnEscape?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  priority?: boolean;
+  modalLevel?: number;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+  loading?: boolean;
+  preventBodyScroll?: boolean;
+  animationDuration?: number;
+  portalTarget?: HTMLElement;
+  allowOverflow?: boolean;
+  bodyPadding?: string | number;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+}
+
+const sizeMap: Record<ModalSize, { width: string; maxWidth: string }> = {
+  sm: { width: '90vw', maxWidth: '400px' },
+  md: { width: '90vw', maxWidth: '600px' },
+  lg: { width: '90vw', maxWidth: '800px' },
+  xl: { width: '90vw', maxWidth: '1200px' },
+  fullscreen: { width: '100vw', maxWidth: '100vw' }
+};
 
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
-const dimensions: {
-  [key in DeviceType]: {
-    [key in Orientation | Size]?:
-      | {
-          [key in Size]: string;
+
+let modalCounter = 0;
+const openModals = new Set<number>();
+
+const getNextModalId = () => ++modalCounter;
+
+const getZIndex = (level: number) => 9_999_999 + level * 1000;
+
+const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
+  (
+    {
+      isOpen,
+      onClose,
+      title,
+      size = 'md',
+      showCloseButton = true,
+      hasHeader = true,
+      closeOnBackdropClick = true,
+      closeOnEscape = true,
+      className = '',
+      style = {},
+      priority = false,
+      modalLevel,
+      header,
+      footer,
+      loading = false,
+      preventBodyScroll = true,
+      animationDuration = 200,
+      portalTarget,
+      allowOverflow = false,
+      bodyPadding,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledby,
+      children
+    },
+    ref
+  ) => {
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [shouldRender, setShouldRender] = useState(isOpen);
+    const modalRef = useRef<HTMLDivElement>(null);
+    const backdropRef = useRef<HTMLDivElement>(null);
+    const previousActiveElement = useRef<HTMLElement | null>(null);
+    const [modalId] = useState(getNextModalId);
+
+    const currentLevel = useMemo(() => {
+      if (modalLevel !== undefined) return modalLevel;
+      if (priority) return 1;
+      return openModals.size;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modalLevel, priority, modalId]);
+
+    const zIndex = useMemo(() => getZIndex(currentLevel), [currentLevel]);
+
+    useEffect(() => {
+      if (isOpen) {
+        openModals.add(modalId);
+      } else {
+        openModals.delete(modalId);
+      }
+
+      return () => {
+        openModals.delete(modalId);
+      };
+    }, [isOpen, modalId]);
+
+    // For width behavior only: treat tablet-landscape like desktop
+    const isLandscape =
+      typeof window !== 'undefined' && window.innerWidth > window.innerHeight;
+
+    const { width, maxWidth, height } = useMemo(() => {
+      const baseSize = sizeMap[size];
+
+      if (size === 'fullscreen') {
+        return {
+          width: '100%',
+          maxWidth: '100vw',
+          height: '100%'
+        };
+      }
+
+      if (deviceIsTablet) {
+        if (isLandscape) {
+          return {
+            ...baseSize,
+            height: 'auto'
+          };
         }
-      | string;
-  };
-} = {
-  desktop: { small: '26%', medium: '35%', large: '80%', default: '50%' },
-  tablet: {
-    landscape: {
-      small: '40%',
-      medium: '50%',
-      large: '90%',
-      default: '60%'
-    },
-    portrait: { small: '80%', medium: '85%', large: '95%', default: '90%' }
-  },
-  mobile: {
-    landscape: {
-      small: '30%',
-      medium: '40%',
-      large: '80%',
-      default: '50%'
-    },
-    portrait: { small: '95%', medium: '95%', large: '95%', default: '95%' }
-  }
-};
-
-export default function Modal({
-  className,
-  closeColor,
-  closeWhenClickedOutside = true,
-  children,
-  hasPriority,
-  innerRef,
-  modalOverModal,
-  onHide,
-  small,
-  medium,
-  large,
-  modalStyle,
-  style,
-  wrapped
-}: {
-  className?: string;
-  closeColor?: string;
-  closeWhenClickedOutside?: boolean;
-  children?: any;
-  hasPriority?: boolean;
-  innerRef?: RefObject<any> | ((instance: any) => void);
-  modalOverModal?: boolean;
-  onHide?: () => void;
-  small?: boolean;
-  medium?: boolean;
-  large?: boolean;
-  modalStyle?: object;
-  style?: object;
-  wrapped?: boolean;
-}) {
-  const [maxHeight, setMaxHeight] = useState('100vh');
-
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (!wrapped) {
-        const newMaxHeight = `${window.innerHeight * 0.9}px`;
-        setMaxHeight(newMaxHeight);
+        return {
+          width: '85vw',
+          maxWidth: baseSize.maxWidth,
+          height: 'auto'
+        };
       }
-    };
 
-    const debouncedUpdateDimensions = debounce(updateDimensions, 100);
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        debouncedUpdateDimensions();
+      if (deviceIsMobile) {
+        return {
+          width: '100vw',
+          maxWidth: size === 'sm' ? '350px' : '100vw',
+          height: 'auto'
+        };
       }
-    };
 
-    updateDimensions();
+      return {
+        ...baseSize,
+        height: 'auto'
+      };
+    }, [size, isLandscape]);
 
-    window.addEventListener('resize', debouncedUpdateDimensions);
-    window.addEventListener('orientationchange', debouncedUpdateDimensions);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    useEffect(() => {
+      if (!preventBodyScroll || currentLevel > 0) return;
 
-    return () => {
-      window.removeEventListener('resize', debouncedUpdateDimensions);
-      window.removeEventListener(
-        'orientationchange',
-        debouncedUpdateDimensions
+      const targetDocument = portalTarget?.ownerDocument ?? document;
+      const targetWindow = targetDocument?.defaultView ?? window;
+      const bodyElement = targetDocument?.body;
+      if (!bodyElement) return;
+
+      if (isOpen) {
+        const originalStyle =
+          targetWindow.getComputedStyle(bodyElement).overflow;
+        bodyElement.style.overflow = 'hidden';
+        return () => {
+          bodyElement.style.overflow = originalStyle;
+        };
+      }
+    }, [isOpen, preventBodyScroll, currentLevel, portalTarget]);
+
+    useEffect(() => {
+      if (!closeOnEscape || !isOpen) return;
+
+      const handleEscape = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          const topModalId = Math.max(...Array.from(openModals));
+          if (modalId === topModalId) {
+            onClose();
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }, [closeOnEscape, isOpen, onClose, modalId]);
+
+    useEffect(() => {
+      if (isOpen) {
+        previousActiveElement.current = document.activeElement as HTMLElement;
+
+        setTimeout(() => {
+          modalRef.current?.focus();
+          if (allowOverflow && backdropRef.current) {
+            backdropRef.current.scrollTop = 0;
+          }
+        }, 50);
+      } else if (previousActiveElement.current) {
+        previousActiveElement.current.focus();
+        previousActiveElement.current = null;
+      }
+    }, [isOpen, allowOverflow]);
+
+    useEffect(() => {
+      if (isOpen) {
+        setShouldRender(true);
+        setIsAnimating(false);
+      } else if (shouldRender) {
+        setIsAnimating(true);
+
+        const endTimer = setTimeout(() => {
+          setShouldRender(false);
+          setIsAnimating(false);
+        }, animationDuration);
+
+        return () => clearTimeout(endTimer);
+      }
+    }, [isOpen, shouldRender, animationDuration]);
+
+    const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+
+      const modal = modalRef.current;
+      if (!modal) return;
+
+      const focusableElements = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [wrapped]);
 
-  const { width, marginLeft } = useMemo(() => {
-    const isLandscape = window.innerWidth > window.innerHeight;
-    let deviceType: DeviceType = 'desktop';
-    if (deviceIsTablet) deviceType = 'tablet';
-    if (deviceIsMobile) deviceType = 'mobile';
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
-    const orientation: Orientation = isLandscape ? 'landscape' : 'portrait';
-    const size: Size = small
-      ? 'small'
-      : medium
-      ? 'medium'
-      : large
-      ? 'large'
-      : 'default';
+      if (event.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement?.focus();
+          event.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement?.focus();
+          event.preventDefault();
+        }
+      }
+    }, []);
 
-    let width: string;
-    const deviceDimensions = dimensions[deviceType];
+    const handleBackdropClick = useCallback(
+      (event: React.MouseEvent) => {
+        if (closeOnBackdropClick && event.target === backdropRef.current) {
+          event.stopPropagation();
+          onClose();
+        }
+      },
+      [closeOnBackdropClick, onClose]
+    );
 
-    if (typeof deviceDimensions[orientation] === 'object') {
-      width = (deviceDimensions[orientation] as { [key in Size]: string })[
-        size
-      ];
-    } else if (typeof deviceDimensions[size] === 'string') {
-      width = deviceDimensions[size] as string;
-    } else {
-      width = dimensions.desktop[size] as string;
-    }
+    if (!shouldRender) return null;
 
-    const marginLeft = `${(100 - parseFloat(width)) / 2}%`;
-
-    return { width, marginLeft };
-  }, [small, medium, large]);
-
-  const Modal = (
-    <ErrorBoundary componentPath="Modal/index">
-      <div
-        className={`${css`
-          position: fixed;
-          z-index: ${9_999_999 +
-          (hasPriority || modalOverModal ? 1_000_000_000 : 0)};
-          top: 0;
-          right: 0;
-          left: 0;
-          bottom: 0;
-        `} ${className}`}
-      >
+    const modalContent = (
+      <ErrorBoundary componentPath="Modal/index">
         <div
-          ref={innerRef}
+          ref={backdropRef}
           className={css`
-            position: absolute;
-            z-index: 500;
-            top: 0;
-            right: 0;
-            left: 0;
-            bottom: 0;
-            padding-bottom: 7rem;
-            background: ${Color.black(0.5)};
-            overflow-y: scroll;
-            -webkit-overflow-scrolling: touch;
-            @media (max-width: ${mobileMaxWidth}) {
-              -webkit-overflow-scrolling: auto;
-            }
+            position: fixed;
+            inset: 0;
+            z-index: ${zIndex};
+            display: flex;
+            width: 100%;
+            align-items: ${allowOverflow ? 'flex-start' : 'center'};
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: ${!isAnimating ? fadeIn : fadeOut} ${animationDuration}ms
+              ease-out;
+            padding: ${deviceIsMobile ? '0' : deviceIsTablet ? '1rem' : '2rem'};
+            ${allowOverflow
+              ? `padding-top: ${
+                  deviceIsMobile
+                    ? '0.75rem'
+                    : deviceIsTablet
+                    ? '1.25rem'
+                    : '2rem'
+                };`
+              : ''}
+            overflow-y: auto;
+            touch-action: manipulation;
           `}
-          style={style}
+          onClick={handleBackdropClick}
+          aria-hidden="true"
         >
-          <Content
-            closeColor={closeColor}
-            closeWhenClickedOutside={closeWhenClickedOutside}
-            style={modalStyle}
+          <div
+            ref={ref || modalRef}
             className={css`
               position: relative;
-              border-radius: ${borderRadius};
-              background: #fff;
               width: ${width};
-              margin-left: ${marginLeft};
-              top: ${deviceIsMobile || deviceIsTablet ? '1rem' : '3rem'};
-              box-shadow: 3px 4px 5px ${Color.black()};
+              max-width: ${maxWidth};
+              ${height !== 'auto' ? `height: ${height};` : ''}
+              ${size === 'fullscreen'
+                ? 'max-height: 100%;'
+                : allowOverflow
+                ? ''
+                : 'max-height: 95%;'}
+              background-color: white;
+              border-radius: ${size === 'fullscreen'
+                ? '0'
+                : deviceIsMobile
+                ? '8px'
+                : '12px'};
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+              animation: ${!isAnimating ? slideIn : slideOut}
+                ${animationDuration}ms ease-out;
               display: flex;
               flex-direction: column;
-              justify-content: space-between;
-              min-height: ${deviceIsTablet &&
-              window.innerWidth > window.innerHeight
-                ? '50vh'
-                : '30vh'};
-              ${wrapped ? '' : `max-height: ${maxHeight};`}
-              > header {
-                display: flex;
-                align-items: center;
-                line-height: 1.5;
-                color: ${Color.black()};
-                font-weight: bold;
-                font-size: ${deviceIsMobile || deviceIsTablet
-                  ? '1.7rem'
-                  : '2rem'};
-                padding: ${deviceIsMobile || deviceIsTablet
-                  ? '1.5rem'
-                  : '2rem'};
-                margin-top: 0.5rem;
-              }
-              > main {
-                display: flex;
-                padding: ${deviceIsMobile || deviceIsTablet
-                  ? '1rem 1.5rem'
-                  : '1.5rem 2rem'};
-                font-size: ${deviceIsMobile || deviceIsTablet
-                  ? '1.3rem'
-                  : '1.5rem'};
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: center;
-                ${wrapped ? '' : 'overflow-y: auto;'}
-                flex-grow: 1;
-              }
-              > footer {
-                padding: 1.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                border-top: 1px solid var(--ui-border);
+              overflow: hidden;
+              ${className}
+
+              &:focus {
+                outline: none;
               }
             `}
-            onHide={onHide}
+            style={style}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={handleKeyDown}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledby}
           >
-            {children}
-          </Content>
-        </div>
-      </div>
-    </ErrorBoundary>
-  );
+            {hasHeader && (header || title || showCloseButton) && (
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
+                  border-bottom: none;
+                  background-color: white;
+                  ${size === 'fullscreen'
+                    ? ''
+                    : 'border-radius: 12px 12px 0 0;'}
+                  flex-shrink: 0;
+                `}
+              >
+                <div
+                  className={css`
+                    flex: 1;
+                    font-size: ${deviceIsMobile || deviceIsTablet
+                      ? '1.6rem'
+                      : '1.8rem'};
+                    font-weight: 600;
+                    color: ${Color.black()};
+                    margin-right: 1rem;
+                  `}
+                  id={ariaLabelledby}
+                >
+                  {safeRender(header || title)}
+                </div>
 
-  return modalOverModal
-    ? Modal
-    : document.getElementById('modal')
-    ? createPortal(Modal, document.getElementById('modal') as HTMLElement)
-    : null;
-}
+                {showCloseButton && (
+                  <button
+                    className={css`
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      width: 2rem;
+                      height: 2rem;
+                      background: none;
+                      border: none;
+                      border-radius: 6px;
+                      color: ${Color.gray()};
+                      cursor: pointer;
+                      transition: all 0.2s ease;
+                      flex-shrink: 0;
+
+                      @media (hover: hover) and (pointer: fine) {
+                        &:hover {
+                          background-color: ${Color.borderGray()};
+                          color: ${Color.black()};
+                        }
+                      }
+
+                      &:focus-visible {
+                        outline: 2px solid ${Color.logoBlue()};
+                        outline-offset: 2px;
+                      }
+                    `}
+                    onClick={onClose}
+                    aria-label="Close modal"
+                    type="button"
+                  >
+                    <Icon icon="times" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {!hasHeader && showCloseButton && (
+              <button
+                className={css`
+                  position: absolute;
+                  top: ${deviceIsMobile ? '0.75rem' : '1rem'};
+                  right: ${deviceIsMobile ? '0.75rem' : '1rem'};
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 2rem;
+                  height: 2rem;
+                  background: none;
+                  border: none;
+                  border-radius: 6px;
+                  color: ${Color.gray()};
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  z-index: 1;
+
+                  @media (hover: hover) and (pointer: fine) {
+                    &:hover {
+                      background-color: ${Color.borderGray()};
+                      color: ${Color.black()};
+                    }
+                  }
+
+                  &:focus-visible {
+                    outline: 2px solid ${Color.logoBlue()};
+                    outline-offset: 2px;
+                  }
+                `}
+                onClick={onClose}
+                aria-label="Close modal"
+                type="button"
+              >
+                <Icon icon="times" />
+              </button>
+            )}
+
+            <div
+              className={css`
+                flex: 1;
+                min-height: 0;
+                overflow-y: ${allowOverflow ? 'visible' : 'auto'};
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                padding: ${bodyPadding !== undefined
+                  ? typeof bodyPadding === 'number'
+                    ? `${bodyPadding}px`
+                    : bodyPadding
+                  : deviceIsMobile
+                  ? '0.75rem'
+                  : '1.25rem'};
+                position: relative;
+                font-size: 1.5rem;
+              `}
+            >
+              {loading ? (
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 200px;
+                    color: ${Color.gray()};
+                  `}
+                >
+                  <Icon icon="spinner" pulse />
+                  <span style={{ marginLeft: '0.5rem' }}>Loading...</span>
+                </div>
+              ) : (
+                children
+              )}
+            </div>
+
+            {footer && (
+              <div
+                className={css`
+                  padding: ${deviceIsMobile ? '1rem' : '1.5rem'};
+                  border-top: none;
+                  background-color: ${Color.wellGray(0.3)};
+                  ${size === 'fullscreen'
+                    ? ''
+                    : 'border-radius: 0 0 12px 12px;'}
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-end;
+                  gap: ${deviceIsMobile ? '0.75rem' : '1rem'};
+                  flex-shrink: 0;
+                `}
+              >
+                {safeRender(footer)}
+              </div>
+            )}
+          </div>
+        </div>
+      </ErrorBoundary>
+    );
+
+    const target = portalTarget || document.getElementById('modal');
+
+    return target ? createPortal(modalContent, target) : modalContent;
+  }
+);
+
+Modal.displayName = 'Modal';
+
+export default Modal;

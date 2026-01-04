@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
@@ -32,66 +33,75 @@ export default function OfferModal({
   const askPriceIsLargerThanOne = askPrice > 1;
 
   return (
-    <Modal large modalOverModal onHide={onHide}>
-      <header>Make an Offer</header>
-      <main>
-        <div
-          style={{
-            height: '30rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column'
-          }}
-        >
+    <Modal
+      isOpen
+      size="xl"
+      onClose={onHide}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Make an Offer</header>
+        <main>
           <div
             style={{
-              fontSize: '1.7rem',
-              fontWeight: 'bold',
-              color: Color.darkerGray(),
+              height: '30rem',
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
             }}
           >
-            Set price (
-            <Icon
-              style={{ color: Color.brownOrange() }}
-              icon={['far', 'badge-dollar']}
+            <div
+              style={{
+                fontSize: '1.7rem',
+                fontWeight: 'bold',
+                color: Color.darkerGray(),
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              Set price (
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />
+              )
+            </div>
+            <Input
+              onChange={handleAmountChange}
+              placeholder="Amount"
+              value={amount}
+              style={{
+                fontSize: '1.7rem',
+                padding: '0.5rem',
+                borderRadius,
+                lineHeight: 1.5,
+                marginTop: '1rem'
+              }}
             />
-            )
+            <Button
+              variant="solid"
+              color="oceanBlue"
+              loading={posting}
+              onClick={handlePostOffer}
+              disabled={!(amount || myId)}
+              style={{
+                fontSize: '1.4rem',
+                marginTop: '2rem'
+              }}
+            >
+              Make Offer
+            </Button>
           </div>
-          <Input
-            onChange={handleAmountChange}
-            placeholder="Amount"
-            value={amount}
-            style={{
-              fontSize: '1.7rem',
-              padding: '0.5rem',
-              borderRadius,
-              lineHeight: 1.5,
-              marginTop: '1rem'
-            }}
-          />
-          <Button
-            variant="solid"
-            color="oceanBlue"
-            loading={posting}
-            onClick={handlePostOffer}
-            disabled={!(amount || myId)}
-            style={{
-              fontSize: '1.4rem',
-              marginTop: '2rem'
-            }}
-          >
-            Make Offer
+        </main>
+        <footer>
+          <Button variant="ghost" onClick={onHide}>
+            Close
           </Button>
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

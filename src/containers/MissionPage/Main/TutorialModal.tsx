@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import InteractiveContent from '~/components/InteractiveContent';
 import Button from '~/components/Button';
 const closeLabel = 'Close';
@@ -19,32 +20,45 @@ export default function TutorialModal({
 }) {
   const ModalBodyRef: React.RefObject<any> = useRef(null);
   return (
-    <Modal modalStyle={{ height: 'CALC(100vh - 7rem)' }} large onHide={onHide}>
-      <header>{missionTitle}</header>
-      <main
-        ref={ModalBodyRef}
-        style={{
-          height: 'CALC(100% - 10rem)',
-          justifyContent: 'start',
-          overflow: 'scroll'
-        }}
-      >
-        <InteractiveContent
-          isOnModal
-          currentTutorialSlideId={tutorialSlideId}
-          interactiveId={tutorialId}
-          onGoBackToMission={onHide}
-          onCurrentSlideIdChange={onCurrentSlideIdChange}
-          onScrollElementTo={handleScrollElementTo}
-          onScrollElementToCenter={handleScrollElementToCenter}
-        />
-        <div style={{ padding: '7rem 0' }} />
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {closeLabel}
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      size="xl"
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+      style={{ height: 'CALC(100vh - 7rem)' }}
+    >
+      <LegacyModalLayout>
+        <header>{missionTitle}</header>
+        <main
+          ref={ModalBodyRef}
+          style={{
+            height: 'CALC(100% - 10rem)',
+            justifyContent: 'start',
+            overflow: 'scroll'
+          }}
+        >
+          <InteractiveContent
+            isOnModal
+            currentTutorialSlideId={tutorialSlideId}
+            interactiveId={tutorialId}
+            onGoBackToMission={onHide}
+            onCurrentSlideIdChange={onCurrentSlideIdChange}
+            onScrollElementTo={handleScrollElementTo}
+            onScrollElementToCenter={handleScrollElementToCenter}
+          />
+          <div style={{ padding: '7rem 0' }} />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            {closeLabel}
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

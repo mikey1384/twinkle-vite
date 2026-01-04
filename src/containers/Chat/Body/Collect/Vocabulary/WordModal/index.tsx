@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import FilterBar from '~/components/FilterBar';
@@ -117,49 +118,58 @@ export default function WordModal({
 
   return (
     <DndProvider backend={Backend}>
-      <Modal large wrapped onHide={onHide}>
-        <header>{title}</header>
-        {posOrder.length > 0 && (
-          <FilterBar>
-            <nav
-              className={selectedTab === 'dictionary' ? 'active' : ''}
-              onClick={() => setSelectedTab('dictionary')}
-            >
-              Dictionary
-            </nav>
-            <nav
-              className={selectedTab === 'edit' ? 'active' : ''}
-              onClick={() => setSelectedTab('edit')}
-            >
-              Edit
-            </nav>
-          </FilterBar>
-        )}
-        {selectedTab === 'dictionary' && (
-          <DictionaryTab
-            deletedDefIds={deletedDefIds}
-            definitionOrder={editedDefinitionOrder}
-            onHide={onHide}
-            posObj={posObj}
-            posOrder={posOrder}
-            word={word}
-            wordMasterBlocked={wordMasterBlocked}
-            onWordMasterBreak={onWordMasterBreak}
-          />
-        )}
-        {selectedTab === 'edit' && (
-          <EditTab
-            deletedDefIds={deletedDefIds}
-            originalDefinitionOrder={definitionOrder}
-            editedDefinitionOrder={editedDefinitionOrder}
-            onEditWord={onEditWord}
-            onHide={onHide}
-            originalPosOrder={posOrder}
-            posObj={posObj}
-            onSetEditedDefinitionOrder={setEditedDefinitionOrder}
-            word={word}
-          />
-        )}
+      <Modal
+        isOpen
+        size="xl"
+        onClose={onHide}
+        hasHeader={false}
+        bodyPadding={0}
+        allowOverflow
+      >
+        <LegacyModalLayout wrapped>
+          <header>{title}</header>
+          {posOrder.length > 0 && (
+            <FilterBar>
+              <nav
+                className={selectedTab === 'dictionary' ? 'active' : ''}
+                onClick={() => setSelectedTab('dictionary')}
+              >
+                Dictionary
+              </nav>
+              <nav
+                className={selectedTab === 'edit' ? 'active' : ''}
+                onClick={() => setSelectedTab('edit')}
+              >
+                Edit
+              </nav>
+            </FilterBar>
+          )}
+          {selectedTab === 'dictionary' && (
+            <DictionaryTab
+              deletedDefIds={deletedDefIds}
+              definitionOrder={editedDefinitionOrder}
+              onHide={onHide}
+              posObj={posObj}
+              posOrder={posOrder}
+              word={word}
+              wordMasterBlocked={wordMasterBlocked}
+              onWordMasterBreak={onWordMasterBreak}
+            />
+          )}
+          {selectedTab === 'edit' && (
+            <EditTab
+              deletedDefIds={deletedDefIds}
+              originalDefinitionOrder={definitionOrder}
+              editedDefinitionOrder={editedDefinitionOrder}
+              onEditWord={onEditWord}
+              onHide={onHide}
+              originalPosOrder={posOrder}
+              posObj={posObj}
+              onSetEditedDefinitionOrder={setEditedDefinitionOrder}
+              word={word}
+            />
+          )}
+        </LegacyModalLayout>
       </Modal>
     </DndProvider>
   );

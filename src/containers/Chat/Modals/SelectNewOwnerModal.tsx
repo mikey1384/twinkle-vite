@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useKeyContext, useAppContext } from '~/contexts';
@@ -77,73 +78,83 @@ export default function SelectNewOwnerModal({
   const [selectedUser, setSelectedUser] = useState<any>(null);
 
   return (
-    <Modal modalOverModal={modalOverModal} onHide={onHide}>
-      <header>Select New Channel Owner</header>
-      <main>
-        {!stringIsEmpty(searchText) || shownMembers.length > 0 ? (
-          <>
-            <SearchInput
-              autoFocus
-              onChange={handleSearch}
-              placeholder={`${searchUsersLabel}...`}
-              value={searchText}
-            />
-            <CheckListGroup
-              style={{ marginTop: '1.5rem' }}
-              onSelect={(index: number) => setSelectedUser(shownMembers[index])}
-              listItems={shownMembers.map((member) => ({
-                label: member?.username,
-                checked: member?.id === selectedUser?.id
-              }))}
-            />
-            {searching && (
-              <Loading style={{ marginTop: '1rem', position: 'absolute' }} />
-            )}
-          </>
-        ) : isClass ? (
-          <div
-            style={{
-              fontSize: '1.7rem',
-              height: '30vh',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <div>
-              You are the only teacher in this class group. Bring in another
-              teacher first.
+    <Modal
+      isOpen
+      onClose={onHide}
+      modalLevel={modalOverModal ? 2 : undefined}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Select New Channel Owner</header>
+        <main>
+          {!stringIsEmpty(searchText) || shownMembers.length > 0 ? (
+            <>
+              <SearchInput
+                autoFocus
+                onChange={handleSearch}
+                placeholder={`${searchUsersLabel}...`}
+                value={searchText}
+              />
+              <CheckListGroup
+                style={{ marginTop: '1.5rem' }}
+                onSelect={(index: number) =>
+                  setSelectedUser(shownMembers[index])
+                }
+                listItems={shownMembers.map((member) => ({
+                  label: member?.username,
+                  checked: member?.id === selectedUser?.id
+                }))}
+              />
+              {searching && (
+                <Loading style={{ marginTop: '1rem', position: 'absolute' }} />
+              )}
+            </>
+          ) : isClass ? (
+            <div
+              style={{
+                fontSize: '1.7rem',
+                height: '30vh',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <div>
+                You are the only teacher in this class group. Bring in another
+                teacher first.
+              </div>
             </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              fontSize: '1.7rem',
-              height: '30vh',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+          ) : (
+            <div
+              style={{
+                fontSize: '1.7rem',
+                height: '30vh',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              You are the only member of this group
+            </div>
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
           >
-            You are the only member of this group
-          </div>
-        )}
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Cancel
-        </Button>
-        <Button
-          color={doneColor}
-          disabled={!selectedUser}
-          loading={loading}
-          onClick={() => onSubmit({ newOwner: selectedUser, andLeave })}
-        >
-          Done
-        </Button>
-      </footer>
+            Cancel
+          </Button>
+          <Button
+            color={doneColor}
+            disabled={!selectedUser}
+            loading={loading}
+            onClick={() => onSubmit({ newOwner: selectedUser, andLeave })}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

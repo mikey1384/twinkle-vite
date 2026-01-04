@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
 import { isEqual } from 'lodash';
@@ -35,31 +36,37 @@ export default function ReorderSectionsModal({
   }, [sectionLabels]);
 
   return (
-    <Modal onHide={onHide}>
-      <header>{titleLabel}</header>
-      <main>
-        <div style={{ marginBottom: '1.5rem', color: Color.darkGray() }}>
-          {hintLabel}
-        </div>
-        <SortableListGroup
-          listItemLabel="label"
-          listItemObj={listItemObj}
-          onMove={handleMove}
-          itemIds={sectionOrder}
-        />
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          disabled={isEqual(sectionOrder, initialSectionOrder)}
-          color={doneColor}
-          onClick={() => onSubmit(sectionOrder)}
-        >
-          Done
-        </Button>
-      </footer>
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>{titleLabel}</header>
+        <main>
+          <div style={{ marginBottom: '1.5rem', color: Color.darkGray() }}>
+            {hintLabel}
+          </div>
+          <SortableListGroup
+            listItemLabel="label"
+            listItemObj={listItemObj}
+            onMove={handleMove}
+            itemIds={sectionOrder}
+          />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={isEqual(sectionOrder, initialSectionOrder)}
+            color={doneColor}
+            onClick={() => onSubmit(sectionOrder)}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

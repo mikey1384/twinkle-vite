@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RewardLevelForm from '~/components/Forms/RewardLevelForm';
@@ -48,47 +49,49 @@ export default function RewardLevelModal({
   }, [moderatorName]);
 
   return (
-    <Modal onHide={onHide}>
-      <ErrorBoundary componentPath="RewardLevelModal">
-        <header>{setRewardLevelLabel}</header>
-        <main style={{ fontSize: '3rem', paddingTop: 0 }}>
-          <RewardLevelExplainer
-            style={{ marginTop: '5rem' }}
-            rewardLevel={rewardLevel}
-            type={contentType}
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <ErrorBoundary componentPath="RewardLevelModal">
+          <header>{setRewardLevelLabel}</header>
+          <main style={{ fontSize: '3rem', paddingTop: 0 }}>
+            <RewardLevelExplainer
+              style={{ marginTop: '5rem' }}
+              rewardLevel={rewardLevel}
+              type={contentType}
+            />
+            <RewardLevelForm
+              rewardLevel={rewardLevel}
+              onSetRewardLevel={setRewardLevel}
+              style={{ marginTop: '3rem', textAlign: 'center' }}
+            />
+          </main>
+          <footer>
+            <Button
+              variant="ghost"
+              style={{ marginRight: '0.7rem' }}
+              onClick={onHide}
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              loading={posting}
+              color={
+                doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
+              }
+              onClick={submit}
+            >
+              {setLabel}
+            </Button>
+          </footer>
+        </ErrorBoundary>
+        {cannotChangeModalShown && (
+          <AlertModal
+            title={settingCannotBeChangedLabel}
+            content={moderatorHasDisabledChangeLabel}
+            onHide={() => setCannotChangeModalShown(false)}
           />
-          <RewardLevelForm
-            rewardLevel={rewardLevel}
-            onSetRewardLevel={setRewardLevel}
-            style={{ marginTop: '3rem', textAlign: 'center' }}
-          />
-        </main>
-        <footer>
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            loading={posting}
-            color={
-              doneColorKey && doneColorKey in Color ? doneColorKey : 'blue'
-            }
-            onClick={submit}
-          >
-            {setLabel}
-          </Button>
-        </footer>
-      </ErrorBoundary>
-      {cannotChangeModalShown && (
-        <AlertModal
-          title={settingCannotBeChangedLabel}
-          content={moderatorHasDisabledChangeLabel}
-          onHide={() => setCannotChangeModalShown(false)}
-        />
-      )}
+        )}
+      </LegacyModalLayout>
     </Modal>
   );
 

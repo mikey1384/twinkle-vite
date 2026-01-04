@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Input from '~/components/Texts/Input';
@@ -56,7 +56,7 @@ export default function CategoryModal({
   }, []);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       size="md"
@@ -201,7 +201,7 @@ export default function CategoryModal({
           />
         )}
       </div>
-    </NewModal>
+    </Modal>
   );
 
   function handleMoveQuestion(questionId: number) {

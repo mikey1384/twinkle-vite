@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import Loading from '~/components/Loading';import { capitalize } from '~/helpers/stringHelpers';
+import Loading from '~/components/Loading';
+import { capitalize } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext } from '~/contexts';
 
 const cancelLabel = 'Cancel';
@@ -58,54 +60,62 @@ export default function TitleSelectionModal({
   }, []);
 
   return (
-    <Modal hasPriority modalOverModal={modalOverModal} onHide={handleHide}>
-      <header>Select Your Title</header>
-      <main>
-        {loading ? (
-          <Loading />
-        ) : (
-          <div
-            style={{
-              padding: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+    <Modal
+      isOpen
+      onClose={handleHide}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Select Your Title</header>
+        <main>
+          {loading ? (
+            <Loading />
+          ) : (
+            <div
+              style={{
+                padding: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <div>
+                <b>Title:</b>
+              </div>
+              <div style={{ marginLeft: '1rem' }}>
+                <DropdownButton
+                  isMenuShownWhenMounted
+                  variant="soft"
+                  tone="raised"
+                  icon="caret-down"
+                  text={selectedTitle || `level ${userLevel}`}
+                  onDropdownShown={setDropdownShown}
+                  menuProps={menuProps}
+                />
+              </div>
+            </div>
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
           >
-            <div>
-              <b>Title:</b>
-            </div>
-            <div style={{ marginLeft: '1rem' }}>
-              <DropdownButton
-                isMenuShownWhenMounted
-                variant="soft"
-                tone="raised"
-                icon="caret-down"
-                text={selectedTitle || `level ${userLevel}`}
-                onDropdownShown={setDropdownShown}
-                menuProps={menuProps}
-              />
-            </div>
-          </div>
-        )}
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          {cancelLabel}
-        </Button>
-        <Button
-          disabled={selectedTitle === currentTitle}
-          loading={submitting}
-          color={doneColor}
-          onClick={handleConfirm}
-        >
-          {confirmLabel}
-        </Button>
-      </footer>
+            {cancelLabel}
+          </Button>
+          <Button
+            disabled={selectedTitle === currentTitle}
+            loading={submitting}
+            color={doneColor}
+            onClick={handleConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

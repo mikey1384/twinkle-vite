@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';import Details from './Details';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
+import Button from '~/components/Button';
+import Details from './Details';
 import FinalConfirm from './FinalConfirm';
 import { useAppContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -33,44 +35,57 @@ export default function ConfirmSelectionModal({
   const [price, setPrice] = useState(0);
 
   return (
-    <Modal modalOverModal closeWhenClickedOutside={false} onHide={onHide}>
-      <header>Sell and/or List Multiple Cards on the Market</header>
-      <main>
-        <Details
-          onSetPrice={setPrice}
-          selectedCardIds={selectedCardIds}
-          isAICardModalShown={isAICardModalShown}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          price={price}
-        />
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {cancelLabel}
-        </Button>
-        <Button
-          disabled={!price}
-          loading={confirmingPrice}
-          color={doneColor}
-          onClick={handleClickSetPrice}
-        >
-          Set Price
-        </Button>
-      </footer>
-      {finalConfirmShown && (
-        <FinalConfirm
-          isAICardModalShown={isAICardModalShown}
-          selectedCardIds={selectedCardIds}
-          higherBidCards={higherBidCards}
-          price={price}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          onConfirm={onConfirm}
-          onHide={() => {
-            setFinalConfirmShown(false);
-            setConfirmingPrice(false);
-          }}
-        />
-      )}
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Sell and/or List Multiple Cards on the Market</header>
+        <main>
+          <Details
+            onSetPrice={setPrice}
+            selectedCardIds={selectedCardIds}
+            isAICardModalShown={isAICardModalShown}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            price={price}
+          />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            {cancelLabel}
+          </Button>
+          <Button
+            disabled={!price}
+            loading={confirmingPrice}
+            color={doneColor}
+            onClick={handleClickSetPrice}
+          >
+            Set Price
+          </Button>
+        </footer>
+        {finalConfirmShown && (
+          <FinalConfirm
+            isAICardModalShown={isAICardModalShown}
+            selectedCardIds={selectedCardIds}
+            higherBidCards={higherBidCards}
+            price={price}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            onConfirm={onConfirm}
+            onHide={() => {
+              setFinalConfirmShown(false);
+              setConfirmingPrice(false);
+            }}
+          />
+        )}
+      </LegacyModalLayout>
     </Modal>
   );
 

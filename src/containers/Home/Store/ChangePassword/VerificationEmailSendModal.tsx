@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import CheckYourEmail from '~/components/CheckYourEmail';
 import SelectEmail from '~/components/SelectEmail';
@@ -31,32 +32,40 @@ export default function VerificationEmailSendModal({
   const viableEmail = email || verifiedEmail;
 
   return (
-    <Modal modalOverModal onHide={onHide}>
-      <header>{headerTitle}</header>
-      <main>
-        {emailExists ? (
-          email && verifiedEmail && email !== verifiedEmail ? (
-            <SelectEmail
-              email={email}
-              verifiedEmail={verifiedEmail}
-              userId={userId}
-            />
+    <Modal
+      isOpen
+      onClose={onHide}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>{headerTitle}</header>
+        <main>
+          {emailExists ? (
+            email && verifiedEmail && email !== verifiedEmail ? (
+              <SelectEmail
+                email={email}
+                verifiedEmail={verifiedEmail}
+                userId={userId}
+              />
+            ) : (
+              <CheckYourEmail email={viableEmail} userId={userId} />
+            )
           ) : (
-            <CheckYourEmail email={viableEmail} userId={userId} />
-          )
-        ) : (
-          <AskForHelp />
-        )}
-      </main>
-      <footer>
-        <Button
-          style={{ marginLeft: '1rem' }}
-          color={doneColorKey}
-          onClick={onHide}
-        >
-          OK
-        </Button>
-      </footer>
+            <AskForHelp />
+          )}
+        </main>
+        <footer>
+          <Button
+            style={{ marginLeft: '1rem' }}
+            color={doneColorKey}
+            onClick={onHide}
+          >
+            OK
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

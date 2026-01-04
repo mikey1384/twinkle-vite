@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import UsernameText from '~/components/Texts/UsernameText';
 import ProfilePic from '~/components/ProfilePic';
@@ -21,45 +22,52 @@ export default function InfoModal({ onHide }: { onHide: () => void }) {
   const navigate = useNavigate();
 
   return (
-    <Modal onHide={usermenuShown ? () => null : onHide}>
-      <header>Your user level is too low</header>
-      <main>
-        <div>You must be user level 2 or higher to chat with Zero</div>
-        <div style={{ marginTop: '1rem' }}>
-          <span>
-            {`In the mean time, you can chat with Zero's younger sister, `}
-          </span>
-          <UsernameText
-            onMenuShownChange={setUsermenuShown}
-            color={Color.pink()}
-            user={{
-              username: 'Ciel',
-              id: CIEL_TWINKLE_ID
-            }}
-          />
-        </div>
-        <div style={{ marginTop: '1rem' }}>
-          {`Click Ciel's picture below to chat with Ciel`}
-        </div>
-        <div onClick={handleLinkClick}>
-          <ProfilePic
-            style={{
-              marginTop: '2rem',
-              width: '10rem',
-              cursor: 'pointer'
-            }}
-            userId={CIEL_TWINKLE_ID}
-            profilePicUrl={CIEL_PFP_URL as string}
-            statusShown
-            large
-          />
-        </div>
-      </main>
-      <footer>
-        <Button color={doneColorKey} onClick={onHide}>
-          Okay
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      onClose={usermenuShown ? () => null : onHide}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Your user level is too low</header>
+        <main>
+          <div>You must be user level 2 or higher to chat with Zero</div>
+          <div style={{ marginTop: '1rem' }}>
+            <span>
+              {`In the mean time, you can chat with Zero's younger sister, `}
+            </span>
+            <UsernameText
+              onMenuShownChange={setUsermenuShown}
+              color={Color.pink()}
+              user={{
+                username: 'Ciel',
+                id: CIEL_TWINKLE_ID
+              }}
+            />
+          </div>
+          <div style={{ marginTop: '1rem' }}>
+            {`Click Ciel's picture below to chat with Ciel`}
+          </div>
+          <div onClick={handleLinkClick}>
+            <ProfilePic
+              style={{
+                marginTop: '2rem',
+                width: '10rem',
+                cursor: 'pointer'
+              }}
+              userId={CIEL_TWINKLE_ID}
+              profilePicUrl={CIEL_PFP_URL as string}
+              statusShown
+              large
+            />
+          </div>
+        </main>
+        <footer>
+          <Button color={doneColorKey} onClick={onHide}>
+            Okay
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

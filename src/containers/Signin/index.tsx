@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import LoginForm from './LoginForm';
 import SignUpForm from './SignUpForm';
 import RestoreAccount from './RestoreAccount';
@@ -25,65 +26,67 @@ export default function Signin({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Signin/index">
       <Modal
-        onHide={onHide}
-        closeWhenClickedOutside={!username}
-        modalStyle={{
-          marginTop: currentPage !== 'signUp' ? 'CALC(50vh - 25rem)' : 0
-        }}
+        isOpen
+        onClose={onHide}
+        closeOnBackdropClick={!username}
+        hasHeader={false}
+        bodyPadding={0}
       >
-        {currentPage === 'main' && (
-          <Main
-            onShowLoginForm={() => setCurrentPage('login')}
-            onShowSignUpForm={() => setCurrentPage('signUp')}
-            onShowForgotPasswordForm={() => setCurrentPage('restore')}
-          />
-        )}
-        {currentPage === 'login' && (
-          <LoginForm
-            username={username}
-            onSetUsername={setUsername}
-            onShowSignupForm={() => setCurrentPage('signUp')}
-            onShowForgotPasswordForm={() => setCurrentPage('restore')}
-          />
-        )}
-        {currentPage === 'signUp' && (
-          <SignUpForm
-            branchName={branchName}
-            classLabel={classLabel}
-            firstname={firstname}
-            lastname={lastname}
-            username={username}
-            password={password}
-            email={email}
-            verifiedEmail={verifiedEmail}
-            isPassphraseValid={isPassphraseValid}
-            isUsernameAvailable={isUsernameAvailable}
-            hasEmailError={hasEmailError}
-            hasNameError={hasNameError}
-            reenteredPassword={reenteredPassword}
-            onSetBranchName={setBranchName}
-            onSetClassLabel={setClassLabel}
-            onSetFirstname={setFirstname}
-            onSetLastname={setLastname}
-            onSetEmail={setEmail}
-            onSetVerifiedEmail={setVerifiedEmail}
-            onSetHasEmailError={setHasEmailError}
-            onSetHasNameError={setHasNameError}
-            onSetIsPassphraseValid={setIsPassphraseValid}
-            onSetIsUsernameAvailable={setIsUsernameAvailable}
-            onSetPassword={setPassword}
-            onSetReenteredPassword={setReenteredPassword}
-            onSetUsername={setUsername}
-            onShowLoginForm={() => setCurrentPage('login')}
-          />
-        )}
-        {currentPage === 'restore' && (
-          <RestoreAccount
-            username={username}
-            onShowLoginForm={() => setCurrentPage('login')}
-            onHide={onHide}
-          />
-        )}
+        <LegacyModalLayout>
+          {currentPage === 'main' && (
+            <Main
+              onShowLoginForm={() => setCurrentPage('login')}
+              onShowSignUpForm={() => setCurrentPage('signUp')}
+              onShowForgotPasswordForm={() => setCurrentPage('restore')}
+            />
+          )}
+          {currentPage === 'login' && (
+            <LoginForm
+              username={username}
+              onSetUsername={setUsername}
+              onShowSignupForm={() => setCurrentPage('signUp')}
+              onShowForgotPasswordForm={() => setCurrentPage('restore')}
+            />
+          )}
+          {currentPage === 'signUp' && (
+            <SignUpForm
+              branchName={branchName}
+              classLabel={classLabel}
+              firstname={firstname}
+              lastname={lastname}
+              username={username}
+              password={password}
+              email={email}
+              verifiedEmail={verifiedEmail}
+              isPassphraseValid={isPassphraseValid}
+              isUsernameAvailable={isUsernameAvailable}
+              hasEmailError={hasEmailError}
+              hasNameError={hasNameError}
+              reenteredPassword={reenteredPassword}
+              onSetBranchName={setBranchName}
+              onSetClassLabel={setClassLabel}
+              onSetFirstname={setFirstname}
+              onSetLastname={setLastname}
+              onSetEmail={setEmail}
+              onSetVerifiedEmail={setVerifiedEmail}
+              onSetHasEmailError={setHasEmailError}
+              onSetHasNameError={setHasNameError}
+              onSetIsPassphraseValid={setIsPassphraseValid}
+              onSetIsUsernameAvailable={setIsUsernameAvailable}
+              onSetPassword={setPassword}
+              onSetReenteredPassword={setReenteredPassword}
+              onSetUsername={setUsername}
+              onShowLoginForm={() => setCurrentPage('login')}
+            />
+          )}
+          {currentPage === 'restore' && (
+            <RestoreAccount
+              username={username}
+              onShowLoginForm={() => setCurrentPage('login')}
+              onHide={onHide}
+            />
+          )}
+        </LegacyModalLayout>
       </Modal>
     </ErrorBoundary>
   );

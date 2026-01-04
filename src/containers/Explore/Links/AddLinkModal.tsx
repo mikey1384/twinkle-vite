@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import Textarea from '~/components/Texts/Textarea';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Banner from '~/components/Banner';
@@ -68,76 +69,85 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
   }, [urlError, urlExceedsCharLimit]);
 
   return (
-    <Modal onHide={onHide}>
-      <header>Add Links</header>
-      <main>
-        {urlError && (
-          <Banner style={{ marginBottom: '1rem' }}>{urlError}</Banner>
-        )}
-        <Input
-          inputRef={UrlFieldRef}
-          style={urlHasError}
-          value={form.url}
-          onChange={handleUrlFieldChange}
-          placeholder="Paste the Link's Internet Address (URL) here"
-        />
-        <Input
-          style={{ marginTop: '1rem', ...(titleExceedsCharLimit?.style || {}) }}
-          value={form.title}
-          onChange={(text) => setForm({ ...form, title: text })}
-          placeholder="Enter Title"
-          onKeyUp={(event: any) => {
-            if (event.key === ' ') {
-              setForm({
-                ...form,
-                title: addEmoji(event.target.value)
-              });
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Add Links</header>
+        <main>
+          {urlError && (
+            <Banner style={{ marginBottom: '1rem' }}>{urlError}</Banner>
+          )}
+          <Input
+            inputRef={UrlFieldRef}
+            style={urlHasError}
+            value={form.url}
+            onChange={handleUrlFieldChange}
+            placeholder="Paste the Link's Internet Address (URL) here"
+          />
+          <Input
+            style={{
+              marginTop: '1rem',
+              ...(titleExceedsCharLimit?.style || {})
+            }}
+            value={form.title}
+            onChange={(text) => setForm({ ...form, title: text })}
+            placeholder="Enter Title"
+            onKeyUp={(event: any) => {
+              if (event.key === ' ') {
+                setForm({
+                  ...form,
+                  title: addEmoji(event.target.value)
+                });
+              }
+            }}
+          />
+          {titleExceedsCharLimit && (
+            <small style={{ color: 'red', width: '100%' }}>
+              {titleExceedsCharLimit?.message}
+            </small>
+          )}
+          <Textarea
+            style={{
+              marginTop: '1rem'
+            }}
+            hasError={!!descriptionExceedsCharLimit}
+            value={form.description}
+            minRows={4}
+            placeholder="Enter Description (Optional, you don't need to write this)"
+            onChange={(event: any) =>
+              setForm({ ...form, description: event.target.value })
             }
-          }}
-        />
-        {titleExceedsCharLimit && (
-          <small style={{ color: 'red', width: '100%' }}>
-            {titleExceedsCharLimit?.message}
-          </small>
-        )}
-        <Textarea
-          style={{
-            marginTop: '1rem'
-          }}
-          hasError={!!descriptionExceedsCharLimit}
-          value={form.description}
-          minRows={4}
-          placeholder="Enter Description (Optional, you don't need to write this)"
-          onChange={(event: any) =>
-            setForm({ ...form, description: event.target.value })
-          }
-          onKeyUp={(event: any) => {
-            if (event.key === ' ') {
-              setForm({
-                ...form,
-                description: addEmoji(event.target.value)
-              });
-            }
-          }}
-        />
-        {descriptionExceedsCharLimit && (
-          <small style={{ color: 'red', width: '100%' }}>
-            {descriptionExceedsCharLimit.message}
-          </small>
-        )}
-      </main>
-      <footer>
-        <Button onClick={onHide} variant="ghost" style={{ marginRight: '0.7rem' }}>
-          Cancel
-        </Button>
-        <Button
-          color={doneColor}
-          onClick={handleSubmit}
-          disabled={submitDisabled()}
-        >
-          Add
-        </Button>
-      </footer>
+            onKeyUp={(event: any) => {
+              if (event.key === ' ') {
+                setForm({
+                  ...form,
+                  description: addEmoji(event.target.value)
+                });
+              }
+            }}
+          />
+          {descriptionExceedsCharLimit && (
+            <small style={{ color: 'red', width: '100%' }}>
+              {descriptionExceedsCharLimit.message}
+            </small>
+          )}
+        </main>
+        <footer>
+          <Button
+            onClick={onHide}
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            color={doneColor}
+            onClick={handleSubmit}
+            disabled={submitDisabled()}
+          >
+            Add
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

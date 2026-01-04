@@ -1,6 +1,6 @@
 import React from 'react';
 import StatBar from './StatBar';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import AttemptResult from './AttemptResult';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -65,7 +65,7 @@ export default function OverviewModal({
   );
 
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={onHide}
       size="sm"
@@ -136,6 +136,6 @@ export default function OverviewModal({
           />
         </main>
       </ErrorBoundary>
-    </NewModal>
+    </Modal>
   );
 }

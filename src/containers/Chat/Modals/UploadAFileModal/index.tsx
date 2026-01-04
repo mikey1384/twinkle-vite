@@ -7,6 +7,7 @@ import React, {
   useState
 } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import ExtractedThumb from '~/components/ExtractedThumb';
@@ -222,58 +223,70 @@ function UploadAFileModal({
   ]);
 
   return (
-    <Modal closeWhenClickedOutside={false} onHide={onHide}>
-      <header>Upload a file</header>
-      <main>
-        {fileObj ? (
-          <FileInfo
-            caption={caption}
-            captionExceedsCharLimit={captionExceedsCharLimit}
-            fileObj={fileObj}
-            fileType={fileType}
-            imageUrl={imageUrl}
-            onEmbed={onEmbed}
-            onCaptionChange={setCaption}
-          />
-        ) : (
-          <Loading />
-        )}
-        {videoSrc && (
-          <ExtractedThumb
-            isHidden
-            src={videoSrc}
-            onThumbnailLoad={handleThumbnailLoad}
-          />
-        )}
-        {thumbnails.length > 0 && (
-          <ThumbnailPicker
-            thumbnails={thumbnails}
-            initialSelectedIndex={selectedThumbnailIndex}
-            onSelect={handleThumbnailSelect}
-          />
-        )}
-      </main>
-      <footer>
-        {aiFileNotSupported && (
-          <div
-            style={{ color: 'red', fontSize: '1.3rem', marginRight: '2rem' }}
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Upload a file</header>
+        <main>
+          {fileObj ? (
+            <FileInfo
+              caption={caption}
+              captionExceedsCharLimit={captionExceedsCharLimit}
+              fileObj={fileObj}
+              fileType={fileType}
+              imageUrl={imageUrl}
+              onEmbed={onEmbed}
+              onCaptionChange={setCaption}
+            />
+          ) : (
+            <Loading />
+          )}
+          {videoSrc && (
+            <ExtractedThumb
+              isHidden
+              src={videoSrc}
+              onThumbnailLoad={handleThumbnailLoad}
+            />
+          )}
+          {thumbnails.length > 0 && (
+            <ThumbnailPicker
+              thumbnails={thumbnails}
+              initialSelectedIndex={selectedThumbnailIndex}
+              onSelect={handleThumbnailSelect}
+            />
+          )}
+        </main>
+        <footer>
+          {aiFileNotSupported && (
+            <div
+              style={{ color: 'red', fontSize: '1.3rem', marginRight: '2rem' }}
+            >
+              Zero and Ciel cannot read this file format.
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
           >
-            Zero and Ciel cannot read this file format.
-          </div>
-        )}
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          disabled={
-            !!captionExceedsCharLimit || !selectedFile || aiFileNotSupported
-          }
-          color={doneColor}
-          onClick={handleSubmit}
-        >
-          Upload
-        </Button>
-      </footer>
+            Cancel
+          </Button>
+          <Button
+            disabled={
+              !!captionExceedsCharLimit || !selectedFile || aiFileNotSupported
+            }
+            color={doneColor}
+            onClick={handleSubmit}
+          >
+            Upload
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

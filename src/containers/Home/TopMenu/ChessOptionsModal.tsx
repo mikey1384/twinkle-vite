@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import { css } from '@emotion/css';
 import { tabletMaxWidth } from '~/constants/css';
 
@@ -17,7 +17,7 @@ export default function ChessOptionsModal({
   onPlayPuzzles: () => void;
 }) {
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={onHide}
       title="Chess"
@@ -129,6 +129,6 @@ export default function ChessOptionsModal({
           </button>
         )}
       </div>
-    </NewModal>
+    </Modal>
   );
 }

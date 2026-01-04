@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Omok from '../../Omok';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import ModalContentWrapper from './ModalContentWrapper';
 import GameModalFooter from './GameModalFooter';
 import { socket } from '~/constants/sockets/api';
@@ -182,7 +182,7 @@ export default function OmokModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/OmokModal">
-      <NewModal
+      <Modal
         isOpen
         size="lg"
         title="Omok"
@@ -243,7 +243,7 @@ export default function OmokModal({
             onSetNewOmokState={setNewOmokState}
           />
         </ModalContentWrapper>
-      </NewModal>
+      </Modal>
       {confirmModalShown && (
         <ConfirmModal
           title={isAbortable ? 'Abort Omok Match' : 'Resign Omok Match'}
@@ -252,7 +252,7 @@ export default function OmokModal({
         />
       )}
       {howToPlayShown && (
-        <NewModal
+        <Modal
           isOpen
           size="sm"
           title="How to Play Twinkle Omok"
@@ -305,7 +305,7 @@ export default function OmokModal({
               </p>
             </section>
           </div>
-        </NewModal>
+        </Modal>
       )}
     </ErrorBoundary>
   );

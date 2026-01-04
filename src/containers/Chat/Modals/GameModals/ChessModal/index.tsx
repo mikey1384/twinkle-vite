@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useMemo, useState } from 'react';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import ModalContentWrapper from '../ModalContentWrapper';
 import GameModalFooter from '../GameModalFooter';
 import Game from './ChessGame';
-import Rewind from './Rewind';import { socket } from '~/constants/sockets/api';
+import Rewind from './Rewind';
+import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
   useChatContext,
@@ -299,7 +300,7 @@ export default function ChessModal({
 
   return (
     <ErrorBoundary componentPath="ChessModal">
-      <NewModal
+      <Modal
         isOpen
         onClose={onHide}
         size="lg"
@@ -397,7 +398,7 @@ export default function ChessModal({
             />
           )}
         </ModalContentWrapper>
-      </NewModal>
+      </Modal>
       {confirmModalShown && (
         <ConfirmModal
           title={

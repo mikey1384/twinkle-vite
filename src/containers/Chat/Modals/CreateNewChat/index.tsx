@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import RegularMenu from './RegularMenu';
 import TeacherMenu from './TeacherMenu';
 import { useKeyContext } from '~/contexts';
@@ -21,21 +22,29 @@ export default function CreateNewChatModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">
-      <Modal wrapped onHide={onHide}>
-        {isSupermod(level) ? (
-          <TeacherMenu
-            channelId={channelId}
-            creatingChat={creatingChat}
-            onCreateRegularChat={onDone}
-            onHide={onHide}
-          />
-        ) : (
-          <RegularMenu
-            creatingChat={creatingChat}
-            onHide={onHide}
-            onDone={onDone}
-          />
-        )}
+      <Modal
+        isOpen
+        onClose={onHide}
+        hasHeader={false}
+        bodyPadding={0}
+        allowOverflow
+      >
+        <LegacyModalLayout wrapped>
+          {isSupermod(level) ? (
+            <TeacherMenu
+              channelId={channelId}
+              creatingChat={creatingChat}
+              onCreateRegularChat={onDone}
+              onHide={onHide}
+            />
+          ) : (
+            <RegularMenu
+              creatingChat={creatingChat}
+              onHide={onHide}
+              onDone={onDone}
+            />
+          )}
+        </LegacyModalLayout>
       </Modal>
     </ErrorBoundary>
   );

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import ChangeListItem from './ChangeListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -89,88 +90,90 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   });
 
   return (
-    <Modal onHide={onHide}>
-      <header>Transaction History</header>
-      <main>
-        <div
-          className={css`
-            text-align: center;
-            font-weight: bold;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              font-size: 1.5rem;
-            }
-          `}
-        >
-          <p style={{ color: Color.black() }}>Current Balance</p>
-          <p style={{ color: Color.darkerGray() }}>
-            {addCommasToNumber(currentBalance ?? twinkleCoins)}
-          </p>
-        </div>
-        {loading ? (
-          <Loading />
-        ) : (
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Transaction History</header>
+        <main>
           <div
-            ref={ListRef}
             className={css`
-              width: 80%;
-              height: 50vh;
-              overflow: scroll;
-              border: 1px solid var(--ui-border);
-              nav {
-                padding: 1.5rem;
-                border-bottom: 1px solid var(--ui-border);
-                border-left: none;
-                border-right: none;
-                &:last-of-type {
-                  border-bottom: none;
-                }
-              }
+              text-align: center;
+              font-weight: bold;
+              font-size: 2rem;
+              margin-bottom: 2rem;
               @media (max-width: ${mobileMaxWidth}) {
-                width: 100%;
+                font-size: 1.5rem;
               }
             `}
           >
-            {changes.map((change: any) => {
-              const accumulatedChanges = changes
-                .filter((v: { id: number }) => v.id > change.id)
-                .reduce((acc, v: { amount: number; type: string }) => {
-                  if (v.type === 'increase') {
-                    return acc - v.amount;
-                  } else {
-                    return acc + v.amount;
-                  }
-                }, 0);
-              const balance = currentBalance ?? twinkleCoins;
-              return (
-                <ChangeListItem
-                  key={change.id}
-                  change={change}
-                  balance={balance + accumulatedChanges}
-                />
-              );
-            })}
-            {loadMoreShown && (
-              <LoadMoreButton
-                filled
-                style={{
-                  width: '100%',
-                  borderRadius: 0,
-                  border: 0
-                }}
-                loading={loadingMore}
-                onClick={handleLoadMore}
-              />
-            )}
+            <p style={{ color: Color.black() }}>Current Balance</p>
+            <p style={{ color: Color.darkerGray() }}>
+              {addCommasToNumber(currentBalance ?? twinkleCoins)}
+            </p>
           </div>
-        )}
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+          {loading ? (
+            <Loading />
+          ) : (
+            <div
+              ref={ListRef}
+              className={css`
+                width: 80%;
+                height: 50vh;
+                overflow: scroll;
+                border: 1px solid var(--ui-border);
+                nav {
+                  padding: 1.5rem;
+                  border-bottom: 1px solid var(--ui-border);
+                  border-left: none;
+                  border-right: none;
+                  &:last-of-type {
+                    border-bottom: none;
+                  }
+                }
+                @media (max-width: ${mobileMaxWidth}) {
+                  width: 100%;
+                }
+              `}
+            >
+              {changes.map((change: any) => {
+                const accumulatedChanges = changes
+                  .filter((v: { id: number }) => v.id > change.id)
+                  .reduce((acc, v: { amount: number; type: string }) => {
+                    if (v.type === 'increase') {
+                      return acc - v.amount;
+                    } else {
+                      return acc + v.amount;
+                    }
+                  }, 0);
+                const balance = currentBalance ?? twinkleCoins;
+                return (
+                  <ChangeListItem
+                    key={change.id}
+                    change={change}
+                    balance={balance + accumulatedChanges}
+                  />
+                );
+              })}
+              {loadMoreShown && (
+                <LoadMoreButton
+                  filled
+                  style={{
+                    width: '100%',
+                    borderRadius: 0,
+                    border: 0
+                  }}
+                  loading={loadingMore}
+                  onClick={handleLoadMore}
+                />
+              )}
+            </div>
+          )}
+        </main>
+        <footer>
+          <Button variant="ghost" onClick={onHide}>
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
 import Rankings from './Rankings';
@@ -110,7 +110,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Home/AIStoriesModal">
-      <NewModal
+      <Modal
         isOpen
         onClose={handleHide}
         size="xl"
@@ -260,7 +260,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             isReverseButtonOrder
           />
         )}
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 

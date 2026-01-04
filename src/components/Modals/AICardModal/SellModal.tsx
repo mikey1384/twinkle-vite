@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import Icon from '~/components/Icon';
@@ -30,92 +31,100 @@ export default function SellModal({
   }, [offers]);
 
   return (
-    <Modal modalOverModal onHide={onHide}>
-      <header>List for Sale</header>
-      <main>
-        <div
-          style={{
-            height: '30rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column'
-          }}
-        >
+    <Modal
+      isOpen
+      onClose={onHide}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>List for Sale</header>
+        <main>
           <div
             style={{
-              fontSize: '1.7rem',
-              fontWeight: 'bold',
-              color: Color.darkerGray(),
+              height: '30rem',
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
             }}
           >
-            Set price (
-            <Icon
-              style={{ color: Color.brownOrange() }}
-              icon={['far', 'badge-dollar']}
+            <div
+              style={{
+                fontSize: '1.7rem',
+                fontWeight: 'bold',
+                color: Color.darkerGray(),
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              Set price (
+              <Icon
+                style={{ color: Color.brownOrange() }}
+                icon={['far', 'badge-dollar']}
+              />
+              )
+            </div>
+            <Input
+              onChange={handleAmountChange}
+              placeholder="Amount"
+              value={amount}
+              style={{
+                maxWidth: '25rem',
+                fontSize: '1.7rem',
+                padding: '0.5rem',
+                borderRadius,
+                lineHeight: 1.5,
+                marginTop: '1rem'
+              }}
             />
-            )
+            {errorMessage && (
+              <div
+                style={{
+                  color: Color.red(),
+                  fontSize: '1.4rem',
+                  marginTop: '0.5rem'
+                }}
+              >
+                {errorMessage}
+              </div>
+            )}
+            <Button
+              variant="solid"
+              color="oceanBlue"
+              onClick={handleCompleteListing}
+              loading={posting}
+              disabled={!amount || !offersLoaded}
+              style={{
+                fontSize: '1.4rem',
+                marginTop: '2rem'
+              }}
+            >
+              List for Sale
+            </Button>
+            {offerers.length > 0 && (
+              <div
+                style={{
+                  width: '50%',
+                  fontSize: '1.4rem',
+                  marginTop: '2rem',
+                  color: Color.darkerGray()
+                }}
+              >
+                {offerers.length} user{offerers.length === 1 ? '' : 's'} made
+                offer for this card at {offerPrice} Twinkle Coins. You can
+                either accept their offer or list it for sale at a higher price.
+              </div>
+            )}
           </div>
-          <Input
-            onChange={handleAmountChange}
-            placeholder="Amount"
-            value={amount}
-            style={{
-              maxWidth: '25rem',
-              fontSize: '1.7rem',
-              padding: '0.5rem',
-              borderRadius,
-              lineHeight: 1.5,
-              marginTop: '1rem'
-            }}
-          />
-          {errorMessage && (
-            <div
-              style={{
-                color: Color.red(),
-                fontSize: '1.4rem',
-                marginTop: '0.5rem'
-              }}
-            >
-              {errorMessage}
-            </div>
-          )}
-          <Button
-            variant="solid"
-            color="oceanBlue"
-            onClick={handleCompleteListing}
-            loading={posting}
-            disabled={!amount || !offersLoaded}
-            style={{
-              fontSize: '1.4rem',
-              marginTop: '2rem'
-            }}
-          >
-            List for Sale
+        </main>
+        <footer>
+          <Button variant="ghost" onClick={onHide}>
+            Close
           </Button>
-          {offerers.length > 0 && (
-            <div
-              style={{
-                width: '50%',
-                fontSize: '1.4rem',
-                marginTop: '2rem',
-                color: Color.darkerGray()
-              }}
-            >
-              {offerers.length} user{offerers.length === 1 ? '' : 's'} made
-              offer for this card at {offerPrice} Twinkle Coins. You can either
-              accept their offer or list it for sale at a higher price.
-            </div>
-          )}
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

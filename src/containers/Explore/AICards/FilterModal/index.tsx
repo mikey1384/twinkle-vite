@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import OwnerFilter from './OwnerFilter';
 import ColorFilter from './ColorFilter';
@@ -52,102 +53,111 @@ export default function FilterModal({
   }, [selectedFilter]);
 
   return (
-    <Modal wrapped closeWhenClickedOutside={false} onHide={handleHide}>
-      <header>Search Cards</header>
-      <main>
-        {filterComponents.map((component, index) => {
-          const style =
-            index < filterComponents?.length - 1
-              ? {
-                  marginBottom: '2rem',
-                  zIndex: filterComponents?.length - 1 - index
-                }
-              : { zIndex: filterComponents?.length - 1 - index };
-          if (component === 'owner') {
-            return (
-              <OwnerFilter
-                style={style}
-                selectedFilter={selectedFilter}
-                selectedOwner={selectedOwner}
-                onSelectOwner={setSelectedOwner}
-                key={component}
-              />
-            );
-          }
-          if (component === 'style') {
-            return (
-              <StyleFilter
-                style={style}
-                selectedFilter={selectedFilter}
-                selectedStyle={selectedStyle}
-                onDropdownShown={setDropdownShown}
-                onSelectStyle={setSelectedStyle}
-                key={component}
-              />
-            );
-          }
-          if (component === 'color') {
-            return (
-              <ColorFilter
-                style={style}
-                selectedColor={selectedColor}
-                onDropdownShown={setDropdownShown}
-                onSelectColor={setSelectedColor}
-                selectedFilter={selectedFilter}
-                key={component}
-              />
-            );
-          }
-          if (component === 'quality') {
-            return (
-              <QualityFilter
-                style={style}
-                selectedQuality={selectedQuality}
-                onDropdownShown={setDropdownShown}
-                onSelectQuality={setSelectedQuality}
-                selectedFilter={selectedFilter}
-                key={component}
-              />
-            );
-          }
-          if (component === 'word') {
-            return (
-              <WordFilter
-                style={style}
-                selectedFilter={selectedFilter}
-                selectedWord={selectedWord}
-                onSelectWord={setSelectedWord}
-                key={component}
-              />
-            );
-          }
-          if (component === 'engine') {
-            return (
-              <EngineFilter
-                selectedEngine={selectedEngine}
-                selectedFilter={selectedFilter}
-                style={style}
-                onDropdownShown={setDropdownShown}
-                onSelectEngine={setSelectedEngine}
-                key={component}
-              />
-            );
-          }
-          return null;
-        })}
-      </main>
-      <footer>
-        <Button
-          style={{ marginRight: '0.7rem' }}
-          variant="ghost"
-          onClick={handleHide}
-        >
-          Close
-        </Button>
-        <Button color={doneColor} onClick={handleApply}>
-          Apply
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      onClose={handleHide}
+      closeOnBackdropClick={false}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>Search Cards</header>
+        <main>
+          {filterComponents.map((component, index) => {
+            const style =
+              index < filterComponents?.length - 1
+                ? {
+                    marginBottom: '2rem',
+                    zIndex: filterComponents?.length - 1 - index
+                  }
+                : { zIndex: filterComponents?.length - 1 - index };
+            if (component === 'owner') {
+              return (
+                <OwnerFilter
+                  style={style}
+                  selectedFilter={selectedFilter}
+                  selectedOwner={selectedOwner}
+                  onSelectOwner={setSelectedOwner}
+                  key={component}
+                />
+              );
+            }
+            if (component === 'style') {
+              return (
+                <StyleFilter
+                  style={style}
+                  selectedFilter={selectedFilter}
+                  selectedStyle={selectedStyle}
+                  onDropdownShown={setDropdownShown}
+                  onSelectStyle={setSelectedStyle}
+                  key={component}
+                />
+              );
+            }
+            if (component === 'color') {
+              return (
+                <ColorFilter
+                  style={style}
+                  selectedColor={selectedColor}
+                  onDropdownShown={setDropdownShown}
+                  onSelectColor={setSelectedColor}
+                  selectedFilter={selectedFilter}
+                  key={component}
+                />
+              );
+            }
+            if (component === 'quality') {
+              return (
+                <QualityFilter
+                  style={style}
+                  selectedQuality={selectedQuality}
+                  onDropdownShown={setDropdownShown}
+                  onSelectQuality={setSelectedQuality}
+                  selectedFilter={selectedFilter}
+                  key={component}
+                />
+              );
+            }
+            if (component === 'word') {
+              return (
+                <WordFilter
+                  style={style}
+                  selectedFilter={selectedFilter}
+                  selectedWord={selectedWord}
+                  onSelectWord={setSelectedWord}
+                  key={component}
+                />
+              );
+            }
+            if (component === 'engine') {
+              return (
+                <EngineFilter
+                  selectedEngine={selectedEngine}
+                  selectedFilter={selectedFilter}
+                  style={style}
+                  onDropdownShown={setDropdownShown}
+                  onSelectEngine={setSelectedEngine}
+                  key={component}
+                />
+              );
+            }
+            return null;
+          })}
+        </main>
+        <footer>
+          <Button
+            style={{ marginRight: '0.7rem' }}
+            variant="ghost"
+            onClick={handleHide}
+          >
+            Close
+          </Button>
+          <Button color={doneColor} onClick={handleApply}>
+            Apply
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

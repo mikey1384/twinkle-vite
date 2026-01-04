@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Playlist from '~/components/Playlist';
 import Link from '~/components/Link';
@@ -17,22 +18,27 @@ export default function PlaylistModal({
   title: string;
 }) {
   return (
-    <Modal onHide={onHide}>
-      <ErrorBoundary componentPath="PlaylistModal">
-        <header>
-          <Link style={{ fontSize: '2.5rem' }} to={`/playlists/${playlistId}`}>
-            {title}
-          </Link>
-        </header>
-        <main>
-          <Playlist onLinkClick={onLinkClick} playlistId={playlistId} />
-        </main>
-        <footer>
-        <Button variant="ghost" onClick={onHide}>
-            Close
-          </Button>
-        </footer>
-      </ErrorBoundary>
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <ErrorBoundary componentPath="PlaylistModal">
+          <header>
+            <Link
+              style={{ fontSize: '2.5rem' }}
+              to={`/playlists/${playlistId}`}
+            >
+              {title}
+            </Link>
+          </header>
+          <main>
+            <Playlist onLinkClick={onLinkClick} playlistId={playlistId} />
+          </main>
+          <footer>
+            <Button variant="ghost" onClick={onHide}>
+              Close
+            </Button>
+          </footer>
+        </ErrorBoundary>
+      </LegacyModalLayout>
     </Modal>
   );
 }

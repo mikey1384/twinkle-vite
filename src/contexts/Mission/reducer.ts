@@ -71,6 +71,35 @@ export default function MissionReducer(
         }
       };
     }
+    case 'RESET_SYSTEM_PROMPT_STATE_FOR_USER': {
+      const mission = state.missionObj[action.missionId] || {};
+      if (
+        !action.userId ||
+        !mission.prevUserId ||
+        mission.prevUserId === action.userId
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        missionObj: {
+          ...state.missionObj,
+          [action.missionId]: {
+            ...mission,
+            prevUserId: action.userId,
+            systemPromptState: {
+              title: '',
+              prompt: '',
+              userMessage: '',
+              chatMessages: [],
+              missionPromptId: null,
+              promptEverGenerated: false
+            },
+            systemPromptProgress: {}
+          }
+        }
+      };
+    }
     case 'SET_ATTEMPT_OBJ':
       return {
         ...state,

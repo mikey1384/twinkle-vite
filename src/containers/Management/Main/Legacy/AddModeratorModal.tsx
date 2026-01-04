@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Loading from '~/components/Loading';
 import SearchInput from '~/components/Texts/SearchInput';
 import DropdownButton from '~/components/Buttons/DropdownButton';
@@ -9,7 +10,8 @@ import Icon from '~/components/Icon';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import { useSearch } from '~/helpers/hooks';
 import { Color } from '~/constants/css';
-import { capitalize } from '~/helpers/stringHelpers';import { useRoleColor } from '~/theme/useRoleColor';
+import { capitalize } from '~/helpers/stringHelpers';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const searchUsersLabel = 'Search Users';
 
@@ -22,7 +24,10 @@ export default function AddModeratorModal({
 }) {
   const [loading, setLoading] = useState(false);
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const level = useKeyContext((v) => v.myState.level);
   const addModerators = useAppContext((v) => v.requestHelpers.addModerators);
   const searchUsers = useAppContext((v) => v.requestHelpers.searchUsers);
@@ -106,61 +111,73 @@ export default function AddModeratorModal({
   }, [accountTypes, selectedUsers]);
 
   return (
-    <Modal closeWhenClickedOutside={!dropdownShown} onHide={onHide}>
-      <header>Add / Edit Moderators</header>
-      <main>
-        <SearchInput
-          autoFocus
-          onChange={handleSearch}
-          onSelect={handleSelectUser}
-          placeholder={`${searchUsersLabel}...`}
-          onClickOutSide={() => {
-            setSearchText('');
-            setSearchedUsers([]);
-          }}
-          renderItemLabel={(item) => (
-            <span>
-              {item.username} <small>{`(${item.realName})`}</small>
-            </span>
-          )}
-          searchResults={searchedUsers}
-          value={searchText}
-        />
-        {selectedUsers.length > 0 && (
-          <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Account Type</th>
-              </tr>
-            </thead>
-            <tbody>{TableContent}</tbody>
-          </Table>
-        )}
-        {selectedUsers.length === 0 && (
-          <div
-            style={{
-              marginTop: '5rem',
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              paddingBottom: '3.5rem'
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={!dropdownShown}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Add / Edit Moderators</header>
+        <main>
+          <SearchInput
+            autoFocus
+            onChange={handleSearch}
+            onSelect={handleSelectUser}
+            placeholder={`${searchUsersLabel}...`}
+            onClickOutSide={() => {
+              setSearchText('');
+              setSearchedUsers([]);
             }}
+            renderItemLabel={(item) => (
+              <span>
+                {item.username} <small>{`(${item.realName})`}</small>
+              </span>
+            )}
+            searchResults={searchedUsers}
+            value={searchText}
+          />
+          {selectedUsers.length > 0 && (
+            <Table columns="2fr 1fr" style={{ marginTop: '1.5rem' }}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Account Type</th>
+                </tr>
+              </thead>
+              <tbody>{TableContent}</tbody>
+            </Table>
+          )}
+          {selectedUsers.length === 0 && (
+            <div
+              style={{
+                marginTop: '5rem',
+                fontSize: '2.5rem',
+                fontWeight: 'bold',
+                paddingBottom: '3.5rem'
+              }}
+            >
+              No users selected
+            </div>
+          )}
+          {searching && (
+            <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            onClick={onHide}
+            style={{ marginRight: '0.7rem' }}
           >
-            No users selected
-          </div>
-        )}
-        {searching && (
-          <Loading style={{ position: 'absolute', marginTop: '1rem' }} />
-        )}
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Cancel
-        </Button>
-        <Button loading={loading} color={doneColor} onClick={handleSubmit}>
-          Done
-        </Button>
-      </footer>
+            Cancel
+          </Button>
+          <Button loading={loading} color={doneColor} onClick={handleSubmit}>
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

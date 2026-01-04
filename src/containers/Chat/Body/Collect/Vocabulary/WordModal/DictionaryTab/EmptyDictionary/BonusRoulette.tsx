@@ -379,7 +379,7 @@ function BonusRoulette({
             <button
               className={spinButtonStyles}
               onClick={handleSpin}
-              disabled={twinkleCoins < 500 || wordMasterBlocked}
+              disabled={twinkleCoins < 500}
             >
               {twinkleCoins < 500 ? (
                 <>
@@ -406,9 +406,6 @@ function BonusRoulette({
   );
 
   async function handleSpin() {
-    if (wordMasterBlocked) {
-      return;
-    }
     startTransition(() => {
       setHasSpun(true);
       messageRef.current = '';

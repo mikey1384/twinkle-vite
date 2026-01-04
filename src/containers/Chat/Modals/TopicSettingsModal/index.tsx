@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import SwitchButton from '~/components/Buttons/SwitchButton';
@@ -135,7 +135,7 @@ export default function TopicSettingsModal({
   ]);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       size="md"
@@ -332,7 +332,7 @@ export default function TopicSettingsModal({
           onConfirm={handleDeleteTopic}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   async function handleDeleteTopic() {

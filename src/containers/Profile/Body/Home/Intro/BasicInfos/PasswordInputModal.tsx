@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -20,44 +21,48 @@ export default function PasswordInputModal({
   );
 
   return (
-    <Modal small onHide={onHide}>
-      <header>Enter Your Password</header>
-      <main>
-        <Input
-          value={password}
-          onChange={(text) => {
-            setErrorMsg('');
-            setPassword(text);
-          }}
-          placeholder="Enter your password"
-          type="password"
-          hasError={!!errorMsg}
-          onKeyPress={(event: any) => {
-            if (
-              !stringIsEmpty(password) &&
-              event.key === 'Enter' &&
-              !errorMsg
-            ) {
-              handleConfirmPassword();
-            }
-          }}
-        />
-        {errorMsg ? (
-          <span style={{ color: 'red', marginTop: '0.5rem' }}>{errorMsg}</span>
-        ) : null}
-      </main>
-      <footer>
-        <Button onClick={onHide} variant="ghost">
-          Cancel
-        </Button>
-        <Button
-          style={{ marginLeft: '1rem' }}
-          color={doneColor}
-          onClick={handleConfirmPassword}
-        >
-          Done
-        </Button>
-      </footer>
+    <Modal isOpen size="sm" onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Enter Your Password</header>
+        <main>
+          <Input
+            value={password}
+            onChange={(text) => {
+              setErrorMsg('');
+              setPassword(text);
+            }}
+            placeholder="Enter your password"
+            type="password"
+            hasError={!!errorMsg}
+            onKeyPress={(event: any) => {
+              if (
+                !stringIsEmpty(password) &&
+                event.key === 'Enter' &&
+                !errorMsg
+              ) {
+                handleConfirmPassword();
+              }
+            }}
+          />
+          {errorMsg ? (
+            <span style={{ color: 'red', marginTop: '0.5rem' }}>
+              {errorMsg}
+            </span>
+          ) : null}
+        </main>
+        <footer>
+          <Button onClick={onHide} variant="ghost">
+            Cancel
+          </Button>
+          <Button
+            style={{ marginLeft: '1rem' }}
+            color={doneColor}
+            onClick={handleConfirmPassword}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

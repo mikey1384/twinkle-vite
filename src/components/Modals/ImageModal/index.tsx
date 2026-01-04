@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Caption from './Caption';
 import ImageEditModal from './ImageEditModal';
 import Icon from '~/components/Icon';
@@ -70,7 +70,7 @@ export default function ImageModal({
   );
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       hasHeader={!!fileName}
@@ -86,7 +86,10 @@ export default function ImageModal({
       footer={
         <>
           {downloadable && (
-            <Button color="orange" onClick={() => window.open(downloadSrc || src)}>
+            <Button
+              color="orange"
+              onClick={() => window.open(downloadSrc || src)}
+            >
               <Icon icon="download" />
               <span style={{ marginLeft: '0.5rem' }}>Download</span>
             </Button>
@@ -236,7 +239,7 @@ export default function ImageModal({
           onClose={() => setIsEditModalOpen(false)}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   async function handleReplace(event: React.ChangeEvent<HTMLInputElement>) {

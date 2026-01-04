@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Puzzle from './Puzzle';
 import { useChessPuzzle } from './Puzzle/hooks/useChessPuzzle';
@@ -97,7 +97,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
   );
 
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={onHide}
       hasHeader={false}
@@ -198,7 +198,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
           <Rankings isActive={activeTab === 'rankings'} />
         </div>
       </div>
-    </NewModal>
+    </Modal>
   );
 
   function handleMoveToNextPuzzle() {

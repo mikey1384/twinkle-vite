@@ -112,16 +112,6 @@ export default function WordMasterStrikeMeter({
           </div>
           <div className={progressBlockCls}>
             <div
-              className={`${progressMetaCls} ${isPanel ? panelMetaCls : ''}`}
-            >
-              <span>
-                {isLoading
-                  ? `--/${breakInterval}`
-                  : `${currentStrikes}/${breakInterval}`}
-              </span>
-              <span>{isLoading ? 'Break ...' : breakLabel}</span>
-            </div>
-            <div
               className={css`
                 display: flex;
                 align-items: center;
@@ -129,27 +119,47 @@ export default function WordMasterStrikeMeter({
               `}
             >
               <div
-                className={`${barTrackCls} ${isPanel ? panelBarTrackCls : ''}`}
-                style={{ flex: 1 }}
+                className={css`
+                  flex: 1;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.35rem;
+                `}
               >
                 <div
-                  className={barFillCls}
-                  style={{
-                    width: `${isLoading ? 0 : progressPct}%`,
-                    background: getBarBackground(isLoading ? 0 : progressPct)
-                  }}
-                />
+                  className={`${progressMetaCls} ${isPanel ? panelMetaCls : ''}`}
+                >
+                  <span>
+                    {isLoading
+                      ? `--/${breakInterval}`
+                      : `${currentStrikes}/${breakInterval}`}
+                  </span>
+                  <span>{isLoading ? 'Break ...' : breakLabel}</span>
+                </div>
                 <div
-                  className={`${barTicksCls} ${isPanel ? panelBarTicksCls : ''}`}
-                />
+                  className={`${barTrackCls} ${isPanel ? panelBarTrackCls : ''}`}
+                >
+                  <div
+                    className={barFillCls}
+                    style={{
+                      width: `${isLoading ? 0 : progressPct}%`,
+                      background: getBarBackground(isLoading ? 0 : progressPct)
+                    }}
+                  />
+                  <div
+                    className={`${barTicksCls} ${isPanel ? panelBarTicksCls : ''}`}
+                  />
+                </div>
               </div>
               {isInteractive && (
                 <span
+                  data-action-hint
                   className={`${actionHintCls} ${
                     isPanel ? panelActionHintCls : ''
                   }`}
                 >
-                  View breaks
+                  <span className={desktopOnlyCls}>View breaks</span>
+                  <span className={mobileOnlyCls}>View</span>
                 </span>
               )}
             </div>
@@ -267,6 +277,7 @@ const panelCardCls = css`
   border: none;
   background: transparent;
   box-shadow: none;
+  overflow: visible;
 
   &::before {
     display: none;
@@ -283,6 +294,13 @@ const cardInteractiveCls = css`
   &:focus-visible {
     outline: 2px solid ${Color.logoBlue(0.35)};
     outline-offset: 2px;
+  }
+
+  @media (hover: hover) {
+    &:hover [data-action-hint] {
+      color: ${Color.white()};
+      text-shadow: 0 0 6px ${Color.lightOceanBlue(0.7)};
+    }
   }
 `;
 
@@ -337,11 +355,11 @@ const pillBaseCls = css`
 
 const panelPillBaseCls = css`
   font-size: 1rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.7rem;
 
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 0.85rem;
-    padding: 0.12rem 0.45rem;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
   }
 `;
 
@@ -490,10 +508,15 @@ const actionHintCls = css`
   letter-spacing: 0.08em;
   color: ${Color.logoBlue()};
   font-weight: 700;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
 `;
 
 const panelActionHintCls = css`
   color: ${Color.lightOceanBlue()};
+
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.75rem;
+  }
 `;
 
 const blockedNoteCls = css`
@@ -502,4 +525,18 @@ const blockedNoteCls = css`
   font-weight: 600;
   color: ${Color.orange()};
   text-align: right;
+`;
+
+const desktopOnlyCls = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
+`;
+
+const mobileOnlyCls = css`
+  display: none;
+
+  @media (max-width: ${mobileMaxWidth}) {
+    display: inline;
+  }
 `;

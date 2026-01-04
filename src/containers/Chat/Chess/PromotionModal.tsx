@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import Button from '~/components/Button';
@@ -44,87 +45,101 @@ export default function PromotionModal({
   ];
 
   return (
-    <Modal modalOverModal small onHide={onHide} closeWhenClickedOutside={false}>
-      <header>Promote Pawn</header>
-      <main>
-        <div
-          className={css`
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            min-height: 200px;
-
-            @media (max-width: ${mobileMaxWidth}) {
-              padding: 0.5rem;
-              min-height: 180px;
-            }
-          `}
-        >
-          <p
-            className={css`
-              font-size: 1.5rem;
-            `}
-          >
-            Choose which piece to promote to:
-          </p>
+    <Modal
+      isOpen
+      size="sm"
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Promote Pawn</header>
+        <main>
           <div
             className={css`
               display: flex;
-              margin-top: 1rem;
-              justify-content: center;
+              flex-direction: column;
               align-items: center;
-              gap: 1rem;
+              justify-content: center;
+              padding: 1rem;
+              min-height: 200px;
 
               @media (max-width: ${mobileMaxWidth}) {
-                gap: 1rem;
-                flex-wrap: wrap;
+                padding: 0.5rem;
+                min-height: 180px;
               }
             `}
           >
-            {pieceChoices.map(({ type, icon }) => (
-              <Button
-                key={type}
-                variant="solid"
-                color={color === 'white' ? 'darkerGray' : 'lighterGray'}
-                onClick={() => onPromote(type)}
-                className={css`
-                  padding: 1rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    padding: 0.5rem;
-                  }
-                `}
-              >
-                <img
-                  src={icon}
-                  alt={type}
-                  className={css`
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                  `}
-                />
-              </Button>
-            ))}
-          </div>
-        </div>
-      </main>
-      <footer
-        className={css`
-          display: flex;
-          justify-content: flex-end;
-          padding: 1rem;
+            <p
+              className={css`
+                font-size: 1.5rem;
+              `}
+            >
+              Choose which piece to promote to:
+            </p>
+            <div
+              className={css`
+                display: flex;
+                margin-top: 1rem;
+                justify-content: center;
+                align-items: center;
+                gap: 1rem;
 
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.5rem;
-          }
-        `}
-      >
-        <Button style={{ marginRight: '0.7rem' }} variant="ghost" onClick={onHide}>
-          Cancel
-        </Button>
-      </footer>
+                @media (max-width: ${mobileMaxWidth}) {
+                  gap: 1rem;
+                  flex-wrap: wrap;
+                }
+              `}
+            >
+              {pieceChoices.map(({ type, icon }) => (
+                <Button
+                  key={type}
+                  variant="solid"
+                  color={color === 'white' ? 'darkerGray' : 'lighterGray'}
+                  onClick={() => onPromote(type)}
+                  className={css`
+                    padding: 1rem;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      padding: 0.5rem;
+                    }
+                  `}
+                >
+                  <img
+                    src={icon}
+                    alt={type}
+                    className={css`
+                      width: 100%;
+                      height: 100%;
+                      object-fit: contain;
+                    `}
+                  />
+                </Button>
+              ))}
+            </div>
+          </div>
+        </main>
+        <footer
+          className={css`
+            display: flex;
+            justify-content: flex-end;
+            padding: 1rem;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 0.5rem;
+            }
+          `}
+        >
+          <Button
+            style={{ marginRight: '0.7rem' }}
+            variant="ghost"
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

@@ -9,7 +9,7 @@ import Game from './Game';
 import FallenPieces from './FallenPieces';
 import BoardWrapper from '../BoardWrapper';
 import DropdownButton from '~/components/Buttons/DropdownButton';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Icon from '~/components/Icon';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import RewindRequestButton from './RewindRequestButton';
@@ -98,7 +98,9 @@ export default function Chess({
 }) {
   const isCompact = displaySize !== 'regular';
   const boardSize =
-    displaySize === 'inline' ? 'inline' : (displaySize as 'regular' | 'compact');
+    displaySize === 'inline'
+      ? 'inline'
+      : (displaySize as 'regular' | 'compact');
   const userId = useKeyContext((v) => v.myState.userId);
   const onBumpChessThemeVersion = useChatContext(
     (v) => v.actions.onBumpChessThemeVersion
@@ -1001,7 +1003,7 @@ export default function Chess({
       }}
     >
       {themeModalShown ? (
-        <NewModal
+        <Modal
           isOpen
           onClose={() => setThemeModalShown(false)}
           title="Select Theme"
@@ -1023,7 +1025,7 @@ export default function Chess({
               menuProps={themeMenuProps}
             />
           </div>
-        </NewModal>
+        </Modal>
       ) : null}
       {gameDropdownButtonShown || themeButtonShown ? (
         <div

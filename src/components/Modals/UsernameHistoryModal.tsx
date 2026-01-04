@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
 import Loading from '~/components/Loading';
@@ -55,7 +55,7 @@ export default function UsernameHistoryModal({
   }, [usernames]);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       title="Previous Usernames"
@@ -133,7 +133,7 @@ export default function UsernameHistoryModal({
           />
         )}
       </div>
-    </NewModal>
+    </Modal>
   );
 
   async function handleDeletePreviousUsername() {

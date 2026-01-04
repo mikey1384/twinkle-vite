@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Game from './Game';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import StartScreen from './StartScreen';
@@ -120,7 +120,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     ) : null;
 
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={handleHide}
       size="lg"
@@ -235,7 +235,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
           />
         )}
       </div>
-    </NewModal>
+    </Modal>
   );
 
   async function handleGameStart() {

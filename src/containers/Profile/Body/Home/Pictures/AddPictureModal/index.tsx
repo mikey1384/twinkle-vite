@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
 import SelectFromArchive from './SelectFromArchive';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 
@@ -20,12 +20,15 @@ export default function AddPictureModal({
   profileId: number;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const [section, setSection] = useState('start');
   const [selectedPictureIds, setSelectedPictureIds] = useState([]);
 
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={onHide}
       title={`Add Picture${section === 'archive' ? `s from Archive` : ''}`}
@@ -79,6 +82,6 @@ export default function AddPictureModal({
           onSetSelectedPictureIds={setSelectedPictureIds}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 }

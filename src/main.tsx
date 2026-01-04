@@ -67,7 +67,9 @@ import { faChevronLeft } from '@fortawesome/pro-solid-svg-icons/faChevronLeft';
 import { faChevronRight } from '@fortawesome/pro-solid-svg-icons/faChevronRight';
 import { faCircle } from '@fortawesome/pro-solid-svg-icons/faCircle';
 import { faClipboardCheck } from '@fortawesome/pro-solid-svg-icons/faClipboardCheck';
+import { faClock } from '@fortawesome/pro-solid-svg-icons/faClock';
 import { faClockRotateLeft } from '@fortawesome/pro-solid-svg-icons/faClockRotateLeft';
+import { faCoins } from '@fortawesome/pro-solid-svg-icons/faCoins';
 import { faCloudUploadAlt } from '@fortawesome/pro-solid-svg-icons/faCloudUploadAlt';
 import { faCode } from '@fortawesome/pro-solid-svg-icons/faCode';
 import { faCodeBranch } from '@fortawesome/pro-solid-svg-icons/faCodeBranch';
@@ -276,7 +278,9 @@ library.add(
   faChevronRight,
   faCircle,
   faClipboardCheck,
+  faClock,
   faClockRotateLeft,
+  faCoins,
   faCloudUploadAlt,
   faComment,
   faCommentAlt,

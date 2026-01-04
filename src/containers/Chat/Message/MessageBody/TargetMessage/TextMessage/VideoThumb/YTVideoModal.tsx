@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';import VideoPlayer from '~/components/VideoPlayer';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
+import Button from '~/components/Button';
+import VideoPlayer from '~/components/VideoPlayer';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { useContentContext } from '~/contexts';
@@ -45,58 +47,64 @@ export default function YTVideoModal({
   )?.[1];
 
   return (
-    <Modal large onHide={onHide}>
-      <header>Video Player</header>
-      <main
-        style={{
-          fontSize: '3rem',
-          paddingTop: 0
-        }}
-      >
-        <div
+    <Modal isOpen size="xl" onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Video Player</header>
+        <main
           style={{
-            display: 'block',
-            height: '100%'
+            fontSize: '3rem',
+            paddingTop: 0
           }}
-          className={css`
-            width: 85%;
-            @media (max-width: ${mobileMaxWidth}) {
-              width: 100%;
-            }
-          `}
         >
           <div
+            style={{
+              display: 'block',
+              height: '100%'
+            }}
             className={css`
-              position: relative;
-              padding-top: 56.25%;
+              width: 85%;
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+              }
             `}
           >
-            <VideoPlayer
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                zIndex: 1
-              }}
-              width="100%"
-              height="100%"
-              fileType="youtube"
-              src={videoId || ''}
-              playing={playing}
-              initialTime={currentTime}
-              onPlay={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
-              onProgress={setTimeAt}
-              playsInline
-            />
+            <div
+              className={css`
+                position: relative;
+                padding-top: 56.25%;
+              `}
+            >
+              <VideoPlayer
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 1
+                }}
+                width="100%"
+                height="100%"
+                fileType="youtube"
+                src={videoId || ''}
+                playing={playing}
+                initialTime={currentTime}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                onProgress={setTimeAt}
+                playsInline
+              />
+            </div>
           </div>
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {closelLabel}
-        </Button>
-      </footer>
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            {closelLabel}
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

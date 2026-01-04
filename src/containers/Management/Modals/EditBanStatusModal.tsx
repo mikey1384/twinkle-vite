@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Table from '../Table';
 import RedTimes from '../RedTimes';
 import Button from '~/components/Button';
@@ -18,7 +19,10 @@ export default function EditBanStatusModal({
   target: any;
 }) {
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
   const updateBanStatus = useAppContext(
     (v) => v.requestHelpers.updateBanStatus
   );
@@ -45,70 +49,72 @@ export default function EditBanStatusModal({
 
   return (
     <ErrorBoundary componentPath="Management/Modals/EditBanStatusModal">
-      <Modal onHide={onHide}>
-        <header style={{ display: 'block' }}>
-          Edit Restriction Status of{' '}
-          <span style={{ color: Color.logoBlue() }}>{target.username}</span>
-        </header>
-        <main>
-          <Table columns="2fr 1fr">
-            <thead>
-              <tr>
-                <th>Features</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody
-              className={`${css`
-                tr {
-                  cursor: pointer;
-                }
-              `} unselectable`}
+      <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+        <LegacyModalLayout>
+          <header style={{ display: 'block' }}>
+            Edit Restriction Status of{' '}
+            <span style={{ color: Color.logoBlue() }}>{target.username}</span>
+          </header>
+          <main>
+            <Table columns="2fr 1fr">
+              <thead>
+                <tr>
+                  <th>Features</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody
+                className={`${css`
+                  tr {
+                    cursor: pointer;
+                  }
+                `} unselectable`}
+              >
+                <tr onClick={() => handleBanStatusClick('all')}>
+                  <td style={{ fontWeight: 'bold' }}>Log In</td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banStatus.all && <RedTimes />}
+                  </td>
+                </tr>
+                <tr onClick={() => handleBanStatusClick('chat')}>
+                  <td style={{ fontWeight: 'bold' }}>Chat</td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banStatus.chat && <RedTimes />}
+                  </td>
+                </tr>
+                <tr onClick={() => handleBanStatusClick('chess')}>
+                  <td style={{ fontWeight: 'bold' }}>Chess</td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banStatus.chess && <RedTimes />}
+                  </td>
+                </tr>
+                <tr onClick={() => handleBanStatusClick('posting')}>
+                  <td style={{ fontWeight: 'bold' }}>Posting</td>
+                  <td style={{ textAlign: 'center' }}>
+                    {banStatus.posting && <RedTimes />}
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </main>
+          <footer>
+            <Button
+              variant="ghost"
+              onClick={onHide}
+              style={{ marginRight: '0.7rem' }}
             >
-              <tr onClick={() => handleBanStatusClick('all')}>
-                <td style={{ fontWeight: 'bold' }}>Log In</td>
-                <td style={{ textAlign: 'center' }}>
-                  {banStatus.all && <RedTimes />}
-                </td>
-              </tr>
-              <tr onClick={() => handleBanStatusClick('chat')}>
-                <td style={{ fontWeight: 'bold' }}>Chat</td>
-                <td style={{ textAlign: 'center' }}>
-                  {banStatus.chat && <RedTimes />}
-                </td>
-              </tr>
-              <tr onClick={() => handleBanStatusClick('chess')}>
-                <td style={{ fontWeight: 'bold' }}>Chess</td>
-                <td style={{ textAlign: 'center' }}>
-                  {banStatus.chess && <RedTimes />}
-                </td>
-              </tr>
-              <tr onClick={() => handleBanStatusClick('posting')}>
-                <td style={{ fontWeight: 'bold' }}>Posting</td>
-                <td style={{ textAlign: 'center' }}>
-                  {banStatus.posting && <RedTimes />}
-                </td>
-              </tr>
-            </tbody>
-          </Table>
-        </main>
-        <footer>
-          <Button
-            variant="ghost"
-            onClick={onHide}
-            style={{ marginRight: '0.7rem' }}
-          >
-            Cancel
-          </Button>
-          <Button
-            loading={submitting}
-            color={doneColor}
-            disabled={submitDisabled}
-            onClick={handleSubmit}
-          >
-            Done
-          </Button>
-        </footer>
+              Cancel
+            </Button>
+            <Button
+              loading={submitting}
+              color={doneColor}
+              disabled={submitDisabled}
+              onClick={handleSubmit}
+            >
+              Done
+            </Button>
+          </footer>
+        </LegacyModalLayout>
       </Modal>
     </ErrorBoundary>
   );

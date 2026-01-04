@@ -14,7 +14,7 @@ import {
   extractBase64FromDataUrl
 } from '~/helpers/imageHelpers';
 import API_URL from '~/constants/URL';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
@@ -768,7 +768,7 @@ export default function ImageEditModal({
   }
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onClose}
       title="Edit Image"
@@ -795,6 +795,6 @@ export default function ImageEditModal({
       }
     >
       {content}
-    </NewModal>
+    </Modal>
   );
 }

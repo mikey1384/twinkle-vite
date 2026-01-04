@@ -38,6 +38,7 @@ export default function GameCTAButton({
   const hasLabel = !!(
     children && !(typeof children === 'string' && children.trim().length === 0)
   );
+  const showIcon = Boolean(icon);
   const cls = getButtonCls({ variant, size, shiny, toggled });
   return (
     <button
@@ -47,8 +48,17 @@ export default function GameCTAButton({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
     >
-      <Icon icon={loading ? 'spinner' : icon} pulse={loading} />
+      {showIcon ? <Icon icon={icon} /> : null}
       {hasLabel ? <span className={labelCls}>{children}</span> : null}
+      {loading ? (
+        <Icon
+          icon="spinner"
+          pulse
+          className={css`
+            margin-left: ${hasLabel || showIcon ? '0.6rem' : '0'};
+          `}
+        />
+      ) : null}
     </button>
   );
 }

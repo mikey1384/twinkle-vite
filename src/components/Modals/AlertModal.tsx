@@ -1,5 +1,5 @@
 import React from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -22,7 +22,7 @@ export default function AlertModal({
   });
 
   return (
-    <NewModal
+    <Modal
       isOpen={isOpen}
       onClose={onHide}
       title={title}
@@ -50,6 +50,6 @@ export default function AlertModal({
       >
         {content}
       </div>
-    </NewModal>
+    </Modal>
   );
 }

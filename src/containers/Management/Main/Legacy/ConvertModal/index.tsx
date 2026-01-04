@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import FromPanel from './FromPanel';
 import ToPanel from './ToPanel';
 import { css } from '@emotion/css';
@@ -24,7 +25,10 @@ export default function ConvertModal({
   );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const doneRole = useRoleColor('done', { fallback: 'blue' });
-  const doneColor = useMemo(() => doneRole.getColor() || Color.blue(), [doneRole]);
+  const doneColor = useMemo(
+    () => doneRole.getColor() || Color.blue(),
+    [doneRole]
+  );
 
   const [submitting, setSubmitting] = useState(false);
   const [loadingUserAchievements, setLoadingUserAchievements] = useState(false);
@@ -43,42 +47,48 @@ export default function ConvertModal({
   }, []);
 
   return (
-    <Modal onHide={onHide}>
-      <header
-        className={css`
-          font-size: 2rem;
-          font-weight: 600;
-        `}
-      >
-        Convert
-      </header>
-      <main>
-        <FromPanel
-          loading={loadingUserAchievements}
-          unlockedAchievements={unlockedAchievements}
-          target={target}
-        />
-        <ToPanel
-          loading={loadingUserAchievements}
-          unlockedAchievements={unlockedAchievements}
-          achievementsObj={achievementsObj}
-          target={target}
-        />
-      </main>
-      <footer
-        className={css`
-          display: flex;
-          justify-content: flex-end;
-          margin-top: 1rem;
-        `}
-      >
-        <Button variant="ghost" onClick={onHide} style={{ marginRight: '0.7rem' }}>
-          Cancel
-        </Button>
-        <Button loading={submitting} color={doneColor} onClick={handleSubmit}>
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header
+          className={css`
+            font-size: 2rem;
+            font-weight: 600;
+          `}
+        >
           Convert
-        </Button>
-      </footer>
+        </header>
+        <main>
+          <FromPanel
+            loading={loadingUserAchievements}
+            unlockedAchievements={unlockedAchievements}
+            target={target}
+          />
+          <ToPanel
+            loading={loadingUserAchievements}
+            unlockedAchievements={unlockedAchievements}
+            achievementsObj={achievementsObj}
+            target={target}
+          />
+        </main>
+        <footer
+          className={css`
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+          `}
+        >
+          <Button
+            variant="ghost"
+            onClick={onHide}
+            style={{ marginRight: '0.7rem' }}
+          >
+            Cancel
+          </Button>
+          <Button loading={submitting} color={doneColor} onClick={handleSubmit}>
+            Convert
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

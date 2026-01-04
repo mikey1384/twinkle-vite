@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import NewModal from '~/components/NewModal';
-import Button from '~/components/Button';import { Color } from '~/constants/css';
+import Modal from '~/components/Modal';
+import Button from '~/components/Button';
+import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const areYouSureLabel = 'Are you sure?';
@@ -40,7 +41,7 @@ export default function ConfirmModal({
     confirmButtonColor ||
     (doneColorKey && doneColorKey in Color ? doneColorKey : 'blue');
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       hasHeader
@@ -98,7 +99,7 @@ export default function ConfirmModal({
       >
         {description}
       </div>
-    </NewModal>
+    </Modal>
   );
 
   async function handleConfirm() {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectNewOwnerModal from '../SelectNewOwnerModal';
 import SwitchButton from '~/components/Buttons/SwitchButton';
@@ -170,7 +170,7 @@ export default function SettingsModal({
   }, []);
 
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={onHide}
       title={userIsChannelOwner ? 'Settings' : 'Edit Group Name'}
@@ -251,38 +251,38 @@ export default function SettingsModal({
             {userIsChannelOwner &&
               (currentThumbUrl || newThumbUri) &&
               !isSubmitting && (
-              <div
-                style={{
-                  width: '100%',
-                  marginTop: '1rem',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
                 <div
-                  className={css`
-                    margin-left: 1rem;
-                    color: ${Color.darkerGray()};
-                    cursor: pointer;
-                    font-weight: bold;
-                    &:hover {
-                      text-decoration: underline;
-                    }
-                  `}
-                  onClick={() => {
-                    if (newThumbUri) {
-                      setNewThumbUri(null);
-                    } else {
-                      setCurrentThumbUrl(null);
-                    }
+                  style={{
+                    width: '100%',
+                    marginTop: '1rem',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
                   }}
                 >
-                  <Icon icon="times" />
-                  <span style={{ marginLeft: '0.7rem' }}>Remove</span>
+                  <div
+                    className={css`
+                      margin-left: 1rem;
+                      color: ${Color.darkerGray()};
+                      cursor: pointer;
+                      font-weight: bold;
+                      &:hover {
+                        text-decoration: underline;
+                      }
+                    `}
+                    onClick={() => {
+                      if (newThumbUri) {
+                        setNewThumbUri(null);
+                      } else {
+                        setCurrentThumbUrl(null);
+                      }
+                    }}
+                  >
+                    <Icon icon="times" />
+                    <span style={{ marginLeft: '0.7rem' }}>Remove</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
         {userIsChannelOwner && (
@@ -560,7 +560,7 @@ export default function SettingsModal({
           aspectFixed={false}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import AchievementItem from '~/components/AchievementItem';
 import NextMission from './NextMission';
@@ -27,27 +28,35 @@ export default function AchievementModal({
   }, []);
 
   return (
-    <Modal closeWhenClickedOutside={false} onHide={onHide}>
-      <header>{achievement.title}</header>
-      <main
-        style={{
-          paddingTop: 0,
-          minHeight: '15rem',
-          justifyContent: 'center'
-        }}
-      >
-        <AchievementItem achievement={achievement} />
-        {achievement.type === 'mission' && (
-          <NextMission
-            style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
-          />
-        )}
-      </main>
-      <footer>
-        <Button color={doneColor} onClick={onHide}>
-          Ok
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>{achievement.title}</header>
+        <main
+          style={{
+            paddingTop: 0,
+            minHeight: '15rem',
+            justifyContent: 'center'
+          }}
+        >
+          <AchievementItem achievement={achievement} />
+          {achievement.type === 'mission' && (
+            <NextMission
+              style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
+            />
+          )}
+        </main>
+        <footer>
+          <Button color={doneColor} onClick={onHide}>
+            Ok
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

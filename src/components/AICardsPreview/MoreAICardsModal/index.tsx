@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import CardItem from './CardItem';
 import { calculateTotalBurnValue } from '~/helpers';
@@ -22,26 +23,38 @@ export default function MoreAICardsModal({
   const totalBv = useMemo(() => calculateTotalBurnValue(cards), [cards]);
 
   return (
-    <Modal modalOverModal={modalOverModal} onHide={onHide}>
-      <header>{`${moreAICardsModalTitle} (total burn value: ${addCommasToNumber(
-        totalBv
-      )} XP)`}</header>
-      <main>
-        <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
-          {cards.map((card) => (
-            <CardItem
-              key={card.id}
-              card={card}
-              onClick={() => onSetAICardModalCardId?.(card.id)}
-            />
-          ))}
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+    <Modal
+      isOpen
+      onClose={onHide}
+      modalLevel={modalOverModal ? 2 : undefined}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>{`${moreAICardsModalTitle} (total burn value: ${addCommasToNumber(
+          totalBv
+        )} XP)`}</header>
+        <main>
+          <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
+            {cards.map((card) => (
+              <CardItem
+                key={card.id}
+                card={card}
+                onClick={() => onSetAICardModalCardId?.(card.id)}
+              />
+            ))}
+          </div>
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

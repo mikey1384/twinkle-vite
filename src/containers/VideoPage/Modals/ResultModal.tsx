@@ -1,5 +1,5 @@
 import React from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 
@@ -16,7 +16,7 @@ export default function ResultModal({
   const perfect = number === totalQuestions;
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       title="Your Results"
@@ -41,6 +41,6 @@ export default function ResultModal({
         <p>{`You've correctly answered ${number} out of ${totalQuestions} question(s).`}</p>
         {perfect && <p style={{ marginTop: '0.5rem' }}>Perfect :)</p>}
       </div>
-    </NewModal>
+    </Modal>
   );
 }

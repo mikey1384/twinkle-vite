@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import CheckListGroup from '~/components/CheckListGroup';
@@ -98,119 +99,121 @@ export default function SelectFeaturedPlaylists({
     : searchLoadMoreButton;
 
   return (
-    <Modal onHide={onHide}>
-      <header>Select up to 5 playlists</header>
-      <main style={{ paddingTop: 0 }}>
-        {selectedPlaylists.length > 5 && (
-          <Banner>Please limit your selection to 5 playlists</Banner>
-        )}
-        <FilterBar>
-          <nav
-            className={selectTabActive ? 'active' : ''}
-            onClick={() => setSelectTabActive(true)}
-            style={{ cursor: 'pointer' }}
-          >
-            Select
-          </nav>
-          <nav
-            className={selectTabActive ? '' : 'active'}
-            onClick={() => setSelectTabActive(false)}
-            style={{ cursor: 'pointer' }}
-          >
-            Selected
-          </nav>
-        </FilterBar>
-        <div style={{ marginTop: '1rem', width: '100%' }}>
-          {selectTabActive && (
-            <>
-              <SearchInput
-                autoFocus
-                placeholder="Search for playlists to feature..."
-                value={searchText}
-                onChange={handleSearch}
-              />
-              {searching ? (
-                <Loading />
-              ) : (
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Select up to 5 playlists</header>
+        <main style={{ paddingTop: 0 }}>
+          {selectedPlaylists.length > 5 && (
+            <Banner>Please limit your selection to 5 playlists</Banner>
+          )}
+          <FilterBar>
+            <nav
+              className={selectTabActive ? 'active' : ''}
+              onClick={() => setSelectTabActive(true)}
+              style={{ cursor: 'pointer' }}
+            >
+              Select
+            </nav>
+            <nav
+              className={selectTabActive ? '' : 'active'}
+              onClick={() => setSelectTabActive(false)}
+              style={{ cursor: 'pointer' }}
+            >
+              Selected
+            </nav>
+          </FilterBar>
+          <div style={{ marginTop: '1rem', width: '100%' }}>
+            {selectTabActive && (
+              <>
+                <SearchInput
+                  autoFocus
+                  placeholder="Search for playlists to feature..."
+                  value={searchText}
+                  onChange={handleSearch}
+                />
+                {searching ? (
+                  <Loading />
+                ) : (
+                  <CheckListGroup
+                    style={{ marginTop: '1rem' }}
+                    inputType="checkbox"
+                    onSelect={handleSelect}
+                    listItems={renderListItems()}
+                  />
+                )}
+                {displayedLoadMoreButton && !searching && (
+                  <LoadMoreButton
+                    style={{ marginTop: '2rem', width: '100%' }}
+                    variant="ghost"
+                    onClick={() => handleLoadMore(lastPlaylistId)}
+                    loading={loadingMore}
+                  />
+                )}
+                {playlistsToPin.length === 0 && (
+                  <p
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '10rem',
+                      fontWeight: 'bold',
+                      fontSize: '2.5rem',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    No Playlists
+                  </p>
+                )}
+              </>
+            )}
+            {!selectTabActive && (
+              <>
                 <CheckListGroup
-                  style={{ marginTop: '1rem' }}
                   inputType="checkbox"
-                  onSelect={handleSelect}
-                  listItems={renderListItems()}
+                  onSelect={handleDeselect}
+                  listItems={selectedPlaylists.map((playlistId) => ({
+                    label: playlistObjectsRef.current[playlistId],
+                    checked: true
+                  }))}
                 />
-              )}
-              {displayedLoadMoreButton && !searching && (
-                <LoadMoreButton
-                  style={{ marginTop: '2rem', width: '100%' }}
-                  variant="ghost"
-                  onClick={() => handleLoadMore(lastPlaylistId)}
-                  loading={loadingMore}
-                />
-              )}
-              {playlistsToPin.length === 0 && (
-                <p
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '10rem',
-                    fontWeight: 'bold',
-                    fontSize: '2.5rem',
-                    justifyContent: 'center'
-                  }}
-                >
-                  No Playlists
-                </p>
-              )}
-            </>
-          )}
-          {!selectTabActive && (
-            <>
-              <CheckListGroup
-                inputType="checkbox"
-                onSelect={handleDeselect}
-                listItems={selectedPlaylists.map((playlistId) => ({
-                  label: playlistObjectsRef.current[playlistId],
-                  checked: true
-                }))}
-              />
-              {selectedPlaylists.length === 0 && (
-                <p
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '10rem',
-                    fontWeight: 'bold',
-                    fontSize: '2.5rem',
-                    justifyContent: 'center'
-                  }}
-                >
-                  No Playlists Selected
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Cancel
-        </Button>
-        <Button
-          color={doneColor}
-          onClick={handleSubmit}
-          disabled={
-            isEqual(selectedPlaylists, initialSelectedPlaylists) ||
-            selectedPlaylists.length > 5
-          }
-          loading={uploading}
-        >
-          Done
-        </Button>
-      </footer>
+                {selectedPlaylists.length === 0 && (
+                  <p
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '10rem',
+                      fontWeight: 'bold',
+                      fontSize: '2.5rem',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    No Playlists Selected
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            color={doneColor}
+            onClick={handleSubmit}
+            disabled={
+              isEqual(selectedPlaylists, initialSelectedPlaylists) ||
+              selectedPlaylists.length > 5
+            }
+            loading={uploading}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

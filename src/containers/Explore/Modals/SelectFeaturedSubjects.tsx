@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import ContentListItem from '~/components/ContentListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Loading from '~/components/Loading';
@@ -103,132 +104,141 @@ export default function SelectFeaturedSubjectsModal({
   );
 
   return (
-    <Modal wrapped large onHide={onHide}>
-      <header>Select Featured Subjects</header>
-      <main>
-        <FilterBar style={{ marginBottom: '1.5rem' }}>
-          <nav
-            className={selectTabActive ? 'active' : ''}
-            onClick={() => setSelectTabActive(true)}
-          >
-            Select
-          </nav>
-          <nav
-            className={!selectTabActive ? 'active' : ''}
-            onClick={() => setSelectTabActive(false)}
-          >
-            Selected
-          </nav>
-        </FilterBar>
-        {selectTabActive && (
-          <SearchInput
-            autoFocus
-            placeholder="Search for subjects to feature..."
-            value={searchText}
-            onChange={handleSearch}
-            style={{ marginBottom: '1.5rem' }}
-          />
-        )}
-        {loaded ? (
-          <>
-            {selectTabActive &&
-              (searching ? (
-                <Loading />
-              ) : displayedSubjects.length === 0 ? (
-                <p
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '10rem',
-                    fontWeight: 'bold',
-                    fontSize: '2.5rem',
-                    justifyContent: 'center'
-                  }}
-                >
-                  No Subjects{stringIsEmpty(searchText) ? '' : ' Found'}
-                </p>
-              ) : (
-                displayedSubjects.map((subjectId) => (
-                  <ContentListItem
-                    selectable
-                    modalOverModal
-                    selected={selected.includes(subjectId)}
-                    key={subjectId}
-                    style={{ width: '100%', marginBottom: '1rem' }}
-                    contentObj={subjectObj[subjectId]}
-                    onClick={() => handleSelect(subjectId)}
-                  />
-                ))
-              ))}
-            {!selectTabActive &&
-              (selected.length === 0 ? (
-                <p
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '10rem',
-                    fontWeight: 'bold',
-                    fontSize: '2.5rem',
-                    justifyContent: 'center'
-                  }}
-                >
-                  No Subjects Selected
-                </p>
-              ) : (
-                selected.map((selectedId, index) => (
-                  <ContentListItem
-                    selectable
-                    modalOverModal
-                    selected={selected.includes(selectedId)}
-                    key={selectedId}
+    <Modal
+      isOpen
+      size="xl"
+      onClose={onHide}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>Select Featured Subjects</header>
+        <main>
+          <FilterBar style={{ marginBottom: '1.5rem' }}>
+            <nav
+              className={selectTabActive ? 'active' : ''}
+              onClick={() => setSelectTabActive(true)}
+            >
+              Select
+            </nav>
+            <nav
+              className={!selectTabActive ? 'active' : ''}
+              onClick={() => setSelectTabActive(false)}
+            >
+              Selected
+            </nav>
+          </FilterBar>
+          {selectTabActive && (
+            <SearchInput
+              autoFocus
+              placeholder="Search for subjects to feature..."
+              value={searchText}
+              onChange={handleSearch}
+              style={{ marginBottom: '1.5rem' }}
+            />
+          )}
+          {loaded ? (
+            <>
+              {selectTabActive &&
+                (searching ? (
+                  <Loading />
+                ) : displayedSubjects.length === 0 ? (
+                  <p
                     style={{
-                      width: '100%',
-                      marginBottom: index !== selected.length - 1 ? '1rem' : 0
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '10rem',
+                      fontWeight: 'bold',
+                      fontSize: '2.5rem',
+                      justifyContent: 'center'
                     }}
-                    contentObj={subjectObj[selectedId]}
-                    onContentIsDeleted={(id) =>
-                      setSelected((selected) => {
-                        return selected.filter(
-                          (selectedId) => selectedId !== id
-                        );
-                      })
-                    }
-                    onClick={() => handleSelect(selectedId)}
-                  />
-                ))
-              ))}
-          </>
-        ) : (
-          <Loading />
-        )}
-        {!searching && displayedLoadMoreButton && selectTabActive && (
-          <LoadMoreButton
-            style={{ fontSize: '2rem' }}
+                  >
+                    No Subjects{stringIsEmpty(searchText) ? '' : ' Found'}
+                  </p>
+                ) : (
+                  displayedSubjects.map((subjectId) => (
+                    <ContentListItem
+                      selectable
+                      modalOverModal
+                      selected={selected.includes(subjectId)}
+                      key={subjectId}
+                      style={{ width: '100%', marginBottom: '1rem' }}
+                      contentObj={subjectObj[subjectId]}
+                      onClick={() => handleSelect(subjectId)}
+                    />
+                  ))
+                ))}
+              {!selectTabActive &&
+                (selected.length === 0 ? (
+                  <p
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      height: '10rem',
+                      fontWeight: 'bold',
+                      fontSize: '2.5rem',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    No Subjects Selected
+                  </p>
+                ) : (
+                  selected.map((selectedId, index) => (
+                    <ContentListItem
+                      selectable
+                      modalOverModal
+                      selected={selected.includes(selectedId)}
+                      key={selectedId}
+                      style={{
+                        width: '100%',
+                        marginBottom: index !== selected.length - 1 ? '1rem' : 0
+                      }}
+                      contentObj={subjectObj[selectedId]}
+                      onContentIsDeleted={(id) =>
+                        setSelected((selected) => {
+                          return selected.filter(
+                            (selectedId) => selectedId !== id
+                          );
+                        })
+                      }
+                      onClick={() => handleSelect(selectedId)}
+                    />
+                  ))
+                ))}
+            </>
+          ) : (
+            <Loading />
+          )}
+          {!searching && displayedLoadMoreButton && selectTabActive && (
+            <LoadMoreButton
+              style={{ fontSize: '2rem' }}
+              variant="ghost"
+              loading={loadingMore}
+              onClick={handleLoadMore}
+            />
+          )}
+        </main>
+        <footer>
+          <Button
             variant="ghost"
-            loading={loadingMore}
-            onClick={handleLoadMore}
-          />
-        )}
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Cancel
-        </Button>
-        <Button
-          disabled={selected.length > MAX_SUBJECTS}
-          loading={submitting}
-          color={doneColor}
-          onClick={handleSubmit}
-        >
-          {selected.length > MAX_SUBJECTS
-            ? `Cannot select more than ${MAX_SUBJECTS}`
-            : 'Done'}
-        </Button>
-      </footer>
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={selected.length > MAX_SUBJECTS}
+            loading={submitting}
+            color={doneColor}
+            onClick={handleSubmit}
+          >
+            {selected.length > MAX_SUBJECTS
+              ? `Cannot select more than ${MAX_SUBJECTS}`
+              : 'Done'}
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

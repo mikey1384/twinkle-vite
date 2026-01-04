@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Loading from '~/components/Loading';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import DonorListItem from '~/components/DonorListItem';
 import RoundList from '~/components/RoundList';
 import Icon from '~/components/Icon';
@@ -101,7 +101,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
   }, [activeTab]);
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       allowOverflow
@@ -509,6 +509,6 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
           </div>
         </div>
       )}
-    </NewModal>
+    </Modal>
   );
 }

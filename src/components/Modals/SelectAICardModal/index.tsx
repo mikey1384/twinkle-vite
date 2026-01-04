@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import FilterPanel from './FilterPanel';
 import FilterBar from '~/components/FilterBar';
@@ -132,7 +132,7 @@ export default function SelectAICardModal({
     : 'Done';
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={onHide}
       size="xl"
@@ -241,6 +241,6 @@ export default function SelectAICardModal({
         )}
         <div style={{ height: '2rem' }} />
       </div>
-    </NewModal>
+    </Modal>
   );
 }

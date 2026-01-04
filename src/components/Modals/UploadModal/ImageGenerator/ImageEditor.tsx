@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import DrawingTools from './DrawingTools';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 
@@ -346,7 +346,7 @@ export default function ImageEditor({
 
   return (
     <>
-      <NewModal
+      <Modal
         isOpen={true}
         onClose={handleCancel}
         title="Edit Image"
@@ -481,7 +481,7 @@ export default function ImageEditor({
 
         <canvas ref={originalCanvasRef} style={{ display: 'none' }} />
         <canvas ref={drawingCanvasRef} style={{ display: 'none' }} />
-      </NewModal>
+      </Modal>
       {confirmModalShown && (
         <ConfirmModal
           modalOverModal

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectAICardModal from '../../../../components/Modals/SelectAICardModal';
 import SelectGroupsModal from './SelectGroupsModal';
@@ -180,7 +180,7 @@ export default function TransactionModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TransactionModal">
-      <NewModal
+      <Modal
         isOpen
         ref={ModalRef as any}
         onClose={isAICardModalShown || dropdownShown ? () => {} : onHide}
@@ -293,7 +293,7 @@ export default function TransactionModal({
             groupObjs={groupObjs}
           />
         )}
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 

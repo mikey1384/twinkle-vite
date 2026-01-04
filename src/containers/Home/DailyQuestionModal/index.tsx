@@ -1,12 +1,12 @@
 import React from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import DailyQuestionPanel from './DailyQuestionPanel';
 
 export default function DailyQuestionModal({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Home/DailyQuestionModal">
-      <NewModal
+      <Modal
         isOpen={true}
         allowOverflow
         onClose={onHide}
@@ -16,7 +16,7 @@ export default function DailyQuestionModal({ onHide }: { onHide: () => void }) {
         modalLevel={0}
       >
         <DailyQuestionPanel onClose={onHide} />
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 }

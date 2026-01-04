@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Game from './Game';
 import OverviewModal from './OverviewModal';
@@ -211,7 +211,7 @@ export default function WordleModal({
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/WordleModal">
-      <NewModal
+      <Modal
         isOpen={true}
         onClose={onHide}
         hasHeader={false}
@@ -313,7 +313,7 @@ export default function WordleModal({
             onHide={() => setOverviewModalShown(false)}
           />
         )}
-      </NewModal>
+      </Modal>
     </ErrorBoundary>
   );
 

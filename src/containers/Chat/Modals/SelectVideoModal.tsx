@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import SelectUploadsForm from '~/components/Forms/SelectUploadsForm';
 import SearchInput from '~/components/Texts/SearchInput';
@@ -58,7 +58,7 @@ export default function SelectVideoModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <NewModal
+    <Modal
       isOpen={isOpen}
       onClose={onHide}
       title="Attach a Video"
@@ -114,7 +114,7 @@ export default function SelectVideoModal({
           loadMoreUploads={loadMoreUploads}
         />
       </div>
-    </NewModal>
+    </Modal>
   );
 
   async function loadMoreUploads() {

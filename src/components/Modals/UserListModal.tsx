@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import RoundList from '~/components/RoundList';
 import Icon from '~/components/Icon';
@@ -62,97 +63,106 @@ export default function UserListModal({
   }, [userId, users]);
 
   return (
-    <Modal modalOverModal={modalOverModal} small onHide={onHide}>
-      <header>{title}</header>
-      <main style={{ paddingTop: 0 }}>
-        <RoundList>
-          {loading ? (
-            <Loading />
-          ) : (
-            allUsers.map((user) => {
-              const userStatusDisplayed =
-                typeof descriptionShown === 'function'
-                  ? descriptionShown(user)
-                  : user.id === userId;
-              return (
-                <nav
-                  key={user.id}
-                  style={{
-                    background: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div>
-                      <ProfilePic
-                        style={{
-                          width: '3rem',
-                          cursor: 'pointer'
-                        }}
-                        userId={user.id}
-                        profilePicUrl={user.profilePicUrl}
-                        online={
-                          chatStatus[user.id]?.isAway ||
-                          chatStatus[user.id]?.isOnline ||
-                          chatStatus[user.id]?.isBusy
-                        }
-                        onClick={() => navigate(`/users/${user.username}`)}
-                        statusShown
-                      />
+    <Modal
+      isOpen
+      size="sm"
+      onClose={onHide}
+      modalLevel={modalOverModal ? 2 : undefined}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>{title}</header>
+        <main style={{ paddingTop: 0 }}>
+          <RoundList>
+            {loading ? (
+              <Loading />
+            ) : (
+              allUsers.map((user) => {
+                const userStatusDisplayed =
+                  typeof descriptionShown === 'function'
+                    ? descriptionShown(user)
+                    : user.id === userId;
+                return (
+                  <nav
+                    key={user.id}
+                    style={{
+                      background: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div>
+                        <ProfilePic
+                          style={{
+                            width: '3rem',
+                            cursor: 'pointer'
+                          }}
+                          userId={user.id}
+                          profilePicUrl={user.profilePicUrl}
+                          online={
+                            chatStatus[user.id]?.isAway ||
+                            chatStatus[user.id]?.isOnline ||
+                            chatStatus[user.id]?.isBusy
+                          }
+                          onClick={() => navigate(`/users/${user.username}`)}
+                          statusShown
+                        />
+                      </div>
+                      <div style={{ marginLeft: '1rem' }}>
+                        <b>{user.username}</b>{' '}
+                        <span
+                          style={{
+                            color: descriptionColor,
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          {userStatusDisplayed ? description : null}
+                        </span>
+                      </div>
                     </div>
-                    <div style={{ marginLeft: '1rem' }}>
-                      <b>{user.username}</b>{' '}
-                      <span
-                        style={{
-                          color: descriptionColor,
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        {userStatusDisplayed ? description : null}
-                      </span>
-                    </div>
-                  </div>
-                  {userId && user.id !== userId && (
-                    <div style={{ display: 'flex' }}>
-                      <Button
-                        color="logoBlue"
-                        variant="solid"
-                        style={{ fontSize: '1.5rem', marginRight: '1rem' }}
-                        onClick={() => navigate(`/users/${user.username}`)}
-                      >
-                        <Icon icon="user" />
-                      </Button>
-                      <Button
-                        color="green"
-                        variant="solid"
-                        style={{ fontSize: '1.5rem' }}
-                        onClick={() => handleTalkClick(user)}
-                      >
-                        <Icon icon="comments" />
-                      </Button>
-                    </div>
-                  )}
-                </nav>
-              );
-            })
-          )}
-          {loadMoreButtonShown && (
-            <LoadMoreButton
-              style={{ marginTop: '1.5rem' }}
-              filled
-              loading={loadingMore}
-              onClick={onLoadMore}
-            />
-          )}
-        </RoundList>
-      </main>
-      <footer>
-        <Button variant="ghost" onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+                    {userId && user.id !== userId && (
+                      <div style={{ display: 'flex' }}>
+                        <Button
+                          color="logoBlue"
+                          variant="solid"
+                          style={{ fontSize: '1.5rem', marginRight: '1rem' }}
+                          onClick={() => navigate(`/users/${user.username}`)}
+                        >
+                          <Icon icon="user" />
+                        </Button>
+                        <Button
+                          color="green"
+                          variant="solid"
+                          style={{ fontSize: '1.5rem' }}
+                          onClick={() => handleTalkClick(user)}
+                        >
+                          <Icon icon="comments" />
+                        </Button>
+                      </div>
+                    )}
+                  </nav>
+                );
+              })
+            )}
+            {loadMoreButtonShown && (
+              <LoadMoreButton
+                style={{ marginTop: '1.5rem' }}
+                filled
+                loading={loadingMore}
+                onClick={onLoadMore}
+              />
+            )}
+          </RoundList>
+        </main>
+        <footer>
+          <Button variant="ghost" onClick={onHide}>
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

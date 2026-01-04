@@ -68,6 +68,6 @@ const strikePaneCls = css`
   min-width: 0;
 
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.6rem 0.5rem;
+    padding: 0.6rem 0.8rem;
   }
 `;

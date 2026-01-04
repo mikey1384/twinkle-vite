@@ -86,7 +86,7 @@ export default function Definition({
           `}
         >
           <div
-            onClick={() => {
+          onClick={() => {
               if (canHit || isNewWord) return;
               setWordModalShown(true);
             }}

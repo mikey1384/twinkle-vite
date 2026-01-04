@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import { css } from '@emotion/css';
 import { isSupermod } from '~/helpers';
@@ -210,34 +211,40 @@ export default function KarmaExplanationModal({
   ]);
 
   return (
-    <Modal onHide={onHide}>
-      <header>Your Karma Points</header>
-      <main>
-        <div
-          className={css`
-            font-size: 1.7rem;
-          `}
-        >
-          {displayedTitle && (
-            <p
-              className={css`
-                font-size: 2rem;
-                font-weight: bold;
-                margin-bottom: 1rem;
-              `}
-            >
-              {displayedTitle}
-            </p>
-          )}
-          {instructionText}
-          {calculationText}
-        </div>
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Close
-        </Button>
-      </footer>
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Your Karma Points</header>
+        <main>
+          <div
+            className={css`
+              font-size: 1.7rem;
+            `}
+          >
+            {displayedTitle && (
+              <p
+                className={css`
+                  font-size: 2rem;
+                  font-weight: bold;
+                  margin-bottom: 1rem;
+                `}
+              >
+                {displayedTitle}
+              </p>
+            )}
+            {instructionText}
+            {calculationText}
+          </div>
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

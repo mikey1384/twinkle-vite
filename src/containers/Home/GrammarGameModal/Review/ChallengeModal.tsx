@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
@@ -59,7 +59,7 @@ export default function ChallengeModal({
   });
 
   return (
-    <NewModal
+    <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={accepted ? 'Challenge Accepted!' : 'Challenge Question'}
@@ -135,7 +135,7 @@ export default function ChallengeModal({
           question and reward you with 50,000 coins.
         </div>
       )}
-    </NewModal>
+    </Modal>
   );
 
   async function handleChallenge() {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SearchBar from './SearchBar';
 import FilterBar from '~/components/FilterBar';
@@ -106,79 +107,95 @@ export default function SelectGroupsModal({
   }
 
   return (
-    <Modal large wrapped modalOverModal onHide={onHide}>
-      <header>{headerLabel}</header>
-      <main>
-        <SearchBar
-          placeholder="Search Groups..."
-          search={searchText}
-          onChange={handleSearch}
-        />
-        <FilterBar style={{ marginBottom: '2rem' }}>
-          <nav
-            className={isSelectedTab ? '' : 'active'}
-            onClick={() => setIsSelectedTab(false)}
+    <Modal
+      isOpen
+      size="xl"
+      onClose={onHide}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
+    >
+      <LegacyModalLayout wrapped>
+        <header>{headerLabel}</header>
+        <main>
+          <SearchBar
+            placeholder="Search Groups..."
+            search={searchText}
+            onChange={handleSearch}
+          />
+          <FilterBar style={{ marginBottom: '2rem' }}>
+            <nav
+              className={isSelectedTab ? '' : 'active'}
+              onClick={() => setIsSelectedTab(false)}
+            >
+              {isSearched ? 'Searched' : 'All'}
+            </nav>
+            <nav
+              className={isSelectedTab ? 'active' : ''}
+              onClick={() => setIsSelectedTab(true)}
+            >
+              Selected
+              {selectedGroupIds.length > 0
+                ? ` (${selectedGroupIds.length})`
+                : ''}
+            </nav>
+          </FilterBar>
+          {isSelectedTab ? (
+            <Selected
+              groups={groups}
+              selectedGroupIds={selectedGroupIds}
+              onSetSelectedGroupIds={setSelectedGroupIds}
+            />
+          ) : isSearched ? (
+            <Searched
+              searchQuery={searchText}
+              searchGroupsForTrade={searchGroupsForTrade}
+              loadMoreShown={searchLoadMoreShown}
+              onSetLoadMoreShown={setSearchLoadMoreShown}
+              selectedGroupIds={selectedGroupIds}
+              onSetSelectedGroupIds={setSelectedGroupIds}
+              type={type}
+              partnerId={partner.id}
+              groupObjs={groupObjs}
+              searchedGroups={searchedGroups}
+              setSearchedGroups={setSearchedGroups}
+              searching={searching}
+            />
+          ) : (
+            <Main
+              groups={groups}
+              loading={loading}
+              loadMoreShown={loadMoreShown}
+              loadGroupsForTrade={loadGroupsForTrade}
+              onSetGroups={setGroups}
+              onSetLoadMoreShown={setLoadMoreShown}
+              selectedGroupIds={selectedGroupIds}
+              onSetSelectedGroupIds={setSelectedGroupIds}
+              successColor={successColor}
+              type={type}
+              partnerName={partner?.username}
+              partnerId={partner?.id}
+            />
+          )}
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
           >
-            {isSearched ? 'Searched' : 'All'}
-          </nav>
-          <nav
-            className={isSelectedTab ? 'active' : ''}
-            onClick={() => setIsSelectedTab(true)}
+            Cancel
+          </Button>
+          <Button
+            disabled={selectedGroupIds.length === 0}
+            color={doneColor}
+            onClick={() => onSelectDone(selectedGroupIds)}
           >
-            Selected
-            {selectedGroupIds.length > 0 ? ` (${selectedGroupIds.length})` : ''}
-          </nav>
-        </FilterBar>
-        {isSelectedTab ? (
-          <Selected
-            groups={groups}
-            selectedGroupIds={selectedGroupIds}
-            onSetSelectedGroupIds={setSelectedGroupIds}
-          />
-        ) : isSearched ? (
-          <Searched
-            searchQuery={searchText}
-            searchGroupsForTrade={searchGroupsForTrade}
-            loadMoreShown={searchLoadMoreShown}
-            onSetLoadMoreShown={setSearchLoadMoreShown}
-            selectedGroupIds={selectedGroupIds}
-            onSetSelectedGroupIds={setSelectedGroupIds}
-            type={type}
-            partnerId={partner.id}
-            groupObjs={groupObjs}
-            searchedGroups={searchedGroups}
-            setSearchedGroups={setSearchedGroups}
-            searching={searching}
-          />
-        ) : (
-          <Main
-            groups={groups}
-            loading={loading}
-            loadMoreShown={loadMoreShown}
-            loadGroupsForTrade={loadGroupsForTrade}
-            onSetGroups={setGroups}
-            onSetLoadMoreShown={setLoadMoreShown}
-            selectedGroupIds={selectedGroupIds}
-            onSetSelectedGroupIds={setSelectedGroupIds}
-            successColor={successColor}
-            type={type}
-            partnerName={partner?.username}
-            partnerId={partner?.id}
-          />
-        )}
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          disabled={selectedGroupIds.length === 0}
-          color={doneColor}
-          onClick={() => onSelectDone(selectedGroupIds)}
-        >
-          Done
-        </Button>
-      </footer>
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 }

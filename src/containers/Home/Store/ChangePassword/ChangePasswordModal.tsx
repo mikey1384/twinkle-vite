@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
-import Input from '~/components/Texts/Input';import VerificationEmailSendModal from './VerificationEmailSendModal';
+import Input from '~/components/Texts/Input';
+import VerificationEmailSendModal from './VerificationEmailSendModal';
 import { css } from '@emotion/css';
 import { isValidPassword, stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
@@ -13,7 +15,8 @@ const enterCurrentPasswordLabel = 'Enter your current password';
 const enterNewPasswordLabel = 'Enter a new password';
 const iForgotMyPasswordLabel = 'I forgot my password';
 const newPasswordLabel = 'New Password';
-const passwordsNeedToBeAtLeastLabel = 'Passwords need to be at least 5 characters long';
+const passwordsNeedToBeAtLeastLabel =
+  'Passwords need to be at least 5 characters long';
 const incorrectPasswordLabel = 'Incorrect password';
 const retypeNewPasswordLabel = 'Retype new password';
 const retypePasswordDoesNotMatchLabel = 'The passwords do not match';
@@ -119,145 +122,163 @@ export default function ChangePasswordModal({
   }, [retypeNewPassword, retypePasswordMatches]);
 
   return (
-    <Modal closeWhenClickedOutside={false} small onHide={onHide}>
-      <header>Change Your Password</header>
-      <main>
-        <div
-          className={css`
-            label {
-              font-weight: bold;
-            }
-            span {
-              font-size: 1.3rem;
-            }
-          `}
-          style={{ width: '100%' }}
-        >
-          <div>
-            <label>{currentPasswordLabel}</label>
-            <Input
-              name="current-password"
-              value={currentPassword}
-              style={{ marginTop: '0.5rem' }}
-              onChange={(text) => {
-                setErrorMsgObj((obj) => ({
-                  ...obj,
-                  currentPassword: ''
-                }));
-                setCurrentPassword(text);
-              }}
-              placeholder={enterCurrentPasswordLabel}
-              type="password"
-              hasError={!!errorMsgObj.currentPassword}
-              onKeyPress={async (event: any) => {
-                if (event.key === 'Enter' && !stringIsEmpty(currentPassword)) {
-                  await handleVerifyCurrentPassword();
-                }
-              }}
-            />
-            {errorMsgObj.currentPassword ? (
-              <span style={{ color: 'red', marginTop: '0.5rem' }}>
-                {errorMsgObj.currentPassword}
-              </span>
-            ) : null}
-            <div
-              style={{
-                marginTop: '0.5rem',
-                display: 'flex',
-                justifyContent: 'flex-end'
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  color: linkColor
+    <Modal
+      isOpen
+      size="sm"
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      hasHeader={false}
+      bodyPadding={0}
+    >
+      <LegacyModalLayout>
+        <header>Change Your Password</header>
+        <main>
+          <div
+            className={css`
+              label {
+                font-weight: bold;
+              }
+              span {
+                font-size: 1.3rem;
+              }
+            `}
+            style={{ width: '100%' }}
+          >
+            <div>
+              <label>{currentPasswordLabel}</label>
+              <Input
+                name="current-password"
+                value={currentPassword}
+                style={{ marginTop: '0.5rem' }}
+                onChange={(text) => {
+                  setErrorMsgObj((obj) => ({
+                    ...obj,
+                    currentPassword: ''
+                  }));
+                  setCurrentPassword(text);
                 }}
-                className={css`
-                  &:hover {
-                    text-decoration: underline;
+                placeholder={enterCurrentPasswordLabel}
+                type="password"
+                hasError={!!errorMsgObj.currentPassword}
+                onKeyPress={async (event: any) => {
+                  if (
+                    event.key === 'Enter' &&
+                    !stringIsEmpty(currentPassword)
+                  ) {
+                    await handleVerifyCurrentPassword();
                   }
-                `}
-                onClick={() => setVerificationEmailSendModalShown(true)}
+                }}
+              />
+              {errorMsgObj.currentPassword ? (
+                <span style={{ color: 'red', marginTop: '0.5rem' }}>
+                  {errorMsgObj.currentPassword}
+                </span>
+              ) : null}
+              <div
+                style={{
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  justifyContent: 'flex-end'
+                }}
               >
-                {iForgotMyPasswordLabel}...
-              </span>
-            </div>
-          </div>
-          {currentPasswordVerified && (
-            <>
-              <div style={{ marginTop: '2rem' }}>
-                <label>{newPasswordLabel}</label>
-                <Input
-                  name="new-password"
-                  value={newPassword}
-                  style={{ marginTop: '0.5rem' }}
-                  onChange={(text) => {
-                    setErrorMsgObj((obj) => ({
-                      ...obj,
-                      newPassword: ''
-                    }));
-                    setNewPassword(text);
+                <span
+                  style={{
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    color: linkColor
                   }}
-                  placeholder={enterNewPasswordLabel}
-                  type="password"
-                  hasError={!!errorMsgObj.newPassword}
-                />
-                {errorMsgObj.newPassword ? (
-                  <span style={{ color: 'red', marginTop: '0.5rem' }}>
-                    {errorMsgObj.newPassword}
-                  </span>
-                ) : null}
+                  className={css`
+                    &:hover {
+                      text-decoration: underline;
+                    }
+                  `}
+                  onClick={() => setVerificationEmailSendModalShown(true)}
+                >
+                  {iForgotMyPasswordLabel}...
+                </span>
               </div>
-              {passwordIsValid && (
-                <div style={{ marginTop: '1.5rem' }}>
-                  <label>{retypeNewPasswordLabel}</label>
+            </div>
+            {currentPasswordVerified && (
+              <>
+                <div style={{ marginTop: '2rem' }}>
+                  <label>{newPasswordLabel}</label>
                   <Input
-                    name="retype-new-password"
-                    value={retypeNewPassword}
+                    name="new-password"
+                    value={newPassword}
                     style={{ marginTop: '0.5rem' }}
                     onChange={(text) => {
                       setErrorMsgObj((obj) => ({
                         ...obj,
-                        retypeNewPassword: ''
+                        newPassword: ''
                       }));
-                      setRetypeNewPassword(text);
+                      setNewPassword(text);
                     }}
-                    placeholder={retypeNewPasswordLabel}
+                    placeholder={enterNewPasswordLabel}
                     type="password"
-                    hasError={!!errorMsgObj.retypeNewPassword}
+                    hasError={!!errorMsgObj.newPassword}
                   />
-                  {errorMsgObj.retypeNewPassword ? (
+                  {errorMsgObj.newPassword ? (
                     <span style={{ color: 'red', marginTop: '0.5rem' }}>
-                      {errorMsgObj.retypeNewPassword}
+                      {errorMsgObj.newPassword}
                     </span>
                   ) : null}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </main>
-      <footer>
-        <Button onClick={onHide} variant="ghost">
-          Close
-        </Button>
-        <Button
-          style={{ marginLeft: '1rem' }}
-          color={success ? 'green' : doneColorKey}
-          onClick={
-            currentPasswordVerified ? handleSubmit : handleVerifyCurrentPassword
-          }
-          disabled={submitDisabled}
-        >
-          {success ? 'Success!' : currentPasswordVerified ? 'Change' : 'Verify'}
-        </Button>
-      </footer>
-      {verificationEmailSendModalShown && (
-        <VerificationEmailSendModal
-          onHide={() => setVerificationEmailSendModalShown(false)}
-        />
-      )}
+                {passwordIsValid && (
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <label>{retypeNewPasswordLabel}</label>
+                    <Input
+                      name="retype-new-password"
+                      value={retypeNewPassword}
+                      style={{ marginTop: '0.5rem' }}
+                      onChange={(text) => {
+                        setErrorMsgObj((obj) => ({
+                          ...obj,
+                          retypeNewPassword: ''
+                        }));
+                        setRetypeNewPassword(text);
+                      }}
+                      placeholder={retypeNewPasswordLabel}
+                      type="password"
+                      hasError={!!errorMsgObj.retypeNewPassword}
+                    />
+                    {errorMsgObj.retypeNewPassword ? (
+                      <span style={{ color: 'red', marginTop: '0.5rem' }}>
+                        {errorMsgObj.retypeNewPassword}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </main>
+        <footer>
+          <Button onClick={onHide} variant="ghost">
+            Close
+          </Button>
+          <Button
+            style={{ marginLeft: '1rem' }}
+            color={success ? 'green' : doneColorKey}
+            onClick={
+              currentPasswordVerified
+                ? handleSubmit
+                : handleVerifyCurrentPassword
+            }
+            disabled={submitDisabled}
+          >
+            {success
+              ? 'Success!'
+              : currentPasswordVerified
+              ? 'Change'
+              : 'Verify'}
+          </Button>
+        </footer>
+        {verificationEmailSendModalShown && (
+          <VerificationEmailSendModal
+            onHide={() => setVerificationEmailSendModalShown(false)}
+          />
+        )}
+      </LegacyModalLayout>
     </Modal>
   );
 

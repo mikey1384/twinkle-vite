@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SortableListGroup from '~/components/SortableListGroup';
 import { objectify } from '~/helpers';
@@ -31,32 +32,38 @@ export default function ReorderFeaturedPlaylists({
   const listItemObj = objectify(featuredPlaylists);
 
   return (
-    <Modal onHide={onHide}>
-      <header>Reorder Featured Playlists</header>
-      <main>
-        <SortableListGroup
-          listItemLabel="title"
-          listItemObj={listItemObj}
-          onMove={handleMove}
-          itemIds={playlistIds}
-        />
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          Cancel
-        </Button>
-        <Button
-          disabled={isEqual(
-            playlistIds,
-            featuredPlaylists.map((playlist: { id: number }) => playlist.id)
-          )}
-          loading={isSubmitting}
-          color={doneColor}
-          onClick={handleSubmit}
-        >
-          Done
-        </Button>
-      </footer>
+    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <LegacyModalLayout>
+        <header>Reorder Featured Playlists</header>
+        <main>
+          <SortableListGroup
+            listItemLabel="title"
+            listItemObj={listItemObj}
+            onMove={handleMove}
+            itemIds={playlistIds}
+          />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={isEqual(
+              playlistIds,
+              featuredPlaylists.map((playlist: { id: number }) => playlist.id)
+            )}
+            loading={isSubmitting}
+            color={doneColor}
+            onClick={handleSubmit}
+          >
+            Done
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

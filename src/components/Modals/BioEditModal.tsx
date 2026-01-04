@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Input from '~/components/Texts/Input';
 import { Color } from '~/constants/css';
@@ -60,7 +60,7 @@ export default function BioEditModal({
   );
 
   return (
-    <NewModal
+    <Modal
       isOpen={true}
       onClose={onHide}
       title="Edit Your Bio"
@@ -246,6 +246,6 @@ export default function BioEditModal({
           </div>
         </div>
       </div>
-    </NewModal>
+    </Modal>
   );
 }

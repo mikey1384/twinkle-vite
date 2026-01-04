@@ -83,6 +83,19 @@ export default function MissionActions(dispatch: Dispatch) {
         newState
       });
     },
+    onResetSystemPromptStateForUser({
+      missionId,
+      userId
+    }: {
+      missionId: number;
+      userId: number;
+    }) {
+      return dispatch({
+        type: 'RESET_SYSTEM_PROMPT_STATE_FOR_USER',
+        missionId,
+        userId
+      });
+    },
     onSetMissionAttempt({
       missionId,
       attempt

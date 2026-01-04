@@ -87,7 +87,7 @@ export default function EmptyDictionary({
             }
           `}
           onClick={() => setShowRoulette(true)}
-          disabled={wordMasterBlocked || twinkleCoins < 500}
+          disabled={twinkleCoins < 500}
         >
           Bonus Chance (<Icon icon={['far', 'badge-dollar']} /> 500)
         </button>

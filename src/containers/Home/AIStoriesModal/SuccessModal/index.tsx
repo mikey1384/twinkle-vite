@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import Modal from '~/components/Modal';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
 import SuccessText from './SuccessText';
 import GradientButton from '~/components/Buttons/GradientButton';
@@ -209,210 +210,220 @@ export default function SuccessModal({
 
   return (
     <Modal
-      modalOverModal
-      wrapped
-      closeWhenClickedOutside={false}
-      onHide={onHide}
+      isOpen
+      size="xl"
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
     >
-      <header>
-        {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
-      </header>
-      <main>
-        <SuccessText difficulty={difficulty} />
-        <div style={{ marginTop: '3.5rem' }}>
-          You answered {numQuestions} out of {numQuestions} question
-          {numQuestions === 1 ? '' : 's'} correctly!
-        </div>
-        <div
-          style={{
-            marginTop: '1rem',
-            marginBottom: '2rem',
-            fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
-          }}
-        >
-          You earned{' '}
-          <b style={{ color: Color[xpNumberColorKey]() }}>
-            {addCommasToNumber(
-              rewardTable[difficulty].xp * (isListening ? 2 : 1)
+      <LegacyModalLayout wrapped>
+        <header>
+          {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
+        </header>
+        <main>
+          <SuccessText difficulty={difficulty} />
+          <div style={{ marginTop: '3.5rem' }}>
+            You answered {numQuestions} out of {numQuestions} question
+            {numQuestions === 1 ? '' : 's'} correctly!
+          </div>
+          <div
+            style={{
+              marginTop: '1rem',
+              marginBottom: '2rem',
+              fontSize: difficulty > 3 ? '1.7rem' : '1.5rem'
+            }}
+          >
+            You earned{' '}
+            <b style={{ color: Color[xpNumberColorKey]() }}>
+              {addCommasToNumber(
+                rewardTable[difficulty].xp * (isListening ? 2 : 1)
+              )}
+            </b>{' '}
+            <b style={{ color: Color.gold() }}>XP</b> and{' '}
+            <b style={{ color: Color.brownOrange() }}>
+              {addCommasToNumber(
+                rewardTable[difficulty].coins * (isListening ? 2 : 1)
+              )}{' '}
+              coins
+            </b>
+          </div>
+          <div
+            style={{
+              marginTop: '2rem',
+              marginBottom: imageUrl ? '1rem' : 0,
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1.5rem'
+            }}
+          >
+            {(imageUrl || previewImageUrl) && (
+              <img
+                loading="lazy"
+                style={{
+                  width: '100%',
+                  maxHeight: '50vh',
+                  objectFit: 'contain',
+                  borderRadius: '12px'
+                }}
+                src={imageUrl || previewImageUrl}
+                alt="Generated Story Image"
+              />
             )}
-          </b>{' '}
-          <b style={{ color: Color.gold() }}>XP</b> and{' '}
-          <b style={{ color: Color.brownOrange() }}>
-            {addCommasToNumber(
-              rewardTable[difficulty].coins * (isListening ? 2 : 1)
-            )}{' '}
-            coins
-          </b>
-        </div>
-        <div
-          style={{
-            marginTop: '2rem',
-            marginBottom: imageUrl ? '1rem' : 0,
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.5rem'
-          }}
-        >
-          {(imageUrl || previewImageUrl) && (
-            <img
-              loading="lazy"
-              style={{
-                width: '100%',
-                maxHeight: '50vh',
-                objectFit: 'contain',
-                borderRadius: '12px'
-              }}
-              src={imageUrl || previewImageUrl}
-              alt="Generated Story Image"
-            />
-          )}
 
-          {!imageUrl && (
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              <div>
-                <Input
-                  hasError={!!inputError}
-                  placeholder="Enter Art Style..."
-                  onChange={handleChange}
-                  value={styleText}
-                />
-              </div>
-              {!inputError && (
+            {!imageUrl && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <Input
+                    hasError={!!inputError}
+                    placeholder="Enter Art Style..."
+                    onChange={handleChange}
+                    value={styleText}
+                  />
+                </div>
+                {!inputError && (
+                  <div
+                    style={{
+                      color: Color.darkGray(),
+                      fontSize: '1rem',
+                      marginTop: '0.5rem'
+                    }}
+                  >
+                    Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
+                  </div>
+                )}
+                {inputError && (
+                  <div
+                    style={{
+                      color: 'red',
+                      marginTop: '0.5rem'
+                    }}
+                  >
+                    {inputError}
+                  </div>
+                )}
+
+                {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+                {false && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginTop: '1rem'
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontWeight: 600,
+                        color: Color.darkerGray(),
+                        fontSize: '1rem'
+                      }}
+                    >
+                      Image Model
+                    </label>
+                    <select
+                      value={imageEngine}
+                      onChange={(e) =>
+                        handleEngineChange(
+                          e.target.value as 'gemini' | 'openai'
+                        )
+                      }
+                      disabled={generatingImage}
+                      style={{
+                        padding: '0.35rem 0.5rem',
+                        borderRadius: '8px',
+                        border: `1px solid ${Color.borderGray()}`,
+                        fontSize: '0.95rem'
+                      }}
+                    >
+                      <option value="gemini">Nano Banana Pro</option>
+                      <option value="openai">GPT Image-1</option>
+                    </select>
+                  </div>
+                )}
+
+                <GradientButton
+                  theme={colorHash[difficulty] || 'default'}
+                  loading={generatingImage}
+                  onClick={handleGenerateImage}
+                  fontSize="1.5rem"
+                  mobileFontSize="1.1rem"
+                  style={{ marginTop: '1.5rem' }}
+                  disabled={!canGenerateImage}
+                >
+                  <div>
+                    <div>{buttonLabel}</div>
+                    <div
+                      className={css`
+                        font-size: 1.1rem;
+                        margin-top: 0.5rem;
+                        @media (max-width: ${mobileMaxWidth}) {
+                          font-size: 1rem;
+                        }
+                      `}
+                    >
+                      ({imageGenerationCostText})
+                    </div>
+                  </div>
+                </GradientButton>
+
                 <div
                   style={{
                     color: Color.darkGray(),
                     fontSize: '1rem',
-                    marginTop: '0.5rem'
+                    marginTop: '0.5rem',
+                    textAlign: 'center'
                   }}
                 >
-                  Examples: Cartoon, Realistic, Watercolor, Sketch, etc.
-                </div>
-              )}
-              {inputError && (
-                <div
-                  style={{
-                    color: 'red',
-                    marginTop: '0.5rem'
-                  }}
-                >
-                  {inputError}
-                </div>
-              )}
-
-              {/* Engine selector hidden - hardcoded to image-1 (openai) */}
-              {false && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    marginTop: '1rem'
-                  }}
-                >
-                  <label
-                    style={{
-                      fontWeight: 600,
-                      color: Color.darkerGray(),
-                      fontSize: '1rem'
-                    }}
-                  >
-                    Image Model
-                  </label>
-                  <select
-                    value={imageEngine}
-                    onChange={(e) =>
-                      handleEngineChange(e.target.value as 'gemini' | 'openai')
-                    }
-                    disabled={generatingImage}
-                    style={{
-                      padding: '0.35rem 0.5rem',
-                      borderRadius: '8px',
-                      border: `1px solid ${Color.borderGray()}`,
-                      fontSize: '0.95rem'
-                    }}
-                  >
-                    <option value="gemini">Nano Banana Pro</option>
-                    <option value="openai">GPT Image-1</option>
-                  </select>
-                </div>
-              )}
-
-              <GradientButton
-                theme={colorHash[difficulty] || 'default'}
-                loading={generatingImage}
-                onClick={handleGenerateImage}
-                fontSize="1.5rem"
-                mobileFontSize="1.1rem"
-                style={{ marginTop: '1.5rem' }}
-                disabled={!canGenerateImage}
-              >
-                <div>
-                  <div>{buttonLabel}</div>
-                  <div
-                    className={css`
-                      font-size: 1.1rem;
-                      margin-top: 0.5rem;
-                      @media (max-width: ${mobileMaxWidth}) {
-                        font-size: 1rem;
-                      }
-                    `}
-                  >
-                    ({imageGenerationCostText})
+                  <div>
+                    {isListening ? (
+                      <>
+                        <div>
+                          Listening images are free for all 5 daily clears
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>First 3 image generations are free</div>
+                        <div>
+                          1,000 coins for 4th and subsequent generations
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    You generated {imageGeneratedCount} image
+                    {imageGeneratedCount === 1 ? '' : 's'} today
+                    {isListening ? ' for listening' : ' for reading'}
                   </div>
                 </div>
-              </GradientButton>
-
-              <div
-                style={{
-                  color: Color.darkGray(),
-                  fontSize: '1rem',
-                  marginTop: '0.5rem',
-                  textAlign: 'center'
-                }}
-              >
-                <div>
-                  {isListening ? (
-                    <>
-                      <div>
-                        Listening images are free for all 5 daily clears
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>First 3 image generations are free</div>
-                      <div>1,000 coins for 4th and subsequent generations</div>
-                    </>
-                  )}
-                </div>
-                <div style={{ marginTop: '0.5rem' }}>
-                  You generated {imageGeneratedCount} image
-                  {imageGeneratedCount === 1 ? '' : 's'} today
-                  {isListening ? ' for listening' : ' for reading'}
-                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
-      <footer>
-        <Button
-          variant="ghost"
-          style={{ marginRight: '0.7rem' }}
-          onClick={onHide}
-        >
-          Close
-        </Button>
-      </footer>
+            )}
+          </div>
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            Close
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

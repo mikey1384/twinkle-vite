@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import Modal from '~/components/Modal';
-import Button from '~/components/Button';import Details from './Details';
+import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
+import Button from '~/components/Button';
+import Details from './Details';
 import { useKeyContext } from '~/contexts';
 import { User } from '~/types';
 
@@ -123,35 +125,48 @@ export default function ConfirmTransactionModal({
 
   return (
     <Modal
-      wrapped
-      modalOverModal
-      closeWhenClickedOutside={false}
-      onHide={onHide}
+      isOpen
+      onClose={onHide}
+      closeOnBackdropClick={false}
+      modalLevel={2}
+      hasHeader={false}
+      bodyPadding={0}
+      allowOverflow
     >
-      <header>{title}</header>
-      <main>
-        <Details
-          coinsOffered={effectiveCoinOffered}
-          coinsWanted={effectiveCoinWanted}
-          cardIdsOffered={offeredCardIds}
-          cardIdsWanted={wantedCardIds}
-          groupIdsOffered={offeredGroupIds}
-          groupIdsWanted={wantedGroupIds}
-          isAICardModalShown={isAICardModalShown}
-          selectedOption={selectedOption}
-          partner={partner}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          groupObjs={groupObjs}
-        />
-      </main>
-      <footer>
-        <Button variant="ghost" style={{ marginRight: '0.7rem' }} onClick={onHide}>
-          {cancelLabel}
-        </Button>
-        <Button loading={submitting} color={doneColor} onClick={handleConfirm}>
-          {confirmLabel}
-        </Button>
-      </footer>
+      <LegacyModalLayout wrapped>
+        <header>{title}</header>
+        <main>
+          <Details
+            coinsOffered={effectiveCoinOffered}
+            coinsWanted={effectiveCoinWanted}
+            cardIdsOffered={offeredCardIds}
+            cardIdsWanted={wantedCardIds}
+            groupIdsOffered={offeredGroupIds}
+            groupIdsWanted={wantedGroupIds}
+            isAICardModalShown={isAICardModalShown}
+            selectedOption={selectedOption}
+            partner={partner}
+            onSetAICardModalCardId={onSetAICardModalCardId}
+            groupObjs={groupObjs}
+          />
+        </main>
+        <footer>
+          <Button
+            variant="ghost"
+            style={{ marginRight: '0.7rem' }}
+            onClick={onHide}
+          >
+            {cancelLabel}
+          </Button>
+          <Button
+            loading={submitting}
+            color={doneColor}
+            onClick={handleConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </footer>
+      </LegacyModalLayout>
     </Modal>
   );
 

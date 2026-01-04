@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import StartScreen from './StartScreen';
-import SelectAttachmentScreen from './SelectAttachmentScreen';import { useRoleColor } from '~/theme/useRoleColor';
+import SelectAttachmentScreen from './SelectAttachmentScreen';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const attachContentToSubjectLabel = 'Attach a content to your subject';
 const backLabel = 'Back';
@@ -47,7 +48,7 @@ export default function AttachContentModal({
   };
 
   return (
-    <NewModal
+    <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title={sectionObj[section].title}
@@ -100,6 +101,6 @@ export default function AttachContentModal({
           onDeselect={() => setSelected(undefined)}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 }

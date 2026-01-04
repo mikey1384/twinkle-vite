@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import UploadModalContent from './Content';
@@ -75,7 +75,7 @@ export default function UploadModal({
 
   return (
     <>
-      <NewModal
+      <Modal
         isOpen={isOpen}
         onClose={handleClose}
         title={getModalTitle()}
@@ -96,7 +96,7 @@ export default function UploadModal({
           onRegisterUseImageHandler={handleRegisterUseImageHandler}
           accept={accept || '*/*'}
         />
-      </NewModal>
+      </Modal>
       {confirmModalShown && (
         <ConfirmModal
           modalOverModal

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import NewModal from '~/components/NewModal';
+import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import FullTextReveal from '~/components/Texts/FullTextReveal';
@@ -43,7 +43,7 @@ export default function BuyTopicsModal({
   );
 
   return (
-    <NewModal
+    <Modal
       isOpen
       onClose={handleClose}
       title={`Purchase "Topics" Feature`}
@@ -156,7 +156,7 @@ export default function BuyTopicsModal({
           onConfirm={handlePurchaseTopic}
         />
       )}
-    </NewModal>
+    </Modal>
   );
 
   function handleClose() {
