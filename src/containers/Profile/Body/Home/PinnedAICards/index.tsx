@@ -84,14 +84,10 @@ export default function PinnedAICards({
       setDisplayedCardIds(cachedCardIds);
       return;
     }
-    setDisplayedCardIds(pinnedCardIds);
-  }, [
-    cachedCardIds,
-    cachedCardIdsKey,
-    hasCachedPinnedCards,
-    pinnedCardIds,
-    pinnedCardIdsKey
-  ]);
+    // Reset to empty when profile changes - wait for API validation
+    // This prevents showing previous profile's cards
+    setDisplayedCardIds([]);
+  }, [cachedCardIds, hasCachedPinnedCards, pinnedCardIdsKey, profile?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -124,11 +120,32 @@ export default function PinnedAICards({
           username: profile.username,
           cardIds: nextCardIds
         });
+        // Sync user state if backend cleaned up invalid cards
+        if (
+          Array.isArray(data?.cardIds) &&
+          data.cardIds.length !== pinnedCardIds.length
+        ) {
+          const nextState = {
+            ...(profile.state || {}),
+            profile: {
+              ...(profile.state?.profile || {}),
+              pinnedAICardIds: nextCardIds
+            }
+          };
+          onSetUserState({
+            userId: profile.id,
+            newState: { state: nextState }
+          });
+        }
         for (const card of data?.cards || []) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
       } catch (error) {
         console.error(error);
+        // Fallback to unvalidated IDs on error to avoid blank UI
+        if (isMounted && displayedCardIds.length === 0) {
+          setDisplayedCardIds(pinnedCardIds);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
