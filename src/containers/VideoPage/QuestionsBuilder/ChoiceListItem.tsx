@@ -54,7 +54,8 @@ export default function ChoiceListItem({
       ref={NavRef}
       style={{
         opacity,
-        cursor: !checkDisabled ? 'ns-resize' : ''
+        cursor: !checkDisabled ? 'ns-resize' : '',
+        touchAction: 'none'
       }}
       className="unselectable"
     >

@@ -47,7 +47,8 @@ export default function QuestionsListItem({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        cursor: 'ns-resize'
+        cursor: 'ns-resize',
+        touchAction: 'none'
       }}
     >
       <div>

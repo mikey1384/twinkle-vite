@@ -81,6 +81,7 @@ export default function SortableListItem({
           border-color 140ms ease,
           background 140ms ease;
         cursor: grab;
+        touch-action: none;
         @media (max-width: ${mobileMaxWidth}) {
           padding: 1.1rem 1.3rem;
         }

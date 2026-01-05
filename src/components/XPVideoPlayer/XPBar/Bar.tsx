@@ -31,7 +31,15 @@ export default function Bar({
   xpRewardAmount,
   coinRewardAmount
 }: BarProps) {
-  if (!userId || !rewardLevel) return null;
+  const shouldRender = Boolean(userId && rewardLevel);
+  const safeLevelColor = useMemo(
+    () => xpLevelColor || 'logoBlue',
+    [xpLevelColor]
+  );
+  const progressPct = useMemo(
+    () => Math.max(0, Math.min(100, started ? videoProgress : 0)),
+    [started, videoProgress]
+  );
 
   const trackCls = useMemo(
     () => css`
@@ -41,7 +49,7 @@ export default function Bar({
       border-radius: 9999px;
       position: relative;
       background: ${Color.white()};
-      border: 1px solid ${Color[xpLevelColor](0.28)};
+      border: 1px solid ${Color[safeLevelColor](0.28)};
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -54,7 +62,7 @@ export default function Bar({
         border-left: 0;
       }
     `,
-    [isChat, xpLevelColor]
+    [isChat, safeLevelColor]
   );
 
   const fillCls = useMemo(
@@ -63,12 +71,12 @@ export default function Bar({
       left: 0;
       top: 0;
       bottom: 0;
-      width: ${Math.max(0, Math.min(100, started ? videoProgress : 0))}%;
-      background: ${Color[xpLevelColor]()};
+      width: ${progressPct}%;
+      background: ${Color[safeLevelColor]()};
       border-radius: 9999px;
       transition: width 0.4s ease;
     `,
-    [started, videoProgress, xpLevelColor]
+    [progressPct, safeLevelColor]
   );
 
   const labelCls = useMemo(
@@ -119,6 +127,8 @@ export default function Bar({
     coinRewardAmount,
     continuingStatusShown
   ]);
+
+  if (!shouldRender) return null;
 
   return (
     <div className={trackCls}>

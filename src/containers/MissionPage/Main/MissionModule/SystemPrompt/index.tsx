@@ -104,8 +104,9 @@ export default function SystemPromptMission({
     [myAttempts, mission.id]
   );
 
+  const systemPromptStateJson = JSON.stringify(mission.systemPromptState || {});
   const systemPromptState: SystemPromptState = useMemo(() => {
-    const rawState = mission.systemPromptState || {};
+    const rawState = JSON.parse(systemPromptStateJson);
     const sanitizedMessages = Array.isArray(rawState.chatMessages)
       ? rawState.chatMessages.map(
           (message: any, index: number): ChatMessage => ({
@@ -126,7 +127,7 @@ export default function SystemPromptMission({
       chatMessages: sanitizedMessages,
       promptEverGenerated: !!rawState.promptEverGenerated
     };
-  }, [mission.systemPromptState]);
+  }, [systemPromptStateJson]);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const draftTimeoutRef = useRef<any>(null);

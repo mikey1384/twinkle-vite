@@ -68,18 +68,7 @@ export default function WordMasterStrikeMeter({
       className={`${wrapperCls} ${isPanel ? panelWrapperCls : ''}`}
       style={style}
     >
-      <div
-        className={`${cardCls} ${isPanel ? panelCardCls : ''} ${
-          isInteractive ? cardInteractiveCls : ''
-        }`}
-        role={isInteractive ? 'button' : undefined}
-        tabIndex={isInteractive ? 0 : undefined}
-        onClick={handleOpenBreaks}
-        onKeyDown={handleKeyDown}
-        aria-label={
-          isInteractive ? 'View word master break requirements' : undefined
-        }
-      >
+      <div className={`${cardCls} ${isPanel ? panelCardCls : ''}`}>
         <div className={`${headerCls} ${isPanel ? panelHeaderCls : ''}`}>
           {!isPanel && (
             <div className={`${titleCls} ${isPanel ? panelTitleCls : ''}`}>
@@ -152,15 +141,17 @@ export default function WordMasterStrikeMeter({
                 </div>
               </div>
               {isInteractive && (
-                <span
-                  data-action-hint
+                <button
+                  type="button"
                   className={`${actionHintCls} ${
                     isPanel ? panelActionHintCls : ''
                   }`}
+                  onClick={handleOpenBreaks}
+                  aria-label="View word master break requirements"
                 >
                   <span className={desktopOnlyCls}>View breaks</span>
                   <span className={mobileOnlyCls}>View</span>
-                </span>
+                </button>
               )}
             </div>
           </div>
@@ -177,14 +168,6 @@ export default function WordMasterStrikeMeter({
   function handleOpenBreaks() {
     if (!onOpenBreaks) return;
     onOpenBreaks();
-  }
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (!onOpenBreaks) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onOpenBreaks();
-    }
   }
 }
 
@@ -285,22 +268,6 @@ const panelCardCls = css`
 
   @media (max-width: ${mobileMaxWidth}) {
     gap: 0.45rem;
-  }
-`;
-
-const cardInteractiveCls = css`
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid ${Color.logoBlue(0.35)};
-    outline-offset: 2px;
-  }
-
-  @media (hover: hover) {
-    &:hover [data-action-hint] {
-      color: ${Color.white()};
-      text-shadow: 0 0 6px ${Color.lightOceanBlue(0.7)};
-    }
   }
 `;
 
@@ -509,10 +476,28 @@ const actionHintCls = css`
   color: ${Color.logoBlue()};
   font-weight: 700;
   transition: color 0.2s ease, text-shadow 0.2s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: ${Color.darkBlue()};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${Color.logoBlue(0.35)};
+    outline-offset: 2px;
+  }
 `;
 
 const panelActionHintCls = css`
   color: ${Color.lightOceanBlue()};
+
+  &:hover {
+    color: ${Color.white()};
+    text-shadow: 0 0 6px ${Color.lightOceanBlue(0.7)};
+  }
 
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 0.75rem;

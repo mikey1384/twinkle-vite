@@ -66,6 +66,7 @@ export default function SortableThumb({
         opacity: isDragging ? 0.5 : 1,
         margin: '0.3%',
         cursor: 'pointer',
+        touchAction: 'none',
         boxShadow: 'none',
         background: 'transparent',
         borderRadius,

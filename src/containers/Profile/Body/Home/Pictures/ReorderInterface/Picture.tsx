@@ -46,6 +46,7 @@ export default function Picture({
       ref={PictureRef}
       className={css`
         cursor: pointer;
+        touch-action: none;
         opacity: ${isDragging ? 0.5 : 1};
         background: black;
         position: relative;
