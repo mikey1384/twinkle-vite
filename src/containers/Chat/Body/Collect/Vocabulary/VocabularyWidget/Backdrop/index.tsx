@@ -66,6 +66,7 @@ const strikePaneCls = css`
   padding: 0.8rem 1rem;
   border-left: 1px solid ${Color.white(0.12)};
   min-width: 0;
+  overflow-y: auto;
 
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0.6rem 0.8rem;

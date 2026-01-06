@@ -208,7 +208,6 @@ function getStatusPillStyle(
 const wrapperCls = css`
   width: 100%;
   margin-bottom: 1rem;
-  touch-action: pan-x pan-y;
 `;
 
 const panelWrapperCls = css`
