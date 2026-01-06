@@ -44,7 +44,7 @@ export default function AddAccountTypeModal({
   }, [accountLabel, perks]);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="AddAccountTypeModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header style={{ display: 'block' }}>Add Account Type:</header>
         <main>

@@ -301,6 +301,7 @@ export default function ChessModal({
   return (
     <ErrorBoundary componentPath="ChessModal">
       <Modal
+        modalKey="ChessModal"
         isOpen
         onClose={onHide}
         size="lg"

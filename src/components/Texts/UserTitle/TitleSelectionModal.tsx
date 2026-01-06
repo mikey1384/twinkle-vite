@@ -61,6 +61,7 @@ export default function TitleSelectionModal({
 
   return (
     <Modal
+      modalKey="TitleSelectionModal"
       isOpen
       onClose={handleHide}
       modalLevel={2}

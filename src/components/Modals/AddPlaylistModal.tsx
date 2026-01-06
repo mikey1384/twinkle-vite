@@ -121,6 +121,7 @@ export default function AddPlaylistModal({
   return (
     <DndProvider backend={Backend}>
       <Modal
+        modalKey="AddPlaylistModal"
         isOpen
         size={section > 0 ? 'xl' : 'md'}
         onClose={onHide}

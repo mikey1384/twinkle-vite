@@ -80,6 +80,7 @@ export default function EditAccountTypeModal({
   return (
     <ErrorBoundary componentPath="Management/Modals/EditAccountTypeModal">
       <Modal
+        modalKey="EditAccountTypeModal"
         isOpen
         onClose={onHide}
         title="Edit Account Type:"

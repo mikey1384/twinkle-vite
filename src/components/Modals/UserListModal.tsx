@@ -64,6 +64,7 @@ export default function UserListModal({
 
   return (
     <Modal
+      modalKey="UserListModal"
       isOpen
       size="sm"
       onClose={onHide}

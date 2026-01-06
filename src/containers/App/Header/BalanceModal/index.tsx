@@ -90,7 +90,7 @@ export default function BalanceModal({ onHide }: { onHide: () => void }) {
   });
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="BalanceModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Transaction History</header>
         <main>

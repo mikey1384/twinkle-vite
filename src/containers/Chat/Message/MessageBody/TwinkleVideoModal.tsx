@@ -31,6 +31,7 @@ export default function TwinkleVideoModal({
   return (
     <ErrorBoundary componentPath="container/Chat/Message/TwinkleVideoModal">
       <Modal
+        modalKey="TwinkleVideoModal"
         isOpen
         size="xl"
         onClose={onHide}

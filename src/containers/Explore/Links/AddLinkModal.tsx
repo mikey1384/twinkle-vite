@@ -69,7 +69,7 @@ export default function AddLinkModal({ onHide }: { onHide: () => void }) {
   }, [urlError, urlExceedsCharLimit]);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="AddLinkModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Add Links</header>
         <main>

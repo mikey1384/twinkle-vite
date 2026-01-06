@@ -210,6 +210,7 @@ export default function SuccessModal({
 
   return (
     <Modal
+      modalKey="SuccessModal"
       isOpen
       size="xl"
       onClose={onHide}

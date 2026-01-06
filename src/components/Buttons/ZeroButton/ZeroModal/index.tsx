@@ -25,6 +25,7 @@ export default function ZeroModal({
   const [selectedSection, setSelectedSection] = useState('rewrite');
   return (
     <Modal
+      modalKey="ZeroModal"
       isOpen
       size="xl"
       onClose={onHide}

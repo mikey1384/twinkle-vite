@@ -49,7 +49,7 @@ export default function EditBanStatusModal({
 
   return (
     <ErrorBoundary componentPath="Management/Modals/EditBanStatusModal">
-      <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <Modal modalKey="EditBanStatusModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
         <LegacyModalLayout>
           <header style={{ display: 'block' }}>
             Edit Restriction Status of{' '}

@@ -23,6 +23,7 @@ export default function AlertModal({
 
   return (
     <Modal
+      modalKey="AlertModal"
       isOpen={isOpen}
       onClose={onHide}
       title={title}

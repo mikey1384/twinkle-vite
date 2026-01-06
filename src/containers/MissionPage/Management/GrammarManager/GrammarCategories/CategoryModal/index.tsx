@@ -57,6 +57,7 @@ export default function CategoryModal({
 
   return (
     <Modal
+      modalKey="CategoryModal"
       isOpen
       onClose={onHide}
       size="md"

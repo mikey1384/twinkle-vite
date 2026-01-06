@@ -63,6 +63,7 @@ export default function ConfirmSelectionModal({
 
   return (
     <Modal
+      modalKey="FinalConfirm"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={false}

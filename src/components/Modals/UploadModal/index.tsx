@@ -76,6 +76,7 @@ export default function UploadModal({
   return (
     <>
       <Modal
+        modalKey="UploadModal"
         isOpen={isOpen}
         onClose={handleClose}
         title={getModalTitle()}

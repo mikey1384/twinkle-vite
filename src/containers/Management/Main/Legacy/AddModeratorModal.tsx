@@ -112,6 +112,7 @@ export default function AddModeratorModal({
 
   return (
     <Modal
+      modalKey="AddModeratorModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={!dropdownShown}

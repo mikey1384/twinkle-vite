@@ -21,7 +21,7 @@ export default function PasswordInputModal({
   );
 
   return (
-    <Modal isOpen size="sm" onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="PasswordInputModal" isOpen size="sm" onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Enter Your Password</header>
         <main>

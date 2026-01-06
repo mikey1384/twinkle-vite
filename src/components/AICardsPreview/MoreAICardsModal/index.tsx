@@ -31,6 +31,7 @@ export default function MoreAICardsModal({
 
   return (
     <Modal
+      modalKey="MoreAICardsModal"
       isOpen
       onClose={onHide}
       modalLevel={modalOverModal ? 2 : undefined}

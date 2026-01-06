@@ -34,6 +34,7 @@ export default function OfferModal({
 
   return (
     <Modal
+      modalKey="OfferModal"
       isOpen
       size="xl"
       onClose={onHide}

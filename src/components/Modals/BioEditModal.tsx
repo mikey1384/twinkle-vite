@@ -61,6 +61,7 @@ export default function BioEditModal({
 
   return (
     <Modal
+      modalKey="BioEditModal"
       isOpen={true}
       onClose={onHide}
       title="Edit Your Bio"

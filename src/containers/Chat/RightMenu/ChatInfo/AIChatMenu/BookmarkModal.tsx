@@ -55,7 +55,7 @@ export default function BookmarkModal({
     : bookmark.username;
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="BookmarkModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <main>
           <div style={{ height: '100%', width: '100%', padding: '3rem 1rem' }}>

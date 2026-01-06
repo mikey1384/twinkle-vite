@@ -71,6 +71,7 @@ export default function ImageModal({
 
   return (
     <Modal
+      modalKey="ImageModal"
       isOpen
       onClose={onHide}
       hasHeader={!!fileName}

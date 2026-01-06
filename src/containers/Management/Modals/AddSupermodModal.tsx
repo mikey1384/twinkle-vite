@@ -144,6 +144,7 @@ export default function AddSupermodModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      modalKey="AddSupermodModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={!dropdownShown}

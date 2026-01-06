@@ -42,6 +42,7 @@ export default function ConfirmModal({
     (doneColorKey && doneColorKey in Color ? doneColorKey : 'blue');
   return (
     <Modal
+      modalKey="ConfirmModal"
       isOpen
       onClose={onHide}
       hasHeader

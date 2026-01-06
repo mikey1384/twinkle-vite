@@ -62,6 +62,7 @@ export default function TodayXPModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      modalKey="TodayXPModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={false}

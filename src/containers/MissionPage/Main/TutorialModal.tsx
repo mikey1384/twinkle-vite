@@ -21,6 +21,7 @@ export default function TutorialModal({
   const ModalBodyRef: React.RefObject<any> = useRef(null);
   return (
     <Modal
+      modalKey="TutorialModal"
       isOpen
       size="xl"
       onClose={onHide}

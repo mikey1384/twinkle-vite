@@ -252,6 +252,7 @@ export default function WordMasterBreakModal({
   return (
     <ErrorBoundary componentPath="Chat/Body/Collect/Vocabulary/WordMasterBreakModal">
       <Modal
+        modalKey="WordMasterBreakModal/Main"
         isOpen={isOpen}
         onClose={handleModalClose}
         title={modalTitle}
@@ -458,6 +459,7 @@ export default function WordMasterBreakModal({
       </Modal>
       {confirmBypassShown && (
         <Modal
+          modalKey="WordMasterBreakModal/ConfirmBypass"
           isOpen={confirmBypassShown}
           onClose={() => setConfirmBypassShown(false)}
           title="Confirm Bypass"

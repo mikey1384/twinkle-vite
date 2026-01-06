@@ -36,6 +36,7 @@ export default function ConfirmSelectionModal({
 
   return (
     <Modal
+      modalKey="ConfirmSelectionModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={false}

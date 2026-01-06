@@ -224,6 +224,7 @@ function UploadAFileModal({
 
   return (
     <Modal
+      modalKey="UploadAFileModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={false}

@@ -42,7 +42,7 @@ export default function SelectDestinationModal({
   }, [originForkId, slideObj]);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="SelectDestinationModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Select Destination</header>
         <main>

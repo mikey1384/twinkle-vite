@@ -171,6 +171,7 @@ export default function SettingsModal({
 
   return (
     <Modal
+      modalKey="SettingsModal"
       isOpen={true}
       onClose={onHide}
       title={userIsChannelOwner ? 'Settings' : 'Edit Group Name'}

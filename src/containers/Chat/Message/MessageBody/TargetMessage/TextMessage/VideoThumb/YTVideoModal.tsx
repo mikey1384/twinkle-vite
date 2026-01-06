@@ -47,7 +47,7 @@ export default function YTVideoModal({
   )?.[1];
 
   return (
-    <Modal isOpen size="xl" onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="YTVideoModal" isOpen size="xl" onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Video Player</header>
         <main

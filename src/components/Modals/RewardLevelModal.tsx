@@ -49,7 +49,7 @@ export default function RewardLevelModal({
   }, [moderatorName]);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="RewardLevelModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <ErrorBoundary componentPath="RewardLevelModal">
           <header>{setRewardLevelLabel}</header>

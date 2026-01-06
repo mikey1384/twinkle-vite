@@ -18,7 +18,7 @@ export default function PlaylistModal({
   title: string;
 }) {
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="PlaylistModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <ErrorBoundary componentPath="PlaylistModal">
           <header>

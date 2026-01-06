@@ -23,6 +23,7 @@ export default function CreateNewChatModal({
   return (
     <ErrorBoundary componentPath="Chat/Modals/CreateNewChat">
       <Modal
+        modalKey="CreateNewChat"
         isOpen
         onClose={onHide}
         hasHeader={false}

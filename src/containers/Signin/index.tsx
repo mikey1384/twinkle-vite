@@ -26,6 +26,7 @@ export default function Signin({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Signin/index">
       <Modal
+        modalKey="Signin"
         isOpen
         onClose={onHide}
         closeOnBackdropClick={!username}

@@ -133,6 +133,7 @@ export default function SelectAICardModal({
 
   return (
     <Modal
+      modalKey="SelectAICardModal"
       isOpen
       onClose={onHide}
       size="xl"

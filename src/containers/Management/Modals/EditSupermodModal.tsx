@@ -88,6 +88,7 @@ export default function EditSupermodModal({
 
   return (
     <Modal
+      modalKey="EditSupermodModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={!dropdownShown}

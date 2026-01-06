@@ -25,7 +25,7 @@ export default function SelectArchivedSlideModal({
   const [selectedSlideId, setSelectedSlideId] = useState<number | null>(null);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="SelectArchivedSlideModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Select a Slide</header>
         <main>

@@ -103,7 +103,7 @@ export default function FormModal({
   }
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="FormModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>{header}</header>
         <main style={{ justifyContent: 'center', minHeight: '20vh' }}>

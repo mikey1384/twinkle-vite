@@ -761,6 +761,7 @@ export default function DailyRewardModal({
   return (
     <>
       <Modal
+        modalKey="DailyRewardModal"
         isOpen
         onClose={handleHide}
         title={modalTitle}

@@ -34,7 +34,7 @@ export default function ApproveModal({
   );
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="ApproveModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Approve Request</header>
         <main>

@@ -99,7 +99,7 @@ export default function SelectFeaturedPlaylists({
     : searchLoadMoreButton;
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="SelectFeaturedPlaylists" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Select up to 5 playlists</header>
         <main style={{ paddingTop: 0 }}>

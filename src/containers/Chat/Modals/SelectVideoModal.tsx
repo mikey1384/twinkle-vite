@@ -59,6 +59,7 @@ export default function SelectVideoModal({
   }, []);
   return (
     <Modal
+      modalKey="SelectVideoModal"
       isOpen={isOpen}
       onClose={onHide}
       title="Attach a Video"

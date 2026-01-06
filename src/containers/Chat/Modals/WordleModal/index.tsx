@@ -212,6 +212,7 @@ export default function WordleModal({
   return (
     <ErrorBoundary componentPath="Chat/Modals/WordleModal">
       <Modal
+        modalKey="WordleModal"
         isOpen={true}
         onClose={onHide}
         hasHeader={false}

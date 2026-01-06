@@ -121,6 +121,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      modalKey="GrammarGameModal"
       isOpen={true}
       onClose={handleHide}
       size="lg"
