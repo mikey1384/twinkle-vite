@@ -5,6 +5,7 @@ import MissionComponent from './MissionComponent';
 import UserComponent from './UserComponent';
 import DefaultComponent from './DefaultComponent';
 import AICardComponent from './AICardComponent';
+import SharedPromptComponent from './SharedPromptComponent';
 
 export default function InternalComponent({
   rootId,
@@ -51,6 +52,9 @@ export default function InternalComponent({
       rootType !== 'user'
     ) {
       return <AICardComponent rootId={rootId} rootType={rootType} src={src} />;
+    }
+    if (linkType === 'shared-prompts') {
+      return <SharedPromptComponent src={src} />;
     }
     return <DefaultComponent linkType={linkType} src={src} />;
   }, [src, isProfileComponent, rootId, rootType]);

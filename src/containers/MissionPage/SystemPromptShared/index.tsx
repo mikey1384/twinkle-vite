@@ -90,6 +90,7 @@ export default function SystemPromptShared({
   const [commentSubmitting, setCommentSubmitting] = useState<{
     [key: number]: boolean;
   }>({});
+  const [copiedId, setCopiedId] = useState<number | null>(null);
 
   // Track the previous sortBy to detect actual sort changes
   const prevSortByRef = React.useRef(sortBy);
@@ -271,6 +272,17 @@ export default function SystemPromptShared({
       setCommentSubmitting((prev) => ({ ...prev, [topicId]: false }));
     }
   };
+
+  async function handleCopyEmbed(topicId: number) {
+    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
+    try {
+      await navigator.clipboard.writeText(embedUrl);
+      setCopiedId(topicId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }
 
   return (
     <ErrorBoundary componentPath="MissionPage/SystemPromptShared">
@@ -474,6 +486,15 @@ export default function SystemPromptShared({
                             ? 'comment'
                             : 'comments'}
                         </div>
+                        <div
+                          className={`${statPillClass} ${copyPillClass}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyEmbed(topic.id);
+                          }}
+                        >
+                          <Icon icon={copiedId === topic.id ? 'check' : 'copy'} />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -618,7 +639,8 @@ const cardClass = css`
 const statsRowClass = css`
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   font-size: 1.1rem;
   color: ${Color.darkerGray()};
 `;
@@ -633,6 +655,15 @@ const statPillClass = css`
   border: 1px solid var(--ui-border);
   font-size: 1.1rem;
   font-weight: 500;
+`;
+
+const copyPillClass = css`
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  &:hover {
+    background: ${Color.highlightGray(0.4)};
+    border-color: ${Color.darkerBorderGray()};
+  }
 `;
 
 const gridClass = css`

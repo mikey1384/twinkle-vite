@@ -1103,9 +1103,9 @@ export default function ChatReducer(
         }
       };
     case 'ENTER_TOPIC': {
-      const prevChannelObj = state.channelsObj[action.channelId];
-      const currentTopicIndex = prevChannelObj.currentTopicIndex ?? -1; // Assuming -1 if not set
-      let topicHistory = prevChannelObj?.topicHistory || [];
+      const prevChannelObj = state.channelsObj[action.channelId] || {};
+      const currentTopicIndex = prevChannelObj.currentTopicIndex ?? -1;
+      let topicHistory = prevChannelObj.topicHistory || [];
       let newTopicIndex = currentTopicIndex;
 
       if (action.direction) {

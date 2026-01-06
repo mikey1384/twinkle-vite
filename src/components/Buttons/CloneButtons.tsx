@@ -182,9 +182,10 @@ export default function CloneButtons({
           className={css`
             width: 2rem;
             height: 2rem;
+            flex-shrink: 0;
             border-radius: 50%;
             margin-right: 0.5rem;
-            object-fit: contain;
+            object-fit: cover;
             background: #fff;
           `}
         />
@@ -240,9 +241,10 @@ export default function CloneButtons({
                 className={css`
                   width: 2rem;
                   height: 2rem;
+                  flex-shrink: 0;
                   border-radius: 50%;
                   margin-right: 0.5rem;
-                  object-fit: contain;
+                  object-fit: cover;
                   background: #fff;
                 `}
               />

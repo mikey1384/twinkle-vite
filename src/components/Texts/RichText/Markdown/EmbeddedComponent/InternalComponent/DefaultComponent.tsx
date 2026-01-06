@@ -46,6 +46,7 @@ const getDescriptionForLinkType: { [key: string]: (src: string) => string } = {
     }
   },
   'ai-cards': () => 'Explore AI Cards',
+  'shared-prompts': () => 'View Shared Prompt',
   missions: (src) => {
     const mission = src.split('/missions/')[1];
     if (!mission) {

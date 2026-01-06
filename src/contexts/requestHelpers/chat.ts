@@ -1502,6 +1502,17 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadSharedPrompt(promptId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/topic/shared/${promptId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadListedAICards({
       lastPrice,
       lastId
