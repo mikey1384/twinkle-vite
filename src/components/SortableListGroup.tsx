@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -20,13 +20,16 @@ export default function SortableListGroup<T extends number | string = number>({
   style?: React.CSSProperties;
 }) {
   const [draggedId, setDraggedId] = useState<T | null>(null);
+  const draggedIdRef = useRef<T | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<T, HTMLElement>>(new Map());
   const touchStartY = useRef<number>(0);
   const isDragging = useRef(false);
   const lastSwapTime = useRef<number>(0);
+  const onMoveRef = useRef(onMove);
+  onMoveRef.current = onMove;
 
-  function handleSwap(sourceId: T, targetId: T) {
+  const handleSwap = useCallback((sourceId: T, targetId: T) => {
     if (sourceId === targetId) return;
 
     // Throttle swaps to prevent jitter (min 80ms between swaps)
@@ -34,11 +37,12 @@ export default function SortableListGroup<T extends number | string = number>({
     if (now - lastSwapTime.current < 80) return;
     lastSwapTime.current = now;
 
-    onMove({ sourceId, targetId });
-  }
+    onMoveRef.current({ sourceId, targetId });
+  }, []);
 
   function handleDragStart(e: React.DragEvent, id: T) {
     setDraggedId(id);
+    draggedIdRef.current = id;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', String(id));
   }
@@ -52,43 +56,58 @@ export default function SortableListGroup<T extends number | string = number>({
 
   function handleDragEnd() {
     setDraggedId(null);
+    draggedIdRef.current = null;
   }
 
   function handleTouchStart(e: React.TouchEvent, id: T) {
     touchStartY.current = e.touches[0].clientY;
     isDragging.current = false;
     setDraggedId(id);
-  }
-
-  function handleTouchMove(e: React.TouchEvent) {
-    if (!draggedId || !containerRef.current) return;
-
-    const touch = e.touches[0];
-    const deltaY = Math.abs(touch.clientY - touchStartY.current);
-
-    if (deltaY > 10) {
-      isDragging.current = true;
-    }
-
-    if (!isDragging.current) return;
-
-    e.preventDefault();
-
-    // Find which item we're over
-    for (const [id, element] of itemRefs.current.entries()) {
-      if (id === draggedId) continue;
-      const rect = element.getBoundingClientRect();
-      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-        handleSwap(draggedId, id);
-        break;
-      }
-    }
+    draggedIdRef.current = id;
   }
 
   function handleTouchEnd() {
     setDraggedId(null);
+    draggedIdRef.current = null;
     isDragging.current = false;
   }
+
+  // Use native event listener with passive: false to allow preventDefault
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function onTouchMove(e: TouchEvent) {
+      const currentDraggedId = draggedIdRef.current;
+      if (!currentDraggedId) return;
+
+      const touch = e.touches[0];
+      const deltaY = Math.abs(touch.clientY - touchStartY.current);
+
+      if (deltaY > 10) {
+        isDragging.current = true;
+      }
+
+      if (!isDragging.current) return;
+
+      e.preventDefault();
+
+      // Find which item we're over
+      for (const [id, element] of itemRefs.current.entries()) {
+        if (id === currentDraggedId) continue;
+        const rect = element.getBoundingClientRect();
+        if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+          handleSwap(currentDraggedId, id);
+          break;
+        }
+      }
+    }
+
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    return () => {
+      container.removeEventListener('touchmove', onTouchMove);
+    };
+  }, [handleSwap]);
 
   return (
     <div
@@ -125,7 +144,6 @@ export default function SortableListGroup<T extends number | string = number>({
             onDragOver={(e) => handleDragOver(e, id)}
             onDragEnd={handleDragEnd}
             onTouchStart={(e) => handleTouchStart(e, id)}
-            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             className={css`
               display: flex;

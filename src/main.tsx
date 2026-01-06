@@ -109,6 +109,8 @@ import { faFolderOpen } from '@fortawesome/pro-solid-svg-icons/faFolderOpen';
 import { faFont } from '@fortawesome/pro-solid-svg-icons/faFont';
 import { faGithub } from '@fortawesome/free-brands-svg-icons/faGithub';
 import { faGlobe } from '@fortawesome/pro-solid-svg-icons/faGlobe';
+import { faGripDotsVertical } from '@fortawesome/pro-solid-svg-icons/faGripDotsVertical';
+import { faGripLines } from '@fortawesome/pro-solid-svg-icons/faGripLines';
 import { faLayerGroup } from '@fortawesome/pro-solid-svg-icons/faLayerGroup';
 import { faLevelUp } from '@fortawesome/pro-solid-svg-icons/faLevelUp';
 import { faHeart } from '@fortawesome/pro-solid-svg-icons/faHeart';
@@ -187,6 +189,7 @@ import { faUndo } from '@fortawesome/pro-solid-svg-icons/faUndo';
 import { faUnlock } from '@fortawesome/pro-solid-svg-icons/faUnlock';
 import { faUser } from '@fortawesome/pro-solid-svg-icons/faUser';
 import { faUserPlus } from '@fortawesome/pro-solid-svg-icons/faUserPlus';
+import { faUserEdit } from '@fortawesome/pro-solid-svg-icons/faUserEdit';
 import { faUpload } from '@fortawesome/pro-solid-svg-icons/faUpload';
 import { faUserGraduate } from '@fortawesome/pro-solid-svg-icons/faUserGraduate';
 import { faUsers } from '@fortawesome/pro-solid-svg-icons/faUsers';
@@ -317,6 +320,8 @@ library.add(
   faFont,
   faGithub,
   faGlobe,
+  faGripDotsVertical,
+  faGripLines,
   faHandHolding,
   faHeart,
   faHeartSquare,
@@ -397,6 +402,7 @@ library.add(
   faUnlock,
   faUser,
   faUserPlus,
+  faUserEdit,
   faUserGraduate,
   faUserGroupCrown,
   faUsers,
