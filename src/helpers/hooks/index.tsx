@@ -683,8 +683,12 @@ export function useWordleLabels({
     () => (
       <>
         The word was <b>{solution}</b> (
-        <b style={{ color: Color[wordLevelHash[wordLevel].color]() }}>
-          {wordLevelHash[wordLevel].label}
+        <b
+          style={{
+            color: Color[wordLevelHash[wordLevel]?.color || 'logoBlue']()
+          }}
+        >
+          {wordLevelHash[wordLevel]?.label || ''}
         </b>{' '}
         word)
       </>

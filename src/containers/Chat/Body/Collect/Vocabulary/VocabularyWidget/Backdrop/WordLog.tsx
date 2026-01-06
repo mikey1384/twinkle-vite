@@ -57,6 +57,7 @@ export default function WordRegisterStatus({ entry }: { entry: WordLogEntry }) {
       }, 600);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry]);
 
   const containerStyle = css`
@@ -89,13 +90,13 @@ export default function WordRegisterStatus({ entry }: { entry: WordLogEntry }) {
         {action === 'register' ? 'Discovered' : 'Collected'}{' '}
         <span
           style={{
-            color: Color[wordLevelHash[level].color](),
+            color: Color[wordLevelHash[level]?.color || 'logoBlue'](),
             fontWeight: 'bold'
           }}
         >
           {word}
         </span>{' '}
-        ({wordLevelHash[level].label} {wordLabel}) •{' '}
+        ({wordLevelHash[level]?.label || ''} {wordLabel}) •{' '}
         <span style={{ color: Color.gold() }}>{xpWithCommas} XP</span> •{' '}
         <Icon
           icon={['far', 'badge-dollar']}

@@ -90,14 +90,14 @@ export default function Menu({
             {addCommasToNumber(burnXP)}
           </b>{' '}
           <b style={{ color: Color.gold() }}>XP</b>. The more valuable the{' '}
-          <b style={{ color: Color[cardLevelHash[cardLevel].color]() }}>
+          <b style={{ color: Color[cardLevelHash[cardLevel]?.color || 'logoBlue']() }}>
             color
           </b>{' '}
           and the higher the{' '}
           {cardQuality === 'common' ? (
             'quality'
           ) : (
-            <b style={{ color: qualityProps[cardQuality].color }}>quality</b>
+            <b style={{ color: qualityProps[cardQuality]?.color || Color.darkGray() }}>quality</b>
           )}{' '}
           of a card, the more <b style={{ color: Color.gold() }}>XP</b> you earn
           by burning it. This action is irreversible, so use it wisely.

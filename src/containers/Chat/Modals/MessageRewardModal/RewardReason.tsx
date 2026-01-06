@@ -14,18 +14,19 @@ export default function RewardReason({
   onSelectReasonId: (v: number) => void;
   style: React.CSSProperties;
 }) {
+  const reason = rewardReasons[reasonId];
+  if (!reason) return null;
+
   return (
     <Button
-      color={rewardReasons[reasonId].color}
+      color={reason.color}
       onClick={() => onSelectReasonId(reasonId)}
       variant={reasonId === selectedReasonId ? 'solid' : 'soft'}
       tone="raised"
       style={style}
     >
-      <Icon size="lg" icon={rewardReasons[reasonId].icon} />
-      <span style={{ marginLeft: '1rem' }}>
-        {rewardReasons[reasonId].message}
-      </span>
+      <Icon size="lg" icon={reason.icon} />
+      <span style={{ marginLeft: '1rem' }}>{reason.message}</span>
     </Button>
   );
 }

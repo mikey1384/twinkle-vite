@@ -12,7 +12,7 @@ export default function RewardMessage({
   rewardReason: number;
   rewardAmount: number;
 }) {
-  const colorKey = rewardReasons[rewardReason].color;
+  const colorKey = rewardReasons[rewardReason]?.color || 'logoBlue';
   const bg = useMemo(() => Color[colorKey](0.14), [colorKey]);
   const border = useMemo(() => Color[colorKey](0.28), [colorKey]);
   const iconColor = useMemo(() => Color[colorKey](), [colorKey]);
