@@ -13,7 +13,7 @@ import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
+import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
 import moment from 'moment';
 
 interface CloneEntry {
@@ -513,6 +513,18 @@ export default function SystemPromptShared({
                             [topic.id]: text
                           }))
                         }
+                        onKeyUp={(event: React.KeyboardEvent) => {
+                          if (event.key === ' ') {
+                            const current = commentTexts[topic.id] || '';
+                            const converted = addEmoji(current);
+                            if (converted !== current) {
+                              setCommentTexts((prev) => ({
+                                ...prev,
+                                [topic.id]: converted
+                              }));
+                            }
+                          }
+                        }}
                         onKeyDown={(event: React.KeyboardEvent) => {
                           if (event.key === 'Enter') {
                             handleCommentSubmit(topic.id);
