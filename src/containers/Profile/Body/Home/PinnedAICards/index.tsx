@@ -16,7 +16,7 @@ import { useProfileState } from '~/helpers/hooks';
 
 const pinnedLabel = 'AI Cards';
 const pinCardsLabel = 'Pin Cards';
-const emptyLabel = 'No pinned AI cards yet';
+const emptyLabel = 'No AI Cards to show here yet';
 const emptyOwnLabel = 'Pin your favorite AI cards to show them here';
 const MAX_PINNED_AI_CARDS = 10;
 

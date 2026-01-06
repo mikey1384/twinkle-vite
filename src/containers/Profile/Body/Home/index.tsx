@@ -35,7 +35,7 @@ const profileSectionKeys = [
 const profileSectionLabels: Record<string, string> = {
   intro: 'Intro',
   pictures: 'Pictures',
-  pinnedAICards: 'Pinned AI Cards',
+  pinnedAICards: 'AI Cards',
   featuredSubjects: 'Featured Subjects',
   notableActivities: 'Notable Activities',
   xpAnalysis: 'XP Analysis',
