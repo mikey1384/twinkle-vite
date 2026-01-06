@@ -5,7 +5,12 @@ import FilterBar from '~/components/FilterBar';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth, getStreakColor } from '~/constants/css';
-import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useHomeContext,
+  useKeyContext
+} from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 
@@ -91,6 +96,7 @@ export default function GradingResult({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const { userId } = useKeyContext((v) => v.myState);
+  const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });
   const xpNumberColor = xpNumberRole.getColor() || DEFAULT_XP_NUMBER_COLOR;
@@ -1092,7 +1098,8 @@ export default function GradingResult({
         responseText: refinedTextToSend,
         originalResponse: originalResponse || response,
         grade,
-        feedback
+        feedback,
+        thinkHard: thinkHardState[aiShareTarget]?.global
       });
 
       if (result.error) {

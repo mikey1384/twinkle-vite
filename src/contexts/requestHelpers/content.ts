@@ -789,6 +789,53 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAIStoryVocabSummary(storyId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/story/vocab/summary?storyId=${storyId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAIStoryVocabQuiz(storyId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/story/vocab/quiz`,
+          { storyId },
+          {
+            ...auth(),
+            timeout: 180000,
+            meta: { allowExtendedTimeout: true, enforceTimeout: false }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async submitAIStoryVocabQuizAnswer({
+      storyId,
+      questionId,
+      selectedIndex
+    }: {
+      storyId: number;
+      questionId: number;
+      selectedIndex: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/game/story/vocab/quiz/answer`,
+          { storyId, questionId, selectedIndex },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async uploadAIStoryAttempt({
       attemptId,
       answers
@@ -2118,7 +2165,8 @@ export default function contentRequestHelpers({
       responseText,
       originalResponse,
       grade,
-      feedback
+      feedback,
+      thinkHard
     }: {
       responseId?: number;
       questionId?: number | null;
@@ -2129,6 +2177,7 @@ export default function contentRequestHelpers({
       originalResponse?: string;
       grade?: string;
       feedback?: string;
+      thinkHard?: boolean;
     }) {
       try {
         const { data } = await request.post(
@@ -2142,7 +2191,8 @@ export default function contentRequestHelpers({
             responseText,
             originalResponse,
             grade,
-            feedback
+            feedback,
+            thinkHard
           },
           auth()
         );

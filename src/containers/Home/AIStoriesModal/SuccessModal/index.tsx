@@ -11,6 +11,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { useRoleColor } from '~/theme/useRoleColor';
+import VocabQuizModal from './VocabQuizModal';
 
 const colorHash: Record<
   number,
@@ -98,6 +99,9 @@ export default function SuccessModal({
   const generateAIStoryImage = useAppContext(
     (v) => v.requestHelpers.generateAIStoryImage
   );
+  const loadAIStoryVocabSummary = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryVocabSummary
+  );
   const updateImageGenerationSettings = useAppContext(
     (v) => v.requestHelpers.updateImageGenerationSettings
   );
@@ -110,6 +114,12 @@ export default function SuccessModal({
   const [styleText, setStyleText] = useState('');
   // Hardcoded to 'openai' (image-1) - Gemini is unstable
   const [imageEngine, setImageEngine] = useState<'gemini' | 'openai'>('openai');
+  const [vocabSummary, setVocabSummary] = useState<{
+    eligibleCount: number;
+    totalWords: number;
+  } | null>(null);
+  const [loadingVocabSummary, setLoadingVocabSummary] = useState(false);
+  const [vocabQuizShown, setVocabQuizShown] = useState(false);
 
   const [progressStage, setProgressStage] =
     useState<ImageGenStatus['stage']>('not_started');
@@ -117,6 +127,37 @@ export default function SuccessModal({
   const [callingOpenAITime, setCallingOpenAITime] = useState(0);
 
   const isMountedRef = useRef(true);
+
+  const eligibleVocabCount = useMemo(() => {
+    return Number(vocabSummary?.eligibleCount || 0);
+  }, [vocabSummary]);
+
+  useEffect(() => {
+    if (!storyId) return;
+    let isMounted = true;
+    setLoadingVocabSummary(true);
+    setVocabSummary(null);
+    loadAIStoryVocabSummary(storyId)
+      .then((data: any) => {
+        if (!isMounted) return;
+        const eligibleCount = Number(data?.eligibleCount || 0);
+        const totalWords = Number(data?.totalWords || 0);
+        setVocabSummary({ eligibleCount, totalWords });
+      })
+      .catch((error: any) => {
+        console.error('Failed to load AI story vocab summary', error);
+        if (isMounted) {
+          setVocabSummary({ eligibleCount: 0, totalWords: 0 });
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoadingVocabSummary(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyId]);
 
   useEffect(() => {
     return () => {
@@ -209,16 +250,17 @@ export default function SuccessModal({
   }, [imageGenerationCost]);
 
   return (
-    <Modal
-      isOpen
-      size="xl"
-      onClose={onHide}
-      closeOnBackdropClick={false}
-      modalLevel={2}
-      hasHeader={false}
-      bodyPadding={0}
-      allowOverflow
-    >
+    <>
+      <Modal
+        isOpen
+        size="xl"
+        onClose={onHide}
+        closeOnBackdropClick={false}
+        modalLevel={2}
+        hasHeader={false}
+        bodyPadding={0}
+        allowOverflow
+      >
       <LegacyModalLayout wrapped>
         <header>
           {isListening ? 'AI Story Listening' : 'AI Story Reading'} Cleared
@@ -412,6 +454,38 @@ export default function SuccessModal({
                 </div>
               </div>
             )}
+            {!loadingVocabSummary && eligibleVocabCount > 0 && (
+              <div
+                className={css`
+                  width: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  margin-top: ${imageUrl ? '1.5rem' : '2rem'};
+                  gap: 0.6rem;
+                `}
+              >
+                <Button
+                  color="logoBlue"
+                  variant="solid"
+                  size="lg"
+                  uppercase={false}
+                  onClick={() => setVocabQuizShown(true)}
+                >
+                  Collect Words
+                </Button>
+                <div
+                  className={css`
+                    font-size: 1rem;
+                    color: ${Color.darkGray()};
+                    text-align: center;
+                  `}
+                >
+                  {eligibleVocabCount} word
+                  {eligibleVocabCount === 1 ? '' : 's'} ready for Word Master
+                </div>
+              </div>
+            )}
           </div>
         </main>
         <footer>
@@ -424,7 +498,15 @@ export default function SuccessModal({
           </Button>
         </footer>
       </LegacyModalLayout>
-    </Modal>
+      </Modal>
+      {vocabQuizShown && (
+        <VocabQuizModal
+          isOpen={vocabQuizShown}
+          onClose={() => setVocabQuizShown(false)}
+          storyId={storyId}
+        />
+      )}
+    </>
   );
 
   function handleChange(text: string) {
