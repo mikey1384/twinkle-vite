@@ -297,7 +297,9 @@ export default function Puzzle({
         needsPromotion = !!legal.find(
           (m: any) => m.to === toAlgebraic && m.promotion
         );
-      } catch {}
+      } catch (err) {
+        console.error('Error checking promotion moves:', err);
+      }
 
       if (needsPromotion) {
         setPromotionPending({

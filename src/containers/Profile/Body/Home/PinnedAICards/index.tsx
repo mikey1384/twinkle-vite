@@ -52,6 +52,7 @@ export default function PinnedAICards({
   );
   const [loading, setLoading] = useState(false);
   const [displayedCardIds, setDisplayedCardIds] = useState<number[]>([]);
+  const [isTopCards, setIsTopCards] = useState(false);
 
   const pinnedCardIds = useMemo(() => {
     const ids = profile?.state?.profile?.pinnedAICardIds;
@@ -94,15 +95,9 @@ export default function PinnedAICards({
       setLoading(false);
       return;
     }
-    if (pinnedCardIds.length === 0) {
+    if (hasCachedPinnedCards && pinnedCardIds.length > 0) {
       setLoading(false);
-      if (!hasCachedPinnedCards) {
-        onLoadPinnedAICards({ username: profile.username, cardIds: [] });
-      }
-      return;
-    }
-    if (hasCachedPinnedCards) {
-      setLoading(false);
+      setIsTopCards(false);
       return;
     }
     loadPinnedCards();
@@ -115,26 +110,29 @@ export default function PinnedAICards({
           ? data.cardIds
           : pinnedCardIds;
         setDisplayedCardIds(nextCardIds);
-        onLoadPinnedAICards({
-          username: profile.username,
-          cardIds: nextCardIds
-        });
-        // Sync user state if backend cleaned up invalid cards
-        if (
-          Array.isArray(data?.cardIds) &&
-          data.cardIds.length !== pinnedCardIds.length
-        ) {
-          const nextState = {
-            ...(profile.state || {}),
-            profile: {
-              ...(profile.state?.profile || {}),
-              pinnedAICardIds: nextCardIds
-            }
-          };
-          onSetUserState({
-            userId: profile.id,
-            newState: { state: nextState }
+        setIsTopCards(Boolean(data?.isTopCards));
+        if (!data?.isTopCards) {
+          onLoadPinnedAICards({
+            username: profile.username,
+            cardIds: nextCardIds
           });
+          // Sync user state if backend cleaned up invalid cards
+          if (
+            Array.isArray(data?.cardIds) &&
+            data.cardIds.length !== pinnedCardIds.length
+          ) {
+            const nextState = {
+              ...(profile.state || {}),
+              profile: {
+                ...(profile.state?.profile || {}),
+                pinnedAICardIds: nextCardIds
+              }
+            };
+            onSetUserState({
+              userId: profile.id,
+              newState: { state: nextState }
+            });
+          }
         }
         for (const card of data?.cards || []) {
           onUpdateAICard({ cardId: card.id, newState: card });
@@ -163,12 +161,15 @@ export default function PinnedAICards({
     profile?.username
   ]);
 
-  const hasPinnedCards = displayedCardIds.length > 0;
+  const hasCards = displayedCardIds.length > 0;
   const buttonLabel = isOwnProfile
-    ? `${pinCardsLabel} (${displayedCardIds.length}/${MAX_PINNED_AI_CARDS})`
+    ? isTopCards
+      ? `${pinCardsLabel} (0/${MAX_PINNED_AI_CARDS})`
+      : `${pinCardsLabel} (${displayedCardIds.length}/${MAX_PINNED_AI_CARDS})`
     : '';
 
-  if (!isOwnProfile && !hasPinnedCards && !loading) {
+  // Hide section for visitors if no cards to display
+  if (!isOwnProfile && !hasCards && !loading) {
     return null;
   }
 
@@ -179,7 +180,7 @@ export default function PinnedAICards({
         loaded={!loading}
         customColorTheme={selectedTheme}
         title={pinnedLabel}
-        isEmpty={!hasPinnedCards}
+        isEmpty={!hasCards}
         emptyMessage={isOwnProfile ? emptyOwnLabel : emptyLabel}
         button={
           isOwnProfile ? (
@@ -195,7 +196,7 @@ export default function PinnedAICards({
           ) : null
         }
       >
-        {hasPinnedCards && (
+        {hasCards && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <AICardsPreview
               isAICardModalShown={!!aiCardModalCardId}

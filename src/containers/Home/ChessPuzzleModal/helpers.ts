@@ -49,10 +49,11 @@ export async function validateMoveWithAnalysis({
 
   const userMoveStr = `${userMove.from}${userMove.to}${
     userMove.promotion || ''
-  }`;
+  }`.toLowerCase();
+  const expectedMoveLower = expectedMove.toLowerCase();
   analysisLog.push(`Your move: ${userMoveStr} (${move.san})`);
 
-  if (userMoveStr === expectedMove) {
+  if (userMoveStr === expectedMoveLower) {
     analysisLog.push('✓ Matches expected move - accepted');
     return {
       isCorrect: true,
