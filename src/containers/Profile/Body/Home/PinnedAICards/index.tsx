@@ -14,9 +14,9 @@ import {
 } from '~/contexts';
 import { useProfileState } from '~/helpers/hooks';
 
-const pinnedLabel = 'Pinned AI Cards';
-const editPinsLabel = 'Edit Pins';
-const pinCardsLabel = 'Pin AI Cards';
+const pinnedLabel = 'AI Cards';
+const editPinsLabel = 'Edit';
+const pinCardsLabel = 'Pin Cards';
 const emptyLabel = 'No pinned AI cards yet';
 const emptyOwnLabel = 'Pin your favorite AI cards to show them here';
 const MAX_PINNED_AI_CARDS = 10;
@@ -203,8 +203,10 @@ export default function PinnedAICards({
             <AICardsPreview
               isAICardModalShown={!!aiCardModalCardId}
               cardIds={displayedCardIds}
-              moreAICardsModalTitle={`${profile.username}'s Pinned AI Cards`}
+              exploreUrl={`/ai-cards/?search[owner]=${profile.username}`}
+              moreAICardsModalTitle={`${profile.username}'s AI Cards`}
               onSetAICardModalCardId={setAICardModalCardId}
+              themeColor={selectedTheme}
             />
           </div>
         )}
