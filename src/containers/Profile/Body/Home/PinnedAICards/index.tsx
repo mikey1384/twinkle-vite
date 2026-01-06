@@ -15,7 +15,6 @@ import {
 import { useProfileState } from '~/helpers/hooks';
 
 const pinnedLabel = 'AI Cards';
-const editPinsLabel = 'Edit';
 const pinCardsLabel = 'Pin Cards';
 const emptyLabel = 'No pinned AI cards yet';
 const emptyOwnLabel = 'Pin your favorite AI cards to show them here';
@@ -166,9 +165,7 @@ export default function PinnedAICards({
 
   const hasPinnedCards = displayedCardIds.length > 0;
   const buttonLabel = isOwnProfile
-    ? `${hasPinnedCards ? editPinsLabel : pinCardsLabel} (${
-        displayedCardIds.length
-      }/${MAX_PINNED_AI_CARDS})`
+    ? `${pinCardsLabel} (${displayedCardIds.length}/${MAX_PINNED_AI_CARDS})`
     : '';
 
   if (!isOwnProfile && !hasPinnedCards && !loading) {
