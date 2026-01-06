@@ -58,6 +58,7 @@ export default function Textarea({
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastValueRef = useRef<string | undefined>(undefined);
   const allowShrinkRef = useRef(false);
+  const isFocusedRef = useRef(false);
   const cachedStylesRef = useRef<{
     padding: number;
     lineHeight: number;
@@ -108,8 +109,9 @@ export default function Textarea({
     // thrashing and scroll jumps. Just check if content overflows.
     // On desktop, we can do full resize even while focused.
     // Exception: Allow full resize on iOS if allowShrinkRef is true (idle timer expired or value cleared)
-    const isFocused = document.activeElement === el;
-    if (isIOS && isFocused && !allowShrinkRef.current) {
+    // Use tracked focus state (isFocusedRef) instead of document.activeElement to avoid
+    // momentary focus loss during cut/paste operations triggering unwanted shrinks
+    if (isIOS && isFocusedRef.current && !allowShrinkRef.current) {
       const currentHeight = el.offsetHeight;
       // Only grow while typing on iOS, shrink happens on blur or after idle timeout
       if (el.scrollHeight > currentHeight) {
@@ -344,7 +346,12 @@ export default function Textarea({
 
           if (rest.onInput) (rest.onInput as any)(e);
         }}
+        onFocus={(e) => {
+          isFocusedRef.current = true;
+          if (rest.onFocus) (rest.onFocus as any)(e);
+        }}
         onBlur={(e) => {
+          isFocusedRef.current = false;
           // Clear idle timer on blur
           if (idleTimerRef.current) {
             clearTimeout(idleTimerRef.current);
