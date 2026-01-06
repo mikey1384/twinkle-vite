@@ -23,6 +23,7 @@ export default function InfoModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      modalKey="InfoModal"
       isOpen
       onClose={usermenuShown ? () => null : onHide}
       hasHeader={false}

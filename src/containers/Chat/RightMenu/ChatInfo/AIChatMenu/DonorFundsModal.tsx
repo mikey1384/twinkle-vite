@@ -102,6 +102,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
 
   return (
     <Modal
+      modalKey="DonorFundsModal"
       isOpen
       onClose={onHide}
       allowOverflow

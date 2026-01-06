@@ -46,6 +46,7 @@ export default function AwardUserAchievementModal({
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements/AwardUserAchievementModal">
       <Modal
+        modalKey="AwardUserAchievementModal"
         isOpen
         onClose={onHide}
         hasHeader={false}

@@ -79,6 +79,7 @@ export default function SelectNewOwnerModal({
 
   return (
     <Modal
+      modalKey="SelectNewOwnerModal"
       isOpen
       onClose={onHide}
       modalLevel={modalOverModal ? 2 : undefined}

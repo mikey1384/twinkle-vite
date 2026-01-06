@@ -44,6 +44,7 @@ export default function BuyTopicsModal({
 
   return (
     <Modal
+      modalKey="BuyTopicsModal"
       isOpen
       onClose={handleClose}
       title={`Purchase "Topics" Feature`}

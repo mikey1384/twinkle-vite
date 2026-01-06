@@ -49,6 +49,7 @@ export default function AttachContentModal({
 
   return (
     <Modal
+      modalKey="AttachContentModal"
       isOpen={isOpen}
       onClose={handleClose}
       title={sectionObj[section].title}

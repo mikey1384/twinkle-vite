@@ -29,6 +29,7 @@ export default function AchievementModal({
 
   return (
     <Modal
+      modalKey="AchievementModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={false}

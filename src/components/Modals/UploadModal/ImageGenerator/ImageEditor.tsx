@@ -347,6 +347,7 @@ export default function ImageEditor({
   return (
     <>
       <Modal
+        modalKey="ImageEditor"
         isOpen={true}
         onClose={handleCancel}
         title="Edit Image"

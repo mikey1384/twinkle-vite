@@ -108,6 +108,7 @@ export default function SelectGroupsModal({
 
   return (
     <Modal
+      modalKey="SelectGroupsModal"
       isOpen
       size="xl"
       onClose={onHide}

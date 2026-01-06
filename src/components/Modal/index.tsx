@@ -101,6 +101,8 @@ interface ModalProps {
   bodyPadding?: string | number;
   'aria-label'?: string;
   'aria-labelledby'?: string;
+  /** Used for error boundary reporting - identifies which modal threw an error */
+  modalKey?: string;
 }
 
 const sizeMap: Record<ModalSize, { width: string; maxWidth: string }> = {
@@ -146,6 +148,7 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       bodyPadding,
       'aria-label': ariaLabel,
       'aria-labelledby': ariaLabelledby,
+      modalKey,
       children
     },
     ref
@@ -156,6 +159,29 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     const backdropRef = useRef<HTMLDivElement>(null);
     const previousActiveElement = useRef<HTMLElement | null>(null);
     const [modalId] = useState(getNextModalId);
+
+    // Create a unique container for this modal instance to prevent portal conflicts
+    const [container] = useState(() => {
+      const el = document.createElement('div');
+      el.setAttribute('data-modal-container', String(modalId));
+      return el;
+    });
+    const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+
+    // Mount/unmount the container element
+    useEffect(() => {
+      const target = portalTarget || document.getElementById('modal');
+      if (target && container) {
+        target.appendChild(container);
+        setPortalRoot(target);
+        return () => {
+          setPortalRoot(null);
+          if (container.parentNode === target) {
+            target.removeChild(container);
+          }
+        };
+      }
+    }, [portalTarget, container]);
 
     const currentLevel = useMemo(() => {
       if (modalLevel !== undefined) return modalLevel;
@@ -328,7 +354,7 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     if (!shouldRender) return null;
 
     const modalContent = (
-      <ErrorBoundary componentPath="Modal/index">
+      <ErrorBoundary componentPath={modalKey || 'Modal/index'}>
         <div
           ref={backdropRef}
           className={css`
@@ -537,7 +563,11 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                   <span style={{ marginLeft: '0.5rem' }}>Loading...</span>
                 </div>
               ) : (
-                children
+                <ErrorBoundary
+                  componentPath={modalKey ? `${modalKey}/children` : 'Modal/children'}
+                >
+                  {children}
+                </ErrorBoundary>
               )}
             </div>
 
@@ -565,9 +595,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       </ErrorBoundary>
     );
 
-    const target = portalTarget || document.getElementById('modal');
-
-    return target ? createPortal(modalContent, target) : modalContent;
+    // Use portal with unique container if portal root exists, otherwise render inline
+    return portalRoot ? createPortal(modalContent, container) : modalContent;
   }
 );
 

@@ -37,7 +37,7 @@ export default function ReorderFeaturedSubjects({
   const listItemObj = objectify(featuredSubjects);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="ReorderFeaturedSubjects" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Reorder Featured Subjects</header>
         <main>

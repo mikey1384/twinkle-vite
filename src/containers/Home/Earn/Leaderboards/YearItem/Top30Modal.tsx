@@ -22,6 +22,7 @@ export default function Top30Modal({
 
   return (
     <Modal
+      modalKey="Top30Modal"
       isOpen
       size="sm"
       onClose={onHide}

@@ -1004,6 +1004,7 @@ export default function Chess({
     >
       {themeModalShown ? (
         <Modal
+          modalKey="Chess"
           isOpen
           onClose={() => setThemeModalShown(false)}
           title="Select Theme"

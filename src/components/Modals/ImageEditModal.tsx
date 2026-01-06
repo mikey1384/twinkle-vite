@@ -88,6 +88,7 @@ export default function ImageEditModal({
   return (
     <ErrorBoundary componentPath="ImageEditModal">
       <Modal
+        modalKey="ImageEditModal"
         isOpen={true}
         onClose={onHide}
         title="Edit your picture"

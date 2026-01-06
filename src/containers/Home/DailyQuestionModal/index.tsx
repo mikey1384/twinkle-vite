@@ -7,6 +7,7 @@ export default function DailyQuestionModal({ onHide }: { onHide: () => void }) {
   return (
     <ErrorBoundary componentPath="Home/DailyQuestionModal">
       <Modal
+        modalKey="DailyQuestionModal"
         isOpen={true}
         allowOverflow
         onClose={onHide}

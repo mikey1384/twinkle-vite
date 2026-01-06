@@ -769,6 +769,7 @@ export default function ImageEditModal({
 
   return (
     <Modal
+      modalKey="ImageEditModal"
       isOpen
       onClose={onClose}
       title="Edit Image"

@@ -125,6 +125,7 @@ export default function ConfirmTransactionModal({
 
   return (
     <Modal
+      modalKey="ConfirmTransactionModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={false}

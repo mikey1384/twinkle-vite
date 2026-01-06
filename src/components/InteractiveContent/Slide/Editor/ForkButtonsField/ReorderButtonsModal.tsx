@@ -35,6 +35,7 @@ export default function ReorderButtonsModal({
     <ErrorBoundary componentPath="ForkButtonsField/ReorderButtonsModal">
       <DndProvider backend={Backend}>
         <Modal
+          modalKey="ReorderButtonsModal"
           isOpen
           size="sm"
           onClose={onHide}

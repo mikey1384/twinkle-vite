@@ -211,7 +211,7 @@ export default function KarmaExplanationModal({
   ]);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="KarmaExplanationModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Your Karma Points</header>
         <main>

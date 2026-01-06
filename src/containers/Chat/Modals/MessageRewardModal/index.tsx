@@ -34,7 +34,7 @@ export default function MessageRewardModal({
   );
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="MessageRewardModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header
           className={css`

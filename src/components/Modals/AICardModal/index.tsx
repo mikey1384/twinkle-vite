@@ -340,6 +340,7 @@ export default function AICardModal({
 
   return (
     <Modal
+      modalKey="AICardModal"
       isOpen
       onClose={onHide}
       size="lg"

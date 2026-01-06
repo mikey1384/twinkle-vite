@@ -60,6 +60,7 @@ export default function ChallengeModal({
 
   return (
     <Modal
+      modalKey="ChallengeModal"
       isOpen={isOpen}
       onClose={onClose}
       title={accepted ? 'Challenge Accepted!' : 'Challenge Question'}

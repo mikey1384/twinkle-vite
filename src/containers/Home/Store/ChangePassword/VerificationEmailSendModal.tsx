@@ -33,6 +33,7 @@ export default function VerificationEmailSendModal({
 
   return (
     <Modal
+      modalKey="VerificationEmailSendModal"
       isOpen
       onClose={onHide}
       modalLevel={2}

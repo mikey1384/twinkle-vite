@@ -62,6 +62,7 @@ export default function OfferDetailModal({
 
   return (
     <Modal
+      modalKey="OfferDetailModal"
       isOpen
       onClose={onHide}
       size="md"

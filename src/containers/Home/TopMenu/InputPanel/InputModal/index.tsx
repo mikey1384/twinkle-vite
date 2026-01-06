@@ -53,6 +53,7 @@ export default function InputModal({
   return (
     <ErrorBoundary componentPath="Home/Stories/InputPanel/InputModal">
       <Modal
+        modalKey="InputModal"
         isOpen={isOpen}
         onClose={handleClose}
         title="Post Something"

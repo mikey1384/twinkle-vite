@@ -105,6 +105,7 @@ export default function ProfilePicModal({
   return (
     <>
       <Modal
+        modalKey="ProfilePicModal"
         isOpen
         onClose={handleClose}
         title={modalTitle}

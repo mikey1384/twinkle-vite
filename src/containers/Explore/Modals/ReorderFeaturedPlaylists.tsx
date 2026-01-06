@@ -32,7 +32,7 @@ export default function ReorderFeaturedPlaylists({
   const listItemObj = objectify(featuredPlaylists);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="ReorderFeaturedPlaylists" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Reorder Featured Playlists</header>
         <main>

@@ -98,6 +98,7 @@ export default function ChessPuzzleModal({ onHide }: { onHide: () => void }) {
 
   return (
     <Modal
+      modalKey="ChessPuzzleModal"
       isOpen={true}
       onClose={onHide}
       hasHeader={false}

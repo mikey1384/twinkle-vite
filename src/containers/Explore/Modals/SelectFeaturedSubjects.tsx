@@ -105,6 +105,7 @@ export default function SelectFeaturedSubjectsModal({
 
   return (
     <Modal
+      modalKey="SelectFeaturedSubjects"
       isOpen
       size="xl"
       onClose={onHide}

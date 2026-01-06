@@ -23,7 +23,7 @@ export default function IconSelectionModal({
   );
   const [selectedIcon, setSelectedIcon] = useState(prevSelectedIcon);
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="IconSelectionModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Select an icon</header>
         <main>

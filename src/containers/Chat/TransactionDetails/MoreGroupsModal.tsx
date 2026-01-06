@@ -20,7 +20,7 @@ export default function MoreGroupsModal({
   onHide: () => void;
 }) {
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="MoreGroupsModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Selected Groups</header>
         <main>

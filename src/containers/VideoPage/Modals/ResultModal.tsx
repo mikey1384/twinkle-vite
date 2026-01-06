@@ -17,6 +17,7 @@ export default function ResultModal({
 
   return (
     <Modal
+      modalKey="ResultModal"
       isOpen
       onClose={onHide}
       title="Your Results"

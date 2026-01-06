@@ -46,6 +46,7 @@ export default function PromotionModal({
 
   return (
     <Modal
+      modalKey="PromotionModal"
       isOpen
       size="sm"
       onClose={onHide}

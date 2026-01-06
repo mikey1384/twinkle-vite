@@ -18,6 +18,7 @@ export default function ChessOptionsModal({
 }) {
   return (
     <Modal
+      modalKey="ChessOptionsModal"
       isOpen={true}
       onClose={onHide}
       title="Chess"

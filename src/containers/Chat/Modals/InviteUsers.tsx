@@ -40,6 +40,7 @@ export default function InviteUsersModal({
 
   return (
     <Modal
+      modalKey="InviteUsers"
       isOpen
       onClose={onHide}
       hasHeader={false}

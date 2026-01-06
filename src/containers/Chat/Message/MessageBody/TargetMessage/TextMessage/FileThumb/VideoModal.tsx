@@ -45,7 +45,7 @@ export default function VideoModal({
   }, []);
 
   return (
-    <Modal isOpen size="xl" onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="VideoModal" isOpen size="xl" onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Video Player</header>
         <main

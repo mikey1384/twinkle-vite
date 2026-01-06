@@ -19,7 +19,7 @@ function MicrophoneAccessModal({
   if (!isShown) return null;
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="MicrophoneAccessModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>Microphone Access Required</header>
         <main>

@@ -64,6 +64,7 @@ export default function SubjectsModal({
 
   return (
     <Modal
+      modalKey="SubjectsModal"
       isOpen
       onClose={onHide}
       title="View Topics"

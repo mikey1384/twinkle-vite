@@ -119,6 +119,7 @@ export default function WordModal({
   return (
     <DndProvider backend={Backend}>
       <Modal
+        modalKey="WordModal"
         isOpen
         size="xl"
         onClose={onHide}

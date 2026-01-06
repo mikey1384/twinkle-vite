@@ -29,6 +29,7 @@ export default function AddPictureModal({
 
   return (
     <Modal
+      modalKey="AddPictureModal"
       isOpen={true}
       onClose={onHide}
       title={`Add Picture${section === 'archive' ? `s from Archive` : ''}`}

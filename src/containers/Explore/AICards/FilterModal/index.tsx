@@ -54,6 +54,7 @@ export default function FilterModal({
 
   return (
     <Modal
+      modalKey="FilterModal"
       isOpen
       onClose={handleHide}
       closeOnBackdropClick={false}

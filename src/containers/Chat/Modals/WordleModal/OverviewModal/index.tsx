@@ -66,6 +66,7 @@ export default function OverviewModal({
 
   return (
     <Modal
+      modalKey="OverviewModal"
       isOpen={true}
       onClose={onHide}
       size="sm"

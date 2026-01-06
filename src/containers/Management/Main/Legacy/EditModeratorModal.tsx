@@ -60,6 +60,7 @@ export default function EditModeratorModal({
 
   return (
     <Modal
+      modalKey="EditModeratorModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={!dropdownShown}

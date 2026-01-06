@@ -130,6 +130,7 @@ export default function EditPlaylistModal({
     <ErrorBoundary componentPath="EditPlaylistModal">
       <DndProvider backend={Backend}>
         <Modal
+          modalKey="EditPlaylistModal"
           isOpen
           size="xl"
           onClose={onHide}

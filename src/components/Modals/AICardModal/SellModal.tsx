@@ -32,6 +32,7 @@ export default function SellModal({
 
   return (
     <Modal
+      modalKey="SellModal"
       isOpen
       onClose={onHide}
       modalLevel={2}

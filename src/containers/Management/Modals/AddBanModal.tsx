@@ -76,7 +76,7 @@ export default function AddBanModal({ onHide }: { onHide: () => void }) {
 
   return (
     <ErrorBoundary componentPath="Management/Modals/AddBanModal">
-      <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+      <Modal modalKey="AddBanModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
         <LegacyModalLayout>
           <header style={{ display: 'block' }}>Restrict Account</header>
           <main>

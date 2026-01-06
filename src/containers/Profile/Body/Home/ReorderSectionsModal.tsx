@@ -36,7 +36,7 @@ export default function ReorderSectionsModal({
   }, [sectionLabels]);
 
   return (
-    <Modal isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
+    <Modal modalKey="ReorderSectionsModal" isOpen onClose={onHide} hasHeader={false} bodyPadding={0}>
       <LegacyModalLayout>
         <header>{titleLabel}</header>
         <main>

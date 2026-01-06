@@ -136,6 +136,7 @@ export default function TopicSettingsModal({
 
   return (
     <Modal
+      modalKey="TopicSettingsModal"
       isOpen
       onClose={onHide}
       size="md"

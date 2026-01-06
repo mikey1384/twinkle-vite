@@ -104,6 +104,7 @@ export default function QuestionsBuilder({
     <ErrorBoundary componentPath="VideoPage/QuestionsBuilder">
       <DndProvider backend={Backend}>
         <Modal
+          modalKey="QuestionsBuilder"
           isOpen
           size="xl"
           onClose={onHide}

@@ -56,6 +56,7 @@ export default function UsernameHistoryModal({
 
   return (
     <Modal
+      modalKey="UsernameHistoryModal"
       isOpen
       onClose={onHide}
       title="Previous Usernames"

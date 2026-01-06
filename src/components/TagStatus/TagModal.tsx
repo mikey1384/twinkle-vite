@@ -59,6 +59,7 @@ function TagModal({
 
   return (
     <Modal
+      modalKey="TagModal"
       isOpen
       onClose={onHide}
       hasHeader={false}

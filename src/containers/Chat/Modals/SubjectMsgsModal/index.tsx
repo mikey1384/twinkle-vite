@@ -59,6 +59,7 @@ export default function SubjectMsgsModal({
 
   return (
     <Modal
+      modalKey="SubjectMsgsModal"
       isOpen
       onClose={onHide}
       closeOnBackdropClick={!usermenuShown}

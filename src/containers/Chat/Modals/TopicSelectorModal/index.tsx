@@ -199,6 +199,7 @@ export default function TopicSelectorModal({
 
   return (
     <Modal
+      modalKey="TopicSelectorModal"
       isOpen
       onClose={onHide}
       title="Topics"

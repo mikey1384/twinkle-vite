@@ -123,6 +123,7 @@ export default function ChangePasswordModal({
 
   return (
     <Modal
+      modalKey="ChangePasswordModal"
       isOpen
       size="sm"
       onClose={onHide}
