@@ -140,7 +140,8 @@ export default function Reading({
         onLoadQuestions(streamedStoryId);
         socket.emit('generate_ai_story_explanations', {
           storyId: Number(streamedStoryId),
-          story
+          story,
+          difficulty
         });
       }
     }

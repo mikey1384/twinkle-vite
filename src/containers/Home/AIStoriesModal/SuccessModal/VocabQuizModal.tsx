@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
@@ -7,20 +7,18 @@ import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, borderRadius } from '~/constants/css';
+import { socket } from '~/constants/sockets/api';
 
 interface QuizQuestion {
   id: number;
   word: string;
   question: string;
   choices: string[];
-}
-
-interface QuizPayload {
-  totalQuestions: number;
-  questions: QuizQuestion[];
-  autoCollectBlocked?: boolean;
-  collectableCount?: number;
-  discoverableCount?: number;
+  answerIndex?: number;
+  status?: 'collectable' | 'discoverable';
+  wordId?: number;
+  wordLevel?: number;
+  definition?: string;
 }
 
 export default function VocabQuizModal({
@@ -34,14 +32,14 @@ export default function VocabQuizModal({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const loadAIStoryVocabQuiz = useAppContext(
-    (v) => v.requestHelpers.loadAIStoryVocabQuiz
-  );
   const submitAIStoryVocabQuizAnswer = useAppContext(
     (v) => v.requestHelpers.submitAIStoryVocabQuizAnswer
   );
 
-  const [quiz, setQuiz] = useState<QuizPayload | null>(null);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [collectableCount, setCollectableCount] = useState(0);
+  const [discoverableCount, setDiscoverableCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -52,15 +50,23 @@ export default function VocabQuizModal({
     'neutral' | 'success' | 'warning' | 'error'
   >('neutral');
   const [submitting, setSubmitting] = useState(false);
+  const [autoCollectBlocked, setAutoCollectBlocked] = useState(false);
+  const [generationComplete, setGenerationComplete] = useState(false);
 
-  const questions = quiz?.questions || [];
-  const totalQuestions = questions.length;
+  const storyIdRef = useRef(storyId);
+
   const currentQuestion = questions[currentIndex] || null;
-  const isLastQuestion = currentIndex + 1 >= totalQuestions;
+  const isLastQuestion =
+    generationComplete && currentIndex + 1 >= questions.length;
   const gradedSelectedIndex =
     typeof answerResult?.selectedIndex === 'number'
       ? answerResult.selectedIndex
       : selectedIndex;
+
+  // Keep storyIdRef updated
+  useEffect(() => {
+    storyIdRef.current = storyId;
+  }, [storyId]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -68,39 +74,77 @@ export default function VocabQuizModal({
       setLoadError('Story is unavailable.');
       return;
     }
-    let isMounted = true;
+
+    // Reset state
     setLoading(true);
     setLoadError('');
-    setQuiz(null);
+    setQuestions([]);
+    setTotalQuestions(0);
     setCurrentIndex(0);
     setSelectedIndex(null);
     setAnswerResult(null);
     setStatusMessage('');
     setStatusTone('neutral');
+    setGenerationComplete(false);
+    setAutoCollectBlocked(false);
 
-    loadAIStoryVocabQuiz(storyId)
-      .then((data: any) => {
-        if (!isMounted) return;
-        if (data?.quiz?.questions?.length) {
-          setQuiz(data.quiz);
-          return;
-        }
-        setLoadError(data?.message || 'No quiz available for this story.');
-      })
-      .catch((error: any) => {
-        console.error(error);
-        if (isMounted) {
-          setLoadError('Failed to load the quiz. Please try again.');
-        }
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
+    // Socket event handlers
+    function handleQuizStarted(data: {
+      storyId: number;
+      totalQuestions: number;
+      collectableCount: number;
+      discoverableCount: number;
+      autoCollectBlocked?: boolean;
+    }) {
+      if (data.storyId !== storyIdRef.current) return;
+      setTotalQuestions(data.totalQuestions);
+      setCollectableCount(data.collectableCount);
+      setDiscoverableCount(data.discoverableCount);
+      setAutoCollectBlocked(data.autoCollectBlocked || false);
+      setLoading(false);
+    }
+
+    function handleQuizQuestion(data: {
+      storyId: number;
+      question: QuizQuestion;
+      currentIndex: number;
+      totalQuestions: number;
+    }) {
+      if (data.storyId !== storyIdRef.current) return;
+      setQuestions((prev) => {
+        // Avoid duplicates
+        if (prev.some((q) => q.id === data.question.id)) return prev;
+        return [...prev, data.question];
       });
+      setTotalQuestions(data.totalQuestions);
+    }
+
+    function handleQuizComplete(data: { storyId: number }) {
+      if (data.storyId !== storyIdRef.current) return;
+      setGenerationComplete(true);
+    }
+
+    function handleQuizError(data: { storyId: number; error: string }) {
+      if (data.storyId !== storyIdRef.current) return;
+      setLoadError(data.error || 'Failed to load quiz');
+      setLoading(false);
+    }
+
+    // Subscribe to socket events
+    socket.on('ai_story_vocab_quiz_started', handleQuizStarted);
+    socket.on('ai_story_vocab_quiz_question', handleQuizQuestion);
+    socket.on('ai_story_vocab_quiz_complete', handleQuizComplete);
+    socket.on('ai_story_vocab_quiz_error', handleQuizError);
+
+    // Start the quiz
+    socket.emit('start_ai_story_vocab_quiz', { storyId });
 
     return () => {
-      isMounted = false;
+      socket.off('ai_story_vocab_quiz_started', handleQuizStarted);
+      socket.off('ai_story_vocab_quiz_question', handleQuizQuestion);
+      socket.off('ai_story_vocab_quiz_complete', handleQuizComplete);
+      socket.off('ai_story_vocab_quiz_error', handleQuizError);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, storyId]);
 
   useEffect(() => {
@@ -118,8 +162,12 @@ export default function VocabQuizModal({
     return Color.darkerGray();
   }, [statusTone]);
 
+  const displayedTotalQuestions = totalQuestions || questions.length;
+  const waitingForQuestion = !currentQuestion && !loadError && !loading;
+
   return (
     <Modal
+      modalKey="VocabQuizModal"
       isOpen={isOpen}
       onClose={submitting ? () => null : onClose}
       size="lg"
@@ -133,7 +181,7 @@ export default function VocabQuizModal({
         <header>Word Master Quiz</header>
         <main>
           {loading ? (
-            <Loading text="Preparing quiz..." />
+            <Loading text="Starting quiz..." />
           ) : loadError ? (
             <div
               className={css`
@@ -145,6 +193,8 @@ export default function VocabQuizModal({
             >
               {loadError}
             </div>
+          ) : waitingForQuestion ? (
+            <Loading text="Generating first question..." />
           ) : currentQuestion ? (
             <div
               className={css`
@@ -154,7 +204,7 @@ export default function VocabQuizModal({
                 gap: 1.4rem;
               `}
             >
-              {quiz?.autoCollectBlocked && (
+              {autoCollectBlocked && (
                 <div
                   className={css`
                     padding: 0.9rem 1.1rem;
@@ -185,15 +235,25 @@ export default function VocabQuizModal({
                 `}
               >
                 <div>
-                  Question {currentIndex + 1} of {totalQuestions}
-                </div>
-                {typeof quiz?.collectableCount === 'number' &&
-                  typeof quiz?.discoverableCount === 'number' && (
-                    <div>
-                      {quiz.collectableCount} collectable /{' '}
-                      {quiz.discoverableCount} discoverable
-                    </div>
+                  Question {currentIndex + 1} of {displayedTotalQuestions}
+                  {!generationComplete && (
+                    <span
+                      className={css`
+                        color: ${Color.gray()};
+                        font-weight: 500;
+                        margin-left: 0.5rem;
+                      `}
+                    >
+                      (generating...)
+                    </span>
                   )}
+                </div>
+                {collectableCount > 0 || discoverableCount > 0 ? (
+                  <div>
+                    {collectableCount} collectable / {discoverableCount}{' '}
+                    discoverable
+                  </div>
+                ) : null}
               </div>
 
               <section
@@ -252,7 +312,11 @@ export default function VocabQuizModal({
             uppercase={false}
             size="lg"
             onClick={handleNext}
-            disabled={!answerResult || submitting}
+            disabled={
+              !answerResult ||
+              submitting ||
+              (!isLastQuestion && currentIndex + 1 >= questions.length)
+            }
           >
             {isLastQuestion ? 'Finish' : 'Next Word'}
           </Button>

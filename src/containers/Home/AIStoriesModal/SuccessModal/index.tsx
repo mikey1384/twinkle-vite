@@ -455,7 +455,7 @@ export default function SuccessModal({
                 </div>
               </div>
             )}
-            {!loadingVocabSummary && eligibleVocabCount > 0 && (
+            {!isListening && (
               <div
                 className={css`
                   width: 100%;
@@ -471,6 +471,8 @@ export default function SuccessModal({
                   variant="solid"
                   size="lg"
                   uppercase={false}
+                  loading={loadingVocabSummary}
+                  disabled={!loadingVocabSummary && eligibleVocabCount === 0}
                   onClick={() => setVocabQuizShown(true)}
                 >
                   Collect Words
@@ -482,8 +484,11 @@ export default function SuccessModal({
                     text-align: center;
                   `}
                 >
-                  {eligibleVocabCount} word
-                  {eligibleVocabCount === 1 ? '' : 's'} ready for Word Master
+                  {loadingVocabSummary
+                    ? 'Checking for collectible words...'
+                    : eligibleVocabCount > 0
+                    ? `${eligibleVocabCount} word${eligibleVocabCount === 1 ? '' : 's'} ready for Word Master`
+                    : 'No new words to collect'}
                 </div>
               </div>
             )}
