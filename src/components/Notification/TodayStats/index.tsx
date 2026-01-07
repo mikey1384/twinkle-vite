@@ -108,15 +108,21 @@ export default function TodayStats({
   });
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchTodayRank() {
       if (Number(todayStats?.xpEarned || 0) > 0) {
         try {
           const { myTodayRank } = await loadTodayRankings({ limit: 1 });
-          setMyTodayRank(myTodayRank);
+          if (!cancelled) {
+            setMyTodayRank(myTodayRank);
+          }
         } catch (error) {
-          console.error('Error fetching today rank:', error);
+          if (!cancelled) {
+            console.error('Error fetching today rank:', error);
+          }
         }
-      } else {
+      } else if (!cancelled) {
         setMyTodayRank(null);
       }
     }
@@ -124,7 +130,12 @@ export default function TodayStats({
     if (todayStats?.loaded) {
       fetchTodayRank();
     }
-  }, [todayStats?.xpEarned, todayStats?.loaded, loadTodayRankings]);
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayStats?.xpEarned, todayStats?.loaded]);
 
   return (
     <ErrorBoundary componentPath="Notification/TodayStats">

@@ -23,9 +23,13 @@ export default function TodayXPRankings() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchInitialRankings() {
       try {
         const { all, hasMore: moreExist } = await loadTodayRankings();
+
+        if (cancelled) return;
 
         onUpdateTodayStats({
           newStats: {
@@ -35,13 +39,19 @@ export default function TodayXPRankings() {
           }
         });
       } catch (error) {
-        console.error('Failed to load today rankings:', error);
+        if (!cancelled) {
+          console.error('Failed to load today rankings:', error);
+        }
       }
     }
 
     if (todayStats?.loaded) {
       fetchInitialRankings();
     }
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayStats?.xpEarned]);
 
@@ -49,6 +59,17 @@ export default function TodayXPRankings() {
     () => progressRole.getColor() || Color.logoBlue(),
     [progressRole]
   );
+
+  // Dedupe by id to prevent duplicate key errors if backend returns duplicates
+  const rankings = useMemo(() => {
+    const raw = todayStats?.todayXPRanking || [];
+    const seen = new Set<number>();
+    return raw.filter((user: any) => {
+      if (seen.has(user.id)) return false;
+      seen.add(user.id);
+      return true;
+    });
+  }, [todayStats?.todayXPRanking]);
 
   if (!todayStats?.todayXPRankingLoaded) {
     return <Loading style={{ height: '7rem' }} />;
@@ -67,7 +88,7 @@ export default function TodayXPRankings() {
         Today's XP Rankings
       </div>
 
-      {todayStats?.todayXPRanking?.length === 0 ? (
+      {rankings.length === 0 ? (
         <div
           style={{
             padding: '2rem',
@@ -87,7 +108,7 @@ export default function TodayXPRankings() {
           bottomPadding="0"
           gap="0.75rem"
         >
-          {todayStats?.todayXPRanking?.map((user: any) => (
+          {rankings.map((user: any) => (
             <RankingsListItem
               key={user.id}
               user={user}
