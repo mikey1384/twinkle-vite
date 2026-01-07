@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -31,12 +31,31 @@ export default function Popup({
   const MenuRef = useRef(null);
   const { x, y, width, height } = popupContext;
   useOutsideClick(MenuRef, onHideMenu, { closeOnScroll: deviceIsMobile });
+  const [portalContainer] = useState(() => {
+    if (typeof document === 'undefined') return null;
+    const el = document.createElement('div');
+    el.setAttribute('data-portal', 'user-popup');
+    return el;
+  });
+  useEffect(() => {
+    if (!portalContainer || typeof document === 'undefined') return;
+    const target = document.getElementById('outer-layer');
+    if (!target) return;
+    target.appendChild(portalContainer);
+    return () => {
+      if (portalContainer.parentNode === target) {
+        target.removeChild(portalContainer);
+      }
+    };
+  }, [portalContainer]);
   const displaysToTheRight = useMemo(() => {
     return window.innerWidth / 2 - x > 0;
   }, [x]);
   const isReversed = useMemo(() => {
     return window.innerHeight / 2 - y < 0;
   }, [y]);
+
+  if (!portalContainer) return null;
 
   return createPortal(
     <ErrorBoundary
@@ -97,6 +116,6 @@ export default function Popup({
         </div>
       </div>
     </ErrorBoundary>,
-    document.getElementById('outer-layer') as HTMLElement
+    portalContainer
   );
 }

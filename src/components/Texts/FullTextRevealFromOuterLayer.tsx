@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
 import { createPortal } from 'react-dom';
@@ -16,6 +16,23 @@ export default function FullTextRevealFromOuterLayer({
   text: string | React.ReactNode;
 }) {
   const { x, y, width, height } = textContext;
+  const [portalContainer] = useState(() => {
+    if (typeof document === 'undefined') return null;
+    const el = document.createElement('div');
+    el.setAttribute('data-portal', 'full-text-reveal');
+    return el;
+  });
+  useEffect(() => {
+    if (!portalContainer || typeof document === 'undefined') return;
+    const target = document.getElementById('outer-layer');
+    if (!target) return;
+    target.appendChild(portalContainer);
+    return () => {
+      if (portalContainer.parentNode === target) {
+        target.removeChild(portalContainer);
+      }
+    };
+  }, [portalContainer]);
 
   const bubbleClass = useMemo(
     () =>
@@ -45,6 +62,8 @@ export default function FullTextRevealFromOuterLayer({
     []
   );
 
+  if (!portalContainer) return null;
+
   return createPortal(
     <ErrorBoundary
       componentPath="FullTextRevealFromOuterLayer"
@@ -66,6 +85,6 @@ export default function FullTextRevealFromOuterLayer({
         {text}
       </div>
     </ErrorBoundary>,
-    document.getElementById('outer-layer') as HTMLElement
+    portalContainer
   );
 }
