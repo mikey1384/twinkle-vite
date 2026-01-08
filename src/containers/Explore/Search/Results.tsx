@@ -36,20 +36,78 @@ export default function Results({
   const timerRef: React.RefObject<any> = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (filter !== prevFilter.current) {
       setSearching(true);
-      handleSearchContent(searchTextRef.current);
+      doSearch(searchTextRef.current);
     }
     prevFilter.current = filter;
+
+    return () => {
+      cancelled = true;
+    };
+
+    async function doSearch(text: string) {
+      try {
+        const { results, loadMoreButton } = await searchContent({
+          filter:
+            filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
+          searchText: text
+        });
+        if (cancelled) return;
+        onLoadSearchResults({ filter, results, loadMoreButton, searchText: text });
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error during search:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          setSearching(false);
+        }
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   useEffect(() => {
+    let cancelled = false;
     searchTextRef.current = searchText;
+
     if (!stringIsEmpty(searchText) && searchText !== prevSearchText) {
       clearTimeout(timerRef.current);
       setSearching(true);
-      timerRef.current = setTimeout(() => handleSearchContent(searchText), 500);
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        doSearch(searchText);
+      }, 500);
+    }
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      setSearching(false);
+    };
+
+    async function doSearch(text: string) {
+      try {
+        const { results, loadMoreButton } = await searchContent({
+          filter:
+            filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
+          searchText: text
+        });
+        if (cancelled) return;
+        onLoadSearchResults({ filter, results, loadMoreButton, searchText: text });
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error during search:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          setSearching(false);
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchText, prevSearchText]);
@@ -133,22 +191,6 @@ export default function Results({
       )}
     </div>
   );
-
-  async function handleSearchContent(searchText: string) {
-    try {
-      setSearching(true);
-      const { results, loadMoreButton } = await searchContent({
-        filter:
-          filter === 'links' ? 'url' : filter.substring(0, filter.length - 1),
-        searchText
-      });
-      onLoadSearchResults({ filter, results, loadMoreButton, searchText });
-    } catch (error) {
-      console.error('Error during search:', error);
-    } finally {
-      setSearching(false);
-    }
-  }
 
   async function loadMoreSearchResults() {
     try {
