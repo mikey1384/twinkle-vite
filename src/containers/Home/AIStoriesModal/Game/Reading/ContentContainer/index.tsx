@@ -95,7 +95,7 @@ export default function ContentContainer({
             fontSize: '1.7rem'
           }}
         >
-          {displayedSection === 'story' && (
+          {displayedSection === 'story' ? (
             <Story
               storyId={storyId}
               isGraded={solveObj.isGraded}
@@ -104,8 +104,7 @@ export default function ContentContainer({
               questionsButtonEnabled={questionsButtonEnabled}
               onFinishRead={handleFinishRead}
             />
-          )}
-          {displayedSection === 'questions' && (
+          ) : (
             <Questions
               solveObj={solveObj}
               userChoiceObj={userChoiceObj}

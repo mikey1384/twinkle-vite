@@ -25,6 +25,17 @@ const colorHash: Record<
   5: 'gold'
 };
 
+const vocabButtonVariantHash: Record<
+  number,
+  'logoBlue' | 'pink' | 'orange' | 'magenta' | 'gold'
+> = {
+  1: 'logoBlue',
+  2: 'pink',
+  3: 'orange',
+  4: 'magenta',
+  5: 'gold'
+};
+
 interface ImageGenStatus {
   storyId?: number;
   stage:
@@ -468,7 +479,11 @@ export default function SuccessModal({
                 `}
               >
                 <GameCTAButton
-                  variant={loadingVocabSummary || eligibleVocabCount === 0 ? 'logoBlue' : 'gold'}
+                  variant={
+                    loadingVocabSummary || eligibleVocabCount === 0
+                      ? 'logoBlue'
+                      : vocabButtonVariantHash[difficulty] || 'logoBlue'
+                  }
                   size="lg"
                   shiny={!loadingVocabSummary && eligibleVocabCount > 0}
                   loading={loadingVocabSummary}
