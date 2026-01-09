@@ -178,11 +178,10 @@ export default function DefaultLayout({
             grid-area: avatar;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.6rem;
 
             @media (max-width: ${mobileMaxWidth}) {
-              align-items: center;
               gap: 0.4rem;
             }
           `}
@@ -192,13 +191,10 @@ export default function DefaultLayout({
               display: flex;
               width: 100%;
               flex-direction: column;
-              align-items: flex-start;
+              align-items: center;
               justify-content: center;
-              padding-left: 1rem;
 
               @media (max-width: ${mobileMaxWidth}) {
-                padding-left: 0;
-                align-items: center;
                 gap: 0.5rem;
               }
             `}
@@ -225,10 +221,10 @@ export default function DefaultLayout({
                 overflow: hidden;
                 text-overflow: ellipsis;
                 margin-top: 0.2rem;
+                text-align: center;
 
                 @media (max-width: ${mobileMaxWidth}) {
                   margin-top: 0;
-                  text-align: center;
                   width: auto;
                   min-width: 0;
                 }
