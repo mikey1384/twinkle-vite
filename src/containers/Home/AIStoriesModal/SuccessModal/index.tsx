@@ -475,7 +475,9 @@ export default function SuccessModal({
                   disabled={!loadingVocabSummary && eligibleVocabCount === 0}
                   onClick={() => setVocabQuizShown(true)}
                 >
-                  Collect Words
+                  {!loadingVocabSummary && eligibleVocabCount === 0
+                    ? 'No Words to Collect'
+                    : 'Collect Words'}
                 </GameCTAButton>
               </div>
             )}
