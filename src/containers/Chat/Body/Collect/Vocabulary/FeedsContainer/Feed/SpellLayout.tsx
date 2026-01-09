@@ -8,6 +8,7 @@ import { mobileMaxWidth, borderRadius } from '~/constants/css';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import Icon from '~/components/Icon';
 import WordModal from '../../WordModal';
+import { WordMasterLevelBadge } from '~/components/WordMasterBadges';
 
 export default function SpellLayout({
   onHeightMeasured,
@@ -185,20 +186,7 @@ export default function SpellLayout({
             width: 100%;
           `}
         >
-          <span
-            className={css`
-              display: inline-block;
-              padding: 0.4rem 0.8rem;
-              border-radius: 1rem;
-              font-size: 1rem;
-              font-weight: 600;
-              color: #fff;
-              background: ${getRGBA(colorName, 1)};
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
-            `}
-          >
-            {wordLevelHash[wordLevel]?.label}
-          </span>
+          <WordMasterLevelBadge level={wordLevel} />
         </div>
 
         <div

@@ -7,6 +7,10 @@ import { css } from '@emotion/css';
 import { wordLevelHash } from '~/constants/defaultValues';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
+import {
+  WordMasterLevelBadge,
+  WordMasterStatusBadge
+} from '~/components/WordMasterBadges';
 
 export default function DefaultLayout({
   onHeightMeasured,
@@ -246,23 +250,7 @@ export default function DefaultLayout({
               />
             </div>
           </div>
-          <div
-            className={css`
-              ${badgeStyle(actionColor, 0.85)}
-              color: #fff;
-              font-weight: 700;
-              text-align: center;
-              width: fit-content;
-              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 0.9rem;
-                padding: 0.3rem 0.6rem;
-              }
-            `}
-          >
-            {actionLabel}
-          </div>
+          <WordMasterStatusBadge label={actionLabel} colorName={actionColor} />
         </div>
 
         <div
@@ -317,24 +305,14 @@ export default function DefaultLayout({
               >
                 {content}
               </span>
-              <span
+              <WordMasterLevelBadge
+                level={wordLevel}
                 className={css`
-                  display: inline-block;
-                  padding: 0.3rem 0.7rem;
-                  border-radius: 1rem;
-                  font-size: 1rem;
-                  font-weight: 600;
-                  color: #fff;
-                  background: ${getRGBA(colorName, 1)};
-                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
                   @media (max-width: ${mobileMaxWidth}) {
                     margin-top: 0.2rem;
-                    font-size: 0.8rem;
                   }
                 `}
-              >
-                {wordLevelHash[wordLevel]?.label}
-              </span>
+              />
             </div>
           )}
 

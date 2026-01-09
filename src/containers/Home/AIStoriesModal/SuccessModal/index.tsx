@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import Modal from '~/components/Modal';
 import LegacyModalLayout from '~/components/Modal/LegacyModalLayout';
 import Button from '~/components/Button';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import SuccessText from './SuccessText';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Input from '~/components/Texts/Input';
@@ -466,30 +467,16 @@ export default function SuccessModal({
                   gap: 0.6rem;
                 `}
               >
-                <Button
-                  color="logoBlue"
-                  variant="solid"
+                <GameCTAButton
+                  variant={loadingVocabSummary || eligibleVocabCount === 0 ? 'logoBlue' : 'gold'}
                   size="lg"
-                  uppercase={false}
+                  shiny={!loadingVocabSummary && eligibleVocabCount > 0}
                   loading={loadingVocabSummary}
                   disabled={!loadingVocabSummary && eligibleVocabCount === 0}
                   onClick={() => setVocabQuizShown(true)}
                 >
                   Collect Words
-                </Button>
-                <div
-                  className={css`
-                    font-size: 1rem;
-                    color: ${Color.darkGray()};
-                    text-align: center;
-                  `}
-                >
-                  {loadingVocabSummary
-                    ? 'Checking for collectible words...'
-                    : eligibleVocabCount > 0
-                    ? `${eligibleVocabCount} word${eligibleVocabCount === 1 ? '' : 's'} ready for Word Master`
-                    : 'No new words to collect'}
-                </div>
+                </GameCTAButton>
               </div>
             )}
           </div>
