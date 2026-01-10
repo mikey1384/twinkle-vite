@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import UsernameText from '~/components/Texts/UsernameText';
 import RichText from '~/components/Texts/RichText';
 import VideoThumb from './VideoThumb';
@@ -14,7 +14,6 @@ import {
   getFileInfoFromFileName,
   isValidSpoiler
 } from '~/helpers/stringHelpers';
-import LocalContext from '../../../../Context';
 
 export default function TextMessage({
   message,
@@ -23,26 +22,10 @@ export default function TextMessage({
   message: any;
   displayedThemeColor: string;
 }) {
-  const {
-    actions: { onSetEmbeddedUrl }
-  } = useContext(LocalContext);
-
-  const [imageUrl, setImageUrl] = useState(message.thumbUrl);
   const fetchedUrl = useMemo(
     () => fetchURLFromText(message.content),
-    [message]
+    [message.content]
   );
-
-  useEffect(() => {
-    if (fetchedUrl) {
-      onSetEmbeddedUrl({
-        contentId: message.id,
-        contentType: 'chat',
-        url: fetchedUrl
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [message.content, message.id]);
 
   const fileType = useMemo(() => {
     return message.fileName
@@ -60,20 +43,14 @@ export default function TextMessage({
     [fetchedUrl]
   );
 
-  const embedlyShown = useMemo(() => {
+  const showVideoThumb = useMemo(() => {
     return (
       fileType !== 'video' &&
       fileType !== 'audio' &&
-      (message.thumbUrl || extractedVideoId || fetchedUrl) &&
+      (extractedVideoId || videoCode) &&
       !message.attachmentHidden
     );
-  }, [
-    extractedVideoId,
-    fetchedUrl,
-    fileType,
-    message.attachmentHidden,
-    message.thumbUrl
-  ]);
+  }, [extractedVideoId, videoCode, fileType, message.attachmentHidden]);
 
   const displayedTime = useMemo(
     () => moment.unix(message?.timeStamp).format('lll'),
@@ -129,7 +106,7 @@ export default function TextMessage({
           </RichText>
         )}
       </div>
-      {embedlyShown && (extractedVideoId || videoCode) ? (
+      {showVideoThumb && (
         <div
           style={{
             width: '25%',
@@ -148,46 +125,7 @@ export default function TextMessage({
             videoUrl={fetchedUrl}
           />
         </div>
-      ) : imageUrl && !(fileType && message.fileName) ? (
-        <div
-          className={`unselectable ${css`
-            width: 25%;
-            background: #fff;
-            height: 7rem;
-            position: relative;
-            @media (max-width: ${mobileMaxWidth}) {
-              height: 5rem;
-            }
-          `}`}
-        >
-          <a
-            style={{ width: '100%', height: '100%' }}
-            target="_blank"
-            rel="noopener noreferrer"
-            href={fetchedUrl}
-          >
-            <section
-              className={css`
-                position: relative;
-                width: 100%;
-                height: 100%;
-              `}
-            >
-              <img
-                loading="lazy"
-                className={css`
-                  position: absolute;
-                  width: 100%;
-                  height: 100%;
-                  object-fit: contain;
-                `}
-                src={imageUrl}
-                onError={() => setImageUrl('/img/link.png')}
-              />
-            </section>
-          </a>
-        </div>
-      ) : null}
+      )}
       {fileType && message.fileName && (
         <FileThumb
           filePath={message.filePath}

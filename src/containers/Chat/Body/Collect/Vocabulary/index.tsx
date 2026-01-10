@@ -250,7 +250,6 @@ export default function Vocabulary({
         <FeedsContainer
           contentRef={feedsContentRef}
           displayedThemeColor={displayedThemeColor}
-          wordMasterBlocked={wordMasterBlocked}
           onWordMasterBreak={handleWordMasterBreakUpdate}
           style={{
             width: '100%',
@@ -271,7 +270,6 @@ export default function Vocabulary({
         canHit={canHit}
         isNewWord={isNewWord}
         isCensored={isCensored}
-        wordMasterBlocked={wordMasterBlocked}
         onWordMasterBreak={handleWordMasterBreakUpdate}
         wordMasterBreak={wordMasterBreak}
         wordMasterBreakLoading={wordMasterBreakLoading}

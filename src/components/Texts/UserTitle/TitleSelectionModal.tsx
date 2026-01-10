@@ -12,12 +12,10 @@ const confirmLabel = 'Confirm';
 
 export default function TitleSelectionModal({
   currentTitle,
-  modalOverModal,
   userLevel,
   onHide
 }: {
   currentTitle: string;
-  modalOverModal?: boolean;
   userLevel: number;
   onHide: () => void;
 }) {

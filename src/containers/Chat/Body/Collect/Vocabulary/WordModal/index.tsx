@@ -15,12 +15,10 @@ const Backend = isMobile(navigator) ? TouchBackend : HTML5Backend;
 export default function WordModal({
   onHide,
   word,
-  wordMasterBlocked,
   onWordMasterBreak
 }: {
   onHide: () => void;
   word: string;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const wordsObj = useChatContext((v) => v.state.wordsObj);
@@ -153,7 +151,6 @@ export default function WordModal({
               posObj={posObj}
               posOrder={posOrder}
               word={word}
-              wordMasterBlocked={wordMasterBlocked}
               onWordMasterBreak={onWordMasterBreak}
             />
           )}

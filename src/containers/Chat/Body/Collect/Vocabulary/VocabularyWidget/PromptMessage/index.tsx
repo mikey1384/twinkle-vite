@@ -20,7 +20,6 @@ interface PromptMessageProps {
   wordRegisterStatus?: any;
   statusMessage: string;
   canHit?: boolean;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
   strikeAnimationKey?: number;
   maskWordMasterStatus?: boolean;
@@ -111,7 +110,6 @@ export default function PromptMessage({
   wordRegisterStatus,
   statusMessage,
   canHit,
-  wordMasterBlocked,
   onWordMasterBreak,
   strikeAnimationKey,
   maskWordMasterStatus
@@ -169,7 +167,13 @@ export default function PromptMessage({
       return 'min(300%, calc(100vh - 20rem))';
     }
     return '25rem';
-  }, [isSearching, showLoading, searchedWord?.content, wordRegisterStatus, promptVisible]);
+  }, [
+    isSearching,
+    showLoading,
+    searchedWord?.content,
+    wordRegisterStatus,
+    promptVisible
+  ]);
 
   const showStatusBar = useMemo(
     () => isSearching && (vocabErrorMessage || statusMessage || isSubmitting),
@@ -220,7 +224,9 @@ export default function PromptMessage({
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: ${isSearching ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'};
+            transition: ${isSearching
+              ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              : 'none'};
             z-index: 1;
             width: ${isSearching ? '90%' : 'auto'};
             max-width: ${isSearching ? '600px' : 'none'};
@@ -228,7 +234,11 @@ export default function PromptMessage({
             overflow: hidden;
             transform-origin: bottom center;
             ${!isSearching && promptVisible
-              ? `animation: ${promptExiting ? bubbleFadeOut : bubbleBounce} ${promptExiting ? '0.5s ease forwards' : '1s ease-in-out infinite'};`
+              ? `animation: ${promptExiting ? bubbleFadeOut : bubbleBounce} ${
+                  promptExiting
+                    ? '0.5s ease forwards'
+                    : '1s ease-in-out infinite'
+                };`
               : ''}
 
             @media (max-width: ${mobileMaxWidth}) {
@@ -262,44 +272,47 @@ export default function PromptMessage({
                 background={statusBarBackground}
               />
             )}
-            {!showContent && !showLoading && !showStatusBar && promptVisible && (
-              <div
-                className={css`
-                  height: 100%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 0.7rem;
-                  color: ${Color.darkerGray()};
-                  font-size: 1.7rem;
-                  background: ${Color.white()};
-                  padding: 0.7rem 2rem;
-                  white-space: nowrap;
-                  font-weight: 500;
-                  letter-spacing: 0.02em;
-
-                  @media (max-width: ${mobileMaxWidth}) {
-                    font-size: 1.4rem;
-                    padding: 0.5rem 1.5rem;
-                    gap: 0.5rem;
-                  }
-                `}
-              >
-                <span>Type a word below</span>
-                <Icon
-                  icon="arrow-down"
-                  style={{
-                    fontSize: '1.4rem',
-                    color: Color.black(0.7)
-                  }}
+            {!showContent &&
+              !showLoading &&
+              !showStatusBar &&
+              promptVisible && (
+                <div
                   className={css`
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.7rem;
+                    color: ${Color.darkerGray()};
+                    font-size: 1.7rem;
+                    background: ${Color.white()};
+                    padding: 0.7rem 2rem;
+                    white-space: nowrap;
+                    font-weight: 500;
+                    letter-spacing: 0.02em;
+
                     @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.2rem;
+                      font-size: 1.4rem;
+                      padding: 0.5rem 1.5rem;
+                      gap: 0.5rem;
                     }
                   `}
-                />
-              </div>
-            )}
+                >
+                  <span>Type a word below</span>
+                  <Icon
+                    icon="arrow-down"
+                    style={{
+                      fontSize: '1.4rem',
+                      color: Color.black(0.7)
+                    }}
+                    className={css`
+                      @media (max-width: ${mobileMaxWidth}) {
+                        font-size: 1.2rem;
+                      }
+                    `}
+                  />
+                </div>
+              )}
 
             {showLoading && (
               <SearchLoading
@@ -337,7 +350,6 @@ export default function PromptMessage({
                         wordObj={searchedWord}
                         isNewWord={isNewWord}
                         canHit={canHit}
-                        wordMasterBlocked={wordMasterBlocked}
                         onWordMasterBreak={onWordMasterBreak}
                       />
                     </>
@@ -404,7 +416,6 @@ export default function PromptMessage({
               key={wordRegisterStatus?.content}
               word={wordRegisterStatus?.content}
               onHide={() => setWordModalShown(false)}
-              wordMasterBlocked={wordMasterBlocked}
               onWordMasterBreak={onWordMasterBreak}
             />
           )}

@@ -17,13 +17,11 @@ function FeedsContainer({
   displayedThemeColor,
   style,
   contentRef,
-  wordMasterBlocked,
   onWordMasterBreak
 }: {
   displayedThemeColor: string;
   style?: React.CSSProperties;
   contentRef: React.RefObject<any>;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const loadVocabularyFeeds = useAppContext(
@@ -137,7 +135,6 @@ function FeedsContainer({
             <Feed
               key={feed.id}
               feed={feed}
-              wordMasterBlocked={wordMasterBlocked}
               onWordMasterBreak={onWordMasterBreak}
             />
           ))}

@@ -179,7 +179,6 @@ const costTextStyles = css`
 function BonusRoulette({
   word,
   onAIDefinitionsGenerated,
-  wordMasterBlocked,
   onWordMasterBreak
 }: {
   word: string;
@@ -187,7 +186,6 @@ function BonusRoulette({
     partOfSpeechOrder: string[];
     partOfSpeeches: any;
   }) => void;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);

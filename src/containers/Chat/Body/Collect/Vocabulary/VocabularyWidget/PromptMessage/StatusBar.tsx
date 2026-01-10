@@ -4,7 +4,7 @@ import { mobileMaxWidth } from '~/constants/css';
 
 interface StatusBarProps {
   message: string;
-  background: string | { [key: string]: string };
+  background: string | { [key: string]: string | undefined };
 }
 
 export default function StatusBar({ message, background }: StatusBarProps) {

@@ -15,7 +15,6 @@ interface VocabularyWidgetProps {
   isSubmitting?: boolean;
   statusMessage: string;
   canHit?: boolean;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
   wordMasterBreak?: any;
   wordMasterBreakLoading?: boolean;
@@ -36,7 +35,6 @@ export default function VocabularyWidget({
   isCensored,
   statusMessage,
   canHit,
-  wordMasterBlocked,
   onWordMasterBreak,
   wordMasterBreak,
   wordMasterBreakLoading,
@@ -73,7 +71,6 @@ export default function VocabularyWidget({
         wordRegisterStatus={hasWordRegisterStatus ? wordRegisterStatus : null}
         statusMessage={statusMessage}
         canHit={canHit}
-        wordMasterBlocked={wordMasterBlocked}
         onWordMasterBreak={onWordMasterBreak}
         strikeAnimationKey={strikeAnimationKey}
         maskWordMasterStatus={maskWordMasterStatus}

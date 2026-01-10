@@ -6,15 +6,17 @@ import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
 import { useInView } from 'react-intersection-observer';
 import DefaultLayout from './DefaultLayout';
-import { badgeStyle, getActionColor, getRGBA } from '~/components/WordMasterBadges';
+import {
+  badgeStyle,
+  getActionColor,
+  getRGBA
+} from '~/components/WordMasterBadges';
 
 function Feed({
   feed,
-  wordMasterBlocked,
   onWordMasterBreak
 }: {
   feed: any;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const {
@@ -75,7 +77,6 @@ function Feed({
           getRGBA={getRGBA}
           getActionColor={getActionColor}
           badgeStyle={badgeStyle}
-          wordMasterBlocked={wordMasterBlocked}
           onWordMasterBreak={onWordMasterBreak}
         />
       ) : action === 'reward' ? (
@@ -95,7 +96,6 @@ function Feed({
           getActionColor={getActionColor}
           badgeStyle={badgeStyle}
           rewardType={rewardType}
-          wordMasterBlocked={wordMasterBlocked}
           onWordMasterBreak={onWordMasterBreak}
         />
       ) : (
@@ -114,7 +114,6 @@ function Feed({
           getRGBA={getRGBA}
           getActionColor={getActionColor}
           badgeStyle={badgeStyle}
-          wordMasterBlocked={wordMasterBlocked}
           onWordMasterBreak={onWordMasterBreak}
         />
       )}

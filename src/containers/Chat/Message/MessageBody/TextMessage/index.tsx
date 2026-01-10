@@ -1,20 +1,21 @@
-import React, { memo, useContext, useCallback, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import Button from '~/components/Button';
 import EditTextArea from '~/components/Texts/EditTextArea';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LinkAttachment from './LinkAttachment';
 import RichText from '~/components/Texts/RichText';
+import VideoAttachment from './VideoAttachment';
 import { Color } from '~/constants/css';
-import { isValidSpoiler, stringIsEmpty } from '~/helpers/stringHelpers';
-import { socket } from '~/constants/sockets/api';
+import {
+  isValidSpoiler,
+  stringIsEmpty,
+  isValidYoutubeUrl,
+  extractVideoIdFromTwinkleVideoUrl
+} from '~/helpers/stringHelpers';
 import { isMobile } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 import Spoiler from '../Spoiler';
-import LocalContext from '../../../Context';
 import ThinkingIndicator from './ThinkingIndicator';
 
-const regex =
-  /\[.*?\]\((https?:\/\/.*?|www.*?)\)|!\[.*?\]\((https?:\/\/.*?|www.*?)\)/;
 const deviceIsMobile = isMobile(navigator);
 
 function TextMessage({
@@ -22,7 +23,6 @@ function TextMessage({
   aiThoughtContent,
   aiThoughtIsThinkingHard,
   attachmentHidden,
-  channelId,
   content,
   displayedThemeColor,
   extractedUrl,
@@ -40,18 +40,16 @@ function TextMessage({
   isEditing,
   onEditCancel,
   onEditDone,
+  onHideAttachment,
   subjectId,
   onShowSubjectMsgsModal,
   socketConnected,
-  subchannelId,
-  thumbUrl,
   userCanEditThis
 }: {
   aiThinkingStatus?: string;
   aiThoughtContent?: string;
   aiThoughtIsThinkingHard?: boolean;
-  attachmentHidden: boolean;
-  channelId: number;
+  attachmentHidden?: boolean;
   content: string;
   displayedThemeColor: string;
   extractedUrl: string;
@@ -69,21 +67,19 @@ function TextMessage({
   isEditing: boolean;
   onEditCancel: () => void;
   onEditDone: (content: string) => void;
+  onHideAttachment?: () => void;
   onShowSubjectMsgsModal: (v: any) => void;
   socketConnected: boolean;
-  subchannelId: number;
   subjectId: number;
-  thumbUrl: string;
-  userCanEditThis: boolean;
+  userCanEditThis?: boolean;
 }) {
-  const {
-    requests: { hideChatAttachment },
-    actions: { onHideAttachment }
-  } = useContext(LocalContext);
-
-  const isContentContainsLink = useMemo(() => {
-    return regex.test(content);
-  }, [content]);
+  const isVideoUrl = useMemo(() => {
+    if (!extractedUrl) return false;
+    return (
+      isValidYoutubeUrl(extractedUrl) ||
+      !!extractVideoIdFromTwinkleVideoUrl(extractedUrl)
+    );
+  }, [extractedUrl]);
 
   // Show full indicator when AI message has no content yet
   const showFullIndicator = useMemo(
@@ -149,17 +145,6 @@ function TextMessage({
     }
     return prefix;
   }, [displayedThemeColor, isReloadedSubject, isSubject]);
-
-  const handleHideAttachment = useCallback(async () => {
-    await hideChatAttachment(messageId);
-    onHideAttachment({ messageId, channelId, subchannelId });
-    socket.emit('hide_message_attachment', {
-      channelId,
-      messageId,
-      subchannelId
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, messageId, subchannelId]);
 
   const isSpoiler = useMemo(() => isValidSpoiler(content), [content]);
   const richTextId = useMemo(() => {
@@ -238,18 +223,17 @@ function TextMessage({
             )}
           </>
         )}
-        {!isContentContainsLink &&
+        {isVideoUrl &&
           extractedUrl &&
           messageId &&
           !isAIMessage &&
-          !attachmentHidden &&
-          !isSpoiler && (
-            <LinkAttachment
+          !isSpoiler &&
+          !attachmentHidden && (
+            <VideoAttachment
               style={{ marginTop: '2rem' }}
               messageId={messageId}
-              defaultThumbUrl={thumbUrl}
               extractedUrl={extractedUrl}
-              onHideAttachment={handleHideAttachment}
+              onHideAttachment={onHideAttachment}
               userCanEditThis={userCanEditThis}
             />
           )}

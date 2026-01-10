@@ -103,9 +103,6 @@ function MessageBody({
     isNewMessage,
     isReloadedSubject,
     isSubject,
-    linkDescription,
-    linkTitle,
-    linkUrl,
     moveViewTimeStamp,
     numMsgs,
     rewardAmount,
@@ -207,21 +204,17 @@ function MessageBody({
   const [highlighted, setHighlighted] = useState(false);
   const [reactionsMenuShown, setReactionsMenuShown] = useState(false);
   const [messageRewardModalShown, setMessageRewardModalShown] = useState(false);
-  const [extractedUrl, setExtractedUrl] = useState(fetchURLFromText(content));
+  const extractedUrl = useMemo(() => fetchURLFromText(content), [content]);
 
   const {
     actions: {
       onAddBookmarkedMessage,
       onAddReactionToMessage,
       onEditMessage,
+      onHideAttachment,
       onRemoveReactionFromMessage,
       onSaveMessage,
-      onSetEmbeddedUrl,
-      onSetActualDescription,
-      onSetActualTitle,
       onSetIsEditing,
-      onSetSiteUrl,
-      onSetThumbUrl,
       onSetReplyTarget,
       onUpdateLastChessMessageId,
       onUpdateLastChessMoveViewerId,
@@ -232,6 +225,7 @@ function MessageBody({
     },
     requests: {
       editChatMessage,
+      hideChatAttachment,
       saveChatMessage,
       setChessMoveViewTimeStamp,
       setOmokMoveViewTimeStamp,
@@ -529,43 +523,6 @@ function MessageBody({
     omokState?.move?.by
   ]);
 
-  useEffect(() => {
-    const url = fetchURLFromText(content);
-    if (url) {
-      setExtractedUrl(url);
-      onSetEmbeddedUrl({ contentId: messageId, contentType: 'chat', url });
-      if (linkDescription) {
-        onSetActualDescription({
-          contentId: messageId,
-          contentType: 'chat',
-          description: linkDescription
-        });
-      }
-      if (linkTitle) {
-        onSetActualTitle({
-          contentId: messageId,
-          contentType: 'chat',
-          title: linkTitle
-        });
-      }
-      if (linkUrl) {
-        onSetSiteUrl({
-          contentId: messageId,
-          contentType: 'chat',
-          siteUrl: linkUrl
-        });
-      }
-      if (thumbUrl) {
-        onSetThumbUrl({
-          contentId: messageId,
-          contentType: 'chat',
-          thumbUrl
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
-
   const dropdownMenuItems = useMemo(() => {
     const result: any[] = [];
     if (isBanned) return result;
@@ -789,6 +746,17 @@ function MessageBody({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, message, userId]);
+
+  const handleHideAttachment = useCallback(async () => {
+    await hideChatAttachment(messageId);
+    onHideAttachment({ messageId, channelId, subchannelId });
+    socket.emit('hide_message_attachment', {
+      channelId,
+      messageId,
+      subchannelId
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, messageId, subchannelId]);
 
   const handleEditCancel = useCallback(() => {
     onSetIsEditing({
@@ -1198,11 +1166,10 @@ function MessageBody({
                     />
                   ) : (
                     <TextMessage
-                      attachmentHidden={!!attachmentHidden}
                       aiThinkingStatus={aiThinkingStatus}
                       aiThoughtContent={aiThoughtContent}
                       aiThoughtIsThinkingHard={message.aiThoughtIsThinkingHard}
-                      channelId={channelId}
+                      attachmentHidden={attachmentHidden}
                       content={content}
                       displayedThemeColor={displayedThemeColor}
                       extractedUrl={extractedUrl}
@@ -1220,11 +1187,10 @@ function MessageBody({
                       isEditing={isEditing}
                       onEditCancel={handleEditCancel}
                       onEditDone={handleEditDone}
+                      onHideAttachment={handleHideAttachment}
                       onShowSubjectMsgsModal={onShowSubjectMsgsModal}
                       socketConnected={socketConnected}
-                      subchannelId={subchannelId}
                       subjectId={subjectId}
-                      thumbUrl={thumbUrl}
                       userCanEditThis={userCanEditThis}
                     />
                   )}

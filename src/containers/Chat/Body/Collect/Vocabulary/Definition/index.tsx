@@ -10,14 +10,12 @@ export default function Definition({
   wordObj,
   isNewWord,
   canHit,
-  wordMasterBlocked,
   onWordMasterBreak
 }: {
   style?: React.CSSProperties;
   wordObj: any;
   isNewWord?: boolean;
   canHit?: boolean;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
@@ -86,7 +84,7 @@ export default function Definition({
           `}
         >
           <div
-          onClick={() => {
+            onClick={() => {
               if (canHit || isNewWord) return;
               setWordModalShown(true);
             }}
@@ -162,7 +160,6 @@ export default function Definition({
           key={wordObj.content}
           onHide={() => setWordModalShown(false)}
           word={wordObj.content}
-          wordMasterBlocked={wordMasterBlocked}
           onWordMasterBreak={onWordMasterBreak}
         />
       )}

@@ -43,7 +43,7 @@ export default function TwinkleVideo({
   }, []);
 
   return (
-    <ErrorBoundary componentPath="Chat/Message/TextMessage/LinkAttachment/TwinkleVideo">
+    <ErrorBoundary componentPath="Chat/Message/TextMessage/VideoAttachment/TwinkleVideo">
       <div style={{ position: 'relative', ...style }}>
         {!loaded ? (
           <Loading style={{ height: '100%' }} />

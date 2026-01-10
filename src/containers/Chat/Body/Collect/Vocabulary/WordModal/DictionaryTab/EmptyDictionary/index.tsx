@@ -8,7 +8,6 @@ import Icon from '~/components/Icon';
 export default function EmptyDictionary({
   word,
   onAIDefinitionsGenerated,
-  wordMasterBlocked,
   onWordMasterBreak
 }: {
   word: string;
@@ -16,7 +15,6 @@ export default function EmptyDictionary({
     partOfSpeechOrder: string[];
     partOfSpeeches: any;
   }) => void;
-  wordMasterBlocked?: boolean;
   onWordMasterBreak?: (status: any) => void;
 }) {
   const [showRoulette, setShowRoulette] = useState(false);
@@ -95,7 +93,6 @@ export default function EmptyDictionary({
         <BonusRoulette
           word={word}
           onAIDefinitionsGenerated={onAIDefinitionsGenerated}
-          wordMasterBlocked={wordMasterBlocked}
           onWordMasterBreak={onWordMasterBreak}
         />
       )}
