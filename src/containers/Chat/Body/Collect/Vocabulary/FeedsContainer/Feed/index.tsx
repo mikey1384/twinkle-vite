@@ -1,6 +1,7 @@
 import React, { memo, useMemo, useRef } from 'react';
 import SpellLayout from './SpellLayout';
 import RewardLayout from './RewardLayout';
+import BreakLayout from './BreakLayout';
 import moment from 'moment';
 import { vocabFeedHeight } from '~/constants/state';
 import { useLazyLoad } from '~/helpers/hooks';
@@ -50,6 +51,7 @@ function Feed({
 
   const feedShown = useMemo(() => inView || isVisible, [inView, isVisible]);
   const componentHeight = placeholderHeightRef.current || '60px';
+  const isBreakFeed = action === 'break_start' || action === 'break_clear';
 
   function handleHeightMeasured(height: number) {
     placeholderHeightRef.current = height;
@@ -60,6 +62,20 @@ function Feed({
     <div ref={inViewRef}>
       {!feedShown ? (
         <div style={{ width: '100%', height: componentHeight }} />
+      ) : isBreakFeed ? (
+        <BreakLayout
+          onHeightMeasured={handleHeightMeasured}
+          userId={userId}
+          username={username}
+          profilePicUrl={profilePicUrl}
+          action={action}
+          breakIndex={feed.breakIndex}
+          breakType={feed.breakType}
+          displayedTime={displayedTime}
+          getRGBA={getRGBA}
+          getActionColor={getActionColor}
+          badgeStyle={badgeStyle}
+        />
       ) : action === 'spell' ? (
         <SpellLayout
           onHeightMeasured={handleHeightMeasured}

@@ -33,6 +33,10 @@ export function getRGBA(colorName: string, opacity = 1) {
 
 export function getActionColor(action: string) {
   switch (action) {
+    case 'break_start':
+      return 'orange';
+    case 'break_clear':
+      return 'limeGreen';
     case 'register':
       return 'premiumRegister';
     case 'spell':

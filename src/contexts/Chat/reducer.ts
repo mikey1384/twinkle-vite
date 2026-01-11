@@ -3101,8 +3101,11 @@ export default function ChatReducer(
         }
       };
     case 'POST_VOCAB_FEED': {
+      const isBreakFeed =
+        action.feed.action === 'break_start' ||
+        action.feed.action === 'break_clear';
       const newWordLog =
-        action.feed.action !== 'reward' && action.isMyFeed
+        action.feed.action !== 'reward' && !isBreakFeed && action.isMyFeed
           ? {
               id: uuidv1(),
               word: action.feed.content,
@@ -3135,13 +3138,15 @@ export default function ChatReducer(
             isNewFeed: true
           }
         },
-        wordsObj: {
-          ...state.wordsObj,
-          [action.feed.content]: {
-            ...state.wordsObj[action.feed.content],
-            ...action.feed
-          }
-        },
+        wordsObj: action.feed.content
+          ? {
+              ...state.wordsObj,
+              [action.feed.content]: {
+                ...state.wordsObj[action.feed.content],
+                ...action.feed
+              }
+            }
+          : state.wordsObj,
         wordLogs: newWordLog ? [newWordLog, ...state.wordLogs] : state.wordLogs,
         vocabFeedsLoadMoreButton: isNewYear
           ? false
