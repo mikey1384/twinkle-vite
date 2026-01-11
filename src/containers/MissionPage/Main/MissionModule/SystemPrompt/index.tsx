@@ -62,6 +62,15 @@ interface SystemPromptState {
   promptEverGenerated?: boolean;
 }
 
+const EMPTY_SYSTEM_PROMPT_STATE: SystemPromptState = {
+  title: '',
+  prompt: '',
+  userMessage: '',
+  missionPromptId: null,
+  chatMessages: [],
+  promptEverGenerated: false
+};
+
 export default function SystemPromptMission({
   mission,
   onSetMissionState,
@@ -99,44 +108,20 @@ export default function SystemPromptMission({
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
 
-  const myAttempt = useMemo(
-    () => myAttempts?.[mission.id],
-    [myAttempts, mission.id]
+  const myAttempt = myAttempts?.[mission.id];
+  const systemPromptState = useMemo(
+    () =>
+      (mission.systemPromptState as SystemPromptState) ||
+      EMPTY_SYSTEM_PROMPT_STATE,
+    [mission.systemPromptState]
   );
-
-  const systemPromptStateJson = JSON.stringify(mission.systemPromptState || {});
-  const systemPromptState: SystemPromptState = useMemo(() => {
-    const rawState = JSON.parse(systemPromptStateJson);
-    const sanitizedMessages = Array.isArray(rawState.chatMessages)
-      ? rawState.chatMessages.map(
-          (message: any, index: number): ChatMessage => ({
-            id: typeof message?.id === 'number' ? message.id : index + 1,
-            role: message?.role === 'assistant' ? 'assistant' : 'user',
-            content: typeof message?.content === 'string' ? message.content : ''
-          })
-        )
-      : [];
-    return {
-      title: rawState.title || '',
-      prompt: rawState.prompt || '',
-      userMessage: rawState.userMessage || '',
-      missionPromptId:
-        typeof rawState.missionPromptId === 'number'
-          ? rawState.missionPromptId
-          : null,
-      chatMessages: sanitizedMessages,
-      promptEverGenerated: !!rawState.promptEverGenerated
-    };
-  }, [systemPromptStateJson]);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const draftTimeoutRef = useRef<any>(null);
-  const hasSetPromptEverGeneratedRef = useRef(false);
 
   // Reset state when user changes
   useEffect(() => {
     if (userId && mission.prevUserId && userId !== mission.prevUserId) {
-      hasSetPromptEverGeneratedRef.current = false;
       onResetSystemPromptStateForUser({ missionId: mission.id, userId });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,40 +142,23 @@ export default function SystemPromptMission({
     onSetError: setError
   });
 
-  const { title, prompt, userMessage, chatMessages, promptEverGenerated } =
-    systemPromptState;
+  const {
+    title = '',
+    prompt = '',
+    userMessage = '',
+    chatMessages = [],
+    promptEverGenerated
+  } = systemPromptState;
+  const safeChatMessages = Array.isArray(chatMessages) ? chatMessages : [];
   const trimmedPrompt = prompt.trim();
   const trimmedMessage = userMessage.trim();
   const trimmedTitle = title.trim();
   const hasPrompt = trimmedPrompt.length > 0;
 
-  useEffect(() => {
-    // Sync ref with state if already true (e.g., loaded from server)
-    if (promptEverGenerated) {
-      hasSetPromptEverGeneratedRef.current = true;
-      return;
-    }
-    if (
-      hasPrompt &&
-      !generating &&
-      !improving &&
-      !hasSetPromptEverGeneratedRef.current
-    ) {
-      hasSetPromptEverGeneratedRef.current = true;
-      handleSetSystemPromptState({
-        ...systemPromptState,
-        promptEverGenerated: true
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasPrompt, promptEverGenerated, generating, improving]);
   const canSend = Boolean(hasPrompt && trimmedMessage && !sending);
-  const createdPrompt = useMemo(() => {
-    const hasPreviewedLocally = chatMessages.some(
-      (message) => message.role === 'assistant'
-    );
-    return !!progress?.previewed || hasPreviewedLocally;
-  }, [chatMessages, progress?.previewed]);
+  const createdPrompt =
+    Boolean(progress?.previewed) ||
+    safeChatMessages.some((message) => message.role === 'assistant');
 
   const aiMessageCount = progress?.aiTopic?.messageCount || 0;
   const sharedMessageCount = progress?.sharedTopic?.messageCount || 0;
@@ -221,43 +189,34 @@ export default function SystemPromptMission({
   const step3Complete =
     isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1);
 
-  const checklistItems = useMemo(
-    () => [
-      {
-        label: 'Draft and test a system prompt',
-        complete: step1Complete,
-        detail: step1Complete
-          ? 'Prompt created and previewed'
-          : 'Create a prompt and preview it with a test message'
-      },
-      {
-        label: 'Use it with Zero or Ciel',
-        complete: step2Complete,
-        detail: step2Complete
-          ? '2/2 messages in your AI topic'
-          : aiTopicId
-          ? `${Math.min(
-              aiMessageCount,
-              2
-            )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
-          : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
-      },
-      {
-        label: `Clone a shared prompt`,
-        complete: step3Complete,
-        detail: step3Complete
-          ? '1/1 message in your cloned shared prompt'
-          : 'Browse Shared Prompts, clone one, and send a message'
-      }
-    ],
-    [
-      step1Complete,
-      step2Complete,
-      step3Complete,
-      aiTopicId,
-      aiMessageCount
-    ]
-  );
+  const checklistItems = [
+    {
+      label: 'Draft and test a system prompt',
+      complete: step1Complete,
+      detail: step1Complete
+        ? 'Prompt created and previewed'
+        : 'Create a prompt and preview it with a test message'
+    },
+    {
+      label: 'Use it with Zero or Ciel',
+      complete: step2Complete,
+      detail: step2Complete
+        ? '2/2 messages in your AI topic'
+        : aiTopicId
+        ? `${Math.min(
+            aiMessageCount,
+            2
+          )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
+        : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
+    },
+    {
+      label: `Clone a shared prompt`,
+      complete: step3Complete,
+      detail: step3Complete
+        ? '1/1 message in your cloned shared prompt'
+        : 'Browse Shared Prompts, clone one, and send a message'
+    }
+  ];
 
   useEffect(() => {
     let mounted = true;
@@ -266,18 +225,16 @@ export default function SystemPromptMission({
         const data = await loadSystemPromptProgress();
         if (!mounted) return;
         setProgress(data || {});
-        const newState: any = { systemPromptProgress: data || {} };
         if (
           data?.systemPromptState &&
           (!mission.systemPromptState?.prompt ||
             !mission.systemPromptState?.title)
         ) {
-          newState.systemPromptState = data.systemPromptState;
+          onSetMissionState({
+            missionId: mission.id,
+            newState: { systemPromptState: data.systemPromptState }
+          });
         }
-        onSetMissionState({
-          missionId: mission.id,
-          newState
-        });
       } catch {
         if (!mounted) return;
         setProgressError('Could not load your mission progress.');
@@ -302,10 +259,6 @@ export default function SystemPromptMission({
         const data = await loadSystemPromptProgress();
         if (!mounted) return;
         setProgress(data || {});
-        onSetMissionState({
-          missionId: mission.id,
-          newState: { systemPromptProgress: data || {} }
-        });
       } catch (error) {
         // Silently fail on polling errors to avoid disrupting UX
         if (mounted) {
@@ -321,11 +274,14 @@ export default function SystemPromptMission({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [missionCleared, mission.id]);
 
+  const lastMessageContentLength =
+    safeChatMessages[safeChatMessages.length - 1]?.content?.length || 0;
+
   useEffect(() => {
     if (messageListRef.current) {
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
-  }, [chatMessages]);
+  }, [safeChatMessages.length, lastMessageContentLength]);
 
   useEffect(() => {
     setSaving(true);
@@ -395,7 +351,7 @@ export default function SystemPromptMission({
           {showPreview && (
             <ErrorBoundary componentPath="MissionModule/SystemPrompt/Preview">
               <Preview
-                chatMessages={chatMessages}
+                chatMessages={safeChatMessages}
                 error={error}
                 userMessage={userMessage}
                 hasPrompt={hasPrompt}
@@ -477,7 +433,7 @@ export default function SystemPromptMission({
       role: 'user',
       content: trimmedMessage
     };
-    const baseMessages = [...chatMessages, userMessageObj];
+    const baseMessages = [...safeChatMessages, userMessageObj];
     const assistantMessageId = Date.now() + 1;
     const nextState: SystemPromptState = {
       ...systemPromptState,
@@ -590,9 +546,16 @@ export default function SystemPromptMission({
   }
 
   function handleSetSystemPromptState(nextState: SystemPromptState) {
+    const hasPromptText =
+      typeof nextState.prompt === 'string' && nextState.prompt.trim().length > 0;
+    const shouldSetPromptFlag =
+      hasPromptText && !nextState.promptEverGenerated;
+    const finalState = shouldSetPromptFlag
+      ? { ...nextState, promptEverGenerated: true }
+      : nextState;
     onSetMissionState({
       missionId: mission.id,
-      newState: { systemPromptState: nextState }
+      newState: { systemPromptState: finalState }
     });
   }
 }
