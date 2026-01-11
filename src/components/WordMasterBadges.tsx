@@ -20,6 +20,12 @@ export function getRGBA(colorName: string, opacity = 1) {
       return `rgba(50, 205, 50, ${opacity})`;
     case 'passionFruit':
       return `rgba(255, 85, 170, ${opacity})`;
+    case 'brownOrange':
+      return `rgba(245, 190, 70, ${opacity})`;
+    case 'darkOceanBlue':
+      return `rgba(30, 110, 183, ${opacity})`;
+    case 'rose':
+      return `rgba(223, 0, 102, ${opacity})`;
     case 'premiumRegister':
       return `linear-gradient(135deg, #ffe259 0%, #ffa751 100%)`;
     case 'premiumSpell':
@@ -51,6 +57,25 @@ export function getActionColor(action: string) {
       return 'red';
     default:
       return 'passionFruit';
+  }
+}
+
+export function getBreakTypeColor(breakType?: string) {
+  switch (breakType) {
+    case 'daily_tasks':
+      return 'logoBlue';
+    case 'daily_reflection':
+      return 'brownOrange';
+    case 'chess_puzzle':
+      return 'darkOceanBlue';
+    case 'pending_moves':
+      return 'orange';
+    case 'grammarbles':
+      return 'gold';
+    case 'vocab_quiz':
+      return 'rose';
+    default:
+      return 'logoBlue';
   }
 }
 

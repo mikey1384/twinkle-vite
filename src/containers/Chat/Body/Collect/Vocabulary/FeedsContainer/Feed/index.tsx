@@ -10,6 +10,7 @@ import DefaultLayout from './DefaultLayout';
 import {
   badgeStyle,
   getActionColor,
+  getBreakTypeColor,
   getRGBA
 } from '~/components/WordMasterBadges';
 
@@ -74,6 +75,7 @@ function Feed({
           displayedTime={displayedTime}
           getRGBA={getRGBA}
           getActionColor={getActionColor}
+          getBreakTypeColor={getBreakTypeColor}
           badgeStyle={badgeStyle}
         />
       ) : action === 'spell' ? (

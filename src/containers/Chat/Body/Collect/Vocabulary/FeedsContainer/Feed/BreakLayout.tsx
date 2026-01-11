@@ -24,6 +24,7 @@ export default function BreakLayout({
   displayedTime,
   getRGBA,
   getActionColor,
+  getBreakTypeColor,
   badgeStyle
 }: {
   onHeightMeasured: (height: number) => void;
@@ -36,6 +37,7 @@ export default function BreakLayout({
   displayedTime: string;
   getRGBA: (colorName: string, opacity?: number) => string;
   getActionColor: (action: string) => string;
+  getBreakTypeColor: (breakType?: string) => string;
   badgeStyle: (colorName: string, bgOpacity?: number) => string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -48,12 +50,13 @@ export default function BreakLayout({
   }, []);
 
   const actionColor = getActionColor(action);
-  const backgroundColor = getRGBA(actionColor, 0.08);
-  const borderColor = getRGBA(actionColor, 0.7);
+  const breakTypeColor = getBreakTypeColor(breakType);
+  const backgroundColor = getRGBA(breakTypeColor, 0.08);
+  const borderColor = getRGBA(breakTypeColor, 0.7);
 
   const actionLabel = useMemo(() => {
     if (action === 'break_clear') return 'Break Cleared';
-    return 'Break Started';
+    return 'Break Triggered';
   }, [action]);
 
   const breakLabel = useMemo(() => {
@@ -149,7 +152,7 @@ export default function BreakLayout({
         className={css`
           font-weight: 800;
           font-size: 2.3rem;
-          color: ${getRGBA('logoBlue', 1)};
+          color: ${getRGBA(breakTypeColor, 1)};
           margin-bottom: 1rem;
           max-width: 90%;
           word-break: break-word;

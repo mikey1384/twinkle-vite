@@ -10,7 +10,17 @@ const actionLabel: Record<string, string> = {
   hit: 'collected',
   apply: 'applied',
   answer: 'answered a question about',
-  reward: 'received an'
+  reward: 'received an',
+  spell: 'spelled'
+};
+
+const breakTypeLabels: Record<string, string> = {
+  daily_tasks: 'daily tasks',
+  daily_reflection: 'daily reflection',
+  chess_puzzle: 'chess puzzle',
+  pending_moves: 'pending moves',
+  grammarbles: 'grammarbles',
+  vocab_quiz: 'vocab quiz'
 };
 
 export default function Vocabulary() {
@@ -22,6 +32,16 @@ export default function Vocabulary() {
   const lastFeed = useMemo(() => {
     return vocabFeeds[0] || {};
   }, [vocabFeeds]);
+  const isBreakAction =
+    lastFeed.action === 'break_start' || lastFeed.action === 'break_clear';
+
+  const breakLabel = useMemo(() => {
+    if (!isBreakAction) return '';
+    const breakType = breakTypeLabels[lastFeed.breakType] || 'break';
+    const breakIndex = lastFeed.breakIndex;
+    return breakIndex ? `Break ${breakIndex}: ${breakType}` : breakType;
+  }, [isBreakAction, lastFeed.breakType, lastFeed.breakIndex]);
+
   const target = useMemo(() => {
     if (lastFeed.action === 'reward') {
       return 'AI Card';
@@ -55,7 +75,16 @@ export default function Vocabulary() {
             }}
           >
             {lastFeed.userId === myId ? youLabel : lastFeed.username}{' '}
-            {actionLabel[lastFeed.action]} <b>{target}</b>
+            {isBreakAction ? (
+              <>
+                {lastFeed.action === 'break_start' ? 'triggered' : 'cleared'}{' '}
+                <b>{breakLabel}</b>
+              </>
+            ) : (
+              <>
+                {actionLabel[lastFeed.action]} <b>{target}</b>
+              </>
+            )}
           </p>
         </div>
       )}
