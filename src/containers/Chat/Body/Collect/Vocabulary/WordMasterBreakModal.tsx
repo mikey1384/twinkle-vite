@@ -8,6 +8,10 @@ import Icon from '~/components/Icon';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import ProfilePic from '~/components/ProfilePic';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import Roulette, {
+  RouletteResolveResult,
+  RouletteSegment
+} from '~/components/Roulette';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { WORD_MASTER_BREAK_INTERVAL } from '~/constants/defaultValues';
 import { timeSinceShort } from '~/helpers/timeStampHelpers';
@@ -21,6 +25,7 @@ interface WordMasterBreakModalProps {
   onRefresh: () => Promise<void>;
   onClearBreak: () => Promise<any>;
   onPayBreak: () => Promise<any>;
+  onSpinRoulette: () => Promise<any>;
   onLoadQuizQuestion: () => Promise<any>;
   onSubmitQuizAnswer: (selectedIndex: number) => Promise<any>;
   onOpenWordle?: () => void;
@@ -61,6 +66,7 @@ export default function WordMasterBreakModal({
   onRefresh,
   onClearBreak,
   onPayBreak,
+  onSpinRoulette,
   onLoadQuizQuestion,
   onSubmitQuizAnswer,
   onOpenWordle,
@@ -113,6 +119,11 @@ export default function WordMasterBreakModal({
     !isLocked;
   const canBypass = Boolean(breakStatus?.canBypass);
   const bypassCost = Number(breakStatus?.bypassCost || 0);
+  const rolledPrice =
+    typeof breakStatus?.rolledPrice === 'number'
+      ? breakStatus.rolledPrice
+      : null;
+  const hasRolledPrice = rolledPrice !== null;
 
   useEffect(() => {
     setStatusMessage('');
@@ -388,46 +399,55 @@ export default function WordMasterBreakModal({
               </GameCTAButton>
             </div>
           ) : (
-            <div
-              className={css`
-                display: grid;
-                grid-auto-flow: column;
-                align-items: center;
-                justify-content: center;
-                column-gap: 1.2rem;
-                padding: 0.9rem 1.4rem;
-                text-align: center;
-                border-radius: 1rem;
-                background: ${summaryAccent.soft};
-                border: 1px solid ${summaryAccent.main};
-              `}
-            >
-              <Icon
-                icon="clock"
-                style={{ color: summaryAccent.main, fontSize: '1.7rem' }}
-              />
-              <NextDayCountdown
-                label="Next reset"
-                onComplete={handleCountdownComplete}
+            <>
+              {hasActiveBreak && !hasRolledPrice && (
+                <BreakPassRoulette
+                  onSpinRoulette={onSpinRoulette}
+                  onRefresh={onRefresh}
+                  onClose={onClose}
+                />
+              )}
+              <div
                 className={css`
                   display: grid;
-                  grid-auto-rows: max-content;
-                  row-gap: 0.35rem;
-                  font-size: 1.45rem;
-                  font-weight: 700;
-                  color: ${Color.black(0.75)};
-                  line-height: 1.2;
+                  grid-auto-flow: column;
+                  align-items: center;
+                  justify-content: center;
+                  column-gap: 1.2rem;
+                  padding: 0.9rem 1.4rem;
                   text-align: center;
+                  border-radius: 1rem;
+                  background: ${summaryAccent.soft};
+                  border: 1px solid ${summaryAccent.main};
                 `}
-                timerClassName={css`
-                  font-family: 'Fira Code', 'Roboto Mono', monospace;
-                  font-size: 2.1rem;
-                  font-weight: 700;
-                  letter-spacing: 0.05em;
-                  color: ${summaryAccent.main};
-                `}
-              />
-            </div>
+              >
+                <Icon
+                  icon="clock"
+                  style={{ color: summaryAccent.main, fontSize: '1.7rem' }}
+                />
+                <NextDayCountdown
+                  label="Next reset"
+                  onComplete={handleCountdownComplete}
+                  className={css`
+                    display: grid;
+                    grid-auto-rows: max-content;
+                    row-gap: 0.35rem;
+                    font-size: 1.45rem;
+                    font-weight: 700;
+                    color: ${Color.black(0.75)};
+                    line-height: 1.2;
+                    text-align: center;
+                  `}
+                  timerClassName={css`
+                    font-family: 'Fira Code', 'Roboto Mono', monospace;
+                    font-size: 2.1rem;
+                    font-weight: 700;
+                    letter-spacing: 0.05em;
+                    color: ${summaryAccent.main};
+                  `}
+                />
+              </div>
+            </>
           )}
 
           <div
@@ -443,7 +463,7 @@ export default function WordMasterBreakModal({
                 Close
               </Button>
             )}
-            {hasActiveBreak && !canClearRequirement && (
+            {hasActiveBreak && !canClearRequirement && hasRolledPrice && (
               <GameCTAButton
                 variant="gold"
                 icon="coins"
@@ -451,7 +471,7 @@ export default function WordMasterBreakModal({
                 disabled={!canBypass || actionLoading || loading}
                 onClick={() => setConfirmBypassShown(true)}
               >
-                {`Pay ${formatCoins(bypassCost)} coins to bypass`}
+                {`Pay ${formatCoins(rolledPrice ?? bypassCost)} coins to bypass`}
               </GameCTAButton>
             )}
           </div>
@@ -484,7 +504,7 @@ export default function WordMasterBreakModal({
             >
               Are you sure you want to spend{' '}
               <strong style={{ color: Color.orange() }}>
-                {formatCoins(bypassCost)} coins
+                {formatCoins(rolledPrice ?? bypassCost)} coins
               </strong>{' '}
               to bypass this break?
             </div>
@@ -860,8 +880,8 @@ export default function WordMasterBreakModal({
     const firstMoveLabel = sentMove
       ? 'First omok move sent'
       : hasRecentPlayers
-      ? 'Send a first omok move to a recent player'
-      : 'No recent players available';
+        ? 'Send a first omok move to a recent player'
+        : 'No recent players available';
     const description = hasRecentPlayers
       ? 'Clear pending omok moves and send a first omok move to a user active within 7 days.'
       : 'Clear pending omok moves. No recent players are available for a first move today.';
@@ -1679,13 +1699,13 @@ function GuideRow({
         background: ${showFailed
           ? Color.red(0.08)
           : isActive
-          ? toneSoft
-          : 'transparent'};
+            ? toneSoft
+            : 'transparent'};
         border-left: ${showFailed
           ? `3px solid ${Color.red()}`
           : isActive
-          ? `3px solid ${toneColor}`
-          : '3px solid transparent'};
+            ? `3px solid ${toneColor}`
+            : '3px solid transparent'};
         opacity: ${isCleared && !clearedCount && !showFailed ? 0.6 : 1};
       `}
     >
@@ -1703,17 +1723,17 @@ function GuideRow({
             background: ${showFailed
               ? Color.red(0.15)
               : showCleared
-              ? Color.green(0.15)
-              : isActive
-              ? toneColor
-              : toneSoft};
+                ? Color.green(0.15)
+                : isActive
+                  ? toneColor
+                  : toneSoft};
             color: ${showFailed
               ? Color.red()
               : showCleared
-              ? Color.green()
-              : isActive
-              ? Color.white()
-              : toneColor};
+                ? Color.green()
+                : isActive
+                  ? Color.white()
+                  : toneColor};
             font-size: 1.1rem;
             font-weight: 700;
             white-space: nowrap;
@@ -1820,4 +1840,131 @@ function getToneColor(tone?: string, opacity = 1) {
     return Color[tone](opacity);
   }
   return Color.logoBlue(opacity);
+}
+
+const BREAK_PASS_ROULETTE_SEGMENTS: RouletteSegment[] = [
+  {
+    key: 'full',
+    label: '1M',
+    weight: 70,
+    gradient: ['#4A4A4A', '#2D2D2D'] as const
+  },
+  {
+    key: 'discount',
+    label: '100K',
+    weight: 25,
+    gradient: ['#32CD32', '#228B22'] as const
+  },
+  {
+    key: 'free',
+    label: 'FREE',
+    weight: 5,
+    gradient: ['#FFD700', '#FFA500'] as const
+  }
+];
+
+function BreakPassRoulette({
+  onSpinRoulette,
+  onRefresh,
+  onClose
+}: {
+  onSpinRoulette: () => Promise<any>;
+  onRefresh: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const [spinComplete, setSpinComplete] = useState(false);
+  const pendingResultRef = useRef<{
+    cleared?: boolean;
+  } | null>(null);
+
+  async function handleResolveOutcome(): Promise<
+    RouletteResolveResult<{ price?: number; cleared?: boolean }>
+  > {
+    try {
+      const result = await onSpinRoulette();
+      const price = result?.price ?? 0;
+      const outcome = result?.outcome ?? 'full';
+      pendingResultRef.current = { cleared: result?.cleared };
+
+      return {
+        type: 'outcome',
+        outcome: {
+          outcomeKey: outcome,
+          message: result?.message || '',
+          data: { price, cleared: result?.cleared }
+        }
+      };
+    } catch (error) {
+      console.error('Failed to spin roulette:', error);
+      return { type: 'cancel' };
+    }
+  }
+
+  function handleSpinComplete() {
+    const pending = pendingResultRef.current;
+    if (pending?.cleared) {
+      onRefresh().then(() => onClose());
+    } else {
+      setSpinComplete(true);
+    }
+  }
+
+  function handleContinue() {
+    onRefresh();
+  }
+
+  return (
+    <section
+      className={css`
+        padding: 1.8rem;
+        border-radius: 1.2rem;
+        border: 1px solid ${Color.borderGray()};
+        background: ${Color.white()};
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.2rem;
+        box-shadow: 0 10px 20px ${Color.black(0.04)};
+      `}
+    >
+      <div
+        className={css`
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: ${Color.darkerGray()};
+          text-align: center;
+        `}
+      >
+        Spin to set your bypass price
+      </div>
+      <div
+        className={css`
+          font-size: 1.2rem;
+          color: ${Color.gray()};
+          text-align: center;
+          max-width: 320px;
+        `}
+      >
+        Spin the wheel to determine your break pass price for today. You might
+        get lucky!
+      </div>
+      <Roulette
+        segments={BREAK_PASS_ROULETTE_SEGMENTS}
+        spinButtonLabel="Spin for Price"
+        onResolveOutcome={handleResolveOutcome}
+        onSpinComplete={handleSpinComplete}
+        wheelSize={220}
+      />
+      {spinComplete && (
+        <GameCTAButton
+          variant="gold"
+          icon="arrow-right"
+          shiny
+          onClick={handleContinue}
+        >
+          Continue
+        </GameCTAButton>
+      )}
+    </section>
+  );
 }

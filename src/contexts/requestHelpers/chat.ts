@@ -776,6 +776,18 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async spinBreakPassRoulette() {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/vocabulary/break/spin`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadWordMasterQuizQuestion() {
       try {
         const { data } = await request.get(
