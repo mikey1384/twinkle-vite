@@ -1264,6 +1264,7 @@ export default function DailyRewardModal({
       {cardModalShown && (
         <AICardModal
           cardId={chosenCardId}
+          modalOverModal
           onHide={() => setCardModalShown(false)}
         />
       )}

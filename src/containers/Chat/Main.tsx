@@ -1157,6 +1157,7 @@ export default function Main({
         {aiCardModalCardId && (
           <AICardModal
             cardId={aiCardModalCardId}
+            modalOverModal
             onHide={() => {
               if (search.includes('cardId')) {
                 navigate('..');
