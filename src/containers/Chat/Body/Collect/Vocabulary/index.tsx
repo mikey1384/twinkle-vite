@@ -54,6 +54,9 @@ export default function Vocabulary({
   const submitWordMasterQuizAnswer = useAppContext(
     (v) => v.requestHelpers.submitWordMasterQuizAnswer
   );
+  const spinBreakPassRoulette = useAppContext(
+    (v) => v.requestHelpers.spinBreakPassRoulette
+  );
   const vocabErrorMessage = useChatContext((v) => v.state.vocabErrorMessage);
   const wordRegisterStatus = useChatContext((v) => v.state.wordRegisterStatus);
   const onSetCollectType = useAppContext(
@@ -309,6 +312,7 @@ export default function Vocabulary({
           onRefresh={refreshWordMasterBreakStatus}
           onClearBreak={handleClearWordMasterBreak}
           onPayBreak={handlePayWordMasterBreak}
+          onSpinRoulette={handleSpinBreakPassRoulette}
           onLoadQuizQuestion={handleLoadWordMasterQuizQuestion}
           onSubmitQuizAnswer={handleSubmitWordMasterQuizAnswer}
           onOpenWordle={() => {
@@ -519,6 +523,17 @@ export default function Vocabulary({
       return result;
     } finally {
       setWordMasterBreakLoading(false);
+    }
+  }
+
+  async function handleSpinBreakPassRoulette() {
+    try {
+      // Don't update state here - let the roulette animation complete first
+      // The refresh will happen in onSpinComplete after animation
+      return await spinBreakPassRoulette();
+    } catch (error) {
+      console.error('Failed to spin break pass roulette:', error);
+      throw error;
     }
   }
 
