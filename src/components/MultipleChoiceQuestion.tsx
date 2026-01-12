@@ -41,7 +41,7 @@ export default function MultipleChoiceQuestion({
     }
     if (!isGraded) return '';
     if (typeof selectedChoiceIndex !== 'number') return 'fail';
-    return selectedChoiceIndex === answerIndex ? 'pass' : 'fail';
+    return selectedChoiceIndex === Number(answerIndex) ? 'pass' : 'fail';
   }, [conditionPassStatusProp, isGraded, selectedChoiceIndex, answerIndex]);
 
   return (
