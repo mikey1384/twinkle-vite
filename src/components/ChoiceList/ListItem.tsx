@@ -20,7 +20,7 @@ export default function ListItem({
 }) {
   const isSelected = !!listItem.checked;
   const isEvaluated = !!conditionPassStatus;
-  const isCorrect = index === answerIndex;
+  const isCorrect = index === Number(answerIndex);
   const isWrongSelection =
     conditionPassStatus === 'fail' && isSelected && !isCorrect;
 

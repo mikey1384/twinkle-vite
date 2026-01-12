@@ -185,7 +185,10 @@ export default function Game({
     let numCorrect = 0;
     const answers = questions.map((question) => {
       const selectedChoiceIndex = userChoiceObj[question.id];
-      if (selectedChoiceIndex === question.answerIndex) {
+      if (
+        typeof selectedChoiceIndex === 'number' &&
+        selectedChoiceIndex === Number(question.answerIndex)
+      ) {
         numCorrect++;
       }
       return {
