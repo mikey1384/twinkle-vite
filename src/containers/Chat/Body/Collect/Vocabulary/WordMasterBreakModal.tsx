@@ -1873,6 +1873,7 @@ function BreakPassRoulette({
   onClose: () => void;
 }) {
   const [spinComplete, setSpinComplete] = useState(false);
+  const [rolledOutcome, setRolledOutcome] = useState<string | null>(null);
   const pendingResultRef = useRef<{
     cleared?: boolean;
   } | null>(null);
@@ -1881,7 +1882,13 @@ function BreakPassRoulette({
     RouletteResolveResult<{ price?: number; cleared?: boolean }>
   > {
     try {
-      const result = await onSpinRoulette();
+      // Start API call and minimum delay timer in parallel
+      // This ensures the wheel has time to warm up before resolving
+      const MIN_WARMUP_MS = 1200;
+      const [result] = await Promise.all([
+        onSpinRoulette(),
+        new Promise((resolve) => setTimeout(resolve, MIN_WARMUP_MS))
+      ]);
       const price = result?.price ?? 0;
       const outcome = result?.outcome ?? 'full';
       pendingResultRef.current = { cleared: result?.cleared };
@@ -1900,8 +1907,9 @@ function BreakPassRoulette({
     }
   }
 
-  function handleSpinComplete() {
+  function handleSpinComplete(outcome: { outcomeKey: string }) {
     const pending = pendingResultRef.current;
+    setRolledOutcome(outcome.outcomeKey);
     if (pending?.cleared) {
       onRefresh().then(() => onClose());
     } else {
@@ -1957,7 +1965,7 @@ function BreakPassRoulette({
       />
       {spinComplete && (
         <GameCTAButton
-          variant="gold"
+          variant={rolledOutcome === 'discount' ? 'success' : 'neutral'}
           icon="arrow-right"
           shiny
           onClick={handleContinue}
