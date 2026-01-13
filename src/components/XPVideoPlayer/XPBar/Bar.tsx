@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -130,12 +131,16 @@ export default function Bar({
 
   if (!shouldRender) return null;
 
+  const contentKey = started ? 'progress' : 'reward';
+
   return (
-    <div className={trackCls}>
-      <div className={fillCls} />
-      <span className={labelCls} style={{ color: labelColor }}>
-        {labelContent}
-      </span>
-    </div>
+    <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar/Inner">
+      <div className={trackCls}>
+        <div className={fillCls} />
+        <span className={labelCls} style={{ color: labelColor }}>
+          <span key={contentKey}>{labelContent}</span>
+        </span>
+      </div>
+    </ErrorBoundary>
   );
 }

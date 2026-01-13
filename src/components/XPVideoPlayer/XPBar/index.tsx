@@ -106,7 +106,7 @@ function XPBar({
           min-width: 0;
         `}
       >
-        <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar">
+        <ErrorBoundary componentPath="XPVideoPlayer/XPBar/Bar/Outer">
           <Bar
             userId={userId}
             rewardLevel={rewardLevel}
