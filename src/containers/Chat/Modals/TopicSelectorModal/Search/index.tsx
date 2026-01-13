@@ -53,20 +53,6 @@ export default function Search({
         <div
           className={css`
             width: 100%;
-            p {
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              color: #333;
-              font-family: 'Helvetica Neue', Arial, sans-serif;
-              font-size: 2rem;
-              text-align: center;
-              font-weight: bold;
-              @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1.7rem;
-              }
-            }
           `}
         >
           {searched &&
@@ -85,7 +71,18 @@ export default function Search({
                   alignItems: 'center'
                 }}
               >
-                <p>{`"${searchText}"`}</p>
+                <p
+                  className={css`
+                    color: #333;
+                    font-family: 'Helvetica Neue', Arial, sans-serif;
+                    font-size: 2rem;
+                    text-align: center;
+                    font-weight: bold;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.7rem;
+                    }
+                  `}
+                >{`"${searchText}"`}</p>
                 <div>
                   <StartTopicButton
                     channelId={channelId}
@@ -130,16 +127,28 @@ export default function Search({
               <div
                 className={css`
                   padding: 5rem;
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: center;
                 `}
               >
-                <p>
+                <p
+                  className={css`
+                    color: #333;
+                    font-family: 'Helvetica Neue', Arial, sans-serif;
+                    font-size: 2rem;
+                    text-align: center;
+                    font-weight: bold;
+                    @media (max-width: ${mobileMaxWidth}) {
+                      font-size: 1.7rem;
+                    }
+                  `}
+                >
                   {searchTextExceedsMax
                     ? `The topic is too long. Please keep it within ${maxTopicLength} characters.`
-                    : ''}
+                    : `No topics found for "${searchText}"`}
                 </p>
-                {!searchTextExceedsMax && (
-                  <p>{`No topics found for "${searchText}"`}</p>
-                )}
               </div>
             )}
           </div>
