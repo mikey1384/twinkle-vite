@@ -16,7 +16,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import { useThemeTokens } from '~/theme/useThemeTokens';
-import { applyThemeVars } from '~/theme';
+import { useRootTheme } from '~/theme/RootThemeProvider';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 
 export default function Profile() {
@@ -27,8 +27,8 @@ export default function Profile() {
   );
   const setTheme = useAppContext((v) => v.requestHelpers.setTheme);
   const userId = useKeyContext((v) => v.myState.userId);
-  const viewerTheme = useKeyContext((v) => v.myState.profileTheme);
   const username = useKeyContext((v) => v.myState.username);
+  const { setRouteThemeOverride } = useRootTheme();
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onInitContent = useContentContext((v) => v.actions.onInitContent);
   const onSetProfileId = useProfileContext((v) => v.actions.onSetProfileId);
@@ -118,31 +118,14 @@ export default function Profile() {
     const isViewingOwnProfile = userId ? profile.id === userId : false;
     if (isViewingOwnProfile) {
       // Clear any lingering route override when viewing own profile
-      try {
-        localStorage.removeItem('routeProfileTheme');
-      } catch (_err) {}
+      setRouteThemeOverride(null);
       return;
     }
     // Visiting another user's profile: set a route-specific theme override
-    try {
-      const theme = profile?.profileTheme || DEFAULT_PROFILE_THEME;
-      localStorage.setItem('routeProfileTheme', theme);
-      // Immediately apply theme variables so page background updates without extra navigation
-      applyThemeVars(theme as any);
-    } catch (_err) {}
-    return () => {
-      // Clear override when leaving the profile page
-      try {
-        localStorage.removeItem('routeProfileTheme');
-        // Restore viewer theme variables immediately
-        const stored = (localStorage.getItem('profileTheme') ||
-          viewerTheme ||
-          DEFAULT_PROFILE_THEME) as any;
-        const restore = stored as any;
-        applyThemeVars(restore);
-      } catch (_err) {}
-    };
-  }, [profile?.id, profile?.profileTheme, userId, viewerTheme]);
+    const theme = (profile?.profileTheme || DEFAULT_PROFILE_THEME) as any;
+    setRouteThemeOverride(theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id, profile?.profileTheme, userId]);
 
   return (
     <ErrorBoundary componentPath="Profile/index" style={{ minHeight: '10rem' }}>

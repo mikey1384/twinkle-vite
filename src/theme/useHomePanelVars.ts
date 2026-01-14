@@ -1,7 +1,6 @@
 import { useMemo, type CSSProperties } from 'react';
-import { useKeyContext } from '~/contexts';
 import { Color, getThemeStyles } from '~/constants/css';
-import { getThemeRoles, ThemeName } from '.';
+import { useRootTheme } from './RootThemeProvider';
 
 interface HomePanelVars extends CSSProperties {
   ['--home-panel-bg']?: string;
@@ -44,12 +43,7 @@ export function useHomePanelVars(
   options: { neutralSurface?: boolean } = {}
 ) {
   const { neutralSurface = false } = options;
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  const themeName = useMemo<ThemeName>(
-    () => (profileTheme || 'logoBlue') as ThemeName,
-    [profileTheme]
-  );
-  const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
+  const { themeName, themeRoles } = useRootTheme();
   const themeStyles = useMemo(
     () => getThemeStyles(themeName, intensity),
     [themeName, intensity]

@@ -18,6 +18,7 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import RecentGroupItems from './RecentGroupItems';
+import { useRootTheme } from '~/theme/RootThemeProvider';
 const BodyRef = document.scrollingElement || document.documentElement;
 
 const peopleLabel = 'People';
@@ -31,7 +32,7 @@ export default function HomeMenuItems({
   style?: React.CSSProperties;
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const { themeName } = useRootTheme();
   const { standardTimeStamp } = useNotiContext((v) => v.state.todayStats);
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,7 +62,6 @@ export default function HomeMenuItems({
     if (activeColorFn) return activeColorFn();
     return Color.logoBlue();
   }, [activeColorFn]);
-  const themeName = (profileTheme || 'logoBlue') as string;
   const isVanta = themeName === 'vantaBlack';
   const hoverBg = useMemo(
     () => getThemeStyles(themeName, 0.12).bg,

@@ -65,7 +65,6 @@ import AdminLogWindow from './AdminLogWindow';
 import { extractVideoThumbnail } from '~/helpers/videoHelpers';
 import UpdateNotice from './UpdateNotice';
 import { useRootTheme } from '~/theme/RootThemeProvider';
-import { applyThemeVars } from '~/theme';
 
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -123,18 +122,6 @@ export default function App() {
   const resolvedBackgroundColor = backgroundColorFn
     ? backgroundColorFn()
     : backgroundColorName;
-
-  useEffect(() => {
-    const path = location?.pathname || '';
-    if (!path.startsWith('/users/')) {
-      try {
-        localStorage.removeItem('routeProfileTheme');
-        const restoreTheme = (myState.profileTheme ||
-          DEFAULT_PROFILE_THEME) as any;
-        applyThemeVars(restoreTheme);
-      } catch (_err) {}
-    }
-  }, [location?.pathname, myState.profileTheme]);
 
   const {
     level,

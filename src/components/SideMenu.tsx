@@ -6,8 +6,8 @@ import {
   borderRadius
 } from '~/constants/css';
 import { css } from '@emotion/css';
-import { useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { useRootTheme } from '~/theme/RootThemeProvider';
 
 export default function SideMenu({
   children,
@@ -32,20 +32,8 @@ export default function SideMenu({
   rightOffset?: string;
   leftOffset?: string;
 }) {
-  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
-  // Allow explicit theme override (e.g., viewing another user's profile)
-  // On profile routes, prefer a route-specific override on reloads
-  let routeTheme: string | null = null;
-  try {
-    const path = window.location?.pathname || '';
-    if (path.startsWith('/users/')) {
-      routeTheme = localStorage.getItem('routeProfileTheme');
-    }
-  } catch (_err) {}
-  const themeName = (theme ||
-    routeTheme ||
-    profileTheme ||
-    'logoBlue') as string;
+  const { themeName: rootThemeName } = useRootTheme();
+  const themeName = (theme || rootThemeName || 'logoBlue') as string;
   const isVanta = themeName === 'vantaBlack';
   const isCardVariant = variant === 'card';
   const isRight = placement === 'right';

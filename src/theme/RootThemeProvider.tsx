@@ -1,8 +1,10 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useLayoutEffect,
   useMemo,
+  useState,
   type ReactNode
 } from 'react';
 import { useAppContext } from '~/contexts';
@@ -13,6 +15,7 @@ import { useLocation } from 'react-router-dom';
 interface RootThemeContextValue {
   themeName: ThemeName;
   themeRoles: RoleTokens;
+  setRouteThemeOverride: (theme: ThemeName | null) => void;
 }
 
 const RootThemeContext = createContext<RootThemeContextValue | null>(null);
@@ -22,30 +25,65 @@ export function RootThemeProvider({ children }: { children: ReactNode }) {
   const userLoaded = useAppContext((v) => v.user.state.loaded);
   const location = useLocation();
 
-  const themeName = useMemo<ThemeName>(() => {
-    let stored: string | null = null;
-    let routeTheme: string | null = null;
+  // Reactive state for route theme override (set by Profile component)
+  const [routeThemeOverride, setRouteThemeOverrideState] = useState<
+    ThemeName | null
+  >(() => {
+    // Initialize from localStorage on mount (for page reloads)
     if (typeof window !== 'undefined') {
-      stored = localStorage.getItem('profileTheme');
-      const path = location?.pathname || window.location?.pathname || '';
+      const path = window.location?.pathname || '';
       if (path.startsWith('/users/')) {
-        routeTheme = localStorage.getItem('routeProfileTheme');
+        return localStorage.getItem('routeProfileTheme') as ThemeName | null;
       }
     }
+    return null;
+  });
+
+  const setRouteThemeOverride = useCallback((theme: ThemeName | null) => {
+    setRouteThemeOverrideState(theme);
+    // Keep localStorage in sync for page reloads
+    try {
+      if (theme) {
+        localStorage.setItem('routeProfileTheme', theme);
+      } else {
+        localStorage.removeItem('routeProfileTheme');
+      }
+    } catch (_err) {}
+  }, []);
+
+  // Clear route override when navigating away from profile pages
+  useLayoutEffect(() => {
+    const path = location?.pathname || '';
+    if (!path.startsWith('/users/') && routeThemeOverride) {
+      setRouteThemeOverride(null);
+    }
+  }, [location?.pathname, routeThemeOverride, setRouteThemeOverride]);
+
+  const themeName = useMemo<ThemeName>(() => {
+    let stored: string | null = null;
+    if (typeof window !== 'undefined') {
+      stored = localStorage.getItem('profileTheme');
+    }
+    const isOnProfilePage = (location?.pathname || '').startsWith('/users/');
+
     // Before user is loaded, prefer route override (if on profile page), then stored
     if (!userLoaded) {
       return (
-        (routeTheme as ThemeName) ||
+        (isOnProfilePage && routeThemeOverride
+          ? routeThemeOverride
+          : undefined) ||
         (stored as ThemeName) ||
         (profileTheme as ThemeName) ||
         DEFAULT_PROFILE_THEME
       );
     }
     // After user loads, if route override exists (visiting someone else's profile), prefer it
-    if (routeTheme) return routeTheme as ThemeName;
+    if (isOnProfilePage && routeThemeOverride) {
+      return routeThemeOverride;
+    }
     // Otherwise prefer user theme; fall back to stored, then default
     return (profileTheme || stored || DEFAULT_PROFILE_THEME) as ThemeName;
-  }, [profileTheme, userLoaded, location?.pathname]);
+  }, [profileTheme, userLoaded, location?.pathname, routeThemeOverride]);
 
   const themeRoles = useMemo(() => getThemeRoles(themeName), [themeName]);
 
@@ -58,9 +96,10 @@ export function RootThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       themeName,
-      themeRoles
+      themeRoles,
+      setRouteThemeOverride
     }),
-    [themeName, themeRoles]
+    [themeName, themeRoles, setRouteThemeOverride]
   );
 
   return (
