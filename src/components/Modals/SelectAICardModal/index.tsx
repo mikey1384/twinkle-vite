@@ -127,6 +127,13 @@ export default function SelectAICardModal({
     ? maxSelectedCards
     : Infinity;
   const overLimit = selectedCardIds.length > (maxCards || 0);
+  const hasChanges = useMemo(() => {
+    if (selectedCardIds.length !== currentlySelectedCardIds.length) return true;
+    const sortedSelected = [...selectedCardIds].sort((a, b) => a - b);
+    const sortedInitial = [...currentlySelectedCardIds].sort((a, b) => a - b);
+    return sortedSelected.some((id, index) => id !== sortedInitial[index]);
+  }, [selectedCardIds, currentlySelectedCardIds]);
+
   const doneLabel = overLimit
     ? `${selectedCardIds.length} cards selected. Maximum is ${maxCards}`
     : 'Done';
@@ -149,7 +156,9 @@ export default function SelectAICardModal({
           </Button>
           <Button
             disabled={
-              overLimit || (!allowEmptySelection && !selectedCardIds?.length)
+              !hasChanges ||
+              overLimit ||
+              (!allowEmptySelection && !selectedCardIds?.length)
             }
             color={doneColor}
             onClick={() => {
