@@ -8,6 +8,7 @@ import React, {
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';
+import ExploreRedirect from '~/containers/Explore/ExploreRedirect';
 import Header from './Header';
 import Home from '~/containers/Home';
 import LinkPage from '~/containers/LinkPage';
@@ -513,6 +514,7 @@ export default function App() {
             <Route path="/videos/:videoId/*" element={<VideoPage />} />
             <Route path="/links/:linkId" element={<LinkPage />} />
             <Route path="/subjects/:contentId" element={<ContentPage />} />
+            <Route path="/explore" element={<ExploreRedirect />} />
             <Route path="/ai-cards" element={<Explore category="ai-cards" />} />
             <Route path="/videos" element={<Explore category="videos" />} />
             <Route path="/links" element={<Explore category="links" />} />
