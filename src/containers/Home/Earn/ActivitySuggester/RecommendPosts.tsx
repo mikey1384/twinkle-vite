@@ -5,7 +5,7 @@ import Button from '~/components/Button';
 import ContentPreview from '~/components/ContentPreview';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
-import { useAppContext, useHomeContext } from '~/contexts';
+import { useAppContext, useContentContext, useHomeContext } from '~/contexts';
 import { Color, borderRadius } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
@@ -28,6 +28,7 @@ export default function RecommendPosts() {
   const markPostAsSkipped = useAppContext(
     (v) => v.requestHelpers.markPostAsSkipped
   );
+  const onInitContent = useContentContext((v) => v.actions.onInitContent);
 
   useEffect(() => {
     handleLoadPostsToRecommend();
@@ -132,6 +133,13 @@ export default function RecommendPosts() {
   async function handleLoadPostsToRecommend() {
     setLoading(true);
     const data = await loadPostsToRecommend();
+    for (const post of data) {
+      onInitContent({
+        contentId: post.id,
+        contentType: post.contentType,
+        ...post
+      });
+    }
     setPosts(data);
     setLoading(false);
   }
