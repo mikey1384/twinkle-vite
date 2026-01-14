@@ -65,6 +65,10 @@ export default function PinnedAICards({
     () => pinnedCardIds.join(','),
     [pinnedCardIds]
   );
+  const selectedCardIdsForPinning = useMemo(
+    () => (isTopCards ? [] : pinnedCardIds),
+    [isTopCards, pinnedCardIds]
+  );
   const cachedCardIds = useMemo(() => {
     const ids = cachedPinnedAICards?.cardIds;
     if (!Array.isArray(ids)) return [];
@@ -212,7 +216,7 @@ export default function PinnedAICards({
       {selectModalShown && (
         <SelectAICardModal
           aiCardModalType="offer"
-          currentlySelectedCardIds={displayedCardIds}
+          currentlySelectedCardIds={selectedCardIdsForPinning}
           onHide={() => setSelectModalShown(false)}
           onSetAICardModalCardId={setAICardModalCardId}
           onSelectDone={handlePinAICards}
