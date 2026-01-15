@@ -52,7 +52,8 @@ import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
 import LocalContext from '../Context';
 import { CIEL_TWINKLE_ID, ZERO_TWINKLE_ID } from '~/constants/defaultValues';
-import { Content } from '~/types';import { useThemeTokens } from '~/theme/useThemeTokens';
+import { Content } from '~/types';
+import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useRoleColor } from '~/theme/useRoleColor';
 import ScopedTheme from '~/theme/ScopedTheme';
 
@@ -524,7 +525,7 @@ function Comment({
   ]);
 
   const commentHeight = useMemo(() => {
-    return placeholderHeight ? placeholderHeight + 8 : '9rem';
+    return placeholderHeight || '9rem';
   }, [placeholderHeight]);
 
   const innerContainerHeight = useMemo(() => {
@@ -539,9 +540,10 @@ function Comment({
 
   return isDisplayed ? (
     <ScopedTheme theme={themeName} roles={['link', 'reward']}>
-      <div ref={ComponentRef}>
+      <div ref={ComponentRef} style={{ marginBottom: '1.25rem' }}>
         <div
           style={{
+            marginBottom: 0,
             ...(isPreview ? { cursor: 'pointer' } : {})
           }}
           className={commentContainer}
