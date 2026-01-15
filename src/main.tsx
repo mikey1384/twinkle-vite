@@ -101,6 +101,7 @@ import { faFileText } from '@fortawesome/pro-solid-svg-icons/faFileText';
 import { faFileCsv } from '@fortawesome/pro-solid-svg-icons/faFileCsv';
 import { faFileVideo } from '@fortawesome/pro-solid-svg-icons/faFileVideo';
 import { faFileWord } from '@fortawesome/pro-solid-svg-icons/faFileWord';
+import { faFileImage } from '@fortawesome/pro-solid-svg-icons/faFileImage';
 import { faFillDrip } from '@fortawesome/pro-solid-svg-icons/faFillDrip';
 import { faFlag } from '@fortawesome/pro-solid-svg-icons/faFlag';
 import { faLink } from '@fortawesome/pro-solid-svg-icons/faLink';
@@ -312,6 +313,7 @@ library.add(
   faFileText,
   faFileVideo,
   faFileWord,
+  faFileImage,
   faFillDrip,
   faFilm,
   faFire,

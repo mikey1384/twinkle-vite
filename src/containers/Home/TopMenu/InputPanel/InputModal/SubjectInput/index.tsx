@@ -428,15 +428,9 @@ function SubjectInput({
                     attachment={attachment}
                     onDragStart={() => {
                       const file = attachment?.file;
-                      let newFile;
-                      if (fileType === 'image') {
-                        newFile = new File([file], file.name, {
-                          type: 'image/png'
-                        });
-                      } else {
-                        newFile = file;
+                      if (file) {
+                        setDraggedFile(file);
                       }
-                      setDraggedFile(newFile);
                     }}
                     onDragEnd={() => setDraggedFile(undefined)}
                     onThumbnailLoad={handleThumbnailLoad}

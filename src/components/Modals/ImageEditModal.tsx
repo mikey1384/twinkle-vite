@@ -13,6 +13,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { exceedsCharLimit, finalizeEmoji } from '~/helpers/stringHelpers';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { convertToWebFriendlyFormat } from '~/helpers/imageHelpers';
 
 export default function ImageEditModal({
   aspectFixed = true,
@@ -64,16 +65,49 @@ export default function ImageEditModal({
   const ImageRef = useRef(null);
 
   useEffect(() => {
-    setLoading(true);
-    window.loadImage(
-      imageUri,
-      function (img) {
-        const image = img.toDataURL('image/jpeg');
-        setOriginalImageUrl(image);
-        setLoading(false);
-      },
-      { orientation: true, canvas: true }
-    );
+    async function processImage() {
+      if (!imageUri) return;
+
+      setLoading(true);
+
+      // Check if the data URL's MIME type indicates a format that needs conversion
+      const mimeMatch = imageUri.match(/^data:image\/([^;]+);/);
+      const mimeType = mimeMatch ? mimeMatch[1].toLowerCase() : '';
+      const needsConversion = ['heic', 'heif', 'tiff', 'tif', 'bmp', 'mpo', 'avif'].includes(mimeType);
+
+      if (needsConversion) {
+        try {
+          // Convert data URL to File and then use convertToWebFriendlyFormat
+          const response = await fetch(imageUri);
+          const blob = await response.blob();
+          const file = new File([blob], `image.${mimeType}`, { type: `image/${mimeType}` });
+          const { dataUrl } = await convertToWebFriendlyFormat(file);
+          setOriginalImageUrl(dataUrl);
+          setLoading(false);
+          return;
+        } catch (error) {
+          console.warn('Image conversion failed:', error);
+        }
+      }
+
+      window.loadImage(
+        imageUri,
+        function (img) {
+          // loadImage returns a canvas on success, or an error on failure
+          if (img && typeof img.toDataURL === 'function') {
+            const image = img.toDataURL('image/jpeg');
+            setOriginalImageUrl(image);
+          } else {
+            // loadImage couldn't process this format - use original URI
+            setOriginalImageUrl(imageUri);
+          }
+          setLoading(false);
+        },
+        { orientation: true, canvas: true }
+      );
+    }
+
+    processImage();
   }, [imageUri]);
 
   const captionExceedChatLimit = useMemo(

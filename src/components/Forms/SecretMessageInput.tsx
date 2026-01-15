@@ -10,6 +10,10 @@ import {
 import { useKeyContext } from '~/contexts';
 import { returnImageFileFromUrl } from '~/helpers';
 import {
+  needsImageConversion,
+  convertToWebFriendlyFormat
+} from '~/helpers/imageHelpers';
+import {
   FILE_UPLOAD_XP_REQUIREMENT,
   mb,
   returnMaxUploadSize
@@ -127,16 +131,9 @@ export default function SecretMessageInput({
               attachment={secretAttachment}
               onDragStart={() => {
                 const file = secretAttachment?.file;
-                let newFile;
-                const { fileType } = getFileInfoFromFileName(file?.name);
-                if (fileType === 'image') {
-                  newFile = new File([file], file.name, {
-                    type: 'image/png'
-                  });
-                } else {
-                  newFile = file;
+                if (file) {
+                  setDraggedFile(file);
                 }
-                setDraggedFile(newFile);
               }}
               onThumbnailLoad={onThumbnailLoad}
               onClose={() => onSetSecretAttachment(null)}
@@ -218,18 +215,43 @@ export default function SecretMessageInput({
     }
   }
 
-  function handleUpload(event: any) {
+  async function handleUpload(event: any) {
     const fileObj = event.target.files[0];
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
     }
     const { fileType } = getFileInfoFromFileName(fileObj.name);
+
+    // Check if image needs conversion (HEIC, TIFF, AVIF, etc.) BEFORE fileType check
+    // These formats may not be classified as 'image' but are images that need conversion
+    if (needsImageConversion(fileObj.name)) {
+      try {
+        const { file: convertedFile, dataUrl, converted } =
+          await convertToWebFriendlyFormat(fileObj);
+        if (converted) {
+          // Note: We don't re-check size after conversion. The user selected a file
+          // within their limit - they shouldn't be penalized if our conversion inflates it.
+          onSetSecretAttachment({
+            file: convertedFile,
+            fileType: 'image',
+            imageUrl: dataUrl
+          });
+          event.target.value = null;
+          return;
+        }
+        // Conversion failed - fall through to non-image handling
+      } catch (error) {
+        console.warn('Image conversion failed:', error);
+        // Fall through to non-image handling
+      }
+    }
+
     if (fileType === 'image') {
       const reader = new FileReader();
       reader.onload = (upload: any) => {
         const payload = upload.target.result;
-        const extension = fileObj.name.split('.').pop();
-        if (extension === 'gif') {
+        const extension = fileObj.name.split('.').pop()?.toLowerCase();
+        if (extension === 'gif' || extension === 'svg') {
           onSetSecretAttachment({
             file: fileObj,
             fileType,
@@ -239,18 +261,32 @@ export default function SecretMessageInput({
           window.loadImage(
             payload,
             function (img) {
-              const imageUrl = img.toDataURL(
-                `image/${extension === 'png' ? 'png' : 'jpeg'}`
-              );
-              const file = returnImageFileFromUrl({
-                imageUrl,
-                fileName: fileObj.name
-              });
-              onSetSecretAttachment({
-                file,
-                fileType,
-                imageUrl
-              });
+              // loadImage returns a canvas on success, or an error on failure
+              if (img && typeof img.toDataURL === 'function') {
+                const outputFormat = extension === 'png' ? 'png' : 'jpeg';
+                const imageUrl = img.toDataURL(`image/${outputFormat}`);
+                // Use correct extension to match actual content type
+                const outputFileName =
+                  outputFormat === 'png'
+                    ? fileObj.name
+                    : fileObj.name.replace(/\.[^.]+$/, '.jpg');
+                const file = returnImageFileFromUrl({
+                  imageUrl,
+                  fileName: outputFileName
+                });
+                onSetSecretAttachment({
+                  file,
+                  fileType,
+                  imageUrl
+                });
+              } else {
+                // loadImage couldn't process - use original file
+                onSetSecretAttachment({
+                  file: fileObj,
+                  fileType,
+                  imageUrl: payload
+                });
+              }
             },
             { orientation: true, canvas: true }
           );

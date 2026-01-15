@@ -5,6 +5,10 @@ import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { isMobile, returnImageFileFromUrl } from '~/helpers';
+import {
+  needsImageConversion,
+  convertToWebFriendlyFormat
+} from '~/helpers/imageHelpers';
 import { Color } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { useInputContext, useKeyContext } from '~/contexts';
@@ -158,17 +162,42 @@ export default function StartScreen({
     </ErrorBoundary>
   );
 
-  function handleUpload(fileObj: File) {
+  async function handleUpload(fileObj: File) {
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
     }
     const { fileType } = getFileInfoFromFileName(fileObj.name);
+
+    // Check if image needs conversion (HEIC, TIFF, AVIF, etc.) BEFORE fileType check
+    // These formats may not be classified as 'image' but are images that need conversion
+    if (needsImageConversion(fileObj.name)) {
+      try {
+        const {
+          file: convertedFile,
+          dataUrl,
+          converted
+        } = await convertToWebFriendlyFormat(fileObj);
+        if (converted) {
+          onSetSubjectAttachment({
+            file: convertedFile,
+            contentType: 'file',
+            fileType: 'image',
+            imageUrl: dataUrl
+          });
+          onHide();
+          return;
+        }
+      } catch (error) {
+        console.warn('Image conversion failed:', error);
+      }
+    }
+
     if (fileType === 'image') {
       const reader = new FileReader();
-      const extension = fileObj.name.split('.').pop();
+      const extension = fileObj.name.split('.').pop()?.toLowerCase();
       reader.onload = (upload: any) => {
         const payload = upload.target.result;
-        if (extension === 'gif') {
+        if (extension === 'gif' || extension === 'svg') {
           onSetSubjectAttachment({
             file: fileObj,
             contentType: 'file',
@@ -180,19 +209,31 @@ export default function StartScreen({
           window.loadImage(
             payload,
             function (img) {
-              const imageUrl = img.toDataURL(
-                `image/${extension === 'png' ? 'png' : 'jpeg'}`
-              );
-              const file = returnImageFileFromUrl({
-                imageUrl,
-                fileName: fileObj.name
-              });
-              onSetSubjectAttachment({
-                file,
-                contentType: 'file',
-                fileType,
-                imageUrl
-              });
+              if (img && typeof img.toDataURL === 'function') {
+                const outputFormat = extension === 'png' ? 'png' : 'jpeg';
+                const imageUrl = img.toDataURL(`image/${outputFormat}`);
+                const outputFileName =
+                  outputFormat === 'png'
+                    ? fileObj.name
+                    : fileObj.name.replace(/\.[^.]+$/, '.jpg');
+                const file = returnImageFileFromUrl({
+                  imageUrl,
+                  fileName: outputFileName
+                });
+                onSetSubjectAttachment({
+                  file,
+                  contentType: 'file',
+                  fileType,
+                  imageUrl
+                });
+              } else {
+                onSetSubjectAttachment({
+                  file: fileObj,
+                  contentType: 'file',
+                  fileType,
+                  imageUrl: payload
+                });
+              }
               onHide();
             },
             { orientation: true, canvas: true }

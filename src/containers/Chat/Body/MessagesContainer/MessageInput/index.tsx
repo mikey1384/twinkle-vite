@@ -12,7 +12,7 @@ import Icon from '~/components/Icon';
 import InputArea from './InputArea';
 import TargetMessagePreview from '../TargetMessagePreview';
 import TargetSubjectPreview from '../TargetSubjectPreview';
-import UploadAFileModal from '../../../Modals/UploadAFileModal';
+import UploadFileModal from '../../../Modals/UploadFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { socket } from '~/constants/sockets/api';
 import { isMobile } from '~/helpers';
@@ -565,7 +565,7 @@ export default function MessageInput({
         />
       )}
       {uploadModalShown && (
-        <UploadAFileModal
+        <UploadFileModal
           initialCaption={inputText}
           isRespondingToSubject={isRespondingToSubject}
           isCielChat={isCielChannel}

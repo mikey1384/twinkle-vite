@@ -71,7 +71,7 @@ export default function TargetSharedTopicContent({
               font-weight: 600;
             `}
           >
-            <UsernameText user={uploader} color={linkColor} /> shared a system
+            <UsernameText user={uploader} color={linkColor} /> created a system
             prompt
           </span>
           {sharedTopicContent.timeStamp && (

@@ -242,7 +242,7 @@ export default function HeadingText({
     case 'sharedTopic':
       return (
         <>
-          <UsernameText user={uploader} color={Color[linkColor]()} /> shared a
+          <UsernameText user={uploader} color={Color[linkColor]()} /> created a
           system prompt:{' '}
           <ContentLink
             content={contentObj}

@@ -10,6 +10,10 @@ import {
   returnMaxUploadSize
 } from '~/constants/defaultValues';
 import { addCommasToNumber, generateFileName } from '~/helpers/stringHelpers';
+import {
+  needsImageConversion,
+  convertToWebFriendlyFormat
+} from '~/helpers/imageHelpers';
 
 const isIOS =
   typeof navigator !== 'undefined' &&
@@ -494,6 +498,10 @@ export default function Textarea({
         'image/webp': 'webp',
         'image/heic': 'heic',
         'image/heif': 'heif',
+        'image/bmp': 'bmp',
+        'image/tiff': 'tiff',
+        'image/avif': 'avif',
+        'image/svg+xml': 'svg',
         'application/pdf': 'pdf',
         'text/plain': 'txt'
       };
@@ -530,20 +538,38 @@ export default function Textarea({
       return setUploadErrorType('size');
     }
     setUploading(true);
+
+    // Convert image if needed (HEIC, TIFF, BMP, etc.)
+    let fileToUpload = file;
+    if (needsImageConversion(file.name)) {
+      try {
+        const { file: convertedFile } =
+          await convertToWebFriendlyFormat(file);
+        // Re-check size after conversion (converted file could be larger)
+        if (convertedFile.size / mb > maxSize) {
+          setUploading(false);
+          return setUploadErrorType('size');
+        }
+        fileToUpload = convertedFile;
+      } catch (error) {
+        console.warn('Image conversion failed:', error);
+      }
+    }
+
     const filePath = uuidv1();
-    const appliedFileName = generateFileName(file.name);
+    const appliedFileName = generateFileName(fileToUpload.name);
     try {
       await uploadFile({
         filePath,
         fileName: appliedFileName,
-        file,
+        file: fileToUpload,
         context: 'embed',
         onUploadProgress: handleUploadProgress
       });
       await saveFileData({
         fileName: appliedFileName,
         filePath,
-        actualFileName: file.name,
+        actualFileName: fileToUpload.name,
         rootType: 'embed'
       });
 

@@ -23,8 +23,14 @@ import {
 } from '~/helpers/stringHelpers';
 import LocalContext from '../../Context';
 import ThumbnailPicker from '~/components/ThumbnailPicker';
+import {
+  needsImageConversion,
+  convertToWebFriendlyFormat
+} from '~/helpers/imageHelpers';
+import AlertModal from '~/components/Modals/AlertModal';
+import { mb, returnMaxUploadSize } from '~/constants/defaultValues';
 
-function UploadAFileModal({
+function UploadFileModal({
   initialCaption = '',
   isRespondingToSubject,
   isCielChat,
@@ -62,6 +68,7 @@ function UploadAFileModal({
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const {
     onFileUpload,
@@ -77,50 +84,106 @@ function UploadAFileModal({
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [aiFileNotSupported, setAiFileNotSupported] = useState(false);
+  const [alertModalShown, setAlertModalShown] = useState(false);
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState(0);
-  const { fileType } = useMemo(
+  const maxSize = useMemo(
+    () => returnMaxUploadSize(fileUploadLvl),
+    [fileUploadLvl]
+  );
+  const { fileType: originalFileType } = useMemo(
     () => getFileInfoFromFileName(fileObj.name),
     [fileObj.name]
   );
+  // Track effective file type - may differ from original if conversion succeeded
+  const [effectiveFileType, setEffectiveFileType] = useState(originalFileType);
 
   useEffect(() => {
-    if (fileType === 'video') {
+    if (originalFileType === 'video') {
       const url = URL.createObjectURL(fileObj);
       setVideoSrc(url);
     }
-  }, [fileObj, fileType]);
+  }, [fileObj, originalFileType]);
 
   useEffect(() => {
-    if (fileType === 'image') {
+    async function processConvertibleImage() {
+      // Check if image needs conversion (HEIC, TIFF, AVIF, etc.) BEFORE fileType check
+      // These formats may not be classified as 'image' but are images that need conversion
+      if (needsImageConversion(fileObj.name)) {
+        try {
+          const { file: convertedFile, dataUrl, converted } =
+            await convertToWebFriendlyFormat(fileObj);
+          if (converted) {
+            // NOTE: We intentionally check the ORIGINAL file size (done before this modal opens),
+            // not the converted size. Users shouldn't be penalized when our internal conversion
+            // produces a larger file — they chose a file within their stated limit.
+            setImageUrl(dataUrl);
+            setSelectedFile(convertedFile);
+            setEffectiveFileType('image');
+            return true;
+          }
+          // Conversion failed - fall through to non-image handling
+        } catch (error) {
+          console.warn('Image conversion failed:', error);
+          // Fall through to non-image handling
+        }
+      }
+      return false;
+    }
+
+    function processWebFriendlyImage() {
       const reader = new FileReader();
       reader.onload = (upload: any) => {
-        const extension = fileObj.name.split('.').pop();
+        const extension = fileObj.name.split('.').pop()?.toLowerCase();
         const payload = upload.target.result;
-        if (extension === 'gif') {
+        if (extension === 'gif' || extension === 'svg') {
           setImageUrl(payload);
           setSelectedFile(fileObj);
         } else {
           window.loadImage(
             payload,
             function (img) {
-              const image = img.toDataURL(
-                `image/${extension === 'png' ? 'png' : 'jpeg'}`
-              );
-              setImageUrl(image);
-              const file = returnImageFileFromUrl({
-                imageUrl: image,
-                fileName: fileObj.name
-              });
-              setSelectedFile(file);
+              // loadImage returns a canvas on success, or an error on failure
+              if (img && typeof img.toDataURL === 'function') {
+                const outputFormat = extension === 'png' ? 'png' : 'jpeg';
+                const image = img.toDataURL(`image/${outputFormat}`);
+                setImageUrl(image);
+                // Use correct extension to match actual content type
+                const outputFileName =
+                  outputFormat === 'png'
+                    ? fileObj.name
+                    : fileObj.name.replace(/\.[^.]+$/, '.jpg');
+                const file = returnImageFileFromUrl({
+                  imageUrl: image,
+                  fileName: outputFileName
+                });
+                setSelectedFile(file);
+              } else {
+                // loadImage couldn't process - use original file
+                setImageUrl(payload);
+                setSelectedFile(fileObj);
+              }
             },
             { orientation: true, canvas: true }
           );
         }
       };
       reader.readAsDataURL(fileObj);
-    } else {
-      setSelectedFile(fileObj);
     }
+
+    async function processFile() {
+      // First try to convert if needed (HEIC, TIFF, AVIF, etc.)
+      const wasConverted = await processConvertibleImage();
+      if (wasConverted) return;
+
+      // Then handle web-friendly images
+      if (originalFileType === 'image') {
+        processWebFriendlyImage();
+      } else {
+        setSelectedFile(fileObj);
+      }
+    }
+
+    processFile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -223,72 +286,91 @@ function UploadAFileModal({
   ]);
 
   return (
-    <Modal
-      modalKey="UploadAFileModal"
-      isOpen
-      onClose={onHide}
-      closeOnBackdropClick={false}
-      hasHeader={false}
-      bodyPadding={0}
-    >
-      <LegacyModalLayout>
-        <header>Upload a file</header>
-        <main>
-          {fileObj ? (
-            <FileInfo
-              caption={caption}
-              captionExceedsCharLimit={captionExceedsCharLimit}
-              fileObj={fileObj}
-              fileType={fileType}
-              imageUrl={imageUrl}
-              onEmbed={onEmbed}
-              onCaptionChange={setCaption}
-            />
-          ) : (
-            <Loading />
-          )}
-          {videoSrc && (
-            <ExtractedThumb
-              isHidden
-              src={videoSrc}
-              onThumbnailLoad={handleThumbnailLoad}
-            />
-          )}
-          {thumbnails.length > 0 && (
-            <ThumbnailPicker
-              thumbnails={thumbnails}
-              initialSelectedIndex={selectedThumbnailIndex}
-              onSelect={handleThumbnailSelect}
-            />
-          )}
-        </main>
-        <footer>
-          {aiFileNotSupported && (
-            <div
-              style={{ color: 'red', fontSize: '1.3rem', marginRight: '2rem' }}
+    <>
+      <Modal
+        modalKey="UploadAIFileModal"
+        isOpen
+        onClose={onHide}
+        closeOnBackdropClick={false}
+        hasHeader={false}
+        bodyPadding={0}
+      >
+        <LegacyModalLayout>
+          <header>Upload a file</header>
+          <main>
+            {fileObj ? (
+              <FileInfo
+                caption={caption}
+                captionExceedsCharLimit={captionExceedsCharLimit}
+                fileObj={fileObj}
+                fileType={effectiveFileType}
+                imageUrl={imageUrl}
+                onEmbed={onEmbed}
+                onCaptionChange={setCaption}
+              />
+            ) : (
+              <Loading />
+            )}
+            {videoSrc && (
+              <ExtractedThumb
+                isHidden
+                src={videoSrc}
+                onThumbnailLoad={handleThumbnailLoad}
+              />
+            )}
+            {thumbnails.length > 0 && (
+              <ThumbnailPicker
+                thumbnails={thumbnails}
+                initialSelectedIndex={selectedThumbnailIndex}
+                onSelect={handleThumbnailSelect}
+              />
+            )}
+          </main>
+          <footer>
+            {aiFileNotSupported && (
+              <div
+                style={{
+                  color: 'red',
+                  fontSize: '1.3rem',
+                  marginRight: '2rem'
+                }}
+              >
+                Zero and Ciel cannot read this file format.
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              style={{ marginRight: '0.7rem' }}
+              onClick={onHide}
             >
-              Zero and Ciel cannot read this file format.
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            style={{ marginRight: '0.7rem' }}
-            onClick={onHide}
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={
-              !!captionExceedsCharLimit || !selectedFile || aiFileNotSupported
-            }
-            color={doneColor}
-            onClick={handleSubmit}
-          >
-            Upload
-          </Button>
-        </footer>
-      </LegacyModalLayout>
-    </Modal>
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                !!captionExceedsCharLimit || !selectedFile || aiFileNotSupported
+              }
+              color={doneColor}
+              onClick={handleSubmit}
+            >
+              Upload
+            </Button>
+          </footer>
+        </LegacyModalLayout>
+      </Modal>
+      {alertModalShown && (
+        <AlertModal
+          title="File is too large"
+          content={`The file size is larger than your limit of ${
+            maxSize / mb
+          } MB`}
+          modalLevel={2}
+          onHide={() => {
+            setAlertModalShown(false);
+            onHide();
+          }}
+        />
+      )}
+    </>
   );
 
   function handleThumbnailLoad({
@@ -307,4 +389,4 @@ function UploadAFileModal({
   }
 }
 
-export default memo(UploadAFileModal);
+export default memo(UploadFileModal);

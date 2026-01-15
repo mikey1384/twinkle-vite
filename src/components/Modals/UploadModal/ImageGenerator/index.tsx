@@ -2,7 +2,12 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
-import { dataUrlToBlob, fileToBase64 } from '~/helpers/imageHelpers';
+import {
+  dataUrlToBlob,
+  fileToBase64,
+  needsImageConversion,
+  convertToWebFriendlyFormat
+} from '~/helpers/imageHelpers';
 
 import InputSection from './InputSection';
 import ErrorDisplay from './ErrorDisplay';
@@ -652,16 +657,31 @@ export default function ImageGenerator({
     }
   }
 
-  function handleReferenceUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleReferenceUpload(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
     const file = event.target.files?.[0];
 
     if (file) {
       setHasBeenEdited(false);
-      setReferenceImage(file);
       setGeneratedImageUrl(null);
       setGeneratedResponseId(null);
       setGeneratedImageId(null);
       setPartialImageData(null);
+
+      // Check if image needs conversion (HEIC, TIFF, BMP, etc.)
+      if (needsImageConversion(file.name)) {
+        try {
+          const { file: convertedFile } =
+            await convertToWebFriendlyFormat(file);
+          setReferenceImage(convertedFile);
+          return;
+        } catch (error) {
+          console.warn('Image conversion failed:', error);
+        }
+      }
+
+      setReferenceImage(file);
     }
   }
 

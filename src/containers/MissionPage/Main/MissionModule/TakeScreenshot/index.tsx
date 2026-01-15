@@ -227,6 +227,11 @@ export default function TakeScreenshot({
         window.loadImage(
           payload,
           async function (img) {
+            if (!img || typeof img.width !== 'number' || !img.height) {
+              setIsChecking(false);
+              setIsFailed(true);
+              return;
+            }
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = img.width;

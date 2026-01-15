@@ -8,6 +8,10 @@ import FileContent from '~/components/FileContent';
 import { mb, returnMaxUploadSize } from '~/constants/defaultValues';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { returnImageFileFromUrl } from '~/helpers';
+import {
+  needsImageConversion,
+  convertToWebFriendlyFormat
+} from '~/helpers/imageHelpers';
 import { useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 
@@ -133,17 +137,43 @@ export default function FileField({
     </div>
   );
 
-  function handleFileSelection(fileObj: File) {
+  async function handleFileSelection(fileObj: File) {
     if (fileObj.size / mb > maxSize) {
       return setAlertModalShown(true);
     }
     const { fileType } = getFileInfoFromFileName(fileObj.name);
+
+    // Check if image needs conversion (HEIC, TIFF, AVIF, etc.) BEFORE fileType check
+    // These formats may not be classified as 'image' but are images that need conversion
+    if (needsImageConversion(fileObj.name)) {
+      try {
+        const { file: convertedFile, dataUrl, converted } =
+          await convertToWebFriendlyFormat(fileObj);
+        if (converted) {
+          // Note: We don't re-check size after conversion. The user selected a file
+          // within their limit - they shouldn't be penalized if our conversion inflates it.
+          onSetAttachmentState({
+            newAttachment: {
+              fileType: 'image',
+              file: convertedFile,
+              imageUrl: dataUrl
+            }
+          });
+          return;
+        }
+        // Conversion failed - fall through to non-image handling
+      } catch (error) {
+        console.warn('Image conversion failed:', error);
+        // Fall through to non-image handling
+      }
+    }
+
     if (fileType === 'image') {
       const reader = new FileReader();
       reader.onload = (upload: any) => {
         const payload = upload.target.result;
-        const extension = fileObj.name.split('.').pop();
-        if (extension === 'gif') {
+        const extension = fileObj.name.split('.').pop()?.toLowerCase();
+        if (extension === 'gif' || extension === 'svg') {
           onSetAttachmentState({
             newAttachment: {
               fileType,
@@ -155,20 +185,36 @@ export default function FileField({
           window.loadImage(
             payload,
             function (img) {
-              const imageUri = img.toDataURL(
-                `image/${extension === 'png' ? 'png' : 'jpeg'}`
-              );
-              const file = returnImageFileFromUrl({
-                imageUrl: imageUri,
-                fileName: fileObj.name
-              });
-              onSetAttachmentState({
-                newAttachment: {
-                  fileType,
-                  file,
-                  imageUrl: imageUri
-                }
-              });
+              // loadImage returns a canvas on success, or an error on failure
+              if (img && typeof img.toDataURL === 'function') {
+                const outputFormat = extension === 'png' ? 'png' : 'jpeg';
+                const imageUri = img.toDataURL(`image/${outputFormat}`);
+                // Use correct extension to match actual content type
+                const outputFileName =
+                  outputFormat === 'png'
+                    ? fileObj.name
+                    : fileObj.name.replace(/\.[^.]+$/, '.jpg');
+                const file = returnImageFileFromUrl({
+                  imageUrl: imageUri,
+                  fileName: outputFileName
+                });
+                onSetAttachmentState({
+                  newAttachment: {
+                    fileType,
+                    file,
+                    imageUrl: imageUri
+                  }
+                });
+              } else {
+                // loadImage couldn't process - use original file
+                onSetAttachmentState({
+                  newAttachment: {
+                    fileType,
+                    file: fileObj,
+                    imageUrl: payload
+                  }
+                });
+              }
             },
             { orientation: true, canvas: true }
           );
