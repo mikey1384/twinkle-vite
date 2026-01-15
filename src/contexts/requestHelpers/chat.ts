@@ -2259,7 +2259,7 @@ export default function chatRequestHelpers({
     async checkIfAIFileSupported({ fileName }: { fileName: string }) {
       try {
         const { data } = await request.get(
-          `${URL}/chat/file/ai/supported?fileName=${fileName}`,
+          `${URL}/chat/file/ai/supported?fileName=${encodeURIComponent(fileName)}`,
           auth()
         );
         return data;
