@@ -245,15 +245,20 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
       setQuestionsReady(false);
       onUpdateGrammarGenerationProgress(null);
       onUpdateGrammarLoadingStatus('loading...');
-      const { questions, maxAttemptNumberReached, attemptNumber, aborted } =
-        await loadGrammarGame();
+      const {
+        questions,
+        maxAttemptNumberReached,
+        alreadyFailedToday,
+        attemptNumber,
+        aborted
+      } = await loadGrammarGame();
 
       if (aborted) {
         onUpdateGrammarLoadingStatus('');
         onUpdateGrammarGenerationProgress(null);
         return;
       }
-      if (maxAttemptNumberReached) {
+      if (maxAttemptNumberReached || alreadyFailedToday) {
         onUpdateGrammarLoadingStatus?.(
           'daily limit reached. come back tomorrow!'
         );
@@ -302,9 +307,9 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
 
   async function startAttemptInBackground() {
     try {
-      const { attemptNumber, maxAttemptNumberReached } =
+      const { attemptNumber, maxAttemptNumberReached, alreadyFailedToday } =
         (await startAttempt()) || ({} as any);
-      if (maxAttemptNumberReached) {
+      if (maxAttemptNumberReached || alreadyFailedToday) {
         onUpdateGrammarLoadingStatus(
           'daily limit reached. come back tomorrow!'
         );

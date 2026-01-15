@@ -911,6 +911,7 @@ export default function contentRequestHelpers({
             nextDayTimeStamp,
             questions,
             maxAttemptNumberReached,
+            alreadyFailedToday,
             aborted
           }
         } = await axios.get(`${URL}/content/game/grammar`, auth());
@@ -918,6 +919,7 @@ export default function contentRequestHelpers({
           nextDayTimeStamp,
           questions,
           maxAttemptNumberReached,
+          alreadyFailedToday,
           aborted
         };
       } catch (error) {

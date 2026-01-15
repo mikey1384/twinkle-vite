@@ -27,7 +27,7 @@ export default function RankBadge({
           fontSize: `${fontScale}em`
         }}
       >
-        {rank ? `#${rank}` : '--'}
+        {resolvedRank ? `#${resolvedRank}` : '--'}
       </span>
     </span>
   );
