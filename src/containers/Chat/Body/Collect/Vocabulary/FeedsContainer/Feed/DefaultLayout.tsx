@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useLayoutEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import WordModal from '../../WordModal';
 import Icon from '~/components/Icon';
@@ -13,7 +13,6 @@ import {
 } from '~/components/WordMasterBadges';
 
 export default function DefaultLayout({
-  onHeightMeasured,
   userId,
   username,
   profilePicUrl,
@@ -29,7 +28,6 @@ export default function DefaultLayout({
   badgeStyle,
   onWordMasterBreak
 }: {
-  onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
   profilePicUrl: string;
@@ -46,14 +44,6 @@ export default function DefaultLayout({
   onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (panelRef.current) {
-      onHeightMeasured(panelRef.current.offsetHeight);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.08);
@@ -134,7 +124,6 @@ export default function DefaultLayout({
 
   return (
     <div
-      ref={panelRef}
       className={css`
         opacity: 0;
         transform: translateY(20px);

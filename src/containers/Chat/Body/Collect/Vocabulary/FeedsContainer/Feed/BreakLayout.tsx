@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -14,7 +14,6 @@ const breakTypeLabels: Record<string, string> = {
 };
 
 export default function BreakLayout({
-  onHeightMeasured,
   userId,
   username,
   profilePicUrl,
@@ -27,7 +26,6 @@ export default function BreakLayout({
   getBreakTypeColor,
   badgeStyle
 }: {
-  onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
   profilePicUrl: string;
@@ -40,15 +38,6 @@ export default function BreakLayout({
   getBreakTypeColor: (breakType?: string) => string;
   badgeStyle: (colorName: string, bgOpacity?: number) => string;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (panelRef.current) {
-      onHeightMeasured(panelRef.current.offsetHeight);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const actionColor = getActionColor(action);
   const breakTypeColor = getBreakTypeColor(breakType);
   const backgroundColor = getRGBA(breakTypeColor, 0.08);
@@ -73,7 +62,6 @@ export default function BreakLayout({
 
   return (
     <div
-      ref={panelRef}
       className={css`
         opacity: 0;
         transform: translateY(20px);

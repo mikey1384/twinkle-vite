@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import WordModal from '../../WordModal';
 
 export default function RewardLayout({
-  onHeightMeasured,
   userId,
   username,
   profilePicUrl,
@@ -28,7 +27,6 @@ export default function RewardLayout({
   rewardType,
   onWordMasterBreak
 }: {
-  onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
   profilePicUrl: string;
@@ -46,15 +44,7 @@ export default function RewardLayout({
   onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
-  useLayoutEffect(() => {
-    if (panelRef.current) {
-      onHeightMeasured(panelRef.current.offsetHeight);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // For the background styling
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
@@ -92,7 +82,6 @@ export default function RewardLayout({
 
   return (
     <div
-      ref={panelRef}
       className={css`
         opacity: 0;
         transform: translateY(20px);

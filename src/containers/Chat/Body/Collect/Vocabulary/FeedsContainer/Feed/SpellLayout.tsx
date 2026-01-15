@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
@@ -11,7 +11,6 @@ import WordModal from '../../WordModal';
 import { WordMasterLevelBadge } from '~/components/WordMasterBadges';
 
 export default function SpellLayout({
-  onHeightMeasured,
   userId,
   username,
   profilePicUrl,
@@ -28,7 +27,6 @@ export default function SpellLayout({
   badgeStyle,
   onWordMasterBreak
 }: {
-  onHeightMeasured: (height: number) => void;
   userId: number;
   username: string;
   profilePicUrl: string;
@@ -46,14 +44,6 @@ export default function SpellLayout({
   onWordMasterBreak?: (status: any) => void;
 }) {
   const [wordModalShown, setWordModalShown] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (panelRef.current) {
-      onHeightMeasured(panelRef.current.offsetHeight);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const colorName = wordLevelHash[wordLevel]?.color || 'logoBlue';
   const backgroundColor = getRGBA(colorName, 0.08);
@@ -63,7 +53,6 @@ export default function SpellLayout({
 
   return (
     <div
-      ref={panelRef}
       className={css`
         display: flex;
         flex-direction: column;
