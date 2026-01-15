@@ -2,19 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Loading from '~/components/Loading';
 import Button from '~/components/Button';
-import CloneButtons from '~/components/Buttons/CloneButtons';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
-import Input from '~/components/Texts/Input';
-import RichText from '~/components/Texts/RichText';
-import UsernameText from '~/components/Texts/UsernameText';
 import MyTopicsManager from './MyTopicsManager';
+import SharedPromptCard from './SharedPromptCard';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { addEmoji, stringIsEmpty } from '~/helpers/stringHelpers';
-import moment from 'moment';
 
 interface CloneEntry {
   target: 'zero' | 'ciel';
@@ -427,153 +422,26 @@ export default function SystemPromptShared({
           </div>
         ) : (
           <section className={gridClass}>
-            {topics.map((topic) => {
-              const instructions =
-                topic.customInstructions ||
-                topic.settings?.customInstructions ||
-                '';
-              const isOwnTopic = topic.userId === userId;
-              return (
-                <article key={topic.id} className={cardClass}>
-                  <div>
-                    <h3
-                      className={titleClass}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/shared-prompts/${topic.id}`);
-                      }}
-                    >
-                      {topic.content}
-                    </h3>
-                    <div className={metaRowClass}>
-                      <UsernameText
-                        user={{ id: topic.userId, username: topic.username }}
-                      />
-                      {topic.timeStamp && (
-                        <small>{moment.unix(topic.timeStamp).fromNow()}</small>
-                      )}
-                      {isOwnTopic && (
-                        <span className={ownBadgeClass}>Your prompt</span>
-                      )}
-                      <div className={statsRowClass}>
-                        <div className={statPillClass}>
-                          <span className={boldClass}>
-                            {topic.cloneCount || 0}
-                          </span>
-                          {Number(topic.cloneCount) === 1 ? 'clone' : 'clones'}
-                        </div>
-                        <div className={statPillClass}>
-                          <span className={boldClass}>
-                            {topic.messageCount || 0}
-                          </span>
-                          {Number(topic.messageCount) === 1
-                            ? 'message'
-                            : 'messages'}
-                        </div>
-                        <div
-                          className={statPillClass}
-                          style={{ cursor: 'pointer' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/shared-prompts/${topic.id}`);
-                          }}
-                        >
-                          <Icon icon="comment" />
-                          <span className={boldClass}>
-                            {topic.numComments || 0}
-                          </span>
-                          {Number(topic.numComments) === 1
-                            ? 'comment'
-                            : 'comments'}
-                        </div>
-                        <div
-                          className={`${statPillClass} ${copyPillClass}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopyEmbed(topic.id);
-                          }}
-                        >
-                          <Icon icon={copiedId === topic.id ? 'check' : 'copy'} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {instructions && (
-                    <div className={instructionsClass}>
-                      <RichText
-                        contentType="sharedTopic"
-                        contentId={topic.id}
-                        maxLines={8}
-                        isShowMoreButtonCentered
-                      >
-                        {instructions}
-                      </RichText>
-                    </div>
-                  )}
-                  <CloneButtons
-                    sharedTopicId={topic.subjectId || topic.id}
-                    sharedTopicTitle={topic.content}
-                    uploaderId={topic.userId}
-                    myClones={topic.myClones}
-                    onCloneSuccess={handleCloneSuccess}
-                  />
-                  {userId && (
-                    <div
-                      className={css`
-                        display: flex;
-                        gap: 0.5rem;
-                        margin-top: 0.5rem;
-                      `}
-                    >
-                      <Input
-                        placeholder="Write a comment..."
-                        value={commentTexts[topic.id] || ''}
-                        onChange={(text: string) =>
-                          setCommentTexts((prev) => ({
-                            ...prev,
-                            [topic.id]: text
-                          }))
-                        }
-                        onKeyUp={(event: React.KeyboardEvent) => {
-                          if (event.key === ' ') {
-                            const current = commentTexts[topic.id] || '';
-                            const converted = addEmoji(current);
-                            if (converted !== current) {
-                              setCommentTexts((prev) => ({
-                                ...prev,
-                                [topic.id]: converted
-                              }));
-                            }
-                          }
-                        }}
-                        onKeyDown={(event: React.KeyboardEvent) => {
-                          if (event.key === 'Enter') {
-                            handleCommentSubmit(topic.id);
-                          }
-                        }}
-                        style={{ flex: 1 }}
-                      />
-                      <Button
-                        color="logoBlue"
-                        variant="soft"
-                        tone="raised"
-                        disabled={
-                          stringIsEmpty(commentTexts[topic.id]) ||
-                          commentSubmitting[topic.id]
-                        }
-                        onClick={() => handleCommentSubmit(topic.id)}
-                      >
-                        {commentSubmitting[topic.id] ? (
-                          <Icon icon="spinner" pulse />
-                        ) : (
-                          <Icon icon="paper-plane" />
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
+            {topics.map((topic) => (
+              <SharedPromptCard
+                key={topic.id}
+                topic={topic}
+                isOwnTopic={topic.userId === userId}
+                userId={userId}
+                copiedId={copiedId}
+                commentText={commentTexts[topic.id] || ''}
+                commentSubmitting={commentSubmitting[topic.id] || false}
+                onCommentTextChange={(text: string) =>
+                  setCommentTexts((prev) => ({
+                    ...prev,
+                    [topic.id]: text
+                  }))
+                }
+                onCommentSubmit={() => handleCommentSubmit(topic.id)}
+                onCopyEmbed={() => handleCopyEmbed(topic.id)}
+                onCloneSuccess={handleCloneSuccess}
+              />
+            ))}
           </section>
         )}
         {loadMoreButton && !loading && (
@@ -612,60 +480,6 @@ export default function SystemPromptShared({
   );
 }
 
-const cardClass = css`
-  width: 100%;
-  background: #fff;
-  border-radius: ${borderRadius};
-  padding: 1rem 1rem 1.3rem;
-  border: 1px solid var(--ui-border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  transition: border-color 0.18s ease;
-  &:hover {
-    border-color: var(--ui-border-strong);
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    border-top: 0;
-    &:last-child {
-      border-bottom: 0;
-    }
-  }
-`;
-
-const statsRowClass = css`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 1.1rem;
-  color: ${Color.darkerGray()};
-`;
-
-const statPillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  background: ${Color.highlightGray(0.2)};
-  border: 1px solid var(--ui-border);
-  font-size: 1.1rem;
-  font-weight: 500;
-`;
-
-const copyPillClass = css`
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  &:hover {
-    background: ${Color.highlightGray(0.4)};
-    border-color: ${Color.darkerBorderGray()};
-  }
-`;
-
 const gridClass = css`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
@@ -674,49 +488,4 @@ const gridClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
   }
-`;
-
-const titleClass = css`
-  margin: 0;
-  font-size: 1.8rem;
-  color: ${Color.logoBlue()};
-  font-weight: 700;
-  cursor: pointer;
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const metaRowClass = css`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  color: ${Color.darkerGray()};
-  font-size: 1.3rem;
-  margin-top: 0.3rem;
-`;
-
-const ownBadgeClass = css`
-  padding: 0.2rem 0.5rem;
-  background: ${Color.logoBlue(0.1)};
-  border: 1px solid ${Color.logoBlue(0.3)};
-  border-radius: 4px;
-  color: ${Color.logoBlue()};
-  font-size: 1.1rem;
-  font-weight: 700;
-`;
-
-const instructionsClass = css`
-  margin: 0.8rem 0;
-  padding: 1rem;
-  border-radius: ${borderRadius};
-  border: 1px solid var(--ui-border);
-  background: #fff;
-  font-size: 1.3rem;
-  line-height: 1.6;
-`;
-
-const boldClass = css`
-  font-weight: 700;
 `;
