@@ -145,7 +145,6 @@ export default function DefaultLayout({
         border-left: 8px solid ${borderColor};
         border-radius: ${borderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-        margin-bottom: 1.5rem;
         min-height: 160px;
 
         @media (max-width: ${mobileMaxWidth}) {

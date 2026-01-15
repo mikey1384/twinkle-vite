@@ -73,7 +73,7 @@ function Feed({
   const isBreakFeed = action === 'break_start' || action === 'break_clear';
 
   return (
-    <div ref={inViewRef}>
+    <div ref={inViewRef} style={{ marginBottom: '1.5rem' }}>
       {!feedShown ? (
         <div style={{ width: '100%', height: componentHeight }} />
       ) : (

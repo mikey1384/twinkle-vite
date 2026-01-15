@@ -82,7 +82,6 @@ export default function BreakLayout({
         border-radius: ${borderRadius};
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
         padding: 1.2rem 1rem;
-        margin-bottom: 1.5rem;
         @media (max-width: ${mobileMaxWidth}) {
           padding: 1rem;
         }
