@@ -28,7 +28,9 @@ export default function RecommendPosts() {
   const markPostAsSkipped = useAppContext(
     (v) => v.requestHelpers.markPostAsSkipped
   );
-  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const onSetContentState = useContentContext(
+    (v) => v.actions.onSetContentState
+  );
 
   useEffect(() => {
     handleLoadPostsToRecommend();
@@ -134,10 +136,10 @@ export default function RecommendPosts() {
     setLoading(true);
     const data = await loadPostsToRecommend();
     for (const post of data) {
-      onInitContent({
+      onSetContentState({
         contentId: post.id,
         contentType: post.contentType,
-        ...post
+        newState: post
       });
     }
     setPosts(data);
