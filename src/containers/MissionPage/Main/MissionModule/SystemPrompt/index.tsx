@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -62,21 +62,19 @@ interface SystemPromptState {
   promptEverGenerated?: boolean;
 }
 
-const EMPTY_SYSTEM_PROMPT_STATE: SystemPromptState = {
-  title: '',
-  prompt: '',
-  userMessage: '',
-  missionPromptId: null,
-  chatMessages: [],
-  promptEverGenerated: false
-};
-
 export default function SystemPromptMission({
   mission,
   onSetMissionState,
   style
 }: {
-  mission: any;
+  mission: {
+    id: number;
+    missionType: 'systemPrompt';
+    xpReward: number;
+    coinReward: number;
+    prevUserId?: number | null;
+    systemPromptState: SystemPromptState;
+  };
   onSetMissionState: (v: any) => void;
   style?: React.CSSProperties;
 }) {
@@ -109,12 +107,6 @@ export default function SystemPromptMission({
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
 
   const myAttempt = myAttempts?.[mission.id];
-  const systemPromptState = useMemo(
-    () =>
-      (mission.systemPromptState as SystemPromptState) ||
-      EMPTY_SYSTEM_PROMPT_STATE,
-    [mission.systemPromptState]
-  );
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const draftTimeoutRef = useRef<any>(null);
@@ -134,7 +126,7 @@ export default function SystemPromptMission({
     improveOriginalPromptRef,
     generateRequestIdRef
   } = useSystemPromptSockets({
-    systemPromptState,
+    systemPromptState: mission.systemPromptState || {},
     onSetSystemPromptState: handleSetSystemPromptState,
     onSetSending: setSending,
     onSetImproving: setImproving,
@@ -148,7 +140,7 @@ export default function SystemPromptMission({
     userMessage = '',
     chatMessages = [],
     promptEverGenerated
-  } = systemPromptState;
+  } = mission.systemPromptState || {};
   const safeChatMessages = Array.isArray(chatMessages) ? chatMessages : [];
   const trimmedPrompt = prompt.trim();
   const trimmedMessage = userMessage.trim();
@@ -167,15 +159,11 @@ export default function SystemPromptMission({
     progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
 
-  // Mission is cleared when step 3 is complete
-  // (step 3 completion implies steps 1 and 2 were done at some point)
   const missionCleared =
     myAttempt?.status === 'pass' || (hasSharedTopic && sharedMessageCount >= 1);
 
   const isMissionPassed = myAttempt?.status === 'pass';
 
-  // Progress on later steps implies earlier steps are complete
-  // (you can't reach step 3 without doing steps 1 and 2)
   const step3HasProgress = hasSharedTopic;
   const step2HasProgress =
     hasAiTopic || Boolean(progress?.pendingPromptForChat?.topicId);
@@ -183,9 +171,7 @@ export default function SystemPromptMission({
   const step1Complete =
     isMissionPassed || createdPrompt || step2HasProgress || step3HasProgress;
   const step2Complete =
-    isMissionPassed ||
-    (hasAiTopic && aiMessageCount >= 2) ||
-    step3HasProgress;
+    isMissionPassed || (hasAiTopic && aiMessageCount >= 2) || step3HasProgress;
   const step3Complete =
     isMissionPassed || (hasSharedTopic && sharedMessageCount >= 1);
 
@@ -300,7 +286,6 @@ export default function SystemPromptMission({
     return () => clearTimeout(draftTimeoutRef.current);
   }, [trimmedTitle, trimmedPrompt]);
 
-  // Progressive reveal logic (hide everything except checklist after mission is passed)
   const showEditor = !missionCleared;
   const showPreview = !missionCleared && !!(trimmedTitle && hasPrompt);
   const showTargetSelector = !missionCleared && !!createdPrompt;
@@ -332,13 +317,13 @@ export default function SystemPromptMission({
                 saving={saving}
                 onTitleChange={(text) =>
                   handleSetSystemPromptState({
-                    ...systemPromptState,
+                    ...mission.systemPromptState,
                     title: text
                   })
                 }
                 onPromptChange={(text) =>
                   handleSetSystemPromptState({
-                    ...systemPromptState,
+                    ...mission.systemPromptState,
                     prompt: text
                   })
                 }
@@ -362,13 +347,13 @@ export default function SystemPromptMission({
                 onClear={() => {
                   setError('');
                   handleSetSystemPromptState({
-                    ...systemPromptState,
+                    ...mission.systemPromptState,
                     chatMessages: []
                   });
                 }}
                 onUserMessageChange={(text) =>
                   handleSetSystemPromptState({
-                    ...systemPromptState,
+                    ...mission.systemPromptState,
                     userMessage: text
                   })
                 }
@@ -436,7 +421,7 @@ export default function SystemPromptMission({
     const baseMessages = [...safeChatMessages, userMessageObj];
     const assistantMessageId = Date.now() + 1;
     const nextState: SystemPromptState = {
-      ...systemPromptState,
+      ...mission.systemPromptState,
       chatMessages: [
         ...baseMessages,
         { id: assistantMessageId, role: 'assistant', content: '' }
@@ -479,7 +464,7 @@ export default function SystemPromptMission({
     setGenerating(true);
     // Clear chatMessages so user must re-preview the new prompt
     handleSetSystemPromptState({
-      ...systemPromptState,
+      ...mission.systemPromptState,
       promptEverGenerated: true,
       chatMessages: [],
       userMessage: ''
@@ -507,7 +492,7 @@ export default function SystemPromptMission({
       }
       if (typeof data?.missionPromptId === 'number') {
         handleSetSystemPromptState({
-          ...systemPromptState,
+          ...mission.systemPromptState,
           missionPromptId: data.missionPromptId
         });
       }
@@ -547,9 +532,9 @@ export default function SystemPromptMission({
 
   function handleSetSystemPromptState(nextState: SystemPromptState) {
     const hasPromptText =
-      typeof nextState.prompt === 'string' && nextState.prompt.trim().length > 0;
-    const shouldSetPromptFlag =
-      hasPromptText && !nextState.promptEverGenerated;
+      typeof nextState.prompt === 'string' &&
+      nextState.prompt.trim().length > 0;
+    const shouldSetPromptFlag = hasPromptText && !nextState.promptEverGenerated;
     const finalState = shouldSetPromptFlag
       ? { ...nextState, promptEverGenerated: true }
       : nextState;
