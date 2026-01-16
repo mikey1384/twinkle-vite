@@ -67,7 +67,14 @@ export default function SystemPromptMission({
   onSetMissionState,
   style
 }: {
-  mission: any;
+  mission: {
+    id: number;
+    missionType: 'systemPrompt';
+    xpReward: number;
+    coinReward: number;
+    prevUserId?: number | null;
+    systemPromptState: SystemPromptState;
+  };
   onSetMissionState: (v: any) => void;
   style?: React.CSSProperties;
 }) {
@@ -119,7 +126,7 @@ export default function SystemPromptMission({
     improveOriginalPromptRef,
     generateRequestIdRef
   } = useSystemPromptSockets({
-    systemPromptState: mission.systemPromptState,
+    systemPromptState: mission.systemPromptState || {},
     onSetSystemPromptState: handleSetSystemPromptState,
     onSetSending: setSending,
     onSetImproving: setImproving,
@@ -152,15 +159,11 @@ export default function SystemPromptMission({
     progress?.pendingPromptForChat?.topicId || progress?.aiTopic?.id || null;
   const hasSharedTopic = Boolean(progress?.sharedTopic?.id);
 
-  // Mission is cleared when step 3 is complete
-  // (step 3 completion implies steps 1 and 2 were done at some point)
   const missionCleared =
     myAttempt?.status === 'pass' || (hasSharedTopic && sharedMessageCount >= 1);
 
   const isMissionPassed = myAttempt?.status === 'pass';
 
-  // Progress on later steps implies earlier steps are complete
-  // (you can't reach step 3 without doing steps 1 and 2)
   const step3HasProgress = hasSharedTopic;
   const step2HasProgress =
     hasAiTopic || Boolean(progress?.pendingPromptForChat?.topicId);
@@ -283,7 +286,6 @@ export default function SystemPromptMission({
     return () => clearTimeout(draftTimeoutRef.current);
   }, [trimmedTitle, trimmedPrompt]);
 
-  // Progressive reveal logic (hide everything except checklist after mission is passed)
   const showEditor = !missionCleared;
   const showPreview = !missionCleared && !!(trimmedTitle && hasPrompt);
   const showTargetSelector = !missionCleared && !!createdPrompt;
