@@ -63,15 +63,6 @@ interface SystemPromptState {
   promptEverGenerated?: boolean;
 }
 
-const EMPTY_SYSTEM_PROMPT_STATE: SystemPromptState = {
-  title: '',
-  prompt: '',
-  userMessage: '',
-  missionPromptId: null,
-  chatMessages: [],
-  promptEverGenerated: false
-};
-
 export default function SystemPromptMission({
   mission,
   onSetMissionState,
