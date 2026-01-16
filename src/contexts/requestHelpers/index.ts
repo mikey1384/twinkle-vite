@@ -1,3 +1,4 @@
+import buildRequestHelpers from './build';
 import chatRequestHelpers from './chat';
 import chessRequestHelpers from './chess';
 import communityRequestHelpers from './community';
@@ -21,6 +22,7 @@ const auth = () => ({
 export default function requestHelpers(handleError: (error: unknown) => void) {
   return {
     auth,
+    ...buildRequestHelpers({ auth, handleError }),
     ...communityRequestHelpers({ auth, handleError }),
     ...contentRequestHelpers({ auth, handleError }),
     ...chessRequestHelpers({ auth, handleError }),

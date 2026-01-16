@@ -5,6 +5,7 @@ import React, {
   useState,
   useCallback
 } from 'react';
+import Build from '~/containers/Build';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
 import Explore from '~/containers/Explore';
@@ -522,6 +523,7 @@ export default function App() {
             <Route path="/playlists/*" element={<PlaylistPage />} />
             <Route path="/missions/:missionType/*" element={<MissionPage />} />
             <Route path="/missions" element={<Mission />} />
+            <Route path="/build/*" element={<Build />} />
             <Route
               path="/chat/*"
               element={<Chat onFileUpload={handleFileUploadOnChat} />}
