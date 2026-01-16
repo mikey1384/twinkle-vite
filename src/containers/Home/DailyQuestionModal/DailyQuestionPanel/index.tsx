@@ -181,7 +181,7 @@ export default function DailyQuestionPanel({
     }) {
       setLoadingMessage(step);
 
-      const duration = step.toLowerCase().includes('analyzing') ? 30000 : 10000;
+      const duration = step.toLowerCase().includes('analyzing') ? 30000 : 20000;
       animateProgress(
         loadingProgressRef,
         loadingTargetRef,

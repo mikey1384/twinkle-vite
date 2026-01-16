@@ -28,7 +28,9 @@ export default function RewardPosts() {
   const markPostAsSkipped = useAppContext(
     (v) => v.requestHelpers.markPostAsSkipped
   );
-  const onInitContent = useContentContext((v) => v.actions.onInitContent);
+  const onSetContentState = useContentContext(
+    (v) => v.actions.onSetContentState
+  );
 
   useEffect(() => {
     handleLoadPostsToReward();
@@ -132,10 +134,10 @@ export default function RewardPosts() {
     setLoading(true);
     const data = await loadPostsToReward();
     for (const post of data) {
-      onInitContent({
+      onSetContentState({
         contentId: post.id,
         contentType: post.contentType,
-        ...post
+        newState: post
       });
     }
     setPosts(data);
