@@ -5,9 +5,11 @@ import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import BuildEditor from './BuildEditor';
 import BuildList from './BuildList';
+import Button from '~/components/Button';
+import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export default function Build() {
   return (
@@ -50,16 +52,115 @@ function NewBuild() {
     <div
       className={css`
         width: 100%;
-        max-width: 600px;
+        max-width: 680px;
         margin: 3rem auto;
-        padding: 2rem;
+        padding: 0 2rem;
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 0 1rem;
+        }
       `}
     >
-      <h1 style={{ marginBottom: '2rem' }}>Create a New Build</h1>
-      <div style={{ marginBottom: '1rem' }}>
+      <div
+        className={css`
+          position: relative;
+          padding: 2.2rem;
+          border-radius: 22px;
+          background: linear-gradient(
+            135deg,
+            ${Color.white()} 0%,
+            ${Color.whiteBlueGray(0.7)} 45%,
+            ${Color.logoBlue(0.12)} 100%
+          );
+          border: 1px solid ${Color.logoBlue(0.18)};
+          box-shadow: 0 24px 48px -40px rgba(30, 110, 183, 0.45);
+          overflow: hidden;
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.6rem;
+          }
+        `}
+      >
+        <div
+          className={css`
+            position: absolute;
+            right: -10%;
+            top: -40%;
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(
+              circle,
+              ${Color.logoBlue(0.2)} 0%,
+              transparent 70%
+            );
+            opacity: 0.7;
+          `}
+        />
+        <div
+          className={css`
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+          `}
+        >
+          <span
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 0.6rem;
+              padding: 0.4rem 0.9rem;
+              border-radius: 999px;
+              background: ${Color.logoBlue(0.15)};
+              color: ${Color.darkOceanBlue()};
+              font-weight: 800;
+              font-size: 1rem;
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+            `}
+          >
+            <Icon icon="sparkles" />
+            New Build
+          </span>
+          <h1
+            className={css`
+              margin: 0;
+              font-size: 2.4rem;
+              font-weight: 800;
+              color: ${Color.darkBlue()};
+              @media (max-width: ${mobileMaxWidth}) {
+                font-size: 2rem;
+              }
+            `}
+          >
+            Create a new build
+          </h1>
+          <p
+            className={css`
+              margin: 0;
+              font-size: 1.2rem;
+              color: ${Color.darkGray()};
+              max-width: 34rem;
+              line-height: 1.6;
+            `}
+          >
+            Give your project a name so the Build Studio can start scaffolding
+            your app.
+          </p>
+        </div>
+      </div>
+      <div
+        className={css`
+          margin-top: 1.8rem;
+          background: #fff;
+          border-radius: ${borderRadius};
+          border: 1px solid ${Color.borderGray()};
+          padding: 1.6rem;
+          box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.2);
+        `}
+      >
         <label
           htmlFor="build-title"
-          style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}
+          style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700 }}
         >
           Title
         </label>
@@ -72,30 +173,38 @@ function NewBuild() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleCreate();
           }}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            fontSize: '1rem',
-            border: '1px solid #ccc',
-            borderRadius: '4px'
-          }}
+          className={css`
+            width: 100%;
+            padding: 0.85rem 1rem;
+            font-size: 1.05rem;
+            border: 1px solid ${Color.borderGray()};
+            border-radius: ${borderRadius};
+            background: ${Color.white()};
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            &:focus {
+              outline: none;
+              border-color: ${Color.logoBlue()};
+              box-shadow: 0 0 0 3px ${Color.logoBlue(0.15)};
+            }
+          `}
         />
+        <div
+          className={css`
+            margin-top: 1.4rem;
+            display: flex;
+            justify-content: flex-end;
+          `}
+        >
+          <Button
+            color="green"
+            variant="solid"
+            onClick={handleCreate}
+            disabled={!title.trim() || creating}
+          >
+            {creating ? 'Creating...' : 'Create Build'}
+          </Button>
+        </div>
       </div>
-      <button
-        onClick={handleCreate}
-        disabled={!title.trim() || creating}
-        style={{
-          padding: '0.75rem 1.5rem',
-          fontSize: '1rem',
-          backgroundColor: title.trim() && !creating ? '#5BA1F8' : '#ccc',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: title.trim() && !creating ? 'pointer' : 'not-allowed'
-        }}
-      >
-        {creating ? 'Creating...' : 'Create Build'}
-      </button>
     </div>
   );
 }
@@ -136,6 +245,7 @@ function BuildEditorWrapper() {
       }
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numericBuildId]);
 
   if (!numericBuildId) {

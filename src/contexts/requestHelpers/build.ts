@@ -28,7 +28,7 @@ export default function buildRequestHelpers({
 
     async loadBuild(buildId: number) {
       try {
-        const { data } = await request.get(`${URL}/build/${buildId}`);
+        const { data } = await request.get(`${URL}/build/${buildId}`, auth());
         return data;
       } catch (error) {
         return handleError(error);
@@ -94,7 +94,7 @@ export default function buildRequestHelpers({
       }
     },
 
-    async downloadBuildDatabase(buildId: number): Promise<ArrayBuffer | null> {
+    async downloadBuildDatabase(buildId: number) {
       try {
         const response = await request.get(`${URL}/build/${buildId}/db`, {
           ...auth(),
@@ -117,18 +117,46 @@ export default function buildRequestHelpers({
       data: ArrayBuffer;
     }) {
       try {
-        const response = await request.put(
-          `${URL}/build/${buildId}/db`,
-          data,
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              'Content-Type': 'application/x-sqlite3'
-            }
+        const response = await request.put(`${URL}/build/${buildId}/db`, data, {
+          ...auth(),
+          headers: {
+            ...auth().headers,
+            'Content-Type': 'application/x-sqlite3'
           }
-        );
+        });
         return response.data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildAiPrompts() {
+      try {
+        const { data } = await request.get(`${URL}/build/ai-prompts`);
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async callBuildAiChat({
+      buildId,
+      promptId,
+      message,
+      history
+    }: {
+      buildId: number;
+      promptId: number;
+      message: string;
+      history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/ai-chat`,
+          { promptId, message, history },
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
