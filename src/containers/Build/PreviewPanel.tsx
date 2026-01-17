@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 
@@ -157,6 +157,34 @@ const TWINKLE_SDK_SCRIPT = `
         if (db) { db.close(); db = null; isInitialized = false; }
       }
     },
+
+    ai: {
+      _prompts: null,
+
+      async listPrompts() {
+        if (this._prompts) return this._prompts;
+        const response = await sendRequest('ai:list-prompts', {});
+        this._prompts = response.prompts || [];
+        return this._prompts;
+      },
+
+      async chat({ promptId, message, history }) {
+        if (!promptId) throw new Error('promptId is required');
+        if (!message) throw new Error('message is required');
+
+        const response = await sendRequest('ai:chat', {
+          promptId: promptId,
+          message: message,
+          history: history || []
+        });
+
+        return {
+          text: response.response,
+          prompt: response.prompt
+        };
+      }
+    },
+
     build: { id: null, title: null, username: null },
     _init(info) {
       this.build.id = info.id;
@@ -174,6 +202,68 @@ const TWINKLE_SDK_SCRIPT = `
 </script>
 `;
 
+const panelClass = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: ${Color.white()};
+  @media (max-width: ${mobileMaxWidth}) {
+    height: 50%;
+  }
+`;
+
+const toolbarClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(
+    135deg,
+    ${Color.white()} 0%,
+    ${Color.whiteBlueGray(0.7)} 60%,
+    ${Color.logoBlue(0.08)} 100%
+  );
+  border-bottom: 1px solid ${Color.borderGray()};
+`;
+
+const toolbarTitleClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+  color: ${Color.darkBlue()};
+  font-size: 1.05rem;
+`;
+
+const toggleGroupClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: ${Color.white()};
+  border: 1px solid ${Color.borderGray()};
+  border-radius: 999px;
+`;
+
+const toggleButtonClass = css`
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: ${Color.darkGray()};
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  &:hover {
+    background: ${Color.whiteBlueGray(0.7)};
+    color: ${Color.darkBlue()};
+  }
+`;
+
 export default function PreviewPanel({
   build,
   code,
@@ -182,12 +272,47 @@ export default function PreviewPanel({
 }: PreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const buildRef = useRef(build);
+  const isOwnerRef = useRef(isOwner);
+  const userIdRef = useRef<number | null>(null);
+  const missionProgressRef = useRef({
+    promptListUsed: false,
+    aiChatUsed: false,
+    dbUsed: false
+  });
+
+  const userId = useKeyContext((v) => v.myState.userId);
+  const missions = useKeyContext((v) => v.myState.missions);
+  const buildMissionState = missions?.build || {};
+  const promptListUsed = Boolean(buildMissionState.promptListUsed);
+  const aiChatUsed = Boolean(buildMissionState.aiChatUsed);
+  const dbUsed = Boolean(buildMissionState.dbUsed);
+
   const downloadBuildDatabase = useAppContext(
     (v) => v.requestHelpers.downloadBuildDatabase
   );
   const uploadBuildDatabase = useAppContext(
     (v) => v.requestHelpers.uploadBuildDatabase
   );
+  const loadBuildAiPrompts = useAppContext(
+    (v) => v.requestHelpers.loadBuildAiPrompts
+  );
+  const callBuildAiChat = useAppContext(
+    (v) => v.requestHelpers.callBuildAiChat
+  );
+  const updateMissionStatus = useAppContext(
+    (v) => v.requestHelpers.updateMissionStatus
+  );
+  const onUpdateUserMissionState = useAppContext(
+    (v) => v.user.actions.onUpdateUserMissionState
+  );
+
+  const downloadBuildDatabaseRef = useRef(downloadBuildDatabase);
+  const uploadBuildDatabaseRef = useRef(uploadBuildDatabase);
+  const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
+  const callBuildAiChatRef = useRef(callBuildAiChat);
+  const updateMissionStatusRef = useRef(updateMissionStatus);
+  const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
 
   // Inject SDK into user code
   const codeWithSdk = useMemo(() => {
@@ -213,19 +338,47 @@ export default function PreviewPanel({
     return URL.createObjectURL(blob);
   }, [codeWithSdk]);
 
-  // Handle postMessage from iframe
-  const handleMessage = useCallback(
-    async (event: MessageEvent) => {
+  useEffect(() => {
+    return () => {
+      if (previewSrc) {
+        URL.revokeObjectURL(previewSrc);
+      }
+    };
+  }, [previewSrc]);
+
+  useEffect(() => {
+    buildRef.current = build;
+  }, [build]);
+
+  useEffect(() => {
+    isOwnerRef.current = isOwner;
+  }, [isOwner]);
+
+  useEffect(() => {
+    userIdRef.current = userId || null;
+  }, [userId]);
+
+  useEffect(() => {
+    missionProgressRef.current = {
+      promptListUsed,
+      aiChatUsed,
+      dbUsed
+    };
+  }, [promptListUsed, aiChatUsed, dbUsed]);
+
+  useEffect(() => {
+    async function handleMessage(event: MessageEvent) {
       const data = event.data;
       if (!data || data.source !== 'twinkle-build') return;
 
       const iframe = iframeRef.current;
       if (!iframe?.contentWindow) return;
 
-      // Verify message came from our iframe
       if (event.source !== iframe.contentWindow) return;
 
       const { id, type, payload } = data;
+      const activeBuild = buildRef.current;
+      const owner = isOwnerRef.current;
 
       try {
         let response: any = {};
@@ -233,19 +386,18 @@ export default function PreviewPanel({
         switch (type) {
           case 'init':
             response = {
-              id: build.id,
-              title: build.title,
-              username: build.username
+              id: activeBuild.id,
+              title: activeBuild.title,
+              username: activeBuild.username
             };
             break;
 
           case 'db:load':
-            if (!isOwner) {
+            if (!owner) {
               throw new Error('Not authorized');
             }
-            const dbData = await downloadBuildDatabase(build.id);
+            const dbData = await downloadBuildDatabaseRef.current(activeBuild.id);
             if (dbData) {
-              // Convert ArrayBuffer to base64
               const bytes = new Uint8Array(dbData);
               let binary = '';
               for (let i = 0; i < bytes.length; i++) {
@@ -258,10 +410,9 @@ export default function PreviewPanel({
             break;
 
           case 'db:save':
-            if (!isOwner) {
+            if (!owner) {
               throw new Error('Not authorized');
             }
-            // Convert base64 to ArrayBuffer
             const base64 = payload.data;
             const binaryStr = atob(base64);
             const len = binaryStr.length;
@@ -269,11 +420,29 @@ export default function PreviewPanel({
             for (let i = 0; i < len; i++) {
               bytesArr[i] = binaryStr.charCodeAt(i);
             }
-            const result = await uploadBuildDatabase({
-              buildId: build.id,
+            const result = await uploadBuildDatabaseRef.current({
+              buildId: activeBuild.id,
               data: bytesArr.buffer
             });
             response = result;
+            break;
+
+          case 'ai:list-prompts':
+            const promptsData = await loadBuildAiPromptsRef.current();
+            response = { prompts: promptsData?.prompts || [] };
+            break;
+
+          case 'ai:chat':
+            if (!owner) {
+              throw new Error('Not authorized');
+            }
+            const aiResult = await callBuildAiChatRef.current({
+              buildId: activeBuild.id,
+              promptId: payload.promptId,
+              message: payload.message,
+              history: payload.history
+            });
+            response = aiResult;
             break;
 
           default:
@@ -288,6 +457,21 @@ export default function PreviewPanel({
           },
           '*'
         );
+
+        if (owner) {
+          if (type === 'ai:chat') {
+            void handleMissionProgress({
+              promptListUsed: true,
+              aiChatUsed: true
+            });
+          }
+          if (type === 'ai:list-prompts') {
+            void handleMissionProgress({ promptListUsed: true });
+          }
+          if (type === 'db:load' || type === 'db:save') {
+            void handleMissionProgress({ dbUsed: true });
+          }
+        }
       } catch (error: any) {
         iframe.contentWindow.postMessage(
           {
@@ -298,88 +482,52 @@ export default function PreviewPanel({
           '*'
         );
       }
-    },
-    [build, isOwner, downloadBuildDatabase, uploadBuildDatabase]
-  );
+    }
 
-  useEffect(() => {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [handleMessage]);
+  }, []);
 
   return (
-    <div
-      className={css`
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        background: ${Color.wellGray()};
-        @media (max-width: ${mobileMaxWidth}) {
-          height: 50%;
-        }
-      `}
-    >
-      <div
-        className={css`
-          display: flex;
-          padding: 0.5rem 1rem;
-          background: #fff;
-          border-bottom: 1px solid ${Color.borderGray()};
-          gap: 0.5rem;
-        `}
-      >
-        <button
-          onClick={() => setViewMode('preview')}
-          className={css`
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            background: ${viewMode === 'preview'
-              ? Color.logoBlue()
-              : 'transparent'};
-            color: ${viewMode === 'preview' ? '#fff' : Color.darkGray()};
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-            &:hover {
-              background: ${viewMode === 'preview'
-                ? Color.logoBlue()
-                : Color.wellGray()};
+    <div className={panelClass}>
+      <div className={toolbarClass}>
+        <div className={toolbarTitleClass}>
+          <Icon icon="laptop-code" />
+          Workspace
+        </div>
+        <div className={toggleGroupClass}>
+          <button
+            onClick={() => setViewMode('preview')}
+            className={toggleButtonClass}
+            style={
+              viewMode === 'preview'
+                ? { background: Color.logoBlue(), color: '#fff' }
+                : undefined
             }
-          `}
-        >
-          <Icon icon="eye" style={{ marginRight: '0.5rem' }} />
-          Preview
-        </button>
-        <button
-          onClick={() => setViewMode('code')}
-          className={css`
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            background: ${viewMode === 'code'
-              ? Color.logoBlue()
-              : 'transparent'};
-            color: ${viewMode === 'code' ? '#fff' : Color.darkGray()};
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-            &:hover {
-              background: ${viewMode === 'code'
-                ? Color.logoBlue()
-                : Color.wellGray()};
+          >
+            <Icon icon="eye" />
+            Preview
+          </button>
+          <button
+            onClick={() => setViewMode('code')}
+            className={toggleButtonClass}
+            style={
+              viewMode === 'code'
+                ? { background: Color.logoBlue(), color: '#fff' }
+                : undefined
             }
-          `}
-        >
-          <Icon icon="code" style={{ marginRight: '0.5rem' }} />
-          Code
-        </button>
+          >
+            <Icon icon="code" />
+            Code
+          </button>
+        </div>
       </div>
 
       <div
         className={css`
           flex: 1;
           overflow: hidden;
+          background: ${Color.white()};
         `}
       >
         {viewMode === 'preview' ? (
@@ -407,12 +555,18 @@ export default function PreviewPanel({
                 color: ${Color.darkGray()};
                 text-align: center;
                 padding: 2rem;
+                background: linear-gradient(
+                  135deg,
+                  ${Color.white()} 0%,
+                  ${Color.whiteGray()} 60%,
+                  ${Color.whiteBlueGray(0.5)} 100%
+                );
               `}
             >
               <Icon
                 icon="laptop-code"
                 size="3x"
-                style={{ marginBottom: '1rem', opacity: 0.5 }}
+                style={{ marginBottom: '1rem', opacity: 0.6 }}
               />
               <p style={{ margin: 0, fontSize: '1.1rem' }}>
                 No preview available yet
@@ -467,6 +621,7 @@ export default function PreviewPanel({
                   justify-content: center;
                   height: 100%;
                   color: ${Color.darkGray()};
+                  background: ${Color.whiteGray()};
                 `}
               >
                 No code yet
@@ -477,4 +632,44 @@ export default function PreviewPanel({
       </div>
     </div>
   );
+
+  async function handleMissionProgress(newState: {
+    promptListUsed?: boolean;
+    aiChatUsed?: boolean;
+    dbUsed?: boolean;
+  }) {
+    if (!userIdRef.current || !isOwnerRef.current) return;
+    const current = missionProgressRef.current;
+    const nextState: {
+      promptListUsed?: boolean;
+      aiChatUsed?: boolean;
+      dbUsed?: boolean;
+    } = {};
+
+    if (newState.promptListUsed && !current.promptListUsed) {
+      nextState.promptListUsed = true;
+    }
+    if (newState.aiChatUsed && !current.aiChatUsed) {
+      nextState.aiChatUsed = true;
+    }
+    if (newState.dbUsed && !current.dbUsed) {
+      nextState.dbUsed = true;
+    }
+
+    if (Object.keys(nextState).length === 0) return;
+
+    missionProgressRef.current = { ...current, ...nextState };
+    onUpdateUserMissionStateRef.current({
+      missionType: 'build',
+      newState: nextState
+    });
+    try {
+      await updateMissionStatusRef.current({
+        missionType: 'build',
+        newStatus: nextState
+      });
+    } catch {
+      return;
+    }
+  }
 }

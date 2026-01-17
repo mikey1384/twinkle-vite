@@ -13,6 +13,7 @@ import Replit from './Replit';
 import WriteItYourself from './WriteItYourself';
 import LaunchTheWebsite from './LaunchTheWebsite';
 import SystemPromptMission from './SystemPrompt';
+import BuildMission from './Build';
 
 export default function MissionModule({
   mission,
@@ -50,6 +51,9 @@ export default function MissionModule({
             onSetMissionState={onSetMissionState}
           />
         )}
+        {mission.missionType === 'build' && (
+          <BuildMission mission={mission} />
+        )}
         {mission.missionType === 'copy-and-paste' && (
           <CopyAndPaste
             mission={mission}
@@ -80,6 +84,7 @@ export default function MissionModule({
         )}
         {mission.missionType === 'launch-the-website' && (
           <LaunchTheWebsite
+            isDeprecated={Number(mission.isHidden) === 1}
             task={mission}
             onSetMissionState={onSetMissionState}
           />
