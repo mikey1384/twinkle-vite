@@ -5,23 +5,59 @@ import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import BuildEditor from './BuildEditor';
 import BuildList from './BuildList';
-import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
 export default function Build() {
   return (
     <ErrorBoundary componentPath="Build">
-      <Routes>
-        <Route path="/" element={<BuildList />} />
-        <Route path="/new" element={<NewBuild />} />
-        <Route path="/:buildId" element={<BuildEditorWrapper />} />
-      </Routes>
+      <div
+        className={css`
+          height: 100%;
+          min-height: 0;
+        `}
+      >
+        <Routes>
+          <Route path="/" element={<BuildList />} />
+          <Route path="/new" element={<NewBuild />} />
+          <Route path="/:buildId" element={<BuildEditorWrapper />} />
+        </Routes>
+      </div>
     </ErrorBoundary>
   );
 }
+
+const primaryButtonClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  &:hover:not(:disabled) {
+    background: var(--theme-hover-bg);
+    transform: translateY(-1px);
+  }
+  &:disabled {
+    background: var(--theme-disabled-bg);
+    border-color: var(--theme-disabled-border);
+    cursor: not-allowed;
+  }
+  &:focus-visible {
+    outline: 2px solid var(--theme-border);
+    outline-offset: 2px;
+  }
+`;
 
 function NewBuild() {
   const navigate = useNavigate();
@@ -65,14 +101,8 @@ function NewBuild() {
           position: relative;
           padding: 2.2rem;
           border-radius: 22px;
-          background: linear-gradient(
-            135deg,
-            ${Color.white()} 0%,
-            ${Color.whiteBlueGray(0.7)} 45%,
-            ${Color.logoBlue(0.12)} 100%
-          );
-          border: 1px solid ${Color.logoBlue(0.18)};
-          box-shadow: 0 24px 48px -40px rgba(30, 110, 183, 0.45);
+          background: #fff;
+          border: 1px solid var(--ui-border);
           overflow: hidden;
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1.6rem;
@@ -81,23 +111,6 @@ function NewBuild() {
       >
         <div
           className={css`
-            position: absolute;
-            right: -10%;
-            top: -40%;
-            width: 280px;
-            height: 280px;
-            background: radial-gradient(
-              circle,
-              ${Color.logoBlue(0.2)} 0%,
-              transparent 70%
-            );
-            opacity: 0.7;
-          `}
-        />
-        <div
-          className={css`
-            position: relative;
-            z-index: 1;
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -110,8 +123,9 @@ function NewBuild() {
               gap: 0.6rem;
               padding: 0.4rem 0.9rem;
               border-radius: 999px;
-              background: ${Color.logoBlue(0.15)};
-              color: ${Color.darkOceanBlue()};
+              background: var(--chat-bg);
+              color: var(--theme-bg);
+              border: 1px solid var(--ui-border);
               font-weight: 800;
               font-size: 1rem;
               letter-spacing: 0.04em;
@@ -126,7 +140,7 @@ function NewBuild() {
               margin: 0;
               font-size: 2.4rem;
               font-weight: 800;
-              color: ${Color.darkBlue()};
+              color: var(--chat-text);
               @media (max-width: ${mobileMaxWidth}) {
                 font-size: 2rem;
               }
@@ -138,7 +152,8 @@ function NewBuild() {
             className={css`
               margin: 0;
               font-size: 1.2rem;
-              color: ${Color.darkGray()};
+              color: var(--chat-text);
+              opacity: 0.75;
               max-width: 34rem;
               line-height: 1.6;
             `}
@@ -153,14 +168,18 @@ function NewBuild() {
           margin-top: 1.8rem;
           background: #fff;
           border-radius: ${borderRadius};
-          border: 1px solid ${Color.borderGray()};
+          border: 1px solid var(--ui-border);
           padding: 1.6rem;
-          box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.2);
         `}
       >
         <label
           htmlFor="build-title"
-          style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 700 }}
+          style={{
+            display: 'block',
+            marginBottom: '0.5rem',
+            fontWeight: 700,
+            color: 'var(--chat-text)'
+          }}
         >
           Title
         </label>
@@ -177,14 +196,13 @@ function NewBuild() {
             width: 100%;
             padding: 0.85rem 1rem;
             font-size: 1.05rem;
-            border: 1px solid ${Color.borderGray()};
+            border: 1px solid var(--ui-border);
             border-radius: ${borderRadius};
-            background: ${Color.white()};
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #fff;
+            transition: border-color 0.2s ease;
             &:focus {
               outline: none;
-              border-color: ${Color.logoBlue()};
-              box-shadow: 0 0 0 3px ${Color.logoBlue(0.15)};
+              border-color: var(--theme-border);
             }
           `}
         />
@@ -195,14 +213,14 @@ function NewBuild() {
             justify-content: flex-end;
           `}
         >
-          <Button
-            color="green"
-            variant="solid"
+          <button
+            className={primaryButtonClass}
             onClick={handleCreate}
             disabled={!title.trim() || creating}
+            type="button"
           >
             {creating ? 'Creating...' : 'Create Build'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

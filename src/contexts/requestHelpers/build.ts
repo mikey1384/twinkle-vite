@@ -46,15 +46,19 @@ export default function buildRequestHelpers({
 
     async updateBuildCode({
       buildId,
-      code
+      code,
+      createVersion,
+      summary
     }: {
       buildId: number;
       code: string;
+      createVersion?: boolean;
+      summary?: string;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/build/${buildId}/code`,
-          { code },
+          { code, createVersion, summary },
           auth()
         );
         return data;
@@ -154,6 +158,63 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/ai-chat`,
           { promptId, message, history },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildArtifacts(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/artifacts`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildArtifactVersions({
+      buildId,
+      artifactId,
+      limit
+    }: {
+      buildId: number;
+      artifactId: number;
+      limit?: number;
+    }) {
+      try {
+        const params = limit ? { limit } : undefined;
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/artifacts/${artifactId}/versions`,
+          {
+            ...auth(),
+            params
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async restoreBuildArtifactVersion({
+      buildId,
+      artifactId,
+      versionId
+    }: {
+      buildId: number;
+      artifactId: number;
+      versionId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/artifacts/${artifactId}/restore`,
+          { versionId },
           auth()
         );
         return data;

@@ -21,6 +21,7 @@ const deviceIsTablet = isTablet(navigator);
 const homeLabel = 'Home';
 const exploreLabel = 'Explore';
 const missionsLabel = 'Missions';
+const buildLabel = 'Build';
 const chatLabel = 'Chat';
 const contentLabels: Record<string, string> = {
   comments: 'Comment',
@@ -70,6 +71,7 @@ export default function MainNavs({
   const contentPath = useViewContext((v) => v.state.contentPath);
   const contentNav = useViewContext((v) => v.state.contentNav);
   const missionNav = useViewContext((v) => v.state.missionNav);
+  const buildNav = useViewContext((v) => v.state.buildNav);
   const profileNav = useViewContext((v) => v.state.profileNav);
   const homeNav = useViewContext((v) => v.state.homeNav);
   const onSetExploreCategory = useViewContext(
@@ -78,6 +80,7 @@ export default function MainNavs({
   const onSetContentPath = useViewContext((v) => v.actions.onSetContentPath);
   const onSetContentNav = useViewContext((v) => v.actions.onSetContentNav);
   const onSetMissionNav = useViewContext((v) => v.actions.onSetMissionNav);
+  const onSetBuildNav = useViewContext((v) => v.actions.onSetBuildNav);
   const onSetProfileNav = useViewContext((v) => v.actions.onSetProfileNav);
   const onSetHomeNav = useViewContext((v) => v.actions.onSetHomeNav);
 
@@ -92,9 +95,17 @@ export default function MainNavs({
     () => pathname.startsWith('/missions'),
     [pathname]
   );
+  const isBuildSection = useMemo(
+    () => pathname.startsWith('/build'),
+    [pathname]
+  );
   const missionLinkTarget = useMemo(
     () => (isMissionSection ? '/missions' : missionNav || '/missions'),
     [isMissionSection, missionNav]
+  );
+  const buildLinkTarget = useMemo(
+    () => (isBuildSection ? '/build' : buildNav || '/build'),
+    [isBuildSection, buildNav]
   );
 
   const contentLabel = useMemo(() => {
@@ -327,6 +338,12 @@ export default function MainNavs({
         onSetMissionNav(nextMissionNav);
       }
     }
+    if (section === 'build') {
+      const nextBuildNav = `${pathname}${search || ''}`;
+      if (buildNav !== nextBuildNav) {
+        onSetBuildNav(nextBuildNav);
+      }
+    }
 
     if (profilePageMatch) {
       onSetProfileNav(pathname);
@@ -444,6 +461,7 @@ export default function MainNavs({
         imgLabel="comments"
         alert={chatAlertShown}
       />
+      <Nav to={buildLinkTarget} className="mobile" imgLabel="rocket-launch" />
       {profileNav && (
         <Nav
           to={profileNav}
@@ -513,6 +531,14 @@ export default function MainNavs({
           </Nav>
         )}
       </div>
+      <Nav
+        to={buildLinkTarget}
+        className="desktop"
+        style={{ marginLeft: '2rem' }}
+        imgLabel="rocket-launch"
+      >
+        {deviceIsTablet ? '' : buildLabel}
+      </Nav>
       {userId && (
         <div
           className={`mobile ${css`
