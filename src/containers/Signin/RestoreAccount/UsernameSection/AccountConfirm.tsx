@@ -20,21 +20,29 @@ export default function AccountConfirm({
 }) {
   let content = null;
 
+  // Determine which state we're in for keyed rendering
+  // Using a key forces React to remount instead of patch, avoiding DOM mismatch
+  // errors caused by browser translation extensions modifying text nodes
+  let stateKey = 'empty';
   if (isBanned) {
+    stateKey = 'banned';
     content = (
-      <div style={{ padding: '2rem', fontWeight: 'bold' }}>
+      <div style={{ padding: '2rem', fontWeight: 'bold' }} translate="no">
         That user is banned
       </div>
     );
   } else if (searching) {
+    stateKey = 'searching';
     content = <Loading />;
   } else if (notExist) {
+    stateKey = 'notExist';
     content = (
-      <div style={{ padding: '1rem', fontWeight: 'bold' }}>
+      <div style={{ padding: '1rem', fontWeight: 'bold' }} translate="no">
         That user account does not exist
       </div>
     );
   } else if (matchingAccount) {
+    stateKey = `found-${matchingAccount.id}`;
     content = (
       <div
         style={{
@@ -42,6 +50,7 @@ export default function AccountConfirm({
           fontWeight: 'bold',
           color: Color.darkerGray()
         }}
+        translate="no"
       >
         Hello {matchingAccount.username}! Press{' '}
         <span
@@ -60,7 +69,7 @@ export default function AccountConfirm({
       componentPath="Signin/RestoreAccount/UsernameSection/AccountConfirm"
       style={{ fontSize: '2rem', ...style }}
     >
-      {content}
+      <div key={stateKey}>{content}</div>
     </ErrorBoundary>
   );
 }

@@ -41,6 +41,9 @@ export default function Notification({
     userId ? v.state?.notiObj?.[userId] : null
   );
   const numNewNotis = useNotiContext((v) => v.state.numNewNotis);
+  const notificationsLoaded = useNotiContext(
+    (v) => v.state.notificationsLoaded
+  );
   const onLoadNotifications = useNotiContext(
     (v) => v.actions.onLoadNotifications
   );
@@ -242,7 +245,7 @@ export default function Notification({
             />
           )}
           <div style={{ position: 'relative' }}>
-            {userId && (numNewNotis > 0 || !!(notifications.length > 0)) && (
+            {userId && (notificationsLoaded || numNewNotis > 0) && (
               <FilterBar
                 className={notiFilterBar}
                 style={{
