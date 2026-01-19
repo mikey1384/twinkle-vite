@@ -1,13 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
+import Modal from '~/components/Modal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
+import { timeSince } from '~/helpers/timeStampHelpers';
 
 interface Build {
   id: number;
   title: string;
   username: string;
+  primaryArtifactId?: number | null;
 }
 
 interface PreviewPanelProps {
@@ -15,6 +18,18 @@ interface PreviewPanelProps {
   code: string | null;
   isOwner: boolean;
   onCodeChange: (code: string) => void;
+  onReplaceCode: (code: string) => void;
+  onSaveVersion: (summary?: string) => void;
+  savingVersion: boolean;
+}
+
+interface ArtifactVersion {
+  id: number;
+  version: number;
+  summary: string | null;
+  gitCommitSha: string | null;
+  createdAt: number;
+  createdByRole: 'user' | 'assistant';
 }
 
 // The Twinkle SDK script that gets injected into builds
@@ -204,9 +219,11 @@ const TWINKLE_SDK_SCRIPT = `
 
 const panelClass = css`
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background: ${Color.white()};
+  background: #fff;
+  gap: 0.6rem;
   @media (max-width: ${mobileMaxWidth}) {
     height: 50%;
   }
@@ -217,13 +234,9 @@ const toolbarClass = css`
   align-items: center;
   justify-content: space-between;
   padding: 0.9rem 1rem;
-  background: linear-gradient(
-    135deg,
-    ${Color.white()} 0%,
-    ${Color.whiteBlueGray(0.7)} 60%,
-    ${Color.logoBlue(0.08)} 100%
-  );
-  border-bottom: 1px solid ${Color.borderGray()};
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: #fff;
 `;
 
 const toolbarTitleClass = css`
@@ -231,7 +244,7 @@ const toolbarTitleClass = css`
   align-items: center;
   gap: 0.6rem;
   font-weight: 800;
-  color: ${Color.darkBlue()};
+  color: var(--chat-text);
   font-size: 1.05rem;
 `;
 
@@ -240,8 +253,8 @@ const toggleGroupClass = css`
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem;
-  background: ${Color.white()};
-  border: 1px solid ${Color.borderGray()};
+  background: #fff;
+  border: 1px solid var(--ui-border);
   border-radius: 999px;
 `;
 
@@ -250,7 +263,7 @@ const toggleButtonClass = css`
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: ${Color.darkGray()};
+  color: var(--chat-text);
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 700;
@@ -259,18 +272,145 @@ const toggleButtonClass = css`
   gap: 0.45rem;
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   &:hover {
-    background: ${Color.whiteBlueGray(0.7)};
-    color: ${Color.darkBlue()};
+    background: var(--chat-bg);
+    color: var(--chat-text);
   }
+`;
+
+const toolbarActionsClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+`;
+
+const actionButtonClass = css`
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: transform 0.2s ease, background 0.2s ease;
+  &:hover:not(:disabled) {
+    background: var(--theme-hover-bg);
+    transform: translateY(-1px);
+  }
+  &:disabled {
+    background: var(--theme-disabled-bg);
+    cursor: not-allowed;
+  }
+`;
+
+const ghostActionButtonClass = css`
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--chat-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: border 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  &:hover {
+    border-color: var(--theme-border);
+    color: var(--chat-text);
+    transform: translateY(-1px);
+  }
+`;
+
+const versionRowClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+`;
+
+const versionMetaClass = css`
+  font-size: 0.8rem;
+  color: var(--chat-text);
+  opacity: 0.6;
+  margin-top: 0.2rem;
+`;
+
+const historyModalShellClass = css`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const historyModalHeaderClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--ui-border);
+  background: #fff;
+`;
+
+const historyModalTitleClass = css`
+  font-weight: 700;
+  color: var(--chat-text);
+  font-size: 1.1rem;
+`;
+
+const historyModalCloseButtonClass = css`
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--ui-border);
+  background: #fff;
+  color: var(--chat-text);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  &:hover {
+    background: var(--chat-bg);
+    border-color: var(--theme-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--theme-border);
+    outline-offset: 2px;
+  }
+`;
+
+const historyModalContentClass = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.25rem;
 `;
 
 export default function PreviewPanel({
   build,
   code,
   isOwner,
-  onCodeChange
+  onCodeChange,
+  onReplaceCode,
+  onSaveVersion,
+  savingVersion
 }: PreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+  const [versions, setVersions] = useState<ArtifactVersion[]>([]);
+  const [restoringVersionId, setRestoringVersionId] = useState<number | null>(null);
+  const [artifactId, setArtifactId] = useState<number | null>(
+    build.primaryArtifactId ?? null
+  );
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const buildRef = useRef(build);
   const isOwnerRef = useRef(isOwner);
@@ -300,6 +440,15 @@ export default function PreviewPanel({
   const callBuildAiChat = useAppContext(
     (v) => v.requestHelpers.callBuildAiChat
   );
+  const listBuildArtifacts = useAppContext(
+    (v) => v.requestHelpers.listBuildArtifacts
+  );
+  const listBuildArtifactVersions = useAppContext(
+    (v) => v.requestHelpers.listBuildArtifactVersions
+  );
+  const restoreBuildArtifactVersion = useAppContext(
+    (v) => v.requestHelpers.restoreBuildArtifactVersion
+  );
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );
@@ -311,6 +460,9 @@ export default function PreviewPanel({
   const uploadBuildDatabaseRef = useRef(uploadBuildDatabase);
   const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
   const callBuildAiChatRef = useRef(callBuildAiChat);
+  const listBuildArtifactsRef = useRef(listBuildArtifacts);
+  const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
+  const restoreBuildArtifactVersionRef = useRef(restoreBuildArtifactVersion);
   const updateMissionStatusRef = useRef(updateMissionStatus);
   const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
 
@@ -351,6 +503,10 @@ export default function PreviewPanel({
   }, [build]);
 
   useEffect(() => {
+    setArtifactId(build.primaryArtifactId ?? null);
+  }, [build.primaryArtifactId]);
+
+  useEffect(() => {
     isOwnerRef.current = isOwner;
   }, [isOwner]);
 
@@ -365,6 +521,81 @@ export default function PreviewPanel({
       dbUsed
     };
   }, [promptListUsed, aiChatUsed, dbUsed]);
+
+  useEffect(() => {
+    if (historyOpen) {
+      void loadVersions();
+    }
+  }, [historyOpen, artifactId]);
+
+  async function loadVersions() {
+    if (!isOwnerRef.current) {
+      setVersions([]);
+      return;
+    }
+    const activeBuild = buildRef.current;
+    if (!activeBuild?.id) return;
+
+    setLoadingVersions(true);
+    try {
+      let activeArtifactId = artifactId;
+      if (!activeArtifactId) {
+        const artifactsData = await listBuildArtifactsRef.current(activeBuild.id);
+        activeArtifactId = artifactsData?.artifacts?.[0]?.id ?? null;
+        if (activeArtifactId) {
+          setArtifactId(activeArtifactId);
+        }
+      }
+
+      if (!activeArtifactId) {
+        setVersions([]);
+        return;
+      }
+
+      const data = await listBuildArtifactVersionsRef.current({
+        buildId: activeBuild.id,
+        artifactId: activeArtifactId,
+        limit: 50
+      });
+      setVersions(data?.versions || []);
+    } catch (error) {
+      console.error('Failed to load versions:', error);
+    } finally {
+      setLoadingVersions(false);
+    }
+  }
+
+  async function handleSaveSnapshot() {
+    if (!isOwnerRef.current || savingVersion || !code) return;
+    await onSaveVersion('Manual snapshot');
+    if (historyOpen) {
+      await loadVersions();
+    }
+  }
+
+  async function handleRestoreVersion(versionId: number) {
+    if (!isOwnerRef.current || !artifactId || restoringVersionId) return;
+    const activeBuild = buildRef.current;
+    if (!activeBuild?.id) return;
+
+    setRestoringVersionId(versionId);
+    try {
+      const result = await restoreBuildArtifactVersionRef.current({
+        buildId: activeBuild.id,
+        artifactId,
+        versionId
+      });
+      if (result?.code) {
+        onReplaceCode(result.code);
+      }
+      if (historyOpen) {
+        await loadVersions();
+      }
+    } catch (error) {
+      console.error('Failed to restore version:', error);
+    }
+    setRestoringVersionId(null);
+  }
 
   useEffect(() => {
     async function handleMessage(event: MessageEvent) {
@@ -495,31 +726,52 @@ export default function PreviewPanel({
           <Icon icon="laptop-code" />
           Workspace
         </div>
-        <div className={toggleGroupClass}>
-          <button
-            onClick={() => setViewMode('preview')}
+        <div className={toolbarActionsClass}>
+          {isOwner && (
+            <>
+              <button
+                className={actionButtonClass}
+                onClick={handleSaveSnapshot}
+                disabled={!code || savingVersion}
+              >
+                <Icon icon="save" />
+                {savingVersion ? 'Saving...' : 'Save Version'}
+              </button>
+              <button
+                className={ghostActionButtonClass}
+                onClick={() => setHistoryOpen(true)}
+              >
+                <Icon icon="clock" />
+                History
+              </button>
+            </>
+          )}
+          <div className={toggleGroupClass}>
+            <button
+              onClick={() => setViewMode('preview')}
             className={toggleButtonClass}
             style={
               viewMode === 'preview'
-                ? { background: Color.logoBlue(), color: '#fff' }
+                ? { background: 'var(--theme-bg)', color: 'var(--theme-text)' }
                 : undefined
             }
           >
-            <Icon icon="eye" />
-            Preview
-          </button>
-          <button
-            onClick={() => setViewMode('code')}
+              <Icon icon="eye" />
+              Preview
+            </button>
+            <button
+              onClick={() => setViewMode('code')}
             className={toggleButtonClass}
             style={
               viewMode === 'code'
-                ? { background: Color.logoBlue(), color: '#fff' }
+                ? { background: 'var(--theme-bg)', color: 'var(--theme-text)' }
                 : undefined
             }
           >
-            <Icon icon="code" />
-            Code
-          </button>
+              <Icon icon="code" />
+              Code
+            </button>
+          </div>
         </div>
       </div>
 
@@ -527,7 +779,8 @@ export default function PreviewPanel({
         className={css`
           flex: 1;
           overflow: hidden;
-          background: ${Color.white()};
+          background: #fff;
+          min-height: 0;
         `}
       >
         {viewMode === 'preview' ? (
@@ -552,15 +805,10 @@ export default function PreviewPanel({
                 align-items: center;
                 justify-content: center;
                 height: 100%;
-                color: ${Color.darkGray()};
+                color: var(--chat-text);
                 text-align: center;
                 padding: 2rem;
-                background: linear-gradient(
-                  135deg,
-                  ${Color.white()} 0%,
-                  ${Color.whiteGray()} 60%,
-                  ${Color.whiteBlueGray(0.5)} 100%
-                );
+                background: #fff;
               `}
             >
               <Icon
@@ -575,7 +823,8 @@ export default function PreviewPanel({
                 style={{
                   margin: '0.5rem 0 0 0',
                   fontSize: '0.9rem',
-                  color: Color.gray()
+                  color: 'var(--chat-text)',
+                  opacity: 0.6
                 }}
               >
                 {isOwner
@@ -620,8 +869,8 @@ export default function PreviewPanel({
                   align-items: center;
                   justify-content: center;
                   height: 100%;
-                  color: ${Color.darkGray()};
-                  background: ${Color.whiteGray()};
+                  color: var(--chat-text);
+                  background: #fff;
                 `}
               >
                 No code yet
@@ -630,6 +879,100 @@ export default function PreviewPanel({
           </div>
         )}
       </div>
+      <Modal
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        size="md"
+        modalKey="BuildVersionHistory"
+        hasHeader={false}
+        showCloseButton={false}
+        bodyPadding={0}
+        aria-label="Version history"
+        style={{
+          backgroundColor: '#fff',
+          boxShadow: 'none',
+          border: '1px solid var(--ui-border)'
+        }}
+      >
+        <div className={historyModalShellClass}>
+          <div className={historyModalHeaderClass}>
+            <div className={historyModalTitleClass}>Version History</div>
+            <button
+              className={historyModalCloseButtonClass}
+              onClick={() => setHistoryOpen(false)}
+              type="button"
+              aria-label="Close version history"
+            >
+              <Icon icon="times" />
+            </button>
+          </div>
+          <div className={historyModalContentClass}>
+          {loadingVersions ? (
+            <div
+              className={css`
+                padding: 1rem;
+                text-align: center;
+                color: var(--chat-text);
+                opacity: 0.7;
+              `}
+            >
+              Loading versions...
+            </div>
+          ) : versions.length === 0 ? (
+            <div
+              className={css`
+                padding: 1rem;
+                text-align: center;
+                color: var(--chat-text);
+                opacity: 0.7;
+              `}
+            >
+              No versions yet. Use "Save Version" or ask the AI to generate code.
+            </div>
+          ) : (
+            versions.map((version) => (
+              <div key={version.id} className={versionRowClass}>
+                <div>
+                  <div
+                    className={css`
+                      font-weight: 700;
+                      color: var(--chat-text);
+                    `}
+                  >
+                    v{version.version}
+                  </div>
+                  {version.summary ? (
+                    <div
+                      className={css`
+                        font-size: 0.9rem;
+                        color: var(--chat-text);
+                        opacity: 0.75;
+                      `}
+                    >
+                      {version.summary}
+                    </div>
+                  ) : null}
+                  <div className={versionMetaClass}>
+                    {timeSince(version.createdAt)} ·{' '}
+                    {version.createdByRole === 'assistant' ? 'AI' : 'You'}
+                    {version.gitCommitSha
+                      ? ` · ${String(version.gitCommitSha).slice(0, 7)}`
+                      : ''}
+                  </div>
+                </div>
+                <button
+                  className={ghostActionButtonClass}
+                  onClick={() => handleRestoreVersion(version.id)}
+                  disabled={restoringVersionId === version.id}
+                >
+                  {restoringVersionId === version.id ? 'Restoring...' : 'Restore'}
+                </button>
+              </div>
+            ))
+          )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 

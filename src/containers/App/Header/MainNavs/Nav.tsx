@@ -133,6 +133,9 @@ function Nav({
     if (to.startsWith('/missions') && pathname.startsWith('/missions')) {
       return 'active';
     }
+    if (to.startsWith('/build') && pathname.startsWith('/build')) {
+      return 'active';
+    }
     if (pathname + (search || '') === to) {
       return 'active';
     }

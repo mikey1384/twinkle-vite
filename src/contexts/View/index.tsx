@@ -32,6 +32,7 @@ const initialViewState: ViewState = {
   contentPath: '',
   contentNav: '',
   missionNav: '/missions',
+  buildNav: '/build',
   pageTitle: '',
   profileNav: '',
   boardNav: '/board',

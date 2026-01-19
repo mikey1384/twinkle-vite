@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Loading from '~/components/Loading';
-import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
 const pageClass = css`
@@ -22,32 +21,12 @@ const heroClass = css`
   position: relative;
   padding: 2.2rem;
   border-radius: 22px;
-  background: linear-gradient(
-    135deg,
-    ${Color.white()} 0%,
-    ${Color.whiteBlueGray(0.7)} 45%,
-    ${Color.logoBlue(0.1)} 100%
-  );
-  border: 1px solid ${Color.logoBlue(0.18)};
-  box-shadow: 0 26px 50px -40px rgba(30, 110, 183, 0.45);
+  background: #fff;
+  border: 1px solid var(--ui-border);
   overflow: hidden;
   margin-bottom: 2rem;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1.6rem;
-  }
-  &::after {
-    content: '';
-    position: absolute;
-    right: -10%;
-    top: -40%;
-    width: 280px;
-    height: 280px;
-    background: radial-gradient(
-      circle,
-      ${Color.logoBlue(0.2)} 0%,
-      transparent 70%
-    );
-    opacity: 0.7;
   }
 `;
 
@@ -65,8 +44,9 @@ const heroBadgeClass = css`
   gap: 0.6rem;
   padding: 0.4rem 0.9rem;
   border-radius: 999px;
-  background: ${Color.logoBlue(0.15)};
-  color: ${Color.darkOceanBlue()};
+  background: var(--chat-bg);
+  color: var(--theme-bg);
+  border: 1px solid var(--ui-border);
   font-weight: 800;
   font-size: 1rem;
   text-transform: uppercase;
@@ -77,7 +57,7 @@ const heroTitleClass = css`
   margin: 0;
   font-size: 2.4rem;
   font-weight: 800;
-  color: ${Color.darkBlue()};
+  color: var(--chat-text);
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 2rem;
   }
@@ -86,7 +66,8 @@ const heroTitleClass = css`
 const heroBodyClass = css`
   margin: 0;
   font-size: 1.3rem;
-  color: ${Color.darkGray()};
+  color: var(--chat-text);
+  opacity: 0.75;
   max-width: 38rem;
   line-height: 1.6;
 `;
@@ -101,16 +82,38 @@ const buildCardClass = css`
   display: block;
   padding: 1.4rem;
   background: #fff;
-  border: 1px solid ${Color.borderGray()};
+  border: 1px solid var(--ui-border);
   border-radius: ${borderRadius};
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
-  box-shadow: 0 14px 30px -24px rgba(15, 23, 42, 0.35);
+  transition: border-color 0.2s ease;
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 24px 40px -28px rgba(30, 110, 183, 0.4);
-    border-color: ${Color.logoBlue()};
+    border-color: var(--theme-border);
+  }
+`;
+
+const primaryButtonClass = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  &:hover {
+    background: var(--theme-hover-bg);
+    transform: translateY(-1px);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--theme-border);
+    outline-offset: 2px;
   }
 `;
 
@@ -160,12 +163,12 @@ export default function BuildList() {
           className={css`
             margin: 1rem 0 0.6rem;
             font-size: 2rem;
-            color: ${Color.darkBlue()};
+            color: var(--chat-text);
           `}
         >
           Create and launch apps with AI
         </h2>
-        <p style={{ color: Color.darkGray(), fontSize: '1.2rem' }}>
+        <p style={{ color: 'var(--chat-text)', opacity: 0.7, fontSize: '1.2rem' }}>
           Log in to start new builds and manage your projects.
         </p>
       </div>
@@ -190,13 +193,13 @@ export default function BuildList() {
             place.
           </p>
           <div>
-            <Button
-              color="green"
-              variant="solid"
+            <button
+              className={primaryButtonClass}
               onClick={() => navigate('/build/new')}
+              type="button"
             >
               New Build
-            </Button>
+            </button>
           </div>
         </div>
       </section>
@@ -206,21 +209,22 @@ export default function BuildList() {
           className={css`
             text-align: center;
             padding: 3rem;
-            background: ${Color.white()};
+            background: #fff;
             border-radius: ${borderRadius};
-            border: 1px dashed ${Color.logoBlue(0.4)};
+            border: 1px dashed var(--ui-border);
           `}
         >
-          <p style={{ fontSize: '1.1rem', color: Color.darkGray() }}>
+          <p style={{ fontSize: '1.1rem', color: 'var(--chat-text)', opacity: 0.7 }}>
             You have not created any builds yet.
           </p>
-          <Button
-            color="green"
+          <button
+            className={primaryButtonClass}
             style={{ marginTop: '1rem' }}
             onClick={() => navigate('/build/new')}
+            type="button"
           >
             Create Your First Build
-          </Button>
+          </button>
         </div>
       ) : (
         <div className={buildGridClass}>
@@ -241,7 +245,7 @@ export default function BuildList() {
                   <h3
                     className={css`
                       margin: 0 0 0.5rem 0;
-                      color: ${Color.darkerGray()};
+                      color: var(--chat-text);
                       font-size: 1.4rem;
                     `}
                   >
@@ -251,7 +255,8 @@ export default function BuildList() {
                     <p
                       className={css`
                         margin: 0;
-                        color: ${Color.darkGray()};
+                        color: var(--chat-text);
+                        opacity: 0.7;
                         font-size: 0.9rem;
                       `}
                     >
@@ -262,7 +267,8 @@ export default function BuildList() {
                 <span
                   className={css`
                     font-size: 0.8rem;
-                    color: ${Color.gray()};
+                    color: var(--chat-text);
+                    opacity: 0.6;
                     white-space: nowrap;
                     margin-left: 1rem;
                   `}
@@ -282,12 +288,9 @@ export default function BuildList() {
                     font-size: 0.75rem;
                     padding: 0.25rem 0.5rem;
                     border-radius: 4px;
-                    background: ${build.status === 'published'
-                      ? Color.green(0.15)
-                      : Color.gray(0.15)};
-                    color: ${build.status === 'published'
-                      ? Color.green()
-                      : Color.darkGray()};
+                    background: var(--chat-bg);
+                    color: var(--chat-text);
+                    border: 1px solid var(--ui-border);
                   `}
                 >
                   {build.status}
@@ -298,8 +301,9 @@ export default function BuildList() {
                       font-size: 0.75rem;
                       padding: 0.25rem 0.5rem;
                       border-radius: 4px;
-                      background: ${Color.blue(0.15)};
-                      color: ${Color.blue()};
+                      background: var(--chat-bg);
+                      color: var(--theme-bg);
+                      border: 1px solid var(--ui-border);
                     `}
                   >
                     public

@@ -3,34 +3,22 @@ import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 
 const pageClass = css`
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 60px);
-  background: linear-gradient(
-    180deg,
-    ${Color.whiteGray()} 0%,
-    ${Color.white()} 45%,
-    ${Color.whiteBlueGray(0.5)} 100%
-  );
-  @media (max-width: ${mobileMaxWidth}) {
-    height: calc(100dvh - 50px);
-  }
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--page-bg);
 `;
 
 const headerClass = css`
   padding: 1.2rem 1.8rem;
-  background: linear-gradient(
-    135deg,
-    ${Color.white()} 0%,
-    ${Color.whiteBlueGray(0.85)} 50%,
-    ${Color.logoBlue(0.08)} 100%
-  );
-  border-bottom: 1px solid ${Color.borderGray()};
-  box-shadow: 0 16px 32px -30px rgba(15, 23, 42, 0.35);
+  background: #fff;
+  border-bottom: 1px solid var(--ui-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -44,8 +32,9 @@ const badgeClass = css`
   gap: 0.6rem;
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
-  background: ${Color.logoBlue(0.14)};
-  color: ${Color.darkOceanBlue()};
+  background: var(--chat-bg);
+  color: var(--theme-bg);
+  border: 1px solid var(--ui-border);
   font-weight: 800;
   font-size: 0.95rem;
   text-transform: uppercase;
@@ -54,9 +43,11 @@ const badgeClass = css`
 
 const panelShellClass = css`
   flex: 1;
+  min-height: 0;
   display: flex;
   gap: 1rem;
   padding: 1.2rem 1.6rem 1.6rem;
+  overflow: hidden;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 1rem;
     flex-direction: column;
@@ -65,11 +56,11 @@ const panelShellClass = css`
 
 const workspaceShellClass = css`
   flex: 1;
+  min-height: 0;
   display: flex;
   overflow: hidden;
   border-radius: ${borderRadius};
-  border: 1px solid ${Color.borderGray()};
-  box-shadow: 0 18px 40px -34px rgba(15, 23, 42, 0.35);
+  border: 1px solid var(--ui-border);
   background: #fff;
   @media (max-width: ${mobileMaxWidth}) {
     flex-direction: column;
@@ -84,6 +75,7 @@ interface Build {
   description: string | null;
   slug: string;
   code: string | null;
+  primaryArtifactId?: number | null;
   status: string;
   isPublic: boolean;
   createdAt: number;
@@ -95,6 +87,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   codeGenerated: string | null;
+  artifactVersionId?: number | null;
   createdAt: number;
 }
 
@@ -121,6 +114,7 @@ export default function BuildEditor({
   );
 
   const [generating, setGenerating] = useState(false);
+  const [savingVersion, setSavingVersion] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -140,6 +134,15 @@ export default function BuildEditor({
       });
 
       if (result?.success) {
+        const assistantText =
+          result.assistantText ?? result.message?.content ?? '';
+        const artifactCode =
+          result.artifact?.content ?? result.code ?? null;
+        const artifactVersionId =
+          result.message?.artifactVersionId ??
+          result.artifact?.versionId ??
+          null;
+
         // Add user message
         const userMessage: ChatMessage = {
           id: messageId,
@@ -153,13 +156,21 @@ export default function BuildEditor({
         const assistantMessage: ChatMessage = {
           id: messageId + 1,
           role: 'assistant',
-          content: result.message?.content ?? '',
-          codeGenerated: result.message?.codeGenerated ?? null,
+          content: assistantText,
+          codeGenerated: artifactCode,
+          artifactVersionId,
           createdAt: result.message?.createdAt ?? now
         };
 
         onUpdateChatMessages([...chatMessages, userMessage, assistantMessage]);
-        onUpdateBuild({ ...build, code: result.code });
+        if (artifactCode) {
+          const nextBuild = {
+            ...build,
+            code: artifactCode,
+            primaryArtifactId: result.artifact?.id ?? build.primaryArtifactId
+          };
+          onUpdateBuild(nextBuild);
+        }
 
         setTimeout(() => {
           chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -182,6 +193,32 @@ export default function BuildEditor({
     }
   }
 
+  function handleReplaceCode(newCode: string) {
+    onUpdateBuild({ ...build, code: newCode });
+  }
+
+  async function handleSaveVersion(summary?: string) {
+    if (!isOwner || !build.code || savingVersion) return;
+    setSavingVersion(true);
+    try {
+      const result = await updateBuildCode({
+        buildId: build.id,
+        code: build.code,
+        createVersion: true,
+        summary
+      });
+      if (result?.artifactVersion?.artifactId) {
+        onUpdateBuild({
+          ...build,
+          primaryArtifactId: result.artifactVersion.artifactId
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save version:', error);
+    }
+    setSavingVersion(false);
+  }
+
   return (
     <div className={pageClass}>
       <header className={headerClass}>
@@ -200,7 +237,7 @@ export default function BuildEditor({
             className={css`
               margin: 0;
               font-size: 1.8rem;
-              color: ${Color.darkBlue()};
+              color: var(--chat-text);
             `}
           >
             {build.title}
@@ -209,7 +246,8 @@ export default function BuildEditor({
             <span
               className={css`
                 font-size: 1.05rem;
-                color: ${Color.darkGray()};
+                color: var(--chat-text);
+                opacity: 0.75;
               `}
             >
               {build.description}
@@ -218,7 +256,8 @@ export default function BuildEditor({
             <span
               className={css`
                 font-size: 0.95rem;
-                color: ${Color.gray()};
+                color: var(--chat-text);
+                opacity: 0.6;
               `}
             >
               {isOwner ? 'Your AI-powered build workspace' : `by ${build.username}`}
@@ -237,12 +276,9 @@ export default function BuildEditor({
               font-size: 0.75rem;
               padding: 0.35rem 0.7rem;
               border-radius: 999px;
-              background: ${build.status === 'published'
-                ? Color.green(0.15)
-                : Color.gray(0.15)};
-              color: ${build.status === 'published'
-                ? Color.green()
-                : Color.darkGray()};
+              background: var(--chat-bg);
+              color: var(--chat-text);
+              border: 1px solid var(--ui-border);
               text-transform: uppercase;
               letter-spacing: 0.04em;
               font-weight: 700;
@@ -255,8 +291,9 @@ export default function BuildEditor({
               font-size: 0.75rem;
               padding: 0.35rem 0.7rem;
               border-radius: 999px;
-              background: ${build.isPublic ? Color.logoBlue(0.15) : Color.gray(0.12)};
-              color: ${build.isPublic ? Color.logoBlue() : Color.darkGray()};
+              background: var(--chat-bg);
+              color: ${build.isPublic ? 'var(--theme-bg)' : 'var(--chat-text)'};
+              border: 1px solid var(--ui-border);
               text-transform: uppercase;
               letter-spacing: 0.04em;
               font-weight: 700;
@@ -283,6 +320,9 @@ export default function BuildEditor({
             code={build.code}
             isOwner={isOwner}
             onCodeChange={handleCodeChange}
+            onReplaceCode={handleReplaceCode}
+            onSaveVersion={handleSaveVersion}
+            savingVersion={savingVersion}
           />
         </div>
       </div>

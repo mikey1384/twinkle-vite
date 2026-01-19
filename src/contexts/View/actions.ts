@@ -33,6 +33,12 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
         nav
       });
     },
+    onSetBuildNav(nav: string) {
+      return dispatch({
+        type: 'SET_BUILD_NAV',
+        nav
+      });
+    },
     onSetContentPath(path: string) {
       return dispatch({
         type: 'SET_CONTENT_PATH',

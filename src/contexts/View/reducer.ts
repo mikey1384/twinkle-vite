@@ -4,6 +4,7 @@ export interface ViewState {
   contentPath: string;
   contentNav: string;
   missionNav: string;
+  buildNav: string;
   pageTitle: string;
   profileNav: string;
   boardNav: string;
@@ -19,6 +20,7 @@ export interface ViewAction {
     | 'SET_CONTENT_PATH'
     | 'SET_CONTENT_NAV'
     | 'SET_MISSION_NAV'
+    | 'SET_BUILD_NAV'
     | 'SET_BOARD_NAV'
     | 'SET_HOME_NAV'
     | 'SET_PAGE_TITLE'
@@ -65,6 +67,11 @@ export default function ViewReducer(
       return {
         ...state,
         missionNav: action.nav!
+      };
+    case 'SET_BUILD_NAV':
+      return {
+        ...state,
+        buildNav: action.nav!
       };
     case 'SET_BOARD_NAV':
       return {
