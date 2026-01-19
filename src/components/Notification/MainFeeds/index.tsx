@@ -8,9 +8,15 @@ import SectionHeader from './SectionHeader';
 import RewardItem from './RewardItem';
 import MyRank from '~/components/MyRank';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import ScopedTheme from '~/theme/ScopedTheme';
+import { css } from '@emotion/css';
+import { Color } from '~/constants/css';
+import { themedCardBase } from '~/theme/themedCard';
+import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { REWARD_VALUE } from '~/constants/defaultValues';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
-import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const tapToCollectRewardsLabel = 'Tap to collect all your rewards';
 const yourXPLabel = 'Your XP';
@@ -99,6 +105,36 @@ export default function MainFeeds({
   const [originalTwinkleCoins, setOriginalTwinkleCoins] = useState(0);
   const [totalTwinkles, setTotalTwinkles] = useState(0);
   const [totalCoins, setTotalCoins] = useState(0);
+
+  const { accentColor, cardVars, themeName } = useThemedCardVars({
+    role: 'sectionPanel'
+  });
+  const emptyStateVars = useMemo(
+    () =>
+      ({
+        ...cardVars,
+        ['--empty-state-accent' as const]: accentColor
+      }) as React.CSSProperties,
+    [accentColor, cardVars]
+  );
+  const emptyStateClass = useMemo(
+    () =>
+      css`
+        ${themedCardBase};
+        padding: 1.6rem 2rem;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: ${Color.darkerGray()};
+        font-size: 1.5rem;
+        line-height: 1.6;
+        text-align: center;
+        gap: 0.8rem;
+      `,
+    []
+  );
 
   useEffect(() => {
     if (totalRewardedTwinkles > 0) {
@@ -318,6 +354,21 @@ export default function MainFeeds({
       {userId && activeTab === 'notification' && notifications.length > 0 && (
         <div style={{ marginTop: 0 }}>{NotificationsItems}</div>
       )}
+      {userId &&
+        activeTab === 'notification' &&
+        notifications.length === 0 &&
+        !loadingNotifications && (
+          <ScopedTheme
+            theme={themeName}
+            roles={['sectionPanel', 'sectionPanelText']}
+            style={emptyStateVars}
+          >
+            <div className={emptyStateClass}>
+              No notifications yet. Interact with others by leaving comments,
+              liking posts, or completing missions to receive notifications.
+            </div>
+          </ScopedTheme>
+        )}
       {activeTab === 'rankings' && <Rankings loadingFeeds={loadingNewFeeds} />}
       {activeTab === 'reward' && rewards.length > 0 && (
         <div style={{ marginTop: 0 }}>{RewardSections}</div>
