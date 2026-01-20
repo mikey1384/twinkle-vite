@@ -44,6 +44,7 @@ const TWINKLE_SDK_SCRIPT = `
   let isInitialized = false;
   let pendingRequests = new Map();
   let requestId = 0;
+  let viewerInfo = null;
 
   function getRequestId() {
     return 'twinkle_' + (++requestId) + '_' + Date.now();
@@ -66,6 +67,25 @@ const TWINKLE_SDK_SCRIPT = `
         payload: payload
       }, '*');
     });
+  }
+
+  function applyViewerInfo(info) {
+    viewerInfo = info || null;
+    if (!window.Twinkle || !window.Twinkle.viewer) return;
+    const viewer = window.Twinkle.viewer;
+    if (!info) {
+      viewer.id = null;
+      viewer.username = null;
+      viewer.profilePicUrl = null;
+      viewer.isLoggedIn = false;
+      viewer.isOwner = false;
+      return;
+    }
+    viewer.id = info.id || null;
+    viewer.username = info.username || null;
+    viewer.profilePicUrl = info.profilePicUrl || null;
+    viewer.isLoggedIn = Boolean(info.isLoggedIn);
+    viewer.isOwner = Boolean(info.isOwner);
   }
 
   window.addEventListener('message', function(event) {
@@ -200,11 +220,115 @@ const TWINKLE_SDK_SCRIPT = `
       }
     },
 
+    viewer: {
+      id: null,
+      username: null,
+      profilePicUrl: null,
+      isLoggedIn: false,
+      isOwner: false,
+
+      async get() {
+        if (viewerInfo) return viewerInfo;
+        const response = await sendRequest('viewer:get', {});
+        applyViewerInfo(response?.viewer);
+        return viewerInfo;
+      },
+
+      async refresh() {
+        viewerInfo = null;
+        return await this.get();
+      }
+    },
+
+    viewerDb: {
+      async query(sql, params) {
+        if (!sql) throw new Error('SQL is required');
+        return await sendRequest('viewer-db:query', { sql: sql, params: params });
+      },
+
+      async exec(sql, params) {
+        if (!sql) throw new Error('SQL is required');
+        return await sendRequest('viewer-db:exec', { sql: sql, params: params });
+      }
+    },
+
+    api: {
+      async getCurrentUser() {
+        return await this.getViewer();
+      },
+
+      async getViewer() {
+        return await window.Twinkle.viewer.get();
+      },
+
+      async getUser(userId) {
+        if (!userId) throw new Error('userId is required');
+        const result = await sendRequest('api:get-user', { userId: userId });
+        return result?.user || null;
+      },
+
+      async getUsers({ search, userIds, cursor, limit } = {}) {
+        return await sendRequest('api:get-users', {
+          search: search,
+          userIds: userIds,
+          cursor: cursor,
+          limit: limit
+        });
+      },
+
+      async getDailyReflections({ following, userIds, lastId, cursor, limit } = {}) {
+        return await sendRequest('api:get-daily-reflections', {
+          following: following,
+          userIds: userIds,
+          lastId: lastId,
+          cursor: cursor,
+          limit: limit
+        });
+      },
+
+      async getDailyReflectionsByUser(userId, { lastId, cursor, limit } = {}) {
+        if (!userId) throw new Error('userId is required');
+        return await sendRequest('api:get-daily-reflections', {
+          userIds: [userId],
+          lastId: lastId,
+          cursor: cursor,
+          limit: limit
+        });
+      }
+    },
+
+    social: {
+      async follow(userId) {
+        if (!userId) throw new Error('userId is required');
+        return await sendRequest('social:follow', { userId: userId });
+      },
+
+      async unfollow(userId) {
+        if (!userId) throw new Error('userId is required');
+        return await sendRequest('social:unfollow', { userId: userId });
+      },
+
+      async getFollowing({ limit, offset } = {}) {
+        return await sendRequest('social:get-following', { limit, offset });
+      },
+
+      async getFollowers({ limit, offset } = {}) {
+        return await sendRequest('social:get-followers', { limit, offset });
+      },
+
+      async isFollowing(userId) {
+        if (!userId) throw new Error('userId is required');
+        const result = await sendRequest('social:is-following', { userId: userId });
+        return result?.isFollowing || false;
+      }
+    },
+
     build: { id: null, title: null, username: null },
     _init(info) {
       this.build.id = info.id;
       this.build.title = info.title;
       this.build.username = info.username;
+      applyViewerInfo(info.viewer);
     }
   };
 
@@ -415,6 +539,8 @@ export default function PreviewPanel({
   const buildRef = useRef(build);
   const isOwnerRef = useRef(isOwner);
   const userIdRef = useRef<number | null>(null);
+  const usernameRef = useRef<string | null>(null);
+  const profilePicUrlRef = useRef<string | null>(null);
   const missionProgressRef = useRef({
     promptListUsed: false,
     aiChatUsed: false,
@@ -422,6 +548,8 @@ export default function PreviewPanel({
   });
 
   const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const missions = useKeyContext((v) => v.myState.missions);
   const buildMissionState = missions?.build || {};
   const promptListUsed = Boolean(buildMissionState.promptListUsed);
@@ -449,6 +577,29 @@ export default function PreviewPanel({
   const restoreBuildArtifactVersion = useAppContext(
     (v) => v.requestHelpers.restoreBuildArtifactVersion
   );
+  const followBuildUser = useAppContext(
+    (v) => v.requestHelpers.followBuildUser
+  );
+  const unfollowBuildUser = useAppContext(
+    (v) => v.requestHelpers.unfollowBuildUser
+  );
+  const loadBuildFollowers = useAppContext(
+    (v) => v.requestHelpers.loadBuildFollowers
+  );
+  const loadBuildFollowing = useAppContext(
+    (v) => v.requestHelpers.loadBuildFollowing
+  );
+  const isFollowingBuildUser = useAppContext(
+    (v) => v.requestHelpers.isFollowingBuildUser
+  );
+  const queryViewerDb = useAppContext((v) => v.requestHelpers.queryViewerDb);
+  const execViewerDb = useAppContext((v) => v.requestHelpers.execViewerDb);
+  const getBuildApiToken = useAppContext((v) => v.requestHelpers.getBuildApiToken);
+  const getBuildApiUser = useAppContext((v) => v.requestHelpers.getBuildApiUser);
+  const getBuildApiUsers = useAppContext((v) => v.requestHelpers.getBuildApiUsers);
+  const getBuildDailyReflections = useAppContext(
+    (v) => v.requestHelpers.getBuildDailyReflections
+  );
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );
@@ -463,8 +614,25 @@ export default function PreviewPanel({
   const listBuildArtifactsRef = useRef(listBuildArtifacts);
   const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
   const restoreBuildArtifactVersionRef = useRef(restoreBuildArtifactVersion);
+  const followBuildUserRef = useRef(followBuildUser);
+  const unfollowBuildUserRef = useRef(unfollowBuildUser);
+  const loadBuildFollowersRef = useRef(loadBuildFollowers);
+  const loadBuildFollowingRef = useRef(loadBuildFollowing);
+  const isFollowingBuildUserRef = useRef(isFollowingBuildUser);
+  const queryViewerDbRef = useRef(queryViewerDb);
+  const execViewerDbRef = useRef(execViewerDb);
+  const getBuildApiTokenRef = useRef(getBuildApiToken);
+  const getBuildApiUserRef = useRef(getBuildApiUser);
+  const getBuildApiUsersRef = useRef(getBuildApiUsers);
+  const getBuildDailyReflectionsRef = useRef(getBuildDailyReflections);
   const updateMissionStatusRef = useRef(updateMissionStatus);
   const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
+
+  const buildApiTokenRef = useRef<{
+    token: string;
+    scopes: string[];
+    expiresAt: number;
+  } | null>(null);
 
   // Inject SDK into user code
   const codeWithSdk = useMemo(() => {
@@ -513,6 +681,58 @@ export default function PreviewPanel({
   useEffect(() => {
     userIdRef.current = userId || null;
   }, [userId]);
+
+  useEffect(() => {
+    usernameRef.current = username || null;
+  }, [username]);
+
+  useEffect(() => {
+    profilePicUrlRef.current = profilePicUrl || null;
+  }, [profilePicUrl]);
+
+  async function ensureBuildApiToken(requiredScopes: string[]) {
+    const now = Math.floor(Date.now() / 1000);
+    const cached = buildApiTokenRef.current;
+    if (
+      cached &&
+      cached.expiresAt - 30 > now &&
+      requiredScopes.every((scope) => cached.scopes.includes(scope))
+    ) {
+      return cached.token;
+    }
+
+    const activeBuild = buildRef.current;
+    if (!activeBuild?.id) {
+      throw new Error('Build not found');
+    }
+
+    const scopeSet = new Set<string>([...(cached?.scopes || []), ...requiredScopes]);
+    const requestedScopes = Array.from(scopeSet);
+
+    const result = await getBuildApiTokenRef.current({
+      buildId: activeBuild.id,
+      scopes: requestedScopes
+    });
+    if (!result?.token) {
+      throw new Error('Failed to obtain API token');
+    }
+    buildApiTokenRef.current = {
+      token: result.token,
+      scopes: result.scopes || requestedScopes,
+      expiresAt: result.expiresAt || now + 600
+    };
+    return result.token;
+  }
+
+  function getViewerInfo() {
+    return {
+      id: userIdRef.current,
+      username: usernameRef.current,
+      profilePicUrl: profilePicUrlRef.current,
+      isLoggedIn: Boolean(userIdRef.current),
+      isOwner: Boolean(isOwnerRef.current)
+    };
+  }
 
   useEffect(() => {
     missionProgressRef.current = {
@@ -605,6 +825,9 @@ export default function PreviewPanel({
       const iframe = iframeRef.current;
       if (!iframe?.contentWindow) return;
 
+      // SECURITY: Validate the message came from our iframe, not an external source.
+      // We use '*' for postMessage origin because blob/srcdoc iframes have null origins,
+      // but we validate event.source to ensure messages only come from our iframe.
       if (event.source !== iframe.contentWindow) return;
 
       const { id, type, payload } = data;
@@ -619,7 +842,8 @@ export default function PreviewPanel({
             response = {
               id: activeBuild.id,
               title: activeBuild.title,
-              username: activeBuild.username
+              username: activeBuild.username,
+              viewer: getViewerInfo()
             };
             break;
 
@@ -676,10 +900,153 @@ export default function PreviewPanel({
             response = aiResult;
             break;
 
+          case 'social:follow': {
+            const targetUserId = Number(payload?.userId);
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            if (!targetUserId || Number.isNaN(targetUserId)) {
+              throw new Error('userId is required');
+            }
+            response = await followBuildUserRef.current({
+              buildId: activeBuild.id,
+              userId: targetUserId
+            });
+            break;
+          }
+
+          case 'social:unfollow': {
+            const targetUserId = Number(payload?.userId);
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            if (!targetUserId || Number.isNaN(targetUserId)) {
+              throw new Error('userId is required');
+            }
+            response = await unfollowBuildUserRef.current({
+              buildId: activeBuild.id,
+              userId: targetUserId
+            });
+            break;
+          }
+
+          case 'social:get-followers':
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            response = await loadBuildFollowersRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              offset: payload?.offset
+            });
+            break;
+
+          case 'social:get-following':
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            response = await loadBuildFollowingRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              offset: payload?.offset
+            });
+            break;
+
+          case 'social:is-following': {
+            const targetUserId = Number(payload?.userId);
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            if (!targetUserId || Number.isNaN(targetUserId)) {
+              throw new Error('userId is required');
+            }
+            response = await isFollowingBuildUserRef.current({
+              buildId: activeBuild.id,
+              userId: targetUserId
+            });
+            break;
+          }
+
+          case 'viewer:get':
+            response = { viewer: getViewerInfo() };
+            break;
+
+          case 'viewer-db:query':
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            response = await queryViewerDbRef.current({
+              buildId: activeBuild.id,
+              sql: payload?.sql,
+              params: payload?.params
+            });
+            break;
+
+          case 'viewer-db:exec':
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            response = await execViewerDbRef.current({
+              buildId: activeBuild.id,
+              sql: payload?.sql,
+              params: payload?.params
+            });
+            break;
+
+          case 'api:get-user': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const userToken = await ensureBuildApiToken(['user:read']);
+            response = await getBuildApiUserRef.current({
+              buildId: activeBuild.id,
+              userId: payload?.userId,
+              token: userToken
+            });
+            break;
+          }
+
+          case 'api:get-users': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const usersToken = await ensureBuildApiToken(['users:read']);
+            response = await getBuildApiUsersRef.current({
+              buildId: activeBuild.id,
+              search: payload?.search,
+              userIds: payload?.userIds,
+              cursor: payload?.cursor,
+              limit: payload?.limit,
+              token: usersToken
+            });
+            break;
+          }
+
+          case 'api:get-daily-reflections': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const reflectionsToken = await ensureBuildApiToken([
+              'dailyReflections:read'
+            ]);
+            response = await getBuildDailyReflectionsRef.current({
+              buildId: activeBuild.id,
+              following: payload?.following,
+              userIds: payload?.userIds,
+              lastId: payload?.lastId,
+              cursor: payload?.cursor,
+              limit: payload?.limit,
+              token: reflectionsToken
+            });
+            break;
+          }
+
           default:
             throw new Error(`Unknown request type: ${type}`);
         }
 
+        // SECURITY: Use '*' because blob URLs have null origins.
+        // Security is enforced by validating event.source above.
         iframe.contentWindow.postMessage(
           {
             source: 'twinkle-parent',

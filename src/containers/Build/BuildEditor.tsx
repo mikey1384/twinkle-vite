@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
-import { useAppContext } from '~/contexts';
+import SocialPanel from './SocialPanel';
+import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -78,6 +80,9 @@ interface Build {
   primaryArtifactId?: number | null;
   status: string;
   isPublic: boolean;
+  publishedAt?: number | null;
+  thumbnailUrl?: string | null;
+  sourceBuildId?: number | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -106,15 +111,22 @@ export default function BuildEditor({
   onUpdateBuild,
   onUpdateChatMessages
 }: BuildEditorProps) {
+  const navigate = useNavigate();
+  const { userId } = useKeyContext((v) => v.myState);
   const generateBuildCode = useAppContext(
     (v) => v.requestHelpers.generateBuildCode
   );
   const updateBuildCode = useAppContext(
     (v) => v.requestHelpers.updateBuildCode
   );
+  const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
+  const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
+  const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
 
   const [generating, setGenerating] = useState(false);
   const [savingVersion, setSavingVersion] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [forking, setForking] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -219,6 +231,58 @@ export default function BuildEditor({
     setSavingVersion(false);
   }
 
+  async function handlePublish() {
+    if (!isOwner || !build.code || publishing) return;
+    setPublishing(true);
+    try {
+      const result = await publishBuild({ buildId: build.id });
+      if (result?.success && result?.build) {
+        onUpdateBuild({
+          ...build,
+          status: result.build.status,
+          isPublic: result.build.isPublic,
+          publishedAt: result.build.publishedAt,
+          thumbnailUrl: result.build.thumbnailUrl
+        });
+      }
+    } catch (error) {
+      console.error('Failed to publish build:', error);
+    }
+    setPublishing(false);
+  }
+
+  async function handleUnpublish() {
+    if (!isOwner || publishing) return;
+    setPublishing(true);
+    try {
+      const result = await unpublishBuild(build.id);
+      if (result?.success && result?.build) {
+        onUpdateBuild({
+          ...build,
+          status: result.build.status,
+          isPublic: result.build.isPublic
+        });
+      }
+    } catch (error) {
+      console.error('Failed to unpublish build:', error);
+    }
+    setPublishing(false);
+  }
+
+  async function handleFork() {
+    if (!userId || forking || isOwner) return;
+    setForking(true);
+    try {
+      const result = await forkBuild(build.id);
+      if (result?.success && result?.build) {
+        navigate(`/build/${result.build.id}`);
+      }
+    } catch (error) {
+      console.error('Failed to fork build:', error);
+    }
+    setForking(false);
+  }
+
   return (
     <div className={pageClass}>
       <header className={headerClass}>
@@ -301,20 +365,87 @@ export default function BuildEditor({
           >
             {build.isPublic ? 'public' : 'private'}
           </span>
+          {isOwner && (
+            <button
+              onClick={build.isPublic ? handleUnpublish : handlePublish}
+              disabled={publishing || (!build.isPublic && !build.code)}
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 0.9rem;
+                border-radius: 10px;
+                border: 1px solid var(--ui-border);
+                background: ${build.isPublic ? '#fff' : 'var(--theme-bg)'};
+                color: ${build.isPublic ? 'var(--chat-text)' : 'var(--theme-text)'};
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                &:hover:not(:disabled) {
+                  transform: translateY(-1px);
+                }
+                &:disabled {
+                  opacity: 0.6;
+                  cursor: not-allowed;
+                }
+              `}
+            >
+              <Icon icon={build.isPublic ? 'eye-slash' : 'globe'} />
+              {publishing
+                ? 'Processing...'
+                : build.isPublic
+                ? 'Unpublish'
+                : 'Publish'}
+            </button>
+          )}
+          {!isOwner && userId && build.isPublic && (
+            <button
+              onClick={handleFork}
+              disabled={forking}
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 0.9rem;
+                border-radius: 10px;
+                border: 1px solid var(--ui-border);
+                background: #fff;
+                color: var(--chat-text);
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                &:hover:not(:disabled) {
+                  border-color: var(--theme-border);
+                  transform: translateY(-1px);
+                }
+                &:disabled {
+                  opacity: 0.6;
+                  cursor: not-allowed;
+                }
+              `}
+            >
+              <Icon icon="code-branch" />
+              {forking ? 'Forking...' : 'Fork'}
+            </button>
+          )}
         </div>
       </header>
 
       <div className={panelShellClass}>
         <div className={workspaceShellClass}>
-          <ChatPanel
-            messages={chatMessages}
-            inputMessage={inputMessage}
-            generating={generating}
-            isOwner={isOwner}
-            chatEndRef={chatEndRef}
-            onInputChange={setInputMessage}
-            onSendMessage={handleSendMessage}
-          />
+          {isOwner && (
+            <ChatPanel
+              messages={chatMessages}
+              inputMessage={inputMessage}
+              generating={generating}
+              isOwner={isOwner}
+              chatEndRef={chatEndRef}
+              onInputChange={setInputMessage}
+              onSendMessage={handleSendMessage}
+            />
+          )}
           <PreviewPanel
             build={build}
             code={build.code}
@@ -325,6 +456,14 @@ export default function BuildEditor({
             savingVersion={savingVersion}
           />
         </div>
+        {build.isPublic && (
+          <SocialPanel
+            buildId={build.id}
+            buildTitle={build.title}
+            ownerId={build.userId}
+            isOwner={isOwner}
+          />
+        )}
       </div>
     </div>
   );
