@@ -5,6 +5,7 @@ import FilterBar from '~/components/FilterBar';
 import Home from './Home';
 import LikedPosts from './LikedPosts';
 import Posts from './Posts';
+import Builds from './Builds';
 import {
   matchPath,
   Navigate,
@@ -19,6 +20,7 @@ const profileLabel = 'Profile';
 const watchedLabel = 'Watched';
 const likesLabel = 'Likes';
 const postsLabel = 'Posts';
+const buildsLabel = 'Builds';
 
 export default function Body({
   profile,
@@ -62,13 +64,25 @@ export default function Body({
       ),
     [location.pathname]
   );
+  const buildsMatch = useMemo(
+    () =>
+      matchPath(
+        {
+          path: '/users/:username/builds'
+        },
+        location.pathname
+      ),
+    [location.pathname]
+  );
 
   useEffect(() => {
-    const postsMatch = !mainMatch && !watchedMatch && !likesMatch;
+    const postsMatch = !mainMatch && !watchedMatch && !likesMatch && !buildsMatch;
     const subTitle = watchedMatch
       ? watchedLabel
       : likesMatch
       ? likesLabel
+      : buildsMatch
+      ? buildsLabel
       : postsMatch
       ? postsLabel
       : '';
@@ -81,7 +95,7 @@ export default function Body({
     }
     return () => onSetPageTitle('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, mainMatch, watchedMatch, likesMatch]);
+  }, [username, mainMatch, watchedMatch, likesMatch, buildsMatch]);
 
   return (
     <div
@@ -153,7 +167,9 @@ export default function Body({
           </nav>
           <nav
             className={
-              !mainMatch && !watchedMatch && !likesMatch ? 'active' : ''
+              !mainMatch && !watchedMatch && !likesMatch && !buildsMatch
+                ? 'active'
+                : ''
             }
             style={{ cursor: 'pointer' }}
             onClick={() =>
@@ -163,6 +179,15 @@ export default function Body({
             }
           >
             <a>{postsLabel}</a>
+          </nav>
+          <nav
+            className={buildsMatch ? 'active' : ''}
+            style={{ cursor: 'pointer' }}
+            onClick={() =>
+              buildsMatch ? null : navigate(`/users/${username}/builds`)
+            }
+          >
+            <a>{buildsLabel}</a>
           </nav>
         </FilterBar>
       </div>
@@ -183,6 +208,15 @@ export default function Body({
             <Route
               path="/likes/:section"
               element={<LikedPosts selectedTheme={selectedTheme} />}
+            />
+            <Route
+              path="/builds"
+              element={
+                <Builds
+                  selectedTheme={selectedTheme}
+                  profileUserId={profile.id}
+                />
+              }
             />
             <Route
               path="/:section/*"
