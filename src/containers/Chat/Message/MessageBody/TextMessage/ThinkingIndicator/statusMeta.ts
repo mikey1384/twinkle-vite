@@ -51,6 +51,11 @@ export const STATUS_META = {
     icon: 'clock',
     color: Color.darkBlue()
   },
+  responding: {
+    text: 'Responding...',
+    icon: 'pen',
+    color: Color.logoBlue()
+  },
   default: { text: 'Thinking...', icon: 'lightbulb', color: Color.gray() }
 } as const;
 
