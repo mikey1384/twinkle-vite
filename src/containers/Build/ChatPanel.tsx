@@ -1,9 +1,12 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
+import ThinkingIndicator from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
+import CodeDiff from '~/components/CodeDiff';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
+import { computeLineDiff } from '~/components/CodeDiff/diffUtils';
 
 const panelClass = css`
   width: 380px;
@@ -57,6 +60,7 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   inputMessage: string;
   generating: boolean;
+  generatingStatus: string | null;
   isOwner: boolean;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onInputChange: (value: string) => void;
@@ -67,6 +71,7 @@ export default function ChatPanel({
   messages,
   inputMessage,
   generating,
+  generatingStatus,
   isOwner,
   chatEndRef,
   onInputChange,
@@ -152,31 +157,12 @@ export default function ChatPanel({
                   `}
                 >
                   {message.role === 'assistant' ? (
-                    <div>
-                      {(message.codeGenerated || message.artifactVersionId) && (
-                        <div
-                          className={css`
-                            display: flex;
-                            align-items: center;
-                            gap: 0.5rem;
-                            padding: 0.5rem 0.75rem;
-                            margin-bottom: 0.75rem;
-                            background: var(--chat-bg);
-                            border-radius: 8px;
-                            color: var(--chat-text);
-                            font-size: 0.85rem;
-                            font-weight: 600;
-                            border: 1px solid var(--ui-border);
-                          `}
-                        >
-                          <Icon icon="check" />
-                          Project saved
-                        </div>
-                      )}
-                      <RichText isAIMessage maxLines={15}>
-                        {message.content}
-                      </RichText>
-                    </div>
+                    <AssistantMessage
+                      message={message}
+                      messages={messages}
+                      generating={generating}
+                      generatingStatus={generatingStatus}
+                    />
                   ) : (
                     <span style={{ whiteSpace: 'pre-wrap' }}>
                       {message.content}
@@ -196,29 +182,6 @@ export default function ChatPanel({
                 </span>
               </div>
             ))}
-            {generating && (
-              <div
-                className={css`
-                  display: flex;
-                  flex-direction: column;
-                  align-items: flex-start;
-                `}
-              >
-                <div
-                  className={css`
-                    padding: 0.75rem 1rem;
-                    border-radius: 12px;
-                    background: var(--chat-bg);
-                    color: var(--chat-text);
-                    font-size: 0.95rem;
-                    border: 1px solid var(--ui-border);
-                  `}
-                >
-                  <Icon icon="spinner" pulse style={{ marginRight: '0.5rem' }} />
-                  Generating...
-                </div>
-              </div>
-            )}
             <div ref={chatEndRef} />
           </div>
         )}
@@ -290,6 +253,134 @@ export default function ChatPanel({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AssistantMessage({
+  message,
+  messages,
+  generating,
+  generatingStatus
+}: {
+  message: ChatMessage;
+  messages: ChatMessage[];
+  generating: boolean;
+  generatingStatus: string | null;
+}) {
+  const [showDiff, setShowDiff] = useState(false);
+
+  const previousCode = useMemo(() => {
+    if (!message.codeGenerated) return null;
+    const messageIndex = messages.findIndex((m) => m.id === message.id);
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (messages[i].codeGenerated) {
+        return messages[i].codeGenerated;
+      }
+    }
+    return '';
+  }, [message, messages]);
+
+  const diffStats = useMemo(() => {
+    if (!message.codeGenerated || previousCode === null) return null;
+    const { stats } = computeLineDiff(previousCode, message.codeGenerated);
+    return stats;
+  }, [message.codeGenerated, previousCode]);
+
+  const hasChanges = diffStats && (diffStats.added > 0 || diffStats.removed > 0);
+
+  return (
+    <div>
+      {(message.codeGenerated || message.artifactVersionId) && (
+        <div
+          className={css`
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--ui-border);
+            overflow: hidden;
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 0.5rem;
+              padding: 0.5rem 0.75rem;
+              background: var(--chat-bg);
+              color: var(--chat-text);
+              font-size: 0.85rem;
+              font-weight: 600;
+            `}
+          >
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+              `}
+            >
+              <Icon icon="check" style={{ color: Color.green() }} />
+              <span>Code updated</span>
+              {hasChanges && (
+                <span
+                  className={css`
+                    display: inline-flex;
+                    gap: 0.4rem;
+                    font-family: 'SF Mono', monospace;
+                    font-size: 0.8rem;
+                    font-weight: 500;
+                  `}
+                >
+                  <span style={{ color: Color.green() }}>+{diffStats.added}</span>
+                  <span style={{ color: Color.rose() }}>-{diffStats.removed}</span>
+                </span>
+              )}
+            </div>
+            {hasChanges && (
+              <button
+                onClick={() => setShowDiff(!showDiff)}
+                className={css`
+                  background: none;
+                  border: none;
+                  color: ${Color.logoBlue()};
+                  cursor: pointer;
+                  font-size: 0.8rem;
+                  padding: 0;
+                  display: flex;
+                  align-items: center;
+                  gap: 0.25rem;
+                  &:hover {
+                    text-decoration: underline;
+                  }
+                `}
+              >
+                {showDiff ? 'Hide' : 'Show'} diff
+                <Icon icon={showDiff ? 'chevron-up' : 'chevron-down'} />
+              </button>
+            )}
+          </div>
+          {showDiff && hasChanges && previousCode !== null && (
+            <CodeDiff
+              oldCode={previousCode}
+              newCode={message.codeGenerated || ''}
+              collapsible={false}
+              className={css`
+                border: none;
+                border-radius: 0;
+                border-top: 1px solid var(--ui-border);
+              `}
+            />
+          )}
+        </div>
+      )}
+      {message.content ? (
+        <RichText isAIMessage maxLines={15}>
+          {message.content}
+        </RichText>
+      ) : generating ? (
+        <ThinkingIndicator status={generatingStatus || 'thinking'} compact />
+      ) : null}
     </div>
   );
 }

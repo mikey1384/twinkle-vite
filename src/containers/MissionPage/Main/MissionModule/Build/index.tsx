@@ -261,6 +261,10 @@ export default function BuildMission({
 
   const missionCleared = checklistItems.every((item) => item.complete);
 
+  // Determine current step for contextual hero content
+  const currentStep = !step1Complete ? 1 : !step2Complete ? 2 : !step3Complete ? 3 : 0;
+  const latestBuild = builds[0];
+
   return (
     <ErrorBoundary componentPath="MissionModule/Build">
       <div className={layoutClass} style={style}>
@@ -279,28 +283,107 @@ export default function BuildMission({
                 <Icon icon="sparkles" />
                 Build Mission
               </span>
-              <h2 className={titleClass}>Build an app with AI assistance</h2>
-              <p className={subtitleClass}>
-                Create a project in the Build Studio, describe what you want, and
-                watch AI generate your app. Then level up by integrating Twinkle
-                SDK features like shared AI prompts or SQLite persistence.
-              </p>
-              <div className={buttonRowClass}>
-                <Button
-                  color="green"
-                  variant="solid"
-                  onClick={() => navigate('/build/new')}
-                >
-                  Start a Build
-                </Button>
-                <Button
-                  color="logoBlue"
-                  variant="soft"
-                  onClick={() => navigate('/build')}
-                >
-                  Open Build Studio
-                </Button>
-              </div>
+              {currentStep === 1 && (
+                <>
+                  <h2 className={titleClass}>Build an app with AI assistance</h2>
+                  <p className={subtitleClass}>
+                    Create a project in the Build Studio, describe what you want, and
+                    watch AI generate your app. Then level up by integrating Twinkle
+                    SDK features like shared AI prompts or SQLite persistence.
+                  </p>
+                  <div className={buttonRowClass}>
+                    <Button
+                      color="green"
+                      variant="solid"
+                      onClick={() => navigate('/build/new')}
+                    >
+                      Start a Build
+                    </Button>
+                    <Button
+                      color="logoBlue"
+                      variant="soft"
+                      onClick={() => navigate('/build')}
+                    >
+                      Open Build Studio
+                    </Button>
+                  </div>
+                </>
+              )}
+              {currentStep === 2 && latestBuild && (
+                <>
+                  <h2 className={titleClass}>Generate code with AI</h2>
+                  <p className={subtitleClass}>
+                    Open your build "{latestBuild.title}" and describe what you want
+                    to create. The AI will generate the code for you.
+                  </p>
+                  <div className={buttonRowClass}>
+                    <Button
+                      color="green"
+                      variant="solid"
+                      onClick={() => navigate(`/build/${latestBuild.id}`)}
+                    >
+                      Continue Building
+                    </Button>
+                    <Button
+                      color="logoBlue"
+                      variant="soft"
+                      onClick={() => navigate('/build')}
+                    >
+                      View All Builds
+                    </Button>
+                  </div>
+                </>
+              )}
+              {currentStep === 3 && latestBuild && (
+                <>
+                  <h2 className={titleClass}>Add a Twinkle SDK feature</h2>
+                  <p className={subtitleClass}>
+                    Level up your app by adding AI prompts or SQLite persistence.
+                    Ask the AI to help you integrate these features.
+                  </p>
+                  <div className={buttonRowClass}>
+                    <Button
+                      color="green"
+                      variant="solid"
+                      onClick={() => navigate(`/build/${latestBuild.id}`)}
+                    >
+                      Add SDK Features
+                    </Button>
+                    <Button
+                      color="logoBlue"
+                      variant="soft"
+                      onClick={() => navigate('/build')}
+                    >
+                      View All Builds
+                    </Button>
+                  </div>
+                </>
+              )}
+              {currentStep === 0 && (
+                <>
+                  <h2 className={titleClass}>Mission Complete!</h2>
+                  <p className={subtitleClass}>
+                    You've built an app with AI assistance and integrated Twinkle SDK
+                    features. Keep building and exploring new ideas!
+                  </p>
+                  <div className={buttonRowClass}>
+                    <Button
+                      color="green"
+                      variant="solid"
+                      onClick={() => navigate('/build/new')}
+                    >
+                      Start Another Build
+                    </Button>
+                    <Button
+                      color="logoBlue"
+                      variant="soft"
+                      onClick={() => navigate('/build')}
+                    >
+                      View All Builds
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </section>
 

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
@@ -7,6 +7,7 @@ import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
+import { socket } from '~/constants/sockets/api';
 
 const pageClass = css`
   display: flex;
@@ -113,9 +114,6 @@ export default function BuildEditor({
 }: BuildEditorProps) {
   const navigate = useNavigate();
   const { userId } = useKeyContext((v) => v.myState);
-  const generateBuildCode = useAppContext(
-    (v) => v.requestHelpers.generateBuildCode
-  );
   const updateBuildCode = useAppContext(
     (v) => v.requestHelpers.updateBuildCode
   );
@@ -124,11 +122,189 @@ export default function BuildEditor({
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
 
   const [generating, setGenerating] = useState(false);
+  const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
   const [savingVersion, setSavingVersion] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatMessagesRef = useRef(chatMessages);
+  const buildRef = useRef(build);
+  const updateBuildRef = useRef(onUpdateBuild);
+  const updateChatMessagesRef = useRef(onUpdateChatMessages);
+  const streamRequestIdRef = useRef<string | null>(null);
+  const assistantMessageIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    chatMessagesRef.current = chatMessages;
+  }, [chatMessages]);
+
+  useEffect(() => {
+    buildRef.current = build;
+  }, [build]);
+
+  useEffect(() => {
+    updateBuildRef.current = onUpdateBuild;
+  }, [onUpdateBuild]);
+
+  useEffect(() => {
+    updateChatMessagesRef.current = onUpdateChatMessages;
+  }, [onUpdateChatMessages]);
+
+  useEffect(() => {
+    function handleGenerateUpdate({
+      requestId,
+      reply
+    }: {
+      requestId?: string;
+      reply?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const assistantId = assistantMessageIdRef.current;
+      if (!assistantId) return;
+      const currentMessages = chatMessagesRef.current;
+      const nextMessages = currentMessages.map((message) =>
+        message.id === assistantId
+          ? { ...message, content: reply || '' }
+          : message
+      );
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+    }
+
+    function handleGenerateComplete({
+      requestId,
+      assistantText,
+      artifact,
+      code,
+      message
+    }: {
+      requestId?: string;
+      assistantText?: string;
+      artifact?: { content?: string; id?: number | null; versionId?: number | null };
+      code?: string | null;
+      message?: { artifactVersionId?: number | null; createdAt?: number };
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const assistantId = assistantMessageIdRef.current;
+      const currentMessages = chatMessagesRef.current;
+      const artifactCode = artifact?.content ?? code ?? null;
+      const artifactVersionId =
+        message?.artifactVersionId ?? artifact?.versionId ?? null;
+      const createdAt = message?.createdAt ?? Math.floor(Date.now() / 1000);
+
+      let nextMessages = currentMessages;
+      if (assistantId) {
+        nextMessages = currentMessages.map((entry) =>
+          entry.id === assistantId
+            ? {
+                ...entry,
+                content: assistantText || entry.content,
+                codeGenerated: artifactCode,
+                artifactVersionId,
+                createdAt
+              }
+            : entry
+        );
+      } else {
+        nextMessages = [
+          ...currentMessages,
+          {
+            id: Date.now(),
+            role: 'assistant' as const,
+            content: assistantText || '',
+            codeGenerated: artifactCode,
+            artifactVersionId,
+            createdAt
+          }
+        ];
+      }
+
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+
+      if (artifactCode) {
+        const activeBuild = buildRef.current;
+        if (activeBuild) {
+          updateBuildRef.current({
+            ...activeBuild,
+            code: artifactCode,
+            primaryArtifactId: artifact?.id ?? activeBuild.primaryArtifactId
+          });
+        }
+      }
+
+      streamRequestIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      setGenerating(false);
+      setGeneratingStatus(null);
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+
+    function handleGenerateStatus({
+      requestId,
+      status
+    }: {
+      requestId?: string;
+      status?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      setGeneratingStatus(status || null);
+    }
+
+    function handleGenerateError({
+      requestId,
+      error
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const assistantId = assistantMessageIdRef.current;
+      const currentMessages = chatMessagesRef.current;
+      const errorMessage = error || 'Failed to generate code.';
+      const nextMessages = assistantId
+        ? currentMessages.map((entry) =>
+            entry.id === assistantId
+              ? { ...entry, content: errorMessage }
+              : entry
+          )
+        : [
+            ...currentMessages,
+            {
+              id: Date.now(),
+              role: 'assistant' as const,
+              content: errorMessage,
+              codeGenerated: null,
+              createdAt: Math.floor(Date.now() / 1000)
+            }
+          ];
+
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+      streamRequestIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      setGenerating(false);
+      setGeneratingStatus(null);
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+
+    socket.on('build_generate_update', handleGenerateUpdate);
+    socket.on('build_generate_complete', handleGenerateComplete);
+    socket.on('build_generate_error', handleGenerateError);
+    socket.on('build_generate_status', handleGenerateStatus);
+
+    return () => {
+      socket.off('build_generate_update', handleGenerateUpdate);
+      socket.off('build_generate_complete', handleGenerateComplete);
+      socket.off('build_generate_error', handleGenerateError);
+      socket.off('build_generate_status', handleGenerateStatus);
+    };
+  }, []);
 
   async function handleSendMessage() {
     if (!inputMessage.trim() || generating || !isOwner) return;
@@ -136,63 +312,41 @@ export default function BuildEditor({
     const messageText = inputMessage.trim();
     const now = Math.floor(Date.now() / 1000);
     const messageId = Date.now();
+    const requestId = `${build.id}-${messageId}`;
     setInputMessage('');
     setGenerating(true);
+    streamRequestIdRef.current = requestId;
 
-    try {
-      const result = await generateBuildCode({
-        buildId: build.id,
-        message: messageText
-      });
+    // Add user message immediately (optimistic update)
+    const userMessage: ChatMessage = {
+      id: messageId,
+      role: 'user',
+      content: messageText,
+      codeGenerated: null,
+      createdAt: now
+    };
+    const assistantMessage: ChatMessage = {
+      id: messageId + 1,
+      role: 'assistant',
+      content: '',
+      codeGenerated: null,
+      createdAt: now + 1
+    };
+    assistantMessageIdRef.current = assistantMessage.id;
 
-      if (result?.success) {
-        const assistantText =
-          result.assistantText ?? result.message?.content ?? '';
-        const artifactCode =
-          result.artifact?.content ?? result.code ?? null;
-        const artifactVersionId =
-          result.message?.artifactVersionId ??
-          result.artifact?.versionId ??
-          null;
+    const messagesWithUser = [...chatMessagesRef.current, userMessage, assistantMessage];
+    chatMessagesRef.current = messagesWithUser;
+    updateChatMessagesRef.current(messagesWithUser);
 
-        // Add user message
-        const userMessage: ChatMessage = {
-          id: messageId,
-          role: 'user',
-          content: messageText,
-          codeGenerated: null,
-          createdAt: now
-        };
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
 
-        // Add assistant message
-        const assistantMessage: ChatMessage = {
-          id: messageId + 1,
-          role: 'assistant',
-          content: assistantText,
-          codeGenerated: artifactCode,
-          artifactVersionId,
-          createdAt: result.message?.createdAt ?? now
-        };
-
-        onUpdateChatMessages([...chatMessages, userMessage, assistantMessage]);
-        if (artifactCode) {
-          const nextBuild = {
-            ...build,
-            code: artifactCode,
-            primaryArtifactId: result.artifact?.id ?? build.primaryArtifactId
-          };
-          onUpdateBuild(nextBuild);
-        }
-
-        setTimeout(() => {
-          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    } catch (error) {
-      console.error('Failed to generate code:', error);
-    }
-
-    setGenerating(false);
+    socket.emit('build_generate', {
+      buildId: build.id,
+      message: messageText,
+      requestId
+    });
   }
 
   async function handleCodeChange(newCode: string) {
@@ -440,6 +594,7 @@ export default function BuildEditor({
               messages={chatMessages}
               inputMessage={inputMessage}
               generating={generating}
+              generatingStatus={generatingStatus}
               isOwner={isOwner}
               chatEndRef={chatEndRef}
               onInputChange={setInputMessage}
