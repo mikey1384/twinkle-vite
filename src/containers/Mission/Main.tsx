@@ -30,6 +30,22 @@ export default function Main({
     [isAdmin]
   );
   const marginLeft = useMemo(() => (isAdmin ? '3rem' : '5rem'), [isAdmin]);
+  const repeatableMissions: { id: number; missionType: string }[] =
+    useMemo(() => {
+      if (!userId) return [];
+      return missions.reduce(
+        (prev: { id: number; missionType: string }[], currMissionId: number) => {
+          const mission = missionObj[currMissionId];
+          if (mission?.repeatable && myAttempts[mission.id]?.status === 'pass') {
+            return prev.concat(mission);
+          }
+          return prev;
+        },
+        []
+      );
+    }, [userId, missionObj, missions, myAttempts]);
+  const hasCurrentMission = !!missionObj[currentMissionId];
+  const hasRightColumn = hasCurrentMission || repeatableMissions.length > 0;
   if (missions.length === 0 && loading) {
     return <Loading />;
   }
@@ -52,13 +68,13 @@ export default function Main({
           missions={missions}
           missionObj={missionObj}
           className={css`
-            width: CALC(${missionObj[currentMissionId] ? '65%' : '80%'} - 5rem);
+            width: CALC(${hasRightColumn ? '65%' : '80%'} - 5rem);
             @media (max-width: ${tabletMaxWidth}) {
               width: 100%;
             }
           `}
         />
-        {missionObj[currentMissionId] && (
+        {hasRightColumn && (
           <div
             className={css`
               width: CALC(35% - 5rem);
@@ -70,21 +86,21 @@ export default function Main({
               }
             `}
           >
-            <CurrentMission
-              missionId={currentMissionId}
-              style={{ width: '100%' }}
-            />
-            {userId && (
+            {hasCurrentMission && (
+              <CurrentMission
+                missionId={currentMissionId}
+                style={{ width: '100%' }}
+              />
+            )}
+            {repeatableMissions.length > 0 && (
               <RepeatableMissions
                 className={css`
-                  margin-top: 2rem;
+                  margin-top: ${hasCurrentMission ? '2rem' : 0};
                   @media (max-width: ${mobileMaxWidth}) {
-                    margin-top: 1.5rem;
+                    margin-top: ${hasCurrentMission ? '1.5rem' : 0};
                   }
                 `}
-                myAttempts={myAttempts}
-                missions={missions}
-                missionObj={missionObj}
+                repeatableMissions={repeatableMissions}
               />
             )}
           </div>
