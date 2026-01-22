@@ -4,33 +4,18 @@ import { css } from '@emotion/css';
 
 export default function RepeatableMissions({
   className,
-  missions,
-  missionObj,
-  myAttempts,
+  repeatableMissions,
   style
 }: {
   className?: string;
-  missions: number[];
-  missionObj: { [key: string]: any };
-  myAttempts: { [key: string]: any };
+  repeatableMissions: { id: number; missionType: string }[];
   style?: React.CSSProperties;
 }) {
-  const repeatableMissions: { id: number; missionType: string }[] =
-    useMemo(() => {
-      return missions.reduce((prevMissions, currMissionId) => {
-        const mission = missionObj[currMissionId];
-        if (mission.repeatable && myAttempts[mission.id]?.status === 'pass') {
-          return prevMissions.concat(mission);
-        }
-        return prevMissions;
-      }, []);
-    }, [missionObj, missions, myAttempts]);
-
   const repeatableMissionsLabel = useMemo(() => {
     return `Pinned Mission${repeatableMissions.length > 1 ? 's' : ''}`;
   }, [repeatableMissions.length]);
 
-  return repeatableMissions.length > 0 ? (
+  return (
     <div className={className} style={style}>
       <p
         className={css`
@@ -53,5 +38,5 @@ export default function RepeatableMissions({
         ))}
       </div>
     </div>
-  ) : null;
+  );
 }
