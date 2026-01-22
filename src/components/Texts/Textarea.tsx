@@ -345,6 +345,21 @@ export default function Textarea({
             idleTimerRef.current = setTimeout(() => {
               allowShrinkRef.current = true;
               scheduleResize(true);
+              // iOS workaround: Force layout recalculation to reset touch hit-testing
+              const el = textareaRef.current;
+              if (el) {
+                setTimeout(() => {
+                  if (el) {
+                    el.offsetHeight;
+                    el.style.transform = 'translateZ(0)';
+                    requestAnimationFrame(() => {
+                      if (el) {
+                        el.style.transform = '';
+                      }
+                    });
+                  }
+                }, 150);
+              }
             }, 3000);
           }
 

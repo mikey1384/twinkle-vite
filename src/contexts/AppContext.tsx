@@ -15,7 +15,11 @@ import { NotiContextProvider } from './Notification';
 import { ProfileContextProvider } from './Profile';
 import { MissionContextProvider } from './Mission';
 import { ViewContextProvider } from './View';
-import { DEFAULT_PROFILE_THEME, LAST_ONLINE_FILTER_LABEL } from '~/constants/defaultValues';
+import {
+  DEFAULT_PROFILE_THEME,
+  LAST_ONLINE_FILTER_LABEL,
+  localStorageKeys
+} from '~/constants/defaultValues';
 
 export const AppContext = createContext({});
 export const initialMyState = {
@@ -54,10 +58,7 @@ function shouldReloadForRedirect() {
       Number(window.sessionStorage.getItem(REDIRECT_RELOAD_STORAGE_KEY)) || 0;
     const now = Date.now();
     if (!lastReload || now - lastReload > REDIRECT_RELOAD_COOLDOWN_MS) {
-      window.sessionStorage.setItem(
-        REDIRECT_RELOAD_STORAGE_KEY,
-        String(now)
-      );
+      window.sessionStorage.setItem(REDIRECT_RELOAD_STORAGE_KEY, String(now));
       return true;
     }
     return false;
@@ -91,6 +92,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
         if (status === 401) {
           localStorage.removeItem('token');
+          Object.keys(localStorageKeys).forEach((key) =>
+            localStorage.removeItem(key)
+          );
           userDispatch({
             type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'
           });
@@ -100,13 +104,16 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           if (shouldReloadForRedirect()) {
             window.location.reload();
           } else {
-            console.warn('Redirect response detected; reload suppressed to avoid loop.');
+            console.warn(
+              'Redirect response detected; reload suppressed to avoid loop.'
+            );
           }
         }
 
         return Promise.reject({
           status,
-          message: data?.error || data?.message || 'An unexpected error occurred'
+          message:
+            data?.error || data?.message || 'An unexpected error occurred'
         });
       }
 
@@ -118,7 +125,10 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     [userDispatch]
   );
 
-  const memoUserActions = useMemo(() => UserActions(userDispatch), [userDispatch]);
+  const memoUserActions = useMemo(
+    () => UserActions(userDispatch),
+    [userDispatch]
+  );
   const memoRequestHelpers = useMemo(
     () => requestHelpers(handleError),
     [handleError]
@@ -148,7 +158,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
                       <InteractiveContextProvider>
                         <AppContext.Provider value={contextValue}>
                           <ChessContextProvider>
-                            <ChatContextProvider>{children}</ChatContextProvider>
+                            <ChatContextProvider>
+                              {children}
+                            </ChatContextProvider>
                           </ChessContextProvider>
                         </AppContext.Provider>
                       </InteractiveContextProvider>
