@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useMemo,
@@ -168,8 +169,7 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     });
     const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
 
-    // Mount/unmount the container element
-    useEffect(() => {
+    useLayoutEffect(() => {
       const target = portalTarget || document.getElementById('modal');
       if (target && container) {
         target.appendChild(container);
@@ -374,8 +374,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                   deviceIsMobile
                     ? '0.75rem'
                     : deviceIsTablet
-                    ? '1.25rem'
-                    : '2rem'
+                      ? '1.25rem'
+                      : '2rem'
                 };`
               : ''}
             overflow-y: auto;
@@ -394,14 +394,14 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
               ${size === 'fullscreen'
                 ? 'max-height: 100%;'
                 : allowOverflow
-                ? ''
-                : 'max-height: 95%;'}
+                  ? ''
+                  : 'max-height: 95%;'}
               background-color: white;
               border-radius: ${size === 'fullscreen'
                 ? '0'
                 : deviceIsMobile
-                ? '8px'
-                : '12px'};
+                  ? '8px'
+                  : '12px'};
               box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
               animation: ${!isAnimating ? slideIn : slideOut}
                 ${animationDuration}ms ease-out;
@@ -543,8 +543,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                     ? `${bodyPadding}px`
                     : bodyPadding
                   : deviceIsMobile
-                  ? '0.75rem'
-                  : '1.25rem'};
+                    ? '0.75rem'
+                    : '1.25rem'};
                 position: relative;
                 font-size: 1.5rem;
               `}
@@ -564,7 +564,9 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
                 </div>
               ) : (
                 <ErrorBoundary
-                  componentPath={modalKey ? `${modalKey}/children` : 'Modal/children'}
+                  componentPath={
+                    modalKey ? `${modalKey}/children` : 'Modal/children'
+                  }
                 >
                   {children}
                 </ErrorBoundary>
