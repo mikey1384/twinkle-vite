@@ -53,6 +53,7 @@ export default function PinnedAICards({
   const [loading, setLoading] = useState(false);
   const [displayedCardIds, setDisplayedCardIds] = useState<number[]>([]);
   const [isTopCards, setIsTopCards] = useState(false);
+  const [loadedForProfileId, setLoadedForProfileId] = useState<number | null>(null);
 
   const pinnedCardIds = useMemo(() => {
     const ids = profile?.state?.profile?.pinnedAICardIds;
@@ -88,9 +89,10 @@ export default function PinnedAICards({
       setDisplayedCardIds(cachedCardIds);
       return;
     }
-    // Reset to empty when profile changes - wait for API validation
+    // Reset state when profile changes - wait for API validation
     // This prevents showing previous profile's cards
     setDisplayedCardIds([]);
+    setLoadedForProfileId(null);
   }, [cachedCardIds, hasCachedPinnedCards, pinnedCardIdsKey, profile?.id]);
 
   useEffect(() => {
@@ -99,9 +101,23 @@ export default function PinnedAICards({
       setLoading(false);
       return;
     }
+    // If pinned cards now exist but we're still showing top cards, switch to pinned cards
+    if (pinnedCardIds.length > 0 && isTopCards) {
+      setDisplayedCardIds(pinnedCardIds);
+      setIsTopCards(false);
+      return;
+    }
+    // Skip if already loaded for this profile AND we have content to show.
+    // If pinned cards become empty and we're not showing top cards, re-fetch to get top cards.
+    if (loadedForProfileId === profile.id && (pinnedCardIds.length > 0 || isTopCards)) {
+      return;
+    }
+    // Only use cache if there are actual pinned cards cached.
+    // If empty, we still need the API to fetch top cards as fallback.
     if (hasCachedPinnedCards && pinnedCardIds.length > 0) {
       setLoading(false);
       setIsTopCards(false);
+      setLoadedForProfileId(profile.id);
       return;
     }
     loadPinnedCards();
@@ -120,11 +136,12 @@ export default function PinnedAICards({
             username: profile.username,
             cardIds: nextCardIds
           });
-          // Sync user state if backend cleaned up invalid cards
-          if (
-            Array.isArray(data?.cardIds) &&
-            data.cardIds.length !== pinnedCardIds.length
-          ) {
+          // Sync user state if backend returned different cards
+          const nextCardIdsKey = nextCardIds
+            .map((id: number) => Number(id))
+            .filter((id: number) => Number.isFinite(id) && id > 0)
+            .join(',');
+          if (nextCardIdsKey !== pinnedCardIdsKey) {
             const nextState = {
               ...(profile.state || {}),
               profile: {
@@ -141,6 +158,7 @@ export default function PinnedAICards({
         for (const card of data?.cards || []) {
           onUpdateAICard({ cardId: card.id, newState: card });
         }
+        setLoadedForProfileId(profile.id);
       } catch (error) {
         console.error(error);
         // Fallback to unvalidated IDs on error to avoid blank UI

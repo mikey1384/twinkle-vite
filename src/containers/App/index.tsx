@@ -70,7 +70,27 @@ import { useRootTheme } from '~/theme/RootThemeProvider';
 const deviceIsMobile = isMobile(navigator);
 const userIsUsingIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+// Workaround for browsers (like Naver Whale) that don't recalculate vw units on orientation change
+function useOrientationReflow() {
+  useEffect(() => {
+    function handleOrientationChange() {
+      // Force layout recalculation by briefly modifying zoom
+      requestAnimationFrame(() => {
+        document.body.style.zoom = '99.99%';
+        requestAnimationFrame(() => {
+          document.body.style.zoom = '';
+        });
+      });
+    }
+    window.addEventListener('orientationchange', handleOrientationChange);
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+}
+
 export default function App() {
+  useOrientationReflow();
   const navigate = useNavigate();
   const location = useLocation();
   const onCloseSigninModal = useAppContext(

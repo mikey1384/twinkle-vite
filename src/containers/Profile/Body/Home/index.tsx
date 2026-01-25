@@ -23,6 +23,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 const messageBoardLabel = 'Message Board';
 const reorderSectionsLabel = 'Reorder Sections';
+const EMPTY_PICTURES: any[] = [];
 const profileSectionKeys = [
   'intro',
   'pictures',
@@ -163,7 +164,7 @@ export default function Home({
       <Pictures
         profileId={profile.id}
         numPics={numPics}
-        pictures={pictures || []}
+        pictures={pictures || EMPTY_PICTURES}
         selectedTheme={selectedTheme}
       />
     ) : null,
