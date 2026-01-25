@@ -331,7 +331,7 @@ export default function SystemPromptShared({
             your AI chat to complete the mission checklist.
           </p>
         </header>
-        <FilterBar>
+        <FilterBar bordered>
           {tabs.map((tab) => (
             <nav
               key={tab.key}

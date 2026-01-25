@@ -208,6 +208,7 @@ export default function MissionPage() {
           >
             {(isAdmin || isSystemPromptMission) && (
               <FilterBar
+                bordered
                 className="mobile"
                 style={{
                   fontSize: '1.6rem',
