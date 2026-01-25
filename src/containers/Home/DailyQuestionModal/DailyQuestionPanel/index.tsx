@@ -72,6 +72,7 @@ export default function DailyQuestionPanel({
   const [gradingMessage, setGradingMessage] = useState('');
   const [gradingResult, setGradingResult] = useState<{
     grade: string;
+    masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
     xpAwarded: number;
     feedback: string;
     responseId: number;
@@ -290,6 +291,7 @@ export default function DailyQuestionPanel({
         if (data.hasResponded && data.response) {
           setGradingResult({
             grade: data.response.grade,
+            masterpieceType: data.response.masterpieceType || null,
             xpAwarded: data.response.xpAwarded,
             feedback: data.response.feedback,
             responseId: data.response.id,
@@ -558,6 +560,7 @@ export default function DailyQuestionPanel({
       setTimeout(() => {
         setGradingResult({
           grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
+          masterpieceType: result.masterpieceType || null,
           xpAwarded: result.xpAwarded || 0,
           feedback: result.isThoughtful
             ? result.feedback || ''
@@ -1049,6 +1052,7 @@ export default function DailyQuestionPanel({
           response={response}
           questionId={questionId}
           grade={gradingResult.grade}
+          masterpieceType={gradingResult.masterpieceType}
           xpAwarded={gradingResult.xpAwarded}
           feedback={gradingResult.feedback}
           responseId={gradingResult.responseId}
