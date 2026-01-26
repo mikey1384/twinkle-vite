@@ -347,7 +347,11 @@ export default function Content({
                 }}
               >
                 <span>★</span>
-                <span>Masterpiece</span>
+                <span>
+                  {contentObj?.masterpieceType
+                    ? `Masterpiece (${contentObj.masterpieceType})`
+                    : 'Masterpiece'}
+                </span>
               </div>
             )}
             <XPAndStreakDisplay
