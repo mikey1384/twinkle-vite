@@ -67,7 +67,8 @@ const getDescriptionForLinkType: { [key: string]: (src: string) => string } = {
   explore: (src) => {
     const exploreType = src.split('/')[1];
     return `Explore ${capitalize(exploreType)}`;
-  }
+  },
+  'achievement-unlocks': () => 'View Achievement'
 };
 
 export default function DefaultComponent({

@@ -6,6 +6,7 @@ import UserComponent from './UserComponent';
 import DefaultComponent from './DefaultComponent';
 import AICardComponent from './AICardComponent';
 import SharedPromptComponent from './SharedPromptComponent';
+import AchievementUnlockComponent from './AchievementUnlockComponent';
 
 export default function InternalComponent({
   rootId,
@@ -55,6 +56,9 @@ export default function InternalComponent({
     }
     if (linkType === 'shared-prompts') {
       return <SharedPromptComponent src={src} />;
+    }
+    if (linkType === 'achievement-unlocks' && contentId) {
+      return <AchievementUnlockComponent src={src} />;
     }
     return <DefaultComponent linkType={linkType} src={src} />;
   }, [src, isProfileComponent, rootId, rootType]);
