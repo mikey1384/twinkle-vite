@@ -349,7 +349,7 @@ export default function Content({
                 <span>★</span>
                 <span>
                   {contentObj?.masterpieceType
-                    ? `Masterpiece (${contentObj.masterpieceType})`
+                    ? `Masterpiece (${contentObj.masterpieceType.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')})`
                     : 'Masterpiece'}
                 </span>
               </div>
