@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import UsernameText from '~/components/Texts/UsernameText';
 import { Color } from '~/constants/css';
 import Button from '~/components/Button';
 
 interface State {
   hasError: boolean;
+  errorMessage: string;
 }
 export default class PreviewErrorBoundary extends Component<
   {
@@ -20,18 +20,19 @@ export default class PreviewErrorBoundary extends Component<
 
   constructor(props: any) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, errorMessage: '' };
     this.onError = this.props.onError;
   }
 
   componentDidCatch(error: any) {
-    this.setState({ hasError: true });
-    this.onError(error.toString());
+    const errorMessage = error.toString();
+    this.setState({ hasError: true, errorMessage });
+    this.onError(errorMessage);
   }
 
   render() {
     const { children, innerRef, ...props } = this.props;
-    const { hasError } = this.state;
+    const { hasError, errorMessage } = this.state;
 
     if (hasError) {
       return (
@@ -70,18 +71,21 @@ export default class PreviewErrorBoundary extends Component<
               Uh oh, something went wrong
             </div>
             <div style={{ fontSize: '1.4rem', lineHeight: 1.6 }}>
-              Screenshot this preview and show it to{' '}
-              <UsernameText
-                color={Color.logoBlue()}
-                user={{
-                  username: 'Mikey',
-                  id: 5
-                }}
-              />{' '}
-              for an <b style={{ color: Color.gold() }}>XP</b> reward.
+              Please check your code for mistakes and fix them.
             </div>
-            <div style={{ marginTop: '1.6rem', fontSize: '1.3rem' }}>
-              Reload the preview once you’ve grabbed the screenshot.
+            <div
+              style={{
+                marginTop: '1.6rem',
+                fontSize: '1.3rem',
+                fontFamily: 'monospace',
+                background: Color.highlightGray(),
+                padding: '1rem',
+                borderRadius: '8px',
+                textAlign: 'left',
+                wordBreak: 'break-word'
+              }}
+            >
+              {errorMessage}
             </div>
           </div>
           <Button
