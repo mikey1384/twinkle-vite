@@ -256,6 +256,11 @@ export default function useChatSocket({
         userId: reactorId
       });
 
+      const channel = channelsObjRef.current?.[channelId];
+      // We only show reaction activity in the left channel list for 1:1 (twoPeople) chats.
+      // Group chat reactions should update the message, but not bump previews/unreads.
+      if (!channel || !channel.twoPeople) return;
+
       const currentPageVisible = pageVisibleRef.current;
       const currentSelectedChannelId = selectedChannelIdRef.current;
       const currentSubchannelId = subchannelIdRef.current;
@@ -276,10 +281,7 @@ export default function useChatSocket({
         maybeUpdateLastRead({ channelId, subchannelId });
       }
 
-      // If channel isn't loaded yet, skip channel-level state updates.
-      if (!channelsObjRef.current?.[channelId]) return;
-
-      // Update channel preview state for reactions regardless of where the user is.
+      // Update channel preview state for DM reactions.
       // Only increment unread counts if the viewer isn't already seeing the reaction.
       const shouldIncrementUnreads =
         reactorId !== userId &&

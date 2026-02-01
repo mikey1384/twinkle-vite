@@ -166,7 +166,7 @@ export default function Channel({
       typeof lastReaction?.userId === 'number' ? lastReaction.userId : null;
     const lastReactionType = lastReaction?.reaction;
 
-    if (lastReactionType && lastReactionTimeStamp >= lastMessageTimeStamp) {
+    if (twoPeople && lastReactionType && lastReactionTimeStamp >= lastMessageTimeStamp) {
       const reactorName =
         typeof lastReactionUserId === 'number'
           ? lastReactionUserId === userId
