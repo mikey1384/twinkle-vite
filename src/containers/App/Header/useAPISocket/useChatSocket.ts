@@ -102,6 +102,9 @@ export default function useChatSocket({
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
+  const onReceiveChatReaction = useChatContext(
+    (v) => v.actions.onReceiveChatReaction
+  );
   const onSetLastChatPath = useAppContext(
     (v) => v.user.actions.onSetLastChatPath
   );
@@ -125,7 +128,39 @@ export default function useChatSocket({
     (v) => v.requestHelpers.updateSubchannelLastRead
   );
 
+  // Reactions can come in bursts. We only need to persist lastRead once per second per
+  // channel/subchannel because all relevant timestamps are second-granularity.
+  const lastReadWriteSecRef = useRef<{
+    channel: Record<number, number>;
+    subchannel: Record<number, number>;
+  }>({ channel: {}, subchannel: {} });
+
   useEffect(() => {
+    // Reset throttle state when user changes.
+    lastReadWriteSecRef.current = { channel: {}, subchannel: {} };
+
+    function maybeUpdateLastRead({
+      channelId,
+      subchannelId
+    }: {
+      channelId: number;
+      subchannelId?: number | null;
+    }) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (channelId > 0 && lastReadWriteSecRef.current.channel[channelId] !== nowSec) {
+        lastReadWriteSecRef.current.channel[channelId] = nowSec;
+        updateChatLastRead(channelId);
+      }
+      if (
+        subchannelId &&
+        subchannelId > 0 &&
+        lastReadWriteSecRef.current.subchannel[subchannelId] !== nowSec
+      ) {
+        lastReadWriteSecRef.current.subchannel[subchannelId] = nowSec;
+        updateSubchannelLastRead(subchannelId);
+      }
+    }
+
     socket.on('ai_thinking_status_updated', onChangeAIThinkingStatus);
     socket.on('ai_thought_streamed', handleAIThoughtStream);
     socket.on('away_status_changed', handleAwayStatusChange);
@@ -134,7 +169,7 @@ export default function useChatSocket({
     socket.on('chat_invitation_received', handleChatInvitation);
     socket.on('chat_message_deleted', onDeleteMessage);
     socket.on('chat_message_edited', onEditMessage);
-    socket.on('chat_reaction_added', onAddReactionToMessage);
+    socket.on('chat_reaction_added', handleChatReactionAdded);
     socket.on('chat_reaction_removed', onRemoveReactionFromMessage);
     socket.on('chat_subject_purchased', onEnableChatSubject);
     socket.on('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
@@ -157,7 +192,7 @@ export default function useChatSocket({
       socket.off('chat_invitation_received', handleChatInvitation);
       socket.off('chat_message_deleted', onDeleteMessage);
       socket.off('chat_message_edited', onEditMessage);
-      socket.off('chat_reaction_added', onAddReactionToMessage);
+      socket.off('chat_reaction_added', handleChatReactionAdded);
       socket.off('chat_reaction_removed', onRemoveReactionFromMessage);
       socket.off('chat_subject_purchased', onEnableChatSubject);
       socket.off('left_chat_from_another_tab', handleLeftChatFromAnotherTab);
@@ -196,6 +231,77 @@ export default function useChatSocket({
       if (currentChatStatus[userId] && currentChatStatus[userId].isBusy !== isBusy) {
         onChangeBusyStatus({ userId, isBusy });
       }
+    }
+
+    function handleChatReactionAdded({
+      channelId,
+      messageId,
+      reaction,
+      subchannelId,
+      userId: reactorId,
+      timeStamp
+    }: {
+      channelId: number;
+      messageId: number;
+      reaction: string;
+      subchannelId: number;
+      userId: number;
+      timeStamp?: number;
+    }) {
+      onAddReactionToMessage({
+        channelId,
+        messageId,
+        reaction,
+        subchannelId,
+        userId: reactorId
+      });
+
+      const currentPageVisible = pageVisibleRef.current;
+      const currentSelectedChannelId = selectedChannelIdRef.current;
+      const currentSubchannelId = subchannelIdRef.current;
+      const reactionIsForCurrentChannel = channelId === currentSelectedChannelId;
+      const reactionIsForCurrentSubchannel =
+        Number(subchannelId || 0) === Number(currentSubchannelId || 0);
+
+      const reactionIsVisibleToViewer =
+        reactorId !== userId &&
+        reactionIsForCurrentChannel &&
+        usingChatRef.current &&
+        currentPageVisible &&
+        reactionIsForCurrentSubchannel;
+
+      // Keep server unread state consistent: if the viewer is currently seeing the reaction,
+      // advance lastRead so it doesn't show up as unread after refresh/other device.
+      if (reactionIsVisibleToViewer) {
+        maybeUpdateLastRead({ channelId, subchannelId });
+      }
+
+      // If channel isn't loaded yet, skip channel-level state updates.
+      if (!channelsObjRef.current?.[channelId]) return;
+
+      // Update channel preview state for reactions regardless of where the user is.
+      // Only increment unread counts if the viewer isn't already seeing the reaction.
+      const shouldIncrementUnreads =
+        reactorId !== userId &&
+        !(
+          reactionIsForCurrentChannel &&
+          usingChatRef.current &&
+          currentPageVisible &&
+          reactionIsForCurrentSubchannel
+        );
+
+      const stamped = Number(timeStamp) || Math.floor(Date.now() / 1000);
+      onReceiveChatReaction({
+        channelId,
+        messageId,
+        reaction,
+        subchannelId,
+        userId: reactorId,
+        pageVisible: currentPageVisible,
+        usingChat: usingChatRef.current,
+        timeStamp: stamped,
+        shouldIncrementUnreads
+      });
     }
 
     function handleChatInvitation({
@@ -328,9 +434,13 @@ export default function useChatSocket({
       if (senderIsUser && currentPageVisible) return;
       if (messageIsForCurrentChannel) {
         if (usingChatRef.current) {
-          updateChatLastRead(message.channelId);
           if (message.subchannelId === currentSubchannelId) {
-            updateSubchannelLastRead(message.subchannelId);
+            maybeUpdateLastRead({
+              channelId: message.channelId,
+              subchannelId: message.subchannelId
+            });
+          } else {
+            maybeUpdateLastRead({ channelId: message.channelId });
           }
         }
         onReceiveMessage({

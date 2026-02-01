@@ -3,7 +3,11 @@ import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { addCommasToNumber, stringIsEmpty } from '~/helpers/stringHelpers';
 import { useAppContext, useKeyContext, useChatContext } from '~/contexts';
-import { VOCAB_CHAT_TYPE, AI_CARD_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  VOCAB_CHAT_TYPE,
+  AI_CARD_CHAT_TYPE,
+  reactionsObj
+} from '~/constants/defaultValues';
 import { useNavigate } from 'react-router-dom';
 import LocalContext from '../../Context';import ErrorBoundary from '~/components/ErrorBoundary';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -21,6 +25,8 @@ export default function Channel({
     twoPeople,
     members,
     numUnreads,
+    settings = {},
+    lastUnreadUserId,
     partnerUsername,
     pathId,
     subchannelObj = {}
@@ -46,6 +52,8 @@ export default function Channel({
     twoPeople?: boolean;
     members?: { id: number; username: string }[];
     numUnreads?: number;
+    settings?: Record<string, any>;
+    lastUnreadUserId?: number;
     partnerUsername?: string;
     pathId?: number;
     subchannelObj?: object;
@@ -131,7 +139,65 @@ export default function Channel({
       : undefined;
   }, [members, twoPeople, userId]);
 
+  const totalNumUnreads = useMemo(() => {
+    let result = Number(numUnreads);
+    for (const subchannel of Object.values(subchannelObj)) {
+      result += Number(subchannel.numUnreads || 0);
+    }
+    return result;
+  }, [numUnreads, subchannelObj]);
+
   const PreviewMessage = useMemo(() => {
+    const lastMessageTimeStamp = Number((lastMessage as any)?.timeStamp) || 0;
+    let loadedSettings: any = settings;
+    if (typeof loadedSettings === 'string') {
+      try {
+        loadedSettings = JSON.parse(loadedSettings);
+      } catch {
+        loadedSettings = {};
+      }
+    }
+    if (!loadedSettings || typeof loadedSettings !== 'object') {
+      loadedSettings = {};
+    }
+    const lastReaction = loadedSettings?.lastReaction || null;
+    const lastReactionTimeStamp = Number(lastReaction?.timeStamp) || 0;
+    const lastReactionUserId =
+      typeof lastReaction?.userId === 'number' ? lastReaction.userId : null;
+    const lastReactionType = lastReaction?.reaction;
+
+    if (lastReactionType && lastReactionTimeStamp >= lastMessageTimeStamp) {
+      const reactorName =
+        typeof lastReactionUserId === 'number'
+          ? lastReactionUserId === userId
+            ? 'You'
+            : twoPeople
+            ? partnerUsername || otherMember
+            : members?.find((member) => member.id === lastReactionUserId)
+                ?.username
+          : null;
+      const reactionIconPosition = reactionsObj[lastReactionType]?.position;
+      return (
+        <span>
+          {reactorName || 'Someone'} reacted{' '}
+          {reactionIconPosition ? (
+            <span
+              className={css`
+                display: inline-block;
+                width: 1.4rem;
+                height: 1.4rem;
+                background: url('/img/emojis.png') ${reactionIconPosition} /
+                  5100%;
+                vertical-align: text-bottom;
+              `}
+            />
+          ) : (
+            lastReactionType
+          )}
+        </span>
+      );
+    }
+
     return renderPreviewMessage(lastMessage || {});
     function renderPreviewMessage({
       content,
@@ -263,15 +329,15 @@ export default function Channel({
       }
       return <span>{'\u00a0'}</span>;
     }
-  }, [lastMessage, userId]);
-
-  const totalNumUnreads = useMemo(() => {
-    let result = Number(numUnreads);
-    for (const subchannel of Object.values(subchannelObj)) {
-      result += Number(subchannel.numUnreads || 0);
-    }
-    return result;
-  }, [numUnreads, subchannelObj]);
+  }, [
+    lastMessage,
+    members,
+    otherMember,
+    partnerUsername,
+    settings,
+    twoPeople,
+    userId
+  ]);
 
   const ChannelName = useMemo(() => {
     // For DMs, prefer pre-computed partnerUsername (computed at load time with known userId)
@@ -323,13 +389,23 @@ export default function Channel({
     [lastMessage]
   );
 
+  const lastUnreadSenderId = useMemo(() => {
+    return typeof lastUnreadUserId === 'number' ? lastUnreadUserId : lastSenderId;
+  }, [lastSenderId, lastUnreadUserId]);
+
   const badgeShown = useMemo(() => {
     return (
       channelId !== selectedChannelId &&
       totalNumUnreads > 0 &&
-      lastSenderId !== userId
+      lastUnreadSenderId !== userId
     );
-  }, [channelId, lastSenderId, totalNumUnreads, selectedChannelId, userId]);
+  }, [
+    channelId,
+    lastUnreadSenderId,
+    totalNumUnreads,
+    selectedChannelId,
+    userId
+  ]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Channels/Channel">

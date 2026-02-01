@@ -28,6 +28,40 @@ const chatTabHash: {
   class: 'classChannelIds'
 };
 
+function loadChannelSettings(settings: any) {
+  if (!settings) return {};
+  if (typeof settings === 'string') {
+    try {
+      return JSON.parse(settings);
+    } catch {
+      return {};
+    }
+  }
+  if (typeof settings !== 'object') return {};
+  return settings;
+}
+
+function mergeChannelSettings({
+  existingSettings,
+  serverSettings
+}: {
+  existingSettings: any;
+  serverSettings: any;
+}) {
+  const existing = loadChannelSettings(existingSettings);
+  const server = loadChannelSettings(serverSettings);
+  const existingLastReactionTs = Number(existing?.lastReaction?.timeStamp) || 0;
+  const serverLastReactionTs = Number(server?.lastReaction?.timeStamp) || 0;
+
+  // Prefer server settings as the source of truth, but keep the newer lastReaction
+  // so we don't regress preview state due to replica lag.
+  const merged = { ...existing, ...server };
+  if (existingLastReactionTs > serverLastReactionTs) {
+    merged.lastReaction = existing.lastReaction;
+  }
+  return merged;
+}
+
 export default function ChatReducer(
   state: any,
   action: {
@@ -268,6 +302,7 @@ export default function ChatReducer(
     }
     case 'REMOVE_REACTION_FROM_MESSAGE': {
       const prevChannelObj = state.channelsObj[action.channelId];
+      if (!prevChannelObj) return state;
       const message =
         (action.subchannelId
           ? prevChannelObj?.subchannelObj?.[action.subchannelId]?.messagesObj?.[
@@ -282,7 +317,25 @@ export default function ChatReducer(
           );
         }
       );
-      const subchannelObj = action.subchannelId
+
+      const loadedSettings = loadChannelSettings(prevChannelObj?.settings);
+      const lastReaction = loadedSettings?.lastReaction || null;
+      const shouldClearLastReaction =
+        !!lastReaction &&
+        Number(lastReaction.messageId) === Number(action.messageId) &&
+        Number(lastReaction.userId) === Number(action.userId) &&
+        lastReaction.reaction === action.reaction &&
+        Number(lastReaction.subchannelId || 0) ===
+          Number(action.subchannelId || 0);
+      const updatedSettings = shouldClearLastReaction
+        ? (() => {
+            const nextSettings = { ...loadedSettings };
+            delete nextSettings.lastReaction;
+            return nextSettings;
+          })()
+        : loadedSettings;
+
+      let subchannelObj = action.subchannelId
         ? {
             ...prevChannelObj?.subchannelObj,
             [action.subchannelId]: {
@@ -298,21 +351,121 @@ export default function ChatReducer(
             }
           }
         : prevChannelObj?.subchannelObj;
+
+      const updatedMessagesObj = {
+        ...state.channelsObj[action.channelId]?.messagesObj,
+        [action.messageId]: {
+          ...message,
+          reactions
+        }
+      };
+
+      let updatedChannelState: any = {
+        ...state.channelsObj[action.channelId],
+        messagesObj: updatedMessagesObj,
+        ...(subchannelObj ? { subchannelObj } : {})
+      };
+
+      if (shouldClearLastReaction) {
+        const getLastMessageTimeStamp = () => {
+          let result = 0;
+          const lastChannelMessageId = updatedChannelState?.messageIds?.[0];
+          const lastChannelMessageTimeStamp = Number(
+            updatedChannelState?.messagesObj?.[lastChannelMessageId]?.timeStamp
+          );
+          if (!isNaN(lastChannelMessageTimeStamp)) {
+            result = Math.max(result, lastChannelMessageTimeStamp);
+          }
+          for (const sub of Object.values(
+            updatedChannelState?.subchannelObj || {}
+          ) as any[]) {
+            const lastSubMessageId = sub?.messageIds?.[0];
+            const lastSubMessageTimeStamp = Number(
+              sub?.messagesObj?.[lastSubMessageId]?.timeStamp
+            );
+            if (!isNaN(lastSubMessageTimeStamp)) {
+              result = Math.max(result, lastSubMessageTimeStamp);
+            }
+          }
+          return result;
+        };
+
+        const nextChannelState: any = {
+          ...updatedChannelState,
+          settings: updatedSettings,
+          // Mirror the backend behavior: when the latest persisted reaction is removed,
+          // revert lastUpdated to the most recent message timestamp.
+          lastUpdated: getLastMessageTimeStamp()
+        };
+
+        const targetSubchannelId = Number(action.subchannelId) || 0;
+        if (targetSubchannelId > 0) {
+          const prevSub = nextChannelState?.subchannelObj?.[targetSubchannelId];
+          if (prevSub) {
+            const nextSubNumUnreads = Math.max(
+              0,
+              Number(prevSub?.numUnreads || 0) - 1
+            );
+            subchannelObj = {
+              ...(nextChannelState?.subchannelObj || {}),
+              [targetSubchannelId]: {
+                ...prevSub,
+                numUnreads: nextSubNumUnreads,
+                ...(nextSubNumUnreads === 0
+                  ? {
+                      lastUnreadUserId: null,
+                      lastUnreadReaction: null,
+                      lastUnreadMessageId: null,
+                      lastUnreadReactionTimeStamp: null
+                    }
+                  : {})
+              }
+            };
+            nextChannelState.subchannelObj = subchannelObj;
+          }
+        } else {
+          nextChannelState.numUnreads = Math.max(
+            0,
+            Number(nextChannelState?.numUnreads || 0) - 1
+          );
+        }
+
+        const totalNumUnreads = (() => {
+          let total = Number(nextChannelState?.numUnreads || 0);
+          for (const sub of Object.values(
+            nextChannelState?.subchannelObj || {}
+          ) as any[]) {
+            total += Number(sub?.numUnreads || 0);
+          }
+          return total;
+        })();
+
+        // If this removal clears the last unread marker, clear the metadata too.
+        if (totalNumUnreads === 0) {
+          nextChannelState.lastUnreadUserId = null;
+          nextChannelState.lastUnreadReaction = null;
+          nextChannelState.lastUnreadMessageId = null;
+          nextChannelState.lastUnreadReactionTimeStamp = null;
+        } else if (
+          Number(nextChannelState?.lastUnreadMessageId || 0) ===
+            Number(action.messageId) &&
+          nextChannelState?.lastUnreadReaction === action.reaction &&
+          Number(nextChannelState?.lastUnreadUserId || 0) ===
+            Number(action.userId)
+        ) {
+          nextChannelState.lastUnreadReaction = null;
+          nextChannelState.lastUnreadMessageId = null;
+          nextChannelState.lastUnreadReactionTimeStamp = null;
+        }
+
+        updatedChannelState = nextChannelState;
+      }
+
       return {
         ...state,
         channelsObj: {
           ...state.channelsObj,
-          [action.channelId]: {
-            ...state.channelsObj[action.channelId],
-            messagesObj: {
-              ...state.channelsObj[action.channelId]?.messagesObj,
-              [action.messageId]: {
-                ...message,
-                reactions
-              }
-            },
-            ...(subchannelObj ? { subchannelObj } : {})
-          }
+          [action.channelId]: updatedChannelState
         }
       };
     }
@@ -952,6 +1105,16 @@ export default function ChatReducer(
     case 'ENTER_CHANNEL': {
       let messagesLoadMoreButton = false;
       const loadedChannel = action.data.channel;
+      const existingLoadedChannel = state.channelsObj[loadedChannel.id] || {};
+      const mergedChannelSettings = mergeChannelSettings({
+        existingSettings: existingLoadedChannel?.settings,
+        serverSettings: loadedChannel?.settings
+      });
+      const mergedChannelLastUpdated = Math.max(
+        Number(existingLoadedChannel?.lastUpdated || 0),
+        Number(loadedChannel?.lastUpdated || 0),
+        Number(mergedChannelSettings?.lastReaction?.timeStamp || 0)
+      );
       if (action.data.messages.length === 21) {
         action.data.messages.pop();
         messagesLoadMoreButton = true;
@@ -1040,6 +1203,8 @@ export default function ChatReducer(
             : {}),
           [loadedChannel.id]: {
             ...loadedChannel,
+            lastUpdated: mergedChannelLastUpdated,
+            settings: mergedChannelSettings,
             messagesLoadMoreButton,
             loadMoreMembersShown: action.data.channel?.loadMoreMembersShown,
             subchannelIds: action.data.channel?.subchannelIds,
@@ -1335,6 +1500,15 @@ export default function ChatReducer(
       for (const channelId in action.data.channelsObj) {
         const existingChannel = state.channelsObj[channelId];
         const serverChannel = action.data.channelsObj[channelId];
+        const mergedSettings = mergeChannelSettings({
+          existingSettings: existingChannel?.settings,
+          serverSettings: serverChannel?.settings
+        });
+        const mergedLastUpdated = Math.max(
+          Number(existingChannel?.lastUpdated || 0),
+          Number(serverChannel?.lastUpdated || 0),
+          Number(mergedSettings?.lastReaction?.timeStamp || 0)
+        );
         // Deep merge topicObj to preserve each topic's loaded state and messageIds
         const mergedTopicObj: Record<string, any> = {
           ...existingChannel?.topicObj
@@ -1358,6 +1532,8 @@ export default function ChatReducer(
         }
         newChannelsObj[channelId] = {
           ...serverChannel,
+          lastUpdated: mergedLastUpdated,
+          settings: mergedSettings,
           // Preserve client-side UI state
           selectedTab: existingChannel?.selectedTab,
           selectedTopicId: existingChannel?.selectedTopicId,
@@ -1392,6 +1568,15 @@ export default function ChatReducer(
       }
       const existingCurrentChannel =
         state.channelsObj[action.data.currentChannelId];
+      const mergedCurrentSettings = mergeChannelSettings({
+        existingSettings: existingCurrentChannel?.settings,
+        serverSettings: newCurrentChannel?.settings
+      });
+      const mergedCurrentLastUpdated = Math.max(
+        Number(existingCurrentChannel?.lastUpdated || 0),
+        Number(newCurrentChannel?.lastUpdated || 0),
+        Number(mergedCurrentSettings?.lastReaction?.timeStamp || 0)
+      );
       // Deep merge topicObj for current channel
       const mergedCurrentTopicObj: Record<string, any> = {
         ...existingCurrentChannel?.topicObj
@@ -1419,6 +1604,8 @@ export default function ChatReducer(
           newCurrentChannel?.allMemberIds ||
           action.data.channelsObj[action.data.currentChannelId]?.allMemberIds ||
           [],
+        lastUpdated: mergedCurrentLastUpdated,
+        settings: mergedCurrentSettings,
         messagesLoadMoreButton,
         messageIds: newMessageIds,
         messagesObj: newMessagesObj,
@@ -1880,9 +2067,25 @@ export default function ChatReducer(
 
       const newChannels = { ...state.channelsObj };
       for (const channel of action.channels) {
+        const existingChannel = state.channelsObj[channel.id] || {};
+        if (existingChannel?.loaded) {
+          newChannels[channel.id] = existingChannel;
+          continue;
+        }
+        const mergedSettings = mergeChannelSettings({
+          existingSettings: existingChannel?.settings,
+          serverSettings: channel?.settings
+        });
+        const mergedLastUpdated = Math.max(
+          Number(existingChannel?.lastUpdated || 0),
+          Number(channel?.lastUpdated || 0),
+          Number(mergedSettings?.lastReaction?.timeStamp || 0)
+        );
         newChannels[channel.id] = {
-          ...state.channelsObj[channel.id],
-          ...(state.channelsObj[channel.id]?.loaded ? {} : channel)
+          ...existingChannel,
+          ...channel,
+          lastUpdated: mergedLastUpdated,
+          settings: mergedSettings
         };
       }
 
@@ -3065,6 +3268,116 @@ export default function ChatReducer(
         homeChannelIds: [action.channel.id].concat(
           state.homeChannelIds.filter(
             (channelId: number) => channelId !== action.channel.id
+          )
+        )
+      };
+    }
+    case 'RECEIVE_CHAT_REACTION': {
+      const prevChannelObj = state.channelsObj[action.channelId];
+      const shouldIncrementUnreads = action.shouldIncrementUnreads !== false;
+      if (!prevChannelObj) {
+        return {
+          ...state,
+          numUnreads:
+            !shouldIncrementUnreads || (action.pageVisible && action.usingChat)
+              ? state.numUnreads
+              : Number(state.numUnreads) + 1
+        };
+      }
+
+      const subchannelId = Number(action.subchannelId) || null;
+      let loadedSettings: any = prevChannelObj?.settings || {};
+      if (typeof loadedSettings === 'string') {
+        try {
+          loadedSettings = JSON.parse(loadedSettings);
+        } catch {
+          loadedSettings = {};
+        }
+      }
+      if (typeof loadedSettings !== 'object' || !loadedSettings) {
+        loadedSettings = {};
+      }
+      const updatedSettings = {
+        ...loadedSettings,
+        lastReaction: {
+          userId: action.userId,
+          reaction: action.reaction,
+          messageId: action.messageId,
+          subchannelId: subchannelId || 0,
+          timeStamp: action.timeStamp
+        }
+      };
+
+      const updatedSubchannelObj = subchannelId
+        ? {
+            ...prevChannelObj?.subchannelObj,
+            [subchannelId]: {
+              ...prevChannelObj?.subchannelObj?.[subchannelId],
+              ...(shouldIncrementUnreads
+                ? {
+                    numUnreads:
+                      Number(
+                        prevChannelObj?.subchannelObj?.[subchannelId]
+                          ?.numUnreads || 0
+                      ) + 1,
+                    lastUnreadUserId: action.userId,
+                    lastUnreadReaction: action.reaction,
+                    lastUnreadMessageId: action.messageId,
+                    lastUnreadReactionTimeStamp: action.timeStamp
+                  }
+                : {})
+            }
+          }
+        : prevChannelObj?.subchannelObj;
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: subchannelId
+            ? {
+                ...prevChannelObj,
+                lastUpdated: action.timeStamp,
+                settings: updatedSettings,
+                ...(shouldIncrementUnreads
+                  ? {
+                      lastUnreadUserId: action.userId,
+                      lastUnreadReaction: action.reaction,
+                      lastUnreadMessageId: action.messageId,
+                      lastUnreadReactionTimeStamp: action.timeStamp
+                    }
+                  : {}),
+                subchannelObj: updatedSubchannelObj
+              }
+            : {
+                ...prevChannelObj,
+                lastUpdated: action.timeStamp,
+                settings: updatedSettings,
+                ...(shouldIncrementUnreads
+                  ? {
+                      numUnreads: Number(prevChannelObj?.numUnreads || 0) + 1,
+                      lastUnreadUserId: action.userId,
+                      lastUnreadReaction: action.reaction,
+                      lastUnreadMessageId: action.messageId,
+                      lastUnreadReactionTimeStamp: action.timeStamp
+                    }
+                  : {})
+              }
+        },
+        numUnreads:
+          !shouldIncrementUnreads || (action.pageVisible && action.usingChat)
+            ? state.numUnreads
+            : Number(state.numUnreads) + 1,
+        favoriteChannelIds: state.allFavoriteChannelIds[action.channelId]
+          ? [action.channelId].concat(
+              state.favoriteChannelIds.filter(
+                (channelId: number) => channelId !== action.channelId
+              )
+            )
+          : state.favoriteChannelIds,
+        homeChannelIds: [action.channelId].concat(
+          state.homeChannelIds.filter(
+            (channelId: number) => channelId !== action.channelId
           )
         )
       };

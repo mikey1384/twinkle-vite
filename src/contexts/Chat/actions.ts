@@ -1295,6 +1295,40 @@ export default function ChatActions(dispatch: Dispatch) {
         newMembers
       });
     },
+    onReceiveChatReaction({
+      channelId,
+      messageId,
+      reaction,
+      subchannelId,
+      userId,
+      pageVisible,
+      usingChat,
+      timeStamp,
+      shouldIncrementUnreads = true
+    }: {
+      channelId: number;
+      messageId: number;
+      reaction: string;
+      subchannelId: number;
+      userId: number;
+      pageVisible: boolean;
+      usingChat: boolean;
+      timeStamp: number;
+      shouldIncrementUnreads?: boolean;
+    }) {
+      return dispatch({
+        type: 'RECEIVE_CHAT_REACTION',
+        channelId,
+        messageId,
+        reaction,
+        subchannelId,
+        userId,
+        pageVisible,
+        usingChat,
+        timeStamp,
+        shouldIncrementUnreads
+      });
+    },
     onNewAICardSummon({ card, feed }: { card: object; feed: object }) {
       return dispatch({
         type: 'RECEIVE_AI_CARD_SUMMON',
