@@ -33,11 +33,7 @@ interface SharedTopic {
   myClones?: CloneEntry[];
 }
 
-export default function SystemPromptShared({
-  missionCleared
-}: {
-  missionCleared: boolean;
-}) {
+export default function SystemPromptShared() {
   const userId = useKeyContext((v) => v.myState.userId);
   const loadOtherUserTopics = useAppContext(
     (v) => v.requestHelpers.loadOtherUserTopics
@@ -331,6 +327,7 @@ export default function SystemPromptShared({
             your AI chat to complete the mission checklist.
           </p>
         </header>
+        <MyTopicsManager />
         <FilterBar bordered>
           {tabs.map((tab) => (
             <nav
@@ -474,7 +471,6 @@ export default function SystemPromptShared({
             </Button>
           </div>
         )}
-        {!missionCleared && <MyTopicsManager />}
       </div>
     </ErrorBoundary>
   );

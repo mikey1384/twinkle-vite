@@ -16,6 +16,7 @@ import TargetSelector from './TargetSelector';
 import Preview from './Preview';
 import TaskComplete from '../components/TaskComplete';
 import MissionStatusCard from '~/components/MissionStatusCard';
+import MyTopicsManager from '../../../SystemPromptShared/MyTopicsManager';
 
 const layoutClass = css`
   display: grid;
@@ -405,6 +406,7 @@ export default function SystemPromptMission({
             allTasksComplete={checklistItems.every((item) => item.complete)}
             style={{ marginTop: '1rem' }}
           />
+          <MyTopicsManager />
         </div>
       </div>
     </ErrorBoundary>

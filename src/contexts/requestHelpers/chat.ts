@@ -412,6 +412,16 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadMySharedPrompts() {
+      try {
+        const {
+          data: { prompts }
+        } = await request.get(`${URL}/chat/topic/mySharedPrompts`, auth());
+        return { prompts };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateTopicShareState({
       channelId,
       topicId,

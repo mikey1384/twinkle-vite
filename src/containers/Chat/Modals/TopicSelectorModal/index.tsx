@@ -134,7 +134,8 @@ export default function TopicSelectorModal({
     return () => {
       ignore = true;
     };
-  }, [channelId, isAIChannel, loadOtherUserTopics]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, isAIChannel]);
 
   useEffect(() => {
     setSearched(false);

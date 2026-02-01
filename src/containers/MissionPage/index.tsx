@@ -315,9 +315,7 @@ export default function MissionPage() {
               {isSystemPromptMission && (
                 <Route
                   path="/shared"
-                  element={
-                    <SystemPromptShared missionCleared={missionCleared} />
-                  }
+                  element={<SystemPromptShared />}
                 />
               )}
               <Route
