@@ -80,7 +80,6 @@ function PromptStatsRow({
 export default function MyTopicsManager() {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
-  const [sharedExpanded, setSharedExpanded] = useState(false);
   const [sharedSearchText, setSharedSearchText] = useState('');
   const [sharedSearchResults, setSharedSearchResults] = useState<MyTopic[]>([]);
   const [sharedSearchLoadMoreButton, setSharedSearchLoadMoreButton] =
@@ -198,19 +197,8 @@ export default function MyTopicsManager() {
 
   const displayedSharedPrompts = sharedSearchActive
     ? sharedSearchResults
-    : sharedExpanded
-      ? sharedPrompts
-      : sharedPrompts.slice(0, INITIAL_SHARED_PROMPTS_DISPLAY_COUNT);
-  const hasMoreSharedPrompts =
-    !sharedExpanded &&
-    !sharedSearchActive &&
-    sharedCount > INITIAL_SHARED_PROMPTS_DISPLAY_COUNT;
-  const sharedHiddenCount = Math.max(
-    0,
-    sharedCount - INITIAL_SHARED_PROMPTS_DISPLAY_COUNT
-  );
-  const sharedHasMoreToLoad =
-    !sharedSearchActive && sharedPrompts.length < sharedCount;
+    : sharedPrompts;
+  const sharedHasMoreToLoad = sharedPrompts.length < sharedCount;
 
   const displayedTopics = expanded
     ? topics
@@ -401,28 +389,34 @@ export default function MyTopicsManager() {
                       border-radius: ${borderRadius};
                     `}
                   >
-                    <Icon
-                      icon="magnifying-glass"
-                      style={{
-                        fontSize: '2.6rem',
-                        marginBottom: '0.8rem',
-                        opacity: 0.5
-                      }}
-                    />
-                    <p
-                      className={css`
-                        margin: 0;
-                        font-size: 1.3rem;
-                      `}
-                    >
-                      No shared prompts match “{sharedSearchText.trim()}”.
-                    </p>
+                    {sharedSearchActive ? (
+                      <>
+                        <Icon
+                          icon="magnifying-glass"
+                          style={{
+                            fontSize: '2.6rem',
+                            marginBottom: '0.8rem',
+                            opacity: 0.5
+                          }}
+                        />
+                        <p
+                          className={css`
+                            margin: 0;
+                            font-size: 1.3rem;
+                          `}
+                        >
+                          No shared prompts match “{sharedSearchText.trim()}”.
+                        </p>
+                      </>
+                    ) : (
+                      <Loading />
+                    )}
                   </div>
                 ) : (
                   displayedSharedPrompts.map((topic) => (
-                    <div
-                      key={topic.id}
-                      className={css`
+	                    <div
+	                      key={topic.id}
+	                      className={css`
                         padding: 1.2rem;
                         border: 1px solid var(--ui-border);
                         border-radius: ${borderRadius};
@@ -528,72 +522,13 @@ export default function MyTopicsManager() {
                   ))
                 )}
 
-                {hasMoreSharedPrompts && (
-                  <button
-                    onClick={handleShowMoreSharedPromptsClick}
-                    className={css`
-                      width: 100%;
-                      padding: 1rem;
-                      background: ${Color.highlightGray(0.1)};
-                      border: 1px solid var(--ui-border);
-                      border-radius: ${borderRadius};
-                      cursor: pointer;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 0.6rem;
-                      font-size: 1.3rem;
-                      font-weight: 600;
-                      color: ${Color.darkerGray()};
-                      transition: all 0.2s ease;
-                      &:hover {
-                        background: ${Color.highlightGray(0.2)};
-                      }
-                    `}
-                  >
-                    <Icon icon="chevron-down" />
-                    Show {sharedHiddenCount} more shared{' '}
-                    {sharedHiddenCount === 1 ? 'prompt' : 'prompts'}
-                  </button>
-                )}
-
-                {sharedExpanded && sharedHasMoreToLoad && (
+                {!sharedSearchActive && sharedHasMoreToLoad && (
                   <LoadMoreButton
                     loading={loadingMoreSharedPrompts}
                     onClick={handleLoadMoreSharedPrompts}
                     style={{ marginTop: '0.5rem' }}
                   />
                 )}
-
-                {sharedExpanded &&
-                  !sharedSearchActive &&
-                  sharedCount > INITIAL_SHARED_PROMPTS_DISPLAY_COUNT && (
-                    <button
-                      onClick={() => setSharedExpanded(false)}
-                      className={css`
-                        width: 100%;
-                        padding: 0.9rem;
-                        background: transparent;
-                        border: 1px solid var(--ui-border);
-                        border-radius: ${borderRadius};
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 0.6rem;
-                        font-size: 1.2rem;
-                        font-weight: 700;
-                        color: ${Color.darkerGray()};
-                        transition: all 0.2s ease;
-                        &:hover {
-                          background: ${Color.highlightGray(0.12)};
-                        }
-                      `}
-                    >
-                      <Icon icon="chevron-up" />
-                      Hide shared prompts
-                    </button>
-                  )}
 
                 {sharedSearchActive &&
                   !loadingSharedSearch &&
@@ -872,15 +807,15 @@ export default function MyTopicsManager() {
     }
   }
 
-  async function handleLoadMoreSharedPrompts() {
-    if (loadingMoreSharedPrompts) return;
-    const hasMore = sharedPrompts.length < sharedTotals.totalCount;
-    if (!hasMore) return;
-    const lastPrompt = sharedPrompts[sharedPrompts.length - 1];
-    const canUseCursor = Boolean(lastPrompt?.sharedAt);
+	  async function handleLoadMoreSharedPrompts() {
+	    if (loadingMoreSharedPrompts) return;
+	    const hasMore = sharedPrompts.length < sharedTotals.totalCount;
+	    if (!hasMore) return;
+	    const lastPrompt = sharedPrompts[sharedPrompts.length - 1];
+	    const canUseCursor = Boolean(lastPrompt?.sharedAt);
 
-    setLoadingMoreSharedPrompts(true);
-    try {
+	    setLoadingMoreSharedPrompts(true);
+	    try {
       const {
         prompts: morePrompts,
         totalCount,
@@ -898,17 +833,17 @@ export default function MyTopicsManager() {
       setSharedPrompts((prev) =>
         prev.length > 0 ? prev.concat(morePrompts || []) : morePrompts || []
       );
-      setSharedTotals({
-        totalCount: Number(totalCount) || 0,
-        totalClones: Number(totalClones) || 0,
-        totalMessages: Number(totalMessages) || 0
-      });
-    } catch (error) {
-      console.error('Failed to load more shared prompts:', error);
-    } finally {
-      setLoadingMoreSharedPrompts(false);
-    }
-  }
+	      setSharedTotals({
+	        totalCount: Number(totalCount) || 0,
+	        totalClones: Number(totalClones) || 0,
+	        totalMessages: Number(totalMessages) || 0
+	      });
+	    } catch (error) {
+	      console.error('Failed to load more shared prompts:', error);
+	    } finally {
+	      setLoadingMoreSharedPrompts(false);
+	    }
+	  }
 
   async function handleLoadMoreSharedSearch() {
     if (
@@ -1065,17 +1000,10 @@ export default function MyTopicsManager() {
     }
   }
 
-  function handleShowMoreSharedPromptsClick() {
-    setSharedExpanded(true);
-    if (sharedPrompts.length < sharedCount) {
-      handleLoadMoreSharedPrompts();
-    }
-  }
-
-  async function handleCopyEmbed(topicId: number) {
-    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
-    try {
-      await navigator.clipboard.writeText(embedUrl);
+	  async function handleCopyEmbed(topicId: number) {
+	    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
+	    try {
+	      await navigator.clipboard.writeText(embedUrl);
       setCopiedId(topicId);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
