@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -31,54 +31,6 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
       ((MAX_AI_CALL_DURATION - aiCallDuration) / MAX_AI_CALL_DURATION) * 100
     );
   }, [aiCallDuration, isAdmin]);
-
-  const handleStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!(e.target as HTMLElement).closest('.draggable-area')) {
-      return;
-    }
-    e.preventDefault();
-    setIsDragging(true);
-
-    if (windowRef.current) {
-      const rect = windowRef.current.getBoundingClientRect();
-      const clientX =
-        'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY =
-        'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-      dragOffset.current = {
-        x: clientX - rect.left,
-        y: clientY - rect.top
-      };
-    }
-  }, []);
-
-  const handleMove = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-
-      const clientX =
-        'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-      const clientY =
-        'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-      setPosition({
-        x: clientX - dragOffset.current.x,
-        y: clientY - dragOffset.current.y
-      });
-    },
-    [isDragging]
-  );
-
-  const handleEnd = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleHangUpClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onHangUp();
-  };
 
   return (
     <>
@@ -214,6 +166,51 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
       </div>
     </>
   );
+
+  function handleStart(e: React.MouseEvent | React.TouchEvent) {
+    if (!(e.target as HTMLElement).closest('.draggable-area')) {
+      return;
+    }
+    e.preventDefault();
+    setIsDragging(true);
+
+    if (windowRef.current) {
+      const rect = windowRef.current.getBoundingClientRect();
+      const clientX =
+        'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+      const clientY =
+        'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+      dragOffset.current = {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+  }
+
+  function handleMove(e: React.MouseEvent | React.TouchEvent) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const clientX =
+      'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY =
+      'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    setPosition({
+      x: clientX - dragOffset.current.x,
+      y: clientY - dragOffset.current.y
+    });
+  }
+
+  function handleEnd() {
+    setIsDragging(false);
+  }
+
+  function handleHangUpClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    onHangUp();
+  }
 }
 
 export default React.memo(Window);

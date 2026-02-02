@@ -212,10 +212,6 @@ function Message({
     );
   }, [currentChannel?.twoPeople, partner?.id]);
 
-  const handleDeleteErrorMessage = () => {
-    onDelete({ messageId: message?.id });
-  };
-
   let renderedContent: React.ReactNode = null;
 
   if (loadFailed) {
@@ -324,6 +320,10 @@ function Message({
   }
 
   return renderedContent;
+
+  function handleDeleteErrorMessage() {
+    onDelete({ messageId: message?.id });
+  }
 }
 
 export default memo(Message);

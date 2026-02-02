@@ -38,15 +38,6 @@ export default function AttachContentModal({
   const [section, setSection] = useState('start');
   const [selected, setSelected] = useState<Record<string, any>>();
 
-  const handleClose = () => {
-    if (section === 'selectVideo' || section === 'selectLink') {
-      setSection('start');
-      setSelected(undefined);
-    } else {
-      onHide();
-    }
-  };
-
   return (
     <Modal
       modalKey="AttachContentModal"
@@ -104,4 +95,13 @@ export default function AttachContentModal({
       )}
     </Modal>
   );
+
+  function handleClose() {
+    if (section === 'selectVideo' || section === 'selectLink') {
+      setSection('start');
+      setSelected(undefined);
+    } else {
+      onHide();
+    }
+  }
 }

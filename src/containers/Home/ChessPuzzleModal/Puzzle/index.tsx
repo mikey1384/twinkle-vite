@@ -512,7 +512,7 @@ export default function Puzzle({
               executeEngineMove={executeEngineMove}
               requestEngineReply={requestEngineReply}
               appendCurrentFen={appendCurrentFen}
-              handleCastling={handleCastling}
+              onCastling={handleCastling}
               currentLevel={selectedLevel || 1}
             />
             {phase === 'ANALYSIS' && (

@@ -10,15 +10,15 @@ interface DrawingToolsUIProps {
   tool: ToolType;
   setTool: (tool: ToolType) => void;
   color: string;
-  handleColorChange: (color: string, commit?: boolean) => void;
+  onColorChange: (color: string, commit?: boolean) => void;
   lineWidth: number;
   setLineWidth: (w: number) => void;
   fontSize: number;
   setFontSize: (s: number) => void;
   disabled: boolean;
   recentColors: string[];
-  handleUndo: () => void;
-  handleRedo: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
   canvasHistory: any[];
   redoHistory: any[];
   clearCanvas: () => void;
@@ -33,15 +33,15 @@ export default function DrawingToolsUI({
   tool,
   setTool,
   color,
-  handleColorChange,
+  onColorChange,
   lineWidth,
   setLineWidth,
   fontSize,
   setFontSize,
   disabled,
   recentColors,
-  handleUndo,
-  handleRedo,
+  onUndo,
+  onRedo,
   canvasHistory,
   redoHistory,
   clearCanvas,
@@ -165,19 +165,19 @@ export default function DrawingToolsUI({
                   }}
                   onBlur={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    handleColorChange(v, true);
+                    onColorChange(v, true);
                     pickerActiveRef.current = false;
                   }}
                   onChange={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    handleColorChange(
+                    onColorChange(
                       v,
                       pickerActiveRef.current ? false : true
                     );
                   }}
                   onInput={(e) => {
                     const v = (e.target as HTMLInputElement).value;
-                    handleColorChange(v, false);
+                    onColorChange(v, false);
                   }}
                   disabled={disabled}
                   className={css`
@@ -236,7 +236,7 @@ export default function DrawingToolsUI({
                 {COMMON_COLORS.map((commonColor) => (
                   <button
                     key={commonColor}
-                    onClick={() => handleColorChange(commonColor, true)}
+                    onClick={() => onColorChange(commonColor, true)}
                     disabled={disabled}
                     className={css`
                       width: 32px;
@@ -297,7 +297,7 @@ export default function DrawingToolsUI({
                   {recentColors.map((recentColor, index) => (
                     <button
                       key={`${recentColor}-${index}`}
-                      onClick={() => handleColorChange(recentColor, true)}
+                      onClick={() => onColorChange(recentColor, true)}
                       disabled={disabled}
                       className={css`
                         width: 26px;
@@ -478,7 +478,7 @@ export default function DrawingToolsUI({
             `}
           >
             <Button
-              onClick={handleUndo}
+              onClick={onUndo}
               disabled={disabled || canvasHistory.length === 0}
               color="darkBlue"
               style={{ padding: '0.75rem 1.25rem' }}
@@ -487,7 +487,7 @@ export default function DrawingToolsUI({
               <span style={{ marginLeft: '0.5rem' }}>Undo</span>
             </Button>
             <Button
-              onClick={handleRedo}
+              onClick={onRedo}
               disabled={disabled || !redoHistory || redoHistory.length === 0}
               color="darkBlue"
               style={{ padding: '0.75rem 1.25rem' }}

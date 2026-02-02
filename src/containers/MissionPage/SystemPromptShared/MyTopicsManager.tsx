@@ -64,15 +64,17 @@ function PromptStatsRow({
       </div>
       <div
         className={`${statPillClass} ${copyPillClass}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onCopyEmbed(topicId);
-        }}
+        onClick={handleCopyClick}
       >
         <Icon icon={copiedId === topicId ? 'check' : 'copy'} />
       </div>
     </div>
   );
+
+  function handleCopyClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    onCopyEmbed(topicId);
+  }
 }
 
 export default function MyTopicsManager() {
@@ -117,44 +119,6 @@ export default function MyTopicsManager() {
 
   useEffect(() => {
     handleLoadTopics();
-    async function handleLoadTopics() {
-      setLoading(true);
-      setLoadingSharedPrompts(true);
-      try {
-        const [topicsResult, sharedPromptsResult] = await Promise.allSettled([
-          loadMyCustomInstructionTopics({ limit: LOAD_LIMIT }),
-          loadMySharedPrompts({ limit: INITIAL_SHARED_PROMPTS_DISPLAY_COUNT })
-        ]);
-
-        if (topicsResult.status === 'fulfilled') {
-          const { topics: loadedTopics, loadMoreButton: hasMore } =
-            topicsResult.value || {};
-          setTopics(loadedTopics || []);
-          setLoadMoreButton(Boolean(hasMore));
-        } else {
-          console.error('Failed to load topics:', topicsResult.reason);
-        }
-
-        if (sharedPromptsResult.status === 'fulfilled') {
-          const { prompts, totalCount, totalClones, totalMessages } =
-            sharedPromptsResult.value || {};
-          setSharedPrompts(prompts || []);
-          setSharedTotals({
-            totalCount: Number(totalCount) || 0,
-            totalClones: Number(totalClones) || 0,
-            totalMessages: Number(totalMessages) || 0
-          });
-        } else {
-          console.error(
-            'Failed to load shared prompt stats:',
-            sharedPromptsResult.reason
-          );
-        }
-      } finally {
-        setLoading(false);
-        setLoadingSharedPrompts(false);
-      }
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -203,63 +167,6 @@ export default function MyTopicsManager() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedSearchText]);
 
-  const handleLoadMore = async () => {
-    if (!loadMoreButton || loadingMore || topics.length === 0) return;
-    const lastTopic = topics[topics.length - 1];
-    setLoadingMore(true);
-    try {
-      const { topics: moreTopics, loadMoreButton: hasMore } =
-        await loadMyCustomInstructionTopics({
-          limit: LOAD_LIMIT,
-          lastId: lastTopic.id
-        });
-      setTopics((prev) => prev.concat(moreTopics || []));
-      setLoadMoreButton(Boolean(hasMore));
-    } catch (error) {
-      console.error('Failed to load more topics:', error);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const handleLoadMoreSharedPrompts = async () => {
-    if (loadingMoreSharedPrompts) return;
-    const hasMore = sharedPrompts.length < sharedTotals.totalCount;
-    if (!hasMore) return;
-    const lastPrompt = sharedPrompts[sharedPrompts.length - 1];
-    const canUseCursor = Boolean(lastPrompt?.sharedAt);
-
-    setLoadingMoreSharedPrompts(true);
-    try {
-      const {
-        prompts: morePrompts,
-        totalCount,
-        totalClones,
-        totalMessages
-      } = await loadMySharedPrompts({
-        limit: LOAD_LIMIT,
-        ...(canUseCursor
-          ? {
-              lastId: lastPrompt.id,
-              lastSharedAt: lastPrompt.sharedAt as number
-            }
-          : {})
-      });
-      setSharedPrompts((prev) =>
-        prev.length > 0 ? prev.concat(morePrompts || []) : morePrompts || []
-      );
-      setSharedTotals({
-        totalCount: Number(totalCount) || 0,
-        totalClones: Number(totalClones) || 0,
-        totalMessages: Number(totalMessages) || 0
-      });
-    } catch (error) {
-      console.error('Failed to load more shared prompts:', error);
-    } finally {
-      setLoadingMoreSharedPrompts(false);
-    }
-  };
-
   useEffect(() => {
     const shouldAutoLoad =
       !sharedSearchText.trim() &&
@@ -283,172 +190,6 @@ export default function MyTopicsManager() {
     loadingSharedPrompts,
     loadingMoreSharedPrompts
   ]);
-
-  const handleLoadMoreSharedSearch = async () => {
-    if (
-      loadingSharedSearch ||
-      loadingMoreSharedSearch ||
-      !sharedSearchLoadMoreButton ||
-      sharedSearchResults.length === 0
-    ) {
-      return;
-    }
-    const lastResult = sharedSearchResults[sharedSearchResults.length - 1];
-    if (!lastResult?.sharedAt) return;
-
-    setLoadingMoreSharedSearch(true);
-    try {
-      const query = sharedSearchText.trim();
-      if (!query) return;
-      const queryAtRequest = query;
-      const { prompts: morePrompts, loadMoreButton: hasMore } =
-        await loadMySharedPrompts({
-          limit: SHARED_PROMPTS_SEARCH_LIMIT,
-          searchText: query,
-          lastId: lastResult.id,
-          lastSharedAt: lastResult.sharedAt
-        });
-      if (sharedSearchTextRef.current.trim() !== queryAtRequest) {
-        return;
-      }
-      setSharedSearchResults((prev) => prev.concat(morePrompts || []));
-      setSharedSearchLoadMoreButton(Boolean(hasMore));
-    } catch (error) {
-      console.error('Failed to load more search results:', error);
-    } finally {
-      setLoadingMoreSharedSearch(false);
-    }
-  };
-
-  const handleToggleShare = async (topic: MyTopic) => {
-    setUpdatingTopicId(topic.id);
-    try {
-      const topicFromTopics = topics.find((t) => t.id === topic.id);
-      const topicFromSharedPrompts = sharedPrompts.find((p) => p.id === topic.id);
-      const topicFromSearchResults = sharedSearchResults.find(
-        (p) => p.id === topic.id
-      );
-      const currentIsShared =
-        topicFromTopics?.isSharedWithOtherUsers ??
-        topicFromSharedPrompts?.isSharedWithOtherUsers ??
-        topicFromSearchResults?.isSharedWithOtherUsers ??
-        topic.isSharedWithOtherUsers;
-      const nextIsShared = !currentIsShared;
-      const effectiveTopic =
-        topicFromTopics || topicFromSharedPrompts || topicFromSearchResults || topic;
-      const cloneDelta = Number(effectiveTopic.cloneCount) || 0;
-      const messageDelta = Number(effectiveTopic.messageCount) || 0;
-      const nowSec = Math.floor(Date.now() / 1000);
-
-      await updateTopicShareState({
-        channelId: topic.channelId,
-        topicId: topic.id,
-        shareWithOtherUsers: nextIsShared
-      });
-      setSharedTotals((prev) => ({
-        totalCount: Math.max(0, prev.totalCount + (nextIsShared ? 1 : -1)),
-        totalClones: Math.max(
-          0,
-          prev.totalClones + (nextIsShared ? cloneDelta : -cloneDelta)
-        ),
-        totalMessages: Math.max(
-          0,
-          prev.totalMessages + (nextIsShared ? messageDelta : -messageDelta)
-        )
-      }));
-      setTopics((prev) =>
-        prev.map((t) =>
-          t.id === topic.id
-            ? {
-                ...t,
-                isSharedWithOtherUsers: nextIsShared,
-                sharedAt: nextIsShared ? nowSec : null
-              }
-            : t
-        )
-      );
-      setSharedPrompts((prev) => {
-        if (nextIsShared) {
-          const alreadyIncluded = prev.some((p) => p.id === topic.id);
-          if (alreadyIncluded) {
-            return prev.map((p) =>
-              p.id === topic.id
-                ? {
-                    ...p,
-                    isSharedWithOtherUsers: true,
-                    sharedAt: nowSec
-                  }
-                : p
-            );
-          }
-          return [
-            {
-              ...topic,
-              isSharedWithOtherUsers: true,
-              sharedAt: nowSec,
-              cloneCount: cloneDelta,
-              messageCount: messageDelta,
-              numComments: Number(effectiveTopic.numComments) || 0
-            },
-            ...prev
-          ];
-        }
-        return prev.filter((p) => p.id !== topic.id);
-      });
-      setSharedSearchResults((prev) => {
-        const query = sharedSearchTextRef.current.trim().toLowerCase();
-        if (!query) return prev;
-
-        const matchesQuery = (topic.content || '')
-          .toLowerCase()
-          .includes(query);
-
-        if (nextIsShared) {
-          if (!matchesQuery) return prev;
-          const alreadyIncluded = prev.some((p) => p.id === topic.id);
-          if (alreadyIncluded) {
-            return prev.map((p) =>
-              p.id === topic.id
-                ? {
-                    ...p,
-                    isSharedWithOtherUsers: true,
-                    sharedAt: nowSec
-                  }
-                : p
-            );
-          }
-          return [
-            {
-              ...topic,
-              isSharedWithOtherUsers: true,
-              sharedAt: nowSec,
-              cloneCount: cloneDelta,
-              messageCount: messageDelta,
-              numComments: Number(effectiveTopic.numComments) || 0
-            },
-            ...prev
-          ];
-        }
-
-        return prev.filter((p) => p.id !== topic.id);
-      });
-    } catch (error) {
-      console.error('Failed to update share state:', error);
-    } finally {
-      setUpdatingTopicId(null);
-    }
-  };
-
-  async function handleCopyEmbed(topicId: number) {
-    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
-    try {
-      await navigator.clipboard.writeText(embedUrl);
-      setCopiedId(topicId);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  }
 
   const sharedCount = sharedTotals.totalCount;
   const totalClones = sharedTotals.totalClones;
@@ -789,12 +530,7 @@ export default function MyTopicsManager() {
 
                 {hasMoreSharedPrompts && (
                   <button
-                    onClick={() => {
-                      setSharedExpanded(true);
-                      if (sharedPrompts.length < sharedCount) {
-                        handleLoadMoreSharedPrompts();
-                      }
-                    }}
+                    onClick={handleShowMoreSharedPromptsClick}
                     className={css`
                       width: 100%;
                       padding: 1rem;
@@ -965,11 +701,10 @@ export default function MyTopicsManager() {
                                 : ''}
                             }
                           `}
-                          onClick={() => {
-                            if (topic.isSharedWithOtherUsers) {
-                              navigate(`/shared-prompts/${topic.id}`);
-                            }
-                          }}
+                          onClick={() =>
+                            topic.isSharedWithOtherUsers &&
+                            navigate(`/shared-prompts/${topic.id}`)
+                          }
                         >
                           {topic.content}
                         </h4>
@@ -1078,6 +813,275 @@ export default function MyTopicsManager() {
       </div>
     </div>
   );
+
+  async function handleLoadTopics() {
+    setLoading(true);
+    setLoadingSharedPrompts(true);
+    try {
+      const [topicsResult, sharedPromptsResult] = await Promise.allSettled([
+        loadMyCustomInstructionTopics({ limit: LOAD_LIMIT }),
+        loadMySharedPrompts({ limit: INITIAL_SHARED_PROMPTS_DISPLAY_COUNT })
+      ]);
+
+      if (topicsResult.status === 'fulfilled') {
+        const { topics: loadedTopics, loadMoreButton: hasMore } =
+          topicsResult.value || {};
+        setTopics(loadedTopics || []);
+        setLoadMoreButton(Boolean(hasMore));
+      } else {
+        console.error('Failed to load topics:', topicsResult.reason);
+      }
+
+      if (sharedPromptsResult.status === 'fulfilled') {
+        const { prompts, totalCount, totalClones, totalMessages } =
+          sharedPromptsResult.value || {};
+        setSharedPrompts(prompts || []);
+        setSharedTotals({
+          totalCount: Number(totalCount) || 0,
+          totalClones: Number(totalClones) || 0,
+          totalMessages: Number(totalMessages) || 0
+        });
+      } else {
+        console.error(
+          'Failed to load shared prompt stats:',
+          sharedPromptsResult.reason
+        );
+      }
+    } finally {
+      setLoading(false);
+      setLoadingSharedPrompts(false);
+    }
+  }
+
+  async function handleLoadMore() {
+    if (!loadMoreButton || loadingMore || topics.length === 0) return;
+    const lastTopic = topics[topics.length - 1];
+    setLoadingMore(true);
+    try {
+      const { topics: moreTopics, loadMoreButton: hasMore } =
+        await loadMyCustomInstructionTopics({
+          limit: LOAD_LIMIT,
+          lastId: lastTopic.id
+        });
+      setTopics((prev) => prev.concat(moreTopics || []));
+      setLoadMoreButton(Boolean(hasMore));
+    } catch (error) {
+      console.error('Failed to load more topics:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  async function handleLoadMoreSharedPrompts() {
+    if (loadingMoreSharedPrompts) return;
+    const hasMore = sharedPrompts.length < sharedTotals.totalCount;
+    if (!hasMore) return;
+    const lastPrompt = sharedPrompts[sharedPrompts.length - 1];
+    const canUseCursor = Boolean(lastPrompt?.sharedAt);
+
+    setLoadingMoreSharedPrompts(true);
+    try {
+      const {
+        prompts: morePrompts,
+        totalCount,
+        totalClones,
+        totalMessages
+      } = await loadMySharedPrompts({
+        limit: LOAD_LIMIT,
+        ...(canUseCursor
+          ? {
+              lastId: lastPrompt.id,
+              lastSharedAt: lastPrompt.sharedAt as number
+            }
+          : {})
+      });
+      setSharedPrompts((prev) =>
+        prev.length > 0 ? prev.concat(morePrompts || []) : morePrompts || []
+      );
+      setSharedTotals({
+        totalCount: Number(totalCount) || 0,
+        totalClones: Number(totalClones) || 0,
+        totalMessages: Number(totalMessages) || 0
+      });
+    } catch (error) {
+      console.error('Failed to load more shared prompts:', error);
+    } finally {
+      setLoadingMoreSharedPrompts(false);
+    }
+  }
+
+  async function handleLoadMoreSharedSearch() {
+    if (
+      loadingSharedSearch ||
+      loadingMoreSharedSearch ||
+      !sharedSearchLoadMoreButton ||
+      sharedSearchResults.length === 0
+    ) {
+      return;
+    }
+    const lastResult = sharedSearchResults[sharedSearchResults.length - 1];
+    if (!lastResult?.sharedAt) return;
+
+    setLoadingMoreSharedSearch(true);
+    try {
+      const query = sharedSearchText.trim();
+      if (!query) return;
+      const queryAtRequest = query;
+      const { prompts: morePrompts, loadMoreButton: hasMore } =
+        await loadMySharedPrompts({
+          limit: SHARED_PROMPTS_SEARCH_LIMIT,
+          searchText: query,
+          lastId: lastResult.id,
+          lastSharedAt: lastResult.sharedAt
+        });
+      if (sharedSearchTextRef.current.trim() !== queryAtRequest) {
+        return;
+      }
+      setSharedSearchResults((prev) => prev.concat(morePrompts || []));
+      setSharedSearchLoadMoreButton(Boolean(hasMore));
+    } catch (error) {
+      console.error('Failed to load more search results:', error);
+    } finally {
+      setLoadingMoreSharedSearch(false);
+    }
+  }
+
+  async function handleToggleShare(topic: MyTopic) {
+    setUpdatingTopicId(topic.id);
+    try {
+      const topicFromTopics = topics.find((t) => t.id === topic.id);
+      const topicFromSharedPrompts = sharedPrompts.find((p) => p.id === topic.id);
+      const topicFromSearchResults = sharedSearchResults.find(
+        (p) => p.id === topic.id
+      );
+      const currentIsShared =
+        topicFromTopics?.isSharedWithOtherUsers ??
+        topicFromSharedPrompts?.isSharedWithOtherUsers ??
+        topicFromSearchResults?.isSharedWithOtherUsers ??
+        topic.isSharedWithOtherUsers;
+      const nextIsShared = !currentIsShared;
+      const effectiveTopic =
+        topicFromTopics || topicFromSharedPrompts || topicFromSearchResults || topic;
+      const cloneDelta = Number(effectiveTopic.cloneCount) || 0;
+      const messageDelta = Number(effectiveTopic.messageCount) || 0;
+      const nowSec = Math.floor(Date.now() / 1000);
+
+      await updateTopicShareState({
+        channelId: topic.channelId,
+        topicId: topic.id,
+        shareWithOtherUsers: nextIsShared
+      });
+      setSharedTotals((prev) => ({
+        totalCount: Math.max(0, prev.totalCount + (nextIsShared ? 1 : -1)),
+        totalClones: Math.max(
+          0,
+          prev.totalClones + (nextIsShared ? cloneDelta : -cloneDelta)
+        ),
+        totalMessages: Math.max(
+          0,
+          prev.totalMessages + (nextIsShared ? messageDelta : -messageDelta)
+        )
+      }));
+      setTopics((prev) =>
+        prev.map((t) =>
+          t.id === topic.id
+            ? {
+                ...t,
+                isSharedWithOtherUsers: nextIsShared,
+                sharedAt: nextIsShared ? nowSec : null
+              }
+            : t
+        )
+      );
+      setSharedPrompts((prev) => {
+        if (nextIsShared) {
+          const alreadyIncluded = prev.some((p) => p.id === topic.id);
+          if (alreadyIncluded) {
+            return prev.map((p) =>
+              p.id === topic.id
+                ? {
+                    ...p,
+                    isSharedWithOtherUsers: true,
+                    sharedAt: nowSec
+                  }
+                : p
+            );
+          }
+          return [
+            {
+              ...topic,
+              isSharedWithOtherUsers: true,
+              sharedAt: nowSec,
+              cloneCount: cloneDelta,
+              messageCount: messageDelta,
+              numComments: Number(effectiveTopic.numComments) || 0
+            },
+            ...prev
+          ];
+        }
+        return prev.filter((p) => p.id !== topic.id);
+      });
+      setSharedSearchResults((prev) => {
+        const query = sharedSearchTextRef.current.trim().toLowerCase();
+        if (!query) return prev;
+
+        const matchesQuery = (topic.content || '')
+          .toLowerCase()
+          .includes(query);
+
+        if (nextIsShared) {
+          if (!matchesQuery) return prev;
+          const alreadyIncluded = prev.some((p) => p.id === topic.id);
+          if (alreadyIncluded) {
+            return prev.map((p) =>
+              p.id === topic.id
+                ? {
+                    ...p,
+                    isSharedWithOtherUsers: true,
+                    sharedAt: nowSec
+                  }
+                : p
+            );
+          }
+          return [
+            {
+              ...topic,
+              isSharedWithOtherUsers: true,
+              sharedAt: nowSec,
+              cloneCount: cloneDelta,
+              messageCount: messageDelta,
+              numComments: Number(effectiveTopic.numComments) || 0
+            },
+            ...prev
+          ];
+        }
+
+        return prev.filter((p) => p.id !== topic.id);
+      });
+    } catch (error) {
+      console.error('Failed to update share state:', error);
+    } finally {
+      setUpdatingTopicId(null);
+    }
+  }
+
+  function handleShowMoreSharedPromptsClick() {
+    setSharedExpanded(true);
+    if (sharedPrompts.length < sharedCount) {
+      handleLoadMoreSharedPrompts();
+    }
+  }
+
+  async function handleCopyEmbed(topicId: number) {
+    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
+    try {
+      await navigator.clipboard.writeText(embedUrl);
+      setCopiedId(topicId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  }
 }
 
 const statsRowClass = css`

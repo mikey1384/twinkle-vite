@@ -76,7 +76,7 @@ export default function ExtractedThumb({
       thumbnailArray: string[]
     ): Promise<void> {
       return new Promise((resolve) => {
-        const handleSeeked = () => {
+        function handleSeeked() {
           if (canvasRef.current && videoRef.current) {
             canvasRef.current.height = videoRef.current.videoHeight;
             canvasRef.current.width = videoRef.current.videoWidth;
@@ -87,7 +87,7 @@ export default function ExtractedThumb({
             thumbnailArray.push(thumbnail);
             resolve();
           }
-        };
+        }
 
         videoRef.current.currentTime = time;
         videoRef.current.addEventListener('seeked', handleSeeked, {

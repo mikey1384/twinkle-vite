@@ -36,26 +36,6 @@ export default function ReorderInterface({
     return objectify(pictures);
   }, [pictures]);
 
-  const handleMove = ({ sourceId, targetId }: MoveParams) => {
-    try {
-      const sourceIndex = reorderedPictureIds.indexOf(sourceId);
-      const targetIndex = reorderedPictureIds.indexOf(targetId);
-
-      // Validate indices
-      if (sourceIndex === -1 || targetIndex === -1) {
-        console.error('Invalid source or target ID in drag and drop operation');
-        return;
-      }
-
-      const newReorderedPictureIds = [...reorderedPictureIds];
-      newReorderedPictureIds.splice(sourceIndex, 1);
-      newReorderedPictureIds.splice(targetIndex, 0, sourceId);
-      onSetReorderedPictureIds(newReorderedPictureIds);
-    } catch (error) {
-      console.error('Error during picture reordering:', error);
-    }
-  };
-
   return (
     <ErrorBoundary componentPath="Profile/Body/Home/Pictures/ReorderInterface/index">
       <DndProvider backend={Backend}>
@@ -94,4 +74,24 @@ export default function ReorderInterface({
       </DndProvider>
     </ErrorBoundary>
   );
+
+  function handleMove({ sourceId, targetId }: MoveParams) {
+    try {
+      const sourceIndex = reorderedPictureIds.indexOf(sourceId);
+      const targetIndex = reorderedPictureIds.indexOf(targetId);
+
+      // Validate indices
+      if (sourceIndex === -1 || targetIndex === -1) {
+        console.error('Invalid source or target ID in drag and drop operation');
+        return;
+      }
+
+      const newReorderedPictureIds = [...reorderedPictureIds];
+      newReorderedPictureIds.splice(sourceIndex, 1);
+      newReorderedPictureIds.splice(targetIndex, 0, sourceId);
+      onSetReorderedPictureIds(newReorderedPictureIds);
+    } catch (error) {
+      console.error('Error during picture reordering:', error);
+    }
+  }
 }

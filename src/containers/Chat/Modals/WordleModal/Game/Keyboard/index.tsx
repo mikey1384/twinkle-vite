@@ -32,16 +32,6 @@ export default function Keyboard({
 }) {
   const charStatuses = getStatuses({ guesses, solution });
 
-  const onClick = (value: string) => {
-    if (value === 'ENTER') {
-      onEnter();
-    } else if (value === 'DELETE') {
-      onDelete();
-    } else {
-      onChar(value);
-    }
-  };
-
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (isChecking) return;
@@ -77,7 +67,7 @@ export default function Keyboard({
           <Key
             value={key}
             key={key}
-            onClick={onClick}
+            onClick={handleClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
             uiScale={uiScale}
@@ -96,7 +86,7 @@ export default function Keyboard({
           <Key
             value={key}
             key={key}
-            onClick={onClick}
+            onClick={handleClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
             maxWordLength={maxWordLength}
@@ -109,7 +99,7 @@ export default function Keyboard({
         <Key
           status={isEnterReady ? 'ready' : ''}
           width={65.4}
-          onClick={onClick}
+          onClick={handleClick}
           value="ENTER"
           uiScale={uiScale}
           isChecking={isChecking}
@@ -120,7 +110,7 @@ export default function Keyboard({
           <Key
             value={key}
             key={key}
-            onClick={onClick}
+            onClick={handleClick}
             status={charStatuses[key]}
             isRevealing={isRevealing}
             uiScale={uiScale}
@@ -130,7 +120,7 @@ export default function Keyboard({
         <Key
           status={isDeleteReady ? 'canDelete' : ''}
           width={65.4}
-          onClick={onClick}
+          onClick={handleClick}
           value="DELETE"
           uiScale={uiScale}
           isChecking={isChecking}
@@ -140,4 +130,14 @@ export default function Keyboard({
       </div>
     </div>
   );
+
+  function handleClick(value: string) {
+    if (value === 'ENTER') {
+      onEnter();
+    } else if (value === 'DELETE') {
+      onDelete();
+    } else {
+      onChar(value);
+    }
+  }
 }

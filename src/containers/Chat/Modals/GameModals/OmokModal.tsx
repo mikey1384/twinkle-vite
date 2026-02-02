@@ -164,22 +164,6 @@ export default function OmokModal({
     [initialState?.move?.number]
   );
 
-  const handleSpoilerClick = async (senderId: number) => {
-    try {
-      if (message) {
-        await setOmokMoveViewTimeStamp({
-          channelId,
-          message,
-          gameType: 'omok'
-        });
-        onUpdateLastOmokMoveViewerId({ channelId, viewerId: myId });
-      }
-      onSpoilerClick(senderId);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   return (
     <ErrorBoundary componentPath="Chat/Modals/OmokModal">
       <Modal
@@ -201,10 +185,7 @@ export default function OmokModal({
             onOfferDraw={() => {}}
             onClose={onHide}
             onCancelMove={() => setNewOmokState(null)}
-            onStartNewGame={() => {
-              setNewOmokState(null);
-              setMessage(null);
-            }}
+            onStartNewGame={handleStartNewGame}
             onDone={() =>
               handleConfirmMove({
                 state: newOmokState,
@@ -311,6 +292,27 @@ export default function OmokModal({
       )}
     </ErrorBoundary>
   );
+
+  async function handleSpoilerClick(senderId: number) {
+    try {
+      if (message) {
+        await setOmokMoveViewTimeStamp({
+          channelId,
+          message,
+          gameType: 'omok'
+        });
+        onUpdateLastOmokMoveViewerId({ channelId, viewerId: myId });
+      }
+      onSpoilerClick(senderId);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  function handleStartNewGame() {
+    setNewOmokState(null);
+    setMessage(null);
+  }
 
   async function handleGameOver() {
     try {

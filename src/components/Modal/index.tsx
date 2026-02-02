@@ -268,14 +268,14 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     useEffect(() => {
       if (!closeOnEscape || !isOpen) return;
 
-      const handleEscape = (event: KeyboardEvent) => {
+      function handleEscape(event: KeyboardEvent) {
         if (event.key === 'Escape') {
           const topModalId = Math.max(...Array.from(openModals));
           if (modalId === topModalId) {
             onClose();
           }
         }
-      };
+      }
 
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);

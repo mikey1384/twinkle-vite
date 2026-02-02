@@ -62,12 +62,6 @@ export default function FileInput({
 }: FileInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleButtonClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
   return (
     <div className={fileInputWrapperStyles}>
       {label && <label className="label-text">{label}</label>}
@@ -103,4 +97,10 @@ export default function FileInput({
       </div>
     </div>
   );
+
+  function handleButtonClick() {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }
 }

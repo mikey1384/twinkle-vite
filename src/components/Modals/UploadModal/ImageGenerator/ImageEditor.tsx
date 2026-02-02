@@ -202,88 +202,20 @@ export default function ImageEditor({
     loadImage();
   }, [imageUrl]);
 
-  const handleSave = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      try {
-        const dataUrl = canvas.toDataURL('image/png', 0.9);
-        onSave(dataUrl);
-      } catch (err) {
-        console.error('Failed to save canvas:', err);
-      }
-    }
-  };
-
-  const handleReset = () => {
-    const originalCanvas = originalCanvasRef.current;
-    const drawingCanvas = drawingCanvasRef.current;
-    if (originalCanvas && drawingCanvas) {
-      const originalCtx = originalCanvas.getContext('2d');
-      const drawingCtx = drawingCanvas.getContext('2d');
-      if (originalCtx && drawingCtx) {
-        // Reset reference canvas
-        originalCtx.clearRect(
-          0,
-          0,
-          originalCanvas.width,
-          originalCanvas.height
-        );
-        originalCtx.fillStyle = '#ffffff';
-        originalCtx.fillRect(0, 0, originalCanvas.width, originalCanvas.height);
-
-        if (imageUrl) {
-          // Reset to original image if there is one
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            originalCtx.drawImage(
-              img,
-              0,
-              0,
-              originalCanvas.width,
-              originalCanvas.height
-            );
-            requestAnimationFrame(() => {
-              updateDisplayRef.current();
-            });
-          };
-          img.src = imageUrl;
-        } else {
-          // Just white background for blank canvas
-          requestAnimationFrame(() => {
-            updateDisplayRef.current();
-          });
-        }
-
-        // Clear drawing canvas
-        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-      }
-    }
-  };
-
-  const handleCancel = () => {
-    // Check if user has made any changes (canvas history has entries)
-    if (toolsAPI.canvasHistory.length > 0) {
-      setConfirmModalShown(true);
-    } else {
-      onCancel();
-    }
-  };
-
   // Handle scroll and resize to trigger redraw and canvas resizing
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     let debounceTimeout: ReturnType<typeof setTimeout>;
-    const handleScroll = () => {
+    function handleScroll() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         updateDisplayRef.current();
       }, 50);
-    };
+    }
 
-    const handleResize = () => {
+    function handleResize() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         const canvas = canvasRef.current;
@@ -313,7 +245,7 @@ export default function ImageEditor({
 
         updateDisplayRef.current();
       }, 100);
-    };
+    }
 
     container.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
@@ -326,23 +258,6 @@ export default function ImageEditor({
       clearTimeout(debounceTimeout);
     };
   }, []);
-
-  const getCursor = () => {
-    switch (toolsAPI.tool) {
-      case 'pencil':
-        return 'crosshair';
-      case 'eraser':
-        return 'grab';
-      case 'text':
-        return 'text';
-      case 'colorPicker':
-        return 'crosshair';
-      case 'fill':
-        return 'crosshair';
-      default:
-        return 'default';
-    }
-  };
 
   return (
     <>
@@ -490,12 +405,99 @@ export default function ImageEditor({
           title="Discard Drawing?"
           description="Are you sure you want to discard your drawing?"
           onHide={() => setConfirmModalShown(false)}
-          onConfirm={() => {
-            setConfirmModalShown(false);
-            onCancel();
-          }}
+          onConfirm={handleConfirmModalConfirm}
         />
       )}
     </>
   );
+
+  function handleSave() {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      try {
+        const dataUrl = canvas.toDataURL('image/png', 0.9);
+        onSave(dataUrl);
+      } catch (err) {
+        console.error('Failed to save canvas:', err);
+      }
+    }
+  }
+
+  function handleReset() {
+    const originalCanvas = originalCanvasRef.current;
+    const drawingCanvas = drawingCanvasRef.current;
+    if (originalCanvas && drawingCanvas) {
+      const originalCtx = originalCanvas.getContext('2d');
+      const drawingCtx = drawingCanvas.getContext('2d');
+      if (originalCtx && drawingCtx) {
+        // Reset reference canvas
+        originalCtx.clearRect(
+          0,
+          0,
+          originalCanvas.width,
+          originalCanvas.height
+        );
+        originalCtx.fillStyle = '#ffffff';
+        originalCtx.fillRect(0, 0, originalCanvas.width, originalCanvas.height);
+
+        if (imageUrl) {
+          // Reset to original image if there is one
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            originalCtx.drawImage(
+              img,
+              0,
+              0,
+              originalCanvas.width,
+              originalCanvas.height
+            );
+            requestAnimationFrame(() => {
+              updateDisplayRef.current();
+            });
+          };
+          img.src = imageUrl;
+        } else {
+          // Just white background for blank canvas
+          requestAnimationFrame(() => {
+            updateDisplayRef.current();
+          });
+        }
+
+        // Clear drawing canvas
+        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      }
+    }
+  }
+
+  function handleCancel() {
+    // Check if user has made any changes (canvas history has entries)
+    if (toolsAPI.canvasHistory.length > 0) {
+      setConfirmModalShown(true);
+    } else {
+      onCancel();
+    }
+  }
+
+  function handleConfirmModalConfirm() {
+    setConfirmModalShown(false);
+    onCancel();
+  }
+
+  function getCursor() {
+    switch (toolsAPI.tool) {
+      case 'pencil':
+        return 'crosshair';
+      case 'eraser':
+        return 'grab';
+      case 'text':
+        return 'text';
+      case 'colorPicker':
+        return 'crosshair';
+      case 'fill':
+        return 'crosshair';
+      default:
+        return 'default';
+    }
+  }
 }

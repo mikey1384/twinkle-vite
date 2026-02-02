@@ -488,7 +488,7 @@ export default function MessageInput({
           isMain={selectedTab !== 'topic'}
           loading={loading}
           partner={partner}
-          handleSendMsg={handleSendMsg}
+          onSendMsg={handleSendMsg}
           onHeightChange={onHeightChange}
           onSetText={handleSetText}
         />

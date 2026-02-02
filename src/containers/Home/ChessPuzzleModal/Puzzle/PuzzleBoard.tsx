@@ -25,7 +25,7 @@ interface PuzzleBoardProps {
     executeEngineMove: (uci: string) => void;
   }) => Promise<void>;
   appendCurrentFen: () => void;
-  handleCastling: (
+  onCastling: (
     dir: 'kingside' | 'queenside'
   ) => Promise<boolean | void> | void;
   currentLevel?: number;
@@ -43,7 +43,7 @@ export default function PuzzleBoard({
   executeEngineMove,
   requestEngineReply,
   appendCurrentFen,
-  handleCastling,
+  onCastling,
   currentLevel
 }: PuzzleBoardProps) {
   const emptySquares = useMemo(() => {
@@ -131,7 +131,7 @@ export default function PuzzleBoard({
       <CastlingOverlay
         interactable={overlayInteractable}
         playerColor={overlayPlayerColor}
-        onCastling={onCastlingClick}
+        onCastling={handleCastlingClick}
         canKingside={canKingside}
         canQueenside={canQueenside}
         onPreClick={() => {}}
@@ -139,7 +139,7 @@ export default function PuzzleBoard({
     </ChessBoard>
   );
 
-  async function onCastlingClick(dir: 'kingside' | 'queenside') {
+  async function handleCastlingClick(dir: 'kingside' | 'queenside') {
     if (phase === 'ANALYSIS') {
       try {
         const castlingSan = dir === 'kingside' ? 'O-O' : 'O-O-O';
@@ -159,7 +159,7 @@ export default function PuzzleBoard({
         return;
       } catch {}
     }
-    const success = await handleCastling(dir);
+    const success = await onCastling(dir);
     if (success) {
       try {
         appendCurrentFen();

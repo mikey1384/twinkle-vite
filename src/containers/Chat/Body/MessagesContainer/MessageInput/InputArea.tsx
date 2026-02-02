@@ -24,7 +24,7 @@ export default function InputArea({
   loading,
   isMain,
   partner,
-  handleSendMsg,
+  onSendMsg,
   onHeightChange,
   onSetText
 }: {
@@ -43,7 +43,7 @@ export default function InputArea({
     id: number;
     username: string;
   };
-  handleSendMsg: () => any;
+  onSendMsg: () => any;
   onHeightChange: (v: number) => any;
   onSetText: (v: string) => any;
 }) {
@@ -191,7 +191,7 @@ export default function InputArea({
       !loading
     ) {
       event.preventDefault();
-      handleSendMsg();
+      onSendMsg();
     }
   }
 
