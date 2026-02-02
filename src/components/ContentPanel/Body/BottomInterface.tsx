@@ -17,6 +17,7 @@ import {
   scrollElementToCenter,
   isTablet
 } from '~/helpers';
+import { useContentContext, useMissionContext } from '~/contexts';
 const editLabel = 'Edit';
 const removeLabel = 'Remove';
 const commentLabel = 'Comment';
@@ -131,6 +132,10 @@ export default function BottomInterface({
   userId: number;
   xpRewardInterfaceShown: boolean;
 }) {
+  const onEditContent = useContentContext((v) => v.actions.onEditContent);
+  const onUpdateSharedPromptClone = useMissionContext(
+    (v) => v.actions.onUpdateSharedPromptClone
+  );
   const {
     contentId,
     contentType,
@@ -391,6 +396,7 @@ export default function BottomInterface({
                 sharedTopicTitle={contentObj.content}
                 uploaderId={uploader.id}
                 myClones={myClones}
+                onCloneSuccess={handleCloneSuccess}
               />
             )}
             {userCanRewardThis &&
@@ -515,6 +521,37 @@ export default function BottomInterface({
       </div>
     </div>
   );
+
+  function handleCloneSuccess({
+    target,
+    topicId,
+    channelId
+  }: {
+    sharedTopicId: number;
+    target: 'zero' | 'ciel';
+    topicId: number;
+    channelId: number;
+    title: string;
+  }) {
+    const existingClones = Array.isArray(myClones) ? myClones : [];
+    const updatedClones = [
+      ...existingClones.filter((clone: any) => clone.target !== target),
+      { target, topicId, channelId }
+    ];
+
+    onEditContent({
+      contentType: 'sharedTopic',
+      contentId,
+      data: { myClones: updatedClones }
+    });
+
+    onUpdateSharedPromptClone({
+      promptId: contentId,
+      target,
+      channelId,
+      topicId
+    });
+  }
 
   async function handleCommentButtonClick() {
     if (!commentsShown && !(autoExpand && !secretHidden)) {
