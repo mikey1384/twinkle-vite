@@ -7,7 +7,9 @@ import UploadModal from '../Modals/UploadModal';
 
 export default function UploadButton({
   onFileSelect,
+  onFilesSelect,
   accept,
+  multiple = false,
   disabled = false,
   icon = 'upload',
   iconSize = 'lg',
@@ -28,7 +30,9 @@ export default function UploadButton({
 }: {
   // Core functionality
   onFileSelect: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   accept?: string;
+  multiple?: boolean;
   disabled?: boolean;
 
   // Button appearance
@@ -109,7 +113,9 @@ export default function UploadButton({
         isOpen={modalShown}
         onHide={() => setModalShown(false)}
         onFileSelect={onFileSelect}
+        onFilesSelect={onFilesSelect}
         accept={accept}
+        multiple={multiple}
       />
     </>
   );

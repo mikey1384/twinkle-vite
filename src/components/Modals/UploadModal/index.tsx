@@ -18,14 +18,18 @@ interface UploadModalProps {
   isOpen: boolean;
   onHide: () => void;
   onFileSelect: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   accept?: string;
+  multiple?: boolean;
 }
 
 export default function UploadModal({
   isOpen,
   onHide,
   onFileSelect,
-  accept
+  onFilesSelect,
+  accept,
+  multiple = false
 }: UploadModalProps) {
   const [selectedOption, setSelectedOption] = useState<
     'select' | 'upload' | 'generate'
@@ -89,6 +93,7 @@ export default function UploadModal({
         <UploadModalContent
           selectedOption={selectedOption}
           onFileSelect={handleFileSelection}
+          onFilesSelect={handleFilesSelection}
           onFileUploadSelect={() => handleChangeOption('upload')}
           onAIGenerateSelect={() => handleChangeOption('generate')}
           onGeneratedImage={handleGeneratedImage}
@@ -96,6 +101,7 @@ export default function UploadModal({
           onUseImageAvailabilityChange={setCanUseGeneratedImage}
           onRegisterUseImageHandler={handleRegisterUseImageHandler}
           accept={accept || '*/*'}
+          multiple={multiple}
         />
       </Modal>
       {confirmModalShown && (
@@ -161,6 +167,15 @@ export default function UploadModal({
 
   function handleFileSelection(file: File) {
     onFileSelect(file);
+    handleClose();
+  }
+
+  function handleFilesSelection(files: File[]) {
+    if (onFilesSelect) {
+      onFilesSelect(files);
+    } else if (files.length > 0) {
+      onFileSelect(files[0]);
+    }
     handleClose();
   }
 

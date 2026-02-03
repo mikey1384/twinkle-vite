@@ -200,7 +200,7 @@ export default function MessageInput({
   const timerRef2: React.RefObject<any> = useRef(null);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [alertModalContent, setAlertModalContent] = useState('');
-  const [fileObj, setFileObj] = useState(null);
+  const [fileObj, setFileObj] = useState<File | File[] | null>(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
   useEffect(() => {
     onRegisterSetText(handleSetText);
@@ -586,6 +586,7 @@ export default function MessageInput({
             }, 10);
           }}
           onScrollToBottom={onScrollToBottom}
+          onTextMessageSubmit={onMessageSubmit}
           onUpload={() => {
             handleSetText('');
             onSetTextAreaHeight(0);
