@@ -91,12 +91,12 @@ export default function AICard({
         justifyContent: 'center'
       }}
       className={`unselectable`}
-      onClick={onClick}
     >
       <div
         style={{
           cursor: onClick ? 'pointer' : 'default'
         }}
+        onClick={onClick}
       >
         <Card
           card={card}
