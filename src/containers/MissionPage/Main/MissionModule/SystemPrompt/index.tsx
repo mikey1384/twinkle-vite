@@ -63,6 +63,15 @@ interface SystemPromptState {
   promptEverGenerated?: boolean;
 }
 
+const EMPTY_SYSTEM_PROMPT_STATE: SystemPromptState = {
+  title: '',
+  prompt: '',
+  userMessage: '',
+  missionPromptId: null,
+  chatMessages: [],
+  promptEverGenerated: false
+};
+
 export default function SystemPromptMission({
   mission,
   onSetMissionState,
@@ -111,6 +120,11 @@ export default function SystemPromptMission({
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const draftTimeoutRef = useRef<any>(null);
+  const latestSystemPromptStateRef = useRef<SystemPromptState>(
+    mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE
+  );
+  latestSystemPromptStateRef.current =
+    mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE;
 
   // Reset state when user changes
   useEffect(() => {
@@ -127,7 +141,7 @@ export default function SystemPromptMission({
     improveOriginalPromptRef,
     generateRequestIdRef
   } = useSystemPromptSockets({
-    systemPromptState: mission.systemPromptState || {},
+    systemPromptState: mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE,
     onSetSystemPromptState: handleSetSystemPromptState,
     onSetSending: setSending,
     onSetImproving: setImproving,
@@ -141,7 +155,7 @@ export default function SystemPromptMission({
     userMessage = '',
     chatMessages = [],
     promptEverGenerated
-  } = mission.systemPromptState || {};
+  } = mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE;
   const safeChatMessages = Array.isArray(chatMessages) ? chatMessages : [];
   const trimmedPrompt = prompt.trim();
   const trimmedMessage = userMessage.trim();
@@ -540,9 +554,46 @@ export default function SystemPromptMission({
     const finalState = shouldSetPromptFlag
       ? { ...nextState, promptEverGenerated: true }
       : nextState;
+    const currentState: SystemPromptState = latestSystemPromptStateRef.current;
+
+    if (isSameSystemPromptState(currentState, finalState)) {
+      return;
+    }
+
+    latestSystemPromptStateRef.current = finalState;
     onSetMissionState({
       missionId: mission.id,
       newState: { systemPromptState: finalState }
     });
+  }
+
+  function isSameSystemPromptState(
+    a: SystemPromptState,
+    b: SystemPromptState
+  ): boolean {
+    if (
+      a.title !== b.title ||
+      a.prompt !== b.prompt ||
+      a.userMessage !== b.userMessage ||
+      a.missionPromptId !== b.missionPromptId ||
+      Boolean(a.promptEverGenerated) !== Boolean(b.promptEverGenerated)
+    ) {
+      return false;
+    }
+
+    const aMessages = Array.isArray(a.chatMessages) ? a.chatMessages : [];
+    const bMessages = Array.isArray(b.chatMessages) ? b.chatMessages : [];
+    if (aMessages.length !== bMessages.length) return false;
+    for (let i = 0; i < aMessages.length; i += 1) {
+      if (
+        aMessages[i].id !== bMessages[i].id ||
+        aMessages[i].role !== bMessages[i].role ||
+        aMessages[i].content !== bMessages[i].content
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
