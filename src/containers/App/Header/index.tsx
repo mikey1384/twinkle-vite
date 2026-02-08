@@ -185,7 +185,7 @@ export default function Header({
   return (
     <ErrorBoundary componentPath="App/Header/index">
       <nav
-        className={`unselectable ${css`
+        className={`notranslate unselectable ${css`
           z-index: 99999;
           position: relative;
           font-family: 'Ubuntu', sans-serif, Arial, Helvetica;
@@ -225,6 +225,7 @@ export default function Header({
           position: 'fixed',
           ...style
         }}
+        translate="no"
       >
         <div
           style={{
