@@ -9,7 +9,7 @@ import {
   useKeyContext,
   useMissionContext
 } from '~/contexts';
-import useSystemPromptSockets from './useSystemPromptSockets';
+import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 import Checklist from './Checklist';
 import Editor from './Editor';
 import TargetSelector from './TargetSelector';
@@ -125,6 +125,27 @@ export default function SystemPromptMission({
   );
   latestSystemPromptStateRef.current =
     mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE;
+  const missionIdRef = useRef(mission.id);
+  missionIdRef.current = mission.id;
+  const onSetMissionStateRef = useRef(onSetMissionState);
+  onSetMissionStateRef.current = onSetMissionState;
+  const previewRequestIdRef = useRef<string | null>(null);
+  const streamingMessageIdRef = useRef<number | null>(null);
+  const improveRequestIdRef = useRef<string | null>(null);
+  const improveOriginalPromptRef = useRef('');
+  const generateRequestIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    previewRequestIdRef.current = null;
+    streamingMessageIdRef.current = null;
+    improveRequestIdRef.current = null;
+    improveOriginalPromptRef.current = '';
+    generateRequestIdRef.current = null;
+    setSending(false);
+    setImproving(false);
+    setGenerating(false);
+    setError('');
+  }, [mission.id]);
 
   // Reset state when user changes
   useEffect(() => {
@@ -134,20 +155,8 @@ export default function SystemPromptMission({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, mission.prevUserId, mission.id]);
 
-  const {
-    previewRequestIdRef,
-    streamingMessageIdRef,
-    improveRequestIdRef,
-    improveOriginalPromptRef,
-    generateRequestIdRef
-  } = useSystemPromptSockets({
-    systemPromptState: mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE,
-    onSetSystemPromptState: handleSetSystemPromptState,
-    onSetSending: setSending,
-    onSetImproving: setImproving,
-    onSetGenerating: setGenerating,
-    onSetError: setError
-  });
+  const currentSystemPromptState =
+    mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE;
 
   const {
     title = '',
@@ -155,7 +164,7 @@ export default function SystemPromptMission({
     userMessage = '',
     chatMessages = [],
     promptEverGenerated
-  } = mission.systemPromptState || EMPTY_SYSTEM_PROMPT_STATE;
+  } = currentSystemPromptState;
   const safeChatMessages = Array.isArray(chatMessages) ? chatMessages : [];
   const trimmedPrompt = prompt.trim();
   const trimmedMessage = userMessage.trim();
@@ -204,11 +213,11 @@ export default function SystemPromptMission({
       detail: step2Complete
         ? '2/2 messages in your AI topic'
         : aiTopicId
-        ? `${Math.min(
-            aiMessageCount,
-            2
-          )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
-        : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
+          ? `${Math.min(
+              aiMessageCount,
+              2
+            )}/2 messages in your AI topic (Topic ID: ${aiTopicId})`
+          : 'Apply the prompt to a Zero/Ciel topic and send 2+ messages'
     },
     {
       label: `Clone a shared prompt`,
@@ -218,6 +227,244 @@ export default function SystemPromptMission({
         : 'Browse Shared Prompts, clone one, and send a message'
     }
   ];
+
+  useEffect(() => {
+    function updateStreamingContent(content: string) {
+      const streamingMessageId = streamingMessageIdRef.current;
+      if (!streamingMessageId) return;
+      const currentState = latestSystemPromptStateRef.current;
+      const messages = Array.isArray(currentState.chatMessages)
+        ? currentState.chatMessages
+        : [];
+      const targetIndex = messages.findIndex(
+        (message) => message.id === streamingMessageId
+      );
+      if (targetIndex < 0) return;
+
+      const updatedMessages = [...messages];
+      updatedMessages[targetIndex] = {
+        ...updatedMessages[targetIndex],
+        content
+      };
+
+      handleSetSystemPromptState({
+        ...currentState,
+        chatMessages: updatedMessages,
+        promptEverGenerated: true
+      });
+    }
+
+    function finalizeStreaming(finalReply?: string) {
+      if (typeof finalReply === 'string' && finalReply.length > 0) {
+        updateStreamingContent(finalReply);
+      }
+      streamingMessageIdRef.current = null;
+      previewRequestIdRef.current = null;
+      setSending(false);
+    }
+
+    function handleStreamingError(message: string) {
+      const fallbackMessage =
+        message || 'Unable to get a preview response. Please try again.';
+      updateStreamingContent(fallbackMessage);
+      setError(fallbackMessage);
+      streamingMessageIdRef.current = null;
+      previewRequestIdRef.current = null;
+      setSending(false);
+    }
+
+    function onPreviewUpdate({
+      requestId,
+      reply
+    }: {
+      requestId?: string;
+      reply?: string;
+    }) {
+      if (!requestId || requestId !== previewRequestIdRef.current) return;
+      updateStreamingContent(reply || '');
+    }
+
+    function onPreviewComplete({
+      requestId,
+      reply
+    }: {
+      requestId?: string;
+      reply?: string;
+    }) {
+      if (!requestId || requestId !== previewRequestIdRef.current) return;
+      finalizeStreaming(reply);
+    }
+
+    function onPreviewError({
+      requestId,
+      error: errorMessage
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      if (!requestId || requestId !== previewRequestIdRef.current) return;
+      handleStreamingError(errorMessage || '');
+    }
+
+    socket.on('system_prompt_preview_update', onPreviewUpdate);
+    socket.on('system_prompt_preview_complete', onPreviewComplete);
+    socket.on('system_prompt_preview_error', onPreviewError);
+
+    return () => {
+      socket.off('system_prompt_preview_update', onPreviewUpdate);
+      socket.off('system_prompt_preview_complete', onPreviewComplete);
+      socket.off('system_prompt_preview_error', onPreviewError);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    function onImproveUpdate({
+      requestId,
+      content,
+      structuredContent
+    }: {
+      requestId?: string;
+      content?: string;
+      structuredContent?: string;
+    }) {
+      if (!requestId || requestId !== improveRequestIdRef.current) return;
+      const currentState = latestSystemPromptStateRef.current;
+
+      const formatted = deriveImprovedInstructionsText({
+        structuredContent,
+        topicText: currentState.title,
+        fallbackText: content || ''
+      });
+
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: formatted,
+        promptEverGenerated: true
+      });
+    }
+
+    function onImproveComplete({
+      requestId,
+      content,
+      structuredContent
+    }: {
+      requestId?: string;
+      content?: string;
+      structuredContent?: string;
+    }) {
+      if (!requestId || requestId !== improveRequestIdRef.current) return;
+      const currentState = latestSystemPromptStateRef.current;
+
+      const formatted = deriveImprovedInstructionsText({
+        structuredContent,
+        topicText: currentState.title,
+        fallbackText: content || currentState.prompt
+      });
+
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: formatted,
+        promptEverGenerated: true
+      });
+      improveRequestIdRef.current = null;
+      setImproving(false);
+    }
+
+    function onImproveError({
+      requestId,
+      error: errorMessage
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      if (!requestId || requestId !== improveRequestIdRef.current) return;
+      const currentState = latestSystemPromptStateRef.current;
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: improveOriginalPromptRef.current,
+        promptEverGenerated: true
+      });
+      improveRequestIdRef.current = null;
+      setImproving(false);
+      setError(
+        errorMessage || 'Unable to improve the prompt. Please try again.'
+      );
+    }
+
+    socket.on('improve_custom_instructions_update', onImproveUpdate);
+    socket.on('improve_custom_instructions_complete', onImproveComplete);
+    socket.on('improve_custom_instructions_error', onImproveError);
+
+    return () => {
+      socket.off('improve_custom_instructions_update', onImproveUpdate);
+      socket.off('improve_custom_instructions_complete', onImproveComplete);
+      socket.off('improve_custom_instructions_error', onImproveError);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    function onGenerateUpdate({
+      requestId,
+      content
+    }: {
+      requestId?: string;
+      content?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      const currentState = latestSystemPromptStateRef.current;
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: content || '',
+        promptEverGenerated: true
+      });
+    }
+
+    function onGenerateComplete({
+      requestId,
+      content
+    }: {
+      requestId?: string;
+      content?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      const currentState = latestSystemPromptStateRef.current;
+      handleSetSystemPromptState({
+        ...currentState,
+        prompt: content || '',
+        promptEverGenerated: true
+      });
+      generateRequestIdRef.current = null;
+      setGenerating(false);
+    }
+
+    function onGenerateError({
+      requestId,
+      error: errorMessage
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      if (!requestId || requestId !== generateRequestIdRef.current) return;
+      generateRequestIdRef.current = null;
+      setGenerating(false);
+      setError(
+        errorMessage || 'Unable to generate the prompt. Please try again.'
+      );
+    }
+
+    socket.on('generate_custom_instructions_update', onGenerateUpdate);
+    socket.on('generate_custom_instructions_complete', onGenerateComplete);
+    socket.on('generate_custom_instructions_error', onGenerateError);
+
+    return () => {
+      socket.off('generate_custom_instructions_update', onGenerateUpdate);
+      socket.off('generate_custom_instructions_complete', onGenerateComplete);
+      socket.off('generate_custom_instructions_error', onGenerateError);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -231,6 +478,7 @@ export default function SystemPromptMission({
           (!mission.systemPromptState?.prompt ||
             !mission.systemPromptState?.title)
         ) {
+          latestSystemPromptStateRef.current = data.systemPromptState;
           onSetMissionState({
             missionId: mission.id,
             newState: { systemPromptState: data.systemPromptState }
@@ -437,7 +685,7 @@ export default function SystemPromptMission({
     const baseMessages = [...safeChatMessages, userMessageObj];
     const assistantMessageId = Date.now() + 1;
     const nextState: SystemPromptState = {
-      ...mission.systemPromptState,
+      ...currentSystemPromptState,
       chatMessages: [
         ...baseMessages,
         { id: assistantMessageId, role: 'assistant', content: '' }
@@ -480,7 +728,7 @@ export default function SystemPromptMission({
     setGenerating(true);
     // Clear chatMessages so user must re-preview the new prompt
     handleSetSystemPromptState({
-      ...mission.systemPromptState,
+      ...currentSystemPromptState,
       promptEverGenerated: true,
       chatMessages: [],
       userMessage: ''
@@ -508,7 +756,7 @@ export default function SystemPromptMission({
       }
       if (typeof data?.missionPromptId === 'number') {
         handleSetSystemPromptState({
-          ...mission.systemPromptState,
+          ...currentSystemPromptState,
           missionPromptId: data.missionPromptId
         });
       }
@@ -561,8 +809,8 @@ export default function SystemPromptMission({
     }
 
     latestSystemPromptStateRef.current = finalState;
-    onSetMissionState({
-      missionId: mission.id,
+    onSetMissionStateRef.current({
+      missionId: missionIdRef.current,
       newState: { systemPromptState: finalState }
     });
   }

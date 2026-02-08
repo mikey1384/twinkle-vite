@@ -1,29 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
-import SwitchButton from '~/components/Buttons/SwitchButton';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import Button from '~/components/Button';
-import RichText from '~/components/Texts/RichText';
 import SearchInput from '~/components/Texts/SearchInput';
 import { useAppContext } from '~/contexts';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 
-interface MyTopic {
-  id: number;
-  channelId: number;
-  content: string;
-  customInstructions: string;
-  isSharedWithOtherUsers: boolean;
-  sharedAt: number | null;
-  timeStamp: number;
-  cloneCount?: number;
-  messageCount?: number;
-  numComments?: number;
-}
+import ManagePromptRow from './ManagePromptRow';
+import SharedPromptRow from './SharedPromptRow';
+import type { MyTopic } from './types';
 
 const INITIAL_DISPLAY_COUNT = 1;
 const LOAD_LIMIT = 10;
@@ -31,51 +19,6 @@ const INITIAL_SHARED_PROMPTS_DISPLAY_COUNT = 2;
 const SHARED_PROMPT_SEARCH_THRESHOLD = 6;
 const SHARED_PROMPTS_SEARCH_LIMIT = 50;
 const SHARED_PROMPT_SEARCH_DEBOUNCE_MS = 250;
-
-function PromptStatsRow({
-  topicId,
-  cloneCount,
-  messageCount,
-  numComments,
-  copiedId,
-  onCopyEmbed
-}: {
-  topicId: number;
-  cloneCount?: number;
-  messageCount?: number;
-  numComments?: number;
-  copiedId: number | null;
-  onCopyEmbed: (topicId: number) => void;
-}) {
-  return (
-    <div className={statsRowClass}>
-      <div className={statPillClass}>
-        <span className={boldClass}>{cloneCount || 0}</span>
-        {Number(cloneCount) === 1 ? 'clone' : 'clones'}
-      </div>
-      <div className={statPillClass}>
-        <span className={boldClass}>{messageCount || 0}</span>
-        {Number(messageCount) === 1 ? 'message' : 'messages'}
-      </div>
-      <div className={statPillClass}>
-        <Icon icon="comment" />
-        <span className={boldClass}>{numComments || 0}</span>
-        {Number(numComments) === 1 ? 'comment' : 'comments'}
-      </div>
-      <div
-        className={`${statPillClass} ${copyPillClass}`}
-        onClick={handleCopyClick}
-      >
-        <Icon icon={copiedId === topicId ? 'check' : 'copy'} />
-      </div>
-    </div>
-  );
-
-  function handleCopyClick(e: React.MouseEvent) {
-    e.stopPropagation();
-    onCopyEmbed(topicId);
-  }
-}
 
 export default function MyTopicsManager() {
   const navigate = useNavigate();
@@ -205,6 +148,9 @@ export default function MyTopicsManager() {
     : topics.slice(0, INITIAL_DISPLAY_COUNT);
   const hasMoreToShow = !expanded && topics.length > INITIAL_DISPLAY_COUNT;
   const hiddenCount = topics.length - INITIAL_DISPLAY_COUNT;
+  const handleOpenSharedPrompt = (topicId: number) => {
+    navigate(`/shared-prompts/${topicId}`);
+  };
 
   return (
     <div
@@ -414,111 +360,15 @@ export default function MyTopicsManager() {
                   </div>
                 ) : (
                   displayedSharedPrompts.map((topic) => (
-	                    <div
-	                      key={topic.id}
-	                      className={css`
-                        padding: 1.2rem;
-                        border: 1px solid var(--ui-border);
-                        border-radius: ${borderRadius};
-                        background: ${Color.logoBlue(0.03)};
-                        transition: all 0.2s ease;
-                      `}
-                    >
-                      <div
-                        className={css`
-                          display: flex;
-                          align-items: flex-start;
-                          justify-content: space-between;
-                          gap: 1rem;
-                          margin-bottom: 0.8rem;
-                        `}
-                      >
-                        <div
-                          className={css`
-                            flex: 1;
-                          `}
-                        >
-                          <h4
-                            className={css`
-                              margin: 0 0 0.3rem;
-                              font-size: 1.6rem;
-                              color: ${Color.black()};
-                              font-weight: 800;
-                              cursor: pointer;
-                              &:hover {
-                                text-decoration: underline;
-                              }
-                            `}
-                            onClick={() =>
-                              navigate(`/shared-prompts/${topic.id}`)
-                            }
-                          >
-                            {topic.content}
-                          </h4>
-                          {topic.sharedAt && (
-                            <div
-                              className={css`
-                                display: flex;
-                                align-items: center;
-                                gap: 0.5rem;
-                                font-size: 1.1rem;
-                                color: ${Color.gray()};
-                                margin-bottom: 0.5rem;
-                              `}
-                            >
-                              <Icon
-                                icon="users"
-                                style={{ fontSize: '1rem' }}
-                              />
-                              <span>
-                                Shared {moment.unix(topic.sharedAt).fromNow()}
-                              </span>
-                            </div>
-                          )}
-                          <PromptStatsRow
-                            topicId={topic.id}
-                            cloneCount={topic.cloneCount}
-                            messageCount={topic.messageCount}
-                            numComments={topic.numComments}
-                            copiedId={copiedId}
-                            onCopyEmbed={handleCopyEmbed}
-                          />
-                        </div>
-                        <SwitchButton
-                          checked={topic.isSharedWithOtherUsers}
-                          onChange={() => handleToggleShare(topic)}
-                          disabled={updatingTopicId === topic.id}
-                          label="Share"
-                          labelStyle={{
-                            fontSize: '1.2rem',
-                            color: Color.darkerGray(),
-                            fontWeight: '500'
-                          }}
-                        />
-                      </div>
-                      {topic.customInstructions && (
-                        <div
-                          className={css`
-                            padding: 0.8rem;
-                            border-radius: ${borderRadius};
-                            border: 1px solid var(--ui-border);
-                            background: #fff;
-                          `}
-                        >
-                          <RichText
-                            contentType="customInstructions"
-                            contentId={topic.id}
-                            maxLines={4}
-                            style={{
-                              fontSize: '1.2rem',
-                              color: Color.darkerGray()
-                            }}
-                          >
-                            {topic.customInstructions}
-                          </RichText>
-                        </div>
-                      )}
-                    </div>
+                    <SharedPromptRow
+                      key={topic.id}
+                      topic={topic}
+                      copiedId={copiedId}
+                      updatingTopicId={updatingTopicId}
+                      onCopyEmbed={handleCopyEmbed}
+                      onToggleShare={handleToggleShare}
+                      onOpen={handleOpenSharedPrompt}
+                    />
                   ))
                 )}
 
@@ -595,114 +445,15 @@ export default function MyTopicsManager() {
             ) : (
               <>
                 {displayedTopics.map((topic) => (
-                  <div
+                  <ManagePromptRow
                     key={topic.id}
-                    className={css`
-                      padding: 1.2rem;
-                      border: 1px solid var(--ui-border);
-                      border-radius: ${borderRadius};
-                      background: ${topic.isSharedWithOtherUsers
-                        ? Color.logoBlue(0.03)
-                        : '#fff'};
-                      transition: all 0.2s ease;
-                    `}
-                  >
-                    <div
-                      className={css`
-                        display: flex;
-                        align-items: flex-start;
-                        justify-content: space-between;
-                        gap: 1rem;
-                        margin-bottom: 0.8rem;
-                      `}
-                    >
-                      <div
-                        className={css`
-                          flex: 1;
-                        `}
-                      >
-                        <h4
-                          className={css`
-                            margin: 0 0 0.3rem;
-                            font-size: 1.6rem;
-                            color: ${Color.black()};
-                            font-weight: 700;
-                            cursor: ${topic.isSharedWithOtherUsers
-                              ? 'pointer'
-                              : 'default'};
-                            &:hover {
-                              ${topic.isSharedWithOtherUsers
-                                ? 'text-decoration: underline;'
-                                : ''}
-                            }
-                          `}
-                          onClick={() =>
-                            topic.isSharedWithOtherUsers &&
-                            navigate(`/shared-prompts/${topic.id}`)
-                          }
-                        >
-                          {topic.content}
-                        </h4>
-                        {topic.isSharedWithOtherUsers && topic.sharedAt && (
-                          <div
-                            className={css`
-                              display: flex;
-                              align-items: center;
-                              gap: 0.5rem;
-                              font-size: 1.1rem;
-                              color: ${Color.gray()};
-                            `}
-                          >
-                            <Icon icon="users" style={{ fontSize: '1rem' }} />
-                            <span>
-                              Shared {moment.unix(topic.sharedAt).fromNow()}
-                            </span>
-                          </div>
-                        )}
-                        {topic.isSharedWithOtherUsers && (
-                          <PromptStatsRow
-                            topicId={topic.id}
-                            cloneCount={topic.cloneCount}
-                            messageCount={topic.messageCount}
-                            numComments={topic.numComments}
-                            copiedId={copiedId}
-                            onCopyEmbed={handleCopyEmbed}
-                          />
-                        )}
-                      </div>
-                      <SwitchButton
-                        checked={topic.isSharedWithOtherUsers}
-                        onChange={() => handleToggleShare(topic)}
-                        disabled={updatingTopicId === topic.id}
-                        label="Share"
-                        labelStyle={{
-                          fontSize: '1.2rem',
-                          color: Color.darkerGray(),
-                          fontWeight: '500'
-                        }}
-                      />
-                    </div>
-                    <div
-                      className={css`
-                        padding: 0.8rem;
-                        border-radius: ${borderRadius};
-                        border: 1px solid var(--ui-border);
-                        background: #fff;
-                      `}
-                    >
-                      <RichText
-                        contentType="customInstructions"
-                        contentId={topic.id}
-                        maxLines={5}
-                        style={{
-                          fontSize: '1.2rem',
-                          color: Color.darkerGray()
-                        }}
-                      >
-                        {topic.customInstructions}
-                      </RichText>
-                    </div>
-                  </div>
+                    topic={topic}
+                    copiedId={copiedId}
+                    updatingTopicId={updatingTopicId}
+                    onCopyEmbed={handleCopyEmbed}
+                    onToggleShare={handleToggleShare}
+                    onOpen={handleOpenSharedPrompt}
+                  />
                 ))}
               </>
             )}
@@ -807,15 +558,15 @@ export default function MyTopicsManager() {
     }
   }
 
-	  async function handleLoadMoreSharedPrompts() {
-	    if (loadingMoreSharedPrompts) return;
-	    const hasMore = sharedPrompts.length < sharedTotals.totalCount;
-	    if (!hasMore) return;
-	    const lastPrompt = sharedPrompts[sharedPrompts.length - 1];
-	    const canUseCursor = Boolean(lastPrompt?.sharedAt);
+  async function handleLoadMoreSharedPrompts() {
+    if (loadingMoreSharedPrompts) return;
+    const hasMore = sharedPrompts.length < sharedTotals.totalCount;
+    if (!hasMore) return;
+    const lastPrompt = sharedPrompts[sharedPrompts.length - 1];
+    const canUseCursor = Boolean(lastPrompt?.sharedAt);
 
-	    setLoadingMoreSharedPrompts(true);
-	    try {
+    setLoadingMoreSharedPrompts(true);
+    try {
       const {
         prompts: morePrompts,
         totalCount,
@@ -833,17 +584,17 @@ export default function MyTopicsManager() {
       setSharedPrompts((prev) =>
         prev.length > 0 ? prev.concat(morePrompts || []) : morePrompts || []
       );
-	      setSharedTotals({
-	        totalCount: Number(totalCount) || 0,
-	        totalClones: Number(totalClones) || 0,
-	        totalMessages: Number(totalMessages) || 0
-	      });
-	    } catch (error) {
-	      console.error('Failed to load more shared prompts:', error);
-	    } finally {
-	      setLoadingMoreSharedPrompts(false);
-	    }
-	  }
+      setSharedTotals({
+        totalCount: Number(totalCount) || 0,
+        totalClones: Number(totalClones) || 0,
+        totalMessages: Number(totalMessages) || 0
+      });
+    } catch (error) {
+      console.error('Failed to load more shared prompts:', error);
+    } finally {
+      setLoadingMoreSharedPrompts(false);
+    }
+  }
 
   async function handleLoadMoreSharedSearch() {
     if (
@@ -1000,10 +751,10 @@ export default function MyTopicsManager() {
     }
   }
 
-	  async function handleCopyEmbed(topicId: number) {
-	    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
-	    try {
-	      await navigator.clipboard.writeText(embedUrl);
+  async function handleCopyEmbed(topicId: number) {
+    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
+    try {
+      await navigator.clipboard.writeText(embedUrl);
       setCopiedId(topicId);
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
@@ -1011,38 +762,3 @@ export default function MyTopicsManager() {
     }
   }
 }
-
-const statsRowClass = css`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  font-size: 1.1rem;
-  color: ${Color.darkerGray()};
-  margin-top: 0.5rem;
-`;
-
-const statPillClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  background: ${Color.highlightGray(0.2)};
-  border: 1px solid var(--ui-border);
-  font-size: 1.1rem;
-  font-weight: 500;
-`;
-
-const copyPillClass = css`
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  &:hover {
-    background: ${Color.highlightGray(0.4)};
-    border-color: ${Color.darkerBorderGray()};
-  }
-`;
-
-const boldClass = css`
-  font-weight: 800;
-`;
