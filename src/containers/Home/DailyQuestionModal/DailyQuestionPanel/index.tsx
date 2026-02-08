@@ -27,6 +27,23 @@ interface TypingMetadata {
   keystrokeTimestamps: number[]; // just raw timestamps
 }
 
+function isDeletionOnlyChange(previousText: string, nextText: string): boolean {
+  if (nextText.length >= previousText.length) return false;
+
+  let nextIndex = 0;
+  for (
+    let previousIndex = 0;
+    previousIndex < previousText.length && nextIndex < nextText.length;
+    previousIndex++
+  ) {
+    if (previousText[previousIndex] === nextText[nextIndex]) {
+      nextIndex++;
+    }
+  }
+
+  return nextIndex === nextText.length;
+}
+
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -445,7 +462,9 @@ export default function DailyQuestionPanel({
       const lowerCaseKey = e.key.toLowerCase();
       if (
         (e.ctrlKey || e.metaKey) &&
-        (lowerCaseKey === 'x' || lowerCaseKey === 'a')
+        (lowerCaseKey === 'x' ||
+          lowerCaseKey === 'a' ||
+          lowerCaseKey === 'z')
       ) {
         e.preventDefault();
         return;
@@ -485,7 +504,10 @@ export default function DailyQuestionPanel({
 
       isComposingRef.current = false;
 
-      if (finalValue.length < committedResponse.length) {
+      const looksLikeDeletionOnly =
+        finalValue.length < committedResponse.length &&
+        isDeletionOnlyChange(committedResponse, finalValue);
+      if (looksLikeDeletionOnly) {
         e.currentTarget.value = committedResponse;
         setResponse(committedResponse);
         return;
@@ -515,7 +537,11 @@ export default function DailyQuestionPanel({
         return;
       }
 
-      if (newValue.length < committedResponse.length) {
+      const looksLikeDeletionOnly =
+        newValue.length < committedResponse.length &&
+        isDeletionOnlyChange(committedResponse, newValue);
+      const isUndo = nativeEvent.inputType === 'historyUndo';
+      if (looksLikeDeletionOnly || isUndo) {
         e.target.value = committedResponse;
         setResponse(committedResponse);
         return;
