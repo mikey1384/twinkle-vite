@@ -5,6 +5,8 @@ import DrawingTools from './DrawingTools';
 import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { useAppContext, useKeyContext } from '~/contexts';
+import { extractDrawingColorSettings } from './DrawingTools/colorSettings';
 
 interface ImageEditorProps {
   imageUrl?: string;
@@ -24,6 +26,24 @@ export default function ImageEditor({
   const [isImageReady, setIsImageReady] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const updateDisplayRef = useRef<() => void>(() => {});
+  const lastSavedColorSettingsRef = useRef('');
+  const queuedColorSettingsRef = useRef<{
+    color: string;
+    recentColors: string[];
+    serialized: string;
+  } | null>(null);
+  const colorSaveInFlightRef = useRef(false);
+  const colorSaveDebounceTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const updateImageEditorSettings = useAppContext(
+    (v) => v.requestHelpers.updateImageEditorSettings
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const userSettings = useKeyContext((v) => v.myState.settings);
+  const { color: initialDrawingColor, recentColors: initialRecentColors } =
+    extractDrawingColorSettings(userSettings);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -44,13 +64,29 @@ export default function ImageEditor({
     drawingCanvasRef: drawingCanvasRef as React.RefObject<HTMLCanvasElement>,
     referenceImageCanvasRef:
       originalCanvasRef as React.RefObject<HTMLCanvasElement>,
-    getCanvasCoordinates
+    getCanvasCoordinates,
+    initialColor: initialDrawingColor,
+    initialRecentColors,
+    onColorSettingsCommit: handlePersistDrawingColorSettings
   });
 
   // Keep the ref updated with the latest updateDisplay function
   useEffect(() => {
     updateDisplayRef.current = updateDisplay;
   }, [updateDisplay]);
+
+  useEffect(() => {
+    return () => {
+      if (colorSaveDebounceTimeoutRef.current) {
+        clearTimeout(colorSaveDebounceTimeoutRef.current);
+        colorSaveDebounceTimeoutRef.current = null;
+      }
+      if (queuedColorSettingsRef.current) {
+        void flushQueuedColorSettings();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load image and draw to canvases - only runs when imageUrl changes
   useEffect(() => {
@@ -498,6 +534,58 @@ export default function ImageEditor({
         return 'crosshair';
       default:
         return 'default';
+    }
+  }
+
+  function handlePersistDrawingColorSettings({
+    color,
+    recentColors
+  }: {
+    color: string;
+    recentColors: string[];
+  }) {
+    if (!userId) return;
+    const serialized = JSON.stringify({ color, recentColors });
+    if (lastSavedColorSettingsRef.current === serialized) return;
+    queuedColorSettingsRef.current = { color, recentColors, serialized };
+    if (colorSaveDebounceTimeoutRef.current) {
+      clearTimeout(colorSaveDebounceTimeoutRef.current);
+    }
+    colorSaveDebounceTimeoutRef.current = setTimeout(() => {
+      colorSaveDebounceTimeoutRef.current = null;
+      void flushQueuedColorSettings();
+    }, 150);
+  }
+
+  async function flushQueuedColorSettings() {
+    if (!userId || colorSaveInFlightRef.current) return;
+    const nextPayload = queuedColorSettingsRef.current;
+    if (!nextPayload) return;
+    if (nextPayload.serialized === lastSavedColorSettingsRef.current) {
+      queuedColorSettingsRef.current = null;
+      return;
+    }
+    queuedColorSettingsRef.current = null;
+    colorSaveInFlightRef.current = true;
+    try {
+      const result = await updateImageEditorSettings({
+        color: nextPayload.color,
+        recentColors: nextPayload.recentColors
+      });
+      if (result?.settings) {
+        lastSavedColorSettingsRef.current = nextPayload.serialized;
+        onSetUserState({
+          userId,
+          newState: { settings: result.settings }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save image editor settings:', error);
+    } finally {
+      colorSaveInFlightRef.current = false;
+      if (queuedColorSettingsRef.current) {
+        void flushQueuedColorSettings();
+      }
     }
   }
 }

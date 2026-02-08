@@ -108,6 +108,24 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async updateImageEditorSettings({
+      color,
+      recentColors
+    }: {
+      color?: string;
+      recentColors?: string[];
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/settings/imageEditor`,
+          { color, recentColors },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async confirmPassword(password: string) {
       try {
         const {

@@ -97,6 +97,8 @@ export default function DailyQuestionPanel({
   const hasStartedRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isSubmittingRef = useRef(false);
+  const isComposingRef = useRef(false);
+  const committedResponseRef = useRef('');
   const lastActivityRef = useRef<number>(Date.now());
   const handleSubmitRef = useRef<() => void>(() => {});
 
@@ -289,6 +291,7 @@ export default function DailyQuestionPanel({
         setStreakBroken(!!data.streakBroken);
 
         if (data.hasResponded && data.response) {
+          committedResponseRef.current = data.response.response || '';
           setGradingResult({
             grade: data.response.grade,
             masterpieceType: data.response.masterpieceType || null,
@@ -306,6 +309,8 @@ export default function DailyQuestionPanel({
           setResponse(data.response.response || '');
           setScreen('result');
         } else {
+          committedResponseRef.current = '';
+          setResponse('');
           setScreen('start');
         }
       } catch (err: any) {
@@ -350,6 +355,7 @@ export default function DailyQuestionPanel({
 
   const handleStart = useCallback(() => {
     hasStartedRef.current = true;
+    committedResponseRef.current = response;
     // Initialize typing metadata
     typingMetadataRef.current = {
       startTime: Date.now(),
@@ -359,7 +365,7 @@ export default function DailyQuestionPanel({
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 100);
-  }, []);
+  }, [response]);
 
   const handleSimplify = useCallback(async () => {
     if (!questionId || isSimplifying) return;
@@ -427,12 +433,20 @@ export default function DailyQuestionPanel({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (isComposingRef.current || e.nativeEvent.isComposing) {
+        return;
+      }
+
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'x' || e.key === 'a')) {
+      const lowerCaseKey = e.key.toLowerCase();
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (lowerCaseKey === 'x' || lowerCaseKey === 'a')
+      ) {
         e.preventDefault();
         return;
       }
@@ -440,23 +454,89 @@ export default function DailyQuestionPanel({
     []
   );
 
-  const handleInput = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value;
-      if (newValue.length >= response.length) {
-        const now = Date.now();
+  const handleBeforeInput = useCallback(
+    (e: React.FormEvent<HTMLTextAreaElement>) => {
+      if (isComposingRef.current) {
+        return;
+      }
 
-        // Track keystroke for anti-cheat (just push timestamp)
-        typingMetadataRef.current.keystrokeTimestamps.push(now);
-
-        setResponse(newValue);
-        lastActivityRef.current = now;
+      const inputType = (e.nativeEvent as InputEvent).inputType;
+      if (
+        inputType?.startsWith('delete') ||
+        inputType === 'insertFromPaste' ||
+        inputType === 'insertFromDrop' ||
+        inputType === 'historyUndo'
+      ) {
+        e.preventDefault();
       }
     },
-    [response.length]
+    []
+  );
+
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(
+    (e: React.CompositionEvent<HTMLTextAreaElement>) => {
+      const now = Date.now();
+      const finalValue = e.currentTarget.value;
+      const committedResponse = committedResponseRef.current;
+
+      isComposingRef.current = false;
+
+      if (finalValue.length < committedResponse.length) {
+        e.currentTarget.value = committedResponse;
+        setResponse(committedResponse);
+        return;
+      }
+
+      if (finalValue.length > committedResponse.length) {
+        typingMetadataRef.current.keystrokeTimestamps.push(now);
+      }
+
+      committedResponseRef.current = finalValue;
+      setResponse(finalValue);
+      lastActivityRef.current = now;
+    },
+    []
+  );
+
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const now = Date.now();
+      const newValue = e.target.value;
+      const committedResponse = committedResponseRef.current;
+      const nativeEvent = e.nativeEvent as InputEvent;
+
+      if (isComposingRef.current || nativeEvent.isComposing) {
+        setResponse(newValue);
+        lastActivityRef.current = now;
+        return;
+      }
+
+      if (newValue.length < committedResponse.length) {
+        e.target.value = committedResponse;
+        setResponse(committedResponse);
+        return;
+      }
+
+      if (newValue.length > committedResponse.length) {
+        typingMetadataRef.current.keystrokeTimestamps.push(now);
+      }
+
+      committedResponseRef.current = newValue;
+      setResponse(newValue);
+      lastActivityRef.current = now;
+    },
+    []
   );
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleCut = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
   }, []);
 
@@ -646,7 +726,7 @@ export default function DailyQuestionPanel({
 
   if (error) {
     return (
-      <div className={containerCls}>
+      <div className={centeredContainerCls}>
         <p style={{ color: Color.darkerGray(), marginBottom: '1rem' }}>
           {error}
         </p>
@@ -993,8 +1073,12 @@ export default function DailyQuestionPanel({
             ref={textareaRef}
             value={response}
             onChange={handleInput}
+            onBeforeInput={handleBeforeInput}
             onKeyDown={handleKeyDown}
+            onCompositionStart={handleCompositionStart}
+            onCompositionEnd={handleCompositionEnd}
             onPaste={handlePaste}
+            onCut={handleCut}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             placeholder="Just start typing... don't stop to think, just write..."

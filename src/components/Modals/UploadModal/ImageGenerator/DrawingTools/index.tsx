@@ -10,6 +10,12 @@ interface DrawingToolsProps {
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
   getCanvasCoordinates?: (e: React.MouseEvent) => { x: number; y: number };
+  initialColor?: string;
+  initialRecentColors?: string[];
+  onColorSettingsCommit?: (params: {
+    color: string;
+    recentColors: string[];
+  }) => void;
 }
 
 export default function DrawingTools(props: DrawingToolsProps) {
@@ -48,7 +54,10 @@ export default function DrawingTools(props: DrawingToolsProps) {
       props.referenceImageCanvasRef || props.originalCanvasRef,
     disabled: props.disabled,
     onHasContent: props.onHasContent,
-    getCanvasCoordinates: props.getCanvasCoordinates
+    getCanvasCoordinates: props.getCanvasCoordinates,
+    initialColor: props.initialColor,
+    initialRecentColors: props.initialRecentColors,
+    onColorSettingsCommit: props.onColorSettingsCommit
   });
 
   const toolsAPI = {

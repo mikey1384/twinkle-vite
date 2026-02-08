@@ -20,6 +20,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
+import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/colorSettings';
 
 const IMAGE_GENERATION_COST = 10000;
 
@@ -62,6 +63,16 @@ export default function ImageEditModal({
   const isGeneratingRef = useRef(false);
   const clearDrawingOverlayRef = useRef<() => void>(() => {});
   const updateDisplayRef = useRef<() => void>(() => {});
+  const lastSavedColorSettingsRef = useRef('');
+  const queuedColorSettingsRef = useRef<{
+    color: string;
+    recentColors: string[];
+    serialized: string;
+  } | null>(null);
+  const colorSaveInFlightRef = useRef(false);
+  const colorSaveDebounceTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const [isImageReady, setIsImageReady] = useState(false);
   const [prompt, setPrompt] = useState('');
@@ -73,9 +84,15 @@ export default function ImageEditModal({
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
   );
+  const updateImageEditorSettings = useAppContext(
+    (v) => v.requestHelpers.updateImageEditorSettings
+  );
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { color: initialDrawingColor, recentColors: initialRecentColors } =
+    extractDrawingColorSettings(userSettings);
 
   const canAffordGeneration = useMemo(() => {
     return twinkleCoins >= IMAGE_GENERATION_COST;
@@ -94,6 +111,19 @@ export default function ImageEditModal({
       onUseImageAvailabilityChange?.(isImageReady && !isGenerating);
     }
   }, [embedded, isImageReady, isGenerating, onUseImageAvailabilityChange]);
+
+  useEffect(() => {
+    return () => {
+      if (colorSaveDebounceTimeoutRef.current) {
+        clearTimeout(colorSaveDebounceTimeoutRef.current);
+        colorSaveDebounceTimeoutRef.current = null;
+      }
+      if (queuedColorSettingsRef.current) {
+        void flushQueuedColorSettings();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (embedded && onRegisterUseImageHandler) {
@@ -122,7 +152,10 @@ export default function ImageEditModal({
     referenceImageCanvasRef:
       originalCanvasRef as React.RefObject<HTMLCanvasElement>,
     getCanvasCoordinates,
-    disabled: isGenerating
+    disabled: isGenerating,
+    initialColor: initialDrawingColor,
+    initialRecentColors,
+    onColorSettingsCommit: handlePersistDrawingColorSettings
   });
 
   // Keep refs updated to avoid stale closures
@@ -429,7 +462,8 @@ export default function ImageEditModal({
             max-height: 50vh;
             position: relative;
             background-color: ${Color.lightGray()};
-            background-image: linear-gradient(
+            background-image:
+              linear-gradient(
                 45deg,
                 ${Color.borderGray()} 25%,
                 transparent 25%
@@ -439,14 +473,22 @@ export default function ImageEditModal({
                 ${Color.borderGray()} 25%,
                 transparent 25%
               ),
-              linear-gradient(45deg, transparent 75%, ${Color.borderGray()} 75%),
+              linear-gradient(
+                45deg,
+                transparent 75%,
+                ${Color.borderGray()} 75%
+              ),
               linear-gradient(
                 -45deg,
                 transparent 75%,
                 ${Color.borderGray()} 75%
               );
             background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-position:
+              0 0,
+              0 10px,
+              10px -10px,
+              -10px 0px;
             border-radius: 8px;
             padding: 1rem;
             flex-shrink: 0;
@@ -794,6 +836,58 @@ export default function ImageEditModal({
         return 'crosshair';
       default:
         return 'default';
+    }
+  }
+
+  function handlePersistDrawingColorSettings({
+    color,
+    recentColors
+  }: {
+    color: string;
+    recentColors: string[];
+  }) {
+    if (!userId) return;
+    const serialized = JSON.stringify({ color, recentColors });
+    if (lastSavedColorSettingsRef.current === serialized) return;
+    queuedColorSettingsRef.current = { color, recentColors, serialized };
+    if (colorSaveDebounceTimeoutRef.current) {
+      clearTimeout(colorSaveDebounceTimeoutRef.current);
+    }
+    colorSaveDebounceTimeoutRef.current = setTimeout(() => {
+      colorSaveDebounceTimeoutRef.current = null;
+      void flushQueuedColorSettings();
+    }, 150);
+  }
+
+  async function flushQueuedColorSettings() {
+    if (!userId || colorSaveInFlightRef.current) return;
+    const nextPayload = queuedColorSettingsRef.current;
+    if (!nextPayload) return;
+    if (nextPayload.serialized === lastSavedColorSettingsRef.current) {
+      queuedColorSettingsRef.current = null;
+      return;
+    }
+    queuedColorSettingsRef.current = null;
+    colorSaveInFlightRef.current = true;
+    try {
+      const result = await updateImageEditorSettings({
+        color: nextPayload.color,
+        recentColors: nextPayload.recentColors
+      });
+      if (result?.settings) {
+        lastSavedColorSettingsRef.current = nextPayload.serialized;
+        onSetUserState({
+          userId,
+          newState: { settings: result.settings }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save image editor settings:', error);
+    } finally {
+      colorSaveInFlightRef.current = false;
+      if (queuedColorSettingsRef.current) {
+        void flushQueuedColorSettings();
+      }
     }
   }
 }
