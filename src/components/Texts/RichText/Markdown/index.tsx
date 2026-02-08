@@ -82,17 +82,19 @@ function Markdown({
   );
 
   const [isProcessed, setIsProcessed] = useState(false);
-
-  const hasLongWord = useMemo(() => {
-    const words = children.split(/\s+/);
-    return words.some((word) => {
-      const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
-      return !isMarkdownImage && word.length > 800;
-    });
-  }, [children]);
+  const [hasLongWord, setHasLongWord] = useState(false);
 
   const processedContent = useMemo(() => {
-    if (hasLongWord) {
+    const hasExcessivelyLongWord = (text: string) => {
+      const words = text.split(/\s+/);
+      return words.some((word) => {
+        const isMarkdownImage = /^!\[.*\]\(.*\)$/.test(word);
+        return !isMarkdownImage && word.length > 800;
+      });
+    };
+
+    if (hasExcessivelyLongWord(children)) {
+      setHasLongWord(true);
       return {
         content: <Fragment key={key}>{children}</Fragment>,
         processed: true
@@ -192,16 +194,11 @@ function Markdown({
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [children, hasLongWord, linkColor, markerColor, isAIMessage, key]);
+  }, [children, linkColor, markerColor, isAIMessage, key]);
 
   useEffect(() => {
-    if (!processedContent.processed) return;
-    if (!isProcessed) {
+    if ((processedContent.processed && !isProcessed) || hasLongWord) {
       setIsProcessed(true);
-      onSetIsParsed(true);
-      return;
-    }
-    if (hasLongWord) {
       onSetIsParsed(true);
     }
   }, [processedContent, isProcessed, hasLongWord, onSetIsParsed]);
