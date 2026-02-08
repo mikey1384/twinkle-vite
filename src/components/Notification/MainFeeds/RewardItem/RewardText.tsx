@@ -66,6 +66,8 @@ export default function RewardText({
       }
     } else if (rootType === 'aiStory') {
       target = 'AI Story';
+    } else if (rootType === 'dailyReflection') {
+      target = 'daily reflection';
     } else if (rootType === 'xpChange') {
       target = 'daily bonus achievement';
     } else {
