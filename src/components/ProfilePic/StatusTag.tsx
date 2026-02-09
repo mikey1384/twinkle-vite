@@ -49,9 +49,9 @@ export default function StatusTag({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const handleResize = () => {
+    function handleResize() {
       setCompactViewport(window.innerWidth <= WIDTH_THRESHOLD);
-    };
+    }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);

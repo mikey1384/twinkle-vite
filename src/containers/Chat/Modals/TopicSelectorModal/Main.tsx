@@ -119,11 +119,6 @@ export default function Main({
     }
   }, [activeTab, hasMyTopics, isAIChannel, showSharedOnly]);
 
-  const handleTabSelect = (tab: 'all' | 'my' | 'shared') => {
-    sharedTabForcedRef.current = false;
-    setActiveTab(tab);
-  };
-
   const effectivePinnedTopicIds = useMemo(
     () => (pinnedTopicIds || []).filter((id) => !!subjectObj[id]),
     [pinnedTopicIds, subjectObj]
@@ -419,6 +414,12 @@ export default function Main({
       </div>
     </div>
   );
+
+  function handleTabSelect(tab: 'all' | 'my' | 'shared') {
+    sharedTabForcedRef.current = false;
+    setActiveTab(tab);
+  }
+
   function handleEditTopic({
     topicText,
     isOwnerPostingOnly,

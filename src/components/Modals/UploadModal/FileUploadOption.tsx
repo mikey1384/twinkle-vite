@@ -6,18 +6,24 @@ import { useRoleColor } from '~/theme/useRoleColor';
 
 interface FileUploadOptionProps {
   onFileSelect: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   accept?: string;
+  multiple?: boolean;
 }
 
 export default function FileUploadOption({
   onFileSelect,
-  accept
+  onFilesSelect,
+  accept,
+  multiple = false
 }: FileUploadOptionProps) {
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const { colorKey: buttonColorKey } = useRoleColor('button', {
     fallback: 'logoBlue'
   });
+  const isMultiImageSelectEnabled = Boolean(multiple && onFilesSelect);
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem', width: '100%' }}>
@@ -48,7 +54,7 @@ export default function FileUploadOption({
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={handleSelectFile}
+        onClick={handleSelectPrimary}
       >
         <Icon
           icon="cloud-upload-alt"
@@ -59,10 +65,14 @@ export default function FileUploadOption({
           style={{ marginTop: '1rem', fontSize: '1.2rem', color: Color.gray() }}
         >
           {isDragOver
-            ? 'Drop files here'
+            ? isMultiImageSelectEnabled
+              ? 'Drop photos here'
+              : 'Drop files here'
+            : isMultiImageSelectEnabled
+            ? 'Drag and drop photos here or click to browse'
             : 'Drag and drop files here or click to browse'}
         </div>
-        {accept && (
+        {accept && !isMultiImageSelectEnabled && (
           <div
             style={{
               marginTop: '0.5rem',
@@ -75,25 +85,83 @@ export default function FileUploadOption({
         )}
       </div>
 
-      <Button
-        variant="soft"
-        tone="raised"
-        color={
-          buttonColorKey && buttonColorKey in Color
-            ? buttonColorKey
-            : 'logoBlue'
-        }
-        onClick={handleSelectFile}
-        style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '1rem',
+          flexWrap: 'wrap'
+        }}
       >
-        <Icon icon="folder-open" />
-        <span style={{ marginLeft: '0.7rem' }}>Choose Files</span>
-      </Button>
+        {isMultiImageSelectEnabled ? (
+          <>
+            <Button
+              variant="soft"
+              tone="raised"
+              color={
+                buttonColorKey && buttonColorKey in Color
+                  ? buttonColorKey
+                  : 'logoBlue'
+              }
+              onClick={handleSelectPhotos}
+              style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
+            >
+              <Icon icon="images" />
+              <span style={{ marginLeft: '0.7rem' }}>Choose Photos</span>
+            </Button>
+            <Button
+              variant="soft"
+              tone="raised"
+              color={
+                buttonColorKey && buttonColorKey in Color
+                  ? buttonColorKey
+                  : 'logoBlue'
+              }
+              onClick={handleSelectFile}
+              style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
+            >
+              <Icon icon="folder-open" />
+              <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="soft"
+            tone="raised"
+            color={
+              buttonColorKey && buttonColorKey in Color
+                ? buttonColorKey
+                : 'logoBlue'
+            }
+            onClick={handleSelectFile}
+            style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
+          >
+            <Icon icon="folder-open" />
+            <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
+          </Button>
+        )}
+      </div>
 
+      {isMultiImageSelectEnabled && (
+        <div style={{ marginTop: '1rem', fontSize: '1.1rem', color: Color.gray() }}>
+          Tip: Choose multiple photos to send them in one message.
+        </div>
+      )}
+
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handlePhotosChange}
+        style={{ display: 'none' }}
+        aria-hidden="true"
+      />
       <input
         ref={fileInputRef}
         type="file"
         accept={accept}
+        multiple={false}
         onChange={handleFileChange}
         style={{ display: 'none' }}
         aria-hidden="true"
@@ -101,12 +169,33 @@ export default function FileUploadOption({
     </div>
   );
 
+  function handlePhotosChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      onFilesSelect?.(files);
+    }
+    event.target.value = '';
+  }
+
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
     if (files && files.length > 0) {
       onFileSelect(files[0]);
     }
     event.target.value = '';
+  }
+
+  function handleSelectPrimary() {
+    if (isMultiImageSelectEnabled) {
+      return handleSelectPhotos();
+    }
+    handleSelectFile();
+  }
+
+  function handleSelectPhotos() {
+    if (photoInputRef.current) {
+      photoInputRef.current.click();
+    }
   }
 
   function handleSelectFile() {
@@ -142,7 +231,8 @@ export default function FileUploadOption({
 
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
-      onFileSelect(files[0]);
+      if (multiple && onFilesSelect) onFilesSelect(Array.from(files));
+      else onFileSelect(files[0]);
     }
   }
 }

@@ -87,10 +87,9 @@ export default function FeaturedSubject({
       <div
         style={style}
         className={css`
-          position: relative;
           margin-bottom: 1rem;
           display: flex;
-          align-items: center;
+          align-items: stretch;
           @media (max-width: ${mobileMaxWidth}) {
             margin-left: 1rem;
             ${!isLoggedIn ? 'margin-top: 1rem;' : ''}
@@ -101,10 +100,8 @@ export default function FeaturedSubject({
           <button
             onClick={handlePrevious}
             className={css`
-              position: absolute;
-              left: 0.3rem;
-              width: 3rem;
-              height: 3rem;
+              flex-shrink: 0;
+              width: 3.5rem;
               background: none;
               border: none;
               cursor: pointer;
@@ -113,27 +110,35 @@ export default function FeaturedSubject({
               justify-content: center;
               font-size: 1.5rem;
               color: #555;
-              background-color: rgba(255, 255, 255, 0.8);
-              box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-              border-radius: 50%;
+              background-color: rgba(240, 240, 240, 0.9);
+              border-radius: 0.5rem 0 0 0.5rem;
+              transition: background-color 0.2s, color 0.2s;
               &:hover {
                 color: #000;
-                background-color: rgba(255, 255, 255, 1);
+                background-color: rgba(220, 220, 220, 1);
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 3rem;
               }
             `}
           >
-            <Icon icon="arrow-left" />
+            <Icon icon="chevron-left" />
           </button>
         )}
-        <ContentListItem key={subject.id} contentObj={subject} />
+        <div
+          className={css`
+            flex: 1;
+            min-width: 0;
+          `}
+        >
+          <ContentListItem key={subject.id} contentObj={subject} />
+        </div>
         {featureds.length > 1 && (
           <button
             onClick={handleNext}
             className={css`
-              position: absolute;
-              right: 0.3rem;
-              width: 3rem;
-              height: 3rem;
+              flex-shrink: 0;
+              width: 3.5rem;
               background: none;
               border: none;
               cursor: pointer;
@@ -142,16 +147,19 @@ export default function FeaturedSubject({
               justify-content: center;
               font-size: 1.5rem;
               color: #555;
-              background-color: rgba(255, 255, 255, 0.8);
-              box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-              border-radius: 50%;
+              background-color: rgba(240, 240, 240, 0.9);
+              border-radius: 0 0.5rem 0.5rem 0;
+              transition: background-color 0.2s, color 0.2s;
               &:hover {
                 color: #000;
-                background-color: rgba(255, 255, 255, 1);
+                background-color: rgba(220, 220, 220, 1);
+              }
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 3rem;
               }
             `}
           >
-            <Icon icon="arrow-right" />
+            <Icon icon="chevron-right" />
           </button>
         )}
       </div>

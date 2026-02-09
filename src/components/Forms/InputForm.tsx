@@ -41,6 +41,7 @@ import {
   needsImageConversion,
   convertToWebFriendlyFormat
 } from '~/helpers/imageHelpers';
+import PhotoUploadModal from '~/components/Modals/PhotoUploadModal';
 
 const recentlySubmittedContent: Record<string, number> = {};
 const areYouSureLabel = 'Are you sure?';
@@ -120,6 +121,11 @@ function InputForm({
   const [secretViewMessageSubmitting, setSecretViewMessageSubmitting] =
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [multiSelectAlertShown, setMultiSelectAlertShown] = useState(false);
+  const [photoUploadModalShown, setPhotoUploadModalShown] = useState(false);
+  const [photoUploadFileObj, setPhotoUploadFileObj] = useState<
+    File | File[] | null
+  >(null);
   const secretViewMessageSubmittingRef = useRef(false);
   const [onHover, setOnHover] = useState(false);
   const emojiDeferTimerRef = useRef<number | null>(null);
@@ -535,8 +541,10 @@ function InputForm({
         <div>
           {userId && (
             <UploadButton
-              onFileSelect={handleUpload}
-              disabled={uploadDisabled}
+              onFileSelect={handleUploadButtonFileSelect}
+              onFilesSelect={handleUploadButtonFilesSelect}
+              multiple
+              disabled={uploadDisabled || submitting}
               color={buttonColor}
               hoverColor={buttonHoverColor}
               onMouseEnter={() => setOnHover(true)}
@@ -574,6 +582,23 @@ function InputForm({
             maxSize / mb
           } MB`}
           onHide={() => setAlertModalShown(false)}
+        />
+      )}
+      {multiSelectAlertShown && (
+        <AlertModal
+          title="Multi-select is photos only"
+          content="Please upload non-image files one at a time using “Choose File.”"
+          onHide={() => setMultiSelectAlertShown(false)}
+        />
+      )}
+      {photoUploadModalShown && (
+        <PhotoUploadModal
+          fileObj={photoUploadFileObj}
+          initialCaption={textRef.current || ''}
+          maxSize={maxSize}
+          onHide={handlePhotoUploadModalHide}
+          onSubmitSingle={handleSubmitSinglePhoto}
+          onSubmitMultiple={handleSubmitMultiplePhotos}
         />
       )}
       {confirmModalShown && (
@@ -615,7 +640,10 @@ function InputForm({
   }
 
   function handleDrop(filePath: string) {
-    handleSetText(`${stringIsEmpty(text) ? '' : `${text}\n`}![](${filePath})`);
+    const currentText = textRef.current || '';
+    handleSetText(
+      `${stringIsEmpty(currentText) ? '' : `${currentText}\n`}![](${filePath})`
+    );
     if (draggedFile) {
       setDraggedFile(undefined);
       onSetCommentAttachment({
@@ -643,23 +671,93 @@ function InputForm({
   }
 
   async function handleSubmit() {
+    await submitText(text);
+  }
+
+  async function submitText(
+    textToSubmit: string,
+    options?: { throwOnError?: boolean }
+  ) {
     cancelPendingSave();
     setSubmitting(true);
     const contentKey = `${parent.contentType}${parent.contentId}`;
     recentlySubmittedContent[contentKey] = Date.now();
     try {
-      await onSubmit(finalizeEmoji(text));
+      await onSubmit(finalizeEmoji(textToSubmit));
       handleSetText('');
       if (isComment) {
         await deleteDraft();
       }
       delete recentlySubmittedContent[contentKey];
+      return true;
     } catch (error: any) {
       console.error('Error submitting form:', error.message);
       delete recentlySubmittedContent[contentKey];
+      if (options?.throwOnError) {
+        throw error;
+      }
+      return false;
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function isImageCandidate(file: File) {
+    if (!file) return false;
+    if (file.type?.startsWith('image/')) return true;
+    const { fileType } = getFileInfoFromFileName(file.name);
+    return fileType === 'image' || needsImageConversion(file.name);
+  }
+
+  function handleUploadButtonFileSelect(file: File) {
+    if (isImageCandidate(file)) {
+      setPhotoUploadFileObj(file);
+      setPhotoUploadModalShown(true);
+      return;
+    }
+    handleUpload(file);
+  }
+
+  function handleUploadButtonFilesSelect(files: File[]) {
+    if (files.length === 0) return;
+
+    const imageFiles = files.filter(isImageCandidate);
+    if (imageFiles.length === 0) {
+      if (files.length > 1) {
+        setMultiSelectAlertShown(true);
+      }
+      handleUpload(files[0]);
+      return;
+    }
+
+    setPhotoUploadFileObj(files);
+    setPhotoUploadModalShown(true);
+  }
+
+  function handlePhotoUploadModalHide() {
+    setPhotoUploadModalShown(false);
+    setPhotoUploadFileObj(null);
+  }
+
+  async function handleSubmitSinglePhoto({
+    file,
+    caption
+  }: {
+    file: File;
+    caption: string;
+  }) {
+    handleSetText(caption);
+    await handleUpload(file);
+  }
+
+  async function handleSubmitMultiplePhotos({
+    message
+  }: {
+    caption: string;
+    message: string;
+    uploadedUrls: string[];
+  }) {
+    await submitText(message, { throwOnError: true });
   }
 }
 

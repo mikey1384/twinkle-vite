@@ -15,6 +15,7 @@ export default function AddButtons({
   isAIChannel,
   myId,
   onFileSelect,
+  onFilesSelect,
   onSelectVideoButtonClick,
   onSetTransactionModalShown
 }: {
@@ -26,6 +27,7 @@ export default function AddButtons({
   isAIChannel?: boolean;
   myId: number;
   onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
   onSelectVideoButtonClick: () => any;
   onSetTransactionModalShown: (v: boolean) => any;
 }) {
@@ -119,6 +121,8 @@ export default function AddButtons({
         icon="upload"
         disabled={disabled}
         onFileSelect={onFileSelect}
+        onFilesSelect={onFilesSelect}
+        multiple
         color={baseButtonColorKey}
         hoverColor={baseHoverColorKey}
         mobilePadding={isTwoPeopleChannel ? '0.5rem' : undefined}

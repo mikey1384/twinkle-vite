@@ -274,11 +274,6 @@ export default function TodayResult({ results }: { results: any[] }) {
     return [0, 1, 2, 3, 4].map((i) => buildRow(i));
   }, [results, isAllS]);
 
-  const handleToggleActive = (rowIndex: number) => {
-    if (!deviceIsMobile) return;
-    setActiveRowIdx(activeRowIdx === rowIndex ? null : rowIndex);
-  };
-
   const rowsData = useMemo(() => {
     return [0, 1, 2, 3, 4].map((i) => {
       const levelNumber = i + 1;
@@ -489,4 +484,9 @@ export default function TodayResult({ results }: { results: any[] }) {
       ))}
     </div>
   );
+
+  function handleToggleActive(rowIndex: number) {
+    if (!deviceIsMobile) return;
+    setActiveRowIdx(activeRowIdx === rowIndex ? null : rowIndex);
+  }
 }

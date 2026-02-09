@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import SectionPanel from '~/components/SectionPanel';
-import Table from '../../Table';import ErrorBoundary from '~/components/ErrorBoundary';
+import Table from '../../Table';
+import ErrorBoundary from '~/components/ErrorBoundary';
 import AchievementListItem from './AchievementListItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useRoleColor } from '~/theme/useRoleColor';
@@ -26,10 +27,6 @@ export default function Achievements() {
     () => Object.values(achievementsObj) as Achievement[],
     [achievementsObj]
   );
-
-  const onLoadMoreAchievements = () => {
-    setNumAchievementsShown((prev) => prev + 5);
-  };
 
   return (
     <ErrorBoundary componentPath="Management/Main/Achievements">
@@ -81,11 +78,15 @@ export default function Achievements() {
             <LoadMoreButton
               variant="ghost"
               style={{ fontSize: '2rem' }}
-              onClick={onLoadMoreAchievements}
+              onClick={handleLoadMoreAchievements}
             />
           </div>
         )}
       </SectionPanel>
     </ErrorBoundary>
   );
+
+  function handleLoadMoreAchievements() {
+    setNumAchievementsShown((prev) => prev + 5);
+  }
 }

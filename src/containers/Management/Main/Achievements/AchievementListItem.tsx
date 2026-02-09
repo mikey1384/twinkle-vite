@@ -65,10 +65,6 @@ export default function AchievementListItem({
     return achievementBadges[lowerCaseType] || '';
   }, [achievement.type, achievementBadges]);
 
-  const handleAddUsers = () => {
-    setAddUsersModalShown(true);
-  };
-
   return (
     <>
       <tr>
@@ -107,4 +103,8 @@ export default function AchievementListItem({
       )}
     </>
   );
+
+  function handleAddUsers() {
+    setAddUsersModalShown(true);
+  }
 }

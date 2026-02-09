@@ -38,13 +38,18 @@ export default function Subchannel({
     return subchannel?.messagesObj?.[lastMessageId];
   }, [subchannel?.messageIds, subchannel?.messagesObj]);
   const numUnreads = useMemo(() => subchannel?.numUnreads || 0, [subchannel]);
+  const lastUnreadSenderId = useMemo(() => {
+    return typeof subchannel?.lastUnreadUserId === 'number'
+      ? subchannel.lastUnreadUserId
+      : lastMessage?.sender?.id ?? lastMessage?.userId;
+  }, [lastMessage?.sender?.id, lastMessage?.userId, subchannel?.lastUnreadUserId]);
   const badgeShown = useMemo(() => {
     return (
       !subchannelSelected &&
       numUnreads > 0 &&
-      lastMessage?.sender?.id !== userId
+      lastUnreadSenderId !== userId
     );
-  }, [lastMessage?.sender?.id, numUnreads, subchannelSelected, userId]);
+  }, [lastUnreadSenderId, numUnreads, subchannelSelected, userId]);
 
   return (
     <ErrorBoundary componentPath="Chat/LeftMenu/Subchannels/Subchannel">

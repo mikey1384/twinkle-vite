@@ -412,6 +412,35 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async loadMySharedPrompts({
+      limit,
+      lastId,
+      lastSharedAt,
+      searchText
+    }: {
+      limit?: number;
+      lastId?: number;
+      lastSharedAt?: number;
+      searchText?: string;
+    } = {}) {
+      try {
+        const params = new URLSearchParams();
+        if (limit) params.append('limit', String(limit));
+        if (lastId) params.append('lastId', String(lastId));
+        if (lastSharedAt) params.append('lastSharedAt', String(lastSharedAt));
+        if (searchText) params.append('searchText', searchText);
+        const queryString = params.toString();
+        const {
+          data: { prompts, loadMoreButton, totalCount, totalClones, totalMessages }
+        } = await request.get(
+          `${URL}/chat/topic/mySharedPrompts${queryString ? `?${queryString}` : ''}`,
+          auth()
+        );
+        return { prompts, loadMoreButton, totalCount, totalClones, totalMessages };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateTopicShareState({
       channelId,
       topicId,

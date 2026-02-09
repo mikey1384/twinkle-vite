@@ -56,17 +56,17 @@ export default function LevelDropdown({
       setAnchorRect({ x: r.x, y: r.y, width: r.width, height: r.height });
     }
     handleResize();
-    const onScroll = (e: Event) => {
+    function handleScroll(e: Event) {
       // Ignore scrolls that originate from inside the menu
       const target = e.target as Node | null;
       if (target && menuRef.current && menuRef.current.contains(target)) return;
       handleResize();
-    };
+    }
     window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('scroll', handleScroll, true);
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('scroll', handleScroll, true);
     };
   }, [open]);
 
@@ -76,24 +76,7 @@ export default function LevelDropdown({
         ref={btnRef}
         disabled={!!disabled}
         label={selectedLabel}
-        onToggle={() => {
-          if (disabled) return;
-          if (!open) {
-            didInitialScrollRef.current = false;
-            if (btnRef.current) {
-              const r = btnRef.current.getBoundingClientRect();
-              setAnchorRect({
-                x: r.x,
-                y: r.y,
-                width: r.width,
-                height: r.height
-              });
-            }
-            setOpen(true);
-          } else {
-            setOpen(false);
-          }
-        }}
+        onToggle={handleToggle}
       />
       <DropdownMenu
         open={open}
@@ -102,11 +85,32 @@ export default function LevelDropdown({
         selectedLabel={selectedLabel}
         menuRef={menuRef}
         didInitialScrollRef={didInitialScrollRef}
-        onSelect={(v) => {
-          onSelect(v);
-          setOpen(false);
-        }}
+        onSelect={handleSelect}
       />
     </>
   );
+
+  function handleToggle() {
+    if (disabled) return;
+    if (!open) {
+      didInitialScrollRef.current = false;
+      if (btnRef.current) {
+        const r = btnRef.current.getBoundingClientRect();
+        setAnchorRect({
+          x: r.x,
+          y: r.y,
+          width: r.width,
+          height: r.height
+        });
+      }
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  }
+
+  function handleSelect(v: number) {
+    onSelect(v);
+    setOpen(false);
+  }
 }

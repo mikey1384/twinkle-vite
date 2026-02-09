@@ -33,11 +33,7 @@ interface SharedTopic {
   myClones?: CloneEntry[];
 }
 
-export default function SystemPromptShared({
-  missionCleared
-}: {
-  missionCleared: boolean;
-}) {
+export default function SystemPromptShared() {
   const userId = useKeyContext((v) => v.myState.userId);
   const loadOtherUserTopics = useAppContext(
     (v) => v.requestHelpers.loadOtherUserTopics
@@ -158,38 +154,6 @@ export default function SystemPromptShared({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy]);
 
-  function handleRefresh() {
-    setNewPromptsAvailable(false);
-    setLoading(true);
-    setError('');
-    loadOtherUserTopics({ sortBy })
-      .then(
-        ({
-          subjects,
-          loadMoreButton: hasMore
-        }: {
-          subjects: SharedTopic[];
-          loadMoreButton: boolean;
-        }) => {
-          onLoadSharedPrompts({
-            prompts: subjects || [],
-            loadMoreButton: Boolean(hasMore),
-            sortBy
-          });
-        }
-      )
-      .catch((err: any) => {
-        setError(
-          err?.response?.data?.error ||
-            err?.message ||
-            'Failed to load shared prompts'
-        );
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }
-
   const tabs = useMemo(
     () => [
       { key: 'new', label: 'New' },
@@ -199,85 +163,6 @@ export default function SystemPromptShared({
     []
   );
 
-  const handleLoadMore = async () => {
-    if (!loadMoreButton || !topics.length) return;
-    const last = topics[topics.length - 1];
-    setLoadingMore(true);
-    try {
-      const { subjects, loadMoreButton: hasMore } =
-        await loadMoreOtherUserTopics({
-          lastSubject: {
-            id: last.id,
-            timeStamp: last.timeStamp || 0,
-            sharedAt: last.sharedAt,
-            cloneCount: last.cloneCount,
-            messageCount: last.messageCount
-          },
-          sortBy
-        });
-      onLoadMoreSharedPrompts({
-        prompts: subjects || [],
-        loadMoreButton: Boolean(hasMore)
-      });
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          err?.message ||
-          'Failed to load more shared prompts'
-      );
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const handleCloneSuccess = (data: {
-    sharedTopicId: number;
-    target: 'zero' | 'ciel';
-    topicId: number;
-    channelId: number;
-    title: string;
-  }) => {
-    onUpdateSharedPromptClone({
-      promptId: data.sharedTopicId,
-      target: data.target,
-      channelId: data.channelId,
-      topicId: data.topicId
-    });
-  };
-
-  const handleCommentSubmit = async (topicId: number) => {
-    const text = commentTexts[topicId]?.trim();
-    if (!text || commentSubmitting[topicId]) return;
-
-    setCommentSubmitting((prev) => ({ ...prev, [topicId]: true }));
-    try {
-      await uploadComment({
-        content: text,
-        parent: {
-          contentType: 'sharedTopic',
-          contentId: topicId
-        }
-      });
-      navigate(`/shared-prompts/${topicId}`);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.error || err?.message || 'Failed to post comment'
-      );
-    } finally {
-      setCommentSubmitting((prev) => ({ ...prev, [topicId]: false }));
-    }
-  };
-
-  async function handleCopyEmbed(topicId: number) {
-    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
-    try {
-      await navigator.clipboard.writeText(embedUrl);
-      setCopiedId(topicId);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  }
 
   return (
     <ErrorBoundary componentPath="MissionPage/SystemPromptShared">
@@ -331,7 +216,8 @@ export default function SystemPromptShared({
             your AI chat to complete the mission checklist.
           </p>
         </header>
-        <FilterBar>
+        <MyTopicsManager />
+        <FilterBar bordered>
           {tabs.map((tab) => (
             <nav
               key={tab.key}
@@ -474,10 +360,121 @@ export default function SystemPromptShared({
             </Button>
           </div>
         )}
-        {!missionCleared && <MyTopicsManager />}
       </div>
     </ErrorBoundary>
   );
+
+  function handleRefresh() {
+    setNewPromptsAvailable(false);
+    setLoading(true);
+    setError('');
+    loadOtherUserTopics({ sortBy })
+      .then(
+        ({
+          subjects,
+          loadMoreButton: hasMore
+        }: {
+          subjects: SharedTopic[];
+          loadMoreButton: boolean;
+        }) => {
+          onLoadSharedPrompts({
+            prompts: subjects || [],
+            loadMoreButton: Boolean(hasMore),
+            sortBy
+          });
+        }
+      )
+      .catch((err: any) => {
+        setError(
+          err?.response?.data?.error ||
+            err?.message ||
+            'Failed to load shared prompts'
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }
+
+  async function handleLoadMore() {
+    if (!loadMoreButton || !topics.length) return;
+    const last = topics[topics.length - 1];
+    setLoadingMore(true);
+    try {
+      const { subjects, loadMoreButton: hasMore } =
+        await loadMoreOtherUserTopics({
+          lastSubject: {
+            id: last.id,
+            timeStamp: last.timeStamp || 0,
+            sharedAt: last.sharedAt,
+            cloneCount: last.cloneCount,
+            messageCount: last.messageCount
+          },
+          sortBy
+        });
+      onLoadMoreSharedPrompts({
+        prompts: subjects || [],
+        loadMoreButton: Boolean(hasMore)
+      });
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.error ||
+          err?.message ||
+          'Failed to load more shared prompts'
+      );
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function handleCloneSuccess(data: {
+    sharedTopicId: number;
+    target: 'zero' | 'ciel';
+    topicId: number;
+    channelId: number;
+    title: string;
+  }) {
+    onUpdateSharedPromptClone({
+      promptId: data.sharedTopicId,
+      target: data.target,
+      channelId: data.channelId,
+      topicId: data.topicId
+    });
+  }
+
+  async function handleCommentSubmit(topicId: number) {
+    const text = commentTexts[topicId]?.trim();
+    if (!text || commentSubmitting[topicId]) return;
+
+    setCommentSubmitting((prev) => ({ ...prev, [topicId]: true }));
+    try {
+      await uploadComment({
+        content: text,
+        parent: {
+          contentType: 'sharedTopic',
+          contentId: topicId
+        }
+      });
+      navigate(`/shared-prompts/${topicId}`);
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.error || err?.message || 'Failed to post comment'
+      );
+    } finally {
+      setCommentSubmitting((prev) => ({ ...prev, [topicId]: false }));
+    }
+  }
+
+  async function handleCopyEmbed(topicId: number) {
+    const embedUrl = `![](https://www.twin-kle.com/shared-prompts/${topicId})`;
+    try {
+      await navigator.clipboard.writeText(embedUrl);
+      setCopiedId(topicId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }
 }
 
 const gridClass = css`

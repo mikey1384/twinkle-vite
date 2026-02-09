@@ -438,19 +438,24 @@ export default function useInitSocket({
 
         onInitChat({ data, userId: userIdRef.current });
 
+        const latestPathId = latestPathIdRef.current;
+        const latestPathIdMatchesCurrentPath =
+          !isNaN(pathId) && Number(latestPathId) === Number(pathId);
+
         if (
-          latestPathIdRef.current &&
-          (data.currentPathId !== latestPathIdRef.current || data.chatType) &&
-          userIdRef.current
+          latestPathId &&
+          (data.currentPathId !== latestPathId || data.chatType) &&
+          userIdRef.current &&
+          (isNaN(pathId) || latestPathIdMatchesCurrentPath)
         ) {
-          const channelId = parseChannelPath(latestPathIdRef.current);
+          const channelId = parseChannelPath(latestPathId);
           const { isAccessible, isPublic } = await checkChatAccessible(
-            latestPathIdRef.current
+            latestPathId
           );
           if (!isAccessible) {
             if (isPublic) {
-              if (!channelPathIdHash[pathId]) {
-                onUpdateChannelPathIdHash({ channelId, pathId });
+              if (!channelPathIdHash[latestPathId]) {
+                onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
               }
               const { channel, joinMessage } = await acceptInvitation(
                 channelId
@@ -467,7 +472,13 @@ export default function useInitSocket({
                     channelName: channel.channelName,
                     pathId: channel.pathId
                   },
-                  newMembers: [{ id: userIdRef.current, username: usernameRef.current, profilePicUrl: profilePicUrlRef.current }]
+                  newMembers: [
+                    {
+                      id: userIdRef.current,
+                      username: usernameRef.current,
+                      profilePicUrl: profilePicUrlRef.current
+                    }
+                  ]
                 });
               }
             } else {
@@ -493,8 +504,8 @@ export default function useInitSocket({
           }
 
           if (channelId > 0) {
-            if (!channelPathIdHash[pathId]) {
-              onUpdateChannelPathIdHash({ channelId, pathId });
+            if (!channelPathIdHash[latestPathId]) {
+              onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
             }
             const channelData = await loadChatChannel({
               channelId,

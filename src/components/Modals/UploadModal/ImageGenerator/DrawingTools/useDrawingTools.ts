@@ -1,12 +1,16 @@
 import React, {
   useRef,
   useState,
-  useCallback,
   useEffect,
   useLayoutEffect
 } from 'react';
 import type { ToolType, TextElement } from './types';
 import { COMMON_COLORS } from './constants';
+import {
+  DEFAULT_DRAWING_COLOR,
+  normalizeDrawingColor,
+  normalizeRecentDrawingColors
+} from './colorSettings';
 
 interface DrawingToolsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -15,6 +19,25 @@ interface DrawingToolsProps {
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
   getCanvasCoordinates?: (e: React.MouseEvent) => { x: number; y: number };
+  initialColor?: string;
+  initialRecentColors?: string[];
+  onColorSettingsCommit?: (params: {
+    color: string;
+    recentColors: string[];
+  }) => void;
+}
+
+function getNextRecentColors(previousColors: string[], newColor: string) {
+  if (COMMON_COLORS.includes(newColor)) {
+    return previousColors;
+  }
+  if (previousColors[0] === newColor) {
+    return previousColors;
+  }
+  return [
+    newColor,
+    ...previousColors.filter((color) => color !== newColor)
+  ].slice(0, 6);
 }
 
 export default function useDrawingTools({
@@ -23,10 +46,13 @@ export default function useDrawingTools({
   referenceImageCanvasRef,
   disabled = false,
   onHasContent,
-  getCanvasCoordinates
+  getCanvasCoordinates,
+  initialColor = DEFAULT_DRAWING_COLOR,
+  initialRecentColors = [],
+  onColorSettingsCommit
 }: DrawingToolsProps) {
   const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#000000');
+  const [color, setColor] = useState(normalizeDrawingColor(initialColor));
   const [lineWidth, setLineWidth] = useState(3);
   const [tool, setTool] = useState<ToolType>('pencil');
   const [fontSize, setFontSize] = useState(20);
@@ -49,30 +75,33 @@ export default function useDrawingTools({
     x: 0,
     y: 0
   });
-  const [recentColors, setRecentColors] = useState<string[]>([]);
+  const [recentColors, setRecentColors] = useState<string[]>(
+    normalizeRecentDrawingColors(initialRecentColors)
+  );
 
   const currentStrokePointsRef = useRef<Array<{ x: number; y: number }>>([]);
   const draggedElementRef = useRef<TextElement | null>(null);
 
   const originalDrawingContentRef = useRef<ImageData | null>(null);
 
-  const addToRecentColors = useCallback((newColor: string) => {
-    setRecentColors((prev) => {
-      if (prev[0] === newColor || COMMON_COLORS.includes(newColor)) return prev;
-      const filtered = prev.filter((c) => c !== newColor);
-      return [newColor, ...filtered].slice(0, 6);
+  function handleColorChange(newColor: string, commit: boolean = true) {
+    const normalizedColor = normalizeDrawingColor(newColor);
+    setColor(normalizedColor);
+    if (!commit) return;
+    setRecentColors((previousColors) => {
+      const nextRecentColors = getNextRecentColors(
+        previousColors,
+        normalizedColor
+      );
+      onColorSettingsCommit?.({
+        color: normalizedColor,
+        recentColors: nextRecentColors
+      });
+      return nextRecentColors;
     });
-  }, []);
+  }
 
-  const handleColorChange = useCallback(
-    (newColor: string, commit: boolean = true) => {
-      setColor(newColor);
-      if (commit) addToRecentColors(newColor);
-    },
-    [addToRecentColors]
-  );
-
-  const checkAndNotifyContent = useCallback(() => {
+  function checkAndNotifyContent() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -87,24 +116,21 @@ export default function useDrawingTools({
       }
     }
     onHasContent?.(hasContent);
-  }, [canvasRef, onHasContent]);
+  }
 
-  const getRasterCanvas = useCallback(
-    () => (drawingCanvasRef ? drawingCanvasRef.current : canvasRef.current),
-    [drawingCanvasRef, canvasRef]
-  );
+  function getRasterCanvas() {
+    return drawingCanvasRef ? drawingCanvasRef.current : canvasRef.current;
+  }
 
-  const cloneImageData = useCallback(
-    (imageData: ImageData) =>
-      new ImageData(
-        new Uint8ClampedArray(imageData.data),
-        imageData.width,
-        imageData.height
-      ),
-    []
-  );
+  function cloneImageData(imageData: ImageData) {
+    return new ImageData(
+      new Uint8ClampedArray(imageData.data),
+      imageData.width,
+      imageData.height
+    );
+  }
 
-  const updateDisplay = useCallback(() => {
+  function updateDisplay() {
     const displayCanvas = canvasRef.current;
     if (!displayCanvas) return;
     const displayCtx = displayCanvas.getContext('2d');
@@ -177,18 +203,7 @@ export default function useDrawingTools({
     }
 
     checkAndNotifyContent();
-  }, [
-    canvasRef,
-    getRasterCanvas,
-    textElements,
-    isDraggingText,
-    draggedTextId,
-    tool,
-    color,
-    lineWidth,
-    referenceImageCanvasRef,
-    checkAndNotifyContent
-  ]);
+  }
 
   // Initial canvas setup - useLayoutEffect ensures this runs before user can interact
   useLayoutEffect(() => {
@@ -214,16 +229,18 @@ export default function useDrawingTools({
       updateDisplay();
     };
     initCanvas();
-  }, [getRasterCanvas, updateDisplay]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-redraw on state changes (text, tool, etc.)
   useEffect(() => {
     if (canvasRef.current) {
       updateDisplay();
     }
-  }, [textElements, tool, updateDisplay, canvasRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textElements, tool, color, lineWidth, isDraggingText, draggedTextId]);
 
-  const saveToHistory = useCallback(() => {
+  function saveToHistory() {
     const rasterCanvas = getRasterCanvas();
     if (!rasterCanvas) return;
     const rasterCtx = rasterCanvas.getContext('2d');
@@ -232,12 +249,7 @@ export default function useDrawingTools({
     const displayCanvas = canvasRef.current;
     const currentData =
       displayCanvas && rasterCanvas !== displayCanvas
-        ? rasterCtx.getImageData(
-            0,
-            0,
-            rasterCanvas.width,
-            rasterCanvas.height
-          )
+        ? rasterCtx.getImageData(0, 0, rasterCanvas.width, rasterCanvas.height)
         : originalDrawingContentRef.current;
     if (!currentData) return;
     // Clone the ImageData to avoid reference issues
@@ -247,72 +259,69 @@ export default function useDrawingTools({
     );
     // Clear redo history when a new action is performed
     setRedoHistory([]);
-  }, [getRasterCanvas, canvasRef, textElements, cloneImageData]);
+  }
 
-  const floodFill = useCallback(
-    (startX: number, startY: number, fillColor: string) => {
-      const rasterCanvas = getRasterCanvas();
-      if (!rasterCanvas) return;
-      const rasterCtx = rasterCanvas.getContext('2d');
-      if (!rasterCtx) return;
-      const imageData = rasterCtx.getImageData(
-        0,
-        0,
-        rasterCanvas.width,
-        rasterCanvas.height
-      );
-      const data = imageData.data;
-      const width = rasterCanvas.width;
-      const height = rasterCanvas.height;
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      if (!tempCtx) return;
-      tempCtx.fillStyle = fillColor;
-      tempCtx.fillRect(0, 0, 1, 1);
-      const fillData = tempCtx.getImageData(0, 0, 1, 1).data;
-      const fillR = fillData[0];
-      const fillG = fillData[1];
-      const fillB = fillData[2];
-      const startIndex = (startY * width + startX) * 4;
-      const targetR = data[startIndex];
-      const targetG = data[startIndex + 1];
-      const targetB = data[startIndex + 2];
-      const targetA = data[startIndex + 3];
-      if (targetR === fillR && targetG === fillG && targetB === fillB) return;
-      const pixelsToCheck = [startX, startY];
-      while (pixelsToCheck.length > 0) {
-        const y = pixelsToCheck.pop()!;
-        const x = pixelsToCheck.pop()!;
-        if (x < 0 || x >= width || y < 0 || y >= height) continue;
-        const currentIndex = (y * width + x) * 4;
-        const currentR = data[currentIndex];
-        const currentG = data[currentIndex + 1];
-        const currentB = data[currentIndex + 2];
-        const currentA = data[currentIndex + 3];
-        if (
-          currentR === targetR &&
-          currentG === targetG &&
-          currentB === targetB &&
-          currentA === targetA
-        ) {
-          data[currentIndex] = fillR;
-          data[currentIndex + 1] = fillG;
-          data[currentIndex + 2] = fillB;
-          data[currentIndex + 3] = 255;
-          pixelsToCheck.push(x + 1, y, x - 1, y, x, y + 1, x, y - 1);
-        }
+  function floodFill(startX: number, startY: number, fillColor: string) {
+    const rasterCanvas = getRasterCanvas();
+    if (!rasterCanvas) return;
+    const rasterCtx = rasterCanvas.getContext('2d');
+    if (!rasterCtx) return;
+    const imageData = rasterCtx.getImageData(
+      0,
+      0,
+      rasterCanvas.width,
+      rasterCanvas.height
+    );
+    const data = imageData.data;
+    const width = rasterCanvas.width;
+    const height = rasterCanvas.height;
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+    tempCtx.fillStyle = fillColor;
+    tempCtx.fillRect(0, 0, 1, 1);
+    const fillData = tempCtx.getImageData(0, 0, 1, 1).data;
+    const fillR = fillData[0];
+    const fillG = fillData[1];
+    const fillB = fillData[2];
+    const startIndex = (startY * width + startX) * 4;
+    const targetR = data[startIndex];
+    const targetG = data[startIndex + 1];
+    const targetB = data[startIndex + 2];
+    const targetA = data[startIndex + 3];
+    if (targetR === fillR && targetG === fillG && targetB === fillB) return;
+    const pixelsToCheck = [startX, startY];
+    while (pixelsToCheck.length > 0) {
+      const y = pixelsToCheck.pop()!;
+      const x = pixelsToCheck.pop()!;
+      if (x < 0 || x >= width || y < 0 || y >= height) continue;
+      const currentIndex = (y * width + x) * 4;
+      const currentR = data[currentIndex];
+      const currentG = data[currentIndex + 1];
+      const currentB = data[currentIndex + 2];
+      const currentA = data[currentIndex + 3];
+      if (
+        currentR === targetR &&
+        currentG === targetG &&
+        currentB === targetB &&
+        currentA === targetA
+      ) {
+        data[currentIndex] = fillR;
+        data[currentIndex + 1] = fillG;
+        data[currentIndex + 2] = fillB;
+        data[currentIndex + 3] = 255;
+        pixelsToCheck.push(x + 1, y, x - 1, y, x, y + 1, x, y - 1);
       }
-      rasterCtx.putImageData(imageData, 0, 0);
-      originalDrawingContentRef.current = rasterCtx.getImageData(
-        0,
-        0,
-        rasterCanvas.width,
-        rasterCanvas.height
-      );
-      updateDisplay();
-    },
-    [getRasterCanvas, updateDisplay]
-  );
+    }
+    rasterCtx.putImageData(imageData, 0, 0);
+    originalDrawingContentRef.current = rasterCtx.getImageData(
+      0,
+      0,
+      rasterCanvas.width,
+      rasterCanvas.height
+    );
+    updateDisplay();
+  }
 
   const defaultGetCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -604,16 +613,17 @@ export default function useDrawingTools({
     const displayCanvas = canvasRef.current;
     const currentData =
       displayCanvas && rasterCanvas !== displayCanvas
-        ? rasterCtx.getImageData(
-            0,
-            0,
-            rasterCanvas.width,
-            rasterCanvas.height
-          )
+        ? rasterCtx.getImageData(0, 0, rasterCanvas.width, rasterCanvas.height)
         : originalDrawingContentRef.current;
     if (currentData) {
       setRedoHistory((prev) =>
-        [...prev, { drawingData: cloneImageData(currentData), textState: [...textElements] }].slice(-10)
+        [
+          ...prev,
+          {
+            drawingData: cloneImageData(currentData),
+            textState: [...textElements]
+          }
+        ].slice(-10)
       );
     }
     const previous = canvasHistory[canvasHistory.length - 1];
@@ -636,16 +646,17 @@ export default function useDrawingTools({
     const displayCanvas = canvasRef.current;
     const currentData =
       displayCanvas && rasterCanvas !== displayCanvas
-        ? rasterCtx.getImageData(
-            0,
-            0,
-            rasterCanvas.width,
-            rasterCanvas.height
-          )
+        ? rasterCtx.getImageData(0, 0, rasterCanvas.width, rasterCanvas.height)
         : originalDrawingContentRef.current;
     if (currentData) {
       setCanvasHistory((prev) =>
-        [...prev, { drawingData: cloneImageData(currentData), textState: [...textElements] }].slice(-10)
+        [
+          ...prev,
+          {
+            drawingData: cloneImageData(currentData),
+            textState: [...textElements]
+          }
+        ].slice(-10)
       );
     }
     const next = redoHistory[redoHistory.length - 1];

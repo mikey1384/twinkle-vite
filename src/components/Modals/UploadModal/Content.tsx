@@ -7,6 +7,7 @@ import Icon from '~/components/Icon';
 export default function UploadModalContent({
   selectedOption,
   onFileSelect,
+  onFilesSelect,
   onFileUploadSelect,
   onAIGenerateSelect,
   onGeneratedImage,
@@ -14,10 +15,12 @@ export default function UploadModalContent({
   onUseImageAvailabilityChange,
   onRegisterUseImageHandler,
   accept,
+  multiple,
   onError
 }: {
   selectedOption: 'select' | 'upload' | 'generate';
   onFileSelect: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   onFileUploadSelect: () => void;
   onAIGenerateSelect: () => void;
   onGeneratedImage: (file: File) => void;
@@ -27,11 +30,19 @@ export default function UploadModalContent({
     handler: (() => void | Promise<void>) | null
   ) => void;
   accept: string;
+  multiple?: boolean;
   onError?: (error: string) => void;
 }) {
   switch (selectedOption) {
     case 'upload':
-      return <FileUploadOption onFileSelect={onFileSelect} accept={accept} />;
+      return (
+        <FileUploadOption
+          onFileSelect={onFileSelect}
+          onFilesSelect={onFilesSelect}
+          accept={accept}
+          multiple={multiple}
+        />
+      );
     case 'generate':
       return (
         <ImageGeneratorOption

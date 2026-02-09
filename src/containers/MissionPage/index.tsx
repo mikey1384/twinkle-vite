@@ -208,6 +208,7 @@ export default function MissionPage() {
           >
             {(isAdmin || isSystemPromptMission) && (
               <FilterBar
+                bordered
                 className="mobile"
                 style={{
                   fontSize: '1.6rem',
@@ -314,9 +315,7 @@ export default function MissionPage() {
               {isSystemPromptMission && (
                 <Route
                   path="/shared"
-                  element={
-                    <SystemPromptShared missionCleared={missionCleared} />
-                  }
+                  element={<SystemPromptShared />}
                 />
               )}
               <Route

@@ -212,13 +212,6 @@ function SubtitleEditor({
     }, 300)
   ).current;
 
-  // Handle local text changes
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setText(newText);
-    debouncedTextUpdate(index, newText);
-  };
-
   return (
     <div
       className={css`
@@ -387,9 +380,7 @@ function SubtitleEditor({
             Seek
           </Button>
           <Button
-            onClick={() => {
-              onPlaySubtitle(sub.start, sub.end);
-            }}
+            onClick={() => onPlaySubtitle(sub.start, sub.end)}
             size="sm"
             variant={isPlaying ? 'danger' : 'primary'}
             style={{ minWidth: '60px' }}
@@ -410,6 +401,12 @@ function SubtitleEditor({
       </div>
     </div>
   );
+
+  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const newText = e.target.value;
+    setText(newText);
+    debouncedTextUpdate(index, newText);
+  }
 }
 
 // Export memoized version to prevent unnecessary re-renders

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
@@ -88,6 +88,7 @@ export default function Game({
   const [userChoiceObj, setUserChoiceObj] = useState<Record<number, number>>(
     {}
   );
+  const userChoiceObjRef = useRef<Record<number, number>>({});
 
   return (
     <div
@@ -141,7 +142,7 @@ export default function Game({
               onSetLoadStoryComplete={setLoadStoryComplete}
               onSetSolveObj={onSetSolveObj}
               onSetStoryId={onSetStoryId}
-              onSetUserChoiceObj={setUserChoiceObj}
+              onSetUserChoiceObj={handleSetUserChoiceObj}
               questions={questions}
               questionsLoaded={questionsLoaded}
               questionsButtonEnabled={questionsButtonEnabled}
@@ -163,7 +164,7 @@ export default function Game({
               onGrade={handleGrade}
               onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
-              onSetUserChoiceObj={setUserChoiceObj}
+              onSetUserChoiceObj={handleSetUserChoiceObj}
               onSetStoryId={onSetStoryId}
               questions={questions}
               questionsLoaded={questionsLoaded}
@@ -181,10 +182,22 @@ export default function Game({
     </div>
   );
 
+  function handleSetUserChoiceObj(
+    action: React.SetStateAction<Record<number, number>>
+  ) {
+    const nextValue =
+      typeof action === 'function'
+        ? action(userChoiceObjRef.current)
+        : action;
+    userChoiceObjRef.current = nextValue;
+    setUserChoiceObj(nextValue);
+  }
+
   async function handleGrade() {
     let numCorrect = 0;
+    const choiceObj = userChoiceObjRef.current;
     const answers = questions.map((question) => {
-      const selectedChoiceIndex = userChoiceObj[question.id];
+      const selectedChoiceIndex = choiceObj[question.id];
       if (
         typeof selectedChoiceIndex === 'number' &&
         selectedChoiceIndex === Number(question.answerIndex)
@@ -248,7 +261,7 @@ export default function Game({
     setQuestionsButtonEnabled(false);
     onSetQuestions([]);
     onSetDisplayedSection('story');
-    setUserChoiceObj({});
+    handleSetUserChoiceObj({});
     onSetSolveObj({
       numCorrect: 0,
       isGraded: false

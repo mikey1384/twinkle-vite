@@ -32,6 +32,12 @@ const gradeLabels: Record<string, string> = {
   Fail: 'Fail'
 };
 
+const masterpieceTypeLabels: Record<string, string> = {
+  heart: 'Masterpiece (Heart)',
+  mind: 'Masterpiece (Mind)',
+  heart_and_mind: 'Masterpiece (Heart & Mind)'
+};
+
 const gradeSymbols: Record<string, string> = {
   Masterpiece: '★',
   Pass: '✓',
@@ -56,6 +62,7 @@ export default function GradingResult({
   originalResponse,
   initialRefinedResponse,
   grade,
+  masterpieceType,
   xpAwarded,
   feedback,
   responseId,
@@ -73,6 +80,7 @@ export default function GradingResult({
   originalResponse: string;
   initialRefinedResponse: string | null;
   grade: string;
+  masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
   xpAwarded: number;
   feedback: string;
   responseId: number;
@@ -223,7 +231,10 @@ export default function GradingResult({
   }
 
   const gradeColor = gradeColors[grade] || Color.darkerGray();
-  const gradeLabel = gradeLabels[grade] || '';
+  const gradeLabel =
+    grade === 'Masterpiece' && masterpieceType
+      ? masterpieceTypeLabels[masterpieceType] || 'Masterpiece'
+      : gradeLabels[grade] || '';
   const gradeSymbol = gradeSymbols[grade] || '?';
   const canShareToFeed = grade !== 'Fail';
   const canShareToFeedNow = canShareToFeed && !isShared;

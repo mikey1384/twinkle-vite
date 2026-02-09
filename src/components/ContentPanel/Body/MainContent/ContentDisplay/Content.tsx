@@ -347,7 +347,11 @@ export default function Content({
                 }}
               >
                 <span>★</span>
-                <span>Masterpiece</span>
+                <span>
+                  {contentObj?.masterpieceType
+                    ? `Masterpiece (${contentObj.masterpieceType.replace(/_/g, ' ').split(' ').map((word: string, i: number) => ['and', 'or', 'the', 'a', 'an'].includes(word) && i > 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)).join(' ')})`
+                    : 'Masterpiece'}
+                </span>
               </div>
             )}
             <XPAndStreakDisplay

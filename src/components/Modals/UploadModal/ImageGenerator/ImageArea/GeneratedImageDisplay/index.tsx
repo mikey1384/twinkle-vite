@@ -52,66 +52,10 @@ export default function GeneratedImageDisplay({
   const [isEditing, setIsEditing] = useState(false);
   const currentImageSrc =
     partialImageData || generatedImageUrl || referenceImageUrl || canvasUrl;
-  const getImageAltText = () => {
-    if (partialImageData || generatedImageUrl) return 'Generated image';
-    if (referenceImageUrl) return 'Reference image';
-    if (canvasUrl) return 'Canvas drawing';
-    return 'Image';
-  };
 
   const canEdit =
     (generatedImageUrl || referenceImageUrl || canvasUrl) &&
     !isShowingLoadingState;
-
-  const handleEditSave = (dataUrl: string) => {
-    setIsEditing(false);
-    onSetHasBeenEdited(true);
-    onImageEdited?.(dataUrl);
-  };
-
-  const handleDownload = async () => {
-    if (!currentImageSrc) return;
-
-    try {
-      let blob: Blob;
-      let fileExtension = 'png';
-
-      if (currentImageSrc.startsWith('data:image')) {
-        // Convert data URL to Blob
-        const [header, data] = currentImageSrc.split(',');
-        const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
-        const binary = atob(data);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          array[i] = binary.charCodeAt(i);
-        }
-        blob = new Blob([array], { type: mime });
-        fileExtension = mime.split('/')[1] || 'png';
-      } else {
-        // Fetch remote image as Blob
-        const response = await fetch(currentImageSrc, { mode: 'cors' });
-        if (!response.ok) throw new Error('Failed to fetch image');
-        blob = await response.blob();
-        fileExtension = blob.type.split('/')[1] || 'png';
-      }
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `twinkle-image-${Date.now()}.${fileExtension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download failed:', error);
-      // Fallback: Open image in a new tab
-      window.open(currentImageSrc, '_blank');
-      alert(
-        'Download failed. The image has been opened in a new tab. Long-press to save it.'
-      );
-    }
-  };
 
   return (
     <div
@@ -409,4 +353,61 @@ export default function GeneratedImageDisplay({
       )}
     </div>
   );
+
+  function getImageAltText() {
+    if (partialImageData || generatedImageUrl) return 'Generated image';
+    if (referenceImageUrl) return 'Reference image';
+    if (canvasUrl) return 'Canvas drawing';
+    return 'Image';
+  }
+
+  function handleEditSave(dataUrl: string) {
+    setIsEditing(false);
+    onSetHasBeenEdited(true);
+    onImageEdited?.(dataUrl);
+  }
+
+  async function handleDownload() {
+    if (!currentImageSrc) return;
+
+    try {
+      let blob: Blob;
+      let fileExtension = 'png';
+
+      if (currentImageSrc.startsWith('data:image')) {
+        // Convert data URL to Blob
+        const [header, data] = currentImageSrc.split(',');
+        const mime = header.match(/:(.*?);/)?.[1] || 'image/png';
+        const binary = atob(data);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          array[i] = binary.charCodeAt(i);
+        }
+        blob = new Blob([array], { type: mime });
+        fileExtension = mime.split('/')[1] || 'png';
+      } else {
+        // Fetch remote image as Blob
+        const response = await fetch(currentImageSrc, { mode: 'cors' });
+        if (!response.ok) throw new Error('Failed to fetch image');
+        blob = await response.blob();
+        fileExtension = blob.type.split('/')[1] || 'png';
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `twinkle-image-${Date.now()}.${fileExtension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: Open image in a new tab
+      window.open(currentImageSrc, '_blank');
+      alert(
+        'Download failed. The image has been opened in a new tab. Long-press to save it.'
+      );
+    }
+  }
 }

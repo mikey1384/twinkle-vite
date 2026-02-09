@@ -865,6 +865,7 @@ export default function Main({
   // Refresh online and recent-offline lists whenever channel changes
   useEffect(() => {
     if (!selectedChannelId) return;
+    socket.emit('join_chat_group', selectedChannelId);
     socket.emit(
       'check_online_users',
       selectedChannelId,

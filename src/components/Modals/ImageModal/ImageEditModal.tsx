@@ -20,6 +20,7 @@ import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
 import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
+import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/colorSettings';
 
 const IMAGE_GENERATION_COST = 10000;
 
@@ -62,6 +63,16 @@ export default function ImageEditModal({
   const isGeneratingRef = useRef(false);
   const clearDrawingOverlayRef = useRef<() => void>(() => {});
   const updateDisplayRef = useRef<() => void>(() => {});
+  const lastSavedColorSettingsRef = useRef('');
+  const queuedColorSettingsRef = useRef<{
+    color: string;
+    recentColors: string[];
+    serialized: string;
+  } | null>(null);
+  const colorSaveInFlightRef = useRef(false);
+  const colorSaveDebounceTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const [isImageReady, setIsImageReady] = useState(false);
   const [prompt, setPrompt] = useState('');
@@ -73,9 +84,15 @@ export default function ImageEditModal({
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
   );
+  const updateImageEditorSettings = useAppContext(
+    (v) => v.requestHelpers.updateImageEditorSettings
+  );
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
+  const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const { color: initialDrawingColor, recentColors: initialRecentColors } =
+    extractDrawingColorSettings(userSettings);
 
   const canAffordGeneration = useMemo(() => {
     return twinkleCoins >= IMAGE_GENERATION_COST;
@@ -94,6 +111,19 @@ export default function ImageEditModal({
       onUseImageAvailabilityChange?.(isImageReady && !isGenerating);
     }
   }, [embedded, isImageReady, isGenerating, onUseImageAvailabilityChange]);
+
+  useEffect(() => {
+    return () => {
+      if (colorSaveDebounceTimeoutRef.current) {
+        clearTimeout(colorSaveDebounceTimeoutRef.current);
+        colorSaveDebounceTimeoutRef.current = null;
+      }
+      if (queuedColorSettingsRef.current) {
+        void flushQueuedColorSettings();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (embedded && onRegisterUseImageHandler) {
@@ -122,7 +152,10 @@ export default function ImageEditModal({
     referenceImageCanvasRef:
       originalCanvasRef as React.RefObject<HTMLCanvasElement>,
     getCanvasCoordinates,
-    disabled: isGenerating
+    disabled: isGenerating,
+    initialColor: initialDrawingColor,
+    initialRecentColors,
+    onColorSettingsCommit: handlePersistDrawingColorSettings
   });
 
   // Keep refs updated to avoid stale closures
@@ -381,138 +414,6 @@ export default function ImageEditModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, loadImageOntoCanvas]);
 
-  const handleGenerate = async () => {
-    if (!prompt.trim() || isGenerating || isGeneratingRef.current) return;
-
-    if (!canAffordGeneration) {
-      setError(
-        `Insufficient coins. You need ${IMAGE_GENERATION_COST.toLocaleString()} coins to generate an image.`
-      );
-      return;
-    }
-
-    isGeneratingRef.current = true;
-    setIsGenerating(true);
-    setError(null);
-    setProgressStage('prompt_ready');
-    setPartialImageData(null);
-
-    try {
-      // Get current canvas state as base64
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        throw new Error('Canvas not available');
-      }
-
-      const dataUrl = canvas.toDataURL('image/png');
-      const referenceB64 = extractBase64FromDataUrl(dataUrl);
-
-      const result = await generateAIImage({
-        prompt: prompt.trim(),
-        referenceImageB64: referenceB64,
-        engine: 'openai'
-      });
-
-      if (!result.success) {
-        const isStreamingActive =
-          progressStage === 'partial_image' || partialImageData !== null;
-
-        if (!isStreamingActive) {
-          const errorMessage = result.error || 'Failed to generate image';
-          setError(errorMessage);
-
-          if (typeof result.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: result.coins }
-            });
-          }
-
-          isGeneratingRef.current = false;
-          setIsGenerating(false);
-          setProgressStage('not_started');
-        }
-        // If streaming is active, don't show error - let socket determine final state
-      }
-    } catch (err) {
-      console.error('Image generation error:', err);
-      // Only show network error if socket streaming hasn't started
-      const isStreamingActive =
-        progressStage === 'partial_image' || partialImageData !== null;
-
-      if (!isStreamingActive) {
-        setError(
-          'Network error: Unable to connect to image generation service'
-        );
-        isGeneratingRef.current = false;
-        setIsGenerating(false);
-        setProgressStage('not_started');
-      }
-      // If streaming is active, socket will handle final state
-    }
-  };
-
-  const handleDownload = async () => {
-    try {
-      // If streaming partial image, download that instead
-      const dataUrl =
-        partialImageData || canvasRef.current?.toDataURL('image/png');
-      if (!dataUrl) return;
-
-      const blob = dataUrlToBlob(dataUrl);
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `edited-image-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Failed to download image:', err);
-      setError('Failed to download image');
-    }
-  };
-
-  const getProgressLabel = () => {
-    switch (progressStage) {
-      case 'prompt_ready':
-        return 'Generating image...';
-      case 'calling_openai':
-        return 'Calling OpenAI...';
-      case 'in_progress':
-        return 'Processing...';
-      case 'generating':
-        return 'Generating image...';
-      case 'partial_image':
-        return 'Streaming image...';
-      case 'completed':
-        return 'Image generated!';
-      default:
-        return 'Generating...';
-    }
-  };
-
-  const getCursor = () => {
-    if (isGenerating) return 'wait';
-    switch (toolsAPI.tool) {
-      case 'pencil':
-        return 'crosshair';
-      case 'eraser':
-        return 'grab';
-      case 'text':
-        return 'text';
-      case 'colorPicker':
-        return 'crosshair';
-      case 'fill':
-        return 'crosshair';
-      default:
-        return 'default';
-    }
-  };
-
   const content = (
     <>
       <div
@@ -561,7 +462,8 @@ export default function ImageEditModal({
             max-height: 50vh;
             position: relative;
             background-color: ${Color.lightGray()};
-            background-image: linear-gradient(
+            background-image:
+              linear-gradient(
                 45deg,
                 ${Color.borderGray()} 25%,
                 transparent 25%
@@ -571,14 +473,22 @@ export default function ImageEditModal({
                 ${Color.borderGray()} 25%,
                 transparent 25%
               ),
-              linear-gradient(45deg, transparent 75%, ${Color.borderGray()} 75%),
+              linear-gradient(
+                45deg,
+                transparent 75%,
+                ${Color.borderGray()} 75%
+              ),
               linear-gradient(
                 -45deg,
                 transparent 75%,
                 ${Color.borderGray()} 75%
               );
             background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-position:
+              0 0,
+              0 10px,
+              10px -10px,
+              -10px 0px;
             border-radius: 8px;
             padding: 1rem;
             flex-shrink: 0;
@@ -708,16 +618,7 @@ export default function ImageEditModal({
               disabled={isGenerating}
               minRows={3}
               style={{ flex: 1 }}
-              onKeyDown={(e) => {
-                if (
-                  e.key === 'Enter' &&
-                  (e.ctrlKey || e.metaKey) &&
-                  !isGenerating
-                ) {
-                  e.preventDefault();
-                  handleGenerate();
-                }
-              }}
+              onKeyDown={handlePromptKeyDown}
             />
             <div
               className={css`
@@ -798,4 +699,195 @@ export default function ImageEditModal({
       {content}
     </Modal>
   );
+
+  function handlePromptKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Enter' || isGenerating) return;
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    handleGenerate();
+  }
+
+  async function handleGenerate() {
+    if (!prompt.trim() || isGenerating || isGeneratingRef.current) return;
+
+    if (!canAffordGeneration) {
+      setError(
+        `Insufficient coins. You need ${IMAGE_GENERATION_COST.toLocaleString()} coins to generate an image.`
+      );
+      return;
+    }
+
+    isGeneratingRef.current = true;
+    setIsGenerating(true);
+    setError(null);
+    setProgressStage('prompt_ready');
+    setPartialImageData(null);
+
+    try {
+      // Get current canvas state as base64
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        throw new Error('Canvas not available');
+      }
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const referenceB64 = extractBase64FromDataUrl(dataUrl);
+
+      const result = await generateAIImage({
+        prompt: prompt.trim(),
+        referenceImageB64: referenceB64,
+        engine: 'openai'
+      });
+
+      if (!result.success) {
+        const isStreamingActive =
+          progressStage === 'partial_image' || partialImageData !== null;
+
+        if (!isStreamingActive) {
+          const errorMessage = result.error || 'Failed to generate image';
+          setError(errorMessage);
+
+          if (typeof result.coins === 'number' && userId) {
+            onSetUserState({
+              userId,
+              newState: { twinkleCoins: result.coins }
+            });
+          }
+
+          isGeneratingRef.current = false;
+          setIsGenerating(false);
+          setProgressStage('not_started');
+        }
+        // If streaming is active, don't show error - let socket determine final state
+      }
+    } catch (err) {
+      console.error('Image generation error:', err);
+      // Only show network error if socket streaming hasn't started
+      const isStreamingActive =
+        progressStage === 'partial_image' || partialImageData !== null;
+
+      if (!isStreamingActive) {
+        setError(
+          'Network error: Unable to connect to image generation service'
+        );
+        isGeneratingRef.current = false;
+        setIsGenerating(false);
+        setProgressStage('not_started');
+      }
+      // If streaming is active, socket will handle final state
+    }
+  }
+
+  async function handleDownload() {
+    try {
+      // If streaming partial image, download that instead
+      const dataUrl =
+        partialImageData || canvasRef.current?.toDataURL('image/png');
+      if (!dataUrl) return;
+
+      const blob = dataUrlToBlob(dataUrl);
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `edited-image-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download image:', err);
+      setError('Failed to download image');
+    }
+  }
+
+  function getProgressLabel() {
+    switch (progressStage) {
+      case 'prompt_ready':
+        return 'Generating image...';
+      case 'calling_openai':
+        return 'Calling OpenAI...';
+      case 'in_progress':
+        return 'Processing...';
+      case 'generating':
+        return 'Generating image...';
+      case 'partial_image':
+        return 'Streaming image...';
+      case 'completed':
+        return 'Image generated!';
+      default:
+        return 'Generating...';
+    }
+  }
+
+  function getCursor() {
+    if (isGenerating) return 'wait';
+    switch (toolsAPI.tool) {
+      case 'pencil':
+        return 'crosshair';
+      case 'eraser':
+        return 'grab';
+      case 'text':
+        return 'text';
+      case 'colorPicker':
+        return 'crosshair';
+      case 'fill':
+        return 'crosshair';
+      default:
+        return 'default';
+    }
+  }
+
+  function handlePersistDrawingColorSettings({
+    color,
+    recentColors
+  }: {
+    color: string;
+    recentColors: string[];
+  }) {
+    if (!userId) return;
+    const serialized = JSON.stringify({ color, recentColors });
+    if (lastSavedColorSettingsRef.current === serialized) return;
+    queuedColorSettingsRef.current = { color, recentColors, serialized };
+    if (colorSaveDebounceTimeoutRef.current) {
+      clearTimeout(colorSaveDebounceTimeoutRef.current);
+    }
+    colorSaveDebounceTimeoutRef.current = setTimeout(() => {
+      colorSaveDebounceTimeoutRef.current = null;
+      void flushQueuedColorSettings();
+    }, 150);
+  }
+
+  async function flushQueuedColorSettings() {
+    if (!userId || colorSaveInFlightRef.current) return;
+    const nextPayload = queuedColorSettingsRef.current;
+    if (!nextPayload) return;
+    if (nextPayload.serialized === lastSavedColorSettingsRef.current) {
+      queuedColorSettingsRef.current = null;
+      return;
+    }
+    queuedColorSettingsRef.current = null;
+    colorSaveInFlightRef.current = true;
+    try {
+      const result = await updateImageEditorSettings({
+        color: nextPayload.color,
+        recentColors: nextPayload.recentColors
+      });
+      if (result?.settings) {
+        lastSavedColorSettingsRef.current = nextPayload.serialized;
+        onSetUserState({
+          userId,
+          newState: { settings: result.settings }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save image editor settings:', error);
+    } finally {
+      colorSaveInFlightRef.current = false;
+      if (queuedColorSettingsRef.current) {
+        void flushQueuedColorSettings();
+      }
+    }
+  }
 }

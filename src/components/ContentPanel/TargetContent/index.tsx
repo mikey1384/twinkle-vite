@@ -336,6 +336,15 @@ export default function TargetContent({
     userId
   ]);
 
+  const disableReason = useMemo(() => {
+    const isClosedBy = rootObj?.isClosedBy || subjectState?.isClosedBy;
+    if (!isClosedBy) return undefined;
+    const closedTargetType = rootObj?.isClosedBy ? rootType : 'subject';
+    return `${
+      isClosedBy.id === userId ? 'You' : isClosedBy.username
+    } disabled comments for this ${closedTargetType}`;
+  }, [rootObj?.isClosedBy, rootType, subjectState?.isClosedBy, userId]);
+
   const timeSinceLabel = useMemo(() => {
     return timeSince(comment.timeStamp);
   }, [comment?.timeStamp]);
@@ -605,6 +614,7 @@ export default function TargetContent({
                 {!contentHidden && !uploadingFile && (
                   <InputForm
                     innerRef={InputFormRef}
+                    disableReason={disableReason}
                     style={{
                       padding: '0 1rem'
                     }}

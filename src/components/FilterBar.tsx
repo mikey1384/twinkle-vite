@@ -155,6 +155,7 @@ export default function FilterBar({
       gap: 0.8rem;
       padding: 0.8rem;
       border-radius: 0;
+      ${bordered ? 'border-left: none; border-right: none;' : ''}
 
       > .nav-section {
         width: 100%;

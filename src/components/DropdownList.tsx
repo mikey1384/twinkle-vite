@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
@@ -8,6 +8,28 @@ import { isMobile } from '~/helpers';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 const deviceIsMobile = isMobile(navigator);
+
+function getDropdownPortalTarget() {
+  if (typeof document === 'undefined') return null;
+  return (
+    document.getElementById('outer-layer') ||
+    document.getElementById('modal') ||
+    document.body
+  );
+}
+
+function detachPortalContainer(container: HTMLElement) {
+  const parent = container.parentNode;
+  if (parent && parent.contains(container)) {
+    parent.removeChild(container);
+  }
+}
+
+function attachPortalContainer(container: HTMLElement, target: HTMLElement) {
+  if (container.parentNode === target) return;
+  detachPortalContainer(container);
+  target.appendChild(container);
+}
 
 export default function DropdownList({
   xAdjustment = 0,
@@ -38,6 +60,15 @@ export default function DropdownList({
   zIndex?: number;
 }) {
   const MenuRef = useRef(null);
+  const [portalContainer] = useState<HTMLElement | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const element = document.createElement('div');
+    element.setAttribute('data-dropdown-portal', 'true');
+    element.setAttribute('translate', 'no');
+    element.className = 'notranslate';
+    return element;
+  });
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const { x, y, width, height } = dropdownContext;
   useOutsideClick(MenuRef, onHideMenu, { closeOnScroll: deviceIsMobile });
   const displaysToTheRight = useMemo(() => {
@@ -58,7 +89,34 @@ export default function DropdownList({
     [getFilterColor]
   );
 
-  return createPortal(
+  useLayoutEffect(() => {
+    if (!portalContainer || typeof document === 'undefined') return;
+
+    const target = getDropdownPortalTarget();
+    if (!target) return;
+
+    attachPortalContainer(portalContainer, target);
+    setPortalRoot(target);
+
+    const observer = new MutationObserver(() => {
+      const currentTarget = getDropdownPortalTarget();
+      if (!currentTarget) return;
+      if (portalContainer.parentNode !== currentTarget) {
+        attachPortalContainer(portalContainer, currentTarget);
+        setPortalRoot(currentTarget);
+      }
+    });
+
+    observer.observe(document.body, { childList: true });
+
+    return () => {
+      observer.disconnect();
+      setPortalRoot(null);
+      detachPortalContainer(portalContainer);
+    };
+  }, [portalContainer]);
+
+  const dropdownContent = (
     <ErrorBoundary
       componentPath="DropdownList"
       style={{
@@ -67,9 +125,10 @@ export default function DropdownList({
         position: 'fixed'
       }}
     >
-      <div ref={MenuRef}>
+      <div ref={MenuRef} className="notranslate" translate="no">
         <ul
           ref={innerRef}
+          translate="no"
           style={style}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
@@ -126,12 +185,15 @@ export default function DropdownList({
                 color: inherit;
               }
             }
-          `} ${className}`}
+          `} ${className || ''} notranslate`}
         >
           {children}
         </ul>
       </div>
-    </ErrorBoundary>,
-    document.getElementById('outer-layer') as HTMLElement
+    </ErrorBoundary>
   );
+
+  return portalRoot && portalContainer
+    ? createPortal(dropdownContent, portalContainer)
+    : dropdownContent;
 }

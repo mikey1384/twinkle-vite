@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
+import { socket } from '~/constants/sockets/api';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
 
@@ -285,6 +286,7 @@ export default function CloneButtons({
     const pathId = Number(clone!.channelId) + Number(CHAT_ID_BASE_NUMBER);
     onUpdateSelectedChannelId(clone!.channelId);
     onEnterTopic({ channelId: clone!.channelId, topicId: clone!.topicId });
+    ensureJoinedChatGroup(clone!.channelId);
     navigate(`/chat/${pathId}/topic/${clone!.topicId}`);
   }
 
@@ -338,6 +340,7 @@ export default function CloneButtons({
         const pathId = Number(data.channelId) + Number(CHAT_ID_BASE_NUMBER);
         onUpdateSelectedChannelId(data.channelId);
         onEnterTopic({ channelId: data.channelId, topicId: data.subjectId });
+        ensureJoinedChatGroup(data.channelId);
         navigate(`/chat/${pathId}/topic/${data.subjectId}`);
       }
     } catch (err: any) {
@@ -349,5 +352,18 @@ export default function CloneButtons({
     } finally {
       setSubmitting((prev) => ({ ...prev, [target]: false }));
     }
+  }
+
+  function ensureJoinedChatGroup(channelId: number) {
+    if (!channelId) return;
+    if (socket.connected) {
+      socket.emit('join_chat_group', channelId);
+      return;
+    }
+    const handleConnect = () => {
+      socket.emit('join_chat_group', channelId);
+      socket.off('connect', handleConnect);
+    };
+    socket.on('connect', handleConnect);
   }
 }

@@ -21,19 +21,6 @@ export default function BackToTopButton({
 }: BackToTopButtonProps) {
   if (!showButton) return null;
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      const topPadding = document.getElementById('top-padding');
-      if (topPadding) {
-        topPadding.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-  };
-
   return (
     <div className={buttonContainerStyles}>
       <IconButton
@@ -61,4 +48,17 @@ export default function BackToTopButton({
       />
     </div>
   );
+
+  function handleClick() {
+    if (onClick) {
+      onClick();
+    } else {
+      const topPadding = document.getElementById('top-padding');
+      if (topPadding) {
+        topPadding.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }
 }

@@ -51,6 +51,7 @@ export default function DefaultButtons({
         isAIChannel={isAIChannel}
         myId={myId}
         onFileSelect={handleFileSelect}
+        onFilesSelect={handleFilesSelect}
         onSelectVideoButtonClick={onSelectVideoButtonClick}
         onSetTransactionModalShown={onSetTransactionModalShown}
         isTwoPeopleChannel={isTwoPeopleChannel}
@@ -74,6 +75,20 @@ export default function DefaultButtons({
       return onSetAlertModalShown(true);
     }
     onSetFileObj(file);
+    onSetUploadModalShown(true);
+  }
+
+  function handleFilesSelect(files: File[]) {
+    if (files.length === 0) return;
+    if (files.length === 1) {
+      return handleFileSelect(files[0]);
+    }
+
+    const allowedFiles = files.filter((file) => file.size / mb <= maxSize);
+    if (allowedFiles.length !== files.length) onSetAlertModalShown(true);
+    if (allowedFiles.length === 0) return;
+
+    onSetFileObj(allowedFiles);
     onSetUploadModalShown(true);
   }
 }

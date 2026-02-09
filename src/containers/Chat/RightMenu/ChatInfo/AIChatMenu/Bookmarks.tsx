@@ -36,21 +36,22 @@ function Bookmarks({
   useEffect(() => {
     const listElement = listRef.current;
     if (!listElement) return;
+    const safeListElement = listElement;
 
-    const onScroll = () => {
+    function handleScroll() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         if (
-          listElement.scrollTop + listElement.clientHeight >=
-          listElement.scrollHeight * 0.7
+          safeListElement.scrollTop + safeListElement.clientHeight >=
+          safeListElement.scrollHeight * 0.7
         ) {
           handleLoadMore();
         }
       }, 200);
-    };
+    }
 
-    listElement.addEventListener('scroll', onScroll);
-    return () => listElement.removeEventListener('scroll', onScroll);
+    safeListElement.addEventListener('scroll', handleScroll);
+    return () => safeListElement.removeEventListener('scroll', handleScroll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarkView, bookmarks.length, loadMoreShown, isLoading]);
 
