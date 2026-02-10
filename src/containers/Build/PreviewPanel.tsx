@@ -394,7 +394,10 @@ const toggleButtonClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
   &:hover {
     background: var(--chat-bg);
     color: var(--chat-text);
@@ -419,7 +422,9 @@ const actionButtonClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
   &:hover:not(:disabled) {
     background: var(--theme-hover-bg);
     transform: translateY(-1px);
@@ -442,7 +447,10 @@ const ghostActionButtonClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  transition: border 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  transition:
+    border 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
   &:hover {
     border-color: var(--theme-border);
     color: var(--chat-text);
@@ -500,7 +508,9 @@ const historyModalCloseButtonClass = css`
   background: #fff;
   color: var(--chat-text);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
   &:hover {
     background: var(--chat-bg);
     border-color: var(--theme-border);
@@ -531,7 +541,9 @@ export default function PreviewPanel({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [versions, setVersions] = useState<ArtifactVersion[]>([]);
-  const [restoringVersionId, setRestoringVersionId] = useState<number | null>(null);
+  const [restoringVersionId, setRestoringVersionId] = useState<number | null>(
+    null
+  );
   const [artifactId, setArtifactId] = useState<number | null>(
     build.primaryArtifactId ?? null
   );
@@ -594,9 +606,15 @@ export default function PreviewPanel({
   );
   const queryViewerDb = useAppContext((v) => v.requestHelpers.queryViewerDb);
   const execViewerDb = useAppContext((v) => v.requestHelpers.execViewerDb);
-  const getBuildApiToken = useAppContext((v) => v.requestHelpers.getBuildApiToken);
-  const getBuildApiUser = useAppContext((v) => v.requestHelpers.getBuildApiUser);
-  const getBuildApiUsers = useAppContext((v) => v.requestHelpers.getBuildApiUsers);
+  const getBuildApiToken = useAppContext(
+    (v) => v.requestHelpers.getBuildApiToken
+  );
+  const getBuildApiUser = useAppContext(
+    (v) => v.requestHelpers.getBuildApiUser
+  );
+  const getBuildApiUsers = useAppContext(
+    (v) => v.requestHelpers.getBuildApiUsers
+  );
   const getBuildDailyReflections = useAppContext(
     (v) => v.requestHelpers.getBuildDailyReflections
   );
@@ -706,7 +724,10 @@ export default function PreviewPanel({
       throw new Error('Build not found');
     }
 
-    const scopeSet = new Set<string>([...(cached?.scopes || []), ...requiredScopes]);
+    const scopeSet = new Set<string>([
+      ...(cached?.scopes || []),
+      ...requiredScopes
+    ]);
     const requestedScopes = Array.from(scopeSet);
 
     const result = await getBuildApiTokenRef.current({
@@ -746,6 +767,7 @@ export default function PreviewPanel({
     if (historyOpen) {
       void loadVersions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [historyOpen, artifactId]);
 
   async function loadVersions() {
@@ -760,7 +782,9 @@ export default function PreviewPanel({
     try {
       let activeArtifactId = artifactId;
       if (!activeArtifactId) {
-        const artifactsData = await listBuildArtifactsRef.current(activeBuild.id);
+        const artifactsData = await listBuildArtifactsRef.current(
+          activeBuild.id
+        );
         activeArtifactId = artifactsData?.artifacts?.[0]?.id ?? null;
         if (activeArtifactId) {
           setArtifactId(activeArtifactId);
@@ -851,7 +875,9 @@ export default function PreviewPanel({
             if (!owner) {
               throw new Error('Not authorized');
             }
-            const dbData = await downloadBuildDatabaseRef.current(activeBuild.id);
+            const dbData = await downloadBuildDatabaseRef.current(
+              activeBuild.id
+            );
             if (dbData) {
               const bytes = new Uint8Array(dbData);
               let binary = '';
@@ -1116,25 +1142,31 @@ export default function PreviewPanel({
           <div className={toggleGroupClass}>
             <button
               onClick={() => setViewMode('preview')}
-            className={toggleButtonClass}
-            style={
-              viewMode === 'preview'
-                ? { background: 'var(--theme-bg)', color: 'var(--theme-text)' }
-                : undefined
-            }
-          >
+              className={toggleButtonClass}
+              style={
+                viewMode === 'preview'
+                  ? {
+                      background: 'var(--theme-bg)',
+                      color: 'var(--theme-text)'
+                    }
+                  : undefined
+              }
+            >
               <Icon icon="eye" />
               Preview
             </button>
             <button
               onClick={() => setViewMode('code')}
-            className={toggleButtonClass}
-            style={
-              viewMode === 'code'
-                ? { background: 'var(--theme-bg)', color: 'var(--theme-text)' }
-                : undefined
-            }
-          >
+              className={toggleButtonClass}
+              style={
+                viewMode === 'code'
+                  ? {
+                      background: 'var(--theme-bg)',
+                      color: 'var(--theme-text)'
+                    }
+                  : undefined
+              }
+            >
               <Icon icon="code" />
               Code
             </button>
@@ -1274,69 +1306,72 @@ export default function PreviewPanel({
             </button>
           </div>
           <div className={historyModalContentClass}>
-          {loadingVersions ? (
-            <div
-              className={css`
-                padding: 1rem;
-                text-align: center;
-                color: var(--chat-text);
-                opacity: 0.7;
-              `}
-            >
-              Loading versions...
-            </div>
-          ) : versions.length === 0 ? (
-            <div
-              className={css`
-                padding: 1rem;
-                text-align: center;
-                color: var(--chat-text);
-                opacity: 0.7;
-              `}
-            >
-              No versions yet. Use "Save Version" or ask the AI to generate code.
-            </div>
-          ) : (
-            versions.map((version) => (
-              <div key={version.id} className={versionRowClass}>
-                <div>
-                  <div
-                    className={css`
-                      font-weight: 700;
-                      color: var(--chat-text);
-                    `}
-                  >
-                    v{version.version}
-                  </div>
-                  {version.summary ? (
+            {loadingVersions ? (
+              <div
+                className={css`
+                  padding: 1rem;
+                  text-align: center;
+                  color: var(--chat-text);
+                  opacity: 0.7;
+                `}
+              >
+                Loading versions...
+              </div>
+            ) : versions.length === 0 ? (
+              <div
+                className={css`
+                  padding: 1rem;
+                  text-align: center;
+                  color: var(--chat-text);
+                  opacity: 0.7;
+                `}
+              >
+                No versions yet. Use "Save Version" or ask the AI to generate
+                code.
+              </div>
+            ) : (
+              versions.map((version) => (
+                <div key={version.id} className={versionRowClass}>
+                  <div>
                     <div
                       className={css`
-                        font-size: 0.9rem;
+                        font-weight: 700;
                         color: var(--chat-text);
-                        opacity: 0.75;
                       `}
                     >
-                      {version.summary}
+                      v{version.version}
                     </div>
-                  ) : null}
-                  <div className={versionMetaClass}>
-                    {timeSince(version.createdAt)} ·{' '}
-                    {version.createdByRole === 'assistant' ? 'AI' : 'You'}
-                    {version.gitCommitSha
-                      ? ` · ${String(version.gitCommitSha).slice(0, 7)}`
-                      : ''}
+                    {version.summary ? (
+                      <div
+                        className={css`
+                          font-size: 0.9rem;
+                          color: var(--chat-text);
+                          opacity: 0.75;
+                        `}
+                      >
+                        {version.summary}
+                      </div>
+                    ) : null}
+                    <div className={versionMetaClass}>
+                      {timeSince(version.createdAt)} ·{' '}
+                      {version.createdByRole === 'assistant' ? 'AI' : 'You'}
+                      {version.gitCommitSha
+                        ? ` · ${String(version.gitCommitSha).slice(0, 7)}`
+                        : ''}
+                    </div>
                   </div>
+                  <button
+                    className={ghostActionButtonClass}
+                    onClick={() => handleRestoreVersion(version.id)}
+                    disabled={restoringVersionId === version.id}
+                  >
+                    {restoringVersionId === version.id
+                      ? 'Restoring...'
+                      : 'Restore'}
+                  </button>
                 </div>
-                <button
-                  className={ghostActionButtonClass}
-                  onClick={() => handleRestoreVersion(version.id)}
-                  disabled={restoringVersionId === version.id}
-                >
-                  {restoringVersionId === version.id ? 'Restoring...' : 'Restore'}
-                </button>
-              </div>
-            ))
-          )}
+              ))
+            )}
           </div>
         </div>
       </Modal>

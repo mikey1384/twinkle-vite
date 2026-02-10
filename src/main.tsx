@@ -129,6 +129,7 @@ import { faGift } from '@fortawesome/pro-solid-svg-icons/faGift';
 import { faJs } from '@fortawesome/free-brands-svg-icons/faJs';
 import { faLeftToLine } from '@fortawesome/pro-solid-svg-icons/faLeftToLine';
 import { faLightbulb } from '@fortawesome/pro-solid-svg-icons/faLightbulb';
+import { faLaptopCode } from '@fortawesome/pro-solid-svg-icons/faLaptopCode';
 import { faList } from '@fortawesome/pro-solid-svg-icons/faList';
 import { faLock } from '@fortawesome/pro-solid-svg-icons/faLock';
 import { faMagic } from '@fortawesome/pro-solid-svg-icons/faMagic';
@@ -340,6 +341,7 @@ library.add(
   faJs,
   faLevelUp,
   faLayerGroup,
+  faLaptopCode,
   faLeftToLine,
   faLightbulb,
   faLink,
