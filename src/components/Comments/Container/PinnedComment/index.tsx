@@ -46,6 +46,7 @@ export default function PinnedComment({
   return (
     <ErrorBoundary componentPath="Comments/PinnedComment/index">
       {comment.loaded &&
+      comment.uploader &&
       !comment.isDeleted &&
       !comment.notFound &&
       !comment.isDeleteNotification ? (
