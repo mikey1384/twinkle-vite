@@ -16,6 +16,9 @@ interface DrawingToolsProps {
     color: string;
     recentColors: string[];
   }) => void;
+  onReset?: () => void;
+  zoomPercent?: number;
+  onZoomChange?: (percent: number) => void;
 }
 
 export default function DrawingTools(props: DrawingToolsProps) {
@@ -57,7 +60,8 @@ export default function DrawingTools(props: DrawingToolsProps) {
     getCanvasCoordinates: props.getCanvasCoordinates,
     initialColor: props.initialColor,
     initialRecentColors: props.initialRecentColors,
-    onColorSettingsCommit: props.onColorSettingsCommit
+    onColorSettingsCommit: props.onColorSettingsCommit,
+    zoomPercent: props.zoomPercent
   });
 
   const toolsAPI = {
@@ -104,6 +108,9 @@ export default function DrawingTools(props: DrawingToolsProps) {
       setTextInput={setTextInput}
       addTextToCanvas={addTextToCanvas}
       cancelTextInput={cancelTextInput}
+      onReset={props.onReset}
+      zoomPercent={props.zoomPercent}
+      onZoomChange={props.onZoomChange}
     />
   );
 
