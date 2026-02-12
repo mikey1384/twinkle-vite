@@ -323,6 +323,101 @@ const TWINKLE_SDK_SCRIPT = `
       }
     },
 
+    content: {
+      async getMySubjects(opts) {
+        var options = opts || {};
+        return await sendRequest('content:my-subjects', {
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      },
+
+      async getSubject(subjectId) {
+        if (!subjectId) throw new Error('subjectId is required');
+        return await sendRequest('content:subject', { subjectId: subjectId });
+      },
+
+      async getSubjectComments(subjectId, opts) {
+        if (!subjectId) throw new Error('subjectId is required');
+        var options = opts || {};
+        return await sendRequest('content:subject-comments', {
+          subjectId: subjectId,
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      }
+    },
+
+    vocabulary: {
+      async lookupWord(word) {
+        if (!word) throw new Error('word is required');
+        return await sendRequest('vocabulary:lookup-word', { word: word });
+      },
+
+      async collectWord(word) {
+        if (!word) throw new Error('word is required');
+        return await sendRequest('vocabulary:collect-word', { word: word });
+      },
+
+      async getBreakStatus() {
+        return await sendRequest('vocabulary:break-status', {});
+      },
+
+      async getCollectedWords(opts) {
+        var options = opts || {};
+        return await sendRequest('vocabulary:collected-words', {
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      }
+    },
+
+    sharedDb: {
+      async getTopics() {
+        return await sendRequest('shared-db:get-topics', {});
+      },
+
+      async createTopic(name) {
+        if (!name) throw new Error('name is required');
+        return await sendRequest('shared-db:create-topic', { name: name });
+      },
+
+      async getEntries(topicName, opts) {
+        if (!topicName) throw new Error('topicName is required');
+        var options = opts || {};
+        return await sendRequest('shared-db:get-entries', {
+          topicName: topicName,
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      },
+
+      async addEntry(topicName, data) {
+        if (!topicName) throw new Error('topicName is required');
+        if (!data) throw new Error('data is required');
+        return await sendRequest('shared-db:add-entry', {
+          topicName: topicName,
+          data: data
+        });
+      },
+
+      async updateEntry(entryId, data) {
+        if (!entryId) throw new Error('entryId is required');
+        if (!data) throw new Error('data is required');
+        return await sendRequest('shared-db:update-entry', {
+          entryId: entryId,
+          data: data
+        });
+      },
+
+      async deleteEntry(entryId) {
+        if (!entryId) throw new Error('entryId is required');
+        return await sendRequest('shared-db:delete-entry', {
+          entryId: entryId
+        });
+      }
+    },
+
     build: { id: null, title: null, username: null },
     _init(info) {
       this.build.id = info.id;
@@ -618,6 +713,45 @@ export default function PreviewPanel({
   const getBuildDailyReflections = useAppContext(
     (v) => v.requestHelpers.getBuildDailyReflections
   );
+  const lookupBuildVocabularyWord = useAppContext(
+    (v) => v.requestHelpers.lookupBuildVocabularyWord
+  );
+  const collectBuildVocabularyWord = useAppContext(
+    (v) => v.requestHelpers.collectBuildVocabularyWord
+  );
+  const getBuildVocabularyBreakStatus = useAppContext(
+    (v) => v.requestHelpers.getBuildVocabularyBreakStatus
+  );
+  const getBuildCollectedVocabularyWords = useAppContext(
+    (v) => v.requestHelpers.getBuildCollectedVocabularyWords
+  );
+  const getBuildMySubjects = useAppContext(
+    (v) => v.requestHelpers.getBuildMySubjects
+  );
+  const getBuildSubject = useAppContext(
+    (v) => v.requestHelpers.getBuildSubject
+  );
+  const getBuildSubjectComments = useAppContext(
+    (v) => v.requestHelpers.getBuildSubjectComments
+  );
+  const getSharedDbTopics = useAppContext(
+    (v) => v.requestHelpers.getSharedDbTopics
+  );
+  const createSharedDbTopic = useAppContext(
+    (v) => v.requestHelpers.createSharedDbTopic
+  );
+  const getSharedDbEntries = useAppContext(
+    (v) => v.requestHelpers.getSharedDbEntries
+  );
+  const addSharedDbEntry = useAppContext(
+    (v) => v.requestHelpers.addSharedDbEntry
+  );
+  const updateSharedDbEntry = useAppContext(
+    (v) => v.requestHelpers.updateSharedDbEntry
+  );
+  const deleteSharedDbEntry = useAppContext(
+    (v) => v.requestHelpers.deleteSharedDbEntry
+  );
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );
@@ -643,6 +777,23 @@ export default function PreviewPanel({
   const getBuildApiUserRef = useRef(getBuildApiUser);
   const getBuildApiUsersRef = useRef(getBuildApiUsers);
   const getBuildDailyReflectionsRef = useRef(getBuildDailyReflections);
+  const lookupBuildVocabularyWordRef = useRef(lookupBuildVocabularyWord);
+  const collectBuildVocabularyWordRef = useRef(collectBuildVocabularyWord);
+  const getBuildVocabularyBreakStatusRef = useRef(
+    getBuildVocabularyBreakStatus
+  );
+  const getBuildCollectedVocabularyWordsRef = useRef(
+    getBuildCollectedVocabularyWords
+  );
+  const getBuildMySubjectsRef = useRef(getBuildMySubjects);
+  const getBuildSubjectRef = useRef(getBuildSubject);
+  const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
+  const getSharedDbTopicsRef = useRef(getSharedDbTopics);
+  const createSharedDbTopicRef = useRef(createSharedDbTopic);
+  const getSharedDbEntriesRef = useRef(getSharedDbEntries);
+  const addSharedDbEntryRef = useRef(addSharedDbEntry);
+  const updateSharedDbEntryRef = useRef(updateSharedDbEntry);
+  const deleteSharedDbEntryRef = useRef(deleteSharedDbEntry);
   const updateMissionStatusRef = useRef(updateMissionStatus);
   const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
 
@@ -1063,6 +1214,209 @@ export default function PreviewPanel({
               cursor: payload?.cursor,
               limit: payload?.limit,
               token: reflectionsToken
+            });
+            break;
+          }
+
+          case 'content:my-subjects': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentSubjectsToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildMySubjectsRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: contentSubjectsToken
+            });
+            break;
+          }
+
+          case 'content:subject': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentSubjectToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildSubjectRef.current({
+              buildId: activeBuild.id,
+              subjectId: payload?.subjectId,
+              token: contentSubjectToken
+            });
+            break;
+          }
+
+          case 'content:subject-comments': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentCommentsToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildSubjectCommentsRef.current({
+              buildId: activeBuild.id,
+              subjectId: payload?.subjectId,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: contentCommentsToken
+            });
+            break;
+          }
+
+          case 'vocabulary:lookup-word': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const vocabLookupToken = await ensureBuildApiToken([
+              'vocabulary:read'
+            ]);
+            response = await lookupBuildVocabularyWordRef.current({
+              buildId: activeBuild.id,
+              word: payload?.word,
+              token: vocabLookupToken
+            });
+            break;
+          }
+
+          case 'vocabulary:collect-word': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const vocabCollectToken = await ensureBuildApiToken([
+              'vocabulary:write'
+            ]);
+            response = await collectBuildVocabularyWordRef.current({
+              buildId: activeBuild.id,
+              word: payload?.word,
+              token: vocabCollectToken
+            });
+            break;
+          }
+
+          case 'vocabulary:break-status': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const vocabBreakToken = await ensureBuildApiToken([
+              'vocabulary:read'
+            ]);
+            response = await getBuildVocabularyBreakStatusRef.current({
+              buildId: activeBuild.id,
+              token: vocabBreakToken
+            });
+            break;
+          }
+
+          case 'vocabulary:collected-words': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const vocabCollectedToken = await ensureBuildApiToken([
+              'vocabulary:read'
+            ]);
+            response = await getBuildCollectedVocabularyWordsRef.current({
+              buildId: activeBuild.id,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: vocabCollectedToken
+            });
+            break;
+          }
+
+          case 'shared-db:get-topics': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const sharedDbTopicsToken = await ensureBuildApiToken([
+              'sharedDb:read'
+            ]);
+            response = await getSharedDbTopicsRef.current({
+              buildId: activeBuild.id,
+              token: sharedDbTopicsToken
+            });
+            break;
+          }
+
+          case 'shared-db:create-topic': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const sharedDbCreateTopicToken = await ensureBuildApiToken([
+              'sharedDb:write'
+            ]);
+            response = await createSharedDbTopicRef.current({
+              buildId: activeBuild.id,
+              name: payload?.name,
+              token: sharedDbCreateTopicToken
+            });
+            break;
+          }
+
+          case 'shared-db:get-entries': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const sharedDbEntriesToken = await ensureBuildApiToken([
+              'sharedDb:read'
+            ]);
+            response = await getSharedDbEntriesRef.current({
+              buildId: activeBuild.id,
+              topicName: payload?.topicName,
+              topicId: payload?.topicId,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: sharedDbEntriesToken
+            });
+            break;
+          }
+
+          case 'shared-db:add-entry': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const sharedDbAddEntryToken = await ensureBuildApiToken([
+              'sharedDb:write'
+            ]);
+            response = await addSharedDbEntryRef.current({
+              buildId: activeBuild.id,
+              topicName: payload?.topicName,
+              topicId: payload?.topicId,
+              data: payload?.data,
+              token: sharedDbAddEntryToken
+            });
+            break;
+          }
+
+          case 'shared-db:update-entry': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const sharedDbUpdateEntryToken = await ensureBuildApiToken([
+              'sharedDb:write'
+            ]);
+            response = await updateSharedDbEntryRef.current({
+              buildId: activeBuild.id,
+              entryId: payload?.entryId,
+              data: payload?.data,
+              token: sharedDbUpdateEntryToken
+            });
+            break;
+          }
+
+          case 'shared-db:delete-entry': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const sharedDbDeleteEntryToken = await ensureBuildApiToken([
+              'sharedDb:write'
+            ]);
+            response = await deleteSharedDbEntryRef.current({
+              buildId: activeBuild.id,
+              entryId: payload?.entryId,
+              token: sharedDbDeleteEntryToken
             });
             break;
           }

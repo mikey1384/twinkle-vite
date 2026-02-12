@@ -800,6 +800,18 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async setFeaturedBuild({ buildId }: { buildId: number | null }) {
+      try {
+        await request.put(
+          `${URL}/user/featured-build`,
+          { buildId },
+          auth()
+        );
+        return;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setTheme({ color }: { color: string }) {
       try {
         await request.put(`${URL}/user/theme`, { color }, auth());
