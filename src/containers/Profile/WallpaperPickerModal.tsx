@@ -28,8 +28,8 @@ export default function WallpaperPickerModal({
     async function handleLoad() {
       const data = await loadMyBuilds();
       if (data) {
-        const withCode = (data || []).filter(
-          (b: any) => b.code && b.code.trim().length > 0
+        const withCode = (data.builds || []).filter(
+          (b: any) => b.hasCode && b.isPublic
         );
         setBuilds(withCode);
       }
@@ -77,7 +77,7 @@ export default function WallpaperPickerModal({
     >
       {loading ? (
         <Loading />
-      ) : builds.length === 0 ? (
+      ) : builds.length === 0 && !currentBuildId ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
           <p>Create a build to use as your wallpaper.</p>
         </div>
