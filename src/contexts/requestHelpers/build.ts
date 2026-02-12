@@ -44,6 +44,17 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadWallpaperCode(buildId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/wallpaper`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async updateBuildCode({
       buildId,
       code,
@@ -634,6 +645,373 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/daily-reflections`,
           { following, userIds, lastId, cursor, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async lookupBuildVocabularyWord({
+      buildId,
+      word,
+      token
+    }: {
+      buildId: number;
+      word: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/vocabulary/lookup`,
+          { word },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async collectBuildVocabularyWord({
+      buildId,
+      word,
+      token
+    }: {
+      buildId: number;
+      word: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/vocabulary/collect`,
+          { word },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildVocabularyBreakStatus({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/vocabulary/break-status`,
+          {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildCollectedVocabularyWords({
+      buildId,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/vocabulary/collected`,
+          { limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildMySubjects({
+      buildId,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/my-subjects`,
+          { limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildSubject({
+      buildId,
+      subjectId,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/subject`,
+          { subjectId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildSubjectComments({
+      buildId,
+      subjectId,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      subjectId: number;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/subject-comments`,
+          { subjectId, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getSharedDbTopics({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/topics`,
+          {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createSharedDbTopic({
+      buildId,
+      name,
+      token
+    }: {
+      buildId: number;
+      name: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/topic`,
+          { name },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getSharedDbEntries({
+      buildId,
+      topicName,
+      topicId,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      topicName?: string;
+      topicId?: number;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entries`,
+          { topicName, topicId, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async addSharedDbEntry({
+      buildId,
+      topicName,
+      topicId,
+      data: entryData,
+      token
+    }: {
+      buildId: number;
+      topicName?: string;
+      topicId?: number;
+      data: Record<string, any>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entry`,
+          { topicName, topicId, data: entryData },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateSharedDbEntry({
+      buildId,
+      entryId,
+      data: entryData,
+      token
+    }: {
+      buildId: number;
+      entryId: number;
+      data: Record<string, any>;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entry/update`,
+          { entryId, data: entryData },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteSharedDbEntry({
+      buildId,
+      entryId,
+      token
+    }: {
+      buildId: number;
+      entryId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/shared-db/entry/delete`,
+          { entryId },
           {
             ...auth(),
             headers: {
