@@ -1,9 +1,4 @@
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  useLayoutEffect
-} from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import type { ToolType, TextElement } from './types';
 import { COMMON_COLORS } from './constants';
 import {
@@ -25,6 +20,7 @@ interface DrawingToolsProps {
     color: string;
     recentColors: string[];
   }) => void;
+  zoomPercent?: number;
 }
 
 function getNextRecentColors(previousColors: string[], newColor: string) {
@@ -539,8 +535,16 @@ export default function useDrawingTools({
     }
   };
 
+  // Multi-touch (2+ fingers) bypasses drawing and lets the browser pan/scroll
+  // natively. Single-finger stays as draw. This is the standard touch-drawing-app
+  // convention (Procreate, Sketchbook, etc.) and also allows scrolling past
+  // tall canvases on mobile.
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
+    if (e.touches.length > 1) {
+      stopDrawing();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     const touch = e.touches[0];
@@ -576,6 +580,10 @@ export default function useDrawingTools({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (disabled) return;
+    if (e.touches.length > 1) {
+      stopDrawing();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     const touch = e.touches[0];
@@ -599,6 +607,7 @@ export default function useDrawingTools({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (disabled) return;
+    if (e.touches.length > 0) return;
     e.preventDefault();
     e.stopPropagation();
     stopDrawing();

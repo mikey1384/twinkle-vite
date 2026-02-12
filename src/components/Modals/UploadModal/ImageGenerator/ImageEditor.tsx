@@ -25,6 +25,8 @@ export default function ImageEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isImageReady, setIsImageReady] = useState(false);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const [containerWidth, setContainerWidth] = useState(0);
   const updateDisplayRef = useRef<() => void>(() => {});
   const lastSavedColorSettingsRef = useRef('');
   const queuedColorSettingsRef = useRef<{
@@ -67,7 +69,10 @@ export default function ImageEditor({
     getCanvasCoordinates,
     initialColor: initialDrawingColor,
     initialRecentColors,
-    onColorSettingsCommit: handlePersistDrawingColorSettings
+    onColorSettingsCommit: handlePersistDrawingColorSettings,
+    onReset: imageUrl ? handleReset : undefined,
+    zoomPercent,
+    onZoomChange: setZoomPercent
   });
 
   // Keep the ref updated with the latest updateDisplay function
@@ -92,151 +97,109 @@ export default function ImageEditor({
   useEffect(() => {
     setIsImageReady(false);
 
-    if (!imageUrl) {
-      // Handle blank canvas mode
-      const canvas = canvasRef.current;
-      const originalCanvas = originalCanvasRef.current;
-      const drawingCanvas = drawingCanvasRef.current;
-      if (!canvas || !originalCanvas || !drawingCanvas) return;
+    // Wait a frame so the container is laid out and we can measure its width
+    requestAnimationFrame(() => {
+      const container = containerRef.current;
+      const displayWidth = container ? container.clientWidth : 1000;
+      setContainerWidth(displayWidth);
 
-      const originalCtx = originalCanvas.getContext('2d');
-      const drawingCtx = drawingCanvas.getContext('2d');
-      if (!originalCtx || !drawingCtx) return;
-
-      // Default canvas size for blank canvas
-      const canvasWidth = 800;
-      const canvasHeight = 600;
-
-      // Set all canvas dimensions
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      originalCanvas.width = canvasWidth;
-      originalCanvas.height = canvasHeight;
-      drawingCanvas.width = canvasWidth;
-      drawingCanvas.height = canvasHeight;
-
-      // Set responsive display size
-      const maxDisplayWidth = Math.min(
-        600,
-        window.innerWidth * 0.8,
-        window.innerHeight * 0.6
-      );
-      const aspectRatio = canvasHeight / canvasWidth;
-      const maxDisplayHeight = window.innerHeight * 0.5;
-
-      let displayWidth = maxDisplayWidth;
-      let displayHeight = displayWidth * aspectRatio;
-
-      // If height exceeds limit, scale down proportionally
-      if (displayHeight > maxDisplayHeight) {
-        displayHeight = maxDisplayHeight;
-        displayWidth = displayHeight / aspectRatio;
+      if (!imageUrl) {
+        setupBlankCanvas(displayWidth);
+        return;
       }
 
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
-
-      // Setup reference canvas with white background (no image)
-      originalCtx.fillStyle = '#ffffff';
-      originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-      // Setup drawing canvas with transparent background
-      drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-      // Update display after a brief delay to ensure everything is ready
-      requestAnimationFrame(() => {
-        updateDisplayRef.current();
-        setIsImageReady(true);
-      });
-
-      return;
-    }
-
-    // Handle image loading mode
-    const loadImage = () => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = canvasRef.current;
-        const originalCanvas = originalCanvasRef.current;
-        const drawingCanvas = drawingCanvasRef.current;
-        if (!canvas || !originalCanvas || !drawingCanvas) return;
-
-        const originalCtx = originalCanvas.getContext('2d');
-        const drawingCtx = drawingCanvas.getContext('2d');
-        if (!originalCtx || !drawingCtx) return;
-
-        const maxCanvasSize = 2048;
-        let canvasWidth = img.naturalWidth;
-        let canvasHeight = img.naturalHeight;
-
-        if (canvasWidth === 0 || canvasHeight === 0) {
-          console.error('Image has zero dimensions');
-          return;
-        }
-
-        if (canvasWidth > maxCanvasSize || canvasHeight > maxCanvasSize) {
-          const scale = Math.min(
-            maxCanvasSize / canvasWidth,
-            maxCanvasSize / canvasHeight
-          );
-          canvasWidth = Math.floor(canvasWidth * scale);
-          canvasHeight = Math.floor(canvasHeight * scale);
-        }
-
-        // Set all canvas dimensions
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        originalCanvas.width = canvasWidth;
-        originalCanvas.height = canvasHeight;
-        drawingCanvas.width = canvasWidth;
-        drawingCanvas.height = canvasHeight;
-
-        // Set responsive display size
-        const maxDisplayWidth = Math.min(
-          600,
-          window.innerWidth * 0.8,
-          window.innerHeight * 0.6
-        );
-        const aspectRatio = canvasHeight / canvasWidth;
-        const maxDisplayHeight = window.innerHeight * 0.5;
-
-        let displayWidth = maxDisplayWidth;
-        let displayHeight = displayWidth * aspectRatio;
-
-        // If height exceeds limit, scale down proportionally
-        if (displayHeight > maxDisplayHeight) {
-          displayHeight = maxDisplayHeight;
-          displayWidth = displayHeight / aspectRatio;
-        }
-
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
-
-        // Setup reference canvas with white background and image
-        originalCtx.fillStyle = '#ffffff';
-        originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-        originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-
-        // Setup drawing canvas with transparent background
-        drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-        // Update display after a brief delay to ensure everything is ready
-        requestAnimationFrame(() => {
-          updateDisplayRef.current();
-          setIsImageReady(true);
-        });
-      };
-
+      img.onload = () => setupImageCanvas(img, displayWidth);
       img.onerror = (err) => {
         console.error('Failed to load image:', err, 'URL:', imageUrl);
       };
-
       img.src = imageUrl;
-    };
-
-    loadImage();
+    });
   }, [imageUrl]);
+
+  function setupBlankCanvas(displayWidth: number) {
+    const canvas = canvasRef.current;
+    const originalCanvas = originalCanvasRef.current;
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!canvas || !originalCanvas || !drawingCanvas) return;
+
+    const originalCtx = originalCanvas.getContext('2d');
+    const drawingCtx = drawingCanvas.getContext('2d');
+    if (!originalCtx || !drawingCtx) return;
+
+    const canvasWidth = displayWidth;
+    const canvasHeight = Math.round(displayWidth * 0.75);
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    originalCanvas.width = canvasWidth;
+    originalCanvas.height = canvasHeight;
+    drawingCanvas.width = canvasWidth;
+    drawingCanvas.height = canvasHeight;
+
+    originalCtx.fillStyle = '#ffffff';
+    originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+    drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    requestAnimationFrame(() => {
+      updateDisplayRef.current();
+      setIsImageReady(true);
+    });
+  }
+
+  function setupImageCanvas(img: HTMLImageElement, displayWidth: number) {
+    const canvas = canvasRef.current;
+    const originalCanvas = originalCanvasRef.current;
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!canvas || !originalCanvas || !drawingCanvas) return;
+
+    const originalCtx = originalCanvas.getContext('2d');
+    const drawingCtx = drawingCanvas.getContext('2d');
+    if (!originalCtx || !drawingCtx) return;
+
+    let canvasWidth = img.naturalWidth;
+    let canvasHeight = img.naturalHeight;
+
+    if (canvasWidth === 0 || canvasHeight === 0) {
+      console.error('Image has zero dimensions');
+      return;
+    }
+
+    const maxCanvasSize = 2048;
+    if (canvasWidth > maxCanvasSize || canvasHeight > maxCanvasSize) {
+      const scale = Math.min(
+        maxCanvasSize / canvasWidth,
+        maxCanvasSize / canvasHeight
+      );
+      canvasWidth = Math.floor(canvasWidth * scale);
+      canvasHeight = Math.floor(canvasHeight * scale);
+    }
+
+    // Scale up small images so brush sizes match displayed pixels
+    if (canvasWidth < displayWidth) {
+      const scale = Math.min(displayWidth / canvasWidth, maxCanvasSize / canvasHeight);
+      canvasWidth = Math.floor(canvasWidth * scale);
+      canvasHeight = Math.floor(canvasHeight * scale);
+    }
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    originalCanvas.width = canvasWidth;
+    originalCanvas.height = canvasHeight;
+    drawingCanvas.width = canvasWidth;
+    drawingCanvas.height = canvasHeight;
+
+    originalCtx.fillStyle = '#ffffff';
+    originalCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+    originalCtx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+    drawingCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    requestAnimationFrame(() => {
+      updateDisplayRef.current();
+      setIsImageReady(true);
+    });
+  }
 
   // Handle scroll and resize to trigger redraw and canvas resizing
   useEffect(() => {
@@ -254,31 +217,9 @@ export default function ImageEditor({
     function handleResize() {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Recalculate responsive display size
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const maxDisplayWidth = Math.min(
-          600,
-          window.innerWidth * 0.8,
-          window.innerHeight * 0.6
-        );
-        const aspectRatio = canvasHeight / canvasWidth;
-        const maxDisplayHeight = window.innerHeight * 0.5;
-
-        let displayWidth = maxDisplayWidth;
-        let displayHeight = displayWidth * aspectRatio;
-
-        if (displayHeight > maxDisplayHeight) {
-          displayHeight = maxDisplayHeight;
-          displayWidth = displayHeight / aspectRatio;
+        if (containerRef.current) {
+          setContainerWidth(containerRef.current.clientWidth);
         }
-
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
-
         updateDisplayRef.current();
       }, 100);
     }
@@ -301,8 +242,9 @@ export default function ImageEditor({
         modalKey="ImageEditor"
         isOpen={true}
         onClose={handleCancel}
-        title="Edit Image"
-        size="lg"
+        hasHeader={false}
+        showCloseButton={false}
+        size="xl"
         modalLevel={3}
         footer={
           <>
@@ -328,39 +270,27 @@ export default function ImageEditor({
             height: 100%;
           `}
         >
-          {toolsUI}
-
-          {imageUrl && (
-            <div
-              className={css`
-                display: flex;
-                justify-content: flex-end;
-                padding-bottom: 0.5rem;
-              `}
-            >
-              <Button
-                onClick={handleReset}
-                color="orange"
-                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
-              >
-                <span>↻</span> Reset
-              </Button>
-            </div>
-          )}
+          <div
+            className={css`
+              position: sticky;
+              top: 0;
+              z-index: 5;
+              background: white;
+              padding-bottom: 0.5rem;
+            `}
+          >
+            {toolsUI}
+          </div>
 
           <div
             ref={containerRef}
             className={css`
-              display: flex;
-              justify-content: center;
-              overflow: auto;
-              max-height: 60vh;
+              width: 100%;
               position: relative;
-
-              @media (max-width: 768px) {
-                max-height: 55vh;
-                overflow: visible;
-              }
+              display: flex;
+              overflow: auto;
+              flex: 1;
+              min-height: 0;
             `}
           >
             <canvas
@@ -372,16 +302,26 @@ export default function ImageEditor({
               onTouchStart={toolsAPI.handleTouchStart}
               onTouchMove={toolsAPI.handleTouchMove}
               onTouchEnd={toolsAPI.handleTouchEnd}
+              style={{
+                width:
+                  zoomPercent === 100
+                    ? '100%'
+                    : `${(containerWidth * zoomPercent) / 100}px`,
+                height: 'auto',
+                margin: 'auto',
+                flexShrink: 0
+              }}
               className={css`
                 background: white;
                 cursor: ${getCursor()};
                 border: 2px solid var(--ui-border);
                 border-radius: 8px;
-                max-width: 100%;
-                max-height: 100%;
                 opacity: ${isImageReady ? 1 : 0};
                 transition: opacity 0.2s ease;
-                touch-action: none;
+                /* pan-x pan-y is intentional: React 19 onTouch* handlers are
+                   non-passive, so preventDefault() reliably suppresses native
+                   scroll for single-finger drawing while allowing two-finger pan. */
+                touch-action: pan-x pan-y;
               `}
             />
 

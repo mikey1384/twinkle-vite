@@ -210,25 +210,9 @@ export default function ImageEditModal({
           drawingCanvas.width = canvasWidth;
           drawingCanvas.height = canvasHeight;
 
-          // Set responsive display size
-          const maxDisplayWidth = Math.min(
-            600,
-            window.innerWidth * 0.8,
-            window.innerHeight * 0.5
-          );
-          const aspectRatio = canvasHeight / canvasWidth;
-          const maxDisplayHeight = window.innerHeight * 0.4;
-
-          let displayWidth = maxDisplayWidth;
-          let displayHeight = displayWidth * aspectRatio;
-
-          if (displayHeight > maxDisplayHeight) {
-            displayHeight = maxDisplayHeight;
-            displayWidth = displayHeight / aspectRatio;
-          }
-
-          canvas.style.width = `${displayWidth}px`;
-          canvas.style.height = `${displayHeight}px`;
+          // Let CSS handle responsive sizing - canvas fills its container
+          canvas.style.width = '100%';
+          canvas.style.height = 'auto';
 
           // Setup reference canvas with white background and image
           originalCtx.fillStyle = '#ffffff';
@@ -298,25 +282,9 @@ export default function ImageEditModal({
       drawingCanvas.width = canvasWidth;
       drawingCanvas.height = canvasHeight;
 
-      // Update display size
-      const maxDisplayWidth = Math.min(
-        600,
-        window.innerWidth * 0.8,
-        window.innerHeight * 0.5
-      );
-      const aspectRatio = canvasHeight / canvasWidth;
-      const maxDisplayHeight = window.innerHeight * 0.4;
-
-      let displayWidth = maxDisplayWidth;
-      let displayHeight = displayWidth * aspectRatio;
-
-      if (displayHeight > maxDisplayHeight) {
-        displayHeight = maxDisplayHeight;
-        displayWidth = displayHeight / aspectRatio;
-      }
-
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
+      // Let CSS handle responsive sizing - canvas fills its container
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
 
       // Draw AI image at its natural size
       originalCtx.fillStyle = '#ffffff';
@@ -459,7 +427,6 @@ export default function ImageEditModal({
             justify-content: center;
             align-items: center;
             min-height: 200px;
-            max-height: 50vh;
             position: relative;
             background-color: ${Color.lightGray()};
             background-image:
@@ -525,7 +492,6 @@ export default function ImageEditModal({
                 alt="Generating..."
                 className={css`
                   max-width: 100%;
-                  max-height: 45vh;
                   border-radius: 4px;
                   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
                 `}
@@ -549,10 +515,12 @@ export default function ImageEditModal({
               border-radius: 4px;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
               max-width: 100%;
-              max-height: 45vh;
               opacity: ${isImageReady ? (isGenerating ? 0.5 : 1) : 0};
               transition: opacity 0.2s ease;
-              touch-action: none;
+              /* pan-x pan-y is intentional: React 19 onTouch* handlers are
+                 non-passive, so preventDefault() reliably suppresses native
+                 scroll for single-finger drawing while allowing two-finger pan. */
+              touch-action: pan-x pan-y;
             `}
           />
         </div>
@@ -674,7 +642,7 @@ export default function ImageEditModal({
       isOpen
       onClose={onClose}
       title="Edit Image"
-      size="lg"
+      size="xl"
       modalLevel={2}
       footer={
         <>

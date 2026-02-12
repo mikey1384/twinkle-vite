@@ -27,6 +27,9 @@ interface DrawingToolsUIProps {
   setTextInput: (t: string) => void;
   addTextToCanvas: () => void;
   cancelTextInput: () => void;
+  onReset?: () => void;
+  zoomPercent?: number;
+  onZoomChange?: (percent: number) => void;
 }
 
 export default function DrawingToolsUI({
@@ -49,7 +52,10 @@ export default function DrawingToolsUI({
   textInput,
   setTextInput,
   addTextToCanvas,
-  cancelTextInput
+  cancelTextInput,
+  onReset,
+  zoomPercent = 100,
+  onZoomChange
 }: DrawingToolsUIProps) {
   const pickerActiveRef = useRef(false);
 
@@ -470,40 +476,171 @@ export default function DrawingToolsUI({
               </div>
             </div>
           )}
+          {onZoomChange && (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                min-width: 100px;
+              `}
+            >
+              <label
+                className={css`
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  color: ${Color.darkGray()};
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                  text-align: center;
+                `}
+              >
+                Zoom
+              </label>
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                  justify-content: center;
+                `}
+              >
+                <button
+                  onClick={() =>
+                    onZoomChange(Math.max(25, zoomPercent - 25))
+                  }
+                  disabled={disabled || zoomPercent <= 25}
+                  className={css`
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 4px;
+                    border: 1px solid var(--ui-border);
+                    background: white;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: ${Color.darkGray()};
+
+                    &:hover:not(:disabled) {
+                      background: ${Color.highlightGray()};
+                    }
+
+                    &:disabled {
+                      opacity: 0.4;
+                      cursor: not-allowed;
+                    }
+                  `}
+                >
+                  <Icon icon="minus" size="sm" />
+                </button>
+                <span
+                  className={css`
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: ${Color.darkGray()};
+                    min-width: 3rem;
+                    text-align: center;
+                  `}
+                >
+                  {zoomPercent}%
+                </span>
+                <button
+                  onClick={() =>
+                    onZoomChange(Math.min(400, zoomPercent + 25))
+                  }
+                  disabled={disabled || zoomPercent >= 400}
+                  className={css`
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 4px;
+                    border: 1px solid var(--ui-border);
+                    background: white;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: ${Color.darkGray()};
+
+                    &:hover:not(:disabled) {
+                      background: ${Color.highlightGray()};
+                    }
+
+                    &:disabled {
+                      opacity: 0.4;
+                      cursor: not-allowed;
+                    }
+                  `}
+                >
+                  <Icon icon="plus" size="sm" />
+                </button>
+              </div>
+            </div>
+          )}
           <div
             className={css`
               display: flex;
+              flex-direction: column;
               gap: 0.5rem;
               margin-left: auto;
             `}
           >
-            <Button
-              onClick={onUndo}
-              disabled={disabled || canvasHistory.length === 0}
-              color="darkBlue"
-              style={{ padding: '0.75rem 1.25rem' }}
+            <div
+              className={css`
+                display: flex;
+                gap: 0.5rem;
+              `}
             >
-              <Icon icon="undo" />
-              <span style={{ marginLeft: '0.5rem' }}>Undo</span>
-            </Button>
-            <Button
-              onClick={onRedo}
-              disabled={disabled || !redoHistory || redoHistory.length === 0}
-              color="darkBlue"
-              style={{ padding: '0.75rem 1.25rem' }}
-            >
-              <Icon icon="redo" />
-              <span style={{ marginLeft: '0.5rem' }}>Redo</span>
-            </Button>
-            <Button
-              onClick={clearCanvas}
-              disabled={disabled}
-              color="darkGray"
-              style={{ padding: '0.75rem 1.25rem' }}
-            >
-              <Icon icon="trash-alt" />
-              <span style={{ marginLeft: '0.5rem' }}>Clear</span>
-            </Button>
+              <Button
+                onClick={onUndo}
+                disabled={disabled || canvasHistory.length === 0}
+                color="darkBlue"
+                style={{ padding: '0.75rem 1.25rem' }}
+              >
+                <Icon icon="undo" />
+                <span style={{ marginLeft: '0.5rem' }}>Undo</span>
+              </Button>
+              <Button
+                onClick={onRedo}
+                disabled={disabled || !redoHistory || redoHistory.length === 0}
+                color="darkBlue"
+                style={{ padding: '0.75rem 1.25rem' }}
+              >
+                <Icon icon="redo" />
+                <span style={{ marginLeft: '0.5rem' }}>Redo</span>
+              </Button>
+              <Button
+                onClick={clearCanvas}
+                disabled={disabled}
+                color="darkGray"
+                style={{ padding: '0.75rem 1.25rem' }}
+              >
+                <Icon icon="trash-alt" />
+                <span style={{ marginLeft: '0.5rem' }}>Clear</span>
+              </Button>
+            </div>
+            {onReset && (
+              <div
+                className={css`
+                  display: flex;
+                  justify-content: flex-end;
+                `}
+              >
+                <Button
+                  onClick={onReset}
+                  disabled={disabled}
+                  color="orange"
+                  style={{ padding: '0.75rem 1.25rem' }}
+                >
+                  <Icon icon="undo" />
+                  <span style={{ marginLeft: '0.5rem' }}>Reset</span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
