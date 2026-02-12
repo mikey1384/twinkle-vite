@@ -544,8 +544,12 @@ export default function App() {
             <Route path="/playlists/*" element={<PlaylistPage />} />
             <Route path="/missions/:missionType/*" element={<MissionPage />} />
             <Route path="/missions" element={<Mission />} />
-            <Route path="/build/*" element={<Build />} />
-            <Route path="/builds" element={<Builds />} />
+            {isAdmin && (
+              <Route path="/build/*" element={<Build />} />
+            )}
+            {isAdmin && (
+              <Route path="/builds" element={<Builds />} />
+            )}
             <Route
               path="/chat/*"
               element={<Chat onFileUpload={handleFileUploadOnChat} />}

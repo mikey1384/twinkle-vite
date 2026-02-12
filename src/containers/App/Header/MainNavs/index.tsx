@@ -64,7 +64,7 @@ export default function MainNavs({
   onSetBalanceModalShown: () => void;
   totalRewardAmount: number;
 }) {
-  const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
+  const { twinkleCoins, userId, banned, lastChatPath, isAdmin } = useKeyContext(
     (v) => v.myState
   );
   const exploreCategory = useViewContext((v) => v.state.exploreCategory);
@@ -461,7 +461,9 @@ export default function MainNavs({
         imgLabel="comments"
         alert={chatAlertShown}
       />
-      <Nav to={buildLinkTarget} className="mobile" imgLabel="rocket-launch" />
+      {isAdmin && (
+        <Nav to={buildLinkTarget} className="mobile" imgLabel="rocket-launch" />
+      )}
       {profileNav && (
         <Nav
           to={profileNav}
@@ -531,14 +533,16 @@ export default function MainNavs({
           </Nav>
         )}
       </div>
-      <Nav
-        to={buildLinkTarget}
-        className="desktop"
-        style={{ marginLeft: '2rem' }}
-        imgLabel="rocket-launch"
-      >
-        {deviceIsTablet ? '' : buildLabel}
-      </Nav>
+      {isAdmin && (
+        <Nav
+          to={buildLinkTarget}
+          className="desktop"
+          style={{ marginLeft: '2rem' }}
+          imgLabel="rocket-launch"
+        >
+          {deviceIsTablet ? '' : buildLabel}
+        </Nav>
+      )}
       {userId && (
         <div
           className={`mobile ${css`
