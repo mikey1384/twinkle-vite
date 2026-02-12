@@ -42,6 +42,7 @@ export default function Cover({
     (v) => v.requestHelpers.setFeaturedBuild
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const {
     featuredBuildId,
     profilePicUrl,
@@ -124,10 +125,10 @@ export default function Cover({
             }
           `}
         >
-          {!deviceIsMobile && featuredBuildId && (
+          {!deviceIsMobile && isAdmin && featuredBuildId && (
             <BuildWallpaper buildId={featuredBuildId} />
           )}
-          {!deviceIsMobile && featuredBuildId && (
+          {!deviceIsMobile && isAdmin && featuredBuildId && (
             <div
               className={css`
                 position: absolute;
@@ -244,7 +245,7 @@ export default function Cover({
             >
               {!colorSelectorShown && (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {!deviceIsMobile && (
+                  {!deviceIsMobile && isAdmin && (
                     <Button
                       style={{ marginBottom: '-1rem' }}
                       variant="solid"
@@ -415,7 +416,7 @@ export default function Cover({
             onHide={() => setUsernameHistoryShown(false)}
           />
         )}
-        {wallpaperPickerShown && (
+        {isAdmin && wallpaperPickerShown && (
           <WallpaperPickerModal
             currentBuildId={featuredBuildId || null}
             onSetWallpaper={handleSetWallpaper}
@@ -447,6 +448,7 @@ export default function Cover({
   }
 
   async function handleSetWallpaper(buildId: number | null) {
+    if (!isAdmin) return;
     await setFeaturedBuild({ buildId });
     onSetUserState({
       userId,

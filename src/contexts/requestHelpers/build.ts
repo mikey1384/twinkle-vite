@@ -47,7 +47,8 @@ export default function buildRequestHelpers({
     async loadWallpaperCode(buildId: number) {
       try {
         const { data } = await request.get(
-          `${URL}/build/${buildId}/wallpaper`
+          `${URL}/build/${buildId}/wallpaper`,
+          auth()
         );
         return data;
       } catch (error) {
