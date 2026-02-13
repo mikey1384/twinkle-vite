@@ -67,9 +67,7 @@ const EMPTY_SYSTEM_PROMPT_STATE: SystemPromptState = {
   title: '',
   prompt: '',
   userMessage: '',
-  missionPromptId: null,
-  chatMessages: [],
-  promptEverGenerated: false
+  chatMessages: []
 };
 
 export default function SystemPromptMission({

@@ -318,10 +318,7 @@ export default function ImageEditor({
                 border-radius: 8px;
                 opacity: ${isImageReady ? 1 : 0};
                 transition: opacity 0.2s ease;
-                /* pan-x pan-y is intentional: React 19 onTouch* handlers are
-                   non-passive, so preventDefault() reliably suppresses native
-                   scroll for single-finger drawing while allowing two-finger pan. */
-                touch-action: pan-x pan-y;
+                touch-action: none;
               `}
             />
 

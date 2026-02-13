@@ -5,6 +5,9 @@ import type { ToolType } from './types';
 import { COMMON_COLORS } from './constants';
 import Icon from '~/components/Icon';
 import Button from '~/components/Button';
+import { isMobile, isTablet } from '~/helpers';
+
+const deviceIsMobile = isMobile(navigator) || isTablet(navigator);
 
 interface DrawingToolsUIProps {
   tool: ToolType;
@@ -549,9 +552,9 @@ export default function DrawingToolsUI({
                 </span>
                 <button
                   onClick={() =>
-                    onZoomChange(Math.min(400, zoomPercent + 25))
+                    onZoomChange(Math.min(deviceIsMobile ? 100 : 400, zoomPercent + 25))
                   }
-                  disabled={disabled || zoomPercent >= 400}
+                  disabled={disabled || zoomPercent >= (deviceIsMobile ? 100 : 400)}
                   className={css`
                     width: 28px;
                     height: 28px;
