@@ -184,6 +184,7 @@ import { faThumbtack } from '@fortawesome/pro-solid-svg-icons/faThumbtack';
 import { faThumbsDown } from '@fortawesome/pro-solid-svg-icons/faThumbsDown';
 import { faThumbsUp } from '@fortawesome/pro-solid-svg-icons/faThumbsUp';
 import { faTimes } from '@fortawesome/pro-solid-svg-icons/faTimes';
+import { faTimesCircle } from '@fortawesome/pro-solid-svg-icons/faTimesCircle';
 import { faTrashAlt } from '@fortawesome/pro-solid-svg-icons/faTrashAlt';
 import { faTrashRestore } from '@fortawesome/pro-solid-svg-icons/faTrashRestore';
 import { faTree } from '@fortawesome/pro-solid-svg-icons/faTree';
@@ -399,6 +400,7 @@ library.add(
   faThumbsUp,
   faThumbtack,
   faTimes,
+  faTimesCircle,
   faTrashAlt,
   faTrashRestore,
   faTree,

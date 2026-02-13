@@ -133,6 +133,7 @@ function RichText({
   isProfileComponent,
   isAIMessage,
   isAudioButtonShown = true,
+  aiActionPlacement = 'floating',
   isShowMoreButtonCentered,
   voice,
   maxLines = 10,
@@ -149,6 +150,7 @@ function RichText({
   contentType?: string;
   hideDictation?: boolean;
   isAudioButtonShown?: boolean;
+  aiActionPlacement?: 'floating' | 'inline';
   isUseNewFormat?: boolean;
   isPreview?: boolean;
   isStatusMsg?: boolean;
@@ -465,36 +467,70 @@ function RichText({
         )}
       </div>
       {isAIMessage && !hideDictation && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '-3rem',
-            right: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}
-        >
-          <Button
-            variant="soft"
-            tone="raised"
-            onClick={handleCopyMessage}
-            style={{
-              padding: '0.5rem 0.7rem',
-              lineHeight: 1
-            }}
-            color="darkerGray"
-          >
-            <Icon icon={copySuccess ? 'check' : 'copy'} />
-          </Button>
-          {isAudioButtonShown && (
-            <AIAudioButton
-              contentKey={`${contentId}-${contentType}-${section}`}
-              text={text}
-              voice={voice}
-            />
+        <>
+          {aiActionPlacement === 'inline' ? (
+            <div
+              style={{
+                marginTop: '0.7rem',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Button
+                variant="soft"
+                tone="raised"
+                onClick={handleCopyMessage}
+                style={{
+                  padding: '0.5rem 0.7rem',
+                  lineHeight: 1
+                }}
+                color="darkerGray"
+              >
+                <Icon icon={copySuccess ? 'check' : 'copy'} />
+              </Button>
+              {isAudioButtonShown && (
+                <AIAudioButton
+                  contentKey={`${contentId}-${contentType}-${section}`}
+                  text={text}
+                  voice={voice}
+                />
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-3rem',
+                right: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Button
+                variant="soft"
+                tone="raised"
+                onClick={handleCopyMessage}
+                style={{
+                  padding: '0.5rem 0.7rem',
+                  lineHeight: 1
+                }}
+                color="darkerGray"
+              >
+                <Icon icon={copySuccess ? 'check' : 'copy'} />
+              </Button>
+              {isAudioButtonShown && (
+                <AIAudioButton
+                  contentKey={`${contentId}-${contentType}-${section}`}
+                  text={text}
+                  voice={voice}
+                />
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
     </ErrorBoundary>
   );

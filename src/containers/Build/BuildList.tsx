@@ -86,9 +86,12 @@ const buildCardClass = css`
   border-radius: ${borderRadius};
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
   &:hover {
     border-color: var(--theme-border);
+    transform: translateY(-1px);
   }
 `;
 
@@ -117,13 +120,94 @@ const primaryButtonClass = css`
   }
 `;
 
+const buildCardHeaderClass = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+`;
+
+const buildTitleClass = css`
+  margin: 0 0 0.45rem 0;
+  color: var(--chat-text);
+  font-size: 1.45rem;
+`;
+
+const buildDescriptionClass = css`
+  margin: 0;
+  color: var(--chat-text);
+  opacity: 0.72;
+  font-size: 0.95rem;
+  line-height: 1.45;
+`;
+
+const buildUpdatedClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--chat-text);
+  opacity: 0.65;
+  white-space: nowrap;
+`;
+
+const buildTagRowClass = css`
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+`;
+
+const buildTagClass = css`
+  font-size: 0.74rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  border: 1px solid var(--ui-border);
+  line-height: 1;
+`;
+
+const buildMetaRowClass = css`
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+`;
+
+const buildMetaItemClass = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--chat-text);
+  opacity: 0.72;
+`;
+
+interface BuildListItem {
+  id: number;
+  title: string;
+  description: string | null;
+  status: string;
+  isPublic: boolean;
+  updatedAt: number;
+  createdAt: number;
+  hasCode?: boolean;
+  viewCount?: number;
+  publishedAt?: number | null;
+  sourceBuildId?: number | null;
+}
+
 export default function BuildList() {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadMyBuilds = useAppContext((v) => v.requestHelpers.loadMyBuilds);
+  const createBuild = useAppContext((v) => v.requestHelpers.createBuild);
 
   const [loading, setLoading] = useState(true);
-  const [builds, setBuilds] = useState<any[]>([]);
+  const [builds, setBuilds] = useState<BuildListItem[]>([]);
+  const [promptInput, setPromptInput] = useState('');
+  const [creatingFromPrompt, setCreatingFromPrompt] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -189,8 +273,9 @@ export default function BuildList() {
           </div>
           <h1 className={heroTitleClass}>My Builds</h1>
           <p className={heroBodyClass}>
-            Iterate fast with AI, wire up SQLite, and preview everything in one
-            place.
+            Turn rough ideas into working apps in minutes. Copilot can draft
+            screens, wire data flows, run review/fix loops, and keep version
+            history as you iterate.
           </p>
           <div>
             <button
@@ -207,24 +292,72 @@ export default function BuildList() {
       {builds.length === 0 ? (
         <div
           className={css`
-            text-align: center;
             padding: 3rem;
             background: #fff;
             border-radius: ${borderRadius};
             border: 1px dashed var(--ui-border);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
           `}
         >
-          <p style={{ fontSize: '1.1rem', color: 'var(--chat-text)', opacity: 0.7 }}>
-            You have not created any builds yet.
-          </p>
-          <button
-            className={primaryButtonClass}
-            style={{ marginTop: '1rem' }}
-            onClick={() => navigate('/build/new')}
-            type="button"
+          <p
+            style={{
+              margin: 0,
+              fontSize: '1.15rem',
+              color: 'var(--chat-text)',
+              opacity: 0.85,
+              lineHeight: 1.55
+            }}
           >
-            Create Your First Build
-          </button>
+            Describe anything you want to build. Copilot will start coding right
+            away, ask follow-up questions if needed, or suggest the closest
+            realistic version using Twinkle SDK capabilities.
+          </p>
+          <div
+            className={css`
+              display: flex;
+              gap: 0.7rem;
+              align-items: center;
+              @media (max-width: ${mobileMaxWidth}) {
+                flex-direction: column;
+                align-items: stretch;
+              }
+            `}
+          >
+            <input
+              value={promptInput}
+              onChange={(e) => setPromptInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleStartFromPrompt();
+                }
+              }}
+              placeholder='Try: "Build a daily reflection app with streaks and friend feed"'
+              className={css`
+                flex: 1;
+                min-width: 0;
+                height: 44px;
+                border: 1px solid var(--ui-border);
+                border-radius: 10px;
+                padding: 0 0.9rem;
+                font-size: 0.95rem;
+                &:focus {
+                  outline: none;
+                  border-color: var(--theme-border);
+                }
+              `}
+            />
+            <button
+              className={primaryButtonClass}
+              disabled={!promptInput.trim() || creatingFromPrompt}
+              onClick={handleStartFromPrompt}
+              type="button"
+            >
+              {creatingFromPrompt ? 'Starting...' : 'Start Building'}
+            </button>
+          </div>
         </div>
       ) : (
         <div className={buildGridClass}>
@@ -234,79 +367,50 @@ export default function BuildList() {
               to={`/build/${build.id}`}
               className={buildCardClass}
             >
-              <div
-                className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: flex-start;
-                `}
-              >
+              <div className={buildCardHeaderClass}>
                 <div>
-                  <h3
-                    className={css`
-                      margin: 0 0 0.5rem 0;
-                      color: var(--chat-text);
-                      font-size: 1.4rem;
-                    `}
-                  >
-                    {build.title}
-                  </h3>
-                  {build.description && (
-                    <p
-                      className={css`
-                        margin: 0;
-                        color: var(--chat-text);
-                        opacity: 0.7;
-                        font-size: 0.9rem;
-                      `}
-                    >
-                      {build.description}
-                    </p>
-                  )}
+                  <h3 className={buildTitleClass}>{build.title}</h3>
+                  <p className={buildDescriptionClass}>
+                    {build.description?.trim() || deriveBuildCardSummary(build)}
+                  </p>
                 </div>
-                <span
-                  className={css`
-                    font-size: 0.8rem;
-                    color: var(--chat-text);
-                    opacity: 0.6;
-                    white-space: nowrap;
-                    margin-left: 1rem;
-                  `}
-                >
-                  {timeSince(build.updatedAt)}
+                <span className={buildUpdatedClass}>
+                  <Icon icon="clock" />
+                  Updated {formatRelativeTime(build.updatedAt)}
                 </span>
               </div>
-              <div
-                className={css`
-                  margin-top: 0.75rem;
-                  display: flex;
-                  gap: 0.5rem;
-                `}
-              >
-                <span
-                  className={css`
-                    font-size: 0.75rem;
-                    padding: 0.25rem 0.5rem;
-                    border-radius: 4px;
-                    background: var(--chat-bg);
-                    color: var(--chat-text);
-                    border: 1px solid var(--ui-border);
-                  `}
-                >
-                  {build.status}
+              <div className={buildTagRowClass}>
+                <span className={buildTagClass}>
+                  {formatBuildStatusLabel(build.status)}
                 </span>
-                {build.isPublic && (
-                  <span
-                    className={css`
-                      font-size: 0.75rem;
-                      padding: 0.25rem 0.5rem;
-                      border-radius: 4px;
-                      background: var(--chat-bg);
-                      color: var(--theme-bg);
-                      border: 1px solid var(--ui-border);
-                    `}
-                  >
-                    public
+                <span className={buildTagClass}>
+                  {build.isPublic ? 'Public' : 'Private'}
+                </span>
+                <span className={buildTagClass}>
+                  {build.hasCode ? 'Code ready' : 'No code yet'}
+                </span>
+                {!!build.sourceBuildId && (
+                  <span className={buildTagClass}>Forked</span>
+                )}
+              </div>
+              <div className={buildMetaRowClass}>
+                <span className={buildMetaItemClass}>
+                  <Icon icon="clock-rotate-left" />
+                  Created {formatRelativeTime(build.createdAt)}
+                </span>
+                <span className={buildMetaItemClass}>
+                  <Icon icon="eye" />
+                  {formatViewLabel(build.viewCount)}
+                </span>
+                {build.isPublic && build.publishedAt ? (
+                  <span className={buildMetaItemClass}>
+                    <Icon icon="globe" />
+                    Published {formatRelativeTime(build.publishedAt)}
+                  </span>
+                ) : (
+                  <span className={buildMetaItemClass}>
+                    <Icon icon="lock" />
+                    Not published yet
                   </span>
                 )}
               </div>
@@ -316,4 +420,64 @@ export default function BuildList() {
       )}
     </div>
   );
+
+  async function handleStartFromPrompt() {
+    if (!promptInput.trim() || creatingFromPrompt) return;
+    const prompt = promptInput.trim();
+    setCreatingFromPrompt(true);
+    try {
+      const title = deriveBuildTitle(prompt);
+      const { build } = await createBuild({ title });
+      if (build?.id) {
+        navigate(`/build/${build.id}`, {
+          state: { initialPrompt: prompt }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to start build from prompt:', error);
+    }
+    setCreatingFromPrompt(false);
+  }
+}
+
+function deriveBuildTitle(prompt: string) {
+  const cleaned = (prompt || '')
+    .normalize('NFKC')
+    .replace(/\s+/gu, ' ')
+    .replace(/[^\p{L}\p{N}\p{M}\s-]/gu, '')
+    .replace(/-{2,}/g, '-')
+    .trim();
+  if (!cleaned) return 'New Build';
+  const words = cleaned.split(' ').slice(0, 6).join(' ');
+  return words.length > 70 ? `${words.slice(0, 67)}...` : words;
+}
+
+function deriveBuildCardSummary(build: BuildListItem) {
+  if (build.hasCode) {
+    return 'Open this build to continue refining code, data, and interaction flow.';
+  }
+  if (build.status === 'draft') {
+    return 'Kick off this draft with a prompt and Copilot will generate the first working version.';
+  }
+  return 'Open this build to continue iterating with Copilot.';
+}
+
+function formatBuildStatusLabel(status: string) {
+  if (!status) return 'Unknown';
+  const normalized = status.toLowerCase();
+  if (normalized === 'draft') return 'Draft';
+  if (normalized === 'published') return 'Published';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function formatRelativeTime(timestamp?: number | null) {
+  if (!timestamp || Number.isNaN(Number(timestamp))) return 'just now';
+  return timeSince(Number(timestamp));
+}
+
+function formatViewLabel(viewCount?: number | null) {
+  const views = Number.isFinite(Number(viewCount)) ? Number(viewCount) : 0;
+  if (views <= 0) return 'No views yet';
+  if (views === 1) return '1 view';
+  return `${views} views`;
 }
