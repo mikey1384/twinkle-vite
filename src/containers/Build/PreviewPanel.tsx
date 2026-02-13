@@ -19,8 +19,6 @@ interface PreviewPanelProps {
   isOwner: boolean;
   onCodeChange: (code: string) => void;
   onReplaceCode: (code: string) => void;
-  onSaveVersion: (summary?: string) => void;
-  savingVersion: boolean;
 }
 
 interface ArtifactVersion {
@@ -30,6 +28,118 @@ interface ArtifactVersion {
   gitCommitSha: string | null;
   createdAt: number;
   createdByRole: 'user' | 'assistant';
+}
+
+interface PreviewSeedCacheEntry {
+  buildId: number;
+  codeSignature: string;
+  src: string;
+  cachedAt: number;
+}
+
+interface PreviewFrameMeta {
+  buildId: number | null;
+  codeSignature: string | null;
+}
+
+const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
+const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
+const previewSeedCache = new Map<number, PreviewSeedCacheEntry>();
+const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
+  'ai:chat',
+  'db:save',
+  'jobs:cancel',
+  'jobs:claim-due',
+  'jobs:schedule',
+  'mail:send',
+  'private-db:remove',
+  'private-db:set',
+  'shared-db:add-entry',
+  'shared-db:create-topic',
+  'shared-db:delete-entry',
+  'shared-db:update-entry',
+  'social:follow',
+  'social:unfollow',
+  'viewer-db:exec',
+  'vocabulary:collect-word'
+]);
+
+function hashPreviewCode(code: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < code.length; i++) {
+    hash ^= code.charCodeAt(i);
+    hash +=
+      (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function buildPreviewCodeSignature(codeWithSdk: string | null) {
+  if (!codeWithSdk) return null;
+  return `${codeWithSdk.length}:${hashPreviewCode(codeWithSdk)}`;
+}
+
+function revokePreviewUrl(src: string | null | undefined) {
+  if (!src) return;
+  try {
+    URL.revokeObjectURL(src);
+  } catch {
+    // no-op
+  }
+}
+
+function prunePreviewSeedCache() {
+  const now = Date.now();
+  for (const [buildId, entry] of previewSeedCache.entries()) {
+    if (now - entry.cachedAt > PREVIEW_SEED_CACHE_TTL_MS) {
+      revokePreviewUrl(entry.src);
+      previewSeedCache.delete(buildId);
+    }
+  }
+
+  if (previewSeedCache.size <= PREVIEW_SEED_CACHE_MAX_ENTRIES) return;
+
+  const oldestEntries = Array.from(previewSeedCache.entries()).sort(
+    (a, b) => a[1].cachedAt - b[1].cachedAt
+  );
+  const overflow = previewSeedCache.size - PREVIEW_SEED_CACHE_MAX_ENTRIES;
+  for (let i = 0; i < overflow; i++) {
+    const [buildId, entry] = oldestEntries[i];
+    revokePreviewUrl(entry.src);
+    previewSeedCache.delete(buildId);
+  }
+}
+
+function takeCachedPreviewSeed(buildId: number, codeSignature: string | null) {
+  prunePreviewSeedCache();
+  if (!codeSignature) return null;
+  const entry = previewSeedCache.get(buildId);
+  if (!entry) return null;
+  if (entry.codeSignature !== codeSignature) return null;
+  previewSeedCache.delete(buildId);
+  return entry;
+}
+
+function putCachedPreviewSeed(entry: PreviewSeedCacheEntry) {
+  prunePreviewSeedCache();
+  const existing = previewSeedCache.get(entry.buildId);
+  if (existing?.src && existing.src !== entry.src) {
+    revokePreviewUrl(existing.src);
+  }
+  previewSeedCache.set(entry.buildId, entry);
+  prunePreviewSeedCache();
+}
+
+function clearCachedPreviewSeed(buildId: number) {
+  const existing = previewSeedCache.get(buildId);
+  if (existing?.src) {
+    revokePreviewUrl(existing.src);
+  }
+  previewSeedCache.delete(buildId);
+}
+
+function isMutatingPreviewRequestType(type: string) {
+  return MUTATING_PREVIEW_REQUEST_TYPES.has(type);
 }
 
 // The Twinkle SDK script that gets injected into builds
@@ -418,6 +528,100 @@ const TWINKLE_SDK_SCRIPT = `
       }
     },
 
+    privateDb: {
+      async get(key) {
+        if (!key) throw new Error('key is required');
+        return await sendRequest('private-db:get', { key: key });
+      },
+
+      async list(opts) {
+        var options = opts || {};
+        return await sendRequest('private-db:list', {
+          prefix: options.prefix,
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      },
+
+      async set(key, value) {
+        if (!key) throw new Error('key is required');
+        return await sendRequest('private-db:set', {
+          key: key,
+          value: value
+        });
+      },
+
+      async remove(key) {
+        if (!key) throw new Error('key is required');
+        return await sendRequest('private-db:remove', { key: key });
+      }
+    },
+
+    jobs: {
+      async schedule(opts) {
+        var options = opts || {};
+        if (!options.name) throw new Error('name is required');
+        if (!options.runAt) throw new Error('runAt is required');
+        return await sendRequest('jobs:schedule', {
+          name: options.name,
+          runAt: options.runAt,
+          intervalSeconds: options.intervalSeconds,
+          maxRuns: options.maxRuns,
+          data: options.data,
+          scope: options.scope
+        });
+      },
+
+      async list(opts) {
+        var options = opts || {};
+        return await sendRequest('jobs:list', {
+          scope: options.scope,
+          status: options.status,
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      },
+
+      async cancel(jobId) {
+        if (!jobId) throw new Error('jobId is required');
+        return await sendRequest('jobs:cancel', { jobId: jobId });
+      },
+
+      async claimDue(opts) {
+        var options = opts || {};
+        return await sendRequest('jobs:claim-due', {
+          scope: options.scope,
+          limit: options.limit
+        });
+      }
+    },
+
+    mail: {
+      async send(opts) {
+        var options = opts || {};
+        if (!options.to) throw new Error('to is required');
+        if (!options.subject) throw new Error('subject is required');
+        return await sendRequest('mail:send', {
+          to: options.to,
+          subject: options.subject,
+          text: options.text,
+          html: options.html,
+          from: options.from,
+          replyTo: options.replyTo,
+          meta: options.meta
+        });
+      },
+
+      async list(opts) {
+        var options = opts || {};
+        return await sendRequest('mail:list', {
+          status: options.status,
+          limit: options.limit,
+          cursor: options.cursor
+        });
+      }
+    },
+
     build: { id: null, title: null, username: null },
     _init(info) {
       this.build.id = info.id;
@@ -437,15 +641,13 @@ const TWINKLE_SDK_SCRIPT = `
 `;
 
 const panelClass = css`
-  flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
   background: #fff;
   gap: 0.6rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    height: 50%;
-  }
+  overflow: hidden;
 `;
 
 const toolbarClass = css`
@@ -505,28 +707,84 @@ const toolbarActionsClass = css`
   gap: 0.6rem;
 `;
 
-const actionButtonClass = css`
-  padding: 0.45rem 0.9rem;
-  border: none;
-  border-radius: 10px;
-  background: var(--theme-bg);
-  color: var(--theme-text);
-  cursor: pointer;
-  font-size: 0.85rem;
+const previewStageClass = css`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  overflow: hidden;
+`;
+
+const previewPreloadSurfaceClass = css`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(76, 175, 80, 0.14), transparent 40%),
+    radial-gradient(circle at 84% 78%, rgba(255, 193, 7, 0.14), transparent 46%),
+    linear-gradient(140deg, #f9fff7 0%, #f4f8ff 52%, #fffdf8 100%);
+  color: var(--chat-text);
+  z-index: 1;
+`;
+
+const previewPreloadIconWrapClass = css`
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--ui-border);
+  background: rgba(255, 255, 255, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const previewPreloadLabelClass = css`
+  font-size: 0.82rem;
   font-weight: 700;
+  opacity: 0.82;
+`;
+
+const previewIframeClass = css`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+  transition: opacity 0.18s ease;
+`;
+
+const previewLoadingOverlayClass = css`
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.9rem;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-  &:hover:not(:disabled) {
-    background: var(--theme-hover-bg);
-    transform: translateY(-1px);
-  }
-  &:disabled {
-    background: var(--theme-disabled-bg);
-    cursor: not-allowed;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--chat-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  z-index: 4;
+  backdrop-filter: blur(1px);
+`;
+
+const previewSpinnerClass = css`
+  animation: previewSpin 0.9s linear infinite;
+  @keyframes previewSpin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 
@@ -628,11 +886,27 @@ export default function PreviewPanel({
   code,
   isOwner,
   onCodeChange,
-  onReplaceCode,
-  onSaveVersion,
-  savingVersion
+  onReplaceCode
 }: PreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  const [activePreviewFrame, setActivePreviewFrame] = useState<
+    'primary' | 'secondary'
+  >('primary');
+  const [previewFrameSources, setPreviewFrameSources] = useState<{
+    primary: string | null;
+    secondary: string | null;
+  }>({
+    primary: null,
+    secondary: null
+  });
+  const [previewFrameReady, setPreviewFrameReady] = useState<{
+    primary: boolean;
+    secondary: boolean;
+  }>({
+    primary: false,
+    secondary: false
+  });
+  const [previewTransitioning, setPreviewTransitioning] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [versions, setVersions] = useState<ArtifactVersion[]>([]);
@@ -642,7 +916,32 @@ export default function PreviewPanel({
   const [artifactId, setArtifactId] = useState<number | null>(
     build.primaryArtifactId ?? null
   );
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const primaryIframeRef = useRef<HTMLIFrameElement>(null);
+  const secondaryIframeRef = useRef<HTMLIFrameElement>(null);
+  const activePreviewFrameRef = useRef<'primary' | 'secondary'>('primary');
+  const messageTargetFrameRef = useRef<'primary' | 'secondary'>('primary');
+  const previewTransitioningRef = useRef(false);
+  const previewFrameMetaRef = useRef<{
+    primary: PreviewFrameMeta;
+    secondary: PreviewFrameMeta;
+  }>({
+    primary: { buildId: null, codeSignature: null },
+    secondary: { buildId: null, codeSignature: null }
+  });
+  const previewFrameSourcesRef = useRef<{
+    primary: string | null;
+    secondary: string | null;
+  }>({
+    primary: null,
+    secondary: null
+  });
+  const previewFrameReadyRef = useRef<{
+    primary: boolean;
+    secondary: boolean;
+  }>({
+    primary: false,
+    secondary: false
+  });
   const buildRef = useRef(build);
   const isOwnerRef = useRef(isOwner);
   const userIdRef = useRef<number | null>(null);
@@ -752,6 +1051,28 @@ export default function PreviewPanel({
   const deleteSharedDbEntry = useAppContext(
     (v) => v.requestHelpers.deleteSharedDbEntry
   );
+  const getPrivateDbItem = useAppContext(
+    (v) => v.requestHelpers.getPrivateDbItem
+  );
+  const listPrivateDbItems = useAppContext(
+    (v) => v.requestHelpers.listPrivateDbItems
+  );
+  const setPrivateDbItem = useAppContext(
+    (v) => v.requestHelpers.setPrivateDbItem
+  );
+  const deletePrivateDbItem = useAppContext(
+    (v) => v.requestHelpers.deletePrivateDbItem
+  );
+  const scheduleBuildJob = useAppContext(
+    (v) => v.requestHelpers.scheduleBuildJob
+  );
+  const listBuildJobs = useAppContext((v) => v.requestHelpers.listBuildJobs);
+  const cancelBuildJob = useAppContext((v) => v.requestHelpers.cancelBuildJob);
+  const claimDueBuildJobs = useAppContext(
+    (v) => v.requestHelpers.claimDueBuildJobs
+  );
+  const sendBuildMail = useAppContext((v) => v.requestHelpers.sendBuildMail);
+  const listBuildMail = useAppContext((v) => v.requestHelpers.listBuildMail);
   const updateMissionStatus = useAppContext(
     (v) => v.requestHelpers.updateMissionStatus
   );
@@ -794,6 +1115,16 @@ export default function PreviewPanel({
   const addSharedDbEntryRef = useRef(addSharedDbEntry);
   const updateSharedDbEntryRef = useRef(updateSharedDbEntry);
   const deleteSharedDbEntryRef = useRef(deleteSharedDbEntry);
+  const getPrivateDbItemRef = useRef(getPrivateDbItem);
+  const listPrivateDbItemsRef = useRef(listPrivateDbItems);
+  const setPrivateDbItemRef = useRef(setPrivateDbItem);
+  const deletePrivateDbItemRef = useRef(deletePrivateDbItem);
+  const scheduleBuildJobRef = useRef(scheduleBuildJob);
+  const listBuildJobsRef = useRef(listBuildJobs);
+  const cancelBuildJobRef = useRef(cancelBuildJob);
+  const claimDueBuildJobsRef = useRef(claimDueBuildJobs);
+  const sendBuildMailRef = useRef(sendBuildMail);
+  const listBuildMailRef = useRef(listBuildMail);
   const updateMissionStatusRef = useRef(updateMissionStatus);
   const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
 
@@ -826,14 +1157,213 @@ export default function PreviewPanel({
     const blob = new Blob([codeWithSdk], { type: 'text/html' });
     return URL.createObjectURL(blob);
   }, [codeWithSdk]);
+  const previewCodeSignature = useMemo(
+    () => buildPreviewCodeSignature(codeWithSdk),
+    [codeWithSdk]
+  );
+
+  useEffect(() => {
+    const activeFrame = activePreviewFrameRef.current;
+    const inactiveFrame = activeFrame === 'primary' ? 'secondary' : 'primary';
+    const currentSources = previewFrameSourcesRef.current;
+    let activeSrc = currentSources[activeFrame];
+    let inactiveSrc = currentSources[inactiveFrame];
+    let seededFromCache = false;
+
+    if (!activeSrc && !inactiveSrc && previewCodeSignature) {
+      const cached = takeCachedPreviewSeed(build.id, previewCodeSignature);
+      if (cached?.src) {
+        const seededSources = {
+          ...currentSources,
+          [activeFrame]: cached.src
+        };
+        previewFrameSourcesRef.current = seededSources;
+        setPreviewFrameSources(seededSources);
+        const seededMeta = {
+          ...previewFrameMetaRef.current,
+          [activeFrame]: {
+            buildId: build.id,
+            codeSignature: cached.codeSignature || previewCodeSignature
+          }
+        };
+        previewFrameMetaRef.current = seededMeta;
+        const seededReady = {
+          ...previewFrameReadyRef.current,
+          [activeFrame]: true
+        };
+        previewFrameReadyRef.current = seededReady;
+        setPreviewFrameReady(seededReady);
+        activeSrc = cached.src;
+        messageTargetFrameRef.current = activeFrame;
+        seededFromCache = true;
+      }
+    }
+
+    if (!previewSrc) {
+      clearCachedPreviewSeed(build.id);
+      if (currentSources.primary) {
+        URL.revokeObjectURL(currentSources.primary);
+      }
+      if (
+        currentSources.secondary &&
+        currentSources.secondary !== currentSources.primary
+      ) {
+        URL.revokeObjectURL(currentSources.secondary);
+      }
+      const cleared = { primary: null, secondary: null };
+      previewFrameSourcesRef.current = cleared;
+      setPreviewFrameSources(cleared);
+      previewFrameMetaRef.current = {
+        primary: { buildId: null, codeSignature: null },
+        secondary: { buildId: null, codeSignature: null }
+      };
+      const clearedReady = { primary: false, secondary: false };
+      previewFrameReadyRef.current = clearedReady;
+      setPreviewFrameReady(clearedReady);
+      messageTargetFrameRef.current = activeFrame;
+      previewTransitioningRef.current = false;
+      setPreviewTransitioning(false);
+      return;
+    }
+
+    if (seededFromCache) {
+      URL.revokeObjectURL(previewSrc);
+      previewTransitioningRef.current = false;
+      setPreviewTransitioning(false);
+      return;
+    }
+
+    if (!activeSrc) {
+      const nextSources = {
+        ...currentSources,
+        [activeFrame]: previewSrc
+      };
+      previewFrameSourcesRef.current = nextSources;
+      setPreviewFrameSources(nextSources);
+      const nextMeta = {
+        ...previewFrameMetaRef.current,
+        [activeFrame]: {
+          buildId: build.id,
+          codeSignature: previewCodeSignature
+        }
+      };
+      previewFrameMetaRef.current = nextMeta;
+      const nextReady = {
+        ...previewFrameReadyRef.current,
+        [activeFrame]: false
+      };
+      previewFrameReadyRef.current = nextReady;
+      setPreviewFrameReady(nextReady);
+      messageTargetFrameRef.current = activeFrame;
+      previewTransitioningRef.current = true;
+      setPreviewTransitioning(true);
+      return;
+    }
+
+    if (previewSrc === activeSrc || previewSrc === inactiveSrc) {
+      const reusedFrame = previewSrc === activeSrc ? activeFrame : inactiveFrame;
+      const currentMeta = previewFrameMetaRef.current[reusedFrame];
+      const nextSignature = previewCodeSignature || currentMeta?.codeSignature;
+      if (
+        currentMeta?.buildId !== build.id ||
+        currentMeta?.codeSignature !== nextSignature
+      ) {
+        previewFrameMetaRef.current = {
+          ...previewFrameMetaRef.current,
+          [reusedFrame]: {
+            buildId: build.id,
+            codeSignature: nextSignature
+          }
+        };
+      }
+      return;
+    }
+
+    if (inactiveSrc && inactiveSrc !== previewSrc) {
+      URL.revokeObjectURL(inactiveSrc);
+    }
+
+    const nextSources = {
+      ...currentSources,
+      [inactiveFrame]: previewSrc
+    };
+    previewFrameSourcesRef.current = nextSources;
+    setPreviewFrameSources(nextSources);
+    const nextMeta = {
+      ...previewFrameMetaRef.current,
+      [inactiveFrame]: {
+        buildId: build.id,
+        codeSignature: previewCodeSignature
+      }
+    };
+    previewFrameMetaRef.current = nextMeta;
+    const nextReady = {
+      ...previewFrameReadyRef.current,
+      [inactiveFrame]: false
+    };
+    previewFrameReadyRef.current = nextReady;
+    setPreviewFrameReady(nextReady);
+    messageTargetFrameRef.current = activeFrame;
+    previewTransitioningRef.current = true;
+    setPreviewTransitioning(true);
+  }, [build.id, previewCodeSignature, previewSrc]);
+
+  useEffect(() => {
+    activePreviewFrameRef.current = activePreviewFrame;
+  }, [activePreviewFrame]);
+
+  useEffect(() => {
+    previewFrameSourcesRef.current = previewFrameSources;
+  }, [previewFrameSources]);
+
+  useEffect(() => {
+    previewFrameReadyRef.current = previewFrameReady;
+  }, [previewFrameReady]);
+
+  useEffect(() => {
+    previewTransitioningRef.current = previewTransitioning;
+  }, [previewTransitioning]);
 
   useEffect(() => {
     return () => {
-      if (previewSrc) {
-        URL.revokeObjectURL(previewSrc);
+      const activeFrame = activePreviewFrameRef.current;
+      const sources = previewFrameSourcesRef.current;
+      const ready = previewFrameReadyRef.current;
+      const frameMeta = previewFrameMetaRef.current;
+      const activeMeta = frameMeta[activeFrame];
+      const activeSrc = sources[activeFrame];
+      const shouldCacheActive =
+        Boolean(activeSrc) &&
+        ready[activeFrame] &&
+        Boolean(activeMeta?.codeSignature) &&
+        activeMeta?.buildId === buildRef.current?.id;
+
+      if (
+        shouldCacheActive &&
+        activeSrc &&
+        activeMeta?.buildId &&
+        activeMeta?.codeSignature
+      ) {
+        putCachedPreviewSeed({
+          buildId: activeMeta.buildId,
+          codeSignature: activeMeta.codeSignature,
+          src: activeSrc,
+          cachedAt: Date.now()
+        });
+      } else if (activeSrc) {
+        URL.revokeObjectURL(activeSrc);
+      }
+
+      if (sources.primary && sources.primary !== activeSrc) {
+        URL.revokeObjectURL(sources.primary);
+      }
+      if (sources.secondary && sources.secondary !== sources.primary) {
+        if (sources.secondary !== activeSrc) {
+          URL.revokeObjectURL(sources.secondary);
+        }
       }
     };
-  }, [previewSrc]);
+  }, []);
 
   useEffect(() => {
     buildRef.current = build;
@@ -960,14 +1490,6 @@ export default function PreviewPanel({
     }
   }
 
-  async function handleSaveSnapshot() {
-    if (!isOwnerRef.current || savingVersion || !code) return;
-    await onSaveVersion('Manual snapshot');
-    if (historyOpen) {
-      await loadVersions();
-    }
-  }
-
   async function handleRestoreVersion(versionId: number) {
     if (!isOwnerRef.current || !artifactId || restoringVersionId) return;
     const activeBuild = buildRef.current;
@@ -992,21 +1514,138 @@ export default function PreviewPanel({
     setRestoringVersionId(null);
   }
 
+  function handlePreviewFrameLoad(
+    frame: 'primary' | 'secondary',
+    expectedSrc: string | null
+  ) {
+    if (!expectedSrc) return;
+    const sources = previewFrameSourcesRef.current;
+    if (sources[frame] !== expectedSrc) return;
+    const nextReadyState = {
+      ...previewFrameReadyRef.current,
+      [frame]: true
+    };
+    previewFrameReadyRef.current = nextReadyState;
+    setPreviewFrameReady(nextReadyState);
+
+    const activeFrame = activePreviewFrameRef.current;
+    const inactiveFrame = activeFrame === 'primary' ? 'secondary' : 'primary';
+
+    if (frame === activeFrame) {
+      messageTargetFrameRef.current = frame;
+      if (!sources[inactiveFrame]) {
+        previewTransitioningRef.current = false;
+        setPreviewTransitioning(false);
+      }
+      return;
+    }
+
+    const outgoingSrc = sources[activeFrame];
+    setActivePreviewFrame(frame);
+    activePreviewFrameRef.current = frame;
+    messageTargetFrameRef.current = frame;
+    previewTransitioningRef.current = false;
+    setPreviewTransitioning(false);
+
+    if (outgoingSrc && outgoingSrc !== expectedSrc) {
+      URL.revokeObjectURL(outgoingSrc);
+    }
+
+    const nextSources = {
+      ...sources,
+      [activeFrame]: null
+    };
+    previewFrameSourcesRef.current = nextSources;
+    setPreviewFrameSources(nextSources);
+    const nextMeta = {
+      ...previewFrameMetaRef.current,
+      [activeFrame]: {
+        buildId: null,
+        codeSignature: null
+      }
+    };
+    previewFrameMetaRef.current = nextMeta;
+    const nextReady = {
+      ...previewFrameReadyRef.current,
+      [activeFrame]: false
+    };
+    previewFrameReadyRef.current = nextReady;
+    setPreviewFrameReady(nextReady);
+  }
+
   useEffect(() => {
     async function handleMessage(event: MessageEvent) {
       const data = event.data;
       if (!data || data.source !== 'twinkle-build') return;
+      const { id, type, payload } = data;
 
-      const iframe = iframeRef.current;
-      if (!iframe?.contentWindow) return;
+      const sourceWindow = event.source as Window | null;
+      if (!sourceWindow) return;
+      const primaryWindow = primaryIframeRef.current?.contentWindow || null;
+      const secondaryWindow = secondaryIframeRef.current?.contentWindow || null;
+      const sourceFrame =
+        primaryWindow && sourceWindow === primaryWindow
+          ? 'primary'
+          : secondaryWindow && sourceWindow === secondaryWindow
+            ? 'secondary'
+            : null;
+      if (!sourceFrame) return;
+      const targetFrame = messageTargetFrameRef.current;
+      const targetWindow =
+        targetFrame === 'primary' ? primaryWindow : secondaryWindow;
+      const alternateFrame = targetFrame === 'primary' ? 'secondary' : 'primary';
+      const alternateWindow =
+        alternateFrame === 'primary' ? primaryWindow : secondaryWindow;
+      const frameMeta = previewFrameMetaRef.current;
+      const activeBuild = buildRef.current;
+      const activeBuildId = activeBuild?.id ?? null;
+      if (!activeBuildId) return;
+      const targetMeta = frameMeta[targetFrame];
+      const alternateMeta = frameMeta[alternateFrame];
+      const alternateHasSource = Boolean(
+        previewFrameSourcesRef.current[alternateFrame]
+      );
+      const shouldAcceptAlternate =
+        previewTransitioningRef.current &&
+        alternateHasSource &&
+        alternateMeta?.buildId === activeBuildId;
+      const fromTargetWindow = Boolean(
+        targetWindow &&
+          sourceWindow === targetWindow &&
+          targetMeta?.buildId === activeBuildId
+      );
+      const fromAlternateWindow = Boolean(
+        alternateWindow &&
+          sourceWindow === alternateWindow &&
+          alternateMeta?.buildId === activeBuildId
+      );
+      if (
+        !fromTargetWindow &&
+        !(shouldAcceptAlternate && fromAlternateWindow)
+      ) {
+        return;
+      }
+
+      if (previewTransitioningRef.current && isMutatingPreviewRequestType(type)) {
+        const mutationAuthorityFrame =
+          shouldAcceptAlternate ? alternateFrame : targetFrame;
+        if (sourceFrame !== mutationAuthorityFrame) {
+          sourceWindow.postMessage(
+            {
+              source: 'twinkle-parent',
+              id,
+              error:
+                'Preview is updating. This request was skipped to prevent duplicate side effects.'
+            },
+            '*'
+          );
+          return;
+        }
+      }
 
       // SECURITY: Validate the message came from our iframe, not an external source.
       // We use '*' for postMessage origin because blob/srcdoc iframes have null origins,
-      // but we validate event.source to ensure messages only come from our iframe.
-      if (event.source !== iframe.contentWindow) return;
-
-      const { id, type, payload } = data;
-      const activeBuild = buildRef.current;
+      // but we validate event.source to ensure messages only come from our preview iframes.
       const owner = isOwnerRef.current;
 
       try {
@@ -1421,13 +2060,171 @@ export default function PreviewPanel({
             break;
           }
 
+          case 'private-db:get': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const privateDbReadToken = await ensureBuildApiToken([
+              'privateDb:read'
+            ]);
+            response = await getPrivateDbItemRef.current({
+              buildId: activeBuild.id,
+              key: payload?.key,
+              token: privateDbReadToken
+            });
+            break;
+          }
+
+          case 'private-db:list': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const privateDbListToken = await ensureBuildApiToken([
+              'privateDb:read'
+            ]);
+            response = await listPrivateDbItemsRef.current({
+              buildId: activeBuild.id,
+              prefix: payload?.prefix,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: privateDbListToken
+            });
+            break;
+          }
+
+          case 'private-db:set': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const privateDbWriteToken = await ensureBuildApiToken([
+              'privateDb:write'
+            ]);
+            response = await setPrivateDbItemRef.current({
+              buildId: activeBuild.id,
+              key: payload?.key,
+              value: payload?.value,
+              token: privateDbWriteToken
+            });
+            break;
+          }
+
+          case 'private-db:remove': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const privateDbDeleteToken = await ensureBuildApiToken([
+              'privateDb:write'
+            ]);
+            response = await deletePrivateDbItemRef.current({
+              buildId: activeBuild.id,
+              key: payload?.key,
+              token: privateDbDeleteToken
+            });
+            break;
+          }
+
+          case 'jobs:schedule': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const jobsWriteToken = await ensureBuildApiToken(['jobs:write']);
+            response = await scheduleBuildJobRef.current({
+              buildId: activeBuild.id,
+              name: payload?.name,
+              runAt: payload?.runAt,
+              intervalSeconds: payload?.intervalSeconds,
+              maxRuns: payload?.maxRuns,
+              data: payload?.data,
+              scope: payload?.scope,
+              token: jobsWriteToken
+            });
+            break;
+          }
+
+          case 'jobs:list': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const jobsReadToken = await ensureBuildApiToken(['jobs:read']);
+            response = await listBuildJobsRef.current({
+              buildId: activeBuild.id,
+              scope: payload?.scope,
+              status: payload?.status,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: jobsReadToken
+            });
+            break;
+          }
+
+          case 'jobs:cancel': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const jobsCancelToken = await ensureBuildApiToken(['jobs:write']);
+            response = await cancelBuildJobRef.current({
+              buildId: activeBuild.id,
+              jobId: payload?.jobId,
+              token: jobsCancelToken
+            });
+            break;
+          }
+
+          case 'jobs:claim-due': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const jobsClaimToken = await ensureBuildApiToken(['jobs:write']);
+            response = await claimDueBuildJobsRef.current({
+              buildId: activeBuild.id,
+              scope: payload?.scope,
+              limit: payload?.limit,
+              token: jobsClaimToken
+            });
+            break;
+          }
+
+          case 'mail:send': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const mailSendToken = await ensureBuildApiToken(['mail:send']);
+            response = await sendBuildMailRef.current({
+              buildId: activeBuild.id,
+              to: payload?.to,
+              subject: payload?.subject,
+              text: payload?.text,
+              html: payload?.html,
+              from: payload?.from,
+              replyTo: payload?.replyTo,
+              meta: payload?.meta,
+              token: mailSendToken
+            });
+            break;
+          }
+
+          case 'mail:list': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const mailReadToken = await ensureBuildApiToken(['mail:read']);
+            response = await listBuildMailRef.current({
+              buildId: activeBuild.id,
+              status: payload?.status,
+              limit: payload?.limit,
+              cursor: payload?.cursor,
+              token: mailReadToken
+            });
+            break;
+          }
+
           default:
             throw new Error(`Unknown request type: ${type}`);
         }
 
         // SECURITY: Use '*' because blob URLs have null origins.
         // Security is enforced by validating event.source above.
-        iframe.contentWindow.postMessage(
+        sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
             id,
@@ -1451,7 +2248,7 @@ export default function PreviewPanel({
           }
         }
       } catch (error: any) {
-        iframe.contentWindow.postMessage(
+        sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
             id,
@@ -1476,14 +2273,6 @@ export default function PreviewPanel({
         <div className={toolbarActionsClass}>
           {isOwner && (
             <>
-              <button
-                className={actionButtonClass}
-                onClick={handleSaveSnapshot}
-                disabled={!code || savingVersion}
-              >
-                <Icon icon="save" />
-                {savingVersion ? 'Saving...' : 'Save Version'}
-              </button>
               <button
                 className={ghostActionButtonClass}
                 onClick={() => setHistoryOpen(true)}
@@ -1537,19 +2326,80 @@ export default function PreviewPanel({
         `}
       >
         {viewMode === 'preview' ? (
-          code && previewSrc ? (
-            <iframe
-              ref={iframeRef}
-              src={previewSrc}
-              title="Preview"
-              sandbox="allow-scripts"
-              className={css`
-                width: 100%;
-                height: 100%;
-                border: none;
-                background: #fff;
-              `}
-            />
+          code &&
+          (previewFrameSources.primary ||
+            previewFrameSources.secondary ||
+            previewSrc) ? (
+            <div className={previewStageClass}>
+              {!previewFrameReady[activePreviewFrame] && (
+                <div className={previewPreloadSurfaceClass}>
+                  <div className={previewPreloadIconWrapClass}>
+                    <Icon icon="spinner" className={previewSpinnerClass} />
+                  </div>
+                  <div className={previewPreloadLabelClass}>
+                    Loading preview...
+                  </div>
+                </div>
+              )}
+              {previewFrameSources.primary && (
+                <iframe
+                  ref={primaryIframeRef}
+                  src={previewFrameSources.primary}
+                  title="Preview (primary)"
+                  sandbox="allow-scripts"
+                  onLoad={() =>
+                    handlePreviewFrameLoad(
+                      'primary',
+                      previewFrameSources.primary
+                    )
+                  }
+                  className={previewIframeClass}
+                  style={{
+                    opacity:
+                      activePreviewFrame === 'primary' && previewFrameReady.primary
+                        ? 1
+                        : 0,
+                    pointerEvents:
+                      activePreviewFrame === 'primary' && previewFrameReady.primary
+                        ? 'auto'
+                        : 'none'
+                  }}
+                />
+              )}
+              {previewFrameSources.secondary && (
+                <iframe
+                  ref={secondaryIframeRef}
+                  src={previewFrameSources.secondary}
+                  title="Preview (secondary)"
+                  sandbox="allow-scripts"
+                  onLoad={() =>
+                    handlePreviewFrameLoad(
+                      'secondary',
+                      previewFrameSources.secondary
+                    )
+                  }
+                  className={previewIframeClass}
+                  style={{
+                    opacity:
+                      activePreviewFrame === 'secondary' &&
+                      previewFrameReady.secondary
+                        ? 1
+                        : 0,
+                    pointerEvents:
+                      activePreviewFrame === 'secondary' &&
+                      previewFrameReady.secondary
+                        ? 'auto'
+                        : 'none'
+                  }}
+                />
+              )}
+              {previewTransitioning && (
+                <div className={previewLoadingOverlayClass}>
+                  <Icon icon="spinner" className={previewSpinnerClass} />
+                  Updating preview
+                </div>
+              )}
+            </div>
           ) : (
             <div
               className={css`
@@ -1680,8 +2530,8 @@ export default function PreviewPanel({
                   opacity: 0.7;
                 `}
               >
-                No versions yet. Use "Save Version" or ask the AI to generate
-                code.
+                No versions yet. Ask Copilot to generate or review code to create
+                version history.
               </div>
             ) : (
               versions.map((version) => (

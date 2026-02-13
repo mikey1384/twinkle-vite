@@ -26,9 +26,28 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadBuild(buildId: number) {
+    async loadBuild(buildId: number, options?: { fromWriter?: boolean }) {
       try {
-        const { data } = await request.get(`${URL}/build/${buildId}`, auth());
+        const qs = options?.fromWriter ? '?fromWriter=1' : '';
+        const { data } = await request.get(`${URL}/build/${buildId}${qs}`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildChatMessage({
+      buildId,
+      messageId
+    }: {
+      buildId: number;
+      messageId: number;
+    }) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/${buildId}/chat/message/${messageId}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -1013,6 +1032,316 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entry/delete`,
           { entryId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getPrivateDbItem({
+      buildId,
+      key,
+      token
+    }: {
+      buildId: number;
+      key: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/private-db/get`,
+          { key },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listPrivateDbItems({
+      buildId,
+      prefix,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      prefix?: string;
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/private-db/list`,
+          { prefix, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async setPrivateDbItem({
+      buildId,
+      key,
+      value,
+      token
+    }: {
+      buildId: number;
+      key: string;
+      value: any;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/private-db/set`,
+          { key, value },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deletePrivateDbItem({
+      buildId,
+      key,
+      token
+    }: {
+      buildId: number;
+      key: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/private-db/delete`,
+          { key },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async scheduleBuildJob({
+      buildId,
+      name,
+      runAt,
+      intervalSeconds,
+      maxRuns,
+      data: jobData,
+      scope,
+      token
+    }: {
+      buildId: number;
+      name: string;
+      runAt: number;
+      intervalSeconds?: number;
+      maxRuns?: number;
+      data?: any;
+      scope?: 'user' | 'build';
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/jobs/schedule`,
+          { name, runAt, intervalSeconds, maxRuns, data: jobData, scope },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildJobs({
+      buildId,
+      scope,
+      status,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      scope?: 'user' | 'build';
+      status?: 'active' | 'cancelled' | 'completed';
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/jobs/list`,
+          { scope, status, limit, cursor },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async cancelBuildJob({
+      buildId,
+      jobId,
+      token
+    }: {
+      buildId: number;
+      jobId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/jobs/cancel`,
+          { jobId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async claimDueBuildJobs({
+      buildId,
+      scope,
+      limit,
+      token
+    }: {
+      buildId: number;
+      scope?: 'user' | 'build';
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/jobs/claim-due`,
+          { scope, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async sendBuildMail({
+      buildId,
+      to,
+      subject,
+      text,
+      html,
+      from,
+      replyTo,
+      meta,
+      token
+    }: {
+      buildId: number;
+      to: string | string[];
+      subject: string;
+      text?: string;
+      html?: string;
+      from?: string;
+      replyTo?: string;
+      meta?: any;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/mail/send`,
+          { to, subject, text, html, from, replyTo, meta },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildMail({
+      buildId,
+      status,
+      limit,
+      cursor,
+      token
+    }: {
+      buildId: number;
+      status?: 'queued' | 'sent' | 'failed';
+      limit?: number;
+      cursor?: { id?: number };
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/mail/list`,
+          { status, limit, cursor },
           {
             ...auth(),
             headers: {

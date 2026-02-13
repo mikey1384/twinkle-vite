@@ -9,16 +9,14 @@ import { timeSince } from '~/helpers/timeStampHelpers';
 import { computeLineDiff } from '~/components/CodeDiff/diffUtils';
 
 const panelClass = css`
-  width: 380px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   min-height: 0;
+  overflow: hidden;
   border-right: 1px solid var(--ui-border);
   background: #fff;
   gap: 0.6rem;
   @media (max-width: ${mobileMaxWidth}) {
-    width: 100%;
-    height: 50%;
     border-right: none;
     border-bottom: 1px solid var(--ui-border);
   }
@@ -49,7 +47,7 @@ const headerSubtitleClass = css`
 
 interface ChatMessage {
   id: number;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'reviewer';
   content: string;
   codeGenerated: string | null;
   artifactVersionId?: number | null;
@@ -61,10 +59,16 @@ interface ChatPanelProps {
   inputMessage: string;
   generating: boolean;
   generatingStatus: string | null;
+  reviewerStatusSteps: string[];
+  assistantStatusSteps: string[];
+  activeStreamMessageIds: number[];
   isOwner: boolean;
+  chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
+  onStopGeneration: () => void;
+  onDeleteMessage: (message: ChatMessage) => void;
 }
 
 export default function ChatPanel({
@@ -72,10 +76,16 @@ export default function ChatPanel({
   inputMessage,
   generating,
   generatingStatus,
+  reviewerStatusSteps,
+  assistantStatusSteps,
+  activeStreamMessageIds,
   isOwner,
+  chatScrollRef,
   chatEndRef,
   onInputChange,
-  onSendMessage
+  onSendMessage,
+  onStopGeneration,
+  onDeleteMessage
 }: ChatPanelProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -96,9 +106,11 @@ export default function ChatPanel({
         </div>
       </div>
       <div
+        ref={chatScrollRef}
         className={css`
           flex: 1;
           overflow-y: auto;
+          overscroll-behavior: contain;
           padding: 1.2rem;
           background: #fff;
           min-height: 0;
@@ -128,60 +140,150 @@ export default function ChatPanel({
               gap: 1rem;
             `}
           >
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={css`
-                  display: flex;
-                  flex-direction: column;
-                  align-items: ${message.role === 'user'
-                    ? 'flex-end'
-                    : 'flex-start'};
-                `}
-              >
+            {messages.map((message, index) => {
+              const isLastReviewer =
+                message.role === 'reviewer' &&
+                index === findLastIndex(messages, (m) => m.role === 'reviewer');
+              const isLastAssistant =
+                message.role === 'assistant' &&
+                index === findLastIndex(messages, (m) => m.role === 'assistant');
+              const isActiveStreamMessage = activeStreamMessageIds.includes(
+                message.id
+              );
+              const isStreamingTarget =
+                (generating && isActiveStreamMessage) ||
+                (generating &&
+                  ((message.role === 'assistant' && isLastAssistant) ||
+                    (message.role === 'reviewer' && isLastReviewer)));
+
+              return (
                 <div
-                  className={css`
-                    max-width: 85%;
-                    padding: 0.75rem 1rem;
-                    border-radius: 12px;
-                    background: ${message.role === 'user'
-                      ? 'var(--theme-bg)'
-                      : 'var(--chat-bg)'};
-                    color: ${message.role === 'user'
-                      ? 'var(--theme-text)'
-                      : 'var(--chat-text)'};
-                    word-break: break-word;
-                    font-size: 0.95rem;
-                    line-height: 1.4;
-                    border: 1px solid var(--ui-border);
+                  key={message.id}
+                    className={css`
+                      display: flex;
+                      flex-direction: column;
+                      align-items: ${message.role === 'user'
+                        ? 'flex-end'
+                        : 'flex-start'};
+                      position: relative;
                   `}
                 >
-                  {message.role === 'assistant' ? (
-                    <AssistantMessage
-                      message={message}
-                      messages={messages}
-                      generating={generating}
-                      generatingStatus={generatingStatus}
-                    />
-                  ) : (
-                    <span style={{ whiteSpace: 'pre-wrap' }}>
-                      {message.content}
+                  <button
+                    onClick={() => onDeleteMessage(message)}
+                    disabled={isStreamingTarget}
+                    title={
+                      isStreamingTarget
+                        ? 'Cannot delete while this request is in progress'
+                        : 'Delete message'
+                    }
+                    className={`${css`
+                      position: absolute;
+                      top: -0.35rem;
+                      right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
+                      left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
+                      padding: 0;
+                      border: none;
+                      background: transparent;
+                      color: var(--chat-text);
+                      font-size: 1.05rem;
+                      line-height: 1;
+                      opacity: 0.55;
+                      pointer-events: auto;
+                      transition: opacity 0.15s ease, transform 0.15s ease,
+                        color 0.15s ease;
+                      transform: translateY(0);
+                      cursor: pointer;
+                      z-index: 2;
+                      &:hover,
+                      &:focus-visible {
+                        opacity: 1;
+                        color: ${Color.rose()};
+                        transform: translateY(-1px);
+                      }
+
+                      &:disabled {
+                        opacity: 0.35;
+                        pointer-events: none;
+                        cursor: not-allowed;
+                      }
+                    `} build-chat-delete-button`}
+                  >
+                    <Icon icon="times-circle" />
+                  </button>
+                  {message.role === 'reviewer' && (
+                    <span
+                      className={css`
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.3rem;
+                        font-size: 0.75rem;
+                        font-weight: 700;
+                        color: ${Color.orange()};
+                        margin-bottom: 0.25rem;
+                        padding: 0 0.3rem;
+                      `}
+                    >
+                      <Icon icon="magnifying-glass" />
+                      Code Review
                     </span>
                   )}
+                  <div
+                    className={css`
+                      max-width: 85%;
+                      padding: 0.75rem 1rem;
+                      border-radius: 12px;
+                      background: ${message.role === 'user'
+                        ? 'var(--theme-bg)'
+                        : message.role === 'reviewer'
+                        ? '#fff8f0'
+                        : 'var(--chat-bg)'};
+                      color: ${message.role === 'user'
+                        ? 'var(--theme-text)'
+                        : 'var(--chat-text)'};
+                      word-break: break-word;
+                      font-size: 0.95rem;
+                      line-height: 1.4;
+                      border: 1px solid ${message.role === 'reviewer'
+                        ? Color.orange(0.3)
+                        : 'var(--ui-border)'};
+                    `}
+                  >
+                    {message.role === 'assistant' ? (
+                      <AssistantMessage
+                        message={message}
+                        messages={messages}
+                        isLatestAssistant={isLastAssistant}
+                        generating={generating}
+                        generatingStatus={generatingStatus}
+                        statusSteps={isLastAssistant ? assistantStatusSteps : []}
+                      />
+                    ) : message.role === 'reviewer' ? (
+                      <ReviewerMessage
+                        message={message}
+                        generating={generating}
+                        generatingStatus={generatingStatus}
+                        statusSteps={isLastReviewer ? reviewerStatusSteps : []}
+                      />
+                    ) : (
+                      <span style={{ whiteSpace: 'pre-wrap' }}>
+                        {message.content}
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    className={css`
+                      font-size: 0.7rem;
+                      color: var(--chat-text);
+                      opacity: 0.5;
+                      margin-top: 0.25rem;
+                      padding: 0 0.5rem;
+                    `}
+                  >
+                    {timeSince(message.createdAt)}
+                  </span>
                 </div>
-                <span
-                  className={css`
-                    font-size: 0.7rem;
-                    color: var(--chat-text);
-                    opacity: 0.5;
-                    margin-top: 0.25rem;
-                    padding: 0 0.5rem;
-                  `}
-                >
-                  {timeSince(message.createdAt)}
-                </span>
-              </div>
-            ))}
+              );
+            })}
             <div ref={chatEndRef} />
           </div>
         )}
@@ -227,29 +329,51 @@ export default function ChatPanel({
               `}
               rows={1}
             />
-            <button
-              onClick={onSendMessage}
-              disabled={!inputMessage.trim() || generating}
-              className={css`
-                padding: 0 1rem;
-                background: ${inputMessage.trim() && !generating
-                  ? 'var(--theme-bg)'
-                  : 'var(--theme-disabled-bg)'};
-                color: var(--theme-text);
-                border: none;
-                border-radius: 10px;
-                cursor: ${inputMessage.trim() && !generating
-                  ? 'pointer'
-                  : 'not-allowed'};
-                transition: transform 0.2s, background 0.2s;
-                &:hover:not(:disabled) {
-                  background: var(--theme-hover-bg);
-                  transform: translateY(-1px);
-                }
-              `}
-            >
-              <Icon icon="paper-plane" />
-            </button>
+            {generating ? (
+              <button
+                onClick={onStopGeneration}
+                className={css`
+                  padding: 0 1rem;
+                  background: ${Color.orange(0.95)};
+                  color: #fff;
+                  border: none;
+                  border-radius: 10px;
+                  cursor: pointer;
+                  transition: transform 0.2s, background 0.2s;
+                  &:hover {
+                    background: ${Color.orange()};
+                    transform: translateY(-1px);
+                  }
+                `}
+                title="Stop Copilot"
+              >
+                <Icon icon="stop" />
+              </button>
+            ) : (
+              <button
+                onClick={onSendMessage}
+                disabled={!inputMessage.trim() || generating}
+                className={css`
+                  padding: 0 1rem;
+                  background: ${inputMessage.trim() && !generating
+                    ? 'var(--theme-bg)'
+                    : 'var(--theme-disabled-bg)'};
+                  color: var(--theme-text);
+                  border: none;
+                  border-radius: 10px;
+                  cursor: ${inputMessage.trim() && !generating
+                    ? 'pointer'
+                    : 'not-allowed'};
+                  transition: transform 0.2s, background 0.2s;
+                  &:hover:not(:disabled) {
+                    background: var(--theme-hover-bg);
+                    transform: translateY(-1px);
+                  }
+                `}
+              >
+                <Icon icon="paper-plane" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -260,15 +384,19 @@ export default function ChatPanel({
 function AssistantMessage({
   message,
   messages,
+  isLatestAssistant,
   generating,
-  generatingStatus
+  generatingStatus,
+  statusSteps
 }: {
   message: ChatMessage;
   messages: ChatMessage[];
+  isLatestAssistant: boolean;
   generating: boolean;
   generatingStatus: string | null;
+  statusSteps: string[];
 }) {
-  const [showDiff, setShowDiff] = useState(false);
+  const [showDiff, setShowDiff] = useState(true);
 
   const previousCode = useMemo(() => {
     if (!message.codeGenerated) return null;
@@ -287,11 +415,18 @@ function AssistantMessage({
     return stats;
   }, [message.codeGenerated, previousCode]);
 
+  const hasCodePayload = Boolean(message.codeGenerated || message.artifactVersionId);
   const hasChanges = diffStats && (diffStats.added > 0 || diffStats.removed > 0);
+  const showSteps = statusSteps.length > 0 && generating;
+  const waitingForCurrentAssistantResponse = generating && isLatestAssistant;
+  const showNoCodeWarning =
+    !hasCodePayload &&
+    !waitingForCurrentAssistantResponse &&
+    looksLikeCompletedCodeChangeClaim(message.content);
 
   return (
     <div>
-      {(message.codeGenerated || message.artifactVersionId) && (
+      {hasCodePayload && (
         <div
           className={css`
             margin-bottom: 0.75rem;
@@ -374,13 +509,215 @@ function AssistantMessage({
           )}
         </div>
       )}
+      {showNoCodeWarning && (
+        <div
+          className={css`
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid ${Color.orange(0.35)};
+            background: ${Color.orange(0.08)};
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.45rem;
+              font-size: 0.82rem;
+              font-weight: 700;
+              color: ${Color.orange()};
+            `}
+          >
+            <Icon icon="exclamation-triangle" />
+            No code changes were applied
+          </div>
+          <div
+            className={css`
+              font-size: 0.8rem;
+              line-height: 1.35;
+              color: var(--chat-text);
+              opacity: 0.85;
+            `}
+          >
+            Copilot replied like it made changes, but it did not return updated
+            code. Your workspace stayed the same.
+          </div>
+        </div>
+      )}
       {message.content ? (
-        <RichText isAIMessage maxLines={15}>
+        <RichText isAIMessage aiActionPlacement="inline" maxLines={15}>
           {message.content}
         </RichText>
-      ) : generating ? (
+      ) : generating && !showSteps ? (
         <ThinkingIndicator status={generatingStatus || 'thinking'} compact />
       ) : null}
+      {showSteps && <StatusStepLog steps={statusSteps} />}
     </div>
   );
+}
+
+function ReviewerMessage({
+  message,
+  generating,
+  generatingStatus,
+  statusSteps
+}: {
+  message: ChatMessage;
+  generating: boolean;
+  generatingStatus: string | null;
+  statusSteps: string[];
+}) {
+  const showSteps = statusSteps.length > 0 && generating;
+
+  return (
+    <div>
+      {message.content ? (
+        <RichText isAIMessage aiActionPlacement="inline" maxLines={20}>
+          {message.content}
+        </RichText>
+      ) : generating && !showSteps ? (
+        <ThinkingIndicator status={generatingStatus || 'Reviewing code...'} compact />
+      ) : null}
+      {showSteps && <StatusStepLog steps={statusSteps} />}
+    </div>
+  );
+}
+
+function StatusStepLog({ steps }: { steps: string[] }) {
+  return (
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      `}
+    >
+      {steps.map((step, index) => {
+        const isCurrent = index === steps.length - 1;
+        const label = formatStepLabel(step);
+        return (
+          <div
+            key={index}
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.4rem;
+              color: ${isCurrent ? 'var(--chat-text)' : Color.gray()};
+              line-height: 1.5;
+            `}
+          >
+            {isCurrent ? (
+              <span style={{ color: Color.logoBlue() }}>&#9679;</span>
+            ) : (
+              <Icon
+                icon="check"
+                style={{ color: Color.green(), fontSize: '0.7rem' }}
+              />
+            )}
+            <span>
+              {label}
+              {isCurrent && <AnimatedDots />}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const dotAnimation = css`
+  @keyframes dotPulse {
+    0%, 20% { opacity: 0; }
+    40% { opacity: 1; }
+    100% { opacity: 1; }
+  }
+`;
+
+function AnimatedDots() {
+  return (
+    <span
+      className={css`
+        ${dotAnimation}
+        margin-left: 1px;
+      `}
+    >
+      <span
+        className={css`
+          animation: dotPulse 1.4s infinite;
+          animation-delay: 0s;
+        `}
+      >
+        .
+      </span>
+      <span
+        className={css`
+          animation: dotPulse 1.4s infinite;
+          animation-delay: 0.2s;
+        `}
+      >
+        .
+      </span>
+      <span
+        className={css`
+          animation: dotPulse 1.4s infinite;
+          animation-delay: 0.4s;
+        `}
+      >
+        .
+      </span>
+    </span>
+  );
+}
+
+const STATUS_LABEL_MAP: Record<string, string> = {
+  thinking: 'Thinking',
+  thinking_hard: 'Thinking hard',
+  analyzing_code: 'Analyzing code',
+  responding: 'Writing response',
+  searching_web: 'Searching the web',
+  reading_file: 'Reading files',
+  retrieving_memory: 'Remembering',
+  saving_file: 'Saving file',
+  reading: 'Reading and thinking',
+  recalling: 'Recalling memories'
+};
+
+function formatStepLabel(status: string): string {
+  if (STATUS_LABEL_MAP[status]) return STATUS_LABEL_MAP[status];
+  // If it already looks like a human label (e.g. "Loading build code..."), strip trailing dots
+  if (status.includes(' ')) return status.replace(/\.+$/, '');
+  return status;
+}
+
+function findLastIndex<T>(arr: T[], predicate: (item: T) => boolean): number {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (predicate(arr[i])) return i;
+  }
+  return -1;
+}
+
+function looksLikeCompletedCodeChangeClaim(content: string) {
+  if (!content || typeof content !== 'string') return false;
+
+  const normalized = content.replace(/[’]/g, "'").toLowerCase();
+  if (
+    /(can't|cannot|unable|couldn't|could not|won't|didn't|did not|not possible|cannot do)/.test(
+      normalized
+    )
+  ) {
+    return false;
+  }
+
+  return [
+    /\b(i|we)\s+(have|ve|did|just)?\s*(added|updated|fixed|implemented|wired|hooked|changed|created|built|patched|refactored)\b/,
+    /\b(here('s| is)\s+(it|the updated version)|it('s| is)\s+(done|fixed|updated))\b/,
+    /\b(wired up|changes?\s+(are in|applied|made)|updated code|follow\/unfollow buttons)\b/
+  ].some((pattern) => pattern.test(normalized));
 }

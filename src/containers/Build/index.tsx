@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
 import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -229,6 +229,7 @@ function NewBuild() {
 
 function BuildEditorWrapper() {
   const { buildId } = useParams();
+  const location = useLocation();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
 
@@ -279,12 +280,17 @@ function BuildEditorWrapper() {
   }
 
   const isOwner = userId === build.userId;
+  const initialPrompt =
+    typeof (location.state as any)?.initialPrompt === 'string'
+      ? (location.state as any).initialPrompt
+      : '';
 
   return (
     <BuildEditor
       build={build}
       chatMessages={chatMessages}
       isOwner={isOwner}
+      initialPrompt={initialPrompt}
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
     />

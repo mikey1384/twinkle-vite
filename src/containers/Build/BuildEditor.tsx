@@ -1,19 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
 import SocialPanel from './SocialPanel';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import { socket } from '~/constants/sockets/api';
 
 const pageClass = css`
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
   height: 100%;
-  min-height: 0;
   overflow: hidden;
   background: var(--page-bg);
 `;
@@ -42,32 +41,63 @@ const badgeClass = css`
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-`;
-
-const panelShellClass = css`
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: 1rem;
-  padding: 1.2rem 1.6rem 1.6rem;
-  overflow: hidden;
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 1rem;
-    flex-direction: column;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+  &:hover {
+    transform: translateY(-1px);
+    border-color: var(--theme-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--theme-border);
+    outline-offset: 2px;
   }
 `;
 
-const workspaceShellClass = css`
-  flex: 1;
+const panelShellClass = css`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 1.2rem 1.6rem 1.6rem;
+  overflow: hidden;
   min-height: 0;
-  display: flex;
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 1rem;
+  }
+`;
+
+const panelShellWithSocialClass = css`
+  ${panelShellClass};
+  grid-template-columns: 1fr 320px;
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+`;
+
+const workspaceShellBase = css`
+  display: grid;
+  min-height: 0;
   overflow: hidden;
   border-radius: ${borderRadius};
   border: 1px solid var(--ui-border);
   background: #fff;
+`;
+
+const workspaceWithChatClass = css`
+  ${workspaceShellBase};
+  grid-template-columns: 380px 1fr;
   @media (max-width: ${mobileMaxWidth}) {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
   }
+`;
+
+const workspaceNoChatClass = css`
+  ${workspaceShellBase};
+  grid-template-columns: 1fr;
 `;
 
 interface Build {
@@ -90,17 +120,19 @@ interface Build {
 
 interface ChatMessage {
   id: number;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'reviewer';
   content: string;
   codeGenerated: string | null;
   artifactVersionId?: number | null;
   createdAt: number;
+  persisted?: boolean;
 }
 
 interface BuildEditorProps {
   build: Build;
   chatMessages: ChatMessage[];
   isOwner: boolean;
+  initialPrompt?: string;
   onUpdateBuild: (build: Build) => void;
   onUpdateChatMessages: (messages: ChatMessage[]) => void;
 }
@@ -109,6 +141,7 @@ export default function BuildEditor({
   build,
   chatMessages,
   isOwner,
+  initialPrompt = '',
   onUpdateBuild,
   onUpdateChatMessages
 }: BuildEditorProps) {
@@ -117,23 +150,39 @@ export default function BuildEditor({
   const updateBuildCode = useAppContext(
     (v) => v.requestHelpers.updateBuildCode
   );
+  const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
+  const deleteBuildChatMessage = useAppContext(
+    (v) => v.requestHelpers.deleteBuildChatMessage
+  );
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
 
   const [generating, setGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
-  const [savingVersion, setSavingVersion] = useState(false);
+  const [reviewerStatusSteps, setReviewerStatusSteps] = useState<string[]>([]);
+  const [assistantStatusSteps, setAssistantStatusSteps] = useState<string[]>(
+    []
+  );
+  const [reviewing, setReviewing] = useState(false);
+  const [_reviewPhase, setReviewPhase] = useState<
+    'reviewing' | 'fixing' | null
+  >(null);
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef(chatMessages);
   const buildRef = useRef(build);
   const updateBuildRef = useRef(onUpdateBuild);
   const updateChatMessagesRef = useRef(onUpdateChatMessages);
   const streamRequestIdRef = useRef<string | null>(null);
+  const userMessageIdRef = useRef<number | null>(null);
   const assistantMessageIdRef = useRef<number | null>(null);
+  const reviewerMessageIdRef = useRef<number | null>(null);
+  const didInitialChatScrollRef = useRef(false);
+  const didAutoPromptRef = useRef(false);
 
   useEffect(() => {
     chatMessagesRef.current = chatMessages;
@@ -150,6 +199,28 @@ export default function BuildEditor({
   useEffect(() => {
     updateChatMessagesRef.current = onUpdateChatMessages;
   }, [onUpdateChatMessages]);
+
+  useEffect(() => {
+    didInitialChatScrollRef.current = false;
+    didAutoPromptRef.current = false;
+  }, [build.id]);
+
+  useEffect(() => {
+    if (didAutoPromptRef.current) return;
+    if (!isOwner) return;
+    const prompt = initialPrompt.trim();
+    if (!prompt) return;
+    if (chatMessagesRef.current.length > 0) return;
+    didAutoPromptRef.current = true;
+    void startGeneration(prompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, isOwner, initialPrompt]);
+
+  useEffect(() => {
+    if (didInitialChatScrollRef.current) return;
+    didInitialChatScrollRef.current = true;
+    scrollChatToBottom('auto');
+  }, [chatMessages.length, build.id]);
 
   useEffect(() => {
     function handleGenerateUpdate({
@@ -181,41 +252,67 @@ export default function BuildEditor({
     }: {
       requestId?: string;
       assistantText?: string;
-      artifact?: { content?: string; id?: number | null; versionId?: number | null };
+      artifact?: {
+        content?: string;
+        id?: number | null;
+        versionId?: number | null;
+      };
       code?: string | null;
-      message?: { artifactVersionId?: number | null; createdAt?: number };
+      message?: {
+        id?: number | null;
+        userMessageId?: number | null;
+        artifactVersionId?: number | null;
+        createdAt?: number;
+      };
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const userMessageTempId = userMessageIdRef.current;
       const assistantId = assistantMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
       const artifactCode = artifact?.content ?? code ?? null;
       const artifactVersionId =
         message?.artifactVersionId ?? artifact?.versionId ?? null;
       const createdAt = message?.createdAt ?? Math.floor(Date.now() / 1000);
+      const persistedAssistantId =
+        typeof message?.id === 'number' && message.id > 0 ? message.id : null;
+      const persistedUserId =
+        typeof message?.userMessageId === 'number' && message.userMessageId > 0
+          ? message.userMessageId
+          : null;
 
-      let nextMessages = currentMessages;
-      if (assistantId) {
-        nextMessages = currentMessages.map((entry) =>
-          entry.id === assistantId
-            ? {
-                ...entry,
-                content: assistantText || entry.content,
-                codeGenerated: artifactCode,
-                artifactVersionId,
-                createdAt
-              }
-            : entry
-        );
-      } else {
+      let nextMessages = currentMessages.map((entry) => {
+        if (
+          userMessageTempId &&
+          persistedUserId &&
+          entry.id === userMessageTempId
+        ) {
+          return { ...entry, id: persistedUserId, persisted: true };
+        }
+        if (assistantId && entry.id === assistantId) {
+          return {
+            ...entry,
+            id: persistedAssistantId || entry.id,
+            persisted: Boolean(persistedAssistantId),
+            content: assistantText || entry.content,
+            codeGenerated: artifactCode,
+            artifactVersionId,
+            createdAt
+          };
+        }
+        return entry;
+      });
+
+      if (!assistantId) {
         nextMessages = [
-          ...currentMessages,
+          ...nextMessages,
           {
-            id: Date.now(),
+            id: persistedAssistantId || Date.now(),
             role: 'assistant' as const,
             content: assistantText || '',
             codeGenerated: artifactCode,
             artifactVersionId,
-            createdAt
+            createdAt,
+            persisted: Boolean(persistedAssistantId)
           }
         ];
       }
@@ -235,12 +332,16 @@ export default function BuildEditor({
       }
 
       streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
+      reviewerMessageIdRef.current = null;
       setGenerating(false);
+      setReviewing(false);
+      setReviewPhase(null);
       setGeneratingStatus(null);
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      setReviewerStatusSteps([]);
+      setAssistantStatusSteps([]);
+      scrollChatToBottom();
     }
 
     function handleGenerateStatus({
@@ -252,6 +353,11 @@ export default function BuildEditor({
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       setGeneratingStatus(status || null);
+      if (status) {
+        setAssistantStatusSteps((prev) =>
+          prev[prev.length - 1] === status ? prev : [...prev, status]
+        );
+      }
     }
 
     function handleGenerateError({
@@ -263,11 +369,15 @@ export default function BuildEditor({
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       const assistantId = assistantMessageIdRef.current;
+      const reviewerId = reviewerMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
       const errorMessage = error || 'Failed to generate code.';
-      const nextMessages = assistantId
+
+      // If phase 1 failed (reviewer exists but no assistant yet), show error on reviewer bubble
+      const errorTargetId = assistantId || reviewerId;
+      const nextMessages = errorTargetId
         ? currentMessages.map((entry) =>
-            entry.id === assistantId
+            entry.id === errorTargetId
               ? { ...entry, content: errorMessage }
               : entry
           )
@@ -278,75 +388,253 @@ export default function BuildEditor({
               role: 'assistant' as const,
               content: errorMessage,
               codeGenerated: null,
-              createdAt: Math.floor(Date.now() / 1000)
+              createdAt: Math.floor(Date.now() / 1000),
+              persisted: false
             }
           ];
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
       streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
+      reviewerMessageIdRef.current = null;
       setGenerating(false);
+      setReviewing(false);
+      setReviewPhase(null);
       setGeneratingStatus(null);
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      setReviewerStatusSteps([]);
+      setAssistantStatusSteps([]);
+      scrollChatToBottom();
+    }
+
+    async function handleGenerateStopped({
+      requestId
+    }: {
+      requestId?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const assistantId = assistantMessageIdRef.current;
+      const reviewerId = reviewerMessageIdRef.current;
+      const userId = userMessageIdRef.current;
+      const currentMessages = chatMessagesRef.current;
+
+      const activeIdSet = new Set(
+        [userId, assistantId, reviewerId].filter(
+          (id): id is number => typeof id === 'number' && id > 0
+        )
+      );
+      const nextMessages = currentMessages.filter(
+        (entry) => !activeIdSet.has(entry.id)
+      );
+
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+      streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      reviewerMessageIdRef.current = null;
+      setGenerating(false);
+      setReviewing(false);
+      setReviewPhase(null);
+      setGeneratingStatus(null);
+      setReviewerStatusSteps([]);
+      setAssistantStatusSteps([]);
+      await syncChatMessagesFromServer(undefined, true);
+      scrollChatToBottom();
+    }
+
+    function handleReviewUpdate({
+      requestId,
+      reviewText
+    }: {
+      requestId?: string;
+      reviewText?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const reviewerId = reviewerMessageIdRef.current;
+      if (!reviewerId) return;
+      const currentMessages = chatMessagesRef.current;
+      const nextMessages = currentMessages.map((message) =>
+        message.id === reviewerId
+          ? { ...message, content: reviewText || '' }
+          : message
+      );
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+    }
+
+    function handleReviewComplete({
+      requestId,
+      reviewText
+    }: {
+      requestId?: string;
+      reviewText?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const reviewerId = reviewerMessageIdRef.current;
+      const currentMessages = chatMessagesRef.current;
+
+      let nextMessages = currentMessages;
+      if (reviewerId) {
+        nextMessages = currentMessages.map((entry) =>
+          entry.id === reviewerId
+            ? { ...entry, content: reviewText || entry.content }
+            : entry
+        );
+      }
+
+      // Add placeholder assistant message for phase 2
+      const assistantId = Date.now() + 2;
+      assistantMessageIdRef.current = assistantId;
+      nextMessages = [
+        ...nextMessages,
+        {
+          id: assistantId,
+          role: 'assistant' as const,
+          content: '',
+          codeGenerated: null,
+          createdAt: Math.floor(Date.now() / 1000),
+          persisted: false
+        }
+      ];
+
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+      setReviewPhase('fixing');
+      scrollChatToBottom();
+    }
+
+    function handleReviewStatus({
+      requestId,
+      status
+    }: {
+      requestId?: string;
+      status?: string;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      setGeneratingStatus(status || null);
+      if (status) {
+        setReviewerStatusSteps((prev) =>
+          prev[prev.length - 1] === status ? prev : [...prev, status]
+        );
+      }
     }
 
     socket.on('build_generate_update', handleGenerateUpdate);
     socket.on('build_generate_complete', handleGenerateComplete);
     socket.on('build_generate_error', handleGenerateError);
+    socket.on('build_generate_stopped', handleGenerateStopped);
     socket.on('build_generate_status', handleGenerateStatus);
+    socket.on('build_review_update', handleReviewUpdate);
+    socket.on('build_review_complete', handleReviewComplete);
+    socket.on('build_review_status', handleReviewStatus);
 
     return () => {
       socket.off('build_generate_update', handleGenerateUpdate);
       socket.off('build_generate_complete', handleGenerateComplete);
       socket.off('build_generate_error', handleGenerateError);
+      socket.off('build_generate_stopped', handleGenerateStopped);
       socket.off('build_generate_status', handleGenerateStatus);
+      socket.off('build_review_update', handleReviewUpdate);
+      socket.off('build_review_complete', handleReviewComplete);
+      socket.off('build_review_status', handleReviewStatus);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSendMessage() {
-    if (!inputMessage.trim() || generating || !isOwner) return;
+    if (!inputMessage.trim() || generating || reviewing || !isOwner) return;
 
     const messageText = inputMessage.trim();
+    setInputMessage('');
+    await startGeneration(messageText);
+  }
+
+  function handleReview() {
+    if (!build.code || generating || reviewing || !isOwner) return;
+
     const now = Math.floor(Date.now() / 1000);
     const messageId = Date.now();
-    const requestId = `${build.id}-${messageId}`;
-    setInputMessage('');
+    const requestId = `${build.id}-review-${messageId}`;
     setGenerating(true);
+    setReviewing(true);
+    setReviewPhase('reviewing');
+    setReviewerStatusSteps([]);
+    setAssistantStatusSteps([]);
     streamRequestIdRef.current = requestId;
+    userMessageIdRef.current = null;
 
-    // Add user message immediately (optimistic update)
-    const userMessage: ChatMessage = {
+    const reviewerMessage: ChatMessage = {
       id: messageId,
-      role: 'user',
-      content: messageText,
-      codeGenerated: null,
-      createdAt: now
-    };
-    const assistantMessage: ChatMessage = {
-      id: messageId + 1,
-      role: 'assistant',
+      role: 'reviewer',
       content: '',
       codeGenerated: null,
-      createdAt: now + 1
+      createdAt: now,
+      persisted: false
     };
-    assistantMessageIdRef.current = assistantMessage.id;
+    reviewerMessageIdRef.current = reviewerMessage.id;
 
-    const messagesWithUser = [...chatMessagesRef.current, userMessage, assistantMessage];
-    chatMessagesRef.current = messagesWithUser;
-    updateChatMessagesRef.current(messagesWithUser);
+    const messagesWithReviewer = [...chatMessagesRef.current, reviewerMessage];
+    chatMessagesRef.current = messagesWithReviewer;
+    updateChatMessagesRef.current(messagesWithReviewer);
 
-    setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    scrollChatToBottom();
 
-    socket.emit('build_generate', {
+    socket.emit('build_review', {
       buildId: build.id,
-      message: messageText,
       requestId
     });
+  }
+
+  function handleStopGeneration() {
+    const requestId = streamRequestIdRef.current;
+    if (!requestId || (!generating && !reviewing) || !isOwner) return;
+    setGeneratingStatus('Stopping...');
+    setAssistantStatusSteps((prev) =>
+      prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
+    );
+    setReviewerStatusSteps((prev) =>
+      prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
+    );
+    socket.emit('build_stop', {
+      buildId: build.id,
+      requestId
+    });
+  }
+
+  async function handleDeleteMessage(message: ChatMessage) {
+    if (!isOwner) return;
+    if (isMessageLockedForActiveRequest(message)) return;
+    if (message.role === 'reviewer') {
+      removeLocalMessageByIds([message.id]);
+      return;
+    }
+
+    try {
+      if (message.persisted === false) {
+        // Fail closed for optimistic-only rows: do not delete any server row by
+        // fuzzy matching. Remove local bubble and reconcile from writer.
+        removeLocalMessageByIds([message.id]);
+        await syncChatMessagesFromServer(undefined, true);
+        return;
+      }
+
+      const result = await deleteBuildChatMessage({
+        buildId: build.id,
+        messageId: message.id
+      });
+
+      if (result?.success !== true || result?.deleted !== true) {
+        await syncChatMessagesFromServer(undefined, true);
+        return;
+      }
+
+      removeLocalMessageByIds([message.id]);
+    } catch (error) {
+      console.error('Failed to delete build chat message:', error);
+      await syncChatMessagesFromServer(undefined, true);
+    }
   }
 
   async function handleCodeChange(newCode: string) {
@@ -361,28 +649,6 @@ export default function BuildEditor({
 
   function handleReplaceCode(newCode: string) {
     onUpdateBuild({ ...build, code: newCode });
-  }
-
-  async function handleSaveVersion(summary?: string) {
-    if (!isOwner || !build.code || savingVersion) return;
-    setSavingVersion(true);
-    try {
-      const result = await updateBuildCode({
-        buildId: build.id,
-        code: build.code,
-        createVersion: true,
-        summary
-      });
-      if (result?.artifactVersion?.artifactId) {
-        onUpdateBuild({
-          ...build,
-          primaryArtifactId: result.artifactVersion.artifactId
-        });
-      }
-    } catch (error) {
-      console.error('Failed to save version:', error);
-    }
-    setSavingVersion(false);
   }
 
   async function handlePublish() {
@@ -447,10 +713,10 @@ export default function BuildEditor({
             gap: 0.6rem;
           `}
         >
-          <span className={badgeClass}>
+          <Link to="/build" className={badgeClass} title="Back to Build menu">
             <Icon icon="rocket-launch" />
             Build Studio
-          </span>
+          </Link>
           <h2
             className={css`
               margin: 0;
@@ -478,7 +744,9 @@ export default function BuildEditor({
                 opacity: 0.6;
               `}
             >
-              {isOwner ? 'Your AI-powered build workspace' : `by ${build.username}`}
+              {isOwner
+                ? 'Your AI-powered build workspace'
+                : `by ${build.username}`}
             </span>
           )}
         </div>
@@ -519,6 +787,32 @@ export default function BuildEditor({
           >
             {build.isPublic ? 'public' : 'private'}
           </span>
+          {isOwner && build.code && !generating && !reviewing && (
+            <button
+              onClick={handleReview}
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 0.9rem;
+                border-radius: 10px;
+                border: 1px solid ${Color.orange(0.5)};
+                background: #fff;
+                color: ${Color.orange()};
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                &:hover {
+                  background: ${Color.orange(0.07)};
+                  transform: translateY(-1px);
+                }
+              `}
+            >
+              <Icon icon="magnifying-glass" />
+              Review
+            </button>
+          )}
           {isOwner && (
             <button
               onClick={build.isPublic ? handleUnpublish : handlePublish}
@@ -531,7 +825,9 @@ export default function BuildEditor({
                 border-radius: 10px;
                 border: 1px solid var(--ui-border);
                 background: ${build.isPublic ? '#fff' : 'var(--theme-bg)'};
-                color: ${build.isPublic ? 'var(--chat-text)' : 'var(--theme-text)'};
+                color: ${build.isPublic
+                  ? 'var(--chat-text)'
+                  : 'var(--theme-text)'};
                 font-size: 0.85rem;
                 font-weight: 700;
                 cursor: pointer;
@@ -549,8 +845,8 @@ export default function BuildEditor({
               {publishing
                 ? 'Processing...'
                 : build.isPublic
-                ? 'Unpublish'
-                : 'Publish'}
+                  ? 'Unpublish'
+                  : 'Publish'}
             </button>
           )}
           {!isOwner && userId && build.isPublic && (
@@ -587,18 +883,28 @@ export default function BuildEditor({
         </div>
       </header>
 
-      <div className={panelShellClass}>
-        <div className={workspaceShellClass}>
+      <div
+        className={build.isPublic ? panelShellWithSocialClass : panelShellClass}
+      >
+        <div
+          className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
+        >
           {isOwner && (
             <ChatPanel
               messages={chatMessages}
               inputMessage={inputMessage}
-              generating={generating}
+              generating={generating || reviewing}
               generatingStatus={generatingStatus}
+              reviewerStatusSteps={reviewerStatusSteps}
+              assistantStatusSteps={assistantStatusSteps}
+              activeStreamMessageIds={getActiveStreamMessageIds()}
               isOwner={isOwner}
+              chatScrollRef={chatScrollRef}
               chatEndRef={chatEndRef}
               onInputChange={setInputMessage}
               onSendMessage={handleSendMessage}
+              onStopGeneration={handleStopGeneration}
+              onDeleteMessage={handleDeleteMessage}
             />
           )}
           <PreviewPanel
@@ -607,11 +913,9 @@ export default function BuildEditor({
             isOwner={isOwner}
             onCodeChange={handleCodeChange}
             onReplaceCode={handleReplaceCode}
-            onSaveVersion={handleSaveVersion}
-            savingVersion={savingVersion}
           />
         </div>
-        {build.isPublic && (
+        {!!build.isPublic && (
           <SocialPanel
             buildId={build.id}
             buildTitle={build.title}
@@ -622,4 +926,109 @@ export default function BuildEditor({
       </div>
     </div>
   );
+
+  function scrollChatToBottom(behavior: ScrollBehavior = 'smooth') {
+    requestAnimationFrame(() => {
+      if (chatScrollRef.current) {
+        chatScrollRef.current.scrollTo({
+          top: chatScrollRef.current.scrollHeight,
+          behavior
+        });
+        return;
+      }
+      chatEndRef.current?.scrollIntoView({
+        behavior,
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    });
+  }
+
+  async function startGeneration(messageText: string) {
+    if (!messageText.trim() || generating || reviewing || !isOwner) return;
+    const now = Math.floor(Date.now() / 1000);
+    const messageId = Date.now();
+    const requestId = `${build.id}-${messageId}`;
+    setGenerating(true);
+    setReviewerStatusSteps([]);
+    setAssistantStatusSteps([]);
+    streamRequestIdRef.current = requestId;
+
+    const userMessage: ChatMessage = {
+      id: messageId,
+      role: 'user',
+      content: messageText,
+      codeGenerated: null,
+      createdAt: now,
+      persisted: false
+    };
+    const assistantMessage: ChatMessage = {
+      id: messageId + 1,
+      role: 'assistant',
+      content: '',
+      codeGenerated: null,
+      createdAt: now + 1,
+      persisted: false
+    };
+    userMessageIdRef.current = userMessage.id;
+    assistantMessageIdRef.current = assistantMessage.id;
+
+    const messagesWithUser = [
+      ...chatMessagesRef.current,
+      userMessage,
+      assistantMessage
+    ];
+    chatMessagesRef.current = messagesWithUser;
+    updateChatMessagesRef.current(messagesWithUser);
+    scrollChatToBottom();
+
+    socket.emit('build_generate', {
+      buildId: build.id,
+      message: messageText,
+      requestId
+    });
+  }
+
+  function removeLocalMessageByIds(ids: number[]) {
+    const idSet = new Set(ids);
+    const nextMessages = chatMessagesRef.current.filter(
+      (entry) => !idSet.has(entry.id)
+    );
+    chatMessagesRef.current = nextMessages;
+    updateChatMessagesRef.current(nextMessages);
+  }
+
+  function getActiveStreamMessageIds() {
+    return [
+      userMessageIdRef.current,
+      assistantMessageIdRef.current,
+      reviewerMessageIdRef.current
+    ].filter((id): id is number => typeof id === 'number' && id > 0);
+  }
+
+  function isMessageLockedForActiveRequest(message: ChatMessage) {
+    if (!generating && !reviewing) return false;
+    return getActiveStreamMessageIds().includes(message.id);
+  }
+
+  async function syncChatMessagesFromServer(
+    serverMessages?: any[],
+    fromWriter = false
+  ) {
+    const messages = Array.isArray(serverMessages)
+      ? serverMessages
+      : (
+          await loadBuild(
+            build.id,
+            fromWriter ? { fromWriter: true } : undefined
+          )
+        )?.chatMessages;
+    if (!Array.isArray(messages)) return;
+    const normalized = messages.map((entry: any) => ({
+      ...entry,
+      persisted: true
+    }));
+    chatMessagesRef.current = normalized;
+    updateChatMessagesRef.current(normalized);
+  }
 }
