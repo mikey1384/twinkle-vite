@@ -50,8 +50,18 @@ interface ChatMessage {
   role: 'user' | 'assistant' | 'reviewer';
   content: string;
   codeGenerated: string | null;
+  streamCodePreview?: string | null;
   artifactVersionId?: number | null;
   createdAt: number;
+}
+
+interface BuildUsageMetric {
+  stage: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number | null;
 }
 
 interface ChatPanelProps {
@@ -61,10 +71,12 @@ interface ChatPanelProps {
   generatingStatus: string | null;
   reviewerStatusSteps: string[];
   assistantStatusSteps: string[];
+  usageMetrics: Record<string, BuildUsageMetric>;
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
+  onChatScroll: () => void;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
   onStopGeneration: () => void;
@@ -78,15 +90,52 @@ export default function ChatPanel({
   generatingStatus,
   reviewerStatusSteps,
   assistantStatusSteps,
+  usageMetrics,
   activeStreamMessageIds,
   isOwner,
   chatScrollRef,
   chatEndRef,
+  onChatScroll,
   onInputChange,
   onSendMessage,
   onStopGeneration,
   onDeleteMessage
 }: ChatPanelProps) {
+  const usageRows = useMemo(() => {
+    const stageOrder = ['planner', 'reviewer', 'validator', 'codex', 'narration'];
+    return Object.values(usageMetrics).sort((a, b) => {
+      const aIndex = stageOrder.indexOf(a.stage);
+      const bIndex = stageOrder.indexOf(b.stage);
+      if (aIndex === -1 && bIndex === -1) return a.stage.localeCompare(b.stage);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+  }, [usageMetrics]);
+
+  const usageTotals = useMemo(() => {
+    return usageRows.reduce(
+      (acc, row) => {
+        acc.inputTokens += row.inputTokens || 0;
+        acc.outputTokens += row.outputTokens || 0;
+        acc.totalTokens += row.totalTokens || 0;
+        if (row.estimatedCostUsd != null) {
+          acc.estimatedCostUsd =
+            acc.estimatedCostUsd == null
+              ? row.estimatedCostUsd
+              : acc.estimatedCostUsd + row.estimatedCostUsd;
+        }
+        return acc;
+      },
+      {
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: null as number | null
+      }
+    );
+  }, [usageRows]);
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -104,9 +153,99 @@ export default function ChatPanel({
         <div className={headerSubtitleClass}>
           Describe the app you want and iterate on the results.
         </div>
+        {usageRows.length > 0 && (
+          <div
+            className={css`
+              margin-top: 0.4rem;
+              border: 1px solid var(--ui-border);
+              border-radius: 10px;
+              background: var(--chat-bg);
+              padding: 0.55rem 0.65rem;
+              display: flex;
+              flex-direction: column;
+              gap: 0.4rem;
+              font-size: 0.76rem;
+              color: var(--chat-text);
+            `}
+          >
+            <div
+              className={css`
+                font-weight: 700;
+                opacity: 0.8;
+              `}
+            >
+              Current run usage
+            </div>
+            {usageRows.map((row) => (
+              <div
+                key={`${row.stage}-${row.model}`}
+                className={css`
+                  display: grid;
+                  grid-template-columns: minmax(80px, auto) 1fr auto;
+                  gap: 0.35rem 0.6rem;
+                  align-items: center;
+                `}
+              >
+                <span
+                  className={css`
+                    font-weight: 700;
+                    text-transform: capitalize;
+                  `}
+                >
+                  {getUsageStageLabel(row.stage)}
+                </span>
+                <span
+                  className={css`
+                    opacity: 0.75;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  `}
+                  title={row.model}
+                >
+                  {row.model}
+                </span>
+                <span
+                  className={css`
+                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                    white-space: nowrap;
+                  `}
+                >
+                  {formatTokenCount(row.totalTokens)} tok
+                  {' / '}
+                  {formatUsageCost(row.estimatedCostUsd)}
+                </span>
+              </div>
+            ))}
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                padding-top: 0.35rem;
+                border-top: 1px solid var(--ui-border);
+                font-weight: 700;
+              `}
+            >
+              <span>Total</span>
+              <span
+                className={css`
+                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                `}
+              >
+                {formatTokenCount(usageTotals.inputTokens)} in /{' '}
+                {formatTokenCount(usageTotals.outputTokens)} out /{' '}
+                {formatTokenCount(usageTotals.totalTokens)} tok /{' '}
+                {formatUsageCost(usageTotals.estimatedCostUsd)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
       <div
         ref={chatScrollRef}
+        onScroll={onChatScroll}
         className={css`
           flex: 1;
           overflow-y: auto;
@@ -417,6 +556,11 @@ function AssistantMessage({
 
   const hasCodePayload = Boolean(message.codeGenerated || message.artifactVersionId);
   const hasChanges = diffStats && (diffStats.added > 0 || diffStats.removed > 0);
+  const hasStreamingCodePreview =
+    generating &&
+    isLatestAssistant &&
+    !message.codeGenerated &&
+    Boolean(message.streamCodePreview && message.streamCodePreview.trim());
   const showSteps = statusSteps.length > 0 && generating;
   const waitingForCurrentAssistantResponse = generating && isLatestAssistant;
   const showNoCodeWarning =
@@ -507,6 +651,33 @@ function AssistantMessage({
               `}
             />
           )}
+        </div>
+      )}
+      {hasStreamingCodePreview && (
+        <div
+          className={css`
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--ui-border);
+            background: var(--chat-bg);
+            color: var(--chat-text);
+            padding: 0.5rem 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+          `}
+        >
+          <span>Generating code draft...</span>
+          <span
+            className={css`
+              opacity: 0.7;
+              font-family: 'SF Mono', monospace;
+            `}
+          >
+            {(message.streamCodePreview || '').length} chars
+          </span>
         </div>
       )}
       {showNoCodeWarning && (
@@ -720,4 +891,32 @@ function looksLikeCompletedCodeChangeClaim(content: string) {
     /\b(here('s| is)\s+(it|the updated version)|it('s| is)\s+(done|fixed|updated))\b/,
     /\b(wired up|changes?\s+(are in|applied|made)|updated code|follow\/unfollow buttons)\b/
   ].some((pattern) => pattern.test(normalized));
+}
+
+function formatTokenCount(value: number) {
+  const safeValue = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+  return new Intl.NumberFormat('en-US').format(safeValue);
+}
+
+function formatUsageCost(value: number | null) {
+  if (value == null || !Number.isFinite(value)) return 'n/a';
+  if (value < 0.01) return `$${value.toFixed(4)}`;
+  return `$${value.toFixed(2)}`;
+}
+
+function getUsageStageLabel(stage: string) {
+  switch (stage) {
+    case 'planner':
+      return 'Plan';
+    case 'reviewer':
+      return 'Review';
+    case 'validator':
+      return 'Validate';
+    case 'codex':
+      return 'Code';
+    case 'narration':
+      return 'Reply';
+    default:
+      return stage;
+  }
 }

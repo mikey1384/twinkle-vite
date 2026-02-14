@@ -123,9 +123,19 @@ interface ChatMessage {
   role: 'user' | 'assistant' | 'reviewer';
   content: string;
   codeGenerated: string | null;
+  streamCodePreview?: string | null;
   artifactVersionId?: number | null;
   createdAt: number;
   persisted?: boolean;
+}
+
+interface BuildUsageMetric {
+  stage: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number | null;
 }
 
 interface BuildEditorProps {
@@ -171,6 +181,9 @@ export default function BuildEditor({
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
+  const [usageMetrics, setUsageMetrics] = useState<
+    Record<string, BuildUsageMetric>
+  >({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef(chatMessages);
@@ -183,6 +196,9 @@ export default function BuildEditor({
   const reviewerMessageIdRef = useRef<number | null>(null);
   const didInitialChatScrollRef = useRef(false);
   const didAutoPromptRef = useRef(false);
+  const shouldAutoScrollRef = useRef(true);
+  const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
+  const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     chatMessagesRef.current = chatMessages;
@@ -203,7 +219,18 @@ export default function BuildEditor({
   useEffect(() => {
     didInitialChatScrollRef.current = false;
     didAutoPromptRef.current = false;
+    shouldAutoScrollRef.current = true;
+    setUsageMetrics({});
   }, [build.id]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollRafRef.current !== null) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (didAutoPromptRef.current) return;
@@ -223,24 +250,34 @@ export default function BuildEditor({
   }, [chatMessages.length, build.id]);
 
   useEffect(() => {
-    function handleGenerateUpdate({
-      requestId,
-      reply
-    }: {
+    function handleGenerateUpdate(payload: {
       requestId?: string;
       reply?: string;
+      codeGenerated?: string | null;
     }) {
+      const { requestId, reply, codeGenerated } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       const assistantId = assistantMessageIdRef.current;
       if (!assistantId) return;
       const currentMessages = chatMessagesRef.current;
-      const nextMessages = currentMessages.map((message) =>
-        message.id === assistantId
-          ? { ...message, content: reply || '' }
-          : message
-      );
+      const hasCodeGeneratedField =
+        Object.prototype.hasOwnProperty.call(payload, 'codeGenerated');
+      const nextMessages = currentMessages.map((message) => {
+        if (message.id !== assistantId) return message;
+        const nextMessage: ChatMessage = {
+          ...message,
+          content: typeof reply === 'string' ? reply : message.content
+        };
+        if (hasCodeGeneratedField) {
+          // Keep streamed artifact text out of the final diff payload to avoid
+          // recomputing expensive diffs on every chunk.
+          nextMessage.streamCodePreview = codeGenerated ?? null;
+        }
+        return nextMessage;
+      });
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      maybeAutoScrollDuringStream();
     }
 
     function handleGenerateComplete({
@@ -295,6 +332,7 @@ export default function BuildEditor({
             persisted: Boolean(persistedAssistantId),
             content: assistantText || entry.content,
             codeGenerated: artifactCode,
+            streamCodePreview: null,
             artifactVersionId,
             createdAt
           };
@@ -310,6 +348,7 @@ export default function BuildEditor({
             role: 'assistant' as const,
             content: assistantText || '',
             codeGenerated: artifactCode,
+            streamCodePreview: null,
             artifactVersionId,
             createdAt,
             persisted: Boolean(persistedAssistantId)
@@ -358,6 +397,7 @@ export default function BuildEditor({
           prev[prev.length - 1] === status ? prev : [...prev, status]
         );
       }
+      maybeAutoScrollDuringStream();
     }
 
     function handleGenerateError({
@@ -377,9 +417,15 @@ export default function BuildEditor({
       const errorTargetId = assistantId || reviewerId;
       const nextMessages = errorTargetId
         ? currentMessages.map((entry) =>
-            entry.id === errorTargetId
-              ? { ...entry, content: errorMessage }
-              : entry
+                entry.id === errorTargetId
+                  ? {
+                      ...entry,
+                      content: errorMessage,
+                      codeGenerated: null,
+                      streamCodePreview: null,
+                      artifactVersionId: null
+                    }
+                  : entry
           )
         : [
             ...currentMessages,
@@ -388,6 +434,7 @@ export default function BuildEditor({
               role: 'assistant' as const,
               content: errorMessage,
               codeGenerated: null,
+              streamCodePreview: null,
               createdAt: Math.floor(Date.now() / 1000),
               persisted: false
             }
@@ -462,6 +509,7 @@ export default function BuildEditor({
       );
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      maybeAutoScrollDuringStream();
     }
 
     function handleReviewComplete({
@@ -494,6 +542,7 @@ export default function BuildEditor({
           role: 'assistant' as const,
           content: '',
           codeGenerated: null,
+          streamCodePreview: null,
           createdAt: Math.floor(Date.now() / 1000),
           persisted: false
         }
@@ -519,6 +568,55 @@ export default function BuildEditor({
           prev[prev.length - 1] === status ? prev : [...prev, status]
         );
       }
+      maybeAutoScrollDuringStream();
+    }
+
+    function handleUsageUpdate({
+      requestId,
+      usage
+    }: {
+      requestId?: string;
+      usage?: {
+        stage?: string;
+        model?: string;
+        inputTokens?: number;
+        outputTokens?: number;
+        totalTokens?: number;
+        estimatedCostUsd?: number | null;
+      };
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const stage = usage?.stage?.trim();
+      const model = usage?.model?.trim();
+      if (!stage || !model) return;
+      const inputTokens = Number(usage?.inputTokens || 0);
+      const outputTokens = Number(usage?.outputTokens || 0);
+      const totalTokens = Number(usage?.totalTokens || 0);
+      const estimatedCostUsd =
+        typeof usage?.estimatedCostUsd === 'number' &&
+        Number.isFinite(usage.estimatedCostUsd)
+          ? usage.estimatedCostUsd
+          : null;
+
+      setUsageMetrics((prev) => {
+        const existing = prev[stage];
+        const nextEstimatedCostUsd =
+          existing?.estimatedCostUsd != null && estimatedCostUsd != null
+            ? Number((existing.estimatedCostUsd + estimatedCostUsd).toFixed(6))
+            : existing?.estimatedCostUsd ?? estimatedCostUsd;
+
+        return {
+          ...prev,
+          [stage]: {
+            stage,
+            model,
+            inputTokens: (existing?.inputTokens || 0) + inputTokens,
+            outputTokens: (existing?.outputTokens || 0) + outputTokens,
+            totalTokens: (existing?.totalTokens || 0) + totalTokens,
+            estimatedCostUsd: nextEstimatedCostUsd
+          }
+        };
+      });
     }
 
     socket.on('build_generate_update', handleGenerateUpdate);
@@ -529,6 +627,7 @@ export default function BuildEditor({
     socket.on('build_review_update', handleReviewUpdate);
     socket.on('build_review_complete', handleReviewComplete);
     socket.on('build_review_status', handleReviewStatus);
+    socket.on('build_usage_update', handleUsageUpdate);
 
     return () => {
       socket.off('build_generate_update', handleGenerateUpdate);
@@ -539,6 +638,7 @@ export default function BuildEditor({
       socket.off('build_review_update', handleReviewUpdate);
       socket.off('build_review_complete', handleReviewComplete);
       socket.off('build_review_status', handleReviewStatus);
+      socket.off('build_usage_update', handleUsageUpdate);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -562,6 +662,7 @@ export default function BuildEditor({
     setReviewPhase('reviewing');
     setReviewerStatusSteps([]);
     setAssistantStatusSteps([]);
+    setUsageMetrics({});
     streamRequestIdRef.current = requestId;
     userMessageIdRef.current = null;
 
@@ -570,6 +671,7 @@ export default function BuildEditor({
       role: 'reviewer',
       content: '',
       codeGenerated: null,
+      streamCodePreview: null,
       createdAt: now,
       persisted: false
     };
@@ -579,6 +681,7 @@ export default function BuildEditor({
     chatMessagesRef.current = messagesWithReviewer;
     updateChatMessagesRef.current(messagesWithReviewer);
 
+    shouldAutoScrollRef.current = true;
     scrollChatToBottom();
 
     socket.emit('build_review', {
@@ -897,10 +1000,12 @@ export default function BuildEditor({
               generatingStatus={generatingStatus}
               reviewerStatusSteps={reviewerStatusSteps}
               assistantStatusSteps={assistantStatusSteps}
+              usageMetrics={usageMetrics}
               activeStreamMessageIds={getActiveStreamMessageIds()}
               isOwner={isOwner}
               chatScrollRef={chatScrollRef}
               chatEndRef={chatEndRef}
+              onChatScroll={handleChatScroll}
               onInputChange={setInputMessage}
               onSendMessage={handleSendMessage}
               onStopGeneration={handleStopGeneration}
@@ -928,16 +1033,19 @@ export default function BuildEditor({
   );
 
   function scrollChatToBottom(behavior: ScrollBehavior = 'smooth') {
-    requestAnimationFrame(() => {
+    pendingScrollBehaviorRef.current = behavior;
+    if (scrollRafRef.current !== null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
       if (chatScrollRef.current) {
         chatScrollRef.current.scrollTo({
           top: chatScrollRef.current.scrollHeight,
-          behavior
+          behavior: pendingScrollBehaviorRef.current
         });
         return;
       }
       chatEndRef.current?.scrollIntoView({
-        behavior,
+        behavior: pendingScrollBehaviorRef.current,
         block: 'nearest',
         inline: 'nearest'
       });
@@ -952,6 +1060,7 @@ export default function BuildEditor({
     setGenerating(true);
     setReviewerStatusSteps([]);
     setAssistantStatusSteps([]);
+    setUsageMetrics({});
     streamRequestIdRef.current = requestId;
 
     const userMessage: ChatMessage = {
@@ -959,6 +1068,7 @@ export default function BuildEditor({
       role: 'user',
       content: messageText,
       codeGenerated: null,
+      streamCodePreview: null,
       createdAt: now,
       persisted: false
     };
@@ -967,6 +1077,7 @@ export default function BuildEditor({
       role: 'assistant',
       content: '',
       codeGenerated: null,
+      streamCodePreview: null,
       createdAt: now + 1,
       persisted: false
     };
@@ -980,6 +1091,7 @@ export default function BuildEditor({
     ];
     chatMessagesRef.current = messagesWithUser;
     updateChatMessagesRef.current(messagesWithUser);
+    shouldAutoScrollRef.current = true;
     scrollChatToBottom();
 
     socket.emit('build_generate', {
@@ -1011,6 +1123,23 @@ export default function BuildEditor({
     return getActiveStreamMessageIds().includes(message.id);
   }
 
+  function handleChatScroll() {
+    shouldAutoScrollRef.current = isChatNearBottom();
+  }
+
+  function maybeAutoScrollDuringStream() {
+    if (!shouldAutoScrollRef.current) return;
+    scrollChatToBottom('auto');
+  }
+
+  function isChatNearBottom(threshold = 120) {
+    const container = chatScrollRef.current;
+    if (!container) return true;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    return distanceFromBottom <= threshold;
+  }
+
   async function syncChatMessagesFromServer(
     serverMessages?: any[],
     fromWriter = false
@@ -1026,7 +1155,8 @@ export default function BuildEditor({
     if (!Array.isArray(messages)) return;
     const normalized = messages.map((entry: any) => ({
       ...entry,
-      persisted: true
+      persisted: true,
+      streamCodePreview: null
     }));
     chatMessagesRef.current = normalized;
     updateChatMessagesRef.current(normalized);
