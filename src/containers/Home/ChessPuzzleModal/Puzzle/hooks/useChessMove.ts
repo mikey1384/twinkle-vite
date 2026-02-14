@@ -261,6 +261,7 @@ export function useChessMove({
     onPuzzleStateUpdate,
     onPromotionPendingUpdate,
     onSetRunResult,
+    onSetInTimeAttack,
     onTimeTrialCompletedUpdate,
     onDailyStatsUpdate,
     onPuzzleComplete,
@@ -293,6 +294,7 @@ export function useChessMove({
     onSetRunResult: (
       result: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING'
     ) => void;
+    onSetInTimeAttack: (v: boolean) => void;
     onTimeTrialCompletedUpdate: (value: boolean) => void;
     onDailyStatsUpdate: (stats: any) => void;
     onPuzzleComplete: (result: any) => void;
@@ -444,19 +446,43 @@ export function useChessMove({
 
       if (inTimeAttack) {
         onClearTimer();
-        const promoResp = await submitTimeAttackAttempt({
-          runId: runIdRef.current,
-          solved: true
-        });
+        let promoResp: any = null;
+        try {
+          promoResp = await submitTimeAttackAttempt({
+            runId: runIdRef.current,
+            solved: true
+          });
+        } catch (error) {
+          console.error('Failed to submit promotion attempt:', error);
+          runIdRef.current = null;
+          onSetRunResult('FAIL');
+          onSetInTimeAttack(false);
+          onSetPhase('FAIL');
+          await Promise.allSettled([refreshLevels(), onRefreshStats()]);
+          return false;
+        }
 
-        if (promoResp.finished) {
-          onSetRunResult(promoResp.success ? 'SUCCESS' : 'FAIL');
+        if (promoResp?.finished) {
           if (promoResp.success) {
+            onSetRunResult('SUCCESS');
             onTimeTrialCompletedUpdate(true);
+            onSetPhase('PROMO_SUCCESS');
+            await Promise.all([refreshLevels(), onRefreshStats()]);
+            return true;
           }
-          onSetPhase('PROMO_SUCCESS');
-          await Promise.all([refreshLevels(), onRefreshStats()]);
-        } else if (promoResp.nextPuzzle) {
+
+          if (promoResp?.reason === 'puzzle_unavailable') {
+            console.warn('Promotion stopped: next puzzle unavailable');
+          }
+          runIdRef.current = null;
+          onSetRunResult('FAIL');
+          onSetInTimeAttack(false);
+          onSetPhase('FAIL');
+          await Promise.allSettled([refreshLevels(), onRefreshStats()]);
+          return false;
+        }
+
+        if (promoResp?.nextPuzzle) {
           if (transitionTimeoutRef.current) {
             clearTimeout(transitionTimeoutRef.current);
             transitionTimeoutRef.current = null;
@@ -476,6 +502,12 @@ export function useChessMove({
           }));
           return true;
         }
+        runIdRef.current = null;
+        onSetRunResult('FAIL');
+        onSetInTimeAttack(false);
+        onSetPhase('FAIL');
+        await Promise.allSettled([refreshLevels(), onRefreshStats()]);
+        return false;
       } else {
         onPuzzleResultUpdate('solved');
         await onPuzzleComplete({

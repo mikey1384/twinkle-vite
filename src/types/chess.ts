@@ -147,5 +147,8 @@ export interface TimeAttackAttemptResponse {
   nextPuzzle?: LichessPuzzle;
   finished?: true;
   success?: boolean;
+  reason?: 'puzzle_unavailable' | string;
+  retryable?: boolean;
+  message?: string;
   stats?: ChessStats;
 }

@@ -41,11 +41,26 @@ interface PreviewFrameMeta {
   codeSignature: string | null;
 }
 
+interface DocsConnectResult {
+  success: boolean;
+  message: string | null;
+  buildId: number | null;
+  connectNonce: string | null;
+}
+
+interface PendingDocsConnectRequest {
+  buildId: number;
+  promise: Promise<DocsConnectResult>;
+}
+
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
 const previewSeedCache = new Map<number, PreviewSeedCacheEntry>();
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
+  'docs:connect-start',
+  'docs:disconnect',
+  'llm:generate',
   'db:save',
   'jobs:cancel',
   'jobs:claim-due',
@@ -159,13 +174,30 @@ const TWINKLE_SDK_SCRIPT = `
     return 'twinkle_' + (++requestId) + '_' + Date.now();
   }
 
-  function sendRequest(type, payload) {
+  function resolveRequestTimeoutMs(type, options) {
+    const requestedTimeout = Number(options && options.timeoutMs);
+    if (Number.isFinite(requestedTimeout) && requestedTimeout > 0) {
+      return requestedTimeout;
+    }
+    if (type === 'docs:connect-start') {
+      return 16 * 60 * 1000;
+    }
+    if (type === 'llm:generate') {
+      // Backend provider retries can run up to ~15 minutes total.
+      // Keep iframe timeout above that window to avoid client-side false timeouts.
+      return 20 * 60 * 1000;
+    }
+    return 30000;
+  }
+
+  function sendRequest(type, payload, options) {
     return new Promise((resolve, reject) => {
       const id = getRequestId();
+      const timeoutMs = resolveRequestTimeoutMs(type, options);
       const timeout = setTimeout(() => {
         pendingRequests.delete(id);
         reject(new Error('Request timed out'));
-      }, 30000);
+      }, timeoutMs);
 
       pendingRequests.set(id, { resolve, reject, timeout });
 
@@ -427,6 +459,81 @@ const TWINKLE_SDK_SCRIPT = `
           bucketSeconds: bucketSeconds,
           limit: limit
         });
+      }
+    },
+
+    docs: {
+      async status() {
+        return await sendRequest('docs:status', {});
+      },
+
+      async connect() {
+        const result = await sendRequest('docs:connect-start', {}, {
+          timeoutMs: 16 * 60 * 1000
+        });
+        return {
+          success: Boolean(result?.success),
+          message: result?.message || null,
+          buildId: result?.buildId || null,
+          connectNonce: result?.connectNonce || null
+        };
+      },
+
+      async disconnect() {
+        return await sendRequest('docs:disconnect', {});
+      },
+
+      async listFiles(opts) {
+        var options = opts || {};
+        return await sendRequest('docs:list-files', {
+          query: options.query,
+          pageToken: options.pageToken,
+          pageSize: options.pageSize
+        });
+      },
+
+      async getDoc(docId) {
+        if (!docId) throw new Error('docId is required');
+        return await sendRequest('docs:get-doc', { docId: docId });
+      },
+
+      async getDocText(docId) {
+        if (!docId) throw new Error('docId is required');
+        return await sendRequest('docs:get-doc-text', { docId: docId });
+      },
+
+      async search(query, opts) {
+        if (!query) throw new Error('query is required');
+        var options = opts || {};
+        return await sendRequest('docs:search', {
+          query: query,
+          pageToken: options.pageToken,
+          pageSize: options.pageSize
+        });
+      }
+    },
+
+    llm: {
+      async listModels() {
+        return await sendRequest('llm:list-models', {});
+      },
+
+      async generate(opts) {
+        var options = opts || {};
+        if (!options.prompt && !Array.isArray(options.messages)) {
+          throw new Error('prompt or messages is required');
+        }
+        return await sendRequest(
+          'llm:generate',
+          {
+            model: options.model,
+            prompt: options.prompt,
+            system: options.system,
+            messages: options.messages,
+            maxOutputTokens: options.maxOutputTokens
+          },
+          { timeoutMs: options.timeoutMs }
+        );
       }
     },
 
@@ -771,8 +878,16 @@ const previewPreloadSurfaceClass = css`
   justify-content: center;
   gap: 0.8rem;
   background:
-    radial-gradient(circle at 18% 22%, rgba(76, 175, 80, 0.14), transparent 40%),
-    radial-gradient(circle at 84% 78%, rgba(255, 193, 7, 0.14), transparent 46%),
+    radial-gradient(
+      circle at 18% 22%,
+      rgba(76, 175, 80, 0.14),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 84% 78%,
+      rgba(255, 193, 7, 0.14),
+      transparent 46%
+    ),
     linear-gradient(140deg, #f9fff7 0%, #f4f8ff 52%, #fffdf8 100%);
   color: var(--chat-text);
   z-index: 1;
@@ -1065,6 +1180,31 @@ export default function PreviewPanel({
   const getBuildAICardMarketCandles = useAppContext(
     (v) => v.requestHelpers.getBuildAICardMarketCandles
   );
+  const getBuildDocsStatus = useAppContext(
+    (v) => v.requestHelpers.getBuildDocsStatus
+  );
+  const startBuildDocsConnect = useAppContext(
+    (v) => v.requestHelpers.startBuildDocsConnect
+  );
+  const disconnectBuildDocs = useAppContext(
+    (v) => v.requestHelpers.disconnectBuildDocs
+  );
+  const listBuildDocsFiles = useAppContext(
+    (v) => v.requestHelpers.listBuildDocsFiles
+  );
+  const getBuildDoc = useAppContext((v) => v.requestHelpers.getBuildDoc);
+  const getBuildDocText = useAppContext(
+    (v) => v.requestHelpers.getBuildDocText
+  );
+  const searchBuildDocs = useAppContext(
+    (v) => v.requestHelpers.searchBuildDocs
+  );
+  const listBuildLlmModels = useAppContext(
+    (v) => v.requestHelpers.listBuildLlmModels
+  );
+  const generateBuildLlmResponse = useAppContext(
+    (v) => v.requestHelpers.generateBuildLlmResponse
+  );
   const lookupBuildVocabularyWord = useAppContext(
     (v) => v.requestHelpers.lookupBuildVocabularyWord
   );
@@ -1153,6 +1293,15 @@ export default function PreviewPanel({
   const getBuildDailyReflectionsRef = useRef(getBuildDailyReflections);
   const getBuildAICardMarketTradesRef = useRef(getBuildAICardMarketTrades);
   const getBuildAICardMarketCandlesRef = useRef(getBuildAICardMarketCandles);
+  const getBuildDocsStatusRef = useRef(getBuildDocsStatus);
+  const startBuildDocsConnectRef = useRef(startBuildDocsConnect);
+  const disconnectBuildDocsRef = useRef(disconnectBuildDocs);
+  const listBuildDocsFilesRef = useRef(listBuildDocsFiles);
+  const getBuildDocRef = useRef(getBuildDoc);
+  const getBuildDocTextRef = useRef(getBuildDocText);
+  const searchBuildDocsRef = useRef(searchBuildDocs);
+  const listBuildLlmModelsRef = useRef(listBuildLlmModels);
+  const generateBuildLlmResponseRef = useRef(generateBuildLlmResponse);
   const lookupBuildVocabularyWordRef = useRef(lookupBuildVocabularyWord);
   const collectBuildVocabularyWordRef = useRef(collectBuildVocabularyWord);
   const getBuildVocabularyBreakStatusRef = useRef(
@@ -1188,6 +1337,8 @@ export default function PreviewPanel({
     scopes: string[];
     expiresAt: number;
   } | null>(null);
+  const docsConnectInFlightRef = useRef<PendingDocsConnectRequest | null>(null);
+  const docsConnectPopupRef = useRef<Window | null>(null);
 
   // Inject SDK into user code
   const codeWithSdk = useMemo(() => {
@@ -1316,7 +1467,8 @@ export default function PreviewPanel({
     }
 
     if (previewSrc === activeSrc || previewSrc === inactiveSrc) {
-      const reusedFrame = previewSrc === activeSrc ? activeFrame : inactiveFrame;
+      const reusedFrame =
+        previewSrc === activeSrc ? activeFrame : inactiveFrame;
       const currentMeta = previewFrameMetaRef.current[reusedFrame];
       const nextSignature = previewCodeSignature || currentMeta?.codeSignature;
       if (
@@ -1491,6 +1643,152 @@ export default function PreviewPanel({
     };
   }
 
+  async function startDocsConnectViaHost(
+    buildId: number
+  ): Promise<DocsConnectResult> {
+    let popup: Window | null = null;
+    try {
+      popup = window.open('', 'twinkle_docs_connect', 'width=560,height=720');
+    } catch {
+      popup = null;
+    }
+    if (!popup) {
+      throw new Error('Popup blocked. Please allow popups and try again.');
+    }
+
+    docsConnectPopupRef.current = popup;
+    try {
+      popup.document.title = 'Connect Google Docs';
+      popup.document.body.innerHTML =
+        '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;padding:24px;color:#444;">Opening Google Docs authorization...</div>';
+    } catch {
+      // no-op
+    }
+
+    try {
+      const docsReadToken = await ensureBuildApiToken(['docs:read']);
+      const start = await startBuildDocsConnectRef.current({
+        buildId,
+        token: docsReadToken
+      });
+      if (!start?.url) {
+        throw new Error(
+          start?.error || 'Failed to start Google Docs connection'
+        );
+      }
+
+      if (popup.closed) {
+        throw new Error(
+          'Google Docs connection window was closed before completion.'
+        );
+      }
+
+      const connectNonce =
+        typeof start.connectNonce === 'string' && start.connectNonce.trim()
+          ? start.connectNonce.trim()
+          : null;
+      const timeoutMs =
+        Math.max(Number(start.timeoutSeconds || 600), 60) * 1000;
+
+      try {
+        popup.location.href = start.url;
+      } catch {
+        throw new Error('Failed to open Google Docs authorization window.');
+      }
+
+      return await new Promise((resolve, reject) => {
+        let done = false;
+        let closePoll: ReturnType<typeof setInterval> | null = null;
+        let timeout: ReturnType<typeof setTimeout> | null = null;
+
+        function cleanup() {
+          if (done) return;
+          done = true;
+          window.removeEventListener('message', handleOAuthMessage);
+          if (closePoll) {
+            clearInterval(closePoll);
+            closePoll = null;
+          }
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+          }
+          if (docsConnectPopupRef.current === popup) {
+            docsConnectPopupRef.current = null;
+          }
+        }
+
+        function handleOAuthMessage(event: MessageEvent) {
+          if (event.source !== popup) return;
+          const data = event?.data;
+          if (!data || data.source !== 'twinkle-build-docs-oauth') return;
+          if (connectNonce) {
+            const incomingNonce =
+              typeof data.connectNonce === 'string' ? data.connectNonce : '';
+            if (incomingNonce !== connectNonce) {
+              return;
+            }
+          }
+
+          const parsedBuildId = Number(data.buildId);
+          cleanup();
+          try {
+            if (popup && !popup.closed) popup.close();
+          } catch {
+            // no-op
+          }
+          resolve({
+            success: Boolean(data.success),
+            message: data.message ? String(data.message) : null,
+            buildId:
+              Number.isFinite(parsedBuildId) && parsedBuildId > 0
+                ? parsedBuildId
+                : buildId,
+            connectNonce:
+              typeof data.connectNonce === 'string'
+                ? data.connectNonce
+                : connectNonce
+          });
+        }
+
+        window.addEventListener('message', handleOAuthMessage);
+
+        closePoll = setInterval(() => {
+          if (!popup || popup.closed) {
+            cleanup();
+            reject(
+              new Error(
+                'Google Docs connection window was closed before completion.'
+              )
+            );
+          }
+        }, 500);
+
+        timeout = setTimeout(() => {
+          cleanup();
+          try {
+            if (popup && !popup.closed) popup.close();
+          } catch {
+            // no-op
+          }
+          reject(
+            new Error('Google Docs connection timed out. Please try again.')
+          );
+        }, timeoutMs);
+      });
+    } catch (error) {
+      if (docsConnectPopupRef.current === popup) {
+        docsConnectPopupRef.current = null;
+      }
+      try {
+        if (popup && !popup.closed) popup.close();
+      } catch {
+        // no-op
+      }
+      throw error;
+    }
+  }
+
   useEffect(() => {
     missionProgressRef.current = {
       promptListUsed,
@@ -1498,6 +1796,19 @@ export default function PreviewPanel({
       dbUsed
     };
   }, [promptListUsed, aiChatUsed, dbUsed]);
+
+  useEffect(() => {
+    return () => {
+      docsConnectInFlightRef.current = null;
+      const popup = docsConnectPopupRef.current;
+      docsConnectPopupRef.current = null;
+      try {
+        if (popup && !popup.closed) popup.close();
+      } catch {
+        // no-op
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (historyOpen) {
@@ -1648,7 +1959,8 @@ export default function PreviewPanel({
       const targetFrame = messageTargetFrameRef.current;
       const targetWindow =
         targetFrame === 'primary' ? primaryWindow : secondaryWindow;
-      const alternateFrame = targetFrame === 'primary' ? 'secondary' : 'primary';
+      const alternateFrame =
+        targetFrame === 'primary' ? 'secondary' : 'primary';
       const alternateWindow =
         alternateFrame === 'primary' ? primaryWindow : secondaryWindow;
       const frameMeta = previewFrameMetaRef.current;
@@ -1666,13 +1978,13 @@ export default function PreviewPanel({
         alternateMeta?.buildId === activeBuildId;
       const fromTargetWindow = Boolean(
         targetWindow &&
-          sourceWindow === targetWindow &&
-          targetMeta?.buildId === activeBuildId
+        sourceWindow === targetWindow &&
+        targetMeta?.buildId === activeBuildId
       );
       const fromAlternateWindow = Boolean(
         alternateWindow &&
-          sourceWindow === alternateWindow &&
-          alternateMeta?.buildId === activeBuildId
+        sourceWindow === alternateWindow &&
+        alternateMeta?.buildId === activeBuildId
       );
       if (
         !fromTargetWindow &&
@@ -1681,9 +1993,13 @@ export default function PreviewPanel({
         return;
       }
 
-      if (previewTransitioningRef.current && isMutatingPreviewRequestType(type)) {
-        const mutationAuthorityFrame =
-          shouldAcceptAlternate ? alternateFrame : targetFrame;
+      if (
+        previewTransitioningRef.current &&
+        isMutatingPreviewRequestType(type)
+      ) {
+        const mutationAuthorityFrame = shouldAcceptAlternate
+          ? alternateFrame
+          : targetFrame;
         if (sourceFrame !== mutationAuthorityFrame) {
           sourceWindow.postMessage(
             {
@@ -1770,6 +2086,143 @@ export default function PreviewPanel({
             });
             response = aiResult;
             break;
+
+          case 'docs:status': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const docsReadToken = await ensureBuildApiToken(['docs:read']);
+            response = await getBuildDocsStatusRef.current({
+              buildId: activeBuild.id,
+              token: docsReadToken
+            });
+            break;
+          }
+
+          case 'docs:connect-start': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const inFlightRequest = docsConnectInFlightRef.current;
+            if (inFlightRequest && inFlightRequest.buildId !== activeBuild.id) {
+              throw new Error(
+                'A Google Docs connection is already in progress for another build.'
+              );
+            }
+
+            if (!inFlightRequest) {
+              const promise = startDocsConnectViaHost(activeBuild.id).finally(
+                () => {
+                  if (docsConnectInFlightRef.current?.promise === promise) {
+                    docsConnectInFlightRef.current = null;
+                  }
+                }
+              );
+              docsConnectInFlightRef.current = {
+                buildId: activeBuild.id,
+                promise
+              };
+            }
+            response = await docsConnectInFlightRef.current?.promise;
+            break;
+          }
+
+          case 'docs:disconnect': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const docsWriteToken = await ensureBuildApiToken(['docs:write']);
+            response = await disconnectBuildDocsRef.current({
+              buildId: activeBuild.id,
+              token: docsWriteToken
+            });
+            break;
+          }
+
+          case 'docs:list-files': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const docsReadToken = await ensureBuildApiToken(['docs:read']);
+            response = await listBuildDocsFilesRef.current({
+              buildId: activeBuild.id,
+              query: payload?.query,
+              pageToken: payload?.pageToken,
+              pageSize: payload?.pageSize,
+              token: docsReadToken
+            });
+            break;
+          }
+
+          case 'docs:get-doc': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const docsReadToken = await ensureBuildApiToken(['docs:read']);
+            response = await getBuildDocRef.current({
+              buildId: activeBuild.id,
+              docId: payload?.docId,
+              token: docsReadToken
+            });
+            break;
+          }
+
+          case 'docs:get-doc-text': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const docsReadToken = await ensureBuildApiToken(['docs:read']);
+            response = await getBuildDocTextRef.current({
+              buildId: activeBuild.id,
+              docId: payload?.docId,
+              token: docsReadToken
+            });
+            break;
+          }
+
+          case 'docs:search': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const docsReadToken = await ensureBuildApiToken(['docs:read']);
+            response = await searchBuildDocsRef.current({
+              buildId: activeBuild.id,
+              query: payload?.query,
+              pageToken: payload?.pageToken,
+              pageSize: payload?.pageSize,
+              token: docsReadToken
+            });
+            break;
+          }
+
+          case 'llm:list-models': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const llmToken = await ensureBuildApiToken(['llm:generate']);
+            response = await listBuildLlmModelsRef.current({
+              buildId: activeBuild.id,
+              token: llmToken
+            });
+            break;
+          }
+
+          case 'llm:generate': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const llmToken = await ensureBuildApiToken(['llm:generate']);
+            response = await generateBuildLlmResponseRef.current({
+              buildId: activeBuild.id,
+              model: payload?.model,
+              prompt: payload?.prompt,
+              system: payload?.system,
+              messages: payload?.messages,
+              maxOutputTokens: payload?.maxOutputTokens,
+              token: llmToken
+            });
+            break;
+          }
 
           case 'social:follow': {
             const targetUserId = Number(payload?.userId);
@@ -1916,7 +2369,9 @@ export default function PreviewPanel({
             if (!activeBuild?.id) {
               throw new Error('Build not found');
             }
-            const aiCardsReadToken = await ensureBuildApiToken(['aiCards:read']);
+            const aiCardsReadToken = await ensureBuildApiToken([
+              'aiCards:read'
+            ]);
             response = await getBuildAICardMarketTradesRef.current({
               buildId: activeBuild.id,
               cardId: payload?.cardId,
@@ -1934,7 +2389,9 @@ export default function PreviewPanel({
             if (!activeBuild?.id) {
               throw new Error('Build not found');
             }
-            const aiCardsReadToken = await ensureBuildApiToken(['aiCards:read']);
+            const aiCardsReadToken = await ensureBuildApiToken([
+              'aiCards:read'
+            ]);
             response = await getBuildAICardMarketCandlesRef.current({
               buildId: activeBuild.id,
               cardId: payload?.cardId,
@@ -2352,7 +2809,7 @@ export default function PreviewPanel({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={panelClass}>
@@ -2427,9 +2884,7 @@ export default function PreviewPanel({
                   <div className={previewPreloadIconWrapClass}>
                     <Icon icon="spinner" className={previewSpinnerClass} />
                   </div>
-                  <div className={previewPreloadLabelClass}>
-                    Loading...
-                  </div>
+                  <div className={previewPreloadLabelClass}>Loading...</div>
                 </div>
               )}
               {previewFrameSources.primary && (
@@ -2447,11 +2902,13 @@ export default function PreviewPanel({
                   className={previewIframeClass}
                   style={{
                     opacity:
-                      activePreviewFrame === 'primary' && previewFrameReady.primary
+                      activePreviewFrame === 'primary' &&
+                      previewFrameReady.primary
                         ? 1
                         : 0,
                     pointerEvents:
-                      activePreviewFrame === 'primary' && previewFrameReady.primary
+                      activePreviewFrame === 'primary' &&
+                      previewFrameReady.primary
                         ? 'auto'
                         : 'none'
                   }}
@@ -2621,8 +3078,8 @@ export default function PreviewPanel({
                   opacity: 0.7;
                 `}
               >
-                No versions yet. Ask Copilot to generate or review code to create
-                version history.
+                No versions yet. Ask Copilot to generate or review code to
+                create version history.
               </div>
             ) : (
               versions.map((version) => (
