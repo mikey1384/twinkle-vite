@@ -3,7 +3,6 @@ import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
 interface Build {
@@ -374,7 +373,9 @@ const TWINKLE_SDK_SCRIPT = `
       async getUser(userId) {
         if (!userId) throw new Error('userId is required');
         const result = await sendRequest('api:get-user', { userId: userId });
-        return result?.user || null;
+        if (result?.user) return result.user;
+        if (result && typeof result === 'object') return result;
+        return null;
       },
 
       async getUsers({ search, userIds, cursor, limit } = {}) {
@@ -404,26 +405,72 @@ const TWINKLE_SDK_SCRIPT = `
           cursor: cursor,
           limit: limit
         });
+      },
+
+      async getAICardMarketTrades({ cardId, side, since, until, cursor, limit } = {}) {
+        return await sendRequest('api:get-ai-card-market-trades', {
+          cardId: cardId,
+          side: side,
+          since: since,
+          until: until,
+          cursor: cursor,
+          limit: limit
+        });
+      },
+
+      async getAICardMarketCandles({ cardId, side, since, until, bucketSeconds, limit } = {}) {
+        return await sendRequest('api:get-ai-card-market-candles', {
+          cardId: cardId,
+          side: side,
+          since: since,
+          until: until,
+          bucketSeconds: bucketSeconds,
+          limit: limit
+        });
       }
     },
 
     social: {
       async follow(userId) {
         if (!userId) throw new Error('userId is required');
-        return await sendRequest('social:follow', { userId: userId });
+        const result = await sendRequest('social:follow', { userId: userId });
+        return {
+          success: Boolean(result?.success),
+          isFollowing:
+            typeof result?.isFollowing === 'boolean'
+              ? result.isFollowing
+              : Boolean(result?.alreadyFollowing)
+        };
       },
 
       async unfollow(userId) {
         if (!userId) throw new Error('userId is required');
-        return await sendRequest('social:unfollow', { userId: userId });
+        const result = await sendRequest('social:unfollow', { userId: userId });
+        return {
+          success: Boolean(result?.success),
+          isFollowing:
+            typeof result?.isFollowing === 'boolean'
+              ? result.isFollowing
+              : false
+        };
       },
 
       async getFollowing({ limit, offset } = {}) {
-        return await sendRequest('social:get-following', { limit, offset });
+        const result = await sendRequest('social:get-following', {
+          limit,
+          offset
+        });
+        if (Array.isArray(result)) return { following: result };
+        return { following: Array.isArray(result?.following) ? result.following : [] };
       },
 
       async getFollowers({ limit, offset } = {}) {
-        return await sendRequest('social:get-followers', { limit, offset });
+        const result = await sendRequest('social:get-followers', {
+          limit,
+          offset
+        });
+        if (Array.isArray(result)) return { followers: result };
+        return { followers: Array.isArray(result?.followers) ? result.followers : [] };
       },
 
       async isFollowing(userId) {
@@ -1012,6 +1059,12 @@ export default function PreviewPanel({
   const getBuildDailyReflections = useAppContext(
     (v) => v.requestHelpers.getBuildDailyReflections
   );
+  const getBuildAICardMarketTrades = useAppContext(
+    (v) => v.requestHelpers.getBuildAICardMarketTrades
+  );
+  const getBuildAICardMarketCandles = useAppContext(
+    (v) => v.requestHelpers.getBuildAICardMarketCandles
+  );
   const lookupBuildVocabularyWord = useAppContext(
     (v) => v.requestHelpers.lookupBuildVocabularyWord
   );
@@ -1098,6 +1151,8 @@ export default function PreviewPanel({
   const getBuildApiUserRef = useRef(getBuildApiUser);
   const getBuildApiUsersRef = useRef(getBuildApiUsers);
   const getBuildDailyReflectionsRef = useRef(getBuildDailyReflections);
+  const getBuildAICardMarketTradesRef = useRef(getBuildAICardMarketTrades);
+  const getBuildAICardMarketCandlesRef = useRef(getBuildAICardMarketCandles);
   const lookupBuildVocabularyWordRef = useRef(lookupBuildVocabularyWord);
   const collectBuildVocabularyWordRef = useRef(collectBuildVocabularyWord);
   const getBuildVocabularyBreakStatusRef = useRef(
@@ -1189,7 +1244,7 @@ export default function PreviewPanel({
         previewFrameMetaRef.current = seededMeta;
         const seededReady = {
           ...previewFrameReadyRef.current,
-          [activeFrame]: true
+          [activeFrame]: false
         };
         previewFrameReadyRef.current = seededReady;
         setPreviewFrameReady(seededReady);
@@ -1857,6 +1912,42 @@ export default function PreviewPanel({
             break;
           }
 
+          case 'api:get-ai-card-market-trades': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const aiCardsReadToken = await ensureBuildApiToken(['aiCards:read']);
+            response = await getBuildAICardMarketTradesRef.current({
+              buildId: activeBuild.id,
+              cardId: payload?.cardId,
+              side: payload?.side,
+              since: payload?.since,
+              until: payload?.until,
+              cursor: payload?.cursor,
+              limit: payload?.limit,
+              token: aiCardsReadToken
+            });
+            break;
+          }
+
+          case 'api:get-ai-card-market-candles': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const aiCardsReadToken = await ensureBuildApiToken(['aiCards:read']);
+            response = await getBuildAICardMarketCandlesRef.current({
+              buildId: activeBuild.id,
+              cardId: payload?.cardId,
+              side: payload?.side,
+              since: payload?.since,
+              until: payload?.until,
+              bucketSeconds: payload?.bucketSeconds,
+              limit: payload?.limit,
+              token: aiCardsReadToken
+            });
+            break;
+          }
+
           case 'content:my-subjects': {
             if (!activeBuild?.id) {
               throw new Error('Build not found');
@@ -2337,7 +2428,7 @@ export default function PreviewPanel({
                     <Icon icon="spinner" className={previewSpinnerClass} />
                   </div>
                   <div className={previewPreloadLabelClass}>
-                    Loading preview...
+                    Loading...
                   </div>
                 </div>
               )}

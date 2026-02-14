@@ -44,7 +44,7 @@ export default function Builds() {
   const [builds, setBuilds] = useState<Build[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadMoreButton, setLoadMoreButton] = useState<number | null>(null);
+  const [loadMoreButton, setLoadMoreButton] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>('recent');
 
   useEffect(() => {
@@ -55,7 +55,13 @@ export default function Builds() {
       try {
         const data = await loadPublicBuilds({ sort: sortOption });
         setBuilds(data?.builds || []);
-        setLoadMoreButton(data?.loadMoreButton || null);
+        setLoadMoreButton(
+          data?.cursor != null
+            ? String(data.cursor)
+            : data?.loadMoreButton != null
+              ? String(data.loadMoreButton)
+              : null
+        );
       } catch (error) {
         console.error('Failed to load builds:', error);
       }
@@ -68,12 +74,21 @@ export default function Builds() {
     if (loadingMore || !loadMoreButton) return;
     setLoadingMore(true);
     try {
-      const data = await loadPublicBuilds({
-        sort: sortOption,
-        lastId: loadMoreButton
-      });
+      const loadMoreParams: any = { sort: sortOption };
+      if (/^\d+$/.test(loadMoreButton)) {
+        loadMoreParams.lastId = Number(loadMoreButton);
+      } else {
+        loadMoreParams.cursor = loadMoreButton;
+      }
+      const data = await loadPublicBuilds(loadMoreParams);
       setBuilds((prev) => [...prev, ...(data?.builds || [])]);
-      setLoadMoreButton(data?.loadMoreButton || null);
+      setLoadMoreButton(
+        data?.cursor != null
+          ? String(data.cursor)
+          : data?.loadMoreButton != null
+            ? String(data.loadMoreButton)
+            : null
+      );
     } catch (error) {
       console.error('Failed to load more builds:', error);
     }

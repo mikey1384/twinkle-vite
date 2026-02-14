@@ -289,15 +289,21 @@ export default function buildRequestHelpers({
     async loadPublicBuilds({
       sort = 'recent',
       limit = 20,
-      lastId
+      lastId,
+      cursor
     }: {
       sort?: 'recent' | 'popular' | 'starred';
       limit?: number;
       lastId?: number;
+      cursor?: string;
     } = {}) {
       try {
         const params: Record<string, any> = { sort, limit };
-        if (lastId) params.lastId = lastId;
+        if (cursor) {
+          params.cursor = cursor;
+        } else if (lastId) {
+          params.lastId = lastId;
+        }
         const { data } = await request.get(`${URL}/build/public/list`, {
           params
         });
@@ -665,6 +671,80 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/daily-reflections`,
           { following, userIds, lastId, cursor, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildAICardMarketTrades({
+      buildId,
+      cardId,
+      side,
+      since,
+      until,
+      cursor,
+      limit,
+      token
+    }: {
+      buildId: number;
+      cardId?: number;
+      side?: 'buy' | 'sell';
+      since?: number;
+      until?: number;
+      cursor?: { id?: number };
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/ai-cards/market-trades`,
+          { cardId, side, since, until, cursor, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildAICardMarketCandles({
+      buildId,
+      cardId,
+      side,
+      since,
+      until,
+      bucketSeconds,
+      limit,
+      token
+    }: {
+      buildId: number;
+      cardId?: number;
+      side?: 'buy' | 'sell';
+      since?: number;
+      until?: number;
+      bucketSeconds?: number;
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/ai-cards/market-candles`,
+          { cardId, side, since, until, bucketSeconds, limit },
           {
             ...auth(),
             headers: {
