@@ -235,6 +235,7 @@ export default function Puzzle({
       onPuzzleStateUpdate: setPuzzleState,
       onPromotionPendingUpdate: setPromotionPending,
       onSetRunResult,
+      onSetInTimeAttack,
       onTimeTrialCompletedUpdate: setTimeTrialCompleted,
       onDailyStatsUpdate: setDailyStats,
       onPuzzleComplete,
@@ -429,6 +430,9 @@ export default function Puzzle({
 
   useEffect(() => {
     if (!inTimeAttack || runResult !== 'PLAYING') return;
+    if (!puzzle) return;
+    if (phase === 'ANALYSIS' || phase === 'SOLUTION' || phase === 'PROMO_SUCCESS')
+      return;
     if (promotionPending) return;
 
     if (timeLeft <= 0) {
@@ -446,7 +450,14 @@ export default function Puzzle({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inTimeAttack, timeLeft, runResult, promotionPending]);
+  }, [
+    inTimeAttack,
+    timeLeft,
+    runResult,
+    promotionPending,
+    puzzle,
+    phase
+  ]);
 
   useEffect(() => {
     if (!inTimeAttack && previousPhaseRef.current !== 'ANALYSIS') {
@@ -535,12 +546,7 @@ export default function Puzzle({
             currentStreak={currentStreak}
             nextDayTimestamp={nextDayTimestamp}
             startingPromotion={startingPromotion}
-            onPromotionClick={async () => {
-              const newPuzzle = await handlePromotionClick();
-              if (newPuzzle) {
-                updatePuzzle(newPuzzle);
-              }
-            }}
+            onPromotionClick={handlePromotionClick}
             onUnlockPromotion={handleUnlockPromotion}
             dailyStats={dailyStats}
             inTimeAttack={inTimeAttack}
@@ -686,18 +692,30 @@ export default function Puzzle({
     }));
   }
 
-  async function handlePromotionClick(): Promise<LichessPuzzle | undefined> {
+  async function handlePromotionClick() {
+    let promotionStarted = false;
     try {
+      if (startingPromotion) return;
       setStartingPromotion(true);
       const { puzzle: promoPuzzle, runId } = await startTimeAttackPromotion();
+      if (!promoPuzzle) {
+        throw new Error('Promotion puzzle is temporarily unavailable');
+      }
+
+      if (timeTrialTimerRef.current) {
+        clearTimeout(timeTrialTimerRef.current);
+        timeTrialTimerRef.current = null;
+      }
+      timeIsAlreadyUpRef.current = false;
       runIdRef.current = runId;
-      onSetInTimeAttack(true);
-      onSetTimeLeft(TIME_ATTACK_DURATION);
+      onSetPhase('START_LEVEL');
       timeAttackDeadlineRef.current = Date.now() + TIME_ATTACK_DURATION * 1000;
+      onSetTimeLeft(TIME_ATTACK_DURATION);
       onSetRunResult('PLAYING');
       setPromoSolved(0);
-
       updatePuzzle(promoPuzzle);
+      onSetInTimeAttack(true);
+      promotionStarted = true;
       setSelectedSquare(null);
       setPuzzleState({
         solutionIndex: 0,
@@ -705,15 +723,20 @@ export default function Puzzle({
         showingHint: false
       });
 
-      await refreshLevels();
-      return promoPuzzle;
+      setStartingPromotion(false);
+      void refreshLevels().catch((refreshError) => {
+        console.warn('Failed to refresh levels after promotion start:', refreshError);
+      });
     } catch (err: any) {
       console.error('❌ failed starting time‑attack:', err);
+      if (!promotionStarted) {
+        onSetInTimeAttack(false);
+        runIdRef.current = null;
+      }
 
       if (err?.status === 403 || err?.response?.status === 403) {
         await onRefreshStats();
       }
-      return undefined;
     } finally {
       setStartingPromotion(false);
     }
@@ -813,7 +836,9 @@ export default function Puzzle({
 
   async function handleTimeUp() {
     if (timeIsAlreadyUpRef.current || phase === 'SOLUTION') return;
+    if (!runIdRef.current) return;
     timeIsAlreadyUpRef.current = true;
+    onSetRunResult('FAIL');
     onSetPhase('SOLUTION');
     if (timeTrialTimerRef.current) {
       clearTimeout(timeTrialTimerRef.current);

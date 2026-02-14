@@ -759,6 +759,257 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getBuildDocsStatus({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/status`,
+          {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async startBuildDocsConnect({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/connect/start`,
+          {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async disconnectBuildDocs({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/connect/disconnect`,
+          {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildDocsFiles({
+      buildId,
+      query,
+      pageToken,
+      pageSize,
+      token
+    }: {
+      buildId: number;
+      query?: string;
+      pageToken?: string;
+      pageSize?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/list-files`,
+          { query, pageToken, pageSize },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildDoc({
+      buildId,
+      docId,
+      token
+    }: {
+      buildId: number;
+      docId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/get-doc`,
+          { docId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildDocText({
+      buildId,
+      docId,
+      token
+    }: {
+      buildId: number;
+      docId: string;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/get-doc-text`,
+          { docId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async searchBuildDocs({
+      buildId,
+      query,
+      pageToken,
+      pageSize,
+      token
+    }: {
+      buildId: number;
+      query: string;
+      pageToken?: string;
+      pageSize?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/docs/search`,
+          { query, pageToken, pageSize },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildLlmModels({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/llm/models`,
+          {},
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async generateBuildLlmResponse({
+      buildId,
+      model,
+      prompt,
+      system,
+      messages,
+      maxOutputTokens,
+      token
+    }: {
+      buildId: number;
+      model?: string;
+      prompt?: string;
+      system?: string;
+      messages?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+      maxOutputTokens?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/llm/generate`,
+          { model, prompt, system, messages, maxOutputTokens },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async lookupBuildVocabularyWord({
       buildId,
       word,
