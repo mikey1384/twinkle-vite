@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { mobileMaxWidth } from '~/constants/css';
-import { useViewContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Home from './Home';
 import LikedPosts from './LikedPosts';
@@ -29,6 +29,8 @@ export default function Body({
   profile: { id: number; username: string };
   selectedTheme: string;
 }) {
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
+  const sessionLoaded = useAppContext((v) => v.user.state.loaded);
   const onSetPageTitle = useViewContext((v) => v.actions.onSetPageTitle);
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,14 +67,16 @@ export default function Body({
     [location.pathname]
   );
   const buildsMatch = useMemo(
-    () =>
-      matchPath(
+    () => {
+      if (!isAdmin) return null;
+      return matchPath(
         {
           path: '/users/:username/builds'
         },
         location.pathname
-      ),
-    [location.pathname]
+      );
+    },
+    [isAdmin, location.pathname]
   );
 
   useEffect(() => {
@@ -180,15 +184,17 @@ export default function Body({
           >
             <a>{postsLabel}</a>
           </nav>
-          <nav
-            className={buildsMatch ? 'active' : ''}
-            style={{ cursor: 'pointer' }}
-            onClick={() =>
-              buildsMatch ? null : navigate(`/users/${username}/builds`)
-            }
-          >
-            <a>{buildsLabel}</a>
-          </nav>
+          {isAdmin && (
+            <nav
+              className={buildsMatch ? 'active' : ''}
+              style={{ cursor: 'pointer' }}
+              onClick={() =>
+                buildsMatch ? null : navigate(`/users/${username}/builds`)
+              }
+            >
+              <a>{buildsLabel}</a>
+            </nav>
+          )}
         </FilterBar>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
@@ -209,15 +215,26 @@ export default function Body({
               path="/likes/:section"
               element={<LikedPosts selectedTheme={selectedTheme} />}
             />
-            <Route
-              path="/builds"
-              element={
-                <Builds
-                  selectedTheme={selectedTheme}
-                  profileUserId={profile.id}
-                />
-              }
-            />
+            {!isAdmin && !sessionLoaded && (
+              <Route path="/builds" element={null} />
+            )}
+            {!isAdmin && sessionLoaded && username && (
+              <Route
+                path="/builds"
+                element={<Navigate replace to={`/users/${username}`} />}
+              />
+            )}
+            {isAdmin && (
+              <Route
+                path="/builds"
+                element={
+                  <Builds
+                    selectedTheme={selectedTheme}
+                    profileUserId={profile.id}
+                  />
+                }
+              />
+            )}
             <Route
               path="/:section/*"
               element={<Posts selectedTheme={selectedTheme} />}

@@ -145,13 +145,18 @@ export default function useCallSocket({
     function handleCallSignal({
       peerId,
       signal,
-      to
+      to,
+      toSocketId
     }: {
       peerId: string;
       signal: any;
-      to: number;
+      to: number | null;
+      toSocketId?: string;
     }) {
-      if (to === userIdRef.current && peersRef.current[peerId]) {
+      if (
+        (to === userIdRef.current || toSocketId === socket.id) &&
+        peersRef.current[peerId]
+      ) {
         if (peersRef.current[peerId].signal) {
           try {
             peersRef.current[peerId].signal(signal);
@@ -283,13 +288,15 @@ export default function useCallSocket({
   function handlePeerAccepted({
     channelId,
     to,
-    peerId
+    peerId,
+    toSocketId
   }: {
     channelId: number;
-    to: number;
+    to: number | null;
     peerId: string;
+    toSocketId?: string;
   }) {
-    if (to === userIdRef.current) {
+    if (to === userIdRef.current || toSocketId === socket.id) {
       try {
         handleNewPeer({
           peerId,
