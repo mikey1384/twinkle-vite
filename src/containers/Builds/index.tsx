@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import FilterBar from '~/components/FilterBar';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import BuildCard from './BuildCard';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 type SortOption = 'recent' | 'popular' | 'starred';
 
@@ -33,6 +37,29 @@ interface Build {
     forkCount: number;
   };
 }
+
+const galleryFilterClass = css`
+  border: 1px solid rgba(65, 140, 235, 0.24);
+  border-radius: 14px;
+  padding: 0.35rem;
+  background: #fff;
+
+  > .nav-section > nav {
+    border-bottom: none !important;
+    border-radius: 10px;
+    transition: transform 0.15s ease;
+  }
+
+  > .nav-section > nav.active {
+    background: rgba(65, 140, 235, 0.14);
+    color: #1d4ed8 !important;
+  }
+
+  > .nav-section > nav:not(.active):hover {
+    background: rgba(65, 140, 235, 0.08);
+    transform: translateY(-1px);
+  }
+`;
 
 export default function Builds() {
   const navigate = useNavigate();
@@ -99,7 +126,7 @@ export default function Builds() {
     navigate(`/build/${buildId}`);
   }
 
-  function handleSortChange(sort: SortOption) {
+function handleSortChange(sort: SortOption) {
     if (sort !== sortOption) {
       setSortOption(sort);
     }
@@ -142,14 +169,15 @@ export default function Builds() {
                 <h1
                   className={css`
                     margin: 0;
-                    font-size: 1.8rem;
-                    font-weight: 800;
+                    font-size: 2.45rem;
+                    font-weight: 900;
                     color: var(--chat-text);
                     display: flex;
                     align-items: center;
                     gap: 0.75rem;
+                    font-family: ${displayFontFamily};
                     @media (max-width: ${mobileMaxWidth}) {
-                      font-size: 1.5rem;
+                      font-size: 2rem;
                     }
                   `}
                 >
@@ -167,30 +195,15 @@ export default function Builds() {
                   Discover apps created by the community
                 </p>
               </div>
-              <button
+              <GameCTAButton
                 onClick={() => navigate('/build/new')}
-                className={css`
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  padding: 0.7rem 1.2rem;
-                  border-radius: 10px;
-                  border: none;
-                  background: var(--theme-bg);
-                  color: var(--theme-text);
-                  font-size: 1rem;
-                  font-weight: 700;
-                  cursor: pointer;
-                  transition: background 0.2s ease, transform 0.2s ease;
-                  &:hover {
-                    background: var(--theme-hover-bg);
-                    transform: translateY(-1px);
-                  }
-                `}
+                variant="gold"
+                size="lg"
+                shiny
+                icon="plus"
               >
-                <Icon icon="plus" />
                 Create Build
-              </button>
+              </GameCTAButton>
             </div>
           </div>
         </div>
@@ -205,9 +218,17 @@ export default function Builds() {
             className={css`
               max-width: 1200px;
               margin: 0 auto;
+              padding: 0.65rem 0.9rem 0.95rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                padding: 0.55rem;
+              }
             `}
           >
-            <FilterBar style={{ margin: 0 }} color={profileTheme}>
+            <FilterBar
+              style={{ margin: 0, minHeight: '3.6rem', fontSize: '1rem' }}
+              className={galleryFilterClass}
+              color={profileTheme}
+            >
               <nav
                 className={sortOption === 'recent' ? 'active' : ''}
                 onClick={() => handleSortChange('recent')}

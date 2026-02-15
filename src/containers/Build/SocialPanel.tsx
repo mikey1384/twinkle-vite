@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import Icon from '~/components/Icon';
 import ProfilePic from '~/components/ProfilePic';
 import Textarea from '~/components/Texts/Textarea';
-import Button from '~/components/Button';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { mobileMaxWidth, borderRadius } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
+
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 interface Like {
   id: number;
@@ -197,63 +199,29 @@ export default function SocialPanel({
           border-bottom: 1px solid var(--ui-border);
           display: flex;
           gap: 0.5rem;
+          background: #fff;
         `}
       >
-        <button
+        <GameCTAButton
           onClick={handleStar}
           disabled={!userId || starring}
-          className={css`
-            flex: 1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1rem;
-            border-radius: 10px;
-            border: 1px solid var(--ui-border);
-            background: ${isStarred ? 'var(--theme-bg)' : '#fff'};
-            color: ${isStarred ? 'var(--theme-text)' : 'var(--chat-text)'};
-            font-size: 0.9rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            &:hover:not(:disabled) {
-              border-color: var(--theme-border);
-            }
-            &:disabled {
-              opacity: 0.6;
-              cursor: not-allowed;
-            }
-          `}
+          loading={starring}
+          variant={isStarred ? 'gold' : 'logoBlue'}
+          size="md"
+          icon="star"
+          style={{ flex: 1 }}
         >
-          <Icon icon={isStarred ? 'star' : ['far', 'star']} />
           {isStarred ? 'Starred' : 'Star'} ({likes.length})
-        </button>
+        </GameCTAButton>
         {!isOwner && userId && (
-          <button
+          <GameCTAButton
             onClick={() => setRewardModalOpen(true)}
-            className={css`
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              gap: 0.5rem;
-              padding: 0.6rem 1rem;
-              border-radius: 10px;
-              border: 1px solid var(--ui-border);
-              background: #fff;
-              color: var(--chat-text);
-              font-size: 0.9rem;
-              font-weight: 700;
-              cursor: pointer;
-              transition: all 0.2s ease;
-              &:hover {
-                border-color: var(--theme-border);
-              }
-            `}
+            variant="magenta"
+            size="md"
+            icon="gift"
           >
-            <Icon icon="gift" />
             Reward
-          </button>
+          </GameCTAButton>
         )}
       </div>
 
@@ -267,9 +235,10 @@ export default function SocialPanel({
         <h4
           className={css`
             margin: 0 0 1rem 0;
-            font-size: 1rem;
-            font-weight: 700;
+            font-size: 1.12rem;
+            font-weight: 900;
             color: var(--chat-text);
+            font-family: ${displayFontFamily};
           `}
         >
           Comments
@@ -299,14 +268,16 @@ export default function SocialPanel({
                 justify-content: flex-end;
               `}
             >
-              <Button
-                variant="solid"
-                color="logoBlue"
+              <GameCTAButton
+                variant="logoBlue"
+                size="md"
+                icon="paper-plane"
                 disabled={!commentText.trim() || submittingComment}
+                loading={submittingComment}
                 onClick={handleSubmitComment}
               >
                 {submittingComment ? 'Posting...' : 'Post'}
-              </Button>
+              </GameCTAButton>
             </div>
           </div>
         )}
@@ -447,15 +418,18 @@ export default function SocialPanel({
               padding: 1.5rem;
               width: 90%;
               max-width: 400px;
+              border: 1px solid var(--ui-border);
+              box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
             `}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
               className={css`
                 margin: 0 0 1rem 0;
-                font-size: 1.2rem;
-                font-weight: 700;
+                font-size: 1.45rem;
+                font-weight: 900;
                 color: var(--chat-text);
+                font-family: ${displayFontFamily};
               `}
             >
               Reward this build
@@ -546,45 +520,29 @@ export default function SocialPanel({
                 gap: 0.75rem;
               `}
             >
-              <button
+              <GameCTAButton
                 onClick={() => setRewardModalOpen(false)}
-                className={css`
-                  flex: 1;
-                  padding: 0.7rem 1rem;
-                  border-radius: 10px;
-                  border: 1px solid var(--ui-border);
-                  background: #fff;
-                  color: var(--chat-text);
-                  font-weight: 700;
-                  cursor: pointer;
-                `}
+                variant="neutral"
+                size="md"
+                style={{ flex: 1 }}
               >
                 Cancel
-              </button>
-              <button
+              </GameCTAButton>
+              <GameCTAButton
                 onClick={handleSubmitReward}
                 disabled={
                   submittingReward ||
                   rewardAmount < 1 ||
                   rewardAmount > (twinkleCoins || 0)
                 }
-                className={css`
-                  flex: 1;
-                  padding: 0.7rem 1rem;
-                  border-radius: 10px;
-                  border: none;
-                  background: var(--theme-bg);
-                  color: var(--theme-text);
-                  font-weight: 700;
-                  cursor: pointer;
-                  &:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                  }
-                `}
+                loading={submittingReward}
+                variant="gold"
+                size="md"
+                icon="gift"
+                style={{ flex: 1 }}
               >
                 {submittingReward ? 'Sending...' : `Send ${rewardAmount} Coins`}
-              </button>
+              </GameCTAButton>
             </div>
           </div>
         </div>

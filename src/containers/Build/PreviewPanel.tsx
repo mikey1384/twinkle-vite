@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
 interface Build {
@@ -794,71 +797,50 @@ const TWINKLE_SDK_SCRIPT = `
 </script>
 `;
 
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+
 const panelClass = css`
   min-height: 0;
   min-width: 0;
   display: grid;
   grid-template-rows: auto 1fr;
   background: #fff;
-  gap: 0.6rem;
+  gap: 0;
   overflow: hidden;
 `;
 
 const toolbarClass = css`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.9rem 1rem;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  min-height: var(--build-workspace-header-height);
+  padding: 0 1rem;
+  column-gap: 0.75rem;
   background: #fff;
+  border-bottom: 1px solid var(--ui-border);
+  @media (max-width: ${mobileMaxWidth}) {
+    grid-template-columns: 1fr;
+    row-gap: 0.65rem;
+    padding: 0.9rem 1rem;
+  }
 `;
 
 const toolbarTitleClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  font-weight: 800;
+  font-weight: 900;
   color: var(--chat-text);
-  font-size: 1.05rem;
-`;
-
-const toggleGroupClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  background: #fff;
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-`;
-
-const toggleButtonClass = css`
-  padding: 0.45rem 0.9rem;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--chat-text);
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
-  &:hover {
-    background: var(--chat-bg);
-    color: var(--chat-text);
-  }
+  font-size: 1.2rem;
+  font-family: ${displayFontFamily};
 `;
 
 const toolbarActionsClass = css`
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  flex-wrap: wrap;
 `;
 
 const previewStageClass = css`
@@ -877,18 +859,7 @@ const previewPreloadSurfaceClass = css`
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-  background:
-    radial-gradient(
-      circle at 18% 22%,
-      rgba(76, 175, 80, 0.14),
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at 84% 78%,
-      rgba(255, 193, 7, 0.14),
-      transparent 46%
-    ),
-    linear-gradient(140deg, #f9fff7 0%, #f4f8ff 52%, #fffdf8 100%);
+  background: #fafbff;
   color: var(--chat-text);
   z-index: 1;
 `;
@@ -947,29 +918,6 @@ const previewSpinnerClass = css`
     to {
       transform: rotate(360deg);
     }
-  }
-`;
-
-const ghostActionButtonClass = css`
-  padding: 0.45rem 0.85rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 10px;
-  background: #fff;
-  color: var(--chat-text);
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  transition:
-    border 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
-  &:hover {
-    border-color: var(--theme-border);
-    color: var(--chat-text);
-    transform: translateY(-1px);
   }
 `;
 
@@ -1042,6 +990,11 @@ const historyModalContentClass = css`
   gap: 0.75rem;
   padding: 1rem 1.25rem 1.25rem;
 `;
+
+const workspaceViewOptions = [
+  { value: 'preview', label: 'Preview', icon: 'eye' },
+  { value: 'code', label: 'Code', icon: 'code' }
+] as const;
 
 export default function PreviewPanel({
   build,
@@ -2820,48 +2773,22 @@ export default function PreviewPanel({
         </div>
         <div className={toolbarActionsClass}>
           {isOwner && (
-            <>
-              <button
-                className={ghostActionButtonClass}
-                onClick={() => setHistoryOpen(true)}
-              >
-                <Icon icon="clock" />
-                History
-              </button>
-            </>
+            <GameCTAButton
+              variant="purple"
+              size="md"
+              icon="clock"
+              onClick={() => setHistoryOpen(true)}
+            >
+              History
+            </GameCTAButton>
           )}
-          <div className={toggleGroupClass}>
-            <button
-              onClick={() => setViewMode('preview')}
-              className={toggleButtonClass}
-              style={
-                viewMode === 'preview'
-                  ? {
-                      background: 'var(--theme-bg)',
-                      color: 'var(--theme-text)'
-                    }
-                  : undefined
-              }
-            >
-              <Icon icon="eye" />
-              Preview
-            </button>
-            <button
-              onClick={() => setViewMode('code')}
-              className={toggleButtonClass}
-              style={
-                viewMode === 'code'
-                  ? {
-                      background: 'var(--theme-bg)',
-                      color: 'var(--theme-text)'
-                    }
-                  : undefined
-              }
-            >
-              <Icon icon="code" />
-              Code
-            </button>
-          </div>
+          <SegmentedToggle<'preview' | 'code'>
+            value={viewMode}
+            onChange={setViewMode}
+            options={workspaceViewOptions}
+            size="md"
+            ariaLabel="Workspace mode"
+          />
         </div>
       </div>
 
@@ -3112,15 +3039,17 @@ export default function PreviewPanel({
                         : ''}
                     </div>
                   </div>
-                  <button
-                    className={ghostActionButtonClass}
+                  <GameCTAButton
+                    variant="orange"
+                    size="sm"
                     onClick={() => handleRestoreVersion(version.id)}
                     disabled={restoringVersionId === version.id}
+                    loading={restoringVersionId === version.id}
                   >
                     {restoringVersionId === version.id
                       ? 'Restoring...'
                       : 'Restore'}
-                  </button>
+                  </GameCTAButton>
                 </div>
               ))
             )}

@@ -2,10 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
+
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 const pageClass = css`
   width: 100%;
@@ -23,6 +27,7 @@ const heroClass = css`
   border-radius: 22px;
   background: #fff;
   border: 1px solid var(--ui-border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   margin-bottom: 2rem;
   @media (max-width: ${mobileMaxWidth}) {
@@ -42,34 +47,41 @@ const heroBadgeClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 1rem;
   border-radius: 999px;
-  background: var(--chat-bg);
-  color: var(--theme-bg);
-  border: 1px solid var(--ui-border);
-  font-weight: 800;
-  font-size: 1rem;
+  background: rgba(65, 140, 235, 0.14);
+  color: #1d4ed8;
+  border: 1px solid rgba(65, 140, 235, 0.28);
+  font-weight: 900;
+  font-size: 0.95rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  font-family: ${displayFontFamily};
 `;
 
 const heroTitleClass = css`
   margin: 0;
-  font-size: 2.4rem;
-  font-weight: 800;
+  font-size: 2.8rem;
+  font-weight: 900;
   color: var(--chat-text);
+  letter-spacing: 0.02em;
+  font-family: ${displayFontFamily};
+  line-height: 1.1;
   @media (max-width: ${mobileMaxWidth}) {
-    font-size: 2rem;
+    font-size: 2.3rem;
   }
 `;
 
 const heroBodyClass = css`
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   color: var(--chat-text);
-  opacity: 0.75;
+  opacity: 0.86;
   max-width: 38rem;
-  line-height: 1.6;
+  line-height: 1.5;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.2rem;
+  }
 `;
 
 const buildGridClass = css`
@@ -83,40 +95,19 @@ const buildCardClass = css`
   padding: 1.4rem;
   background: #fff;
   border: 1px solid var(--ui-border);
+  border-left: 4px solid #418CEB;
   border-radius: ${borderRadius};
   text-decoration: none;
   color: inherit;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   transition:
     border-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   &:hover {
-    border-color: var(--theme-border);
-    transform: translateY(-1px);
-  }
-`;
-
-const primaryButtonClass = css`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.2rem;
-  border-radius: 10px;
-  border: 1px solid var(--theme-border);
-  background: var(--theme-bg);
-  color: var(--theme-text);
-  font-size: 0.95rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-  &:hover {
-    background: var(--theme-hover-bg);
-    transform: translateY(-1px);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--theme-border);
-    outline-offset: 2px;
+    border-color: rgba(65, 140, 235, 0.28);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   }
 `;
 
@@ -131,6 +122,8 @@ const buildTitleClass = css`
   margin: 0 0 0.45rem 0;
   color: var(--chat-text);
   font-size: 1.45rem;
+  font-weight: 900;
+  font-family: ${displayFontFamily};
 `;
 
 const buildDescriptionClass = css`
@@ -160,12 +153,12 @@ const buildTagRowClass = css`
 
 const buildTagClass = css`
   font-size: 0.74rem;
-  padding: 0.28rem 0.55rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 999px;
-  background: var(--chat-bg);
-  color: var(--chat-text);
   border: 1px solid var(--ui-border);
   line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 `;
 
 const buildMetaRowClass = css`
@@ -184,6 +177,48 @@ const buildMetaItemClass = css`
   opacity: 0.72;
 `;
 
+const emptyStateClass = css`
+  padding: 2.2rem;
+  border-radius: ${borderRadius};
+  border: 1px solid var(--ui-border);
+  background: #fafbff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const emptyTitleClass = css`
+  margin: 0;
+  font-size: 2rem;
+  color: var(--chat-text);
+  font-family: ${displayFontFamily};
+  font-weight: 900;
+  line-height: 1.1;
+`;
+
+const emptyBodyClass = css`
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--chat-text);
+  opacity: 0.86;
+  line-height: 1.5;
+`;
+
+const emptyInputWrapClass = css`
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  padding: 0.65rem;
+  @media (max-width: ${mobileMaxWidth}) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
 interface BuildListItem {
   id: number;
   title: string;
@@ -196,6 +231,12 @@ interface BuildListItem {
   viewCount?: number;
   publishedAt?: number | null;
   sourceBuildId?: number | null;
+}
+
+interface BuildTone {
+  background: string;
+  border: string;
+  color: string;
 }
 
 export default function BuildList() {
@@ -225,7 +266,7 @@ export default function BuildList() {
       }
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   if (!userId) {
@@ -246,14 +287,16 @@ export default function BuildList() {
         <h2
           className={css`
             margin: 1rem 0 0.6rem;
-            font-size: 2rem;
+            font-size: 2.2rem;
             color: var(--chat-text);
+            font-family: ${displayFontFamily};
+            font-weight: 900;
           `}
         >
-          Create and launch apps with AI
+          Build apps with AI
         </h2>
-        <p style={{ color: 'var(--chat-text)', opacity: 0.7, fontSize: '1.2rem' }}>
-          Log in to start new builds and manage your projects.
+        <p style={{ color: 'var(--chat-text)', opacity: 0.8, fontSize: '1.35rem' }}>
+          Log in to start making your own apps.
         </p>
       </div>
     );
@@ -273,58 +316,29 @@ export default function BuildList() {
           </div>
           <h1 className={heroTitleClass}>My Builds</h1>
           <p className={heroBodyClass}>
-            Turn rough ideas into working apps in minutes. Copilot can draft
-            screens, wire data flows, run review/fix loops, and keep version
-            history as you iterate.
+            Got an app idea? Describe it and AI will build it for you.
           </p>
           <div>
-            <button
-              className={primaryButtonClass}
+            <GameCTAButton
+              variant="gold"
+              size="lg"
+              shiny
               onClick={() => navigate('/build/new')}
-              type="button"
             >
               New Build
-            </button>
+            </GameCTAButton>
           </div>
         </div>
       </section>
 
       {builds.length === 0 ? (
-        <div
-          className={css`
-            padding: 3rem;
-            background: #fff;
-            border-radius: ${borderRadius};
-            border: 1px dashed var(--ui-border);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-          `}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontSize: '1.15rem',
-              color: 'var(--chat-text)',
-              opacity: 0.85,
-              lineHeight: 1.55
-            }}
-          >
-            Describe anything you want to build. Copilot will start coding right
-            away, ask follow-up questions if needed, or suggest the closest
-            realistic version using Twinkle SDK capabilities.
+        <div className={emptyStateClass}>
+          <h2 className={emptyTitleClass}>Kick Off Your First Build</h2>
+          <p className={emptyBodyClass}>
+            Tell AI what you want to make, like a game, quiz, or helper app.
+            It will start building right away.
           </p>
-          <div
-            className={css`
-              display: flex;
-              gap: 0.7rem;
-              align-items: center;
-              @media (max-width: ${mobileMaxWidth}) {
-                flex-direction: column;
-                align-items: stretch;
-              }
-            `}
-          >
+          <div className={emptyInputWrapClass}>
             <input
               value={promptInput}
               onChange={(e) => setPromptInput(e.target.value)}
@@ -338,84 +352,103 @@ export default function BuildList() {
               className={css`
                 flex: 1;
                 min-width: 0;
-                height: 44px;
-                border: 1px solid var(--ui-border);
-                border-radius: 10px;
-                padding: 0 0.9rem;
-                font-size: 0.95rem;
+                height: 48px;
+                border: 1px solid rgba(65, 140, 235, 0.3);
+                border-radius: 12px;
+                padding: 0 0.95rem;
+                font-size: 1rem;
+                background: #fff;
                 &:focus {
                   outline: none;
-                  border-color: var(--theme-border);
+                  border-color: #418CEB;
+                  box-shadow: 0 0 0 2px rgba(65, 140, 235, 0.12);
                 }
               `}
             />
-            <button
-              className={primaryButtonClass}
+            <GameCTAButton
+              variant="success"
+              size="lg"
+              shiny
+              loading={creatingFromPrompt}
               disabled={!promptInput.trim() || creatingFromPrompt}
               onClick={handleStartFromPrompt}
-              type="button"
             >
               {creatingFromPrompt ? 'Starting...' : 'Start Building'}
-            </button>
+            </GameCTAButton>
           </div>
         </div>
       ) : (
         <div className={buildGridClass}>
-          {builds.map((build) => (
-            <Link
-              key={build.id}
-              to={`/build/${build.id}`}
-              className={buildCardClass}
-            >
-              <div className={buildCardHeaderClass}>
-                <div>
-                  <h3 className={buildTitleClass}>{build.title}</h3>
-                  <p className={buildDescriptionClass}>
-                    {build.description?.trim() || deriveBuildCardSummary(build)}
-                  </p>
+          {builds.map((build) => {
+            const statusTone = getBuildStatusTone(build.status);
+            const visibilityTone = getVisibilityTone(build.isPublic);
+            const codeTone = getCodeTone(Boolean(build.hasCode));
+            return (
+              <Link
+                key={build.id}
+                to={`/build/${build.id}`}
+                className={buildCardClass}
+                style={{ borderLeftColor: statusTone.border }}
+              >
+                <div className={buildCardHeaderClass}>
+                  <div>
+                    <h3 className={buildTitleClass}>{build.title}</h3>
+                    <p className={buildDescriptionClass}>
+                      {build.description?.trim() || deriveBuildCardSummary(build)}
+                    </p>
+                  </div>
+                  <span className={buildUpdatedClass}>
+                    <Icon icon="clock" />
+                    Updated {formatRelativeTime(build.updatedAt)}
+                  </span>
                 </div>
-                <span className={buildUpdatedClass}>
-                  <Icon icon="clock" />
-                  Updated {formatRelativeTime(build.updatedAt)}
-                </span>
-              </div>
-              <div className={buildTagRowClass}>
-                <span className={buildTagClass}>
-                  {formatBuildStatusLabel(build.status)}
-                </span>
-                <span className={buildTagClass}>
-                  {build.isPublic ? 'Public' : 'Private'}
-                </span>
-                <span className={buildTagClass}>
-                  {build.hasCode ? 'Code ready' : 'No code yet'}
-                </span>
-                {!!build.sourceBuildId && (
-                  <span className={buildTagClass}>Forked</span>
-                )}
-              </div>
-              <div className={buildMetaRowClass}>
-                <span className={buildMetaItemClass}>
-                  <Icon icon="clock-rotate-left" />
-                  Created {formatRelativeTime(build.createdAt)}
-                </span>
-                <span className={buildMetaItemClass}>
-                  <Icon icon="eye" />
-                  {formatViewLabel(build.viewCount)}
-                </span>
-                {build.isPublic && build.publishedAt ? (
-                  <span className={buildMetaItemClass}>
-                    <Icon icon="globe" />
-                    Published {formatRelativeTime(build.publishedAt)}
+                <div className={buildTagRowClass}>
+                  <span className={buildTagClass} style={toTagStyle(statusTone)}>
+                    {formatBuildStatusLabel(build.status)}
                   </span>
-                ) : (
-                  <span className={buildMetaItemClass}>
-                    <Icon icon="lock" />
-                    Not published yet
+                  <span className={buildTagClass} style={toTagStyle(visibilityTone)}>
+                    {build.isPublic ? 'Public' : 'Private'}
                   </span>
-                )}
-              </div>
-            </Link>
-          ))}
+                  <span className={buildTagClass} style={toTagStyle(codeTone)}>
+                    {build.hasCode ? 'Code ready' : 'No code yet'}
+                  </span>
+                  {!!build.sourceBuildId && (
+                    <span
+                      className={buildTagClass}
+                      style={toTagStyle({
+                        background: 'rgba(147, 51, 234, 0.14)',
+                        border: 'rgba(147, 51, 234, 0.36)',
+                        color: '#6b21a8'
+                      })}
+                    >
+                      Forked
+                    </span>
+                  )}
+                </div>
+                <div className={buildMetaRowClass}>
+                  <span className={buildMetaItemClass}>
+                    <Icon icon="clock-rotate-left" />
+                    Created {formatRelativeTime(build.createdAt)}
+                  </span>
+                  <span className={buildMetaItemClass}>
+                    <Icon icon="eye" />
+                    {formatViewLabel(build.viewCount)}
+                  </span>
+                  {build.isPublic && build.publishedAt ? (
+                    <span className={buildMetaItemClass}>
+                      <Icon icon="globe" />
+                      Published {formatRelativeTime(build.publishedAt)}
+                    </span>
+                  ) : (
+                    <span className={buildMetaItemClass}>
+                      <Icon icon="lock" />
+                      Not published yet
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
@@ -480,4 +513,65 @@ function formatViewLabel(viewCount?: number | null) {
   if (views <= 0) return 'No views yet';
   if (views === 1) return '1 view';
   return `${views} views`;
+}
+
+function getBuildStatusTone(status: string): BuildTone {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'draft') {
+    return {
+      background: 'rgba(255, 154, 0, 0.16)',
+      border: 'rgba(255, 154, 0, 0.36)',
+      color: '#b45309'
+    };
+  }
+  if (normalized === 'published') {
+    return {
+      background: 'rgba(34, 197, 94, 0.14)',
+      border: 'rgba(34, 197, 94, 0.34)',
+      color: '#166534'
+    };
+  }
+  return {
+    background: 'rgba(65, 140, 235, 0.14)',
+    border: 'rgba(65, 140, 235, 0.34)',
+    color: '#1d4ed8'
+  };
+}
+
+function getVisibilityTone(isPublic: boolean): BuildTone {
+  if (isPublic) {
+    return {
+      background: 'rgba(65, 140, 235, 0.14)',
+      border: 'rgba(65, 140, 235, 0.34)',
+      color: '#1d4ed8'
+    };
+  }
+  return {
+    background: 'rgba(100, 116, 139, 0.14)',
+    border: 'rgba(100, 116, 139, 0.3)',
+    color: '#334155'
+  };
+}
+
+function getCodeTone(hasCode: boolean): BuildTone {
+  if (hasCode) {
+    return {
+      background: 'rgba(34, 197, 94, 0.14)',
+      border: 'rgba(34, 197, 94, 0.34)',
+      color: '#166534'
+    };
+  }
+  return {
+    background: 'rgba(236, 72, 153, 0.12)',
+    border: 'rgba(236, 72, 153, 0.28)',
+    color: '#be185d'
+  };
+}
+
+function toTagStyle(tone: BuildTone): React.CSSProperties {
+  return {
+    background: tone.background,
+    borderColor: tone.border,
+    color: tone.color
+  };
 }

@@ -7,6 +7,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { computeLineDiff } from '~/components/CodeDiff/diffUtils';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 const panelClass = css`
   display: grid;
@@ -23,11 +24,16 @@ const panelClass = css`
 `;
 
 const headerClass = css`
-  padding: 1.1rem 1.2rem;
+  min-height: var(--build-workspace-header-height);
+  padding: 0 1rem;
   background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  align-items: center;
+  row-gap: 0.4rem;
+  border-bottom: 1px solid var(--ui-border);
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.9rem 1rem;
+  }
 `;
 
 const headerTitleClass = css`
@@ -39,11 +45,6 @@ const headerTitleClass = css`
   font-size: 1.1rem;
 `;
 
-const headerSubtitleClass = css`
-  font-size: 0.95rem;
-  color: var(--chat-text);
-  opacity: 0.7;
-`;
 
 interface ChatMessage {
   id: number;
@@ -149,9 +150,6 @@ export default function ChatPanel({
         <div className={headerTitleClass}>
           <Icon icon="sparkles" />
           Build Copilot
-        </div>
-        <div className={headerSubtitleClass}>
-          Describe the app you want and iterate on the results.
         </div>
         {usageRows.length > 0 && (
           <div
@@ -469,49 +467,22 @@ export default function ChatPanel({
               rows={1}
             />
             {generating ? (
-              <button
+              <GameCTAButton
                 onClick={onStopGeneration}
-                className={css`
-                  padding: 0 1rem;
-                  background: ${Color.orange(0.95)};
-                  color: #fff;
-                  border: none;
-                  border-radius: 10px;
-                  cursor: pointer;
-                  transition: transform 0.2s, background 0.2s;
-                  &:hover {
-                    background: ${Color.orange()};
-                    transform: translateY(-1px);
-                  }
-                `}
-                title="Stop Copilot"
-              >
-                <Icon icon="stop" />
-              </button>
+                variant="orange"
+                size="md"
+                icon="stop"
+                style={{ minWidth: '3rem' }}
+              />
             ) : (
-              <button
+              <GameCTAButton
                 onClick={onSendMessage}
                 disabled={!inputMessage.trim() || generating}
-                className={css`
-                  padding: 0 1rem;
-                  background: ${inputMessage.trim() && !generating
-                    ? 'var(--theme-bg)'
-                    : 'var(--theme-disabled-bg)'};
-                  color: var(--theme-text);
-                  border: none;
-                  border-radius: 10px;
-                  cursor: ${inputMessage.trim() && !generating
-                    ? 'pointer'
-                    : 'not-allowed'};
-                  transition: transform 0.2s, background 0.2s;
-                  &:hover:not(:disabled) {
-                    background: var(--theme-hover-bg);
-                    transform: translateY(-1px);
-                  }
-                `}
-              >
-                <Icon icon="paper-plane" />
-              </button>
+                variant="logoBlue"
+                size="md"
+                icon="paper-plane"
+                style={{ minWidth: '3rem' }}
+              />
             )}
           </div>
         </div>

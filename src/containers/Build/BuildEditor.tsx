@@ -5,9 +5,13 @@ import PreviewPanel from './PreviewPanel';
 import SocialPanel from './SocialPanel';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
+import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { socket } from '~/constants/sockets/api';
+
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 const pageClass = css`
   display: grid;
@@ -32,15 +36,16 @@ const badgeClass = css`
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.35rem 0.9rem;
+  padding: 0.4rem 1rem;
   border-radius: 999px;
-  background: var(--chat-bg);
-  color: var(--theme-bg);
-  border: 1px solid var(--ui-border);
-  font-weight: 800;
-  font-size: 0.95rem;
+  background: rgba(65, 140, 235, 0.14);
+  color: #1d4ed8;
+  border: 1px solid rgba(65, 140, 235, 0.28);
+  font-weight: 900;
+  font-size: 0.9rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  font-family: ${displayFontFamily};
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -56,15 +61,43 @@ const badgeClass = css`
   }
 `;
 
+const headerTitleClass = css`
+  margin: 0;
+  font-size: 2rem;
+  color: var(--chat-text);
+  font-family: ${displayFontFamily};
+  font-weight: 900;
+  line-height: 1.15;
+`;
+
+const headerActionsClass = css`
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+const statusBadgeClass = css`
+  font-size: 0.76rem;
+  padding: 0.38rem 0.74rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 900;
+  font-family: ${displayFontFamily};
+  border: 1px solid transparent;
+  line-height: 1;
+`;
+
 const panelShellClass = css`
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  padding: 1.2rem 1.6rem 1.6rem;
+  padding: 0.85rem 1.6rem 1.6rem;
   overflow: hidden;
   min-height: 0;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 1rem;
+    padding: 0.75rem 1rem 1rem;
   }
 `;
 
@@ -78,6 +111,7 @@ const panelShellWithSocialClass = css`
 `;
 
 const workspaceShellBase = css`
+  --build-workspace-header-height: 4.5rem;
   display: grid;
   min-height: 0;
   overflow: hidden;
@@ -820,15 +854,7 @@ export default function BuildEditor({
             <Icon icon="rocket-launch" />
             Build Studio
           </Link>
-          <h2
-            className={css`
-              margin: 0;
-              font-size: 1.8rem;
-              color: var(--chat-text);
-            `}
-          >
-            {build.title}
-          </h2>
+          <h2 className={headerTitleClass}>{build.title}</h2>
           {build.description ? (
             <span
               className={css`
@@ -853,135 +879,56 @@ export default function BuildEditor({
             </span>
           )}
         </div>
-        <div
-          className={css`
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-          `}
-        >
+        <div className={headerActionsClass}>
           <span
-            className={css`
-              font-size: 0.75rem;
-              padding: 0.35rem 0.7rem;
-              border-radius: 999px;
-              background: var(--chat-bg);
-              color: var(--chat-text);
-              border: 1px solid var(--ui-border);
-              text-transform: uppercase;
-              letter-spacing: 0.04em;
-              font-weight: 700;
-            `}
+            className={statusBadgeClass}
+            style={getBuildStatusBadgeStyle(build.status)}
           >
             {build.status}
           </span>
           <span
-            className={css`
-              font-size: 0.75rem;
-              padding: 0.35rem 0.7rem;
-              border-radius: 999px;
-              background: var(--chat-bg);
-              color: ${build.isPublic ? 'var(--theme-bg)' : 'var(--chat-text)'};
-              border: 1px solid var(--ui-border);
-              text-transform: uppercase;
-              letter-spacing: 0.04em;
-              font-weight: 700;
-            `}
+            className={statusBadgeClass}
+            style={getVisibilityBadgeStyle(build.isPublic)}
           >
             {build.isPublic ? 'public' : 'private'}
           </span>
           {isOwner && build.code && !generating && !reviewing && (
-            <button
+            <GameCTAButton
               onClick={handleReview}
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                padding: 0.45rem 0.9rem;
-                border-radius: 10px;
-                border: 1px solid ${Color.orange(0.5)};
-                background: #fff;
-                color: ${Color.orange()};
-                font-size: 0.85rem;
-                font-weight: 700;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                &:hover {
-                  background: ${Color.orange(0.07)};
-                  transform: translateY(-1px);
-                }
-              `}
+              variant="orange"
+              size="md"
+              icon="magnifying-glass"
             >
-              <Icon icon="magnifying-glass" />
               Review
-            </button>
+            </GameCTAButton>
           )}
           {isOwner && (
-            <button
+            <GameCTAButton
               onClick={build.isPublic ? handleUnpublish : handlePublish}
               disabled={publishing || (!build.isPublic && !build.code)}
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                padding: 0.45rem 0.9rem;
-                border-radius: 10px;
-                border: 1px solid var(--ui-border);
-                background: ${build.isPublic ? '#fff' : 'var(--theme-bg)'};
-                color: ${build.isPublic
-                  ? 'var(--chat-text)'
-                  : 'var(--theme-text)'};
-                font-size: 0.85rem;
-                font-weight: 700;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                &:hover:not(:disabled) {
-                  transform: translateY(-1px);
-                }
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
-                }
-              `}
+              loading={publishing}
+              variant={build.isPublic ? 'neutral' : 'magenta'}
+              size="md"
+              icon={build.isPublic ? 'eye-slash' : 'globe'}
             >
-              <Icon icon={build.isPublic ? 'eye-slash' : 'globe'} />
               {publishing
                 ? 'Processing...'
                 : build.isPublic
                   ? 'Unpublish'
                   : 'Publish'}
-            </button>
+            </GameCTAButton>
           )}
           {!isOwner && userId && build.isPublic && (
-            <button
+            <GameCTAButton
               onClick={handleFork}
               disabled={forking}
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                padding: 0.45rem 0.9rem;
-                border-radius: 10px;
-                border: 1px solid var(--ui-border);
-                background: #fff;
-                color: var(--chat-text);
-                font-size: 0.85rem;
-                font-weight: 700;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                &:hover:not(:disabled) {
-                  border-color: var(--theme-border);
-                  transform: translateY(-1px);
-                }
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
-                }
-              `}
+              loading={forking}
+              variant="primary"
+              size="md"
+              icon="code-branch"
             >
-              <Icon icon="code-branch" />
               {forking ? 'Forking...' : 'Fork'}
-            </button>
+            </GameCTAButton>
           )}
         </div>
       </header>
@@ -1161,4 +1108,42 @@ export default function BuildEditor({
     chatMessagesRef.current = normalized;
     updateChatMessagesRef.current(normalized);
   }
+}
+
+function getBuildStatusBadgeStyle(status: string): React.CSSProperties {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'draft') {
+    return {
+      background: 'rgba(255, 154, 0, 0.16)',
+      borderColor: 'rgba(255, 154, 0, 0.36)',
+      color: '#b45309'
+    };
+  }
+  if (normalized === 'published') {
+    return {
+      background: 'rgba(34, 197, 94, 0.16)',
+      borderColor: 'rgba(34, 197, 94, 0.36)',
+      color: '#166534'
+    };
+  }
+  return {
+    background: 'rgba(65, 140, 235, 0.14)',
+    borderColor: 'rgba(65, 140, 235, 0.34)',
+    color: '#1d4ed8'
+  };
+}
+
+function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {
+  if (isPublic) {
+    return {
+      background: 'rgba(65, 140, 235, 0.14)',
+      borderColor: 'rgba(65, 140, 235, 0.34)',
+      color: '#1d4ed8'
+    };
+  }
+  return {
+    background: 'rgba(100, 116, 139, 0.14)',
+    borderColor: 'rgba(100, 116, 139, 0.3)',
+    color: '#334155'
+  };
 }

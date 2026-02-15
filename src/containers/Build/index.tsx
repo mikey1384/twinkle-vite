@@ -3,12 +3,16 @@ import { Routes, Route, useParams, useNavigate, useLocation } from 'react-router
 import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import BuildEditor from './BuildEditor';
 import BuildList from './BuildList';
 import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
+
+const displayFontFamily =
+  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 export default function Build() {
   return (
@@ -28,36 +32,6 @@ export default function Build() {
     </ErrorBoundary>
   );
 }
-
-const primaryButtonClass = css`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1.2rem;
-  border-radius: 10px;
-  border: 1px solid var(--theme-border);
-  background: var(--theme-bg);
-  color: var(--theme-text);
-  font-size: 0.95rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-  &:hover:not(:disabled) {
-    background: var(--theme-hover-bg);
-    transform: translateY(-1px);
-  }
-  &:disabled {
-    background: var(--theme-disabled-bg);
-    border-color: var(--theme-disabled-border);
-    cursor: not-allowed;
-  }
-  &:focus-visible {
-    outline: 2px solid var(--theme-border);
-    outline-offset: 2px;
-  }
-`;
 
 function NewBuild() {
   const navigate = useNavigate();
@@ -88,7 +62,7 @@ function NewBuild() {
     <div
       className={css`
         width: 100%;
-        max-width: 680px;
+        max-width: 720px;
         margin: 3rem auto;
         padding: 0 2rem;
         @media (max-width: ${mobileMaxWidth}) {
@@ -103,6 +77,7 @@ function NewBuild() {
           border-radius: 22px;
           background: #fff;
           border: 1px solid var(--ui-border);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
           overflow: hidden;
           @media (max-width: ${mobileMaxWidth}) {
             padding: 1.6rem;
@@ -121,15 +96,16 @@ function NewBuild() {
               display: inline-flex;
               align-items: center;
               gap: 0.6rem;
-              padding: 0.4rem 0.9rem;
+              padding: 0.45rem 1rem;
               border-radius: 999px;
-              background: var(--chat-bg);
-              color: var(--theme-bg);
-              border: 1px solid var(--ui-border);
-              font-weight: 800;
-              font-size: 1rem;
-              letter-spacing: 0.04em;
+              background: rgba(65, 140, 235, 0.14);
+              color: #1d4ed8;
+              border: 1px solid rgba(65, 140, 235, 0.28);
+              font-weight: 900;
+              font-size: 0.95rem;
+              letter-spacing: 0.05em;
               text-transform: uppercase;
+              font-family: ${displayFontFamily};
             `}
           >
             <Icon icon="sparkles" />
@@ -138,28 +114,30 @@ function NewBuild() {
           <h1
             className={css`
               margin: 0;
-              font-size: 2.4rem;
-              font-weight: 800;
+              font-size: 2.8rem;
+              font-weight: 900;
+              line-height: 1.1;
               color: var(--chat-text);
+              font-family: ${displayFontFamily};
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 2rem;
+                font-size: 2.3rem;
               }
             `}
           >
-            Create a new build
+            Create a New Build
           </h1>
           <p
             className={css`
               margin: 0;
-              font-size: 1.2rem;
+              font-size: 1.18rem;
               color: var(--chat-text);
-              opacity: 0.75;
+              opacity: 0.8;
               max-width: 34rem;
               line-height: 1.6;
             `}
           >
-            Give your project a name so the Build Studio can start scaffolding
-            your app.
+            Give your project a name so Build Studio can start scaffolding your
+            app.
           </p>
         </div>
       </div>
@@ -170,6 +148,7 @@ function NewBuild() {
           border-radius: ${borderRadius};
           border: 1px solid var(--ui-border);
           padding: 1.6rem;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
         `}
       >
         <label
@@ -194,15 +173,16 @@ function NewBuild() {
           }}
           className={css`
             width: 100%;
-            padding: 0.85rem 1rem;
+            padding: 0.9rem 1rem;
             font-size: 1.05rem;
-            border: 1px solid var(--ui-border);
+            border: 1px solid rgba(65, 140, 235, 0.26);
             border-radius: ${borderRadius};
             background: #fff;
-            transition: border-color 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
             &:focus {
               outline: none;
-              border-color: var(--theme-border);
+              border-color: #418CEB;
+              box-shadow: 0 0 0 2px rgba(65, 140, 235, 0.12);
             }
           `}
         />
@@ -213,14 +193,16 @@ function NewBuild() {
             justify-content: flex-end;
           `}
         >
-          <button
-            className={primaryButtonClass}
+          <GameCTAButton
+            variant="primary"
+            size="lg"
+            shiny
             onClick={handleCreate}
             disabled={!title.trim() || creating}
-            type="button"
+            loading={creating}
           >
             {creating ? 'Creating...' : 'Create Build'}
-          </button>
+          </GameCTAButton>
         </div>
       </div>
     </div>

@@ -34,6 +34,7 @@ export default function BuildCard({
 }: BuildCardProps) {
   const publishedAt = build.publishedAt || build.updatedAt || build.createdAt;
   const publishedLabel = publishedAt ? timeSince(publishedAt) : 'Unpublished';
+  const accent = getBuildAccent(build.status);
 
   return (
     <div
@@ -41,24 +42,27 @@ export default function BuildCard({
       className={css`
         background: #fff;
         border: 1px solid var(--ui-border);
+        border-top: 4px solid ${accent};
         border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transform: translateY(-3px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
         }
       `}
     >
       <div
         className={css`
           height: 140px;
-          background: linear-gradient(135deg, var(--theme-bg) 0%, var(--theme-hover-bg) 100%);
+          background: linear-gradient(135deg, #eef5ff 0%, #fff6e5 100%);
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
+          position: relative;
         `}
       >
         {build.thumbnailUrl ? (
@@ -75,7 +79,7 @@ export default function BuildCard({
           <Icon
             icon="laptop-code"
             size="3x"
-            style={{ color: 'var(--theme-text)', opacity: 0.5 }}
+            style={{ color: '#1d4ed8', opacity: 0.45 }}
           />
         )}
       </div>
@@ -88,7 +92,7 @@ export default function BuildCard({
           className={css`
             margin: 0 0 0.5rem 0;
             font-size: 1.1rem;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--chat-text);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -119,7 +123,7 @@ export default function BuildCard({
             gap: 1rem;
             font-size: 0.85rem;
             color: var(--chat-text);
-            opacity: 0.6;
+            opacity: 0.65;
           `}
         >
           <span
@@ -160,7 +164,7 @@ export default function BuildCard({
             margin-top: 0.5rem;
             font-size: 0.8rem;
             color: var(--chat-text);
-            opacity: 0.5;
+            opacity: 0.55;
           `}
         >
           {publishedLabel}
@@ -168,4 +172,11 @@ export default function BuildCard({
       </div>
     </div>
   );
+}
+
+function getBuildAccent(status: string) {
+  const normalized = (status || '').toLowerCase();
+  if (normalized === 'draft') return '#FF9A00';
+  if (normalized === 'published') return '#22c55e';
+  return '#418CEB';
 }
