@@ -774,16 +774,6 @@ export default function MessagesContainer({
             channelId: selectedChannelId,
             timeStamp
           };
-          socket.emit('new_chat_message', {
-            message: messagePayload,
-            channel: {
-              id: selectedChannelId,
-              ...(currentChannel.twoPeople
-                ? { twoPeople: true, members: currentChannel.members }
-                : { channelName }),
-              pathId: currentChannel.pathId
-            }
-          });
           onSubmitMessage({
             messageId,
             message: messagePayload
@@ -890,16 +880,6 @@ export default function MessagesContainer({
             channelId: selectedChannelId,
             timeStamp
           };
-          socket.emit('new_chat_message', {
-            message: messagePayload,
-            channel: {
-              id: selectedChannelId,
-              ...(currentChannel.twoPeople
-                ? { twoPeople: true, members: currentChannel.members }
-                : { channelName }),
-              pathId: currentChannel.pathId
-            }
-          });
           onSubmitMessage({
             messageId,
             message: messagePayload
