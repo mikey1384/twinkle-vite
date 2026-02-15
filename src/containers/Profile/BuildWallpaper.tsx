@@ -30,7 +30,12 @@ const WALLPAPER_SDK_STUB = `<script>
       getUsers: noopArr, getDailyReflections: noopArr,
       getDailyReflectionsByUser: noopArr
     },
-    content: { getMySubjects: noopArr, getSubject: noop, getSubjectComments: noopArr },
+    content: {
+      getMySubjects: noopArr,
+      getSubject: noop,
+      getSubjectComments: noopArr,
+      getProfileComments: noop
+    },
     vocabulary: {
       lookupWord: noop, collectWord: noop,
       getBreakStatus: noop, getCollectedWords: noopArr

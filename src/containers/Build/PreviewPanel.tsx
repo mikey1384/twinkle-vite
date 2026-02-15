@@ -612,6 +612,22 @@ const TWINKLE_SDK_SCRIPT = `
           limit: options.limit,
           cursor: options.cursor
         });
+      },
+
+      async getProfileComments(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comments', {
+          profileUserId: options.profileUserId,
+          limit: options.limit,
+          offset: options.offset,
+          sortBy: options.sortBy,
+          includeReplies: options.includeReplies,
+          includeStats: options.includeStats,
+          topCommentersLimit: options.topCommentersLimit,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
       }
     },
 
@@ -1179,6 +1195,9 @@ export default function PreviewPanel({
   const getBuildSubjectComments = useAppContext(
     (v) => v.requestHelpers.getBuildSubjectComments
   );
+  const getBuildProfileComments = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileComments
+  );
   const getSharedDbTopics = useAppContext(
     (v) => v.requestHelpers.getSharedDbTopics
   );
@@ -1266,6 +1285,7 @@ export default function PreviewPanel({
   const getBuildMySubjectsRef = useRef(getBuildMySubjects);
   const getBuildSubjectRef = useRef(getBuildSubject);
   const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
+  const getBuildProfileCommentsRef = useRef(getBuildProfileComments);
   const getSharedDbTopicsRef = useRef(getSharedDbTopics);
   const createSharedDbTopicRef = useRef(createSharedDbTopic);
   const getSharedDbEntriesRef = useRef(getSharedDbEntries);
@@ -2402,6 +2422,30 @@ export default function PreviewPanel({
               limit: payload?.limit,
               cursor: payload?.cursor,
               token: contentCommentsToken
+            });
+            break;
+          }
+
+          case 'content:profile-comments': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileCountToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentsRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              limit: payload?.limit,
+              offset: payload?.offset,
+              sortBy: payload?.sortBy,
+              includeReplies: payload?.includeReplies,
+              includeStats: payload?.includeStats,
+              topCommentersLimit: payload?.topCommentersLimit,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileCountToken
             });
             break;
           }

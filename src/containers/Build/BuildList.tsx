@@ -338,7 +338,7 @@ export default function BuildList() {
 
       {builds.length === 0 ? (
         <div className={emptyStateClass}>
-          <h2 className={emptyTitleClass}>Kick Off Your First Build</h2>
+          <h2 className={emptyTitleClass}>Make Your First App</h2>
           <p className={emptyBodyClass}>
             Tell AI what you want to make, like a game, quiz, or helper app.
             It will start building right away.

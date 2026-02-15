@@ -1205,6 +1205,62 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getBuildProfileComments({
+      buildId,
+      profileUserId,
+      limit,
+      offset,
+      sortBy,
+      includeReplies,
+      includeStats,
+      topCommentersLimit,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      limit?: number;
+      offset?: number;
+      sortBy?: 'newest' | 'oldest' | 'mostLiked' | 'mostReplied';
+      includeReplies?: boolean;
+      includeStats?: boolean;
+      topCommentersLimit?: number;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comments`,
+          {
+            profileUserId,
+            limit,
+            offset,
+            sortBy,
+            includeReplies,
+            includeStats,
+            topCommentersLimit,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getSharedDbTopics({
       buildId,
       token
