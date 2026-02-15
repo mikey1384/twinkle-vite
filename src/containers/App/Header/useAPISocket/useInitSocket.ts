@@ -224,6 +224,12 @@ export default function useInitSocket({
 
     function checkSocketHealth() {
       if (!socket.connected) {
+        logForAdmin({
+          message: 'Socket disconnected during health check - attempting reconnect'
+        });
+        try {
+          socket.connect();
+        } catch {}
         return;
       }
 
@@ -284,6 +290,7 @@ export default function useInitSocket({
     };
     const onOnline = () => {
       void checkFeedsOutdated();
+      checkSocketHealth();
     };
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onOnline);
