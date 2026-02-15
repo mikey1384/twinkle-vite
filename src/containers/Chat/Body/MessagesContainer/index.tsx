@@ -227,6 +227,9 @@ export default function MessagesContainer({
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
+  const latestBoardMessageIdRef = useRef<
+    Record<number, Partial<Record<'chess' | 'omok', number>>>
+  >({});
   const [searchText, setSearchText] = useState('');
 
   const { handleSearch, searching } = useSearch({
@@ -511,6 +514,32 @@ export default function MessagesContainer({
   }, [wordleModalShown]);
 
   useEffect(() => {
+    const channelId = Number(currentChannel?.id || selectedChannelId || 0);
+    if (!channelId) return;
+    const latestChessMessageId = Number(currentChannel?.lastChessMessageId || 0);
+    const latestOmokMessageId = Number(currentChannel?.lastOmokMessageId || 0);
+    if (latestChessMessageId > 0) {
+      setLatestBoardMessageId({
+        channelId,
+        gameType: 'chess',
+        messageId: latestChessMessageId
+      });
+    }
+    if (latestOmokMessageId > 0) {
+      setLatestBoardMessageId({
+        channelId,
+        gameType: 'omok',
+        messageId: latestOmokMessageId
+      });
+    }
+  }, [
+    currentChannel?.id,
+    currentChannel?.lastChessMessageId,
+    currentChannel?.lastOmokMessageId,
+    selectedChannelId
+  ]);
+
+  useEffect(() => {
     if (isReloadRequired) {
       reload();
     }
@@ -555,12 +584,24 @@ export default function MessagesContainer({
     function handleCountdownUpdate({
       channelId,
       number,
-      gameType = 'chess'
+      gameType = 'chess',
+      startMessageId
     }: {
       channelId: number;
       number: number;
       gameType?: 'chess' | 'omok';
+      startMessageId?: number;
     }) {
+      const normalizedStartMessageId = Number(startMessageId || 0);
+      const latestKnownMessageId = getLatestBoardMessageId(channelId, gameType);
+      if (
+        normalizedStartMessageId > 0 &&
+        latestKnownMessageId > normalizedStartMessageId
+      ) {
+        // Ignore delayed stale timer ticks after a newer move has already been saved.
+        clearBoardCountdown(channelId, gameType);
+        return;
+      }
       if (channelId === selectedChannelId) {
         if (gameType === 'chess' && number === 0) {
           onSetChessModalShown(false);
@@ -597,6 +638,8 @@ export default function MessagesContainer({
       if (message.isChessMsg) {
         // Determine game type, respecting explicit server tag first
         const content: string = message?.content || '';
+        const normalizedChannelId = Number(message?.channelId || 0);
+        const normalizedMessageId = Number(message?.id || 0);
         let gameType: 'chess' | 'omok';
         if (message.gameType === 'omok') {
           gameType = 'omok';
@@ -608,6 +651,13 @@ export default function MessagesContainer({
           gameType = 'omok';
         } else {
           gameType = 'chess';
+        }
+        if (normalizedChannelId > 0 && normalizedMessageId > 0) {
+          setLatestBoardMessageId({
+            channelId: normalizedChannelId,
+            gameType,
+            messageId: normalizedMessageId
+          });
         }
         // Clear the countdown store so CountdownDisplay stops showing the value
         countdownStore.set(message.channelId, gameType, null);
@@ -762,6 +812,12 @@ export default function MessagesContainer({
               gameWinnerId
             }
           });
+          setLatestBoardMessageId({
+            channelId: selectedChannelId,
+            gameType: 'chess',
+            messageId: Number(messageId)
+          });
+          clearBoardCountdown(selectedChannelId, 'chess');
           const messagePayload = {
             id: messageId,
             userId,
@@ -868,6 +924,12 @@ export default function MessagesContainer({
               gameWinnerId
             }
           });
+          setLatestBoardMessageId({
+            channelId: selectedChannelId,
+            gameType: 'omok',
+            messageId: Number(messageId)
+          });
+          clearBoardCountdown(selectedChannelId, 'omok');
           const messagePayload = {
             id: messageId,
             userId,
@@ -1887,5 +1949,50 @@ export default function MessagesContainer({
     } catch (error) {
       console.error('Error searching messages:', error);
     }
+  }
+
+  function setLatestBoardMessageId({
+    channelId,
+    gameType,
+    messageId
+  }: {
+    channelId: number;
+    gameType: 'chess' | 'omok';
+    messageId: number;
+  }) {
+    const normalizedChannelId = Number(channelId || 0);
+    const normalizedMessageId = Number(messageId || 0);
+    if (!normalizedChannelId || normalizedMessageId <= 0) return;
+    const latestForType = getLatestBoardMessageId(normalizedChannelId, gameType);
+    if (normalizedMessageId <= latestForType) return;
+    latestBoardMessageIdRef.current[normalizedChannelId] = {
+      ...(latestBoardMessageIdRef.current[normalizedChannelId] || {}),
+      [gameType]: normalizedMessageId
+    };
+  }
+
+  function getLatestBoardMessageId(
+    channelId: number,
+    gameType: 'chess' | 'omok'
+  ) {
+    return Number(
+      latestBoardMessageIdRef.current[Number(channelId || 0)]?.[gameType] || 0
+    );
+  }
+
+  function clearBoardCountdown(
+    channelId: number,
+    gameType: 'chess' | 'omok'
+  ) {
+    const normalizedChannelId = Number(channelId || 0);
+    if (!normalizedChannelId) return;
+    countdownStore.set(normalizedChannelId, gameType, null);
+    setBoardCountdownObj((prev) => ({
+      ...prev,
+      [normalizedChannelId]: {
+        ...(prev[normalizedChannelId] || {}),
+        [gameType]: null
+      }
+    }));
   }
 }
