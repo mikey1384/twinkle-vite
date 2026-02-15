@@ -628,6 +628,56 @@ const TWINKLE_SDK_SCRIPT = `
           since: options.since,
           until: options.until
         });
+      },
+
+      async getProfileCommentIds(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comment-ids', {
+          profileUserId: options.profileUserId,
+          limit: options.limit,
+          offset: options.offset,
+          sortBy: options.sortBy,
+          includeReplies: options.includeReplies,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
+      },
+
+      async getCommentsByIds(idsOrOpts) {
+        var options = Array.isArray(idsOrOpts)
+          ? { ids: idsOrOpts }
+          : idsOrOpts || {};
+        if (!Array.isArray(options.ids)) {
+          throw new Error('ids array is required');
+        }
+        return await sendRequest('content:profile-comments-by-ids', {
+          ids: options.ids
+        });
+      },
+
+      async getProfileCommentCounts(idsOrOpts) {
+        var options = Array.isArray(idsOrOpts)
+          ? { ids: idsOrOpts }
+          : idsOrOpts || {};
+        if (!Array.isArray(options.ids)) {
+          throw new Error('ids array is required');
+        }
+        return await sendRequest('content:profile-comment-counts', {
+          ids: options.ids
+        });
+      },
+
+      async getProfileCommentStats(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comment-stats', {
+          profileUserId: options.profileUserId,
+          includeReplies: options.includeReplies,
+          topCommentersLimit: options.topCommentersLimit,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
       }
     },
 
@@ -1198,6 +1248,18 @@ export default function PreviewPanel({
   const getBuildProfileComments = useAppContext(
     (v) => v.requestHelpers.getBuildProfileComments
   );
+  const getBuildProfileCommentIds = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileCommentIds
+  );
+  const getBuildProfileCommentsByIds = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileCommentsByIds
+  );
+  const getBuildProfileCommentCounts = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileCommentCounts
+  );
+  const getBuildProfileCommentStats = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileCommentStats
+  );
   const getSharedDbTopics = useAppContext(
     (v) => v.requestHelpers.getSharedDbTopics
   );
@@ -1286,6 +1348,10 @@ export default function PreviewPanel({
   const getBuildSubjectRef = useRef(getBuildSubject);
   const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
   const getBuildProfileCommentsRef = useRef(getBuildProfileComments);
+  const getBuildProfileCommentIdsRef = useRef(getBuildProfileCommentIds);
+  const getBuildProfileCommentsByIdsRef = useRef(getBuildProfileCommentsByIds);
+  const getBuildProfileCommentCountsRef = useRef(getBuildProfileCommentCounts);
+  const getBuildProfileCommentStatsRef = useRef(getBuildProfileCommentStats);
   const getSharedDbTopicsRef = useRef(getSharedDbTopics);
   const createSharedDbTopicRef = useRef(createSharedDbTopic);
   const getSharedDbEntriesRef = useRef(getSharedDbEntries);
@@ -2446,6 +2512,78 @@ export default function PreviewPanel({
               since: payload?.since,
               until: payload?.until,
               token: contentProfileCountToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-ids': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileIdsToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentIdsRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              limit: payload?.limit,
+              offset: payload?.offset,
+              sortBy: payload?.sortBy,
+              includeReplies: payload?.includeReplies,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileIdsToken
+            });
+            break;
+          }
+
+          case 'content:profile-comments-by-ids': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileByIdsToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentsByIdsRef.current({
+              buildId: activeBuild.id,
+              ids: Array.isArray(payload?.ids) ? payload.ids : [],
+              token: contentProfileByIdsToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-counts': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileCountsToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentCountsRef.current({
+              buildId: activeBuild.id,
+              ids: Array.isArray(payload?.ids) ? payload.ids : [],
+              token: contentProfileCountsToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-stats': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileStatsToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentStatsRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              includeReplies: payload?.includeReplies,
+              topCommentersLimit: payload?.topCommentersLimit,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileStatsToken
             });
             break;
           }

@@ -1261,6 +1261,154 @@ export default function buildRequestHelpers({
       }
     },
 
+    async getBuildProfileCommentIds({
+      buildId,
+      profileUserId,
+      limit,
+      offset,
+      sortBy,
+      includeReplies,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      limit?: number;
+      offset?: number;
+      sortBy?: 'newest' | 'oldest' | 'mostLiked' | 'mostReplied';
+      includeReplies?: boolean;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-ids`,
+          {
+            profileUserId,
+            limit,
+            offset,
+            sortBy,
+            includeReplies,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileCommentsByIds({
+      buildId,
+      ids,
+      token
+    }: {
+      buildId: number;
+      ids: number[];
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comments-by-ids`,
+          { ids },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileCommentCounts({
+      buildId,
+      ids,
+      token
+    }: {
+      buildId: number;
+      ids: number[];
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-counts`,
+          { ids },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileCommentStats({
+      buildId,
+      profileUserId,
+      includeReplies,
+      topCommentersLimit,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      includeReplies?: boolean;
+      topCommentersLimit?: number;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-stats`,
+          {
+            profileUserId,
+            includeReplies,
+            topCommentersLimit,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getSharedDbTopics({
       buildId,
       token
