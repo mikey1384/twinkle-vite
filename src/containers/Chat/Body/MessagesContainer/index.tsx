@@ -344,10 +344,10 @@ export default function MessagesContainer({
     socketConnected && appliedIsRespondingToSubject
       ? ' - 8rem - 2px'
       : replyTarget
-      ? ' - 12rem - 2px'
-      : chessTarget
-      ? ' - 24rem - 2px'
-      : ''
+        ? ' - 12rem - 2px'
+        : chessTarget
+          ? ' - 24rem - 2px'
+          : ''
   }
     ${
       selectedChannelIsOnCall || selectedChannelIsOnAICall
@@ -516,7 +516,9 @@ export default function MessagesContainer({
   useEffect(() => {
     const channelId = Number(currentChannel?.id || selectedChannelId || 0);
     if (!channelId) return;
-    const latestChessMessageId = Number(currentChannel?.lastChessMessageId || 0);
+    const latestChessMessageId = Number(
+      currentChannel?.lastChessMessageId || 0
+    );
     const latestOmokMessageId = Number(currentChannel?.lastOmokMessageId || 0);
     if (latestChessMessageId > 0) {
       setLatestBoardMessageId({
@@ -532,6 +534,7 @@ export default function MessagesContainer({
         messageId: latestOmokMessageId
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentChannel?.id,
     currentChannel?.lastChessMessageId,
@@ -1246,9 +1249,8 @@ export default function MessagesContainer({
   ]);
 
   const handleCancelRewindRequest = useCallback(async () => {
-    const { messageId, cancelMessage, timeStamp } = await cancelChessRewind(
-      selectedChannelId
-    );
+    const { messageId, cancelMessage, timeStamp } =
+      await cancelChessRewind(selectedChannelId);
     socket.emit('cancel_chess_rewind', {
       channelId: selectedChannelId,
       messageId,
@@ -1277,9 +1279,8 @@ export default function MessagesContainer({
   );
 
   const handleDeclineRewind = useCallback(async () => {
-    const { messageId, declineMessage, timeStamp } = await declineChessRewind(
-      selectedChannelId
-    );
+    const { messageId, declineMessage, timeStamp } =
+      await declineChessRewind(selectedChannelId);
     socket.emit('decline_chess_rewind', {
       channelId: selectedChannelId,
       messageId,
@@ -1963,7 +1964,10 @@ export default function MessagesContainer({
     const normalizedChannelId = Number(channelId || 0);
     const normalizedMessageId = Number(messageId || 0);
     if (!normalizedChannelId || normalizedMessageId <= 0) return;
-    const latestForType = getLatestBoardMessageId(normalizedChannelId, gameType);
+    const latestForType = getLatestBoardMessageId(
+      normalizedChannelId,
+      gameType
+    );
     if (normalizedMessageId <= latestForType) return;
     latestBoardMessageIdRef.current[normalizedChannelId] = {
       ...(latestBoardMessageIdRef.current[normalizedChannelId] || {}),
@@ -1980,10 +1984,7 @@ export default function MessagesContainer({
     );
   }
 
-  function clearBoardCountdown(
-    channelId: number,
-    gameType: 'chess' | 'omok'
-  ) {
+  function clearBoardCountdown(channelId: number, gameType: 'chess' | 'omok') {
     const normalizedChannelId = Number(channelId || 0);
     if (!normalizedChannelId) return;
     countdownStore.set(normalizedChannelId, gameType, null);
