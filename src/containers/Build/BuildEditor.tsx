@@ -54,10 +54,15 @@ const badgeClass = css`
   &:hover {
     transform: translateY(-1px);
     border-color: var(--theme-border);
+    text-decoration: none;
+  }
+  &:active {
+    text-decoration: none;
   }
   &:focus-visible {
     outline: 2px solid var(--theme-border);
     outline-offset: 2px;
+    text-decoration: none;
   }
 `;
 

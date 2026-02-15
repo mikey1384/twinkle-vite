@@ -108,6 +108,11 @@ const buildCardClass = css`
     border-color: rgba(65, 140, 235, 0.28);
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    text-decoration: none;
+  }
+  &:focus-visible,
+  &:active {
+    text-decoration: none;
   }
 `;
 
