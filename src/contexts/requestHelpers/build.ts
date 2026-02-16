@@ -1212,8 +1212,6 @@ export default function buildRequestHelpers({
       offset,
       sortBy,
       includeReplies,
-      includeStats,
-      topCommentersLimit,
       range,
       since,
       until,
@@ -1225,8 +1223,6 @@ export default function buildRequestHelpers({
       offset?: number;
       sortBy?: 'newest' | 'oldest' | 'mostLiked' | 'mostReplied';
       includeReplies?: boolean;
-      includeStats?: boolean;
-      topCommentersLimit?: number;
       range?: 'today';
       since?: number;
       until?: number;
@@ -1241,8 +1237,6 @@ export default function buildRequestHelpers({
             offset,
             sortBy,
             includeReplies,
-            includeStats,
-            topCommentersLimit,
             range,
             since,
             until
@@ -1369,6 +1363,129 @@ export default function buildRequestHelpers({
       buildId,
       profileUserId,
       includeReplies,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      includeReplies?: boolean;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-stats`,
+          {
+            profileUserId,
+            includeReplies,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileCommentCount({
+      buildId,
+      profileUserId,
+      includeReplies,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      includeReplies?: boolean;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-count`,
+          {
+            profileUserId,
+            includeReplies,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileCommentSummary({
+      buildId,
+      profileUserId,
+      includeReplies,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      includeReplies?: boolean;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-summary`,
+          {
+            profileUserId,
+            includeReplies,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileTopCommenters({
+      buildId,
+      profileUserId,
+      includeReplies,
       topCommentersLimit,
       range,
       since,
@@ -1386,11 +1503,52 @@ export default function buildRequestHelpers({
     }) {
       try {
         const { data } = await request.post(
-          `${URL}/build/${buildId}/api/content/profile-comment-stats`,
+          `${URL}/build/${buildId}/api/content/profile-comment-top-commenters`,
           {
             profileUserId,
             includeReplies,
             topCommentersLimit,
+            range,
+            since,
+            until
+          },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getBuildProfileMostLikedComment({
+      buildId,
+      profileUserId,
+      includeReplies,
+      range,
+      since,
+      until,
+      token
+    }: {
+      buildId: number;
+      profileUserId?: number;
+      includeReplies?: boolean;
+      range?: 'today';
+      since?: number;
+      until?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/content/profile-comment-most-liked`,
+          {
+            profileUserId,
+            includeReplies,
             range,
             since,
             until

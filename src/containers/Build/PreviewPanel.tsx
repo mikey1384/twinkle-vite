@@ -622,8 +622,6 @@ const TWINKLE_SDK_SCRIPT = `
           offset: options.offset,
           sortBy: options.sortBy,
           includeReplies: options.includeReplies,
-          includeStats: options.includeStats,
-          topCommentersLimit: options.topCommentersLimit,
           range: options.range,
           since: options.since,
           until: options.until
@@ -673,7 +671,51 @@ const TWINKLE_SDK_SCRIPT = `
         return await sendRequest('content:profile-comment-stats', {
           profileUserId: options.profileUserId,
           includeReplies: options.includeReplies,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
+      },
+
+      async getProfileCommentCount(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comment-count', {
+          profileUserId: options.profileUserId,
+          includeReplies: options.includeReplies,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
+      },
+
+      async getProfileCommentSummary(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comment-summary', {
+          profileUserId: options.profileUserId,
+          includeReplies: options.includeReplies,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
+      },
+
+      async getProfileTopCommenters(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comment-top-commenters', {
+          profileUserId: options.profileUserId,
+          includeReplies: options.includeReplies,
           topCommentersLimit: options.topCommentersLimit,
+          range: options.range,
+          since: options.since,
+          until: options.until
+        });
+      },
+
+      async getProfileMostLikedComment(opts) {
+        var options = opts || {};
+        return await sendRequest('content:profile-comment-most-liked', {
+          profileUserId: options.profileUserId,
+          includeReplies: options.includeReplies,
           range: options.range,
           since: options.since,
           until: options.until
@@ -1260,6 +1302,18 @@ export default function PreviewPanel({
   const getBuildProfileCommentStats = useAppContext(
     (v) => v.requestHelpers.getBuildProfileCommentStats
   );
+  const getBuildProfileCommentCount = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileCommentCount
+  );
+  const getBuildProfileCommentSummary = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileCommentSummary
+  );
+  const getBuildProfileTopCommenters = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileTopCommenters
+  );
+  const getBuildProfileMostLikedComment = useAppContext(
+    (v) => v.requestHelpers.getBuildProfileMostLikedComment
+  );
   const getSharedDbTopics = useAppContext(
     (v) => v.requestHelpers.getSharedDbTopics
   );
@@ -1352,6 +1406,12 @@ export default function PreviewPanel({
   const getBuildProfileCommentsByIdsRef = useRef(getBuildProfileCommentsByIds);
   const getBuildProfileCommentCountsRef = useRef(getBuildProfileCommentCounts);
   const getBuildProfileCommentStatsRef = useRef(getBuildProfileCommentStats);
+  const getBuildProfileCommentCountRef = useRef(getBuildProfileCommentCount);
+  const getBuildProfileCommentSummaryRef = useRef(getBuildProfileCommentSummary);
+  const getBuildProfileTopCommentersRef = useRef(getBuildProfileTopCommenters);
+  const getBuildProfileMostLikedCommentRef = useRef(
+    getBuildProfileMostLikedComment
+  );
   const getSharedDbTopicsRef = useRef(getSharedDbTopics);
   const createSharedDbTopicRef = useRef(createSharedDbTopic);
   const getSharedDbEntriesRef = useRef(getSharedDbEntries);
@@ -2506,8 +2566,6 @@ export default function PreviewPanel({
               offset: payload?.offset,
               sortBy: payload?.sortBy,
               includeReplies: payload?.includeReplies,
-              includeStats: payload?.includeStats,
-              topCommentersLimit: payload?.topCommentersLimit,
               range: payload?.range,
               since: payload?.since,
               until: payload?.until,
@@ -2579,11 +2637,87 @@ export default function PreviewPanel({
               buildId: activeBuild.id,
               profileUserId: payload?.profileUserId,
               includeReplies: payload?.includeReplies,
-              topCommentersLimit: payload?.topCommentersLimit,
               range: payload?.range,
               since: payload?.since,
               until: payload?.until,
               token: contentProfileStatsToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-count': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileCountOnlyToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentCountRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              includeReplies: payload?.includeReplies,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileCountOnlyToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-summary': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileSummaryToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileCommentSummaryRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              includeReplies: payload?.includeReplies,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileSummaryToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-top-commenters': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileTopCommentersToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileTopCommentersRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              includeReplies: payload?.includeReplies,
+              topCommentersLimit: payload?.topCommentersLimit,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileTopCommentersToken
+            });
+            break;
+          }
+
+          case 'content:profile-comment-most-liked': {
+            if (!activeBuild?.id) {
+              throw new Error('Build not found');
+            }
+            const contentProfileMostLikedToken = await ensureBuildApiToken([
+              'content:read'
+            ]);
+            response = await getBuildProfileMostLikedCommentRef.current({
+              buildId: activeBuild.id,
+              profileUserId: payload?.profileUserId,
+              includeReplies: payload?.includeReplies,
+              range: payload?.range,
+              since: payload?.since,
+              until: payload?.until,
+              token: contentProfileMostLikedToken
             });
             break;
           }
