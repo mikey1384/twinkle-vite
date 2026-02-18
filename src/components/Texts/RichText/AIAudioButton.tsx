@@ -123,9 +123,14 @@ function AIAudioButton({
       const link = document.createElement('a');
       link.href = audioUrl;
       link.download = `${contentKey}.mp3`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        document.body.appendChild(link);
+        link.click();
+      } finally {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      }
     }
   }
 }

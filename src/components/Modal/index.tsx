@@ -165,6 +165,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
     const [container] = useState(() => {
       const el = document.createElement('div');
       el.setAttribute('data-modal-container', String(modalId));
+      el.setAttribute('translate', 'no');
+      el.className = 'notranslate';
       return el;
     });
     const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
@@ -357,7 +359,8 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
       <ErrorBoundary componentPath={modalKey || 'Modal/index'}>
         <div
           ref={backdropRef}
-          className={css`
+          translate="no"
+          className={`${css`
             position: fixed;
             inset: 0;
             z-index: ${zIndex};
@@ -380,7 +383,7 @@ const Modal = forwardRef<HTMLDivElement, PropsWithChildren<ModalProps>>(
               : ''}
             overflow-y: auto;
             touch-action: manipulation;
-          `}
+          `} notranslate`}
           onClick={handleBackdropClick}
           aria-hidden="true"
         >

@@ -134,6 +134,7 @@ export default function FullTextReveal({
       {show && portalTarget && coords
         ? createPortal(
             <div
+              translate="no"
               className={`${bubbleClass} ${className || ''}`}
               style={{
                 top: coords.top,

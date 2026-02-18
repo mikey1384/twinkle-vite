@@ -124,6 +124,7 @@ export default function TopicStartNotification({
     elementRef: React.RefObject<HTMLDivElement | null>
   ) {
     if (!elementRef.current || !containerRef.current) return text;
+    if (!document.body) return text;
 
     const containerWidth = containerRef.current.offsetWidth;
     const maxWidth = containerWidth * 0.75;
@@ -140,18 +141,22 @@ export default function TopicStartNotification({
     let end = text.length;
     let mid = end;
 
-    while (start < end) {
-      mid = Math.floor((start + end + 1) / 2);
-      testDiv.textContent = text.slice(0, mid) + '...';
+    try {
+      while (start < end) {
+        mid = Math.floor((start + end + 1) / 2);
+        testDiv.textContent = text.slice(0, mid) + '...';
 
-      if (testDiv.offsetWidth <= maxWidth) {
-        start = mid;
-      } else {
-        end = mid - 1;
+        if (testDiv.offsetWidth <= maxWidth) {
+          start = mid;
+        } else {
+          end = mid - 1;
+        }
+      }
+    } finally {
+      if (testDiv.parentNode) {
+        testDiv.parentNode.removeChild(testDiv);
       }
     }
-
-    document.body.removeChild(testDiv);
     return text.slice(0, start) + (start < text.length ? '...' : '');
   }
 }

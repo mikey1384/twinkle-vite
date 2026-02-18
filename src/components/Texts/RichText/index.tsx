@@ -544,10 +544,15 @@ function RichText({
       console.error('Failed to copy text:', error);
       const textArea = document.createElement('textarea');
       textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
+      try {
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+      } finally {
+        if (textArea.parentNode) {
+          textArea.parentNode.removeChild(textArea);
+        }
+      }
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     }

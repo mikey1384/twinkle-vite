@@ -20,6 +20,8 @@ export default function FullTextRevealFromOuterLayer({
     if (typeof document === 'undefined') return null;
     const el = document.createElement('div');
     el.setAttribute('data-portal', 'full-text-reveal');
+    el.setAttribute('translate', 'no');
+    el.className = 'notranslate';
     return el;
   });
   useEffect(() => {

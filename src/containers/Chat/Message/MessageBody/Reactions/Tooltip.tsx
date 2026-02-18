@@ -74,9 +74,10 @@ export default function Tooltip({
       }}
     >
       <div
+        translate="no"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        className={css`
+        className={`${css`
           padding: 0.5rem;
           font-size: 1.2rem;
           min-width: ${displayedReactedUsers.length === 1 &&
@@ -98,7 +99,7 @@ export default function Tooltip({
           border: none;
           background: #fff;
           box-shadow: 1px 1px 2px ${Color.black(0.6)};
-        `}
+        `} notranslate`}
       >
         {peopleWhoReactedText}
       </div>
