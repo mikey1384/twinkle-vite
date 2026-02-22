@@ -79,6 +79,12 @@ export default function PromptWorkshop({
   const messageListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestIdRef = useRef<string>('');
+  const generateDedupWaitTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const previewDedupWaitTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const trimmedTitle = title.trim();
   const trimmedPrompt = prompt.trim();
@@ -109,6 +115,17 @@ export default function PromptWorkshop({
 
   // Socket listeners for generate_custom_instructions
   useEffect(() => {
+    return () => {
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+      }
+      if (previewDedupWaitTimeoutRef.current) {
+        clearTimeout(previewDedupWaitTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     function handleGenerateUpdate({
       requestId,
       content
@@ -117,6 +134,10 @@ export default function PromptWorkshop({
       content: string;
     }) {
       if (requestId === requestIdRef.current) {
+        if (generateDedupWaitTimeoutRef.current) {
+          clearTimeout(generateDedupWaitTimeoutRef.current);
+          generateDedupWaitTimeoutRef.current = null;
+        }
         setSystemPromptState({ prompt: content });
       }
     }
@@ -129,6 +150,10 @@ export default function PromptWorkshop({
       content: string;
     }) {
       if (requestId === requestIdRef.current) {
+        if (generateDedupWaitTimeoutRef.current) {
+          clearTimeout(generateDedupWaitTimeoutRef.current);
+          generateDedupWaitTimeoutRef.current = null;
+        }
         setSystemPromptState({ prompt: content });
         setGenerating(false);
       }
@@ -136,12 +161,36 @@ export default function PromptWorkshop({
 
     function handleGenerateError({
       requestId,
-      error
+      error,
+      transient,
+      guardStatus
     }: {
       requestId: string;
       error: string;
+      transient?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (requestId === requestIdRef.current) {
+        if (transient && guardStatus === 'processing') {
+          if (generateDedupWaitTimeoutRef.current) {
+            clearTimeout(generateDedupWaitTimeoutRef.current);
+          }
+          const pendingRequestId = requestId;
+          generateDedupWaitTimeoutRef.current = setTimeout(() => {
+            if (requestIdRef.current !== pendingRequestId) return;
+            setError(
+              'A duplicate generation request is still processing. Please retry if no result appears.'
+            );
+            setGenerating(false);
+            generateDedupWaitTimeoutRef.current = null;
+          }, 15000);
+          setError(error || 'This generation request is already in progress.');
+          return;
+        }
+        if (generateDedupWaitTimeoutRef.current) {
+          clearTimeout(generateDedupWaitTimeoutRef.current);
+          generateDedupWaitTimeoutRef.current = null;
+        }
         setError(error || 'Failed to generate prompt');
         setGenerating(false);
       }
@@ -221,6 +270,10 @@ export default function PromptWorkshop({
       reply: string;
     }) {
       if (requestId === requestIdRef.current) {
+        if (previewDedupWaitTimeoutRef.current) {
+          clearTimeout(previewDedupWaitTimeoutRef.current);
+          previewDedupWaitTimeoutRef.current = null;
+        }
         setChatMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
@@ -242,6 +295,10 @@ export default function PromptWorkshop({
       reply: string;
     }) {
       if (requestId === requestIdRef.current) {
+        if (previewDedupWaitTimeoutRef.current) {
+          clearTimeout(previewDedupWaitTimeoutRef.current);
+          previewDedupWaitTimeoutRef.current = null;
+        }
         setChatMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
@@ -258,12 +315,36 @@ export default function PromptWorkshop({
 
     function handlePreviewError({
       requestId,
-      error
+      error,
+      transient,
+      guardStatus
     }: {
       requestId: string;
       error: string;
+      transient?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (requestId === requestIdRef.current) {
+        if (transient && guardStatus === 'processing') {
+          if (previewDedupWaitTimeoutRef.current) {
+            clearTimeout(previewDedupWaitTimeoutRef.current);
+          }
+          const pendingRequestId = requestId;
+          previewDedupWaitTimeoutRef.current = setTimeout(() => {
+            if (requestIdRef.current !== pendingRequestId) return;
+            setError(
+              'A duplicate preview request is still processing. Please retry if no result appears.'
+            );
+            setSending(false);
+            previewDedupWaitTimeoutRef.current = null;
+          }, 15000);
+          setError(error || 'This preview request is already in progress.');
+          return;
+        }
+        if (previewDedupWaitTimeoutRef.current) {
+          clearTimeout(previewDedupWaitTimeoutRef.current);
+          previewDedupWaitTimeoutRef.current = null;
+        }
         setError(error || 'Failed to get response');
         setSending(false);
       }
@@ -296,6 +377,10 @@ export default function PromptWorkshop({
 
   const handleGeneratePrompt = useCallback(() => {
     if (!canGenerate) return;
+    if (generateDedupWaitTimeoutRef.current) {
+      clearTimeout(generateDedupWaitTimeoutRef.current);
+      generateDedupWaitTimeoutRef.current = null;
+    }
     setError('');
     setGenerating(true);
     const requestId = `gen_${Date.now()}`;
@@ -324,6 +409,10 @@ export default function PromptWorkshop({
 
   const handleSendMessage = useCallback(() => {
     if (!canSend) return;
+    if (previewDedupWaitTimeoutRef.current) {
+      clearTimeout(previewDedupWaitTimeoutRef.current);
+      previewDedupWaitTimeoutRef.current = null;
+    }
     setError('');
     setSending(true);
     const requestId = `prev_${Date.now()}`;

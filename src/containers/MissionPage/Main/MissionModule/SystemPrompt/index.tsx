@@ -132,6 +132,12 @@ export default function SystemPromptMission({
   const improveRequestIdRef = useRef<string | null>(null);
   const improveOriginalPromptRef = useRef('');
   const generateRequestIdRef = useRef<string | null>(null);
+  const previewDedupWaitTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const generateDedupWaitTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   useEffect(() => {
     previewRequestIdRef.current = null;
@@ -139,11 +145,30 @@ export default function SystemPromptMission({
     improveRequestIdRef.current = null;
     improveOriginalPromptRef.current = '';
     generateRequestIdRef.current = null;
+    if (previewDedupWaitTimeoutRef.current) {
+      clearTimeout(previewDedupWaitTimeoutRef.current);
+      previewDedupWaitTimeoutRef.current = null;
+    }
+    if (generateDedupWaitTimeoutRef.current) {
+      clearTimeout(generateDedupWaitTimeoutRef.current);
+      generateDedupWaitTimeoutRef.current = null;
+    }
     setSending(false);
     setImproving(false);
     setGenerating(false);
     setError('');
   }, [mission.id]);
+
+  useEffect(() => {
+    return () => {
+      if (previewDedupWaitTimeoutRef.current) {
+        clearTimeout(previewDedupWaitTimeoutRef.current);
+      }
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Reset state when user changes
   useEffect(() => {
@@ -279,6 +304,10 @@ export default function SystemPromptMission({
       reply?: string;
     }) {
       if (!requestId || requestId !== previewRequestIdRef.current) return;
+      if (previewDedupWaitTimeoutRef.current) {
+        clearTimeout(previewDedupWaitTimeoutRef.current);
+        previewDedupWaitTimeoutRef.current = null;
+      }
       updateStreamingContent(reply || '');
     }
 
@@ -290,17 +319,44 @@ export default function SystemPromptMission({
       reply?: string;
     }) {
       if (!requestId || requestId !== previewRequestIdRef.current) return;
+      if (previewDedupWaitTimeoutRef.current) {
+        clearTimeout(previewDedupWaitTimeoutRef.current);
+        previewDedupWaitTimeoutRef.current = null;
+      }
       finalizeStreaming(reply);
     }
 
     function onPreviewError({
       requestId,
-      error: errorMessage
+      error: errorMessage,
+      transient,
+      guardStatus
     }: {
       requestId?: string;
       error?: string;
+      transient?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (!requestId || requestId !== previewRequestIdRef.current) return;
+      if (transient && guardStatus === 'processing') {
+        if (previewDedupWaitTimeoutRef.current) {
+          clearTimeout(previewDedupWaitTimeoutRef.current);
+        }
+        const pendingRequestId = requestId;
+        previewDedupWaitTimeoutRef.current = setTimeout(() => {
+          if (previewRequestIdRef.current !== pendingRequestId) return;
+          handleStreamingError(
+            'A duplicate preview request is still processing. Please retry if no result appears.'
+          );
+          previewDedupWaitTimeoutRef.current = null;
+        }, 15000);
+        setError(errorMessage || 'This preview request is already in progress.');
+        return;
+      }
+      if (previewDedupWaitTimeoutRef.current) {
+        clearTimeout(previewDedupWaitTimeoutRef.current);
+        previewDedupWaitTimeoutRef.current = null;
+      }
       handleStreamingError(errorMessage || '');
     }
 
@@ -411,6 +467,10 @@ export default function SystemPromptMission({
       content?: string;
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+        generateDedupWaitTimeoutRef.current = null;
+      }
       const currentState = latestSystemPromptStateRef.current;
       handleSetSystemPromptState({
         ...currentState,
@@ -427,6 +487,10 @@ export default function SystemPromptMission({
       content?: string;
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+        generateDedupWaitTimeoutRef.current = null;
+      }
       const currentState = latestSystemPromptStateRef.current;
       handleSetSystemPromptState({
         ...currentState,
@@ -439,12 +503,37 @@ export default function SystemPromptMission({
 
     function onGenerateError({
       requestId,
-      error: errorMessage
+      error: errorMessage,
+      transient,
+      guardStatus
     }: {
       requestId?: string;
       error?: string;
+      transient?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
+      if (transient && guardStatus === 'processing') {
+        if (generateDedupWaitTimeoutRef.current) {
+          clearTimeout(generateDedupWaitTimeoutRef.current);
+        }
+        const pendingRequestId = requestId;
+        generateDedupWaitTimeoutRef.current = setTimeout(() => {
+          if (generateRequestIdRef.current !== pendingRequestId) return;
+          generateRequestIdRef.current = null;
+          setGenerating(false);
+          setError(
+            'A duplicate generation request is still processing. Please retry if no result appears.'
+          );
+          generateDedupWaitTimeoutRef.current = null;
+        }, 15000);
+        setError(errorMessage || 'This generation request is already in progress.');
+        return;
+      }
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+        generateDedupWaitTimeoutRef.current = null;
+      }
       generateRequestIdRef.current = null;
       setGenerating(false);
       setError(
@@ -674,6 +763,10 @@ export default function SystemPromptMission({
 
   function handleSendMessage() {
     if (!canSend) return;
+    if (previewDedupWaitTimeoutRef.current) {
+      clearTimeout(previewDedupWaitTimeoutRef.current);
+      previewDedupWaitTimeoutRef.current = null;
+    }
     setError('');
     const userMessageObj: ChatMessage = {
       id: Date.now(),
@@ -722,6 +815,10 @@ export default function SystemPromptMission({
 
   function handleGeneratePrompt() {
     if (!trimmedTitle || generating) return;
+    if (generateDedupWaitTimeoutRef.current) {
+      clearTimeout(generateDedupWaitTimeoutRef.current);
+      generateDedupWaitTimeoutRef.current = null;
+    }
     setError('');
     setGenerating(true);
     // Clear chatMessages so user must re-preview the new prompt

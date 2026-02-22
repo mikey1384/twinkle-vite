@@ -42,6 +42,9 @@ export default function AIChatTopicMenu({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const generateRequestIdRef = useRef<string | null>(null);
   const improveRequestIdRef = useRef<string | null>(null);
+  const generateDedupWaitTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const originalInstructionsRef = useRef('');
   const topicTextRef = useRef(topicText);
 
@@ -105,6 +108,14 @@ export default function AIChatTopicMenu({
     topicTextRef.current = topicText;
   }, [topicText]);
 
+  useEffect(() => {
+    return () => {
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Socket listeners for generating custom instructions
   useEffect(() => {
     function handleGenerateUpdate({
@@ -115,6 +126,10 @@ export default function AIChatTopicMenu({
       content?: string;
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+        generateDedupWaitTimeoutRef.current = null;
+      }
       onSetCustomInstructions(content || '');
     }
 
@@ -126,6 +141,10 @@ export default function AIChatTopicMenu({
       content?: string;
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+        generateDedupWaitTimeoutRef.current = null;
+      }
       onSetCustomInstructions(content || '');
       generateRequestIdRef.current = null;
       setGenerating(false);
@@ -133,12 +152,37 @@ export default function AIChatTopicMenu({
 
     function handleGenerateError({
       requestId,
-      error: errorMessage
+      error: errorMessage,
+      transient,
+      guardStatus
     }: {
       requestId?: string;
       error?: string;
+      transient?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (!requestId || requestId !== generateRequestIdRef.current) return;
+      if (transient && guardStatus === 'processing') {
+        if (generateDedupWaitTimeoutRef.current) {
+          clearTimeout(generateDedupWaitTimeoutRef.current);
+        }
+        const pendingRequestId = requestId;
+        generateDedupWaitTimeoutRef.current = setTimeout(() => {
+          if (generateRequestIdRef.current !== pendingRequestId) return;
+          generateRequestIdRef.current = null;
+          setGenerating(false);
+          setError(
+            'A duplicate request is still processing. Please retry if no result appears.'
+          );
+          generateDedupWaitTimeoutRef.current = null;
+        }, 15000);
+        setError(errorMessage || 'This request is already in progress.');
+        return;
+      }
+      if (generateDedupWaitTimeoutRef.current) {
+        clearTimeout(generateDedupWaitTimeoutRef.current);
+        generateDedupWaitTimeoutRef.current = null;
+      }
       generateRequestIdRef.current = null;
       setGenerating(false);
       setError(
@@ -390,6 +434,10 @@ export default function AIChatTopicMenu({
 
   function handleGenerateCustomInstructions() {
     if (generating) return;
+    if (generateDedupWaitTimeoutRef.current) {
+      clearTimeout(generateDedupWaitTimeoutRef.current);
+      generateDedupWaitTimeoutRef.current = null;
+    }
     setError('');
     setGenerating(true);
     const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;

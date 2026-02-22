@@ -233,11 +233,18 @@ export default function BuildEditor({
   const userMessageIdRef = useRef<number | null>(null);
   const assistantMessageIdRef = useRef<number | null>(null);
   const reviewerMessageIdRef = useRef<number | null>(null);
+  const dedupedProcessingReconcileRequestIdRef = useRef<string | null>(null);
+  const dedupedProcessingReconcileStartedAtRef = useRef<number>(0);
+  const dedupedProcessingReconcileTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const didInitialChatScrollRef = useRef(false);
   const didAutoPromptRef = useRef(false);
   const shouldAutoScrollRef = useRef(true);
   const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
   const scrollRafRef = useRef<number | null>(null);
+  const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
+  const DEDUPED_PROCESSING_RECONCILE_MAX_MS = 3 * 60 * 1000;
 
   useEffect(() => {
     chatMessagesRef.current = chatMessages;
@@ -268,7 +275,9 @@ export default function BuildEditor({
         cancelAnimationFrame(scrollRafRef.current);
         scrollRafRef.current = null;
       }
+      resetDedupedProcessingReconcileState();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -296,11 +305,14 @@ export default function BuildEditor({
     }) {
       const { requestId, reply, codeGenerated } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       const assistantId = assistantMessageIdRef.current;
       if (!assistantId) return;
       const currentMessages = chatMessagesRef.current;
-      const hasCodeGeneratedField =
-        Object.prototype.hasOwnProperty.call(payload, 'codeGenerated');
+      const hasCodeGeneratedField = Object.prototype.hasOwnProperty.call(
+        payload,
+        'codeGenerated'
+      );
       const nextMessages = currentMessages.map((message) => {
         if (message.id !== assistantId) return message;
         const nextMessage: ChatMessage = {
@@ -342,6 +354,7 @@ export default function BuildEditor({
       };
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       const userMessageTempId = userMessageIdRef.current;
       const assistantId = assistantMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
@@ -430,6 +443,7 @@ export default function BuildEditor({
       status?: string;
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       setGeneratingStatus(status || null);
       if (status) {
         setAssistantStatusSteps((prev) =>
@@ -447,6 +461,7 @@ export default function BuildEditor({
       error?: string;
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       const assistantId = assistantMessageIdRef.current;
       const reviewerId = reviewerMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
@@ -456,15 +471,15 @@ export default function BuildEditor({
       const errorTargetId = assistantId || reviewerId;
       const nextMessages = errorTargetId
         ? currentMessages.map((entry) =>
-                entry.id === errorTargetId
-                  ? {
-                      ...entry,
-                      content: errorMessage,
-                      codeGenerated: null,
-                      streamCodePreview: null,
-                      artifactVersionId: null
-                    }
-                  : entry
+            entry.id === errorTargetId
+              ? {
+                  ...entry,
+                  content: errorMessage,
+                  codeGenerated: null,
+                  streamCodePreview: null,
+                  artifactVersionId: null
+                }
+              : entry
           )
         : [
             ...currentMessages,
@@ -495,11 +510,44 @@ export default function BuildEditor({
     }
 
     async function handleGenerateStopped({
-      requestId
+      requestId,
+      deduped,
+      guardStatus
     }: {
       requestId?: string;
+      deduped?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      if (deduped) {
+        resetDedupedProcessingReconcileState();
+        if (guardStatus === 'completed') {
+          await syncChatMessagesFromServer(undefined, true);
+          streamRequestIdRef.current = null;
+          userMessageIdRef.current = null;
+          assistantMessageIdRef.current = null;
+          reviewerMessageIdRef.current = null;
+        } else if (guardStatus === 'processing') {
+          // Keep request refs briefly in case late events from the claimed
+          // worker arrive, then reconcile from writer if they do not.
+          scheduleDedupedProcessingReconcile(requestId);
+        } else {
+          await syncChatMessagesFromServer(undefined, true);
+          streamRequestIdRef.current = null;
+          userMessageIdRef.current = null;
+          assistantMessageIdRef.current = null;
+          reviewerMessageIdRef.current = null;
+        }
+        setGenerating(false);
+        setReviewing(false);
+        setReviewPhase(null);
+        setGeneratingStatus(null);
+        setReviewerStatusSteps([]);
+        setAssistantStatusSteps([]);
+        scrollChatToBottom();
+        return;
+      }
+      resetDedupedProcessingReconcileState();
       const assistantId = assistantMessageIdRef.current;
       const reviewerId = reviewerMessageIdRef.current;
       const userId = userMessageIdRef.current;
@@ -538,6 +586,7 @@ export default function BuildEditor({
       reviewText?: string;
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       const reviewerId = reviewerMessageIdRef.current;
       if (!reviewerId) return;
       const currentMessages = chatMessagesRef.current;
@@ -559,6 +608,7 @@ export default function BuildEditor({
       reviewText?: string;
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       const reviewerId = reviewerMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
 
@@ -601,6 +651,7 @@ export default function BuildEditor({
       status?: string;
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
       setGeneratingStatus(status || null);
       if (status) {
         setReviewerStatusSteps((prev) =>
@@ -642,7 +693,7 @@ export default function BuildEditor({
         const nextEstimatedCostUsd =
           existing?.estimatedCostUsd != null && estimatedCostUsd != null
             ? Number((existing.estimatedCostUsd + estimatedCostUsd).toFixed(6))
-            : existing?.estimatedCostUsd ?? estimatedCostUsd;
+            : (existing?.estimatedCostUsd ?? estimatedCostUsd);
 
         return {
           ...prev,
@@ -692,6 +743,7 @@ export default function BuildEditor({
 
   function handleReview() {
     if (!build.code || generating || reviewing || !isOwner) return;
+    resetDedupedProcessingReconcileState();
 
     const now = Math.floor(Date.now() / 1000);
     const messageId = Date.now();
@@ -1006,6 +1058,7 @@ export default function BuildEditor({
 
   async function startGeneration(messageText: string) {
     if (!messageText.trim() || generating || reviewing || !isOwner) return;
+    resetDedupedProcessingReconcileState();
     const now = Math.floor(Date.now() / 1000);
     const messageId = Date.now();
     const requestId = `${build.id}-${messageId}`;
@@ -1082,6 +1135,93 @@ export default function BuildEditor({
   function maybeAutoScrollDuringStream() {
     if (!shouldAutoScrollRef.current) return;
     scrollChatToBottom('auto');
+  }
+
+  function clearDedupedProcessingReconcileTimer() {
+    if (!dedupedProcessingReconcileTimerRef.current) return;
+    clearTimeout(dedupedProcessingReconcileTimerRef.current);
+    dedupedProcessingReconcileTimerRef.current = null;
+  }
+
+  function resetDedupedProcessingReconcileState() {
+    clearDedupedProcessingReconcileTimer();
+    dedupedProcessingReconcileRequestIdRef.current = null;
+    dedupedProcessingReconcileStartedAtRef.current = 0;
+  }
+
+  function scheduleDedupedProcessingReconcile(requestId: string) {
+    if (dedupedProcessingReconcileRequestIdRef.current !== requestId) {
+      dedupedProcessingReconcileRequestIdRef.current = requestId;
+      dedupedProcessingReconcileStartedAtRef.current = Date.now();
+    } else if (!dedupedProcessingReconcileStartedAtRef.current) {
+      dedupedProcessingReconcileStartedAtRef.current = Date.now();
+    }
+    clearDedupedProcessingReconcileTimer();
+    dedupedProcessingReconcileTimerRef.current = setTimeout(() => {
+      void reconcileDedupedProcessingRequest(requestId);
+    }, DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS);
+  }
+
+  async function reconcileDedupedProcessingRequest(requestId: string) {
+    if (
+      streamRequestIdRef.current !== requestId ||
+      dedupedProcessingReconcileRequestIdRef.current !== requestId
+    ) {
+      resetDedupedProcessingReconcileState();
+      return;
+    }
+    let shouldReschedule = false;
+    try {
+      await syncChatMessagesFromServer(undefined, true);
+    } catch (error) {
+      console.error('Failed to reconcile deduped build request:', error);
+      shouldReschedule = true;
+    } finally {
+      clearDedupedProcessingReconcileTimer();
+    }
+    if (shouldReschedule) {
+      scheduleDedupedProcessingReconcile(requestId);
+      return;
+    }
+    if (
+      streamRequestIdRef.current !== requestId ||
+      dedupedProcessingReconcileRequestIdRef.current !== requestId
+    ) {
+      resetDedupedProcessingReconcileState();
+      return;
+    }
+    const messageIds = new Set(
+      chatMessagesRef.current.map((entry) => entry.id)
+    );
+    if (userMessageIdRef.current && !messageIds.has(userMessageIdRef.current)) {
+      userMessageIdRef.current = null;
+    }
+    if (
+      assistantMessageIdRef.current &&
+      !messageIds.has(assistantMessageIdRef.current)
+    ) {
+      assistantMessageIdRef.current = null;
+    }
+    if (
+      reviewerMessageIdRef.current &&
+      !messageIds.has(reviewerMessageIdRef.current)
+    ) {
+      reviewerMessageIdRef.current = null;
+    }
+    scrollChatToBottom();
+
+    const startedAt =
+      dedupedProcessingReconcileStartedAtRef.current || Date.now();
+    if (Date.now() - startedAt >= DEDUPED_PROCESSING_RECONCILE_MAX_MS) {
+      streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      reviewerMessageIdRef.current = null;
+      resetDedupedProcessingReconcileState();
+      return;
+    }
+
+    scheduleDedupedProcessingReconcile(requestId);
   }
 
   function isChatNearBottom(threshold = 120) {
