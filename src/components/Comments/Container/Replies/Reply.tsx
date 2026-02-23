@@ -266,7 +266,6 @@ function Reply({
     () => timeSince(reply.timeStamp),
     [reply.timeStamp]
   );
-
   const dropdownMenuItems = useMemo(() => {
     const items = [];
     if (userIsUploader || canEdit) {

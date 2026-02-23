@@ -61,6 +61,7 @@ export default function useAPISocket({
 
   const usingChatRef = useRef(usingChat);
   const prevProfilePicUrl = useRef(profilePicUrl);
+  const prevUserIdRef = useRef(userId);
   const currentPathIdRef = useRef(Number(currentPathId));
 
   useEffect(() => {
@@ -69,8 +70,21 @@ export default function useAPISocket({
   }, [subchannelId]);
 
   useEffect(() => {
-    socket.disconnect();
-    socket.connect();
+    const previousUserId = prevUserIdRef.current;
+    const userIdChanged = previousUserId !== userId;
+    prevUserIdRef.current = userId;
+
+    if (!userIdChanged) return;
+
+    if (socket.connected) {
+      socket.disconnect();
+      socket.connect();
+      return;
+    }
+
+    if (!socket.active) {
+      socket.connect();
+    }
   }, [userId]);
 
   useEffect(() => {

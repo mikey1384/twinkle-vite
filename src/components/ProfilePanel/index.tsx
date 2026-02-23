@@ -458,6 +458,19 @@ function ProfilePanel({
       } as React.CSSProperties),
     [cardBg, cardVars, heroBackground, panelAccentColor]
   );
+  const panelContainerStyle = useMemo(
+    () =>
+      ({
+        ...panelStyleVars,
+        ...(commentsShown
+          ? ({
+              contentVisibility: 'visible',
+              containIntrinsicSize: 'auto'
+            } as React.CSSProperties)
+          : {})
+      } as React.CSSProperties),
+    [commentsShown, panelStyleVars]
+  );
 
   const [bioEditModalShown, setBioEditModalShown] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -549,7 +562,10 @@ function ProfilePanel({
                     overflow: 'visible'
                   }}
                 >
-                  <div className={panelContainerClass} style={panelStyleVars}>
+                  <div
+                    className={panelContainerClass}
+                    style={panelContainerStyle}
+                  >
                     <div className={`unselectable ${heroSectionClass}`}>
                       <div className={heroBadgesClass}>
                         <AchievementBadges

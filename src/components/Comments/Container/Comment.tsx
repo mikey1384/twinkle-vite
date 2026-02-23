@@ -236,7 +236,6 @@ function Comment({
       ).length > 0
     );
   }, [recommendations, userId]);
-
   const isRewardedByUser = useMemo(() => {
     return (
       rewards.filter(

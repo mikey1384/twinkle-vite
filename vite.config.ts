@@ -41,7 +41,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '~': resolve(__dirname, 'src'),
-      buffer: 'buffer/'
+      'react-sanitized-html': resolve(__dirname, 'src/shims/react-sanitized-html.tsx'),
+      buffer: 'buffer/',
+      util: 'util/'
     }
   },
   build: {
