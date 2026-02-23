@@ -43,11 +43,13 @@ export default function useInitSocket({
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
+  const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
 
   const onChangeSocketStatus = useNotiContext(
     (v) => v.actions.onChangeSocketStatus
   );
   const onCheckVersion = useNotiContext((v) => v.actions.onCheckVersion);
+  const onSetNumNewPosts = useNotiContext((v) => v.actions.onSetNumNewPosts);
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
@@ -82,6 +84,7 @@ export default function useInitSocket({
   const loadChatChannel = useAppContext(
     (v) => v.requestHelpers.loadChatChannel
   );
+  const countNewFeeds = useAppContext((v) => v.requestHelpers.countNewFeeds);
   const loadNewFeeds = useAppContext((v) => v.requestHelpers.loadNewFeeds);
   const checkVersion = useAppContext((v) => v.requestHelpers.checkVersion);
   const getNumberOfUnreadMessages = useAppContext(
@@ -111,6 +114,7 @@ export default function useInitSocket({
   const channelsObjRef = useRef(channelsObj);
   const feedsRef = useRef(feeds);
   const subFilterRef = useRef(subFilter);
+  const numNewPostsRef = useRef(numNewPosts);
   const userIdRef = useRef(userId);
   const usernameRef = useRef(username);
   const profilePicUrlRef = useRef(profilePicUrl);
@@ -136,6 +140,9 @@ export default function useInitSocket({
   useEffect(() => {
     subFilterRef.current = subFilter;
   }, [subFilter]);
+  useEffect(() => {
+    numNewPostsRef.current = numNewPosts;
+  }, [numNewPosts]);
 
   const checkFeedsOutdated = useCallback(
     async ({
@@ -191,6 +198,9 @@ export default function useInitSocket({
                   ? newFeeds.length > 0
                   : !!newFeeds;
               } catch {}
+            }
+            if (flag) {
+              await hydrateNumNewPostsIfNeeded(firstFeed.lastInteraction);
             }
             onSetFeedsOutdated(flag);
           } catch {
@@ -328,6 +338,10 @@ export default function useInitSocket({
 
     function handleHomeOutdated() {
       onSetFeedsOutdated(true);
+      const firstFeed = feedsRef.current?.[0];
+      if (firstFeed?.lastInteraction) {
+        void hydrateNumNewPostsIfNeeded(firstFeed.lastInteraction);
+      }
     }
 
     function handleConnect() {
@@ -741,6 +755,20 @@ export default function useInitSocket({
   function handleStopUserActionCapture() {
     if (actionCaptureActiveRef.current) {
       detachActionListenersRef.current?.();
+    }
+  }
+
+  async function hydrateNumNewPostsIfNeeded(lastInteraction: number) {
+    if (!lastInteraction) return;
+    if (numNewPostsRef.current > 0) return;
+    try {
+      const count = await countNewFeeds({ lastInteraction });
+      const parsedCount = Number(count || 0);
+      if (parsedCount > 0 && numNewPostsRef.current === 0) {
+        onSetNumNewPosts(parsedCount);
+      }
+    } catch {
+      // ignore transient errors
     }
   }
 }

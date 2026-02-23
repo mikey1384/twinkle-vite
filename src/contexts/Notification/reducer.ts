@@ -47,6 +47,11 @@ export default function NotiReducer(
         ...state,
         numNewPosts: state.numNewPosts + 1
       };
+    case 'SET_NUM_NEW_POSTS':
+      return {
+        ...state,
+        numNewPosts: Math.max(0, Number(action.numNewPosts || 0))
+      };
     case 'LOAD_MORE_NOTIFICATIONS':
       return {
         ...state,

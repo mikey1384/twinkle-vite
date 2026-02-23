@@ -1159,6 +1159,18 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async countNewFeeds({ lastInteraction }: { lastInteraction: number }) {
+      try {
+        const {
+          data: { count }
+        } = await request.get(
+          `${URL}/content/newFeeds/count?lastInteraction=${lastInteraction}`
+        );
+        return Number(count || 0);
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadPlaylistList(playlistId: number) {
       try {
         const { data } = await request.get(

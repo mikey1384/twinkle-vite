@@ -102,6 +102,12 @@ export default function NotiActions(dispatch: Dispatch) {
         type: 'INCREASE_NUM_NEW_POSTS'
       });
     },
+    onSetNumNewPosts(numNewPosts: number) {
+      return dispatch({
+        type: 'SET_NUM_NEW_POSTS',
+        numNewPosts
+      });
+    },
     onLoadMoreNotifications({
       loadMoreNotifications,
       notifications,
