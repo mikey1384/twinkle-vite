@@ -97,6 +97,8 @@ export default function SystemPromptMission({
   const [progressError, setProgressError] = useState('');
   const [progress, setProgress] = useState<any | null>(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  savingRef.current = saving;
 
   const loadSystemPromptProgress = useAppContext(
     (v) => v.requestHelpers.loadSystemPromptProgress
@@ -350,7 +352,9 @@ export default function SystemPromptMission({
           );
           previewDedupWaitTimeoutRef.current = null;
         }, 15000);
-        setError(errorMessage || 'This preview request is already in progress.');
+        setError(
+          errorMessage || 'This preview request is already in progress.'
+        );
         return;
       }
       if (previewDedupWaitTimeoutRef.current) {
@@ -527,7 +531,9 @@ export default function SystemPromptMission({
           );
           generateDedupWaitTimeoutRef.current = null;
         }, 15000);
-        setError(errorMessage || 'This generation request is already in progress.');
+        setError(
+          errorMessage || 'This generation request is already in progress.'
+        );
         return;
       }
       if (generateDedupWaitTimeoutRef.current) {
@@ -620,19 +626,32 @@ export default function SystemPromptMission({
   }, [safeChatMessages.length, lastMessageContentLength]);
 
   useEffect(() => {
-    setSaving(true);
     clearTimeout(draftTimeoutRef.current);
     const isClearing = !trimmedTitle && !trimmedPrompt;
-    draftTimeoutRef.current = setTimeout(
-      () => {
-        socket.emit('save_system_prompt_draft', {
-          title: trimmedTitle,
-          prompt: trimmedPrompt
-        });
+    if (isClearing) {
+      socket.emit('save_system_prompt_draft', {
+        title: trimmedTitle,
+        prompt: trimmedPrompt
+      });
+      if (savingRef.current) {
         setSaving(false);
-      },
-      isClearing ? 0 : 1000
-    );
+      }
+      return;
+    }
+
+    if (!savingRef.current) {
+      setSaving(true);
+    }
+    draftTimeoutRef.current = setTimeout(() => {
+      socket.emit('save_system_prompt_draft', {
+        title: trimmedTitle,
+        prompt: trimmedPrompt
+      });
+      if (savingRef.current) {
+        setSaving(false);
+      }
+    }, 1000);
+
     return () => clearTimeout(draftTimeoutRef.current);
   }, [trimmedTitle, trimmedPrompt]);
 

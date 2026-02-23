@@ -42,6 +42,7 @@ export default function useInitSocket({
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
+  const feedsOutdated = useHomeContext((v) => v.state.feedsOutdated);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
 
@@ -110,6 +111,7 @@ export default function useInitSocket({
   const isCheckingOutdatedRef = useRef(false);
   const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
   const checkFeedsRerunRequestedRef = useRef(false);
+  const pendingHydrateFromOutdatedRef = useRef(false);
   const categoryRef = useRef(category);
   const channelsObjRef = useRef(channelsObj);
   const feedsRef = useRef(feeds);
@@ -143,6 +145,21 @@ export default function useInitSocket({
   useEffect(() => {
     numNewPostsRef.current = numNewPosts;
   }, [numNewPosts]);
+  useEffect(() => {
+    if (!pendingHydrateFromOutdatedRef.current) return;
+    if (!feedsOutdated) {
+      pendingHydrateFromOutdatedRef.current = false;
+      return;
+    }
+    const firstFeed = feeds?.[0];
+    if (!firstFeed?.lastInteraction) return;
+
+    pendingHydrateFromOutdatedRef.current = false;
+    if (numNewPosts === 0) {
+      void hydrateNumNewPostsIfNeeded(firstFeed.lastInteraction);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feeds, feedsOutdated, numNewPosts]);
 
   const checkFeedsOutdated = useCallback(
     async ({
@@ -235,7 +252,8 @@ export default function useInitSocket({
     function checkSocketHealth() {
       if (!socket.connected) {
         logForAdmin({
-          message: 'Socket disconnected during health check - attempting reconnect'
+          message:
+            'Socket disconnected during health check - attempting reconnect'
         });
         try {
           socket.connect();
@@ -340,8 +358,13 @@ export default function useInitSocket({
       onSetFeedsOutdated(true);
       const firstFeed = feedsRef.current?.[0];
       if (firstFeed?.lastInteraction) {
-        void hydrateNumNewPostsIfNeeded(firstFeed.lastInteraction);
+        pendingHydrateFromOutdatedRef.current = false;
+        if (numNewPostsRef.current === 0) {
+          void hydrateNumNewPostsIfNeeded(firstFeed.lastInteraction);
+        }
+        return;
       }
+      pendingHydrateFromOutdatedRef.current = true;
     }
 
     function handleConnect() {
@@ -470,17 +493,15 @@ export default function useInitSocket({
           (isNaN(pathId) || latestPathIdMatchesCurrentPath)
         ) {
           const channelId = parseChannelPath(latestPathId);
-          const { isAccessible, isPublic } = await checkChatAccessible(
-            latestPathId
-          );
+          const { isAccessible, isPublic } =
+            await checkChatAccessible(latestPathId);
           if (!isAccessible) {
             if (isPublic) {
               if (!channelPathIdHash[latestPathId]) {
                 onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
               }
-              const { channel, joinMessage } = await acceptInvitation(
-                channelId
-              );
+              const { channel, joinMessage } =
+                await acceptInvitation(channelId);
               if (channel.id === channelId) {
                 socket.emit('join_chat_group', channel.id);
                 socket.emit('new_chat_message', {
@@ -572,9 +593,8 @@ export default function useInitSocket({
                 pathId
               });
             }
-            const { channel, joinMessage } = await acceptInvitation(
-              currentChannelId
-            );
+            const { channel, joinMessage } =
+              await acceptInvitation(currentChannelId);
             if (channel.id === currentChannelId) {
               socket.emit('join_chat_group', channel.id);
               socket.emit('new_chat_message', {
@@ -715,7 +735,10 @@ export default function useInitSocket({
     // Use capture phase to avoid components stopping propagation on key events
     events.forEach((e) => window.addEventListener(e, handler, true));
     // touchstart must be passive to avoid blocking iOS tap events
-    window.addEventListener('touchstart', handler, { capture: true, passive: true });
+    window.addEventListener('touchstart', handler, {
+      capture: true,
+      passive: true
+    });
     actionCaptureActiveRef.current = true;
     detachActionListenersRef.current = () => {
       events.forEach((e) => window.removeEventListener(e, handler, true));
@@ -763,9 +786,26 @@ export default function useInitSocket({
     if (numNewPostsRef.current > 0) return;
     try {
       const count = await countNewFeeds({ lastInteraction });
-      const parsedCount = Number(count || 0);
+      const parsedCount = Number(count);
+      if (!Number.isFinite(parsedCount)) {
+        throw new Error('Invalid new feed count');
+      }
       if (parsedCount > 0 && numNewPostsRef.current === 0) {
         onSetNumNewPosts(parsedCount);
+      }
+      return;
+    } catch {
+      // ignore transient errors
+    }
+
+    if (numNewPostsRef.current > 0) return;
+    try {
+      const fallbackFeeds = await loadNewFeeds({ lastInteraction });
+      const fallbackCount = Array.isArray(fallbackFeeds)
+        ? fallbackFeeds.length
+        : 0;
+      if (fallbackCount > 0 && numNewPostsRef.current === 0) {
+        onSetNumNewPosts(fallbackCount);
       }
     } catch {
       // ignore transient errors

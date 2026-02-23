@@ -53,6 +53,7 @@ export default function Stories() {
   const onResetNumNewPosts = useNotiContext(
     (v) => v.actions.onResetNumNewPosts
   );
+  const onSetNumNewPosts = useNotiContext((v) => v.actions.onSetNumNewPosts);
   const onSetAIStoriesModalShown = useHomeContext(
     (v) => v.actions.onSetAIStoriesModalShown
   );
@@ -87,6 +88,8 @@ export default function Stories() {
   const categoryRef: React.RefObject<any> = useRef(null);
   const ContainerRef = useRef(null);
   const subFilterRef = useRef<string | null>(null);
+  const displayOrderRef = useRef(displayOrder);
+  const numNewPostsRef = useRef(numNewPosts);
   const mountedRef = useRef(true);
 
   const loadingPosts = useMemo(
@@ -96,40 +99,37 @@ export default function Stories() {
 
   const { panelVars } = useHomePanelVars(0.08);
   const feedListClass = useMemo(
-    () =>
-      css`
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-      `,
+    () => css`
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    `,
     []
   );
   const feedItemCustomClass = useMemo(
-    () =>
-      css`
-        /* spacing only; no background, no border */
-        padding: 0.4rem 1.1rem;
-        transition: background 0.15s ease;
-        &:first-of-type {
-          padding-top: 0;
-        }
-        @media (max-width: ${mobileMaxWidth}) {
-          padding: 0.3rem 0;
-        }
-      `,
+    () => css`
+      /* spacing only; no background, no border */
+      padding: 0.4rem 1.1rem;
+      transition: background 0.15s ease;
+      &:first-of-type {
+        padding-top: 0;
+      }
+      @media (max-width: ${mobileMaxWidth}) {
+        padding: 0.3rem 0;
+      }
+    `,
     []
   );
   const contentPanelClass = useMemo(
-    () =>
-      css`
-        > div {
-          padding: 1rem 0 1rem 0;
-          border-top: none;
-          @media (max-width: ${mobileMaxWidth}) {
-            padding: 0.5rem 0 0.5rem 0;
-          }
+    () => css`
+      > div {
+        padding: 1rem 0 1rem 0;
+        border-top: none;
+        @media (max-width: ${mobileMaxWidth}) {
+          padding: 0.5rem 0 0.5rem 0;
         }
-      `,
+      }
+    `,
     []
   );
 
@@ -141,12 +141,19 @@ export default function Stories() {
     categoryRef.current = category;
   }, [category]);
 
+  useEffect(() => {
+    displayOrderRef.current = displayOrder;
+  }, [displayOrder]);
+
+  useEffect(() => {
+    numNewPostsRef.current = numNewPosts;
+  }, [numNewPosts]);
+
   useInfiniteScroll({
     scrollable: feeds?.length > 0 && !loadingMoreRef.current,
     feedsLength: feeds?.length,
     onScrollToBottom: handleLoadMoreFeeds
   });
-
 
   useEffect(() => {
     const maxRetries = 3;
@@ -266,12 +273,20 @@ export default function Stories() {
                 feedsOutdated && (
                   <Banner
                     color={alertColorKey}
-                    onClick={() => window.location.reload()}
+                    onClick={handleRefreshOutdatedFeed}
                     style={{
-                      marginBottom: '1rem'
+                      marginBottom: '1rem',
+                      opacity: loadingNewFeeds ? 0.5 : 1
                     }}
                   >
-                    Tap to See New Posts!
+                    Feed updated. Tap to refresh.
+                    {loadingNewFeeds && (
+                      <Icon
+                        style={{ marginLeft: '1rem' }}
+                        icon="spinner"
+                        pulse
+                      />
+                    )}
                   </Banner>
                 )
               )}
@@ -442,6 +457,7 @@ export default function Stories() {
   }
 
   async function handleFetchNewFeeds() {
+    const initialNumNewPosts = numNewPostsRef.current;
     try {
       if (!loadingNewFeeds) {
         setLoadingNewFeeds(true);
@@ -450,13 +466,13 @@ export default function Stories() {
         });
 
         if (data) {
-          onResetNumNewPosts();
           onChangeSubFilter('all');
           const currentCategory = categoryRef.current;
           if (
             currentCategory !== 'uploads' ||
             displayOrder === 'asc' ||
-            (currentCategory === 'uploads' && subFilterRef.current === 'subject')
+            (currentCategory === 'uploads' &&
+              subFilterRef.current === 'subject')
           ) {
             categoryRef.current = 'uploads';
             onChangeCategory('uploads');
@@ -464,16 +480,69 @@ export default function Stories() {
             const { data } = await loadFeeds();
             if (categoryRef.current === 'uploads') {
               onLoadFeeds(data);
+              reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
             }
             return;
           }
           onLoadNewFeeds(data);
+          reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
         }
       }
     } catch (error) {
       console.error('Error fetching new feeds:', error);
     } finally {
       setLoadingNewFeeds(false);
+    }
+  }
+
+  async function handleRefreshOutdatedFeed() {
+    if (loadingNewFeeds) return;
+    const initialNumNewPosts = numNewPostsRef.current;
+    const currentCategory = categoryRef.current;
+    const currentSubFilter = subFilterRef.current;
+    const currentDisplayOrder = displayOrder;
+    const currentFilter =
+      currentCategory === 'uploads'
+        ? currentSubFilter || 'all'
+        : categoryObj[currentCategory]?.filter || 'all';
+    const currentOrderBy =
+      categoryObj[currentCategory]?.orderBy || 'lastInteraction';
+    const isRecommended = categoryObj[currentCategory]?.isRecommended;
+
+    try {
+      setLoadingNewFeeds(true);
+      const { data: refreshedFeeds } = await loadFeeds({
+        filter: currentFilter,
+        order: currentDisplayOrder,
+        orderBy: currentOrderBy,
+        isRecommended
+      });
+      if (categoryRef.current !== currentCategory) return;
+      if (
+        currentCategory === 'uploads' &&
+        subFilterRef.current !== currentSubFilter
+      ) {
+        return;
+      }
+      if (displayOrderRef.current !== currentDisplayOrder) return;
+      onLoadFeeds(refreshedFeeds);
+      onSetDisplayOrder(currentDisplayOrder);
+      reconcileNumNewPostsAfterRefresh(initialNumNewPosts);
+    } catch (error) {
+      console.error('Error refreshing outdated feed:', error);
+    } finally {
+      setLoadingNewFeeds(false);
+    }
+  }
+
+  function reconcileNumNewPostsAfterRefresh(initialNumNewPosts: number) {
+    const latestNumNewPosts = numNewPostsRef.current;
+    if (latestNumNewPosts > initialNumNewPosts) {
+      onSetNumNewPosts(latestNumNewPosts - initialNumNewPosts);
+      return;
+    }
+    if (latestNumNewPosts === initialNumNewPosts && latestNumNewPosts !== 0) {
+      onResetNumNewPosts();
     }
   }
 
