@@ -885,9 +885,14 @@ export default function chatRequestHelpers({
     },
     async generateAICard() {
       try {
+        const clientRequestId =
+          typeof crypto !== 'undefined' &&
+          typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const { data } = await request.post(
           `${URL}/chat/aiCard/generate`,
-          {},
+          { clientRequestId },
           auth()
         );
         return data;
