@@ -368,13 +368,72 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
-    async loadDeletedPosts(contentType: string) {
+    async loadDeletedPosts(
+      params:
+        | string
+        | {
+            contentType: string;
+            limit?: number;
+            offset?: number;
+            cursor?: {
+              timeStamp: number;
+              id: number;
+            } | null;
+          }
+    ) {
       try {
+        const contentType = typeof params === 'string' ? params : params.contentType;
+        const limit =
+          typeof params === 'string' ? undefined : Number(params.limit);
+        const offset =
+          typeof params === 'string' ? undefined : Number(params.offset);
+        const cursorTimeStamp =
+          typeof params === 'string'
+            ? NaN
+            : Number(params.cursor?.timeStamp);
+        const cursorId =
+          typeof params === 'string' ? NaN : Number(params.cursor?.id);
+        const searchParams = new URLSearchParams();
+        searchParams.set('contentType', contentType);
+        if (Number.isFinite(limit) && (limit as number) > 0) {
+          searchParams.set('limit', String(Math.floor(limit as number)));
+        }
+        if (Number.isFinite(cursorTimeStamp) && Number.isFinite(cursorId)) {
+          searchParams.set(
+            'cursorTimeStamp',
+            String(Math.floor(cursorTimeStamp))
+          );
+          searchParams.set('cursorId', String(Math.floor(cursorId)));
+        }
+        if (Number.isFinite(offset) && (offset as number) >= 0) {
+          searchParams.set('offset', String(Math.floor(offset as number)));
+        }
         const { data } = await request.get(
-          `${URL}/management/deleted?contentType=${contentType}`,
+          `${URL}/management/deleted?${searchParams.toString()}`,
           auth()
         );
-        return data;
+        if (Array.isArray(data)) {
+          return {
+            items: data,
+            hasMore: false,
+            nextOffset: null,
+            nextCursor: null
+          };
+        }
+        return {
+          items: Array.isArray(data?.items) ? data.items : [],
+          hasMore: !!data?.hasMore,
+          nextOffset:
+            typeof data?.nextOffset === 'number' ? data.nextOffset : null,
+          nextCursor:
+            Number.isFinite(Number(data?.nextCursor?.timeStamp)) &&
+            Number.isFinite(Number(data?.nextCursor?.id))
+              ? {
+                  timeStamp: Number(data.nextCursor.timeStamp),
+                  id: Number(data.nextCursor.id)
+                }
+              : null
+        };
       } catch (error) {
         return handleError(error);
       }
