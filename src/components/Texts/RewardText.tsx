@@ -68,7 +68,7 @@ export default function RewardText({
               fontWeight: 'bold'
             }}
           >
-            <Icon icon={['far', 'badge-dollar']} /> {displayedCoinReward}
+            <Icon icon="coins" /> {displayedCoinReward}
           </div>
         )}
         {checked && (

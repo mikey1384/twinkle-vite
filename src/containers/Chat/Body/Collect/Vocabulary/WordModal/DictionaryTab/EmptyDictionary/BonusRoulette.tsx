@@ -93,7 +93,7 @@ function BonusRoulette({
     if (twinkleCoins < 500) return null;
     return (
       <div className={costTextStyles}>
-        Wager: <Icon icon={['far', 'badge-dollar']} /> 500
+        Wager: <Icon icon="coins" /> 500
       </div>
     );
   }, [twinkleCoins]);
@@ -105,7 +105,7 @@ function BonusRoulette({
       spinButtonLabel="Spin the Wheel"
       spinButtonDisabledLabel={
         <>
-          <Icon icon={['far', 'badge-dollar']} /> 500
+          <Icon icon="coins" /> 500
         </>
       }
       costLabel={costLabel}

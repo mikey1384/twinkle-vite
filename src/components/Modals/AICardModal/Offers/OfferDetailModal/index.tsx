@@ -72,7 +72,7 @@ export default function OfferDetailModal({
         <div>
           <Icon
             style={{ color: Color.brownOrange() }}
-            icon={['far', 'badge-dollar']}
+            icon="coins"
           />{' '}
           {addCommasToNumber(price)} Offers
         </div>
@@ -121,7 +121,7 @@ export default function OfferDetailModal({
               Accept{' '}
               <Icon
                 style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               <b style={{ color: Color.darkerGray(), marginLeft: '2px' }}>
                 {addCommasToNumber(price)}

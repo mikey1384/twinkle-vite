@@ -211,7 +211,7 @@ export default function SpellLayout({
 
         {coinReward > 0 && (
           <div className={badgeStyle('gold', 0.85)}>
-            <Icon icon={['far', 'badge-dollar']} />
+            <Icon icon="coins" />
             <span className="label">{addCommasToNumber(coinReward)}</span>
           </div>
         )}

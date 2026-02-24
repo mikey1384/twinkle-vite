@@ -119,10 +119,10 @@ export default function CardItem({
                   {offerObj.user.id === userId ? 'offered ' : ''}
                   <Icon
                     style={{ color: Color.brownOrange() }}
-                    icon={['far', 'badge-dollar']}
+                    icon="coins"
                   />
                   <b
-                    style={{ marginLeft: '0.2rem', color: Color.darkerGray() }}
+                    style={{ marginLeft: '0.5rem', color: Color.darkerGray() }}
                   >
                     {addCommasToNumber(offerObj.price)}
                   </b>
@@ -163,10 +163,10 @@ export default function CardItem({
                 >
                   <Icon
                     style={{ color: Color.brownOrange() }}
-                    icon={['far', 'badge-dollar']}
+                    icon="coins"
                   />
                   <b
-                    style={{ marginLeft: '0.2rem', color: Color.darkerGray() }}
+                    style={{ marginLeft: '0.5rem', color: Color.darkerGray() }}
                   >
                     {addCommasToNumber(card.askPrice)}
                   </b>

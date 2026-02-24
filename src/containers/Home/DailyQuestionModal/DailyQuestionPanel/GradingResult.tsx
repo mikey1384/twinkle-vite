@@ -61,7 +61,7 @@ const pulseAnimation = keyframes`
 const VIBE_OPTIONS = [
   {
     id: 'default',
-    title: 'Twinkle Choice',
+    title: 'Let Twinkle Pick',
     description: 'Let Twinkle pick a balanced question for tomorrow.'
   },
   {
@@ -211,6 +211,18 @@ const FOCUS_OPTIONS = [
 type VibeOptionId = (typeof VIBE_OPTIONS)[number]['id'];
 type FocusOptionId = (typeof FOCUS_OPTIONS)[number]['id'];
 
+function isVibeOptionId(value: string | null | undefined): value is VibeOptionId {
+  if (!value) return false;
+  return VIBE_OPTIONS.some((option) => option.id === value);
+}
+
+function isFocusOptionId(
+  value: string | null | undefined
+): value is FocusOptionId {
+  if (!value) return false;
+  return FOCUS_OPTIONS.some((option) => option.id === value);
+}
+
 export default function GradingResult({
   question,
   questionId,
@@ -230,6 +242,8 @@ export default function GradingResult({
   sharedWithCiel: initialSharedWithCiel,
   initialNextQuestionCategory,
   initialCurrentFocus,
+  initialPaidTomorrowVibeSelections,
+  initialPaidCurrentFocusSelections,
   isAdultUser = false,
   onClose
 }: {
@@ -251,6 +265,8 @@ export default function GradingResult({
   sharedWithCiel: boolean;
   initialNextQuestionCategory?: string | null;
   initialCurrentFocus?: string | null;
+  initialPaidTomorrowVibeSelections?: string[];
+  initialPaidCurrentFocusSelections?: string[];
   isAdultUser?: boolean;
   onClose: () => void;
 }) {
@@ -309,6 +325,38 @@ export default function GradingResult({
   const [currentFocus, setCurrentFocus] = useState<string | null>(
     initialCurrentFocus || null
   );
+  const [ownedVibeSelections, setOwnedVibeSelections] = useState<VibeOptionId[]>(
+    () => {
+      const ownedSelections = new Set<VibeOptionId>();
+      for (const selection of initialPaidTomorrowVibeSelections || []) {
+        if (!isVibeOptionId(selection) || selection === 'default') continue;
+        ownedSelections.add(selection);
+      }
+      if (
+        isVibeOptionId(initialNextQuestionCategory) &&
+        initialNextQuestionCategory !== 'default'
+      ) {
+        ownedSelections.add(initialNextQuestionCategory);
+      }
+      return Array.from(ownedSelections);
+    }
+  );
+  const [ownedFocusSelections, setOwnedFocusSelections] = useState<
+    FocusOptionId[]
+  >(() => {
+    const ownedSelections = new Set<FocusOptionId>();
+    for (const selection of initialPaidCurrentFocusSelections || []) {
+      if (!isFocusOptionId(selection) || selection === 'infer') continue;
+      ownedSelections.add(selection);
+    }
+    if (
+      isFocusOptionId(initialCurrentFocus) &&
+      initialCurrentFocus !== 'infer'
+    ) {
+      ownedSelections.add(initialCurrentFocus);
+    }
+    return Array.from(ownedSelections);
+  });
   const [isVibeModalOpen, setIsVibeModalOpen] = useState(false);
   const [isFocusModalOpen, setIsFocusModalOpen] = useState(false);
   const [isSettingVibe, setIsSettingVibe] = useState(false);
@@ -416,7 +464,7 @@ export default function GradingResult({
   function getVibeLabel(category: string | null) {
     const normalized = category || 'default';
     const option = VIBE_OPTIONS.find((entry) => entry.id === normalized);
-    return option ? option.title : 'Default';
+    return option ? option.title : 'Let Twinkle Pick';
   }
 
   function getFocusLabel(focus: string | null) {
@@ -460,8 +508,12 @@ export default function GradingResult({
       setIsVibeModalOpen(false);
       return;
     }
-    if (selection === 'default') {
+    const alreadyOwned = ownedVibeSelections.includes(selection);
+    if (selection === 'default' || alreadyOwned) {
       void applyVibeSelection(selection);
+      return;
+    }
+    if (availableTwinkleCoins < tomorrowVibePrice) {
       return;
     }
     setIsVibeModalOpen(false);
@@ -477,8 +529,12 @@ export default function GradingResult({
       setIsFocusModalOpen(false);
       return;
     }
-    if (selection === 'infer') {
+    const alreadyOwned = ownedFocusSelections.includes(selection);
+    if (selection === 'infer' || alreadyOwned) {
       void applyFocusSelection(selection);
+      return;
+    }
+    if (availableTwinkleCoins < currentFocusPrice) {
       return;
     }
     setIsFocusModalOpen(false);
@@ -503,6 +559,11 @@ export default function GradingResult({
         return;
       }
       setNextCategory(result.nextQuestionCategory || null);
+      if (selection !== 'default') {
+        setOwnedVibeSelections((prev) =>
+          prev.includes(selection) ? prev : [...prev, selection]
+        );
+      }
       if (result.newCoins !== undefined && userId) {
         onSetUserState({ userId, newState: { twinkleCoins: result.newCoins } });
       }
@@ -528,6 +589,11 @@ export default function GradingResult({
         return;
       }
       setCurrentFocus(result.currentFocus || null);
+      if (selection !== 'infer') {
+        setOwnedFocusSelections((prev) =>
+          prev.includes(selection) ? prev : [...prev, selection]
+        );
+      }
       if (result.newCoins !== undefined && userId) {
         onSetUserState({ userId, newState: { twinkleCoins: result.newCoins } });
       }
@@ -565,6 +631,7 @@ export default function GradingResult({
   const canChooseTomorrowPreferences = grade !== 'Fail';
   const tomorrowVibePrice = priceTable.dailyQuestionTomorrowVibe;
   const currentFocusPrice = priceTable.dailyQuestionCurrentFocus;
+  const availableTwinkleCoins = twinkleCoins || 0;
   const pendingPaymentLabel = pendingPayment
     ? pendingPayment.type === 'vibe'
       ? getVibeLabel(pendingPayment.selection)
@@ -1591,80 +1658,94 @@ export default function GradingResult({
           {VIBE_OPTIONS.map((option) => {
             const isSelected = (nextCategory || 'default') === option.id;
             const isPaidOption = option.id !== 'default';
+            const isOwnedPaidOption =
+              isPaidOption && ownedVibeSelections.includes(option.id);
+            const requiresPayment = isPaidOption && !isOwnedPaidOption;
+            const isDisabledForCoins =
+              requiresPayment && availableTwinkleCoins < tomorrowVibePrice;
+            const disabledReason = isDisabledForCoins
+              ? `You don't have enough coins for this choice (need ${tomorrowVibePrice.toLocaleString()} coins).`
+              : '';
             return (
-              <button
-                key={option.id}
-                type="button"
-                className={css`
-                  width: 100%;
-                  text-align: left;
-                  background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
-                  border: none;
-                  border-bottom: 1px solid ${Color.borderGray()};
-                  padding: 1rem 1rem;
-                  cursor: pointer;
-                  &:hover {
-                    background: ${Color.wellGray()};
-                  }
-                `}
-                onClick={() => handleSelectVibe(option.id)}
-                disabled={isSettingVibe}
-              >
-                <div
+              <div key={option.id} title={disabledReason || undefined}>
+                <button
+                  type="button"
                   className={css`
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 0.75rem;
+                    width: 100%;
+                    text-align: left;
+                    background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
+                    border: none;
+                    border-bottom: 1px solid ${Color.borderGray()};
+                    padding: 1rem 1rem;
+                    opacity: ${isDisabledForCoins ? 0.55 : 1};
+                    cursor: ${isDisabledForCoins ? 'not-allowed' : 'pointer'};
+                    &:hover {
+                      background: ${isDisabledForCoins
+                        ? isSelected
+                          ? Color.logoBlue(0.07)
+                          : 'white'
+                        : Color.wellGray()};
+                    }
                   `}
+                  onClick={() => handleSelectVibe(option.id)}
+                  disabled={isSettingVibe || isDisabledForCoins}
                 >
-                  <div>
-                    <div
-                      className={css`
-                        font-size: 1.25rem;
-                        color: ${Color.black()};
-                        font-weight: 700;
-                        margin-bottom: 0.3rem;
-                      `}
-                    >
-                      {option.title}
-                    </div>
-                    <div
-                      className={css`
-                        font-size: 1.1rem;
-                        color: ${Color.darkerGray()};
-                      `}
-                    >
-                      {option.description}
-                    </div>
-                  </div>
                   <div
                     className={css`
                       display: flex;
+                      justify-content: space-between;
                       align-items: center;
-                      gap: 0.5rem;
-                      flex-shrink: 0;
+                      gap: 0.75rem;
                     `}
                   >
-                    {isPaidOption && (
-                      <span
+                    <div>
+                      <div
                         className={css`
-                          display: inline-flex;
-                          align-items: center;
-                          gap: 0.3rem;
-                          font-size: 1.05rem;
-                          color: ${Color.orange()};
+                          font-size: 1.25rem;
+                          color: ${Color.black()};
                           font-weight: 700;
+                          margin-bottom: 0.3rem;
                         `}
                       >
-                        <Icon icon="coins" />
-                        {tomorrowVibePrice.toLocaleString()}
-                      </span>
-                    )}
-                    {isSelected && <Icon icon="check" />}
+                        {option.title}
+                      </div>
+                      <div
+                        className={css`
+                          font-size: 1.1rem;
+                          color: ${Color.darkerGray()};
+                        `}
+                      >
+                        {option.description}
+                      </div>
+                    </div>
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        flex-shrink: 0;
+                      `}
+                    >
+                      {isPaidOption && (
+                        <span
+                          className={css`
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.3rem;
+                            font-size: 1.05rem;
+                            color: ${Color.orange()};
+                            font-weight: 700;
+                          `}
+                        >
+                          <Icon icon="coins" />
+                          {tomorrowVibePrice.toLocaleString()}
+                        </span>
+                      )}
+                      {isSelected && <Icon icon="check" />}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -1689,80 +1770,94 @@ export default function GradingResult({
           {FOCUS_OPTIONS.map((option) => {
             const isSelected = (currentFocus || 'infer') === option.id;
             const isPaidOption = option.id !== 'infer';
+            const isOwnedPaidOption =
+              isPaidOption && ownedFocusSelections.includes(option.id);
+            const requiresPayment = isPaidOption && !isOwnedPaidOption;
+            const isDisabledForCoins =
+              requiresPayment && availableTwinkleCoins < currentFocusPrice;
+            const disabledReason = isDisabledForCoins
+              ? `You don't have enough coins for this choice (need ${currentFocusPrice.toLocaleString()} coins).`
+              : '';
             return (
-              <button
-                key={option.id}
-                type="button"
-                className={css`
-                  width: 100%;
-                  text-align: left;
-                  background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
-                  border: none;
-                  border-bottom: 1px solid ${Color.borderGray()};
-                  padding: 1rem 1rem;
-                  cursor: pointer;
-                  &:hover {
-                    background: ${Color.wellGray()};
-                  }
-                `}
-                onClick={() => handleSelectFocus(option.id)}
-                disabled={isSettingFocus}
-              >
-                <div
+              <div key={option.id} title={disabledReason || undefined}>
+                <button
+                  type="button"
                   className={css`
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 0.75rem;
+                    width: 100%;
+                    text-align: left;
+                    background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
+                    border: none;
+                    border-bottom: 1px solid ${Color.borderGray()};
+                    padding: 1rem 1rem;
+                    opacity: ${isDisabledForCoins ? 0.55 : 1};
+                    cursor: ${isDisabledForCoins ? 'not-allowed' : 'pointer'};
+                    &:hover {
+                      background: ${isDisabledForCoins
+                        ? isSelected
+                          ? Color.logoBlue(0.07)
+                          : 'white'
+                        : Color.wellGray()};
+                    }
                   `}
+                  onClick={() => handleSelectFocus(option.id)}
+                  disabled={isSettingFocus || isDisabledForCoins}
                 >
-                  <div>
-                    <div
-                      className={css`
-                        font-size: 1.25rem;
-                        color: ${Color.black()};
-                        font-weight: 700;
-                        margin-bottom: 0.3rem;
-                      `}
-                    >
-                      {getFocusOptionTitle(option)}
-                    </div>
-                    <div
-                      className={css`
-                        font-size: 1.1rem;
-                        color: ${Color.darkerGray()};
-                      `}
-                    >
-                      {getFocusOptionDescription(option)}
-                    </div>
-                  </div>
                   <div
                     className={css`
                       display: flex;
+                      justify-content: space-between;
                       align-items: center;
-                      gap: 0.5rem;
-                      flex-shrink: 0;
+                      gap: 0.75rem;
                     `}
                   >
-                    {isPaidOption && (
-                      <span
+                    <div>
+                      <div
                         className={css`
-                          display: inline-flex;
-                          align-items: center;
-                          gap: 0.3rem;
-                          font-size: 1.05rem;
-                          color: ${Color.orange()};
+                          font-size: 1.25rem;
+                          color: ${Color.black()};
                           font-weight: 700;
+                          margin-bottom: 0.3rem;
                         `}
                       >
-                        <Icon icon="coins" />
-                        {currentFocusPrice.toLocaleString()}
-                      </span>
-                    )}
-                    {isSelected && <Icon icon="check" />}
+                        {getFocusOptionTitle(option)}
+                      </div>
+                      <div
+                        className={css`
+                          font-size: 1.1rem;
+                          color: ${Color.darkerGray()};
+                        `}
+                      >
+                        {getFocusOptionDescription(option)}
+                      </div>
+                    </div>
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        flex-shrink: 0;
+                      `}
+                    >
+                      {isPaidOption && (
+                        <span
+                          className={css`
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.3rem;
+                            font-size: 1.05rem;
+                            color: ${Color.orange()};
+                            font-weight: 700;
+                          `}
+                        >
+                          <Icon icon="coins" />
+                          {currentFocusPrice.toLocaleString()}
+                        </span>
+                      )}
+                      {isSelected && <Icon icon="check" />}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -1793,7 +1888,7 @@ export default function GradingResult({
                 <strong>not</strong> be charged again.
               </p>
               <p style={{ marginBottom: 0 }}>
-                Your current balance: {(twinkleCoins || 0).toLocaleString()}{' '}
+                Your current balance: {availableTwinkleCoins.toLocaleString()}{' '}
                 coins
               </p>
             </div>

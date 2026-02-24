@@ -29,7 +29,7 @@ export default function WantDetail({
       <div key="coins" style={{ fontWeight: 'bold' }}>
         <Icon
           style={{ color: Color.brownOrange() }}
-          icon={['far', 'badge-dollar']}
+          icon="coins"
         />{' '}
         <span style={{ color: Color.darkerGray() }}>
           {addCommasToNumber(coins)}

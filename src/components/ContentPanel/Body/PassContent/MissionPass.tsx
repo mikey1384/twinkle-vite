@@ -140,7 +140,7 @@ function EnglishMessage({
         <>
           <Icon
             style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
-            icon={['far', 'badge-dollar']}
+            icon="coins"
           />{' '}
           <span
             className={css`

@@ -114,7 +114,7 @@ export default function AddButtons({
               : undefined
           }
         >
-          <Icon size="lg" icon={['far', 'badge-dollar']} />
+          <Icon size="lg" icon="coins" />
         </Button>
       )}
       <UploadButton

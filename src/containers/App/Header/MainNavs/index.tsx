@@ -368,26 +368,26 @@ export default function MainNavs({
       contentNav === 'videos' || contentNav === 'playlists'
         ? 'film'
         : contentNav === 'ai-cards'
-        ? 'cards-blank'
-        : contentNav === 'ai-stories'
-        ? 'book-open'
-        : contentNav === 'links'
-        ? 'book'
-        : contentNav === 'subjects'
-        ? 'bolt'
-        : contentNav === 'missions'
-        ? 'clipboard-check'
-        : contentNav === 'achievement-unlocks'
-        ? 'trophy'
-        : contentNav === 'mission-passes'
-        ? 'check-circle'
-        : contentNav === 'daily-rewards'
-        ? 'check-circle'
-        : contentNav === 'daily-reflections'
-        ? 'pencil-alt'
-        : contentNav === 'shared-prompts'
-        ? 'share'
-        : 'comment-alt',
+          ? 'cards-blank'
+          : contentNav === 'ai-stories'
+            ? 'book-open'
+            : contentNav === 'links'
+              ? 'book'
+              : contentNav === 'subjects'
+                ? 'bolt'
+                : contentNav === 'missions'
+                  ? 'clipboard-check'
+                  : contentNav === 'achievement-unlocks'
+                    ? 'trophy'
+                    : contentNav === 'mission-passes'
+                      ? 'check-circle'
+                      : contentNav === 'daily-rewards'
+                        ? 'check-circle'
+                        : contentNav === 'daily-reflections'
+                          ? 'pencil-alt'
+                          : contentNav === 'shared-prompts'
+                            ? 'share'
+                            : 'comment-alt',
     [contentNav]
   );
 
@@ -411,8 +411,8 @@ export default function MainNavs({
         ? chatType === VOCAB_CHAT_TYPE
           ? `/${VOCAB_CHAT_TYPE}`
           : chatType === AI_CARD_CHAT_TYPE
-          ? `/${AI_CARD_CHAT_TYPE}`
-          : lastChatPath || ''
+            ? `/${AI_CARD_CHAT_TYPE}`
+            : lastChatPath || ''
         : ''
     }`;
   }, [chatLoaded, chatType, lastChatPath]);
@@ -557,10 +557,7 @@ export default function MainNavs({
           }}
           onClick={onSetBalanceModalShown}
         >
-          <Icon
-            style={{ marginRight: '0.5rem' }}
-            icon={['far', 'badge-dollar']}
-          />
+          <Icon style={{ marginRight: '0.5rem' }} icon="coins" />
           {typeof twinkleCoins === 'number' ? (
             displayedTwinkleCoins
           ) : (

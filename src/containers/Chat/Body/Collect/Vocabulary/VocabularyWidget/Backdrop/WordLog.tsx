@@ -99,7 +99,7 @@ export default function WordRegisterStatus({ entry }: { entry: WordLogEntry }) {
         ({wordLevelHash[level]?.label || ''} {wordLabel}) •{' '}
         <span style={{ color: Color.gold() }}>{xpWithCommas} XP</span> •{' '}
         <Icon
-          icon={['far', 'badge-dollar']}
+          icon="coins"
           style={{ color: Color.brownOrange() }}
         />{' '}
         <span style={{ color: Color.brownOrange() }}>{coinsWithCommas}</span>

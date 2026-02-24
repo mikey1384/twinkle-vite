@@ -315,7 +315,7 @@ export default function Card({
               <div>
                 price:{' '}
                 <b style={{ color: Color.gold() }}>
-                  <Icon icon={['far', 'badge-dollar']} />
+                  <Icon icon="coins" />
                   <span style={{ marginLeft: '2px' }}>
                     {addCommasToNumber(finalCard.askPrice)}
                   </span>

@@ -1082,7 +1082,7 @@ export default function DailyRewardModal({
                       </div>
                       <div className={summaryColRight}>
                         <Icon
-                          icon={['far', 'badge-dollar']}
+                          icon="coins"
                           style={{
                             color: Color.brownOrange(),
                             fontSize: '1em'
@@ -1108,7 +1108,7 @@ export default function DailyRewardModal({
                       </div>
                       <div className={summaryColRight}>
                         <Icon
-                          icon={['far', 'badge-dollar']}
+                          icon="coins"
                           style={{
                             color: Color.brownOrange(),
                             fontSize: '1em'
@@ -1132,7 +1132,7 @@ export default function DailyRewardModal({
                       <div className={summaryColCenter} />
                       <div className={summaryColRight}>
                         <Icon
-                          icon={['far', 'badge-dollar']}
+                          icon="coins"
                           style={{
                             color: Color.brownOrange(),
                             fontSize: '1em'
@@ -1173,7 +1173,7 @@ export default function DailyRewardModal({
                         }}
                       >
                         <Icon
-                          icon={['far', 'badge-dollar']}
+                          icon="coins"
                           style={{
                             fontSize: coinFontSize,
                             color: Color.brownOrange()

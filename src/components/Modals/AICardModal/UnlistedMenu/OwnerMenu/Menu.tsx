@@ -115,7 +115,7 @@ export default function Menu({
               (
               <Icon
                 style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               {addCommasToNumber(appliedBurnPrice)})
             </span>

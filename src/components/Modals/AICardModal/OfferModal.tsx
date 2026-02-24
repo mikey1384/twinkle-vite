@@ -66,7 +66,7 @@ export default function OfferModal({
               Set price (
               <Icon
                 style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               )
             </div>

@@ -127,7 +127,7 @@ const item = {
                             color: Color.brownOrange()
                           }}
                         >
-                          <Icon icon={['far', 'badge-dollar']} />{' '}
+                          <Icon icon="coins" />{' '}
                           {videoRewardHash[keyNumber]?.coin}
                         </span>
                       </span>
@@ -163,7 +163,7 @@ const item = {
                             fontWeight: 700
                           }}
                         >
-                          <Icon icon={['far', 'badge-dollar']} />{' '}
+                          <Icon icon="coins" />{' '}
                           {videoRewardHash[keyNumber + 1]?.coin}
                         </span>
                       </span>

@@ -44,6 +44,11 @@ function isDeletionOnlyChange(previousText: string, nextText: string): boolean {
   return nextIndex === nextText.length;
 }
 
+function normalizeSelectionArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string');
+}
+
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -110,6 +115,12 @@ export default function DailyQuestionPanel({
     string | null
   >(null);
   const [currentFocus, setCurrentFocus] = useState<string | null>(null);
+  const [paidTomorrowVibeSelections, setPaidTomorrowVibeSelections] = useState<
+    string[]
+  >([]);
+  const [paidCurrentFocusSelections, setPaidCurrentFocusSelections] = useState<
+    string[]
+  >([]);
   const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
   const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -313,6 +324,12 @@ export default function DailyQuestionPanel({
         setStreakBroken(!!data.streakBroken);
         setNextQuestionCategory(data.nextQuestionCategory || null);
         setCurrentFocus(data.currentFocus || null);
+        setPaidTomorrowVibeSelections(
+          normalizeSelectionArray(data.paidTomorrowVibeSelections)
+        );
+        setPaidCurrentFocusSelections(
+          normalizeSelectionArray(data.paidCurrentFocusSelections)
+        );
         setIsAdultUser(!!data.isAdult);
 
         if (data.hasResponded && data.response) {
@@ -1184,6 +1201,8 @@ export default function DailyQuestionPanel({
           initialRefinedResponse={gradingResult.sharedResponse}
           initialNextQuestionCategory={nextQuestionCategory}
           initialCurrentFocus={currentFocus}
+          initialPaidTomorrowVibeSelections={paidTomorrowVibeSelections}
+          initialPaidCurrentFocusSelections={paidCurrentFocusSelections}
           isAdultUser={isAdultUser}
           onClose={onClose}
         />

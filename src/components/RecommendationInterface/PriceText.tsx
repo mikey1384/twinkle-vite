@@ -18,7 +18,7 @@ function PriceText({ isRecommendedByUser, switchButtonShown }: PriceTextProps) {
         fontSize: '1.3rem'
       }}
     >
-      (<Icon icon={['far', 'badge-dollar']} /> {priceTable.recommendation})
+      (<Icon icon="coins" /> {priceTable.recommendation})
     </span>
   );
 }

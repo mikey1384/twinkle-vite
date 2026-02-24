@@ -113,7 +113,7 @@ export default function AccountMenu({
             style={{ marginRight: '1rem', cursor: 'pointer' }}
             onClick={onSetBalanceModalShown}
           >
-            <Icon icon={['far', 'badge-dollar']} />{' '}
+            <Icon icon="coins" style={{ marginRight: '0.5rem' }} />{' '}
             {addCommasToNumber(twinkleCoins)}
           </div>
         ) : (

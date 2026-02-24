@@ -215,7 +215,7 @@ function XPBar({
                     {numCoinsEarned > 0 && !isMaxReached ? (
                       `+ ${numCoinsEarnedWithComma}`
                     ) : (
-                      <Icon size="lg" icon={['far', 'badge-dollar']} />
+                      <Icon size="lg" icon="coins" />
                     )}
                   </div>
                 </div>

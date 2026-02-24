@@ -93,7 +93,7 @@ export default function ColorSelector({
                 }}
                 text={
                   <>
-                    <Icon icon={['far', 'badge-dollar']} />{' '}
+                    <Icon icon="coins" />{' '}
                     {priceTable.chatTheme}
                   </>
                 }

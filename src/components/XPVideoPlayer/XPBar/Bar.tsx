@@ -109,7 +109,7 @@ export default function Bar({
     const coinFrag =
       rewardLevel > 2 ? (
         <>
-          & <Icon icon={['far', 'badge-dollar']} /> {coinRewardAmount}
+          & <Icon icon="coins" /> {coinRewardAmount}
         </>
       ) : null;
     const prefix = continuingStatusShown ? `${continueLabel} · ` : '';

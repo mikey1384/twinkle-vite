@@ -116,8 +116,8 @@ export default function ChangeUsername({
           >
             {changeLabel}
             <div style={{ marginLeft: '0.7rem' }}>
-              (<Icon icon={['far', 'badge-dollar']} />
-              <span style={{ marginLeft: '0.3rem' }}>
+              (<Icon icon="coins" />
+              <span style={{ marginLeft: '0.5rem' }}>
                 {priceTable.username}
               </span>
               )

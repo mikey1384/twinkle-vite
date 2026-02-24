@@ -76,11 +76,11 @@ export default function RewardAmountInfo({
               <span>&</span>
               <Icon
                 style={{ marginLeft: '0.5rem' }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               <span
                 className={css`
-                  margin-left: 0.2rem;
+                  margin-left: 0.5rem;
                 `}
               >
                 {coinRewardAmount}

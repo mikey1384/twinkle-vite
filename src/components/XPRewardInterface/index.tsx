@@ -158,8 +158,8 @@ export default function XPRewardInterface({
         {requiresPayment ? (
           <div style={{ display: 'inline' }}>
             &nbsp;(
-            <Icon icon={['far', 'badge-dollar']} />
-            <span style={{ marginLeft: '0.3rem' }}>
+            <Icon icon="coins" />
+            <span style={{ marginLeft: '0.5rem' }}>
               {selectedAmount * priceTable.reward}
             </span>
             )

@@ -100,7 +100,7 @@ export default function MyOffer({
             Twinkle Coins (
             <Icon
               style={{ color: Color.brownOrange() }}
-              icon={['far', 'badge-dollar']}
+              icon="coins"
             />
             )
           </div>

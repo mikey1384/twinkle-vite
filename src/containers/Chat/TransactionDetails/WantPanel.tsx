@@ -65,14 +65,14 @@ export default function WantPanel({
       <div key="coins">
         <Icon
           style={{ color: Color.brownOrange() }}
-          icon={['far', 'badge-dollar']}
+          icon="coins"
         />
         <span
           style={{
             fontSize: '1.5rem',
             fontWeight: 'bold',
             color: Color.darkerGray(),
-            marginLeft: '0.3rem'
+            marginLeft: '0.5rem'
           }}
         >
           {addCommasToNumber(wantCoins)}

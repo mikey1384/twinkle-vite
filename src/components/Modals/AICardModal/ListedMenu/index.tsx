@@ -90,11 +90,11 @@ export default function ListedMenu({
             <div style={{ marginTop: '0.5rem' }}>
               <Icon
                 style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               <span
                 style={{
-                  marginLeft: '0.3rem',
+                  marginLeft: '0.5rem',
                   fontWeight: 'bold',
                   color: Color.darkerGray()
                 }}
@@ -116,11 +116,11 @@ export default function ListedMenu({
             >
               <Icon
                 style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               <span
                 style={{
-                  marginLeft: '0.2rem',
+                  marginLeft: '0.5rem',
                   color: Color.darkerGray(),
                   fontWeight: 'bold'
                 }}

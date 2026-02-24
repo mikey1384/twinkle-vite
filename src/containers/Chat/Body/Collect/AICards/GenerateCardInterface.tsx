@@ -52,7 +52,7 @@ export default function GenerateCardInterface({
               <span style={{ marginRight: '0.7rem' }}>Not Enough Coins</span>(
               <Icon
                 style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               {priceTable.card})
             </div>
@@ -63,7 +63,7 @@ export default function GenerateCardInterface({
               <span style={{ marginRight: '0.7rem' }}>Summon Card</span>(
               <Icon
                 style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               {priceTable.card})
             </div>

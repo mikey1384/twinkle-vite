@@ -63,7 +63,7 @@ export default function SellModal({
               Set price (
               <Icon
                 style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
               )
             </div>

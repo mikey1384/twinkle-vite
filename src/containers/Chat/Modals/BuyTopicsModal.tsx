@@ -107,7 +107,7 @@ export default function BuyTopicsModal({
                     outline: insufficientFunds ? 'none' : ''
                   }}
                 >
-                  <Icon size="lg" icon={['far', 'badge-dollar']} />
+                  <Icon size="lg" icon="coins" />
                   <span style={{ marginLeft: '0.5rem' }}>Buy</span>
                 </Button>
                 {insufficientFunds && hovered && (

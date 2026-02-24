@@ -145,7 +145,7 @@ export default function TargetPassContent({
           <>
             <Icon
               style={{ color: Color.brownOrange(), fontWeight: 'bold' }}
-              icon={['far', 'badge-dollar']}
+              icon="coins"
             />{' '}
             <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
               {mission.coinReward}

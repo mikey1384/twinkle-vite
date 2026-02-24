@@ -158,7 +158,7 @@ export default function TargetDailyGoalsContent({
               <>
                 <Icon
                   style={{ color: Color.brownOrange() }}
-                  icon={['far', 'badge-dollar']}
+                  icon="coins"
                 />{' '}
                 <span style={{ color: Color.brownOrange(), fontWeight: 'bold' }}>
                   {coinEarned}

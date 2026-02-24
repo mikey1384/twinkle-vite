@@ -68,9 +68,9 @@ export default function OfferListItem({
             <div>
               <Icon
                 style={{ color: Color.brownOrange() }}
-                icon={['far', 'badge-dollar']}
+                icon="coins"
               />
-              <span style={{ marginLeft: '0.2rem' }}>
+              <span style={{ marginLeft: '0.5rem' }}>
                 <b style={{ color: Color.darkerGray() }}>
                   {addCommasToNumber(offer.price)}
                 </b>

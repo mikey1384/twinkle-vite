@@ -389,7 +389,7 @@ export default function Mission({
                   `}
                 >
                   <Icon
-                    icon={['far', 'badge-dollar']}
+                    icon="coins"
                     style={{ fontSize: '1.8rem', color: Color.brownOrange() }}
                   />
                   <span
@@ -474,7 +474,7 @@ export default function Mission({
                       `}
                     >
                       <Icon
-                        icon={['far', 'badge-dollar']}
+                        icon="coins"
                         style={{
                           fontSize: '1.8rem',
                           color: Color.brownOrange()

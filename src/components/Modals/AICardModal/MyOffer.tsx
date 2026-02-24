@@ -41,11 +41,11 @@ export default function MyOffer({
         <p>
           <Icon
             style={{ color: Color.brownOrange() }}
-            icon={['far', 'badge-dollar']}
+            icon="coins"
           />
           <span
             style={{
-              marginLeft: '0.3rem',
+              marginLeft: '0.5rem',
               color: Color.darkerGray(),
               fontWeight: 'bold'
             }}

@@ -74,7 +74,7 @@ export default function MyWant({
             Twinkle Coins (
             <Icon
               style={{ color: Color.brownOrange() }}
-              icon={['far', 'badge-dollar']}
+              icon="coins"
             />
             )
           </div>
