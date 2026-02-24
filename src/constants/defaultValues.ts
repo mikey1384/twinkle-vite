@@ -482,7 +482,9 @@ export const priceTable = {
   username: 10,
   recommendation: 2,
   reward: 2,
-  thinkHard: 500
+  thinkHard: 500,
+  dailyQuestionTomorrowVibe: 1000,
+  dailyQuestionCurrentFocus: 10000
 };
 export const qualityProps: {
   [key: string]: {

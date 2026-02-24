@@ -14,6 +14,9 @@ export default function ActionBlock({
   username: string;
 }) {
   const displayedAction = useMemo(() => {
+    const normalizedAction = humanizeToken(action);
+    const normalizedTarget = humanizeToken(target);
+
     if (action === 'grammarChallenge' && target === 'grammarbles_question') {
       return 'challenged a Grammarbles question';
     }
@@ -32,6 +35,9 @@ export default function ActionBlock({
       }
       if (action === 'followup') {
         return 'followed up on an AI image';
+      }
+      if (action === 'refund') {
+        return 'refunded AI image credits';
       }
     }
     if (action === 'donation' && target === 'community') {
@@ -131,10 +137,10 @@ export default function ActionBlock({
       }
     }
     if (action === 'receive') {
-      return `received from ${username}`;
+      return username ? `received from ${username}` : 'received transfer';
     }
     if (action === 'send') {
-      return `sent ${username}`;
+      return username ? `sent to ${username}` : 'sent transfer';
     }
     if (action === 'vocabRoulette') {
       if (type === 'decrease') {
@@ -154,10 +160,38 @@ export default function ActionBlock({
     if (action === 'dailyReflectionStreakRepair') {
       return 'purchased a daily reflection streak repair';
     }
+    if (
+      action === 'dailyQuestionTomorrowVibeSelection' &&
+      target === 'dailyQuestionTomorrowVibe'
+    ) {
+      return "set tomorrow's vibe";
+    }
+    if (
+      action === 'dailyQuestionCurrentFocusSelection' &&
+      target === 'dailyQuestionCurrentFocus'
+    ) {
+      return 'set current focus';
+    }
     if (action === 'wordMasterBreakBypass') {
       return 'bypassed a Word Master break';
     }
-    return `${action} ${target}`;
+    if (normalizedAction && normalizedTarget) {
+      return `${normalizedAction} ${normalizedTarget}`;
+    }
+    if (normalizedAction) {
+      return normalizedAction;
+    }
+    return 'updated balance';
   }, [action, target, type, username]);
   return <div style={style}>{displayedAction}</div>;
+}
+
+function humanizeToken(value: unknown) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
 }

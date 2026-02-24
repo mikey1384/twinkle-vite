@@ -106,6 +106,11 @@ export default function DailyQuestionPanel({
   const [streakRepairAvailable, setStreakRepairAvailable] = useState(false);
   const [streakAtRisk, setStreakAtRisk] = useState(false);
   const [streakBroken, setStreakBroken] = useState(false);
+  const [nextQuestionCategory, setNextQuestionCategory] = useState<
+    string | null
+  >(null);
+  const [currentFocus, setCurrentFocus] = useState<string | null>(null);
+  const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
   const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -306,6 +311,9 @@ export default function DailyQuestionPanel({
         setStreakRepairAvailable(!!data.streakRepairAvailable);
         setStreakAtRisk(!!data.streakAtRisk);
         setStreakBroken(!!data.streakBroken);
+        setNextQuestionCategory(data.nextQuestionCategory || null);
+        setCurrentFocus(data.currentFocus || null);
+        setIsAdultUser(!!data.isAdult);
 
         if (data.hasResponded && data.response) {
           committedResponseRef.current = data.response.response || '';
@@ -1174,6 +1182,9 @@ export default function DailyQuestionPanel({
           sharedWithCiel={gradingResult.sharedWithCiel}
           originalResponse={gradingResult.originalResponse}
           initialRefinedResponse={gradingResult.sharedResponse}
+          initialNextQuestionCategory={nextQuestionCategory}
+          initialCurrentFocus={currentFocus}
+          isAdultUser={isAdultUser}
           onClose={onClose}
         />
       </ErrorBoundary>

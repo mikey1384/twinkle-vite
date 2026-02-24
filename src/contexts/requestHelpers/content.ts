@@ -2251,6 +2251,40 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async setDailyQuestionNextCategory({
+      category,
+      content
+    }: {
+      category: string;
+      content?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/next-category`,
+          { category, content },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setDailyQuestionCurrentFocus({
+      currentFocus
+    }: {
+      currentFocus: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/daily-question/current-focus`,
+          { currentFocus },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async getDailyQuestionHistory({
       limit,
       offset
