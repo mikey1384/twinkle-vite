@@ -439,7 +439,7 @@ export default function missionRequestHelpers({
       newStatus
     }: {
       missionType: string;
-      newStatus: string;
+      newStatus: { [key: string]: any };
     }) {
       try {
         await request.put(
@@ -616,12 +616,14 @@ export default function missionRequestHelpers({
       promptTitle,
       systemPrompt,
       target,
-      topicId
+      topicId,
+      emitRefreshEvent = true
     }: {
       promptTitle: string;
       systemPrompt: string;
       target: 'zero' | 'ciel';
       topicId?: number;
+      emitRefreshEvent?: boolean;
     }) {
       try {
         const { data } = await request.post(
@@ -634,6 +636,16 @@ export default function missionRequestHelpers({
           },
           auth()
         );
+        if (emitRefreshEvent && typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('twinkle:system-prompt-topic-updated', {
+              detail: {
+                topicId: data?.topicId,
+                channelId: data?.channelId
+              }
+            })
+          );
+        }
         return Promise.resolve(data);
       } catch (error) {
         return handleError(error);

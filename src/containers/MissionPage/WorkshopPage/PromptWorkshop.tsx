@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
@@ -40,9 +34,20 @@ export default function PromptWorkshop({
 }) {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
+  const myUserState = useKeyContext((v) => v.myState.state);
+  const persistedWorkshopSaveTarget = useKeyContext(
+    (v) => v.myState.state?.missions?.['system-prompt']?.workshopSaveTarget
+  );
   const applySystemPromptToAIChat = useAppContext(
     (v) => v.requestHelpers.applySystemPromptToAIChat
   );
+  const updateMissionStatus = useAppContext(
+    (v) => v.requestHelpers.updateMissionStatus
+  );
+  const updateTopicShareState = useAppContext(
+    (v) => v.requestHelpers.updateTopicShareState
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const onUpdateSelectedChannelId = useChatContext(
     (v) => v.actions.onUpdateSelectedChannelId
@@ -71,10 +76,19 @@ export default function PromptWorkshop({
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [improving, setImproving] = useState(false);
-  const [applyingTarget, setApplyingTarget] = useState<'zero' | 'ciel' | null>(
+  const [saveAction, setSaveAction] = useState<null | 'save' | 'share'>(null);
+  const [saveTarget, setSaveTarget] = useState<'zero' | 'ciel'>(
+    persistedWorkshopSaveTarget === 'ciel' ? 'ciel' : 'zero'
+  );
+  const [applyingTarget, setApplyingTarget] = useState<null | 'zero' | 'ciel'>(
     null
   );
+  const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState('');
+  const savedTopicIdsRef = useRef<{
+    zero?: { topicId: number };
+    ciel?: { topicId: number };
+  }>({});
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -96,22 +110,18 @@ export default function PromptWorkshop({
     !showPromptSection || (generating && !hasPrompt);
 
   // Update mission state helper
-  const setSystemPromptState = useCallback(
-    (nextState: {
-      title?: string;
-      prompt?: string;
-      promptEverGenerated?: boolean;
-    }) => {
-      onSetMissionState({
-        missionId: mission.id,
-        newState: {
-          systemPromptState: { ...systemPromptState, ...nextState }
-        }
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mission.id, systemPromptState]
-  );
+  function setSystemPromptState(nextState: {
+    title?: string;
+    prompt?: string;
+    promptEverGenerated?: boolean;
+  }) {
+    onSetMissionState({
+      missionId: mission.id,
+      newState: {
+        systemPromptState: { ...systemPromptState, ...nextState }
+      }
+    });
+  }
 
   // Socket listeners for generate_custom_instructions
   useEffect(() => {
@@ -208,7 +218,8 @@ export default function PromptWorkshop({
       );
       socket.off('generate_custom_instructions_error', handleGenerateError);
     };
-  }, [setSystemPromptState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mission.id, systemPromptState]);
 
   useEffect(() => {
     function handleImproveUpdate({
@@ -258,7 +269,8 @@ export default function PromptWorkshop({
       socket.off('improve_custom_instructions_complete', handleImproveComplete);
       socket.off('improve_custom_instructions_error', handleImproveError);
     };
-  }, [setSystemPromptState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mission.id, systemPromptState]);
 
   // Socket listeners for system_prompt_preview (test chat)
   useEffect(() => {
@@ -375,7 +387,15 @@ export default function PromptWorkshop({
     }
   }, [generating, improving, prompt]);
 
-  const handleGeneratePrompt = useCallback(() => {
+  useEffect(() => {
+    if (persistedWorkshopSaveTarget === 'zero') {
+      setSaveTarget('zero');
+    } else if (persistedWorkshopSaveTarget === 'ciel') {
+      setSaveTarget('ciel');
+    }
+  }, [persistedWorkshopSaveTarget]);
+
+  function handleGeneratePrompt() {
     if (!canGenerate) return;
     if (generateDedupWaitTimeoutRef.current) {
       clearTimeout(generateDedupWaitTimeoutRef.current);
@@ -391,9 +411,9 @@ export default function PromptWorkshop({
       topicText: trimmedTitle,
       trackProgress: false
     });
-  }, [canGenerate, trimmedTitle, setSystemPromptState]);
+  }
 
-  const handleImprovePrompt = useCallback(() => {
+  function handleImprovePrompt() {
     if (!hasPrompt || improving || generating) return;
     setError('');
     setImproving(true);
@@ -405,9 +425,9 @@ export default function PromptWorkshop({
       customInstructions: trimmedPrompt,
       trackProgress: false
     });
-  }, [hasPrompt, improving, generating, trimmedTitle, trimmedPrompt]);
+  }
 
-  const handleSendMessage = useCallback(() => {
+  function handleSendMessage() {
     if (!canSend) return;
     if (previewDedupWaitTimeoutRef.current) {
       clearTimeout(previewDedupWaitTimeoutRef.current);
@@ -434,53 +454,15 @@ export default function PromptWorkshop({
       })),
       trackProgress: false
     });
-  }, [canSend, userMessage, trimmedTitle, trimmedPrompt, chatMessages]);
+  }
 
-  const handleApplyToAIChat = useCallback(
-    async (target: 'zero' | 'ciel') => {
-      if (!hasPrompt || applyingTarget) return;
-      setApplyingTarget(target);
-      try {
-        const data = await applySystemPromptToAIChat({
-          promptTitle: trimmedTitle,
-          systemPrompt: trimmedPrompt,
-          target
-        });
-        if (data?.channelId && data?.topicId) {
-          const recipientId =
-            target === 'zero' ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
-          onOpenNewChatTab({
-            user: { id: userId },
-            recipient: { id: recipientId }
-          });
-          onUpdateSelectedChannelId(data.channelId);
-          onSetThinkHardForTopic({
-            topicId: data.topicId,
-            thinkHard: target === 'ciel'
-          });
-          const pathId = Number(data.channelId) + Number(CHAT_ID_BASE_NUMBER);
-          navigate(`/chat/${pathId}/topic/${data.topicId}`);
-        }
-      } catch (err) {
-        console.error('Failed to apply prompt:', err);
-        setError('Failed to apply prompt to chat');
-      } finally {
-        setApplyingTarget(null);
-      }
-    },
-    [
-      hasPrompt,
-      applyingTarget,
-      trimmedTitle,
-      trimmedPrompt,
-      userId,
-      applySystemPromptToAIChat,
-      onOpenNewChatTab,
-      onUpdateSelectedChannelId,
-      onSetThinkHardForTopic,
-      navigate
-    ]
-  );
+  async function handleSave() {
+    await savePromptForSelectedTarget(false);
+  }
+
+  async function handleSaveAndShare() {
+    await savePromptForSelectedTarget(true);
+  }
 
   const sectionClass = css`
     display: flex;
@@ -730,10 +712,181 @@ export default function PromptWorkshop({
         </section>
       )}
 
-      {/* Use with AI Buttons */}
+      {/* Save Buttons */}
       {hasPrompt && (
         <section className={sectionClass}>
-          <div className={labelClass}>Use with AI</div>
+          <div className={labelClass}>Save Prompt</div>
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+            `}
+          >
+            <span
+              className={css`
+                font-size: 1.05rem;
+                color: ${Color.gray()};
+                font-weight: 700;
+              `}
+            >
+              Save target
+            </span>
+          </div>
+          <div
+            className={css`
+              display: flex;
+              justify-content: center;
+            `}
+          >
+            <div
+              role="tablist"
+              aria-label="Save target"
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                width: min(32rem, 100%);
+                padding: 0.35rem;
+                border-radius: 999px;
+                border: 1px solid var(--ui-border);
+                background: ${Color.highlightGray(0.35)};
+              `}
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={saveTarget === 'zero'}
+                disabled={Boolean(saveAction) || Boolean(applyingTarget)}
+                onClick={() => handleSaveTargetChange('zero')}
+                className={css`
+                  flex: 1;
+                  height: 3.6rem;
+                  border-radius: 999px;
+                  border: 1px solid
+                    ${saveTarget === 'zero' ? Color.logoBlue() : 'transparent'};
+                  background: ${saveTarget === 'zero'
+                    ? Color.logoBlue()
+                    : 'transparent'};
+                  color: ${saveTarget === 'zero' ? '#fff' : Color.darkerGray()};
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.55rem;
+                  font-size: 1.2rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                  transition: all 0.15s ease;
+                  &:disabled {
+                    opacity: 0.6;
+                    cursor: default;
+                  }
+                `}
+              >
+                <img
+                  src={zero}
+                  alt="Zero"
+                  className={css`
+                    width: 1.4rem;
+                    height: 1.4rem;
+                    border-radius: 50%;
+                    object-fit: cover;
+                  `}
+                />
+                Zero
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={saveTarget === 'ciel'}
+                disabled={Boolean(saveAction) || Boolean(applyingTarget)}
+                onClick={() => handleSaveTargetChange('ciel')}
+                className={css`
+                  flex: 1;
+                  height: 3.6rem;
+                  border-radius: 999px;
+                  border: 1px solid
+                    ${saveTarget === 'ciel' ? Color.purple() : 'transparent'};
+                  background: ${saveTarget === 'ciel'
+                    ? Color.purple()
+                    : 'transparent'};
+                  color: ${saveTarget === 'ciel' ? '#fff' : Color.darkerGray()};
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.55rem;
+                  font-size: 1.2rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                  transition: all 0.15s ease;
+                  &:disabled {
+                    opacity: 0.6;
+                    cursor: default;
+                  }
+                `}
+              >
+                <img
+                  src={ciel}
+                  alt="Ciel"
+                  className={css`
+                    width: 1.4rem;
+                    height: 1.4rem;
+                    border-radius: 50%;
+                    object-fit: cover;
+                  `}
+                />
+                Ciel
+              </button>
+            </div>
+          </div>
+          <div
+            className={css`
+              display: flex;
+              gap: 0.6rem;
+              flex-wrap: wrap;
+            `}
+          >
+            <Button
+              color="darkBlue"
+              variant="solid"
+              tone="raised"
+              loading={saveAction === 'save'}
+              disabled={
+                Boolean(saveAction) ||
+                Boolean(applyingTarget) ||
+                generating ||
+                improving
+              }
+              onClick={handleSave}
+              style={{ flex: 1, minWidth: '8rem' }}
+            >
+              <Icon icon="floppy-disk" style={{ marginRight: '0.5rem' }} />
+              Save
+            </Button>
+            <Button
+              color="logoBlue"
+              variant="solid"
+              tone="raised"
+              loading={saveAction === 'share'}
+              disabled={
+                Boolean(saveAction) ||
+                Boolean(applyingTarget) ||
+                generating ||
+                improving
+              }
+              onClick={handleSaveAndShare}
+              style={{ flex: 1, minWidth: '8rem' }}
+            >
+              <Icon icon="users" style={{ marginRight: '0.5rem' }} />
+              Save and Share
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* Share with AI Buttons */}
+      {hasPrompt && (
+        <section className={sectionClass}>
+          <div className={labelClass}>Share with AI</div>
           <div
             className={css`
               display: flex;
@@ -746,8 +899,13 @@ export default function PromptWorkshop({
               variant="solid"
               tone="raised"
               loading={applyingTarget === 'zero'}
-              disabled={applyingTarget === 'ciel' || generating || improving}
-              onClick={() => handleApplyToAIChat('zero')}
+              disabled={
+                Boolean(saveAction) ||
+                Boolean(applyingTarget) ||
+                generating ||
+                improving
+              }
+              onClick={() => handleShareWithAI('zero')}
               style={{ flex: 1, minWidth: '8rem' }}
             >
               <img
@@ -761,15 +919,20 @@ export default function PromptWorkshop({
                   background: #fff;
                 `}
               />
-              Zero
+              Share with Zero
             </Button>
             <Button
               color="purple"
               variant="solid"
               tone="raised"
               loading={applyingTarget === 'ciel'}
-              disabled={applyingTarget === 'zero' || generating || improving}
-              onClick={() => handleApplyToAIChat('ciel')}
+              disabled={
+                Boolean(saveAction) ||
+                Boolean(applyingTarget) ||
+                generating ||
+                improving
+              }
+              onClick={() => handleShareWithAI('ciel')}
               style={{ flex: 1, minWidth: '8rem' }}
             >
               <img
@@ -783,10 +946,22 @@ export default function PromptWorkshop({
                   background: #fff;
                 `}
               />
-              Ciel
+              Share with Ciel
             </Button>
           </div>
         </section>
+      )}
+
+      {statusMessage && (
+        <div
+          className={css`
+            color: ${Color.logoBlue()};
+            font-size: 1.1rem;
+            padding: 0.5rem;
+          `}
+        >
+          {statusMessage}
+        </div>
       )}
 
       {error && (
@@ -802,4 +977,139 @@ export default function PromptWorkshop({
       )}
     </div>
   );
+
+  async function savePromptForSelectedTarget(shareAfterSave: boolean) {
+    if (!hasPrompt || saveAction || applyingTarget) return;
+    setError('');
+    setStatusMessage('');
+    setSaveAction(shareAfterSave ? 'share' : 'save');
+    const target = saveTarget;
+
+    try {
+      const existingTopicId = savedTopicIdsRef.current[target]?.topicId;
+      const data = await applySystemPromptToAIChat({
+        promptTitle: trimmedTitle,
+        systemPrompt: trimmedPrompt,
+        target,
+        emitRefreshEvent: false,
+        ...(existingTopicId ? { topicId: existingTopicId } : {})
+      });
+      if (!Number(data?.topicId) || !Number(data?.channelId)) {
+        throw new Error(`Invalid response while saving to ${target}`);
+      }
+
+      savedTopicIdsRef.current[target] = { topicId: Number(data.topicId) };
+
+      if (shareAfterSave) {
+        try {
+          await updateTopicShareState({
+            channelId: Number(data.channelId),
+            topicId: Number(data.topicId),
+            shareWithOtherUsers: true
+          });
+          setStatusMessage(`Saved to ${capitalizeTarget(target)} and shared.`);
+        } catch (shareError) {
+          console.error('Failed to share saved prompt:', shareError);
+          setStatusMessage(`Saved to ${capitalizeTarget(target)}.`);
+          setError(`Saved, but failed to share with other users.`);
+        }
+      } else {
+        setStatusMessage(`Saved to ${capitalizeTarget(target)}.`);
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('twinkle:system-prompt-topic-updated')
+        );
+      }
+    } catch (err) {
+      console.error('Failed to save prompt:', err);
+      setError(`Failed to save to ${capitalizeTarget(target)}`);
+    } finally {
+      setSaveAction(null);
+    }
+  }
+
+  function capitalizeTarget(target: 'zero' | 'ciel') {
+    return target === 'zero' ? 'Zero' : 'Ciel';
+  }
+
+  async function handleSaveTargetChange(target: 'zero' | 'ciel') {
+    if (target === saveTarget) return;
+    if (saveAction || applyingTarget) return;
+    setSaveTarget(target);
+    try {
+      await updateMissionStatus({
+        missionType: 'system-prompt',
+        newStatus: { workshopSaveTarget: target }
+      });
+      if (userId) {
+        onSetUserState({
+          userId,
+          newState: {
+            state: {
+              ...(myUserState || {}),
+              missions: {
+                ...(myUserState?.missions || {}),
+                'system-prompt': {
+                  ...(myUserState?.missions?.['system-prompt'] || {}),
+                  workshopSaveTarget: target
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save workshop target preference:', err);
+    }
+  }
+
+  async function handleShareWithAI(target: 'zero' | 'ciel') {
+    if (!hasPrompt || saveAction || applyingTarget || generating || improving) {
+      return;
+    }
+    setError('');
+    setStatusMessage('');
+    setApplyingTarget(target);
+    try {
+      const existingTopicId = savedTopicIdsRef.current[target]?.topicId;
+      const data = await applySystemPromptToAIChat({
+        promptTitle: trimmedTitle,
+        systemPrompt: trimmedPrompt,
+        target,
+        emitRefreshEvent: false,
+        ...(existingTopicId ? { topicId: existingTopicId } : {})
+      });
+      if (!Number(data?.topicId) || !Number(data?.channelId)) {
+        throw new Error(`Invalid response while sharing with ${target}`);
+      }
+
+      savedTopicIdsRef.current[target] = { topicId: Number(data.topicId) };
+      setSaveTarget(target);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('twinkle:system-prompt-topic-updated')
+        );
+      }
+
+      const recipientId = target === 'zero' ? ZERO_TWINKLE_ID : CIEL_TWINKLE_ID;
+      onOpenNewChatTab({
+        user: { id: userId },
+        recipient: { id: recipientId }
+      });
+      onUpdateSelectedChannelId(Number(data.channelId));
+      onSetThinkHardForTopic({
+        topicId: Number(data.topicId),
+        thinkHard: target === 'ciel'
+      });
+      const pathId = Number(data.channelId) + Number(CHAT_ID_BASE_NUMBER);
+      navigate(`/chat/${pathId}/topic/${data.topicId}`);
+    } catch (err) {
+      console.error('Failed to share prompt with AI:', err);
+      setError(`Failed to share with ${target === 'zero' ? 'Zero' : 'Ciel'}`);
+    } finally {
+      setApplyingTarget(null);
+    }
+  }
 }

@@ -19,6 +19,7 @@ const INITIAL_SHARED_PROMPTS_DISPLAY_COUNT = 2;
 const SHARED_PROMPT_SEARCH_THRESHOLD = 6;
 const SHARED_PROMPTS_SEARCH_LIMIT = 50;
 const SHARED_PROMPT_SEARCH_DEBOUNCE_MS = 250;
+const SYSTEM_PROMPT_TOPIC_UPDATED_EVENT = 'twinkle:system-prompt-topic-updated';
 
 export default function MyTopicsManager() {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ export default function MyTopicsManager() {
   const sharedSearchTextRef = useRef('');
   sharedSearchTextRef.current = sharedSearchText;
   const autoLoadSharedPromptsAttemptedRef = useRef(false);
+  const latestLoadTopicsRequestIdRef = useRef(0);
 
   const loadMyCustomInstructionTopics = useAppContext(
     (v) => v.requestHelpers.loadMyCustomInstructionTopics
@@ -61,6 +63,20 @@ export default function MyTopicsManager() {
 
   useEffect(() => {
     handleLoadTopics();
+    if (typeof window === 'undefined') return;
+    function handleSystemPromptTopicUpdated() {
+      handleLoadTopics();
+    }
+    window.addEventListener(
+      SYSTEM_PROMPT_TOPIC_UPDATED_EVENT,
+      handleSystemPromptTopicUpdated
+    );
+    return () => {
+      window.removeEventListener(
+        SYSTEM_PROMPT_TOPIC_UPDATED_EVENT,
+        handleSystemPromptTopicUpdated
+      );
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -501,6 +517,8 @@ export default function MyTopicsManager() {
   );
 
   async function handleLoadTopics() {
+    const requestId = latestLoadTopicsRequestIdRef.current + 1;
+    latestLoadTopicsRequestIdRef.current = requestId;
     setLoading(true);
     setLoadingSharedPrompts(true);
     try {
@@ -508,6 +526,10 @@ export default function MyTopicsManager() {
         loadMyCustomInstructionTopics({ limit: LOAD_LIMIT }),
         loadMySharedPrompts({ limit: INITIAL_SHARED_PROMPTS_DISPLAY_COUNT })
       ]);
+
+      if (latestLoadTopicsRequestIdRef.current !== requestId) {
+        return;
+      }
 
       if (topicsResult.status === 'fulfilled') {
         const { topics: loadedTopics, loadMoreButton: hasMore } =
@@ -534,8 +556,10 @@ export default function MyTopicsManager() {
         );
       }
     } finally {
-      setLoading(false);
-      setLoadingSharedPrompts(false);
+      if (latestLoadTopicsRequestIdRef.current === requestId) {
+        setLoading(false);
+        setLoadingSharedPrompts(false);
+      }
     }
   }
 

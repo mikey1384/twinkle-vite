@@ -20,7 +20,7 @@ export const initialMissionState = {
   sharedPrompts: [] as any[],
   sharedPromptsLoaded: false,
   sharedPromptsLoadMoreButton: false,
-  sharedPromptsSortBy: 'new' as 'new' | 'cloned' | 'used'
+  sharedPromptsSortBy: 'new' as 'new' | 'cloned' | 'used' | 'mine'
 };
 
 export function MissionContextProvider({ children }: { children: ReactNode }) {

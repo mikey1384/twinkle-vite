@@ -135,7 +135,7 @@ export default function MissionActions(dispatch: Dispatch) {
     }: {
       prompts: object[];
       loadMoreButton: boolean;
-      sortBy: 'new' | 'cloned' | 'used';
+      sortBy: 'new' | 'cloned' | 'used' | 'mine';
     }) {
       return dispatch({
         type: 'LOAD_SHARED_PROMPTS',
@@ -157,7 +157,7 @@ export default function MissionActions(dispatch: Dispatch) {
         loadMoreButton
       });
     },
-    onSetSharedPromptsSortBy(sortBy: 'new' | 'cloned' | 'used') {
+    onSetSharedPromptsSortBy(sortBy: 'new' | 'cloned' | 'used' | 'mine') {
       return dispatch({
         type: 'SET_SHARED_PROMPTS_SORT_BY',
         sortBy

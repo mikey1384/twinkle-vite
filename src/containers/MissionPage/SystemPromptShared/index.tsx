@@ -4,7 +4,6 @@ import Loading from '~/components/Loading';
 import Button from '~/components/Button';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
-import MyTopicsManager from './MyTopicsManager';
 import SharedPromptCard from './SharedPromptCard';
 import { useAppContext, useKeyContext, useMissionContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -33,13 +32,19 @@ interface SharedTopic {
   myClones?: CloneEntry[];
 }
 
+type SharedPromptsSortBy = 'new' | 'cloned' | 'used' | 'mine';
+
 export default function SystemPromptShared() {
   const userId = useKeyContext((v) => v.myState.userId);
+  const myUsername = useKeyContext((v) => v.myState.username);
   const loadOtherUserTopics = useAppContext(
     (v) => v.requestHelpers.loadOtherUserTopics
   );
   const loadMoreOtherUserTopics = useAppContext(
     (v) => v.requestHelpers.loadMoreOtherUserTopics
+  );
+  const loadMySharedPrompts = useAppContext(
+    (v) => v.requestHelpers.loadMySharedPrompts
   );
   const uploadComment = useAppContext((v) => v.requestHelpers.uploadComment);
   const navigate = useNavigate();
@@ -53,10 +58,9 @@ export default function SystemPromptShared() {
   const loadMoreButton = useMissionContext(
     (v) => v.state.sharedPromptsLoadMoreButton
   );
-  const sortBy = useMissionContext((v) => v.state.sharedPromptsSortBy) as
-    | 'new'
-    | 'cloned'
-    | 'used';
+  const sortBy = useMissionContext(
+    (v) => v.state.sharedPromptsSortBy
+  ) as SharedPromptsSortBy;
   const onLoadSharedPrompts = useMissionContext(
     (v) => v.actions.onLoadSharedPrompts
   );
@@ -95,13 +99,11 @@ export default function SystemPromptShared() {
       setError('');
       setLoading(true);
       try {
-        const { subjects, loadMoreButton: hasMore } = await loadOtherUserTopics(
-          { sortBy }
-        );
+        const { prompts, hasMore } = await loadSharedPromptsBySort(sortBy);
         if (ignore) return;
         onLoadSharedPrompts({
-          prompts: subjects || [],
-          loadMoreButton: Boolean(hasMore),
+          prompts: prompts || [],
+          loadMoreButton: hasMore,
           sortBy
         });
         setNewPromptsAvailable(false);
@@ -119,16 +121,16 @@ export default function SystemPromptShared() {
 
     async function checkForNewPrompts() {
       try {
-        const { subjects } = await loadOtherUserTopics({ sortBy });
+        const { prompts: fetchedPrompts } = await loadSharedPromptsBySort(sortBy);
         if (ignore) return;
         // Check if the first item is different from what we have
-        if (subjects?.length > 0 && topics?.length > 0) {
-          const newestFetched = subjects[0].id;
+        if (fetchedPrompts?.length > 0 && topics?.length > 0) {
+          const newestFetched = fetchedPrompts[0].id;
           const newestCached = topics[0].id;
           if (newestFetched !== newestCached) {
             setNewPromptsAvailable(true);
           }
-        } else if (subjects?.length > 0 && topics?.length === 0) {
+        } else if (fetchedPrompts?.length > 0 && topics?.length === 0) {
           setNewPromptsAvailable(true);
         }
       } catch {
@@ -158,7 +160,8 @@ export default function SystemPromptShared() {
     () => [
       { key: 'new', label: 'New' },
       { key: 'cloned', label: 'Most Cloned' },
-      { key: 'used', label: 'Most Used' }
+      { key: 'used', label: 'Most Used' },
+      { key: 'mine', label: 'Mine' }
     ],
     []
   );
@@ -216,7 +219,6 @@ export default function SystemPromptShared() {
             your AI chat to complete the mission checklist.
           </p>
         </header>
-        <MyTopicsManager />
         <FilterBar bordered>
           {tabs.map((tab) => (
             <nav
@@ -303,7 +305,9 @@ export default function SystemPromptShared() {
                 ? 'Be the first to share your system prompt with the community!'
                 : sortBy === 'cloned'
                 ? 'No prompts have been cloned yet. Check back soon!'
-                : 'No prompts have messages yet. Try the "New" tab!'}
+                : sortBy === 'used'
+                ? 'No prompts have messages yet. Try the "New" tab!'
+                : "You haven't shared any prompts yet. Share one from chat to see it here."}
             </p>
           </div>
         ) : (
@@ -368,18 +372,18 @@ export default function SystemPromptShared() {
     setNewPromptsAvailable(false);
     setLoading(true);
     setError('');
-    loadOtherUserTopics({ sortBy })
+    loadSharedPromptsBySort(sortBy)
       .then(
         ({
-          subjects,
-          loadMoreButton: hasMore
+          prompts,
+          hasMore
         }: {
-          subjects: SharedTopic[];
-          loadMoreButton: boolean;
+          prompts: SharedTopic[];
+          hasMore: boolean;
         }) => {
           onLoadSharedPrompts({
-            prompts: subjects || [],
-            loadMoreButton: Boolean(hasMore),
+            prompts: prompts || [],
+            loadMoreButton: hasMore,
             sortBy
           });
         }
@@ -401,6 +405,25 @@ export default function SystemPromptShared() {
     const last = topics[topics.length - 1];
     setLoadingMore(true);
     try {
+      if (sortBy === 'mine') {
+        if (!last.sharedAt) {
+          onLoadMoreSharedPrompts({
+            prompts: [],
+            loadMoreButton: false
+          });
+          return;
+        }
+        const { prompts, loadMoreButton: hasMore } = await loadMySharedPrompts({
+          lastId: last.id,
+          lastSharedAt: last.sharedAt
+        });
+        onLoadMoreSharedPrompts({
+          prompts: mapMinePromptsToSharedTopics(prompts || []),
+          loadMoreButton: Boolean(hasMore)
+        });
+        return;
+      }
+
       const { subjects, loadMoreButton: hasMore } =
         await loadMoreOtherUserTopics({
           lastSubject: {
@@ -474,6 +497,35 @@ export default function SystemPromptShared() {
     } catch (err) {
       console.error('Failed to copy:', err);
     }
+  }
+
+  async function loadSharedPromptsBySort(selectedSortBy: SharedPromptsSortBy) {
+    if (selectedSortBy === 'mine') {
+      const { prompts, loadMoreButton } = await loadMySharedPrompts();
+      return {
+        prompts: mapMinePromptsToSharedTopics(prompts || []),
+        hasMore: Boolean(loadMoreButton)
+      };
+    }
+
+    const { subjects, loadMoreButton } = await loadOtherUserTopics({
+      sortBy: selectedSortBy
+    });
+    return {
+      prompts: subjects || [],
+      hasMore: Boolean(loadMoreButton)
+    };
+  }
+
+  function mapMinePromptsToSharedTopics(prompts: any[]) {
+    return prompts.map((prompt) => ({
+      ...prompt,
+      userId: Number(prompt.userId) || Number(userId) || 0,
+      username: prompt.username || myUsername || 'You',
+      cloneCount: Number(prompt.cloneCount) || 0,
+      messageCount: Number(prompt.messageCount) || 0,
+      numComments: Number(prompt.numComments) || 0
+    }));
   }
 }
 
