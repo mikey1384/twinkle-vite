@@ -38,6 +38,93 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadBuildTierOverrides(limit = 100) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/management/build-tier?limit=${Math.max(
+            1,
+            Math.floor(Number(limit) || 100)
+          )}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadBuildTierForUser(userId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/management/build-tier/${userId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setBuildTierForUser({
+      userId,
+      tier,
+      reason
+    }: {
+      userId: number;
+      tier: 'free' | 'pro' | 'premium';
+      reason?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/management/build-tier/${userId}`,
+          { tier, reason },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async clearBuildTierForUser(userId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/management/build-tier/${userId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setBuildByoForUser({
+      userId,
+      enabled,
+      reason
+    }: {
+      userId: number;
+      enabled: boolean;
+      reason?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/management/build-tier/${userId}/byo`,
+          { enabled, reason },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async clearBuildByoForUser(userId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/user/management/build-tier/${userId}/byo`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadModerators() {
       try {
         const {

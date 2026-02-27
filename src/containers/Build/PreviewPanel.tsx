@@ -1,10 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import Icon from '~/components/Icon';
 import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { parse as parseJavaScriptModule } from '@babel/parser';
 import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
@@ -18,9 +25,24 @@ interface Build {
 interface PreviewPanelProps {
   build: Build;
   code: string | null;
+  projectFiles: Array<{
+    path: string;
+    content?: string;
+  }>;
   isOwner: boolean;
-  onCodeChange: (code: string) => void;
   onReplaceCode: (code: string) => void;
+  onApplyRestoredProjectFiles: (
+    files: Array<{ path: string; content?: string }>,
+    restoredCode?: string | null
+  ) => void;
+  onSaveProjectFiles: (
+    files: Array<{ path: string; content?: string }>
+  ) => Promise<{ success: boolean; error?: string }>;
+  onEditableProjectFilesStateChange?: (state: {
+    files: Array<{ path: string; content?: string }>;
+    hasUnsavedChanges: boolean;
+    saving: boolean;
+  }) => void;
 }
 
 interface ArtifactVersion {
@@ -58,7 +80,9 @@ interface PendingDocsConnectRequest {
 
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
+const MODULE_SPECIFIER_REWRITE_CACHE_MAX_ENTRIES = 500;
 const previewSeedCache = new Map<number, PreviewSeedCacheEntry>();
+const moduleSpecifierRewriteCache = new Map<string, string>();
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
   'docs:connect-start',
@@ -89,6 +113,40 @@ function hashPreviewCode(code: string) {
       (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
   }
   return (hash >>> 0).toString(16);
+}
+
+function buildModuleSpecifierRewriteCacheKey({
+  modulePath,
+  source,
+  localProjectPathsKey
+}: {
+  modulePath: string;
+  source: string;
+  localProjectPathsKey: string;
+}) {
+  const normalizedModulePath = normalizeProjectFilePath(modulePath || '/index.html');
+  const sourceSignature = `${source.length}:${hashPreviewCode(source)}`;
+  return `${normalizedModulePath}\n${localProjectPathsKey}\n${sourceSignature}`;
+}
+
+function readCachedModuleSpecifierRewrite(cacheKey: string) {
+  const cached = moduleSpecifierRewriteCache.get(cacheKey);
+  if (typeof cached !== 'string') return null;
+  // Refresh insertion order for simple LRU behavior.
+  moduleSpecifierRewriteCache.delete(cacheKey);
+  moduleSpecifierRewriteCache.set(cacheKey, cached);
+  return cached;
+}
+
+function writeCachedModuleSpecifierRewrite(cacheKey: string, rewrittenSource: string) {
+  moduleSpecifierRewriteCache.set(cacheKey, rewrittenSource);
+  while (
+    moduleSpecifierRewriteCache.size > MODULE_SPECIFIER_REWRITE_CACHE_MAX_ENTRIES
+  ) {
+    const oldestKey = moduleSpecifierRewriteCache.keys().next().value;
+    if (typeof oldestKey !== 'string') break;
+    moduleSpecifierRewriteCache.delete(oldestKey);
+  }
 }
 
 function buildPreviewCodeSignature(codeWithSdk: string | null) {
@@ -157,6 +215,606 @@ function clearCachedPreviewSeed(buildId: number) {
 
 function isMutatingPreviewRequestType(type: string) {
   return MUTATING_PREVIEW_REQUEST_TYPES.has(type);
+}
+
+function normalizeProjectFilePath(rawPath: string) {
+  const source = String(rawPath || '').trim().replace(/\\/g, '/');
+  const withRoot = source.startsWith('/') ? source : `/${source}`;
+  const normalized = withRoot
+    .replace(/\/{2,}/g, '/')
+    .replace(/\/\.\//g, '/');
+  const parts = normalized.split('/');
+  const out: string[] = [];
+  for (const part of parts) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      out.pop();
+      continue;
+    }
+    out.push(part);
+  }
+  return `/${out.join('/')}`;
+}
+
+function isIndexHtmlPath(filePath: string) {
+  const normalized = normalizeProjectFilePath(filePath).toLowerCase();
+  return normalized === '/index.html' || normalized === '/index.htm';
+}
+
+function getPreferredIndexFile<T extends { path: string }>(files: T[]) {
+  let htmMatch: T | null = null;
+  for (const file of files || []) {
+    const normalized = normalizeProjectFilePath(file.path).toLowerCase();
+    if (normalized === '/index.html') {
+      return file;
+    }
+    if (!htmMatch && normalized === '/index.htm') {
+      htmMatch = file;
+    }
+  }
+  return htmMatch;
+}
+
+function getPreferredIndexPath<T extends { path: string }>(files: T[]) {
+  return getPreferredIndexFile(files)?.path || null;
+}
+
+interface EditableProjectFile {
+  path: string;
+  content: string;
+}
+
+interface ProjectFileTreeFolder {
+  path: string;
+  name: string;
+  folders: ProjectFileTreeFolder[];
+  files: EditableProjectFile[];
+}
+
+interface ProjectExplorerEntryFolder {
+  kind: 'folder';
+  path: string;
+  name: string;
+  depth: number;
+  fileCount: number;
+}
+
+interface ProjectExplorerEntryFile {
+  kind: 'file';
+  file: EditableProjectFile;
+  depth: number;
+}
+
+type ProjectExplorerEntry = ProjectExplorerEntryFolder | ProjectExplorerEntryFile;
+
+function getFileNameFromPath(filePath: string) {
+  const normalized = normalizeProjectFilePath(filePath);
+  const parts = normalized.split('/').filter(Boolean);
+  return parts[parts.length - 1] || normalized;
+}
+
+function buildEditableProjectFiles({
+  code,
+  projectFiles
+}: {
+  code: string | null;
+  projectFiles: Array<{ path: string; content?: string }>;
+}): EditableProjectFile[] {
+  const deduped = new Map<string, string>();
+  for (const file of projectFiles || []) {
+    if (!file || typeof file !== 'object') continue;
+    const normalizedPath = normalizeProjectFilePath(file.path);
+    if (!normalizedPath || normalizedPath === '/') continue;
+    deduped.set(
+      normalizedPath,
+      typeof file.content === 'string' ? file.content : ''
+    );
+  }
+  if (!Array.from(deduped.keys()).some((path) => isIndexHtmlPath(path))) {
+    deduped.set('/index.html', String(code || ''));
+  }
+  return Array.from(deduped.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([path, content]) => ({ path, content }));
+}
+
+function serializeEditableProjectFiles(files: EditableProjectFile[]) {
+  return files.map((file) => `${file.path}\n${file.content}`).join('\n---\n');
+}
+
+function isPathWithinFolder(filePath: string, folderPath: string) {
+  const normalizedFile = normalizeProjectFilePath(filePath);
+  const normalizedFolder = normalizeProjectFilePath(folderPath);
+  if (normalizedFolder === '/') return true;
+  return normalizedFile.startsWith(`${normalizedFolder}/`);
+}
+
+function remapPathPrefix({
+  filePath,
+  fromPrefix,
+  toPrefix
+}: {
+  filePath: string;
+  fromPrefix: string;
+  toPrefix: string;
+}) {
+  const normalizedFilePath = normalizeProjectFilePath(filePath);
+  const normalizedFrom = normalizeProjectFilePath(fromPrefix);
+  const normalizedTo = normalizeProjectFilePath(toPrefix);
+  if (normalizedFilePath === normalizedFrom) {
+    return normalizedTo;
+  }
+  if (normalizedFilePath.startsWith(`${normalizedFrom}/`)) {
+    return `${normalizedTo}${normalizedFilePath.slice(normalizedFrom.length)}`;
+  }
+  return normalizedFilePath;
+}
+
+function buildProjectFileTree(files: EditableProjectFile[]) {
+  const root: ProjectFileTreeFolder = {
+    path: '/',
+    name: '',
+    folders: [],
+    files: []
+  };
+  const folderByPath = new Map<string, ProjectFileTreeFolder>([['/', root]]);
+  const sortedFiles = [...files].sort((a, b) => a.path.localeCompare(b.path));
+
+  for (const file of sortedFiles) {
+    const normalizedPath = normalizeProjectFilePath(file.path);
+    const pathParts = normalizedPath.split('/').filter(Boolean);
+    const fileName = pathParts[pathParts.length - 1];
+    if (!fileName) continue;
+    const folderParts = pathParts.slice(0, -1);
+    let currentFolder = root;
+    let currentPath = '';
+
+    for (const segment of folderParts) {
+      currentPath += `/${segment}`;
+      let nextFolder = folderByPath.get(currentPath);
+      if (!nextFolder) {
+        nextFolder = {
+          path: currentPath,
+          name: segment,
+          folders: [],
+          files: []
+        };
+        currentFolder.folders.push(nextFolder);
+        folderByPath.set(currentPath, nextFolder);
+      }
+      currentFolder = nextFolder;
+    }
+
+    currentFolder.files.push({
+      path: normalizedPath,
+      content: file.content
+    });
+  }
+
+  function sortFolder(folder: ProjectFileTreeFolder) {
+    folder.folders.sort((a, b) => a.path.localeCompare(b.path));
+    folder.files.sort((a, b) => a.path.localeCompare(b.path));
+    for (const childFolder of folder.folders) {
+      sortFolder(childFolder);
+    }
+  }
+  sortFolder(root);
+  return root;
+}
+
+function countFolderFiles(folder: ProjectFileTreeFolder): number {
+  return folder.files.length + folder.folders.reduce((sum, childFolder) => {
+    return sum + countFolderFiles(childFolder);
+  }, 0);
+}
+
+function buildProjectExplorerEntries({
+  files,
+  collapsedFolders
+}: {
+  files: EditableProjectFile[];
+  collapsedFolders: Record<string, boolean>;
+}) {
+  const root = buildProjectFileTree(files);
+  const entries: ProjectExplorerEntry[] = [];
+
+  function visitFolder(folder: ProjectFileTreeFolder, depth: number) {
+    for (const childFolder of folder.folders) {
+      const isCollapsed = Boolean(collapsedFolders[childFolder.path]);
+      entries.push({
+        kind: 'folder',
+        path: childFolder.path,
+        name: childFolder.name,
+        depth,
+        fileCount: countFolderFiles(childFolder)
+      });
+      if (!isCollapsed) {
+        visitFolder(childFolder, depth + 1);
+      }
+    }
+    for (const file of folder.files) {
+      entries.push({
+        kind: 'file',
+        file,
+        depth
+      });
+    }
+  }
+
+  visitFolder(root, 0);
+  return entries;
+}
+
+function resolveLocalProjectPathFromBase(rawValue: string, basePath: string) {
+  const value = String(rawValue || '').trim();
+  if (!value || value.startsWith('#')) return null;
+  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(value) || value.startsWith('//')) {
+    return null;
+  }
+  try {
+    const normalizedBasePath = normalizeProjectFilePath(basePath || '/index.html');
+    const url = new URL(value, `https://twinkle.local${normalizedBasePath}`);
+    return normalizeProjectFilePath(url.pathname);
+  } catch {
+    return null;
+  }
+}
+
+function resolveLocalProjectPath(rawValue: string) {
+  return resolveLocalProjectPathFromBase(rawValue, '/index.html');
+}
+
+function isPotentialLocalModuleFile(filePath: string) {
+  const normalized = normalizeProjectFilePath(filePath).toLowerCase();
+  return (
+    normalized.endsWith('.js') ||
+    normalized.endsWith('.mjs') ||
+    normalized.endsWith('.cjs') ||
+    normalized.endsWith('.jsx') ||
+    normalized.endsWith('.ts') ||
+    normalized.endsWith('.tsx') ||
+    normalized.endsWith('.json')
+  );
+}
+
+function rewriteLocalModuleSpecifiersToAbsolutePaths({
+  source,
+  modulePath,
+  localProjectPaths,
+  localProjectPathsKey
+}: {
+  source: string;
+  modulePath: string;
+  localProjectPaths: Set<string>;
+  localProjectPathsKey: string;
+}) {
+  const cacheKey = buildModuleSpecifierRewriteCacheKey({
+    modulePath,
+    source,
+    localProjectPathsKey
+  });
+  const cachedSource = readCachedModuleSpecifierRewrite(cacheKey);
+  if (cachedSource !== null) {
+    return cachedSource;
+  }
+  const maybeRewriteSpecifier = (rawSpecifier: string) => {
+    const resolvedPath = resolveLocalProjectPathFromBase(rawSpecifier, modulePath);
+    if (!resolvedPath || !localProjectPaths.has(resolvedPath)) {
+      return rawSpecifier;
+    }
+    return resolvedPath;
+  };
+  const rewrites: Array<{ start: number; end: number; replacement: string }> = [];
+
+  function queueLiteralRewrite(node: any) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type !== 'StringLiteral') return;
+    if (typeof node.value !== 'string') return;
+    if (!Number.isFinite(node.start) || !Number.isFinite(node.end)) return;
+    const rewritten = maybeRewriteSpecifier(node.value);
+    if (rewritten === node.value) return;
+    rewrites.push({
+      start: Number(node.start),
+      end: Number(node.end),
+      replacement: JSON.stringify(rewritten)
+    });
+  }
+
+  function visitNode(node: any) {
+    if (!node || typeof node !== 'object') return;
+
+    if (
+      node.type === 'ImportDeclaration' ||
+      node.type === 'ExportAllDeclaration' ||
+      node.type === 'ExportNamedDeclaration'
+    ) {
+      queueLiteralRewrite(node.source);
+    } else if (node.type === 'ImportExpression') {
+      queueLiteralRewrite(node.source);
+    } else if (
+      node.type === 'CallExpression' &&
+      node.callee &&
+      node.callee.type === 'Import' &&
+      Array.isArray(node.arguments) &&
+      node.arguments.length > 0
+    ) {
+      queueLiteralRewrite(node.arguments[0]);
+    }
+
+    for (const value of Object.values(node)) {
+      if (!value) continue;
+      if (Array.isArray(value)) {
+        for (const child of value) {
+          if (child && typeof child === 'object') {
+            visitNode(child);
+          }
+        }
+        continue;
+      }
+      if (value && typeof value === 'object') {
+        visitNode(value);
+      }
+    }
+  }
+
+  try {
+    const ast = parseJavaScriptModule(source, {
+      sourceType: 'unambiguous',
+      errorRecovery: true,
+      plugins: [
+        'jsx',
+        'typescript',
+        'dynamicImport',
+        'importAttributes',
+        'topLevelAwait',
+        'classProperties',
+        'classPrivateProperties',
+        'classPrivateMethods',
+        'decorators-legacy'
+      ]
+    });
+    visitNode(ast.program);
+  } catch (parseError) {
+    // Keep preview resilient: if module parsing fails, return source unchanged.
+    console.error('Failed to parse module for specifier rewrite:', {
+      modulePath,
+      error: parseError
+    });
+    writeCachedModuleSpecifierRewrite(cacheKey, source);
+    return source;
+  }
+
+  if (rewrites.length === 0) {
+    writeCachedModuleSpecifierRewrite(cacheKey, source);
+    return source;
+  }
+
+  rewrites.sort((a, b) => b.start - a.start);
+  let rewritten = source;
+  for (const entry of rewrites) {
+    rewritten =
+      rewritten.slice(0, entry.start) +
+      entry.replacement +
+      rewritten.slice(entry.end);
+  }
+  writeCachedModuleSpecifierRewrite(cacheKey, rewritten);
+  return rewritten;
+}
+
+function buildLocalProjectPathsKey(localProjectPaths: Set<string>) {
+  const sortedLocalProjectPaths = Array.from(localProjectPaths.values()).sort((a, b) =>
+    a.localeCompare(b)
+  );
+  return `${sortedLocalProjectPaths.length}:${hashPreviewCode(
+    sortedLocalProjectPaths.join('\n')
+  )}`;
+}
+
+function buildLocalModuleImportMap({
+  fileMap,
+  localProjectPaths,
+  localProjectPathsKey
+}: {
+  fileMap: Map<string, string>;
+  localProjectPaths: Set<string>;
+  localProjectPathsKey: string;
+}) {
+  const imports: Record<string, string> = {};
+  for (const [filePath, source] of fileMap.entries()) {
+    if (!isPotentialLocalModuleFile(filePath)) continue;
+    const normalizedPath = normalizeProjectFilePath(filePath);
+    const lowerPath = normalizedPath.toLowerCase();
+    const isJsonModule = lowerPath.endsWith('.json');
+    const rewrittenSource = isJsonModule
+      ? source
+      : rewriteLocalModuleSpecifiersToAbsolutePaths({
+          source,
+          modulePath: normalizedPath,
+          localProjectPaths,
+          localProjectPathsKey
+        });
+    const mimeType = isJsonModule ? 'application/json' : 'text/javascript';
+    imports[normalizedPath] = `data:${mimeType};charset=utf-8,${encodeURIComponent(
+      rewrittenSource
+    )}`;
+  }
+  return imports;
+}
+
+function buildLocalScriptDataUrl({
+  source,
+  mimeType = 'text/javascript'
+}: {
+  source: string;
+  mimeType?: string;
+}) {
+  return `data:${mimeType};charset=utf-8,${encodeURIComponent(source)}`;
+}
+
+function preserveLocalStylesheetLinkAttributes({
+  linkNode,
+  styleNode
+}: {
+  linkNode: HTMLLinkElement;
+  styleNode: HTMLStyleElement;
+}) {
+  const media = String(linkNode.getAttribute('media') || '').trim();
+  if (media) {
+    styleNode.setAttribute('media', media);
+  }
+  const title = String(linkNode.getAttribute('title') || '').trim();
+  if (title) {
+    styleNode.setAttribute('title', title);
+  }
+  const nonce = String(linkNode.getAttribute('nonce') || '').trim();
+  if (nonce) {
+    styleNode.setAttribute('nonce', nonce);
+  }
+  if (linkNode.hasAttribute('disabled')) {
+    styleNode.setAttribute('disabled', '');
+  }
+  const id = String(linkNode.getAttribute('id') || '').trim();
+  if (id) {
+    styleNode.setAttribute('id', id);
+  }
+  const className = String(linkNode.getAttribute('class') || '').trim();
+  if (className) {
+    styleNode.setAttribute('class', className);
+  }
+  for (const attribute of Array.from(linkNode.attributes)) {
+    const name = String(attribute?.name || '');
+    const lowerName = name.toLowerCase();
+    if (!lowerName.startsWith('data-') && !lowerName.startsWith('aria-')) continue;
+    styleNode.setAttribute(name, String(attribute?.value || ''));
+  }
+}
+
+function inlineLocalProjectAssets({
+  html,
+  projectFiles
+}: {
+  html: string;
+  projectFiles: Array<{ path: string; content?: string }>;
+}) {
+  if (!html) return html;
+  if (!Array.isArray(projectFiles) || projectFiles.length === 0) return html;
+
+  const fileMap = new Map<string, string>();
+  for (const file of projectFiles) {
+    if (!file || typeof file !== 'object') continue;
+    if (typeof file.content !== 'string') continue;
+    const normalized = normalizeProjectFilePath(String(file.path || ''));
+    if (!normalized || normalized === '/') continue;
+    fileMap.set(normalized, file.content);
+  }
+  if (fileMap.size === 0) return html;
+  const localProjectPaths = new Set<string>(fileMap.keys());
+  const localProjectPathsKey = buildLocalProjectPathsKey(localProjectPaths);
+  const moduleImportMap = buildLocalModuleImportMap({
+    fileMap,
+    localProjectPaths,
+    localProjectPathsKey
+  });
+  const hasModuleImportMap = Object.keys(moduleImportMap).length > 0;
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    let firstLocalModuleEntryScript: HTMLScriptElement | null = null;
+
+    const scriptNodes = Array.from(doc.querySelectorAll('script'));
+    for (const scriptNode of scriptNodes) {
+      const scriptType = String(scriptNode.getAttribute('type') || '')
+        .trim()
+        .toLowerCase();
+      const isModuleScript = scriptType === 'module';
+      const src = scriptNode.getAttribute('src');
+      const hasSrc = typeof src === 'string' && src.trim().length > 0;
+      if (!hasSrc) {
+        if (!isModuleScript || !hasModuleImportMap) {
+          continue;
+        }
+        const inlineSource = String(scriptNode.textContent || '');
+        const rewrittenInlineSource = rewriteLocalModuleSpecifiersToAbsolutePaths({
+          source: inlineSource,
+          modulePath: '/index.html',
+          localProjectPaths,
+          localProjectPathsKey
+        });
+        if (rewrittenInlineSource !== inlineSource) {
+          scriptNode.textContent = rewrittenInlineSource;
+        }
+        if (!firstLocalModuleEntryScript) {
+          firstLocalModuleEntryScript = scriptNode;
+        }
+        continue;
+      }
+      const resolvedPath = resolveLocalProjectPath(src || '');
+      if (!resolvedPath) continue;
+      if (isModuleScript) {
+        // Keep module import resolution stable by routing local module paths
+        // through an import map and preserving external module script loading
+        // semantics (async/defer/ordering) via src rewrite.
+        const mappedEntry = moduleImportMap[resolvedPath];
+        if (!hasModuleImportMap || !mappedEntry) {
+          continue;
+        }
+        const moduleEntryScript = scriptNode.cloneNode(false) as HTMLScriptElement;
+        moduleEntryScript.setAttribute('src', mappedEntry);
+        moduleEntryScript.removeAttribute('integrity');
+        scriptNode.replaceWith(moduleEntryScript);
+        if (!firstLocalModuleEntryScript) {
+          firstLocalModuleEntryScript = moduleEntryScript;
+        }
+        continue;
+      }
+      const scriptContent = fileMap.get(resolvedPath);
+      if (typeof scriptContent !== 'string') continue;
+      const rawScriptType = String(scriptNode.getAttribute('type') || '').trim();
+      const mimeType = rawScriptType || 'text/javascript';
+      const rewrittenClassicScript = scriptNode.cloneNode(false) as HTMLScriptElement;
+      rewrittenClassicScript.setAttribute(
+        'src',
+        buildLocalScriptDataUrl({
+          source: scriptContent,
+          mimeType
+        })
+      );
+      rewrittenClassicScript.removeAttribute('integrity');
+      scriptNode.replaceWith(rewrittenClassicScript);
+    }
+    if (firstLocalModuleEntryScript && hasModuleImportMap) {
+      const importMapScript = doc.createElement('script');
+      importMapScript.setAttribute('type', 'importmap');
+      importMapScript.textContent = JSON.stringify({
+        imports: moduleImportMap
+      });
+      firstLocalModuleEntryScript.before(importMapScript);
+    }
+
+    const stylesheetNodes = Array.from(
+      doc.querySelectorAll('link[rel~="stylesheet"][href]')
+    );
+    for (const linkNode of stylesheetNodes) {
+      const href = linkNode.getAttribute('href');
+      const resolvedPath = resolveLocalProjectPath(href || '');
+      if (!resolvedPath) continue;
+      const stylesheetContent = fileMap.get(resolvedPath);
+      if (typeof stylesheetContent !== 'string') continue;
+      const styleNode = doc.createElement('style');
+      styleNode.textContent = stylesheetContent;
+      preserveLocalStylesheetLinkAttributes({
+        linkNode: linkNode as HTMLLinkElement,
+        styleNode
+      });
+      linkNode.replaceWith(styleNode);
+    }
+
+    return `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
+  } catch (error) {
+    console.error('Failed to inline project assets for preview:', error);
+    return html;
+  }
 }
 
 // The Twinkle SDK script that gets injected into builds
@@ -1107,9 +1765,12 @@ const workspaceViewOptions = [
 export default function PreviewPanel({
   build,
   code,
+  projectFiles,
   isOwner,
-  onCodeChange,
-  onReplaceCode
+  onReplaceCode,
+  onApplyRestoredProjectFiles,
+  onSaveProjectFiles,
+  onEditableProjectFilesStateChange
 }: PreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [activePreviewFrame, setActivePreviewFrame] = useState<
@@ -1139,6 +1800,24 @@ export default function PreviewPanel({
   const [artifactId, setArtifactId] = useState<number | null>(
     build.primaryArtifactId ?? null
   );
+  const [editableProjectFiles, setEditableProjectFiles] = useState<
+    EditableProjectFile[]
+  >(() => buildEditableProjectFiles({ code, projectFiles }));
+  const deferredPreviewProjectFiles = useDeferredValue(editableProjectFiles);
+  const [activeFilePath, setActiveFilePath] = useState('/index.html');
+  const [newFilePath, setNewFilePath] = useState('');
+  const [renamePathInput, setRenamePathInput] = useState('/index.html');
+  const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(
+    null
+  );
+  const [folderMoveTargetPath, setFolderMoveTargetPath] = useState('');
+  const [overwritePathConflicts, setOverwritePathConflicts] = useState(false);
+  const [pathConflictList, setPathConflictList] = useState<string[]>([]);
+  const [collapsedFolders, setCollapsedFolders] = useState<
+    Record<string, boolean>
+  >({});
+  const [savingProjectFiles, setSavingProjectFiles] = useState(false);
+  const [projectFileError, setProjectFileError] = useState('');
   const primaryIframeRef = useRef<HTMLIFrameElement>(null);
   const secondaryIframeRef = useRef<HTMLIFrameElement>(null);
   const activePreviewFrameRef = useRef<'primary' | 'secondary'>('primary');
@@ -1175,6 +1854,49 @@ export default function PreviewPanel({
     aiChatUsed: false,
     dbUsed: false
   });
+
+  const persistedProjectFiles = useMemo(
+    () => buildEditableProjectFiles({ code, projectFiles }),
+    [code, projectFiles]
+  );
+  const persistedProjectFilesSignature = useMemo(
+    () => serializeEditableProjectFiles(persistedProjectFiles),
+    [persistedProjectFiles]
+  );
+  const editableProjectFilesSignature = useMemo(
+    () => serializeEditableProjectFiles(editableProjectFiles),
+    [editableProjectFiles]
+  );
+  const hasUnsavedProjectFileChanges =
+    editableProjectFilesSignature !== persistedProjectFilesSignature;
+  const editableProjectFilesForParent = useMemo(
+    () =>
+      editableProjectFiles.map((file) => ({
+        path: file.path,
+        content: file.content
+      })),
+    [editableProjectFiles]
+  );
+  const activeFile = useMemo(
+    () =>
+      editableProjectFiles.find((file) => file.path === activeFilePath) || null,
+    [editableProjectFiles, activeFilePath]
+  );
+  const persistedFileContentByPath = useMemo(() => {
+    const byPath = new Map<string, string>();
+    for (const file of persistedProjectFiles) {
+      byPath.set(file.path, file.content);
+    }
+    return byPath;
+  }, [persistedProjectFiles]);
+  const projectExplorerEntries = useMemo(
+    () =>
+      buildProjectExplorerEntries({
+        files: editableProjectFiles,
+        collapsedFolders
+      }),
+    [editableProjectFiles, collapsedFolders]
+  );
 
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
@@ -1438,24 +2160,40 @@ export default function PreviewPanel({
   } | null>(null);
   const docsConnectInFlightRef = useRef<PendingDocsConnectRequest | null>(null);
   const docsConnectPopupRef = useRef<Window | null>(null);
+  const hydratedBuildIdRef = useRef<number | null>(null);
 
   // Inject SDK into user code
   const codeWithSdk = useMemo(() => {
-    if (!code) return null;
+    const indexFile = getPreferredIndexFile(deferredPreviewProjectFiles);
+    const hasIndexFile = Boolean(indexFile);
+    const runtimeIndexHtml = hasIndexFile
+      ? indexFile?.content ?? ''
+      : String(code || '');
+    if (!hasIndexFile && runtimeIndexHtml.length === 0) return null;
+    const htmlWithInlinedAssets = inlineLocalProjectAssets({
+      html: runtimeIndexHtml,
+      projectFiles: deferredPreviewProjectFiles
+    });
 
     // Insert SDK script right after <head> tag
-    if (code.includes('<head>')) {
-      return code.replace('<head>', '<head>' + TWINKLE_SDK_SCRIPT);
+    if (htmlWithInlinedAssets.includes('<head>')) {
+      return htmlWithInlinedAssets.replace(
+        '<head>',
+        '<head>' + TWINKLE_SDK_SCRIPT
+      );
     }
 
     // If no head tag, insert before first script or at start of body
-    if (code.includes('<body>')) {
-      return code.replace('<body>', '<body>' + TWINKLE_SDK_SCRIPT);
+    if (htmlWithInlinedAssets.includes('<body>')) {
+      return htmlWithInlinedAssets.replace(
+        '<body>',
+        '<body>' + TWINKLE_SDK_SCRIPT
+      );
     }
 
     // Fallback: prepend to entire code
-    return TWINKLE_SDK_SCRIPT + code;
-  }, [code]);
+    return TWINKLE_SDK_SCRIPT + htmlWithInlinedAssets;
+  }, [code, deferredPreviewProjectFiles]);
 
   const previewSrc = useMemo(() => {
     if (!codeWithSdk) return null;
@@ -1694,6 +2432,315 @@ export default function PreviewPanel({
   useEffect(() => {
     profilePicUrlRef.current = profilePicUrl || null;
   }, [profilePicUrl]);
+
+  useEffect(() => {
+    const shouldHydrateForBuild =
+      hydratedBuildIdRef.current === null || hydratedBuildIdRef.current !== build.id;
+    if (!shouldHydrateForBuild) return;
+    hydratedBuildIdRef.current = build.id;
+    setEditableProjectFiles(persistedProjectFiles);
+    setActiveFilePath(
+      getPreferredIndexPath(persistedProjectFiles) ||
+        persistedProjectFiles[0]?.path ||
+        '/index.html'
+    );
+    setProjectFileError('');
+    setNewFilePath('');
+    setRenamePathInput('/index.html');
+    setSelectedFolderPath(null);
+    setFolderMoveTargetPath('');
+    setOverwritePathConflicts(false);
+    setPathConflictList([]);
+    setCollapsedFolders({});
+  }, [build.id, persistedProjectFiles, persistedProjectFilesSignature]);
+
+  useEffect(() => {
+    if (hasUnsavedProjectFileChanges) return;
+    setEditableProjectFiles(persistedProjectFiles);
+    setActiveFilePath((prev) => {
+      const hasPrev = persistedProjectFiles.some((file) => file.path === prev);
+      if (hasPrev) return prev;
+      return (
+        getPreferredIndexPath(persistedProjectFiles) ||
+        persistedProjectFiles[0]?.path ||
+        '/index.html'
+      );
+    });
+  }, [
+    persistedProjectFiles,
+    persistedProjectFilesSignature,
+    hasUnsavedProjectFileChanges
+  ]);
+
+  useEffect(() => {
+    onEditableProjectFilesStateChange?.({
+      files: editableProjectFilesForParent,
+      hasUnsavedChanges: hasUnsavedProjectFileChanges,
+      saving: savingProjectFiles
+    });
+  }, [
+    editableProjectFilesForParent,
+    hasUnsavedProjectFileChanges,
+    savingProjectFiles,
+    onEditableProjectFilesStateChange
+  ]);
+
+  useEffect(() => {
+    setRenamePathInput(activeFile?.path || '/index.html');
+  }, [activeFile?.path]);
+
+  useEffect(() => {
+    if (!selectedFolderPath) {
+      setFolderMoveTargetPath('');
+      return;
+    }
+    setFolderMoveTargetPath(selectedFolderPath);
+  }, [selectedFolderPath]);
+
+  function setEditableFiles(nextFiles: EditableProjectFile[]) {
+    const sorted = [...nextFiles].sort((a, b) => a.path.localeCompare(b.path));
+    setEditableProjectFiles(sorted);
+    setActiveFilePath((prev) => {
+      if (sorted.some((file) => file.path === prev)) return prev;
+      return (
+        getPreferredIndexPath(sorted) ||
+        sorted[0]?.path ||
+        '/index.html'
+      );
+    });
+  }
+
+  function toggleFolderCollapsed(folderPath: string) {
+    setCollapsedFolders((prev) => ({
+      ...prev,
+      [folderPath]: !prev[folderPath]
+    }));
+  }
+
+  function handleSelectFolder(folderPath: string) {
+    setSelectedFolderPath(folderPath);
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
+
+  function handleEditableFileContentChange(content: string) {
+    if (!isOwner || !activeFile) return;
+    setEditableFiles(
+      editableProjectFiles.map((file) =>
+        file.path === activeFile.path ? { ...file, content } : file
+      )
+    );
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
+
+  function handleAddProjectFile() {
+    if (!isOwner) return;
+    const normalizedPath = normalizeProjectFilePath(newFilePath);
+    if (
+      !normalizedPath ||
+      normalizedPath === '/' ||
+      normalizedPath.endsWith('/')
+    ) {
+      setProjectFileError('Enter a valid file path like /src/app.js');
+      return;
+    }
+    if (editableProjectFiles.some((file) => file.path === normalizedPath)) {
+      setProjectFileError('A file with this path already exists');
+      return;
+    }
+    const nextFiles = [
+      ...editableProjectFiles,
+      { path: normalizedPath, content: '' }
+    ];
+    setEditableFiles(nextFiles);
+    setActiveFilePath(normalizedPath);
+    setSelectedFolderPath(null);
+    setNewFilePath('');
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
+
+  function handleDeleteProjectFile(filePath: string) {
+    if (!isOwner) return;
+    if (isIndexHtmlPath(filePath)) {
+      setProjectFileError('Cannot delete /index.html');
+      return;
+    }
+    const nextFiles = editableProjectFiles.filter((file) => file.path !== filePath);
+    if (nextFiles.length === editableProjectFiles.length) return;
+    if (!window.confirm(`Delete ${filePath}?`)) return;
+    setEditableFiles(nextFiles);
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
+
+  function handleRenameOrMoveActiveFile() {
+    if (!isOwner || !activeFile) return;
+    const normalizedPath = normalizeProjectFilePath(renamePathInput);
+    if (
+      !normalizedPath ||
+      normalizedPath === '/' ||
+      normalizedPath.endsWith('/')
+    ) {
+      setProjectFileError('Enter a valid target path like /src/app.js');
+      return;
+    }
+    const activeIsIndex = isIndexHtmlPath(activeFile.path);
+    if (activeIsIndex && !isIndexHtmlPath(normalizedPath)) {
+      setProjectFileError('/index.html can only be moved to /index.htm');
+      return;
+    }
+    if (
+      normalizedPath !== activeFile.path &&
+      editableProjectFiles.some((file) => file.path === normalizedPath)
+    ) {
+      if (!overwritePathConflicts) {
+        setPathConflictList([normalizedPath]);
+        setProjectFileError(
+          'Path conflict detected. Enable overwrite conflicts to continue.'
+        );
+        return;
+      }
+    }
+    if (normalizedPath === activeFile.path) {
+      setProjectFileError('');
+      setPathConflictList([]);
+      return;
+    }
+    const nextFiles = editableProjectFiles
+      .filter(
+        (file) =>
+          !(overwritePathConflicts && file.path === normalizedPath) ||
+          file.path === activeFile.path
+      )
+      .map((file) =>
+        file.path === activeFile.path
+          ? { ...file, path: normalizedPath }
+          : file
+      );
+    setEditableFiles(nextFiles);
+    setActiveFilePath(normalizedPath);
+    setSelectedFolderPath(null);
+    setRenamePathInput(normalizedPath);
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
+
+  function handleMoveSelectedFolder() {
+    if (!isOwner || !selectedFolderPath) return;
+    const sourceFolder = normalizeProjectFilePath(selectedFolderPath);
+    const targetFolder = normalizeProjectFilePath(folderMoveTargetPath);
+    if (!targetFolder || targetFolder === '/') {
+      setProjectFileError('Enter a valid target folder like /src/ui');
+      return;
+    }
+    if (sourceFolder === targetFolder) {
+      setProjectFileError('');
+      setPathConflictList([]);
+      return;
+    }
+    if (
+      targetFolder === sourceFolder ||
+      targetFolder.startsWith(`${sourceFolder}/`)
+    ) {
+      setProjectFileError('Cannot move a folder into itself.');
+      return;
+    }
+
+    const filesInFolder = editableProjectFiles.filter((file) =>
+      isPathWithinFolder(file.path, sourceFolder)
+    );
+    if (filesInFolder.length === 0) {
+      setProjectFileError('Selected folder has no files to move.');
+      return;
+    }
+
+    const movedSourcePaths = new Set(filesInFolder.map((file) => file.path));
+    const remappedFiles = filesInFolder.map((file) => ({
+      path: remapPathPrefix({
+        filePath: file.path,
+        fromPrefix: sourceFolder,
+        toPrefix: targetFolder
+      }),
+      content: file.content
+    }));
+    const remappedTargetPaths = new Set(remappedFiles.map((file) => file.path));
+    const conflictPaths = editableProjectFiles
+      .filter(
+        (file) =>
+          !movedSourcePaths.has(file.path) && remappedTargetPaths.has(file.path)
+      )
+      .map((file) => file.path)
+      .sort((a, b) => a.localeCompare(b));
+
+    if (conflictPaths.length > 0 && !overwritePathConflicts) {
+      setPathConflictList(conflictPaths.slice(0, 12));
+      setProjectFileError(
+        `Move blocked by ${conflictPaths.length} path conflicts. Enable overwrite conflicts to continue.`
+      );
+      return;
+    }
+
+    const conflictSet = new Set(conflictPaths);
+    const retainedFiles = editableProjectFiles.filter((file) => {
+      if (movedSourcePaths.has(file.path)) return false;
+      if (overwritePathConflicts && conflictSet.has(file.path)) return false;
+      return true;
+    });
+    const merged = [...retainedFiles, ...remappedFiles];
+    const deduped = new Map<string, string>();
+    for (const file of merged) {
+      deduped.set(file.path, file.content);
+    }
+    const nextFiles = Array.from(deduped.entries()).map(([path, content]) => ({
+      path,
+      content
+    }));
+
+    setEditableFiles(nextFiles);
+    setActiveFilePath((prev) =>
+      remapPathPrefix({
+        filePath: prev,
+        fromPrefix: sourceFolder,
+        toPrefix: targetFolder
+      })
+    );
+    setCollapsedFolders((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const [path, value] of Object.entries(prev)) {
+        if (path === sourceFolder || path.startsWith(`${sourceFolder}/`)) {
+          const remappedPath = remapPathPrefix({
+            filePath: path,
+            fromPrefix: sourceFolder,
+            toPrefix: targetFolder
+          });
+          next[remappedPath] = value;
+        } else {
+          next[path] = value;
+        }
+      }
+      return next;
+    });
+    setSelectedFolderPath(targetFolder);
+    setFolderMoveTargetPath(targetFolder);
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
+
+  async function handleSaveEditableProjectFiles() {
+    if (!isOwner || savingProjectFiles || !hasUnsavedProjectFileChanges) return;
+    setSavingProjectFiles(true);
+    setProjectFileError('');
+    const result = await onSaveProjectFiles(editableProjectFiles);
+    setSavingProjectFiles(false);
+    if (!result?.success) {
+      setProjectFileError(result?.error || 'Failed to save project files');
+      return;
+    }
+    setProjectFileError('');
+    setPathConflictList([]);
+  }
 
   async function ensureBuildApiToken(requiredScopes: string[]) {
     const now = Math.floor(Date.now() / 1000);
@@ -1967,7 +3014,27 @@ export default function PreviewPanel({
         artifactId,
         versionId
       });
-      if (result?.code) {
+      const restoredProjectFiles = Array.isArray(result?.projectFiles)
+        ? result.projectFiles
+        : [];
+      if (restoredProjectFiles.length > 0) {
+        const restoredCode =
+          typeof result?.code === 'string' ? result.code : null;
+        onApplyRestoredProjectFiles(restoredProjectFiles, restoredCode);
+        const restoredEditableFiles = buildEditableProjectFiles({
+          code: restoredCode,
+          projectFiles: restoredProjectFiles
+        });
+        setEditableProjectFiles(restoredEditableFiles);
+        setActiveFilePath(
+          getPreferredIndexPath(restoredEditableFiles) ||
+            restoredEditableFiles[0]?.path ||
+            '/index.html'
+        );
+        setProjectFileError('');
+        setPathConflictList([]);
+        setOverwritePathConflicts(false);
+      } else if (result?.code) {
         onReplaceCode(result.code);
       }
       if (historyOpen) {
@@ -3117,7 +4184,6 @@ export default function PreviewPanel({
         `}
       >
         {viewMode === 'preview' ? (
-          code &&
           (previewFrameSources.primary ||
             previewFrameSources.secondary ||
             previewSrc) ? (
@@ -3231,45 +4297,558 @@ export default function PreviewPanel({
           <div
             className={css`
               height: 100%;
-              overflow: auto;
+              min-height: 0;
+              display: grid;
+              grid-template-columns: 280px 1fr;
+              background: #111827;
+              @media (max-width: ${mobileMaxWidth}) {
+                grid-template-columns: 1fr;
+                grid-template-rows: 220px 1fr;
+              }
             `}
           >
-            {code ? (
-              <textarea
-                value={code}
-                onChange={(e) => isOwner && onCodeChange(e.target.value)}
-                readOnly={!isOwner}
-                spellCheck={false}
-                className={css`
-                  width: 100%;
-                  height: 100%;
-                  padding: 1rem;
-                  border: none;
-                  resize: none;
-                  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-                  font-size: 0.85rem;
-                  line-height: 1.5;
-                  background: #1e1e1e;
-                  color: #d4d4d4;
-                  &:focus {
-                    outline: none;
-                  }
-                `}
-              />
-            ) : (
+            <div
+              className={css`
+                border-right: 1px solid rgba(255, 255, 255, 0.08);
+                background: #0b1220;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                @media (max-width: ${mobileMaxWidth}) {
+                  border-right: none;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                }
+              `}
+            >
               <div
                 className={css`
+                  padding: 0.7rem 0.8rem;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
                   display: flex;
                   align-items: center;
-                  justify-content: center;
-                  height: 100%;
-                  color: var(--chat-text);
-                  background: #fff;
+                  justify-content: space-between;
+                  gap: 0.5rem;
+                  color: #e5e7eb;
+                  font-size: 0.75rem;
+                  letter-spacing: 0.02em;
+                  text-transform: uppercase;
+                  font-weight: 800;
                 `}
               >
-                No code yet
+                <span>Project files</span>
+                <span>{editableProjectFiles.length}</span>
               </div>
-            )}
+              {isOwner && (
+                <div
+                  className={css`
+                    padding: 0.6rem 0.65rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    display: flex;
+                    gap: 0.4rem;
+                  `}
+                >
+                  <input
+                    value={newFilePath}
+                    onChange={(e) => setNewFilePath(e.target.value)}
+                    placeholder="/src/app.js"
+                    className={css`
+                      flex: 1;
+                      min-width: 0;
+                      border: 1px solid rgba(255, 255, 255, 0.16);
+                      border-radius: 8px;
+                      background: rgba(17, 24, 39, 0.8);
+                      color: #e5e7eb;
+                      padding: 0.45rem 0.5rem;
+                      font-size: 0.75rem;
+                      &:focus {
+                        outline: none;
+                        border-color: rgba(65, 140, 235, 0.8);
+                      }
+                    `}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddProjectFile}
+                    className={css`
+                      border: 1px solid rgba(255, 255, 255, 0.16);
+                      border-radius: 8px;
+                      background: rgba(65, 140, 235, 0.18);
+                      color: #dbeafe;
+                      padding: 0.4rem 0.55rem;
+                      cursor: pointer;
+                      font-size: 0.75rem;
+                      font-weight: 700;
+                      &:hover {
+                        background: rgba(65, 140, 235, 0.3);
+                      }
+                    `}
+                    aria-label="Add file"
+                    title="Add file"
+                  >
+                    <Icon icon="plus" />
+                  </button>
+                </div>
+              )}
+              {isOwner && (
+                <div
+                  className={css`
+                    padding: 0.55rem 0.7rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.45rem;
+                  `}
+                >
+                  {selectedFolderPath && (
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+                      `}
+                    >
+                      <input
+                        value={folderMoveTargetPath}
+                        onChange={(e) =>
+                          setFolderMoveTargetPath(e.target.value)
+                        }
+                        placeholder="/new/folder/path"
+                        className={css`
+                          flex: 1;
+                          min-width: 0;
+                          border: 1px solid rgba(255, 255, 255, 0.16);
+                          border-radius: 8px;
+                          background: rgba(17, 24, 39, 0.82);
+                          color: #e5e7eb;
+                          padding: 0.42rem 0.5rem;
+                          font-size: 0.72rem;
+                        `}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleMoveSelectedFolder}
+                        className={css`
+                          border: 1px solid rgba(255, 255, 255, 0.18);
+                          border-radius: 8px;
+                          background: rgba(34, 197, 94, 0.2);
+                          color: #bbf7d0;
+                          padding: 0.36rem 0.52rem;
+                          font-size: 0.72rem;
+                          font-weight: 700;
+                          cursor: pointer;
+                        `}
+                        title={`Move folder ${selectedFolderPath}`}
+                      >
+                        Move folder
+                      </button>
+                    </div>
+                  )}
+                  <label
+                    className={css`
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 0.35rem;
+                      color: #cbd5e1;
+                      font-size: 0.72rem;
+                      cursor: pointer;
+                    `}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={overwritePathConflicts}
+                      onChange={(e) =>
+                        setOverwritePathConflicts(e.target.checked)
+                      }
+                    />
+                    Overwrite path conflicts
+                  </label>
+                </div>
+              )}
+              <div
+                className={css`
+                  flex: 1;
+                  min-height: 0;
+                  overflow: auto;
+                  padding: 0.45rem;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.35rem;
+                `}
+              >
+                {projectExplorerEntries.map((entry) => {
+                  if (entry.kind === 'folder') {
+                    const isCollapsed = Boolean(collapsedFolders[entry.path]);
+                    const isSelected = selectedFolderPath === entry.path;
+                    return (
+                      <div
+                        key={`folder-${entry.path}`}
+                        className={css`
+                          display: flex;
+                          align-items: center;
+                          gap: 0.28rem;
+                        `}
+                        style={{
+                          marginLeft: `${entry.depth * 0.8}rem`
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleFolderCollapsed(entry.path)}
+                          className={css`
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            border-radius: 8px;
+                            background: rgba(148, 163, 184, 0.16);
+                            color: #cbd5e1;
+                            padding: 0.3rem 0.45rem;
+                            font-size: 0.68rem;
+                            cursor: pointer;
+                          `}
+                        >
+                          {isCollapsed ? '[+]' : '[-]'} {entry.name}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectFolder(entry.path)}
+                          className={css`
+                            flex: 1;
+                            min-width: 0;
+                            text-align: left;
+                            border: 1px solid
+                              ${isSelected
+                                ? 'rgba(65, 140, 235, 0.7)'
+                                : 'rgba(255, 255, 255, 0.08)'};
+                            background: ${isSelected
+                              ? 'rgba(65, 140, 235, 0.25)'
+                              : 'rgba(148, 163, 184, 0.1)'};
+                            color: #cbd5e1;
+                            border-radius: 8px;
+                            padding: 0.34rem 0.48rem;
+                            cursor: pointer;
+                            font-size: 0.74rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 0.5rem;
+                          `}
+                          title={entry.path}
+                        >
+                          <span
+                            className={css`
+                              overflow: hidden;
+                              text-overflow: ellipsis;
+                              white-space: nowrap;
+                            `}
+                          >
+                            {entry.name}
+                          </span>
+                          <span>{entry.fileCount}</span>
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  const file = entry.file;
+                  const isActive = file.path === activeFilePath;
+                  const isDirty =
+                    persistedFileContentByPath.get(file.path) !== file.content;
+                  const displayName = getFileNameFromPath(file.path);
+                  return (
+                    <div
+                      key={`file-${file.path}`}
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.3rem;
+                        margin-left: ${(entry.depth + 1) * 0.8}rem;
+                      `}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveFilePath(file.path);
+                          setSelectedFolderPath(null);
+                          setProjectFileError('');
+                          setPathConflictList([]);
+                        }}
+                        className={css`
+                          flex: 1;
+                          min-width: 0;
+                          text-align: left;
+                          border: 1px solid
+                            ${isActive
+                              ? 'rgba(65, 140, 235, 0.65)'
+                              : 'rgba(255, 255, 255, 0.08)'};
+                          background: ${isActive
+                            ? 'rgba(65, 140, 235, 0.2)'
+                            : 'rgba(17, 24, 39, 0.6)'};
+                          color: ${isActive ? '#dbeafe' : '#e5e7eb'};
+                          border-radius: 8px;
+                          padding: 0.42rem 0.5rem;
+                          cursor: pointer;
+                          font-size: 0.76rem;
+                          display: flex;
+                          align-items: center;
+                          justify-content: space-between;
+                          gap: 0.45rem;
+                        `}
+                        title={file.path}
+                      >
+                        <span
+                          className={css`
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                          `}
+                        >
+                          {displayName}
+                        </span>
+                        {isDirty && (
+                          <span
+                            className={css`
+                              color: #fbbf24;
+                              font-weight: 900;
+                            `}
+                            aria-label="Unsaved changes"
+                            title="Unsaved changes"
+                          >
+                            •
+                          </span>
+                        )}
+                      </button>
+                      {isOwner && !isIndexHtmlPath(file.path) && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProjectFile(file.path)}
+                          className={css`
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            background: rgba(239, 68, 68, 0.14);
+                            color: #fecaca;
+                            border-radius: 8px;
+                            padding: 0.38rem 0.5rem;
+                            cursor: pointer;
+                            &:hover {
+                              background: rgba(239, 68, 68, 0.24);
+                            }
+                          `}
+                          title={`Delete ${file.path}`}
+                        >
+                          <Icon icon="trash-alt" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div
+              className={css`
+                position: relative;
+                min-height: 0;
+                display: grid;
+                grid-template-rows: auto 1fr;
+              `}
+            >
+              <div
+                className={css`
+                  padding: 0.55rem 0.75rem;
+                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  gap: 0.75rem;
+                  background: #0f172a;
+                `}
+              >
+                <div
+                  className={css`
+                    min-width: 0;
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.35rem;
+                  `}
+                >
+                  <div
+                    className={css`
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
+                      color: #e5e7eb;
+                      font-size: 0.8rem;
+                      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                    `}
+                    title={activeFile?.path || '/index.html'}
+                  >
+                    {activeFile?.path || '/index.html'}
+                  </div>
+                  {isOwner && activeFile && (
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+                      `}
+                    >
+                      <input
+                        value={renamePathInput}
+                        onChange={(e) => setRenamePathInput(e.target.value)}
+                        placeholder="/src/new-path.js"
+                        className={css`
+                          flex: 1;
+                          min-width: 0;
+                          border: 1px solid rgba(255, 255, 255, 0.16);
+                          border-radius: 8px;
+                          background: rgba(17, 24, 39, 0.85);
+                          color: #e5e7eb;
+                          padding: 0.3rem 0.45rem;
+                          font-size: 0.72rem;
+                          font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                          &:focus {
+                            outline: none;
+                            border-color: rgba(65, 140, 235, 0.8);
+                          }
+                        `}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRenameOrMoveActiveFile}
+                        className={css`
+                          border: 1px solid rgba(255, 255, 255, 0.18);
+                          border-radius: 8px;
+                          background: rgba(65, 140, 235, 0.18);
+                          color: #dbeafe;
+                          padding: 0.3rem 0.55rem;
+                          font-size: 0.72rem;
+                          font-weight: 700;
+                          cursor: pointer;
+                          &:hover {
+                            background: rgba(65, 140, 235, 0.3);
+                          }
+                        `}
+                      >
+                        Move
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: #e5e7eb;
+                    font-size: 0.72rem;
+                  `}
+                >
+                  {hasUnsavedProjectFileChanges ? (
+                    <span
+                      className={css`
+                        color: #fbbf24;
+                        font-weight: 700;
+                      `}
+                    >
+                      Unsaved
+                    </span>
+                  ) : (
+                    <span
+                      className={css`
+                        color: #86efac;
+                        font-weight: 700;
+                      `}
+                    >
+                      Saved
+                    </span>
+                  )}
+                  {isOwner && (
+                    <GameCTAButton
+                      variant="primary"
+                      size="sm"
+                      disabled={
+                        savingProjectFiles || !hasUnsavedProjectFileChanges
+                      }
+                      loading={savingProjectFiles}
+                      onClick={handleSaveEditableProjectFiles}
+                    >
+                      {savingProjectFiles ? 'Saving...' : 'Save files'}
+                    </GameCTAButton>
+                  )}
+                </div>
+              </div>
+              {activeFile ? (
+                <textarea
+                  value={activeFile.content}
+                  onChange={(e) =>
+                    handleEditableFileContentChange(e.target.value)
+                  }
+                  readOnly={!isOwner}
+                  spellCheck={false}
+                  className={css`
+                    width: 100%;
+                    height: 100%;
+                    padding: 1rem;
+                    border: none;
+                    resize: none;
+                    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                    font-size: 0.85rem;
+                    line-height: 1.5;
+                    background: #111827;
+                    color: #d4d4d4;
+                    &:focus {
+                      outline: none;
+                    }
+                  `}
+                />
+              ) : (
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    color: #cbd5e1;
+                    background: #111827;
+                  `}
+                >
+                  No file selected
+                </div>
+              )}
+              {(projectFileError || pathConflictList.length > 0) && (
+                <div
+                  className={css`
+                    position: absolute;
+                    right: 0.8rem;
+                    bottom: 0.8rem;
+                    background: rgba(239, 68, 68, 0.16);
+                    border: 1px solid rgba(239, 68, 68, 0.35);
+                    color: #fecaca;
+                    border-radius: 8px;
+                    padding: 0.45rem 0.6rem;
+                    font-size: 0.75rem;
+                    max-width: 28rem;
+                  `}
+                >
+                  {projectFileError || 'Path conflicts detected.'}
+                  {pathConflictList.length > 0 && (
+                    <div
+                      className={css`
+                        margin-top: 0.35rem;
+                        border-top: 1px solid rgba(255, 255, 255, 0.22);
+                        padding-top: 0.35rem;
+                        max-height: 7rem;
+                        overflow: auto;
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                        font-size: 0.68rem;
+                        line-height: 1.35;
+                      `}
+                    >
+                      {pathConflictList.map((path) => (
+                        <div key={path}>{path}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

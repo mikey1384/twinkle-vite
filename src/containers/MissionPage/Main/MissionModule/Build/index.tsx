@@ -217,6 +217,7 @@ export default function BuildMission({
   }, [userId]);
 
   const missionState = missions?.build || {};
+  const copilotPromptCompleted = Boolean(missionState.copilotPromptCompleted);
   const promptListUsed = Boolean(missionState.promptListUsed);
   const aiChatUsed = Boolean(missionState.aiChatUsed);
   const dbUsed = Boolean(missionState.dbUsed);
@@ -228,12 +229,11 @@ export default function BuildMission({
   const hasBuild = builds.length > 0;
   const step1Complete = isMissionPassed || hasBuild;
 
-  // Step 2: User has generated code (any build has code)
+  // Step 2: User has completed at least one successful Copilot generation.
+  // Keep hasCode fallback for users who generated before this flag existed.
   const hasCodeGenerated = builds.some((b) => b.hasCode);
-  const step2Complete = isMissionPassed || hasCodeGenerated;
-
-  // Step 3: User has used a Twinkle SDK feature (AI prompts or database)
-  const step3Complete = isMissionPassed || sdkFeatureUsed;
+  const step2Complete =
+    isMissionPassed || copilotPromptCompleted || hasCodeGenerated;
 
   const checklistItems = [
     {
@@ -244,25 +244,18 @@ export default function BuildMission({
         : 'Start your first project in the Build Studio'
     },
     {
-      label: 'Generate code with AI',
+      label: 'Send one working Copilot prompt',
       complete: step2Complete,
       detail: step2Complete
-        ? 'Code generated and previewed'
-        : 'Describe what you want and let the AI create it'
-    },
-    {
-      label: 'Use a Twinkle SDK feature',
-      complete: step3Complete,
-      detail: step3Complete
-        ? `Used: ${[aiChatUsed && 'AI Chat', promptListUsed && !aiChatUsed && 'AI Prompts', dbUsed && 'Database'].filter(Boolean).join(', ') || 'SDK feature'}`
-        : 'Add database persistence or shared AI prompts to your app'
+        ? 'Copilot generated a working app response'
+        : 'Try a prompt like "Build a Mario-style platformer game"'
     }
   ];
 
-  const missionCleared = checklistItems.every((item) => item.complete);
+  const missionCleared = step1Complete && step2Complete;
 
   // Determine current step for contextual hero content
-  const currentStep = !step1Complete ? 1 : !step2Complete ? 2 : !step3Complete ? 3 : 0;
+  const currentStep = !step1Complete ? 1 : !step2Complete ? 2 : 0;
   const latestBuild = builds[0];
 
   return (
@@ -288,8 +281,8 @@ export default function BuildMission({
                   <h2 className={titleClass}>Build an app with AI assistance</h2>
                   <p className={subtitleClass}>
                     Create a project in the Build Studio, describe what you want, and
-                    watch AI generate your app. Then level up by integrating Twinkle
-                    SDK features like shared AI prompts or SQLite persistence.
+                    watch AI generate your app. For this mission, one successful
+                    Copilot generation is enough to pass.
                   </p>
                   <div className={buttonRowClass}>
                     <Button
@@ -334,37 +327,12 @@ export default function BuildMission({
                   </div>
                 </>
               )}
-              {currentStep === 3 && latestBuild && (
-                <>
-                  <h2 className={titleClass}>Add a Twinkle SDK feature</h2>
-                  <p className={subtitleClass}>
-                    Level up your app by adding AI prompts or SQLite persistence.
-                    Ask the AI to help you integrate these features.
-                  </p>
-                  <div className={buttonRowClass}>
-                    <Button
-                      color="green"
-                      variant="solid"
-                      onClick={() => navigate(`/build/${latestBuild.id}`)}
-                    >
-                      Add SDK Features
-                    </Button>
-                    <Button
-                      color="logoBlue"
-                      variant="soft"
-                      onClick={() => navigate('/build')}
-                    >
-                      View All Builds
-                    </Button>
-                  </div>
-                </>
-              )}
               {currentStep === 0 && (
                 <>
                   <h2 className={titleClass}>Mission Complete!</h2>
                   <p className={subtitleClass}>
-                    You've built an app with AI assistance and integrated Twinkle SDK
-                    features. Keep building and exploring new ideas!
+                    You shipped your first Copilot-generated build. Keep iterating
+                    and add advanced features when you are ready.
                   </p>
                   <div className={buttonRowClass}>
                     <Button
@@ -392,7 +360,7 @@ export default function BuildMission({
               <div className={featureIconClass}>
                 <Icon icon="brain" />
               </div>
-              <h3 className={featureTitleClass}>Shared AI prompts</h3>
+              <h3 className={featureTitleClass}>Bonus: Shared AI prompts</h3>
               <p className={featureBodyClass}>
                 Pull a shared prompt and make your app respond to user input
                 with Twinkle AI.
@@ -405,7 +373,7 @@ export default function BuildMission({
               >
                 <Icon icon="save" />
               </div>
-              <h3 className={featureTitleClass}>SQLite persistence</h3>
+              <h3 className={featureTitleClass}>Bonus: SQLite persistence</h3>
               <p className={featureBodyClass}>
                 Save project data with Twinkle.db so your app remembers progress
                 across sessions.
@@ -421,12 +389,39 @@ export default function BuildMission({
               >
                 <Icon icon="rocket-launch" />
               </div>
-              <h3 className={featureTitleClass}>Showcase a full workflow</h3>
+              <h3 className={featureTitleClass}>Bonus: Full workflow polish</h3>
               <p className={featureBodyClass}>
                 Combine AI, data, and UI into a single experience and make it
                 feel polished.
               </p>
             </div>
+          </section>
+
+          <section
+            className={css`
+              background: ${sdkFeatureUsed
+                ? Color.oceanGreen(0.12)
+                : Color.logoBlue(0.08)};
+              border: 1px solid
+                ${sdkFeatureUsed
+                  ? Color.oceanGreen(0.28)
+                  : Color.logoBlue(0.24)};
+              border-radius: ${borderRadius};
+              padding: 1rem 1.2rem;
+              color: ${Color.darkGray()};
+              font-size: 1.05rem;
+              line-height: 1.5;
+            `}
+          >
+            {sdkFeatureUsed
+              ? `Bonus progress unlocked: ${[
+                  aiChatUsed && 'AI Chat',
+                  promptListUsed && !aiChatUsed && 'AI Prompts',
+                  dbUsed && 'Database'
+                ]
+                  .filter(Boolean)
+                  .join(', ')}`
+              : 'Bonus (optional): add shared AI prompts or SQLite persistence to strengthen your app.'}
           </section>
 
           {isMissionPassed && (
@@ -440,7 +435,7 @@ export default function BuildMission({
               <MissionStatusCard
                 status="success"
                 title="Mission Accomplished"
-                message="You shipped a build that blends AI and data together."
+                message="You shipped your first Copilot build."
                 rewards={{
                   xp: mission.xpReward,
                   coins: mission.coinReward

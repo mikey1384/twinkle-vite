@@ -14,6 +14,57 @@ import { borderRadius, mobileMaxWidth } from '~/constants/css';
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
+interface BuildCopilotPolicy {
+  tier: 'free' | 'pro' | 'premium';
+  assignedTier?: 'free' | 'pro' | 'premium';
+  byo?: {
+    enabled: boolean;
+    requiredForPaidTiers: boolean;
+    blockedAssignedTier: boolean;
+  };
+  pricing: {
+    proMonthlyPriceUsd: number;
+  };
+  limits: {
+    maxProjects: number;
+    maxProjectBytes: number;
+    maxFilesPerProject: number;
+    maxFileBytes: number;
+    maxPromptChars: number;
+    historyMaxAgeSeconds: number;
+    historyMaxMessages: number;
+    historyMessageCharLimit: number;
+    historyTotalCharBudget: number;
+  };
+  usage: {
+    projectCount: number;
+    projectCountRemaining: number;
+    currentProjectBytes: number;
+    projectBytesRemaining: number;
+    projectFileCount: number;
+    projectFileBytes: number;
+    maxFilesPerProject: number;
+    maxFileBytes: number;
+  };
+  requestBilling: {
+    dayKey: string;
+    tier: 'free' | 'pro' | 'premium';
+    freeRequestsPerDay: number;
+    coinCostPerRequest: number;
+    billingEnabled: boolean;
+    requestsToday: number;
+    freeRequestsUsed: number;
+    freeRequestsRemaining: number;
+    paidRequestsToday: number;
+    coinSpentToday: number;
+    coinBalance: number | null;
+  };
+  codexReasoning: {
+    allowedEfforts: Array<'low' | 'medium' | 'high' | 'xhigh'>;
+    defaultEffort: 'low' | 'medium' | 'high' | 'xhigh';
+  };
+}
+
 export default function Build() {
   return (
     <ErrorBoundary componentPath="Build">
@@ -218,6 +269,8 @@ function BuildEditorWrapper() {
   const [loading, setLoading] = useState(true);
   const [build, setBuild] = useState<any>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [copilotPolicy, setCopilotPolicy] =
+    useState<BuildCopilotPolicy | null>(null);
   const [error, setError] = useState('');
 
   const numericBuildId = useMemo(() => {
@@ -235,8 +288,15 @@ function BuildEditorWrapper() {
       try {
         const data = await loadBuild(numericBuildId);
         if (data?.build) {
-          setBuild(data.build);
+          setBuild({
+            ...data.build,
+            projectManifest: data.projectManifest || null,
+            projectFiles: Array.isArray(data.projectFiles)
+              ? data.projectFiles
+              : []
+          });
           setChatMessages(data.chatMessages || []);
+          setCopilotPolicy(data.copilotPolicy || null);
         } else {
           setError('Build not found');
         }
@@ -271,10 +331,12 @@ function BuildEditorWrapper() {
     <BuildEditor
       build={build}
       chatMessages={chatMessages}
+      copilotPolicy={copilotPolicy}
       isOwner={isOwner}
       initialPrompt={initialPrompt}
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
+      onUpdateCopilotPolicy={setCopilotPolicy}
     />
   );
 }

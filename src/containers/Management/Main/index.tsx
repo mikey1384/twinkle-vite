@@ -6,6 +6,7 @@ import Moderators from './Legacy/Moderators';
 import AccountTypes from './Legacy/AccountTypes';
 import BannedUsers from './BannedUsers';
 import Achievements from './Achievements';
+import BuildTierControls from './BuildTierControls';
 import { useAppContext, useManagementContext, useKeyContext } from '~/contexts';
 import WealthData from './WealthData';
 
@@ -84,6 +85,7 @@ export default function Main() {
     >
       <WealthData />
       <Approvals canManage={canManage} />
+      {canManage && <BuildTierControls canManage={canManage} />}
       {canManage && <Achievements />}
       <Supermods canManage={canManage} />
       {canManage && <Moderators canManage={canManage} />}

@@ -98,17 +98,84 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildProjectFiles(
+      buildId: number,
+      options?: { fromWriter?: boolean }
+    ) {
+      try {
+        const qs = options?.fromWriter ? '?fromWriter=1' : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/project-files${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildProjectFiles({
+      buildId,
+      files,
+      createVersion,
+      summary
+    }: {
+      buildId: number;
+      files: Array<{ path: string; content: string }>;
+      createVersion?: boolean;
+      summary?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/${buildId}/project-files`,
+          { files, createVersion, summary },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildProjectFileChangeLogs(
+      buildId: number,
+      options?: { fromWriter?: boolean; limit?: number }
+    ) {
+      try {
+        const queryParts: string[] = [];
+        if (options?.fromWriter) {
+          queryParts.push('fromWriter=1');
+        }
+        if (
+          Number.isFinite(Number(options?.limit)) &&
+          Number(options?.limit) > 0
+        ) {
+          queryParts.push(`limit=${Math.floor(Number(options?.limit))}`);
+        }
+        const qs = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/project-file-change-logs${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async generateBuildCode({
       buildId,
-      message
+      message,
+      reasoningEffort
     }: {
       buildId: number;
       message: string;
+      reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/generate`,
-          { message },
+          { message, reasoningEffort },
           auth()
         );
         return data;
@@ -178,17 +245,19 @@ export default function buildRequestHelpers({
       buildId,
       promptId,
       message,
-      history
+      history,
+      reasoningEffort
     }: {
       buildId: number;
       promptId: number;
       message: string;
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+      reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/ai-chat`,
-          { promptId, message, history },
+          { promptId, message, history, reasoningEffort },
           auth()
         );
         return data;

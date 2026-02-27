@@ -65,6 +65,92 @@ interface BuildUsageMetric {
   estimatedCostUsd: number | null;
 }
 
+interface BuildCopilotPolicy {
+  tier: 'free' | 'pro' | 'premium';
+  assignedTier?: 'free' | 'pro' | 'premium';
+  byo?: {
+    enabled: boolean;
+    requiredForPaidTiers: boolean;
+    blockedAssignedTier: boolean;
+  };
+  pricing: {
+    proMonthlyPriceUsd: number;
+  };
+  limits: {
+    maxProjects: number;
+    maxProjectBytes: number;
+    maxFilesPerProject: number;
+    maxFileBytes: number;
+    maxPromptChars: number;
+    historyMaxAgeSeconds: number;
+    historyMaxMessages: number;
+    historyMessageCharLimit: number;
+    historyTotalCharBudget: number;
+  };
+  usage: {
+    projectCount: number;
+    projectCountRemaining: number;
+    currentProjectBytes: number;
+    projectBytesRemaining: number;
+    projectFileCount: number;
+    projectFileBytes: number;
+    maxFilesPerProject: number;
+    maxFileBytes: number;
+  };
+  requestBilling: {
+    dayKey: string;
+    tier: 'free' | 'pro' | 'premium';
+    freeRequestsPerDay: number;
+    coinCostPerRequest: number;
+    billingEnabled: boolean;
+    requestsToday: number;
+    freeRequestsUsed: number;
+    freeRequestsRemaining: number;
+    paidRequestsToday: number;
+    coinSpentToday: number;
+    coinBalance: number | null;
+  };
+  codexReasoning: {
+    allowedEfforts: Array<'low' | 'medium' | 'high' | 'xhigh'>;
+    defaultEffort: 'low' | 'medium' | 'high' | 'xhigh';
+  };
+}
+
+interface BuildRunEvent {
+  id: string;
+  kind: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
+  phase: string | null;
+  message: string;
+  createdAt: number;
+  deduped?: boolean;
+  usage?: {
+    stage?: string | null;
+    model?: string | null;
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+    estimatedCostUsd?: number | null;
+  } | null;
+}
+
+interface BuildProjectFileDiff {
+  addedPaths: string[];
+  updatedPaths: string[];
+  deletedPaths: string[];
+}
+
+interface BuildProjectFileChangeLog {
+  id: number;
+  buildId: number;
+  actorRole: 'user' | 'assistant' | 'system';
+  summaryText: string;
+  diff: BuildProjectFileDiff;
+  createdAt: number;
+}
+
+type BuildQueueMode = 'collect' | 'steer' | 'followup';
+type BuildCodexReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
+
 interface ChatPanelProps {
   messages: ChatMessage[];
   inputMessage: string;
@@ -73,14 +159,28 @@ interface ChatPanelProps {
   reviewerStatusSteps: string[];
   assistantStatusSteps: string[];
   usageMetrics: Record<string, BuildUsageMetric>;
+  copilotPolicy: BuildCopilotPolicy | null;
+  projectFileChangeLogs: BuildProjectFileChangeLog[];
+  projectFilePromptContextPreview: string;
+  projectFileChangeLogsLoading: boolean;
+  projectFileChangeLogsError: string;
+  projectFileChangeLogsLoadedAt: number | null;
+  runEvents: BuildRunEvent[];
+  queueMode: BuildQueueMode;
+  selectedReasoningEffort: BuildCodexReasoningEffort;
+  reasoningEffortOptions: BuildCodexReasoningEffort[];
+  queuedCount: number;
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onChatScroll: () => void;
   onInputChange: (value: string) => void;
+  onQueueModeChange: (mode: BuildQueueMode) => void;
+  onReasoningEffortChange: (effort: BuildCodexReasoningEffort) => void;
   onSendMessage: () => void;
   onStopGeneration: () => void;
+  onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
   onDeleteMessage: (message: ChatMessage) => void;
 }
 
@@ -92,16 +192,31 @@ export default function ChatPanel({
   reviewerStatusSteps,
   assistantStatusSteps,
   usageMetrics,
+  copilotPolicy,
+  projectFileChangeLogs,
+  projectFilePromptContextPreview,
+  projectFileChangeLogsLoading,
+  projectFileChangeLogsError,
+  projectFileChangeLogsLoadedAt,
+  runEvents,
+  queueMode,
+  selectedReasoningEffort,
+  reasoningEffortOptions,
+  queuedCount,
   activeStreamMessageIds,
   isOwner,
   chatScrollRef,
   chatEndRef,
   onChatScroll,
   onInputChange,
+  onQueueModeChange,
+  onReasoningEffortChange,
   onSendMessage,
   onStopGeneration,
+  onReloadProjectFileChangeLogs,
   onDeleteMessage
 }: ChatPanelProps) {
+  const [showCopilotDebug, setShowCopilotDebug] = useState(false);
   const usageRows = useMemo(() => {
     const stageOrder = ['planner', 'reviewer', 'validator', 'codex', 'narration'];
     return Object.values(usageMetrics).sort((a, b) => {
@@ -137,6 +252,77 @@ export default function ChatPanel({
     );
   }, [usageRows]);
 
+  const inputCharCount = inputMessage.length;
+  const promptCharLimit = copilotPolicy?.limits.maxPromptChars ?? null;
+  const projectCountUsage = useMemo(() => {
+    if (!copilotPolicy) return null;
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        (copilotPolicy.usage.projectCount / copilotPolicy.limits.maxProjects) *
+          100
+      )
+    );
+  }, [copilotPolicy]);
+  const projectByteUsage = useMemo(() => {
+    if (!copilotPolicy) return null;
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        (copilotPolicy.usage.currentProjectBytes /
+          copilotPolicy.limits.maxProjectBytes) *
+          100
+      )
+    );
+  }, [copilotPolicy]);
+  const projectFileCountUsage = useMemo(() => {
+    if (!copilotPolicy) return null;
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        (copilotPolicy.usage.projectFileCount /
+          copilotPolicy.limits.maxFilesPerProject) *
+          100
+      )
+    );
+  }, [copilotPolicy]);
+  const requestUsage = useMemo(() => {
+    if (!copilotPolicy) return null;
+    const billing = copilotPolicy.requestBilling;
+    if (!billing.billingEnabled) return null;
+    if (billing.freeRequestsPerDay <= 0) return 100;
+    return Math.max(
+      0,
+      Math.min(100, (billing.freeRequestsUsed / billing.freeRequestsPerDay) * 100)
+    );
+  }, [copilotPolicy]);
+  const nextRequestCostLabel = useMemo(() => {
+    if (!copilotPolicy) return null;
+    const billing = copilotPolicy.requestBilling;
+    if (!billing.billingEnabled) return 'Included';
+    if (billing.freeRequestsRemaining > 0) return 'Free';
+    return `${formatTokenCount(billing.coinCostPerRequest)} coins`;
+  }, [copilotPolicy]);
+
+  function handleToggleCopilotDebug() {
+    const nextValue = !showCopilotDebug;
+    setShowCopilotDebug(nextValue);
+    if (
+      nextValue &&
+      !projectFileChangeLogsLoading &&
+      !projectFileChangeLogsLoadedAt
+    ) {
+      void onReloadProjectFileChangeLogs();
+    }
+  }
+
+  function handleRefreshCopilotDebug() {
+    void onReloadProjectFileChangeLogs();
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -151,6 +337,146 @@ export default function ChatPanel({
           <Icon icon="sparkles" />
           Build Copilot
         </div>
+        {copilotPolicy && (
+          <div
+            className={css`
+              margin-top: 0.4rem;
+              border: 1px solid var(--ui-border);
+              border-radius: 10px;
+              background: #fff;
+              padding: 0.55rem 0.65rem;
+              display: flex;
+              flex-direction: column;
+              gap: 0.42rem;
+              font-size: 0.75rem;
+              color: var(--chat-text);
+            `}
+          >
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.4rem;
+              `}
+            >
+              <span
+                className={css`
+                  font-weight: 800;
+                  opacity: 0.85;
+                `}
+              >
+                Plan limits
+              </span>
+              <span
+                className={css`
+                  border-radius: 999px;
+                  border: 1px solid var(--ui-border);
+                  padding: 0.1rem 0.45rem;
+                  font-size: 0.7rem;
+                  font-weight: 800;
+                  text-transform: uppercase;
+                  letter-spacing: 0.03em;
+                  background: var(--chat-bg);
+                `}
+            >
+                {copilotPolicy.tier}
+              </span>
+            </div>
+            {copilotPolicy.byo?.blockedAssignedTier && (
+              <div
+                className={css`
+                  border: 1px solid ${Color.orange(0.35)};
+                  border-radius: 8px;
+                  background: ${Color.orange(0.08)};
+                  color: ${Color.orange(0.95)};
+                  padding: 0.42rem 0.5rem;
+                  font-size: 0.72rem;
+                  line-height: 1.35;
+                `}
+              >
+                Assigned {copilotPolicy.assignedTier || 'paid'} tier is inactive.
+                Enable BYO to unlock paid Build limits.
+              </div>
+            )}
+            <MetricBarRow
+              label="Projects"
+              value={`${formatTokenCount(copilotPolicy.usage.projectCount)} / ${formatTokenCount(copilotPolicy.limits.maxProjects)}`}
+              meta={`${formatTokenCount(copilotPolicy.usage.projectCountRemaining)} left`}
+              percent={projectCountUsage || 0}
+            />
+            <MetricBarRow
+              label="Project size"
+              value={`${formatBytes(copilotPolicy.usage.currentProjectBytes)} / ${formatBytes(copilotPolicy.limits.maxProjectBytes)}`}
+              meta={`${formatBytes(copilotPolicy.usage.projectBytesRemaining)} left`}
+              percent={projectByteUsage || 0}
+            />
+            <MetricBarRow
+              label="Files"
+              value={`${formatTokenCount(copilotPolicy.usage.projectFileCount)} / ${formatTokenCount(copilotPolicy.limits.maxFilesPerProject)}`}
+              meta={`Per-file cap ${formatBytes(copilotPolicy.limits.maxFileBytes)}`}
+              percent={projectFileCountUsage || 0}
+            />
+            {copilotPolicy.requestBilling.billingEnabled && requestUsage != null ? (
+              <MetricBarRow
+                label="Daily free requests"
+                value={`${formatTokenCount(copilotPolicy.requestBilling.freeRequestsUsed)} / ${formatTokenCount(copilotPolicy.requestBilling.freeRequestsPerDay)}`}
+                meta={`${formatTokenCount(copilotPolicy.requestBilling.freeRequestsRemaining)} free left`}
+                percent={requestUsage}
+              />
+            ) : (
+              <div
+                className={css`
+                  display: flex;
+                  justify-content: space-between;
+                  gap: 0.5rem;
+                  font-size: 0.72rem;
+                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                `}
+              >
+                <span>Requests included</span>
+                <span>{copilotPolicy.tier} tier</span>
+              </div>
+            )}
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+              `}
+            >
+              <span>Prompt {formatTokenCount(copilotPolicy.limits.maxPromptChars)} chars</span>
+              <span>
+                History {copilotPolicy.limits.historyMaxMessages} msgs /{' '}
+                {Math.floor(copilotPolicy.limits.historyMaxAgeSeconds / 3600)}h
+              </span>
+            </div>
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                font-size: 0.72rem;
+                font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+              `}
+            >
+              <span>
+                Paid requests {formatTokenCount(copilotPolicy.requestBilling.paidRequestsToday)}
+                {' / '}
+                {formatTokenCount(copilotPolicy.requestBilling.coinSpentToday)} coins
+              </span>
+              <span>
+                Balance{' '}
+                {copilotPolicy.requestBilling.coinBalance == null
+                  ? 'n/a'
+                  : formatTokenCount(copilotPolicy.requestBilling.coinBalance)}
+              </span>
+            </div>
+          </div>
+        )}
         {usageRows.length > 0 && (
           <div
             className={css`
@@ -240,6 +566,304 @@ export default function ChatPanel({
             </div>
           </div>
         )}
+        {runEvents.length > 0 && (
+          <div
+            className={css`
+              border: 1px solid var(--ui-border);
+              border-radius: 10px;
+              background: #fff;
+              padding: 0.55rem 0.65rem;
+              display: flex;
+              flex-direction: column;
+              gap: 0.25rem;
+              font-size: 0.76rem;
+              color: var(--chat-text);
+              max-height: 160px;
+              overflow-y: auto;
+            `}
+          >
+            <div
+              className={css`
+                font-weight: 700;
+                opacity: 0.82;
+                margin-bottom: 0.1rem;
+              `}
+            >
+              Current run timeline
+            </div>
+            {runEvents.slice(-12).map((event) => (
+              <div
+                key={event.id}
+                className={css`
+                  display: grid;
+                  grid-template-columns: auto auto 1fr;
+                  gap: 0.35rem;
+                  align-items: baseline;
+                  line-height: 1.35;
+                `}
+              >
+                <span
+                  className={css`
+                    color: ${getRunEventColor(event.kind)};
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                    font-size: 0.68rem;
+                    white-space: nowrap;
+                  `}
+                >
+                  {getRunEventLabel(event.kind)}
+                </span>
+                <span
+                  className={css`
+                    color: ${Color.gray(0.9)};
+                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                    font-size: 0.68rem;
+                    white-space: nowrap;
+                  `}
+                >
+                  {formatRunEventTime(event.createdAt)}
+                </span>
+                <span
+                  className={css`
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  `}
+                  title={event.message}
+                >
+                  {event.phase ? `[${event.phase}] ` : ''}
+                  {event.message}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div
+          className={css`
+            border: 1px solid var(--ui-border);
+            border-radius: 10px;
+            background: #fff;
+            padding: 0.55rem 0.65rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.76rem;
+            color: var(--chat-text);
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 0.5rem;
+            `}
+          >
+            <span
+              className={css`
+                font-weight: 700;
+                opacity: 0.85;
+              `}
+            >
+              AI context debug
+            </span>
+            <div
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+              `}
+            >
+              <button
+                type="button"
+                onClick={handleRefreshCopilotDebug}
+                disabled={projectFileChangeLogsLoading}
+                className={css`
+                  border: 1px solid var(--ui-border);
+                  background: #fff;
+                  color: var(--chat-text);
+                  border-radius: 999px;
+                  padding: 0.18rem 0.5rem;
+                  font-size: 0.68rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                  &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                  }
+                `}
+              >
+                {projectFileChangeLogsLoading ? 'Loading...' : 'Refresh'}
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleCopilotDebug}
+                className={css`
+                  border: 1px solid var(--ui-border);
+                  background: ${showCopilotDebug ? 'var(--chat-bg)' : '#fff'};
+                  color: var(--chat-text);
+                  border-radius: 999px;
+                  padding: 0.18rem 0.5rem;
+                  font-size: 0.68rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                `}
+              >
+                {showCopilotDebug ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 0.5rem;
+              font-size: 0.7rem;
+              font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+              opacity: 0.8;
+            `}
+          >
+            <span>{formatTokenCount(projectFileChangeLogs.length)} logs</span>
+            <span>
+              {projectFileChangeLogsLoadedAt
+                ? `Updated ${formatRunEventTime(projectFileChangeLogsLoadedAt)}`
+                : 'Not loaded yet'}
+            </span>
+          </div>
+          {showCopilotDebug && (
+            <div
+              className={css`
+                margin-top: 0.15rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+              `}
+            >
+              {projectFileChangeLogsError ? (
+                <div
+                  className={css`
+                    border: 1px solid ${Color.rose(0.35)};
+                    background: ${Color.rose(0.07)};
+                    color: ${Color.rose(0.95)};
+                    border-radius: 8px;
+                    padding: 0.5rem 0.55rem;
+                    font-size: 0.74rem;
+                  `}
+                >
+                  {projectFileChangeLogsError}
+                </div>
+              ) : null}
+              <div
+                className={css`
+                  border: 1px solid var(--ui-border);
+                  border-radius: 8px;
+                  background: var(--chat-bg);
+                  padding: 0.45rem 0.5rem;
+                `}
+              >
+                <div
+                  className={css`
+                    font-weight: 700;
+                    margin-bottom: 0.28rem;
+                    font-size: 0.72rem;
+                  `}
+                >
+                  Prompt context preview
+                </div>
+                <pre
+                  className={css`
+                    margin: 0;
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    font-size: 0.7rem;
+                    line-height: 1.35;
+                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                    max-height: 160px;
+                    overflow-y: auto;
+                  `}
+                >
+                  {projectFilePromptContextPreview || '[no recent file changes]'}
+                </pre>
+              </div>
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.25rem;
+                  max-height: 180px;
+                  overflow-y: auto;
+                `}
+              >
+                {projectFileChangeLogs.length === 0 ? (
+                  <div
+                    className={css`
+                      font-size: 0.72rem;
+                      opacity: 0.72;
+                    `}
+                  >
+                    No project file change logs yet.
+                  </div>
+                ) : (
+                  projectFileChangeLogs.map((entry) => {
+                    const totalChanges = countProjectFileChanges(entry.diff);
+                    return (
+                      <div
+                        key={entry.id}
+                        className={css`
+                          border: 1px solid var(--ui-border);
+                          border-radius: 8px;
+                          background: #fff;
+                          padding: 0.4rem 0.5rem;
+                          display: flex;
+                          flex-direction: column;
+                          gap: 0.2rem;
+                        `}
+                      >
+                        <div
+                          className={css`
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 0.5rem;
+                            font-size: 0.69rem;
+                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                            opacity: 0.85;
+                          `}
+                        >
+                          <span>
+                            {entry.actorRole.toUpperCase()} #{entry.id}
+                          </span>
+                          <span>
+                            {totalChanges} file change{totalChanges === 1 ? '' : 's'}
+                          </span>
+                        </div>
+                        <div
+                          className={css`
+                            font-size: 0.73rem;
+                            line-height: 1.35;
+                          `}
+                        >
+                          {entry.summaryText || '[no summary]'}
+                        </div>
+                        <div
+                          className={css`
+                            font-size: 0.68rem;
+                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                            opacity: 0.72;
+                          `}
+                        >
+                          {formatRunEventTime(entry.createdAt * 1000)}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <div
         ref={chatScrollRef}
@@ -436,6 +1060,110 @@ export default function ChatPanel({
           <div
             className={css`
               display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 0.5rem;
+              margin-bottom: 0.55rem;
+              flex-wrap: wrap;
+            `}
+          >
+            <div
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+              `}
+            >
+              {(['collect', 'steer', 'followup'] as BuildQueueMode[]).map(
+                (mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => onQueueModeChange(mode)}
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      background: ${queueMode === mode
+                        ? 'var(--chat-bg)'
+                        : '#fff'};
+                      color: ${queueMode === mode
+                        ? 'var(--chat-text)'
+                        : Color.gray(0.95)};
+                      border-radius: 999px;
+                      padding: 0.2rem 0.55rem;
+                      font-size: 0.72rem;
+                      font-weight: 700;
+                      text-transform: uppercase;
+                      letter-spacing: 0.03em;
+                      cursor: pointer;
+                    `}
+                  >
+                    {mode}
+                  </button>
+                )
+              )}
+            </div>
+            <div
+              className={css`
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                font-size: 0.72rem;
+                color: var(--chat-text);
+              `}
+            >
+              <span
+                className={css`
+                  font-weight: 700;
+                  opacity: 0.72;
+                `}
+              >
+                Reasoning
+              </span>
+              <select
+                value={selectedReasoningEffort}
+                onChange={(e) =>
+                  onReasoningEffortChange(
+                    e.target.value as BuildCodexReasoningEffort
+                  )
+                }
+                className={css`
+                  border: 1px solid var(--ui-border);
+                  background: #fff;
+                  color: var(--chat-text);
+                  border-radius: 999px;
+                  padding: 0.16rem 0.5rem;
+                  font-size: 0.72rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                  &:focus {
+                    outline: none;
+                    border-color: var(--theme-border);
+                  }
+                `}
+              >
+                {reasoningEffortOptions.map((effort) => (
+                  <option key={effort} value={effort}>
+                    {formatReasoningEffortLabel(effort)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {queuedCount > 0 && (
+              <span
+                className={css`
+                  font-size: 0.73rem;
+                  color: var(--chat-text);
+                  opacity: 0.72;
+                  font-weight: 700;
+                `}
+              >
+                {queuedCount} queued
+              </span>
+            )}
+          </div>
+          <div
+            className={css`
+              display: flex;
               gap: 0.5rem;
             `}
           >
@@ -443,8 +1171,11 @@ export default function ChatPanel({
               value={inputMessage}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe what you want to build..."
-              disabled={generating}
+              placeholder={
+                generating
+                  ? 'Type a follow-up to queue...'
+                  : 'Describe what you want to build...'
+              }
               className={css`
                 flex: 1;
                 padding: 0.75rem;
@@ -460,13 +1191,18 @@ export default function ChatPanel({
                   outline: none;
                   border-color: var(--theme-border);
                 }
-                &:disabled {
-                  background: var(--chat-bg);
-                }
               `}
               rows={1}
             />
-            {generating ? (
+            <GameCTAButton
+              onClick={onSendMessage}
+              disabled={!inputMessage.trim()}
+              variant={generating ? 'orange' : 'logoBlue'}
+              size="md"
+              icon="paper-plane"
+              style={{ minWidth: '3rem' }}
+            />
+            {generating && (
               <GameCTAButton
                 onClick={onStopGeneration}
                 variant="orange"
@@ -474,19 +1210,123 @@ export default function ChatPanel({
                 icon="stop"
                 style={{ minWidth: '3rem' }}
               />
-            ) : (
-              <GameCTAButton
-                onClick={onSendMessage}
-                disabled={!inputMessage.trim() || generating}
-                variant="logoBlue"
-                size="md"
-                icon="paper-plane"
-                style={{ minWidth: '3rem' }}
-              />
             )}
           </div>
+          {promptCharLimit != null && (
+            <div
+              className={css`
+                margin-top: 0.42rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                font-size: 0.72rem;
+              `}
+            >
+              <span
+                className={css`
+                  color: ${inputCharCount > promptCharLimit
+                    ? Color.rose()
+                    : Color.gray(0.9)};
+                  font-weight: 700;
+                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                `}
+              >
+                Prompt: {formatTokenCount(inputCharCount)} /{' '}
+                {formatTokenCount(promptCharLimit)} chars
+              </span>
+              {copilotPolicy && (
+                <span
+                  className={css`
+                    color: var(--chat-text);
+                    opacity: 0.72;
+                    font-weight: 700;
+                  `}
+                >
+                  Next request: {nextRequestCostLabel}
+                  {copilotPolicy.tier === 'free'
+                    ? ` | Pro $${copilotPolicy.pricing.proMonthlyPriceUsd}/month`
+                    : ''}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function MetricBarRow({
+  label,
+  value,
+  meta,
+  percent
+}: {
+  label: string;
+  value: string;
+  meta: string;
+  percent: number;
+}) {
+  return (
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      `}
+    >
+      <div
+        className={css`
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 0.5rem;
+        `}
+      >
+        <span
+          className={css`
+            font-weight: 700;
+          `}
+        >
+          {label}
+        </span>
+        <span
+          className={css`
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            white-space: nowrap;
+          `}
+        >
+          {value}
+        </span>
+      </div>
+      <div
+        className={css`
+          height: 5px;
+          border-radius: 999px;
+          background: var(--chat-bg);
+          overflow: hidden;
+        `}
+      >
+        <div
+          className={css`
+            width: ${Math.max(0, Math.min(100, percent))}%;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #4f8df7, #5ad1ff);
+          `}
+        />
+      </div>
+      <div
+        className={css`
+          display: flex;
+          justify-content: flex-end;
+          font-size: 0.68rem;
+          opacity: 0.7;
+        `}
+      >
+        {meta}
+      </div>
     </div>
   );
 }
@@ -864,6 +1704,20 @@ function looksLikeCompletedCodeChangeClaim(content: string) {
   ].some((pattern) => pattern.test(normalized));
 }
 
+function formatReasoningEffortLabel(effort: BuildCodexReasoningEffort) {
+  switch (effort) {
+    case 'xhigh':
+      return 'xhigh (pro+)';
+    case 'high':
+      return 'high';
+    case 'medium':
+      return 'medium';
+    case 'low':
+    default:
+      return 'low';
+  }
+}
+
 function formatTokenCount(value: number) {
   const safeValue = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
   return new Intl.NumberFormat('en-US').format(safeValue);
@@ -873,6 +1727,13 @@ function formatUsageCost(value: number | null) {
   if (value == null || !Number.isFinite(value)) return 'n/a';
   if (value < 0.01) return `$${value.toFixed(4)}`;
   return `$${value.toFixed(2)}`;
+}
+
+function formatBytes(value: number) {
+  const bytes = Number.isFinite(value) ? Math.max(0, value) : 0;
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 function getUsageStageLabel(stage: string) {
@@ -890,4 +1751,58 @@ function getUsageStageLabel(stage: string) {
     default:
       return stage;
   }
+}
+
+function getRunEventLabel(kind: BuildRunEvent['kind']) {
+  switch (kind) {
+    case 'lifecycle':
+      return 'run';
+    case 'phase':
+      return 'phase';
+    case 'action':
+      return 'action';
+    case 'usage':
+      return 'usage';
+    case 'status':
+      return 'status';
+    default:
+      return kind;
+  }
+}
+
+function getRunEventColor(kind: BuildRunEvent['kind']) {
+  switch (kind) {
+    case 'lifecycle':
+      return Color.logoBlue();
+    case 'phase':
+      return Color.pink();
+    case 'action':
+      return Color.orange();
+    case 'usage':
+      return Color.green();
+    case 'status':
+      return Color.gray(0.9);
+    default:
+      return Color.gray();
+  }
+}
+
+function formatRunEventTime(timestamp: number) {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return '--:--:--';
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
+function countProjectFileChanges(diff: BuildProjectFileDiff | null | undefined) {
+  if (!diff) return 0;
+  return (
+    (Array.isArray(diff.addedPaths) ? diff.addedPaths.length : 0) +
+    (Array.isArray(diff.updatedPaths) ? diff.updatedPaths.length : 0) +
+    (Array.isArray(diff.deletedPaths) ? diff.deletedPaths.length : 0)
+  );
 }
