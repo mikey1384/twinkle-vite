@@ -2253,15 +2253,17 @@ export default function contentRequestHelpers({
     },
     async setDailyQuestionNextCategory({
       category,
-      content
+      content,
+      answer
     }: {
       category: string;
       content?: string;
+      answer?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/content/daily-question/next-category`,
-          { category, content },
+          { category, content, answer },
           auth()
         );
         return data;
