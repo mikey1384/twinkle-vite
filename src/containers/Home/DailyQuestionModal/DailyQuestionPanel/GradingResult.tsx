@@ -1556,6 +1556,19 @@ export default function GradingResult({
                   {getVibeLabel(nextCategory)}
                 </span>
               </div>
+              {isFollowUpSelected && (
+                <p
+                  className={css`
+                    margin: 0.55rem 0 0;
+                    font-size: 1.05rem;
+                    color: ${Color.orange()};
+                    font-weight: 700;
+                  `}
+                >
+                  "Keep Going" vibe is active: it overrides Current Focus for
+                  tomorrow's question.
+                </p>
+              )}
             </button>
 
             <button
@@ -1629,8 +1642,8 @@ export default function GradingResult({
                     font-weight: 700;
                   `}
                 >
-                  Keep Going is selected, so Current Focus will be ignored for
-                  tomorrow unless you change the vibe.
+                  "Keep Going" vibe is selected, so Current Focus will be
+                  ignored for tomorrow unless you change the vibe.
                 </p>
               )}
               <div
@@ -1826,6 +1839,22 @@ export default function GradingResult({
         title="Current Focus"
         size="md"
       >
+        {isFollowUpSelected && (
+          <div
+            className={css`
+              margin-bottom: 0.8rem;
+              padding: 0.75rem 0.9rem;
+              border-radius: 8px;
+              background: ${Color.orange(0.12)};
+              color: ${Color.orange()};
+              font-size: 1.05rem;
+              font-weight: 700;
+            `}
+          >
+            "Keep Going" vibe currently overrides Current Focus for tomorrow's
+            question.
+          </div>
+        )}
         <div
           className={css`
             width: 100%;
@@ -1834,21 +1863,6 @@ export default function GradingResult({
             gap: 0.8rem;
           `}
         >
-          {isFollowUpSelected && (
-            <div
-              className={css`
-                padding: 0.75rem 0.9rem;
-                border-radius: 8px;
-                background: ${Color.orange(0.12)};
-                color: ${Color.orange()};
-                font-size: 1.05rem;
-                font-weight: 700;
-              `}
-            >
-              Keep Going currently overrides Current Focus for tomorrow's
-              question.
-            </div>
-          )}
           <div
             className={css`
               max-height: 55vh;
