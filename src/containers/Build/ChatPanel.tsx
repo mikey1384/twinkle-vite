@@ -397,6 +397,18 @@ export default function ChatPanel({
               >
                 Assigned {copilotPolicy.assignedTier || 'paid'} tier is inactive.
                 Enable BYO to unlock paid Build limits.
+                <a
+                  href="/mission"
+                  className={css`
+                    display: inline-flex;
+                    margin-top: 0.35rem;
+                    font-weight: 700;
+                    text-decoration: underline;
+                    color: inherit;
+                  `}
+                >
+                  Open Build Mission BYO setup
+                </a>
               </div>
             )}
             <MetricBarRow

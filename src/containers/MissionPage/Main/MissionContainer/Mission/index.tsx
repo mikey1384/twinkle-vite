@@ -73,6 +73,10 @@ export default function Mission({
     () => myAttempt?.status === 'pass' && !!mission.repeatable,
     [mission.repeatable, myAttempt?.status]
   );
+  const isCleared = useMemo(
+    () => myAttempt?.status === 'pass',
+    [myAttempt?.status]
+  );
   const missionThumb = useMemo(
     () => returnMissionThumb(mission.missionType),
     [mission.missionType]
@@ -241,6 +245,7 @@ export default function Mission({
                 font-size: 1.5rem;
                 line-height: 1.6;
                 color: ${Color.darkerGray()};
+                ${isCleared ? `opacity: 0.5; text-decoration: line-through;` : ''}
                 @media (max-width: ${mobileMaxWidth}) {
                   font-size: 1.4rem;
                 }
@@ -348,9 +353,7 @@ export default function Mission({
                     background: #fff;
                     border: 1px solid var(--ui-border);
                     border-radius: ${borderRadius};
-                    ${isRepeating
-                      ? `opacity: 0.5; text-decoration: line-through;`
-                      : ''}
+                    ${isCleared ? `opacity: 0.5; text-decoration: line-through;` : ''}
                   `}
                 >
                   <span
@@ -383,9 +386,7 @@ export default function Mission({
                     background: #fff;
                     border: 1px solid var(--ui-border);
                     border-radius: ${borderRadius};
-                    ${isRepeating
-                      ? `opacity: 0.5; text-decoration: line-through;`
-                      : ''}
+                    ${isCleared ? `opacity: 0.5; text-decoration: line-through;` : ''}
                   `}
                 >
                   <Icon
@@ -505,7 +506,8 @@ export default function Mission({
         </ErrorBoundary>
       ) : (!mission.repeatable && myAttempt?.status === 'pass') ||
         (myAttempt?.status === 'fail' && !myAttempt?.tryingAgain) ? (
-        mission.missionType === 'system-prompt' ? (
+        mission.missionType === 'system-prompt' ||
+        mission.missionType === 'build' ? (
           <MissionModule
             mission={mission}
             isRepeating={isRepeating}

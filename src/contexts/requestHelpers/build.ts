@@ -241,6 +241,96 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadBuildByoSettings() {
+      try {
+        const { data } = await request.get(`${URL}/build/byo`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildByoEnabled({
+      enabled,
+      reason
+    }: {
+      enabled: boolean;
+      reason?: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/byo`,
+          { enabled, reason },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async clearBuildByoOverride() {
+      try {
+        const { data } = await request.delete(`${URL}/build/byo`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildByoProviderKeys() {
+      try {
+        const { data } = await request.get(`${URL}/build/byo/provider-keys`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildByoProviderKey({
+      provider,
+      apiKey
+    }: {
+      provider: 'openai' | 'anthropic' | 'google';
+      apiKey: string;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/byo/provider-key`,
+          { provider, apiKey },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async clearBuildByoProviderKey(provider: 'openai' | 'anthropic' | 'google') {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/byo/provider-key/${provider}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async verifyBuildByoProvider(provider: 'openai' | 'anthropic' | 'google') {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/byo/verify/${provider}`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async callBuildAiChat({
       buildId,
       promptId,
