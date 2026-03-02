@@ -140,14 +140,17 @@ export default function AICardModal({
     return !!card?.id && !card?.isBurned && card?.isLive !== false;
   }, [card?.id, card?.isBurned, card?.isLive]);
   const generatingImage = useMemo(() => {
-    return !!card?.imageGenerationInProgress;
-  }, [card?.imageGenerationInProgress]);
+    return !!card?.imageGenerationInProgress || !!card?.isImageGenerating;
+  }, [card?.imageGenerationInProgress, card?.isImageGenerating]);
   const progressStage: CardImageGenStatus['stage'] = useMemo(() => {
+    if (card?.isImageGenerating) {
+      return 'generating';
+    }
     return (
       (card?.imageGenerationStage as CardImageGenStatus['stage']) ||
       'not_started'
     );
-  }, [card?.imageGenerationStage]);
+  }, [card?.imageGenerationStage, card?.isImageGenerating]);
 
   useEffect(() => {
     // Ensure we are in the notification room to receive stream events

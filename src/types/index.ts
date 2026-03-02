@@ -34,6 +34,7 @@ export interface Card {
   askPrice: number;
   id: number;
   imagePath: string;
+  isImageGenerating?: boolean;
   isBurned: boolean;
   isBurning?: boolean;
   level: number;
