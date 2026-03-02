@@ -14,6 +14,7 @@ import {
   needsImageConversion,
   convertToWebFriendlyFormat
 } from '~/helpers/imageHelpers';
+import { getImageAttachmentIdFromDataTransfer } from '~/helpers/imageAttachmentEmbedHelpers';
 
 const isIOS =
   typeof navigator !== 'undefined' &&
@@ -27,6 +28,7 @@ export default function Textarea({
   minRows = 1,
   maxRows = 20,
   onDrop,
+  onAttachmentDrop,
   style,
   theme,
   disableFocusGlow,
@@ -39,10 +41,12 @@ export default function Textarea({
   minRows?: number;
   maxRows?: number;
   onDrop?: (filePath: string) => void;
+  onAttachmentDrop?: (attachmentId: string) => Promise<void> | void;
   theme?: string;
   disableFocusGlow?: boolean;
   disableAutoResize?: boolean;
 }) {
+  const dropEnabled = !!onDrop || !!onAttachmentDrop;
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const userId = useKeyContext((v) => v.myState.userId);
   const maxSize = useMemo(
@@ -300,7 +304,7 @@ export default function Textarea({
             }
           }
         }}
-        onDrop={onDrop ? handleDrop : undefined}
+        onDrop={dropEnabled ? handleDrop : undefined}
         onPaste={(e) => {
           // Mark that we're pasting so resize uses longer delay
           isPastingRef.current = true;
@@ -384,6 +388,14 @@ export default function Textarea({
         onDragEnter={() => {
           setIsDragging(true);
         }}
+        onDragOver={(event) => {
+          if (!dropEnabled) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (!isDragging) {
+            setIsDragging(true);
+          }
+        }}
         onDragLeave={() => {
           setIsDragging(false);
         }}
@@ -391,7 +403,7 @@ export default function Textarea({
           color: hasError ? Color.red() : undefined,
           border: hasError
             ? `1px solid ${Color.red()}`
-            : onDrop
+            : dropEnabled
             ? isDragging
               ? '2px dashed #00aaff'
               : style?.border
@@ -482,6 +494,14 @@ export default function Textarea({
     e.stopPropagation();
     setIsDragging(false);
     if (uploading) return;
+    if (onAttachmentDrop) {
+      const attachmentId = getImageAttachmentIdFromDataTransfer(e.dataTransfer);
+      if (attachmentId) {
+        await onAttachmentDrop(attachmentId);
+        return;
+      }
+    }
+    if (!onDrop) return;
     const file = draggedFile || e.dataTransfer.files[0];
     if (file) {
       await handleFileUpload(file);
