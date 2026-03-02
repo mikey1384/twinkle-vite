@@ -125,14 +125,29 @@ export default function useAICardSocket() {
         'uploading'
       ]);
 
+      function isGeneratingImagePath(path?: string) {
+        if (typeof path !== 'string') return false;
+        const normalized = path.trim().toLowerCase();
+        return /^generating\.{0,3}$/.test(normalized);
+      }
+
       const hasPartial = !!status?.partialImageB64;
       const rawImageUrl: string | undefined = status?.imageUrl;
       const rawImagePath: string | undefined = status?.imagePath;
       const isDataUrl =
         typeof rawImageUrl === 'string' && rawImageUrl.startsWith('data:');
 
-      const hasActualImagePath =
-        !!rawImagePath || (!!rawImageUrl && !isDataUrl);
+      const hasValidImagePath =
+        typeof rawImagePath === 'string' &&
+        !!rawImagePath &&
+        !isGeneratingImagePath(rawImagePath);
+      const hasValidImageUrl =
+        typeof rawImageUrl === 'string' &&
+        !!rawImageUrl &&
+        !isDataUrl &&
+        !isGeneratingImagePath(rawImageUrl);
+
+      const hasActualImagePath = hasValidImagePath || hasValidImageUrl;
 
       const inProgress =
         activeStages.has(stage) ||
@@ -146,12 +161,17 @@ export default function useAICardSocket() {
 
       const newState: Record<string, any> = {
         imageGenerationStage: stage,
-        imageGenerationInProgress: inProgress
+        imageGenerationInProgress: inProgress,
+        isImageGenerating: inProgress
       };
 
       if (stage === 'completed') {
         const finalImagePath = rawImagePath || (isDataUrl ? '' : rawImageUrl);
-        if (finalImagePath && !finalImagePath.startsWith('data:')) {
+        if (
+          finalImagePath &&
+          !finalImagePath.startsWith('data:') &&
+          !isGeneratingImagePath(finalImagePath)
+        ) {
           newState.imagePath = normalizeToPath(finalImagePath);
           newState.imageGenerationPreviewUrl = '';
         } else if (isDataUrl && rawImageUrl) {
@@ -167,6 +187,12 @@ export default function useAICardSocket() {
 
     function normalizeToPath(url: string): string {
       if (!url) return '';
+      if (
+        typeof url === 'string' &&
+        /^generating\.{0,3}$/i.test(url.trim())
+      ) {
+        return '';
+      }
 
       if (url.startsWith('/')) return url;
 
