@@ -2,6 +2,7 @@ import React from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
+import { setImageAttachmentDragData } from '~/helpers/imageAttachmentEmbedHelpers';
 
 export type ImageAttachmentStatus = 'selected' | 'uploading' | 'ready' | 'error';
 
@@ -20,11 +21,15 @@ export interface ImageAttachment {
 export default function ImageAttachmentsBar({
   attachments,
   onRemove,
-  removeDisabled
+  removeDisabled,
+  onEmbedAttachment,
+  embedDisabled
 }: {
   attachments: ImageAttachment[];
   onRemove: (attachmentId: string) => void;
   removeDisabled?: boolean;
+  onEmbedAttachment?: (attachmentId: string) => void;
+  embedDisabled?: boolean;
 }) {
   if (attachments.length === 0) return null;
 
@@ -41,6 +46,24 @@ export default function ImageAttachmentsBar({
       {attachments.map((attachment) => (
         <div
           key={attachment.id}
+          draggable={
+            !!onEmbedAttachment &&
+            !removeDisabled &&
+            !embedDisabled &&
+            attachment.status !== 'uploading'
+          }
+          onDragStart={(event) => {
+            if (
+              !onEmbedAttachment ||
+              removeDisabled ||
+              embedDisabled ||
+              attachment.status === 'uploading'
+            ) {
+              event.preventDefault();
+              return;
+            }
+            setImageAttachmentDragData(event.dataTransfer, attachment.id);
+          }}
           style={{
             position: 'relative',
             width: '7rem',
@@ -48,7 +71,14 @@ export default function ImageAttachmentsBar({
             borderRadius: '1rem',
             overflow: 'hidden',
             border: `1px solid ${Color.borderGray()}`,
-            background: Color.wellGray()
+            background: Color.wellGray(),
+            cursor:
+              onEmbedAttachment &&
+              !removeDisabled &&
+              !embedDisabled &&
+              attachment.status !== 'uploading'
+                ? 'grab'
+                : 'default'
           }}
           aria-label={`Attached image: ${attachment.fileName}`}
         >
@@ -138,4 +168,3 @@ export default function ImageAttachmentsBar({
     </div>
   );
 }
-

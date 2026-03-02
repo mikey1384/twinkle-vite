@@ -38,6 +38,9 @@ import {
 } from '~/constants/defaultValues';
 import Textarea from '~/components/Texts/Textarea';
 import ImageAttachmentsBar, { ImageAttachment } from '~/components/ImageAttachmentsBar';
+import {
+  appendImageMarkdownToText
+} from '~/helpers/imageAttachmentEmbedHelpers';
 
 function UploadFileModal({
   initialCaption = '',
@@ -105,6 +108,7 @@ function UploadFileModal({
   const imageAttachmentsRef = useRef<ImageAttachment[]>([]);
   const isMountedRef = useRef(true);
   const [multiImageUploading, setMultiImageUploading] = useState(false);
+  const [embeddingAttachmentId, setEmbeddingAttachmentId] = useState('');
   const addMoreInputRef = useRef<HTMLInputElement>(null);
   const maxSize = useMemo(
     () => returnMaxUploadSize(fileUploadLvl),
@@ -277,6 +281,13 @@ function UploadFileModal({
       }),
     [caption]
   );
+  const shouldBlockForAiUnsupportedFile = useMemo(() => {
+    if (!aiFileNotSupported) return false;
+    if (!isMultiImageMode) return true;
+    // In multi-image mode, AI file support checks only gate the single-photo
+    // attachment pipeline (exactly one remaining attachment).
+    return imageAttachments.length === 1;
+  }, [aiFileNotSupported, imageAttachments.length, isMultiImageMode]);
 
   async function handleSubmit() {
     if (isMultiImageMode) {
@@ -405,7 +416,7 @@ function UploadFileModal({
                   <Button
                     variant="soft"
                     tone="raised"
-                    disabled={multiImageUploading}
+                    disabled={multiImageUploading || !!embeddingAttachmentId}
                     onClick={handleAddMorePhotosClick}
                     style={{ whiteSpace: 'nowrap' }}
                   >
@@ -427,7 +438,9 @@ function UploadFileModal({
                 <ImageAttachmentsBar
                   attachments={imageAttachments}
                   onRemove={handleRemoveImageAttachment}
-                  removeDisabled={multiImageUploading}
+                  removeDisabled={multiImageUploading || !!embeddingAttachmentId}
+                  onEmbedAttachment={handleEmbedImageAttachment}
+                  embedDisabled={multiImageUploading || !!embeddingAttachmentId}
                 />
                 <Textarea
                   autoFocus
@@ -437,6 +450,7 @@ function UploadFileModal({
                   onChange={(event: any) => setCaption(event.target.value)}
                   onKeyUp={handleCaptionKeyUp}
                   minRows={3}
+                  onAttachmentDrop={handleEmbedImageAttachment}
                 />
                 {captionExceedsCharLimit && (
                   <div
@@ -497,7 +511,7 @@ function UploadFileModal({
             )}
           </main>
           <footer>
-            {aiFileNotSupported && (
+            {shouldBlockForAiUnsupportedFile && (
               <div
                 style={{
                   color: 'red',
@@ -522,7 +536,7 @@ function UploadFileModal({
             <Button
               variant="ghost"
               style={{ marginRight: '0.7rem' }}
-              disabled={multiImageUploading}
+              disabled={multiImageUploading || !!embeddingAttachmentId}
               onClick={handleHide}
             >
               Cancel
@@ -532,12 +546,14 @@ function UploadFileModal({
                 isMultiImageMode
                   ? !!captionExceedsCharLimit ||
                     multiImageUploading ||
-                    imageAttachments.length === 0 ||
-                    aiFileNotSupported ||
+                    !!embeddingAttachmentId ||
+                    (imageAttachments.length === 0 &&
+                      (stringIsEmpty(caption) || !onTextMessageSubmit)) ||
+                    shouldBlockForAiUnsupportedFile ||
                     (imageAttachments.length > 1 && !onTextMessageSubmit)
                   : !!captionExceedsCharLimit ||
                     !selectedFile ||
-                    aiFileNotSupported
+                    shouldBlockForAiUnsupportedFile
               }
               color={doneColor}
               onClick={handleSubmit}
@@ -561,7 +577,7 @@ function UploadFileModal({
   );
 
   function handleHide() {
-    if (multiImageUploading) return;
+    if (multiImageUploading || !!embeddingAttachmentId) return;
     onHide();
   }
 
@@ -587,22 +603,45 @@ function UploadFileModal({
   }
 
   function handleRemoveImageAttachment(attachmentId: string) {
-    if (multiImageUploading) return;
-    const currentAttachment = imageAttachmentsRef.current.find(
-      (attachment) => attachment.id === attachmentId
-    );
-    if (currentAttachment?.previewUrlIsObjectUrl) {
-      URL.revokeObjectURL(currentAttachment.previewUrl);
-    }
-    setImageAttachments((prev) =>
-      prev.filter((attachment) => attachment.id !== attachmentId)
-    );
+    if (multiImageUploading || !!embeddingAttachmentId) return;
+    removeImageAttachmentById(attachmentId);
     setAiFileNotSupported(false);
     setMultiImageUploadErrorText('');
   }
 
+  async function handleEmbedImageAttachment(attachmentId: string) {
+    if (multiImageUploading || !!embeddingAttachmentId) return;
+    const attachment = imageAttachmentsRef.current.find(
+      (entry) => entry.id === attachmentId
+    );
+    if (!attachment) return;
+    if (attachment.status === 'uploading') return;
+
+    setEmbeddingAttachmentId(attachmentId);
+    setMultiImageUploadErrorText('');
+    try {
+      const uploadedUrl =
+        attachment.status === 'ready' && attachment.uploadedUrl
+          ? attachment.uploadedUrl
+          : await uploadSingleImageAttachment(attachment);
+
+      if (!uploadedUrl) {
+        setMultiImageUploadErrorTextSafely(
+          'Could not embed this photo. Please retry.'
+        );
+        return;
+      }
+
+      setCaption((prev) => appendImageMarkdownToText(prev, uploadedUrl));
+      setAiFileNotSupportedSafely(false);
+      removeImageAttachmentById(attachmentId);
+    } finally {
+      setEmbeddingAttachmentIdSafely('');
+    }
+  }
+
   function handleAddMorePhotosClick() {
-    if (multiImageUploading) return;
+    if (multiImageUploading || !!embeddingAttachmentId) return;
     addMoreInputRef.current?.click();
   }
 
@@ -649,11 +688,19 @@ function UploadFileModal({
   }
 
   async function handleSubmitMultipleImages() {
-    if (multiImageUploading) return;
+    if (multiImageUploading || !!embeddingAttachmentId) return;
     if (!!captionExceedsCharLimit) return;
 
     const attachmentsSnapshot = imageAttachments;
-    if (attachmentsSnapshot.length === 0) return;
+    const captionText = finalizeEmoji(caption);
+    const isTopicMessage =
+      (selectedTab === 'topic' || isRespondingToSubject) && topicId;
+    if (
+      attachmentsSnapshot.length === 0 &&
+      (stringIsEmpty(captionText) || !onTextMessageSubmit)
+    ) {
+      return;
+    }
 
     setMultiImageUploading(true);
     setMultiImageUploadErrorText('');
@@ -661,6 +708,19 @@ function UploadFileModal({
 
     let didClose = false;
     try {
+      if (attachmentsSnapshot.length === 0) {
+        if (!onTextMessageSubmit) return;
+        await onTextMessageSubmit({
+          message: captionText,
+          subchannelId,
+          selectedTab,
+          topicId: isTopicMessage ? topicId : null
+        });
+        didClose = true;
+        onUpload();
+        return;
+      }
+
       // If we’re only sending a single photo, keep the existing chat attachment
       // pipeline instead of embedding `![]()` in the message content.
       if (attachmentsSnapshot.length === 1) {
@@ -698,13 +758,9 @@ function UploadFileModal({
       }
 
       const imageMarkdown = orderedUrls.map((url) => `![](${url})`).join('\n');
-      const captionText = finalizeEmoji(caption);
       const composedMessage = stringIsEmpty(captionText)
         ? imageMarkdown
         : `${imageMarkdown}\n${captionText}`;
-
-      const isTopicMessage =
-        (selectedTab === 'topic' || isRespondingToSubject) && topicId;
 
       // NOTE (review clarification): A previous review suggested multi-photo uploads
       // must go through `/chat/file` for AI channels. That's not true for our AI
@@ -971,6 +1027,18 @@ function UploadFileModal({
     setImageAttachments(updater);
   }
 
+  function removeImageAttachmentById(attachmentId: string) {
+    const currentAttachment = imageAttachmentsRef.current.find(
+      (attachment) => attachment.id === attachmentId
+    );
+    if (currentAttachment?.previewUrlIsObjectUrl) {
+      URL.revokeObjectURL(currentAttachment.previewUrl);
+    }
+    setImageAttachmentsSafely((prev) =>
+      prev.filter((attachment) => attachment.id !== attachmentId)
+    );
+  }
+
   function setAiFileNotSupportedSafely(value: boolean) {
     if (!isMountedRef.current) return;
     setAiFileNotSupported(value);
@@ -984,6 +1052,11 @@ function UploadFileModal({
   function setMultiImageUploadingSafely(value: boolean) {
     if (!isMountedRef.current) return;
     setMultiImageUploading(value);
+  }
+
+  function setEmbeddingAttachmentIdSafely(value: string) {
+    if (!isMountedRef.current) return;
+    setEmbeddingAttachmentId(value);
   }
 
   function revokeAttachmentObjectUrls(attachments: ImageAttachment[]) {

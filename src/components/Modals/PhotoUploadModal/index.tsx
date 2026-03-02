@@ -23,6 +23,7 @@ import {
   needsImageConversion
 } from '~/helpers/imageHelpers';
 import { cloudFrontURL, mb } from '~/constants/defaultValues';
+import { appendImageMarkdownToText } from '~/helpers/imageAttachmentEmbedHelpers';
 
 export default function PhotoUploadModal({
   fileObj,
@@ -54,6 +55,7 @@ export default function PhotoUploadModal({
   const imageAttachmentsRef = useRef<ImageAttachment[]>([]);
   const isMountedRef = useRef(true);
   const [multiImageUploading, setMultiImageUploading] = useState(false);
+  const [embeddingAttachmentId, setEmbeddingAttachmentId] = useState('');
   const addMoreInputRef = useRef<HTMLInputElement>(null);
 
   const selectedFiles: File[] = useMemo(() => {
@@ -168,7 +170,7 @@ export default function PhotoUploadModal({
                 <Button
                   variant="soft"
                   tone="raised"
-                  disabled={multiImageUploading}
+                  disabled={multiImageUploading || !!embeddingAttachmentId}
                   onClick={handleAddMorePhotosClick}
                   style={{ whiteSpace: 'nowrap' }}
                 >
@@ -188,7 +190,9 @@ export default function PhotoUploadModal({
               <ImageAttachmentsBar
                 attachments={imageAttachments}
                 onRemove={handleRemoveImageAttachment}
-                removeDisabled={multiImageUploading}
+                removeDisabled={multiImageUploading || !!embeddingAttachmentId}
+                onEmbedAttachment={handleEmbedImageAttachment}
+                embedDisabled={multiImageUploading || !!embeddingAttachmentId}
               />
               <Textarea
                 autoFocus
@@ -198,6 +202,7 @@ export default function PhotoUploadModal({
                 onChange={(event: any) => setCaption(event.target.value)}
                 onKeyUp={handleCaptionKeyUp}
                 minRows={3}
+                onAttachmentDrop={handleEmbedImageAttachment}
               />
               {captionExceedsCharLimit && (
                 <div
@@ -227,7 +232,7 @@ export default function PhotoUploadModal({
             <Button
               variant="ghost"
               style={{ marginRight: '0.7rem' }}
-              disabled={multiImageUploading}
+              disabled={multiImageUploading || !!embeddingAttachmentId}
               onClick={handleHide}
             >
               Cancel
@@ -236,7 +241,9 @@ export default function PhotoUploadModal({
               disabled={
                 !!captionExceedsCharLimit ||
                 multiImageUploading ||
-                imageAttachments.length === 0 ||
+                !!embeddingAttachmentId ||
+                (imageAttachments.length === 0 &&
+                  (stringIsEmpty(caption) || !onSubmitMultiple)) ||
                 (imageAttachments.length > 1 && !onSubmitMultiple)
               }
               onClick={handleSubmit}
@@ -258,7 +265,7 @@ export default function PhotoUploadModal({
   );
 
   function handleHide() {
-    if (multiImageUploading) return;
+    if (multiImageUploading || !!embeddingAttachmentId) return;
     onHide();
   }
 
@@ -269,21 +276,43 @@ export default function PhotoUploadModal({
   }
 
   function handleRemoveImageAttachment(attachmentId: string) {
-    if (multiImageUploading) return;
-    const currentAttachment = imageAttachmentsRef.current.find(
-      (attachment) => attachment.id === attachmentId
-    );
-    if (currentAttachment?.previewUrlIsObjectUrl) {
-      URL.revokeObjectURL(currentAttachment.previewUrl);
-    }
-    setImageAttachments((prev) =>
-      prev.filter((attachment) => attachment.id !== attachmentId)
-    );
+    if (multiImageUploading || !!embeddingAttachmentId) return;
+    removeImageAttachmentById(attachmentId);
     setMultiImageUploadErrorText('');
   }
 
+  async function handleEmbedImageAttachment(attachmentId: string) {
+    if (multiImageUploading || !!embeddingAttachmentId) return;
+    const attachment = imageAttachmentsRef.current.find(
+      (entry) => entry.id === attachmentId
+    );
+    if (!attachment) return;
+    if (attachment.status === 'uploading') return;
+
+    setEmbeddingAttachmentId(attachmentId);
+    setMultiImageUploadErrorText('');
+    try {
+      const uploadedUrl =
+        attachment.status === 'ready' && attachment.uploadedUrl
+          ? attachment.uploadedUrl
+          : await uploadSingleImageAttachment(attachment);
+
+      if (!uploadedUrl) {
+        setMultiImageUploadErrorTextSafely(
+          'Could not embed this photo. Please retry.'
+        );
+        return;
+      }
+
+      setCaption((prev) => appendImageMarkdownToText(prev, uploadedUrl));
+      removeImageAttachmentById(attachmentId);
+    } finally {
+      setEmbeddingAttachmentIdSafely('');
+    }
+  }
+
   function handleAddMorePhotosClick() {
-    if (multiImageUploading) return;
+    if (multiImageUploading || !!embeddingAttachmentId) return;
     addMoreInputRef.current?.click();
   }
 
@@ -327,18 +356,34 @@ export default function PhotoUploadModal({
   }
 
   async function handleSubmit() {
-    if (multiImageUploading) return;
+    if (multiImageUploading || !!embeddingAttachmentId) return;
     if (!!captionExceedsCharLimit) return;
 
     const attachmentsSnapshot = imageAttachments;
-    if (attachmentsSnapshot.length === 0) return;
+    const captionText = finalizeEmoji(caption);
+    if (
+      attachmentsSnapshot.length === 0 &&
+      (stringIsEmpty(captionText) || !onSubmitMultiple)
+    ) {
+      return;
+    }
 
     setMultiImageUploading(true);
     setMultiImageUploadErrorText('');
 
     let didClose = false;
     try {
-      const captionText = finalizeEmoji(caption);
+      if (attachmentsSnapshot.length === 0) {
+        if (!onSubmitMultiple) return;
+        await onSubmitMultiple({
+          caption: captionText,
+          message: captionText,
+          uploadedUrls: []
+        });
+        didClose = true;
+        onHide();
+        return;
+      }
 
       if (attachmentsSnapshot.length === 1) {
         await onSubmitSingle({
@@ -554,6 +599,18 @@ export default function PhotoUploadModal({
     setImageAttachments(updater);
   }
 
+  function removeImageAttachmentById(attachmentId: string) {
+    const currentAttachment = imageAttachmentsRef.current.find(
+      (attachment) => attachment.id === attachmentId
+    );
+    if (currentAttachment?.previewUrlIsObjectUrl) {
+      URL.revokeObjectURL(currentAttachment.previewUrl);
+    }
+    setImageAttachmentsSafely((prev) =>
+      prev.filter((attachment) => attachment.id !== attachmentId)
+    );
+  }
+
   function setMultiImageUploadErrorTextSafely(value: string) {
     if (!isMountedRef.current) return;
     setMultiImageUploadErrorText(value);
@@ -562,6 +619,11 @@ export default function PhotoUploadModal({
   function setMultiImageUploadingSafely(value: boolean) {
     if (!isMountedRef.current) return;
     setMultiImageUploading(value);
+  }
+
+  function setEmbeddingAttachmentIdSafely(value: string) {
+    if (!isMountedRef.current) return;
+    setEmbeddingAttachmentId(value);
   }
 
   function revokeAttachmentObjectUrls(attachments: ImageAttachment[]) {
