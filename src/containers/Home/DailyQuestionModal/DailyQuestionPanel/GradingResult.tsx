@@ -501,7 +501,8 @@ export default function GradingResult({
     if (selection === 'infer') return true;
     if (ownedFocusSelections.includes(selection)) return true;
     return (
-      (currentFocus || 'infer') === 'infer' && reusableFocusSelection === selection
+      (currentFocus || 'infer') === 'infer' &&
+      reusableFocusSelection === selection
     );
   }
 
@@ -612,7 +613,8 @@ export default function GradingResult({
       const isSelectionOwnedForDay =
         result.isSelectionOwnedForDay === true ||
         (result.isSelectionOwnedForDay === undefined && coinsCharged > 0);
-      const isSelectionExplicitlyNotOwned = result.isSelectionOwnedForDay === false;
+      const isSelectionExplicitlyNotOwned =
+        result.isSelectionOwnedForDay === false;
       if (selection !== 'infer') {
         setOwnedFocusSelections((prev) => {
           if (isSelectionOwnedForDay) {
@@ -1554,19 +1556,6 @@ export default function GradingResult({
                   {getVibeLabel(nextCategory)}
                 </span>
               </div>
-              {isFollowUpSelected && (
-                <p
-                  className={css`
-                    margin: 0.55rem 0 0;
-                    font-size: 1.05rem;
-                    color: ${Color.orange()};
-                    font-weight: 700;
-                  `}
-                >
-                  Keep Going is active: it overrides Current Focus for
-                  tomorrow's question.
-                </p>
-              )}
             </button>
 
             <button
@@ -1893,7 +1882,9 @@ export default function GradingResult({
                     className={css`
                       width: 100%;
                       text-align: left;
-                      background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
+                      background: ${isSelected
+                        ? Color.logoBlue(0.07)
+                        : 'white'};
                       border: none;
                       border-bottom: 1px solid ${Color.borderGray()};
                       padding: 1rem 1rem;
