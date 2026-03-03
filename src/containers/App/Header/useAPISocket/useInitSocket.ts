@@ -99,7 +99,8 @@ export default function useInitSocket({
   const latestPathIdRef = useRef(latestPathId);
   const selectedChannelIdRef = useRef(selectedChannelId);
   const isLoadingChatRef = useRef(false);
-  const disconnectedDuringLoadRef = useRef(false);
+  const loadChatRetryTimerRef = useRef<number | null>(null);
+  const loadChatRetryCountRef = useRef(0);
   const heartbeatTimerRef = useRef<number | null>(null);
   const userActionAckedRef = useRef(false);
   const userActionAttemptsRef = useRef(0);
@@ -245,6 +246,15 @@ export default function useInitSocket({
   }, [selectedChannelId]);
 
   useEffect(() => {
+    if (userId) return;
+    if (loadChatRetryTimerRef.current) {
+      clearTimeout(loadChatRetryTimerRef.current);
+      loadChatRetryTimerRef.current = null;
+    }
+    loadChatRetryCountRef.current = 0;
+  }, [userId]);
+
+  useEffect(() => {
     let socketHealthCheckTimer: number | null = null;
     let currentPongHandler: (() => void) | null = null;
     let pongReceived = false;
@@ -347,6 +357,10 @@ export default function useInitSocket({
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('home_outdated', handleHomeOutdated);
+      if (loadChatRetryTimerRef.current) {
+        clearTimeout(loadChatRetryTimerRef.current);
+        loadChatRetryTimerRef.current = null;
+      }
     };
 
     function handleOnlineAcknowledged() {
@@ -377,16 +391,19 @@ export default function useInitSocket({
       // Start capturing user actions immediately upon connect
       handleStartUserActionCapture();
 
-      const shouldSkipReload = disconnectedDuringLoadRef.current;
-      if (shouldSkipReload) {
-        disconnectedDuringLoadRef.current = false;
-      }
+      const shouldSkipReload = isLoadingChatRef.current;
 
       onClearRecentChessMessage(selectedChannelIdRef.current);
       handleCheckVersion();
       void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
       if (userIdRef.current) {
+        if (loadChatRetryTimerRef.current) {
+          clearTimeout(loadChatRetryTimerRef.current);
+          loadChatRetryTimerRef.current = null;
+        }
+        loadChatRetryCountRef.current = 0;
+
         const token = getStoredItem('token');
         socket.emit(
           'bind_uid_to_socket',
@@ -446,6 +463,7 @@ export default function useInitSocket({
     }): Promise<void> {
       onSetReconnecting();
       isLoadingChatRef.current = true;
+      let didInitChat = false;
 
       try {
         onInit();
@@ -479,8 +497,14 @@ export default function useInitSocket({
         logForAdmin({
           message: `Chat loaded in ${chatLoadingTime} seconds`
         });
+        loadChatRetryCountRef.current = 0;
+        if (loadChatRetryTimerRef.current) {
+          clearTimeout(loadChatRetryTimerRef.current);
+          loadChatRetryTimerRef.current = null;
+        }
 
         onInitChat({ data, userId: userIdRef.current });
+        didInitChat = true;
 
         const latestPathId = latestPathIdRef.current;
         const latestPathIdMatchesCurrentPath =
@@ -626,19 +650,39 @@ export default function useInitSocket({
           }
         }
       } catch (error) {
-        console.error('Failed to load chat:', error);
+        if (!didInitChat) {
+          console.error('Failed to load chat:', error);
+          scheduleLoadChatRetry();
+        } else {
+          console.error('Failed to sync post-load chat state:', error);
+        }
       } finally {
         isLoadingChatRef.current = false;
       }
+    }
+
+    function scheduleLoadChatRetry() {
+      if (loadChatRetryTimerRef.current || !userIdRef.current) return;
+      const delay = Math.min(1000 * 2 ** loadChatRetryCountRef.current, 10000);
+      loadChatRetryCountRef.current += 1;
+      logForAdmin({
+        message: `Retrying chat load in ${Math.round(delay / 1000)}s`
+      });
+      loadChatRetryTimerRef.current = window.setTimeout(() => {
+        loadChatRetryTimerRef.current = null;
+        if (!userIdRef.current) {
+          loadChatRetryCountRef.current = 0;
+          return;
+        }
+        if (!socket.connected || isLoadingChatRef.current) return;
+        void handleLoadChat({ selectedChannelId: selectedChannelIdRef.current });
+      }, delay);
     }
 
     function handleDisconnect(reason: string) {
       logForAdmin({
         message: `disconnected from socket. reason: ${reason}`
       });
-      if (isLoadingChatRef.current) {
-        disconnectedDuringLoadRef.current = true;
-      }
       onChangeSocketStatus(false);
 
       if (heartbeatTimerRef.current) {
