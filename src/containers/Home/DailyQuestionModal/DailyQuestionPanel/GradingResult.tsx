@@ -1565,7 +1565,7 @@ export default function GradingResult({
                     font-weight: 700;
                   `}
                 >
-                  "Keep Going" vibe is active: it overrides Current Focus for
+                  Keep Going is active: it overrides Current Focus for
                   tomorrow's question.
                 </p>
               )}
@@ -1642,8 +1642,8 @@ export default function GradingResult({
                     font-weight: 700;
                   `}
                 >
-                  "Keep Going" vibe is selected, so Current Focus will be
-                  ignored for tomorrow unless you change the vibe.
+                  Keep Going is selected, so Current Focus will be ignored for
+                  tomorrow unless you change the vibe.
                 </p>
               )}
               <div
@@ -1839,22 +1839,6 @@ export default function GradingResult({
         title="Current Focus"
         size="md"
       >
-        {isFollowUpSelected && (
-          <div
-            className={css`
-              margin-bottom: 0.8rem;
-              padding: 0.75rem 0.9rem;
-              border-radius: 8px;
-              background: ${Color.orange(0.12)};
-              color: ${Color.orange()};
-              font-size: 1.05rem;
-              font-weight: 700;
-            `}
-          >
-            "Keep Going" vibe currently overrides Current Focus for tomorrow's
-            question.
-          </div>
-        )}
         <div
           className={css`
             width: 100%;
