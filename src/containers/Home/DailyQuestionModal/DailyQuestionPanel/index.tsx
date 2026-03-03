@@ -121,6 +121,8 @@ export default function DailyQuestionPanel({
   const [paidCurrentFocusSelections, setPaidCurrentFocusSelections] = useState<
     string[]
   >([]);
+  const [reusableCurrentFocusSelection, setReusableCurrentFocusSelection] =
+    useState<string | null>(null);
   const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
   const [purchasingRepair, setPurchasingRepair] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -329,6 +331,9 @@ export default function DailyQuestionPanel({
         );
         setPaidCurrentFocusSelections(
           normalizeSelectionArray(data.paidCurrentFocusSelections)
+        );
+        setReusableCurrentFocusSelection(
+          data.reusableCurrentFocusSelection || null
         );
         setIsAdultUser(!!data.isAdult);
 
@@ -1203,6 +1208,7 @@ export default function DailyQuestionPanel({
           initialCurrentFocus={currentFocus}
           initialPaidTomorrowVibeSelections={paidTomorrowVibeSelections}
           initialPaidCurrentFocusSelections={paidCurrentFocusSelections}
+          initialReusableCurrentFocusSelection={reusableCurrentFocusSelection}
           isAdultUser={isAdultUser}
           onClose={onClose}
         />

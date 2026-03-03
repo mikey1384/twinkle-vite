@@ -4,10 +4,10 @@ import Icon from '~/components/Icon';
 import FilterBar from '~/components/FilterBar';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import Modal from '~/components/Modal';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { css, keyframes } from '@emotion/css';
 import { Color, mobileMaxWidth, getStreakColor } from '~/constants/css';
 import { priceTable } from '~/constants/defaultValues';
+import PendingPaymentConfirmModal from './PendingPaymentConfirmModal';
 import {
   useAppContext,
   useChatContext,
@@ -211,7 +211,9 @@ const FOCUS_OPTIONS = [
 type VibeOptionId = (typeof VIBE_OPTIONS)[number]['id'];
 type FocusOptionId = (typeof FOCUS_OPTIONS)[number]['id'];
 
-function isVibeOptionId(value: string | null | undefined): value is VibeOptionId {
+function isVibeOptionId(
+  value: string | null | undefined
+): value is VibeOptionId {
   if (!value) return false;
   return VIBE_OPTIONS.some((option) => option.id === value);
 }
@@ -244,6 +246,7 @@ export default function GradingResult({
   initialCurrentFocus,
   initialPaidTomorrowVibeSelections,
   initialPaidCurrentFocusSelections,
+  initialReusableCurrentFocusSelection,
   isAdultUser = false,
   onClose
 }: {
@@ -267,6 +270,7 @@ export default function GradingResult({
   initialCurrentFocus?: string | null;
   initialPaidTomorrowVibeSelections?: string[];
   initialPaidCurrentFocusSelections?: string[];
+  initialReusableCurrentFocusSelection?: string | null;
   isAdultUser?: boolean;
   onClose: () => void;
 }) {
@@ -325,22 +329,32 @@ export default function GradingResult({
   const [currentFocus, setCurrentFocus] = useState<string | null>(
     initialCurrentFocus || null
   );
-  const [ownedVibeSelections, setOwnedVibeSelections] = useState<VibeOptionId[]>(
-    () => {
-      const ownedSelections = new Set<VibeOptionId>();
-      for (const selection of initialPaidTomorrowVibeSelections || []) {
-        if (!isVibeOptionId(selection) || selection === 'default') continue;
-        ownedSelections.add(selection);
-      }
+  const [reusableFocusSelection, setReusableFocusSelection] =
+    useState<FocusOptionId | null>(() => {
       if (
-        isVibeOptionId(initialNextQuestionCategory) &&
-        initialNextQuestionCategory !== 'default'
+        isFocusOptionId(initialReusableCurrentFocusSelection) &&
+        initialReusableCurrentFocusSelection !== 'infer'
       ) {
-        ownedSelections.add(initialNextQuestionCategory);
+        return initialReusableCurrentFocusSelection;
       }
-      return Array.from(ownedSelections);
+      return null;
+    });
+  const [ownedVibeSelections, setOwnedVibeSelections] = useState<
+    VibeOptionId[]
+  >(() => {
+    const ownedSelections = new Set<VibeOptionId>();
+    for (const selection of initialPaidTomorrowVibeSelections || []) {
+      if (!isVibeOptionId(selection) || selection === 'default') continue;
+      ownedSelections.add(selection);
     }
-  );
+    if (
+      isVibeOptionId(initialNextQuestionCategory) &&
+      initialNextQuestionCategory !== 'default'
+    ) {
+      ownedSelections.add(initialNextQuestionCategory);
+    }
+    return Array.from(ownedSelections);
+  });
   const [ownedFocusSelections, setOwnedFocusSelections] = useState<
     FocusOptionId[]
   >(() => {
@@ -348,12 +362,6 @@ export default function GradingResult({
     for (const selection of initialPaidCurrentFocusSelections || []) {
       if (!isFocusOptionId(selection) || selection === 'infer') continue;
       ownedSelections.add(selection);
-    }
-    if (
-      isFocusOptionId(initialCurrentFocus) &&
-      initialCurrentFocus !== 'infer'
-    ) {
-      ownedSelections.add(initialCurrentFocus);
     }
     return Array.from(ownedSelections);
   });
@@ -473,9 +481,7 @@ export default function GradingResult({
     return option ? getFocusOptionTitle(option) : 'Let Twinkle Pick';
   }
 
-  function getFocusOptionTitle(
-    option: (typeof FOCUS_OPTIONS)[number]
-  ): string {
+  function getFocusOptionTitle(option: (typeof FOCUS_OPTIONS)[number]): string {
     return isAdultUser && 'titleAdult' in option && option.titleAdult
       ? option.titleAdult
       : option.title;
@@ -489,6 +495,14 @@ export default function GradingResult({
       option.descriptionAdult
       ? option.descriptionAdult
       : option.description;
+  }
+
+  function isFocusSelectionFreeToday(selection: FocusOptionId) {
+    if (selection === 'infer') return true;
+    if (ownedFocusSelections.includes(selection)) return true;
+    return (
+      (currentFocus || 'infer') === 'infer' && reusableFocusSelection === selection
+    );
   }
 
   function handleOpenVibeModal() {
@@ -529,8 +543,7 @@ export default function GradingResult({
       setIsFocusModalOpen(false);
       return;
     }
-    const alreadyOwned = ownedFocusSelections.includes(selection);
-    if (selection === 'infer' || alreadyOwned) {
+    if (isFocusSelectionFreeToday(selection)) {
       void applyFocusSelection(selection);
       return;
     }
@@ -595,11 +608,37 @@ export default function GradingResult({
         return;
       }
       setCurrentFocus(result.currentFocus || null);
+      const coinsCharged = Number(result.coinsCharged) || 0;
+      const isSelectionOwnedForDay =
+        result.isSelectionOwnedForDay === true ||
+        (result.isSelectionOwnedForDay === undefined && coinsCharged > 0);
+      const isSelectionExplicitlyNotOwned = result.isSelectionOwnedForDay === false;
       if (selection !== 'infer') {
-        setOwnedFocusSelections((prev) =>
-          prev.includes(selection) ? prev : [...prev, selection]
-        );
+        setOwnedFocusSelections((prev) => {
+          if (isSelectionOwnedForDay) {
+            return prev.includes(selection) ? prev : [...prev, selection];
+          }
+          if (isSelectionExplicitlyNotOwned) {
+            return prev.filter((item) => item !== selection);
+          }
+          return prev;
+        });
       }
+      setReusableFocusSelection((prev) => {
+        if (result.reusableCurrentFocusSelection === null) {
+          return null;
+        }
+        if (
+          isFocusOptionId(result.reusableCurrentFocusSelection) &&
+          result.reusableCurrentFocusSelection !== 'infer'
+        ) {
+          return result.reusableCurrentFocusSelection;
+        }
+        if (selection !== 'infer' && coinsCharged > 0) {
+          return selection;
+        }
+        return prev;
+      });
       if (result.newCoins !== undefined && userId) {
         onSetUserState({ userId, newState: { twinkleCoins: result.newCoins } });
       }
@@ -743,8 +782,8 @@ export default function GradingResult({
                 font-size: ${streak >= 10
                   ? '2.5rem'
                   : streak >= 5
-                  ? '2.2rem'
-                  : '2rem'};
+                    ? '2.2rem'
+                    : '2rem'};
                 animation: ${streak >= 5 ? fireAnimation : 'none'} 0.6s
                   ease-in-out infinite;
               `}
@@ -756,8 +795,8 @@ export default function GradingResult({
                 font-size: ${streak >= 10
                   ? '2rem'
                   : streak >= 5
-                  ? '1.8rem'
-                  : '1.6rem'};
+                    ? '1.8rem'
+                    : '1.6rem'};
                 font-weight: bold;
                 color: ${getStreakColor(streak)};
               `}
@@ -1410,8 +1449,8 @@ export default function GradingResult({
                   ? 'Sharing with Zero...'
                   : 'Confirm Share with Zero'
                 : sharingWithCiel
-                ? 'Sharing with Ciel...'
-                : 'Confirm Share with Ciel'}
+                  ? 'Sharing with Ciel...'
+                  : 'Confirm Share with Ciel'}
             </Button>
           </>
         )}
@@ -1524,7 +1563,7 @@ export default function GradingResult({
                     font-weight: 700;
                   `}
                 >
-                  "Keep Going" vibe is active: it overrides Current Focus for
+                  Keep Going is active: it overrides Current Focus for
                   tomorrow's question.
                 </p>
               )}
@@ -1601,8 +1640,8 @@ export default function GradingResult({
                     font-weight: 700;
                   `}
                 >
-                  "Keep Going" vibe is selected, so Current Focus will be
-                  ignored for tomorrow unless you change the vibe.
+                  Keep Going is selected, so Current Focus will be ignored for
+                  tomorrow unless you change the vibe.
                 </p>
               )}
               <div
@@ -1686,6 +1725,12 @@ export default function GradingResult({
             overflow-y: auto;
             border: 1px solid ${Color.borderGray()};
             border-radius: 10px;
+            > div:first-of-type > button {
+              border-top: none;
+            }
+            > div:last-of-type > button {
+              border-bottom: none;
+            }
           `}
         >
           {VIBE_OPTIONS.map((option) => {
@@ -1759,7 +1804,7 @@ export default function GradingResult({
                         flex-shrink: 0;
                       `}
                     >
-                      {isPaidOption && (
+                      {requiresPayment && (
                         <span
                           className={css`
                             display: inline-flex;
@@ -1792,156 +1837,148 @@ export default function GradingResult({
         title="Current Focus"
         size="md"
       >
-        {isFollowUpSelected && (
-          <div
-            className={css`
-              margin-bottom: 0.8rem;
-              padding: 0.75rem 0.9rem;
-              border-radius: 8px;
-              background: ${Color.orange(0.12)};
-              color: ${Color.orange()};
-              font-size: 1.05rem;
-              font-weight: 700;
-            `}
-          >
-            "Keep Going" vibe currently overrides Current Focus for tomorrow's
-            question.
-          </div>
-        )}
         <div
           className={css`
-            max-height: 55vh;
-            overflow-y: auto;
-            border: 1px solid ${Color.borderGray()};
-            border-radius: 10px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
           `}
         >
-          {FOCUS_OPTIONS.map((option) => {
-            const isSelected = (currentFocus || 'infer') === option.id;
-            const isPaidOption = option.id !== 'infer';
-            const isOwnedPaidOption =
-              isPaidOption && ownedFocusSelections.includes(option.id);
-            const requiresPayment = isPaidOption && !isOwnedPaidOption;
-            const isDisabledForCoins =
-              requiresPayment && availableTwinkleCoins < currentFocusPrice;
-            const disabledReason = isDisabledForCoins
-              ? `You don't have enough coins for this choice (need ${currentFocusPrice.toLocaleString()} coins).`
-              : '';
-            return (
-              <div key={option.id} title={disabledReason || undefined}>
-                <button
-                  type="button"
-                  className={css`
-                    width: 100%;
-                    text-align: left;
-                    background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
-                    border: none;
-                    border-bottom: 1px solid ${Color.borderGray()};
-                    padding: 1rem 1rem;
-                    opacity: ${isDisabledForCoins ? 0.55 : 1};
-                    cursor: ${isDisabledForCoins ? 'not-allowed' : 'pointer'};
-                    &:hover {
-                      background: ${isDisabledForCoins
-                        ? isSelected
-                          ? Color.logoBlue(0.07)
-                          : 'white'
-                        : Color.wellGray()};
-                    }
-                  `}
-                  onClick={() => handleSelectFocus(option.id)}
-                  disabled={isSettingFocus || isDisabledForCoins}
-                >
-                  <div
+          {isFollowUpSelected && (
+            <div
+              className={css`
+                padding: 0.75rem 0.9rem;
+                border-radius: 8px;
+                background: ${Color.orange(0.12)};
+                color: ${Color.orange()};
+                font-size: 1.05rem;
+                font-weight: 700;
+              `}
+            >
+              Keep Going currently overrides Current Focus for tomorrow's
+              question.
+            </div>
+          )}
+          <div
+            className={css`
+              max-height: 55vh;
+              overflow-y: auto;
+              border: 1px solid ${Color.borderGray()};
+              border-radius: 10px;
+              > div:first-of-type > button {
+                border-top: none;
+              }
+              > div:last-of-type > button {
+                border-bottom: none;
+              }
+            `}
+          >
+            {FOCUS_OPTIONS.map((option) => {
+              const isSelected = (currentFocus || 'infer') === option.id;
+              const isPaidOption = option.id !== 'infer';
+              const isFreeToday =
+                isPaidOption && isFocusSelectionFreeToday(option.id);
+              const requiresPayment =
+                isPaidOption && !isFreeToday && !isSelected;
+              const isDisabledForCoins =
+                requiresPayment && availableTwinkleCoins < currentFocusPrice;
+              const disabledReason = isDisabledForCoins
+                ? `You don't have enough coins for this choice (need ${currentFocusPrice.toLocaleString()} coins).`
+                : '';
+              return (
+                <div key={option.id} title={disabledReason || undefined}>
+                  <button
+                    type="button"
                     className={css`
-                      display: flex;
-                      justify-content: space-between;
-                      align-items: center;
-                      gap: 0.75rem;
+                      width: 100%;
+                      text-align: left;
+                      background: ${isSelected ? Color.logoBlue(0.07) : 'white'};
+                      border: none;
+                      border-bottom: 1px solid ${Color.borderGray()};
+                      padding: 1rem 1rem;
+                      opacity: ${isDisabledForCoins ? 0.55 : 1};
+                      cursor: ${isDisabledForCoins ? 'not-allowed' : 'pointer'};
+                      &:hover {
+                        background: ${isDisabledForCoins
+                          ? isSelected
+                            ? Color.logoBlue(0.07)
+                            : 'white'
+                          : Color.wellGray()};
+                      }
                     `}
+                    onClick={() => handleSelectFocus(option.id)}
+                    disabled={isSettingFocus || isDisabledForCoins}
                   >
-                    <div>
-                      <div
-                        className={css`
-                          font-size: 1.25rem;
-                          color: ${Color.black()};
-                          font-weight: 700;
-                          margin-bottom: 0.3rem;
-                        `}
-                      >
-                        {getFocusOptionTitle(option)}
-                      </div>
-                      <div
-                        className={css`
-                          font-size: 1.1rem;
-                          color: ${Color.darkerGray()};
-                        `}
-                      >
-                        {getFocusOptionDescription(option)}
-                      </div>
-                    </div>
                     <div
                       className={css`
                         display: flex;
+                        justify-content: space-between;
                         align-items: center;
-                        gap: 0.5rem;
-                        flex-shrink: 0;
+                        gap: 0.75rem;
                       `}
                     >
-                      {isPaidOption && (
-                        <span
+                      <div>
+                        <div
                           className={css`
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 0.3rem;
-                            font-size: 1.05rem;
-                            color: ${Color.orange()};
+                            font-size: 1.25rem;
+                            color: ${Color.black()};
                             font-weight: 700;
+                            margin-bottom: 0.3rem;
                           `}
                         >
-                          <Icon icon="coins" />
-                          {currentFocusPrice.toLocaleString()}
-                        </span>
-                      )}
-                      {isSelected && <Icon icon="check" />}
+                          {getFocusOptionTitle(option)}
+                        </div>
+                        <div
+                          className={css`
+                            font-size: 1.1rem;
+                            color: ${Color.darkerGray()};
+                          `}
+                        >
+                          {getFocusOptionDescription(option)}
+                        </div>
+                      </div>
+                      <div
+                        className={css`
+                          display: flex;
+                          align-items: center;
+                          gap: 0.5rem;
+                          flex-shrink: 0;
+                        `}
+                      >
+                        {requiresPayment && (
+                          <span
+                            className={css`
+                              display: inline-flex;
+                              align-items: center;
+                              gap: 0.3rem;
+                              font-size: 1.05rem;
+                              color: ${Color.orange()};
+                              font-weight: 700;
+                            `}
+                          >
+                            <Icon icon="coins" />
+                            {currentFocusPrice.toLocaleString()}
+                          </span>
+                        )}
+                        {isSelected && <Icon icon="check" />}
+                      </div>
                     </div>
-                  </div>
-                </button>
-              </div>
-            );
-          })}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </Modal>
 
       {pendingPayment && (
-        <ConfirmModal
-          title="Confirm coin payment"
+        <PendingPaymentConfirmModal
+          label={pendingPaymentLabel}
+          price={pendingPayment.price}
+          availableTwinkleCoins={availableTwinkleCoins}
           onHide={() => setPendingPayment(null)}
           onConfirm={handleConfirmPendingPayment}
-          confirmButtonColor="orange"
-          confirmButtonLabel="Confirm and Continue"
-          description={
-            <div
-              className={css`
-                font-size: 1.3rem;
-                line-height: 1.65;
-                text-align: left;
-                color: ${Color.black()};
-              `}
-            >
-              <p style={{ marginTop: 0 }}>
-                This will set <strong>{pendingPaymentLabel}</strong> and
-                costs <strong>{pendingPayment.price.toLocaleString()} coins</strong>.
-              </p>
-              <p>
-                If you already paid for this exact option today, you will{' '}
-                <strong>not</strong> be charged again.
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                Your current balance: {availableTwinkleCoins.toLocaleString()}{' '}
-                coins
-              </p>
-            </div>
-          }
         />
       )}
     </div>
