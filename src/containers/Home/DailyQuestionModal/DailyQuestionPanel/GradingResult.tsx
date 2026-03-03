@@ -1556,19 +1556,6 @@ export default function GradingResult({
                   {getVibeLabel(nextCategory)}
                 </span>
               </div>
-              {isFollowUpSelected && (
-                <p
-                  className={css`
-                    margin: 0.55rem 0 0;
-                    font-size: 1.05rem;
-                    color: ${Color.orange()};
-                    font-weight: 700;
-                  `}
-                >
-                  Keep Going is active: it overrides Current Focus for
-                  tomorrow's question.
-                </p>
-              )}
             </button>
 
             <button
