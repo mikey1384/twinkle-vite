@@ -1,6 +1,8 @@
 import React, { ReactNode } from 'react';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
+import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
+import { useNotiContext } from '~/contexts';
 
 const levelHash: Record<string, string> = {
   '1': 'Level 1 (AR 1)',
@@ -99,6 +101,7 @@ const Explanation = ({ level }: { level: number }) => {
 };
 
 export default function MainMenu({
+  dailyTask,
   difficulty,
   loadingTopic,
   maxReadAttempts,
@@ -112,6 +115,7 @@ export default function MainMenu({
   listenCount = 0,
   topicLoadError
 }: {
+  dailyTask: any;
   difficulty: number;
   loadingTopic: boolean;
   maxReadAttempts: number;
@@ -125,6 +129,10 @@ export default function MainMenu({
   listenCount: number;
   topicLoadError: boolean;
 }) {
+  const dailyTaskStreak = useNotiContext(
+    (v) => v.state.todayStats.dailyTaskStreak
+  );
+
   if (topicLoadError) {
     return (
       <div
@@ -191,6 +199,12 @@ export default function MainMenu({
           label: levelHash[level],
           onClick: () => onSetDifficulty(Number(level))
         }))}
+      />
+      <DailyRewardBoostStrip
+        focus="aiStory"
+        streak={dailyTaskStreak}
+        aiStory={dailyTask}
+        style={{ marginTop: '1.25rem', width: '80%', maxWidth: '46rem' }}
       />
       <div
         style={{

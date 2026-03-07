@@ -9,7 +9,12 @@ import Button from '~/components/Button';
 import Rankings from './Rankings';
 import Review from './Review';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { useAppContext, useHomeContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useHomeContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -27,6 +32,9 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.cancelGrammarGame
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [gameState, setGameState] = useState('notStarted');
@@ -342,7 +350,7 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
         }
         const promises = [
           (async () => {
-            const { isDuplicate, newXp, newCoins } =
+            const { dailyTaskStatus, isDuplicate, newXp, newCoins } =
               await uploadGrammarGameResult({
                 attemptNumber: attemptNumberRef.current || timesPlayedToday + 1,
                 scoreArray: scoreArrayRef.current,
@@ -380,6 +388,17 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               userId,
               newState
             });
+            if (dailyTaskStatus) {
+              onUpdateTodayStats({
+                newStats: {
+                  achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
+                  dailyTaskStatus,
+                  dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+                  dailyTaskBestStreak:
+                    dailyTaskStatus?.streak?.longestStreak || 0
+                }
+              });
+            }
           })(),
           (async () => {
             await new Promise<void>((resolve) => setTimeout(resolve, 3000));

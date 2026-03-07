@@ -97,6 +97,7 @@ export default function DailyRewardModal({
   const [alreadyChecked, setAlreadyChecked] = useState(false);
   const [isRevealPressed, setIsRevealPressed] = useState(false);
   const [xpEarned, setXPEarned] = useState(0);
+  const [dailyTaskReward, setDailyTaskReward] = useState<any>(null);
   const [bonusAttempted, setBonusAttempted] = useState(false);
   const [bonusAchieved, setBonusAchieved] = useState(false);
   // Bonus (question) UI states
@@ -183,6 +184,7 @@ export default function DailyRewardModal({
           hasBonus,
           bonusAttempted,
           bonusAchieved,
+          dailyTaskReward,
           nextDayTimeStamp: newNextDayTimeStamp,
           xpEarned,
           isAlreadyChecked,
@@ -207,6 +209,7 @@ export default function DailyRewardModal({
           onSetIsDailyRewardChecked(true);
         }
         setCardIds(cards.map((card: Card) => card.id));
+        setDailyTaskReward(dailyTaskReward || null);
         for (const card of cards) {
           onUpdateAICard({
             cardId: card.id,
@@ -276,8 +279,13 @@ export default function DailyRewardModal({
       try {
         setBonusLoading(true);
         if (bonusQuestions.length === 0) {
-          const { questions, chosenCard, isCardOwned, isUnavailable } =
-            await loadDailyBonus();
+          const {
+            questions,
+            chosenCard,
+            isCardOwned,
+            isUnavailable,
+            dailyTaskReward
+          } = await loadDailyBonus();
           if (ignore) return;
           if (isUnavailable) {
             return window.location.reload();
@@ -288,6 +296,9 @@ export default function DailyRewardModal({
             newState: chosenCard
           });
           setIsCardOwned(isCardOwned);
+          if (dailyTaskReward) {
+            setDailyTaskReward(dailyTaskReward);
+          }
           setBonusQuestions(questions);
           applyGradedIfNeeded(questions);
         } else {
@@ -407,6 +418,42 @@ export default function DailyRewardModal({
     }
     return '...rounded to the nearest thousand';
   }, [burnValue, isCardOwned]);
+
+  const effectiveRewardMultiplier = useMemo(() => {
+    return Number(dailyTaskReward?.finalMultiplier || 1);
+  }, [dailyTaskReward]);
+
+  const showDailyTaskMultiplier = useMemo(() => {
+    return Math.abs(effectiveRewardMultiplier - 1) > 0.001;
+  }, [effectiveRewardMultiplier]);
+
+  const dailyTaskRewardText = useMemo(() => {
+    if (!dailyTaskReward || !showDailyTaskMultiplier) {
+      return fourthSentenceText;
+    }
+    if (dailyTaskReward.excellenceQualified) {
+      return 'Daily task excellence bonus applied';
+    }
+    if (dailyTaskReward.basicQualified) {
+      return 'Daily task streak bonus applied';
+    }
+    return 'Daily task base reward applied';
+  }, [dailyTaskReward, fourthSentenceText, showDailyTaskMultiplier]);
+
+  const dailyTaskMultiplierLabel = useMemo(() => {
+    if (!showDailyTaskMultiplier) return '';
+    return formatRewardMultiplier(effectiveRewardMultiplier);
+  }, [effectiveRewardMultiplier, showDailyTaskMultiplier]);
+
+  const dailyTaskMultiplierColor = useMemo(() => {
+    if (dailyTaskReward?.excellenceQualified) {
+      return Color.gold();
+    }
+    if (dailyTaskReward?.basicQualified) {
+      return Color.purple();
+    }
+    return Color.darkGray();
+  }, [dailyTaskReward]);
 
   const modalClass = css`
     @keyframes flashEffect {
@@ -624,6 +671,13 @@ export default function DailyRewardModal({
     if (digitCount === 5) return '2rem';
     if (digitCount === 4) return '1.8rem';
     return '1.6rem';
+  }
+
+  function formatRewardMultiplier(multiplier: number) {
+    if (Math.abs(multiplier - Math.round(multiplier)) < 0.001) {
+      return `${Math.round(multiplier)}`;
+    }
+    return multiplier.toFixed(1).replace(/\.0$/, '');
   }
 
   const footerClass = css`
@@ -964,9 +1018,18 @@ export default function DailyRewardModal({
                       {showBonusLine4 && (
                         <div className={`fadeIn ${summaryRowClass}`}>
                           <div className={summaryColLeft}>
-                            {fourthSentenceText}
+                            {dailyTaskRewardText}
                           </div>
-                          <div className={summaryColCenter} />
+                          <div
+                            className={summaryColCenter}
+                            style={{ color: dailyTaskMultiplierColor }}
+                          >
+                            {showDailyTaskMultiplier ? (
+                              <>
+                                <Icon icon="times" /> {dailyTaskMultiplierLabel}
+                              </>
+                            ) : null}
+                          </div>
                           <div className={summaryColRight}>
                             <span
                               className={coinsNumberClass}
@@ -1128,8 +1191,17 @@ export default function DailyRewardModal({
                   )}
                   {showFourthSentence && (
                     <div className={`fadeIn ${summaryRowClass}`}>
-                      <div className={summaryColLeft}>{fourthSentenceText}</div>
-                      <div className={summaryColCenter} />
+                      <div className={summaryColLeft}>{dailyTaskRewardText}</div>
+                      <div
+                        className={summaryColCenter}
+                        style={{ color: dailyTaskMultiplierColor }}
+                      >
+                        {showDailyTaskMultiplier ? (
+                          <>
+                            <Icon icon="times" /> {dailyTaskMultiplierLabel}
+                          </>
+                        ) : null}
+                      </div>
                       <div className={summaryColRight}>
                         <Icon
                           icon="coins"
@@ -1339,10 +1411,18 @@ export default function DailyRewardModal({
   async function handleBonusConfirm() {
     try {
       setBonusSubmitting(true);
-      const { isCorrect, isAlreadyAttempted, rewardAmount } =
+      const {
+        isCorrect,
+        isAlreadyAttempted,
+        rewardAmount,
+        dailyTaskReward
+      } =
         await postDailyBonus(bonusSelectedChoiceIndex);
       if (isAlreadyAttempted) {
         return window.location.reload();
+      }
+      if (dailyTaskReward) {
+        setDailyTaskReward(dailyTaskReward);
       }
       setBonusIsGraded(true);
       bonusIsGradedRef.current = true;

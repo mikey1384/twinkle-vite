@@ -7,7 +7,7 @@ import Button from '~/components/Button';
 import SuccessModal from './SuccessModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { useAppContext } from '~/contexts';
+import { useAppContext, useNotiContext } from '~/contexts';
 import { sleep } from '~/helpers';
 
 const rewardTable = {
@@ -47,10 +47,14 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const [listeningImageGeneratedCount, setListeningImageGeneratedCount] =
     useState(0);
   const [readingImageGeneratedCount, setReadingImageGeneratedCount] =
     useState(0);
+  const [dailyTask, setDailyTask] = useState<any>(null);
   const [readCount, setReadCount] = useState(0);
   const [listenCount, setListenCount] = useState(0);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -184,6 +188,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             {activeTab === 'game' && (
               <Game
                 attemptId={attemptId}
+                dailyTask={dailyTask}
                 difficulty={Number(difficulty)}
                 displayedSection={displayedSection}
                 gameMode={gameMode}
@@ -200,6 +205,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
                 onSetDifficulty={setDifficulty}
                 onSetDisplayedSection={setDisplayedSection}
                 onSetIsCloseLocked={setIsCloseLocked}
+                onSetDailyTask={setDailyTask}
                 onSetQuestions={setQuestions}
                 onSetSuccessModalShown={setSuccessModalShown}
                 onSetTopicLoadError={setTopicLoadError}
@@ -275,9 +281,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     setLoadingTopic(true);
     try {
       const {
+        dailyTaskStatus,
         topic,
         topicKey,
         type,
+        dailyTask,
         readCount,
         listenCount,
         listeningImageGeneratedCount,
@@ -292,10 +300,21 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         setTopic(topic);
         setStoryType(type);
         setTopicKey(topicKey);
+        setDailyTask(dailyTaskStatus?.aiStory || dailyTask || null);
         setListeningImageGeneratedCount(listeningImageGeneratedCount);
         setReadingImageGeneratedCount(readingImageGeneratedCount);
         setReadCount(readCount);
         setListenCount(listenCount);
+        if (dailyTaskStatus) {
+          onUpdateTodayStats({
+            newStats: {
+              achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
+              dailyTaskStatus,
+              dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+              dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
+            }
+          });
+        }
         setLoadingTopic(false);
       }
     } catch (error) {
@@ -318,9 +337,11 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
     for (let i = 0; i < retries; i++) {
       try {
         const {
+          dailyTaskStatus,
           topic,
           topicKey,
           type,
+          dailyTask,
           imageGeneratedCount,
           readCount,
           listenCount,
@@ -332,6 +353,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             topic,
             topicKey,
             type,
+            dailyTaskStatus,
+            dailyTask,
             imageGeneratedCount,
             readCount,
             listenCount,

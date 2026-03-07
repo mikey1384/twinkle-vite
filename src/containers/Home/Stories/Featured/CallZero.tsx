@@ -10,7 +10,11 @@ import {
 } from '~/contexts';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
-import { checkMicrophoneAccess } from '~/helpers';
+import {
+  buildTodayStatsFromResponse,
+  buildTodayStatsForNextDay,
+  checkMicrophoneAccess
+} from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 import NextDayCountdown from '~/components/NextDayCountdown';
@@ -200,6 +204,7 @@ export default function CallZero({
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
+  const fetchTodayStats = useAppContext((v) => v.requestHelpers.fetchTodayStats);
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
@@ -585,16 +590,16 @@ export default function CallZero({
   async function handleCountdownComplete() {
     const newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
     onUpdateTodayStats({
-      newStats: {
-        aiCallDuration: 0,
-        xpEarned: 0,
-        coinsEarned: 0,
-        achievedDailyGoals: [],
-        dailyHasBonus: false,
-        dailyBonusAttempted: false,
-        dailyRewardResultViewed: false,
-        nextDayTimeStamp: newNextDayTimeStamp
-      }
+      newStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
     });
+    if (!userId) return;
+    try {
+      const todayStatsFromServer = await fetchTodayStats();
+      onUpdateTodayStats({
+        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
+      });
+    } catch (error) {
+      console.error('Failed to refresh today stats after rollover:', error);
+    }
   }
 }

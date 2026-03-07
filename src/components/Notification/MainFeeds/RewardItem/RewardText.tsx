@@ -69,7 +69,7 @@ export default function RewardText({
     } else if (rootType === 'dailyReflection') {
       target = 'daily reflection';
     } else if (rootType === 'xpChange') {
-      target = 'daily bonus achievement';
+      target = 'Daily Tasks bonus';
     } else {
       target = rootType;
     }
@@ -141,7 +141,7 @@ export default function RewardText({
           style={{
             color: missionLinkColor
           }}
-        >{`${targetObj?.user?.username}${`'s`} daily bonus achievement`}</b>
+        >{`${targetObj?.user?.username}${`'s`} Daily Tasks bonus`}</b>
       ) : (
         <ContentLink
           style={{

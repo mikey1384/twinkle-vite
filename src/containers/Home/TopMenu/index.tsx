@@ -27,6 +27,7 @@ import DailyBonusButton from '~/components/Buttons/DailyBonusButton';
 import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import ChessOptionsModal from './ChessOptionsModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
@@ -240,6 +241,15 @@ export default function TopMenu({
           today?
         </p>
         <InputPanel onInputModalButtonClick={onInputModalButtonClick} />
+        {!!userId && (
+          <DailyRewardBoostStrip
+            streak={todayStats.dailyTaskStreak}
+            wordle={todayStats.dailyTaskStatus?.wordle}
+            grammarbles={todayStats.dailyTaskStatus?.grammarbles}
+            aiStory={todayStats.dailyTaskStatus?.aiStory}
+            style={{ marginTop: '1rem' }}
+          />
+        )}
         <div
           className={css`
             margin-top: 1.5rem;
