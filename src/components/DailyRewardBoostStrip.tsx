@@ -531,23 +531,29 @@ function buildGrammarblesRow(grammarbles: any): BoostRow {
 
 function buildAIStoryRow(aiStory: any): BoostRow {
   const currentLevel = Math.max(1, Number(aiStory?.currentLevel) || 1);
+  const highestPassedLevel = Math.max(
+    currentLevel,
+    Number(aiStory?.highestPassedLevel) || 0
+  );
   const basicAchieved = !!aiStory?.basicQualified;
   const hasReading = !!aiStory?.hasReadingClearAtCurrentLevel;
   const hasListening = !!aiStory?.hasListeningClearAtCurrentLevel;
   const excellenceAchieved = !!aiStory?.excellenceQualified;
 
-  let description = `Excellence target: clear both Read and Listen at Lv${currentLevel}.`;
+  let description = `Excellence target: clear both Read and Listen at Lv${currentLevel} or higher.`;
   if (excellenceAchieved) {
     description = 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at Lv${currentLevel}.`;
+    description = `Read is done. Finish Listen at Lv${currentLevel} or higher.`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at Lv${currentLevel}.`;
+    description = `Listen is done. Finish Read at Lv${currentLevel} or higher.`;
   }
 
   return {
     label: 'AI Story',
-    title: basicAchieved ? `Lv${currentLevel} cleared` : `Clear Lv${currentLevel}`,
+    title: basicAchieved
+      ? `Lv${highestPassedLevel} cleared`
+      : `Clear Lv${currentLevel} or higher`,
     description,
     tone: 'logoBlue',
     basicAchieved,
