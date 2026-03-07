@@ -145,9 +145,7 @@ export default function Content({
 
   const dailyTaskBreakdownText = useMemo(() => {
     if (!dailyTaskReward) return '';
-    return `Base x${formatRewardMultiplier(
-      Number(dailyTaskReward.baseMultiplier || 1)
-    )} • Basic x${formatRewardMultiplier(
+    return `Basic x${formatRewardMultiplier(
       Number(dailyTaskReward.basicMultiplier || 1)
     )} • Excellence x${formatRewardMultiplier(
       Number(dailyTaskReward.excellenceMultiplier || 1)
@@ -163,6 +161,7 @@ export default function Content({
         ? (title || '').trimEnd()
         : '';
   }, [contentType, description, title]);
+
   const RenderedContent = useMemo(() => {
     switch (contentType) {
       case 'comment':
