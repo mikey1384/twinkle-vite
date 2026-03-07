@@ -46,6 +46,8 @@ import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState, useScrollPosition } from '~/helpers/hooks';
 import {
+  buildTodayStatsFromResponse,
+  buildTodayStatsForNextDay,
   getSectionFromPathname,
   isMobile,
   returnImageFileFromUrl
@@ -358,39 +360,10 @@ export default function App() {
       handleLoadTodayStats();
     }
     async function handleLoadTodayStats() {
-      const {
-        achievedDailyGoals,
-        aiCallDuration,
-        dailyHasBonus,
-        dailyBonusAttempted,
-        dailyRewardResultViewed,
-        dailyQuestionCompleted,
-        xpEarned,
-        coinsEarned,
-        nextMission,
-        standardTimeStamp,
-        nextDayTimeStamp
-      } = await fetchTodayStats();
+      const todayStatsFromServer = await fetchTodayStats();
       if (checkUserChange(userId)) return;
-      let timeDifference = 0;
-      if (standardTimeStamp) {
-        timeDifference = new Date(standardTimeStamp).getTime() - Date.now();
-      }
       onUpdateTodayStats({
-        newStats: {
-          achievedDailyGoals,
-          aiCallDuration,
-          dailyHasBonus,
-          dailyBonusAttempted,
-          dailyRewardResultViewed,
-          dailyQuestionCompleted,
-          xpEarned,
-          coinsEarned,
-          nextDayTimeStamp,
-          nextMission,
-          standardTimeStamp,
-          timeDifference
-        }
+        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -658,17 +631,20 @@ export default function App() {
     onSetDailyRewardModalShown(false);
     const newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
     onUpdateTodayStats({
-      newStats: {
-        aiCallDuration: 0,
-        xpEarned: 0,
-        coinsEarned: 0,
-        achievedDailyGoals: [],
-        dailyHasBonus: false,
-        dailyBonusAttempted: false,
-        dailyRewardResultViewed: false,
-        nextDayTimeStamp: newNextDayTimeStamp
-      }
+      newStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
     });
+    if (!userId) return;
+    try {
+      const todayStatsFromServer = await fetchTodayStats();
+      if (checkUserChange(userId)) return;
+      onUpdateTodayStats({
+        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
+      });
+    } catch (error) {
+      if (!checkUserChange(userId)) {
+        console.error('Failed to refresh today stats after rollover:', error);
+      }
+    }
   }
 
   async function handleFileUploadOnHome({

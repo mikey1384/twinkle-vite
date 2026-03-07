@@ -1697,14 +1697,22 @@ export default function chatRequestHelpers({
     async loadWordle(channelId: number) {
       try {
         const {
-          data: { wordleSolution, wordleWordLevel, nextDayTimeStamp }
+          data: {
+            dailyTaskStatus,
+            wordleSolution,
+            wordleWordLevel,
+            wordleAttemptState,
+            nextDayTimeStamp
+          }
         } = await request.get(
           `${URL}/chat/wordle?channelId=${channelId}`,
           auth()
         );
         return {
+          dailyTaskStatus,
           wordleSolution,
           wordleWordLevel,
+          wordleAttemptState,
           nextDayTimeStamp
         };
       } catch (error) {
@@ -2010,13 +2018,14 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { wordleAttemptState, wordleStats }
+          data: { wordleAttemptState, wordleStats, dailyTaskStatus }
         } = await request.put(
           `${URL}/chat/wordle/attempt`,
           { channelName, channelId, guesses, solution, isSolved },
           auth()
         );
         return {
+          dailyTaskStatus,
           wordleAttemptState,
           wordleStats
         };

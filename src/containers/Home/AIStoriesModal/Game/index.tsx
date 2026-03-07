@@ -2,13 +2,14 @@ import React, { useRef, useState } from 'react';
 import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 
 const MAX_READ_ATTEMPTS = 5;
 const MAX_LISTEN_ATTEMPTS = 5;
 
 export default function Game({
   attemptId,
+  dailyTask,
   difficulty,
   displayedSection,
   gameMode,
@@ -25,6 +26,7 @@ export default function Game({
   onSetDropdownShown,
   onSetGameMode,
   onSetIsCloseLocked,
+  onSetDailyTask,
   onSetQuestions,
   onSetSuccessModalShown,
   onSetTopicLoadError,
@@ -40,6 +42,7 @@ export default function Game({
   topicLoadError
 }: {
   attemptId: number;
+  dailyTask: any;
   difficulty: number;
   displayedSection: string;
   isGameStarted: boolean;
@@ -56,6 +59,7 @@ export default function Game({
   onSetDropdownShown: (v: boolean) => void;
   onSetGameMode: (v: string) => void;
   onSetIsCloseLocked: (v: boolean) => void;
+  onSetDailyTask: (v: any) => void;
   onSetQuestions: (v: any) => void;
   onSetSuccessModalShown: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
@@ -72,6 +76,9 @@ export default function Game({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const loadAIStoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadAIStoryQuestions
   );
@@ -103,6 +110,7 @@ export default function Game({
     >
       {!isGameStarted ? (
         <MainMenu
+          dailyTask={dailyTask}
           difficulty={difficulty}
           onLoadTopic={onLoadTopic}
           loadingTopic={loadingTopic}
@@ -214,10 +222,22 @@ export default function Game({
     });
     try {
       setIsGrading(true);
-      const { newXp, newCoins, isPassed } = await uploadAIStoryAttempt({
-        attemptId,
-        answers
-      });
+      const { dailyTaskStatus, newXp, newCoins, isPassed, dailyTask } =
+        await uploadAIStoryAttempt({
+          attemptId,
+          answers
+        });
+      onSetDailyTask(dailyTaskStatus?.aiStory || dailyTask || null);
+      if (dailyTaskStatus) {
+        onUpdateTodayStats({
+          newStats: {
+            achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
+            dailyTaskStatus,
+            dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+            dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
+          }
+        });
+      }
       if (newXp && newCoins) {
         onSetUserState({
           userId,

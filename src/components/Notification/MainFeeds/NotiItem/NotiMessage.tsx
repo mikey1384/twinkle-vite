@@ -302,7 +302,7 @@ function NotiMessage({
                 color: missionLinkColor
               }}
             >
-              daily bonus achievement
+              Daily Tasks bonus
             </b>
           ) : (
             <ContentLink
@@ -358,7 +358,7 @@ function NotiMessage({
         } else if (rewardRootType === 'aiStory') {
           rewardRootLabel = 'AI Story';
         } else if (rewardRootType === 'xpChange') {
-          rewardRootLabel = 'daily bonus achievement';
+          rewardRootLabel = 'Daily Tasks bonus';
         } else {
           rewardRootLabel = rewardRootType;
         }
@@ -369,7 +369,7 @@ function NotiMessage({
             {rewardRootType === 'xpChange' ? (
               <b
                 style={{ color: missionLinkColor }}
-              >{`${targetObj?.user?.username}'s daily bonus achievement`}</b>
+              >{`${targetObj?.user?.username}'s Daily Tasks bonus`}</b>
             ) : (
               <ContentLink
                 style={{

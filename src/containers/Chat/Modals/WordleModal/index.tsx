@@ -262,6 +262,7 @@ export default function WordleModal({
             {activeTab === 'game' ? (
               <div ref={gameRef} style={{ width: '100%' }}>
                 <Game
+                  attemptState={attemptState}
                   isRevealing={isRevealing}
                   onSetIsRevealing={setIsRevealing}
                   channelName={channelName}
@@ -320,17 +321,16 @@ export default function WordleModal({
 
   async function handleCountdownComplete() {
     const {
+      dailyTaskStatus,
       wordleSolution,
       wordleWordLevel,
+      wordleAttemptState,
       nextDayTimeStamp: newNextDayTimeStamp
     } = await loadWordle(channelId);
     onSetChannelState({
       channelId,
       newState: {
-        attemptState: {
-          isStrict: false,
-          xpRewardAmount: null
-        },
+        wordleAttemptState,
         wordleSolution,
         wordleWordLevel,
         wordleGuesses: []
@@ -338,6 +338,10 @@ export default function WordleModal({
     });
     onUpdateTodayStats({
       newStats: {
+        achievedDailyGoals: dailyTaskStatus?.achievedDailyGoals || [],
+        dailyTaskStatus: dailyTaskStatus || null,
+        dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+        dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0,
         nextDayTimeStamp: newNextDayTimeStamp
       }
     });

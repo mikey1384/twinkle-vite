@@ -227,14 +227,14 @@ export default function HeadingText({
       return (
         <>
           <UsernameText user={uploader} color={Color[linkColor]()} /> completed
-          all 3 daily goals and correctly answered an{' '}
+          Daily Tasks and correctly answered a{' '}
           <span
             style={{
               fontWeight: 'bold',
               color: Color[cardLevelHash[contentObj?.level]?.color]()
             }}
           >
-            {wordLevelHash[contentObj?.level]?.label} vocabulary question
+            {wordLevelHash[contentObj?.level]?.label} vocabulary bonus question
           </span>{' '}
         </>
       );

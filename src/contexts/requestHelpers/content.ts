@@ -256,7 +256,14 @@ export default function contentRequestHelpers({
     async checkNumGrammarGamesPlayedToday() {
       try {
         const {
-          data: { attemptResults, attemptNumber, earnedCoins, nextDayTimeStamp }
+          data: {
+            attemptResults,
+            attemptNumber,
+            earnedCoins,
+            nextDayTimeStamp,
+            dailyTaskStatus,
+            dailyTask
+          }
         } = await request.get(
           `${URL}/content/game/grammar/gamesPlayedToday`,
           auth()
@@ -265,7 +272,9 @@ export default function contentRequestHelpers({
           attemptResults,
           attemptNumber,
           earnedCoins,
-          nextDayTimeStamp
+          nextDayTimeStamp,
+          dailyTaskStatus,
+          dailyTask
         };
       } catch (error) {
         return handleError(error);
@@ -681,6 +690,8 @@ export default function contentRequestHelpers({
             topic,
             topicKey,
             type,
+            dailyTaskStatus,
+            dailyTask,
             imageGeneratedCount,
             readCount,
             listenCount,
@@ -695,6 +706,8 @@ export default function contentRequestHelpers({
           topic,
           topicKey,
           type,
+          dailyTaskStatus,
+          dailyTask,
           imageGeneratedCount,
           readCount,
           listenCount,
@@ -848,7 +861,7 @@ export default function contentRequestHelpers({
     }) {
       try {
         const {
-          data: { newXp, newCoins, isPassed }
+          data: { newXp, newCoins, isPassed, dailyTaskStatus, dailyTask }
         } = await request.post(
           `${URL}/content/game/story/attempt`,
           { attemptId, answers },
@@ -857,7 +870,9 @@ export default function contentRequestHelpers({
         return {
           newXp,
           newCoins,
-          isPassed
+          isPassed,
+          dailyTaskStatus,
+          dailyTask
         };
       } catch (error) {
         return handleError(error);
@@ -1837,7 +1852,9 @@ export default function contentRequestHelpers({
             isDuplicate,
             allLevelsClearedBonusApplied,
             fullClearBonusAmount,
-            fullClearBonusBase
+            fullClearBonusBase,
+            dailyTaskStatus,
+            dailyTask
           }
         } = await request.post(
           `${URL}/content/game/grammar`,
@@ -1850,7 +1867,9 @@ export default function contentRequestHelpers({
           newCoins,
           allLevelsClearedBonusApplied,
           fullClearBonusAmount,
-          fullClearBonusBase
+          fullClearBonusBase,
+          dailyTaskStatus,
+          dailyTask
         };
       } catch (error) {
         return handleError(error);

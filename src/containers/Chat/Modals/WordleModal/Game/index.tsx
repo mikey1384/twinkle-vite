@@ -20,12 +20,14 @@ import {
   WIN_MESSAGES,
   WORD_NOT_FOUND_MESSAGE
 } from '../constants/strings';
-import { useAppContext, useChatContext } from '~/contexts';
+import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
 import { isMobile } from '~/helpers';
+import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 
 const deviceIsMobile = isMobile(navigator);
 
 export default function Game({
+  attemptState,
   channelId,
   channelName,
   guesses = [],
@@ -41,6 +43,7 @@ export default function Game({
   socketConnected,
   uiScale = 1
 }: {
+  attemptState: any;
   channelId: number;
   channelName?: string;
   guesses: string[];
@@ -74,6 +77,12 @@ export default function Game({
     (v) => v.actions.onSetWordleGuesses
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
+  const dailyTaskStreak = useNotiContext(
+    (v) => v.state.todayStats.dailyTaskStreak
+  );
   const MAX_WORD_LENGTH = useMemo(() => solution?.length || 5, [solution]);
   const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
   const [alertMessage, setAlertMessage] = useState<any>({});
@@ -167,6 +176,20 @@ export default function Game({
           checked={isStrictMode}
           label="Aim for Double Bonus"
           onChange={() => handleToggleWordleStrictMode(!isStrictMode)}
+        />
+      </div>
+      <div
+        style={{
+          width: '100%',
+          paddingLeft: '2rem',
+          paddingRight: '2rem',
+          marginTop: `${1.2 * uiScale}rem`
+        }}
+      >
+        <DailyRewardBoostStrip
+          focus="wordle"
+          streak={dailyTaskStreak}
+          wordle={attemptState?.dailyTask}
         />
       </div>
       <div
@@ -335,7 +358,11 @@ export default function Game({
 
     async function handleGameLost() {
       const loadStartTime = Date.now();
-      const { wordleAttemptState, wordleStats } = await updateWordleAttempt({
+      const {
+        dailyTaskStatus,
+        wordleAttemptState,
+        wordleStats
+      } = await updateWordleAttempt({
         channelName,
         channelId,
         guesses: guesses.concat([currentGuess]),
@@ -346,6 +373,7 @@ export default function Game({
         channelId,
         newState: { wordleAttemptState, wordleStats }
       });
+      applyDailyTaskStatus(dailyTaskStatus);
       const loadEndTime = Date.now();
       const loadTime = loadEndTime - loadStartTime;
       handleShowAlert({
@@ -361,7 +389,11 @@ export default function Game({
 
     async function handleGameWon() {
       const loadStartTime = Date.now();
-      const { wordleAttemptState, wordleStats } = await updateWordleAttempt({
+      const {
+        dailyTaskStatus,
+        wordleAttemptState,
+        wordleStats
+      } = await updateWordleAttempt({
         channelName,
         channelId,
         guesses: guesses.concat([currentGuess]),
@@ -372,6 +404,7 @@ export default function Game({
         channelId,
         newState: { wordleAttemptState, wordleStats }
       });
+      applyDailyTaskStatus(dailyTaskStatus);
       const loadEndTime = Date.now();
       const loadTime = loadEndTime - loadStartTime;
       return handleShowAlert({
@@ -424,5 +457,17 @@ export default function Game({
         }
       }, durationMs);
     }, delayMs);
+  }
+
+  function applyDailyTaskStatus(dailyTaskStatus: any) {
+    if (!dailyTaskStatus) return;
+    onUpdateTodayStats({
+      newStats: {
+        achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
+        dailyTaskStatus,
+        dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+        dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
+      }
+    });
   }
 }

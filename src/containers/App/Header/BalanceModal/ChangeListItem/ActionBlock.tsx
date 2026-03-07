@@ -160,6 +160,9 @@ export default function ActionBlock({
     if (action === 'dailyReflectionStreakRepair') {
       return 'purchased a daily reflection streak repair';
     }
+    if (action === 'dailyTaskStreakRepair') {
+      return 'purchased a Daily Tasks streak repair';
+    }
     if (
       action === 'dailyQuestionTomorrowVibeSelection' &&
       target === 'dailyQuestionTomorrowVibe'

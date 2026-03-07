@@ -36,8 +36,11 @@ export default function notificationRequestHelpers({
     async fetchTodayStats() {
       try {
         const {
-	          data: {
+	        data: {
 	            achievedDailyGoals,
+              dailyTaskStreak,
+              dailyTaskBestStreak,
+              dailyTaskStatus,
 	            aiCallDuration,
 	            dailyHasBonus,
 	            dailyBonusAttempted,
@@ -52,6 +55,9 @@ export default function notificationRequestHelpers({
         } = await request.get(`${URL}/notification/today`, auth());
         return {
           achievedDailyGoals,
+          dailyTaskStreak,
+          dailyTaskBestStreak,
+          dailyTaskStatus,
           aiCallDuration,
 	          dailyHasBonus,
 	          dailyBonusAttempted,
@@ -143,6 +149,7 @@ export default function notificationRequestHelpers({
             cards,
             chosenCardId,
             coinEarned,
+            dailyTaskReward,
             hasBonus,
             bonusAttempted,
             bonusAchieved,
@@ -160,6 +167,7 @@ export default function notificationRequestHelpers({
           cards,
           chosenCardId,
           coinEarned,
+          dailyTaskReward,
           hasBonus,
           bonusAttempted,
           bonusAchieved,
@@ -168,6 +176,18 @@ export default function notificationRequestHelpers({
           isAlreadyChecked,
           isCardOwned
         };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async purchaseDailyTaskRepair() {
+      try {
+        const { data } = await request.post(
+          `${URL}/notification/today/dailyTask/repair`,
+          {},
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }
@@ -183,12 +203,24 @@ export default function notificationRequestHelpers({
     async loadDailyBonus() {
       try {
         const {
-          data: { questions, chosenCard, isCardOwned, isUnavailable }
+          data: {
+            questions,
+            chosenCard,
+            isCardOwned,
+            isUnavailable,
+            dailyTaskReward
+          }
         } = await axios.get(
           `${URL}/notification/today/dailyReward/bonus`,
           auth()
         );
-        return { questions, chosenCard, isCardOwned, isUnavailable };
+        return {
+          questions,
+          chosenCard,
+          isCardOwned,
+          isUnavailable,
+          dailyTaskReward
+        };
       } catch (error) {
         return handleError(error);
       }
@@ -196,13 +228,25 @@ export default function notificationRequestHelpers({
     async postDailyBonus(selectedIndex: number) {
       try {
         const {
-          data: { isCorrect, isAlreadyAttempted, rewardAmount }
+          data: { isCorrect, isAlreadyAttempted, rewardAmount, dailyTaskReward }
         } = await request.post(
           `${URL}/notification/today/dailyReward/bonus`,
           { selectedIndex },
           auth()
         );
-        return { isCorrect, isAlreadyAttempted, rewardAmount };
+        return { isCorrect, isAlreadyAttempted, rewardAmount, dailyTaskReward };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async purchaseDailyTaskStreakRepair() {
+      try {
+        const { data } = await request.post(
+          `${URL}/notification/today/dailyTask/repair`,
+          {},
+          auth()
+        );
+        return data;
       } catch (error) {
         return handleError(error);
       }

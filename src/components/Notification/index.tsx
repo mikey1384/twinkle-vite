@@ -12,7 +12,11 @@ import {
   useKeyContext
 } from '~/contexts';
 import { scrollPositions, isRewardCollected } from '~/constants/state';
-import { isMobile } from '~/helpers';
+import {
+  buildTodayStatsFromResponse,
+  buildTodayStatsForNextDay,
+  isMobile
+} from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 const newsLabel = 'News';
 const rankingsLabel = 'Rankings';
@@ -35,6 +39,7 @@ export default function Notification({
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
+  const fetchTodayStats = useAppContext((v) => v.requestHelpers.fetchTodayStats);
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
   const userId = useKeyContext((v) => v.myState.userId);
   const myNotiState = useNotiContext((v) =>
@@ -336,17 +341,17 @@ export default function Notification({
       newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
     }
     onUpdateTodayStats({
-      newStats: {
-        aiCallDuration: 0,
-        xpEarned: 0,
-        coinsEarned: 0,
-        achievedDailyGoals: [],
-        dailyHasBonus: false,
-        dailyBonusAttempted: false,
-        dailyRewardResultViewed: false,
-        nextDayTimeStamp: newNextDayTimeStamp
-      }
+      newStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
     });
+    if (!userId) return;
+    try {
+      const todayStatsFromServer = await fetchTodayStats();
+      onUpdateTodayStats({
+        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
+      });
+    } catch (error) {
+      console.error('Failed to refresh today stats after rollover:', error);
+    }
   }
 
   async function handleFetchNotifications(userId: number) {

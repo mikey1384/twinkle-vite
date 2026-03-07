@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Marble from '../Marble';import TodayResult from './TodayResult';
+import Marble from '../Marble';
+import TodayResult from './TodayResult';
+import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import {
   useAppContext,
   useHomeContext,
@@ -60,10 +62,14 @@ export default function StartScreen({
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
+  const dailyTaskStreak = useNotiContext(
+    (v) => v.state.todayStats.dailyTaskStreak
+  );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const [dailyTask, setDailyTask] = useState<any>(null);
 
   const roleS = useRoleColor('grammarGameScoreS', { fallback: 'gold' });
   const roleA = useRoleColor('grammarGameScoreA', { fallback: 'magenta' });
@@ -135,14 +141,25 @@ export default function StartScreen({
             attemptResults,
             attemptNumber,
             earnedCoins,
+            dailyTaskStatus,
+            dailyTask,
             nextDayTimeStamp: newNextDayTimeStamp
           } = await checkNumGrammarGamesPlayedToday();
           setResults(attemptResults);
-          if (typeof earnedCoins === 'boolean') {
-            onSetDailyTaskUnlocked?.(earnedCoins);
+          setDailyTask(dailyTaskStatus?.grammarbles || dailyTask || null);
+          const dailyTaskUnlocked =
+            typeof dailyTaskStatus?.grammarbles?.earnedCoins === 'boolean'
+              ? dailyTaskStatus.grammarbles.earnedCoins
+              : earnedCoins;
+          if (typeof dailyTaskUnlocked === 'boolean') {
+            onSetDailyTaskUnlocked?.(dailyTaskUnlocked);
           }
           onUpdateTodayStats({
             newStats: {
+              achievedDailyGoals: dailyTaskStatus?.achievedDailyGoals || [],
+              dailyTaskStatus: dailyTaskStatus || null,
+              dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+              dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0,
               nextDayTimeStamp: newNextDayTimeStamp
             }
           });
@@ -444,6 +461,12 @@ export default function StartScreen({
             )}
           </div>
         </div>
+        <DailyRewardBoostStrip
+          focus="grammarbles"
+          streak={dailyTaskStreak}
+          grammarbles={dailyTask}
+          style={{ marginTop: '2rem', maxWidth: '46rem' }}
+        />
         {loaded && (
           <div
             className={css`

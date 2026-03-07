@@ -162,6 +162,9 @@ export default function NotiReducer(
 	        todayStats: {
 	          myAchievementsObj: {},
 	          achievedDailyGoals: [],
+	          dailyTaskStatus: null,
+	          dailyTaskStreak: 0,
+	          dailyTaskBestStreak: 0,
 	          dailyQuestionCompleted: false,
 	          loaded: false,
 	          xpEarned: 0,

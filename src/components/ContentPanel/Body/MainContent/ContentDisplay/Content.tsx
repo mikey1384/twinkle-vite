@@ -90,7 +90,7 @@ export default function Content({
     themeName: theme,
     fallback: 'logoGreen'
   });
-  const { bonusQuestion, word, level, xpEarned, coinEarned, card } =
+  const { bonusQuestion, word, level, xpEarned, coinEarned, card, dailyTaskReward } =
     useMemo(() => {
       if (contentType !== 'xpChange') {
         return {
@@ -99,7 +99,8 @@ export default function Content({
           level: 0,
           xpEarned: 0,
           coinEarned: 0,
-          card: null
+          card: null,
+          dailyTaskReward: null
         };
       }
       return contentObj;
@@ -112,6 +113,41 @@ export default function Content({
   const displayedCoinEarned = useMemo(() => {
     return addCommasToNumber(coinEarned);
   }, [coinEarned]);
+
+  const dailyTaskRewardTone = useMemo(() => {
+    if (dailyTaskReward?.excellenceQualified) {
+      return {
+        label: 'Excellence boost',
+        color: Color.gold(),
+        background: Color.gold(0.14)
+      };
+    }
+    if (dailyTaskReward?.basicQualified) {
+      return {
+        label: 'Basic boost',
+        color: Color.purple(),
+        background: Color.purple(0.12)
+      };
+    }
+    return {
+      label: 'Base reward',
+      color: Color.darkGray(),
+      background: Color.black(0.05)
+    };
+  }, [dailyTaskReward]);
+
+  const dailyTaskBreakdownText = useMemo(() => {
+    if (!dailyTaskReward) return '';
+    return `Base x${formatRewardMultiplier(
+      Number(dailyTaskReward.baseMultiplier || 1)
+    )} • Basic x${formatRewardMultiplier(
+      Number(dailyTaskReward.basicMultiplier || 1)
+    )} • Excellence x${formatRewardMultiplier(
+      Number(dailyTaskReward.excellenceMultiplier || 1)
+    )} • Final x${formatRewardMultiplier(
+      Number(dailyTaskReward.finalMultiplier || 1)
+    )}`;
+  }, [dailyTaskReward]);
 
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
@@ -224,6 +260,74 @@ export default function Content({
                 />
               </div>
             )}
+            {dailyTaskReward && (
+              <div
+                style={{
+                  marginBottom: '1.4rem',
+                  padding: '1rem 1.1rem',
+                  borderRadius,
+                  border: `1px solid ${Color.borderGray()}`,
+                  background: Color.whiteGray(),
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.8rem'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    gap: '0.6rem'
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '0.35rem 0.8rem',
+                      borderRadius: '999px',
+                      background: dailyTaskRewardTone.background,
+                      color: dailyTaskRewardTone.color,
+                      fontWeight: 700
+                    }}
+                  >
+                    {dailyTaskRewardTone.label}
+                  </div>
+                  <div
+                    style={{
+                      padding: '0.35rem 0.8rem',
+                      borderRadius: '999px',
+                      background: Color.logoBlue(0.12),
+                      color: Color.logoBlue(),
+                      fontWeight: 700
+                    }}
+                  >
+                    {`Final x${formatRewardMultiplier(
+                      Number(dailyTaskReward.finalMultiplier || 1)
+                    )}`}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '1.1rem',
+                    color: Color.darkGray(),
+                    lineHeight: 1.5
+                  }}
+                >
+                  {dailyTaskBreakdownText}
+                </div>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '1.15rem',
+                    color: Color.darkGray(),
+                    lineHeight: 1.5
+                  }}
+                >
+                  {`Today's Daily Tasks reward paid ${displayedCoinEarned} coins and the bonus question paid ${displayedXPEarned} XP.`}
+                </div>
+              </div>
+            )}
             <MultipleChoiceQuestion
               key={bonusQuestion.id}
               isGraded={hasSelection}
@@ -258,7 +362,7 @@ export default function Content({
               <b style={{ color: Color.brownOrange() }}>
                 {displayedCoinEarned} coins
               </b>{' '}
-              from completing all daily goals
+              from today's Daily Tasks reward
             </div>
           </div>
         );
@@ -492,4 +596,11 @@ export default function Content({
       )}
     </div>
   );
+}
+
+function formatRewardMultiplier(multiplier: number) {
+  if (Math.abs(multiplier - Math.round(multiplier)) < 0.001) {
+    return `${Math.round(multiplier)}`;
+  }
+  return multiplier.toFixed(1).replace(/\.0$/, '');
 }

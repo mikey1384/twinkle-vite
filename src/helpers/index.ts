@@ -16,6 +16,201 @@ import {
 import axios from 'axios';
 import URL from '~/constants/URL';
 
+const twinkleDayIndexEpochMs = Date.UTC(2022, 0, 1, 0, 0, 0);
+const msInDay = 86400000;
+const dailyTaskStreakRepairCost = 100000;
+const dailyTaskStreakRepairCostCap = dailyTaskStreakRepairCost * 100;
+const dailyTaskStreakDaysPerTier = 10;
+const dailyTaskStreakMultiplierCap = 10;
+
+function toNonNegativeInt(value: any) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function toNullableInt(value: any) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+function clampLevel(value: any, fallback = 1) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.max(1, Math.min(5, parsed));
+}
+
+function calculateDailyTaskStreakMultiplier(streakDays: any) {
+  const appliedStreakDays = toNonNegativeInt(streakDays);
+  return Math.min(
+    Math.floor(Math.max(appliedStreakDays - 1, 0) / dailyTaskStreakDaysPerTier) + 2,
+    dailyTaskStreakMultiplierCap
+  );
+}
+
+function calculateDailyTaskRepairCost(streakDays: any) {
+  const appliedStreakDays = toNonNegativeInt(streakDays);
+  if (appliedStreakDays < 1) return 0;
+  return Math.min(
+    dailyTaskStreakRepairCost * appliedStreakDays,
+    dailyTaskStreakRepairCostCap
+  );
+}
+
+function getDayIndexFromNextDayTimeStamp(nextDayTimeStamp: number) {
+  const parsed = Number(nextDayTimeStamp);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.floor((parsed - twinkleDayIndexEpochMs) / msInDay) - 1;
+}
+
+function buildDailyTaskStreakForNextDay({
+  nextDayTimeStamp,
+  previousDailyTaskStatus,
+  previousDailyTaskBestStreak
+}: {
+  nextDayTimeStamp: number;
+  previousDailyTaskStatus?: any;
+  previousDailyTaskBestStreak?: number;
+}) {
+  const currentDayIndex = getDayIndexFromNextDayTimeStamp(nextDayTimeStamp);
+  const previousStreak = previousDailyTaskStatus?.streak || {};
+  const rawCurrentStreak = toNonNegativeInt(previousStreak.currentStreak);
+  const longestStreak = Math.max(
+    toNonNegativeInt(previousStreak.longestStreak),
+    toNonNegativeInt(previousDailyTaskBestStreak)
+  );
+  const lastCompletedDayIndex = toNullableInt(previousStreak.lastCompletedDayIndex);
+
+  if (currentDayIndex === null) {
+    return {
+      currentStreak: rawCurrentStreak,
+      longestStreak,
+      lastCompletedDayIndex,
+      rewardMultiplier: calculateDailyTaskStreakMultiplier(rawCurrentStreak),
+      streakRepairAvailable: false,
+      streakAtRisk: false,
+      streakBroken: false,
+      repairableStreak: 0,
+      repairCost: 0
+    };
+  }
+
+  const dayGap =
+    lastCompletedDayIndex === null ? null : currentDayIndex - lastCompletedDayIndex;
+  const streakAtRisk =
+    rawCurrentStreak > 0 &&
+    lastCompletedDayIndex !== null &&
+    dayGap === 2;
+  const streakBroken =
+    rawCurrentStreak > 0 &&
+    lastCompletedDayIndex !== null &&
+    (dayGap || 0) > 2;
+  const streakRepairAvailable = false;
+  const streakIsCurrent =
+    lastCompletedDayIndex === currentDayIndex ||
+    lastCompletedDayIndex === currentDayIndex - 1 ||
+    streakRepairAvailable;
+  const effectiveCurrentStreak = streakIsCurrent ? rawCurrentStreak : 0;
+  const repairableStreak = streakAtRisk ? rawCurrentStreak : 0;
+
+  return {
+    currentStreak: effectiveCurrentStreak,
+    longestStreak,
+    lastCompletedDayIndex,
+    rewardMultiplier: calculateDailyTaskStreakMultiplier(effectiveCurrentStreak),
+    streakRepairAvailable,
+    streakAtRisk,
+    streakBroken,
+    repairableStreak,
+    repairCost: calculateDailyTaskRepairCost(repairableStreak)
+  };
+}
+
+function buildDailyTaskStatusForNextDay({
+  nextDayTimeStamp,
+  previousDailyTaskStatus,
+  previousDailyTaskBestStreak
+}: {
+  nextDayTimeStamp: number;
+  previousDailyTaskStatus?: any;
+  previousDailyTaskBestStreak?: number;
+}) {
+  const grammarblesLevel = clampLevel(
+    previousDailyTaskStatus?.progression?.grammarblesLevel ??
+      previousDailyTaskStatus?.grammarbles?.progressionLevel ??
+      previousDailyTaskStatus?.grammarbles?.currentLevel,
+    1
+  );
+  const aiStoryLevel = clampLevel(
+    previousDailyTaskStatus?.progression?.aiStoryLevel ??
+      previousDailyTaskStatus?.aiStory?.progressionLevel ??
+      previousDailyTaskStatus?.aiStory?.currentLevel,
+    1
+  );
+  const streak = buildDailyTaskStreakForNextDay({
+    nextDayTimeStamp,
+    previousDailyTaskStatus,
+    previousDailyTaskBestStreak
+  });
+
+  return {
+    wordleDone: false,
+    grammarblesDone: false,
+    aiStoryDone: false,
+    isComplete: false,
+    achievedDailyGoals: [],
+    streak,
+    progression: {
+      grammarblesLevel,
+      aiStoryLevel
+    },
+    reward: {
+      rewardLevel: 1,
+      baseMultiplier: 1,
+      basicMultiplier: 1,
+      excellenceMultiplier: 1,
+      finalMultiplier: 1,
+      basicQualified: false,
+      excellenceQualified: false,
+      streakMultiplier: streak.rewardMultiplier
+    },
+    wordle: {
+      attempted: false,
+      completed: false,
+      failed: false,
+      isSolved: false,
+      numGuesses: 0,
+      basicQualified: false,
+      excellenceQualified: false
+    },
+    grammarbles: {
+      attemptCount: 0,
+      earnedCoins: false,
+      passes: 0,
+      highestPassedLevel: 0,
+      currentLevel: grammarblesLevel,
+      progressionLevel: grammarblesLevel,
+      bestScoreAtCurrentLevel: 0,
+      currentLevelPerfect: false,
+      allPerfectToday: false,
+      isPassed: false,
+      basicQualified: false,
+      excellenceQualified: false,
+      excellenceMode: 'baseline',
+      comparisonScore: null
+    },
+    aiStory: {
+      highestPassedLevel: 0,
+      currentLevel: aiStoryLevel,
+      progressionLevel: aiStoryLevel,
+      hasReadingClearAtCurrentLevel: false,
+      hasListeningClearAtCurrentLevel: false,
+      isPassed: false,
+      basicQualified: false,
+      excellenceQualified: false
+    }
+  };
+}
+
 export function calculateTotalBurnValue(cards: Card[]) {
   let totalBv = 0;
   for (const card of cards) {
@@ -38,6 +233,74 @@ export async function checkMicrophoneAccess() {
     console.error('Microphone access not granted:', error);
     return false;
   }
+}
+
+export function buildTodayStatsForNextDay(
+  nextDayTimeStamp: number,
+  todayStats?: any
+) {
+  const dailyTaskStatus = buildDailyTaskStatusForNextDay({
+    nextDayTimeStamp,
+    previousDailyTaskStatus: todayStats?.dailyTaskStatus,
+    previousDailyTaskBestStreak: todayStats?.dailyTaskBestStreak
+  });
+
+  return {
+    aiCallDuration: 0,
+    xpEarned: 0,
+    coinsEarned: 0,
+    achievedDailyGoals: [],
+    dailyTaskStatus,
+    dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+    dailyTaskBestStreak:
+      dailyTaskStatus?.streak?.longestStreak ||
+      toNonNegativeInt(todayStats?.dailyTaskBestStreak),
+    dailyHasBonus: false,
+    dailyBonusAttempted: false,
+    dailyQuestionCompleted: false,
+    dailyRewardResultViewed: false,
+    nextDayTimeStamp
+  };
+}
+
+export function buildTodayStatsFromResponse({
+  achievedDailyGoals,
+  dailyTaskStreak,
+  dailyTaskBestStreak,
+  dailyTaskStatus,
+  aiCallDuration,
+  dailyHasBonus,
+  dailyBonusAttempted,
+  dailyRewardResultViewed,
+  dailyQuestionCompleted,
+  xpEarned,
+  coinsEarned,
+  nextMission,
+  standardTimeStamp,
+  nextDayTimeStamp
+}: any) {
+  let timeDifference = 0;
+  if (standardTimeStamp) {
+    timeDifference = new Date(standardTimeStamp).getTime() - Date.now();
+  }
+
+  return {
+    achievedDailyGoals,
+    dailyTaskStreak,
+    dailyTaskBestStreak,
+    dailyTaskStatus,
+    aiCallDuration,
+    dailyHasBonus,
+    dailyBonusAttempted,
+    dailyRewardResultViewed,
+    dailyQuestionCompleted,
+    xpEarned,
+    coinsEarned,
+    nextDayTimeStamp,
+    nextMission,
+    standardTimeStamp,
+    timeDifference
+  };
 }
 
 export function checkScrollIsAtTheBottom({
