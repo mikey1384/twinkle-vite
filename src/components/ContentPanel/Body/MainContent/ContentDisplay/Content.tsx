@@ -90,21 +90,28 @@ export default function Content({
     themeName: theme,
     fallback: 'logoGreen'
   });
-  const { bonusQuestion, word, level, xpEarned, coinEarned, card, dailyTaskReward } =
-    useMemo(() => {
-      if (contentType !== 'xpChange') {
-        return {
-          bonusQuestion: null,
-          word: '',
-          level: 0,
-          xpEarned: 0,
-          coinEarned: 0,
-          card: null,
-          dailyTaskReward: null
-        };
-      }
-      return contentObj;
-    }, [contentObj, contentType]);
+  const {
+    bonusQuestion,
+    word,
+    level,
+    xpEarned,
+    coinEarned,
+    card,
+    dailyTaskReward
+  } = useMemo(() => {
+    if (contentType !== 'xpChange') {
+      return {
+        bonusQuestion: null,
+        word: '',
+        level: 0,
+        xpEarned: 0,
+        coinEarned: 0,
+        card: null,
+        dailyTaskReward: null
+      };
+    }
+    return contentObj;
+  }, [contentObj, contentType]);
 
   const displayedXPEarned = useMemo(() => {
     return addCommasToNumber(xpEarned);
@@ -144,7 +151,7 @@ export default function Content({
       Number(dailyTaskReward.basicMultiplier || 1)
     )} • Excellence x${formatRewardMultiplier(
       Number(dailyTaskReward.excellenceMultiplier || 1)
-    )} • Final x${formatRewardMultiplier(
+    )} • x${formatRewardMultiplier(
       Number(dailyTaskReward.finalMultiplier || 1)
     )}`;
   }, [dailyTaskReward]);
@@ -153,8 +160,8 @@ export default function Content({
     return !stringIsEmpty(description)
       ? description.trim()
       : contentType === 'video' || contentType === 'url'
-      ? (title || '').trimEnd()
-      : '';
+        ? (title || '').trimEnd()
+        : '';
   }, [contentType, description, title]);
   const RenderedContent = useMemo(() => {
     switch (contentType) {
@@ -301,7 +308,7 @@ export default function Content({
                       fontWeight: 700
                     }}
                   >
-                    {`Final x${formatRewardMultiplier(
+                    {`x${formatRewardMultiplier(
                       Number(dailyTaskReward.finalMultiplier || 1)
                     )}`}
                   </div>
@@ -453,7 +460,16 @@ export default function Content({
                 <span>★</span>
                 <span>
                   {contentObj?.masterpieceType
-                    ? `Masterpiece (${contentObj.masterpieceType.replace(/_/g, ' ').split(' ').map((word: string, i: number) => ['and', 'or', 'the', 'a', 'an'].includes(word) && i > 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)).join(' ')})`
+                    ? `Masterpiece (${contentObj.masterpieceType
+                        .replace(/_/g, ' ')
+                        .split(' ')
+                        .map((word: string, i: number) =>
+                          ['and', 'or', 'the', 'a', 'an'].includes(word) &&
+                          i > 0
+                            ? word
+                            : word.charAt(0).toUpperCase() + word.slice(1)
+                        )
+                        .join(' ')})`
                     : 'Masterpiece'}
                 </span>
               </div>
