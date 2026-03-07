@@ -145,13 +145,21 @@ export default function Content({
 
   const dailyTaskBreakdownText = useMemo(() => {
     if (!dailyTaskReward) return '';
-    return `Basic x${formatRewardMultiplier(
-      Number(dailyTaskReward.basicMultiplier || 1)
-    )} • Excellence x${formatRewardMultiplier(
-      Number(dailyTaskReward.excellenceMultiplier || 1)
-    )} • x${formatRewardMultiplier(
-      Number(dailyTaskReward.finalMultiplier || 1)
-    )}`;
+    const appliedBasicMultiplier = Number(
+      dailyTaskReward?.basicMultiplier || 1
+    );
+    const appliedExcellenceMultiplier = Number(
+      dailyTaskReward?.excellenceMultiplier || 1
+    );
+    const basicMultiplierText =
+      appliedBasicMultiplier > 1
+        ? `Basic x${formatRewardMultiplier(appliedBasicMultiplier)}`
+        : '';
+    const excellenceMultiplierText =
+      appliedExcellenceMultiplier > 1
+        ? ` • Excellence x${formatRewardMultiplier(appliedExcellenceMultiplier)}`
+        : '';
+    return `${basicMultiplierText}${excellenceMultiplierText}`;
   }, [dailyTaskReward]);
 
   const Description = useMemo(() => {
