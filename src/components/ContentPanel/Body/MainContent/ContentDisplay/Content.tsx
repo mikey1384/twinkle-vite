@@ -189,7 +189,7 @@ export default function Content({
     );
     const dailyTaskRewardSummaryText = `${addCommasToNumber(
       baseCoinReward
-    )} base coins -> ${displayedCoinEarned} at x${formatRewardMultiplier(
+    )} base -> ${displayedCoinEarned} at x${formatRewardMultiplier(
       appliedFinalMultiplier
     )}`;
 
