@@ -143,24 +143,61 @@ export default function Content({
     };
   }, [dailyTaskReward]);
 
-  const dailyTaskBreakdownText = useMemo(() => {
-    if (!dailyTaskReward) return '';
-    const appliedBasicMultiplier = Number(
-      dailyTaskReward?.basicMultiplier || 1
-    );
+  const { dailyTaskBreakdownText, dailyTaskRewardSummaryText } = useMemo(() => {
+    if (!dailyTaskReward) {
+      return {
+        dailyTaskBreakdownText: '',
+        dailyTaskRewardSummaryText: ''
+      };
+    }
+
+    const appliedBasicMultiplier = Number(dailyTaskReward?.basicMultiplier || 1);
     const appliedExcellenceMultiplier = Number(
       dailyTaskReward?.excellenceMultiplier || 1
     );
-    const basicMultiplierText =
-      appliedBasicMultiplier > 1
-        ? `Basic x${formatRewardMultiplier(appliedBasicMultiplier)}`
-        : '';
-    const excellenceMultiplierText =
-      appliedExcellenceMultiplier > 1
-        ? ` • Excellence x${formatRewardMultiplier(appliedExcellenceMultiplier)}`
-        : '';
-    return `${basicMultiplierText}${excellenceMultiplierText}`;
-  }, [dailyTaskReward]);
+    const appliedFinalMultiplier = Math.max(
+      1,
+      Number(dailyTaskReward?.finalMultiplier || 1)
+    );
+    const rawCurrentStreak = Number(dailyTaskReward?.currentStreak);
+    const currentStreak = Number.isInteger(rawCurrentStreak)
+      ? rawCurrentStreak
+      : null;
+    const boostParts: string[] = [];
+
+    if (appliedBasicMultiplier > 1) {
+      boostParts.push(
+        `Basic x${formatRewardMultiplier(appliedBasicMultiplier)}`
+      );
+    }
+    if (appliedExcellenceMultiplier > 1) {
+      boostParts.push(
+        `Excellence x${formatRewardMultiplier(appliedExcellenceMultiplier)}`
+      );
+    }
+
+    const streakLabel =
+      currentStreak !== null
+        ? `${addCommasToNumber(currentStreak)}-day streak`
+        : 'Streak boost';
+    const dailyTaskBreakdownText = boostParts.length
+      ? `${streakLabel} -> ${boostParts.join(' • ')}`
+      : `${streakLabel} -> no extra boost`;
+    const baseCoinReward = Math.max(
+      0,
+      Math.round(coinEarned / appliedFinalMultiplier)
+    );
+    const dailyTaskRewardSummaryText = `${addCommasToNumber(
+      baseCoinReward
+    )} base coins -> ${displayedCoinEarned} at x${formatRewardMultiplier(
+      appliedFinalMultiplier
+    )}`;
+
+    return {
+      dailyTaskBreakdownText,
+      dailyTaskRewardSummaryText
+    };
+  }, [coinEarned, dailyTaskReward, displayedCoinEarned]);
 
   const Description = useMemo(() => {
     return !stringIsEmpty(description)
@@ -338,7 +375,7 @@ export default function Content({
                     lineHeight: 1.5
                   }}
                 >
-                  {`Today's Daily Tasks reward paid ${displayedCoinEarned} coins and the bonus question paid ${displayedXPEarned} XP.`}
+                  {dailyTaskRewardSummaryText}
                 </div>
               </div>
             )}
