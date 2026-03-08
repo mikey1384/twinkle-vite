@@ -37,6 +37,36 @@ import { throttle } from '~/helpers';
 
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
+const EMPTY_PROFILE_FEEDS: any[] = [];
+const DEFAULT_PROFILE_NOTABLES = {
+  feeds: EMPTY_PROFILE_FEEDS,
+  loaded: false,
+  loadMoreButton: false
+};
+const DEFAULT_PROFILE_SUBJECTS = {
+  posts: EMPTY_PROFILE_FEEDS,
+  loaded: false,
+  loadMoreButton: false
+};
+const DEFAULT_PROFILE_PINNED_AI_CARDS = {
+  cardIds: EMPTY_PROFILE_FEEDS,
+  loaded: false
+};
+const DEFAULT_PROFILE_LIKES = {
+  all: EMPTY_PROFILE_FEEDS,
+  comments: EMPTY_PROFILE_FEEDS,
+  subjects: EMPTY_PROFILE_FEEDS,
+  videos: EMPTY_PROFILE_FEEDS,
+  links: EMPTY_PROFILE_FEEDS
+};
+const DEFAULT_PROFILE_POSTS = {
+  all: EMPTY_PROFILE_FEEDS,
+  comments: EMPTY_PROFILE_FEEDS,
+  subjects: EMPTY_PROFILE_FEEDS,
+  videos: EMPTY_PROFILE_FEEDS,
+  watched: EMPTY_PROFILE_FEEDS,
+  links: EMPTY_PROFILE_FEEDS
+};
 
 type OutsideRef =
   | React.RefObject<HTMLElement | null>
@@ -394,42 +424,27 @@ export function useOutsideClick(
 
 export function useProfileState(username: string) {
   const userState = useProfileContext((v) => v.state[username]) || {};
-  const {
-    notExist = false,
-    notables = { feeds: [] },
-    subjects = {
-      posts: []
-    },
-    pinnedAICards = {
-      cardIds: [],
-      loaded: false
-    },
-    likes = {
-      all: [],
-      comments: [],
-      subjects: [],
-      videos: [],
-      links: []
-    },
-    posts = {
-      all: [],
-      comments: [],
-      subjects: [],
-      videos: [],
-      watched: [],
-      links: []
-    },
-    profileId
-  } = userState;
-  return {
-    likes,
-    subjects,
-    pinnedAICards,
-    notables,
-    posts,
-    notExist,
-    profileId
-  };
+  const notExist = userState.notExist ?? false;
+  const notables = userState.notables || DEFAULT_PROFILE_NOTABLES;
+  const subjects = userState.subjects || DEFAULT_PROFILE_SUBJECTS;
+  const pinnedAICards =
+    userState.pinnedAICards || DEFAULT_PROFILE_PINNED_AI_CARDS;
+  const likes = userState.likes || DEFAULT_PROFILE_LIKES;
+  const posts = userState.posts || DEFAULT_PROFILE_POSTS;
+  const profileId = userState.profileId;
+
+  return useMemo(
+    () => ({
+      likes,
+      subjects,
+      pinnedAICards,
+      notables,
+      posts,
+      notExist,
+      profileId
+    }),
+    [likes, subjects, pinnedAICards, notables, posts, notExist, profileId]
+  );
 }
 
 export function useSearch({
