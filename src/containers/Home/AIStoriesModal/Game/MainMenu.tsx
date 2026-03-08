@@ -204,6 +204,7 @@ export default function MainMenu({
         focus="aiStory"
         streak={dailyTaskStreak}
         aiStory={dailyTask}
+        loadingStates={{ aiStory: loadingTopic }}
         style={{ marginTop: '1.25rem', width: '80%', maxWidth: '46rem' }}
       />
       <div

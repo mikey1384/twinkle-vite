@@ -8,7 +8,7 @@ import SuccessModal from './SuccessModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useNotiContext } from '~/contexts';
-import { sleep } from '~/helpers';
+import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 
 const rewardTable = {
   1: {
@@ -47,8 +47,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const [listeningImageGeneratedCount, setListeningImageGeneratedCount] =
     useState(0);
@@ -64,7 +64,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [successModalShown, setSuccessModalShown] = useState(false);
   const [storyId, setStoryId] = useState(0);
   const [storyType, setStoryType] = useState('');
-  const [loadingTopic, setLoadingTopic] = useState(false);
+  const [loadingTopic, setLoadingTopic] = useState(true);
   const [topicLoadError, setTopicLoadError] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [isCloseLocked, setIsCloseLocked] = useState(false);
@@ -306,19 +306,15 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         setReadCount(readCount);
         setListenCount(listenCount);
         if (dailyTaskStatus) {
-          onUpdateTodayStats({
-            newStats: {
-              achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
-              dailyTaskStatus,
-              dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-              dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
-            }
+          onApplyTodayStatsProgress({
+            newStats: buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
           });
         }
         setLoadingTopic(false);
       }
     } catch (error) {
       console.error('Failed to load topic:', error);
+      setLoadingTopic(false);
       setTopicLoadError(true);
     }
   }

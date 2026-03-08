@@ -16,6 +16,10 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
+import {
+  buildTodayStatsPatchFromDailyTaskStatus,
+  toValidNextDayTimeStamp
+} from '~/helpers';
 
 export default function WordleModal({
   channelId,
@@ -42,8 +46,8 @@ export default function WordleModal({
 }) {
   const doneColor = useKeyContext((v) => v.theme.done.color);
   const isStrictMode = useKeyContext((v) => v.myState.wordleStrictMode);
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
@@ -84,7 +88,10 @@ export default function WordleModal({
   useEffect(() => {
     init();
     async function init() {
-      const currentNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+      const currentNextDayTimeStamp = toValidNextDayTimeStamp(
+        await getCurrentNextDayTimeStamp()
+      );
+      if (currentNextDayTimeStamp === null) return;
       if (nextDayTimeStamp && nextDayTimeStamp !== currentNextDayTimeStamp) {
         handleCountdownComplete();
       }
@@ -336,12 +343,9 @@ export default function WordleModal({
         wordleGuesses: []
       }
     });
-    onUpdateTodayStats({
+    onApplyTodayStatsProgress({
       newStats: {
-        achievedDailyGoals: dailyTaskStatus?.achievedDailyGoals || [],
-        dailyTaskStatus: dailyTaskStatus || null,
-        dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-        dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0,
+        ...buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus),
         nextDayTimeStamp: newNextDayTimeStamp
       }
     });

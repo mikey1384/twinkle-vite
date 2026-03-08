@@ -13,6 +13,7 @@ import Icon from '~/components/Icon';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 
 const badgeItems = ['W', 'G', 'A'];
 
@@ -41,6 +42,9 @@ export default function DailyGoals({
   );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
+  );
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const [ampedBadgeIndex, setAmpedBadgeIndex] = useState(0);
   const [purchasingRepair, setPurchasingRepair] = useState(false);
@@ -236,14 +240,10 @@ export default function DailyGoals({
         });
       }
       if (result?.dailyTaskStatus) {
-        onUpdateTodayStats({
-          newStats: {
-            achievedDailyGoals: result.dailyTaskStatus.achievedDailyGoals || [],
-            dailyTaskStatus: result.dailyTaskStatus,
-            dailyTaskStreak: result.dailyTaskStatus?.streak?.currentStreak || 0,
-            dailyTaskBestStreak:
-              result.dailyTaskStatus?.streak?.longestStreak || 0
-          }
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(
+            result.dailyTaskStatus
+          )
         });
       }
     } catch (error) {

@@ -76,8 +76,8 @@ export default function DailyQuestionPanel({
     (v) => v.requestHelpers.purchaseDailyQuestionRepair
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
 
   const [screen, setScreen] = useState<Screen>('loading');
@@ -688,7 +688,7 @@ export default function DailyQuestionPanel({
       }
 
       if (result.isThoughtful) {
-        onUpdateTodayStats({
+        onApplyTodayStatsProgress({
           newStats: { dailyQuestionCompleted: true }
         });
       }
@@ -719,14 +719,8 @@ export default function DailyQuestionPanel({
       setError(err?.message || 'Failed to submit. Please try again.');
       isSubmittingRef.current = false;
     }
-  }, [
-    questionId,
-    response,
-    userId,
-    submitDailyQuestionResponse,
-    onSetUserState,
-    onUpdateTodayStats
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionId, response, userId]);
 
   useEffect(() => {
     handleSubmitRef.current = handleSubmit;

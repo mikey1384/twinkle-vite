@@ -6,6 +6,7 @@ import ScopedTheme from '~/theme/ScopedTheme';
 import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
 type Focus = 'all' | 'wordle' | 'grammarbles' | 'aiStory';
+type TaskKey = Exclude<Focus, 'all'>;
 type Tone =
   | 'logoBlue'
   | 'orange'
@@ -21,6 +22,7 @@ interface BoostRow {
   tone: Tone;
   basicAchieved: boolean;
   excellenceAchieved: boolean;
+  isLoading?: boolean;
 }
 
 const compactFireAnimation = keyframes`
@@ -28,11 +30,17 @@ const compactFireAnimation = keyframes`
   50% { transform: scale(1.08) rotate(3deg); }
 `;
 
+const spinnerAnimation = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
 export default function DailyRewardBoostStrip({
   streak,
   wordle,
   grammarbles,
   aiStory,
+  loadingStates,
   focus = 'all',
   style
 }: {
@@ -40,6 +48,7 @@ export default function DailyRewardBoostStrip({
   wordle?: any;
   grammarbles?: any;
   aiStory?: any;
+  loadingStates?: Partial<Record<TaskKey, boolean>>;
   focus?: Focus;
   style?: React.CSSProperties;
 }) {
@@ -57,7 +66,8 @@ export default function DailyRewardBoostStrip({
     focus,
     wordle,
     grammarbles,
-    aiStory
+    aiStory,
+    loadingStates
   });
   const streakDays = Math.max(0, Number(streak) || 0);
 
@@ -363,7 +373,30 @@ function BoostGuideRow({
               line-height: 1.45;
             `}
           >
-            {row.description}
+            {row.isLoading ? (
+              <span
+                className={css`
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.6rem;
+                `}
+              >
+                <span
+                  className={css`
+                    width: 0.95rem;
+                    height: 0.95rem;
+                    border-radius: 999px;
+                    border: 2px solid ${Color.borderGray()};
+                    border-top-color: ${getToneColor(row.tone)};
+                    animation: ${spinnerAnimation} 0.8s linear infinite;
+                    flex-shrink: 0;
+                  `}
+                />
+                <span>{row.description}</span>
+              </span>
+            ) : (
+              row.description
+            )}
           </div>
         </div>
       </div>
@@ -430,29 +463,44 @@ function buildRows({
   focus,
   wordle,
   grammarbles,
-  aiStory
+  aiStory,
+  loadingStates
 }: {
   focus: Focus;
   wordle?: any;
   grammarbles?: any;
   aiStory?: any;
+  loadingStates?: Partial<Record<TaskKey, boolean>>;
 }) {
   const rows: BoostRow[] = [];
 
   if (focus === 'all' || focus === 'wordle') {
-    rows.push(buildWordleRow(wordle));
+    rows.push(buildWordleRow(wordle, !!loadingStates?.wordle));
   }
   if (focus === 'all' || focus === 'grammarbles') {
-    rows.push(buildGrammarblesRow(grammarbles));
+    rows.push(buildGrammarblesRow(grammarbles, !!loadingStates?.grammarbles));
   }
   if (focus === 'all' || focus === 'aiStory') {
-    rows.push(buildAIStoryRow(aiStory));
+    rows.push(buildAIStoryRow(aiStory, !!loadingStates?.aiStory));
   }
 
   return rows;
 }
 
-function buildWordleRow(wordle: any): BoostRow {
+function buildWordleRow(wordle: any, isLoading = false): BoostRow {
+  if (isLoading) {
+    return buildLoadingRow({
+      label: 'Wordle',
+      tone: 'orange'
+    });
+  }
+  if (!wordle) {
+    return buildUnavailableRow({
+      label: 'Wordle',
+      tone: 'orange'
+    });
+  }
+
   const solved = !!wordle?.isSolved;
   const failed = !!wordle?.failed;
   const numGuesses = Number(wordle?.numGuesses) || 0;
@@ -484,7 +532,20 @@ function buildWordleRow(wordle: any): BoostRow {
   };
 }
 
-function buildGrammarblesRow(grammarbles: any): BoostRow {
+function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
+  if (isLoading) {
+    return buildLoadingRow({
+      label: 'Grammarbles',
+      tone: 'magenta'
+    });
+  }
+  if (!grammarbles) {
+    return buildUnavailableRow({
+      label: 'Grammarbles',
+      tone: 'magenta'
+    });
+  }
+
   const currentLevel = Math.max(1, Number(grammarbles?.currentLevel) || 1);
   const basicAchieved = !!grammarbles?.basicQualified;
   const excellenceAchieved = !!grammarbles?.excellenceQualified;
@@ -493,8 +554,8 @@ function buildGrammarblesRow(grammarbles: any): BoostRow {
     Number(grammarbles?.comparisonScore) > 0
       ? Number(grammarbles.comparisonScore)
       : null;
-
-  let description = 'Excellence target is waiting.';
+  let title = basicAchieved ? `Lv${currentLevel} cleared` : `Clear Lv${currentLevel}`;
+  let description = 'Excellence target unavailable right now.';
   switch (grammarbles?.excellenceMode) {
     case 'baseline':
       description =
@@ -525,13 +586,16 @@ function buildGrammarblesRow(grammarbles: any): BoostRow {
         ? 'All 5 levels perfect completed.'
         : 'Excellence target: make all 5 levels perfect.';
       break;
+    case 'none':
+      title = 'Status unavailable';
+      break;
     default:
-      description = 'Excellence target is waiting.';
+      title = 'Status unavailable';
   }
 
   return {
     label: 'Grammarbles',
-    title: basicAchieved ? `Lv${currentLevel} cleared` : `Clear Lv${currentLevel}`,
+    title,
     description,
     tone: 'magenta',
     basicAchieved,
@@ -539,7 +603,20 @@ function buildGrammarblesRow(grammarbles: any): BoostRow {
   };
 }
 
-function buildAIStoryRow(aiStory: any): BoostRow {
+function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
+  if (isLoading) {
+    return buildLoadingRow({
+      label: 'AI Story',
+      tone: 'logoBlue'
+    });
+  }
+  if (!aiStory) {
+    return buildUnavailableRow({
+      label: 'AI Story',
+      tone: 'logoBlue'
+    });
+  }
+
   const currentLevel = Math.max(1, Number(aiStory?.currentLevel) || 1);
   const highestPassedLevel = Math.max(
     currentLevel,
@@ -568,6 +645,41 @@ function buildAIStoryRow(aiStory: any): BoostRow {
     tone: 'logoBlue',
     basicAchieved,
     excellenceAchieved
+  };
+}
+
+function buildLoadingRow({
+  label,
+  tone
+}: {
+  label: string;
+  tone: Tone;
+}): BoostRow {
+  return {
+    label,
+    title: 'Loading target',
+    description: 'Loading Excellence target...',
+    tone,
+    basicAchieved: false,
+    excellenceAchieved: false,
+    isLoading: true
+  };
+}
+
+function buildUnavailableRow({
+  label,
+  tone
+}: {
+  label: string;
+  tone: Tone;
+}): BoostRow {
+  return {
+    label,
+    title: 'Status unavailable',
+    description: 'Excellence target unavailable right now.',
+    tone,
+    basicAchieved: false,
+    excellenceAchieved: false
   };
 }
 

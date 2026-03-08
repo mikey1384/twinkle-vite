@@ -21,7 +21,7 @@ import {
   WORD_NOT_FOUND_MESSAGE
 } from '../constants/strings';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
-import { isMobile } from '~/helpers';
+import { buildTodayStatsPatchFromDailyTaskStatus, isMobile } from '~/helpers';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 
 const deviceIsMobile = isMobile(navigator);
@@ -77,8 +77,8 @@ export default function Game({
     (v) => v.actions.onSetWordleGuesses
   );
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const dailyTaskStreak = useNotiContext(
     (v) => v.state.todayStats.dailyTaskStreak
@@ -461,13 +461,8 @@ export default function Game({
 
   function applyDailyTaskStatus(dailyTaskStatus: any) {
     if (!dailyTaskStatus) return;
-    onUpdateTodayStats({
-      newStats: {
-        achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
-        dailyTaskStatus,
-        dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-        dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
-      }
+    onApplyTodayStatsProgress({
+      newStats: buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
     });
   }
 }

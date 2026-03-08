@@ -3,6 +3,7 @@ import Listening from './Listening';
 import MainMenu from './MainMenu';
 import Reading from './Reading';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 
 const MAX_READ_ATTEMPTS = 5;
 const MAX_LISTEN_ATTEMPTS = 5;
@@ -76,8 +77,8 @@ export default function Game({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const loadAIStoryQuestions = useAppContext(
     (v) => v.requestHelpers.loadAIStoryQuestions
@@ -229,13 +230,8 @@ export default function Game({
         });
       onSetDailyTask(dailyTaskStatus?.aiStory || dailyTask || null);
       if (dailyTaskStatus) {
-        onUpdateTodayStats({
-          newStats: {
-            achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
-            dailyTaskStatus,
-            dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-            dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
-          }
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
         });
       }
       if (newXp && newCoins) {
