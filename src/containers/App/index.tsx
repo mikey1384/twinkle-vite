@@ -50,6 +50,7 @@ import {
   buildTodayStatsForNextDay,
   getSectionFromPathname,
   isMobile,
+  toValidNextDayTimeStamp,
   returnImageFileFromUrl
 } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
@@ -105,6 +106,12 @@ export default function App() {
   );
   const adminLogs = useManagementContext((v) => v.state.adminLogs);
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const onHydrateTodayStats = useNotiContext(
+    (v) => v.actions.onHydrateTodayStats
+  );
+  const onSetTodayStatsLoading = useNotiContext(
+    (v) => v.actions.onSetTodayStatsLoading
+  );
   const achievementsObj = useAppContext((v) => v.user.state.achievementsObj);
   const onInitMyState = useAppContext((v) => v.user.actions.onInitMyState);
   const onSetTopMenuSectionSection = useHomeContext(
@@ -360,11 +367,24 @@ export default function App() {
       handleLoadTodayStats();
     }
     async function handleLoadTodayStats() {
-      const todayStatsFromServer = await fetchTodayStats();
-      if (checkUserChange(userId)) return;
-      onUpdateTodayStats({
-        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
-      });
+      if (!todayStats.loaded) {
+        onSetTodayStatsLoading(true);
+      }
+      try {
+        const todayStatsFromServer = await fetchTodayStats();
+        if (checkUserChange(userId)) return;
+        onHydrateTodayStats({
+          todayStats: buildTodayStatsFromResponse(todayStatsFromServer)
+        });
+      } catch (error) {
+        if (!checkUserChange(userId)) {
+          console.error('Failed to load today stats:', error);
+        }
+      } finally {
+        if (!checkUserChange(userId)) {
+          onSetTodayStatsLoading(false);
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twinkleXP, twinkleCoins, userId]);
@@ -629,16 +649,22 @@ export default function App() {
 
   async function handleCountdownComplete() {
     onSetDailyRewardModalShown(false);
-    const newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
-    onUpdateTodayStats({
-      newStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
+    const newNextDayTimeStamp = toValidNextDayTimeStamp(
+      await getCurrentNextDayTimeStamp()
+    );
+    if (newNextDayTimeStamp === null) {
+      console.error('Failed to resolve next day timestamp for app rollover');
+      return;
+    }
+    onHydrateTodayStats({
+      todayStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
     });
     if (!userId) return;
     try {
       const todayStatsFromServer = await fetchTodayStats();
       if (checkUserChange(userId)) return;
-      onUpdateTodayStats({
-        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
+      onHydrateTodayStats({
+        todayStats: buildTodayStatsFromResponse(todayStatsFromServer)
       });
     } catch (error) {
       if (!checkUserChange(userId)) {

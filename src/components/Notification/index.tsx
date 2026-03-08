@@ -15,7 +15,8 @@ import { scrollPositions, isRewardCollected } from '~/constants/state';
 import {
   buildTodayStatsFromResponse,
   buildTodayStatsForNextDay,
-  isMobile
+  isMobile,
+  toValidNextDayTimeStamp
 } from '~/helpers';
 const deviceIsMobile = isMobile(navigator);
 const newsLabel = 'News';
@@ -39,7 +40,9 @@ export default function Notification({
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
   );
-  const fetchTodayStats = useAppContext((v) => v.requestHelpers.fetchTodayStats);
+  const fetchTodayStats = useAppContext(
+    (v) => v.requestHelpers.fetchTodayStats
+  );
   const loadRewards = useAppContext((v) => v.requestHelpers.loadRewards);
   const userId = useKeyContext((v) => v.myState.userId);
   const myNotiState = useNotiContext((v) =>
@@ -54,6 +57,9 @@ export default function Notification({
   );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
+  );
+  const onHydrateTodayStats = useNotiContext(
+    (v) => v.actions.onHydrateTodayStats
   );
   const dailyRewardModalShown = useNotiContext(
     (v) => v.state.dailyRewardModalShown
@@ -97,7 +103,10 @@ export default function Notification({
   useEffect(() => {
     init();
     async function init() {
-      const currentNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+      const currentNextDayTimeStamp = toValidNextDayTimeStamp(
+        await getCurrentNextDayTimeStamp()
+      );
+      if (currentNextDayTimeStamp === null) return;
       if (
         todayStats?.nextDayTimeStamp &&
         todayStats?.nextDayTimeStamp !== currentNextDayTimeStamp
@@ -337,17 +346,24 @@ export default function Notification({
 
   async function handleCountdownComplete(newNextDayTimeStamp?: number) {
     onSetDailyRewardModalShown(false);
-    if (!newNextDayTimeStamp) {
-      newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
+    const resolvedNextDayTimeStamp = toValidNextDayTimeStamp(
+      newNextDayTimeStamp ?? (await getCurrentNextDayTimeStamp())
+    );
+    if (resolvedNextDayTimeStamp === null) {
+      console.error('Failed to resolve next day timestamp for Today Stats rollover');
+      return;
     }
-    onUpdateTodayStats({
-      newStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
+    onHydrateTodayStats({
+      todayStats: buildTodayStatsForNextDay(
+        resolvedNextDayTimeStamp,
+        todayStats
+      )
     });
     if (!userId) return;
     try {
       const todayStatsFromServer = await fetchTodayStats();
-      onUpdateTodayStats({
-        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
+      onHydrateTodayStats({
+        todayStats: buildTodayStatsFromResponse(todayStatsFromServer)
       });
     } catch (error) {
       console.error('Failed to refresh today stats after rollover:', error);

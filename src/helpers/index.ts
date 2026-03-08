@@ -33,6 +33,11 @@ function toNullableInt(value: any) {
   return Number.isInteger(parsed) ? parsed : null;
 }
 
+export function toValidNextDayTimeStamp(value: any) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 function clampLevel(value: any, fallback = 1) {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) return fallback;
@@ -244,22 +249,31 @@ export function buildTodayStatsForNextDay(
     previousDailyTaskStatus: todayStats?.dailyTaskStatus,
     previousDailyTaskBestStreak: todayStats?.dailyTaskBestStreak
   });
+  const dailyTaskPatch = buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus);
 
   return {
     aiCallDuration: 0,
     xpEarned: 0,
     coinsEarned: 0,
-    achievedDailyGoals: [],
-    dailyTaskStatus,
-    dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-    dailyTaskBestStreak:
-      dailyTaskStatus?.streak?.longestStreak ||
-      toNonNegativeInt(todayStats?.dailyTaskBestStreak),
+    ...dailyTaskPatch,
+    dailyTaskBestStreak: Math.max(
+      dailyTaskPatch.dailyTaskBestStreak,
+      toNonNegativeInt(todayStats?.dailyTaskBestStreak)
+    ),
     dailyHasBonus: false,
     dailyBonusAttempted: false,
     dailyQuestionCompleted: false,
     dailyRewardResultViewed: false,
     nextDayTimeStamp
+  };
+}
+
+export function buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus?: any) {
+  return {
+    achievedDailyGoals: dailyTaskStatus?.achievedDailyGoals || [],
+    dailyTaskStatus: dailyTaskStatus || null,
+    dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
+    dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0
   };
 }
 

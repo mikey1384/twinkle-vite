@@ -247,6 +247,15 @@ export default function TopMenu({
             wordle={todayStats.dailyTaskStatus?.wordle}
             grammarbles={todayStats.dailyTaskStatus?.grammarbles}
             aiStory={todayStats.dailyTaskStatus?.aiStory}
+            loadingStates={
+              todayStats.loading
+                ? {
+                    wordle: !todayStats.dailyTaskStatus?.wordle,
+                    grammarbles: !todayStats.dailyTaskStatus?.grammarbles,
+                    aiStory: !todayStats.dailyTaskStatus?.aiStory
+                  }
+                : undefined
+            }
             style={{ marginTop: '1rem' }}
           />
         )}

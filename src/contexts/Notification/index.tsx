@@ -34,6 +34,7 @@ export const initialNotiState = {
       dailyTaskBestStreak: 0,
 	    dailyQuestionCompleted: false,
 	    loaded: false,
+      loading: true,
 	    xpEarned: 0,
 	    coinsEarned: 0,
 	    showXPRankings: false,

@@ -1,3 +1,25 @@
+function mergeTodayStats(
+  state: any,
+  newStats: Record<string, any>,
+  {
+    loaded,
+    loading
+  }: {
+    loaded?: boolean;
+    loading?: boolean;
+  } = {}
+) {
+  return {
+    ...state,
+    todayStats: {
+      ...state.todayStats,
+      ...newStats,
+      ...(typeof loaded === 'boolean' ? { loaded } : {}),
+      ...(typeof loading === 'boolean' ? { loading } : {})
+    }
+  };
+}
+
 export default function NotiReducer(
   state: any,
   action: {
@@ -148,28 +170,33 @@ export default function NotiReducer(
         updateNoticeShown: action.shown
       };
     case 'UPDATE_TODAY_STATS':
+      return mergeTodayStats(state, action.newStats);
+    case 'APPLY_TODAY_STATS_PROGRESS':
+      // Canonical progress patches can unlock Today Stats rendering before
+      // the full /notification/today hydrate finishes.
+      return mergeTodayStats(state, action.newStats, { loaded: true });
+    case 'HYDRATE_TODAY_STATS':
+      return mergeTodayStats(state, action.todayStats, {
+        loaded: true,
+        loading: false
+      });
+    case 'SET_TODAY_STATS_LOADING':
+      return mergeTodayStats(state, {}, { loading: action.loading });
+    case 'RESET_TODAY_STATS':
       return {
         ...state,
         todayStats: {
-          ...state.todayStats,
-          ...action.newStats,
-          loaded: true
-        }
-      };
-	    case 'RESET_TODAY_STATS':
-	      return {
-	        ...state,
-	        todayStats: {
-	          myAchievementsObj: {},
-	          achievedDailyGoals: [],
-	          dailyTaskStatus: null,
-	          dailyTaskStreak: 0,
-	          dailyTaskBestStreak: 0,
-	          dailyQuestionCompleted: false,
-	          loaded: false,
-	          xpEarned: 0,
-	          coinsEarned: 0,
-	          showXPRankings: false,
+          myAchievementsObj: {},
+          achievedDailyGoals: [],
+          dailyTaskStatus: null,
+          dailyTaskStreak: 0,
+          dailyTaskBestStreak: 0,
+          dailyQuestionCompleted: false,
+          loaded: false,
+          loading: true,
+          xpEarned: 0,
+          coinsEarned: 0,
+          showXPRankings: false,
           todayXPRankingLoaded: false,
           todayXPRanking: [],
           todayXPRankingHasMore: false

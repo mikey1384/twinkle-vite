@@ -13,7 +13,8 @@ import Icon from '~/components/Icon';
 import {
   buildTodayStatsFromResponse,
   buildTodayStatsForNextDay,
-  checkMicrophoneAccess
+  checkMicrophoneAccess,
+  toValidNextDayTimeStamp
 } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
 import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
@@ -208,8 +209,8 @@ export default function CallZero({
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onHydrateTodayStats = useNotiContext(
+    (v) => v.actions.onHydrateTodayStats
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const nextDayTimeStamp = useNotiContext(
@@ -588,15 +589,21 @@ export default function CallZero({
   );
 
   async function handleCountdownComplete() {
-    const newNextDayTimeStamp = await getCurrentNextDayTimeStamp();
-    onUpdateTodayStats({
-      newStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
+    const newNextDayTimeStamp = toValidNextDayTimeStamp(
+      await getCurrentNextDayTimeStamp()
+    );
+    if (newNextDayTimeStamp === null) {
+      console.error('Failed to resolve next day timestamp for call rollover');
+      return;
+    }
+    onHydrateTodayStats({
+      todayStats: buildTodayStatsForNextDay(newNextDayTimeStamp, todayStats)
     });
     if (!userId) return;
     try {
       const todayStatsFromServer = await fetchTodayStats();
-      onUpdateTodayStats({
-        newStats: buildTodayStatsFromResponse(todayStatsFromServer)
+      onHydrateTodayStats({
+        todayStats: buildTodayStatsFromResponse(todayStatsFromServer)
       });
     } catch (error) {
       console.error('Failed to refresh today stats after rollover:', error);

@@ -10,7 +10,7 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
-import { isMobile } from '~/helpers';
+import { buildTodayStatsPatchFromDailyTaskStatus, isMobile } from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import {
@@ -65,8 +65,8 @@ export default function StartScreen({
   const dailyTaskStreak = useNotiContext(
     (v) => v.state.todayStats.dailyTaskStreak
   );
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const userId = useKeyContext((v) => v.myState.userId);
   const [dailyTask, setDailyTask] = useState<any>(null);
@@ -154,12 +154,9 @@ export default function StartScreen({
           if (typeof dailyTaskUnlocked === 'boolean') {
             onSetDailyTaskUnlocked?.(dailyTaskUnlocked);
           }
-          onUpdateTodayStats({
+          onApplyTodayStatsProgress({
             newStats: {
-              achievedDailyGoals: dailyTaskStatus?.achievedDailyGoals || [],
-              dailyTaskStatus: dailyTaskStatus || null,
-              dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-              dailyTaskBestStreak: dailyTaskStatus?.streak?.longestStreak || 0,
+              ...buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus),
               nextDayTimeStamp: newNextDayTimeStamp
             }
           });
@@ -465,6 +462,7 @@ export default function StartScreen({
           focus="grammarbles"
           streak={dailyTaskStreak}
           grammarbles={dailyTask}
+          loadingStates={{ grammarbles: !loaded }}
           style={{ marginTop: '2rem', maxWidth: '46rem' }}
         />
         {loaded && (

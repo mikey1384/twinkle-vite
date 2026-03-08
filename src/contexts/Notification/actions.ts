@@ -176,6 +176,24 @@ export default function NotiActions(dispatch: Dispatch) {
         type: 'UPDATE_TODAY_STATS',
         newStats
       });
+    },
+    onApplyTodayStatsProgress({ newStats }: { newStats: object }) {
+      return dispatch({
+        type: 'APPLY_TODAY_STATS_PROGRESS',
+        newStats
+      });
+    },
+    onHydrateTodayStats({ todayStats }: { todayStats: object }) {
+      return dispatch({
+        type: 'HYDRATE_TODAY_STATS',
+        todayStats
+      });
+    },
+    onSetTodayStatsLoading(loading: boolean) {
+      return dispatch({
+        type: 'SET_TODAY_STATS_LOADING',
+        loading
+      });
     }
   };
 }

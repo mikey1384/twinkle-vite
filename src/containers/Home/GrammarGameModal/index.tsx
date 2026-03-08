@@ -15,6 +15,7 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 
 export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -32,8 +33,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
     (v) => v.requestHelpers.cancelGrammarGame
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const onUpdateTodayStats = useNotiContext(
-    (v) => v.actions.onUpdateTodayStats
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
   );
   const [activeTab, setActiveTab] = useState('game');
   const [rankingsTab, setRankingsTab] = useState('all');
@@ -389,14 +390,8 @@ export default function GrammarGameModal({ onHide }: { onHide: () => void }) {
               newState
             });
             if (dailyTaskStatus) {
-              onUpdateTodayStats({
-                newStats: {
-                  achievedDailyGoals: dailyTaskStatus.achievedDailyGoals || [],
-                  dailyTaskStatus,
-                  dailyTaskStreak: dailyTaskStatus?.streak?.currentStreak || 0,
-                  dailyTaskBestStreak:
-                    dailyTaskStatus?.streak?.longestStreak || 0
-                }
+              onApplyTodayStatsProgress({
+                newStats: buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus)
               });
             }
           })(),
