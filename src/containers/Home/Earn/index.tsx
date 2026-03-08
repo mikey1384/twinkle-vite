@@ -27,6 +27,7 @@ export default function Earn() {
   return (
     <ErrorBoundary componentPath="Home/Earn/index">
       <TopMenu
+        showDailyRewardBoostStrip={false}
         style={{ marginBottom: '3.5rem' }}
         onPlayAIStories={() => onSetAIStoriesModalShown(true)}
         onPlayGrammarGame={() => onSetGrammarGameModalShown(true)}

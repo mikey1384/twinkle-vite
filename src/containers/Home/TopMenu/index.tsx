@@ -36,12 +36,14 @@ export default function TopMenu({
   onPlayAIStories,
   onPlayGrammarGame,
   onDailyQuestionClick,
+  showDailyRewardBoostStrip = true,
   style
 }: {
   onInputModalButtonClick: (v?: string) => void;
   onPlayAIStories: () => void;
   onPlayGrammarGame: () => void;
   onDailyQuestionClick: () => void;
+  showDailyRewardBoostStrip?: boolean;
   style?: React.CSSProperties;
 }) {
   const navigate = useNavigate();
@@ -241,7 +243,7 @@ export default function TopMenu({
           today?
         </p>
         <InputPanel onInputModalButtonClick={onInputModalButtonClick} />
-        {!!userId && (
+        {!!userId && showDailyRewardBoostStrip && (
           <DailyRewardBoostStrip
             streak={todayStats.dailyTaskStreak}
             wordle={todayStats.dailyTaskStatus?.wordle}
