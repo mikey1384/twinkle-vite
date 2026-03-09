@@ -301,6 +301,43 @@ export default function Body({
       : targetObj.subject?.rewardLevel || rootRewardLevel || 0;
   }, [contentObj.byUser, rootObj.rewardLevel, rootType, targetObj.subject]);
 
+  const rewardContext = useMemo(() => {
+    if (
+      contentObj.byUser ||
+      (contentType !== 'video' && contentType !== 'url')
+    ) {
+      return {};
+    }
+    if (
+      targetObj.subject?.id &&
+      Number(targetObj.subject?.rewardLevel) > 0
+    ) {
+      return {
+        rewardContextType: 'subject',
+        rewardContextId: targetObj.subject.id
+      };
+    }
+    if (
+      rootId &&
+      (rootType === 'subject' || rootType === 'video' || rootType === 'url') &&
+      finalRewardLevel > 0
+    ) {
+      return {
+        rewardContextType: rootType,
+        rewardContextId: rootId
+      };
+    }
+    return {};
+  }, [
+    contentObj.byUser,
+    contentType,
+    finalRewardLevel,
+    rootId,
+    rootType,
+    targetObj.subject?.id,
+    targetObj.subject?.rewardLevel
+  ]);
+
   const disableReason = useMemo(() => {
     const isClosedBy = contentObj?.isClosedBy || rootObj?.isClosedBy;
     if (isClosedBy) {
@@ -441,6 +478,8 @@ export default function Body({
               )
             }
             rewardLevel={finalRewardLevel}
+            rewardContextType={rewardContext.rewardContextType}
+            rewardContextId={rewardContext.rewardContextId}
             uploaderLevel={uploader.level}
             uploaderId={uploader.id}
             rewards={rewards}

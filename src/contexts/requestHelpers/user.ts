@@ -681,6 +681,8 @@ export default function userRequestHelpers({
       contentId,
       rootType,
       rootId,
+      rewardContextType,
+      rewardContextId,
       uploaderId,
       rewardType
     }: {
@@ -689,10 +691,12 @@ export default function userRequestHelpers({
       amount: number;
       contentType: string;
       contentId: number;
-      rootType: string;
-      rootId: number;
+      rootType?: string;
+      rootId?: number;
+      rewardContextType?: string;
+      rewardContextId?: number;
       uploaderId: number;
-      rewardType: string;
+      rewardType?: string;
     }) {
       try {
         const {
@@ -707,6 +711,8 @@ export default function userRequestHelpers({
             contentId,
             rootType,
             rootId,
+            rewardContextType,
+            rewardContextId,
             uploaderId,
             rewardType
           },

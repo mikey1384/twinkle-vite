@@ -19,7 +19,8 @@ import {
   useContentContext,
   useInputContext,
   useKeyContext
-} from '~/contexts';import { useRoleColor } from '~/theme/useRoleColor';
+} from '~/contexts';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 const clearLabel = 'Clear';
 const rewardLabel = 'Reward';
@@ -29,6 +30,8 @@ export default function XPRewardInterface({
   contentType,
   innerRef,
   rewardLevel,
+  rewardContextId,
+  rewardContextType,
   noPadding,
   onReward,
   rewards,
@@ -39,6 +42,8 @@ export default function XPRewardInterface({
   contentType: string;
   innerRef: any;
   rewardLevel: number;
+  rewardContextId?: number;
+  rewardContextType?: string;
   noPadding?: boolean;
   onReward: () => void;
   rewards: any[];
@@ -297,6 +302,8 @@ export default function XPRewardInterface({
         amount: selectedAmount,
         contentType,
         contentId,
+        rewardContextType,
+        rewardContextId,
         uploaderId
       });
       if (alreadyRewarded) {
