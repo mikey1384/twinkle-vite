@@ -38,10 +38,12 @@ const deviceIsMobile = isMobile(navigator);
 export default function Chess({
   isCountdownActive,
   channelId,
+  forceSpoilerOff,
   gameWinnerId,
   interactable,
   initialState,
   isFromModal,
+  latestChessBoardMessageId,
   messageId,
   lastChessMessageId,
   loaded,
@@ -68,10 +70,12 @@ export default function Chess({
   channelId: number;
   rewindRequestMessageSenderId?: number;
   isCountdownActive?: boolean;
+  forceSpoilerOff?: boolean;
   gameWinnerId?: number;
   interactable?: boolean;
   initialState: any;
   isFromModal?: boolean;
+  latestChessBoardMessageId?: number;
   lastChessMessageId?: number;
   loaded: boolean;
   messageId?: number;
@@ -909,7 +913,10 @@ export default function Chess({
         onClick: () => setThemeModalShown(true)
       }
     ].filter(Boolean) as any[];
-    if (lastChessMessageId !== messageId && !!initialState?.previousState) {
+    if (
+      latestChessBoardMessageId !== messageId &&
+      !!initialState?.previousState
+    ) {
       result.push({
         label: (
           <div
@@ -951,6 +958,7 @@ export default function Chess({
     isRewinded,
     isStalemate,
     lastChessMessageId,
+    latestChessBoardMessageId,
     messageId,
     onDiscussClick,
     onRewindClick,
@@ -1314,7 +1322,7 @@ export default function Chess({
         >
           <Game
             loading={!loaded || (!isDiscussion && !opponentId)}
-            spoilerOff={!!gameWinnerId || chessBoardShown}
+            spoilerOff={!!forceSpoilerOff || !!gameWinnerId || chessBoardShown}
             interactable={!!interactable && !newChessState && !userMadeLastMove}
             squares={squares}
             myColor={myColor}

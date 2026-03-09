@@ -46,6 +46,10 @@ import {
   useKeyContext
 } from '~/contexts';
 import { User } from '~/types';
+import {
+  getLatestGameBoundaryMessageId,
+  getPendingTerminalToken
+} from '~/containers/Chat/helpers/gameMessageIds';
 import LocalContext from '../../Context';
 const CALL_SCREEN_HEIGHT = '30%';
 const deviceIsMobile = isMobile(navigator);
@@ -131,8 +135,11 @@ export default function MessagesContainer({
       onSetWordleModalShown,
       onSubmitMessage,
       onUpdateChannelPathIdHash,
+      onUpdateLastChessMessageId,
+      onUpdateLastChessMoveViewerId,
       onUpdateLastOmokMessageId,
       onUpdateLastOmokMoveViewerId,
+      onUpdateRecentChessMessage,
       onUpdateRecentOmokMessage
     },
     requests: {
@@ -227,8 +234,13 @@ export default function MessagesContainer({
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
+  // Used only to ignore stale countdown ticks after a newer game event (move or
+  // terminal result) has already arrived for the same channel/game type.
   const latestBoardMessageIdRef = useRef<
     Record<number, Partial<Record<'chess' | 'omok', number>>>
+  >({});
+  const pendingTerminalTokenRef = useRef<
+    Record<number, Partial<Record<'chess' | 'omok', string>>>
   >({});
   const [searchText, setSearchText] = useState('');
 
@@ -517,9 +529,21 @@ export default function MessagesContainer({
     const channelId = Number(currentChannel?.id || selectedChannelId || 0);
     if (!channelId) return;
     const latestChessMessageId = Number(
-      currentChannel?.lastChessMessageId || 0
+      getLatestGameBoundaryMessageId(currentChannel, 'chess') || 0
     );
-    const latestOmokMessageId = Number(currentChannel?.lastOmokMessageId || 0);
+    const latestOmokMessageId = Number(
+      getLatestGameBoundaryMessageId(currentChannel, 'omok') || 0
+    );
+    setPendingTerminalToken({
+      channelId,
+      gameType: 'chess',
+      token: getPendingTerminalToken(currentChannel, 'chess')
+    });
+    setPendingTerminalToken({
+      channelId,
+      gameType: 'omok',
+      token: getPendingTerminalToken(currentChannel, 'omok')
+    });
     if (latestChessMessageId > 0) {
       setLatestBoardMessageId({
         channelId,
@@ -538,7 +562,13 @@ export default function MessagesContainer({
   }, [
     currentChannel?.id,
     currentChannel?.lastChessMessageId,
+    currentChannel?.lastChessTerminalMessageId,
+    currentChannel?.lastChessPendingTerminalToken,
     currentChannel?.lastOmokMessageId,
+    currentChannel?.lastOmokTerminalMessageId,
+    currentChannel?.lastOmokPendingTerminalToken,
+    currentChannel?.latestChessBoardMessageId,
+    currentChannel?.latestOmokBoardMessageId,
     selectedChannelId
   ]);
 
@@ -595,6 +625,12 @@ export default function MessagesContainer({
       gameType?: 'chess' | 'omok';
       startMessageId?: number;
     }) {
+      if (hasPendingTerminalBoundary(channelId, gameType)) {
+        // A live terminal row arrived before MySQL assigned a numeric id. Any
+        // later countdown packet belongs to the finished game and must be ignored.
+        clearBoardCountdown(channelId, gameType);
+        return;
+      }
       const normalizedStartMessageId = Number(startMessageId || 0);
       const latestKnownMessageId = getLatestBoardMessageId(channelId, gameType);
       if (
@@ -655,11 +691,33 @@ export default function MessagesContainer({
         } else {
           gameType = 'chess';
         }
+        const isTerminalMessage =
+          typeof message?.gameWinnerId === 'number' ||
+          !!message?.isDraw ||
+          !!message?.isAbort ||
+          !!message?.isResign;
         if (normalizedChannelId > 0 && normalizedMessageId > 0) {
           setLatestBoardMessageId({
             channelId: normalizedChannelId,
             gameType,
             messageId: normalizedMessageId
+          });
+          if (isTerminalMessage) {
+            setPendingTerminalToken({
+              channelId: normalizedChannelId,
+              gameType,
+              token: null
+            });
+          }
+        } else if (normalizedChannelId > 0 && isTerminalMessage) {
+          setPendingTerminalToken({
+            channelId: normalizedChannelId,
+            gameType,
+            token: getPendingTerminalBoundaryToken({
+              channelId: normalizedChannelId,
+              gameType,
+              message
+            })
           });
         }
         // Clear the countdown store so CountdownDisplay stops showing the value
@@ -837,6 +895,21 @@ export default function MessagesContainer({
             messageId,
             message: messagePayload
           });
+          onUpdateLastChessMessageId({
+            channelId: selectedChannelId,
+            messageId: Number(messageId),
+            ...(typeof gameWinnerId === 'number'
+              ? { terminalMessageId: Number(messageId) }
+              : {})
+          });
+          onUpdateLastChessMoveViewerId({
+            channelId: selectedChannelId,
+            viewerId: userId
+          });
+          onUpdateRecentChessMessage({
+            channelId: selectedChannelId,
+            message: messagePayload
+          });
           onScrollToBottom();
           onSetChessModalShown(false);
         } else {
@@ -951,7 +1024,10 @@ export default function MessagesContainer({
           });
           onUpdateLastOmokMessageId({
             channelId: selectedChannelId,
-            messageId
+            messageId: Number(messageId),
+            ...(typeof gameWinnerId === 'number'
+              ? { terminalMessageId: Number(messageId) }
+              : {})
           });
           onUpdateLastOmokMoveViewerId({
             channelId: selectedChannelId,
@@ -1973,6 +2049,11 @@ export default function MessagesContainer({
       ...(latestBoardMessageIdRef.current[normalizedChannelId] || {}),
       [gameType]: normalizedMessageId
     };
+    setPendingTerminalToken({
+      channelId: normalizedChannelId,
+      gameType,
+      token: null
+    });
   }
 
   function getLatestBoardMessageId(
@@ -1982,6 +2063,78 @@ export default function MessagesContainer({
     return Number(
       latestBoardMessageIdRef.current[Number(channelId || 0)]?.[gameType] || 0
     );
+  }
+
+  function setPendingTerminalToken({
+    channelId,
+    gameType,
+    token
+  }: {
+    channelId: number;
+    gameType: 'chess' | 'omok';
+    token: string | null;
+  }) {
+    const normalizedChannelId = Number(channelId || 0);
+    if (!normalizedChannelId) return;
+    const currentEntry = pendingTerminalTokenRef.current[normalizedChannelId] || {};
+    if (!token) {
+      if (!currentEntry[gameType]) return;
+      const nextEntry = { ...currentEntry };
+      delete nextEntry[gameType];
+      if (Object.keys(nextEntry).length === 0) {
+        delete pendingTerminalTokenRef.current[normalizedChannelId];
+      } else {
+        pendingTerminalTokenRef.current[normalizedChannelId] = nextEntry;
+      }
+      return;
+    }
+    pendingTerminalTokenRef.current[normalizedChannelId] = {
+      ...currentEntry,
+      [gameType]: token
+    };
+  }
+
+  function hasPendingTerminalBoundary(
+    channelId: number,
+    gameType: 'chess' | 'omok'
+  ) {
+    return Boolean(
+      pendingTerminalTokenRef.current[Number(channelId || 0)]?.[gameType]
+    );
+  }
+
+  function getPendingTerminalBoundaryToken({
+    channelId,
+    gameType,
+    message
+  }: {
+    channelId: number;
+    gameType: 'chess' | 'omok';
+    message: any;
+  }) {
+    const explicitId =
+      typeof message?.id === 'string' && message.id
+        ? message.id
+        : typeof message?.id === 'number' && message.id > 0
+        ? String(message.id)
+        : null;
+    if (explicitId) return explicitId;
+    const content =
+      typeof message?.content === 'string' ? message.content : 'terminal';
+    const timeStamp = Number(message?.timeStamp || 0);
+    const winnerId =
+      typeof message?.gameWinnerId === 'number' ? message.gameWinnerId : 0;
+    return [
+      'pending-terminal',
+      channelId,
+      gameType,
+      timeStamp,
+      winnerId,
+      Number(Boolean(message?.isDraw)),
+      Number(Boolean(message?.isAbort)),
+      Number(Boolean(message?.isResign)),
+      content
+    ].join(':');
   }
 
   function clearBoardCountdown(channelId: number, gameType: 'chess' | 'omok') {

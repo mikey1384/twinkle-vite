@@ -9,7 +9,7 @@ export default function TargetChessPosition({
   chessState,
   channelId,
   gameState,
-  lastChessMessageId,
+  latestChessBoardMessageId,
   messageId,
   myId,
   userId,
@@ -22,7 +22,7 @@ export default function TargetChessPosition({
   chessState: any;
   channelId: number;
   gameState: any;
-  lastChessMessageId: number;
+  latestChessBoardMessageId: number;
   messageId: number;
   myId: number;
   userId: number;
@@ -80,7 +80,7 @@ export default function TargetChessPosition({
         }}
       >
         {!chessState.isRewindRequest &&
-          Number(chessState.messageId) !== Number(lastChessMessageId) &&
+          Number(chessState.messageId) !== Number(latestChessBoardMessageId) &&
           chessState.previousState && (
             <ProposeButton
               style={{ marginTop: '1rem', marginBottom: '1rem' }}

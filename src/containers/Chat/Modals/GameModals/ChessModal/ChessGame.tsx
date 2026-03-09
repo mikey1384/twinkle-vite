@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import Chess from '../../../Chess';
 import { getUserChatSquareColors } from '../../../Chess/helpers/theme';
+import { getLatestGameBoundaryMessageId } from '~/containers/Chat/helpers/gameMessageIds';
 
 export default function ChessGame({
   boardState,
   isCountdownActive,
   channelId,
+  gameFinished,
   currentChannel,
   initialState,
   message,
@@ -28,6 +30,7 @@ export default function ChessGame({
   boardState: any;
   isCountdownActive?: boolean;
   channelId: number;
+  gameFinished?: boolean;
   currentChannel: any;
   initialState: any;
   message: any;
@@ -95,10 +98,14 @@ export default function ChessGame({
       currentChannel.lastChessMoveViewerId === myId;
     const isLoadingOrNoInitialState =
       !loading.current && !initialState?.move?.number;
+    const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
+      currentChannel,
+      'chess'
+    );
     const isOlderMessage =
       message?.id &&
-      currentChannel.lastChessMessageId &&
-      message?.id < currentChannel?.lastChessMessageId;
+      latestBoundaryMessageId &&
+      message?.id < latestBoundaryMessageId;
 
     return (
       isLoadingOrNoInitialState ||
@@ -109,8 +116,7 @@ export default function ChessGame({
   }, [
     isCountdownActive,
     initialState?.move?.number,
-    currentChannel?.lastChessMessageId,
-    currentChannel?.lastChessMoveViewerId,
+    currentChannel,
     message?.id,
     myId,
     userMadeLastMove
@@ -121,6 +127,7 @@ export default function ChessGame({
       isFromModal
       channelId={channelId}
       isCountdownActive={isCountdownActive}
+      forceSpoilerOff={!!gameFinished}
       interactable={
         typeof interactableOverride === 'boolean'
           ? interactableOverride

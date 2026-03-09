@@ -53,6 +53,10 @@ import {
   BookmarkView
 } from '~/constants/defaultValues';
 import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
+import {
+  getLatestBoardMessageId,
+  getLatestGameBoundaryMessageId
+} from '~/containers/Chat/helpers/gameMessageIds';
 
 const deviceIsMobile = isMobile(navigator);
 const replyLabel = 'Reply';
@@ -313,10 +317,30 @@ function MessageBody({
   let appliedUsername = memberName || username;
   let appliedProfilePicUrl = memberProfilePicUrl || profilePicUrl;
 
-  const isOmokMsg = useMemo(() => !!omokState, [omokState]);
-  const isChessBoardMsg = useMemo(
-    () => Boolean(isChessMsg && !isOmokMsg),
-    [isChessMsg, isOmokMsg]
+  const hasOmokBoardState = useMemo(() => Boolean(omokState), [omokState]);
+  const hasChessBoardState = useMemo(() => Boolean(chessState), [chessState]);
+  const gameTypeForMessage = useMemo(() => {
+    if (hasOmokBoardState) return 'omok';
+    if (hasChessBoardState) return 'chess';
+    if (message.gameType === 'omok') return 'omok';
+    if (message.gameType === 'chess') return 'chess';
+    const lc = (content || '').toLowerCase();
+    if (lc.includes('omok')) return 'omok';
+    if (lc.includes('chess')) return 'chess';
+    return 'chess';
+  }, [content, hasChessBoardState, hasOmokBoardState, message.gameType]);
+  const isTerminalGameMessage = useMemo(
+    () =>
+      typeof gameWinnerId === 'number' || isDraw || isAbort || isResign,
+    [gameWinnerId, isDraw, isAbort, isResign]
+  );
+  const isTerminalOmokMessage = useMemo(
+    () => isTerminalGameMessage && gameTypeForMessage === 'omok',
+    [gameTypeForMessage, isTerminalGameMessage]
+  );
+  const isTerminalChessMessage = useMemo(
+    () => isTerminalGameMessage && gameTypeForMessage === 'chess',
+    [gameTypeForMessage, isTerminalGameMessage]
   );
 
   if (fileToUpload && !userId) {
@@ -325,28 +349,52 @@ function MessageBody({
     appliedProfilePicUrl = myProfilePicUrl;
   }
   useEffect(() => {
-    if (isOmokMsg && typeof messageId === 'number') {
-      onUpdateLastOmokMessageId({ channelId, messageId });
-    } else if (isChessBoardMsg && typeof messageId === 'number') {
-      onUpdateLastChessMessageId({ channelId, messageId });
-    } else if (gameWinnerId || isDraw) {
-      onUpdateLastChessMessageId({
-        channelId,
-        messageId: null
-      });
+    // Messages render newest-first, so terminal rows establish the boundary
+    // before any older board rows from the same finished game mount.
+    if (typeof messageId === 'number' && hasOmokBoardState) {
       onUpdateLastOmokMessageId({
         channelId,
-        messageId: null
+        messageId,
+        ...(isTerminalOmokMessage ? { terminalMessageId: messageId } : {})
       });
+    } else if (typeof messageId === 'number' && hasChessBoardState) {
+      onUpdateLastChessMessageId({
+        channelId,
+        messageId,
+        ...(isTerminalChessMessage ? { terminalMessageId: messageId } : {})
+      });
+    } else if (isTerminalGameMessage) {
+      if (gameTypeForMessage === 'omok') {
+        onUpdateLastOmokMessageId({
+          channelId,
+          messageId: null,
+          terminalMessageId: messageId
+        });
+      } else {
+        onUpdateLastChessMessageId({
+          channelId,
+          messageId: null,
+          terminalMessageId: messageId
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, isOmokMsg, isChessBoardMsg, messageId, gameWinnerId, isDraw]);
+  }, [
+    channelId,
+    gameTypeForMessage,
+    hasOmokBoardState,
+    hasChessBoardState,
+    isTerminalChessMessage,
+    isTerminalGameMessage,
+    isTerminalOmokMessage,
+    messageId
+  ]);
 
   useEffect(() => {
-    if (!message.id && isChessBoardMsg) {
+    if (!message.id && hasChessBoardState) {
       onUpdateRecentChessMessage({ channelId, message });
     }
-    if (!message.id && isOmokMsg) {
+    if (!message.id && hasOmokBoardState) {
       onUpdateRecentOmokMessage({ channelId, message });
     }
     if (
@@ -468,17 +516,21 @@ function MessageBody({
       return true;
     }
     const userMadeThisMove = chessState?.move?.by === myId;
-    const lastMessageId = currentChannel?.lastChessMessageId;
+    const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'chess');
+    const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
+      currentChannel,
+      'chess'
+    );
     const userIsTheLastMoveViewer =
       currentChannel?.lastChessMoveViewerId === myId &&
-      messageId === lastMessageId;
+      messageId === latestBoardMessageId;
     if (
       userMadeThisMove ||
       userIsTheLastMoveViewer ||
       !!moveViewTimeStamp ||
       (typeof messageId === 'number' &&
-        typeof lastMessageId === 'number' &&
-        messageId < lastMessageId)
+        typeof latestBoundaryMessageId === 'number' &&
+        messageId < latestBoundaryMessageId)
     ) {
       return true;
     }
@@ -486,8 +538,7 @@ function MessageBody({
   }, [
     isChessCountdownActive,
     chessState?.move?.by,
-    currentChannel?.lastChessMessageId,
-    currentChannel?.lastChessMoveViewerId,
+    currentChannel,
     messageId,
     moveViewTimeStamp,
     myId
@@ -498,24 +549,27 @@ function MessageBody({
       return true;
     }
     const userMadeThisMove = omokState?.move?.by === myId;
-    const lastMessageId = currentChannel?.lastOmokMessageId;
+    const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'omok');
+    const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
+      currentChannel,
+      'omok'
+    );
     const userIsTheLastMoveViewer =
       currentChannel?.lastOmokMoveViewerId === myId &&
-      messageId === lastMessageId;
+      messageId === latestBoardMessageId;
     if (
       userMadeThisMove ||
       userIsTheLastMoveViewer ||
       !!moveViewTimeStamp ||
       (typeof messageId === 'number' &&
-        typeof lastMessageId === 'number' &&
-        messageId < lastMessageId)
+        typeof latestBoundaryMessageId === 'number' &&
+        messageId < latestBoundaryMessageId)
     ) {
       return true;
     }
     return false;
   }, [
-    currentChannel?.lastOmokMessageId,
-    currentChannel?.lastOmokMoveViewerId,
+    currentChannel,
     messageId,
     moveViewTimeStamp,
     myId,
@@ -707,13 +761,6 @@ function MessageBody({
     }
     return !!targetSubject;
   }, [currentChannel?.id, currentChannel?.selectedTab, targetSubject]);
-
-  const gameTypeForResult = useMemo(() => {
-    const lc = (content || '').toLowerCase();
-    if (lc.includes('omok')) return 'omok';
-    if (lc.includes('chess')) return 'chess';
-    return 'chess';
-  }, [content]);
 
   const handleChessSpoilerClick = useCallback(async () => {
     if (spoilerClickedRef.current) return;
@@ -926,7 +973,7 @@ function MessageBody({
         isAbort={!!isAbort}
         isResign={!!isResign}
         isDraw={!!isDraw}
-        gameType={gameTypeForResult as 'chess' | 'omok'}
+        gameType={gameTypeForMessage as 'chess' | 'omok'}
         omokState={omokState}
       />
     );
@@ -1046,7 +1093,7 @@ function MessageBody({
                   username={appliedUsername}
                   onClick={onChessBoardClick}
                 />
-              ) : isOmokMsg ? (
+              ) : hasOmokBoardState ? (
                 <Omok
                   channelId={channelId}
                   isCountdownActive={isOmokCountdownActive}
@@ -1068,7 +1115,7 @@ function MessageBody({
                   displaySize="inline"
                   style={{ marginTop: '1rem', width: '100%' }}
                 />
-              ) : isChessBoardMsg ? (
+              ) : hasChessBoardState ? (
                 <Chess
                   key={chessThemeVersion}
                   loaded
@@ -1081,6 +1128,9 @@ function MessageBody({
                   myId={myId}
                   initialState={chessState}
                   lastChessMessageId={currentChannel.lastChessMessageId}
+                  latestChessBoardMessageId={
+                    currentChannel.latestChessBoardMessageId
+                  }
                   onBoardClick={onChessBoardClick}
                   onRewindClick={() =>
                     onRequestRewind({
@@ -1127,7 +1177,9 @@ function MessageBody({
                       userId={userId}
                       username={appliedUsername}
                       gameState={currentChannel?.gameState?.chess || {}}
-                      lastChessMessageId={currentChannel.lastChessMessageId}
+                      latestChessBoardMessageId={
+                        currentChannel.latestChessBoardMessageId
+                      }
                       onCancelRewindRequest={onCancelRewindRequest}
                       onAcceptRewind={onAcceptRewind}
                       onDeclineRewind={onDeclineRewind}

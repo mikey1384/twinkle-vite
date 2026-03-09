@@ -2029,15 +2029,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onUpdateLastChessMessageId({
       channelId,
-      messageId
+      messageId,
+      terminalMessageId
     }: {
       channelId: number;
-      messageId: number;
+      messageId: number | null;
+      terminalMessageId?: number | string | null;
     }) {
       return dispatch({
         type: 'UPDATE_LAST_CHESS_MESSAGE_ID',
         channelId,
-        messageId
+        messageId,
+        terminalMessageId
       });
     },
     onUpdateLastChessMoveViewerId({
@@ -2055,15 +2058,18 @@ export default function ChatActions(dispatch: Dispatch) {
     },
     onUpdateLastOmokMessageId({
       channelId,
-      messageId
+      messageId,
+      terminalMessageId
     }: {
       channelId: number;
-      messageId: number;
+      messageId: number | null;
+      terminalMessageId?: number | string | null;
     }) {
       return dispatch({
         type: 'UPDATE_LAST_OMOK_MESSAGE_ID',
         channelId,
-        messageId
+        messageId,
+        terminalMessageId
       });
     },
     onUpdateLastOmokMoveViewerId({
