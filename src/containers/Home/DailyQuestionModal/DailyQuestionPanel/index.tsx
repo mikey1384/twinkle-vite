@@ -20,6 +20,15 @@ type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
 
 const INACTIVITY_LIMIT = 10;
 const MIN_RESPONSE_LENGTH = 50;
+const PROGRESS_TICK_MS = 80;
+const PROGRESS_MILESTONE_HOLD = 0.8;
+const QUESTION_PROGRESS_DURATIONS = {
+  early: 45000,
+  middle: 30000,
+  late: 35000
+} as const;
+const GRADING_DURATION_MULTIPLIER = 1.25;
+const MIN_GRADING_DURATION_MS = 12000;
 
 // Typing metadata for anti-cheat - keep it simple, calculate at submit
 interface TypingMetadata {
@@ -161,13 +170,11 @@ export default function DailyQuestionPanel({
       animationRef: React.RefObject<NodeJS.Timeout | null>,
       duration: number = 10000
     ) {
-      // Clear any existing animation
       if (animationRef.current) {
         clearInterval(animationRef.current);
         animationRef.current = null;
       }
 
-      // If going backwards, jump immediately
       if (newTarget <= currentRef.current) {
         currentRef.current = newTarget;
         targetRef.current = newTarget;
@@ -175,39 +182,44 @@ export default function DailyQuestionPanel({
         return;
       }
 
-      // Jump to the previous target first (complete the previous stage)
-      const previousTarget = targetRef.current;
-      if (previousTarget > currentRef.current) {
-        currentRef.current = previousTarget;
-        setter(previousTarget);
-      }
-
-      // Now animate from the previous target to the new target
       const startValue = currentRef.current;
       targetRef.current = newTarget;
-      const difference = newTarget - startValue;
-      const steps = 60; // 60 steps for smooth animation
-      const stepDuration = duration / steps;
-      let currentStep = 0;
+      const effectiveTarget =
+        newTarget >= 100
+          ? 100 - PROGRESS_MILESTONE_HOLD
+          : Math.max(startValue, newTarget - PROGRESS_MILESTONE_HOLD);
+      const startedAt = Date.now();
 
       animationRef.current = setInterval(() => {
-        currentStep++;
-        // Ease-out curve for more natural feel
-        const easeProgress = 1 - Math.pow(1 - currentStep / steps, 2);
-        const newValue = Math.round(startValue + difference * easeProgress);
+        const elapsed = Date.now() - startedAt;
+        const normalizedTime = Math.max(elapsed / duration, 0);
+        const easedProgress = 1 - Math.exp(-4 * normalizedTime);
+        const nextValue =
+          startValue + (effectiveTarget - startValue) * easedProgress;
+        const normalizedValue = Math.min(
+          effectiveTarget,
+          Math.max(currentRef.current, nextValue)
+        );
+        const displayValue = Math.round(normalizedValue * 10) / 10;
 
-        currentRef.current = newValue;
-        setter(newValue);
+        if (displayValue > currentRef.current) {
+          currentRef.current = displayValue;
+          setter(displayValue);
+        }
 
-        if (currentStep >= steps) {
+        if (
+          elapsed >= duration * 1.5 ||
+          effectiveTarget - normalizedValue <= 0.05
+        ) {
           if (animationRef.current) {
             clearInterval(animationRef.current);
             animationRef.current = null;
           }
-          currentRef.current = newTarget;
-          setter(newTarget);
+          const settledValue = Math.round(effectiveTarget * 10) / 10;
+          currentRef.current = settledValue;
+          setter(settledValue);
         }
-      }, stepDuration);
+      }, PROGRESS_TICK_MS);
     }
 
     function handleQuestionProgress({
@@ -219,7 +231,12 @@ export default function DailyQuestionPanel({
     }) {
       setLoadingMessage(step);
 
-      const duration = step.toLowerCase().includes('analyzing') ? 30000 : 20000;
+      const duration =
+        progress <= 33
+          ? QUESTION_PROGRESS_DURATIONS.early
+          : progress <= 66
+            ? QUESTION_PROGRESS_DURATIONS.middle
+            : QUESTION_PROGRESS_DURATIONS.late;
       animateProgress(
         loadingProgressRef,
         loadingTargetRef,
@@ -241,7 +258,12 @@ export default function DailyQuestionPanel({
     }) {
       setGradingMessage(step);
       const duration =
-        typeof durationMs === 'number' && durationMs > 0 ? durationMs : 10000;
+        typeof durationMs === 'number' && durationMs > 0
+          ? Math.max(
+              Math.round(durationMs * GRADING_DURATION_MULTIPLIER),
+              MIN_GRADING_DURATION_MS
+            )
+          : MIN_GRADING_DURATION_MS;
       animateProgress(
         gradingProgressRef,
         gradingTargetRef,
