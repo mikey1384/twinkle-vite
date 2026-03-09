@@ -492,9 +492,7 @@ export default function DailyQuestionPanel({
       const lowerCaseKey = e.key.toLowerCase();
       if (
         (e.ctrlKey || e.metaKey) &&
-        (lowerCaseKey === 'x' ||
-          lowerCaseKey === 'a' ||
-          lowerCaseKey === 'z')
+        (lowerCaseKey === 'x' || lowerCaseKey === 'a' || lowerCaseKey === 'z')
       ) {
         e.preventDefault();
         return;
@@ -801,18 +799,18 @@ export default function DailyQuestionPanel({
                 background: ${currentStreak >= 10
                   ? '#FFD700'
                   : currentStreak >= 7
-                  ? '#E53935'
-                  : currentStreak >= 4
-                  ? '#FF9800'
-                  : '#9E9E9E'}15;
+                    ? '#E53935'
+                    : currentStreak >= 4
+                      ? '#FF9800'
+                      : '#9E9E9E'}15;
                 border: 2px solid
                   ${currentStreak >= 10
                     ? '#FFD700'
                     : currentStreak >= 7
-                    ? '#E53935'
-                    : currentStreak >= 4
-                    ? '#FF9800'
-                    : '#9E9E9E'}40;
+                      ? '#E53935'
+                      : currentStreak >= 4
+                        ? '#FF9800'
+                        : '#9E9E9E'}40;
                 border-radius: 12px;
               `}
             >
@@ -838,10 +836,10 @@ export default function DailyQuestionPanel({
                     color: ${currentStreak >= 10
                       ? '#FFD700'
                       : currentStreak >= 7
-                      ? '#E53935'
-                      : currentStreak >= 4
-                      ? '#FF9800'
-                      : '#9E9E9E'};
+                        ? '#E53935'
+                        : currentStreak >= 4
+                          ? '#FF9800'
+                          : '#9E9E9E'};
                   `}
                 >
                   {currentStreak}-day streak
