@@ -185,6 +185,17 @@ export default function ChessModal({
   const resultMessageActive =
     latestChessRelevantMessage?.type === 'result' &&
     acknowledgedResultId !== latestResultMessageKey;
+  const activeResultMessage = useMemo(
+    () =>
+      latestChessRelevantMessage?.type === 'result' && resultMessageActive
+        ? latestChessRelevantMessage.message
+        : null,
+    [latestChessRelevantMessage, resultMessageActive]
+  );
+  const latestStatusMessage = useMemo(
+    () => activeResultMessage || message,
+    [activeResultMessage, message]
+  );
 
   useEffect(() => {
     if (latestChessRelevantMessage?.type !== 'result') {
@@ -194,11 +205,19 @@ export default function ChessModal({
 
   const gameFinished = useMemo(
     () =>
-      (resultMessageActive && !submitting) ||
       Boolean(
-        boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw
+        (resultMessageActive && !submitting) ||
+          latestStatusMessage?.gameWinnerId ||
+          latestStatusMessage?.isDraw ||
+          latestStatusMessage?.isAbort ||
+          boardState?.isCheckmate ||
+          boardState?.isStalemate ||
+          boardState?.isDraw
       ),
     [
+      latestStatusMessage?.gameWinnerId,
+      latestStatusMessage?.isAbort,
+      latestStatusMessage?.isDraw,
       boardState?.isCheckmate,
       boardState?.isDraw,
       boardState?.isStalemate,
@@ -208,12 +227,9 @@ export default function ChessModal({
   );
 
   const boardMoveNumber = Number(boardState?.move?.number || 0);
-  const boardFinished = Boolean(
-    boardState?.isCheckmate || boardState?.isStalemate || boardState?.isDraw
-  );
   const boardInteractable = useMemo(() => {
-    return !!boardFinished || !userMadeLastMove;
-  }, [boardFinished, userMadeLastMove]);
+    return !gameFinished && !userMadeLastMove;
+  }, [gameFinished, userMadeLastMove]);
 
   const gameEndButtonShown = useMemo(
     () =>
@@ -333,10 +349,10 @@ export default function ChessModal({
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={drawButtonShown}
             showCancelMove={!!newChessState}
-            showDoneButton={!message?.gameWinnerId && !userMadeLastMove}
+            showDoneButton={!gameFinished && !userMadeLastMove}
             drawOfferPending={drawOfferPending}
             isAbortable={isAbortable}
-            gameFinished={!!message?.gameWinnerId}
+            gameFinished={gameFinished}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={handleOfferDraw}
             onClose={onHide}
@@ -367,6 +383,7 @@ export default function ChessModal({
               <Game
                 boardState={boardState}
                 channelId={channelId}
+                gameFinished={gameFinished}
                 isCountdownActive={isCountdownActive}
                 currentChannel={currentChannel}
                 initialState={initialState}

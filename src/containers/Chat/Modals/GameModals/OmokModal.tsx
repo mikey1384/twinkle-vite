@@ -7,6 +7,10 @@ import ModalContentWrapper from './ModalContentWrapper';
 import GameModalFooter from './GameModalFooter';
 import { socket } from '~/constants/sockets/api';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import {
+  getLatestBoardMessageId,
+  getLatestGameBoundaryMessageId
+} from '~/containers/Chat/helpers/gameMessageIds';
 
 interface OmokModalProps {
   currentChannel: any;
@@ -62,8 +66,105 @@ export default function OmokModal({
   const warningColor = useKeyContext((v) => v.theme.warning.color);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [howToPlayShown, setHowToPlayShown] = useState(false);
+  const [acknowledgedResultId, setAcknowledgedResultId] = useState<
+    string | number | null
+  >(null);
 
   const initialState = useMemo(() => message?.omokState, [message]);
+  const latestOmokRelevantMessage = useMemo(() => {
+    const messageIds: any[] = currentChannel?.messageIds || [];
+    const messagesObj: Record<string, any> = currentChannel?.messagesObj || {};
+    const getMessageById = (id: any) =>
+      messagesObj[id] ??
+      messagesObj[String(id)] ??
+      messagesObj[Number(id)] ??
+      null;
+
+    for (const rawId of messageIds) {
+      const msg = getMessageById(rawId);
+      if (!msg?.isChessMsg) continue;
+      const content =
+        typeof msg.content === 'string' ? msg.content.toLowerCase() : '';
+      const isOmokMessage =
+        Boolean(msg.omokState) ||
+        (!msg.chessState &&
+          (content.includes('omok') || msg.gameType === 'omok'));
+      if (!isOmokMessage) continue;
+      const hasBoardState = Boolean(msg.omokState);
+      const isResultMessage =
+        typeof msg.gameWinnerId === 'number' ||
+        Boolean(msg.isDraw) ||
+        Boolean(msg.isAbort);
+      if (isResultMessage && !hasBoardState) {
+        return { type: 'result' as const, message: msg };
+      }
+      if (hasBoardState) {
+        return { type: 'board' as const, message: msg };
+      }
+    }
+
+    const fallback = currentChannel?.recentOmokMessage;
+    const fallbackContent =
+      typeof fallback?.content === 'string'
+        ? fallback.content.toLowerCase()
+        : '';
+    const fallbackIsOmokResult =
+      fallback?.isChessMsg &&
+      !fallback?.omokState &&
+      (typeof fallback?.gameWinnerId === 'number' ||
+        fallback?.isDraw ||
+        fallback?.isAbort) &&
+      !fallback?.chessState &&
+      (fallbackContent.includes('omok') || fallback?.gameType === 'omok');
+    if (fallbackIsOmokResult) {
+      return { type: 'result' as const, message: fallback };
+    }
+
+    return null;
+  }, [
+    currentChannel?.messageIds,
+    currentChannel?.messagesObj,
+    currentChannel?.recentOmokMessage
+  ]);
+  const latestResultMessageKey =
+    latestOmokRelevantMessage?.type === 'result'
+      ? latestOmokRelevantMessage?.message?.id ??
+        latestOmokRelevantMessage?.message?.timeStamp ??
+        latestOmokRelevantMessage?.message?.content ??
+        null
+      : null;
+  const resultMessageActive =
+    latestOmokRelevantMessage?.type === 'result' &&
+    acknowledgedResultId !== latestResultMessageKey;
+  const activeResultMessage = useMemo(
+    () =>
+      latestOmokRelevantMessage?.type === 'result' && resultMessageActive
+        ? latestOmokRelevantMessage.message
+        : null,
+    [latestOmokRelevantMessage, resultMessageActive]
+  );
+  const latestStatusMessage = useMemo(
+    () => activeResultMessage || message,
+    [activeResultMessage, message]
+  );
+  const gameFinished = useMemo(
+    () =>
+      Boolean(
+        (resultMessageActive && !submitting) ||
+        latestStatusMessage?.gameWinnerId ||
+          latestStatusMessage?.isDraw ||
+          latestStatusMessage?.isAbort ||
+          initialState?.winnerId
+      ),
+    [
+      initialState?.winnerId,
+      latestStatusMessage?.gameWinnerId,
+      latestStatusMessage?.isAbort,
+      latestStatusMessage?.isDraw,
+      resultMessageActive,
+      submitting
+    ]
+  );
 
   const userMadeLastMove = useMemo(
     () => initialState?.move?.by === myId,
@@ -74,24 +175,34 @@ export default function OmokModal({
     if (isCountdownActive) {
       return true;
     }
+    const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'omok');
+    const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
+      currentChannel,
+      'omok'
+    );
     const userIsTheLastMoveViewer =
       currentChannel.lastOmokMoveViewerId === myId &&
-      message?.id === currentChannel.lastOmokMessageId;
+      message?.id === latestBoardMessageId;
     const isOlderMessage =
       message?.id &&
-      currentChannel.lastOmokMessageId &&
-      message.id < currentChannel.lastOmokMessageId;
+      latestBoundaryMessageId &&
+      message.id < latestBoundaryMessageId;
     return (
       userMadeLastMove || userIsTheLastMoveViewer || Boolean(isOlderMessage)
     );
   }, [
     isCountdownActive,
-    currentChannel.lastOmokMessageId,
-    currentChannel.lastOmokMoveViewerId,
+    currentChannel,
     message?.id,
     myId,
     userMadeLastMove
   ]);
+
+  useEffect(() => {
+    if (latestOmokRelevantMessage?.type !== 'result') {
+      setAcknowledgedResultId(null);
+    }
+  }, [latestOmokRelevantMessage?.type]);
 
   const handleConfirmMove = async ({
     state,
@@ -154,8 +265,14 @@ export default function OmokModal({
     () =>
       (initialState?.move?.number || 0) > 0 &&
       !newOmokState?.move?.number &&
+      !gameFinished &&
       !userMadeLastMove,
-    [newOmokState?.move?.number, initialState?.move?.number, userMadeLastMove]
+    [
+      gameFinished,
+      newOmokState?.move?.number,
+      initialState?.move?.number,
+      userMadeLastMove
+    ]
   );
 
   // Allow abort early in the game (before 4 half-moves), matching chess behavior
@@ -177,10 +294,10 @@ export default function OmokModal({
             showGameEndButton={gameEndButtonShown}
             showOfferDraw={false}
             showCancelMove={!!newOmokState}
-            showDoneButton={!message?.gameWinnerId && !userMadeLastMove}
+            showDoneButton={!gameFinished && !userMadeLastMove}
             drawOfferPending={false}
             isAbortable={isAbortable}
-            gameFinished={!!message?.gameWinnerId}
+            gameFinished={gameFinished}
             onOpenConfirmModal={() => setConfirmModalShown(true)}
             onOfferDraw={() => {}}
             onClose={onHide}
@@ -213,11 +330,12 @@ export default function OmokModal({
             initialState={initialState}
             isCountdownActive={isCountdownActive}
             spoilerOff={spoilerOff}
-            interactable
+            interactable={!gameFinished}
             loaded={loaded && socketConnected}
             isFromModal
-            isDraw={!!message?.isDraw}
-            isAbort={!!message?.isAbort}
+            gameWinnerId={latestStatusMessage?.gameWinnerId}
+            isDraw={!!latestStatusMessage?.isDraw}
+            isAbort={!!latestStatusMessage?.isAbort}
             onConfirmMove={handleConfirmMove}
             onCancelPendingMove={() => setSubmitting(false)}
             onSpoilerClick={handleSpoilerClick}
@@ -311,7 +429,12 @@ export default function OmokModal({
 
   function handleStartNewGame() {
     setNewOmokState(null);
-    setMessage(null);
+    setMessage({});
+    if (latestResultMessageKey !== null) {
+      setAcknowledgedResultId(latestResultMessageKey);
+    } else {
+      setAcknowledgedResultId(null);
+    }
   }
 
   async function handleGameOver() {

@@ -5,6 +5,11 @@ import { useChatContext, useKeyContext } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { Color } from '~/constants/css';
 import { OmokCell, OmokColor } from '~/containers/Chat/Omok/helpers';
+import {
+  getActiveGameMessageId,
+  getLatestBoardMessageId,
+  getLatestGameBoundaryMessageId
+} from '~/containers/Chat/helpers/gameMessageIds';
 
 export default function LeftButtons({
   buttonColor,
@@ -71,6 +76,14 @@ export default function LeftButtons({
 
   const chessButtonIsGlowing = useMemo(() => {
     if (!isTwoPeopleChannel || !channelState) return false;
+    const latestActiveMessageId = getActiveGameMessageId(channelState, 'chess');
+    const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
+      channelState,
+      'chess'
+    );
+    if (!latestActiveMessageId && latestBoundaryMessageId) {
+      return false;
+    }
     const latestMessage = getLatestGameMessage(channelState, 'chess');
     const latestGameOver = getLatestChessGameOverMessage(channelState);
     if (latestGameOver) {
@@ -107,6 +120,14 @@ export default function LeftButtons({
 
   const omokButtonIsGlowing = useMemo(() => {
     if (!isTwoPeopleChannel || !channelState) return false;
+    const latestActiveMessageId = getActiveGameMessageId(channelState, 'omok');
+    const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
+      channelState,
+      'omok'
+    );
+    if (!latestActiveMessageId && latestBoundaryMessageId) {
+      return false;
+    }
     const latestMessage = getLatestGameMessage(channelState, 'omok');
     const latestGameOver = getLatestOmokGameOverMessage(channelState);
 
@@ -228,10 +249,7 @@ export default function LeftButtons({
 function getLatestGameMessage(channelState: any, game: 'chess' | 'omok') {
   if (!channelState) return null;
   const messagesObj = channelState.messagesObj || {};
-  const lastId =
-    game === 'chess'
-      ? channelState.lastChessMessageId
-      : channelState.lastOmokMessageId;
+  const lastId = getLatestBoardMessageId(channelState, game);
   const getMessageById = (id: any) =>
     messagesObj[id] ||
     (typeof id === 'number' || typeof id === 'string'

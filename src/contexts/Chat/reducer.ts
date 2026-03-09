@@ -1197,6 +1197,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
+                  recentOmokMessage: null,
                   numUnreads: 0
                 }
               }
@@ -1254,6 +1255,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
+                  recentOmokMessage: null,
                   numUnreads: 0
                 }
               }
@@ -1261,6 +1263,7 @@ export default function ChatReducer(
           0: {
             ...state.channelsObj[0],
             recentChessMessage: null,
+            recentOmokMessage: null,
             messageIds: [],
             messagesLoadMoreButton: false,
             loaded: true
@@ -1610,6 +1613,7 @@ export default function ChatReducer(
         messageIds: newMessageIds,
         messagesObj: newMessagesObj,
         recentChessMessage: null,
+        recentOmokMessage: null,
         loaded: true,
         // Preserve client-side UI state
         selectedTab: existingCurrentChannel?.selectedTab,
@@ -2118,6 +2122,8 @@ export default function ChatReducer(
         loadMoreButton = true;
       }
       const prevChannelObj = state.channelsObj[action.loadedChannelId];
+      // messageIds stay newest-first. Loading more appends older ids to the tail
+      // so newer terminal rows mount before the older board rows they close out.
       const messageIds = action.loadedSubchannelId
         ? prevChannelObj.messageIds
         : prevChannelObj.messageIds.concat(action.messageIds);
@@ -2334,6 +2340,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
+                  recentOmokMessage: null,
                   numUnreads: 0
                 }
               }
@@ -2620,6 +2627,7 @@ export default function ChatReducer(
                 [state.selectedChannelId]: {
                   ...state.channelsObj[state.selectedChannelId],
                   recentChessMessage: null,
+                  recentOmokMessage: null,
                   numUnreads: 0
                 }
               }
@@ -4541,12 +4549,22 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            lastChessMessageId:
-              typeof action.messageId === 'number' &&
-              action.messageId >
-                (state.channelsObj[action.channelId]?.lastChessMessageId || 0)
-                ? action.messageId
-                : state.channelsObj[action.channelId]?.lastChessMessageId
+            ...resolveLatestBoardMessageState({
+              currentActiveBoardMessageId:
+                state.channelsObj[action.channelId]?.lastChessMessageId,
+              currentLatestBoardMessageId:
+                state.channelsObj[action.channelId]?.latestChessBoardMessageId,
+              currentTerminalMessageId:
+                state.channelsObj[action.channelId]?.lastChessTerminalMessageId,
+              currentPendingTerminalToken:
+                state.channelsObj[action.channelId]?.lastChessPendingTerminalToken,
+              nextBoardMessageId: action.messageId,
+              nextTerminalMessageId: action.terminalMessageId,
+              boardMessageKey: 'lastChessMessageId',
+              latestBoardMessageKey: 'latestChessBoardMessageId',
+              terminalMessageKey: 'lastChessTerminalMessageId',
+              pendingTerminalTokenKey: 'lastChessPendingTerminalToken'
+            })
           }
         }
       };
@@ -4557,12 +4575,22 @@ export default function ChatReducer(
           ...state.channelsObj,
           [action.channelId]: {
             ...state.channelsObj[action.channelId],
-            lastOmokMessageId:
-              typeof action.messageId === 'number' &&
-              action.messageId >
-                (state.channelsObj[action.channelId]?.lastOmokMessageId || 0)
-                ? action.messageId
-                : state.channelsObj[action.channelId]?.lastOmokMessageId
+            ...resolveLatestBoardMessageState({
+              currentActiveBoardMessageId:
+                state.channelsObj[action.channelId]?.lastOmokMessageId,
+              currentLatestBoardMessageId:
+                state.channelsObj[action.channelId]?.latestOmokBoardMessageId,
+              currentTerminalMessageId:
+                state.channelsObj[action.channelId]?.lastOmokTerminalMessageId,
+              currentPendingTerminalToken:
+                state.channelsObj[action.channelId]?.lastOmokPendingTerminalToken,
+              nextBoardMessageId: action.messageId,
+              nextTerminalMessageId: action.terminalMessageId,
+              boardMessageKey: 'lastOmokMessageId',
+              latestBoardMessageKey: 'latestOmokBoardMessageId',
+              terminalMessageKey: 'lastOmokTerminalMessageId',
+              pendingTerminalTokenKey: 'lastOmokPendingTerminalToken'
+            })
           }
         }
       };
@@ -4697,5 +4725,143 @@ function getBookmarkLists(bookmarks?: BookmarkListMap) {
   return {
     ai: bookmarks?.ai ? [...bookmarks.ai] : [],
     me: bookmarks?.me ? [...bookmarks.me] : []
+  };
+}
+
+// last*MessageId tracks the newest board that is still playable.
+// latest*BoardMessageId tracks the newest board row regardless of whether the
+// game is already finished.
+// last*TerminalMessageId tracks the newest row that ended a game so historical
+// board rows cannot become "current" again when they mount later.
+// last*PendingTerminalToken tracks a live terminal row that has not been given a
+// comparable numeric message id yet (socket result rows arrive this way).
+function resolveLatestBoardMessageState({
+  currentActiveBoardMessageId,
+  currentLatestBoardMessageId,
+  currentTerminalMessageId,
+  currentPendingTerminalToken,
+  nextBoardMessageId,
+  nextTerminalMessageId,
+  boardMessageKey,
+  latestBoardMessageKey,
+  terminalMessageKey,
+  pendingTerminalTokenKey
+}: {
+  currentActiveBoardMessageId?: number | null;
+  currentLatestBoardMessageId?: number | null;
+  currentTerminalMessageId?: number | null;
+  currentPendingTerminalToken?: string | null;
+  nextBoardMessageId?: number | null;
+  nextTerminalMessageId?: number | string | null;
+  boardMessageKey: 'lastChessMessageId' | 'lastOmokMessageId';
+  latestBoardMessageKey:
+    | 'latestChessBoardMessageId'
+    | 'latestOmokBoardMessageId';
+  terminalMessageKey:
+    | 'lastChessTerminalMessageId'
+    | 'lastOmokTerminalMessageId';
+  pendingTerminalTokenKey:
+    | 'lastChessPendingTerminalToken'
+    | 'lastOmokPendingTerminalToken';
+}) {
+  const currentActiveBoardId =
+    typeof currentActiveBoardMessageId === 'number'
+      ? currentActiveBoardMessageId
+      : null;
+  const currentLatestBoardId =
+    typeof currentLatestBoardMessageId === 'number'
+      ? currentLatestBoardMessageId
+      : null;
+  const currentTerminalId =
+    typeof currentTerminalMessageId === 'number' ? currentTerminalMessageId : 0;
+  const nextTerminalId =
+    typeof nextTerminalMessageId === 'number' ? nextTerminalMessageId : null;
+  const nextPendingTerminalToken =
+    typeof nextTerminalMessageId === 'string' && nextTerminalMessageId
+      ? nextTerminalMessageId
+      : null;
+  const nextBoardId =
+    typeof nextBoardMessageId === 'number' ? nextBoardMessageId : null;
+  const appliedTerminalId =
+    nextTerminalId === null
+      ? currentTerminalId
+      : Math.max(currentTerminalId, nextTerminalId);
+  let appliedPendingTerminalToken =
+    nextPendingTerminalToken || currentPendingTerminalToken || null;
+  if (nextTerminalId !== null) {
+    appliedPendingTerminalToken = null;
+  }
+  const appliedLatestBoardId =
+    nextBoardId === null
+      ? currentLatestBoardId
+      : currentLatestBoardId === null
+      ? nextBoardId
+      : Math.max(currentLatestBoardId, nextBoardId);
+
+  if (nextBoardId !== null) {
+    if (appliedPendingTerminalToken) {
+      if (
+        typeof currentLatestBoardId === 'number' &&
+        nextBoardId <= currentLatestBoardId
+      ) {
+        return {
+          [boardMessageKey]: null,
+          [latestBoardMessageKey]: appliedLatestBoardId,
+          [terminalMessageKey]: appliedTerminalId || null,
+          [pendingTerminalTokenKey]: appliedPendingTerminalToken
+        };
+      }
+      appliedPendingTerminalToken = null;
+    }
+    if (nextBoardId <= appliedTerminalId) {
+      return {
+        [boardMessageKey]:
+          typeof currentActiveBoardId === 'number' &&
+          currentActiveBoardId > appliedTerminalId
+            ? currentActiveBoardId
+            : null,
+        [latestBoardMessageKey]: appliedLatestBoardId,
+        [terminalMessageKey]: appliedTerminalId || null,
+        [pendingTerminalTokenKey]: appliedPendingTerminalToken
+      };
+    }
+    return {
+      [boardMessageKey]:
+        currentActiveBoardId === null
+          ? nextBoardId
+          : Math.max(currentActiveBoardId, nextBoardId),
+      [latestBoardMessageKey]: appliedLatestBoardId,
+      [terminalMessageKey]: appliedTerminalId || null,
+      [pendingTerminalTokenKey]: appliedPendingTerminalToken
+    };
+  }
+
+  if (nextBoardMessageId === null) {
+    if (nextTerminalId === null) {
+      return {
+        [boardMessageKey]:
+          appliedPendingTerminalToken === null ? currentActiveBoardId : null,
+        [latestBoardMessageKey]: appliedLatestBoardId,
+        [terminalMessageKey]: appliedTerminalId || null,
+        [pendingTerminalTokenKey]: appliedPendingTerminalToken
+      };
+    }
+    return {
+      [boardMessageKey]:
+        typeof currentActiveBoardId === 'number' &&
+        currentActiveBoardId > nextTerminalId
+          ? currentActiveBoardId
+          : null,
+      [latestBoardMessageKey]: appliedLatestBoardId,
+      [terminalMessageKey]: appliedTerminalId || null,
+      [pendingTerminalTokenKey]: appliedPendingTerminalToken
+    };
+  }
+
+  return {
+    [boardMessageKey]: currentActiveBoardId,
+    [latestBoardMessageKey]: appliedLatestBoardId,
+    [terminalMessageKey]: appliedTerminalId || null,
+    [pendingTerminalTokenKey]: appliedPendingTerminalToken
   };
 }
