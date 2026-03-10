@@ -1052,25 +1052,6 @@ export default function DailyQuestionPanel({
                 , your response auto-submits
               </li>
               <li>
-                <span className={ruleSuccessCls}>Typos are fine</span> —
-                spelling, grammar, and even language don't affect your grade.
-                Write in whatever language you're comfortable with!
-                <p
-                  className={css`
-                    margin-top: 1rem;
-                    font-size: 1.2rem;
-                    color: ${Color.darkerGray()};
-                    line-height: 1.5;
-                  `}
-                >
-                  After grading, you'll get a{' '}
-                  <span className={ruleSuccessCls}>
-                    polished English version
-                  </span>{' '}
-                  you can choose to share instead.
-                </p>
-              </li>
-              <li>
                 <span className={ruleTitleCls}>Minimum length</span> — write at
                 least{' '}
                 <span className={ruleSuccessCls}>
