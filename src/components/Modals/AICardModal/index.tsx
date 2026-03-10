@@ -507,6 +507,9 @@ export default function AICardModal({
                     @media (max-width: ${mobileMaxWidth}) {
                       font-size: 1.1rem !important;
                       height: 3rem !important;
+                      && > .nav-section > nav {
+                        padding: 0.7rem 1rem;
+                      }
                     }
                   `}
                 >
