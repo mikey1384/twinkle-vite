@@ -732,7 +732,28 @@ function CompactStatusDot({
         flex-shrink: 0;
       `}
     >
-      <Icon icon={icon} style={{ fontSize: '0.72rem' }} />
+      <span
+        className={css`
+          width: 0.78rem;
+          height: 0.78rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        `}
+      >
+        <Icon
+          icon={icon}
+          style={{
+            fontSize: '0.72rem',
+            width: '0.72rem',
+            height: '0.72rem',
+            display: 'block',
+            verticalAlign: '0'
+          }}
+        />
+      </span>
     </span>
   );
 }
@@ -776,7 +797,7 @@ function BoostGuideRow({
         display: flex;
         justify-content: space-between;
         gap: 1rem;
-        align-items: flex-start;
+        align-items: center;
         padding: 0.75rem 0.9rem;
         margin: -0.15rem -0.2rem;
         border-radius: 0.9rem;
@@ -786,6 +807,7 @@ function BoostGuideRow({
 
         @media (max-width: ${mobileMaxWidth}) {
           flex-direction: column;
+          align-items: stretch;
         }
       `}
     >
@@ -876,11 +898,11 @@ function BoostGuideRow({
       >
         <ProgressPill
           achieved={row.basicAchieved}
-          label="Basic"
+          variant="basic"
         />
         <ProgressPill
           achieved={row.excellenceAchieved}
-          label="Excellence"
+          variant="excellence"
         />
       </div>
     </div>
@@ -889,11 +911,16 @@ function BoostGuideRow({
 
 function ProgressPill({
   achieved,
-  label
+  variant
 }: {
   achieved: boolean;
-  label: string;
+  variant: 'basic' | 'excellence';
 }) {
+  const isExcellence = variant === 'excellence';
+  const label = isExcellence ? 'Excellence' : 'Basic';
+  const color = isExcellence ? Color.gold() : Color.green();
+  const icon = isExcellence ? 'star' : 'check';
+
   return (
     <div
       className={css`
@@ -903,17 +930,19 @@ function ProgressPill({
         padding: 0.38rem 0.72rem;
         border-radius: 999px;
         border: 1px solid
-          ${achieved ? Color.green(0.28) : Color.borderGray()};
-        background: ${achieved ? Color.green(0.1) : Color.white()};
-        color: ${achieved ? Color.green() : Color.darkGray()};
+          ${achieved ? withAlpha(color, 0.48) : withAlpha(color, 0.32)};
+        background: ${achieved ? withAlpha(color, 0.1) : Color.white()};
+        color: ${achieved ? color : Color.darkGray()};
         font-size: 1.05rem;
         font-weight: 700;
         white-space: nowrap;
+        box-shadow: inset 0 0 0 1px
+          ${achieved ? withAlpha(color, 0.08) : withAlpha(color, 0.04)};
       `}
     >
       <Icon
-        icon={achieved ? 'check' : 'circle'}
-        style={{ color: achieved ? Color.green() : Color.gray() }}
+        icon={icon}
+        style={{ color: achieved ? color : withAlpha(color, 0.45) }}
       />
       <span>{label}</span>
     </div>
