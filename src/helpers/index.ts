@@ -19,7 +19,6 @@ import URL from '~/constants/URL';
 const twinkleDayIndexEpochMs = Date.UTC(2022, 0, 1, 0, 0, 0);
 const msInDay = 86400000;
 const dailyTaskStreakRepairCost = 100000;
-const dailyTaskStreakRepairCostCap = dailyTaskStreakRepairCost * 100;
 const dailyTaskStreakDaysPerTier = 10;
 const dailyTaskStreakMultiplierCap = 10;
 
@@ -55,9 +54,11 @@ function calculateDailyTaskStreakMultiplier(streakDays: any) {
 function calculateDailyTaskRepairCost(streakDays: any) {
   const appliedStreakDays = toNonNegativeInt(streakDays);
   if (appliedStreakDays < 1) return 0;
-  return Math.min(
-    dailyTaskStreakRepairCost * appliedStreakDays,
-    dailyTaskStreakRepairCostCap
+
+  // Match repair pricing to the same 10-day tiers used by the reward boost.
+  return dailyTaskStreakRepairCost * Math.max(
+    1,
+    calculateDailyTaskStreakMultiplier(appliedStreakDays) - 1
   );
 }
 
@@ -92,6 +93,7 @@ function buildDailyTaskStreakForNextDay({
       lastCompletedDayIndex,
       rewardMultiplier: calculateDailyTaskStreakMultiplier(rawCurrentStreak),
       streakRepairAvailable: false,
+      repairNoticeHidden: false,
       streakAtRisk: false,
       streakBroken: false,
       repairableStreak: 0,
@@ -123,6 +125,7 @@ function buildDailyTaskStreakForNextDay({
     lastCompletedDayIndex,
     rewardMultiplier: calculateDailyTaskStreakMultiplier(effectiveCurrentStreak),
     streakRepairAvailable,
+    repairNoticeHidden: false,
     streakAtRisk,
     streakBroken,
     repairableStreak,
@@ -164,6 +167,10 @@ function buildDailyTaskStatusForNextDay({
     isComplete: false,
     achievedDailyGoals: [],
     streak,
+    preferences: {
+      boostStripCompact: !!previousDailyTaskStatus?.preferences?.boostStripCompact,
+      boostStripCompactSet: !!previousDailyTaskStatus?.preferences?.boostStripCompactSet
+    },
     progression: {
       grammarblesLevel,
       aiStoryLevel

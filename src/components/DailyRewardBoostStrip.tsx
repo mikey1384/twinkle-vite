@@ -2,6 +2,8 @@ import React from 'react';
 import { css, keyframes } from '@emotion/css';
 import Icon from '~/components/Icon';
 import { Color, getStreakColor, mobileMaxWidth } from '~/constants/css';
+import { useAppContext, useNotiContext } from '~/contexts';
+import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
@@ -42,6 +44,7 @@ export default function DailyRewardBoostStrip({
   aiStory,
   loadingStates,
   focus = 'all',
+  allowCompactToggle = false,
   style
 }: {
   streak: number;
@@ -50,6 +53,7 @@ export default function DailyRewardBoostStrip({
   aiStory?: any;
   loadingStates?: Partial<Record<TaskKey, boolean>>;
   focus?: Focus;
+  allowCompactToggle?: boolean;
   style?: React.CSSProperties;
 }) {
   const [showFormula, setShowFormula] = React.useState(false);
@@ -69,13 +73,28 @@ export default function DailyRewardBoostStrip({
     aiStory,
     loadingStates
   });
+  const dailyTaskStatus = useNotiContext((v) => v.state.todayStats.dailyTaskStatus);
+  const onApplyTodayStatsProgress = useNotiContext(
+    (v) => v.actions.onApplyTodayStatsProgress
+  );
+  const setDailyTaskBoostStripCompact = useAppContext(
+    (v) => v.requestHelpers.setDailyTaskBoostStripCompact
+  );
+  const [savingCompactPreference, setSavingCompactPreference] = React.useState(false);
   const streakDays = Math.max(0, Number(streak) || 0);
+  const boostStripCompactSet = !!dailyTaskStatus?.preferences?.boostStripCompactSet;
+  const boostStripCompact = allowCompactToggle
+    ? boostStripCompactSet
+      ? !!dailyTaskStatus?.preferences?.boostStripCompact
+      : true
+    : false;
 
   if (!rows.length) {
     return null;
   }
 
   const summaryLabel = 'Boost condition';
+  const compactLabel = focus === 'all' ? 'Boost status' : `${rows[0].label} boost`;
   const streakColor = getStreakColor(streakDays);
   const showStreakBadge = streakDays > 0;
   const showSparkles = streakDays >= 10;
@@ -95,21 +114,220 @@ export default function DailyRewardBoostStrip({
     ...(style || {})
   } as React.CSSProperties;
 
+  if (boostStripCompact) {
+    return (
+      <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
+        <section
+          style={panelStyle}
+          className={css`
+            position: relative;
+            width: 100%;
+            padding: 1rem 4.2rem 1rem 1.05rem;
+            border-radius: 1.1rem;
+            background: var(--section-panel-bg, #fff);
+            border: 1px solid var(--section-panel-border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              padding: 1rem 3.8rem 1rem 1rem;
+              flex-direction: column;
+              text-align: center;
+            }
+          `}
+        >
+          <ViewModeButton
+            disabled={savingCompactPreference}
+            icon="plus"
+            ariaLabel="Show full boost status"
+            onClick={() => void handleSetBoostStripCompact(false)}
+          />
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.85rem;
+              min-width: 0;
+              flex: 1;
+
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+              }
+            `}
+          >
+            <div
+              className={css`
+                width: 2.7rem;
+                height: 2.7rem;
+                border-radius: 0.9rem;
+                background: var(--boost-strip-accent-soft);
+                color: var(--boost-strip-accent);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.35rem;
+                box-shadow: inset 0 0 0 1px var(--boost-strip-accent-strong);
+                flex-shrink: 0;
+              `}
+            >
+              <Icon icon="sparkles" />
+            </div>
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 0.15rem;
+                min-width: 0;
+              `}
+            >
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.55rem;
+                  flex-wrap: wrap;
+
+                  @media (max-width: ${mobileMaxWidth}) {
+                    justify-content: center;
+                  }
+                `}
+              >
+                <div
+                  className={css`
+                    padding: 0.28rem 0.8rem;
+                    border-radius: 999px;
+                    background: var(--boost-strip-accent-soft);
+                    color: var(--boost-strip-heading-color);
+                    text-shadow: var(--boost-strip-heading-shadow);
+                    font-size: 1.02rem;
+                    font-weight: 800;
+                    letter-spacing: 0.02em;
+                    border: 1px solid var(--boost-strip-accent-strong);
+                  `}
+                >
+                  {compactLabel}
+                </div>
+                {showStreakBadge && (
+                  <div
+                    className={css`
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 0.4rem;
+                      padding: 0.28rem 0.72rem;
+                      border-radius: 999px;
+                      background: ${withAlpha(streakColor, 0.1)};
+                      border: 1px solid ${withAlpha(streakColor, 0.22)};
+                      color: ${streakColor};
+                      font-size: 0.98rem;
+                      font-weight: 800;
+                      white-space: nowrap;
+                    `}
+                  >
+                    <span
+                      className={css`
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1;
+                        font-size: ${streakDays >= 10
+                          ? '1.25rem'
+                          : streakDays >= 5
+                            ? '1.12rem'
+                            : '1rem'};
+                        animation: ${streakDays >= 5
+                          ? `${compactFireAnimation} 0.6s ease-in-out infinite`
+                          : 'none'};
+                      `}
+                    >
+                      🔥
+                    </span>
+                    <span>{streakDays}-day streak</span>
+                    {showSparkles && (
+                      <Icon
+                        icon="sparkles"
+                        style={{ fontSize: '0.75rem', color: streakColor }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+              <div
+                className={css`
+                  font-size: 1.08rem;
+                  font-weight: 700;
+                  color: ${Color.darkerGray()};
+                  line-height: 1.4;
+                `}
+              >
+                {`Up to x${formatMultiplier(potentialMultiplier)} total reward today`}
+              </div>
+            </div>
+          </div>
+          <div
+            className={css`
+              display: grid;
+              grid-template-columns: repeat(3, minmax(8.8rem, 1fr));
+              gap: 0.55rem;
+              width: min(31rem, 100%);
+              min-width: 0;
+              margin-left: auto;
+
+              @media (max-width: 1100px) {
+                grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+                width: min(100%, 29rem);
+              }
+
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                margin-left: 0;
+              }
+            `}
+          >
+            {rows.map((row) => (
+              <CompactStatusChip
+                key={row.label}
+                row={row}
+              />
+            ))}
+          </div>
+        </section>
+      </ScopedTheme>
+    );
+  }
+
   return (
     <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
       <section
         style={panelStyle}
         className={css`
+          position: relative;
           width: 100%;
-          padding: 1.4rem 1.6rem;
+          padding: 1.4rem ${allowCompactToggle ? '4.4rem' : '1.6rem'} 1.4rem 1.6rem;
           border-radius: 1.2rem;
           background: var(--section-panel-bg, #fff);
           border: 1px solid var(--section-panel-border-color);
           display: flex;
           flex-direction: column;
           gap: 1rem;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            padding: 1.25rem ${allowCompactToggle ? '4rem' : '1.1rem'} 1.25rem 1.1rem;
+          }
         `}
       >
+        {allowCompactToggle && (
+          <ViewModeButton
+            disabled={savingCompactPreference}
+            icon="minus"
+            ariaLabel="Show smaller boost status"
+            onClick={() => void handleSetBoostStripCompact(true)}
+          />
+        )}
         <div
           className={css`
             display: flex;
@@ -223,36 +441,44 @@ export default function DailyRewardBoostStrip({
             >
               {summaryBlurb}
             </div>
-            <button
-              type="button"
-              aria-label="Show boost formula"
-              onClick={() => setShowFormula((prev) => !prev)}
+            <div
               className={css`
                 flex-shrink: 0;
-                width: 2rem;
-                height: 2rem;
-                border-radius: 999px;
-                border: 1px solid var(--boost-strip-accent-strong);
-                background: rgba(255, 255, 255, 0.96);
-                color: var(--boost-strip-accent);
-                font-size: 1.05rem;
-                font-weight: 800;
-                cursor: pointer;
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                transition:
-                  transform 120ms ease,
-                  border-color 120ms ease;
-
-                &:hover {
-                  transform: translateY(-1px);
-                  border-color: var(--boost-strip-accent);
-                }
               `}
             >
-              !
-            </button>
+              <button
+                type="button"
+                aria-label="Show boost formula"
+                onClick={() => setShowFormula((prev) => !prev)}
+                className={css`
+                  flex-shrink: 0;
+                  width: 2rem;
+                  height: 2rem;
+                  border-radius: 999px;
+                  border: 1px solid var(--boost-strip-accent-strong);
+                  background: rgba(255, 255, 255, 0.96);
+                  color: var(--boost-strip-accent);
+                  font-size: 1.05rem;
+                  font-weight: 800;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transition:
+                    transform 120ms ease,
+                    border-color 120ms ease;
+
+                  &:hover {
+                    transform: translateY(-1px);
+                    border-color: var(--boost-strip-accent);
+                  }
+                `}
+              >
+                !
+              </button>
+            </div>
           </div>
           {showFormula && (
             <div
@@ -290,6 +516,237 @@ export default function DailyRewardBoostStrip({
       </section>
     </ScopedTheme>
   );
+
+  async function handleSetBoostStripCompact(compact: boolean) {
+    if (!allowCompactToggle || savingCompactPreference) return;
+
+    const previousStatus = dailyTaskStatus;
+    if (dailyTaskStatus) {
+      const nextStatus = {
+        ...dailyTaskStatus,
+        preferences: {
+          ...(dailyTaskStatus.preferences || {}),
+          boostStripCompact: compact,
+          boostStripCompactSet: true
+        }
+      };
+
+      onApplyTodayStatsProgress({
+        newStats: buildTodayStatsPatchFromDailyTaskStatus(nextStatus)
+      });
+    }
+
+    try {
+      setSavingCompactPreference(true);
+      const result = await setDailyTaskBoostStripCompact(compact);
+      if (result?.dailyTaskStatus) {
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(
+            result.dailyTaskStatus
+          )
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      if (previousStatus) {
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(previousStatus)
+        });
+      }
+    } finally {
+      setSavingCompactPreference(false);
+    }
+  }
+}
+
+function ViewModeButton({
+  icon,
+  ariaLabel,
+  onClick,
+  disabled = false
+}: {
+  icon: string;
+  ariaLabel: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className={css`
+        position: absolute;
+        top: 0.9rem;
+        right: 0.95rem;
+        flex-shrink: 0;
+        width: 2.3rem;
+        height: 2.3rem;
+        border-radius: 0.8rem;
+        border: 1px solid var(--boost-strip-accent-strong);
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--boost-strip-accent);
+        font-size: 1.1rem;
+        font-weight: 800;
+        cursor: ${disabled ? 'default' : 'pointer'};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 120ms ease,
+          border-color 120ms ease,
+          opacity 120ms ease,
+          background 120ms ease;
+        opacity: ${disabled ? 0.6 : 1};
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          transform: ${disabled ? 'none' : 'translateY(-1px)'};
+          border-color: ${disabled
+            ? 'var(--boost-strip-accent-strong)'
+            : 'var(--boost-strip-accent)'};
+          background: ${disabled ? 'rgba(255, 255, 255, 0.96)' : 'white'};
+        }
+
+        @media (max-width: ${mobileMaxWidth}) {
+          top: 0.85rem;
+          right: 0.85rem;
+        }
+      `}
+    >
+      <Icon icon={icon} />
+    </button>
+  );
+}
+
+function CompactStatusChip({ row }: { row: BoostRow }) {
+  const toneColor = getToneColor(row.tone);
+
+  return (
+    <div
+      aria-label={getCompactStatusAriaLabel(row)}
+      className={css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        padding: 0.6rem 0.72rem 0.6rem 0.8rem;
+        border-radius: 1rem;
+        border: 1px solid ${withAlpha(toneColor, 0.2)};
+        background: ${withAlpha(toneColor, 0.08)};
+        min-height: 4.3rem;
+
+        @media (max-width: ${mobileMaxWidth}) {
+          padding-left: 0.7rem;
+          padding-right: 0.7rem;
+        }
+      `}
+    >
+      <div
+        className={css`
+          display: flex;
+          flex: 1;
+          min-width: 0;
+        `}
+      >
+        <span
+          className={css`
+            color: ${toneColor};
+            font-size: 0.94rem;
+            font-weight: 800;
+            line-height: 1.15;
+            text-wrap: balance;
+          `}
+        >
+          {row.label}
+        </span>
+      </div>
+      <div
+        className={css`
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.35rem;
+          flex-shrink: 0;
+        `}
+      >
+        {row.isLoading ? (
+          <span
+            className={css`
+              width: 1.45rem;
+              height: 1.45rem;
+              border-radius: 999px;
+              border: 2px solid ${withAlpha(toneColor, 0.22)};
+              border-top-color: ${toneColor};
+              animation: ${spinnerAnimation} 0.8s linear infinite;
+            `}
+          />
+        ) : (
+          <>
+            <CompactStatusDot
+              icon="check"
+              color={Color.green()}
+              achieved={row.basicAchieved}
+            />
+            <CompactStatusDot
+              icon="star"
+              color={Color.gold()}
+              achieved={row.excellenceAchieved}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CompactStatusDot({
+  icon,
+  color,
+  achieved
+}: {
+  icon: string;
+  color: string;
+  achieved: boolean;
+}) {
+  return (
+    <span
+      className={css`
+        width: 1.35rem;
+        height: 1.35rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid ${achieved ? color : withAlpha(color, 0.18)};
+        background: ${achieved ? color : Color.white()};
+        color: ${achieved ? Color.white() : withAlpha(color, 0.45)};
+        box-shadow: inset 0 0 0 1px
+          ${achieved ? 'transparent' : withAlpha(color, 0.04)};
+        flex-shrink: 0;
+      `}
+    >
+      <Icon icon={icon} style={{ fontSize: '0.72rem' }} />
+    </span>
+  );
+}
+
+function getCompactStatusAriaLabel(row: BoostRow) {
+  if (row.isLoading) {
+    return `${row.label} status is loading`;
+  }
+  if (row.basicAchieved && row.excellenceAchieved) {
+    return `${row.label} basic and excellence completed`;
+  }
+  if (row.excellenceAchieved) {
+    return `${row.label} excellence completed`;
+  }
+  if (row.basicAchieved) {
+    return `${row.label} basic completed`;
+  }
+  return `${row.label} not completed yet`;
 }
 
 function BoostGuideRow({
