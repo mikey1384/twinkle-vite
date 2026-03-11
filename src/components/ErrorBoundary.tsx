@@ -8,18 +8,19 @@ import { getStoredItem } from '~/helpers/userDataHelpers';
 import { Color } from '~/constants/css';
 
 if (import.meta.env.SSR) {
-  import('source-map-support')
-    .then(({ install }) => install())
-    .catch(() => {});
+  import('source-map-support').then(({ install }) => install()).catch(() => {});
 }
 
 const token = () => getStoredItem('token');
 
 interface State {
   hasError: boolean;
+  recoveryKey: number;
+  recoverableErrorCount: number;
 }
 export default class ErrorBoundary extends Component<
   {
+    autoRecoverDomMutationError?: boolean;
     children?: React.ReactNode;
     className?: string;
     innerRef?: React.RefObject<any> | ((instance: any) => void);
@@ -34,21 +35,40 @@ export default class ErrorBoundary extends Component<
 > {
   constructor(props: any) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      recoveryKey: 0,
+      recoverableErrorCount: 0
+    };
   }
 
   async componentDidCatch(error: Error) {
-    this.setState({ hasError: true });
+    const shouldAutoRecover =
+      this.props.autoRecoverDomMutationError &&
+      isRecoverableDomMutationError(error) &&
+      this.state.recoverableErrorCount < 1;
+
     reportError({
       componentPath: this.props.componentPath,
       message: error.stack || '',
       info: ''
     });
+
+    if (shouldAutoRecover) {
+      this.setState((state) => ({
+        hasError: false,
+        recoveryKey: state.recoveryKey + 1,
+        recoverableErrorCount: state.recoverableErrorCount + 1
+      }));
+      return;
+    }
+
+    this.setState({ hasError: true });
   }
 
   render() {
     const { children, innerRef, componentPath, ...props } = this.props;
-    const { hasError } = this.state;
+    const { hasError, recoveryKey } = this.state;
     if (hasError) {
       return (
         <div
@@ -119,7 +139,9 @@ export default class ErrorBoundary extends Component<
               background: #fff;
               color: ${Color.logoBlue()};
               cursor: pointer;
-              transition: transform 0.2s ease, box-shadow 0.2s ease;
+              transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
 
               @media (hover: hover) and (pointer: fine) {
                 &:hover {
@@ -138,13 +160,25 @@ export default class ErrorBoundary extends Component<
       );
     }
     return Object.keys(props).length > 0 ? (
-      <div ref={innerRef} style={props.style} {...props}>
+      <div key={recoveryKey} ref={innerRef} style={props.style} {...props}>
         {children}
       </div>
     ) : (
-      <>{children}</>
+      <React.Fragment key={recoveryKey}>{children}</React.Fragment>
     );
   }
+}
+
+function isRecoverableDomMutationError(error: Error) {
+  const message = String(error?.message || '');
+  return (
+    message.includes(`Failed to execute 'removeChild' on 'Node'`) ||
+    message.includes(`Failed to execute 'insertBefore' on 'Node'`) ||
+    message.includes('The node to be removed is not a child of this node') ||
+    message.includes(
+      'The node before which the new node is to be inserted is not a child of this node'
+    )
+  );
 }
 
 async function reportError({
