@@ -785,9 +785,7 @@ function BoostGuideRow({
   const showCleared = row.basicAchieved && row.excellenceAchieved;
   const showPartial = row.basicAchieved && !row.excellenceAchieved;
   const frameColor = 'var(--boost-strip-accent-strong)';
-  const borderColor = showCleared
-    ? Color.green()
-    : showPartial || isFocused
+  const borderColor = showCleared || showPartial || isFocused
       ? getToneColor(row.tone)
       : 'var(--boost-strip-accent)';
 
@@ -822,10 +820,8 @@ function BoostGuideRow({
           className={css`
             padding: 0.35rem 0.9rem;
             border-radius: 999px;
-            background: ${showCleared
-              ? Color.green(0.15)
-              : getToneColor(row.tone, 0.12)};
-            color: ${showCleared ? Color.green() : getToneColor(row.tone)};
+            background: ${getToneColor(row.tone, 0.12)};
+            color: ${getToneColor(row.tone)};
             font-size: 1.1rem;
             font-weight: 800;
             white-space: nowrap;
