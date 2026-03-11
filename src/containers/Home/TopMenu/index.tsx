@@ -245,6 +245,7 @@ export default function TopMenu({
         <InputPanel onInputModalButtonClick={onInputModalButtonClick} />
         {!!userId && showDailyRewardBoostStrip && (
           <DailyRewardBoostStrip
+            allowCompactToggle
             streak={todayStats.dailyTaskStreak}
             wordle={todayStats.dailyTaskStatus?.wordle}
             grammarbles={todayStats.dailyTaskStatus?.grammarbles}

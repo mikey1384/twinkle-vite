@@ -192,6 +192,30 @@ export default function notificationRequestHelpers({
         return handleError(error);
       }
     },
+    async setDailyTaskRepairNoticeHidden(hidden: boolean) {
+      try {
+        const { data } = await request.put(
+          `${URL}/notification/today/dailyTask/repair-notice`,
+          { hidden },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async setDailyTaskBoostStripCompact(compact: boolean) {
+      try {
+        const { data } = await request.put(
+          `${URL}/notification/today/dailyTask/boost-strip`,
+          { compact },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async updateDailyRewardViewStatus() {
       try {
         await request.put(`${URL}/notification/today/dailyReward`, {}, auth());
