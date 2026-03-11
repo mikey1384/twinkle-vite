@@ -94,7 +94,7 @@ export default function DailyGoals({
   const repairNoticeBodyColor = Color.darkBluerGray();
   const collapsedRepairNoticeBorder = streakRepairAvailable
     ? repairNoticeBorder
-    : Color.darkGray();
+    : Color.gray();
   const collapsedRepairNoticeAccent = streakRepairAvailable
     ? repairNoticeAccent
     : Color.darkGray();
@@ -169,8 +169,8 @@ export default function DailyGoals({
           </Badge>
         ))}
       </div>
-      {streakAtRisk && (
-        isRepairNoticeCollapsed ? (
+      {streakAtRisk &&
+        (isRepairNoticeCollapsed ? (
           <div
             className={css`
               margin: 0.9rem auto 0;
@@ -407,8 +407,7 @@ export default function DailyGoals({
               </p>
             )}
           </div>
-        )
-      )}
+        ))}
       {allGoalsAchieved && (
         <div
           className={css`
