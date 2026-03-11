@@ -374,15 +374,18 @@ export default function DailyRewardModal({
     return addCommasToNumber(burnValue);
   }, [burnValue]);
 
-  // For bonus flow, show adjusted XP amount instead of coins
-  const xpAdjustedToCardOwnership = useMemo(() => {
-    const val = isCardOwned ? burnValue * 5 : burnValue / 2;
-    return addCommasToNumber(val);
+  const ownershipAdjustedRewardAmount = useMemo(() => {
+    return isCardOwned ? burnValue * 5 : burnValue / 2;
   }, [burnValue, isCardOwned]);
 
+  // For bonus flow, show adjusted XP amount instead of coins
+  const xpAdjustedToCardOwnership = useMemo(() => {
+    return addCommasToNumber(ownershipAdjustedRewardAmount);
+  }, [ownershipAdjustedRewardAmount]);
+
   const numCoinsAdjustedToCardOwnership = useMemo(() => {
-    return addCommasToNumber(isCardOwned ? burnValue * 5 : burnValue / 2);
-  }, [burnValue, isCardOwned]);
+    return addCommasToNumber(ownershipAdjustedRewardAmount);
+  }, [ownershipAdjustedRewardAmount]);
 
   const xpDigitCount = useMemo(() => {
     const absolute = Math.abs(Math.trunc(xpEarned || 0));
@@ -408,37 +411,49 @@ export default function DailyRewardModal({
     [xpDigitCount]
   );
 
-  const fourthSentenceText = useMemo(() => {
-    const defaultCoinEarned = isCardOwned ? burnValue * 5 : burnValue / 2;
-    if (defaultCoinEarned < 100) {
-      return 'Minimum reward amount is 100';
-    }
-    if (defaultCoinEarned < 1000) {
-      return '...rounded to the nearest hundred';
-    }
-    return '...rounded to the nearest thousand';
-  }, [burnValue, isCardOwned]);
-
   const effectiveRewardMultiplier = useMemo(() => {
     return Number(dailyTaskReward?.finalMultiplier || 1);
   }, [dailyTaskReward]);
 
+  const rewardAmountBeforeFinalRounding = useMemo(() => {
+    return ownershipAdjustedRewardAmount * effectiveRewardMultiplier;
+  }, [effectiveRewardMultiplier, ownershipAdjustedRewardAmount]);
+
+  const displayedRoundedBaseRewardAmount = useMemo(() => {
+    return addCommasToNumber(roundRewardAmount(ownershipAdjustedRewardAmount));
+  }, [ownershipAdjustedRewardAmount]);
+
+  const displayedRewardAmountBeforeFinalRounding = useMemo(() => {
+    return addCommasToNumber(rewardAmountBeforeFinalRounding);
+  }, [rewardAmountBeforeFinalRounding]);
+
   const showDailyTaskMultiplier = useMemo(() => {
     return Math.abs(effectiveRewardMultiplier - 1) > 0.001;
   }, [effectiveRewardMultiplier]);
+
+  const fourthSentenceText = useMemo(() => {
+    if (ownershipAdjustedRewardAmount < 100) {
+      return 'Minimum reward amount is 100';
+    }
+    return `Rounded to ${displayedRoundedBaseRewardAmount}`;
+  }, [displayedRoundedBaseRewardAmount, ownershipAdjustedRewardAmount]);
 
   const dailyTaskRewardText = useMemo(() => {
     if (!dailyTaskReward || !showDailyTaskMultiplier) {
       return fourthSentenceText;
     }
     if (dailyTaskReward.excellenceQualified) {
-      return 'Daily task excellence bonus applied';
+      return 'Daily task excellence bonus applied before final rounding';
     }
     if (dailyTaskReward.basicQualified) {
-      return 'Daily task streak bonus applied';
+      return 'Daily task streak bonus applied before final rounding';
     }
-    return 'Daily task base reward applied';
-  }, [dailyTaskReward, fourthSentenceText, showDailyTaskMultiplier]);
+    return 'Daily task multiplier applied before final rounding';
+  }, [
+    dailyTaskReward,
+    fourthSentenceText,
+    showDailyTaskMultiplier
+  ]);
 
   const dailyTaskMultiplierLabel = useMemo(() => {
     if (!showDailyTaskMultiplier) return '';
@@ -678,6 +693,17 @@ export default function DailyRewardModal({
       return `${Math.round(multiplier)}`;
     }
     return multiplier.toFixed(1).replace(/\.0$/, '');
+  }
+
+  function roundRewardAmount(rewardAmount: number) {
+    if (rewardAmount < 100) {
+      rewardAmount = 100;
+    } else if (rewardAmount < 1000) {
+      rewardAmount = Math.round(rewardAmount / 100) * 100;
+    } else {
+      rewardAmount = Math.round(rewardAmount / 1000) * 1000;
+    }
+    return Math.max(0, rewardAmount);
   }
 
   const footerClass = css`
@@ -1038,7 +1064,9 @@ export default function DailyRewardModal({
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              {addCommasToNumber(xpEarned)}
+                              {showDailyTaskMultiplier
+                                ? displayedRewardAmountBeforeFinalRounding
+                                : addCommasToNumber(xpEarned)}
                             </span>
                             <span style={{ color: Color.gold() }}>XP</span>
                           </div>
@@ -1217,7 +1245,9 @@ export default function DailyRewardModal({
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          {displayedCoinEarned}
+                          {showDailyTaskMultiplier
+                            ? displayedRewardAmountBeforeFinalRounding
+                            : displayedCoinEarned}
                         </span>
                       </div>
                     </div>

@@ -183,7 +183,10 @@ export default function Header({
   }, [versionMatch]);
 
   return (
-    <ErrorBoundary componentPath="App/Header/index">
+    <ErrorBoundary
+      componentPath="App/Header/index"
+      autoRecoverDomMutationError
+    >
       <nav
         className={`notranslate unselectable ${css`
           z-index: 99999;

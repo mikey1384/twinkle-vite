@@ -183,15 +183,12 @@ export default function Content({
     const dailyTaskBreakdownText = boostParts.length
       ? `${streakLabel} -> ${boostParts.join(' • ')}`
       : `${streakLabel} -> no extra boost`;
-    const baseCoinReward = Math.max(
-      0,
-      Math.round(coinEarned / appliedFinalMultiplier)
-    );
-    const dailyTaskRewardSummaryText = `${addCommasToNumber(
-      baseCoinReward
-    )} base -> ${displayedCoinEarned} at x${formatRewardMultiplier(
-      appliedFinalMultiplier
-    )}`;
+    const dailyTaskRewardSummaryText =
+      appliedFinalMultiplier > 1
+        ? `${displayedCoinEarned} final reward at x${formatRewardMultiplier(
+            appliedFinalMultiplier
+          )}`
+        : `${displayedCoinEarned} final reward`;
 
     return {
       dailyTaskBreakdownText,
