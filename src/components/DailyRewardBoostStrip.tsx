@@ -10,13 +10,7 @@ import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 type Focus = 'all' | 'wordle' | 'grammarbles' | 'aiStory';
 type TaskKey = Exclude<Focus, 'all'>;
 const WORDLE_EXCELLENCE_MAX_GUESSES = 4;
-type Tone =
-  | 'logoBlue'
-  | 'orange'
-  | 'magenta'
-  | 'gold'
-  | 'green'
-  | 'gray';
+type Tone = 'logoBlue' | 'orange' | 'magenta' | 'gold' | 'green' | 'gray';
 
 interface BoostRow {
   label: string;
@@ -76,16 +70,20 @@ export default function DailyRewardBoostStrip({
     aiStory,
     loadingStates
   });
-  const dailyTaskStatus = useNotiContext((v) => v.state.todayStats.dailyTaskStatus);
+  const dailyTaskStatus = useNotiContext(
+    (v) => v.state.todayStats.dailyTaskStatus
+  );
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
   const setDailyTaskBoostStripCompact = useAppContext(
     (v) => v.requestHelpers.setDailyTaskBoostStripCompact
   );
-  const [savingCompactPreference, setSavingCompactPreference] = React.useState(false);
+  const [savingCompactPreference, setSavingCompactPreference] =
+    React.useState(false);
   const streakDays = Math.max(0, Number(streak) || 0);
-  const boostStripCompactSet = !!dailyTaskStatus?.preferences?.boostStripCompactSet;
+  const boostStripCompactSet =
+    !!dailyTaskStatus?.preferences?.boostStripCompactSet;
   const boostStripCompact = allowCompactToggle
     ? boostStripCompactSet
       ? !!dailyTaskStatus?.preferences?.boostStripCompact
@@ -97,7 +95,8 @@ export default function DailyRewardBoostStrip({
   }
 
   const summaryLabel = 'Boost condition';
-  const compactLabel = focus === 'all' ? 'Boost status' : `${rows[0].label} boost`;
+  const compactLabel =
+    focus === 'all' ? 'Boost status' : `${rows[0].label} boost`;
   const streakColor = getStreakColor(streakDays);
   const showStreakBadge = streakDays > 0;
   const showSparkles = streakDays >= 10;
@@ -119,7 +118,10 @@ export default function DailyRewardBoostStrip({
 
   if (boostStripCompact) {
     return (
-      <ScopedTheme theme={themeName} roles={['sectionPanel', 'sectionPanelText']}>
+      <ScopedTheme
+        theme={themeName}
+        roles={['sectionPanel', 'sectionPanelText']}
+      >
         <section
           style={panelStyle}
           className={css`
@@ -293,10 +295,7 @@ export default function DailyRewardBoostStrip({
             `}
           >
             {rows.map((row) => (
-              <CompactStatusChip
-                key={row.label}
-                row={row}
-              />
+              <CompactStatusChip key={row.label} row={row} />
             ))}
           </div>
         </section>
@@ -311,7 +310,7 @@ export default function DailyRewardBoostStrip({
         className={css`
           position: relative;
           width: 100%;
-          padding: 1.4rem ${allowCompactToggle ? '4.4rem' : '1.6rem'} 1.4rem 1.6rem;
+          padding: 1.4rem 1.6rem;
           border-radius: 1.2rem;
           background: var(--section-panel-bg, #fff);
           border: 1px solid var(--section-panel-border-color);
@@ -320,7 +319,7 @@ export default function DailyRewardBoostStrip({
           gap: 1rem;
 
           @media (max-width: ${mobileMaxWidth}) {
-            padding: 1.25rem ${allowCompactToggle ? '4rem' : '1.1rem'} 1.25rem 1.1rem;
+            padding: 1.25rem 1.1rem;
           }
         `}
       >
@@ -339,6 +338,11 @@ export default function DailyRewardBoostStrip({
             align-items: center;
             justify-content: flex-start;
             gap: 0.9rem;
+            padding-right: ${allowCompactToggle ? '3.4rem' : '0'};
+
+            @media (max-width: ${mobileMaxWidth}) {
+              padding-right: ${allowCompactToggle ? '3.05rem' : '0'};
+            }
           `}
         >
           <div
@@ -510,11 +514,7 @@ export default function DailyRewardBoostStrip({
           `}
         >
           {rows.map((row) => (
-            <BoostGuideRow
-              key={row.label}
-              focus={focus}
-              row={row}
-            />
+            <BoostGuideRow key={row.label} focus={focus} row={row} />
           ))}
         </div>
       </section>
@@ -774,18 +774,13 @@ function getCompactStatusAriaLabel(row: BoostRow) {
   return `${row.label} not completed yet`;
 }
 
-function BoostGuideRow({
-  row,
-  focus
-}: {
-  row: BoostRow;
-  focus: Focus;
-}) {
+function BoostGuideRow({ row, focus }: { row: BoostRow; focus: Focus }) {
   const isFocused = focus !== 'all';
   const showCleared = row.basicAchieved && row.excellenceAchieved;
   const showPartial = row.basicAchieved && !row.excellenceAchieved;
   const frameColor = 'var(--boost-strip-accent-strong)';
-  const borderColor = showCleared || showPartial || isFocused
+  const borderColor =
+    showCleared || showPartial || isFocused
       ? getToneColor(row.tone)
       : 'var(--boost-strip-accent)';
 
@@ -887,19 +882,16 @@ function BoostGuideRow({
           gap: 0.55rem;
 
           @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
+            width: auto;
+            margin-left: auto;
+            flex-direction: column;
+            align-items: flex-end;
             justify-content: flex-start;
           }
         `}
       >
-        <ProgressPill
-          achieved={row.basicAchieved}
-          variant="basic"
-        />
-        <ProgressPill
-          achieved={row.excellenceAchieved}
-          variant="excellence"
-        />
+        <ProgressPill achieved={row.basicAchieved} variant="basic" />
+        <ProgressPill achieved={row.excellenceAchieved} variant="excellence" />
       </div>
     </div>
   );
@@ -1040,7 +1032,9 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
     Number(grammarbles?.comparisonScore) > 0
       ? Number(grammarbles.comparisonScore)
       : null;
-  let title = basicAchieved ? `Lv${currentLevel} cleared` : `Clear Lv${currentLevel}`;
+  let title = basicAchieved
+    ? `Lv${currentLevel} cleared`
+    : `Clear Lv${currentLevel}`;
   let description = 'Excellence target unavailable right now.';
   switch (grammarbles?.excellenceMode) {
     case 'baseline':
