@@ -458,13 +458,17 @@ export default function StartScreen({
             )}
           </div>
         </div>
-        <DailyRewardBoostStrip
-          focus="grammarbles"
-          streak={dailyTaskStreak}
-          grammarbles={dailyTask}
-          loadingStates={{ grammarbles: !loaded }}
-          style={{ marginTop: '2rem', maxWidth: '46rem' }}
-        />
+        <div
+          style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+        >
+          <DailyRewardBoostStrip
+            focus="grammarbles"
+            streak={dailyTaskStreak}
+            grammarbles={dailyTask}
+            loadingStates={{ grammarbles: !loaded }}
+            style={{ marginTop: '2rem', maxWidth: '46rem' }}
+          />
+        </div>
         {loaded && (
           <div
             className={css`

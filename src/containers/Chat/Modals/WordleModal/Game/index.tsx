@@ -137,7 +137,6 @@ export default function Game({
 
   useEffect(() => {
     setAlertMessage({});
-     
   }, [nextDayTimeStamp]);
 
   return (
@@ -181,6 +180,8 @@ export default function Game({
       <div
         style={{
           width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
           paddingLeft: '2rem',
           paddingRight: '2rem',
           marginTop: `${1.2 * uiScale}rem`
@@ -358,17 +359,14 @@ export default function Game({
 
     async function handleGameLost() {
       const loadStartTime = Date.now();
-      const {
-        dailyTaskStatus,
-        wordleAttemptState,
-        wordleStats
-      } = await updateWordleAttempt({
-        channelName,
-        channelId,
-        guesses: guesses.concat([currentGuess]),
-        solution,
-        isSolved: false
-      });
+      const { dailyTaskStatus, wordleAttemptState, wordleStats } =
+        await updateWordleAttempt({
+          channelName,
+          channelId,
+          guesses: guesses.concat([currentGuess]),
+          solution,
+          isSolved: false
+        });
       onSetChannelState({
         channelId,
         newState: { wordleAttemptState, wordleStats }
@@ -389,17 +387,14 @@ export default function Game({
 
     async function handleGameWon() {
       const loadStartTime = Date.now();
-      const {
-        dailyTaskStatus,
-        wordleAttemptState,
-        wordleStats
-      } = await updateWordleAttempt({
-        channelName,
-        channelId,
-        guesses: guesses.concat([currentGuess]),
-        solution,
-        isSolved: true
-      });
+      const { dailyTaskStatus, wordleAttemptState, wordleStats } =
+        await updateWordleAttempt({
+          channelName,
+          channelId,
+          guesses: guesses.concat([currentGuess]),
+          solution,
+          isSolved: true
+        });
       onSetChannelState({
         channelId,
         newState: { wordleAttemptState, wordleStats }

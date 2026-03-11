@@ -80,8 +80,7 @@ const difficultyExplanation: Record<
 
 const Explanation = ({ level }: { level: number }) => {
   const entry =
-    difficultyExplanation[String(level)] ||
-    difficultyExplanation['1'];
+    difficultyExplanation[String(level)] || difficultyExplanation['1'];
   return (
     <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
       <div
@@ -182,6 +181,7 @@ export default function MainMenu({
     <div
       style={{
         display: 'flex',
+        width: '100%',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center'
@@ -200,13 +200,22 @@ export default function MainMenu({
           onClick: () => onSetDifficulty(Number(level))
         }))}
       />
-      <DailyRewardBoostStrip
-        focus="aiStory"
-        streak={dailyTaskStreak}
-        aiStory={dailyTask}
-        loadingStates={{ aiStory: loadingTopic }}
-        style={{ marginTop: '1.25rem', width: '80%', maxWidth: '46rem' }}
-      />
+      <div
+        style={{
+          marginTop: '2rem',
+          width: '100%',
+          maxWidth: '46rem',
+          display: 'flex',
+          justifyContent: 'center'
+        }}
+      >
+        <DailyRewardBoostStrip
+          focus="aiStory"
+          streak={dailyTaskStreak}
+          aiStory={dailyTask}
+          loadingStates={{ aiStory: loadingTopic }}
+        />
+      </div>
       <div
         style={{
           marginTop: '2rem',
