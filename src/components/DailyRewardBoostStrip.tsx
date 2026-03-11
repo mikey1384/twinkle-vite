@@ -9,6 +9,7 @@ import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
 type Focus = 'all' | 'wordle' | 'grammarbles' | 'aiStory';
 type TaskKey = Exclude<Focus, 'all'>;
+const WORDLE_EXCELLENCE_MAX_GUESSES = 4;
 type Tone =
   | 'logoBlue'
   | 'orange'
@@ -973,13 +974,13 @@ function buildWordleRow(wordle: any, isLoading = false): BoostRow {
     title = 'Wordle ended without a solve';
   }
 
-  let description = 'Excellence target: solve in 3 guesses.';
+  let description = `Excellence target: solve in ${WORDLE_EXCELLENCE_MAX_GUESSES} guesses.`;
   if (excellenceAchieved) {
-    description = '3-guess excellence secured.';
+    description = `${WORDLE_EXCELLENCE_MAX_GUESSES}-guess excellence secured.`;
   } else if (solved) {
-    description = '3-guess excellence missed for today.';
+    description = `${WORDLE_EXCELLENCE_MAX_GUESSES}-guess excellence missed for today.`;
   } else if (failed) {
-    description = '3-guess excellence is closed for today.';
+    description = `${WORDLE_EXCELLENCE_MAX_GUESSES}-guess excellence is closed for today.`;
   }
 
   return {

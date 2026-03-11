@@ -187,19 +187,6 @@ export default function MainMenu({
         alignItems: 'center'
       }}
     >
-      <DropdownButton
-        variant="solid"
-        tone="raised"
-        color="darkerGray"
-        icon="caret-down"
-        listStyle={{ minWidth: '18rem', whiteSpace: 'nowrap' }}
-        text={levelHash[difficulty]}
-        onDropdownShown={onSetDropdownShown}
-        menuProps={Object.keys(levelHash).map((level: string) => ({
-          label: levelHash[level],
-          onClick: () => onSetDifficulty(Number(level))
-        }))}
-      />
       <div
         style={{
           marginTop: '2rem',
@@ -214,6 +201,21 @@ export default function MainMenu({
           streak={dailyTaskStreak}
           aiStory={dailyTask}
           loadingStates={{ aiStory: loadingTopic }}
+        />
+      </div>
+      <div style={{ marginTop: '1.5rem' }}>
+        <DropdownButton
+          variant="solid"
+          tone="raised"
+          color="darkerGray"
+          icon="caret-down"
+          listStyle={{ minWidth: '18rem', whiteSpace: 'nowrap' }}
+          text={levelHash[difficulty]}
+          onDropdownShown={onSetDropdownShown}
+          menuProps={Object.keys(levelHash).map((level: string) => ({
+            label: levelHash[level],
+            onClick: () => onSetDifficulty(Number(level))
+          }))}
         />
       </div>
       <div
