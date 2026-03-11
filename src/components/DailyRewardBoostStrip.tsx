@@ -799,8 +799,7 @@ function BoostGuideRow({ row, focus }: { row: BoostRow; focus: Focus }) {
         border-left: 3px solid ${borderColor};
 
         @media (max-width: ${mobileMaxWidth}) {
-          flex-direction: column;
-          align-items: stretch;
+          align-items: center;
         }
       `}
     >
@@ -808,7 +807,9 @@ function BoostGuideRow({ row, focus }: { row: BoostRow; focus: Focus }) {
         className={css`
           display: flex;
           gap: 0.9rem;
-          align-items: flex-start;
+          align-items: center;
+          flex: 1;
+          min-width: 0;
         `}
       >
         <div
@@ -880,10 +881,9 @@ function BoostGuideRow({ row, focus }: { row: BoostRow; focus: Focus }) {
           flex-wrap: wrap;
           justify-content: flex-end;
           gap: 0.55rem;
+          flex-shrink: 0;
 
           @media (max-width: ${mobileMaxWidth}) {
-            width: auto;
-            margin-left: auto;
             flex-direction: column;
             align-items: flex-end;
             justify-content: flex-start;
