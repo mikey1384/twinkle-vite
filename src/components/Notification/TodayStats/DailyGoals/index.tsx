@@ -92,6 +92,12 @@ export default function DailyGoals({
     ? Color.armyGreen()
     : Color.brownOrange();
   const repairNoticeBodyColor = Color.darkBluerGray();
+  const collapsedRepairNoticeBorder = streakRepairAvailable
+    ? repairNoticeBorder
+    : Color.darkGray();
+  const collapsedRepairNoticeAccent = streakRepairAvailable
+    ? repairNoticeAccent
+    : Color.darkGray();
 
   useEffect(() => {
     timerRef.current = setTimeout(() => {
@@ -172,7 +178,7 @@ export default function DailyGoals({
               padding: 0.85rem 1rem;
               border-radius: 1rem;
               background: ${Color.white()};
-              border: 2px solid ${repairNoticeBorder};
+              border: 2px solid ${collapsedRepairNoticeBorder};
               display: flex;
               flex-direction: column;
               align-items: center;
@@ -195,7 +201,7 @@ export default function DailyGoals({
                   gap: 0.55rem;
                   font-size: 1.05rem;
                   font-weight: 800;
-                  color: ${repairNoticeAccent};
+                  color: ${collapsedRepairNoticeAccent};
                   font-family: ${funFont};
                   margin-bottom: 0.2rem;
                 `}

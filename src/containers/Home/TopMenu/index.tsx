@@ -246,6 +246,7 @@ export default function TopMenu({
         {!!userId && showDailyRewardBoostStrip && (
           <DailyRewardBoostStrip
             allowCompactToggle
+            hideCompactSummaryOnMobile
             streak={todayStats.dailyTaskStreak}
             wordle={todayStats.dailyTaskStatus?.wordle}
             grammarbles={todayStats.dailyTaskStatus?.grammarbles}

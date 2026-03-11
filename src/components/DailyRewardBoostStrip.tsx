@@ -45,6 +45,7 @@ export default function DailyRewardBoostStrip({
   loadingStates,
   focus = 'all',
   allowCompactToggle = false,
+  hideCompactSummaryOnMobile = false,
   style
 }: {
   streak: number;
@@ -54,6 +55,7 @@ export default function DailyRewardBoostStrip({
   loadingStates?: Partial<Record<TaskKey, boolean>>;
   focus?: Focus;
   allowCompactToggle?: boolean;
+  hideCompactSummaryOnMobile?: boolean;
   style?: React.CSSProperties;
 }) {
   const [showFormula, setShowFormula] = React.useState(false);
@@ -153,6 +155,7 @@ export default function DailyRewardBoostStrip({
               flex: 1;
 
               @media (max-width: ${mobileMaxWidth}) {
+                display: ${hideCompactSummaryOnMobile ? 'none' : 'flex'};
                 width: 100%;
                 justify-content: center;
                 flex-wrap: wrap;
