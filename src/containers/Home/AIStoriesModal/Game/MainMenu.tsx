@@ -87,7 +87,7 @@ const Explanation = ({ level }: { level: number }) => {
         style={{
           marginTop: '1rem',
           fontSize: '1rem',
-          textAlign: 'left',
+          textAlign: 'center',
           width: '80%'
         }}
       >
