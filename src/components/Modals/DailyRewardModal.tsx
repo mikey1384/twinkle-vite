@@ -550,6 +550,7 @@ export default function DailyRewardModal({
     margin-top: 2.5rem;
     width: 100%;
     max-width: 52rem;
+    justify-self: center;
     margin-left: auto;
     margin-right: auto;
     display: grid;
@@ -571,7 +572,7 @@ export default function DailyRewardModal({
 
   const summaryRowClass = css`
     display: grid;
-    grid-template-columns: 2.5fr auto 1fr;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     column-gap: 1rem;
     width: 100%;
@@ -581,6 +582,7 @@ export default function DailyRewardModal({
     font-size: 1.55rem;
     line-height: 1.4;
     color: #111827;
+    min-width: 0;
     white-space: nowrap;
     @media (max-width: 480px) {
       font-size: 1.45rem;
@@ -597,6 +599,7 @@ export default function DailyRewardModal({
     display: grid;
     grid-auto-flow: column;
     align-items: center;
+    justify-self: center;
     justify-content: center;
     column-gap: 0.75rem;
     min-width: 11rem;
@@ -619,6 +622,7 @@ export default function DailyRewardModal({
     display: grid;
     grid-auto-flow: column;
     grid-template-columns: max-content max-content;
+    justify-self: end;
     justify-content: end;
     align-items: center;
     column-gap: 0.5rem;

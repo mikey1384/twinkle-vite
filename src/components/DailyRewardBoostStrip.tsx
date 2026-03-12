@@ -54,6 +54,7 @@ export default function DailyRewardBoostStrip({
   style?: React.CSSProperties;
 }) {
   const [showFormula, setShowFormula] = React.useState(false);
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const {
     themeName,
     accentColor,
@@ -70,9 +71,7 @@ export default function DailyRewardBoostStrip({
     aiStory,
     loadingStates
   });
-  const dailyTaskStatus = useNotiContext(
-    (v) => v.state.todayStats.dailyTaskStatus
-  );
+  const dailyTaskStatus = todayStats?.dailyTaskStatus;
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
@@ -100,11 +99,14 @@ export default function DailyRewardBoostStrip({
   const streakColor = getStreakColor(streakDays);
   const showStreakBadge = streakDays > 0;
   const showSparkles = streakDays >= 10;
+  const rewardTimeframe = todayStats?.dailyRewardResultViewed
+    ? 'tomorrow'
+    : 'today';
   const summaryBlurb = `You're currently on a ${streakDays}-day Daily Tasks streak. That gives you an x${formatMultiplier(
     streakMultiplier
   )} multiplier boost for both Basic and Excellence conditions, up to x${formatMultiplier(
     potentialMultiplier
-  )} total reward today.`;
+  )} total reward ${rewardTimeframe}.`;
   const panelStyle = {
     ...styleVars,
     ['--boost-strip-accent' as const]: accentColor,
@@ -269,7 +271,7 @@ export default function DailyRewardBoostStrip({
                   line-height: 1.4;
                 `}
               >
-                {`Up to x${formatMultiplier(potentialMultiplier)} total reward today`}
+                {`Up to x${formatMultiplier(potentialMultiplier)} total reward ${rewardTimeframe}`}
               </div>
             </div>
           </div>
@@ -500,7 +502,7 @@ export default function DailyRewardBoostStrip({
                 color: ${Color.darkGray()};
               `}
             >
-              {`Streak days 0-10 use x2 for Basic and x2 for Excellence. Days 11-20 use x3 for both. Days 21-30 use x4 for both. Every extra 10 streak days adds +1 to both ladders, capped at x10 each. If you hit both conditions today, your current streak can take the reward as high as x${formatMultiplier(
+              {`Streak days 0-10 use x2 for Basic and x2 for Excellence. Days 11-20 use x3 for both. Days 21-30 use x4 for both. Every extra 10 streak days adds +1 to both ladders, capped at x10 each. If you hit both conditions ${rewardTimeframe}, your current streak can take the reward as high as x${formatMultiplier(
                 potentialMultiplier
               )} total.`}
             </div>
