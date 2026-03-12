@@ -549,7 +549,7 @@ export default function DailyRewardModal({
   const summaryContainerClass = css`
     margin-top: 2.5rem;
     width: 100%;
-    max-width: 52rem;
+    max-width: 64rem;
     justify-self: center;
     margin-left: auto;
     margin-right: auto;
@@ -583,11 +583,12 @@ export default function DailyRewardModal({
     line-height: 1.4;
     color: #111827;
     min-width: 0;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: break-word;
     @media (max-width: 480px) {
       font-size: 1.45rem;
       white-space: normal;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       min-width: 0;
     }
   `;
