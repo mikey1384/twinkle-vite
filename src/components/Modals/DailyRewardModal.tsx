@@ -580,11 +580,11 @@ export default function DailyRewardModal({
     color: #111827;
     min-width: 0;
     white-space: normal;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     @media (max-width: 480px) {
       font-size: 1.45rem;
       white-space: normal;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
       min-width: 0;
     }
   `;
@@ -619,8 +619,8 @@ export default function DailyRewardModal({
     display: grid;
     grid-auto-flow: column;
     grid-template-columns: max-content max-content;
-    justify-self: center;
-    justify-content: center;
+    justify-self: end;
+    justify-content: end;
     align-items: center;
     column-gap: 0.5rem;
     @media (max-width: 480px) {
