@@ -545,7 +545,7 @@ export default function DailyRewardModal({
   const summaryContainerClass = css`
     margin-top: 2.5rem;
     width: 100%;
-    max-width: 64rem;
+    max-width: 60rem;
     justify-self: center;
     margin-left: auto;
     margin-right: auto;
