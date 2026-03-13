@@ -38,6 +38,22 @@ interface HeaderProps {
   style?: React.CSSProperties;
 }
 
+const contentSubsectionTitles: Record<string, string> = {
+  comments: 'Comment',
+  links: 'Link',
+  missions: 'Mission',
+  playlists: 'Playlist',
+  subjects: 'Subject',
+  videos: 'Video',
+  'ai-cards': 'AI Card',
+  'ai-stories': 'AI Story',
+  'daily-reflections': 'Daily Reflection',
+  'mission-passes': 'Mission Pass',
+  'achievement-unlocks': 'Achievement',
+  'daily-rewards': 'Daily Goal',
+  'shared-prompts': 'Shared Prompt'
+};
+
 export default function Header({
   onInit,
   onMobileMenuOpen,
@@ -162,15 +178,19 @@ export default function Header({
     } else {
       let currentPageTitle = 'Twinkle';
       if (section !== 'home') {
+        const subsectionTitle = isSubsection
+          ? contentSubsectionTitles[section]
+          : '';
         const displayedSection =
-          section === 'ai-cards'
+          subsectionTitle ||
+          (section === 'ai-cards'
             ? 'Explore AI Cards'
             : section === 'ai-stories'
             ? 'AI Stories'
-            : section;
-        currentPageTitle = `${capitalize(
-          displayedSection
-        )} | ${currentPageTitle}`;
+            : section);
+        currentPageTitle = `${
+          subsectionTitle ? displayedSection : capitalize(displayedSection)
+        } | ${currentPageTitle}`;
       }
       document.title = `${currentPageTitle}${newNotiNum > 0 ? ' *' : ''}`;
     }
