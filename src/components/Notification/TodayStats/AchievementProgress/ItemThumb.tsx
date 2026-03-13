@@ -46,9 +46,10 @@ export default function ItemThumb({
 
   const thumbRadius = useMemo(() => parseInt(thumbSize) / 2, [thumbSize]);
   const circumference = useMemo(() => 2 * Math.PI * thumbRadius, [thumbRadius]);
+  const completedRatio = useMemo(() => progress / 100, [progress]);
   const strokeDashoffset = useMemo(
-    () => Math.max(-circumference, -1 * (progress / 100) * circumference),
-    [progress, circumference]
+    () => Math.max(-circumference, -1 * completedRatio * circumference),
+    [completedRatio, circumference]
   );
   return (
     <div
@@ -100,7 +101,10 @@ export default function ItemThumb({
             fill="transparent"
             stroke="rgba(0, 0, 0, 0.7)"
             strokeWidth={thumbRadius * 2}
-            strokeDasharray={circumference}
+            // Use an explicit dash+gap pair to avoid browser-specific
+            // interpretation of a single-value dash array.
+            // Keep the negative offset so progress still reveals clockwise.
+            strokeDasharray={`${circumference} ${circumference}`}
             strokeDashoffset={strokeDashoffset || 0}
           />
         </svg>
