@@ -2056,12 +2056,15 @@ export default function chatRequestHelpers({
       lastId?: number;
     }) {
       try {
+        const searchParams = new URLSearchParams();
+        searchParams.set('channelId', String(channelId));
+        searchParams.set('searchText', text);
+        if (topicId) searchParams.set('topicId', String(topicId));
+        if (lastId) searchParams.set('lastId', String(lastId));
         const {
           data: { searchText, messageIds, messagesObj, loadMoreButton }
         } = await request.get(
-          `${URL}/chat/search/message?channelId=${channelId}&searchText=${text}${
-            topicId ? `&topicId=${topicId}` : ''
-          }${lastId ? `&lastId=${lastId}` : ''}`,
+          `${URL}/chat/search/message?${searchParams.toString()}`,
           auth()
         );
         return { searchText, messageIds, messagesObj, loadMoreButton };
@@ -2077,8 +2080,12 @@ export default function chatRequestHelpers({
       channelId: number;
     }) {
       try {
+        const searchParams = new URLSearchParams();
+        searchParams.set('text', text);
+        searchParams.set('channelId', String(channelId));
         const { data } = await request.get(
-          `${URL}/chat/search/subject?text=${text}&channelId=${channelId}`
+          `${URL}/chat/search/subject?${searchParams.toString()}`,
+          auth()
         );
         return data;
       } catch (error) {
@@ -2093,8 +2100,12 @@ export default function chatRequestHelpers({
       searchText: string;
     }) {
       try {
+        const searchParams = new URLSearchParams();
+        searchParams.set('text', searchText);
+        searchParams.set('channelId', String(channelId));
         const { data } = await request.get(
-          `${URL}/chat/search/users?text=${searchText}&channelId=${channelId}`
+          `${URL}/chat/search/users?${searchParams.toString()}`,
+          auth()
         );
         return data;
       } catch (error) {

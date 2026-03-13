@@ -243,13 +243,19 @@ export default function MessagesContainer({
     Record<number, Partial<Record<'chess' | 'omok', string>>>
   >({});
   const [searchText, setSearchText] = useState('');
+  const searchContextRef = useRef({
+    channelId: selectedChannelId,
+    selectedTab,
+    topicId: null as number | null,
+    searchText: ''
+  });
 
   const { handleSearch, searching } = useSearch({
     onSearch: handleMessageSearch,
     onEmptyQuery: () => {
       onSeachChatMessages({
         channelId: selectedChannelId,
-        topicId: appliedTopicId,
+        topicId: selectedTab === 'topic' ? appliedTopicId : null,
         messageIds: [],
         messagesObj: {},
         loadMoreShown: false
@@ -258,7 +264,7 @@ export default function MessagesContainer({
     onClear: () => {
       onSeachChatMessages({
         channelId: selectedChannelId,
-        topicId: appliedTopicId,
+        topicId: selectedTab === 'topic' ? appliedTopicId : null,
         messageIds: [],
         messagesObj: {},
         loadMoreShown: false
@@ -386,6 +392,15 @@ export default function MessagesContainer({
       currentChannel.featuredTopicId,
     [currentChannel.selectedTopicId, currentChannel.featuredTopicId, subjectId]
   );
+
+  useEffect(() => {
+    searchContextRef.current = {
+      channelId: selectedChannelId,
+      selectedTab,
+      topicId: selectedTab === 'topic' ? appliedTopicId : null,
+      searchText
+    };
+  }, [appliedTopicId, searchText, selectedChannelId, selectedTab]);
 
   const currentlySelectedTopic = useMemo(() => {
     if (topicObj[appliedTopicId]) {
@@ -2009,16 +2024,39 @@ export default function MessagesContainer({
   }
 
   async function handleMessageSearch(text: string) {
+    const requestedTopicId = selectedTab === 'topic' ? appliedTopicId : null;
+    const requestContext = {
+      channelId: selectedChannelId,
+      selectedTab,
+      topicId: requestedTopicId,
+      searchText: text.trim()
+    };
     try {
-      const { messageIds, messagesObj, loadMoreButton } =
-        await searchChatMessages({
-          channelId: selectedChannelId,
-          topicId: selectedTab === 'topic' ? appliedTopicId : null,
-          text
-        });
-      onSeachChatMessages({
+      const {
+        searchText: returnedSearchText,
+        messageIds,
+        messagesObj,
+        loadMoreButton
+      } = await searchChatMessages({
         channelId: selectedChannelId,
-        topicId: selectedTab === 'topic' ? appliedTopicId : null,
+        topicId: requestedTopicId,
+        text
+      });
+      const currentContext = searchContextRef.current;
+      if (
+        currentContext.channelId !== requestContext.channelId ||
+        currentContext.selectedTab !== requestContext.selectedTab ||
+        currentContext.topicId !== requestContext.topicId ||
+        currentContext.searchText.trim() !== requestContext.searchText
+      ) {
+        return;
+      }
+      if ((returnedSearchText || '').trim() !== requestContext.searchText) {
+        return;
+      }
+      onSeachChatMessages({
+        channelId: requestContext.channelId,
+        topicId: requestedTopicId,
         messageIds,
         messagesObj,
         loadMoreShown: loadMoreButton
