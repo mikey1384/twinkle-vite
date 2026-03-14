@@ -1042,7 +1042,9 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
     case 'baseline':
       description =
         currentLevel >= 5
-          ? 'No score to beat yet. Excellence target: make all 5 levels perfect.'
+          ? excellenceAchieved
+            ? 'No prior Lv5 benchmark. Lv5 clear counted as excellence.'
+            : 'No prior Lv5 benchmark. Excellence target: clear all 5 levels.'
           : `No score to beat yet. Excellence target: clear Lv${currentLevel + 1}.`;
       break;
     case 'score-or-next-level':
@@ -1052,8 +1054,8 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
       break;
     case 'total-score':
       description = comparisonScore
-        ? `Excellence target: beat yesterday's 5-level total of ${comparisonScore}.`
-        : `Excellence target: beat yesterday's 5-level total.`;
+        ? `Excellence target: beat your most recent Lv5-clear total of ${comparisonScore}.`
+        : `Excellence target: beat your most recent Lv5-clear total.`;
       break;
     case 'score':
       description = comparisonScore
