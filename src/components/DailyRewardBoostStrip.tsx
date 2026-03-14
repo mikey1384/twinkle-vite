@@ -1110,21 +1110,23 @@ function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
   const hasReading = !!aiStory?.hasReadingClearAtCurrentLevel;
   const hasListening = !!aiStory?.hasListeningClearAtCurrentLevel;
   const excellenceAchieved = !!aiStory?.excellenceQualified;
+  const levelTargetPhrase =
+    currentLevel >= 5 ? `Lv${currentLevel}` : `Lv${currentLevel} or higher`;
 
-  let description = `Excellence target: clear both Read and Listen at Lv${currentLevel} or higher.`;
+  let description = `Excellence target: clear both Read and Listen at ${levelTargetPhrase}.`;
   if (excellenceAchieved) {
     description = 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at Lv${currentLevel} or higher.`;
+    description = `Read is done. Finish Listen at ${levelTargetPhrase}.`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at Lv${currentLevel} or higher.`;
+    description = `Listen is done. Finish Read at ${levelTargetPhrase}.`;
   }
 
   return {
     label: 'AI Story',
     title: basicAchieved
       ? `Lv${highestPassedLevel} cleared`
-      : `Clear Lv${currentLevel} or higher`,
+      : `Clear ${levelTargetPhrase}`,
     description,
     tone: 'logoBlue',
     basicAchieved,
