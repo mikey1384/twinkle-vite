@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import playButtonImg from '~/assets/play-button-image.png';
-import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 
 export default function Thumbnail({
   className,
@@ -19,10 +19,6 @@ export default function Thumbnail({
   thumbUrl?: string;
   playButtonShown?: boolean;
 }) {
-  const isDisplayedOnHome = useMemo(
-    () => contentType === 'subject' || contentType === 'comment',
-    [contentType]
-  );
   const isVideo = useMemo(() => {
     const { fileType } = getFileInfoFromFileName(fileName || '');
     return fileType === 'video';
@@ -30,10 +26,12 @@ export default function Thumbnail({
   const src = useMemo(
     () =>
       thumbUrl ||
-      `${cloudFrontURL}/attachments/${
-        isDisplayedOnHome ? 'feed' : contentType
-      }/${filePath}/${encodeURIComponent(fileName || '')}`,
-    [contentType, fileName, filePath, isDisplayedOnHome, thumbUrl]
+      buildAttachmentUrl({
+        filePath,
+        fileName,
+        contentType: contentType || ''
+      }),
+    [contentType, fileName, filePath, thumbUrl]
   );
   const [imageWorks, setImageWorks] = useState(true);
 

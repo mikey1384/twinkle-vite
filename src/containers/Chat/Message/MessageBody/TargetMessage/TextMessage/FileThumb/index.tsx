@@ -5,10 +5,10 @@ import ImageModal from '~/components/Modals/ImageModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import VideoThumb from './VideoThumb';
 import VideoModal from './VideoModal';
-import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { isMobile } from '~/helpers';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -27,9 +27,11 @@ export default function FileThumb({
 }) {
   const src = useMemo(() => {
     if (!filePath) return '';
-    return `${cloudFrontURL}/attachments/chat/${filePath}/${encodeURIComponent(
-      fileName
-    )}`;
+    return buildAttachmentUrl({
+      filePath,
+      fileName,
+      contentType: 'chat'
+    });
   }, [fileName, filePath]);
   const [videoModalShown, setVideoModalShown] = useState(false);
   const [imageModalShown, setImageModalShown] = useState(false);
