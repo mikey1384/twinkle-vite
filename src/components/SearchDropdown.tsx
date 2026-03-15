@@ -1,9 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { RefObject, useEffect, useLayoutEffect, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
 import { css } from '@emotion/css';
+import { createPortal } from 'react-dom';
+
+function getDropdownPortalTarget() {
+  if (typeof document === 'undefined') return null;
+  return (
+    document.getElementById('outer-layer') ||
+    document.getElementById('modal') ||
+    document.body
+  );
+}
 
 export default function SearchDropdown({
+  anchorRef,
   innerRef,
   dropdownFooter,
   indexToHighlight,
@@ -14,6 +25,7 @@ export default function SearchDropdown({
   renderItemLabel,
   renderItemUrl
 }: {
+  anchorRef?: RefObject<HTMLElement | null>;
   innerRef?: any;
   dropdownFooter?: any;
   indexToHighlight: number;
@@ -24,18 +36,93 @@ export default function SearchDropdown({
   renderItemLabel?: (item: any) => any;
   renderItemUrl?: (item: any) => string;
 }) {
+  const [anchorRect, setAnchorRect] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
+  const [anchorTypography, setAnchorTypography] = useState<{
+    fontSize: string;
+    fontFamily: string;
+    fontWeight: string;
+    lineHeight: string;
+  } | null>(null);
+
   useEffect(() => {
     onUpdate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchResults]);
 
-  return (
+  useLayoutEffect(() => {
+    const anchor = anchorRef?.current;
+    if (!anchor || typeof window === 'undefined') return;
+    const anchorElement: HTMLElement = anchor;
+
+    let frameId = 0;
+    function updatePosition() {
+      const rect = anchorElement.getBoundingClientRect();
+      const anchorStyle = window.getComputedStyle(anchorElement);
+      setAnchorRect({
+        left: rect.left,
+        top: rect.bottom + 4,
+        width: rect.width
+      });
+      setAnchorTypography((prev) => {
+        const next = {
+          fontSize: anchorStyle.fontSize,
+          fontFamily: anchorStyle.fontFamily,
+          fontWeight: anchorStyle.fontWeight,
+          lineHeight: anchorStyle.lineHeight
+        };
+        if (
+          prev?.fontSize === next.fontSize &&
+          prev?.fontFamily === next.fontFamily &&
+          prev?.fontWeight === next.fontWeight &&
+          prev?.lineHeight === next.lineHeight
+        ) {
+          return prev;
+        }
+        return next;
+      });
+    }
+
+    function queuePositionUpdate() {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(updatePosition);
+    }
+
+    queuePositionUpdate();
+    window.addEventListener('resize', queuePositionUpdate);
+    window.addEventListener('scroll', queuePositionUpdate, true);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(queuePositionUpdate);
+      resizeObserver.observe(anchorElement);
+    }
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', queuePositionUpdate);
+      window.removeEventListener('scroll', queuePositionUpdate, true);
+      resizeObserver?.disconnect();
+    };
+  }, [anchorRef, searchResults.length]);
+
+  const portalTarget = anchorRef ? getDropdownPortalTarget() : null;
+  const shouldUsePortal = !!portalTarget && !!anchorRef && !!anchorRect;
+
+  const dropdown = (
     <ErrorBoundary
       className={css`
-        position: absolute;
-        top: calc(100% + 0.4rem);
-        left: 0;
-        right: 0;
+        ${shouldUsePortal
+          ? ''
+          : `
+          position: absolute;
+          top: calc(100% + 0.4rem);
+          left: 0;
+          right: 0;
+        `}
         background: #fff;
         border: 1px solid var(--ui-border);
         border-radius: 12px;
@@ -43,7 +130,22 @@ export default function SearchDropdown({
         overflow: hidden;
       `}
       componentPath="SearchDropdown"
-      style={style}
+      style={
+        shouldUsePortal
+          ? {
+              position: 'fixed',
+              left: `${anchorRect.left}px`,
+              top: `${anchorRect.top}px`,
+              width: `${anchorRect.width}px`,
+              zIndex: 100_000_000,
+              fontSize: anchorTypography?.fontSize,
+              fontFamily: anchorTypography?.fontFamily,
+              fontWeight: anchorTypography?.fontWeight,
+              lineHeight: anchorTypography?.lineHeight,
+              ...style
+            }
+          : style
+      }
     >
       <div
         ref={innerRef}
@@ -103,4 +205,6 @@ export default function SearchDropdown({
       </div>
     </ErrorBoundary>
   );
+
+  return shouldUsePortal ? createPortal(dropdown, portalTarget) : dropdown;
 }
