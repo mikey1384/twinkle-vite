@@ -3,8 +3,8 @@ import ExtractedThumb from '~/components/ExtractedThumb';
 import Image from '~/components/Image';
 import FileIcon from '~/components/FileIcon';
 import { css } from '@emotion/css';
-import { cloudFrontURL } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 
 export default function FileInfo({
   fileType,
@@ -19,14 +19,11 @@ export default function FileInfo({
 }) {
   const fileUrl = useMemo(() => {
     if (!filePath || !fileName) return '';
-    if (filePath.startsWith('ai-generated/')) {
-      return `${cloudFrontURL}/attachments/${filePath}/${encodeURIComponent(
-        fileName
-      )}`;
-    }
-    return `${cloudFrontURL}/attachments/chat/${filePath}/${encodeURIComponent(
-      fileName
-    )}`;
+    return buildAttachmentUrl({
+      filePath,
+      fileName,
+      contentType: 'chat'
+    });
   }, [fileName, filePath]);
 
   const isMediaType = fileType === 'image' || fileType === 'video';
@@ -64,7 +61,11 @@ export default function FileInfo({
             color: inherit;
           `}
         >
-          <span className={css`color: ${Color.darkerGray()};`}>
+          <span
+            className={css`
+              color: ${Color.darkerGray()};
+            `}
+          >
             <FileIcon size="5x" fileType={fileType} />
           </span>
           <span

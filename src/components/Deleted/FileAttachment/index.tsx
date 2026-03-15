@@ -4,7 +4,7 @@ import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
-import { cloudFrontURL } from '~/constants/defaultValues';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { css } from '@emotion/css';
 
 export default function FileAttachment({
@@ -32,9 +32,11 @@ export default function FileAttachment({
   );
   const src = useMemo(
     () =>
-      `${cloudFrontURL}/attachments/chat/${filePath}/${encodeURIComponent(
-        fileName
-      )}`,
+      buildAttachmentUrl({
+        filePath,
+        fileName,
+        contentType: 'chat'
+      }),
     [fileName, filePath]
   );
   const [imageWorks, setImageWorks] = useState(true);

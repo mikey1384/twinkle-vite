@@ -90,7 +90,7 @@ export default function ImageGenerator({
           referenceImageUrl ||
           hasBeenEdited ||
           (drawingCanvasUrl && canvasHasContent)) &&
-          !isShowingLoadingState
+        !isShowingLoadingState
       ),
     [
       generatedImageUrl,
@@ -614,7 +614,7 @@ export default function ImageGenerator({
       const blob = await response.blob();
 
       const timestamp = Date.now();
-      const file = new File([blob], `ai-generated-${timestamp}.png`, {
+      const file = new File([blob], `edited-image-${timestamp}.png`, {
         type: 'image/png'
       });
 

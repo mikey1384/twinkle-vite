@@ -11,8 +11,8 @@ import {
   isUnicodeArt,
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { useThemeTokens } from '~/theme/useThemeTokens';
-import { cloudFrontURL } from '~/constants/defaultValues';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -98,7 +98,11 @@ export default function TopicMessagePreview({
 
   const appliedThumbUrl = useMemo(() => {
     if (getFileInfoFromFileName(fileName)?.fileType === 'image') {
-      return `${cloudFrontURL}/attachments/chat/${filePath}/${fileName}`;
+      return buildAttachmentUrl({
+        filePath,
+        fileName,
+        contentType: 'chat'
+      });
     }
     return thumbUrl;
   }, [fileName, filePath, thumbUrl]);

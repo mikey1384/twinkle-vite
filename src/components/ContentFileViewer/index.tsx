@@ -4,8 +4,8 @@ import ImagePreview from './ImagePreview';
 import MediaPlayer from './MediaPlayer';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { Color } from '~/constants/css';
-import { cloudFrontURL } from '~/constants/defaultValues';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
+import { buildAttachmentUrl } from '~/helpers/attachmentHelpers';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 export default function ContentFileViewer({
@@ -58,16 +58,12 @@ export default function ContentFileViewer({
     [fileName]
   );
   const src = useMemo(() => {
-    // Handle AI-generated files which have a different path structure
-    if (filePath.startsWith('ai-generated/')) {
-      return `${cloudFrontURL}/attachments/${filePath}/${encodeURIComponent(
-        fileName || ''
-      )}`;
-    }
-    return `${cloudFrontURL}/attachments/${
-      isDisplayedOnHome ? 'feed' : contentType
-    }/${filePath}/${encodeURIComponent(fileName || '')}`;
-  }, [contentType, fileName, filePath, isDisplayedOnHome]);
+    return buildAttachmentUrl({
+      filePath,
+      fileName,
+      contentType
+    });
+  }, [contentType, fileName, filePath]);
 
   return (
     <ErrorBoundary componentPath="ContentFileViewer/index">
