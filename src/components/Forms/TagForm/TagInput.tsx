@@ -57,7 +57,9 @@ export default function TagInput({
     return searchResults.filter((item) => !selectedItems[item.id]);
   }, [searchResults, selectedItems]);
 
-  useOutsideClick(TagInputRef, onClickOutSide, { enabled: true });
+  useOutsideClick(TagInputRef, onClickOutSide, {
+    enabled: results.length === 0
+  });
 
   return (
     <ErrorBoundary componentPath="TagForm/TagInput">

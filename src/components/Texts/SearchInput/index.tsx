@@ -48,8 +48,9 @@ export default function SearchInput({
 }) {
   const [indexToHighlight, setIndexToHighlight] = useState(0);
   const SearchInputRef = useRef(null);
+  const DropdownRef = useRef(null);
 
-  useOutsideClick(SearchInputRef, onClickOutSide, {
+  useOutsideClick([SearchInputRef, DropdownRef], onClickOutSide, {
     enabled: !!onClickOutSide && searchResults.length > 0
   });
   const { colorKey: searchColor } = useRoleColor('search', {
@@ -131,6 +132,8 @@ export default function SearchInput({
         />
       </div>
       <DropdownList
+        anchorRef={SearchInputRef}
+        dropdownRef={DropdownRef}
         dropdownFooter={dropdownFooter}
         indexToHighlight={indexToHighlight}
         renderItemLabel={renderItemLabel}
