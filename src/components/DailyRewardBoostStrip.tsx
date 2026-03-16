@@ -4,6 +4,7 @@ import Icon from '~/components/Icon';
 import { Color, getStreakColor, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus } from '~/helpers';
+import { addCommasToNumber } from '~/helpers/stringHelpers';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useSectionPanelVars } from '~/theme/useSectionPanelVars';
 
@@ -1034,6 +1035,8 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
     Number(grammarbles?.comparisonScore) > 0
       ? Number(grammarbles.comparisonScore)
       : null;
+  const comparisonScoreLabel =
+    comparisonScore !== null ? addCommasToNumber(comparisonScore) : null;
   let title = basicAchieved
     ? `Lv${currentLevel} cleared`
     : `Clear Lv${currentLevel}`;
@@ -1048,18 +1051,18 @@ function buildGrammarblesRow(grammarbles: any, isLoading = false): BoostRow {
           : `No score to beat yet. Excellence target: clear Lv${currentLevel + 1}.`;
       break;
     case 'score-or-next-level':
-      description = comparisonScore
-        ? `Excellence target: beat yesterday's Lv${currentLevel} score of ${comparisonScore}, or clear Lv${currentLevel + 1}.`
+      description = comparisonScoreLabel
+        ? `Excellence target: beat yesterday's Lv${currentLevel} score of ${comparisonScoreLabel}, or clear Lv${currentLevel + 1}.`
         : `Excellence target: beat yesterday's Lv${currentLevel} score, or clear Lv${currentLevel + 1}.`;
       break;
     case 'total-score':
-      description = comparisonScore
-        ? `Excellence target: beat your most recent Lv5-clear total of ${comparisonScore}.`
+      description = comparisonScoreLabel
+        ? `Excellence target: beat your most recent Lv5-clear total of ${comparisonScoreLabel}.`
         : `Excellence target: beat your most recent Lv5-clear total.`;
       break;
     case 'score':
-      description = comparisonScore
-        ? `Excellence target: beat yesterday's score benchmark of ${comparisonScore}.`
+      description = comparisonScoreLabel
+        ? `Excellence target: beat yesterday's score benchmark of ${comparisonScoreLabel}.`
         : "Excellence target: beat yesterday's score benchmark.";
       break;
     case 'next-level':
