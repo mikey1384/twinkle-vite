@@ -8,6 +8,9 @@ import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { extractDrawingColorSettings } from './DrawingTools/colorSettings';
 
+const MIN_DRAW_CANVAS_WIDTH = 320;
+const MAX_DRAW_CANVAS_WIDTH = 1000;
+
 interface ImageEditorProps {
   imageUrl?: string;
   onSave: (dataUrl: string) => void;
@@ -24,6 +27,8 @@ export default function ImageEditor({
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isImageReady, setIsImageReady] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState<string | null>(null);
+  const [imageLoadAttempt, setImageLoadAttempt] = useState(0);
   const [confirmModalShown, setConfirmModalShown] = useState(false);
   const [zoomPercent, setZoomPercent] = useState(100);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -47,7 +52,7 @@ export default function ImageEditor({
   const { color: initialDrawingColor, recentColors: initialRecentColors } =
     extractDrawingColorSettings(userSettings);
 
-  const getCanvasCoordinates = (e: React.MouseEvent) => {
+  const getCanvasCoordinates = (e: React.MouseEvent | React.PointerEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
@@ -60,6 +65,23 @@ export default function ImageEditor({
       y: (e.clientY - rect.top) * scaleY
     };
   };
+
+  function resolveDisplayWidth() {
+    const container = containerRef.current;
+    const measuredWidth = Math.max(
+      container?.clientWidth || 0,
+      container?.offsetWidth || 0
+    );
+    if (measuredWidth > 0) {
+      return measuredWidth;
+    }
+    const viewportWidth =
+      typeof window === 'undefined' ? MAX_DRAW_CANVAS_WIDTH : window.innerWidth;
+    return Math.min(
+      Math.max(viewportWidth - 64, MIN_DRAW_CANVAS_WIDTH),
+      MAX_DRAW_CANVAS_WIDTH
+    );
+  }
 
   const { toolsAPI, toolsUI, updateDisplay } = DrawingTools({
     canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>,
@@ -93,14 +115,16 @@ export default function ImageEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load image and draw to canvases - only runs when imageUrl changes
+  // Load image and draw to canvases.
   useEffect(() => {
     setIsImageReady(false);
+    setImageLoadError(null);
+    let isCancelled = false;
 
     // Wait a frame so the container is laid out and we can measure its width
-    requestAnimationFrame(() => {
-      const container = containerRef.current;
-      const displayWidth = container ? container.clientWidth : 1000;
+    const frameId = requestAnimationFrame(() => {
+      if (isCancelled) return;
+      const displayWidth = resolveDisplayWidth();
       setContainerWidth(displayWidth);
 
       if (!imageUrl) {
@@ -110,13 +134,27 @@ export default function ImageEditor({
 
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => setupImageCanvas(img, displayWidth);
+      img.onload = () => {
+        if (isCancelled) return;
+        setImageLoadError(null);
+        setupImageCanvas(img, displayWidth);
+      };
       img.onerror = (err) => {
+        if (isCancelled) return;
         console.error('Failed to load image:', err, 'URL:', imageUrl);
+        setImageLoadError(
+          'Failed to load image. The source may have expired or is unavailable.'
+        );
+        setIsImageReady(false);
       };
       img.src = imageUrl;
     });
-  }, [imageUrl]);
+
+    return () => {
+      isCancelled = true;
+      cancelAnimationFrame(frameId);
+    };
+  }, [imageUrl, imageLoadAttempt]);
 
   function setupBlankCanvas(displayWidth: number) {
     const canvas = canvasRef.current;
@@ -218,7 +256,7 @@ export default function ImageEditor({
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         if (containerRef.current) {
-          setContainerWidth(containerRef.current.clientWidth);
+          setContainerWidth(resolveDisplayWidth());
         }
         updateDisplayRef.current();
       }, 100);
@@ -255,7 +293,11 @@ export default function ImageEditor({
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} color="blue">
+            <Button
+              onClick={handleSave}
+              color="blue"
+              disabled={!isImageReady || !!imageLoadError}
+            >
               Save Changes
             </Button>
           </>
@@ -291,14 +333,16 @@ export default function ImageEditor({
               overflow: auto;
               flex: 1;
               min-height: 0;
+              cursor: ${isImageReady && !imageLoadError ? getCursor() : 'progress'};
             `}
           >
             <canvas
               ref={canvasRef}
-              onMouseDown={toolsAPI.handleCanvasClick}
-              onMouseMove={toolsAPI.draw}
-              onMouseUp={toolsAPI.stopDrawing}
-              onMouseLeave={toolsAPI.stopDrawing}
+              onPointerDown={toolsAPI.handlePointerDown}
+              onPointerMove={toolsAPI.handlePointerMove}
+              onPointerUp={toolsAPI.handlePointerUp}
+              onPointerLeave={toolsAPI.handlePointerLeave}
+              onPointerCancel={toolsAPI.handlePointerLeave}
               onTouchStart={toolsAPI.handleTouchStart}
               onTouchMove={toolsAPI.handleTouchMove}
               onTouchEnd={toolsAPI.handleTouchEnd}
@@ -309,7 +353,8 @@ export default function ImageEditor({
                     : `${(containerWidth * zoomPercent) / 100}px`,
                 height: 'auto',
                 margin: 'auto',
-                flexShrink: 0
+                flexShrink: 0,
+                pointerEvents: isImageReady ? 'auto' : 'none'
               }}
               className={css`
                 background: white;
@@ -322,18 +367,19 @@ export default function ImageEditor({
               `}
             />
 
-            {!isImageReady && (
+            {!isImageReady && !imageLoadError && (
               <div
                 className={css`
                   position: absolute;
-                  top: 50%;
-                  left: 50%;
-                  transform: translate(-50%, -50%);
+                  inset: 0;
                   display: flex;
                   flex-direction: column;
                   align-items: center;
+                  justify-content: center;
                   gap: 0.75rem;
                   color: ${Color.darkGray()};
+                  background: rgba(255, 255, 255, 0.85);
+                  pointer-events: none;
                 `}
               >
                 <div
@@ -365,6 +411,41 @@ export default function ImageEditor({
                 </div>
               </div>
             )}
+
+            {!!imageLoadError && (
+              <div
+                className={css`
+                  position: absolute;
+                  inset: 0;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 0.75rem;
+                  text-align: center;
+                  color: ${Color.darkGray()};
+                  background: rgba(255, 255, 255, 0.92);
+                  padding: 1rem;
+                `}
+              >
+                <div
+                  className={css`
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    max-width: 360px;
+                  `}
+                >
+                  {imageLoadError}
+                </div>
+                <Button
+                  color="blue"
+                  onClick={handleRetryImageLoad}
+                  disabled={!imageUrl}
+                >
+                  Retry Loading Image
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -385,6 +466,7 @@ export default function ImageEditor({
   );
 
   function handleSave() {
+    if (!isImageReady || imageLoadError) return;
     const canvas = canvasRef.current;
     if (canvas) {
       try {
@@ -403,44 +485,35 @@ export default function ImageEditor({
       const originalCtx = originalCanvas.getContext('2d');
       const drawingCtx = drawingCanvas.getContext('2d');
       if (originalCtx && drawingCtx) {
-        // Reset reference canvas
-        originalCtx.clearRect(
-          0,
-          0,
-          originalCanvas.width,
-          originalCanvas.height
-        );
-        originalCtx.fillStyle = '#ffffff';
-        originalCtx.fillRect(0, 0, originalCanvas.width, originalCanvas.height);
-
-        if (imageUrl) {
-          // Reset to original image if there is one
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            originalCtx.drawImage(
-              img,
-              0,
-              0,
-              originalCanvas.width,
-              originalCanvas.height
-            );
-            requestAnimationFrame(() => {
-              updateDisplayRef.current();
-            });
-          };
-          img.src = imageUrl;
-        } else {
-          // Just white background for blank canvas
-          requestAnimationFrame(() => {
-            updateDisplayRef.current();
-          });
+        // For image editing flows, keep the original reference image already
+        // present in originalCanvas and only clear the drawing overlay.
+        if (!imageUrl) {
+          originalCtx.clearRect(
+            0,
+            0,
+            originalCanvas.width,
+            originalCanvas.height
+          );
+          originalCtx.fillStyle = '#ffffff';
+          originalCtx.fillRect(
+            0,
+            0,
+            originalCanvas.width,
+            originalCanvas.height
+          );
         }
 
-        // Clear drawing canvas
         drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        requestAnimationFrame(() => {
+          updateDisplayRef.current();
+        });
       }
     }
+  }
+
+  function handleRetryImageLoad() {
+    if (!imageUrl) return;
+    setImageLoadAttempt((attempt) => attempt + 1);
   }
 
   function handleCancel() {

@@ -306,29 +306,54 @@ export default function ImageEditModal({
     if (isUploadingRef.current) return;
     setUploading(true);
     isUploadingRef.current = true;
-    const path = uuidv1();
-    const fileName = `${path}.jpg`;
-    const file = returnImageFileFromUrl({
-      imageUrl: croppedImageUrl,
-      fileName
-    });
-    const filePath = `${userId}/${fileName}`;
-    const caption = finalizeEmoji(captionText);
-    await uploadFile({
-      context: 'profilePic',
-      filePath,
-      file,
-      onUploadProgress: handleUploadProgress
-    });
-    const pictures = await uploadUserPic({
-      src: `/profile/${filePath}`,
-      isProfilePic,
-      caption
-    });
-    onEditDone({
-      pictures,
-      filePath
-    });
+    try {
+      const path = uuidv1();
+      const fileName = `${path}.jpg`;
+      const file = returnImageFileFromUrl({
+        imageUrl: croppedImageUrl,
+        fileName
+      });
+      const filePath = `${userId}/${fileName}`;
+      const caption = finalizeEmoji(captionText);
+      let profileUploadToken: string | undefined;
+      const uploadedSrc = await uploadFile({
+        context: 'profilePic',
+        filePath,
+        file,
+        isProfilePic,
+        onSignedUploadMeta: ({
+          profileUploadToken: nextToken
+        }: {
+          profileUploadToken?: string;
+        }) => {
+          profileUploadToken = nextToken;
+        },
+        onUploadProgress: handleUploadProgress
+      });
+      if (
+        typeof uploadedSrc !== 'string' ||
+        !uploadedSrc.startsWith('/profile/')
+      ) {
+        throw new Error('Failed to upload profile picture');
+      }
+      const uploadedFilePath = uploadedSrc.slice('/profile/'.length);
+      const pictures = await uploadUserPic({
+        src: uploadedSrc,
+        isProfilePic,
+        caption,
+        uploadToken: profileUploadToken
+      });
+      setUploading(false);
+      isUploadingRef.current = false;
+      onEditDone({
+        pictures,
+        filePath: uploadedFilePath
+      });
+    } catch (error) {
+      setUploading(false);
+      isUploadingRef.current = false;
+      throw error;
+    }
   }
 
   function handleUploadProgress({

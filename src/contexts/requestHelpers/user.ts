@@ -1073,18 +1073,20 @@ export default function userRequestHelpers({
     async uploadUserPic({
       caption,
       src,
-      isProfilePic
+      isProfilePic,
+      uploadToken
     }: {
       caption: string;
       src: string;
       isProfilePic: boolean;
+      uploadToken?: string;
     }) {
       try {
         const {
           data: { pictures }
         } = await request.post(
           `${URL}/user/picture`,
-          { caption, src, isProfilePic },
+          { caption, src, isProfilePic, uploadToken },
           auth()
         );
         return pictures;
