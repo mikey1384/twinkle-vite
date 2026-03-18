@@ -1935,14 +1935,18 @@ export default function contentRequestHelpers({
       filePath,
       file,
       fileName,
+      isProfilePic,
       isAIChat = false,
+      onSignedUploadMeta,
       onUploadProgress
     }: {
       context?: string;
       filePath: string;
       file: File;
       fileName?: string;
+      isProfilePic?: boolean;
       isAIChat?: boolean;
+      onSignedUploadMeta?: (meta: { profileUploadToken?: string }) => void;
       onUploadProgress?: (progressEvent: any) => void;
     }) {
       const path = await attemptUpload({
@@ -1951,7 +1955,9 @@ export default function contentRequestHelpers({
         onUploadProgress: onUploadProgress ?? (() => {}),
         path: filePath,
         context,
+        isProfilePic,
         isAIChat,
+        onSignedUploadMeta,
         auth
       });
       return path;
@@ -2147,10 +2153,12 @@ export default function contentRequestHelpers({
     async submitDailyQuestionResponse({
       questionId,
       response,
-      typingMetadata
+      typingMetadata,
+      clientRequestId
     }: {
       questionId: number;
       response: string;
+      clientRequestId?: string;
       typingMetadata?: {
         startTime: number;
         endTime: number;
@@ -2163,8 +2171,30 @@ export default function contentRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/content/daily-question/response`,
-          { questionId, response, typingMetadata },
+          { questionId, response, typingMetadata, clientRequestId },
           { ...auth(), timeout: 180000, meta: { enforceTimeout: false } }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async recoverDailyQuestionSubmission({
+      questionId,
+      clientRequestId
+    }: {
+      questionId: number;
+      clientRequestId: string;
+    }) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/daily-question/recover`,
+          {
+            ...auth(),
+            params: { questionId, clientRequestId },
+            timeout: 30000,
+            meta: { enforceTimeout: false }
+          }
         );
         return data;
       } catch (error) {

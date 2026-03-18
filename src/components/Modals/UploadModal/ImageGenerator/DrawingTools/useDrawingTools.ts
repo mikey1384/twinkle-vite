@@ -13,7 +13,9 @@ interface DrawingToolsProps {
   referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
-  getCanvasCoordinates?: (e: React.MouseEvent) => { x: number; y: number };
+  getCanvasCoordinates?: (
+    e: React.MouseEvent | React.PointerEvent
+  ) => { x: number; y: number };
   initialColor?: string;
   initialRecentColors?: string[];
   onColorSettingsCommit?: (params: {
@@ -77,8 +79,12 @@ export default function useDrawingTools({
 
   const currentStrokePointsRef = useRef<Array<{ x: number; y: number }>>([]);
   const draggedElementRef = useRef<TextElement | null>(null);
-
   const originalDrawingContentRef = useRef<ImageData | null>(null);
+  const textElementsRef = useRef<TextElement[]>([]);
+
+  useEffect(() => {
+    textElementsRef.current = textElements;
+  }, [textElements]);
 
   function handleColorChange(newColor: string, commit: boolean = true) {
     const normalizedColor = normalizeDrawingColor(newColor);
@@ -97,21 +103,29 @@ export default function useDrawingTools({
     });
   }
 
-  function checkAndNotifyContent() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  function scanRasterForContent() {
+    const rasterCanvas = getRasterCanvas();
+    if (!rasterCanvas) return false;
+    const rasterCtx = rasterCanvas.getContext('2d');
+    if (!rasterCtx) return false;
+    if (rasterCanvas.width === 0 || rasterCanvas.height === 0) return false;
+    const imageData = rasterCtx.getImageData(
+      0,
+      0,
+      rasterCanvas.width,
+      rasterCanvas.height
+    );
     const data = imageData.data;
-    let hasContent = false;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] > 0) {
-        hasContent = true;
-        break;
+        return true;
       }
     }
-    onHasContent?.(hasContent);
+    return false;
+  }
+
+  function notifyContentState(nextTextElements = textElementsRef.current) {
+    onHasContent?.(scanRasterForContent() || nextTextElements.length > 0);
   }
 
   function getRasterCanvas() {
@@ -157,7 +171,7 @@ export default function useDrawingTools({
     }
 
     // Render all text, handling dragged text separately
-    textElements.forEach((element) => {
+    textElementsRef.current.forEach((element) => {
       if (isDraggingText && draggedTextId === element.id) {
         return; // Skip the dragged one
       }
@@ -197,8 +211,6 @@ export default function useDrawingTools({
       }
       displayCtx.stroke();
     }
-
-    checkAndNotifyContent();
   }
 
   // Initial canvas setup - useLayoutEffect ensures this runs before user can interact
@@ -223,6 +235,7 @@ export default function useDrawingTools({
         );
       }
       updateDisplay();
+      notifyContentState();
     };
     initCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -251,7 +264,9 @@ export default function useDrawingTools({
     // Clone the ImageData to avoid reference issues
     const drawingData = cloneImageData(currentData);
     setCanvasHistory((prev) =>
-      [...prev, { drawingData, textState: [...textElements] }].slice(-10)
+      [...prev, { drawingData, textState: [...textElementsRef.current] }].slice(
+        -10
+      )
     );
     // Clear redo history when a new action is performed
     setRedoHistory([]);
@@ -317,9 +332,12 @@ export default function useDrawingTools({
       rasterCanvas.height
     );
     updateDisplay();
+    notifyContentState();
   }
 
-  const defaultGetCanvasCoordinates = (e: React.MouseEvent) => {
+  const defaultGetCanvasCoordinates = (
+    e: React.MouseEvent | React.PointerEvent
+  ) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
@@ -368,8 +386,11 @@ export default function useDrawingTools({
       fontSize,
       color
     };
-    setTextElements((prev) => [...prev, newTextElement]);
+    const nextTextElements = [...textElementsRef.current, newTextElement];
+    textElementsRef.current = nextTextElements;
+    setTextElements(nextTextElements);
     requestAnimationFrame(updateDisplay);
+    notifyContentState(nextTextElements);
     setTextInput('');
     setTextPosition(null);
     setIsAddingText(false);
@@ -386,8 +407,8 @@ export default function useDrawingTools({
     if (!rasterCanvas) return null;
     const ctx = rasterCanvas.getContext('2d');
     if (!ctx) return null;
-    for (let i = textElements.length - 1; i >= 0; i--) {
-      const element = textElements[i];
+    for (let i = textElementsRef.current.length - 1; i >= 0; i--) {
+      const element = textElementsRef.current[i];
       ctx.font = `${element.fontSize}px Arial`;
       ctx.textBaseline = 'top';
       const textMetrics = ctx.measureText(element.text);
@@ -405,7 +426,27 @@ export default function useDrawingTools({
     return null;
   };
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return;
+    if (e.button !== 0) return;
+    e.preventDefault();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore capture failures and continue drawing.
+    }
+    handleCanvasInteractionStart(e);
+  };
+
   const handleCanvasClick = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    handleCanvasInteractionStart(e);
+  };
+
+  const handleCanvasInteractionStart = (
+    e: React.MouseEvent | React.PointerEvent
+  ) => {
     if (disabled) return;
     const coords = getCanvasCoordinates
       ? getCanvasCoordinates(e)
@@ -458,7 +499,24 @@ export default function useDrawingTools({
     setIsDrawing(true);
   };
 
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return;
+    if (isDrawing || isDraggingText) {
+      e.preventDefault();
+    }
+    handleCanvasInteractionMove(e);
+  };
+
   const draw = (e: React.MouseEvent) => {
+    if (isDrawing || isDraggingText) {
+      e.preventDefault();
+    }
+    handleCanvasInteractionMove(e);
+  };
+
+  const handleCanvasInteractionMove = (
+    e: React.MouseEvent | React.PointerEvent
+  ) => {
     if (disabled) return;
     const coords = getCanvasCoordinates
       ? getCanvasCoordinates(e)
@@ -480,14 +538,44 @@ export default function useDrawingTools({
     requestAnimationFrame(updateDisplay);
   };
 
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return;
+    handleCanvasInteractionEnd();
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignore release failures.
+    }
+  };
+
+  const handlePointerLeave = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return;
+    handleCanvasInteractionEnd();
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignore release failures.
+    }
+  };
+
   const stopDrawing = () => {
+    handleCanvasInteractionEnd();
+  };
+
+  const handleCanvasInteractionEnd = () => {
     if (disabled) return;
     if (isDraggingText) {
       if (draggedElementRef.current) {
         const updatedElement = draggedElementRef.current;
-        setTextElements((prev) =>
-          prev.map((el) => (el.id === updatedElement.id ? updatedElement : el))
+        const nextTextElements = textElementsRef.current.map((el) =>
+          el.id === updatedElement.id ? updatedElement : el
         );
+        textElementsRef.current = nextTextElements;
+        setTextElements(nextTextElements);
         draggedElementRef.current = null;
       }
       setIsDraggingText(false);
@@ -531,7 +619,7 @@ export default function useDrawingTools({
       currentStrokePointsRef.current = [];
       setIsDrawing(false);
       updateDisplay();
-      checkAndNotifyContent();
+      notifyContentState();
     }
   };
 
@@ -542,7 +630,7 @@ export default function useDrawingTools({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
     if (e.touches.length > 1) {
-      stopDrawing();
+      handleCanvasInteractionEnd();
       return;
     }
     e.preventDefault();
@@ -581,7 +669,7 @@ export default function useDrawingTools({
   const handleTouchMove = (e: React.TouchEvent) => {
     if (disabled) return;
     if (e.touches.length > 1) {
-      stopDrawing();
+      handleCanvasInteractionEnd();
       return;
     }
     e.preventDefault();
@@ -610,7 +698,7 @@ export default function useDrawingTools({
     if (e.touches.length > 0) return;
     e.preventDefault();
     e.stopPropagation();
-    stopDrawing();
+    handleCanvasInteractionEnd();
   };
 
   const handleUndo = () => {
@@ -630,7 +718,7 @@ export default function useDrawingTools({
           ...prev,
           {
             drawingData: cloneImageData(currentData),
-            textState: [...textElements]
+            textState: [...textElementsRef.current]
           }
         ].slice(-10)
       );
@@ -640,9 +728,12 @@ export default function useDrawingTools({
     if (rasterCtx && previous) {
       const restoredData = cloneImageData(previous.drawingData);
       rasterCtx.putImageData(restoredData, 0, 0);
-      setTextElements([...previous.textState]);
+      const nextTextElements = [...previous.textState];
+      textElementsRef.current = nextTextElements;
+      setTextElements(nextTextElements);
       originalDrawingContentRef.current = restoredData;
       updateDisplay();
+      notifyContentState(nextTextElements);
     }
   };
 
@@ -663,7 +754,7 @@ export default function useDrawingTools({
           ...prev,
           {
             drawingData: cloneImageData(currentData),
-            textState: [...textElements]
+            textState: [...textElementsRef.current]
           }
         ].slice(-10)
       );
@@ -673,9 +764,12 @@ export default function useDrawingTools({
     if (rasterCtx && next) {
       const restoredData = cloneImageData(next.drawingData);
       rasterCtx.putImageData(restoredData, 0, 0);
-      setTextElements([...next.textState]);
+      const nextTextElements = [...next.textState];
+      textElementsRef.current = nextTextElements;
+      setTextElements(nextTextElements);
       originalDrawingContentRef.current = restoredData;
       updateDisplay();
+      notifyContentState(nextTextElements);
     }
   };
 
@@ -686,17 +780,16 @@ export default function useDrawingTools({
     const rasterCtx = rasterCanvas.getContext('2d');
     if (!rasterCtx) return;
     rasterCtx.clearRect(0, 0, rasterCanvas.width, rasterCanvas.height);
-    rasterCtx.fillStyle = '#ffffff';
-    rasterCtx.fillRect(0, 0, rasterCanvas.width, rasterCanvas.height);
     originalDrawingContentRef.current = rasterCtx.getImageData(
       0,
       0,
       rasterCanvas.width,
       rasterCanvas.height
     );
+    textElementsRef.current = [];
     setTextElements([]);
     updateDisplay();
-    onHasContent?.(false);
+    notifyContentState([]);
   };
 
   const clearDrawingOverlay = () => {
@@ -706,20 +799,30 @@ export default function useDrawingTools({
       const rasterCtx = rasterCanvas.getContext('2d');
       if (rasterCtx) {
         rasterCtx.clearRect(0, 0, rasterCanvas.width, rasterCanvas.height);
+        originalDrawingContentRef.current = rasterCtx.getImageData(
+          0,
+          0,
+          rasterCanvas.width,
+          rasterCanvas.height
+        );
       }
     }
-    originalDrawingContentRef.current = null;
+    textElementsRef.current = [];
     setTextElements([]);
     setCanvasHistory([]);
     setRedoHistory([]);
     updateDisplay();
-    onHasContent?.(false);
+    notifyContentState([]);
   };
 
   return {
     handleCanvasClick,
     draw,
     stopDrawing,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerLeave,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,

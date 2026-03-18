@@ -16,7 +16,7 @@ export default function GameCTAButton({
   loading = false
 }: {
   onClick: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   icon?: string;
   style?: React.CSSProperties;
   disabled?: boolean;

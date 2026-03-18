@@ -9,7 +9,9 @@ interface DrawingToolsProps {
   referenceImageCanvasRef?: React.RefObject<HTMLCanvasElement>;
   disabled?: boolean;
   onHasContent?: (hasContent: boolean) => void;
-  getCanvasCoordinates?: (e: React.MouseEvent) => { x: number; y: number };
+  getCanvasCoordinates?: (
+    e: React.MouseEvent | React.PointerEvent
+  ) => { x: number; y: number };
   initialColor?: string;
   initialRecentColors?: string[];
   onColorSettingsCommit?: (params: {
@@ -26,6 +28,10 @@ export default function DrawingTools(props: DrawingToolsProps) {
     handleCanvasClick,
     draw,
     stopDrawing,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerLeave,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
@@ -68,6 +74,10 @@ export default function DrawingTools(props: DrawingToolsProps) {
     handleCanvasClick,
     draw,
     stopDrawing,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerLeave,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,

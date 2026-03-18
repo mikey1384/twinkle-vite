@@ -645,7 +645,9 @@ export async function attemptUpload({
   onUploadProgress,
   path,
   context = 'feed',
+  isProfilePic,
   isAIChat = false,
+  onSignedUploadMeta,
   auth
 }: {
   fileName: string;
@@ -653,7 +655,9 @@ export async function attemptUpload({
   onUploadProgress: (progressEvent: any) => void;
   path: string;
   context?: string;
+  isProfilePic?: boolean;
   isAIChat?: boolean;
+  onSignedUploadMeta?: (meta: { profileUploadToken?: string }) => void;
   auth: () => any;
 }): Promise<string | void> {
   const MAX_RETRIES = 3;
@@ -711,6 +715,9 @@ export async function attemptUpload({
       queryParams.append('fileName', encodeURIComponent(fileName));
       queryParams.append('path', path);
       queryParams.append('context', context);
+      if (typeof isProfilePic === 'boolean') {
+        queryParams.append('isProfilePic', String(isProfilePic));
+      }
       if (isAIChat) {
         queryParams.append('isAIChat', 'true');
       }
@@ -718,6 +725,11 @@ export async function attemptUpload({
         `${URL}/content/sign-s3?${queryParams.toString()}`,
         auth()
       );
+      if (onSignedUploadMeta) {
+        onSignedUploadMeta({
+          profileUploadToken: data?.profileUploadToken
+        });
+      }
       logForAdmin({
         message: `Got signed S3 URL for ${fileName}`
       });

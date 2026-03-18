@@ -36,6 +36,53 @@ interface TypingMetadata {
   keystrokeTimestamps: number[]; // just raw timestamps
 }
 
+function createEmptyTypingMetadata(): TypingMetadata {
+  return {
+    startTime: 0,
+    keystrokeTimestamps: []
+  };
+}
+
+function normalizeTypingMetadata(value: unknown): TypingMetadata | null {
+  const parsed = value as Partial<TypingMetadata> | null;
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  const startTime = Number(parsed.startTime);
+  if (!Number.isFinite(startTime) || startTime <= 0) {
+    return null;
+  }
+
+  if (!Array.isArray(parsed.keystrokeTimestamps)) {
+    return null;
+  }
+
+  const keystrokeTimestamps = parsed.keystrokeTimestamps
+    .map((timestamp) => Number(timestamp))
+    .filter((timestamp) => Number.isFinite(timestamp) && timestamp > 0)
+    .map((timestamp) => Math.floor(timestamp))
+    .slice(-5000);
+
+  if (keystrokeTimestamps.length === 0) {
+    return null;
+  }
+
+  return {
+    startTime: Math.floor(startTime),
+    keystrokeTimestamps
+  };
+}
+
+function cloneTypingMetadata(metadata: TypingMetadata | null | undefined) {
+  if (!metadata) {
+    return createEmptyTypingMetadata();
+  }
+
+  return {
+    startTime: metadata.startTime,
+    keystrokeTimestamps: [...metadata.keystrokeTimestamps]
+  };
+}
+
 function isDeletionOnlyChange(previousText: string, nextText: string): boolean {
   if (nextText.length >= previousText.length) return false;
 
@@ -58,6 +105,140 @@ function normalizeSelectionArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === 'string');
 }
 
+const DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY = 'dailyQuestionPending';
+const DAILY_QUESTION_RECOVERY_POLL_MS = 2000;
+const DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS = 30;
+const DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT = 3;
+const DAILY_QUESTION_DRAFT_RESTORED_NOTICE =
+  "We couldn't confirm your previous submission. Your draft is restored. Start again to resubmit.";
+const DAILY_QUESTION_DRAFT_SAVED_NOTICE =
+  "We couldn't restore your submission right now. Your draft is saved. Start again when you're ready to resubmit.";
+
+type PendingDailyQuestionRecoveryState = 'pending' | 'draft';
+
+interface PendingDailyQuestionSubmission {
+  userId: number;
+  questionId: number;
+  clientRequestId: string;
+  response: string;
+  createdAt: number;
+  recoveryState: PendingDailyQuestionRecoveryState;
+  typingMetadata?: TypingMetadata | null;
+}
+
+interface RecoverPendingSubmissionArgs {
+  questionId: number;
+  clientRequestId: string;
+  responseText: string;
+  attempt?: number;
+}
+
+function createDailyQuestionClientRequestId() {
+  return typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getDailyQuestionPendingSubmissionStorageKey(userId: number) {
+  return `${DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY}:${userId}`;
+}
+
+function normalizePendingSubmissionRecoveryState(
+  value: unknown
+): PendingDailyQuestionRecoveryState {
+  return value === 'draft' ? 'draft' : 'pending';
+}
+
+function loadPendingDailyQuestionSubmission(userId: number) {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.sessionStorage === 'undefined'
+  ) {
+    return null;
+  }
+
+  try {
+    const rawValue = window.sessionStorage.getItem(
+      getDailyQuestionPendingSubmissionStorageKey(userId)
+    );
+    if (!rawValue) return null;
+
+    const parsed = JSON.parse(rawValue) as Partial<PendingDailyQuestionSubmission>;
+    if (
+      Number(parsed?.userId) !== userId ||
+      !Number.isFinite(Number(parsed?.questionId)) ||
+      Number(parsed?.questionId) <= 0 ||
+      typeof parsed?.clientRequestId !== 'string' ||
+      !parsed.clientRequestId ||
+      typeof parsed?.response !== 'string'
+    ) {
+      return null;
+    }
+
+    return {
+      userId,
+      questionId: Number(parsed.questionId),
+      clientRequestId: parsed.clientRequestId,
+      response: parsed.response,
+      createdAt: Number(parsed.createdAt) || 0,
+      recoveryState: normalizePendingSubmissionRecoveryState(
+        parsed?.recoveryState
+      ),
+      typingMetadata: normalizeTypingMetadata(parsed?.typingMetadata)
+    };
+  } catch {
+    return null;
+  }
+}
+
+function savePendingDailyQuestionSubmission({
+  userId,
+  questionId,
+  clientRequestId,
+  response,
+  createdAt,
+  recoveryState,
+  typingMetadata
+}: PendingDailyQuestionSubmission) {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.sessionStorage === 'undefined'
+  ) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      getDailyQuestionPendingSubmissionStorageKey(userId),
+      JSON.stringify({
+        userId,
+        questionId,
+        clientRequestId,
+        response,
+        createdAt,
+        recoveryState,
+        typingMetadata: normalizeTypingMetadata(typingMetadata)
+      })
+    );
+  } catch {}
+}
+
+function clearPendingDailyQuestionSubmission(userId: number) {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.sessionStorage === 'undefined'
+  ) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(
+      getDailyQuestionPendingSubmissionStorageKey(userId)
+    );
+  } catch {}
+}
+
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -77,6 +258,9 @@ export default function DailyQuestionPanel({
   );
   const submitDailyQuestionResponse = useAppContext(
     (v) => v.requestHelpers.submitDailyQuestionResponse
+  );
+  const recoverDailyQuestionSubmission = useAppContext(
+    (v) => v.requestHelpers.recoverDailyQuestionSubmission
   );
   const simplifyDailyQuestion = useAppContext(
     (v) => v.requestHelpers.simplifyDailyQuestion
@@ -134,6 +318,9 @@ export default function DailyQuestionPanel({
     useState<string | null>(null);
   const [isAdultUser, setIsAdultUser] = useState<boolean>(false);
   const [purchasingRepair, setPurchasingRepair] = useState(false);
+  const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
+  const [restoredDraftNeedsFreshTyping, setRestoredDraftNeedsFreshTyping] =
+    useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -144,13 +331,25 @@ export default function DailyQuestionPanel({
   const isComposingRef = useRef(false);
   const committedResponseRef = useRef('');
   const lastActivityRef = useRef<number>(Date.now());
+  const restoredDraftNeedsFreshTypingRef = useRef(restoredDraftNeedsFreshTyping);
+  restoredDraftNeedsFreshTypingRef.current = restoredDraftNeedsFreshTyping;
   const handleSubmitRef = useRef<() => void>(() => {});
+  const activeClientRequestIdRef = useRef<string | null>(null);
+  const recoveryPollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clearPendingSubmissionRef = useRef<() => void>(() => {});
+  const returnToDraftStartScreenRef = useRef<
+    (args: {
+      responseText: string;
+      notice: string;
+      typingMetadata?: TypingMetadata | null;
+    }) => void
+  >(() => {});
+  const recoverPendingSubmissionRef = useRef<
+    (args: RecoverPendingSubmissionArgs) => Promise<void>
+  >(async () => {});
 
   // Typing metadata for anti-cheat verification
-  const typingMetadataRef = useRef<TypingMetadata>({
-    startTime: 0,
-    keystrokeTimestamps: []
-  });
+  const typingMetadataRef = useRef<TypingMetadata>(createEmptyTypingMetadata());
 
   // Refs for smooth progress animation
   const loadingProgressRef = useRef(0);
@@ -159,6 +358,21 @@ export default function DailyQuestionPanel({
   const gradingTargetRef = useRef(0);
   const loadingAnimationRef = useRef<NodeJS.Timeout | null>(null);
   const gradingAnimationRef = useRef<NodeJS.Timeout | null>(null);
+  const getDailyQuestionRef = useRef(getDailyQuestion);
+  const submitDailyQuestionResponseRef = useRef(submitDailyQuestionResponse);
+  const recoverDailyQuestionSubmissionRef = useRef(
+    recoverDailyQuestionSubmission
+  );
+  const simplifyDailyQuestionRef = useRef(simplifyDailyQuestion);
+  const onSetUserStateRef = useRef(onSetUserState);
+  const onApplyTodayStatsProgressRef = useRef(onApplyTodayStatsProgress);
+
+  getDailyQuestionRef.current = getDailyQuestion;
+  submitDailyQuestionResponseRef.current = submitDailyQuestionResponse;
+  recoverDailyQuestionSubmissionRef.current = recoverDailyQuestionSubmission;
+  simplifyDailyQuestionRef.current = simplifyDailyQuestion;
+  onSetUserStateRef.current = onSetUserState;
+  onApplyTodayStatsProgressRef.current = onApplyTodayStatsProgress;
 
   // Socket event listeners for progress updates with smooth animation
   useEffect(() => {
@@ -295,14 +509,291 @@ export default function DailyQuestionPanel({
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (recoveryPollTimeoutRef.current) {
+        clearTimeout(recoveryPollTimeoutRef.current);
+        recoveryPollTimeoutRef.current = null;
+      }
     };
   }, []);
 
-  // Store getDailyQuestion in a ref to avoid dependency issues
-  const getDailyQuestionRef = useRef(getDailyQuestion);
-  useEffect(() => {
-    getDailyQuestionRef.current = getDailyQuestion;
-  }, [getDailyQuestion]);
+  function clearRecoveryPoll() {
+    if (recoveryPollTimeoutRef.current) {
+      clearTimeout(recoveryPollTimeoutRef.current);
+      recoveryPollTimeoutRef.current = null;
+    }
+  }
+
+  function clearPendingSubmission() {
+    clearRecoveryPoll();
+    if (userId) {
+      clearPendingDailyQuestionSubmission(userId);
+    }
+    activeClientRequestIdRef.current = null;
+  }
+
+  function returnToDraftStartScreen({
+    responseText,
+    notice,
+    typingMetadata
+  }: {
+    responseText: string;
+    notice: string;
+    typingMetadata?: TypingMetadata | null;
+  }) {
+    const restoredTypingMetadata = normalizeTypingMetadata(typingMetadata);
+    clearRecoveryPoll();
+    activeClientRequestIdRef.current = null;
+    committedResponseRef.current = responseText || '';
+    setResponse(responseText || '');
+    typingMetadataRef.current = restoredTypingMetadata
+      ? cloneTypingMetadata(restoredTypingMetadata)
+      : createEmptyTypingMetadata();
+    setGradingResult(null);
+    setError(null);
+    setRecoveryNotice(notice);
+    setRestoredDraftNeedsFreshTyping(
+      Boolean((responseText || '').trim()) && !restoredTypingMetadata
+    );
+    setScreen('start');
+    isSubmittingRef.current = false;
+  }
+
+  function saveDraftOnlyPendingSubmission({
+    questionId,
+    clientRequestId,
+    responseText,
+    typingMetadata
+  }: {
+    questionId: number;
+    clientRequestId: string;
+    responseText: string;
+    typingMetadata?: TypingMetadata | null;
+  }) {
+    if (!userId) return;
+    savePendingDailyQuestionSubmission({
+      userId,
+      questionId,
+      clientRequestId,
+      response: responseText,
+      createdAt: Date.now(),
+      recoveryState: 'draft',
+      typingMetadata
+    });
+  }
+
+  function persistDraftRecovery({
+    questionId,
+    clientRequestId,
+    responseText,
+    typingMetadata
+  }: {
+    questionId: number;
+    clientRequestId: string;
+    responseText: string;
+    typingMetadata?: TypingMetadata | null;
+  }) {
+    clearRecoveryPoll();
+    activeClientRequestIdRef.current = null;
+    saveDraftOnlyPendingSubmission({
+      questionId,
+      clientRequestId,
+      responseText,
+      typingMetadata
+    });
+  }
+
+  function applyCompletedSubmitResult({
+    result,
+    fallbackOriginalResponse
+  }: {
+    result: {
+      isThoughtful: boolean;
+      grade?: string;
+      masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
+      originalResponse?: string;
+      xpAwarded?: number;
+      newXP?: number;
+      feedback?: string;
+      rejectionReason?: string;
+      responseId?: number;
+      sharedResponse?: string | null;
+      streak?: number;
+      streakMultiplier?: number;
+      usedRepair?: boolean;
+    };
+    fallbackOriginalResponse?: string;
+  }) {
+    gradingCompleteRef.current = true;
+    setGradingProgress(100);
+    setError(null);
+    setRecoveryNotice(null);
+    setRestoredDraftNeedsFreshTyping(false);
+    typingMetadataRef.current = createEmptyTypingMetadata();
+    clearPendingSubmission();
+
+    if (result.newXP && userId) {
+      onSetUserStateRef.current({
+        userId,
+        newState: { twinkleXP: result.newXP }
+      });
+    }
+
+    if (result.isThoughtful) {
+      onApplyTodayStatsProgressRef.current({
+        newStats: { dailyQuestionCompleted: true }
+      });
+    }
+
+    const originalResponse =
+      result.originalResponse || fallbackOriginalResponse || '';
+    committedResponseRef.current = originalResponse;
+    setResponse(originalResponse);
+
+    setTimeout(() => {
+      if (!isMountedRef.current) return;
+
+      setGradingResult({
+        grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
+        masterpieceType: result.masterpieceType || null,
+        xpAwarded: result.xpAwarded || 0,
+        feedback: result.isThoughtful
+          ? result.feedback || ''
+          : result.rejectionReason ||
+            'Nice try — you can start over and try again right away.',
+        responseId: result.responseId || 0,
+        isShared: false,
+        sharedWithZero: false,
+        sharedWithCiel: false,
+        originalResponse,
+        sharedResponse: result.sharedResponse || null,
+        streak: result.streak || 1,
+        streakMultiplier: result.streakMultiplier || 1,
+        usedRepair: result.usedRepair || false
+      });
+      setScreen('result');
+      isSubmittingRef.current = false;
+    }, 500);
+  }
+
+  function scheduleRecoveryPoll({
+    questionId,
+    clientRequestId,
+    responseText,
+    attempt
+  }: {
+    questionId: number;
+    clientRequestId: string;
+    responseText: string;
+    attempt: number;
+  }) {
+    clearRecoveryPoll();
+    recoveryPollTimeoutRef.current = setTimeout(() => {
+      void recoverPendingSubmission({
+        questionId,
+        clientRequestId,
+        responseText,
+        attempt
+      });
+    }, DAILY_QUESTION_RECOVERY_POLL_MS) as unknown as NodeJS.Timeout;
+  }
+
+  async function recoverPendingSubmission({
+    questionId,
+    clientRequestId,
+    responseText,
+    attempt = 0
+  }: RecoverPendingSubmissionArgs) {
+    try {
+      const result = await recoverDailyQuestionSubmissionRef.current({
+        questionId,
+        clientRequestId
+      });
+
+      if (!isMountedRef.current) return;
+
+      if (result.status === 'completed' && result.submitResult) {
+        applyCompletedSubmitResult({
+          result: result.submitResult,
+          fallbackOriginalResponse: responseText
+        });
+        return;
+      }
+
+      const shouldRetryNotFound =
+        result.status === 'not_found' &&
+        attempt < DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT;
+      if (
+        result.status === 'processing' ||
+        shouldRetryNotFound
+      ) {
+        setScreen('grading');
+        setGradingMessage('Restoring your result...');
+        setGradingProgress((current) => Math.max(current, 95));
+        if (attempt + 1 < DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS) {
+          scheduleRecoveryPoll({
+            questionId,
+            clientRequestId,
+            responseText,
+            attempt: attempt + 1
+          });
+          return;
+        }
+      }
+
+      if (result.status === 'not_found') {
+        persistDraftRecovery({
+          questionId,
+          clientRequestId,
+          responseText,
+          typingMetadata: typingMetadataRef.current
+        });
+        returnToDraftStartScreen({
+          responseText,
+          notice: DAILY_QUESTION_DRAFT_RESTORED_NOTICE,
+          typingMetadata: typingMetadataRef.current
+        });
+        return;
+      }
+
+      clearPendingSubmission();
+      isSubmittingRef.current = false;
+      setError(
+        'Failed to recover your submission. Please try again from a new question screen.'
+      );
+    } catch (err: any) {
+      if (!isMountedRef.current) return;
+
+      if (attempt + 1 < DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS) {
+        setScreen('grading');
+        setGradingMessage('Restoring your result...');
+        setGradingProgress((current) => Math.max(current, 95));
+        scheduleRecoveryPoll({
+          questionId,
+          clientRequestId,
+          responseText,
+          attempt: attempt + 1
+        });
+        return;
+      }
+
+      console.error('Failed to recover pending daily question submission:', err);
+      persistDraftRecovery({
+        questionId,
+        clientRequestId,
+        responseText,
+        typingMetadata: typingMetadataRef.current
+      });
+      returnToDraftStartScreen({
+        responseText,
+        notice: DAILY_QUESTION_DRAFT_SAVED_NOTICE,
+        typingMetadata: typingMetadataRef.current
+      });
+    }
+  }
+
+  clearPendingSubmissionRef.current = clearPendingSubmission;
+  returnToDraftStartScreenRef.current = returnToDraftStartScreen;
+  recoverPendingSubmissionRef.current = recoverPendingSubmission;
 
   useEffect(() => {
     if (!userId) return;
@@ -317,6 +808,7 @@ export default function DailyQuestionPanel({
 
     setScreen('loading');
     setError(null);
+    setRecoveryNotice(null);
     setLoadingProgress(0);
     setLoadingMessage('Loading...');
 
@@ -359,7 +851,16 @@ export default function DailyQuestionPanel({
         );
         setIsAdultUser(!!data.isAdult);
 
+        const pendingSubmission = loadPendingDailyQuestionSubmission(userId);
+        if (pendingSubmission && pendingSubmission.questionId !== data.questionId) {
+          clearPendingDailyQuestionSubmission(userId);
+        }
+
+        typingMetadataRef.current = createEmptyTypingMetadata();
+        setRestoredDraftNeedsFreshTyping(false);
+
         if (data.hasResponded && data.response) {
+          clearPendingSubmissionRef.current();
           committedResponseRef.current = data.response.response || '';
           setGradingResult({
             grade: data.response.grade,
@@ -373,13 +874,44 @@ export default function DailyQuestionPanel({
             originalResponse: data.response.response || '',
             sharedResponse: data.response.sharedResponse || null,
             streak: data.response.streakAtTime || data.currentStreak || 1,
-            streakMultiplier: Math.min(data.response.streakAtTime || 1, 10)
+            streakMultiplier: Math.min(data.response.streakAtTime || 1, 10),
+            usedRepair: !!data.response.usedRepair
           });
           setResponse(data.response.response || '');
           setScreen('result');
+        } else if (
+          pendingSubmission &&
+          pendingSubmission.questionId === data.questionId
+        ) {
+          if (pendingSubmission.recoveryState === 'draft') {
+            returnToDraftStartScreenRef.current({
+              responseText: pendingSubmission.response || '',
+              notice: DAILY_QUESTION_DRAFT_SAVED_NOTICE,
+              typingMetadata: pendingSubmission.typingMetadata
+            });
+          } else {
+            typingMetadataRef.current = pendingSubmission.typingMetadata
+              ? cloneTypingMetadata(pendingSubmission.typingMetadata)
+              : createEmptyTypingMetadata();
+            activeClientRequestIdRef.current = pendingSubmission.clientRequestId;
+            committedResponseRef.current = pendingSubmission.response || '';
+            setResponse(pendingSubmission.response || '');
+            setScreen('grading');
+            setGradingProgress(95);
+            setGradingMessage('Restoring your result...');
+            setGradingResult(null);
+            isSubmittingRef.current = true;
+            void recoverPendingSubmissionRef.current({
+              questionId: data.questionId,
+              clientRequestId: pendingSubmission.clientRequestId,
+              responseText: pendingSubmission.response || ''
+            });
+          }
         } else {
+          clearPendingSubmissionRef.current();
           committedResponseRef.current = '';
           setResponse('');
+          setGradingResult(null);
           setScreen('start');
         }
       } catch (err: any) {
@@ -404,6 +936,10 @@ export default function DailyQuestionPanel({
     lastActivityRef.current = Date.now();
     setInactivityTimer(INACTIVITY_LIMIT);
 
+    if (restoredDraftNeedsFreshTyping) {
+      return;
+    }
+
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - lastActivityRef.current) / 1000);
       const remaining = Math.max(0, INACTIVITY_LIMIT - elapsed);
@@ -420,28 +956,32 @@ export default function DailyQuestionPanel({
     return () => {
       clearInterval(interval);
     };
-  }, [screen]);
+  }, [screen, restoredDraftNeedsFreshTyping]);
 
-  const handleStart = useCallback(() => {
+  function handleStart() {
+    setRecoveryNotice(null);
     hasStartedRef.current = true;
+    clearRecoveryPoll();
+    activeClientRequestIdRef.current = null;
     committedResponseRef.current = response;
-    // Initialize typing metadata
-    typingMetadataRef.current = {
-      startTime: Date.now(),
-      keystrokeTimestamps: []
-    };
+    if (!normalizeTypingMetadata(typingMetadataRef.current)) {
+      typingMetadataRef.current = {
+        startTime: Date.now(),
+        keystrokeTimestamps: []
+      };
+    }
     setScreen('writing');
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 100);
-  }, [response]);
+  }
 
-  const handleSimplify = useCallback(async () => {
+  async function handleSimplify() {
     if (!questionId || isSimplifying) return;
 
     try {
       setIsSimplifying(true);
-      const result = await simplifyDailyQuestion({ questionId });
+      const result = await simplifyDailyQuestionRef.current({ questionId });
 
       if (result.simplifiedQuestion) {
         setQuestion(result.simplifiedQuestion);
@@ -452,12 +992,12 @@ export default function DailyQuestionPanel({
     } finally {
       setIsSimplifying(false);
     }
-  }, [questionId, isSimplifying, simplifyDailyQuestion]);
+  }
 
-  const handleShowOriginal = useCallback(() => {
+  function handleShowOriginal() {
     setQuestion(originalQuestion);
     setIsSimplified(false);
-  }, [originalQuestion]);
+  }
 
   const hasEnoughCoins = (twinkleCoins || 0) >= STREAK_REPAIR_COST;
 
@@ -564,6 +1104,9 @@ export default function DailyQuestionPanel({
       }
 
       if (finalValue.length > committedResponse.length) {
+        if (restoredDraftNeedsFreshTypingRef.current) {
+          setRestoredDraftNeedsFreshTyping(false);
+        }
         typingMetadataRef.current.keystrokeTimestamps.push(now);
       }
 
@@ -598,6 +1141,9 @@ export default function DailyQuestionPanel({
       }
 
       if (newValue.length > committedResponse.length) {
+        if (restoredDraftNeedsFreshTypingRef.current) {
+          setRestoredDraftNeedsFreshTyping(false);
+        }
         typingMetadataRef.current.keystrokeTimestamps.push(now);
       }
 
@@ -625,13 +1171,37 @@ export default function DailyQuestionPanel({
   }
 
   const handleSubmit = useCallback(async () => {
-    if (!questionId || isSubmittingRef.current) return;
+    if (
+      !questionId ||
+      isSubmittingRef.current ||
+      restoredDraftNeedsFreshTypingRef.current
+    ) {
+      return;
+    }
     isSubmittingRef.current = true;
+    clearRecoveryPoll();
+    setRecoveryNotice(null);
 
     // Calculate typing metrics from raw timestamps
     const metadata = typingMetadataRef.current;
     const endTime = Date.now();
     const timestamps = metadata.keystrokeTimestamps;
+    const trimmedResponse = response.trim() || '(no response)';
+    const clientRequestId =
+      activeClientRequestIdRef.current || createDailyQuestionClientRequestId();
+    activeClientRequestIdRef.current = clientRequestId;
+
+    if (userId) {
+      savePendingDailyQuestionSubmission({
+        userId,
+        questionId,
+        clientRequestId,
+        response: trimmedResponse,
+        createdAt: endTime,
+        recoveryState: 'pending',
+        typingMetadata: typingMetadataRef.current
+      });
+    }
 
     // Calculate burst metrics (chars typed within 500ms of each other)
     let maxBurstSize = 0;
@@ -678,14 +1248,15 @@ export default function DailyQuestionPanel({
     gradingCompleteRef.current = false;
 
     try {
-      const result = await submitDailyQuestionResponse({
+      const result = await submitDailyQuestionResponseRef.current({
         questionId,
-        response: response.trim() || '(no response)',
+        response: trimmedResponse,
+        clientRequestId,
         typingMetadata: {
           startTime: metadata.startTime,
           endTime,
           keystrokeCount: timestamps.length,
-          totalCharsTyped: response.trim().length,
+          totalCharsTyped: trimmedResponse.length,
           maxBurstSize,
           burstCount
         }
@@ -693,51 +1264,31 @@ export default function DailyQuestionPanel({
 
       if (result.error) {
         setError(result.error);
+        clearPendingSubmission();
         isSubmittingRef.current = false;
         return;
       }
 
-      gradingCompleteRef.current = true;
-      setGradingProgress(100);
-
-      if (result.newXP && userId) {
-        onSetUserState({
-          userId,
-          newState: { twinkleXP: result.newXP }
-        });
-      }
-
-      if (result.isThoughtful) {
-        onApplyTodayStatsProgress({
-          newStats: { dailyQuestionCompleted: true }
-        });
-      }
-
-      setTimeout(() => {
-        setGradingResult({
-          grade: result.isThoughtful ? result.grade || 'Pass' : 'Fail',
-          masterpieceType: result.masterpieceType || null,
-          xpAwarded: result.xpAwarded || 0,
-          feedback: result.isThoughtful
-            ? result.feedback || ''
-            : result.rejectionReason ||
-              'Nice try — you can start over and try again right away.',
-          responseId: result.responseId || 0,
-          isShared: false,
-          sharedWithZero: false,
-          sharedWithCiel: false,
-          originalResponse: response.trim(),
-          sharedResponse: result.sharedResponse || null,
-          streak: result.streak || 1,
-          streakMultiplier: result.streakMultiplier || 1,
-          usedRepair: result.usedRepair || false
-        });
-        setScreen('result');
-      }, 500);
+      applyCompletedSubmitResult({
+        result,
+        fallbackOriginalResponse: trimmedResponse
+      });
     } catch (err: any) {
       console.error('Failed to submit response:', err);
-      setError(err?.message || 'Failed to submit. Please try again.');
-      isSubmittingRef.current = false;
+      if (err?.status && err.status < 500 && err.status !== 409) {
+        clearPendingSubmission();
+        setError(err?.message || 'Failed to submit. Please try again.');
+        isSubmittingRef.current = false;
+        return;
+      }
+      setScreen('grading');
+      setGradingMessage('Restoring your result...');
+      setGradingProgress((current) => Math.max(current, 95));
+      void recoverPendingSubmission({
+        questionId,
+        clientRequestId,
+        responseText: trimmedResponse
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionId, response, userId]);
@@ -811,6 +1362,30 @@ export default function DailyQuestionPanel({
     return (
       <ErrorBoundary componentPath="DailyQuestionPanel/Start">
         <div className={containerCls}>
+          {recoveryNotice && (
+            <div
+              className={css`
+                text-align: center;
+                margin-bottom: 1rem;
+                padding: 0.75rem 1rem;
+                border-radius: 10px;
+                background: ${Color.yellow(0.18)};
+                border: 1px solid ${Color.yellow(0.5)};
+              `}
+            >
+              <p
+                className={css`
+                  margin: 0;
+                  color: ${Color.darkerGray()};
+                  font-size: 1.1rem;
+                  line-height: 1.4;
+                  font-weight: 600;
+                `}
+              >
+                {recoveryNotice}
+              </p>
+            </div>
+          )}
           {/* Streak Display */}
           {currentStreak > 0 && !streakBroken && !streakAtRisk && (
             <div
@@ -1106,15 +1681,19 @@ export default function DailyQuestionPanel({
                 font-size: 2.5rem;
                 font-weight: bold;
                 color: ${timeWarning ? Color.rose() : Color.black()};
-                ${timeWarning
+                ${!restoredDraftNeedsFreshTyping && timeWarning
                   ? `animation: ${pulseAnimation} 0.5s infinite;`
                   : ''}
               `}
             >
-              {inactivityTimer}s
+              {restoredDraftNeedsFreshTyping ? '--' : `${inactivityTimer}s`}
             </div>
             <div style={{ color: Color.darkerGray(), fontSize: '1.2rem' }}>
-              {inactivityTimer <= 3 ? 'Done?' : 'Keep typing!'}
+              {restoredDraftNeedsFreshTyping
+                ? 'Make one small edit to resume'
+                : inactivityTimer <= 3
+                  ? 'Done?'
+                  : 'Keep typing!'}
             </div>
           </div>
 
@@ -1136,6 +1715,25 @@ export default function DailyQuestionPanel({
             className={textareaCls}
             autoFocus
           />
+
+          {restoredDraftNeedsFreshTyping && (
+            <div
+              className={css`
+                width: 100%;
+                margin-top: 0.75rem;
+                padding: 0.75rem 1rem;
+                border-radius: 10px;
+                background: ${Color.yellow(0.14)};
+                border: 1px solid ${Color.yellow(0.35)};
+                color: ${Color.darkerGray()};
+                font-size: 1.05rem;
+                line-height: 1.4;
+              `}
+            >
+              This restored draft needs one fresh edit before the timer resumes
+              and it can be resubmitted safely.
+            </div>
+          )}
 
           <div className={statsRowCls}>
             <span style={{ color: Color.lightGray() }}>{wordCount} words</span>
