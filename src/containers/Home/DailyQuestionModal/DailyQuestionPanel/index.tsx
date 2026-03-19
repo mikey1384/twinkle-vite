@@ -113,6 +113,52 @@ const DAILY_QUESTION_DRAFT_RESTORED_NOTICE =
   "We couldn't confirm your previous submission. Your draft is restored. Start again to resubmit.";
 const DAILY_QUESTION_DRAFT_SAVED_NOTICE =
   "We couldn't restore your submission right now. Your draft is saved. Start again when you're ready to resubmit.";
+const VIBE_LABELS: Record<string, string> = {
+  default: 'Let Twinkle Pick',
+  follow_up: 'Keep Going',
+  go_deeper: 'Go Deeper',
+  open_new_door: 'New Angle',
+  light: 'Light & Easy',
+  opinion: 'My Take',
+  autobiography: 'My Story',
+  connection: 'People & Connection',
+  growth: 'Level Up',
+  fictional: 'Fictional'
+};
+const FOCUS_LABELS: Record<
+  string,
+  string | { default: string; adult?: string }
+> = {
+  infer: 'Let Twinkle Pick',
+  dating_partner_search: 'Crushes & Dating',
+  relationship_partnership: 'Relationship Vibes',
+  breakup_recovery: 'After a Breakup',
+  family_parenting: 'Family Life',
+  friendship_social_life: 'Friends & Social Life',
+  job_search_career: {
+    default: 'School & Future Dreams',
+    adult: 'Career & Work Direction'
+  },
+  exam_test_prep: {
+    default: 'Tests & Study',
+    adult: 'Exams & Certifications'
+  },
+  entrepreneurship: {
+    default: 'Projects & Big Ideas',
+    adult: 'Projects & Entrepreneurship'
+  },
+  financial_stability: {
+    default: 'Money Habits & Goals',
+    adult: 'Financial Stability'
+  },
+  purpose_identity: 'Who Am I?',
+  confidence_self_trust: 'Confidence / Self-trust',
+  stress_burnout: 'Stress / Burnout',
+  grief_loss: 'Grief / Loss',
+  health_energy: 'Health / Energy',
+  life_transitions: 'Life Transitions',
+  faith_spirituality: 'Faith / Spirituality'
+};
 
 type PendingDailyQuestionRecoveryState = 'pending' | 'draft';
 
@@ -138,6 +184,18 @@ function createDailyQuestionClientRequestId() {
     typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getTodayVibeLabel(vibe: string | null) {
+  return VIBE_LABELS[vibe || 'default'] || VIBE_LABELS.default;
+}
+
+function getTodayFocusLabel(focus: string | null, isAdultUser: boolean) {
+  const option = FOCUS_LABELS[focus || 'infer'] || FOCUS_LABELS.infer;
+  if (typeof option === 'string') {
+    return option;
+  }
+  return isAdultUser && option.adult ? option.adult : option.default;
 }
 
 function getDailyQuestionPendingSubmissionStorageKey(userId: number) {
@@ -301,6 +359,10 @@ export default function DailyQuestionPanel({
     usedRepair?: boolean;
   } | null>(null);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [todayVibe, setTodayVibe] = useState<string | null>(null);
+  const [todayCurrentFocus, setTodayCurrentFocus] = useState<string | null>(
+    null
+  );
   const [streakRepairAvailable, setStreakRepairAvailable] = useState(false);
   const [streakAtRisk, setStreakAtRisk] = useState(false);
   const [streakBroken, setStreakBroken] = useState(false);
@@ -835,6 +897,8 @@ export default function DailyQuestionPanel({
 
         // Save streak info
         setCurrentStreak(data.currentStreak || 0);
+        setTodayVibe(data.todayVibe || null);
+        setTodayCurrentFocus(data.todayCurrentFocus || null);
         setStreakRepairAvailable(!!data.streakRepairAvailable);
         setStreakAtRisk(!!data.streakAtRisk);
         setStreakBroken(!!data.streakBroken);
@@ -1330,6 +1394,11 @@ export default function DailyQuestionPanel({
   );
 
   const timeWarning = inactivityTimer <= 3 && inactivityTimer > 0;
+  const todayVibeLabel = getTodayVibeLabel(todayVibe);
+  const todayCurrentFocusLabel = getTodayFocusLabel(
+    todayCurrentFocus,
+    isAdultUser
+  );
 
   // Loading screen
   if (screen === 'loading') {
@@ -1575,6 +1644,19 @@ export default function DailyQuestionPanel({
                 </p>
               </div>
             )}
+
+          <div className={todayPreferenceRowCls}>
+            <div className={todayPreferenceCardCls}>
+              <span className={todayPreferenceLabelCls}>Today's vibe</span>
+              <span className={todayPreferenceValueCls}>{todayVibeLabel}</span>
+            </div>
+            <div className={todayPreferenceCardCls}>
+              <span className={todayPreferenceLabelCls}>Current focus</span>
+              <span className={todayPreferenceValueCls}>
+                {todayCurrentFocusLabel}
+              </span>
+            </div>
+          </div>
 
           <p className={questionTextCls}>{question}</p>
 
@@ -1861,6 +1943,55 @@ const questionTextSmallCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.2rem;
   }
+`;
+
+const todayPreferenceRowCls = css`
+  display: flex;
+  width: 100%;
+  max-width: 560px;
+  margin-bottom: 1.5rem;
+  border: 1px solid ${Color.borderGray()};
+  border-radius: 16px;
+  background: ${Color.highlightGray()};
+  overflow: hidden;
+  @media (max-width: ${mobileMaxWidth}) {
+    flex-direction: column;
+  }
+  > div:not(:last-child) {
+    border-right: 1px solid ${Color.borderGray()};
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    > div:not(:last-child) {
+      border-right: 0;
+      border-bottom: 1px solid ${Color.borderGray()};
+    }
+  }
+`;
+
+const todayPreferenceCardCls = css`
+  flex: 1;
+  min-width: 0;
+  padding: 0.95rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: center;
+  align-items: center;
+`;
+
+const todayPreferenceLabelCls = css`
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: ${Color.lightGray()};
+`;
+
+const todayPreferenceValueCls = css`
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: ${Color.black()};
+  line-height: 1.35;
 `;
 
 const instructionBoxCls = css`
