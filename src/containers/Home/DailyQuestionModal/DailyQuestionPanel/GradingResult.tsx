@@ -106,9 +106,9 @@ const VIBE_OPTIONS = [
   },
   {
     id: 'fictional',
-    title: 'Fictional',
+    title: 'Hypothetical',
     description:
-      'Guarantee an imaginative hypothetical question with no real personal details in the wording.'
+      'Guarantee a hypothetical question with no real personal details in the wording; overt fiction only when it helps the question work.'
   }
 ] as const;
 
