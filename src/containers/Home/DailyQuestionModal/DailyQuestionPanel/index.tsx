@@ -123,7 +123,7 @@ const VIBE_LABELS: Record<string, string> = {
   autobiography: 'My Story',
   connection: 'People & Connection',
   growth: 'Level Up',
-  fictional: 'Fictional'
+  fictional: 'Hypothetical'
 };
 const FOCUS_LABELS: Record<
   string,
