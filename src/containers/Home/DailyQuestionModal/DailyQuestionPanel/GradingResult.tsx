@@ -103,6 +103,12 @@ const VIBE_OPTIONS = [
     id: 'growth',
     title: 'Level Up',
     description: 'Focus on learning, courage, and your next direction.'
+  },
+  {
+    id: 'fictional',
+    title: 'Fictional',
+    description:
+      'Guarantee an imaginative hypothetical question with no real personal details in the wording.'
   }
 ] as const;
 
