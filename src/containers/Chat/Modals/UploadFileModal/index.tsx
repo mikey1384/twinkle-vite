@@ -42,6 +42,16 @@ import {
   appendImageMarkdownToText
 } from '~/helpers/imageAttachmentEmbedHelpers';
 
+const hiddenFileInputStyle: React.CSSProperties = {
+  position: 'fixed',
+  left: '-9999px',
+  top: 0,
+  width: '1px',
+  height: '1px',
+  opacity: 0,
+  pointerEvents: 'none'
+};
+
 function UploadFileModal({
   initialCaption = '',
   isRespondingToSubject,
@@ -430,8 +440,9 @@ function UploadFileModal({
                     type="file"
                     accept="image/*"
                     multiple
+                    tabIndex={-1}
                     onChange={handleAddMorePhotosChange}
-                    style={{ display: 'none' }}
+                    style={hiddenFileInputStyle}
                     aria-hidden="true"
                   />
                 </div>
@@ -642,7 +653,7 @@ function UploadFileModal({
 
   function handleAddMorePhotosClick() {
     if (multiImageUploading || !!embeddingAttachmentId) return;
-    addMoreInputRef.current?.click();
+    openNativeFilePicker(addMoreInputRef.current);
   }
 
   function handleAddMorePhotosChange(
@@ -685,6 +696,25 @@ function UploadFileModal({
     }
 
     event.target.value = '';
+  }
+
+  function openNativeFilePicker(input: HTMLInputElement | null) {
+    if (!input) return;
+
+    const pickerInput = input as HTMLInputElement & {
+      showPicker?: () => void;
+    };
+
+    if (typeof pickerInput.showPicker === 'function') {
+      try {
+        pickerInput.showPicker();
+        return;
+      } catch (_error) {
+        // Fall back to click() for browsers that expose showPicker but reject it here.
+      }
+    }
+
+    input.click();
   }
 
   async function handleSubmitMultipleImages() {
