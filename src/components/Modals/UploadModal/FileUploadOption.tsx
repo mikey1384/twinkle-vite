@@ -4,6 +4,16 @@ import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 
+const hiddenFileInputStyle: React.CSSProperties = {
+  position: 'fixed',
+  left: '-9999px',
+  top: 0,
+  width: '1px',
+  height: '1px',
+  opacity: 0,
+  pointerEvents: 'none'
+};
+
 interface FileUploadOptionProps {
   onFileSelect: (file: File) => void;
   onFilesSelect?: (files: File[]) => void;
@@ -153,8 +163,9 @@ export default function FileUploadOption({
         type="file"
         accept="image/*"
         multiple
+        tabIndex={-1}
         onChange={handlePhotosChange}
-        style={{ display: 'none' }}
+        style={hiddenFileInputStyle}
         aria-hidden="true"
       />
       <input
@@ -162,8 +173,9 @@ export default function FileUploadOption({
         type="file"
         accept={accept}
         multiple={false}
+        tabIndex={-1}
         onChange={handleFileChange}
-        style={{ display: 'none' }}
+        style={hiddenFileInputStyle}
         aria-hidden="true"
       />
     </div>
@@ -193,15 +205,11 @@ export default function FileUploadOption({
   }
 
   function handleSelectPhotos() {
-    if (photoInputRef.current) {
-      photoInputRef.current.click();
-    }
+    openNativeFilePicker(photoInputRef.current);
   }
 
   function handleSelectFile() {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    openNativeFilePicker(fileInputRef.current);
   }
 
   function handleDragOver(event: React.DragEvent) {
@@ -234,5 +242,24 @@ export default function FileUploadOption({
       if (multiple && onFilesSelect) onFilesSelect(Array.from(files));
       else onFileSelect(files[0]);
     }
+  }
+
+  function openNativeFilePicker(input: HTMLInputElement | null) {
+    if (!input) return;
+
+    const pickerInput = input as HTMLInputElement & {
+      showPicker?: () => void;
+    };
+
+    if (typeof pickerInput.showPicker === 'function') {
+      try {
+        pickerInput.showPicker();
+        return;
+      } catch (_error) {
+        // Fall back to click() for browsers that expose showPicker but reject it here.
+      }
+    }
+
+    input.click();
   }
 }
