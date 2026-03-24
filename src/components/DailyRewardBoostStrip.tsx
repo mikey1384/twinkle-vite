@@ -1106,30 +1106,35 @@ function buildAIStoryRow(aiStory: any, isLoading = false): BoostRow {
 
   const currentLevel = Math.max(1, Number(aiStory?.currentLevel) || 1);
   const highestPassedLevel = Math.max(
-    currentLevel,
+    0,
     Number(aiStory?.highestPassedLevel) || 0
   );
   const basicAchieved = !!aiStory?.basicQualified;
   const hasReading = !!aiStory?.hasReadingClearAtCurrentLevel;
   const hasListening = !!aiStory?.hasListeningClearAtCurrentLevel;
   const excellenceAchieved = !!aiStory?.excellenceQualified;
-  const levelTargetPhrase =
+  const basicRequirementLevel = currentLevel >= 4 ? currentLevel - 1 : currentLevel;
+  const basicTargetPhrase =
+    basicRequirementLevel >= 5
+      ? `Lv${basicRequirementLevel}`
+      : `Lv${basicRequirementLevel} or higher`;
+  const excellenceTargetPhrase =
     currentLevel >= 5 ? `Lv${currentLevel}` : `Lv${currentLevel} or higher`;
 
-  let description = `Excellence target: clear both Read and Listen at ${levelTargetPhrase}.`;
+  let description = `Excellence target: clear both Read and Listen at ${excellenceTargetPhrase}.`;
   if (excellenceAchieved) {
     description = 'Read and Listen both cleared.';
   } else if (hasReading && !hasListening) {
-    description = `Read is done. Finish Listen at ${levelTargetPhrase}.`;
+    description = `Read is done. Finish Listen at ${excellenceTargetPhrase}.`;
   } else if (!hasReading && hasListening) {
-    description = `Listen is done. Finish Read at ${levelTargetPhrase}.`;
+    description = `Listen is done. Finish Read at ${excellenceTargetPhrase}.`;
   }
 
   return {
     label: 'AI Story',
     title: basicAchieved
       ? `Lv${highestPassedLevel} cleared`
-      : `Clear ${levelTargetPhrase}`,
+      : `Clear ${basicTargetPhrase}`,
     description,
     tone: 'logoBlue',
     basicAchieved,
