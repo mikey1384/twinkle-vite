@@ -224,21 +224,20 @@ interface BuildCopilotPolicy {
     maxFileBytes: number;
   };
   requestBilling: {
+    dayIndex: number;
     dayKey: string;
     tier: 'free' | 'pro' | 'premium';
-    freeRequestsPerDay: number;
+    messageRequestsPerDay: number;
+    reviewRequestsPerDay: number;
     coinCostPerRequest: number;
     billingEnabled: boolean;
-    requestsToday: number;
-    freeRequestsUsed: number;
-    freeRequestsRemaining: number;
+    messageRequestsToday: number;
+    messageRequestsRemaining: number;
+    reviewRequestsToday: number;
+    reviewRequestsRemaining: number;
     paidRequestsToday: number;
     coinSpentToday: number;
     coinBalance: number | null;
-  };
-  codexReasoning: {
-    allowedEfforts: Array<'low' | 'medium' | 'high' | 'xhigh'>;
-    defaultEffort: 'low' | 'medium' | 'high' | 'xhigh';
   };
 }
 
@@ -274,14 +273,9 @@ interface BuildProjectFileChangeLog {
   createdAt: number;
 }
 
-type BuildQueueMode = 'collect' | 'steer' | 'followup';
-type BuildCodexReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
-
 interface QueuedBuildRequest {
   id: string;
   message: string;
-  mode: BuildQueueMode;
-  reasoningEffort: BuildCodexReasoningEffort;
   createdAt: number;
 }
 
@@ -459,9 +453,6 @@ export default function BuildEditor({
     useState('');
   const [projectFileChangeLogsLoadedAt, setProjectFileChangeLogsLoadedAt] =
     useState<number | null>(null);
-  const [queueMode, setQueueMode] = useState<BuildQueueMode>('followup');
-  const [selectedReasoningEffort, setSelectedReasoningEffort] =
-    useState<BuildCodexReasoningEffort>('medium');
   const [queuedRequests, setQueuedRequests] = useState<QueuedBuildRequest[]>(
     []
   );
@@ -499,28 +490,11 @@ export default function BuildEditor({
   const startingGenerationRef = useRef(false);
   const queuePausedForSaveRef = useRef(false);
   const requiresProjectFilesResyncBeforeSaveRef = useRef(false);
-  const activeReasoningEffortRef = useRef<BuildCodexReasoningEffort | null>(
-    null
-  );
   const projectFilesDraftRef = useRef<
     Array<{ path: string; content?: string }>
   >([]);
   const hasUnsavedProjectFilesRef = useRef(false);
   const savingProjectFilesRef = useRef(false);
-  const selectedReasoningEffortRef =
-    useRef<BuildCodexReasoningEffort>('medium');
-  const reasoningEffortOptionsRef = useRef<BuildCodexReasoningEffort[]>([
-    'low',
-    'medium',
-    'high'
-  ]);
-  const reasoningEffortOptions = useMemo<BuildCodexReasoningEffort[]>(
-    () =>
-      copilotPolicy?.codexReasoning?.allowedEfforts?.length
-        ? copilotPolicy.codexReasoning.allowedEfforts
-        : ['low', 'medium', 'high'],
-    [copilotPolicy?.codexReasoning]
-  );
 
   useEffect(() => {
     chatMessagesRef.current = chatMessages;
@@ -533,14 +507,6 @@ export default function BuildEditor({
   useEffect(() => {
     reviewingRef.current = reviewing;
   }, [reviewing]);
-
-  useEffect(() => {
-    selectedReasoningEffortRef.current = selectedReasoningEffort;
-  }, [selectedReasoningEffort]);
-
-  useEffect(() => {
-    reasoningEffortOptionsRef.current = reasoningEffortOptions;
-  }, [reasoningEffortOptions]);
 
   useEffect(() => {
     buildRef.current = build;
@@ -602,21 +568,7 @@ export default function BuildEditor({
     startingGenerationRef.current = false;
     queuePausedForSaveRef.current = false;
     requiresProjectFilesResyncBeforeSaveRef.current = false;
-    activeReasoningEffortRef.current = null;
   }, [build.id]);
-
-  useEffect(() => {
-    const allowedEfforts = copilotPolicy?.codexReasoning?.allowedEfforts?.length
-      ? copilotPolicy.codexReasoning.allowedEfforts
-      : (['low', 'medium', 'high'] as BuildCodexReasoningEffort[]);
-    const fallbackEffort =
-      copilotPolicy?.codexReasoning?.defaultEffort ||
-      allowedEfforts[0] ||
-      'medium';
-    setSelectedReasoningEffort((prev) =>
-      allowedEfforts.includes(prev) ? prev : fallbackEffort
-    );
-  }, [copilotPolicy]);
 
   useEffect(() => {
     return () => {
@@ -636,11 +588,7 @@ export default function BuildEditor({
     if (!prompt) return;
     if (chatMessagesRef.current.length > 0) return;
     didAutoPromptRef.current = true;
-    void startGeneration(
-      prompt,
-      'followup',
-      copilotPolicy?.codexReasoning?.defaultEffort
-    );
+    void startGeneration(prompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id, isOwner, initialPrompt]);
 
@@ -860,7 +808,6 @@ export default function BuildEditor({
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
       reviewerMessageIdRef.current = null;
-      activeReasoningEffortRef.current = null;
       generatingRef.current = false;
       reviewingRef.current = false;
       setGenerating(false);
@@ -957,7 +904,6 @@ export default function BuildEditor({
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
       reviewerMessageIdRef.current = null;
-      activeReasoningEffortRef.current = null;
       generatingRef.current = false;
       reviewingRef.current = false;
       setGenerating(false);
@@ -996,7 +942,6 @@ export default function BuildEditor({
             userMessageIdRef.current = null;
             assistantMessageIdRef.current = null;
             reviewerMessageIdRef.current = null;
-            activeReasoningEffortRef.current = null;
           }
         } else if (guardStatus === 'processing') {
           // Keep request refs briefly in case late events from the claimed
@@ -1016,7 +961,6 @@ export default function BuildEditor({
             userMessageIdRef.current = null;
             assistantMessageIdRef.current = null;
             reviewerMessageIdRef.current = null;
-            activeReasoningEffortRef.current = null;
           }
         }
         generatingRef.current = false;
@@ -1054,7 +998,6 @@ export default function BuildEditor({
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
       reviewerMessageIdRef.current = null;
-      activeReasoningEffortRef.current = null;
       generatingRef.current = false;
       reviewingRef.current = false;
       setGenerating(false);
@@ -1581,11 +1524,7 @@ export default function BuildEditor({
     );
   }
 
-  function enqueueBuildRequest(
-    messageText: string,
-    mode: BuildQueueMode,
-    reasoningEffort: BuildCodexReasoningEffort
-  ) {
+  function enqueueLatestBuildRequest(messageText: string) {
     const trimmed = String(messageText || '').trim();
     if (!trimmed) return;
     const normalized = normalizeQueuedMessage(trimmed);
@@ -1598,87 +1537,38 @@ export default function BuildEditor({
     );
     const existing = queuedRequestsRef.current;
     const duplicateIndex = existing.findIndex(
-      (entry) =>
-        normalizeQueuedMessage(entry.message) === normalized &&
-        entry.reasoningEffort === reasoningEffort
+      (entry) => normalizeQueuedMessage(entry.message) === normalized
     );
 
-    if (mode === 'collect') {
-      if (
-        (normalized === activeMessage &&
-          activeReasoningEffortRef.current === reasoningEffort) ||
-        duplicateIndex >= 0
-      ) {
-        appendLocalRunEvent({
-          kind: 'status',
-          phase: 'queued',
-          message: 'Collected duplicate request (coalesced).'
-        });
-        return;
-      }
-      updateQueuedRequests([
-        ...existing,
-        {
-          id: `${Date.now()}-${existing.length}`,
-          message: trimmed,
-          mode,
-          reasoningEffort,
-          createdAt: Date.now()
-        }
-      ]);
+    if (normalized === activeMessage) {
       appendLocalRunEvent({
         kind: 'status',
         phase: 'queued',
-        message: 'Collected request to run after current task.'
+        message: 'That request is already in progress.'
       });
       return;
     }
 
-    if (mode === 'followup') {
-      if (duplicateIndex >= 0) {
-        appendLocalRunEvent({
-          kind: 'status',
-          phase: 'queued',
-          message: 'Follow-up request already queued (coalesced).'
-        });
-        return;
-      }
-      updateQueuedRequests([
-        ...existing,
-        {
-          id: `${Date.now()}-${existing.length}`,
-          message: trimmed,
-          mode,
-          reasoningEffort,
-          createdAt: Date.now()
-        }
-      ]);
+    if (duplicateIndex >= 0) {
       appendLocalRunEvent({
         kind: 'status',
         phase: 'queued',
-        message: 'Follow-up request queued.'
+        message: 'Your latest request is already pending.'
       });
       return;
     }
 
-    const withoutDuplicate = existing.filter(
-      (entry) => normalizeQueuedMessage(entry.message) !== normalized
-    );
-    const next = [
+    updateQueuedRequests([
       {
         id: `${Date.now()}-steer`,
         message: trimmed,
-        mode,
-        reasoningEffort,
         createdAt: Date.now()
-      },
-      ...withoutDuplicate
-    ];
-    updateQueuedRequests(next);
+      }
+    ]);
     appendLocalRunEvent({
       kind: 'action',
       phase: 'stopping',
-      message: 'Steering to latest request (current run will stop).'
+      message: 'Switching to your latest request...'
     });
     if (generatingRef.current || reviewingRef.current) {
       handleStopGeneration();
@@ -1695,20 +1585,16 @@ export default function BuildEditor({
     appendLocalRunEvent({
       kind: 'status',
       phase: 'queued',
-      message: `Starting queued request (${nextRequest.mode}, ${nextRequest.reasoningEffort}).`
+      message: 'Starting your latest request.'
     });
-    const started = await startGeneration(
-      nextRequest.message,
-      nextRequest.mode,
-      nextRequest.reasoningEffort
-    );
+    const started = await startGeneration(nextRequest.message);
     if (!started) {
       queuePausedForSaveRef.current = true;
       updateQueuedRequests([nextRequest, ...queuedRequestsRef.current]);
       appendLocalRunEvent({
         kind: 'status',
         phase: 'queued',
-        message: 'Queued request paused until pending file changes are saved.'
+        message: 'Waiting for file edits to save before continuing.'
       });
       return;
     }
@@ -1730,18 +1616,14 @@ export default function BuildEditor({
     setInputMessage('');
 
     if (isRunActivityInFlight()) {
-      enqueueBuildRequest(messageText, queueMode, selectedReasoningEffort);
+      enqueueLatestBuildRequest(messageText);
       return;
     }
 
-    const started = await startGeneration(
-      messageText,
-      queueMode,
-      selectedReasoningEffort
-    );
+    const started = await startGeneration(messageText);
     if (!started) {
       if (isRunActivityInFlight()) {
-        enqueueBuildRequest(messageText, queueMode, selectedReasoningEffort);
+        enqueueLatestBuildRequest(messageText);
         return;
       }
       setInputMessage(messageText);
@@ -1758,8 +1640,6 @@ export default function BuildEditor({
     const activeBuild = buildRef.current;
     if (!activeBuild?.code) return;
     resetDedupedProcessingReconcileState();
-    const reasoningEffort = selectedReasoningEffortRef.current;
-
     const now = Math.floor(Date.now() / 1000);
     const messageId = Date.now();
     const requestId = `${activeBuild.id}-review-${messageId}`;
@@ -1774,7 +1654,6 @@ export default function BuildEditor({
     setRunEvents([]);
     streamRequestIdRef.current = requestId;
     userMessageIdRef.current = null;
-    activeReasoningEffortRef.current = reasoningEffort;
 
     const reviewerMessage: ChatMessage = {
       id: messageId,
@@ -1796,8 +1675,7 @@ export default function BuildEditor({
 
     socket.emit('build_review', {
       buildId: activeBuild.id,
-      requestId,
-      reasoningEffort
+      requestId
     });
   }
 
@@ -1980,7 +1858,8 @@ export default function BuildEditor({
         files: normalizedFiles.map((file) => ({
           path: file.path,
           content: file.content
-        }))
+        })),
+        createVersion: true
       });
       const savedFiles = normalizeProjectFilesForBuild(
         Array.isArray(result?.projectFiles)
@@ -2267,18 +2146,12 @@ export default function BuildEditor({
               projectFileChangeLogsError={projectFileChangeLogsError}
               projectFileChangeLogsLoadedAt={projectFileChangeLogsLoadedAt}
               runEvents={runEvents}
-              queueMode={queueMode}
-              selectedReasoningEffort={selectedReasoningEffort}
-              reasoningEffortOptions={reasoningEffortOptions}
-              queuedCount={queuedRequests.length}
               activeStreamMessageIds={getActiveStreamMessageIds()}
               isOwner={isOwner}
               chatScrollRef={chatScrollRef}
               chatEndRef={chatEndRef}
               onChatScroll={handleChatScroll}
               onInputChange={setInputMessage}
-              onQueueModeChange={setQueueMode}
-              onReasoningEffortChange={setSelectedReasoningEffort}
               onSendMessage={handleSendMessage}
               onStopGeneration={handleStopGeneration}
               onReloadProjectFileChangeLogs={handleReloadProjectFileChangeLogs}
@@ -2333,9 +2206,7 @@ export default function BuildEditor({
   }
 
   async function startGeneration(
-    messageText: string,
-    mode: BuildQueueMode = 'followup',
-    reasoningEffort?: BuildCodexReasoningEffort
+    messageText: string
   ): Promise<boolean> {
     if (!messageText.trim() || isRunActivityInFlight() || !isOwner) {
       return false;
@@ -2366,14 +2237,8 @@ export default function BuildEditor({
       const now = Math.floor(Date.now() / 1000);
       const messageId = Date.now();
       const requestId = `${activeBuild.id}-${messageId}`;
-      const resolvedReasoningEffort =
-        reasoningEffort &&
-        reasoningEffortOptionsRef.current.includes(reasoningEffort)
-          ? reasoningEffort
-          : selectedReasoningEffortRef.current;
       generatingRef.current = true;
       reviewingRef.current = false;
-      activeReasoningEffortRef.current = resolvedReasoningEffort;
       setGenerating(true);
       setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
@@ -2415,9 +2280,7 @@ export default function BuildEditor({
       socket.emit('build_generate', {
         buildId: activeBuild.id,
         message: messageText,
-        requestId,
-        mode,
-        reasoningEffort: resolvedReasoningEffort
+        requestId
       });
       return true;
     } finally {
@@ -2559,7 +2422,6 @@ export default function BuildEditor({
     if (!hasActiveStreamPlaceholders) {
       if (streamRequestIdRef.current === requestId) {
         streamRequestIdRef.current = null;
-        activeReasoningEffortRef.current = null;
       }
       resetDedupedProcessingReconcileState();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
@@ -2573,7 +2435,6 @@ export default function BuildEditor({
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
       reviewerMessageIdRef.current = null;
-      activeReasoningEffortRef.current = null;
       resetDedupedProcessingReconcileState();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
       return;

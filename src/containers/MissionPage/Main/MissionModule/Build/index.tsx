@@ -132,6 +132,9 @@ const BYO_PROVIDER_META: Record<
   }
 };
 
+// Keep the BYO mission UI code in place until we decide whether to ship it.
+const SHOW_BUILD_MISSION_BYO_UI = false;
+
 interface BuildByoSettingsState {
   byo: {
     enabled: boolean;
@@ -219,7 +222,11 @@ export default function BuildMission({
   useEffect(() => {
     if (userId) {
       loadBuilds();
-      loadByo();
+      if (SHOW_BUILD_MISSION_BYO_UI) {
+        loadByo();
+      } else {
+        setByoLoading(false);
+      }
     } else {
       setLoading(false);
       setByoLoading(false);
@@ -561,7 +568,7 @@ export default function BuildMission({
             )}
           </div>
 
-          {isMissionPassed && (
+          {SHOW_BUILD_MISSION_BYO_UI && isMissionPassed && (
             <section
               className={css`
                 background: #fff;

@@ -165,17 +165,15 @@ export default function buildRequestHelpers({
 
     async generateBuildCode({
       buildId,
-      message,
-      reasoningEffort
+      message
     }: {
       buildId: number;
       message: string;
-      reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/generate`,
-          { message, reasoningEffort },
+          { message },
           auth()
         );
         return data;
@@ -335,19 +333,17 @@ export default function buildRequestHelpers({
       buildId,
       promptId,
       message,
-      history,
-      reasoningEffort
+      history
     }: {
       buildId: number;
       promptId: number;
       message: string;
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
-      reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh';
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/ai-chat`,
-          { promptId, message, history, reasoningEffort },
+          { promptId, message, history },
           auth()
         );
         return data;

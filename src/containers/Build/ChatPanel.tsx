@@ -3,6 +3,8 @@ import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import ThinkingIndicator from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import CodeDiff from '~/components/CodeDiff';
+import ProgressBar from '~/components/ProgressBar';
+import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -11,7 +13,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 const panelClass = css`
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   min-height: 0;
   overflow: hidden;
   border-right: 1px solid var(--ui-border);
@@ -25,7 +27,7 @@ const panelClass = css`
 
 const headerClass = css`
   min-height: var(--build-workspace-header-height);
-  padding: 0 1rem;
+  padding: 0.55rem 1rem 0 1rem;
   background: #fff;
   display: grid;
   align-items: center;
@@ -98,21 +100,20 @@ interface BuildCopilotPolicy {
     maxFileBytes: number;
   };
   requestBilling: {
+    dayIndex: number;
     dayKey: string;
     tier: 'free' | 'pro' | 'premium';
-    freeRequestsPerDay: number;
+    messageRequestsPerDay: number;
+    reviewRequestsPerDay: number;
     coinCostPerRequest: number;
     billingEnabled: boolean;
-    requestsToday: number;
-    freeRequestsUsed: number;
-    freeRequestsRemaining: number;
+    messageRequestsToday: number;
+    messageRequestsRemaining: number;
+    reviewRequestsToday: number;
+    reviewRequestsRemaining: number;
     paidRequestsToday: number;
     coinSpentToday: number;
     coinBalance: number | null;
-  };
-  codexReasoning: {
-    allowedEfforts: Array<'low' | 'medium' | 'high' | 'xhigh'>;
-    defaultEffort: 'low' | 'medium' | 'high' | 'xhigh';
   };
 }
 
@@ -148,8 +149,7 @@ interface BuildProjectFileChangeLog {
   createdAt: number;
 }
 
-type BuildQueueMode = 'collect' | 'steer' | 'followup';
-type BuildCodexReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
+type ChatPanelTab = 'chat' | 'debug';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -166,18 +166,12 @@ interface ChatPanelProps {
   projectFileChangeLogsError: string;
   projectFileChangeLogsLoadedAt: number | null;
   runEvents: BuildRunEvent[];
-  queueMode: BuildQueueMode;
-  selectedReasoningEffort: BuildCodexReasoningEffort;
-  reasoningEffortOptions: BuildCodexReasoningEffort[];
-  queuedCount: number;
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onChatScroll: () => void;
   onInputChange: (value: string) => void;
-  onQueueModeChange: (mode: BuildQueueMode) => void;
-  onReasoningEffortChange: (effort: BuildCodexReasoningEffort) => void;
   onSendMessage: () => void;
   onStopGeneration: () => void;
   onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
@@ -199,24 +193,18 @@ export default function ChatPanel({
   projectFileChangeLogsError,
   projectFileChangeLogsLoadedAt,
   runEvents,
-  queueMode,
-  selectedReasoningEffort,
-  reasoningEffortOptions,
-  queuedCount,
   activeStreamMessageIds,
   isOwner,
   chatScrollRef,
   chatEndRef,
   onChatScroll,
   onInputChange,
-  onQueueModeChange,
-  onReasoningEffortChange,
   onSendMessage,
   onStopGeneration,
   onReloadProjectFileChangeLogs,
   onDeleteMessage
 }: ChatPanelProps) {
-  const [showCopilotDebug, setShowCopilotDebug] = useState(false);
+  const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat');
   const usageRows = useMemo(() => {
     const stageOrder = ['planner', 'reviewer', 'validator', 'codex', 'narration'];
     return Object.values(usageMetrics).sort((a, b) => {
@@ -254,68 +242,80 @@ export default function ChatPanel({
 
   const inputCharCount = inputMessage.length;
   const promptCharLimit = copilotPolicy?.limits.maxPromptChars ?? null;
-  const projectCountUsage = useMemo(() => {
-    if (!copilotPolicy) return null;
-    return Math.max(
-      0,
-      Math.min(
-        100,
-        (copilotPolicy.usage.projectCount / copilotPolicy.limits.maxProjects) *
-          100
-      )
-    );
-  }, [copilotPolicy]);
-  const projectByteUsage = useMemo(() => {
-    if (!copilotPolicy) return null;
-    return Math.max(
-      0,
-      Math.min(
-        100,
-        (copilotPolicy.usage.currentProjectBytes /
-          copilotPolicy.limits.maxProjectBytes) *
-          100
-      )
-    );
-  }, [copilotPolicy]);
-  const projectFileCountUsage = useMemo(() => {
-    if (!copilotPolicy) return null;
-    return Math.max(
-      0,
-      Math.min(
-        100,
-        (copilotPolicy.usage.projectFileCount /
-          copilotPolicy.limits.maxFilesPerProject) *
-          100
-      )
-    );
-  }, [copilotPolicy]);
-  const requestUsage = useMemo(() => {
+  const dailyMessageUsage = useMemo(() => {
     if (!copilotPolicy) return null;
     const billing = copilotPolicy.requestBilling;
-    if (!billing.billingEnabled) return null;
-    if (billing.freeRequestsPerDay <= 0) return 100;
+    if (billing.messageRequestsPerDay <= 0) return null;
     return Math.max(
       0,
-      Math.min(100, (billing.freeRequestsUsed / billing.freeRequestsPerDay) * 100)
+      Math.min(
+        100,
+        (billing.messageRequestsToday / billing.messageRequestsPerDay) * 100
+      )
     );
   }, [copilotPolicy]);
-  const nextRequestCostLabel = useMemo(() => {
+  const dailyMessageBarText = useMemo(() => {
     if (!copilotPolicy) return null;
     const billing = copilotPolicy.requestBilling;
-    if (!billing.billingEnabled) return 'Included';
-    if (billing.freeRequestsRemaining > 0) return 'Free';
-    return `${formatTokenCount(billing.coinCostPerRequest)} coins`;
+    if (billing.messageRequestsPerDay <= 0) {
+      return 'Unlimited messages';
+    }
+    return `${formatTokenCount(billing.messageRequestsToday)} / ${formatTokenCount(billing.messageRequestsPerDay)} messages`;
   }, [copilotPolicy]);
-
-  function handleToggleCopilotDebug() {
-    const nextValue = !showCopilotDebug;
-    setShowCopilotDebug(nextValue);
+  const dailyReviewLabel = useMemo(() => {
+    if (!copilotPolicy) return null;
+    const billing = copilotPolicy.requestBilling;
+    if (billing.reviewRequestsPerDay <= 0) {
+      return 'Reviews: unlimited';
+    }
+    return `Reviews: ${formatTokenCount(billing.reviewRequestsToday)} / ${formatTokenCount(billing.reviewRequestsPerDay)}`;
+  }, [copilotPolicy]);
+  const dailyLimitSummary = useMemo(() => {
+    if (!copilotPolicy) return null;
+    const billing = copilotPolicy.requestBilling;
     if (
-      nextValue &&
+      billing.messageRequestsPerDay <= 0 &&
+      billing.reviewRequestsPerDay <= 0
+    ) {
+      return 'Unlimited daily messages and reviews';
+    }
+    return `${formatTokenCount(billing.messageRequestsRemaining)} messages left today • ${formatTokenCount(billing.reviewRequestsRemaining)} reviews left`;
+  }, [copilotPolicy]);
+  const hasPromptContextPreview = Boolean(
+    projectFilePromptContextPreview && projectFilePromptContextPreview.trim()
+  );
+  const hasProjectFileChangeLogs = projectFileChangeLogs.length > 0;
+  const showDebugEmptyState =
+    !projectFileChangeLogsError &&
+    !hasPromptContextPreview &&
+    !hasProjectFileChangeLogs;
+
+  function handleTabChange(nextTab: ChatPanelTab) {
+    if (nextTab === activeTab) return;
+    setActiveTab(nextTab);
+    if (
+      nextTab === 'debug' &&
       !projectFileChangeLogsLoading &&
       !projectFileChangeLogsLoadedAt
     ) {
       void onReloadProjectFileChangeLogs();
+    }
+    if (nextTab === 'chat') {
+      requestAnimationFrame(() => {
+        const container = chatScrollRef.current;
+        if (container) {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'auto'
+          });
+          return;
+        }
+        chatEndRef.current?.scrollIntoView({
+          behavior: 'auto',
+          block: 'end',
+          inline: 'nearest'
+        });
+      });
     }
   }
 
@@ -341,14 +341,15 @@ export default function ChatPanel({
           <div
             className={css`
               margin-top: 0.4rem;
+              margin-bottom: 1rem;
               border: 1px solid var(--ui-border);
               border-radius: 10px;
-              background: #fff;
-              padding: 0.55rem 0.65rem;
+              background: var(--chat-bg);
+              padding: 0.7rem 0.75rem 0.95rem;
               display: flex;
               flex-direction: column;
-              gap: 0.42rem;
-              font-size: 0.75rem;
+              gap: 0.6rem;
+              font-size: 0.86rem;
               color: var(--chat-text);
             `}
           >
@@ -356,7 +357,6 @@ export default function ChatPanel({
               className={css`
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
                 gap: 0.4rem;
               `}
             >
@@ -366,21 +366,7 @@ export default function ChatPanel({
                   opacity: 0.85;
                 `}
               >
-                Plan limits
-              </span>
-              <span
-                className={css`
-                  border-radius: 999px;
-                  border: 1px solid var(--ui-border);
-                  padding: 0.1rem 0.45rem;
-                  font-size: 0.7rem;
-                  font-weight: 800;
-                  text-transform: uppercase;
-                  letter-spacing: 0.03em;
-                  background: var(--chat-bg);
-                `}
-            >
-                {copilotPolicy.tier}
+                Daily limit
               </span>
             </div>
             {copilotPolicy.byo?.blockedAssignedTier && (
@@ -411,82 +397,47 @@ export default function ChatPanel({
                 </a>
               </div>
             )}
-            <MetricBarRow
-              label="Projects"
-              value={`${formatTokenCount(copilotPolicy.usage.projectCount)} / ${formatTokenCount(copilotPolicy.limits.maxProjects)}`}
-              meta={`${formatTokenCount(copilotPolicy.usage.projectCountRemaining)} left`}
-              percent={projectCountUsage || 0}
-            />
-            <MetricBarRow
-              label="Project size"
-              value={`${formatBytes(copilotPolicy.usage.currentProjectBytes)} / ${formatBytes(copilotPolicy.limits.maxProjectBytes)}`}
-              meta={`${formatBytes(copilotPolicy.usage.projectBytesRemaining)} left`}
-              percent={projectByteUsage || 0}
-            />
-            <MetricBarRow
-              label="Files"
-              value={`${formatTokenCount(copilotPolicy.usage.projectFileCount)} / ${formatTokenCount(copilotPolicy.limits.maxFilesPerProject)}`}
-              meta={`Per-file cap ${formatBytes(copilotPolicy.limits.maxFileBytes)}`}
-              percent={projectFileCountUsage || 0}
-            />
-            {copilotPolicy.requestBilling.billingEnabled && requestUsage != null ? (
-              <MetricBarRow
-                label="Daily free requests"
-                value={`${formatTokenCount(copilotPolicy.requestBilling.freeRequestsUsed)} / ${formatTokenCount(copilotPolicy.requestBilling.freeRequestsPerDay)}`}
-                meta={`${formatTokenCount(copilotPolicy.requestBilling.freeRequestsRemaining)} free left`}
-                percent={requestUsage}
-              />
+            {dailyMessageUsage != null && dailyMessageBarText ? (
+              <>
+                <div
+                  className={css`
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                  `}
+                >
+                  Copilot messages
+                </div>
+                <ProgressBar
+                  progress={dailyMessageUsage}
+                  text={dailyMessageBarText}
+                  style={{ marginTop: '-0.2rem' }}
+                />
+                {dailyReviewLabel && (
+                  <div
+                    className={css`
+                      display: flex;
+                      align-items: center;
+                      font-size: 0.82rem;
+                      font-weight: 700;
+                    `}
+                  >
+                    <span>{dailyReviewLabel}</span>
+                  </div>
+                )}
+              </>
             ) : (
               <div
                 className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  gap: 0.5rem;
-                  font-size: 0.72rem;
-                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                  border-radius: 8px;
+                  background: #fff;
+                  padding: 0.8rem 0.9rem;
+                  font-size: 0.88rem;
+                  font-weight: 700;
                 `}
               >
-                <span>Requests included</span>
-                <span>{copilotPolicy.tier} tier</span>
+                Unlimited daily messages and reviews
               </div>
             )}
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.5rem;
-                font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-              `}
-            >
-              <span>Prompt {formatTokenCount(copilotPolicy.limits.maxPromptChars)} chars</span>
-              <span>
-                History {copilotPolicy.limits.historyMaxMessages} msgs /{' '}
-                {Math.floor(copilotPolicy.limits.historyMaxAgeSeconds / 3600)}h
-              </span>
-            </div>
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.5rem;
-                font-size: 0.72rem;
-                font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-              `}
-            >
-              <span>
-                Paid requests {formatTokenCount(copilotPolicy.requestBilling.paidRequestsToday)}
-                {' / '}
-                {formatTokenCount(copilotPolicy.requestBilling.coinSpentToday)} coins
-              </span>
-              <span>
-                Balance{' '}
-                {copilotPolicy.requestBilling.coinBalance == null
-                  ? 'n/a'
-                  : formatTokenCount(copilotPolicy.requestBilling.coinBalance)}
-              </span>
-            </div>
           </div>
         )}
         {usageRows.length > 0 && (
@@ -651,235 +602,30 @@ export default function ChatPanel({
             ))}
           </div>
         )}
-        <div
-          className={css`
-            border: 1px solid var(--ui-border);
-            border-radius: 10px;
-            background: #fff;
-            padding: 0.55rem 0.65rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-            font-size: 0.76rem;
-            color: var(--chat-text);
-          `}
-        >
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 0.5rem;
-            `}
-          >
-            <span
-              className={css`
-                font-weight: 700;
-                opacity: 0.85;
-              `}
-            >
-              AI context debug
-            </span>
-            <div
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.35rem;
-              `}
-            >
-              <button
-                type="button"
-                onClick={handleRefreshCopilotDebug}
-                disabled={projectFileChangeLogsLoading}
-                className={css`
-                  border: 1px solid var(--ui-border);
-                  background: #fff;
-                  color: var(--chat-text);
-                  border-radius: 999px;
-                  padding: 0.18rem 0.5rem;
-                  font-size: 0.68rem;
-                  font-weight: 700;
-                  cursor: pointer;
-                  &:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                  }
-                `}
-              >
-                {projectFileChangeLogsLoading ? 'Loading...' : 'Refresh'}
-              </button>
-              <button
-                type="button"
-                onClick={handleToggleCopilotDebug}
-                className={css`
-                  border: 1px solid var(--ui-border);
-                  background: ${showCopilotDebug ? 'var(--chat-bg)' : '#fff'};
-                  color: var(--chat-text);
-                  border-radius: 999px;
-                  padding: 0.18rem 0.5rem;
-                  font-size: 0.68rem;
-                  font-weight: 700;
-                  cursor: pointer;
-                `}
-              >
-                {showCopilotDebug ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </div>
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 0.5rem;
-              font-size: 0.7rem;
-              font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-              opacity: 0.8;
-            `}
-          >
-            <span>{formatTokenCount(projectFileChangeLogs.length)} logs</span>
-            <span>
-              {projectFileChangeLogsLoadedAt
-                ? `Updated ${formatRunEventTime(projectFileChangeLogsLoadedAt)}`
-                : 'Not loaded yet'}
-            </span>
-          </div>
-          {showCopilotDebug && (
-            <div
-              className={css`
-                margin-top: 0.15rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.4rem;
-              `}
-            >
-              {projectFileChangeLogsError ? (
-                <div
-                  className={css`
-                    border: 1px solid ${Color.rose(0.35)};
-                    background: ${Color.rose(0.07)};
-                    color: ${Color.rose(0.95)};
-                    border-radius: 8px;
-                    padding: 0.5rem 0.55rem;
-                    font-size: 0.74rem;
-                  `}
-                >
-                  {projectFileChangeLogsError}
-                </div>
-              ) : null}
-              <div
-                className={css`
-                  border: 1px solid var(--ui-border);
-                  border-radius: 8px;
-                  background: var(--chat-bg);
-                  padding: 0.45rem 0.5rem;
-                `}
-              >
-                <div
-                  className={css`
-                    font-weight: 700;
-                    margin-bottom: 0.28rem;
-                    font-size: 0.72rem;
-                  `}
-                >
-                  Prompt context preview
-                </div>
-                <pre
-                  className={css`
-                    margin: 0;
-                    white-space: pre-wrap;
-                    word-break: break-word;
-                    font-size: 0.7rem;
-                    line-height: 1.35;
-                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                    max-height: 160px;
-                    overflow-y: auto;
-                  `}
-                >
-                  {projectFilePromptContextPreview || '[no recent file changes]'}
-                </pre>
-              </div>
-              <div
-                className={css`
-                  display: flex;
-                  flex-direction: column;
-                  gap: 0.25rem;
-                  max-height: 180px;
-                  overflow-y: auto;
-                `}
-              >
-                {projectFileChangeLogs.length === 0 ? (
-                  <div
-                    className={css`
-                      font-size: 0.72rem;
-                      opacity: 0.72;
-                    `}
-                  >
-                    No project file change logs yet.
-                  </div>
-                ) : (
-                  projectFileChangeLogs.map((entry) => {
-                    const totalChanges = countProjectFileChanges(entry.diff);
-                    return (
-                      <div
-                        key={entry.id}
-                        className={css`
-                          border: 1px solid var(--ui-border);
-                          border-radius: 8px;
-                          background: #fff;
-                          padding: 0.4rem 0.5rem;
-                          display: flex;
-                          flex-direction: column;
-                          gap: 0.2rem;
-                        `}
-                      >
-                        <div
-                          className={css`
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            gap: 0.5rem;
-                            font-size: 0.69rem;
-                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                            opacity: 0.85;
-                          `}
-                        >
-                          <span>
-                            {entry.actorRole.toUpperCase()} #{entry.id}
-                          </span>
-                          <span>
-                            {totalChanges} file change{totalChanges === 1 ? '' : 's'}
-                          </span>
-                        </div>
-                        <div
-                          className={css`
-                            font-size: 0.73rem;
-                            line-height: 1.35;
-                          `}
-                        >
-                          {entry.summaryText || '[no summary]'}
-                        </div>
-                        <div
-                          className={css`
-                            font-size: 0.68rem;
-                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                            opacity: 0.72;
-                          `}
-                        >
-                          {formatRunEventTime(entry.createdAt * 1000)}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+      </div>
+      <div
+        className={css`
+          padding: 0 1rem;
+          margin-top: -0.05rem;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        `}
+      >
+        <SegmentedToggle<ChatPanelTab>
+          value={activeTab}
+          onChange={handleTabChange}
+          options={[
+            { value: 'chat', label: 'Chat', icon: 'comments' },
+            { value: 'debug', label: 'Debug', icon: 'brain' }
+          ]}
+          size="sm"
+          ariaLabel="Build Copilot panel tab"
+        />
       </div>
       <div
         ref={chatScrollRef}
-        onScroll={onChatScroll}
+        onScroll={activeTab === 'chat' ? onChatScroll : undefined}
         className={css`
           flex: 1;
           overflow-y: auto;
@@ -889,290 +635,377 @@ export default function ChatPanel({
           min-height: 0;
         `}
       >
-        {messages.length === 0 ? (
-          <div
-            className={css`
-              text-align: center;
-              padding: 2rem;
-              color: var(--chat-text);
-              opacity: 0.7;
-            `}
-          >
-            <Icon icon="comments" size="2x" style={{ marginBottom: '0.8rem' }} />
-            <p style={{ margin: 0, fontSize: '1.05rem' }}>
-              {isOwner
-                ? 'Describe what you want to build and I will help you create it.'
-                : 'No messages yet.'}
-            </p>
-          </div>
+        {activeTab === 'chat' ? (
+          messages.length === 0 ? (
+            <div
+              className={css`
+                text-align: center;
+                padding: 2rem;
+                color: var(--chat-text);
+                opacity: 0.7;
+              `}
+            >
+              <Icon
+                icon="comments"
+                size="2x"
+                style={{ marginBottom: '0.8rem' }}
+              />
+              <p style={{ margin: 0, fontSize: '1.05rem' }}>
+                {isOwner
+                  ? 'Describe what you want to build and I will help you create it.'
+                  : 'No messages yet.'}
+              </p>
+            </div>
+          ) : (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+              `}
+            >
+              {messages.map((message, index) => {
+                const isLastReviewer =
+                  message.role === 'reviewer' &&
+                  index === findLastIndex(messages, (m) => m.role === 'reviewer');
+                const isLastAssistant =
+                  message.role === 'assistant' &&
+                  index === findLastIndex(messages, (m) => m.role === 'assistant');
+                const isActiveStreamMessage = activeStreamMessageIds.includes(
+                  message.id
+                );
+                const isStreamingTarget =
+                  (generating && isActiveStreamMessage) ||
+                  (generating &&
+                    ((message.role === 'assistant' && isLastAssistant) ||
+                      (message.role === 'reviewer' && isLastReviewer)));
+
+                return (
+                  <div
+                    key={message.id}
+                      className={css`
+                        display: flex;
+                        flex-direction: column;
+                        align-items: ${message.role === 'user'
+                          ? 'flex-end'
+                          : 'flex-start'};
+                        position: relative;
+                    `}
+                  >
+                    <button
+                      onClick={() => onDeleteMessage(message)}
+                      disabled={isStreamingTarget}
+                      title={
+                        isStreamingTarget
+                          ? 'Cannot delete while this request is in progress'
+                          : 'Delete message'
+                      }
+                      className={`${css`
+                        position: absolute;
+                        top: -0.35rem;
+                        right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
+                        left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
+                        padding: 0;
+                        border: none;
+                        background: transparent;
+                        color: var(--chat-text);
+                        font-size: 1.05rem;
+                        line-height: 1;
+                        opacity: 0.55;
+                        pointer-events: auto;
+                        transition: opacity 0.15s ease, transform 0.15s ease,
+                          color 0.15s ease;
+                        transform: translateY(0);
+                        cursor: pointer;
+                        z-index: 2;
+                        &:hover,
+                        &:focus-visible {
+                          opacity: 1;
+                          color: ${Color.rose()};
+                          transform: translateY(-1px);
+                        }
+
+                        &:disabled {
+                          opacity: 0.35;
+                          pointer-events: none;
+                          cursor: not-allowed;
+                        }
+                      `} build-chat-delete-button`}
+                    >
+                      <Icon icon="times-circle" />
+                    </button>
+                    {message.role === 'reviewer' && (
+                      <span
+                        className={css`
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 0.3rem;
+                          font-size: 0.75rem;
+                          font-weight: 700;
+                          color: ${Color.orange()};
+                          margin-bottom: 0.25rem;
+                          padding: 0 0.3rem;
+                        `}
+                      >
+                        <Icon icon="magnifying-glass" />
+                        Code Review
+                      </span>
+                    )}
+                    <div
+                      className={css`
+                        max-width: 85%;
+                        padding: 0.75rem 1rem;
+                        border-radius: 12px;
+                        background: ${message.role === 'user'
+                          ? 'var(--theme-bg)'
+                          : message.role === 'reviewer'
+                          ? '#fff8f0'
+                          : 'var(--chat-bg)'};
+                        color: ${message.role === 'user'
+                          ? 'var(--theme-text)'
+                          : 'var(--chat-text)'};
+                        word-break: break-word;
+                        font-size: 0.95rem;
+                        line-height: 1.4;
+                        border: 1px solid ${message.role === 'reviewer'
+                          ? Color.orange(0.3)
+                          : 'var(--ui-border)'};
+                      `}
+                    >
+                      {message.role === 'assistant' ? (
+                        <AssistantMessage
+                          message={message}
+                          messages={messages}
+                          isLatestAssistant={isLastAssistant}
+                          generating={generating}
+                          generatingStatus={generatingStatus}
+                          statusSteps={isLastAssistant ? assistantStatusSteps : []}
+                        />
+                      ) : message.role === 'reviewer' ? (
+                        <ReviewerMessage
+                          message={message}
+                          generating={generating}
+                          generatingStatus={generatingStatus}
+                          statusSteps={isLastReviewer ? reviewerStatusSteps : []}
+                        />
+                      ) : (
+                        <span style={{ whiteSpace: 'pre-wrap' }}>
+                          {message.content}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={css`
+                        font-size: 0.7rem;
+                        color: var(--chat-text);
+                        opacity: 0.5;
+                        margin-top: 0.25rem;
+                        padding: 0 0.5rem;
+                      `}
+                    >
+                      {timeSince(message.createdAt)}
+                    </span>
+                  </div>
+                );
+              })}
+              <div ref={chatEndRef} />
+            </div>
+          )
         ) : (
           <div
             className={css`
               display: flex;
               flex-direction: column;
-              gap: 1rem;
+              gap: 0.75rem;
             `}
           >
-            {messages.map((message, index) => {
-              const isLastReviewer =
-                message.role === 'reviewer' &&
-                index === findLastIndex(messages, (m) => m.role === 'reviewer');
-              const isLastAssistant =
-                message.role === 'assistant' &&
-                index === findLastIndex(messages, (m) => m.role === 'assistant');
-              const isActiveStreamMessage = activeStreamMessageIds.includes(
-                message.id
-              );
-              const isStreamingTarget =
-                (generating && isActiveStreamMessage) ||
-                (generating &&
-                  ((message.role === 'assistant' && isLastAssistant) ||
-                    (message.role === 'reviewer' && isLastReviewer)));
-
-              return (
-                <div
-                  key={message.id}
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 0.6rem;
+                flex-wrap: wrap;
+              `}
+            >
+              <div
+                className={css`
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.45rem;
+                  font-size: 0.72rem;
+                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                  opacity: 0.8;
+                `}
+              >
+                {projectFileChangeLogsLoadedAt ? (
+                  <span>
+                    Updated {formatRunEventTime(projectFileChangeLogsLoadedAt)}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleRefreshCopilotDebug}
+                  disabled={projectFileChangeLogsLoading}
+                  className={css`
+                    border: 1px solid var(--ui-border);
+                    background: #fff;
+                    color: var(--chat-text);
+                    border-radius: 999px;
+                    padding: 0.22rem 0.55rem;
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    &:disabled {
+                      opacity: 0.5;
+                      cursor: not-allowed;
+                    }
+                  `}
+                >
+                  {projectFileChangeLogsLoading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+            </div>
+            {projectFileChangeLogsError ? (
+              <div
+                className={css`
+                  border: 1px solid ${Color.rose(0.35)};
+                  background: ${Color.rose(0.07)};
+                  color: ${Color.rose(0.95)};
+                  border-radius: 10px;
+                  padding: 0.6rem 0.7rem;
+                  font-size: 0.8rem;
+                `}
+              >
+                {projectFileChangeLogsError}
+              </div>
+            ) : null}
+            {showDebugEmptyState ? (
+              <div
+                className={css`
+                  border: 1px solid var(--ui-border);
+                  border-radius: 10px;
+                  background: var(--chat-bg);
+                  padding: 0.85rem 0.9rem;
+                  font-size: 0.86rem;
+                  font-weight: 700;
+                  color: var(--chat-text);
+                `}
+              >
+                No recent file changes yet.
+              </div>
+            ) : (
+              <>
+                {hasPromptContextPreview ? (
+                  <div
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 10px;
+                      background: var(--chat-bg);
+                      padding: 0.7rem 0.8rem;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        font-weight: 700;
+                        margin-bottom: 0.4rem;
+                        font-size: 0.8rem;
+                      `}
+                    >
+                      Recent file context
+                    </div>
+                    <pre
+                      className={css`
+                        margin: 0;
+                        white-space: pre-wrap;
+                        word-break: break-word;
+                        font-size: 0.74rem;
+                        line-height: 1.45;
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                      `}
+                    >
+                      {projectFilePromptContextPreview}
+                    </pre>
+                  </div>
+                ) : null}
+                {hasProjectFileChangeLogs ? (
+                  <div
                     className={css`
                       display: flex;
                       flex-direction: column;
-                      align-items: ${message.role === 'user'
-                        ? 'flex-end'
-                        : 'flex-start'};
-                      position: relative;
-                  `}
-                >
-                  <button
-                    onClick={() => onDeleteMessage(message)}
-                    disabled={isStreamingTarget}
-                    title={
-                      isStreamingTarget
-                        ? 'Cannot delete while this request is in progress'
-                        : 'Delete message'
-                    }
-                    className={`${css`
-                      position: absolute;
-                      top: -0.35rem;
-                      right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
-                      left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
-                      padding: 0;
-                      border: none;
-                      background: transparent;
-                      color: var(--chat-text);
-                      font-size: 1.05rem;
-                      line-height: 1;
-                      opacity: 0.55;
-                      pointer-events: auto;
-                      transition: opacity 0.15s ease, transform 0.15s ease,
-                        color 0.15s ease;
-                      transform: translateY(0);
-                      cursor: pointer;
-                      z-index: 2;
-                      &:hover,
-                      &:focus-visible {
-                        opacity: 1;
-                        color: ${Color.rose()};
-                        transform: translateY(-1px);
-                      }
-
-                      &:disabled {
-                        opacity: 0.35;
-                        pointer-events: none;
-                        cursor: not-allowed;
-                      }
-                    `} build-chat-delete-button`}
-                  >
-                    <Icon icon="times-circle" />
-                  </button>
-                  {message.role === 'reviewer' && (
-                    <span
-                      className={css`
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 0.3rem;
-                        font-size: 0.75rem;
-                        font-weight: 700;
-                        color: ${Color.orange()};
-                        margin-bottom: 0.25rem;
-                        padding: 0 0.3rem;
-                      `}
-                    >
-                      <Icon icon="magnifying-glass" />
-                      Code Review
-                    </span>
-                  )}
-                  <div
-                    className={css`
-                      max-width: 85%;
-                      padding: 0.75rem 1rem;
-                      border-radius: 12px;
-                      background: ${message.role === 'user'
-                        ? 'var(--theme-bg)'
-                        : message.role === 'reviewer'
-                        ? '#fff8f0'
-                        : 'var(--chat-bg)'};
-                      color: ${message.role === 'user'
-                        ? 'var(--theme-text)'
-                        : 'var(--chat-text)'};
-                      word-break: break-word;
-                      font-size: 0.95rem;
-                      line-height: 1.4;
-                      border: 1px solid ${message.role === 'reviewer'
-                        ? Color.orange(0.3)
-                        : 'var(--ui-border)'};
+                      gap: 0.4rem;
                     `}
                   >
-                    {message.role === 'assistant' ? (
-                      <AssistantMessage
-                        message={message}
-                        messages={messages}
-                        isLatestAssistant={isLastAssistant}
-                        generating={generating}
-                        generatingStatus={generatingStatus}
-                        statusSteps={isLastAssistant ? assistantStatusSteps : []}
-                      />
-                    ) : message.role === 'reviewer' ? (
-                      <ReviewerMessage
-                        message={message}
-                        generating={generating}
-                        generatingStatus={generatingStatus}
-                        statusSteps={isLastReviewer ? reviewerStatusSteps : []}
-                      />
-                    ) : (
-                      <span style={{ whiteSpace: 'pre-wrap' }}>
-                        {message.content}
-                      </span>
-                    )}
+                    {projectFileChangeLogs.map((entry) => {
+                      const totalChanges = countProjectFileChanges(entry.diff);
+                      return (
+                        <div
+                          key={entry.id}
+                          className={css`
+                            border: 1px solid var(--ui-border);
+                            border-radius: 10px;
+                            background: #fff;
+                            padding: 0.6rem 0.7rem;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.28rem;
+                          `}
+                        >
+                          <div
+                            className={css`
+                              display: flex;
+                              align-items: center;
+                              justify-content: space-between;
+                              gap: 0.5rem;
+                              font-size: 0.72rem;
+                              font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                              opacity: 0.85;
+                            `}
+                          >
+                            <span>
+                              {entry.actorRole.toUpperCase()} #{entry.id}
+                            </span>
+                            <span>
+                              {totalChanges} file change
+                              {totalChanges === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                          <div
+                            className={css`
+                              font-size: 0.82rem;
+                              line-height: 1.45;
+                              color: var(--chat-text);
+                            `}
+                          >
+                            {entry.summaryText || '[no summary]'}
+                          </div>
+                          <div
+                            className={css`
+                              font-size: 0.7rem;
+                              font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                              opacity: 0.72;
+                            `}
+                          >
+                            {formatRunEventTime(entry.createdAt * 1000)}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <span
-                    className={css`
-                      font-size: 0.7rem;
-                      color: var(--chat-text);
-                      opacity: 0.5;
-                      margin-top: 0.25rem;
-                      padding: 0 0.5rem;
-                    `}
-                  >
-                    {timeSince(message.createdAt)}
-                  </span>
-                </div>
-              );
-            })}
-            <div ref={chatEndRef} />
+                ) : null}
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {isOwner && (
+      {isOwner && activeTab === 'chat' && (
         <div
           className={css`
             padding: 0.9rem 1rem 1.1rem;
             background: #fff;
           `}
         >
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 0.5rem;
-              margin-bottom: 0.55rem;
-              flex-wrap: wrap;
-            `}
-          >
-            <div
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.35rem;
-              `}
-            >
-              {(['collect', 'steer', 'followup'] as BuildQueueMode[]).map(
-                (mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => onQueueModeChange(mode)}
-                    className={css`
-                      border: 1px solid var(--ui-border);
-                      background: ${queueMode === mode
-                        ? 'var(--chat-bg)'
-                        : '#fff'};
-                      color: ${queueMode === mode
-                        ? 'var(--chat-text)'
-                        : Color.gray(0.95)};
-                      border-radius: 999px;
-                      padding: 0.2rem 0.55rem;
-                      font-size: 0.72rem;
-                      font-weight: 700;
-                      text-transform: uppercase;
-                      letter-spacing: 0.03em;
-                      cursor: pointer;
-                    `}
-                  >
-                    {mode}
-                  </button>
-                )
-              )}
-            </div>
-            <div
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.35rem;
-                font-size: 0.72rem;
-                color: var(--chat-text);
-              `}
-            >
-              <span
-                className={css`
-                  font-weight: 700;
-                  opacity: 0.72;
-                `}
-              >
-                Reasoning
-              </span>
-              <select
-                value={selectedReasoningEffort}
-                onChange={(e) =>
-                  onReasoningEffortChange(
-                    e.target.value as BuildCodexReasoningEffort
-                  )
-                }
-                className={css`
-                  border: 1px solid var(--ui-border);
-                  background: #fff;
-                  color: var(--chat-text);
-                  border-radius: 999px;
-                  padding: 0.16rem 0.5rem;
-                  font-size: 0.72rem;
-                  font-weight: 700;
-                  cursor: pointer;
-                  &:focus {
-                    outline: none;
-                    border-color: var(--theme-border);
-                  }
-                `}
-              >
-                {reasoningEffortOptions.map((effort) => (
-                  <option key={effort} value={effort}>
-                    {formatReasoningEffortLabel(effort)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {queuedCount > 0 && (
-              <span
-                className={css`
-                  font-size: 0.73rem;
-                  color: var(--chat-text);
-                  opacity: 0.72;
-                  font-weight: 700;
-                `}
-              >
-                {queuedCount} queued
-              </span>
-            )}
-          </div>
           <div
             className={css`
               display: flex;
@@ -1185,7 +1018,7 @@ export default function ChatPanel({
               onKeyDown={handleKeyDown}
               placeholder={
                 generating
-                  ? 'Type a follow-up to queue...'
+                  ? 'Describe what to change next...'
                   : 'Describe what you want to build...'
               }
               className={css`
@@ -1255,90 +1088,13 @@ export default function ChatPanel({
                     font-weight: 700;
                   `}
                 >
-                  Next request: {nextRequestCostLabel}
-                  {copilotPolicy.tier === 'free'
-                    ? ` | Pro $${copilotPolicy.pricing.proMonthlyPriceUsd}/month`
-                    : ''}
+                  {dailyLimitSummary}
                 </span>
               )}
             </div>
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function MetricBarRow({
-  label,
-  value,
-  meta,
-  percent
-}: {
-  label: string;
-  value: string;
-  meta: string;
-  percent: number;
-}) {
-  return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-      `}
-    >
-      <div
-        className={css`
-          display: flex;
-          align-items: baseline;
-          justify-content: space-between;
-          gap: 0.5rem;
-        `}
-      >
-        <span
-          className={css`
-            font-weight: 700;
-          `}
-        >
-          {label}
-        </span>
-        <span
-          className={css`
-            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-            white-space: nowrap;
-          `}
-        >
-          {value}
-        </span>
-      </div>
-      <div
-        className={css`
-          height: 5px;
-          border-radius: 999px;
-          background: var(--chat-bg);
-          overflow: hidden;
-        `}
-      >
-        <div
-          className={css`
-            width: ${Math.max(0, Math.min(100, percent))}%;
-            height: 100%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #4f8df7, #5ad1ff);
-          `}
-        />
-      </div>
-      <div
-        className={css`
-          display: flex;
-          justify-content: flex-end;
-          font-size: 0.68rem;
-          opacity: 0.7;
-        `}
-      >
-        {meta}
-      </div>
     </div>
   );
 }
@@ -1716,20 +1472,6 @@ function looksLikeCompletedCodeChangeClaim(content: string) {
   ].some((pattern) => pattern.test(normalized));
 }
 
-function formatReasoningEffortLabel(effort: BuildCodexReasoningEffort) {
-  switch (effort) {
-    case 'xhigh':
-      return 'xhigh (pro+)';
-    case 'high':
-      return 'high';
-    case 'medium':
-      return 'medium';
-    case 'low':
-    default:
-      return 'low';
-  }
-}
-
 function formatTokenCount(value: number) {
   const safeValue = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
   return new Intl.NumberFormat('en-US').format(safeValue);
@@ -1739,13 +1481,6 @@ function formatUsageCost(value: number | null) {
   if (value == null || !Number.isFinite(value)) return 'n/a';
   if (value < 0.01) return `$${value.toFixed(4)}`;
   return `$${value.toFixed(2)}`;
-}
-
-function formatBytes(value: number) {
-  const bytes = Number.isFinite(value) ? Math.max(0, value) : 0;
-  if (bytes < 1024) return `${Math.round(bytes)} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 function getUsageStageLabel(stage: string) {

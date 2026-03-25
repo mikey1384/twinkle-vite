@@ -47,21 +47,20 @@ interface BuildCopilotPolicy {
     maxFileBytes: number;
   };
   requestBilling: {
+    dayIndex: number;
     dayKey: string;
     tier: 'free' | 'pro' | 'premium';
-    freeRequestsPerDay: number;
+    messageRequestsPerDay: number;
+    reviewRequestsPerDay: number;
     coinCostPerRequest: number;
     billingEnabled: boolean;
-    requestsToday: number;
-    freeRequestsUsed: number;
-    freeRequestsRemaining: number;
+    messageRequestsToday: number;
+    messageRequestsRemaining: number;
+    reviewRequestsToday: number;
+    reviewRequestsRemaining: number;
     paidRequestsToday: number;
     coinSpentToday: number;
     coinBalance: number | null;
-  };
-  codexReasoning: {
-    allowedEfforts: Array<'low' | 'medium' | 'high' | 'xhigh'>;
-    defaultEffort: 'low' | 'medium' | 'high' | 'xhigh';
   };
 }
 
@@ -107,6 +106,10 @@ function NewBuild() {
       console.error('Failed to create build:', error);
       setCreating(false);
     }
+  }
+
+  function handleBack() {
+    navigate('/build');
   }
 
   return (
@@ -241,9 +244,20 @@ function NewBuild() {
           className={css`
             margin-top: 1.4rem;
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
           `}
         >
+          <GameCTAButton
+            variant="neutral"
+            size="lg"
+            icon="arrow-left"
+            onClick={handleBack}
+          >
+            Build Studio
+          </GameCTAButton>
           <GameCTAButton
             variant="primary"
             size="lg"

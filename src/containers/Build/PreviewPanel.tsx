@@ -1811,8 +1811,6 @@ export default function PreviewPanel({
     null
   );
   const [folderMoveTargetPath, setFolderMoveTargetPath] = useState('');
-  const [overwritePathConflicts, setOverwritePathConflicts] = useState(false);
-  const [pathConflictList, setPathConflictList] = useState<string[]>([]);
   const [collapsedFolders, setCollapsedFolders] = useState<
     Record<string, boolean>
   >({});
@@ -2449,8 +2447,6 @@ export default function PreviewPanel({
     setRenamePathInput('/index.html');
     setSelectedFolderPath(null);
     setFolderMoveTargetPath('');
-    setOverwritePathConflicts(false);
-    setPathConflictList([]);
     setCollapsedFolders({});
   }, [build.id, persistedProjectFiles, persistedProjectFilesSignature]);
 
@@ -2520,7 +2516,6 @@ export default function PreviewPanel({
   function handleSelectFolder(folderPath: string) {
     setSelectedFolderPath(folderPath);
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   function handleEditableFileContentChange(content: string) {
@@ -2531,7 +2526,6 @@ export default function PreviewPanel({
       )
     );
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   function handleAddProjectFile() {
@@ -2558,7 +2552,6 @@ export default function PreviewPanel({
     setSelectedFolderPath(null);
     setNewFilePath('');
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   function handleDeleteProjectFile(filePath: string) {
@@ -2572,7 +2565,6 @@ export default function PreviewPanel({
     if (!window.confirm(`Delete ${filePath}?`)) return;
     setEditableFiles(nextFiles);
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   function handleRenameOrMoveActiveFile() {
@@ -2595,24 +2587,16 @@ export default function PreviewPanel({
       normalizedPath !== activeFile.path &&
       editableProjectFiles.some((file) => file.path === normalizedPath)
     ) {
-      if (!overwritePathConflicts) {
-        setPathConflictList([normalizedPath]);
-        setProjectFileError(
-          'Path conflict detected. Enable overwrite conflicts to continue.'
-        );
-        return;
-      }
+      // Replace the destination file automatically. Restore history is the
+      // safety net for mistaken overwrites.
     }
     if (normalizedPath === activeFile.path) {
       setProjectFileError('');
-      setPathConflictList([]);
       return;
     }
     const nextFiles = editableProjectFiles
       .filter(
-        (file) =>
-          !(overwritePathConflicts && file.path === normalizedPath) ||
-          file.path === activeFile.path
+        (file) => file.path !== normalizedPath || file.path === activeFile.path
       )
       .map((file) =>
         file.path === activeFile.path
@@ -2624,7 +2608,6 @@ export default function PreviewPanel({
     setSelectedFolderPath(null);
     setRenamePathInput(normalizedPath);
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   function handleMoveSelectedFolder() {
@@ -2637,7 +2620,6 @@ export default function PreviewPanel({
     }
     if (sourceFolder === targetFolder) {
       setProjectFileError('');
-      setPathConflictList([]);
       return;
     }
     if (
@@ -2674,18 +2656,10 @@ export default function PreviewPanel({
       .map((file) => file.path)
       .sort((a, b) => a.localeCompare(b));
 
-    if (conflictPaths.length > 0 && !overwritePathConflicts) {
-      setPathConflictList(conflictPaths.slice(0, 12));
-      setProjectFileError(
-        `Move blocked by ${conflictPaths.length} path conflicts. Enable overwrite conflicts to continue.`
-      );
-      return;
-    }
-
     const conflictSet = new Set(conflictPaths);
     const retainedFiles = editableProjectFiles.filter((file) => {
       if (movedSourcePaths.has(file.path)) return false;
-      if (overwritePathConflicts && conflictSet.has(file.path)) return false;
+      if (conflictSet.has(file.path)) return false;
       return true;
     });
     const merged = [...retainedFiles, ...remappedFiles];
@@ -2725,7 +2699,6 @@ export default function PreviewPanel({
     setSelectedFolderPath(targetFolder);
     setFolderMoveTargetPath(targetFolder);
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   async function handleSaveEditableProjectFiles() {
@@ -2739,7 +2712,6 @@ export default function PreviewPanel({
       return;
     }
     setProjectFileError('');
-    setPathConflictList([]);
   }
 
   async function ensureBuildApiToken(requiredScopes: string[]) {
@@ -3032,8 +3004,6 @@ export default function PreviewPanel({
             '/index.html'
         );
         setProjectFileError('');
-        setPathConflictList([]);
-        setOverwritePathConflicts(false);
       } else if (result?.code) {
         onReplaceCode(result.code);
       }
@@ -4443,25 +4413,6 @@ export default function PreviewPanel({
                       </button>
                     </div>
                   )}
-                  <label
-                    className={css`
-                      display: inline-flex;
-                      align-items: center;
-                      gap: 0.35rem;
-                      color: #cbd5e1;
-                      font-size: 0.72rem;
-                      cursor: pointer;
-                    `}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={overwritePathConflicts}
-                      onChange={(e) =>
-                        setOverwritePathConflicts(e.target.checked)
-                      }
-                    />
-                    Overwrite path conflicts
-                  </label>
                 </div>
               )}
               <div
@@ -4568,7 +4519,6 @@ export default function PreviewPanel({
                           setActiveFilePath(file.path);
                           setSelectedFolderPath(null);
                           setProjectFileError('');
-                          setPathConflictList([]);
                         }}
                         className={css`
                           flex: 1;
@@ -4812,7 +4762,7 @@ export default function PreviewPanel({
                   No file selected
                 </div>
               )}
-              {(projectFileError || pathConflictList.length > 0) && (
+              {projectFileError && (
                 <div
                   className={css`
                     position: absolute;
@@ -4827,25 +4777,7 @@ export default function PreviewPanel({
                     max-width: 28rem;
                   `}
                 >
-                  {projectFileError || 'Path conflicts detected.'}
-                  {pathConflictList.length > 0 && (
-                    <div
-                      className={css`
-                        margin-top: 0.35rem;
-                        border-top: 1px solid rgba(255, 255, 255, 0.22);
-                        padding-top: 0.35rem;
-                        max-height: 7rem;
-                        overflow: auto;
-                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                        font-size: 0.68rem;
-                        line-height: 1.35;
-                      `}
-                    >
-                      {pathConflictList.map((path) => (
-                        <div key={path}>{path}</div>
-                      ))}
-                    </div>
-                  )}
+                  {projectFileError}
                 </div>
               )}
             </div>
@@ -4900,7 +4832,7 @@ export default function PreviewPanel({
                   opacity: 0.7;
                 `}
               >
-                No versions yet. Ask Copilot to generate or review code to
+                No versions yet. Copilot runs and saved file changes will
                 create version history.
               </div>
             ) : (
