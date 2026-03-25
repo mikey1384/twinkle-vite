@@ -34,6 +34,7 @@ function getThinkHardFromStorage() {
 function getInitialChatState() {
   return {
     aiCallChannelId: null,
+    aiCallEnding: false,
     aiCardErrorMessage: '',
     aiCardFeedIds: [],
     aiCardFeedObj: {},
@@ -120,6 +121,7 @@ function getInitialChatState() {
 
 export const initialChatState = {
   aiCallChannelId: null,
+  aiCallEnding: false,
   aiCardErrorMessage: '',
   aiCardFeedIds: [],
   aiCardFeedObj: {},

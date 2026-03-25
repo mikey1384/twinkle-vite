@@ -2,24 +2,51 @@ import React, { useMemo, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import FeaturedSubjects from './FeaturedSubjects';
 import CallZero from './CallZero';
-import { useChatContext, useKeyContext } from '~/contexts';
+import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 
 export default function Featured() {
   const userId = useKeyContext((v) => v.myState.userId);
   const zeroChannelId = useChatContext((v) => v.state.zeroChannelId);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
+  const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const [callButtonHovered, setCallButtonHovered] = useState(false);
 
   const aiCallOngoing = useMemo(
     () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
     [aiCallChannelId, zeroChannelId]
   );
+  const isZeroChannelLoading = useMemo(() => {
+    return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
+  }, [aiCallEnding, aiCallOngoing, userId, zeroChannelId]);
+  const aiCallDuration = useMemo(() => {
+    if (!todayStats) return 0;
+    return todayStats.aiCallDuration;
+  }, [todayStats]);
+  const hasReachedDailyLimit = useMemo(() => {
+    if (isAdmin) return false;
+    return aiCallDuration >= MAX_AI_CALL_DURATION;
+  }, [aiCallDuration, isAdmin]);
 
   const isZeroInterfaceExpanded = useMemo(() => {
-    return callButtonHovered || aiCallOngoing;
-  }, [callButtonHovered, aiCallOngoing]);
+    return (
+      callButtonHovered ||
+      aiCallOngoing ||
+      aiCallEnding ||
+      isZeroChannelLoading ||
+      hasReachedDailyLimit
+    );
+  }, [
+    aiCallEnding,
+    aiCallOngoing,
+    callButtonHovered,
+    hasReachedDailyLimit,
+    isZeroChannelLoading
+  ]);
 
   return (
     <ErrorBoundary componentPath="Home/Stories/Featured/index">

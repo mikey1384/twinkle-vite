@@ -326,6 +326,39 @@ export default function ImageGenerator({
     };
   }, [canUseGeneratedImage, onRegisterUseImageHandler]);
 
+  const showSourceImagePanelAbovePrompt =
+    mode === 'text' &&
+    !generatedImageUrl &&
+    !partialImageData &&
+    Boolean(referenceImageUrl || drawingCanvasUrl);
+
+  const imageArea = (
+    <ImageArea
+      partialImageData={partialImageData}
+      generatedImageUrl={generatedImageUrl}
+      referenceImageUrl={referenceImageUrl}
+      canvasUrl={drawingCanvasUrl}
+      isGenerating={isGenerating}
+      isFollowUpGenerating={isFollowUpGenerating}
+      showFollowUp={showFollowUp}
+      followUpPrompt={followUpPrompt}
+      onFollowUpPromptChange={setFollowUpPrompt}
+      onFollowUpGenerate={handleFollowUpGenerate}
+      onUseImage={handleUseImage}
+      getProgressLabel={getProgressLabel}
+      onRemoveReference={handleRemoveReference}
+      onImageEdited={handleImageEdited}
+      hasBeenEdited={hasBeenEdited}
+      onSetHasBeenEdited={setHasBeenEdited}
+      canvasHasContent={canvasHasContent}
+      isShowingLoadingState={isShowingLoadingState}
+      canAffordFollowUp={canAffordFollowUp}
+      followUpCost={FOLLOW_UP_COST}
+      followUpEngine={followUpEngine}
+      onFollowUpEngineChange={handleFollowUpEngineChange}
+    />
+  );
+
   return (
     <div
       className={css`
@@ -411,6 +444,8 @@ export default function ImageGenerator({
         />
       )}
 
+      {showSourceImagePanelAbovePrompt && imageArea}
+
       <InputSection
         prompt={prompt}
         onPromptChange={setPrompt}
@@ -426,30 +461,7 @@ export default function ImageGenerator({
 
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
 
-      <ImageArea
-        partialImageData={partialImageData}
-        generatedImageUrl={generatedImageUrl}
-        referenceImageUrl={referenceImageUrl}
-        canvasUrl={drawingCanvasUrl}
-        isGenerating={isGenerating}
-        isFollowUpGenerating={isFollowUpGenerating}
-        showFollowUp={showFollowUp}
-        followUpPrompt={followUpPrompt}
-        onFollowUpPromptChange={setFollowUpPrompt}
-        onFollowUpGenerate={handleFollowUpGenerate}
-        onUseImage={handleUseImage}
-        getProgressLabel={getProgressLabel}
-        onRemoveReference={handleRemoveReference}
-        onImageEdited={handleImageEdited}
-        hasBeenEdited={hasBeenEdited}
-        onSetHasBeenEdited={setHasBeenEdited}
-        canvasHasContent={canvasHasContent}
-        isShowingLoadingState={isShowingLoadingState}
-        canAffordFollowUp={canAffordFollowUp}
-        followUpCost={FOLLOW_UP_COST}
-        followUpEngine={followUpEngine}
-        onFollowUpEngineChange={handleFollowUpEngineChange}
-      />
+      {!showSourceImagePanelAbovePrompt && imageArea}
     </div>
   );
 

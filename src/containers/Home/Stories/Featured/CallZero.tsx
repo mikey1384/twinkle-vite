@@ -154,8 +154,7 @@ const callButtonClass = css`
     text-transform: uppercase;
   }
 
-  &:hover:not(:disabled),
-  &:focus-visible {
+  &:hover:not([aria-disabled='true']) {
     background: var(--call-button-bg-hover, var(--call-button-bg));
     border-color: var(--call-button-border-hover, var(--call-button-border));
     box-shadow: var(--call-button-shadow-hover, var(--call-button-shadow));
@@ -167,7 +166,7 @@ const callButtonClass = css`
     outline-offset: 3px;
   }
 
-  &:disabled {
+  &[aria-disabled='true'] {
     cursor: not-allowed;
     background: linear-gradient(
       135deg,
@@ -180,7 +179,7 @@ const callButtonClass = css`
     transform: translateY(-50%);
   }
 
-  &:disabled .call-button__icon {
+  &[aria-disabled='true'] .call-button__icon {
     background: rgba(255, 255, 255, 0.35);
     color: ${Color.gray()};
     box-shadow: none;
@@ -217,6 +216,10 @@ export default function CallZero({
     (v) => v.state.todayStats.nextDayTimeStamp
   );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onSetAICallEnding = useChatContext(
+    (v) => v.actions.onSetAICallEnding
+  );
+  const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
   const actionRole = useRoleColor('action', { fallback: 'green' });
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
@@ -234,17 +237,40 @@ export default function CallZero({
     );
   }, [aiCallDuration, isAdmin]);
 
-  const isCallButtonDisabled = useMemo(() => {
-    if (userId && !zeroChannelId) return true;
-    if (aiCallOngoing) return false;
+  const isZeroChannelLoading = useMemo(() => {
+    return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
+  }, [aiCallEnding, aiCallOngoing, userId, zeroChannelId]);
+
+  const hasReachedDailyLimit = useMemo(() => {
     if (isAdmin) return false;
     return batteryLevel <= 0;
-  }, [aiCallOngoing, batteryLevel, isAdmin, userId, zeroChannelId]);
+  }, [batteryLevel, isAdmin]);
+
+  const isCallButtonUnavailable = useMemo(() => {
+    if (aiCallOngoing) return false;
+    return isZeroChannelLoading || aiCallEnding || hasReachedDailyLimit;
+  }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
+
+  const showCallInfoPanel = useMemo(() => {
+    return (
+      callButtonHovered ||
+      aiCallOngoing ||
+      isZeroChannelLoading ||
+      aiCallEnding ||
+      hasReachedDailyLimit
+    );
+  }, [
+    aiCallEnding,
+    aiCallOngoing,
+    callButtonHovered,
+    hasReachedDailyLimit,
+    isZeroChannelLoading
+  ]);
 
   const getCallQuotaMessage = useMemo(() => {
-    if (!isCallButtonDisabled) return '';
-    return "You've reached your daily AI call limit. Come back tomorrow for more conversations with Zero!";
-  }, [isCallButtonDisabled]);
+    if (!hasReachedDailyLimit) return '';
+    return 'More call time unlocks tomorrow.';
+  }, [hasReachedDailyLimit]);
 
   const accentBaseColor = useMemo(() => {
     if (aiCallOngoing) return Color.rose();
@@ -338,6 +364,7 @@ export default function CallZero({
   );
 
   const initiateCall = useCallback(() => {
+    onSetAICallEnding(false);
     onSetAICall(zeroChannelId);
     socket.emit('ai_start_ai_voice_conversation', {
       channelId: zeroChannelId
@@ -346,8 +373,14 @@ export default function CallZero({
   }, [zeroChannelId]);
 
   const handleCallButtonClick = useCallback(async () => {
+    if (isCallButtonUnavailable && !aiCallOngoing) {
+      return;
+    }
+
     if (aiCallOngoing) {
+      onSetAICallEnding(true);
       onSetAICall(null);
+      socket.emit('ai_end_ai_voice_conversation');
       return;
     }
 
@@ -362,27 +395,40 @@ export default function CallZero({
       setMicrophoneModalShown(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiCallOngoing, userId, initiateCall]);
+  }, [aiCallOngoing, isCallButtonUnavailable, userId, initiateCall]);
 
   const callButtonLabel = useMemo(() => {
     if (aiCallOngoing) {
       return 'Hang Up';
     }
-    if (isCallButtonDisabled) {
+    if (isZeroChannelLoading) {
+      return 'Connecting...';
+    }
+    if (aiCallEnding) {
+      return 'Ending...';
+    }
+    if (hasReachedDailyLimit) {
       return 'Call Locked';
     }
     return 'Call Zero';
-  }, [aiCallOngoing, isCallButtonDisabled]);
+  }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
   const callButtonIcon = useMemo(
-    () => (aiCallOngoing ? 'phone-slash' : 'phone-volume'),
-    [aiCallOngoing]
+    () =>
+      aiCallOngoing
+        ? 'phone-slash'
+        : aiCallEnding || isZeroChannelLoading
+          ? 'spinner'
+          : 'phone-volume',
+    [aiCallEnding, aiCallOngoing, isZeroChannelLoading]
   );
   const callButtonAriaLabel = useMemo(() => {
     if (aiCallOngoing) return 'Hang up the call with Zero';
-    if (isCallButtonDisabled)
+    if (isZeroChannelLoading) return 'Connecting to Zero';
+    if (aiCallEnding) return 'Ending the previous call with Zero';
+    if (hasReachedDailyLimit)
       return 'AI call limit reached. Zero will be available again tomorrow.';
     return 'Call Zero for voice assistance';
-  }, [aiCallOngoing, isCallButtonDisabled]);
+  }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
 
   return (
     <div
@@ -409,11 +455,11 @@ export default function CallZero({
           display: flex;
           flex-direction: column;
           justify-content: center;
-          opacity: ${callButtonHovered || aiCallOngoing ? 1 : 0};
+          opacity: ${showCallInfoPanel ? 1 : 0};
           transition: opacity 0.3s ease-in-out;
         `}
       >
-        {batteryLevel <= 0 && callButtonHovered ? (
+        {hasReachedDailyLimit ? (
           <>
             <h2
               className={css`
@@ -462,6 +508,40 @@ export default function CallZero({
                 `}
               />
             </div>
+          </>
+        ) : aiCallEnding ? (
+          <>
+            <h2
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: ${Color.darkBlue()};
+              `}
+            >
+              Ending Call
+            </h2>
+          </>
+        ) : isZeroChannelLoading ? (
+          <>
+            <h2
+              className={css`
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: ${Color.darkBlue()};
+              `}
+            >
+              Connecting Zero
+            </h2>
+            <p
+              className={css`
+                font-size: 1.05rem;
+                line-height: 1.6;
+              `}
+            >
+              Preparing your call.
+            </p>
           </>
         ) : (
           <>
@@ -563,7 +643,7 @@ export default function CallZero({
         type="button"
         className={callButtonClass}
         style={callButtonStyle}
-        aria-disabled={isCallButtonDisabled}
+        aria-disabled={isCallButtonUnavailable}
         onClick={handleCallButtonClick}
         onMouseEnter={() => onSetCallButtonHovered(true)}
         onMouseLeave={() => onSetCallButtonHovered(false)}

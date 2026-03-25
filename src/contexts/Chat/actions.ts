@@ -1555,6 +1555,12 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId
       });
     },
+    onSetAICallEnding(isEnding: boolean) {
+      return dispatch({
+        type: 'SET_AI_CALL_ENDING',
+        isEnding
+      });
+    },
     onSetTopicSettingsJSON({
       channelId,
       topicId,

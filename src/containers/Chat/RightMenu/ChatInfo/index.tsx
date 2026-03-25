@@ -55,9 +55,13 @@ function ChatInfo({
   const [callDisabled, setCallDisabled] = useState(false);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onSetAICallEnding = useChatContext(
+    (v) => v.actions.onSetAICallEnding
+  );
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
 
   const {
     state: { aiCallChannelId }
@@ -120,6 +124,10 @@ function ChatInfo({
   const aiCallOngoing = useMemo(
     () => !!selectedChannelId && selectedChannelId === aiCallChannelId,
     [aiCallChannelId, selectedChannelId]
+  );
+  const aiCallEndingOnThisChannel = useMemo(
+    () => (isZeroChat || isCielChat) && aiCallEnding && !aiCallOngoing,
+    [aiCallEnding, aiCallOngoing, isZeroChat, isCielChat]
   );
 
   const calling = useMemo(() => {
@@ -245,6 +253,7 @@ function ChatInfo({
 
   const initiateCall = useCallback(() => {
     if (isZeroChat || isCielChat) {
+      onSetAICallEnding(false);
       onSetAICall(selectedChannelId);
       socket.emit('ai_start_ai_voice_conversation', {
         channelId: selectedChannelId,
@@ -303,9 +312,14 @@ function ChatInfo({
   ]);
 
   const handleCallButtonClick = useCallback(async () => {
+    if (aiCallEndingOnThisChannel) {
+      return;
+    }
+
     // If call is ongoing, handle hang up
     if (callOngoing || aiCallOngoing) {
       if (isZeroChat || isCielChat) {
+        onSetAICallEnding(true);
         onSetAICall(null);
         socket.emit('ai_end_ai_voice_conversation');
       } else {
@@ -330,17 +344,16 @@ function ChatInfo({
     } else {
       setMicrophoneModalShown(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     callOngoing,
     aiCallOngoing,
+    aiCallEndingOnThisChannel,
     isZeroChat,
     isCielChat,
     calling,
     myId,
     channelOnCall.id,
-    onSetAICall,
-    onSetCall,
-    onHangUp,
     initiateCall
   ]);
 
@@ -373,8 +386,10 @@ function ChatInfo({
             {isCallButtonShown && (
               <CallButton
                 callOngoing={callOngoing || aiCallOngoing}
+                ending={aiCallEndingOnThisChannel}
                 disabled={
                   callDisabled ||
+                  aiCallEndingOnThisChannel ||
                   (!aiCallOngoing &&
                     !isAdmin &&
                     maxAiCallDurationReachedAndIsAIChat)
