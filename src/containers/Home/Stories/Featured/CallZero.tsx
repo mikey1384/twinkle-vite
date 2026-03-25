@@ -513,40 +513,6 @@ export default function CallZero({
               />
             </div>
           </>
-        ) : aiCallEnding ? (
-          <>
-            <h2
-              className={css`
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-                color: ${Color.darkBlue()};
-              `}
-            >
-              Ending Call
-            </h2>
-          </>
-        ) : isZeroChannelLoading ? (
-          <>
-            <h2
-              className={css`
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-                color: ${Color.darkBlue()};
-              `}
-            >
-              Connecting Zero
-            </h2>
-            <p
-              className={css`
-                font-size: 1.05rem;
-                line-height: 1.6;
-              `}
-            >
-              Preparing your call.
-            </p>
-          </>
         ) : (
           <>
             <h2
