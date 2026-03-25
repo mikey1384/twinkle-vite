@@ -194,7 +194,7 @@ export default function Content({
       dailyTaskBreakdownText,
       dailyTaskRewardSummaryText
     };
-  }, [coinEarned, dailyTaskReward, displayedCoinEarned]);
+  }, [dailyTaskReward, displayedCoinEarned]);
 
   const Description = useMemo(() => {
     return !stringIsEmpty(description)

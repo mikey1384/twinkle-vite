@@ -10,11 +10,15 @@ interface AICallWindowProps {
 
 export default function AICallWindow({ initialPosition }: AICallWindowProps) {
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onSetAICallEnding = useChatContext(
+    (v) => v.actions.onSetAICallEnding
+  );
 
   return ReactDOM.createPortal(
     <Window
       initialPosition={initialPosition}
       onHangUp={() => {
+        onSetAICallEnding(true);
         onSetAICall(null);
         socket.emit('ai_end_ai_voice_conversation');
       }}

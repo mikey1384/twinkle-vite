@@ -54,6 +54,9 @@ export default function useInitSocket({
   const onClearRecentChessMessage = useChatContext(
     (v) => v.actions.onClearRecentChessMessage
   );
+  const onSetAICallEnding = useChatContext(
+    (v) => v.actions.onSetAICallEnding
+  );
   const onEnterChannelWithId = useChatContext(
     (v) => v.actions.onEnterChannelWithId
   );
@@ -683,6 +686,7 @@ export default function useInitSocket({
       logForAdmin({
         message: `disconnected from socket. reason: ${reason}`
       });
+      onSetAICallEnding(false);
       onChangeSocketStatus(false);
 
       if (heartbeatTimerRef.current) {

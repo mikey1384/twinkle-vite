@@ -34,6 +34,9 @@ export default function useAISocket({
   const onSetChannelState = useChatContext((v) => v.actions.onSetChannelState);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
+  const onSetAICallEnding = useChatContext(
+    (v) => v.actions.onSetAICallEnding
+  );
   const onUpdateAIGeneratedFile = useChatContext(
     (v) => v.actions.onUpdateAIGeneratedFile
   );
@@ -176,6 +179,7 @@ export default function useAISocket({
     socket.on('ai_message_error', handleAIMessageError);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
+    socket.on('openai_voice_session_ended', handleAIVoiceSessionEnded);
     socket.on('last_used_files_updated', onUpdateLastUsedFiles);
     socket.on('grammar_generation_progress_update', handleGrammarProgress);
     socket.on('subtitle_translation_progress_update', handleSubtitleProgress);
@@ -197,6 +201,7 @@ export default function useAISocket({
         'ai_call_max_duration_reached',
         handleAICallMaxDurationReached
       );
+      socket.off('openai_voice_session_ended', handleAIVoiceSessionEnded);
       socket.off('last_used_files_updated', onUpdateLastUsedFiles);
       socket.off('grammar_generation_progress_update', handleGrammarProgress);
       socket.off(
@@ -287,8 +292,15 @@ export default function useAISocket({
     }
 
     function handleAICallMaxDurationReached() {
+      onSetAICallEnding(false);
       onSetAICall(null);
       socket.emit('ai_end_ai_voice_conversation');
+    }
+
+    function handleAIVoiceSessionEnded() {
+      handleAssistantResponseStopped();
+      onSetAICallEnding(false);
+      onSetAICall(null);
     }
 
     function handleOpenAIAudio(base64AudioDelta: string) {

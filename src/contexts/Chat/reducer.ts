@@ -3676,6 +3676,12 @@ export default function ChatReducer(
         aiCallChannelId: action.channelId
       };
     }
+    case 'SET_AI_CALL_ENDING': {
+      return {
+        ...state,
+        aiCallEnding: action.isEnding
+      };
+    }
     case 'SET_CHESS_GAME_STATE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       return {
