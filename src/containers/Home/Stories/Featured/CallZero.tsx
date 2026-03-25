@@ -121,8 +121,12 @@ const callButtonClass = css`
   color: var(--call-button-text, ${Color.white()});
   box-shadow: var(--call-button-shadow);
   cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease,
-    border-color 0.25s ease, filter 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    filter 0.25s ease;
   font-family: 'Inter', sans-serif;
   letter-spacing: 0.02em;
   z-index: 3;
@@ -204,7 +208,9 @@ export default function CallZero({
   const getCurrentNextDayTimeStamp = useAppContext(
     (v) => v.requestHelpers.getCurrentNextDayTimeStamp
   );
-  const fetchTodayStats = useAppContext((v) => v.requestHelpers.fetchTodayStats);
+  const fetchTodayStats = useAppContext(
+    (v) => v.requestHelpers.fetchTodayStats
+  );
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
@@ -216,9 +222,7 @@ export default function CallZero({
     (v) => v.state.todayStats.nextDayTimeStamp
   );
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const onSetAICallEnding = useChatContext(
-    (v) => v.actions.onSetAICallEnding
-  );
+  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
   const actionRole = useRoleColor('action', { fallback: 'green' });
 
@@ -508,40 +512,6 @@ export default function CallZero({
                 `}
               />
             </div>
-          </>
-        ) : aiCallEnding ? (
-          <>
-            <h2
-              className={css`
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-                color: ${Color.darkBlue()};
-              `}
-            >
-              Ending Call
-            </h2>
-          </>
-        ) : isZeroChannelLoading ? (
-          <>
-            <h2
-              className={css`
-                font-size: 1.5rem;
-                font-weight: 600;
-                margin-bottom: 1rem;
-                color: ${Color.darkBlue()};
-              `}
-            >
-              Connecting Zero
-            </h2>
-            <p
-              className={css`
-                font-size: 1.05rem;
-                line-height: 1.6;
-              `}
-            >
-              Preparing your call.
-            </p>
           </>
         ) : (
           <>
