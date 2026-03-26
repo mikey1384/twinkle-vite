@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
@@ -14,6 +14,15 @@ const hiddenFileInputStyle: React.CSSProperties = {
   pointerEvents: 'none'
 };
 
+const buttonFileInputOverlayStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  opacity: 0,
+  cursor: 'pointer'
+};
+
 interface FileUploadOptionProps {
   onFileSelect: (file: File) => void;
   onFilesSelect?: (files: File[]) => void;
@@ -27,13 +36,16 @@ export default function FileUploadOption({
   accept,
   multiple = false
 }: FileUploadOptionProps) {
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const { colorKey: buttonColorKey } = useRoleColor('button', {
     fallback: 'logoBlue'
   });
   const isMultiImageSelectEnabled = Boolean(multiple && onFilesSelect);
+  const buttonPhotoInputRef = useRef<HTMLInputElement>(null);
+  const buttonFileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputId = useId();
+  const fileInputId = useId();
+  const primaryInputId = isMultiImageSelectEnabled ? photoInputId : fileInputId;
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem', width: '100%' }}>
@@ -48,8 +60,10 @@ export default function FileUploadOption({
         Upload from Your Device
       </div>
 
-      <div
+      <label
+        htmlFor={primaryInputId}
         style={{
+          display: 'block',
           border: `2px dashed ${
             isDragOver ? Color.logoBlue() : Color.borderGray()
           }`,
@@ -64,7 +78,6 @@ export default function FileUploadOption({
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={handleSelectPrimary}
       >
         <Icon
           icon="cloud-upload-alt"
@@ -93,7 +106,7 @@ export default function FileUploadOption({
             Accepted formats: {accept}
           </div>
         )}
-      </div>
+      </label>
 
       <div
         style={{
@@ -105,6 +118,61 @@ export default function FileUploadOption({
       >
         {isMultiImageSelectEnabled ? (
           <>
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
+              <Button
+                variant="soft"
+                tone="raised"
+                color={
+                  buttonColorKey && buttonColorKey in Color
+                    ? buttonColorKey
+                    : 'logoBlue'
+                }
+                onClick={handleChoosePhotosClick}
+                style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
+              >
+                <Icon icon="images" />
+                <span style={{ marginLeft: '0.7rem' }}>Choose Photos</span>
+              </Button>
+              <input
+                ref={buttonPhotoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                tabIndex={-1}
+                onChange={handlePhotosChange}
+                style={buttonFileInputOverlayStyle}
+                aria-label="Choose Photos"
+              />
+            </div>
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
+              <Button
+                variant="soft"
+                tone="raised"
+                color={
+                  buttonColorKey && buttonColorKey in Color
+                    ? buttonColorKey
+                    : 'logoBlue'
+                }
+                onClick={handleChooseFileClick}
+                style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
+              >
+                <Icon icon="folder-open" />
+                <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
+              </Button>
+              <input
+                ref={buttonFileInputRef}
+                type="file"
+                accept={accept}
+                multiple={false}
+                tabIndex={-1}
+                onChange={handleFileChange}
+                style={buttonFileInputOverlayStyle}
+                aria-label="Choose File"
+              />
+            </div>
+          </>
+        ) : (
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
             <Button
               variant="soft"
               tone="raised"
@@ -113,42 +181,23 @@ export default function FileUploadOption({
                   ? buttonColorKey
                   : 'logoBlue'
               }
-              onClick={handleSelectPhotos}
-              style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
-            >
-              <Icon icon="images" />
-              <span style={{ marginLeft: '0.7rem' }}>Choose Photos</span>
-            </Button>
-            <Button
-              variant="soft"
-              tone="raised"
-              color={
-                buttonColorKey && buttonColorKey in Color
-                  ? buttonColorKey
-                  : 'logoBlue'
-              }
-              onClick={handleSelectFile}
+              onClick={handleChooseFileClick}
               style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
             >
               <Icon icon="folder-open" />
               <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
             </Button>
-          </>
-        ) : (
-          <Button
-            variant="soft"
-            tone="raised"
-            color={
-              buttonColorKey && buttonColorKey in Color
-                ? buttonColorKey
-                : 'logoBlue'
-            }
-            onClick={handleSelectFile}
-            style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
-          >
-            <Icon icon="folder-open" />
-            <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
-          </Button>
+            <input
+              ref={buttonFileInputRef}
+              type="file"
+              accept={accept}
+              multiple={false}
+              tabIndex={-1}
+              onChange={handleFileChange}
+              style={buttonFileInputOverlayStyle}
+              aria-label="Choose File"
+            />
+          </div>
         )}
       </div>
 
@@ -159,7 +208,7 @@ export default function FileUploadOption({
       )}
 
       <input
-        ref={photoInputRef}
+        id={photoInputId}
         type="file"
         accept="image/*"
         multiple
@@ -169,7 +218,7 @@ export default function FileUploadOption({
         aria-hidden="true"
       />
       <input
-        ref={fileInputRef}
+        id={fileInputId}
         type="file"
         accept={accept}
         multiple={false}
@@ -197,19 +246,16 @@ export default function FileUploadOption({
     event.target.value = '';
   }
 
-  function handleSelectPrimary() {
-    if (isMultiImageSelectEnabled) {
-      return handleSelectPhotos();
-    }
-    handleSelectFile();
+  function handleChoosePhotosClick() {
+    if (!buttonPhotoInputRef.current) return;
+    buttonPhotoInputRef.current.value = '';
+    buttonPhotoInputRef.current.click();
   }
 
-  function handleSelectPhotos() {
-    openNativeFilePicker(photoInputRef.current);
-  }
-
-  function handleSelectFile() {
-    openNativeFilePicker(fileInputRef.current);
+  function handleChooseFileClick() {
+    if (!buttonFileInputRef.current) return;
+    buttonFileInputRef.current.value = '';
+    buttonFileInputRef.current.click();
   }
 
   function handleDragOver(event: React.DragEvent) {
@@ -242,24 +288,5 @@ export default function FileUploadOption({
       if (multiple && onFilesSelect) onFilesSelect(Array.from(files));
       else onFileSelect(files[0]);
     }
-  }
-
-  function openNativeFilePicker(input: HTMLInputElement | null) {
-    if (!input) return;
-
-    const pickerInput = input as HTMLInputElement & {
-      showPicker?: () => void;
-    };
-
-    if (typeof pickerInput.showPicker === 'function') {
-      try {
-        pickerInput.showPicker();
-        return;
-      } catch (_error) {
-        // Fall back to click() for browsers that expose showPicker but reject it here.
-      }
-    }
-
-    input.click();
   }
 }

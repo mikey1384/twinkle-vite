@@ -42,14 +42,13 @@ import {
   appendImageMarkdownToText
 } from '~/helpers/imageAttachmentEmbedHelpers';
 
-const hiddenFileInputStyle: React.CSSProperties = {
-  position: 'fixed',
-  left: '-9999px',
-  top: 0,
-  width: '1px',
-  height: '1px',
+const buttonFileInputOverlayStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
   opacity: 0,
-  pointerEvents: 'none'
+  cursor: 'pointer'
 };
 
 function UploadFileModal({
@@ -423,28 +422,31 @@ function UploadFileModal({
                       ? 'They will be sent in one message.'
                       : 'You can add more photos before sending.'}
                   </div>
-                  <Button
-                    variant="soft"
-                    tone="raised"
-                    disabled={multiImageUploading || !!embeddingAttachmentId}
-                    onClick={handleAddMorePhotosClick}
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    <Icon icon="plus" />
-                    <span style={{ marginLeft: '0.7rem' }}>
-                      Add more photos
-                    </span>
-                  </Button>
-                  <input
-                    ref={addMoreInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    tabIndex={-1}
-                    onChange={handleAddMorePhotosChange}
-                    style={hiddenFileInputStyle}
-                    aria-hidden="true"
-                  />
+                  <div style={{ position: 'relative', display: 'inline-flex' }}>
+                    <Button
+                      variant="soft"
+                      tone="raised"
+                      disabled={multiImageUploading || !!embeddingAttachmentId}
+                      onClick={handleAddMorePhotosClick}
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      <Icon icon="plus" />
+                      <span style={{ marginLeft: '0.7rem' }}>
+                        Add more photos
+                      </span>
+                    </Button>
+                    <input
+                      ref={addMoreInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      tabIndex={-1}
+                      disabled={multiImageUploading || !!embeddingAttachmentId}
+                      onChange={handleAddMorePhotosChange}
+                      style={buttonFileInputOverlayStyle}
+                      aria-label="Add more photos"
+                    />
+                  </div>
                 </div>
                 <ImageAttachmentsBar
                   attachments={imageAttachments}
@@ -653,12 +655,18 @@ function UploadFileModal({
 
   function handleAddMorePhotosClick() {
     if (multiImageUploading || !!embeddingAttachmentId) return;
-    openNativeFilePicker(addMoreInputRef.current);
+    if (!addMoreInputRef.current) return;
+    addMoreInputRef.current.value = '';
+    addMoreInputRef.current.click();
   }
 
   function handleAddMorePhotosChange(
     event: React.ChangeEvent<HTMLInputElement>
   ) {
+    if (multiImageUploading || !!embeddingAttachmentId) {
+      event.target.value = '';
+      return;
+    }
     const files = Array.from(event.target.files || []);
     if (files.length === 0) {
       event.target.value = '';
@@ -696,25 +704,6 @@ function UploadFileModal({
     }
 
     event.target.value = '';
-  }
-
-  function openNativeFilePicker(input: HTMLInputElement | null) {
-    if (!input) return;
-
-    const pickerInput = input as HTMLInputElement & {
-      showPicker?: () => void;
-    };
-
-    if (typeof pickerInput.showPicker === 'function') {
-      try {
-        pickerInput.showPicker();
-        return;
-      } catch (_error) {
-        // Fall back to click() for browsers that expose showPicker but reject it here.
-      }
-    }
-
-    input.click();
   }
 
   async function handleSubmitMultipleImages() {
