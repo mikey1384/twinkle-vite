@@ -36,6 +36,38 @@ export default function buildRequestHelpers({
       }
     },
 
+    async loadRuntimeBuild(buildId: number, options?: { fromWriter?: boolean }) {
+      try {
+        const qs = options?.fromWriter ? '?fromWriter=1' : '';
+        const { data } = await request.get(
+          `${URL}/build/${buildId}/runtime${qs}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildMetadata({
+      buildId,
+      description
+    }: {
+      buildId: number;
+      description?: string | null;
+    }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/build/${buildId}`,
+          { description },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async deleteBuildChatMessage({
       buildId,
       messageId
@@ -63,12 +95,21 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadWallpaperCode(buildId: number) {
+    async loadUserBuilds({
+      userId,
+      limit = 20,
+      lastId
+    }: {
+      userId: number;
+      limit?: number;
+      lastId?: number;
+    }) {
       try {
-        const { data } = await request.get(
-          `${URL}/build/${buildId}/wallpaper`,
-          auth()
-        );
+        const params: Record<string, any> = { limit };
+        if (lastId) params.lastId = lastId;
+        const { data } = await request.get(`${URL}/build/user/${userId}`, {
+          params
+        });
         return data;
       } catch (error) {
         return handleError(error);
@@ -137,6 +178,36 @@ export default function buildRequestHelpers({
       }
     },
 
+    async createBuildPreviewSession({
+      buildId,
+      sessionId,
+      entryPath,
+      codeSignature,
+      files
+    }: {
+      buildId: number;
+      sessionId?: string;
+      entryPath?: string | null;
+      codeSignature?: string | null;
+      files: Array<{ path: string; content: string }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/preview-session`,
+          {
+            sessionId,
+            entryPath,
+            codeSignature,
+            files
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadBuildProjectFileChangeLogs(
       buildId: number,
       options?: { fromWriter?: boolean; limit?: number }
@@ -182,11 +253,20 @@ export default function buildRequestHelpers({
       }
     },
 
-    async deleteBuild(buildId: number) {
+    async deleteBuild({
+      buildId,
+      confirmTitle
+    }: {
+      buildId: number;
+      confirmTitle: string;
+    }) {
       try {
         const { data } = await request.delete(
           `${URL}/build/${buildId}`,
-          auth()
+          {
+            ...auth(),
+            data: { confirmTitle }
+          }
         );
         return data;
       } catch (error) {
@@ -233,96 +313,6 @@ export default function buildRequestHelpers({
     async loadBuildAiPrompts() {
       try {
         const { data } = await request.get(`${URL}/build/ai-prompts`);
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadBuildByoSettings() {
-      try {
-        const { data } = await request.get(`${URL}/build/byo`, auth());
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async updateBuildByoEnabled({
-      enabled,
-      reason
-    }: {
-      enabled: boolean;
-      reason?: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/build/byo`,
-          { enabled, reason },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async clearBuildByoOverride() {
-      try {
-        const { data } = await request.delete(`${URL}/build/byo`, auth());
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadBuildByoProviderKeys() {
-      try {
-        const { data } = await request.get(`${URL}/build/byo/provider-keys`, auth());
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async updateBuildByoProviderKey({
-      provider,
-      apiKey
-    }: {
-      provider: 'openai' | 'anthropic' | 'google';
-      apiKey: string;
-    }) {
-      try {
-        const { data } = await request.put(
-          `${URL}/build/byo/provider-key`,
-          { provider, apiKey },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async clearBuildByoProviderKey(provider: 'openai' | 'anthropic' | 'google') {
-      try {
-        const { data } = await request.delete(
-          `${URL}/build/byo/provider-key/${provider}`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async verifyBuildByoProvider(provider: 'openai' | 'anthropic' | 'google') {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/byo/verify/${provider}`,
-          {},
-          auth()
-        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -447,7 +437,7 @@ export default function buildRequestHelpers({
       lastId,
       cursor
     }: {
-      sort?: 'recent' | 'popular' | 'starred';
+      sort?: 'recent' | 'popular';
       limit?: number;
       lastId?: number;
       cursor?: string;
@@ -468,214 +458,11 @@ export default function buildRequestHelpers({
       }
     },
 
-    async loadUserBuilds({
-      userId,
-      limit = 20,
-      lastId
-    }: {
-      userId: number;
-      limit?: number;
-      lastId?: number;
-    }) {
-      try {
-        const params: Record<string, any> = { limit };
-        if (lastId) params.lastId = lastId;
-        const { data } = await request.get(`${URL}/build/user/${userId}`, {
-          params
-        });
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async starBuild(buildId: number) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/star`,
-          {},
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadBuildComments({
-      buildId,
-      lastCommentId,
-      limit = 20
-    }: {
-      buildId: number;
-      lastCommentId?: number;
-      limit?: number;
-    }) {
-      try {
-        const params: Record<string, any> = { limit };
-        if (lastCommentId) params.lastCommentId = lastCommentId;
-        const { data } = await request.get(
-          `${URL}/build/${buildId}/comments`,
-          { ...auth(), params }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async postBuildComment({
-      buildId,
-      content,
-      replyId,
-      fileName,
-      filePath,
-      fileSize,
-      thumbUrl
-    }: {
-      buildId: number;
-      content: string;
-      replyId?: number;
-      fileName?: string;
-      filePath?: string;
-      fileSize?: number;
-      thumbUrl?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/comments`,
-          { content, replyId, fileName, filePath, fileSize, thumbUrl },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async rewardBuild({
-      buildId,
-      rewardAmount,
-      rewardComment
-    }: {
-      buildId: number;
-      rewardAmount: number;
-      rewardComment?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/reward`,
-          { rewardAmount, rewardComment },
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async forkBuild(buildId: number) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/fork`,
           {},
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async followBuildUser({
-      buildId,
-      userId
-    }: {
-      buildId: number;
-      userId: number;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/social/follow/${userId}`,
-          {},
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async unfollowBuildUser({
-      buildId,
-      userId
-    }: {
-      buildId: number;
-      userId: number;
-    }) {
-      try {
-        const { data } = await request.delete(
-          `${URL}/build/${buildId}/social/follow/${userId}`,
-          auth()
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadBuildFollowers({
-      buildId,
-      limit = 50,
-      offset = 0
-    }: {
-      buildId: number;
-      limit?: number;
-      offset?: number;
-    }) {
-      try {
-        const params: Record<string, any> = { limit, offset };
-        const { data } = await request.get(
-          `${URL}/build/${buildId}/social/followers`,
-          { ...auth(), params }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async loadBuildFollowing({
-      buildId,
-      limit = 50,
-      offset = 0
-    }: {
-      buildId: number;
-      limit?: number;
-      offset?: number;
-    }) {
-      try {
-        const params: Record<string, any> = { limit, offset };
-        const { data } = await request.get(
-          `${URL}/build/${buildId}/social/following`,
-          { ...auth(), params }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async isFollowingBuildUser({
-      buildId,
-      userId
-    }: {
-      buildId: number;
-      userId: number;
-    }) {
-      try {
-        const { data } = await request.get(
-          `${URL}/build/${buildId}/social/is-following/${userId}`,
           auth()
         );
         return data;
@@ -807,7 +594,6 @@ export default function buildRequestHelpers({
 
     async getBuildDailyReflections({
       buildId,
-      following,
       userIds,
       lastId,
       cursor,
@@ -815,7 +601,6 @@ export default function buildRequestHelpers({
       token
     }: {
       buildId: number;
-      following?: boolean;
       userIds?: number[];
       lastId?: number;
       cursor?: { id?: number; sharedAt?: number };
@@ -825,440 +610,7 @@ export default function buildRequestHelpers({
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/daily-reflections`,
-          { following, userIds, lastId, cursor, limit },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildAICardMarketTrades({
-      buildId,
-      cardId,
-      side,
-      since,
-      until,
-      cursor,
-      limit,
-      token
-    }: {
-      buildId: number;
-      cardId?: number;
-      side?: 'buy' | 'sell';
-      since?: number;
-      until?: number;
-      cursor?: { id?: number };
-      limit?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/ai-cards/market-trades`,
-          { cardId, side, since, until, cursor, limit },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildAICardMarketCandles({
-      buildId,
-      cardId,
-      side,
-      since,
-      until,
-      bucketSeconds,
-      limit,
-      token
-    }: {
-      buildId: number;
-      cardId?: number;
-      side?: 'buy' | 'sell';
-      since?: number;
-      until?: number;
-      bucketSeconds?: number;
-      limit?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/ai-cards/market-candles`,
-          { cardId, side, since, until, bucketSeconds, limit },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildDocsStatus({
-      buildId,
-      token
-    }: {
-      buildId: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/status`,
-          {},
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async startBuildDocsConnect({
-      buildId,
-      token
-    }: {
-      buildId: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/connect/start`,
-          {},
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async disconnectBuildDocs({
-      buildId,
-      token
-    }: {
-      buildId: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/connect/disconnect`,
-          {},
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async listBuildDocsFiles({
-      buildId,
-      query,
-      pageToken,
-      pageSize,
-      token
-    }: {
-      buildId: number;
-      query?: string;
-      pageToken?: string;
-      pageSize?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/list-files`,
-          { query, pageToken, pageSize },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildDoc({
-      buildId,
-      docId,
-      token
-    }: {
-      buildId: number;
-      docId: string;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/get-doc`,
-          { docId },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildDocText({
-      buildId,
-      docId,
-      token
-    }: {
-      buildId: number;
-      docId: string;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/get-doc-text`,
-          { docId },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async searchBuildDocs({
-      buildId,
-      query,
-      pageToken,
-      pageSize,
-      token
-    }: {
-      buildId: number;
-      query: string;
-      pageToken?: string;
-      pageSize?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/docs/search`,
-          { query, pageToken, pageSize },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async listBuildLlmModels({
-      buildId,
-      token
-    }: {
-      buildId: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/llm/models`,
-          {},
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async generateBuildLlmResponse({
-      buildId,
-      model,
-      prompt,
-      system,
-      messages,
-      maxOutputTokens,
-      token
-    }: {
-      buildId: number;
-      model?: string;
-      prompt?: string;
-      system?: string;
-      messages?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
-      maxOutputTokens?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/llm/generate`,
-          { model, prompt, system, messages, maxOutputTokens },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async lookupBuildVocabularyWord({
-      buildId,
-      word,
-      token
-    }: {
-      buildId: number;
-      word: string;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/vocabulary/lookup`,
-          { word },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async collectBuildVocabularyWord({
-      buildId,
-      word,
-      token
-    }: {
-      buildId: number;
-      word: string;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/vocabulary/collect`,
-          { word },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildVocabularyBreakStatus({
-      buildId,
-      token
-    }: {
-      buildId: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/vocabulary/break-status`,
-          {},
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildCollectedVocabularyWords({
-      buildId,
-      limit,
-      cursor,
-      token
-    }: {
-      buildId: number;
-      limit?: number;
-      cursor?: { id?: number };
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/vocabulary/collected`,
-          { limit, cursor },
+          { userIds, lastId, cursor, limit },
           {
             ...auth(),
             headers: {
@@ -1376,7 +728,7 @@ export default function buildRequestHelpers({
       profileUserId?: number;
       limit?: number;
       offset?: number;
-      sortBy?: 'newest' | 'oldest' | 'mostLiked' | 'mostReplied';
+      sortBy?: 'newest' | 'oldest';
       includeReplies?: boolean;
       range?: 'today';
       since?: number;
@@ -1426,7 +778,7 @@ export default function buildRequestHelpers({
       profileUserId?: number;
       limit?: number;
       offset?: number;
-      sortBy?: 'newest' | 'oldest' | 'mostLiked' | 'mostReplied';
+      sortBy?: 'newest' | 'oldest';
       includeReplies?: boolean;
       range?: 'today';
       since?: number;
@@ -1500,214 +852,6 @@ export default function buildRequestHelpers({
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/content/profile-comment-counts`,
           { ids },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildProfileCommentStats({
-      buildId,
-      profileUserId,
-      includeReplies,
-      range,
-      since,
-      until,
-      token
-    }: {
-      buildId: number;
-      profileUserId?: number;
-      includeReplies?: boolean;
-      range?: 'today';
-      since?: number;
-      until?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/content/profile-comment-stats`,
-          {
-            profileUserId,
-            includeReplies,
-            range,
-            since,
-            until
-          },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildProfileCommentCount({
-      buildId,
-      profileUserId,
-      includeReplies,
-      range,
-      since,
-      until,
-      token
-    }: {
-      buildId: number;
-      profileUserId?: number;
-      includeReplies?: boolean;
-      range?: 'today';
-      since?: number;
-      until?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/content/profile-comment-count`,
-          {
-            profileUserId,
-            includeReplies,
-            range,
-            since,
-            until
-          },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildProfileCommentSummary({
-      buildId,
-      profileUserId,
-      includeReplies,
-      range,
-      since,
-      until,
-      token
-    }: {
-      buildId: number;
-      profileUserId?: number;
-      includeReplies?: boolean;
-      range?: 'today';
-      since?: number;
-      until?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/content/profile-comment-summary`,
-          {
-            profileUserId,
-            includeReplies,
-            range,
-            since,
-            until
-          },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildProfileTopCommenters({
-      buildId,
-      profileUserId,
-      includeReplies,
-      topCommentersLimit,
-      range,
-      since,
-      until,
-      token
-    }: {
-      buildId: number;
-      profileUserId?: number;
-      includeReplies?: boolean;
-      topCommentersLimit?: number;
-      range?: 'today';
-      since?: number;
-      until?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/content/profile-comment-top-commenters`,
-          {
-            profileUserId,
-            includeReplies,
-            topCommentersLimit,
-            range,
-            since,
-            until
-          },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async getBuildProfileMostLikedComment({
-      buildId,
-      profileUserId,
-      includeReplies,
-      range,
-      since,
-      until,
-      token
-    }: {
-      buildId: number;
-      profileUserId?: number;
-      includeReplies?: boolean;
-      range?: 'today';
-      since?: number;
-      until?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/content/profile-comment-most-liked`,
-          {
-            profileUserId,
-            includeReplies,
-            range,
-            since,
-            until
-          },
           {
             ...auth(),
             headers: {
@@ -2008,200 +1152,5 @@ export default function buildRequestHelpers({
       }
     },
 
-    async scheduleBuildJob({
-      buildId,
-      name,
-      runAt,
-      intervalSeconds,
-      maxRuns,
-      data: jobData,
-      scope,
-      token
-    }: {
-      buildId: number;
-      name: string;
-      runAt: number;
-      intervalSeconds?: number;
-      maxRuns?: number;
-      data?: any;
-      scope?: 'user' | 'build';
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/jobs/schedule`,
-          { name, runAt, intervalSeconds, maxRuns, data: jobData, scope },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async listBuildJobs({
-      buildId,
-      scope,
-      status,
-      limit,
-      cursor,
-      token
-    }: {
-      buildId: number;
-      scope?: 'user' | 'build';
-      status?: 'active' | 'cancelled' | 'completed';
-      limit?: number;
-      cursor?: { id?: number };
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/jobs/list`,
-          { scope, status, limit, cursor },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async cancelBuildJob({
-      buildId,
-      jobId,
-      token
-    }: {
-      buildId: number;
-      jobId: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/jobs/cancel`,
-          { jobId },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async claimDueBuildJobs({
-      buildId,
-      scope,
-      limit,
-      token
-    }: {
-      buildId: number;
-      scope?: 'user' | 'build';
-      limit?: number;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/jobs/claim-due`,
-          { scope, limit },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async sendBuildMail({
-      buildId,
-      to,
-      subject,
-      text,
-      html,
-      from,
-      replyTo,
-      meta,
-      token
-    }: {
-      buildId: number;
-      to: string | string[];
-      subject: string;
-      text?: string;
-      html?: string;
-      from?: string;
-      replyTo?: string;
-      meta?: any;
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/mail/send`,
-          { to, subject, text, html, from, replyTo, meta },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async listBuildMail({
-      buildId,
-      status,
-      limit,
-      cursor,
-      token
-    }: {
-      buildId: number;
-      status?: 'queued' | 'sent' | 'failed';
-      limit?: number;
-      cursor?: { id?: number };
-      token?: string;
-    }) {
-      try {
-        const { data } = await request.post(
-          `${URL}/build/${buildId}/api/mail/list`,
-          { status, limit, cursor },
-          {
-            ...auth(),
-            headers: {
-              ...auth().headers,
-              ...(token ? { 'x-build-api-token': token } : {})
-            }
-          }
-        );
-        return data;
-      } catch (error) {
-        return handleError(error);
-      }
-    }
   };
 }

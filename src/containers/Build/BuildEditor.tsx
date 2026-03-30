@@ -2,16 +2,24 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
-import SocialPanel from './SocialPanel';
+import BuildDescriptionModal from './BuildDescriptionModal';
+import type { BuildCapabilitySnapshot } from './capabilityTypes';
+import type {
+  BuildRuntimeExplorationPlan,
+  BuildRuntimeObservationState
+} from './runtimeObservationTypes';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
+import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import ScopedTheme from '~/theme/ScopedTheme';
 import { socket } from '~/constants/sockets/api';
 
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+const buildForkUiEnabled = false;
 
 const pageClass = css`
   display: grid;
@@ -38,22 +46,22 @@ const badgeClass = css`
   gap: 0.6rem;
   padding: 0.4rem 1rem;
   border-radius: 999px;
-  background: rgba(65, 140, 235, 0.14);
-  color: #1d4ed8;
-  border: 1px solid rgba(65, 140, 235, 0.28);
+  background: color-mix(in srgb, var(--theme-bg) 12%, white);
+  color: color-mix(in srgb, var(--theme-border) 82%, #24324a);
+  border: 1px solid color-mix(in srgb, var(--theme-bg) 22%, white);
   font-weight: 900;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+  text-transform: none;
+  letter-spacing: normal;
   font-family: ${displayFontFamily};
   text-decoration: none;
   cursor: pointer;
   transition:
     transform 0.15s ease,
-    border-color 0.15s ease;
+    background-color 0.15s ease;
   &:hover {
     transform: translateY(-1px);
-    border-color: var(--theme-border);
+    background: color-mix(in srgb, var(--theme-bg) 18%, white);
     text-decoration: none;
   }
   &:active {
@@ -75,6 +83,12 @@ const headerTitleClass = css`
   line-height: 1.15;
 `;
 
+const headerSubtitleClass = css`
+  font-size: 1.05rem;
+  color: var(--chat-text);
+  opacity: 0.75;
+`;
+
 const headerActionsClass = css`
   display: flex;
   gap: 0.55rem;
@@ -82,7 +96,7 @@ const headerActionsClass = css`
   flex-wrap: wrap;
 `;
 
-const statusBadgeClass = css`
+const badgePillClass = css`
   font-size: 0.76rem;
   padding: 0.38rem 0.74rem;
   border-radius: 999px;
@@ -103,15 +117,6 @@ const panelShellClass = css`
   min-height: 0;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0.75rem 1rem 1rem;
-  }
-`;
-
-const panelShellWithSocialClass = css`
-  ${panelShellClass};
-  grid-template-columns: 1fr 320px;
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
   }
 `;
 
@@ -148,7 +153,6 @@ interface Build {
   slug: string;
   code: string | null;
   primaryArtifactId?: number | null;
-  status: string;
   isPublic: boolean;
   publishedAt?: number | null;
   thumbnailUrl?: string | null;
@@ -167,6 +171,35 @@ interface Build {
     createdAt?: number;
     updatedAt?: number;
   }>;
+  capabilitySnapshot?: BuildCapabilitySnapshot | null;
+  executionPlan?: BuildExecutionPlan | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface BuildExecutionPlanChunk {
+  id: string;
+  kind: 'chunk' | 'big_chunk';
+  title: string;
+  summary: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'cancelled';
+  chunks: BuildExecutionPlanChunk[];
+}
+
+interface BuildExecutionPlan {
+  buildId: number;
+  mode: 'large' | 'too_broad';
+  status: 'active' | 'completed' | 'cancelled';
+  summary: string;
+  plan: {
+    version: 1;
+    mode: 'large' | 'too_broad';
+    summary: string;
+    chunks: BuildExecutionPlanChunk[];
+  };
+  currentBigChunkId: string | null;
+  currentChunkId: string | null;
+  createdByUserId: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -192,52 +225,27 @@ interface BuildUsageMetric {
 }
 
 interface BuildCopilotPolicy {
-  tier: 'free' | 'pro' | 'premium';
-  assignedTier?: 'free' | 'pro' | 'premium';
-  byo?: {
-    enabled: boolean;
-    requiredForPaidTiers: boolean;
-    blockedAssignedTier: boolean;
-  };
-  pricing: {
-    proMonthlyPriceUsd: number;
-  };
   limits: {
-    maxProjects: number;
     maxProjectBytes: number;
     maxFilesPerProject: number;
-    maxFileBytes: number;
-    maxPromptChars: number;
-    historyMaxAgeSeconds: number;
-    historyMaxMessages: number;
-    historyMessageCharLimit: number;
-    historyTotalCharBudget: number;
+    maxFileLines: number;
   };
   usage: {
-    projectCount: number;
-    projectCountRemaining: number;
     currentProjectBytes: number;
     projectBytesRemaining: number;
     projectFileCount: number;
     projectFileBytes: number;
     maxFilesPerProject: number;
-    maxFileBytes: number;
   };
-  requestBilling: {
+  requestLimits: {
     dayIndex: number;
     dayKey: string;
-    tier: 'free' | 'pro' | 'premium';
-    messageRequestsPerDay: number;
+    generationRequestsPerDay: number;
     reviewRequestsPerDay: number;
-    coinCostPerRequest: number;
-    billingEnabled: boolean;
-    messageRequestsToday: number;
-    messageRequestsRemaining: number;
+    generationRequestsToday: number;
+    generationRequestsRemaining: number;
     reviewRequestsToday: number;
     reviewRequestsRemaining: number;
-    paidRequestsToday: number;
-    coinSpentToday: number;
-    coinBalance: number | null;
   };
 }
 
@@ -285,6 +293,7 @@ interface BuildEditorProps {
   copilotPolicy: BuildCopilotPolicy | null;
   isOwner: boolean;
   initialPrompt?: string;
+  seedGreeting?: boolean;
   onUpdateBuild: (build: Build) => void;
   onUpdateChatMessages: (messages: ChatMessage[]) => void;
   onUpdateCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
@@ -303,6 +312,22 @@ interface BuildEditorProjectFilesDraftState {
   files: Array<{ path: string; content?: string }>;
   hasUnsavedChanges: boolean;
   saving: boolean;
+}
+
+type BuildRunMode = 'user' | 'review' | 'greeting' | 'runtime-autofix';
+
+interface RuntimeAutoFixContext {
+  beforeObservation: BuildRuntimeObservationState;
+  remainingRepairsAfterVerification: number;
+}
+
+interface PendingRuntimeVerification {
+  armedAt: number;
+  beforeObservation: BuildRuntimeObservationState;
+  remainingRepairs: number;
+  allowSameCodeSignature: boolean;
+  requestId: string | null;
+  afterObservation: BuildRuntimeObservationState | null;
 }
 
 function normalizeProjectFilePath(rawPath: string) {
@@ -341,6 +366,11 @@ function resolveIndexHtmlFromProjectFiles(
     return byPath.get('/index.htm') ?? '';
   }
   return String(fallbackCode || '');
+}
+
+function isIndexHtmlProjectFilePath(filePath: string) {
+  const normalized = normalizeProjectFilePath(filePath).toLowerCase();
+  return normalized === '/index.html' || normalized === '/index.htm';
 }
 
 function resolveIndexEntryPathFromProjectFiles(
@@ -393,20 +423,269 @@ function normalizeProjectFilesForBuild(
     }));
 }
 
+function overlayStreamedProjectFilesForBuild({
+  baseFiles,
+  updates,
+  fallbackCode
+}: {
+  baseFiles: Array<{ path: string; content?: string }>;
+  updates: Array<{ path: string; content?: string }>;
+  fallbackCode: string | null | undefined;
+}) {
+  const merged = new Map<string, string>();
+  for (const file of baseFiles || []) {
+    if (!file || typeof file !== 'object') continue;
+    merged.set(
+      normalizeProjectFilePath(file.path),
+      typeof file.content === 'string' ? file.content : ''
+    );
+  }
+  for (const file of updates || []) {
+    if (!file || typeof file !== 'object') continue;
+    merged.set(
+      normalizeProjectFilePath(file.path),
+      typeof file.content === 'string' ? file.content : ''
+    );
+  }
+  return normalizeProjectFilesForBuild(
+    Array.from(merged.entries()).map(([path, content]) => ({
+      path,
+      content
+    })),
+    fallbackCode
+  );
+}
+
+function parseCodexImplementationAttempt(message: string) {
+  const match = /^Codex started implementation attempt (\d+)\/\d+\./i.exec(
+    String(message || '').trim()
+  );
+  if (!match) return null;
+  return Number(match[1] || 0) || null;
+}
+
+function isCodexChecklistStepCompleted(message: string) {
+  return /^Codex completed checklist step \d+\/\d+/i.test(
+    String(message || '').trim()
+  );
+}
+
+function formatRuntimeObservationSummary(
+  observationState: BuildRuntimeObservationState | null
+) {
+  if (
+    !observationState ||
+    (observationState.issues.length === 0 && !observationState.health)
+  ) {
+    return '';
+  }
+  function formatIssueKindLabel(kind: BuildRuntimeObservationState['issues'][number]['kind']) {
+    switch (kind) {
+      case 'unhandledrejection':
+        return 'Unhandled rejection';
+      case 'blankrender':
+        return 'Blank render';
+      case 'sdkblocked':
+        return 'Blocked capability call';
+      case 'interactionnoop':
+        return 'No-op interaction';
+      case 'keyboardscroll':
+        return 'Keyboard scroll leak';
+      case 'playfieldmismatch':
+        return 'Gameplay escaped playfield';
+      case 'error':
+      default:
+        return 'Runtime error';
+    }
+  }
+  const issuesText = observationState.issues
+    .slice(-5)
+    .map((issue, index) => {
+      const locationParts = [
+        issue.filename || null,
+        issue.lineNumber != null ? `line ${issue.lineNumber}` : null,
+        issue.columnNumber != null ? `col ${issue.columnNumber}` : null
+      ].filter(Boolean);
+      const locationText =
+        locationParts.length > 0 ? ` (${locationParts.join(', ')})` : '';
+      const stackLine = String(issue.stack || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .find(Boolean);
+      return [
+        `${index + 1}. ${formatIssueKindLabel(issue.kind)}: ${issue.message}${locationText}`,
+        stackLine ? `   stack: ${stackLine.slice(0, 260)}` : null
+      ]
+        .filter(Boolean)
+        .join('\n');
+    })
+    .join('\n');
+  const health = observationState.health;
+  const interactionText =
+    health?.interactionStatus === 'changed'
+      ? `changed the UI after clicking ${
+          health.interactionTargetLabel
+            ? `"${health.interactionTargetLabel}"`
+            : 'a control'
+        }`
+      : health?.interactionStatus === 'unchanged'
+        ? `clicked ${
+            health.interactionTargetLabel
+              ? `"${health.interactionTargetLabel}"`
+              : 'a control'
+          }, but nothing visibly changed`
+        : health?.interactionStatus === 'skipped'
+          ? 'skipped because no safe startup control was found'
+          : null;
+  const interactionStepLines = (health?.interactionSteps || [])
+    .slice(-2)
+    .map((step, index) => {
+      const prefix =
+        step.source === 'planned'
+          ? `${index + 1}. planned ${step.actionKind || 'step'}`
+          : `${index + 1}. clicked`;
+      const parts = [
+        prefix +
+          ' ' +
+          (step.targetLabel ? `"${step.targetLabel}"` : 'a control'),
+        step.goal ? `goal: ${step.goal}` : null,
+        step.expectedSignals?.routeChange === true
+          ? 'expected: route should change'
+          : step.expectedSignals?.routeChange === false
+            ? 'expected: stay on same route'
+            : null,
+        step.expectedSignals && step.expectedSignals.textIncludes.length > 0
+          ? `expected text: ${step.expectedSignals.textIncludes
+              .map((text) => `"${text}"`)
+              .join(', ')}`
+          : null,
+        step.expectedSignals &&
+        step.expectedSignals.revealsLabels.length > 0
+          ? `expected controls: ${step.expectedSignals.revealsLabels
+              .map((label) => `"${label}"`)
+              .join(', ')}`
+          : null,
+        step.routeChanged && step.routeAfter
+          ? `route -> ${step.routeAfter}`
+          : null,
+        step.hashChanged && step.hashAfter ? `hash -> ${step.hashAfter}` : null,
+        step.headingDelta !== 0 || step.buttonDelta !== 0 || step.formDelta !== 0
+          ? `headings/buttons/forms delta: ${step.headingDelta >= 0 ? '+' : ''}${step.headingDelta}/${step.buttonDelta >= 0 ? '+' : ''}${step.buttonDelta}/${step.formDelta >= 0 ? '+' : ''}${step.formDelta}`
+          : null,
+        step.revealedTargetLabels.length > 0
+          ? `revealed: ${step.revealedTargetLabels
+              .map((label) => `"${label}"`)
+              .join(', ')}`
+          : null
+      ].filter(Boolean);
+      const textDelta =
+        step.visibleTextBefore !== step.visibleTextAfter &&
+        (step.visibleTextBefore || step.visibleTextAfter)
+          ? `   text: ${
+              step.visibleTextBefore
+                ? `"${step.visibleTextBefore}"`
+                : '[none]'
+            } -> ${
+              step.visibleTextAfter ? `"${step.visibleTextAfter}"` : '[none]'
+            }`
+          : null;
+      return [parts.join('; '), textDelta].filter(Boolean).join('\n');
+    });
+  const healthLines = health
+    ? [
+        'Preview health:',
+        `- booted: ${health.booted ? 'yes' : 'no'}`,
+        `- meaningful UI: ${health.meaningfulRender ? 'yes' : 'no'}`,
+        health.gameLike ? '- game-like preview: yes' : null,
+        `- headings/buttons/forms: ${health.headingCount}/${health.buttonCount}/${health.formCount}`,
+        health.viewportOverflowY > 0 || health.viewportOverflowX > 0
+          ? `- viewport overflow (y/x): ${health.viewportOverflowY}px / ${health.viewportOverflowX}px`
+          : null,
+        health.gameplayTelemetry
+          ? `- gameplay telemetry: ${health.gameplayTelemetry.status}`
+          : null,
+        health.gameplayTelemetry &&
+        (health.gameplayTelemetry.overflowTop > 0 ||
+          health.gameplayTelemetry.overflowRight > 0 ||
+          health.gameplayTelemetry.overflowBottom > 0 ||
+          health.gameplayTelemetry.overflowLeft > 0)
+          ? `- gameplay overflow (top/right/bottom/left): ${health.gameplayTelemetry.overflowTop}px / ${health.gameplayTelemetry.overflowRight}px / ${health.gameplayTelemetry.overflowBottom}px / ${health.gameplayTelemetry.overflowLeft}px`
+          : null,
+        interactionText ? `- interaction probe: ${interactionText}` : null,
+        interactionStepLines.length > 0
+          ? `- interaction steps:\n${interactionStepLines
+              .map((line) => `  ${line.replace(/\n/g, '\n  ')}`)
+              .join('\n')}`
+          : null,
+        health.visibleTextSample
+          ? `- visible text: ${health.visibleTextSample}`
+          : null
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : '';
+  if (!issuesText) {
+    return healthLines;
+  }
+  return [healthLines, issuesText].filter(Boolean).join('\n\n');
+}
+
+function cloneRuntimeObservationState(
+  observationState: BuildRuntimeObservationState
+): BuildRuntimeObservationState {
+  return {
+    ...observationState,
+    issues: observationState.issues.map((issue) => ({ ...issue })),
+    health: observationState.health
+      ? {
+          ...observationState.health,
+          gameplayTelemetry: observationState.health.gameplayTelemetry
+            ? {
+                ...observationState.health.gameplayTelemetry,
+                playfieldBounds:
+                  observationState.health.gameplayTelemetry.playfieldBounds
+                    ? {
+                        ...observationState.health.gameplayTelemetry
+                          .playfieldBounds
+                      }
+                    : null,
+                playerBounds:
+                  observationState.health.gameplayTelemetry.playerBounds
+                    ? {
+                        ...observationState.health.gameplayTelemetry.playerBounds
+                      }
+                    : null
+              }
+            : null,
+          interactionSteps: observationState.health.interactionSteps.map(
+            (step) => ({
+              ...step,
+              revealedTargetLabels: [...step.revealedTargetLabels]
+            })
+          )
+        }
+      : null
+  };
+}
+
 export default function BuildEditor({
   build,
   chatMessages,
   copilotPolicy,
   isOwner,
   initialPrompt = '',
+  seedGreeting = false,
   onUpdateBuild,
   onUpdateChatMessages,
   onUpdateCopilotPolicy
 }: BuildEditorProps) {
   const navigate = useNavigate();
-  const { userId, missions } = useKeyContext((v) => v.myState);
+  const { userId, profileTheme } = useKeyContext((v) => v.myState);
   const updateBuildProjectFiles = useAppContext(
     (v) => v.requestHelpers.updateBuildProjectFiles
+  );
+  const updateBuildMetadata = useAppContext(
+    (v) => v.requestHelpers.updateBuildMetadata
   );
   const loadBuildProjectFileChangeLogs = useAppContext(
     (v) => v.requestHelpers.loadBuildProjectFileChangeLogs
@@ -414,12 +693,6 @@ export default function BuildEditor({
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
   const deleteBuildChatMessage = useAppContext(
     (v) => v.requestHelpers.deleteBuildChatMessage
-  );
-  const updateMissionStatus = useAppContext(
-    (v) => v.requestHelpers.updateMissionStatus
-  );
-  const onUpdateUserMissionState = useAppContext(
-    (v) => v.user.actions.onUpdateUserMissionState
   );
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
@@ -437,11 +710,19 @@ export default function BuildEditor({
   >(null);
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
+  const [descriptionModalShown, setDescriptionModalShown] = useState(false);
+  const [savingDescription, setSavingDescription] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [usageMetrics, setUsageMetrics] = useState<
     Record<string, BuildUsageMetric>
   >({});
   const [runEvents, setRunEvents] = useState<BuildRunEvent[]>([]);
+  const [streamingProjectFiles, setStreamingProjectFiles] = useState<
+    Array<{ path: string; content?: string }> | null
+  >(null);
+  const [streamingFocusFilePath, setStreamingFocusFilePath] = useState<
+    string | null
+  >(null);
   const [projectFileChangeLogs, setProjectFileChangeLogs] = useState<
     BuildProjectFileChangeLog[]
   >([]);
@@ -453,6 +734,10 @@ export default function BuildEditor({
     useState('');
   const [projectFileChangeLogsLoadedAt, setProjectFileChangeLogsLoadedAt] =
     useState<number | null>(null);
+  const [runtimeObservationState, setRuntimeObservationState] =
+    useState<BuildRuntimeObservationState | null>(null);
+  const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
+    useState<BuildRuntimeExplorationPlan | null>(null);
   const [queuedRequests, setQueuedRequests] = useState<QueuedBuildRequest[]>(
     []
   );
@@ -463,13 +748,16 @@ export default function BuildEditor({
   const updateBuildRef = useRef(onUpdateBuild);
   const updateChatMessagesRef = useRef(onUpdateChatMessages);
   const updateCopilotPolicyRef = useRef(onUpdateCopilotPolicy);
-  const updateMissionStatusRef = useRef(updateMissionStatus);
-  const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
-  const missionProgressRef = useRef<any>(missions?.build || {});
   const streamRequestIdRef = useRef<string | null>(null);
   const userMessageIdRef = useRef<number | null>(null);
   const assistantMessageIdRef = useRef<number | null>(null);
   const reviewerMessageIdRef = useRef<number | null>(null);
+  const streamingProjectFilesBaseRef = useRef<
+    Array<{ path: string; content?: string }>
+  >([]);
+  const streamingProjectFilesRef = useRef<
+    Array<{ path: string; content?: string }> | null
+  >(null);
   const dedupedProcessingReconcileRequestIdRef = useRef<string | null>(null);
   const dedupedProcessingReconcileStartedAtRef = useRef<number>(0);
   const dedupedProcessingReconcileTimerRef = useRef<ReturnType<
@@ -477,6 +765,7 @@ export default function BuildEditor({
   > | null>(null);
   const didInitialChatScrollRef = useRef(false);
   const didAutoPromptRef = useRef(false);
+  const didAutoGreetingRef = useRef(false);
   const shouldAutoScrollRef = useRef(true);
   const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
   const scrollRafRef = useRef<number | null>(null);
@@ -495,10 +784,28 @@ export default function BuildEditor({
   >([]);
   const hasUnsavedProjectFilesRef = useRef(false);
   const savingProjectFilesRef = useRef(false);
+  const runtimeObservationStateRef =
+    useRef<BuildRuntimeObservationState | null>(null);
+  const lastRuntimeHealthEventKeyRef = useRef('');
+  const pendingRuntimeAutoFixRef = useRef<{
+    armedAt: number;
+  } | null>(null);
+  const pendingRuntimeVerificationRef =
+    useRef<PendingRuntimeVerification | null>(null);
+  const activeRuntimeAutoFixContextRef =
+    useRef<RuntimeAutoFixContext | null>(null);
+  const runtimeAutoFixAttemptedSignaturesRef = useRef<Set<string>>(new Set());
+  const activeRunModeRef = useRef<BuildRunMode>('user');
+  const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
+  const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
 
   useEffect(() => {
     chatMessagesRef.current = chatMessages;
   }, [chatMessages]);
+
+  useEffect(() => {
+    streamingProjectFilesRef.current = streamingProjectFiles;
+  }, [streamingProjectFiles]);
 
   useEffect(() => {
     generatingRef.current = generating;
@@ -511,6 +818,10 @@ export default function BuildEditor({
   useEffect(() => {
     buildRef.current = build;
   }, [build]);
+
+  useEffect(() => {
+    runtimeObservationStateRef.current = runtimeObservationState;
+  }, [runtimeObservationState]);
 
   useEffect(() => {
     const normalizedFiles = normalizeProjectFilesForBuild(
@@ -539,20 +850,9 @@ export default function BuildEditor({
   }, [onUpdateCopilotPolicy]);
 
   useEffect(() => {
-    updateMissionStatusRef.current = updateMissionStatus;
-  }, [updateMissionStatus]);
-
-  useEffect(() => {
-    onUpdateUserMissionStateRef.current = onUpdateUserMissionState;
-  }, [onUpdateUserMissionState]);
-
-  useEffect(() => {
-    missionProgressRef.current = missions?.build || {};
-  }, [missions?.build]);
-
-  useEffect(() => {
     didInitialChatScrollRef.current = false;
     didAutoPromptRef.current = false;
+    didAutoGreetingRef.current = false;
     shouldAutoScrollRef.current = true;
     setUsageMetrics({});
     setRunEvents([]);
@@ -563,11 +863,21 @@ export default function BuildEditor({
     setProjectFileChangeLogsLoadedAt(null);
     queuedRequestsRef.current = [];
     setQueuedRequests([]);
+    setDescriptionModalShown(false);
     dedupedProcessingInFlightRef.current = false;
     postCompleteSyncInFlightRef.current = false;
     startingGenerationRef.current = false;
     queuePausedForSaveRef.current = false;
     requiresProjectFilesResyncBeforeSaveRef.current = false;
+    runtimeObservationStateRef.current = null;
+    lastRuntimeHealthEventKeyRef.current = '';
+    setRuntimeObservationState(null);
+    setRuntimeExplorationPlan(null);
+    pendingRuntimeAutoFixRef.current = null;
+    pendingRuntimeVerificationRef.current = null;
+    activeRuntimeAutoFixContextRef.current = null;
+    runtimeAutoFixAttemptedSignaturesRef.current = new Set();
+    activeRunModeRef.current = 'user';
   }, [build.id]);
 
   useEffect(() => {
@@ -593,9 +903,20 @@ export default function BuildEditor({
   }, [build.id, isOwner, initialPrompt]);
 
   useEffect(() => {
+    if (didAutoGreetingRef.current) return;
+    if (!isOwner) return;
+    if (!seedGreeting) return;
+    if (initialPrompt.trim()) return;
+    if (chatMessagesRef.current.length > 0) return;
+    didAutoGreetingRef.current = true;
+    void startGreetingGeneration();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, initialPrompt, isOwner, seedGreeting]);
+
+  useEffect(() => {
     if (didInitialChatScrollRef.current) return;
     didInitialChatScrollRef.current = true;
-    scrollChatToBottom('auto');
+    scrollChatToBottom('auto', { force: true });
   }, [chatMessages.length, build.id]);
 
   useEffect(() => {
@@ -603,8 +924,9 @@ export default function BuildEditor({
       requestId?: string;
       reply?: string;
       codeGenerated?: string | null;
+      projectFiles?: Array<{ path: string; content?: string }> | null;
     }) {
-      const { requestId, reply, codeGenerated } = payload;
+      const { requestId, reply, codeGenerated, projectFiles } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
       const assistantId = assistantMessageIdRef.current;
@@ -629,6 +951,24 @@ export default function BuildEditor({
       });
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      if (Array.isArray(projectFiles) && projectFiles.length > 0) {
+        const activeBuild = buildRef.current;
+        const fallbackCode = activeBuild?.code || '';
+        const nextFocusFilePath =
+          projectFiles
+            .map((file) => normalizeProjectFilePath(file.path))
+            .find((filePath) => !isIndexHtmlProjectFilePath(filePath)) || null;
+        const nextStreamingProjectFiles = overlayStreamedProjectFilesForBuild({
+          baseFiles: streamingProjectFilesBaseRef.current,
+          updates: projectFiles,
+          fallbackCode
+        });
+        streamingProjectFilesRef.current = nextStreamingProjectFiles;
+        setStreamingProjectFiles(nextStreamingProjectFiles);
+        if (nextFocusFilePath) {
+          setStreamingFocusFilePath(nextFocusFilePath);
+        }
+      }
       maybeAutoScrollDuringStream();
     }
 
@@ -638,6 +978,9 @@ export default function BuildEditor({
       artifact,
       code,
       projectFiles,
+      executionPlan,
+      runtimeExplorationPlan,
+      runtimePlanRefined,
       message
     }: {
       requestId?: string;
@@ -649,6 +992,9 @@ export default function BuildEditor({
       };
       code?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
+      executionPlan?: BuildExecutionPlan | null;
+      runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
+      runtimePlanRefined?: boolean;
       message?: {
         id?: number | null;
         userMessageId?: number | null;
@@ -659,6 +1005,7 @@ export default function BuildEditor({
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
       const wasReviewRun = reviewingRef.current;
+      const completedRunMode = activeRunModeRef.current;
       const userMessageTempId = userMessageIdRef.current;
       const assistantId = assistantMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
@@ -777,6 +1124,10 @@ export default function BuildEditor({
             ...activeBuild,
             code: resolvedCode,
             primaryArtifactId: artifact?.id ?? activeBuild.primaryArtifactId,
+            executionPlan:
+              executionPlan !== undefined
+                ? executionPlan || null
+                : activeBuild.executionPlan || null,
             projectManifest: {
               entryPath: resolveIndexEntryPathFromProjectFiles(
                 nextProjectFiles,
@@ -796,12 +1147,73 @@ export default function BuildEditor({
           }
         }
       }
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
 
       const generatedCodeSuccessfully =
         artifactCode !== null ||
         (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0);
-      if (!wasReviewRun && generatedCodeSuccessfully) {
-        void markBuildMissionPromptCompleted();
+      const planWasRefined = Boolean(
+        runtimePlanRefined && runtimeExplorationPlan
+      );
+      setRuntimeExplorationPlan(
+        generatedCodeSuccessfully || planWasRefined
+          ? runtimeExplorationPlan || null
+          : null
+      );
+      let shouldDelayQueuedRequestsForRuntimeFollowUp = false;
+      if (
+        generatedCodeSuccessfully &&
+        (completedRunMode === 'user' || completedRunMode === 'review')
+      ) {
+        armRuntimeAutoFix();
+        clearRuntimeVerification();
+        appendLocalRunEvent({
+          kind: 'status',
+          phase: 'completed',
+          message: 'Checking the updated preview for runtime issues...'
+        });
+        shouldDelayQueuedRequestsForRuntimeFollowUp = true;
+      } else if (
+        completedRunMode === 'runtime-autofix'
+      ) {
+        const runtimeAutoFixContext = activeRuntimeAutoFixContextRef.current;
+        if (runtimeAutoFixContext) {
+          if (generatedCodeSuccessfully) {
+            armRuntimeVerification({
+              beforeObservation: runtimeAutoFixContext.beforeObservation,
+              remainingRepairs:
+                runtimeAutoFixContext.remainingRepairsAfterVerification
+            });
+            appendLocalRunEvent({
+              kind: 'status',
+              phase: 'completed',
+              message: 'Re-checking the repaired preview...'
+            });
+            shouldDelayQueuedRequestsForRuntimeFollowUp = true;
+          } else if (planWasRefined) {
+            armRuntimeVerification({
+              beforeObservation: runtimeAutoFixContext.beforeObservation,
+              remainingRepairs:
+                runtimeAutoFixContext.remainingRepairsAfterVerification,
+              allowSameCodeSignature: true
+            });
+            appendLocalRunEvent({
+              kind: 'action',
+              phase: 'preview',
+              message:
+                "Lumine revised the runtime plan and is re-checking the preview before changing code."
+            });
+            shouldDelayQueuedRequestsForRuntimeFollowUp = true;
+          } else {
+            clearRuntimeVerification();
+          }
+        } else {
+          clearRuntimeVerification();
+        }
+        disarmRuntimeAutoFix();
+      } else {
+        resetRuntimeHealthFollowUpState();
       }
 
       streamRequestIdRef.current = null;
@@ -816,6 +1228,7 @@ export default function BuildEditor({
       setGeneratingStatus(null);
       setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
+      activeRunModeRef.current = 'user';
       scrollChatToBottom();
       postCompleteSyncInFlightRef.current = true;
       try {
@@ -836,7 +1249,15 @@ export default function BuildEditor({
       } finally {
         postCompleteSyncInFlightRef.current = false;
       }
-      await maybeStartNextQueuedRequest();
+      if (
+        maybeProcessPendingRuntimeAutoFix() ||
+        maybeProcessPendingRuntimeVerification()
+      ) {
+        return;
+      }
+      if (!shouldDelayQueuedRequestsForRuntimeFollowUp) {
+        await maybeStartNextQueuedRequest();
+      }
     }
 
     function handleGenerateStatus({
@@ -866,6 +1287,7 @@ export default function BuildEditor({
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
+      resetRuntimeHealthFollowUpState();
       const assistantId = assistantMessageIdRef.current;
       const reviewerId = reviewerMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
@@ -900,6 +1322,8 @@ export default function BuildEditor({
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
@@ -912,6 +1336,7 @@ export default function BuildEditor({
       setGeneratingStatus(null);
       setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
+      activeRunModeRef.current = 'user';
       scrollChatToBottom();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
     }
@@ -928,6 +1353,7 @@ export default function BuildEditor({
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       if (deduped) {
         resetDedupedProcessingReconcileState();
+        resetRuntimeHealthFollowUpState();
         let shouldStartQueuedRequest = true;
         if (guardStatus === 'completed') {
           try {
@@ -965,12 +1391,15 @@ export default function BuildEditor({
         }
         generatingRef.current = false;
         reviewingRef.current = false;
+        setStreamingProjectFiles(null);
+        setStreamingFocusFilePath(null);
         setGenerating(false);
         setReviewing(false);
         setReviewPhase(null);
         setGeneratingStatus(null);
         setReviewerStatusSteps([]);
         setAssistantStatusSteps([]);
+        activeRunModeRef.current = 'user';
         scrollChatToBottom();
         if (shouldStartQueuedRequest) {
           await maybeStartNextQueuedRequest();
@@ -978,6 +1407,7 @@ export default function BuildEditor({
         return;
       }
       resetDedupedProcessingReconcileState();
+      resetRuntimeHealthFollowUpState();
       const assistantId = assistantMessageIdRef.current;
       const reviewerId = reviewerMessageIdRef.current;
       const userId = userMessageIdRef.current;
@@ -994,6 +1424,8 @@ export default function BuildEditor({
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
@@ -1006,6 +1438,7 @@ export default function BuildEditor({
       setGeneratingStatus(null);
       setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
+      activeRunModeRef.current = 'user';
       postCompleteSyncInFlightRef.current = true;
       try {
         await syncChatMessagesFromServer(undefined, true);
@@ -1201,6 +1634,118 @@ export default function BuildEditor({
         const next = [...prev, nextEvent];
         return next.slice(-40);
       });
+      if (kind === 'action') {
+        const implementationAttempt = parseCodexImplementationAttempt(message);
+        if (implementationAttempt) {
+          const committedBase = normalizeProjectFilesForBuild(
+            streamingProjectFilesBaseRef.current,
+            buildRef.current?.code || ''
+          );
+          streamingProjectFilesRef.current =
+            committedBase.length > 0 ? committedBase : null;
+          setStreamingProjectFiles(
+            committedBase.length > 0 ? committedBase : null
+          );
+          if (implementationAttempt > 1) {
+            setStreamingFocusFilePath(null);
+          }
+          return;
+        }
+        if (isCodexChecklistStepCompleted(message)) {
+          const currentStreamingProjectFiles = streamingProjectFilesRef.current;
+          if (
+            Array.isArray(currentStreamingProjectFiles) &&
+            currentStreamingProjectFiles.length > 0
+          ) {
+            const committedBase = normalizeProjectFilesForBuild(
+              currentStreamingProjectFiles,
+              buildRef.current?.code || ''
+            );
+            streamingProjectFilesBaseRef.current = committedBase;
+            streamingProjectFilesRef.current = committedBase;
+            setStreamingProjectFiles(committedBase);
+          }
+        }
+      }
+    }
+
+    function handleRuntimeVerifyComplete({
+      requestId,
+      improved,
+      reason,
+      shouldRepairAgain,
+      nextRemainingRepairs
+    }: {
+      requestId?: string;
+      improved?: boolean;
+      reason?: string;
+      shouldRepairAgain?: boolean;
+      nextRemainingRepairs?: number;
+    }) {
+      const pendingVerification = pendingRuntimeVerificationRef.current;
+      if (
+        !requestId ||
+        !pendingVerification ||
+        requestId !== pendingVerification.requestId
+      ) {
+        return;
+      }
+      const afterObservation = pendingVerification.afterObservation;
+      clearRuntimeVerification();
+      if (improved && reason) {
+        appendLocalRunEvent({
+          kind: 'action',
+          phase: 'preview',
+          message: `Lumine re-checked the repaired preview and it looks healthier: ${reason}.`
+        });
+      }
+      if (shouldRepairAgain && afterObservation) {
+        appendLocalRunEvent({
+          kind: 'status',
+          phase: 'preview',
+          message: `Lumine re-checked the repaired preview, but it did not improve enough: ${reason || 'preview health did not improve'}. Trying one last repair pass.`
+        });
+        void startRuntimeAutoFix(afterObservation, {
+          remainingRepairsAfterVerification: Math.max(
+            0,
+            Number(nextRemainingRepairs || 0)
+          ),
+          trigger: 'verification'
+        });
+        return;
+      }
+      if (!improved && reason) {
+        appendLocalRunEvent({
+          kind: 'status',
+          phase: 'preview',
+          message: `Lumine re-checked the repaired preview, but it still does not look healthier: ${reason}.`
+        });
+      }
+      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+    }
+
+    function handleRuntimeVerifyError({
+      requestId,
+      error
+    }: {
+      requestId?: string;
+      error?: string;
+    }) {
+      const pendingVerification = pendingRuntimeVerificationRef.current;
+      if (
+        !requestId ||
+        !pendingVerification ||
+        requestId !== pendingVerification.requestId
+      ) {
+        return;
+      }
+      clearRuntimeVerification();
+      appendLocalRunEvent({
+        kind: 'status',
+        phase: 'preview',
+        message: error || 'Runtime verification failed.'
+      });
+      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
     }
 
     socket.on('build_generate_update', handleGenerateUpdate);
@@ -1213,6 +1758,8 @@ export default function BuildEditor({
     socket.on('build_review_status', handleReviewStatus);
     socket.on('build_usage_update', handleUsageUpdate);
     socket.on('build_run_event', handleRunEvent);
+    socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
+    socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
 
     return () => {
       socket.off('build_generate_update', handleGenerateUpdate);
@@ -1225,6 +1772,8 @@ export default function BuildEditor({
       socket.off('build_review_status', handleReviewStatus);
       socket.off('build_usage_update', handleUsageUpdate);
       socket.off('build_run_event', handleRunEvent);
+      socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
+      socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1253,6 +1802,124 @@ export default function BuildEditor({
       };
       return [...prev, next].slice(-40);
     });
+  }
+
+  function handleRuntimeObservationChange(
+    nextState: BuildRuntimeObservationState
+  ) {
+    const health = nextState.health;
+    if (health) {
+      const healthEventKey = [
+        nextState.buildId,
+        nextState.codeSignature || '',
+        health.booted ? '1' : '0',
+        health.meaningfulRender ? '1' : '0',
+        health.gameLike ? '1' : '0',
+        health.headingCount,
+        health.buttonCount,
+        health.formCount,
+        health.viewportOverflowY,
+        health.viewportOverflowX,
+        health.gameplayTelemetry?.status || '',
+        health.gameplayTelemetry?.overflowTop || 0,
+        health.gameplayTelemetry?.overflowRight || 0,
+        health.gameplayTelemetry?.overflowBottom || 0,
+        health.gameplayTelemetry?.overflowLeft || 0,
+        health.interactionStatus,
+        health.interactionTargetLabel || '',
+        JSON.stringify(health.interactionSteps || []),
+        health.visibleTextSample || ''
+      ].join('|');
+      if (lastRuntimeHealthEventKeyRef.current !== healthEventKey) {
+        lastRuntimeHealthEventKeyRef.current = healthEventKey;
+        const interactionTargetText = health.interactionTargetLabel
+          ? `"${health.interactionTargetLabel}"`
+          : 'a control';
+        const interactionStepCount = (health.interactionSteps || []).length;
+        const latestInteractionStep =
+          interactionStepCount > 0
+            ? health.interactionSteps[interactionStepCount - 1]
+            : null;
+        appendLocalRunEvent({
+          kind:
+            health.interactionStatus === 'changed' || health.meaningfulRender
+              ? 'action'
+              : 'status',
+          phase: 'preview',
+          message:
+            health.gameLike &&
+            (health.viewportOverflowY > 48 || health.viewportOverflowX > 24)
+              ? `Preview booted, but the game overflows its viewport (${health.viewportOverflowY}px tall overflow, ${health.viewportOverflowX}px wide overflow).`
+              : health.gameplayTelemetry?.status === 'out-of-bounds'
+                ? `Preview booted, but gameplay escaped the declared playfield (${health.gameplayTelemetry.overflowTop}px top, ${health.gameplayTelemetry.overflowRight}px right, ${health.gameplayTelemetry.overflowBottom}px bottom, ${health.gameplayTelemetry.overflowLeft}px left overflow).`
+              : interactionStepCount >= 2 &&
+                  health.interactionStatus === 'changed' &&
+                  latestInteractionStep?.source === 'planned'
+                ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
+                : interactionStepCount >= 2 && health.interactionStatus === 'changed'
+                  ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
+                  : health.interactionStatus === 'changed'
+                    ? latestInteractionStep?.source === 'planned'
+                      ? latestInteractionStep?.routeChanged && latestInteractionStep.routeAfter
+                        ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
+                        : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
+                      : latestInteractionStep?.routeChanged && latestInteractionStep.routeAfter
+                        ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
+                        : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
+                    : health.interactionStatus === 'unchanged'
+                      ? latestInteractionStep?.source === 'planned'
+                        ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
+                        : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
+                      : health.meaningfulRender
+                        ? 'Preview booted and rendered meaningful UI.'
+                        : 'Preview booted, but the UI still looks sparse.'
+        });
+      }
+    }
+    setRuntimeObservationState(nextState);
+  }
+
+  function getCurrentRuntimeObservationSummary() {
+    return formatRuntimeObservationSummary(runtimeObservationStateRef.current);
+  }
+
+  function armRuntimeAutoFix() {
+    pendingRuntimeAutoFixRef.current = {
+      armedAt: Date.now()
+    };
+  }
+
+  function disarmRuntimeAutoFix() {
+    pendingRuntimeAutoFixRef.current = null;
+  }
+
+  function armRuntimeVerification({
+    beforeObservation,
+    remainingRepairs,
+    allowSameCodeSignature = false
+  }: {
+    beforeObservation: BuildRuntimeObservationState;
+    remainingRepairs: number;
+    allowSameCodeSignature?: boolean;
+  }) {
+    pendingRuntimeVerificationRef.current = {
+      armedAt: Date.now(),
+      beforeObservation: cloneRuntimeObservationState(beforeObservation),
+      remainingRepairs: Math.max(0, remainingRepairs),
+      allowSameCodeSignature,
+      requestId: null,
+      afterObservation: null
+    };
+  }
+
+  function clearRuntimeVerification() {
+    pendingRuntimeVerificationRef.current = null;
+    activeRuntimeAutoFixContextRef.current = null;
+  }
+
+  function resetRuntimeHealthFollowUpState() {
+    disarmRuntimeAutoFix();
+    clearRuntimeVerification();
   }
 
   function handleProjectFilesDraftStateChange(
@@ -1576,6 +2243,12 @@ export default function BuildEditor({
   }
 
   async function maybeStartNextQueuedRequest() {
+    if (
+      pendingRuntimeAutoFixRef.current ||
+      pendingRuntimeVerificationRef.current
+    ) {
+      return;
+    }
     if (isRunActivityInFlight()) {
       return;
     }
@@ -1610,28 +2283,141 @@ export default function BuildEditor({
     void Promise.resolve().then(() => maybeStartNextQueuedRequest());
   }
 
+  function maybeProcessPendingRuntimeAutoFix(
+    observationState = runtimeObservationStateRef.current
+  ) {
+    const pendingAutoFix = pendingRuntimeAutoFixRef.current;
+    if (!observationState || !pendingAutoFix || !isOwner) return false;
+    if (isRunActivityInFlight({ includeBootstrap: true })) return false;
+    if (Date.now() - pendingAutoFix.armedAt > RUNTIME_AUTO_FIX_WINDOW_MS) {
+      disarmRuntimeAutoFix();
+      appendLocalRunEvent({
+        kind: 'status',
+        phase: 'preview',
+        message:
+          'Timed out while checking the updated preview for runtime issues.'
+      });
+      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+      return true;
+    }
+    if (!observationState.codeSignature) {
+      return false;
+    }
+    if (observationState.updatedAt < pendingAutoFix.armedAt) {
+      return false;
+    }
+    const signatureKey = `${build.id}:${observationState.codeSignature}`;
+    if (runtimeAutoFixAttemptedSignaturesRef.current.has(signatureKey)) {
+      disarmRuntimeAutoFix();
+      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+      return true;
+    }
+    runtimeAutoFixAttemptedSignaturesRef.current.add(signatureKey);
+    disarmRuntimeAutoFix();
+    void startRuntimeAutoFix(observationState);
+    return true;
+  }
+
+  function maybeProcessPendingRuntimeVerification(
+    observationState = runtimeObservationStateRef.current
+  ) {
+    const pendingVerification = pendingRuntimeVerificationRef.current;
+    if (!observationState || !pendingVerification || !isOwner) return false;
+    if (isRunActivityInFlight({ includeBootstrap: true })) return false;
+    if (
+      Date.now() - pendingVerification.armedAt >
+      RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS
+    ) {
+      clearRuntimeVerification();
+      appendLocalRunEvent({
+        kind: 'status',
+        phase: 'preview',
+        message:
+          'Timed out while re-checking the repaired preview. Continuing without another automatic repair.'
+      });
+      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+      return true;
+    }
+    if (
+      !observationState.codeSignature ||
+      observationState.updatedAt < pendingVerification.armedAt ||
+      (!pendingVerification.allowSameCodeSignature &&
+        observationState.codeSignature ===
+          pendingVerification.beforeObservation.codeSignature)
+    ) {
+      return false;
+    }
+    if (pendingVerification.requestId) {
+      return false;
+    }
+    const verificationRequestId = `${build.id}-runtime-verify-${Date.now()}`;
+    pendingRuntimeVerificationRef.current = {
+      ...pendingVerification,
+      requestId: verificationRequestId,
+      afterObservation: cloneRuntimeObservationState(observationState)
+    };
+    socket.emit('build_runtime_verify', {
+      buildId: build.id,
+      requestId: verificationRequestId,
+      beforeObservation: pendingVerification.beforeObservation,
+      afterObservation: observationState,
+      remainingRepairs: pendingVerification.remainingRepairs
+    });
+    return true;
+  }
+
+  useEffect(() => {
+    maybeProcessPendingRuntimeAutoFix(runtimeObservationState);
+  }, [build.id, isOwner, runtimeObservationState]);
+
+  useEffect(() => {
+    maybeProcessPendingRuntimeVerification(runtimeObservationState);
+  }, [build.id, isOwner, runtimeObservationState]);
+
   async function handleSendMessage() {
     if (!inputMessage.trim() || !isOwner) return;
     const messageText = inputMessage.trim();
     setInputMessage('');
+    await sendBuildMessageText(messageText);
+  }
 
-    if (isRunActivityInFlight()) {
-      enqueueLatestBuildRequest(messageText);
+  async function handleSendPresetMessage(messageText: string) {
+    if (!String(messageText || '').trim() || !isOwner) return;
+    await sendBuildMessageText(messageText);
+  }
+
+  async function sendBuildMessageText(messageText: string) {
+    const trimmedMessage = String(messageText || '').trim();
+    if (!trimmedMessage || !isOwner) return;
+
+    if (
+      isRunActivityInFlight() ||
+      pendingRuntimeAutoFixRef.current ||
+      pendingRuntimeVerificationRef.current
+    ) {
+      enqueueLatestBuildRequest(trimmedMessage);
       return;
     }
 
-    const started = await startGeneration(messageText);
+    const started = await startGeneration(trimmedMessage);
     if (!started) {
       if (isRunActivityInFlight()) {
-        enqueueLatestBuildRequest(messageText);
+        enqueueLatestBuildRequest(trimmedMessage);
         return;
       }
-      setInputMessage(messageText);
+      setInputMessage(trimmedMessage);
     }
   }
 
   async function handleReview() {
-    if (!isOwner || isRunActivityInFlight()) return;
+    if (
+      !isOwner ||
+      isRunActivityInFlight() ||
+      pendingRuntimeAutoFixRef.current ||
+      pendingRuntimeVerificationRef.current
+    ) {
+      return;
+    }
     const projectFilesReady = await ensureProjectFilesPersistedBeforeRun({
       runType: 'review'
     });
@@ -1643,6 +2429,15 @@ export default function BuildEditor({
     const now = Math.floor(Date.now() / 1000);
     const messageId = Date.now();
     const requestId = `${activeBuild.id}-review-${messageId}`;
+    activeRunModeRef.current = 'review';
+    resetRuntimeHealthFollowUpState();
+    setRuntimeExplorationPlan(null);
+    streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+      activeBuild.projectFiles || [],
+      activeBuild.code || ''
+    );
+    setStreamingProjectFiles(null);
+    setStreamingFocusFilePath(null);
     generatingRef.current = true;
     reviewingRef.current = true;
     setGenerating(true);
@@ -1671,11 +2466,17 @@ export default function BuildEditor({
     updateChatMessagesRef.current(messagesWithReviewer);
 
     shouldAutoScrollRef.current = true;
-    scrollChatToBottom();
+    scrollChatToBottom('smooth', { force: true });
+
+    const runtimeObservation = runtimeObservationStateRef.current;
+    const runtimeObservationSummary =
+      formatRuntimeObservationSummary(runtimeObservation);
 
     socket.emit('build_review', {
       buildId: activeBuild.id,
-      requestId
+      requestId,
+      runtimeObservation,
+      runtimeObservationSummary: runtimeObservationSummary || undefined
     });
   }
 
@@ -1986,7 +2787,6 @@ export default function BuildEditor({
       if (result?.success && result?.build) {
         onUpdateBuild({
           ...latestBuild,
-          status: result.build.status,
           isPublic: result.build.isPublic,
           publishedAt: result.build.publishedAt,
           thumbnailUrl: result.build.thumbnailUrl
@@ -2007,7 +2807,6 @@ export default function BuildEditor({
       if (result?.success && result?.build) {
         onUpdateBuild({
           ...build,
-          status: result.build.status,
           isPublic: result.build.isPublic
         });
       }
@@ -2041,48 +2840,35 @@ export default function BuildEditor({
             gap: 0.6rem;
           `}
         >
-          <Link to="/build" className={badgeClass} title="Back to Build menu">
-            <Icon icon="rocket-launch" />
-            Build Studio
-          </Link>
+          <ScopedTheme
+            as="span"
+            theme={(profileTheme || DEFAULT_PROFILE_THEME) as any}
+          >
+            <Link to="/build" className={badgeClass} title="Back to main menu">
+              <Icon icon="arrow-left" />
+              Back to Main Menu
+            </Link>
+          </ScopedTheme>
           <h2 className={headerTitleClass}>{build.title}</h2>
-          {build.description ? (
-            <span
-              className={css`
-                font-size: 1.05rem;
-                color: var(--chat-text);
-                opacity: 0.75;
-              `}
-            >
-              {build.description}
-            </span>
-          ) : (
-            <span
-              className={css`
-                font-size: 0.95rem;
-                color: var(--chat-text);
-                opacity: 0.6;
-              `}
-            >
-              {isOwner
-                ? 'Your AI-powered build workspace'
-                : `by ${build.username}`}
-            </span>
-          )}
+          {renderBuildDescription()}
         </div>
         <div className={headerActionsClass}>
           <span
-            className={statusBadgeClass}
-            style={getBuildStatusBadgeStyle(build.status)}
-          >
-            {build.status}
-          </span>
-          <span
-            className={statusBadgeClass}
+            className={badgePillClass}
             style={getVisibilityBadgeStyle(build.isPublic)}
           >
             {build.isPublic ? 'public' : 'private'}
           </span>
+          {isOwner && (
+            <GameCTAButton
+              onClick={handleOpenDescriptionModal}
+              variant="neutral"
+              size="md"
+              icon="pencil-alt"
+            >
+              {build.description?.trim() ? 'Edit Description' : 'Add Description'}
+            </GameCTAButton>
+          )}
           {isOwner && build.code && !generating && !reviewing && (
             <GameCTAButton
               onClick={handleReview}
@@ -2109,7 +2895,7 @@ export default function BuildEditor({
                   : 'Publish'}
             </GameCTAButton>
           )}
-          {!isOwner && userId && build.isPublic && (
+          {buildForkUiEnabled && !isOwner && userId && build.isPublic && (
             <GameCTAButton
               onClick={handleFork}
               disabled={forking}
@@ -2124,15 +2910,14 @@ export default function BuildEditor({
         </div>
       </header>
 
-      <div
-        className={build.isPublic ? panelShellWithSocialClass : panelShellClass}
-      >
+      <div className={panelShellClass}>
         <div
           className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
         >
           {isOwner && (
             <ChatPanel
               messages={chatMessages}
+              executionPlan={build.executionPlan || null}
               inputMessage={inputMessage}
               generating={generating || reviewing}
               generatingStatus={generatingStatus}
@@ -2153,6 +2938,7 @@ export default function BuildEditor({
               onChatScroll={handleChatScroll}
               onInputChange={setInputMessage}
               onSendMessage={handleSendMessage}
+              onSendPresetMessage={handleSendPresetMessage}
               onStopGeneration={handleStopGeneration}
               onReloadProjectFileChangeLogs={handleReloadProjectFileChangeLogs}
               onDeleteMessage={handleDeleteMessage}
@@ -2162,7 +2948,11 @@ export default function BuildEditor({
             build={build}
             code={build.code}
             projectFiles={build.projectFiles || []}
+            streamingProjectFiles={streamingProjectFiles}
+            streamingFocusFilePath={streamingFocusFilePath}
             isOwner={isOwner}
+            capabilitySnapshot={build.capabilitySnapshot || null}
+            runtimeExplorationPlan={runtimeExplorationPlan}
             onReplaceCode={handleReplaceCode}
             onApplyRestoredProjectFiles={handleApplyRestoredProjectFiles}
             onSaveProjectFiles={(files) =>
@@ -2171,21 +2961,76 @@ export default function BuildEditor({
             onEditableProjectFilesStateChange={
               handleProjectFilesDraftStateChange
             }
+            onRuntimeObservationChange={handleRuntimeObservationChange}
           />
         </div>
-        {!!build.isPublic && (
-          <SocialPanel
-            buildId={build.id}
-            buildTitle={build.title}
-            ownerId={build.userId}
-            isOwner={isOwner}
-          />
-        )}
       </div>
+      {descriptionModalShown && isOwner && (
+        <BuildDescriptionModal
+          buildTitle={build.title}
+          initialDescription={build.description}
+          loading={savingDescription}
+          onHide={handleCloseDescriptionModal}
+          onSubmit={handleSaveDescription}
+        />
+      )}
     </div>
   );
 
-  function scrollChatToBottom(behavior: ScrollBehavior = 'smooth') {
+  function renderBuildDescription() {
+    if (build.description?.trim()) {
+      return <span className={headerSubtitleClass}>{build.description}</span>;
+    }
+
+    return <span className={headerSubtitleClass}>by {build.username}</span>;
+  }
+
+  function handleOpenDescriptionModal() {
+    setDescriptionModalShown(true);
+  }
+
+  function handleCloseDescriptionModal() {
+    if (savingDescription) return;
+    setDescriptionModalShown(false);
+  }
+
+  async function handleSaveDescription(description: string) {
+    if (!isOwner || savingDescription) return;
+    const latestBuild = buildRef.current;
+    const nextDescription = description.trim();
+    if ((latestBuild.description || '').trim() === nextDescription) {
+      setDescriptionModalShown(false);
+      return;
+    }
+    setSavingDescription(true);
+    try {
+      const result = await updateBuildMetadata({
+        buildId: latestBuild.id,
+        description: nextDescription
+      });
+      if (result?.success && result?.build) {
+        const nextBuild = {
+          ...latestBuild,
+          ...result.build
+        };
+        buildRef.current = nextBuild;
+        updateBuildRef.current(nextBuild);
+        setDescriptionModalShown(false);
+      }
+    } catch (error) {
+      console.error('Failed to update build description:', error);
+    } finally {
+      setSavingDescription(false);
+    }
+  }
+
+  function scrollChatToBottom(
+    behavior: ScrollBehavior = 'smooth',
+    options?: { force?: boolean }
+  ) {
+    if (!options?.force && !shouldAutoScrollRef.current) {
+      return;
+    }
     pendingScrollBehaviorRef.current = behavior;
     if (scrollRafRef.current !== null) return;
     scrollRafRef.current = requestAnimationFrame(() => {
@@ -2203,6 +3048,97 @@ export default function BuildEditor({
         inline: 'nearest'
       });
     });
+  }
+
+  async function startRuntimeAutoFix(
+    observationState: BuildRuntimeObservationState,
+    options?: {
+      remainingRepairsAfterVerification?: number;
+      trigger?: 'initial' | 'verification';
+    }
+  ): Promise<boolean> {
+    if (!isOwner || isRunActivityInFlight()) {
+      return false;
+    }
+    const runtimeObservationSummary =
+      formatRuntimeObservationSummary(observationState);
+    if (!runtimeObservationSummary) {
+      return false;
+    }
+    const activeBuild = buildRef.current;
+    const requestedBuildId = Number(activeBuild?.id || build.id);
+    if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
+      return false;
+    }
+
+    resetDedupedProcessingReconcileState();
+    disarmRuntimeAutoFix();
+    pendingRuntimeVerificationRef.current = null;
+    setRuntimeExplorationPlan(null);
+    activeRuntimeAutoFixContextRef.current = {
+      beforeObservation: cloneRuntimeObservationState(observationState),
+      remainingRepairsAfterVerification: Math.max(
+        0,
+        options?.remainingRepairsAfterVerification ?? 1
+      )
+    };
+    const now = Math.floor(Date.now() / 1000);
+    const assistantMessageId = Date.now();
+    const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
+    activeRunModeRef.current = 'runtime-autofix';
+    streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+      activeBuild?.projectFiles || [],
+      activeBuild?.code || ''
+    );
+    setStreamingProjectFiles(null);
+    setStreamingFocusFilePath(null);
+    generatingRef.current = true;
+    reviewingRef.current = false;
+    setGenerating(true);
+    setGeneratingStatus(null);
+    setReviewerStatusSteps([]);
+    setAssistantStatusSteps([]);
+    setUsageMetrics({});
+    setRunEvents([]);
+    streamRequestIdRef.current = requestId;
+    userMessageIdRef.current = null;
+    assistantMessageIdRef.current = assistantMessageId;
+    reviewerMessageIdRef.current = null;
+
+    const assistantMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      codeGenerated: null,
+      streamCodePreview: null,
+      createdAt: now,
+      persisted: false
+    };
+
+    const nextMessages = [...chatMessagesRef.current, assistantMessage];
+    chatMessagesRef.current = nextMessages;
+    updateChatMessagesRef.current(nextMessages);
+    appendLocalRunEvent({
+      kind: 'action',
+      phase: 'implementing',
+      message:
+        options?.trigger === 'verification'
+          ? 'Lumine is taking one final repair pass after re-checking the preview.'
+          : 'Preview explorer sent its findings to Lumine for automatic repair.'
+    });
+    shouldAutoScrollRef.current = true;
+    scrollChatToBottom('smooth', { force: true });
+
+    socket.emit('build_generate', {
+      buildId: requestedBuildId,
+      requestId,
+      message: 'Investigate and fix the observed runtime issues.',
+      runtimeObservationSummary,
+      runtimeObservation: observationState,
+      runtimeExplorationPlan,
+      autoFixRuntimeObservation: true
+    });
+    return true;
   }
 
   async function startGeneration(
@@ -2237,6 +3173,16 @@ export default function BuildEditor({
       const now = Math.floor(Date.now() / 1000);
       const messageId = Date.now();
       const requestId = `${activeBuild.id}-${messageId}`;
+      const runtimeObservationSummary = getCurrentRuntimeObservationSummary();
+      activeRunModeRef.current = 'user';
+      resetRuntimeHealthFollowUpState();
+      setRuntimeExplorationPlan(null);
+      streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+        activeBuild.projectFiles || [],
+        activeBuild.code || ''
+      );
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
       generatingRef.current = true;
       reviewingRef.current = false;
       setGenerating(true);
@@ -2275,12 +3221,13 @@ export default function BuildEditor({
       chatMessagesRef.current = messagesWithUser;
       updateChatMessagesRef.current(messagesWithUser);
       shouldAutoScrollRef.current = true;
-      scrollChatToBottom();
+      scrollChatToBottom('smooth', { force: true });
 
       socket.emit('build_generate', {
         buildId: activeBuild.id,
         message: messageText,
-        requestId
+        requestId,
+        runtimeObservationSummary: runtimeObservationSummary || undefined
       });
       return true;
     } finally {
@@ -2288,23 +3235,75 @@ export default function BuildEditor({
     }
   }
 
-  async function markBuildMissionPromptCompleted() {
-    if (!isOwner || !userId) return;
-    const current = missionProgressRef.current || {};
-    if (current.copilotPromptCompleted) return;
-    const nextState = { copilotPromptCompleted: true };
-    missionProgressRef.current = { ...current, ...nextState };
-    onUpdateUserMissionStateRef.current({
-      missionType: 'build',
-      newState: nextState
-    });
+  async function startGreetingGeneration(): Promise<boolean> {
+    if (isRunActivityInFlight() || !isOwner) {
+      return false;
+    }
+    startingGenerationRef.current = true;
     try {
-      await updateMissionStatusRef.current({
-        missionType: 'build',
-        newStatus: nextState
+      const activeBuild = buildRef.current;
+      const requestedBuildId = Number(activeBuild?.id || build.id);
+      if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
+        return false;
+      }
+      if (!activeBuild || Number(activeBuild.id) !== requestedBuildId) {
+        appendLocalRunEvent({
+          kind: 'lifecycle',
+          phase: 'error',
+          message:
+            'Build changed before Lumine greeting could start. Please retry on the active build.'
+        });
+        return false;
+      }
+      resetDedupedProcessingReconcileState();
+      const now = Math.floor(Date.now() / 1000);
+      const assistantMessageId = Date.now();
+      const requestId = `${activeBuild.id}-greeting-${assistantMessageId}`;
+      activeRunModeRef.current = 'greeting';
+      resetRuntimeHealthFollowUpState();
+      setRuntimeExplorationPlan(null);
+      streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+        activeBuild.projectFiles || [],
+        activeBuild.code || ''
+      );
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
+      generatingRef.current = true;
+      reviewingRef.current = false;
+      setGenerating(true);
+      setGeneratingStatus(null);
+      setReviewerStatusSteps([]);
+      setAssistantStatusSteps([]);
+      setUsageMetrics({});
+      setRunEvents([]);
+      streamRequestIdRef.current = requestId;
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = assistantMessageId;
+      reviewerMessageIdRef.current = null;
+
+      const assistantMessage: ChatMessage = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        codeGenerated: null,
+        streamCodePreview: null,
+        createdAt: now,
+        persisted: false
+      };
+
+      const nextMessages = [...chatMessagesRef.current, assistantMessage];
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+      shouldAutoScrollRef.current = true;
+      scrollChatToBottom('smooth', { force: true });
+
+      socket.emit('build_generate_greeting', {
+        buildId: activeBuild.id,
+        requestId
       });
-    } catch {
-      return;
+      return true;
+    } finally {
+      startingGenerationRef.current = false;
     }
   }
 
@@ -2465,6 +3464,7 @@ export default function BuildEditor({
       if (buildPayload?.build) {
         const nextBuild = {
           ...buildPayload.build,
+          executionPlan: buildPayload.executionPlan || null,
           projectManifest: buildPayload.projectManifest || null,
           projectFiles: Array.isArray(buildPayload.projectFiles)
             ? buildPayload.projectFiles
@@ -2495,29 +3495,6 @@ export default function BuildEditor({
       updateChatMessagesRef.current(normalized);
     }
   }
-}
-
-function getBuildStatusBadgeStyle(status: string): React.CSSProperties {
-  const normalized = (status || '').toLowerCase();
-  if (normalized === 'draft') {
-    return {
-      background: 'rgba(255, 154, 0, 0.16)',
-      borderColor: 'rgba(255, 154, 0, 0.36)',
-      color: '#b45309'
-    };
-  }
-  if (normalized === 'published') {
-    return {
-      background: 'rgba(34, 197, 94, 0.16)',
-      borderColor: 'rgba(34, 197, 94, 0.36)',
-      color: '#166534'
-    };
-  }
-  return {
-    background: 'rgba(65, 140, 235, 0.14)',
-    borderColor: 'rgba(65, 140, 235, 0.34)',
-    color: '#1d4ed8'
-  };
 }
 
 function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {

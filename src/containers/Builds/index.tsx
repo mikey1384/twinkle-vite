@@ -14,7 +14,7 @@ import { mobileMaxWidth } from '~/constants/css';
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
-type SortOption = 'recent' | 'popular' | 'starred';
+type SortOption = 'recent' | 'popular';
 
 interface Build {
   id: number;
@@ -24,18 +24,12 @@ interface Build {
   title: string;
   description: string | null;
   slug: string;
-  status: string;
   thumbnailUrl: string | null;
   publishedAt: number;
   sourceBuildId: number | null;
+  viewCount: number;
   createdAt: number;
   updatedAt: number;
-  stats: {
-    viewCount: number;
-    starCount: number;
-    commentCount: number;
-    forkCount: number;
-  };
 }
 
 const galleryFilterClass = css`
@@ -123,10 +117,10 @@ export default function Builds() {
   }
 
   function handleBuildClick(buildId: number) {
-    navigate(`/build/${buildId}`);
+    navigate(`/app/${buildId}`);
   }
 
-function handleSortChange(sort: SortOption) {
+  function handleSortChange(sort: SortOption) {
     if (sort !== sortOption) {
       setSortOption(sort);
     }
@@ -242,13 +236,6 @@ function handleSortChange(sort: SortOption) {
                 style={{ cursor: 'pointer' }}
               >
                 <a>Popular</a>
-              </nav>
-              <nav
-                className={sortOption === 'starred' ? 'active' : ''}
-                onClick={() => handleSortChange('starred')}
-                style={{ cursor: 'pointer' }}
-              >
-                <a>Most Starred</a>
               </nav>
             </FilterBar>
           </div>

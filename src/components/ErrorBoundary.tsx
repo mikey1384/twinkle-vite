@@ -68,6 +68,7 @@ export default class ErrorBoundary extends Component<
 
   render() {
     const { children, innerRef, componentPath, ...props } = this.props;
+    delete (props as any).autoRecoverDomMutationError;
     const { hasError, recoveryKey } = this.state;
     if (hasError) {
       return (

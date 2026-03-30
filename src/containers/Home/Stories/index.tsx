@@ -79,6 +79,9 @@ export default function Stories() {
   const onLoadMoreFeeds = useHomeContext((v) => v.actions.onLoadMoreFeeds);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
   const onSetDisplayOrder = useHomeContext((v) => v.actions.onSetDisplayOrder);
+  const onSetFeedsOutdated = useHomeContext(
+    (v) => v.actions.onSetFeedsOutdated
+  );
 
   const [loadingFeeds, setLoadingFeeds] = useState(false);
   const [loadingFilteredFeeds, setLoadingFilteredFeeds] = useState(false);
@@ -254,7 +257,7 @@ export default function Stories() {
           ) : null}
           {loaded && !loadingPosts && feeds?.length > 0 ? (
             <>
-              {numNewPosts > 0 ? (
+              {displayOrder === 'desc' && numNewPosts > 0 ? (
                 <Banner
                   color={alertColorKey}
                   onClick={handleFetchNewFeeds}
@@ -270,6 +273,7 @@ export default function Stories() {
                   )}
                 </Banner>
               ) : (
+                displayOrder === 'desc' &&
                 feedsOutdated && (
                   <Banner
                     color={alertColorKey}
@@ -550,6 +554,10 @@ export default function Stories() {
     const newDisplayOrder = displayOrder === 'desc' ? 'asc' : 'desc';
     const initialFilter =
       category === 'uploads' ? subFilter : categoryObj[category].filter;
+    if (newDisplayOrder === 'asc') {
+      onResetNumNewPosts();
+      onSetFeedsOutdated(false);
+    }
     setLoadingFeeds(true);
     const { data, filter } = await loadFeeds({
       order: newDisplayOrder,

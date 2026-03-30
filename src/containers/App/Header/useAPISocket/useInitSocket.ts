@@ -38,6 +38,7 @@ export default function useInitSocket({
   const navigate = useNavigate();
 
   const category = useHomeContext((v) => v.state.category);
+  const displayOrder = useHomeContext((v) => v.state.displayOrder);
   const channelPathIdHash = useChatContext((v) => v.state.channelPathIdHash);
   const channelsObj = useChatContext((v) => v.state.channelsObj);
   const feeds = useHomeContext((v) => v.state.feeds);
@@ -117,6 +118,7 @@ export default function useInitSocket({
   const checkFeedsRerunRequestedRef = useRef(false);
   const pendingHydrateFromOutdatedRef = useRef(false);
   const categoryRef = useRef(category);
+  const displayOrderRef = useRef(displayOrder);
   const channelsObjRef = useRef(channelsObj);
   const feedsRef = useRef(feeds);
   const subFilterRef = useRef(subFilter);
@@ -138,6 +140,9 @@ export default function useInitSocket({
     categoryRef.current = category;
   }, [category]);
   useEffect(() => {
+    displayOrderRef.current = displayOrder;
+  }, [displayOrder]);
+  useEffect(() => {
     channelsObjRef.current = channelsObj;
   }, [channelsObj]);
   useEffect(() => {
@@ -150,20 +155,30 @@ export default function useInitSocket({
     numNewPostsRef.current = numNewPosts;
   }, [numNewPosts]);
   useEffect(() => {
+    if (displayOrder !== 'desc') {
+      pendingHydrateFromOutdatedRef.current = false;
+      if (feedsOutdated) {
+        onSetFeedsOutdated(false);
+      }
+      if (numNewPosts !== 0) {
+        onSetNumNewPosts(0);
+      }
+      return;
+    }
     if (!pendingHydrateFromOutdatedRef.current) return;
     if (!feedsOutdated) {
       pendingHydrateFromOutdatedRef.current = false;
       return;
     }
-    const firstFeed = feeds?.[0];
-    if (!firstFeed?.lastInteraction) return;
+    const newestVisibleFeed = feeds?.[0];
+    if (!newestVisibleFeed?.lastInteraction) return;
 
     pendingHydrateFromOutdatedRef.current = false;
     if (numNewPosts === 0) {
-      void hydrateNumNewPostsIfNeeded(firstFeed.lastInteraction);
+      void hydrateNumNewPostsIfNeeded(newestVisibleFeed.lastInteraction);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feeds, feedsOutdated, numNewPosts]);
+  }, [displayOrder, feeds, feedsOutdated, numNewPosts]);
 
   const checkFeedsOutdated = useCallback(
     async ({
@@ -191,6 +206,11 @@ export default function useInitSocket({
         const now = Date.now();
         if (isCheckingOutdatedRef.current) return;
         if (!bypass && now - lastOutdatedCheckRef.current < 15000) return;
+
+        if (displayOrderRef.current !== 'desc') {
+          onSetFeedsOutdated(false);
+          return;
+        }
 
         const firstFeed = feedsRef.current?.[0];
         const currentCategory = categoryRef.current;
@@ -372,6 +392,11 @@ export default function useInitSocket({
     }
 
     function handleHomeOutdated() {
+      if (displayOrderRef.current !== 'desc') {
+        onSetFeedsOutdated(false);
+        pendingHydrateFromOutdatedRef.current = false;
+        return;
+      }
       onSetFeedsOutdated(true);
       const firstFeed = feedsRef.current?.[0];
       if (firstFeed?.lastInteraction) {

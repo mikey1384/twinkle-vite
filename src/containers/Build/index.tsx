@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Routes, Route, useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  useParams,
+  useNavigate,
+  useLocation
+} from 'react-router-dom';
 import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -15,52 +21,27 @@ const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
 interface BuildCopilotPolicy {
-  tier: 'free' | 'pro' | 'premium';
-  assignedTier?: 'free' | 'pro' | 'premium';
-  byo?: {
-    enabled: boolean;
-    requiredForPaidTiers: boolean;
-    blockedAssignedTier: boolean;
-  };
-  pricing: {
-    proMonthlyPriceUsd: number;
-  };
   limits: {
-    maxProjects: number;
     maxProjectBytes: number;
     maxFilesPerProject: number;
-    maxFileBytes: number;
-    maxPromptChars: number;
-    historyMaxAgeSeconds: number;
-    historyMaxMessages: number;
-    historyMessageCharLimit: number;
-    historyTotalCharBudget: number;
+    maxFileLines: number;
   };
   usage: {
-    projectCount: number;
-    projectCountRemaining: number;
     currentProjectBytes: number;
     projectBytesRemaining: number;
     projectFileCount: number;
     projectFileBytes: number;
     maxFilesPerProject: number;
-    maxFileBytes: number;
   };
-  requestBilling: {
+  requestLimits: {
     dayIndex: number;
     dayKey: string;
-    tier: 'free' | 'pro' | 'premium';
-    messageRequestsPerDay: number;
+    generationRequestsPerDay: number;
     reviewRequestsPerDay: number;
-    coinCostPerRequest: number;
-    billingEnabled: boolean;
-    messageRequestsToday: number;
-    messageRequestsRemaining: number;
+    generationRequestsToday: number;
+    generationRequestsRemaining: number;
     reviewRequestsToday: number;
     reviewRequestsRemaining: number;
-    paidRequestsToday: number;
-    coinSpentToday: number;
-    coinBalance: number | null;
   };
 }
 
@@ -98,9 +79,14 @@ function NewBuild() {
     if (!title.trim() || creating) return;
     setCreating(true);
     try {
-      const { build } = await createBuild({ title: title.trim() });
+      const { build } = await createBuild({
+        title: title.trim()
+      });
       if (build?.id) {
-        navigate(`/build/${build.id}`, { replace: true });
+        navigate(`/build/${build.id}`, {
+          replace: true,
+          state: { seedGreeting: true }
+        });
       }
     } catch (error) {
       console.error('Failed to create build:', error);
@@ -300,11 +286,18 @@ function BuildEditorWrapper() {
     async function handleLoad() {
       setLoading(true);
       try {
-        const data = await loadBuild(numericBuildId);
+        const data = await loadBuild(numericBuildId, {
+          fromWriter: Boolean(
+            (location.state as any)?.initialPrompt ||
+              (location.state as any)?.seedGreeting
+          )
+        });
         if (data?.build) {
           setBuild({
             ...data.build,
+            executionPlan: data.executionPlan || null,
             projectManifest: data.projectManifest || null,
+            capabilitySnapshot: data.capabilitySnapshot || null,
             projectFiles: Array.isArray(data.projectFiles)
               ? data.projectFiles
               : []
@@ -314,14 +307,14 @@ function BuildEditorWrapper() {
         } else {
           setError('Build not found');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load build:', err);
-        setError('Failed to load build');
+        setError(err?.message || 'Failed to load build');
       }
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [numericBuildId]);
+  }, [location.state, numericBuildId]);
 
   if (!numericBuildId) {
     return <InvalidPage text="Invalid build ID" />;
@@ -335,7 +328,8 @@ function BuildEditorWrapper() {
     return <InvalidPage text={error || 'Build not found'} />;
   }
 
-  const isOwner = userId === build.userId;
+  const isOwner = Number(userId) > 0 && Number(userId) === Number(build.userId);
+  const seedGreeting = Boolean((location.state as any)?.seedGreeting);
   const initialPrompt =
     typeof (location.state as any)?.initialPrompt === 'string'
       ? (location.state as any).initialPrompt
@@ -348,6 +342,7 @@ function BuildEditorWrapper() {
       copilotPolicy={copilotPolicy}
       isOwner={isOwner}
       initialPrompt={initialPrompt}
+      seedGreeting={seedGreeting}
       onUpdateBuild={setBuild}
       onUpdateChatMessages={setChatMessages}
       onUpdateCopilotPolicy={setCopilotPolicy}

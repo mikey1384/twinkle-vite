@@ -9,6 +9,7 @@ import NotableActivities from './Activities/NotableActivities';
 import XPAnalysis from './Activities/XPAnalysis';
 import MissionProgress from './Activities/MissionProgress';
 import Pictures from './Pictures';
+import Builds from './Builds';
 import PinnedAICards from './PinnedAICards';
 import ReorderSectionsModal from './ReorderSectionsModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
@@ -27,6 +28,7 @@ const EMPTY_PICTURES: any[] = [];
 const profileSectionKeys = [
   'intro',
   'pictures',
+  'builds',
   'pinnedAICards',
   'featuredSubjects',
   'notableActivities',
@@ -36,6 +38,7 @@ const profileSectionKeys = [
 const profileSectionLabels: Record<string, string> = {
   intro: 'Intro',
   pictures: 'Pictures',
+  builds: 'Builds',
   pinnedAICards: 'AI Cards',
   featuredSubjects: 'Featured Subjects',
   notableActivities: 'Notable Activities',
@@ -168,6 +171,7 @@ export default function Home({
         selectedTheme={selectedTheme}
       />
     ) : null,
+    builds: <Builds profile={profile} selectedTheme={selectedTheme} />,
     pinnedAICards: (
       <PinnedAICards profile={profile} selectedTheme={selectedTheme} />
     ),

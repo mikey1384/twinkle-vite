@@ -14,12 +14,31 @@ import { css } from '@emotion/css';
 import { parse as parseJavaScriptModule } from '@babel/parser';
 import { mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
+import type { BuildCapabilitySnapshot } from './capabilityTypes';
+import type {
+  BuildRuntimeExplorationExpectedSignals,
+  BuildRuntimeExplorationPlan,
+  BuildRuntimeExplorationPlanStep,
+  BuildRuntimeInteractionStep,
+  BuildRuntimeHealthSnapshot,
+  BuildRuntimeObservationIssue,
+  BuildRuntimeObservationState
+} from './runtimeObservationTypes';
+
+declare global {
+  interface Window {
+    initSqlJs?: (options: {
+      locateFile: (file: string) => string;
+    }) => Promise<any>;
+  }
+}
 
 interface Build {
   id: number;
   title: string;
   username: string;
   primaryArtifactId?: number | null;
+  isPublic?: boolean | number | null;
 }
 
 interface PreviewPanelProps {
@@ -29,6 +48,11 @@ interface PreviewPanelProps {
     path: string;
     content?: string;
   }>;
+  streamingProjectFiles?: Array<{
+    path: string;
+    content?: string;
+  }> | null;
+  streamingFocusFilePath?: string | null;
   isOwner: boolean;
   onReplaceCode: (code: string) => void;
   onApplyRestoredProjectFiles: (
@@ -38,11 +62,17 @@ interface PreviewPanelProps {
   onSaveProjectFiles: (
     files: Array<{ path: string; content?: string }>
   ) => Promise<{ success: boolean; error?: string }>;
+  runtimeOnly?: boolean;
+  capabilitySnapshot?: BuildCapabilitySnapshot | null;
   onEditableProjectFilesStateChange?: (state: {
     files: Array<{ path: string; content?: string }>;
     hasUnsavedChanges: boolean;
     saving: boolean;
   }) => void;
+  runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
+  onRuntimeObservationChange?: (
+    state: BuildRuntimeObservationState
+  ) => void;
 }
 
 interface ArtifactVersion {
@@ -66,43 +96,60 @@ interface PreviewFrameMeta {
   codeSignature: string | null;
 }
 
-interface DocsConnectResult {
-  success: boolean;
-  message: string | null;
-  buildId: number | null;
-  connectNonce: string | null;
-}
-
-interface PendingDocsConnectRequest {
-  buildId: number;
-  promise: Promise<DocsConnectResult>;
-}
-
 const PREVIEW_SEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const PREVIEW_SEED_CACHE_MAX_ENTRIES = 8;
 const MODULE_SPECIFIER_REWRITE_CACHE_MAX_ENTRIES = 500;
+const HOST_SQL_JS_CDN_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3';
+const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
+const GUEST_VIEWER_DB_STORAGE_KEY_PREFIX = 'twinkle_build_guest_viewer_db:';
+const GUEST_VIEWER_DB_SIZE_LIMIT_BYTES = 1 * 1024 * 1024;
+const GUEST_VIEWER_DB_MAX_ROWS = 1000;
+const GUEST_RESTRICTION_BANNER_TEXT =
+  'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
+const GUEST_RESTRICTION_ERROR_MESSAGE =
+  'This feature requires signing in because it uses user-only data.';
 const previewSeedCache = new Map<number, PreviewSeedCacheEntry>();
 const moduleSpecifierRewriteCache = new Map<string, string>();
+const guestViewerDbCache = new Map<string, any>();
+let hostSqlJsPromise: Promise<any> | null = null;
+const LEGACY_TWINKLE_SDK_METHOD_REPLACEMENTS = [
+  ['Twinkle.api.getUser', 'Twinkle.users.getUser'],
+  ['Twinkle.api.getUsers', 'Twinkle.users.getUsers'],
+  [
+    'Twinkle.api.getDailyReflectionsByUser',
+    'Twinkle.reflections.getDailyReflectionsByUser'
+  ],
+  ['Twinkle.api.getDailyReflections', 'Twinkle.reflections.getDailyReflections'],
+  ['Twinkle.content.getMySubjects', 'Twinkle.subjects.getMySubjects'],
+  ['Twinkle.content.getSubjectComments', 'Twinkle.subjects.getSubjectComments'],
+  ['Twinkle.content.getSubject', 'Twinkle.subjects.getSubject'],
+  [
+    'Twinkle.content.getProfileCommentCounts',
+    'Twinkle.profileComments.getProfileCommentCounts'
+  ],
+  [
+    'Twinkle.content.getProfileCommentIds',
+    'Twinkle.profileComments.getProfileCommentIds'
+  ],
+  [
+    'Twinkle.content.getCommentsByIds',
+    'Twinkle.profileComments.getCommentsByIds'
+  ],
+  [
+    'Twinkle.content.getProfileComments',
+    'Twinkle.profileComments.getProfileComments'
+  ]
+] as const;
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
-  'docs:connect-start',
-  'docs:disconnect',
-  'llm:generate',
   'db:save',
-  'jobs:cancel',
-  'jobs:claim-due',
-  'jobs:schedule',
-  'mail:send',
   'private-db:remove',
   'private-db:set',
   'shared-db:add-entry',
   'shared-db:create-topic',
   'shared-db:delete-entry',
   'shared-db:update-entry',
-  'social:follow',
-  'social:unfollow',
-  'viewer-db:exec',
-  'vocabulary:collect-word'
+  'viewer-db:exec'
 ]);
 
 function hashPreviewCode(code: string) {
@@ -152,6 +199,346 @@ function writeCachedModuleSpecifierRewrite(cacheKey: string, rewrittenSource: st
 function buildPreviewCodeSignature(codeWithSdk: string | null) {
   if (!codeWithSdk) return null;
   return `${codeWithSdk.length}:${hashPreviewCode(codeWithSdk)}`;
+}
+
+function buildEmptyRuntimeObservationState({
+  buildId,
+  codeSignature
+}: {
+  buildId: number;
+  codeSignature: string | null;
+}): BuildRuntimeObservationState {
+  return {
+    buildId,
+    codeSignature,
+    issues: [],
+    health: null,
+    updatedAt: Date.now()
+  };
+}
+
+function normalizeRuntimeObservationIssue(
+  payload: any
+): BuildRuntimeObservationIssue | null {
+  const kind =
+    payload?.kind === 'unhandledrejection'
+      ? 'unhandledrejection'
+      : payload?.kind === 'blankrender'
+        ? 'blankrender'
+        : payload?.kind === 'sdkblocked'
+          ? 'sdkblocked'
+          : payload?.kind === 'keyboardscroll'
+            ? 'keyboardscroll'
+            : payload?.kind === 'playfieldmismatch'
+              ? 'playfieldmismatch'
+          : payload?.kind === 'interactionnoop'
+            ? 'interactionnoop'
+            : 'error';
+  const message = String(payload?.message || '').trim();
+  if (!message) return null;
+  const stack = String(payload?.stack || '').trim();
+  const filename = String(payload?.filename || '').trim();
+  const lineNumber = Number(payload?.lineNumber);
+  const columnNumber = Number(payload?.columnNumber);
+  const createdAt = Number(payload?.createdAt);
+
+  return {
+    kind,
+    message: message.slice(0, 400),
+    stack: stack ? stack.slice(0, 1200) : null,
+    filename: filename ? filename.slice(0, 240) : null,
+    lineNumber:
+      Number.isFinite(lineNumber) && lineNumber > 0 ? lineNumber : null,
+    columnNumber:
+      Number.isFinite(columnNumber) && columnNumber > 0 ? columnNumber : null,
+    createdAt:
+      Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now()
+  };
+}
+
+function normalizeRuntimeExpectedSignals(
+  rawExpectedSignals: any
+): BuildRuntimeExplorationExpectedSignals | null {
+  if (!rawExpectedSignals || typeof rawExpectedSignals !== 'object') {
+    return null;
+  }
+  const routeChange =
+    typeof rawExpectedSignals.routeChange === 'boolean'
+      ? rawExpectedSignals.routeChange
+      : null;
+  const textIncludes = Array.isArray(rawExpectedSignals.textIncludes)
+    ? rawExpectedSignals.textIncludes
+        .map((text) => String(text || '').trim())
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+  const revealsLabels = Array.isArray(rawExpectedSignals.revealsLabels)
+    ? rawExpectedSignals.revealsLabels
+        .map((label) => String(label || '').trim())
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+  if (
+    routeChange === null &&
+    textIncludes.length === 0 &&
+    revealsLabels.length === 0
+  ) {
+    return null;
+  }
+  return {
+    routeChange,
+    textIncludes: textIncludes.map((text) => text.slice(0, 80)),
+    revealsLabels: revealsLabels.map((label) => label.slice(0, 80))
+  };
+}
+
+function normalizeRuntimeGameplayRect(payload: any) {
+  if (!payload || typeof payload !== 'object') return null;
+  const x = Number(payload.x);
+  const y = Number(payload.y);
+  const width = Number(payload.width);
+  const height = Number(payload.height);
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return null;
+  }
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(width),
+    height: Math.round(height)
+  };
+}
+
+function normalizeRuntimeHealthSnapshot(
+  payload: any
+): BuildRuntimeHealthSnapshot | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const visibleTextSample = String(payload.visibleTextSample || '').trim();
+  const headingCount = Number(payload.headingCount);
+  const buttonCount = Number(payload.buttonCount);
+  const formCount = Number(payload.formCount);
+  const viewportOverflowY = Number(payload.viewportOverflowY);
+  const viewportOverflowX = Number(payload.viewportOverflowX);
+  const observedAt = Number(payload.observedAt);
+  const interactionStatus = String(payload.interactionStatus || '').trim();
+  const interactionTargetLabel = String(
+    payload.interactionTargetLabel || ''
+  ).trim();
+  const interactionSteps = Array.isArray(payload.interactionSteps)
+    ? payload.interactionSteps
+        .map((step): BuildRuntimeInteractionStep | null => {
+          if (!step || typeof step !== 'object') return null;
+          const targetLabel = String(step.targetLabel || '').trim();
+          const routeBefore = String(step.routeBefore || '').trim();
+          const routeAfter = String(step.routeAfter || '').trim();
+          const hashBefore = String(step.hashBefore || '').trim();
+          const hashAfter = String(step.hashAfter || '').trim();
+          const visibleTextBefore = String(step.visibleTextBefore || '').trim();
+          const visibleTextAfter = String(step.visibleTextAfter || '').trim();
+          const headingDelta = Number(step.headingDelta);
+          const buttonDelta = Number(step.buttonDelta);
+          const formDelta = Number(step.formDelta);
+          const observedAtValue = Number(step.observedAt);
+          const status = String(step.status || '').trim();
+          const revealedTargetLabels = Array.isArray(step.revealedTargetLabels)
+            ? step.revealedTargetLabels
+                .map((label) => String(label || '').trim())
+                .filter(Boolean)
+                .slice(0, 4)
+            : [];
+
+          if (
+            status !== 'changed' &&
+            status !== 'unchanged' &&
+            status !== 'skipped'
+          ) {
+            return null;
+          }
+
+          return {
+            source: step.source === 'planned' ? 'planned' : 'generic',
+            goal:
+              typeof step.goal === 'string' && step.goal.trim()
+                ? step.goal.trim().slice(0, 220)
+                : null,
+            actionKind:
+              step.actionKind === 'submit-form'
+                ? 'submit-form'
+                : step.actionKind === 'click'
+                  ? 'click'
+                  : null,
+            expectedSignals: normalizeRuntimeExpectedSignals(
+              step.expectedSignals
+            ),
+            targetLabel: targetLabel ? targetLabel.slice(0, 120) : null,
+            status,
+            routeBefore: routeBefore ? routeBefore.slice(0, 240) : null,
+            routeAfter: routeAfter ? routeAfter.slice(0, 240) : null,
+            hashBefore: hashBefore ? hashBefore.slice(0, 240) : null,
+            hashAfter: hashAfter ? hashAfter.slice(0, 240) : null,
+            routeChanged: Boolean(step.routeChanged),
+            hashChanged: Boolean(step.hashChanged),
+            visibleTextBefore: visibleTextBefore
+              ? visibleTextBefore.slice(0, 180)
+              : null,
+            visibleTextAfter: visibleTextAfter
+              ? visibleTextAfter.slice(0, 180)
+              : null,
+            headingDelta:
+              Number.isFinite(headingDelta) ? Math.trunc(headingDelta) : 0,
+            buttonDelta:
+              Number.isFinite(buttonDelta) ? Math.trunc(buttonDelta) : 0,
+            formDelta: Number.isFinite(formDelta) ? Math.trunc(formDelta) : 0,
+            revealedTargetLabels,
+            observedAt:
+              Number.isFinite(observedAtValue) && observedAtValue > 0
+                ? observedAtValue
+                : Date.now()
+          };
+        })
+        .filter(Boolean)
+        .slice(0, 4) as BuildRuntimeInteractionStep[]
+    : [];
+  const gameplayTelemetry =
+    payload.gameplayTelemetry && typeof payload.gameplayTelemetry === 'object'
+      ? {
+          playfieldBounds: normalizeRuntimeGameplayRect(
+            payload.gameplayTelemetry.playfieldBounds
+          ),
+          playerBounds: normalizeRuntimeGameplayRect(
+            payload.gameplayTelemetry.playerBounds
+          ),
+          overflowTop: Number.isFinite(Number(payload.gameplayTelemetry.overflowTop))
+            ? Math.max(0, Math.floor(Number(payload.gameplayTelemetry.overflowTop)))
+            : 0,
+          overflowRight: Number.isFinite(
+            Number(payload.gameplayTelemetry.overflowRight)
+          )
+            ? Math.max(0, Math.floor(Number(payload.gameplayTelemetry.overflowRight)))
+            : 0,
+          overflowBottom: Number.isFinite(
+            Number(payload.gameplayTelemetry.overflowBottom)
+          )
+            ? Math.max(0, Math.floor(Number(payload.gameplayTelemetry.overflowBottom)))
+            : 0,
+          overflowLeft: Number.isFinite(
+            Number(payload.gameplayTelemetry.overflowLeft)
+          )
+            ? Math.max(0, Math.floor(Number(payload.gameplayTelemetry.overflowLeft)))
+            : 0,
+          status:
+            payload.gameplayTelemetry.status === 'out-of-bounds'
+              ? 'out-of-bounds'
+              : payload.gameplayTelemetry.status === 'ok'
+                ? 'ok'
+                : 'incomplete',
+          reportedAt: Number.isFinite(Number(payload.gameplayTelemetry.reportedAt))
+            ? Math.floor(Number(payload.gameplayTelemetry.reportedAt))
+            : Date.now()
+        }
+      : null;
+
+  return {
+    booted: Boolean(payload.booted),
+    meaningfulRender: Boolean(payload.meaningfulRender),
+    gameLike: Boolean(payload.gameLike),
+    headingCount:
+      Number.isFinite(headingCount) && headingCount >= 0
+        ? Math.floor(headingCount)
+        : 0,
+    buttonCount:
+      Number.isFinite(buttonCount) && buttonCount >= 0
+        ? Math.floor(buttonCount)
+        : 0,
+    formCount:
+      Number.isFinite(formCount) && formCount >= 0
+        ? Math.floor(formCount)
+        : 0,
+    viewportOverflowY:
+      Number.isFinite(viewportOverflowY) && viewportOverflowY >= 0
+        ? Math.floor(viewportOverflowY)
+        : 0,
+    viewportOverflowX:
+      Number.isFinite(viewportOverflowX) && viewportOverflowX >= 0
+        ? Math.floor(viewportOverflowX)
+        : 0,
+    visibleTextSample: visibleTextSample ? visibleTextSample.slice(0, 180) : null,
+    interactionStatus:
+      interactionStatus === 'changed' ||
+      interactionStatus === 'unchanged' ||
+      interactionStatus === 'skipped'
+        ? interactionStatus
+        : 'idle',
+    interactionTargetLabel: interactionTargetLabel
+      ? interactionTargetLabel.slice(0, 120)
+      : null,
+    interactionSteps,
+    gameplayTelemetry,
+    observedAt:
+      Number.isFinite(observedAt) && observedAt > 0 ? observedAt : Date.now()
+  };
+}
+
+function normalizeRuntimeExplorationPlanStep(
+  step: any
+): BuildRuntimeExplorationPlanStep | null {
+  if (!step || typeof step !== 'object') return null;
+  const kind =
+    step.kind === 'submit-form'
+      ? 'submit-form'
+      : step.kind === 'click'
+        ? 'click'
+        : null;
+  if (!kind) return null;
+  const goal = String(step.goal || '').trim();
+  const labelHints = Array.isArray(step.labelHints)
+    ? step.labelHints
+        .map((label) => String(label || '').trim())
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+  const inputHints = Array.isArray(step.inputHints)
+    ? step.inputHints
+        .map((hint) => String(hint || '').trim())
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+  const expectedSignals = normalizeRuntimeExpectedSignals(step.expectedSignals);
+  if (!goal || labelHints.length === 0) return null;
+  return {
+    kind,
+    goal: goal.slice(0, 220),
+    labelHints: labelHints.map((label) => label.slice(0, 80)),
+    inputHints: inputHints.map((hint) => hint.slice(0, 80)),
+    expectedSignals
+  };
+}
+
+function normalizeRuntimeExplorationPlan(
+  plan: any
+): BuildRuntimeExplorationPlan | null {
+  if (!plan || typeof plan !== 'object') return null;
+  const summary = String(plan.summary || '').trim();
+  const steps = Array.isArray(plan.steps)
+    ? plan.steps
+        .map((step) => normalizeRuntimeExplorationPlanStep(step))
+        .filter(Boolean)
+        .slice(0, 3) as BuildRuntimeExplorationPlanStep[]
+    : [];
+  if (!summary || steps.length === 0) return null;
+  return {
+    summary: summary.slice(0, 240),
+    generatedFrom:
+      plan.generatedFrom === 'planner' ? 'planner' : 'heuristic',
+    steps
+  };
 }
 
 function revokePreviewUrl(src: string | null | undefined) {
@@ -213,8 +600,259 @@ function clearCachedPreviewSeed(buildId: number) {
   previewSeedCache.delete(buildId);
 }
 
+function rewriteLegacyTwinkleSdkSource(source: string) {
+  if (!source) return source;
+  let rewrittenSource = source;
+  for (const [legacyMethod, nextMethod] of LEGACY_TWINKLE_SDK_METHOD_REPLACEMENTS) {
+    if (!rewrittenSource.includes(legacyMethod)) continue;
+    rewrittenSource = rewrittenSource.split(legacyMethod).join(nextMethod);
+  }
+  return rewrittenSource;
+}
+
 function isMutatingPreviewRequestType(type: string) {
   return MUTATING_PREVIEW_REQUEST_TYPES.has(type);
+}
+
+function bytesToBase64(bytes: Uint8Array) {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    for (let j = 0; j < chunk.length; j++) {
+      binary += String.fromCharCode(chunk[j]);
+    }
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(base64: string) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function getGuestViewerDbCacheKey(buildId: number, guestSessionId: string) {
+  return `${buildId}:${guestSessionId}`;
+}
+
+function getGuestViewerDbStorageKey(buildId: number, guestSessionId: string) {
+  return `${GUEST_VIEWER_DB_STORAGE_KEY_PREFIX}${buildId}:${guestSessionId}`;
+}
+
+async function loadHostSqlJs() {
+  if (hostSqlJsPromise) return hostSqlJsPromise;
+
+  hostSqlJsPromise = new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      hostSqlJsPromise = null;
+      reject(new Error('Window not available'));
+      return;
+    }
+
+    function initializeSqlJs() {
+      if (typeof window.initSqlJs !== 'function') {
+        hostSqlJsPromise = null;
+        reject(new Error('Failed to initialize sql.js'));
+        return;
+      }
+
+      window
+        .initSqlJs({
+          locateFile: (file) => `${HOST_SQL_JS_CDN_BASE}/${file}`
+        })
+        .then(resolve)
+        .catch((error) => {
+          hostSqlJsPromise = null;
+          reject(
+            error instanceof Error
+              ? error
+              : new Error('Failed to initialize sql.js')
+          );
+        });
+    }
+
+    if (typeof window.initSqlJs === 'function') {
+      initializeSqlJs();
+      return;
+    }
+
+    const existingScript = document.querySelector(
+      'script[data-twinkle-host-sqljs="true"]'
+    ) as HTMLScriptElement | null;
+    const script = existingScript || document.createElement('script');
+
+    function handleLoad() {
+      initializeSqlJs();
+    }
+
+    function handleError() {
+      hostSqlJsPromise = null;
+      reject(new Error('Failed to load sql.js'));
+    }
+
+    script.addEventListener('load', handleLoad, { once: true });
+    script.addEventListener('error', handleError, { once: true });
+
+    if (!existingScript) {
+      script.src = `${HOST_SQL_JS_CDN_BASE}/sql-wasm.min.js`;
+      script.async = true;
+      script.setAttribute('data-twinkle-host-sqljs', 'true');
+      document.head.appendChild(script);
+    }
+  });
+
+  return hostSqlJsPromise;
+}
+
+async function getGuestViewerDb({
+  buildId,
+  guestSessionId
+}: {
+  buildId: number;
+  guestSessionId: string;
+}) {
+  const cacheKey = getGuestViewerDbCacheKey(buildId, guestSessionId);
+  const cached = guestViewerDbCache.get(cacheKey);
+  if (cached) return cached;
+
+  const SQL = await loadHostSqlJs();
+  const storageKey = getGuestViewerDbStorageKey(buildId, guestSessionId);
+
+  try {
+    const storedBase64 = window.localStorage.getItem(storageKey);
+    if (storedBase64) {
+      const db = new SQL.Database(base64ToBytes(storedBase64));
+      guestViewerDbCache.set(cacheKey, db);
+      return db;
+    }
+  } catch {
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch {
+      // no-op
+    }
+  }
+
+  const emptyDb = new SQL.Database();
+  guestViewerDbCache.set(cacheKey, emptyDb);
+  return emptyDb;
+}
+
+function persistGuestViewerDb({
+  buildId,
+  guestSessionId,
+  db
+}: {
+  buildId: number;
+  guestSessionId: string;
+  db: any;
+}) {
+  const exported = db.export() as Uint8Array;
+  if (exported.length > GUEST_VIEWER_DB_SIZE_LIMIT_BYTES) {
+    throw new Error('Guest app data exceeds the local storage limit.');
+  }
+
+  try {
+    window.localStorage.setItem(
+      getGuestViewerDbStorageKey(buildId, guestSessionId),
+      bytesToBase64(exported)
+    );
+  } catch {
+    throw new Error('Failed to save guest app data locally.');
+  }
+}
+
+async function executeGuestViewerDbQuery({
+  buildId,
+  guestSessionId,
+  sql,
+  params
+}: {
+  buildId: number;
+  guestSessionId: string;
+  sql: string;
+  params?: any[];
+}) {
+  if (typeof sql !== 'string' || !sql.trim()) {
+    throw new Error('SQL is required');
+  }
+  if (typeof params !== 'undefined' && !Array.isArray(params)) {
+    throw new Error('Params must be an array');
+  }
+
+  const db = await getGuestViewerDb({ buildId, guestSessionId });
+  const stmt = db.prepare(sql);
+
+  try {
+    if (!stmt.reader) {
+      throw new Error('Query must return rows');
+    }
+    if (params?.length) {
+      stmt.bind(params);
+    }
+
+    const rows = [];
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject());
+    }
+    const rowCount = rows.length;
+    const truncated = rowCount > GUEST_VIEWER_DB_MAX_ROWS;
+
+    return {
+      rows: truncated ? rows.slice(0, GUEST_VIEWER_DB_MAX_ROWS) : rows,
+      rowCount,
+      truncated
+    };
+  } finally {
+    stmt.free();
+  }
+}
+
+async function executeGuestViewerDbExec({
+  buildId,
+  guestSessionId,
+  sql,
+  params
+}: {
+  buildId: number;
+  guestSessionId: string;
+  sql: string;
+  params?: any[];
+}) {
+  if (typeof sql !== 'string' || !sql.trim()) {
+    throw new Error('SQL is required');
+  }
+  if (typeof params !== 'undefined' && !Array.isArray(params)) {
+    throw new Error('Params must be an array');
+  }
+
+  const db = await getGuestViewerDb({ buildId, guestSessionId });
+  const stmt = db.prepare(sql);
+
+  try {
+    if (stmt.reader) {
+      throw new Error('Use query() for SELECT statements');
+    }
+
+    stmt.run(params || []);
+    const metadataResult = db.exec(
+      'SELECT changes() AS changes, last_insert_rowid() AS lastInsertRowid'
+    );
+    const metadataRow = metadataResult?.[0]?.values?.[0] || [];
+
+    persistGuestViewerDb({ buildId, guestSessionId, db });
+
+    return {
+      changes: Number(metadataRow[0] || 0),
+      lastInsertRowid: Number(metadataRow[1] || 0)
+    };
+  } finally {
+    stmt.free();
+  }
 }
 
 function normalizeProjectFilePath(rawPath: string) {
@@ -477,16 +1115,22 @@ function isPotentialLocalModuleFile(filePath: string) {
   );
 }
 
+function buildLocalModuleImportSpecifier(filePath: string) {
+  return `twinkle-local${normalizeProjectFilePath(filePath)}`;
+}
+
 function rewriteLocalModuleSpecifiersToAbsolutePaths({
   source,
   modulePath,
   localProjectPaths,
-  localProjectPathsKey
+  localProjectPathsKey,
+  rewriteResolvedPath
 }: {
   source: string;
   modulePath: string;
   localProjectPaths: Set<string>;
   localProjectPathsKey: string;
+  rewriteResolvedPath?: ((resolvedPath: string) => string) | null;
 }) {
   const cacheKey = buildModuleSpecifierRewriteCacheKey({
     modulePath,
@@ -502,7 +1146,10 @@ function rewriteLocalModuleSpecifiersToAbsolutePaths({
     if (!resolvedPath || !localProjectPaths.has(resolvedPath)) {
       return rawSpecifier;
     }
-    return resolvedPath;
+    if (typeof rewriteResolvedPath === 'function') {
+      return rewriteResolvedPath(resolvedPath);
+    }
+    return buildLocalModuleImportSpecifier(resolvedPath);
   };
   const rewrites: Array<{ start: number; end: number; replacement: string }> = [];
 
@@ -625,20 +1272,364 @@ function buildLocalModuleImportMap({
     const normalizedPath = normalizeProjectFilePath(filePath);
     const lowerPath = normalizedPath.toLowerCase();
     const isJsonModule = lowerPath.endsWith('.json');
+    const rewrittenSdkSource = isJsonModule
+      ? source
+      : rewriteLegacyTwinkleSdkSource(source);
     const rewrittenSource = isJsonModule
       ? source
       : rewriteLocalModuleSpecifiersToAbsolutePaths({
-          source,
+          source: rewrittenSdkSource,
           modulePath: normalizedPath,
           localProjectPaths,
           localProjectPathsKey
         });
     const mimeType = isJsonModule ? 'application/json' : 'text/javascript';
-    imports[normalizedPath] = `data:${mimeType};charset=utf-8,${encodeURIComponent(
+    imports[buildLocalModuleImportSpecifier(normalizedPath)] = `data:${mimeType};charset=utf-8,${encodeURIComponent(
       rewrittenSource
     )}`;
   }
   return imports;
+}
+
+function buildPreviewSessionFileUrl(sessionId: string, filePath: string) {
+  return `/build/preview/${encodeURIComponent(sessionId)}${normalizeProjectFilePath(
+    filePath
+  )}`;
+}
+
+function rewriteLocalCssUrlsForPreviewSession({
+  source,
+  filePath,
+  localProjectPaths,
+  sessionId
+}: {
+  source: string;
+  filePath: string;
+  localProjectPaths: Set<string>;
+  sessionId: string;
+}) {
+  if (!source) return source;
+  return source.replace(
+    /url\(\s*(['"]?)([^)"']+)\1\s*\)/gi,
+    (match, quote, rawValue) => {
+      const resolvedPath = resolveLocalProjectPathFromBase(rawValue, filePath);
+      if (!resolvedPath || !localProjectPaths.has(resolvedPath)) {
+        return match;
+      }
+      const nextUrl = buildPreviewSessionFileUrl(sessionId, resolvedPath);
+      if (quote) {
+        return `url(${quote}${nextUrl}${quote})`;
+      }
+      return `url("${nextUrl}")`;
+    }
+  );
+}
+
+function rewriteHtmlSrcsetForPreviewSession({
+  rawValue,
+  filePath,
+  localProjectPaths,
+  sessionId
+}: {
+  rawValue: string;
+  filePath: string;
+  localProjectPaths: Set<string>;
+  sessionId: string;
+}) {
+  return String(rawValue || '')
+    .split(',')
+    .map((entry) => {
+      const trimmed = String(entry || '').trim();
+      if (!trimmed) return '';
+      const [candidateUrl, descriptor] = trimmed.split(/\s+/, 2);
+      const resolvedPath = resolveLocalProjectPathFromBase(candidateUrl, filePath);
+      if (!resolvedPath || !localProjectPaths.has(resolvedPath)) {
+        return trimmed;
+      }
+      const rewrittenUrl = buildPreviewSessionFileUrl(sessionId, resolvedPath);
+      return descriptor ? `${rewrittenUrl} ${descriptor}` : rewrittenUrl;
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
+function buildPreviewSessionUrlBridgeScript({
+  sessionId,
+  localProjectPaths
+}: {
+  sessionId: string;
+  localProjectPaths: Set<string>;
+}) {
+  const sortedPaths = Array.from(localProjectPaths.values()).sort((a, b) =>
+    a.localeCompare(b)
+  );
+  return `<script>
+(function() {
+  var previewSessionBase = ${JSON.stringify(`/build/preview/${encodeURIComponent(sessionId)}`)};
+  var localProjectPaths = ${JSON.stringify(sortedPaths)};
+  var localProjectPathSet = Object.create(null);
+  for (var i = 0; i < localProjectPaths.length; i += 1) {
+    localProjectPathSet[localProjectPaths[i]] = true;
+  }
+
+  function resolvePreviewLocalUrl(value) {
+    if (value == null) return null;
+    try {
+      var url = new URL(String(value), window.location.href);
+      if (url.origin !== window.location.origin) return null;
+      if (!localProjectPathSet[url.pathname]) return null;
+      return previewSessionBase + url.pathname + url.search + url.hash;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  var originalFetch = window.fetch;
+  if (typeof originalFetch === 'function') {
+    window.fetch = function(input, init) {
+      if (typeof Request !== 'undefined' && input instanceof Request) {
+        var rewrittenRequestUrl = resolvePreviewLocalUrl(input.url);
+        if (rewrittenRequestUrl) {
+          return originalFetch.call(this, new Request(rewrittenRequestUrl, input), init);
+        }
+      } else {
+        var rewrittenFetchUrl = resolvePreviewLocalUrl(input);
+        if (rewrittenFetchUrl) {
+          return originalFetch.call(this, rewrittenFetchUrl, init);
+        }
+      }
+      return originalFetch.call(this, input, init);
+    };
+  }
+
+  var originalXhrOpen = XMLHttpRequest && XMLHttpRequest.prototype.open;
+  if (typeof originalXhrOpen === 'function') {
+    XMLHttpRequest.prototype.open = function(method, url) {
+      var rewrittenXhrUrl = resolvePreviewLocalUrl(url);
+      if (rewrittenXhrUrl) {
+        arguments[1] = rewrittenXhrUrl;
+      }
+      return originalXhrOpen.apply(this, arguments);
+    };
+  }
+
+  function wrapUrlConstructor(OriginalConstructor) {
+    if (typeof OriginalConstructor !== 'function') return OriginalConstructor;
+    return function(url) {
+      var rewrittenUrl = resolvePreviewLocalUrl(url);
+      if (rewrittenUrl) {
+        arguments[0] = rewrittenUrl;
+      }
+      return Reflect.construct(OriginalConstructor, arguments, new.target || OriginalConstructor);
+    };
+  }
+
+  if (typeof window.Worker === 'function') {
+    window.Worker = wrapUrlConstructor(window.Worker);
+  }
+  if (typeof window.SharedWorker === 'function') {
+    window.SharedWorker = wrapUrlConstructor(window.SharedWorker);
+  }
+  if (typeof window.EventSource === 'function') {
+    window.EventSource = wrapUrlConstructor(window.EventSource);
+  }
+})();
+</script>`;
+}
+
+function injectPreviewScriptsIntoHtml({
+  html,
+  scriptsHtml
+}: {
+  html: string;
+  scriptsHtml: string;
+}) {
+  if (!html) return scriptsHtml;
+  if (html.includes('<head>')) {
+    return html.replace('<head>', '<head>' + scriptsHtml);
+  }
+  if (html.includes('<body>')) {
+    return html.replace('<body>', '<body>' + scriptsHtml);
+  }
+  return scriptsHtml + html;
+}
+
+function rewriteLocalProjectHtmlForPreviewSession({
+  html,
+  filePath,
+  localProjectPaths,
+  localProjectPathsKey,
+  sessionId
+}: {
+  html: string;
+  filePath: string;
+  localProjectPaths: Set<string>;
+  localProjectPathsKey: string;
+  sessionId: string;
+}) {
+  if (!html) return html;
+
+  const rewriteLocalUrl = (rawValue: string) => {
+    const resolvedPath = resolveLocalProjectPathFromBase(rawValue, filePath);
+    if (!resolvedPath || !localProjectPaths.has(resolvedPath)) {
+      return rawValue;
+    }
+    return buildPreviewSessionFileUrl(sessionId, resolvedPath);
+  };
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    const scriptNodes = Array.from(doc.querySelectorAll('script'));
+    for (const scriptNode of scriptNodes) {
+      const scriptType = String(scriptNode.getAttribute('type') || '')
+        .trim()
+        .toLowerCase();
+      const isModuleScript = scriptType === 'module';
+      const rawSrc = scriptNode.getAttribute('src');
+      if (rawSrc && rawSrc.trim()) {
+        const rewrittenSrc = rewriteLocalUrl(rawSrc);
+        if (rewrittenSrc !== rawSrc) {
+          scriptNode.setAttribute('src', rewrittenSrc);
+          scriptNode.removeAttribute('integrity');
+        }
+        continue;
+      }
+      const inlineSource = String(scriptNode.textContent || '');
+      let rewrittenInlineSource = rewriteLegacyTwinkleSdkSource(inlineSource);
+      if (isModuleScript) {
+        rewrittenInlineSource = rewriteLocalModuleSpecifiersToAbsolutePaths({
+          source: rewrittenInlineSource,
+          modulePath: filePath,
+          localProjectPaths,
+          localProjectPathsKey,
+          rewriteResolvedPath: (resolvedPath) =>
+            buildPreviewSessionFileUrl(sessionId, resolvedPath)
+        });
+      }
+      if (rewrittenInlineSource !== inlineSource) {
+        scriptNode.textContent = rewrittenInlineSource;
+      }
+    }
+
+    const styleNodes = Array.from(doc.querySelectorAll('style'));
+    for (const styleNode of styleNodes) {
+      styleNode.textContent = rewriteLocalCssUrlsForPreviewSession({
+        source: String(styleNode.textContent || ''),
+        filePath,
+        localProjectPaths,
+        sessionId
+      });
+    }
+
+    const attrSelectors: Array<{
+      selector: string;
+      attribute: 'href' | 'src' | 'poster' | 'data' | 'srcset';
+    }> = [
+      { selector: '[href]', attribute: 'href' },
+      { selector: '[src]', attribute: 'src' },
+      { selector: '[poster]', attribute: 'poster' },
+      { selector: 'object[data]', attribute: 'data' },
+      { selector: 'img[srcset], source[srcset]', attribute: 'srcset' }
+    ];
+
+    for (const entry of attrSelectors) {
+      const nodes = Array.from(doc.querySelectorAll(entry.selector));
+      for (const node of nodes) {
+        const currentValue = String(node.getAttribute(entry.attribute) || '');
+        if (!currentValue) continue;
+        const rewrittenValue =
+          entry.attribute === 'srcset'
+            ? rewriteHtmlSrcsetForPreviewSession({
+                rawValue: currentValue,
+                filePath,
+                localProjectPaths,
+                sessionId
+              })
+            : rewriteLocalUrl(currentValue);
+        if (rewrittenValue !== currentValue) {
+          node.setAttribute(entry.attribute, rewrittenValue);
+          if (entry.attribute === 'src' || entry.attribute === 'href') {
+            node.removeAttribute('integrity');
+          }
+        }
+      }
+    }
+
+    return `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
+  } catch (error) {
+    console.error('Failed to rewrite preview-session HTML:', error);
+    return html;
+  }
+}
+
+function buildPreviewSessionProjectFiles({
+  code,
+  projectFiles,
+  sessionId
+}: {
+  code: string | null;
+  projectFiles: Array<{ path: string; content?: string }>;
+  sessionId: string;
+}) {
+  const normalizedFiles = buildEditableProjectFiles({ code, projectFiles }).map(
+    (file) => ({
+      path: file.path,
+      content: file.content
+    })
+  );
+  const localProjectPaths = new Set<string>(
+    normalizedFiles.map((file) => normalizeProjectFilePath(file.path))
+  );
+  const localProjectPathsKey = buildLocalProjectPathsKey(localProjectPaths);
+  const injectedScripts =
+    buildPreviewSessionUrlBridgeScript({
+      sessionId,
+      localProjectPaths
+    }) + TWINKLE_SDK_SCRIPT;
+
+  return normalizedFiles.map((file) => {
+    const normalizedPath = normalizeProjectFilePath(file.path);
+    const lowerPath = normalizedPath.toLowerCase();
+    let content = String(file.content || '');
+
+    if (lowerPath.endsWith('.html') || lowerPath.endsWith('.htm')) {
+      content = rewriteLocalProjectHtmlForPreviewSession({
+        html: content,
+        filePath: normalizedPath,
+        localProjectPaths,
+        localProjectPathsKey,
+        sessionId
+      });
+      content = injectPreviewScriptsIntoHtml({
+        html: content,
+        scriptsHtml: injectedScripts
+      });
+    } else if (isPotentialLocalModuleFile(normalizedPath)) {
+      const rewrittenSdkSource = rewriteLegacyTwinkleSdkSource(content);
+      content = rewriteLocalModuleSpecifiersToAbsolutePaths({
+        source: rewrittenSdkSource,
+        modulePath: normalizedPath,
+        localProjectPaths,
+        localProjectPathsKey,
+        rewriteResolvedPath: (resolvedPath) =>
+          buildPreviewSessionFileUrl(sessionId, resolvedPath)
+      });
+    } else if (lowerPath.endsWith('.css')) {
+      content = rewriteLocalCssUrlsForPreviewSession({
+        source: content,
+        filePath: normalizedPath,
+        localProjectPaths,
+        sessionId
+      });
+    }
+
+    return {
+      path: normalizedPath,
+      content
+    };
+  });
 }
 
 function buildLocalScriptDataUrl({
@@ -697,17 +1688,17 @@ function inlineLocalProjectAssets({
   projectFiles: Array<{ path: string; content?: string }>;
 }) {
   if (!html) return html;
-  if (!Array.isArray(projectFiles) || projectFiles.length === 0) return html;
 
   const fileMap = new Map<string, string>();
-  for (const file of projectFiles) {
-    if (!file || typeof file !== 'object') continue;
-    if (typeof file.content !== 'string') continue;
-    const normalized = normalizeProjectFilePath(String(file.path || ''));
-    if (!normalized || normalized === '/') continue;
-    fileMap.set(normalized, file.content);
+  if (Array.isArray(projectFiles)) {
+    for (const file of projectFiles) {
+      if (!file || typeof file !== 'object') continue;
+      if (typeof file.content !== 'string') continue;
+      const normalized = normalizeProjectFilePath(String(file.path || ''));
+      if (!normalized || normalized === '/') continue;
+      fileMap.set(normalized, file.content);
+    }
   }
-  if (fileMap.size === 0) return html;
   const localProjectPaths = new Set<string>(fileMap.keys());
   const localProjectPathsKey = buildLocalProjectPathsKey(localProjectPaths);
   const moduleImportMap = buildLocalModuleImportMap({
@@ -731,20 +1722,20 @@ function inlineLocalProjectAssets({
       const src = scriptNode.getAttribute('src');
       const hasSrc = typeof src === 'string' && src.trim().length > 0;
       if (!hasSrc) {
-        if (!isModuleScript || !hasModuleImportMap) {
-          continue;
-        }
         const inlineSource = String(scriptNode.textContent || '');
-        const rewrittenInlineSource = rewriteLocalModuleSpecifiersToAbsolutePaths({
-          source: inlineSource,
-          modulePath: '/index.html',
-          localProjectPaths,
-          localProjectPathsKey
-        });
+        let rewrittenInlineSource = rewriteLegacyTwinkleSdkSource(inlineSource);
+        if (isModuleScript && hasModuleImportMap) {
+          rewrittenInlineSource = rewriteLocalModuleSpecifiersToAbsolutePaths({
+            source: rewrittenInlineSource,
+            modulePath: '/index.html',
+            localProjectPaths,
+            localProjectPathsKey
+          });
+        }
         if (rewrittenInlineSource !== inlineSource) {
           scriptNode.textContent = rewrittenInlineSource;
         }
-        if (!firstLocalModuleEntryScript) {
+        if (isModuleScript && hasModuleImportMap && !firstLocalModuleEntryScript) {
           firstLocalModuleEntryScript = scriptNode;
         }
         continue;
@@ -772,11 +1763,12 @@ function inlineLocalProjectAssets({
       if (typeof scriptContent !== 'string') continue;
       const rawScriptType = String(scriptNode.getAttribute('type') || '').trim();
       const mimeType = rawScriptType || 'text/javascript';
+      const rewrittenScriptContent = rewriteLegacyTwinkleSdkSource(scriptContent);
       const rewrittenClassicScript = scriptNode.cloneNode(false) as HTMLScriptElement;
       rewrittenClassicScript.setAttribute(
         'src',
         buildLocalScriptDataUrl({
-          source: scriptContent,
+          source: rewrittenScriptContent,
           mimeType
         })
       );
@@ -818,11 +1810,15 @@ function inlineLocalProjectAssets({
 }
 
 // The Twinkle SDK script that gets injected into builds
-const TWINKLE_SDK_SCRIPT = `
+const TWINKLE_SDK_SCRIPT = String.raw`
 <script>
+var Twinkle;
 (function() {
   'use strict';
-  if (window.Twinkle) return;
+  if (window.Twinkle) {
+    Twinkle = window.Twinkle;
+    return;
+  }
 
   let SQL = null;
   let db = null;
@@ -830,6 +1826,55 @@ const TWINKLE_SDK_SCRIPT = `
   let pendingRequests = new Map();
   let requestId = 0;
   let viewerInfo = null;
+  let capabilitySnapshot = null;
+  let runtimeExplorationPlan = null;
+  var blankRenderProbeState = {
+    scheduled: false,
+    resolved: false,
+    reported: false
+  };
+  var previewInteractionProbeState = {
+    scheduled: false,
+    completed: false,
+    status: 'idle',
+    targetLabel: '',
+    steps: [],
+    usedTargetLabels: Object.create(null),
+    planStepIndex: 0
+  };
+  var previewHealthLastKey = '';
+  var previewHealthMutationTimer = null;
+  var previewHealthObserver = null;
+  var keyboardScrollProbeState = {
+    reported: false
+  };
+  var viewportModeState = {
+    mode: 'document',
+    styleInjected: false
+  };
+  var viewportFitState = {
+    scheduled: false,
+    candidate: null,
+    scale: 1,
+    baseWidth: 0,
+    baseHeight: 0
+  };
+  var previewLayoutState = {
+    reservedInsets: {
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0
+    },
+    listeners: [],
+    current: null,
+    lastKey: ''
+  };
+  var gameplayTelemetryState = {
+    playfieldBounds: null,
+    playerBounds: null,
+    scheduled: false
+  };
 
   function getRequestId() {
     return 'twinkle_' + (++requestId) + '_' + Date.now();
@@ -839,14 +1884,6 @@ const TWINKLE_SDK_SCRIPT = `
     const requestedTimeout = Number(options && options.timeoutMs);
     if (Number.isFinite(requestedTimeout) && requestedTimeout > 0) {
       return requestedTimeout;
-    }
-    if (type === 'docs:connect-start') {
-      return 16 * 60 * 1000;
-    }
-    if (type === 'llm:generate') {
-      // Backend provider retries can run up to ~15 minutes total.
-      // Keep iframe timeout above that window to avoid client-side false timeouts.
-      return 20 * 60 * 1000;
     }
     return 30000;
   }
@@ -881,6 +1918,7 @@ const TWINKLE_SDK_SCRIPT = `
       viewer.profilePicUrl = null;
       viewer.isLoggedIn = false;
       viewer.isOwner = false;
+      viewer.isGuest = false;
       return;
     }
     viewer.id = info.id || null;
@@ -888,11 +1926,1885 @@ const TWINKLE_SDK_SCRIPT = `
     viewer.profilePicUrl = info.profilePicUrl || null;
     viewer.isLoggedIn = Boolean(info.isLoggedIn);
     viewer.isOwner = Boolean(info.isOwner);
+    viewer.isGuest = Boolean(info.isGuest);
   }
+
+  function applyCapabilitySnapshot(snapshot) {
+    capabilitySnapshot = snapshot || null;
+    if (!window.Twinkle || !window.Twinkle.capabilities) return;
+    window.Twinkle.capabilities.current = capabilitySnapshot;
+  }
+
+  function normalizeExplorationPlanStep(rawStep) {
+    if (!rawStep || typeof rawStep !== 'object') return null;
+    function normalizeExpectedSignals(rawExpectedSignals) {
+      if (!rawExpectedSignals || typeof rawExpectedSignals !== 'object') {
+        return null;
+      }
+      var routeChange =
+        typeof rawExpectedSignals.routeChange === 'boolean'
+          ? rawExpectedSignals.routeChange
+          : null;
+      var textIncludes = Array.isArray(rawExpectedSignals.textIncludes)
+        ? rawExpectedSignals.textIncludes
+            .map(function(text) {
+              return trimObservationText(text, 80);
+            })
+            .filter(Boolean)
+            .slice(0, 4)
+        : [];
+      var revealsLabels = Array.isArray(rawExpectedSignals.revealsLabels)
+        ? rawExpectedSignals.revealsLabels
+            .map(function(label) {
+              return trimObservationText(label, 80);
+            })
+            .filter(Boolean)
+            .slice(0, 4)
+        : [];
+      if (
+        routeChange === null &&
+        textIncludes.length === 0 &&
+        revealsLabels.length === 0
+      ) {
+        return null;
+      }
+      return {
+        routeChange: routeChange,
+        textIncludes: textIncludes,
+        revealsLabels: revealsLabels
+      };
+    }
+    var kind =
+      rawStep.kind === 'submit-form'
+        ? 'submit-form'
+        : rawStep.kind === 'click'
+          ? 'click'
+          : null;
+    if (!kind) return null;
+    var goal = trimObservationText(rawStep.goal, 220);
+    var labelHints = Array.isArray(rawStep.labelHints)
+      ? rawStep.labelHints
+          .map(function(label) {
+            return trimObservationText(label, 80);
+          })
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
+    var inputHints = Array.isArray(rawStep.inputHints)
+      ? rawStep.inputHints
+          .map(function(hint) {
+            return trimObservationText(hint, 80);
+          })
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
+    var expectedSignals = normalizeExpectedSignals(rawStep.expectedSignals);
+    if (!goal || labelHints.length === 0) return null;
+    return {
+      kind: kind,
+      goal: goal,
+      labelHints: labelHints,
+      inputHints: inputHints,
+      expectedSignals: expectedSignals
+    };
+  }
+
+  function applyRuntimeExplorationPlan(plan) {
+    var shouldRestartProbe =
+      previewInteractionProbeState.scheduled ||
+      previewInteractionProbeState.completed ||
+      previewInteractionProbeState.steps.length > 0;
+    var normalizedPlan =
+      plan && typeof plan === 'object'
+        ? {
+            summary: trimObservationText(plan.summary, 240),
+            generatedFrom:
+              plan.generatedFrom === 'planner' ? 'planner' : 'heuristic',
+            steps: Array.isArray(plan.steps)
+              ? plan.steps
+                  .map(normalizeExplorationPlanStep)
+                  .filter(Boolean)
+                  .slice(0, 3)
+              : []
+          }
+        : null;
+    runtimeExplorationPlan =
+      normalizedPlan &&
+      normalizedPlan.summary &&
+      normalizedPlan.steps &&
+      normalizedPlan.steps.length > 0
+        ? normalizedPlan
+        : null;
+    syncViewportAppMode('');
+    previewInteractionProbeState.planStepIndex = 0;
+    if (shouldRestartProbe && runtimeExplorationPlan) {
+      restartPreviewInteractionProbe();
+    }
+  }
+
+  var runtimeObservationKeys = Object.create(null);
+  var runtimeObservationCount = 0;
+
+  function trimObservationText(value, maxLength) {
+    var text = String(value || '').trim();
+    if (!text) return '';
+    return text.length > maxLength ? text.slice(0, maxLength) : text;
+  }
+
+  function sanitizeObservationStack(value) {
+    var text = String(value || '').replace(/\r/g, '');
+    if (!text) return '';
+    text = text.replace(
+      /data:text\/javascript[^)\s]*/gi,
+      '[inline-preview-module]'
+    );
+    text = text.replace(/blob:[^)\s]{80,}/gi, '[blob-url]');
+    return text
+      .split('\n')
+      .map(function(line) {
+        var normalized = String(line || '').replace(/\s+/g, ' ').trim();
+        if (!normalized) return '';
+        return normalized.length > 180
+          ? normalized.slice(0, 180) + '...'
+          : normalized;
+      })
+      .filter(Boolean)
+      .slice(0, 6)
+      .join('\n');
+  }
+
+  function normalizeGameplayRect(rawValue) {
+    if (rawValue == null) return null;
+    if (!rawValue || typeof rawValue !== 'object') return null;
+    var x = Number(rawValue.x);
+    var y = Number(rawValue.y);
+    var width = Number(rawValue.width);
+    var height = Number(rawValue.height);
+    if (
+      !Number.isFinite(x) ||
+      !Number.isFinite(y) ||
+      !Number.isFinite(width) ||
+      !Number.isFinite(height) ||
+      width <= 0 ||
+      height <= 0
+    ) {
+      return null;
+    }
+    return {
+      x: Math.round(x),
+      y: Math.round(y),
+      width: Math.round(width),
+      height: Math.round(height)
+    };
+  }
+
+  function buildGameplayTelemetrySnapshot() {
+    var playfieldBounds = gameplayTelemetryState.playfieldBounds;
+    var playerBounds = gameplayTelemetryState.playerBounds;
+    if (!playfieldBounds && !playerBounds) return null;
+    if (!playfieldBounds || !playerBounds) {
+      return {
+        playfieldBounds: playfieldBounds,
+        playerBounds: playerBounds,
+        overflowTop: 0,
+        overflowRight: 0,
+        overflowBottom: 0,
+        overflowLeft: 0,
+        status: 'incomplete',
+        reportedAt: Date.now()
+      };
+    }
+    var overflowTop = Math.max(0, playfieldBounds.y - playerBounds.y);
+    var overflowLeft = Math.max(0, playfieldBounds.x - playerBounds.x);
+    var overflowRight = Math.max(
+      0,
+      playerBounds.x +
+        playerBounds.width -
+        (playfieldBounds.x + playfieldBounds.width)
+    );
+    var overflowBottom = Math.max(
+      0,
+      playerBounds.y +
+        playerBounds.height -
+        (playfieldBounds.y + playfieldBounds.height)
+    );
+    return {
+      playfieldBounds: playfieldBounds,
+      playerBounds: playerBounds,
+      overflowTop: Math.ceil(overflowTop),
+      overflowRight: Math.ceil(overflowRight),
+      overflowBottom: Math.ceil(overflowBottom),
+      overflowLeft: Math.ceil(overflowLeft),
+      status:
+        overflowTop > 0 ||
+        overflowRight > 0 ||
+        overflowBottom > 0 ||
+        overflowLeft > 0
+          ? 'out-of-bounds'
+          : 'ok',
+      reportedAt: Date.now()
+    };
+  }
+
+  function buildGameplayMismatchMessage(telemetry) {
+    if (!telemetry) {
+      return 'The reported player bounds moved outside the reported playfield bounds.';
+    }
+    if (telemetry.overflowBottom > 0) {
+      return 'The reported player bounds extend below the reported playfield floor. Clamp gameplay to the declared playfield instead of the raw canvas edge.';
+    }
+    if (telemetry.overflowTop > 0) {
+      return 'The reported player bounds extend above the reported playfield ceiling. Clamp gameplay to the declared playfield.';
+    }
+    if (telemetry.overflowLeft > 0 || telemetry.overflowRight > 0) {
+      return 'The reported player bounds extend outside the reported playfield walls. Clamp gameplay to the declared playfield.';
+    }
+    return 'The reported player bounds moved outside the reported playfield bounds.';
+  }
+
+  function evaluateGameplayTelemetry() {
+    var telemetry = buildGameplayTelemetrySnapshot();
+    if (telemetry && telemetry.status === 'out-of-bounds') {
+      reportRuntimeObservation('playfieldmismatch', {
+        message: buildGameplayMismatchMessage(telemetry)
+      });
+    }
+    reportPreviewHealthSnapshot(false);
+    return telemetry;
+  }
+
+  function scheduleGameplayTelemetryEvaluation() {
+    if (gameplayTelemetryState.scheduled) return;
+    gameplayTelemetryState.scheduled = true;
+    requestAnimationFrame(function() {
+      gameplayTelemetryState.scheduled = false;
+      evaluateGameplayTelemetry();
+    });
+  }
+
+  function normalizePreviewInsetValue(value) {
+    var numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+    return Math.floor(numeric);
+  }
+
+  function clonePreviewInsets(insets) {
+    var source = insets && typeof insets === 'object' ? insets : {};
+    return {
+      top: normalizePreviewInsetValue(source.top),
+      right: normalizePreviewInsetValue(source.right),
+      bottom: normalizePreviewInsetValue(source.bottom),
+      left: normalizePreviewInsetValue(source.left)
+    };
+  }
+
+  function previewInsetsEqual(a, b) {
+    return (
+      !!a &&
+      !!b &&
+      a.top === b.top &&
+      a.right === b.right &&
+      a.bottom === b.bottom &&
+      a.left === b.left
+    );
+  }
+
+  function getPreviewViewportSize() {
+    return {
+      width: Math.max(
+        window.innerWidth || 0,
+        document.documentElement ? document.documentElement.clientWidth || 0 : 0
+      ),
+      height: Math.max(
+        window.innerHeight || 0,
+        document.documentElement ? document.documentElement.clientHeight || 0 : 0
+      )
+    };
+  }
+
+  function buildPreviewLayoutSnapshot() {
+    var viewport = getPreviewViewportSize();
+    var stageWidth = viewport.width;
+    var stageHeight = viewport.height;
+    var safeInsets = clonePreviewInsets(previewLayoutState.reservedInsets);
+    var maxVerticalInset = Math.max(0, stageHeight - 1);
+    var maxHorizontalInset = Math.max(0, stageWidth - 1);
+    if (safeInsets.top + safeInsets.bottom > maxVerticalInset) {
+      var excessVertical =
+        safeInsets.top + safeInsets.bottom - maxVerticalInset;
+      if (safeInsets.bottom >= excessVertical) {
+        safeInsets.bottom -= excessVertical;
+      } else {
+        safeInsets.top = Math.max(0, safeInsets.top - (excessVertical - safeInsets.bottom));
+        safeInsets.bottom = 0;
+      }
+    }
+    if (safeInsets.left + safeInsets.right > maxHorizontalInset) {
+      var excessHorizontal =
+        safeInsets.left + safeInsets.right - maxHorizontalInset;
+      if (safeInsets.right >= excessHorizontal) {
+        safeInsets.right -= excessHorizontal;
+      } else {
+        safeInsets.left = Math.max(
+          0,
+          safeInsets.left - (excessHorizontal - safeInsets.right)
+        );
+        safeInsets.right = 0;
+      }
+    }
+    var playfieldWidth = Math.max(
+      1,
+      stageWidth - safeInsets.left - safeInsets.right
+    );
+    var playfieldHeight = Math.max(
+      1,
+      stageHeight - safeInsets.top - safeInsets.bottom
+    );
+    return {
+      mode: viewportModeState.mode,
+      viewport: viewport,
+      stage: {
+        width: stageWidth,
+        height: stageHeight,
+        scale:
+          viewportModeState.mode === 'viewport-app' &&
+          viewportFitState.scale > 0
+            ? Number(viewportFitState.scale.toFixed(4))
+            : 1
+      },
+      safeInsets: safeInsets,
+      playfield: {
+        x: safeInsets.left,
+        y: safeInsets.top,
+        width: playfieldWidth,
+        height: playfieldHeight
+      }
+    };
+  }
+
+  function applyPreviewLayoutCssVariables(layout) {
+    var documentElement = document.documentElement;
+    if (!documentElement || !layout) return;
+    documentElement.style.setProperty(
+      '--twinkle-preview-viewport-width',
+      String(layout.viewport.width) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-viewport-height',
+      String(layout.viewport.height) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-stage-width',
+      String(layout.stage.width) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-stage-height',
+      String(layout.stage.height) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-stage-scale',
+      String(layout.stage.scale)
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-safe-top',
+      String(layout.safeInsets.top) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-safe-right',
+      String(layout.safeInsets.right) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-safe-bottom',
+      String(layout.safeInsets.bottom) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-safe-left',
+      String(layout.safeInsets.left) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-playfield-x',
+      String(layout.playfield.x) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-playfield-y',
+      String(layout.playfield.y) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-playfield-width',
+      String(layout.playfield.width) + 'px'
+    );
+    documentElement.style.setProperty(
+      '--twinkle-preview-playfield-height',
+      String(layout.playfield.height) + 'px'
+    );
+  }
+
+  function publishPreviewLayout(force) {
+    var layout = readPreviewLayout();
+    var key = buildPreviewLayoutKey(layout);
+    if (!force && key === previewLayoutState.lastKey) {
+      return layout;
+    }
+    previewLayoutState.lastKey = key;
+    var listeners = previewLayoutState.listeners.slice();
+    for (var i = 0; i < listeners.length; i += 1) {
+      try {
+        listeners[i](layout);
+      } catch (_) {}
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent('twinkle:preview-layout', {
+          detail: layout
+        })
+      );
+    } catch (_) {}
+    return layout;
+  }
+
+  function buildPreviewLayoutKey(layout) {
+    return [
+      layout.mode,
+      layout.viewport.width,
+      layout.viewport.height,
+      layout.stage.width,
+      layout.stage.height,
+      layout.stage.scale,
+      layout.safeInsets.top,
+      layout.safeInsets.right,
+      layout.safeInsets.bottom,
+      layout.safeInsets.left,
+      layout.playfield.x,
+      layout.playfield.y,
+      layout.playfield.width,
+      layout.playfield.height
+    ].join('|');
+  }
+
+  function readPreviewLayout() {
+    var layout = buildPreviewLayoutSnapshot();
+    previewLayoutState.current = layout;
+    applyPreviewLayoutCssVariables(layout);
+    if (window.Twinkle && window.Twinkle.preview) {
+      window.Twinkle.preview.current = layout;
+    }
+    return layout;
+  }
+
+  function ensureViewportModeStyle() {
+    if (viewportModeState.styleInjected) return;
+    viewportModeState.styleInjected = true;
+    var styleNode = document.createElement('style');
+    styleNode.setAttribute('data-twinkle-preview-viewport-style', '1');
+    styleNode.textContent =
+      'html[data-twinkle-preview-mode="viewport-app"]{' +
+      'height:100% !important;' +
+      'min-height:100% !important;' +
+      'max-height:100% !important;' +
+      'width:100% !important;' +
+      'overflow:hidden !important;' +
+      'overscroll-behavior:none !important;' +
+      '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] body{' +
+      'margin:0 !important;' +
+      'height:100% !important;' +
+      'min-height:100% !important;' +
+      'max-height:100% !important;' +
+      'width:100% !important;' +
+      'max-width:100% !important;' +
+      'overflow:hidden !important;' +
+      'overscroll-behavior:none !important;' +
+      'display:flex !important;' +
+      'align-items:center !important;' +
+      'justify-content:center !important;' +
+      '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > *{' +
+      'max-width:100% !important;' +
+      'max-height:100% !important;' +
+      'box-sizing:border-box !important;' +
+      '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > #root,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > [id="app"],' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > main,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > section,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > article{' +
+      'width:100% !important;' +
+      'max-height:100% !important;' +
+      'display:flex !important;' +
+      'align-items:center !important;' +
+      'justify-content:center !important;' +
+      'overflow:hidden !important;' +
+      '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > #root > *,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > [id="app"] > *,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > main > *,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > section > *,' +
+      'html[data-twinkle-preview-mode="viewport-app"] body > article > *{' +
+      'max-width:100% !important;' +
+      'max-height:100% !important;' +
+      '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] canvas,' +
+      'html[data-twinkle-preview-mode="viewport-app"] svg,' +
+      'html[data-twinkle-preview-mode="viewport-app"] video,' +
+      'html[data-twinkle-preview-mode="viewport-app"] img{' +
+      'max-width:100% !important;' +
+      'max-height:100% !important;' +
+      '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] [data-twinkle-preview-fit="1"]{' +
+      'transform-origin:center center !important;' +
+      '}';
+    (document.head || document.documentElement).appendChild(styleNode);
+  }
+
+  function getRuntimePlanText() {
+    var planText = '';
+    if (!runtimeExplorationPlan) return planText;
+    planText += ' ' + String(runtimeExplorationPlan.summary || '');
+    if (Array.isArray(runtimeExplorationPlan.steps)) {
+      for (var i = 0; i < runtimeExplorationPlan.steps.length; i += 1) {
+        var step = runtimeExplorationPlan.steps[i];
+        if (!step) continue;
+        planText += ' ' + String(step.goal || '');
+        if (Array.isArray(step.labelHints)) {
+          planText += ' ' + step.labelHints.join(' ');
+        }
+      }
+    }
+    return planText;
+  }
+
+  function shouldUseViewportAppMode(visibleText) {
+    var body = document.body;
+    if (body && body.querySelector('canvas')) {
+      return true;
+    }
+    var haystack = (
+      String(visibleText || '') +
+      ' ' +
+      String(document.title || '') +
+      ' ' +
+      getRuntimePlanText()
+    ).toLowerCase();
+    return /\\b(game|play|player|score|level|enemy|boss|jump|dodge|flappy|restart|game over|lives?)\\b/.test(
+      haystack
+    );
+  }
+
+  function applyViewportAppMode(enabled) {
+    ensureViewportModeStyle();
+    var documentElement = document.documentElement;
+    if (!documentElement) return;
+    var nextMode = enabled ? 'viewport-app' : 'document';
+    if (viewportModeState.mode === nextMode) return;
+    viewportModeState.mode = nextMode;
+    if (enabled) {
+      documentElement.setAttribute('data-twinkle-preview-mode', 'viewport-app');
+    } else {
+      documentElement.removeAttribute('data-twinkle-preview-mode');
+    }
+    scheduleViewportAppFit();
+  }
+
+  function syncViewportAppMode(visibleText) {
+    applyViewportAppMode(shouldUseViewportAppMode(visibleText));
+  }
+
+  function clearViewportFitCandidate(candidate) {
+    if (!candidate || !candidate.style) return;
+    candidate.removeAttribute('data-twinkle-preview-fit');
+    candidate.style.transform = '';
+    candidate.style.transformOrigin = '';
+  }
+
+  function getViewportAppFitCandidate() {
+    var body = document.body;
+    if (!body) return null;
+    var canvases = body.querySelectorAll('canvas');
+    for (var i = 0; i < canvases.length; i += 1) {
+      var canvas = canvases[i];
+      if (!isVisibleUiElement(canvas)) continue;
+      var parent = canvas.parentElement;
+      if (
+        parent &&
+        parent !== body &&
+        parent !== document.documentElement &&
+        parent.id !== 'root' &&
+        parent.getAttribute('id') !== 'app'
+      ) {
+        return parent;
+      }
+      return canvas;
+    }
+    var fallbackSelectors = [
+      'body > #root > *',
+      'body > [id="app"] > *',
+      'body > main > *',
+      'body > section > *',
+      'body > article > *'
+    ];
+    for (var j = 0; j < fallbackSelectors.length; j += 1) {
+      var candidate = body.querySelector(fallbackSelectors[j]);
+      if (candidate && isVisibleUiElement(candidate)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  function fitViewportAppCandidate() {
+    if (viewportModeState.mode !== 'viewport-app') {
+      if (viewportFitState.candidate) {
+        clearViewportFitCandidate(viewportFitState.candidate);
+        viewportFitState.candidate = null;
+        viewportFitState.scale = 1;
+        viewportFitState.baseWidth = 0;
+        viewportFitState.baseHeight = 0;
+      }
+      publishPreviewLayout(false);
+      return;
+    }
+    var candidate = getViewportAppFitCandidate();
+    if (viewportFitState.candidate && viewportFitState.candidate !== candidate) {
+      clearViewportFitCandidate(viewportFitState.candidate);
+      viewportFitState.candidate = null;
+      viewportFitState.scale = 1;
+      viewportFitState.baseWidth = 0;
+      viewportFitState.baseHeight = 0;
+    }
+    if (!candidate) {
+      publishPreviewLayout(false);
+      return;
+    }
+    var rect = candidate.getBoundingClientRect();
+    var baseWidth = Math.max(
+      candidate.offsetWidth || 0,
+      candidate.clientWidth || 0,
+      candidate.scrollWidth || 0,
+      rect && rect.width ? Math.round(rect.width) : 0
+    );
+    var baseHeight = Math.max(
+      candidate.offsetHeight || 0,
+      candidate.clientHeight || 0,
+      candidate.scrollHeight || 0,
+      rect && rect.height ? Math.round(rect.height) : 0
+    );
+    var viewportWidth = Math.max(window.innerWidth || 0, document.documentElement ? document.documentElement.clientWidth || 0 : 0);
+    var viewportHeight = Math.max(window.innerHeight || 0, document.documentElement ? document.documentElement.clientHeight || 0 : 0);
+    if (baseWidth <= 0 || baseHeight <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
+      return;
+    }
+    var padding = 12;
+    var scale = Math.min(
+      1,
+      Math.max(0.1, (viewportWidth - padding * 2) / baseWidth),
+      Math.max(0.1, (viewportHeight - padding * 2) / baseHeight)
+    );
+    viewportFitState.candidate = candidate;
+    viewportFitState.scale = scale;
+    viewportFitState.baseWidth = baseWidth;
+    viewportFitState.baseHeight = baseHeight;
+    if (scale >= 0.995) {
+      clearViewportFitCandidate(candidate);
+      viewportFitState.candidate = null;
+      viewportFitState.scale = 1;
+      viewportFitState.baseWidth = 0;
+      viewportFitState.baseHeight = 0;
+      publishPreviewLayout(false);
+      return;
+    }
+    candidate.setAttribute('data-twinkle-preview-fit', '1');
+    candidate.style.transformOrigin = 'center center';
+    candidate.style.transform = 'scale(' + scale.toFixed(4) + ')';
+    publishPreviewLayout(false);
+  }
+
+  function scheduleViewportAppFit() {
+    if (viewportFitState.scheduled) return;
+    viewportFitState.scheduled = true;
+    requestAnimationFrame(function() {
+      viewportFitState.scheduled = false;
+      fitViewportAppCandidate();
+    });
+  }
+
+  function rememberRuntimeObservationKey(key) {
+    if (!key) return false;
+    if (runtimeObservationKeys[key]) return true;
+    runtimeObservationKeys[key] = true;
+    runtimeObservationCount += 1;
+    if (runtimeObservationCount > 40) {
+      runtimeObservationKeys = Object.create(null);
+      runtimeObservationCount = 0;
+    }
+    return false;
+  }
+
+  function reportRuntimeObservation(kind, details) {
+    try {
+      var message = trimObservationText(details && details.message, 400);
+      if (!message) return;
+      var filename = trimObservationText(details && details.filename, 240);
+      var stack = trimObservationText(
+        sanitizeObservationStack(details && details.stack),
+        1200
+      );
+      var lineNumber = Number(details && details.lineNumber);
+      var columnNumber = Number(details && details.columnNumber);
+      var key = [
+        kind || 'error',
+        message,
+        filename,
+        Number.isFinite(lineNumber) ? lineNumber : '',
+        Number.isFinite(columnNumber) ? columnNumber : ''
+      ].join('|');
+      if (rememberRuntimeObservationKey(key)) return;
+      window.parent.postMessage({
+        source: 'twinkle-build',
+        type: 'runtime-observation',
+        payload: {
+          kind:
+            kind === 'unhandledrejection'
+              ? 'unhandledrejection'
+              : kind === 'blankrender'
+                ? 'blankrender'
+                : kind === 'sdkblocked'
+                  ? 'sdkblocked'
+                  : kind === 'keyboardscroll'
+                    ? 'keyboardscroll'
+                    : kind === 'playfieldmismatch'
+                      ? 'playfieldmismatch'
+                  : kind === 'interactionnoop'
+                    ? 'interactionnoop'
+                  : 'error',
+          message: message,
+          stack: stack || null,
+          filename: filename || null,
+          lineNumber:
+            Number.isFinite(lineNumber) && lineNumber > 0 ? lineNumber : null,
+          columnNumber:
+            Number.isFinite(columnNumber) && columnNumber > 0 ? columnNumber : null,
+          createdAt: Date.now()
+        }
+      }, '*');
+    } catch (_) {}
+  }
+
+  function collectSafeInteractionTargetLabels(limit, excludeUsed) {
+    var labels = [];
+    var seen = Object.create(null);
+    var candidates = document.querySelectorAll(
+      'button,[role="button"],input[type="button"],a[href]'
+    );
+    for (var i = 0; i < candidates.length; i += 1) {
+      var candidate = candidates[i];
+      if (!isSafeInteractionTarget(candidate)) continue;
+      var label = getPreviewInteractionTargetLabel(candidate);
+      var normalizedLabel = String(label || '').trim().toLowerCase();
+      if (!normalizedLabel || seen[normalizedLabel]) continue;
+      if (
+        excludeUsed &&
+        previewInteractionProbeState.usedTargetLabels[normalizedLabel]
+      ) {
+        continue;
+      }
+      seen[normalizedLabel] = true;
+      labels.push(label);
+      if (labels.length >= (limit || 6)) break;
+    }
+    return labels;
+  }
+
+  function collectPreviewUiState() {
+    var body = document.body;
+    var documentElement = document.documentElement;
+    var text = trimObservationText(
+      body && body.innerText ? String(body.innerText).replace(/\s+/g, ' ') : '',
+      180
+    );
+    syncViewportAppMode(text);
+    fitViewportAppCandidate();
+    var headingCount = body
+      ? body.querySelectorAll('h1,h2,h3,[role="heading"]').length
+      : 0;
+    var buttonCount = body
+      ? body.querySelectorAll('button,[role="button"],input[type="button"],input[type="submit"],a[href]').length
+      : 0;
+    var formCount = body ? body.querySelectorAll('form').length : 0;
+    var meaningfulRender =
+      text.length >= 24 ||
+      headingCount > 0 ||
+      buttonCount > 0 ||
+      formCount > 0 ||
+      hasMeaningfulRender();
+    var viewportHeight = Math.max(
+      window.innerHeight || 0,
+      documentElement ? documentElement.clientHeight || 0 : 0
+    );
+    var viewportWidth = Math.max(
+      window.innerWidth || 0,
+      documentElement ? documentElement.clientWidth || 0 : 0
+    );
+    var contentHeight = Math.max(
+      body ? body.scrollHeight || 0 : 0,
+      body ? body.offsetHeight || 0 : 0,
+      documentElement ? documentElement.scrollHeight || 0 : 0,
+      documentElement ? documentElement.offsetHeight || 0 : 0
+    );
+    var contentWidth = Math.max(
+      body ? body.scrollWidth || 0 : 0,
+      body ? body.offsetWidth || 0 : 0,
+      documentElement ? documentElement.scrollWidth || 0 : 0,
+      documentElement ? documentElement.offsetWidth || 0 : 0
+    );
+    var documentOverflowY =
+      viewportHeight > 0 ? Math.max(0, contentHeight - viewportHeight) : 0;
+    var documentOverflowX =
+      viewportWidth > 0 ? Math.max(0, contentWidth - viewportWidth) : 0;
+    var maxElementBottom = 0;
+    var maxElementRight = 0;
+    var measuredElements = 0;
+    var overflowCandidates = body
+      ? body.querySelectorAll(
+          'main,section,article,form,table,canvas,svg,img,video,button,input,textarea,select,a[href],[role="button"],body > *'
+        )
+      : [];
+    for (var i = 0; i < overflowCandidates.length; i += 1) {
+      var candidate = overflowCandidates[i];
+      if (!isVisibleUiElement(candidate)) continue;
+      var candidateRect = candidate.getBoundingClientRect();
+      if (!candidateRect) continue;
+      maxElementBottom = Math.max(maxElementBottom, candidateRect.bottom || 0);
+      maxElementRight = Math.max(maxElementRight, candidateRect.right || 0);
+      measuredElements += 1;
+      if (measuredElements >= 120) break;
+    }
+    var elementOverflowY =
+      viewportHeight > 0 ? Math.max(0, Math.ceil(maxElementBottom - viewportHeight)) : 0;
+    var elementOverflowX =
+      viewportWidth > 0 ? Math.max(0, Math.ceil(maxElementRight - viewportWidth)) : 0;
+    var viewportOverflowY = Math.max(documentOverflowY, elementOverflowY);
+    var viewportOverflowX = Math.max(documentOverflowX, elementOverflowX);
+
+    return {
+      meaningfulRender: meaningfulRender,
+      gameLike: viewportModeState.mode === 'viewport-app',
+      headingCount: headingCount,
+      buttonCount: buttonCount,
+      formCount: formCount,
+      viewportOverflowY: viewportOverflowY,
+      viewportOverflowX: viewportOverflowX,
+      visibleTextSample: text || null,
+      route: (window.location.pathname || '') + (window.location.search || ''),
+      hash: window.location.hash || '',
+      safeTargetLabels: collectSafeInteractionTargetLabels(6, false)
+    };
+  }
+
+  function collectPreviewHealthSnapshot() {
+    var uiState = collectPreviewUiState();
+    var gameplayTelemetry = buildGameplayTelemetrySnapshot();
+    return {
+      booted: true,
+      meaningfulRender: uiState.meaningfulRender,
+      gameLike: uiState.gameLike,
+      headingCount: uiState.headingCount,
+      buttonCount: uiState.buttonCount,
+      formCount: uiState.formCount,
+      viewportOverflowY: uiState.viewportOverflowY,
+      viewportOverflowX: uiState.viewportOverflowX,
+      visibleTextSample: uiState.visibleTextSample,
+      interactionStatus: previewInteractionProbeState.status || 'idle',
+      interactionTargetLabel:
+        trimObservationText(previewInteractionProbeState.targetLabel, 120) ||
+        null,
+      interactionSteps: previewInteractionProbeState.steps.slice(0, 4),
+      gameplayTelemetry: gameplayTelemetry,
+      observedAt: Date.now()
+    };
+  }
+
+  function reportPreviewHealthSnapshot(force) {
+    try {
+      var snapshot = collectPreviewHealthSnapshot();
+      var key = [
+        snapshot.booted ? '1' : '0',
+        snapshot.meaningfulRender ? '1' : '0',
+        snapshot.gameLike ? '1' : '0',
+        snapshot.headingCount,
+        snapshot.buttonCount,
+        snapshot.formCount,
+        snapshot.viewportOverflowY,
+        snapshot.viewportOverflowX,
+        snapshot.interactionStatus || 'idle',
+        snapshot.interactionTargetLabel || '',
+        snapshot.gameplayTelemetry
+          ? snapshot.gameplayTelemetry.status || 'incomplete'
+          : 'none',
+        snapshot.gameplayTelemetry
+          ? Math.floor((snapshot.gameplayTelemetry.overflowTop || 0) / 16)
+          : 0,
+        snapshot.gameplayTelemetry
+          ? Math.floor((snapshot.gameplayTelemetry.overflowRight || 0) / 16)
+          : 0,
+        snapshot.gameplayTelemetry
+          ? Math.floor((snapshot.gameplayTelemetry.overflowBottom || 0) / 16)
+          : 0,
+        snapshot.gameplayTelemetry
+          ? Math.floor((snapshot.gameplayTelemetry.overflowLeft || 0) / 16)
+          : 0,
+        JSON.stringify(snapshot.interactionSteps || []),
+        snapshot.visibleTextSample || ''
+      ].join('|');
+      if (!force && key === previewHealthLastKey) return;
+      previewHealthLastKey = key;
+      window.parent.postMessage({
+        source: 'twinkle-build',
+        type: 'preview-health',
+        payload: snapshot
+      }, '*');
+    } catch (_) {}
+  }
+
+  function schedulePreviewHealthReport(delayMs, force) {
+    setTimeout(function() {
+      reportPreviewHealthSnapshot(Boolean(force));
+    }, Math.max(0, Number(delayMs) || 0));
+  }
+
+  function startPreviewHealthMonitoring() {
+    schedulePreviewHealthReport(250, true);
+    schedulePreviewHealthReport(1200, false);
+    schedulePreviewHealthReport(3200, false);
+
+    if (!window.MutationObserver || previewHealthObserver) return;
+    var body = document.body;
+    if (!body) return;
+    previewHealthObserver = new MutationObserver(function() {
+      if (previewHealthMutationTimer) {
+        clearTimeout(previewHealthMutationTimer);
+      }
+      previewHealthMutationTimer = setTimeout(function() {
+        previewHealthMutationTimer = null;
+        scheduleViewportAppFit();
+        reportPreviewHealthSnapshot(false);
+      }, 350);
+    });
+    try {
+      previewHealthObserver.observe(body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+      setTimeout(function() {
+        try {
+          if (previewHealthObserver) {
+            previewHealthObserver.disconnect();
+            previewHealthObserver = null;
+          }
+        } catch (_) {}
+      }, 7000);
+    } catch (_) {
+      previewHealthObserver = null;
+    }
+  }
+
+  function completePreviewInteractionProbe(status, targetLabel) {
+    previewInteractionProbeState.completed = true;
+    previewInteractionProbeState.status = status || 'idle';
+    previewInteractionProbeState.targetLabel = trimObservationText(targetLabel, 120);
+    reportPreviewHealthSnapshot(true);
+  }
+
+  function appendPreviewInteractionStep(step) {
+    if (!step || typeof step !== 'object') return;
+    previewInteractionProbeState.steps = previewInteractionProbeState.steps
+      .concat([step])
+      .slice(-4);
+    previewInteractionProbeState.status = step.status || 'idle';
+    previewInteractionProbeState.targetLabel = trimObservationText(
+      step.targetLabel,
+      120
+    );
+    reportPreviewHealthSnapshot(true);
+  }
+
+  function collectPreviewInteractionSignatureFromUiState(uiState) {
+    var body = document.body;
+    var childCount = body ? body.children.length : 0;
+    return [
+      uiState.meaningfulRender ? '1' : '0',
+      uiState.gameLike ? '1' : '0',
+      uiState.headingCount,
+      uiState.buttonCount,
+      uiState.formCount,
+      uiState.viewportOverflowY,
+      uiState.viewportOverflowX,
+      uiState.visibleTextSample || '',
+      childCount,
+      uiState.route || '',
+      uiState.hash || ''
+    ].join('|');
+  }
+
+  function getPreviewInteractionTargetLabel(element) {
+    if (!element) return 'a control';
+    var text = trimObservationText(
+      element.innerText ||
+        element.textContent ||
+        element.value ||
+        element.getAttribute('aria-label') ||
+        element.getAttribute('title') ||
+        '',
+      60
+    );
+    if (text) return text;
+    var tagName = String(element.tagName || '').toLowerCase();
+    if (tagName === 'a') return 'a link';
+    if (tagName === 'input') return 'an input';
+    return 'a control';
+  }
+
+  function rememberPreviewInteractionTargetLabel(label) {
+    var normalizedLabel = String(label || '')
+      .trim()
+      .toLowerCase();
+    if (!normalizedLabel) return;
+    previewInteractionProbeState.usedTargetLabels[normalizedLabel] = true;
+  }
+
+  function normalizeExplorationHint(value) {
+    return trimObservationText(value, 80).toLowerCase();
+  }
+
+  function doesLabelMatchHints(label, hints) {
+    var normalizedLabel = normalizeExplorationHint(label);
+    if (!normalizedLabel) return false;
+    for (var i = 0; i < (hints || []).length; i += 1) {
+      var hint = normalizeExplorationHint(hints[i]);
+      if (!hint) continue;
+      if (
+        normalizedLabel === hint ||
+        normalizedLabel.indexOf(hint) !== -1 ||
+        hint.indexOf(normalizedLabel) !== -1
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function getNextRuntimeExplorationPlanStep() {
+    if (
+      !runtimeExplorationPlan ||
+      !Array.isArray(runtimeExplorationPlan.steps) ||
+      runtimeExplorationPlan.steps.length === 0
+    ) {
+      return null;
+    }
+    var index = Number(previewInteractionProbeState.planStepIndex || 0);
+    if (index < 0 || index >= runtimeExplorationPlan.steps.length) {
+      return null;
+    }
+    return runtimeExplorationPlan.steps[index] || null;
+  }
+
+  function isVisibleUiElement(element) {
+    if (!element || !document.body || !document.body.contains(element)) {
+      return false;
+    }
+    if (element.disabled || element.getAttribute('aria-disabled') === 'true') {
+      return false;
+    }
+    var style = window.getComputedStyle(element);
+    if (!style || style.display === 'none' || style.visibility === 'hidden') {
+      return false;
+    }
+    var rect = element.getBoundingClientRect();
+    if (!rect || rect.width < 16 || rect.height < 16) {
+      return false;
+    }
+    return true;
+  }
+
+  function isVisibleInteractionTarget(element) {
+    if (!isVisibleUiElement(element)) return false;
+    if (element.closest('form')) {
+      return false;
+    }
+    return true;
+  }
+
+  function isVisibleTextInput(element) {
+    if (!isVisibleUiElement(element)) return false;
+    var tagName = String(element.tagName || '').toLowerCase();
+    if (tagName === 'textarea') return true;
+    if (tagName !== 'input') return false;
+    var type = trimObservationText(
+      element.getAttribute('type') || '',
+      30
+    ).toLowerCase();
+    return (
+      !type ||
+      type === 'text' ||
+      type === 'search' ||
+      type === 'email' ||
+      type === 'url' ||
+      type === 'number'
+    );
+  }
+
+  function isSafeInteractionTarget(element) {
+    if (!isVisibleInteractionTarget(element)) return false;
+    var tagName = String(element.tagName || '').toLowerCase();
+    var type = trimObservationText(
+      element.getAttribute('type') || '',
+      30
+    ).toLowerCase();
+    if (tagName === 'a') {
+      var href = trimObservationText(element.getAttribute('href') || '', 300);
+      if (
+        !href ||
+        /^https?:/i.test(href) ||
+        /^mailto:/i.test(href) ||
+        /^tel:/i.test(href) ||
+        element.getAttribute('download') != null ||
+        element.getAttribute('target') === '_blank'
+      ) {
+        return false;
+      }
+    }
+    if (tagName === 'input' && type && type !== 'button') {
+      return false;
+    }
+    var label = getPreviewInteractionTargetLabel(element).toLowerCase();
+    if (
+      /(delete|remove|destroy|clear|reset|logout|sign out|publish|unpublish|buy|pay|checkout|reward|tip|send|mail|email|invite|transfer|deploy|save)/i.test(
+        label
+      )
+    ) {
+      return false;
+    }
+    if (
+      /(start|play|begin|continue|next|open|show|launch|run|try|enter|go|toggle|reveal)/i.test(
+        label
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  function findSafeInteractionTarget() {
+    var candidates = document.querySelectorAll(
+      'button,[role="button"],input[type="button"],a[href]'
+    );
+    for (var i = 0; i < candidates.length; i += 1) {
+      if (!isSafeInteractionTarget(candidates[i])) continue;
+      var label = getPreviewInteractionTargetLabel(candidates[i])
+        .trim()
+        .toLowerCase();
+      if (label && previewInteractionProbeState.usedTargetLabels[label]) {
+        continue;
+      }
+        return candidates[i];
+    }
+    return null;
+  }
+
+  function findPlannedInteractionTarget(planStep) {
+    if (!planStep || planStep.kind !== 'click') return null;
+    var candidates = document.querySelectorAll(
+      'button,[role="button"],input[type="button"],a[href]'
+    );
+    var bestCandidate = null;
+    var bestScore = -1;
+    for (var i = 0; i < candidates.length; i += 1) {
+      var candidate = candidates[i];
+      if (!isSafeInteractionTarget(candidate)) continue;
+      var label = getPreviewInteractionTargetLabel(candidate);
+      var normalizedLabel = normalizeExplorationHint(label);
+      if (
+        normalizedLabel &&
+        previewInteractionProbeState.usedTargetLabels[normalizedLabel]
+      ) {
+        continue;
+      }
+      if (!doesLabelMatchHints(label, planStep.labelHints)) continue;
+      var score = 1;
+      if (
+        Array.isArray(planStep.labelHints) &&
+        normalizeExplorationHint(planStep.labelHints[0]) === normalizedLabel
+      ) {
+        score += 1;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestCandidate = candidate;
+      }
+    }
+    return bestCandidate;
+  }
+
+  function getSafeFormLabel(form) {
+    if (!form) return '';
+    var heading = form.querySelector('h1,h2,h3,[role="heading"]');
+    if (heading) {
+      var headingText = trimObservationText(
+        heading.innerText || heading.textContent || '',
+        60
+      );
+      if (headingText) return headingText;
+    }
+    var submit = form.querySelector(
+      'button,[role="button"],input[type="submit"],input[type="button"]'
+    );
+    if (submit) {
+      return getPreviewInteractionTargetLabel(submit);
+    }
+    return trimObservationText(
+      form.getAttribute('aria-label') ||
+        form.getAttribute('name') ||
+        form.getAttribute('id') ||
+        'a form',
+      60
+    );
+  }
+
+  function collectSafeFormInputHints(form) {
+    if (!form) return [];
+    var inputs = form.querySelectorAll('input,textarea,select');
+    var seen = Object.create(null);
+    var hints = [];
+    for (var i = 0; i < inputs.length; i += 1) {
+      var input = inputs[i];
+      var candidates = [
+        input.getAttribute('placeholder'),
+        input.getAttribute('aria-label'),
+        input.getAttribute('name')
+      ];
+      for (var j = 0; j < candidates.length; j += 1) {
+        var hint = trimObservationText(candidates[j], 80);
+        var normalizedHint = normalizeExplorationHint(hint);
+        if (!normalizedHint || seen[normalizedHint]) continue;
+        seen[normalizedHint] = true;
+        hints.push(hint);
+        if (hints.length >= 4) return hints;
+      }
+    }
+    return hints;
+  }
+
+  function fillSafeFormInputs(form) {
+    if (!form) return false;
+    var changed = false;
+    var inputs = form.querySelectorAll('input,textarea');
+    for (var i = 0; i < inputs.length; i += 1) {
+      var input = inputs[i];
+      if (!isVisibleTextInput(input)) continue;
+      if (input.disabled || input.readOnly) continue;
+      var currentValue = String(input.value || '').trim();
+      if (currentValue) continue;
+      var type = trimObservationText(
+        input.getAttribute('type') || '',
+        30
+      ).toLowerCase();
+      var placeholder = trimObservationText(
+        input.getAttribute('placeholder') || '',
+        80
+      ).toLowerCase();
+      var nextValue = 'Test';
+      if (type === 'email' || /email/.test(placeholder)) {
+        nextValue = 'test@example.com';
+      } else if (type === 'url' || /url|website|link/.test(placeholder)) {
+        nextValue = 'https://example.com';
+      } else if (type === 'number') {
+        nextValue = '1';
+      } else if (/search/.test(type) || /search/.test(placeholder)) {
+        nextValue = 'test';
+      } else if (
+        /name|title|label|task|item|goal|prompt|message|note|text|description/.test(
+          placeholder
+        )
+      ) {
+        nextValue = 'Test entry';
+      }
+      try {
+        input.focus();
+      } catch (_) {}
+      input.value = nextValue;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      changed = true;
+    }
+    return changed;
+  }
+
+  function findSafeFormTarget() {
+    var forms = document.querySelectorAll('form');
+    for (var i = 0; i < forms.length; i += 1) {
+      var form = forms[i];
+      if (!form || !document.body || !document.body.contains(form)) continue;
+      var formLabel = getSafeFormLabel(form);
+      var normalizedLabel = String(formLabel || '').trim().toLowerCase();
+      if (
+        normalizedLabel &&
+        previewInteractionProbeState.usedTargetLabels[normalizedLabel]
+      ) {
+        continue;
+      }
+      var submit = form.querySelector(
+        'button,[role="button"],input[type="submit"],input[type="button"]'
+      );
+      if (!submit || !isVisibleUiElement(submit)) continue;
+      var submitLabel = getPreviewInteractionTargetLabel(submit).toLowerCase();
+      if (
+        /(delete|remove|destroy|clear|reset|logout|sign out|publish|unpublish|buy|pay|checkout|reward|tip|send|mail|email|invite|transfer|deploy|save)/i.test(
+          submitLabel
+        )
+      ) {
+        continue;
+      }
+      if (!fillSafeFormInputs(form)) continue;
+      return {
+        element: submit,
+        label: formLabel || getPreviewInteractionTargetLabel(submit),
+        actionKind: 'submit-form'
+      };
+    }
+    return null;
+  }
+
+  function findPlannedFormTarget(planStep) {
+    if (!planStep || planStep.kind !== 'submit-form') return null;
+    var forms = document.querySelectorAll('form');
+    var bestMatch = null;
+    var bestScore = -1;
+    for (var i = 0; i < forms.length; i += 1) {
+      var form = forms[i];
+      if (!form || !document.body || !document.body.contains(form)) continue;
+      var submit = form.querySelector(
+        'button,[role="button"],input[type="submit"],input[type="button"]'
+      );
+      if (!submit || !isVisibleUiElement(submit)) continue;
+      var submitLabel = getPreviewInteractionTargetLabel(submit);
+      if (
+        /(delete|remove|destroy|clear|reset|logout|sign out|publish|unpublish|buy|pay|checkout|reward|tip|send|mail|email|invite|transfer|deploy|save)/i.test(
+          submitLabel.toLowerCase()
+        )
+      ) {
+        continue;
+      }
+      var formLabel = getSafeFormLabel(form);
+      var inputHints = collectSafeFormInputHints(form);
+      var score = 0;
+      if (doesLabelMatchHints(submitLabel, planStep.labelHints)) {
+        score += 2;
+      }
+      if (doesLabelMatchHints(formLabel, planStep.labelHints)) {
+        score += 2;
+      }
+      for (var j = 0; j < inputHints.length; j += 1) {
+        if (doesLabelMatchHints(inputHints[j], planStep.inputHints)) {
+          score += 1;
+        }
+      }
+      if (score <= 0) continue;
+      if (!fillSafeFormInputs(form)) continue;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = {
+          element: submit,
+          label: formLabel || submitLabel,
+          actionKind: 'submit-form'
+        };
+      }
+    }
+    return bestMatch;
+  }
+
+  function activateInteractionTarget(element) {
+    if (!element) return;
+    if (typeof element.click === 'function') {
+      element.click();
+      return;
+    }
+    var clickEvent = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    });
+    element.dispatchEvent(clickEvent);
+  }
+
+  function buildPreviewInteractionStep(
+    targetLabel,
+    beforeState,
+    afterState,
+    status,
+    meta
+  ) {
+    var stepMeta = meta && typeof meta === 'object' ? meta : {};
+    var beforeLabels = Array.isArray(beforeState.safeTargetLabels)
+      ? beforeState.safeTargetLabels
+      : [];
+    var beforeMap = Object.create(null);
+    for (var i = 0; i < beforeLabels.length; i += 1) {
+      beforeMap[String(beforeLabels[i] || '').trim().toLowerCase()] = true;
+    }
+    var revealedTargetLabels = (Array.isArray(afterState.safeTargetLabels)
+      ? afterState.safeTargetLabels
+      : []
+    )
+      .filter(function(label) {
+        var normalized = String(label || '').trim().toLowerCase();
+        if (!normalized) return false;
+        if (beforeMap[normalized]) return false;
+        if (normalized === String(targetLabel || '').trim().toLowerCase()) {
+          return false;
+        }
+        return true;
+      })
+      .slice(0, 4);
+
+    return {
+      source: stepMeta.source === 'planned' ? 'planned' : 'generic',
+      goal: trimObservationText(stepMeta.goal, 220) || null,
+      actionKind:
+        stepMeta.actionKind === 'submit-form'
+          ? 'submit-form'
+          : stepMeta.actionKind === 'click'
+            ? 'click'
+            : null,
+      expectedSignals:
+        stepMeta.expectedSignals &&
+        typeof stepMeta.expectedSignals === 'object'
+          ? {
+              routeChange:
+                typeof stepMeta.expectedSignals.routeChange === 'boolean'
+                  ? stepMeta.expectedSignals.routeChange
+                  : null,
+              textIncludes: Array.isArray(stepMeta.expectedSignals.textIncludes)
+                ? stepMeta.expectedSignals.textIncludes
+                    .map(function(text) {
+                      return trimObservationText(text, 80);
+                    })
+                    .filter(Boolean)
+                    .slice(0, 4)
+                : [],
+              revealsLabels: Array.isArray(stepMeta.expectedSignals.revealsLabels)
+                ? stepMeta.expectedSignals.revealsLabels
+                    .map(function(label) {
+                      return trimObservationText(label, 80);
+                    })
+                    .filter(Boolean)
+                    .slice(0, 4)
+                : []
+            }
+          : null,
+      targetLabel: targetLabel || null,
+      status: status,
+      routeBefore: beforeState.route || null,
+      routeAfter: afterState.route || null,
+      hashBefore: beforeState.hash || null,
+      hashAfter: afterState.hash || null,
+      routeChanged: beforeState.route !== afterState.route,
+      hashChanged: beforeState.hash !== afterState.hash,
+      visibleTextBefore: beforeState.visibleTextSample || null,
+      visibleTextAfter: afterState.visibleTextSample || null,
+      headingDelta: Number(afterState.headingCount || 0) - Number(beforeState.headingCount || 0),
+      buttonDelta: Number(afterState.buttonCount || 0) - Number(beforeState.buttonCount || 0),
+      formDelta: Number(afterState.formCount || 0) - Number(beforeState.formCount || 0),
+      revealedTargetLabels: revealedTargetLabels,
+      observedAt: Date.now()
+    };
+  }
+
+  function continuePreviewInteractionProbeIfUseful() {
+    if (previewInteractionProbeState.completed) return;
+    if (previewInteractionProbeState.steps.length >= 4) {
+      completePreviewInteractionProbe(
+        previewInteractionProbeState.status,
+        previewInteractionProbeState.targetLabel
+      );
+      return;
+    }
+    setTimeout(function() {
+      runPreviewInteractionProbe(true);
+    }, 900);
+  }
+
+  function runPreviewInteractionProbe(isFinalAttempt) {
+    if (previewInteractionProbeState.completed) return;
+    if (!hasMeaningfulRender()) {
+      if (isFinalAttempt) {
+        completePreviewInteractionProbe(
+          previewInteractionProbeState.steps.length > 0
+            ? previewInteractionProbeState.status
+            : 'skipped',
+          previewInteractionProbeState.steps.length > 0
+            ? previewInteractionProbeState.targetLabel
+            : ''
+        );
+      }
+      return;
+    }
+
+    var planStep = getNextRuntimeExplorationPlanStep();
+    var target = null;
+    var targetLabel = '';
+    var interactionSource = planStep ? 'planned' : 'generic';
+    var actionKind = planStep ? planStep.kind : 'click';
+    if (planStep) {
+      if (planStep.kind === 'submit-form') {
+        var plannedFormTarget = findPlannedFormTarget(planStep);
+        if (plannedFormTarget) {
+          target = plannedFormTarget.element;
+          targetLabel =
+            plannedFormTarget.label || getPreviewInteractionTargetLabel(target);
+          actionKind = plannedFormTarget.actionKind || 'submit-form';
+        }
+      } else {
+        target = findPlannedInteractionTarget(planStep);
+        if (target) {
+          targetLabel = getPreviewInteractionTargetLabel(target);
+        }
+      }
+      if (!target) {
+        var plannedGoal = trimObservationText(planStep.goal, 220) || 'planned interaction';
+        reportRuntimeObservation('interactionnoop', {
+          message:
+            'Preview could not find a safe control for planned goal: ' +
+            plannedGoal +
+            '.'
+        });
+        appendPreviewInteractionStep(
+          buildPreviewInteractionStep(
+            planStep.labelHints && planStep.labelHints[0]
+              ? planStep.labelHints[0]
+              : '',
+            collectPreviewUiState(),
+            collectPreviewUiState(),
+            'skipped',
+            {
+              source: 'planned',
+              goal: plannedGoal,
+              actionKind: planStep.kind,
+              expectedSignals: planStep.expectedSignals || null
+            }
+          )
+        );
+        completePreviewInteractionProbe('skipped', '');
+        return;
+      }
+    }
+
+    if (!target) {
+      target = findSafeInteractionTarget();
+    }
+    if (!target) {
+      var formTarget = findSafeFormTarget();
+      if (formTarget) {
+        target = formTarget.element;
+        targetLabel = formTarget.label || getPreviewInteractionTargetLabel(target);
+        actionKind = formTarget.actionKind || 'submit-form';
+      }
+    }
+    if (!target) {
+      if (isFinalAttempt) {
+        completePreviewInteractionProbe(
+          previewInteractionProbeState.steps.length > 0
+            ? previewInteractionProbeState.status
+            : 'skipped',
+          previewInteractionProbeState.steps.length > 0
+            ? previewInteractionProbeState.targetLabel
+            : ''
+        );
+      }
+      return;
+    }
+
+    targetLabel = targetLabel || getPreviewInteractionTargetLabel(target);
+    rememberPreviewInteractionTargetLabel(targetLabel);
+    var beforeState = collectPreviewUiState();
+    var beforeSignature = collectPreviewInteractionSignatureFromUiState(beforeState);
+    var beforeObservationCount = runtimeObservationCount;
+    try {
+      activateInteractionTarget(target);
+    } catch (error) {
+      reportRuntimeObservation('error', {
+        message:
+          'Preview interaction probe failed while clicking "' +
+          targetLabel +
+          '".',
+        stack: error && error.stack ? error.stack : String(error || '')
+      });
+      appendPreviewInteractionStep(
+        buildPreviewInteractionStep(targetLabel, beforeState, beforeState, 'unchanged', {
+          source: interactionSource,
+          goal: planStep ? planStep.goal : null,
+          actionKind: actionKind,
+          expectedSignals: planStep ? planStep.expectedSignals || null : null
+        })
+      );
+      completePreviewInteractionProbe('unchanged', targetLabel);
+      return;
+    }
+
+    setTimeout(function() {
+      var afterState = collectPreviewUiState();
+      var afterSignature = collectPreviewInteractionSignatureFromUiState(afterState);
+      var changed =
+        afterSignature !== beforeSignature ||
+        runtimeObservationCount > beforeObservationCount;
+      var step = buildPreviewInteractionStep(
+        targetLabel,
+        beforeState,
+        afterState,
+        changed ? 'changed' : 'unchanged',
+        {
+          source: interactionSource,
+          goal: planStep ? planStep.goal : null,
+          actionKind: actionKind,
+          expectedSignals: planStep ? planStep.expectedSignals || null : null
+        }
+      );
+      if (planStep) {
+        previewInteractionProbeState.planStepIndex += 1;
+      }
+      appendPreviewInteractionStep(step);
+      if (!changed) {
+        reportRuntimeObservation('interactionnoop', {
+          message:
+            'Auto-clicked "' +
+            targetLabel +
+            '" but the preview UI did not visibly change.'
+        });
+        completePreviewInteractionProbe('unchanged', targetLabel);
+        return;
+      }
+      continuePreviewInteractionProbeIfUseful();
+    }, 1100);
+  }
+
+  function schedulePreviewInteractionProbe() {
+    if (previewInteractionProbeState.scheduled) return;
+    previewInteractionProbeState.scheduled = true;
+    setTimeout(function() {
+      runPreviewInteractionProbe(false);
+    }, 1800);
+    setTimeout(function() {
+      runPreviewInteractionProbe(true);
+    }, 4200);
+  }
+
+  function restartPreviewInteractionProbe() {
+    previewInteractionProbeState.scheduled = false;
+    previewInteractionProbeState.completed = false;
+    previewInteractionProbeState.status = 'idle';
+    previewInteractionProbeState.targetLabel = '';
+    previewInteractionProbeState.steps = [];
+    previewInteractionProbeState.usedTargetLabels = Object.create(null);
+    previewInteractionProbeState.planStepIndex = 0;
+    schedulePreviewInteractionProbe();
+  }
+
+  function hasMeaningfulRender() {
+    var body = document.body;
+    if (!body) return false;
+    var text = trimObservationText(
+      String(body.innerText || '').replace(/\s+/g, ' '),
+      240
+    );
+    if (text.length >= 24) return true;
+    return Boolean(
+      body.querySelector(
+        'main,section,article,form,table,canvas,svg,img,video,button,input,textarea,select,a[href],[role="button"]'
+      )
+    );
+  }
+
+  function looksLikeGamePreview(visibleText) {
+    return shouldUseViewportAppMode(visibleText);
+  }
+
+  function runBlankRenderProbe(isFinalCheck) {
+    if (blankRenderProbeState.reported || blankRenderProbeState.resolved) {
+      return;
+    }
+    if (hasMeaningfulRender()) {
+      blankRenderProbeState.resolved = true;
+      return;
+    }
+    if (!isFinalCheck) return;
+    var body = document.body;
+    var text = trimObservationText(
+      body && body.innerText ? String(body.innerText).replace(/\s+/g, ' ') : '',
+      160
+    );
+    var meaningfulElements = body
+      ? body.querySelectorAll(
+          'main,section,article,form,table,canvas,svg,img,video,button,input,textarea,select,a[href],[role="button"]'
+        ).length
+      : 0;
+    reportRuntimeObservation('blankrender', {
+      message:
+        'Preview stayed blank or near-empty after startup' +
+        ' (visibleText=' +
+        String(text.length) +
+        ', meaningfulElements=' +
+        String(meaningfulElements) +
+        ').',
+      stack: text ? 'visible text: ' + text : ''
+    });
+    blankRenderProbeState.reported = true;
+  }
+
+  function scheduleBlankRenderProbe() {
+    if (blankRenderProbeState.scheduled) return;
+    blankRenderProbeState.scheduled = true;
+    setTimeout(function() {
+      runBlankRenderProbe(false);
+    }, 2200);
+    setTimeout(function() {
+      runBlankRenderProbe(true);
+    }, 5000);
+  }
+
+  function isEditableTarget(element) {
+    if (!element || typeof element.closest !== 'function') return false;
+    return Boolean(
+      element.closest(
+        'input,textarea,select,[contenteditable=""],[contenteditable="true"]'
+      )
+    );
+  }
+
+  window.addEventListener(
+    'keydown',
+    function(event) {
+      if (!event) return;
+      if (!looksLikeGamePreview()) return;
+      if (
+        event.key !== 'ArrowUp' &&
+        event.key !== 'ArrowDown' &&
+        event.key !== 'ArrowLeft' &&
+        event.key !== 'ArrowRight' &&
+        event.key !== ' '
+      ) {
+        return;
+      }
+      if (isEditableTarget(event.target)) return;
+      if (typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+      var documentElement = document.documentElement;
+      var beforeScrollTop = Math.max(
+        window.scrollY || 0,
+        documentElement ? documentElement.scrollTop || 0 : 0
+      );
+      setTimeout(function() {
+        if (keyboardScrollProbeState.reported) return;
+        var afterScrollTop = Math.max(
+          window.scrollY || 0,
+          documentElement ? documentElement.scrollTop || 0 : 0
+        );
+        if (afterScrollTop === beforeScrollTop) return;
+        keyboardScrollProbeState.reported = true;
+        reportRuntimeObservation('keyboardscroll', {
+          message:
+            'Game-control keys scrolled the preview document. Prevent default browser scrolling for arrow or space controls and keep the game inside the viewport.'
+        });
+      }, 0);
+    },
+    true
+  );
+
+  function looksLikeBlockedCapabilityError(message) {
+    var text = String(message || '').trim();
+    if (!text) return false;
+    return (
+      /sign in is required/i.test(text) ||
+      /only the owner workspace/i.test(text) ||
+      /user-only/i.test(text) ||
+      /not allowed in this context/i.test(text) ||
+      /blocked/i.test(text) ||
+      /not available in this context/i.test(text) ||
+      /unavailable in this context/i.test(text)
+    );
+  }
+
+  window.addEventListener('error', function(event) {
+    if (!event) return;
+    reportRuntimeObservation('error', {
+      message: event.message || (event.error && event.error.message) || 'Runtime error',
+      stack: event.error && event.error.stack,
+      filename: event.filename || (event.error && event.error.fileName) || '',
+      lineNumber: event.lineno || (event.error && event.error.lineNumber),
+      columnNumber: event.colno || (event.error && event.error.columnNumber)
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (!event) return;
+    var reason = event.reason;
+    var message = '';
+    var stack = '';
+    if (typeof reason === 'string') {
+      message = reason;
+    } else if (reason && typeof reason === 'object') {
+      message = reason.message || reason.reason || String(reason);
+      stack = reason.stack || '';
+    } else {
+      message = String(reason || 'Unhandled promise rejection');
+    }
+    reportRuntimeObservation('unhandledrejection', {
+      message: message || 'Unhandled promise rejection',
+      stack: stack
+    });
+  });
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    syncViewportAppMode('');
+    scheduleViewportAppFit();
+    scheduleBlankRenderProbe();
+    startPreviewHealthMonitoring();
+    schedulePreviewInteractionProbe();
+  } else {
+    document.addEventListener('DOMContentLoaded', function() {
+      syncViewportAppMode('');
+      scheduleViewportAppFit();
+      scheduleBlankRenderProbe();
+      startPreviewHealthMonitoring();
+      schedulePreviewInteractionProbe();
+    }, { once: true });
+  }
+  window.addEventListener('load', function() {
+    syncViewportAppMode('');
+    scheduleViewportAppFit();
+    scheduleBlankRenderProbe();
+    startPreviewHealthMonitoring();
+    schedulePreviewInteractionProbe();
+  }, { once: true });
+  window.addEventListener('resize', function() {
+    scheduleViewportAppFit();
+  });
 
   window.addEventListener('message', function(event) {
     const data = event.data;
     if (!data || data.source !== 'twinkle-parent') return;
+
+    if (data.type === 'viewer:update') {
+      applyViewerInfo(data.viewer);
+      return;
+    }
+    if (data.type === 'capabilities:update') {
+      applyCapabilitySnapshot(data.capabilities);
+      return;
+    }
+    if (data.type === 'exploration-plan:update') {
+      applyRuntimeExplorationPlan(data.explorationPlan);
+      return;
+    }
 
     const pending = pendingRequests.get(data.id);
     if (!pending) return;
@@ -901,6 +3813,16 @@ const TWINKLE_SDK_SCRIPT = `
     pendingRequests.delete(data.id);
 
     if (data.error) {
+      if (looksLikeBlockedCapabilityError(data.error)) {
+        reportRuntimeObservation('sdkblocked', {
+          message:
+            'Twinkle request "' +
+            String(data.type || 'unknown') +
+            '" was blocked: ' +
+            String(data.error || ''),
+          stack: null
+        });
+      }
       pending.reject(new Error(data.error));
     } else {
       pending.resolve(data.payload);
@@ -928,7 +3850,7 @@ const TWINKLE_SDK_SCRIPT = `
     });
   }
 
-  window.Twinkle = {
+  Twinkle = (window.Twinkle = {
     db: {
       async open() {
         if (db) return db;
@@ -1022,12 +3944,56 @@ const TWINKLE_SDK_SCRIPT = `
       }
     },
 
+    capabilities: {
+      current: null,
+
+      async get() {
+        if (capabilitySnapshot) return capabilitySnapshot;
+        const response = await sendRequest('capabilities:get', {});
+        applyCapabilitySnapshot(response?.capabilities);
+        return capabilitySnapshot;
+      },
+
+      async can(actionName) {
+        if (!actionName) throw new Error('actionName is required');
+        const snapshot = await this.get();
+        const normalizedActionName = String(actionName || '').trim();
+        return Boolean(
+          snapshot?.lumine?.actionDetails?.some(
+            (detail) =>
+              detail?.name === normalizedActionName && detail?.allowed === true
+          )
+        );
+      },
+
+      async listActions() {
+        const snapshot = await this.get();
+        return {
+          available: Array.isArray(snapshot?.lumine?.availableActions)
+            ? snapshot.lumine.availableActions
+            : [],
+          blocked: Array.isArray(snapshot?.lumine?.blockedActions)
+            ? snapshot.lumine.blockedActions
+            : [],
+          details: Array.isArray(snapshot?.lumine?.actionDetails)
+            ? snapshot.lumine.actionDetails
+            : []
+        };
+      },
+
+      async refresh() {
+        capabilitySnapshot = null;
+        return await this.get();
+      }
+    },
+
     viewer: {
       id: null,
       username: null,
       profilePicUrl: null,
       isLoggedIn: false,
       isOwner: false,
+      isGuest: false,
 
       async get() {
         if (viewerInfo) return viewerInfo;
@@ -1039,6 +4005,153 @@ const TWINKLE_SDK_SCRIPT = `
       async refresh() {
         viewerInfo = null;
         return await this.get();
+      }
+    },
+
+    preview: {
+      current: null,
+
+      getLayout() {
+        return readPreviewLayout();
+      },
+
+      getGameplayTelemetry() {
+        return buildGameplayTelemetrySnapshot();
+      },
+
+      wrapResult(result) {
+        var promise = Promise.resolve(result);
+        if (result && typeof result === 'object') {
+          try {
+            if (typeof result.then !== 'function') {
+              Object.defineProperty(result, 'then', {
+                configurable: true,
+                enumerable: false,
+                value: function(onFulfilled, onRejected) {
+                  return promise.then(onFulfilled, onRejected);
+                }
+              });
+            }
+            if (typeof result.catch !== 'function') {
+              Object.defineProperty(result, 'catch', {
+                configurable: true,
+                enumerable: false,
+                value: function(onRejected) {
+                  return promise.catch(onRejected);
+                }
+              });
+            }
+            if (typeof result.finally !== 'function') {
+              Object.defineProperty(result, 'finally', {
+                configurable: true,
+                enumerable: false,
+                value: function(onFinally) {
+                  return promise.finally(onFinally);
+                }
+              });
+            }
+          } catch (_) {}
+          return result;
+        }
+        return promise;
+      },
+
+      reserveInsets(insets) {
+        var currentInsets = clonePreviewInsets(previewLayoutState.reservedInsets);
+        var nextInsets = {
+          top:
+            insets && Object.prototype.hasOwnProperty.call(insets, 'top')
+              ? normalizePreviewInsetValue(insets.top)
+              : currentInsets.top,
+          right:
+            insets && Object.prototype.hasOwnProperty.call(insets, 'right')
+              ? normalizePreviewInsetValue(insets.right)
+              : currentInsets.right,
+          bottom:
+            insets && Object.prototype.hasOwnProperty.call(insets, 'bottom')
+              ? normalizePreviewInsetValue(insets.bottom)
+              : currentInsets.bottom,
+          left:
+            insets && Object.prototype.hasOwnProperty.call(insets, 'left')
+              ? normalizePreviewInsetValue(insets.left)
+              : currentInsets.left
+        };
+        if (previewInsetsEqual(currentInsets, nextInsets)) {
+          return this.wrapResult(readPreviewLayout());
+        }
+        previewLayoutState.reservedInsets = nextInsets;
+        return this.wrapResult(publishPreviewLayout(true));
+      },
+
+      setPlayfield(bounds) {
+        gameplayTelemetryState.playfieldBounds = normalizeGameplayRect(bounds);
+        scheduleGameplayTelemetryEvaluation();
+        return this.wrapResult(buildGameplayTelemetrySnapshot());
+      },
+
+      reportGameplayState(state) {
+        if (state == null) {
+          gameplayTelemetryState.playerBounds = null;
+          scheduleGameplayTelemetryEvaluation();
+          return this.wrapResult(buildGameplayTelemetrySnapshot());
+        }
+        if (typeof state !== 'object') {
+          throw new Error('state object is required');
+        }
+        if (Object.prototype.hasOwnProperty.call(state, 'playfieldBounds')) {
+          gameplayTelemetryState.playfieldBounds = normalizeGameplayRect(
+            state.playfieldBounds
+          );
+        }
+        if (Object.prototype.hasOwnProperty.call(state, 'playerBounds')) {
+          gameplayTelemetryState.playerBounds = normalizeGameplayRect(
+            state.playerBounds
+          );
+        }
+        scheduleGameplayTelemetryEvaluation();
+        return this.wrapResult(buildGameplayTelemetrySnapshot());
+      },
+
+      clearReservedInsets() {
+        var clearedInsets = {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0
+        };
+        if (previewInsetsEqual(previewLayoutState.reservedInsets, clearedInsets)) {
+          return this.wrapResult(readPreviewLayout());
+        }
+        previewLayoutState.reservedInsets = clearedInsets;
+        return this.wrapResult(publishPreviewLayout(true));
+      },
+
+      clearGameplayState() {
+        gameplayTelemetryState.playfieldBounds = null;
+        gameplayTelemetryState.playerBounds = null;
+        scheduleGameplayTelemetryEvaluation();
+        return this.wrapResult(buildGameplayTelemetrySnapshot());
+      },
+
+      subscribe(listener, options) {
+        if (typeof listener !== 'function') {
+          throw new Error('listener is required');
+        }
+        previewLayoutState.listeners.push(listener);
+        var shouldEmitImmediately =
+          !options || options.immediate !== false;
+        if (shouldEmitImmediately) {
+          try {
+            listener(readPreviewLayout());
+          } catch (_) {}
+        }
+        return function unsubscribe() {
+          previewLayoutState.listeners = previewLayoutState.listeners.filter(
+            function(candidate) {
+              return candidate !== listener;
+            }
+          );
+        };
       }
     },
 
@@ -1054,15 +4167,7 @@ const TWINKLE_SDK_SCRIPT = `
       }
     },
 
-    api: {
-      async getCurrentUser() {
-        return await this.getViewer();
-      },
-
-      async getViewer() {
-        return await window.Twinkle.viewer.get();
-      },
-
+    users: {
       async getUser(userId) {
         if (!userId) throw new Error('userId is required');
         const result = await sendRequest('api:get-user', { userId: userId });
@@ -1078,11 +4183,12 @@ const TWINKLE_SDK_SCRIPT = `
           cursor: cursor,
           limit: limit
         });
-      },
+      }
+    },
 
-      async getDailyReflections({ following, userIds, lastId, cursor, limit } = {}) {
+    reflections: {
+      async getDailyReflections({ userIds, lastId, cursor, limit } = {}) {
         return await sendRequest('api:get-daily-reflections', {
-          following: following,
           userIds: userIds,
           lastId: lastId,
           cursor: cursor,
@@ -1098,157 +4204,10 @@ const TWINKLE_SDK_SCRIPT = `
           cursor: cursor,
           limit: limit
         });
-      },
-
-      async getAICardMarketTrades({ cardId, side, since, until, cursor, limit } = {}) {
-        return await sendRequest('api:get-ai-card-market-trades', {
-          cardId: cardId,
-          side: side,
-          since: since,
-          until: until,
-          cursor: cursor,
-          limit: limit
-        });
-      },
-
-      async getAICardMarketCandles({ cardId, side, since, until, bucketSeconds, limit } = {}) {
-        return await sendRequest('api:get-ai-card-market-candles', {
-          cardId: cardId,
-          side: side,
-          since: since,
-          until: until,
-          bucketSeconds: bucketSeconds,
-          limit: limit
-        });
       }
     },
 
-    docs: {
-      async status() {
-        return await sendRequest('docs:status', {});
-      },
-
-      async connect() {
-        const result = await sendRequest('docs:connect-start', {}, {
-          timeoutMs: 16 * 60 * 1000
-        });
-        return {
-          success: Boolean(result?.success),
-          message: result?.message || null,
-          buildId: result?.buildId || null,
-          connectNonce: result?.connectNonce || null
-        };
-      },
-
-      async disconnect() {
-        return await sendRequest('docs:disconnect', {});
-      },
-
-      async listFiles(opts) {
-        var options = opts || {};
-        return await sendRequest('docs:list-files', {
-          query: options.query,
-          pageToken: options.pageToken,
-          pageSize: options.pageSize
-        });
-      },
-
-      async getDoc(docId) {
-        if (!docId) throw new Error('docId is required');
-        return await sendRequest('docs:get-doc', { docId: docId });
-      },
-
-      async getDocText(docId) {
-        if (!docId) throw new Error('docId is required');
-        return await sendRequest('docs:get-doc-text', { docId: docId });
-      },
-
-      async search(query, opts) {
-        if (!query) throw new Error('query is required');
-        var options = opts || {};
-        return await sendRequest('docs:search', {
-          query: query,
-          pageToken: options.pageToken,
-          pageSize: options.pageSize
-        });
-      }
-    },
-
-    llm: {
-      async listModels() {
-        return await sendRequest('llm:list-models', {});
-      },
-
-      async generate(opts) {
-        var options = opts || {};
-        if (!options.prompt && !Array.isArray(options.messages)) {
-          throw new Error('prompt or messages is required');
-        }
-        return await sendRequest(
-          'llm:generate',
-          {
-            model: options.model,
-            prompt: options.prompt,
-            system: options.system,
-            messages: options.messages,
-            maxOutputTokens: options.maxOutputTokens
-          },
-          { timeoutMs: options.timeoutMs }
-        );
-      }
-    },
-
-    social: {
-      async follow(userId) {
-        if (!userId) throw new Error('userId is required');
-        const result = await sendRequest('social:follow', { userId: userId });
-        return {
-          success: Boolean(result?.success),
-          isFollowing:
-            typeof result?.isFollowing === 'boolean'
-              ? result.isFollowing
-              : Boolean(result?.alreadyFollowing)
-        };
-      },
-
-      async unfollow(userId) {
-        if (!userId) throw new Error('userId is required');
-        const result = await sendRequest('social:unfollow', { userId: userId });
-        return {
-          success: Boolean(result?.success),
-          isFollowing:
-            typeof result?.isFollowing === 'boolean'
-              ? result.isFollowing
-              : false
-        };
-      },
-
-      async getFollowing({ limit, offset } = {}) {
-        const result = await sendRequest('social:get-following', {
-          limit,
-          offset
-        });
-        if (Array.isArray(result)) return { following: result };
-        return { following: Array.isArray(result?.following) ? result.following : [] };
-      },
-
-      async getFollowers({ limit, offset } = {}) {
-        const result = await sendRequest('social:get-followers', {
-          limit,
-          offset
-        });
-        if (Array.isArray(result)) return { followers: result };
-        return { followers: Array.isArray(result?.followers) ? result.followers : [] };
-      },
-
-      async isFollowing(userId) {
-        if (!userId) throw new Error('userId is required');
-        const result = await sendRequest('social:is-following', { userId: userId });
-        return result?.isFollowing || false;
-      }
-    },
-
-    content: {
+    subjects: {
       async getMySubjects(opts) {
         var options = opts || {};
         return await sendRequest('content:my-subjects', {
@@ -1270,8 +4229,10 @@ const TWINKLE_SDK_SCRIPT = `
           limit: options.limit,
           cursor: options.cursor
         });
-      },
+      }
+    },
 
+    profileComments: {
       async getProfileComments(opts) {
         var options = opts || {};
         return await sendRequest('content:profile-comments', {
@@ -1321,86 +4282,6 @@ const TWINKLE_SDK_SCRIPT = `
         }
         return await sendRequest('content:profile-comment-counts', {
           ids: options.ids
-        });
-      },
-
-      async getProfileCommentStats(opts) {
-        var options = opts || {};
-        return await sendRequest('content:profile-comment-stats', {
-          profileUserId: options.profileUserId,
-          includeReplies: options.includeReplies,
-          range: options.range,
-          since: options.since,
-          until: options.until
-        });
-      },
-
-      async getProfileCommentCount(opts) {
-        var options = opts || {};
-        return await sendRequest('content:profile-comment-count', {
-          profileUserId: options.profileUserId,
-          includeReplies: options.includeReplies,
-          range: options.range,
-          since: options.since,
-          until: options.until
-        });
-      },
-
-      async getProfileCommentSummary(opts) {
-        var options = opts || {};
-        return await sendRequest('content:profile-comment-summary', {
-          profileUserId: options.profileUserId,
-          includeReplies: options.includeReplies,
-          range: options.range,
-          since: options.since,
-          until: options.until
-        });
-      },
-
-      async getProfileTopCommenters(opts) {
-        var options = opts || {};
-        return await sendRequest('content:profile-comment-top-commenters', {
-          profileUserId: options.profileUserId,
-          includeReplies: options.includeReplies,
-          topCommentersLimit: options.topCommentersLimit,
-          range: options.range,
-          since: options.since,
-          until: options.until
-        });
-      },
-
-      async getProfileMostLikedComment(opts) {
-        var options = opts || {};
-        return await sendRequest('content:profile-comment-most-liked', {
-          profileUserId: options.profileUserId,
-          includeReplies: options.includeReplies,
-          range: options.range,
-          since: options.since,
-          until: options.until
-        });
-      }
-    },
-
-    vocabulary: {
-      async lookupWord(word) {
-        if (!word) throw new Error('word is required');
-        return await sendRequest('vocabulary:lookup-word', { word: word });
-      },
-
-      async collectWord(word) {
-        if (!word) throw new Error('word is required');
-        return await sendRequest('vocabulary:collect-word', { word: word });
-      },
-
-      async getBreakStatus() {
-        return await sendRequest('vocabulary:break-status', {});
-      },
-
-      async getCollectedWords(opts) {
-        var options = opts || {};
-        return await sendRequest('vocabulary:collected-words', {
-          limit: options.limit,
-          cursor: options.cursor
         });
       }
     },
@@ -1480,79 +4361,17 @@ const TWINKLE_SDK_SCRIPT = `
       }
     },
 
-    jobs: {
-      async schedule(opts) {
-        var options = opts || {};
-        if (!options.name) throw new Error('name is required');
-        if (!options.runAt) throw new Error('runAt is required');
-        return await sendRequest('jobs:schedule', {
-          name: options.name,
-          runAt: options.runAt,
-          intervalSeconds: options.intervalSeconds,
-          maxRuns: options.maxRuns,
-          data: options.data,
-          scope: options.scope
-        });
-      },
-
-      async list(opts) {
-        var options = opts || {};
-        return await sendRequest('jobs:list', {
-          scope: options.scope,
-          status: options.status,
-          limit: options.limit,
-          cursor: options.cursor
-        });
-      },
-
-      async cancel(jobId) {
-        if (!jobId) throw new Error('jobId is required');
-        return await sendRequest('jobs:cancel', { jobId: jobId });
-      },
-
-      async claimDue(opts) {
-        var options = opts || {};
-        return await sendRequest('jobs:claim-due', {
-          scope: options.scope,
-          limit: options.limit
-        });
-      }
-    },
-
-    mail: {
-      async send(opts) {
-        var options = opts || {};
-        if (!options.to) throw new Error('to is required');
-        if (!options.subject) throw new Error('subject is required');
-        return await sendRequest('mail:send', {
-          to: options.to,
-          subject: options.subject,
-          text: options.text,
-          html: options.html,
-          from: options.from,
-          replyTo: options.replyTo,
-          meta: options.meta
-        });
-      },
-
-      async list(opts) {
-        var options = opts || {};
-        return await sendRequest('mail:list', {
-          status: options.status,
-          limit: options.limit,
-          cursor: options.cursor
-        });
-      }
-    },
-
     build: { id: null, title: null, username: null },
     _init(info) {
       this.build.id = info.id;
       this.build.title = info.title;
       this.build.username = info.username;
       applyViewerInfo(info.viewer);
+      applyCapabilitySnapshot(info.capabilities);
+      applyRuntimeExplorationPlan(info.explorationPlan);
+      publishPreviewLayout(true);
     }
-  };
+  });
 
   sendRequest('init', {}).then(info => {
     if (info) window.Twinkle._init(info);
@@ -1573,6 +4392,15 @@ const panelClass = css`
   grid-template-rows: auto 1fr;
   background: #fff;
   gap: 0;
+  overflow: hidden;
+`;
+
+const runtimePanelClass = css`
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr;
+  background: #fff;
   overflow: hidden;
 `;
 
@@ -1607,6 +4435,51 @@ const toolbarActionsClass = css`
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+`;
+
+const guestRestrictionBannerClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-top: 1px solid rgba(120, 77, 0, 0.18);
+  background: linear-gradient(180deg, #fff8dc 0%, #fff1b8 100%);
+  color: #4f3a00;
+  @media (max-width: ${mobileMaxWidth}) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const guestRestrictionBannerTextClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.5;
+`;
+
+const guestRestrictionBannerActionsClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+`;
+
+const guestRestrictionBannerDismissClass = css`
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const previewStageClass = css`
@@ -1766,11 +4639,17 @@ export default function PreviewPanel({
   build,
   code,
   projectFiles,
+  streamingProjectFiles = null,
+  streamingFocusFilePath = null,
   isOwner,
   onReplaceCode,
   onApplyRestoredProjectFiles,
   onSaveProjectFiles,
-  onEditableProjectFilesStateChange
+  runtimeOnly = false,
+  capabilitySnapshot = null,
+  onEditableProjectFilesStateChange,
+  runtimeExplorationPlan = null,
+  onRuntimeObservationChange
 }: PreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [activePreviewFrame, setActivePreviewFrame] = useState<
@@ -1791,6 +4670,9 @@ export default function PreviewPanel({
     secondary: false
   });
   const [previewTransitioning, setPreviewTransitioning] = useState(false);
+  const [workspacePreviewSrc, setWorkspacePreviewSrc] = useState<string | null>(
+    null
+  );
   const [historyOpen, setHistoryOpen] = useState(false);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [versions, setVersions] = useState<ArtifactVersion[]>([]);
@@ -1816,6 +4698,16 @@ export default function PreviewPanel({
   >({});
   const [savingProjectFiles, setSavingProjectFiles] = useState(false);
   const [projectFileError, setProjectFileError] = useState('');
+  const [guestRestrictionBannerVisible, setGuestRestrictionBannerVisible] =
+    useState(false);
+  const [runtimeObservationState, setRuntimeObservationState] = useState<
+    BuildRuntimeObservationState
+  >(() =>
+    buildEmptyRuntimeObservationState({
+      buildId: build.id,
+      codeSignature: null
+    })
+  );
   const primaryIframeRef = useRef<HTMLIFrameElement>(null);
   const secondaryIframeRef = useRef<HTMLIFrameElement>(null);
   const activePreviewFrameRef = useRef<'primary' | 'secondary'>('primary');
@@ -1842,20 +4734,35 @@ export default function PreviewPanel({
     primary: false,
     secondary: false
   });
+  const previewSessionRequestSeqRef = useRef(0);
   const buildRef = useRef(build);
+  const previewCodeSignatureRef = useRef<string | null>(null);
+  const wasShowingStreamingCodeRef = useRef(false);
+  const streamingAutoFollowEnabledRef = useRef(false);
+  const autoReturnToPreviewPendingRef = useRef(false);
+  const lastStreamingFocusFilePathRef = useRef<string | null>(null);
+  const runtimeObservationStateRef = useRef<BuildRuntimeObservationState>(
+    buildEmptyRuntimeObservationState({
+      buildId: build.id,
+      codeSignature: null
+    })
+  );
   const isOwnerRef = useRef(isOwner);
   const userIdRef = useRef<number | null>(null);
   const usernameRef = useRef<string | null>(null);
   const profilePicUrlRef = useRef<string | null>(null);
-  const missionProgressRef = useRef({
-    promptListUsed: false,
-    aiChatUsed: false,
-    dbUsed: false
-  });
+  const guestSessionIdRef = useRef<string | null>(null);
 
   const persistedProjectFiles = useMemo(
     () => buildEditableProjectFiles({ code, projectFiles }),
     [code, projectFiles]
+  );
+  const streamedProjectFiles = useMemo(
+    () =>
+      Array.isArray(streamingProjectFiles) && streamingProjectFiles.length > 0
+        ? buildEditableProjectFiles({ code, projectFiles: streamingProjectFiles })
+        : null,
+    [code, streamingProjectFiles]
   );
   const persistedProjectFilesSignature = useMemo(
     () => serializeEditableProjectFiles(persistedProjectFiles),
@@ -1867,6 +4774,12 @@ export default function PreviewPanel({
   );
   const hasUnsavedProjectFileChanges =
     editableProjectFilesSignature !== persistedProjectFilesSignature;
+  const isShowingStreamingCode =
+    Boolean(streamedProjectFiles && streamedProjectFiles.length > 0) &&
+    !hasUnsavedProjectFileChanges;
+  const displayedProjectFiles = isShowingStreamingCode
+    ? streamedProjectFiles || editableProjectFiles
+    : editableProjectFiles;
   const editableProjectFilesForParent = useMemo(
     () =>
       editableProjectFiles.map((file) => ({
@@ -1877,8 +4790,10 @@ export default function PreviewPanel({
   );
   const activeFile = useMemo(
     () =>
-      editableProjectFiles.find((file) => file.path === activeFilePath) || null,
-    [editableProjectFiles, activeFilePath]
+      displayedProjectFiles.find((file) => file.path === activeFilePath) ||
+      displayedProjectFiles[0] ||
+      null,
+    [displayedProjectFiles, activeFilePath]
   );
   const persistedFileContentByPath = useMemo(() => {
     const byPath = new Map<string, string>();
@@ -1890,21 +4805,15 @@ export default function PreviewPanel({
   const projectExplorerEntries = useMemo(
     () =>
       buildProjectExplorerEntries({
-        files: editableProjectFiles,
+        files: displayedProjectFiles,
         collapsedFolders
       }),
-    [editableProjectFiles, collapsedFolders]
+    [displayedProjectFiles, collapsedFolders]
   );
 
   const userId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
-  const missions = useKeyContext((v) => v.myState.missions);
-  const buildMissionState = missions?.build || {};
-  const promptListUsed = Boolean(buildMissionState.promptListUsed);
-  const aiChatUsed = Boolean(buildMissionState.aiChatUsed);
-  const dbUsed = Boolean(buildMissionState.dbUsed);
-
   const downloadBuildDatabase = useAppContext(
     (v) => v.requestHelpers.downloadBuildDatabase
   );
@@ -1926,20 +4835,8 @@ export default function PreviewPanel({
   const restoreBuildArtifactVersion = useAppContext(
     (v) => v.requestHelpers.restoreBuildArtifactVersion
   );
-  const followBuildUser = useAppContext(
-    (v) => v.requestHelpers.followBuildUser
-  );
-  const unfollowBuildUser = useAppContext(
-    (v) => v.requestHelpers.unfollowBuildUser
-  );
-  const loadBuildFollowers = useAppContext(
-    (v) => v.requestHelpers.loadBuildFollowers
-  );
-  const loadBuildFollowing = useAppContext(
-    (v) => v.requestHelpers.loadBuildFollowing
-  );
-  const isFollowingBuildUser = useAppContext(
-    (v) => v.requestHelpers.isFollowingBuildUser
+  const createBuildPreviewSession = useAppContext(
+    (v) => v.requestHelpers.createBuildPreviewSession
   );
   const queryViewerDb = useAppContext((v) => v.requestHelpers.queryViewerDb);
   const execViewerDb = useAppContext((v) => v.requestHelpers.execViewerDb);
@@ -1954,49 +4851,6 @@ export default function PreviewPanel({
   );
   const getBuildDailyReflections = useAppContext(
     (v) => v.requestHelpers.getBuildDailyReflections
-  );
-  const getBuildAICardMarketTrades = useAppContext(
-    (v) => v.requestHelpers.getBuildAICardMarketTrades
-  );
-  const getBuildAICardMarketCandles = useAppContext(
-    (v) => v.requestHelpers.getBuildAICardMarketCandles
-  );
-  const getBuildDocsStatus = useAppContext(
-    (v) => v.requestHelpers.getBuildDocsStatus
-  );
-  const startBuildDocsConnect = useAppContext(
-    (v) => v.requestHelpers.startBuildDocsConnect
-  );
-  const disconnectBuildDocs = useAppContext(
-    (v) => v.requestHelpers.disconnectBuildDocs
-  );
-  const listBuildDocsFiles = useAppContext(
-    (v) => v.requestHelpers.listBuildDocsFiles
-  );
-  const getBuildDoc = useAppContext((v) => v.requestHelpers.getBuildDoc);
-  const getBuildDocText = useAppContext(
-    (v) => v.requestHelpers.getBuildDocText
-  );
-  const searchBuildDocs = useAppContext(
-    (v) => v.requestHelpers.searchBuildDocs
-  );
-  const listBuildLlmModels = useAppContext(
-    (v) => v.requestHelpers.listBuildLlmModels
-  );
-  const generateBuildLlmResponse = useAppContext(
-    (v) => v.requestHelpers.generateBuildLlmResponse
-  );
-  const lookupBuildVocabularyWord = useAppContext(
-    (v) => v.requestHelpers.lookupBuildVocabularyWord
-  );
-  const collectBuildVocabularyWord = useAppContext(
-    (v) => v.requestHelpers.collectBuildVocabularyWord
-  );
-  const getBuildVocabularyBreakStatus = useAppContext(
-    (v) => v.requestHelpers.getBuildVocabularyBreakStatus
-  );
-  const getBuildCollectedVocabularyWords = useAppContext(
-    (v) => v.requestHelpers.getBuildCollectedVocabularyWords
   );
   const getBuildMySubjects = useAppContext(
     (v) => v.requestHelpers.getBuildMySubjects
@@ -2018,21 +4872,6 @@ export default function PreviewPanel({
   );
   const getBuildProfileCommentCounts = useAppContext(
     (v) => v.requestHelpers.getBuildProfileCommentCounts
-  );
-  const getBuildProfileCommentStats = useAppContext(
-    (v) => v.requestHelpers.getBuildProfileCommentStats
-  );
-  const getBuildProfileCommentCount = useAppContext(
-    (v) => v.requestHelpers.getBuildProfileCommentCount
-  );
-  const getBuildProfileCommentSummary = useAppContext(
-    (v) => v.requestHelpers.getBuildProfileCommentSummary
-  );
-  const getBuildProfileTopCommenters = useAppContext(
-    (v) => v.requestHelpers.getBuildProfileTopCommenters
-  );
-  const getBuildProfileMostLikedComment = useAppContext(
-    (v) => v.requestHelpers.getBuildProfileMostLikedComment
   );
   const getSharedDbTopics = useAppContext(
     (v) => v.requestHelpers.getSharedDbTopics
@@ -2064,21 +4903,8 @@ export default function PreviewPanel({
   const deletePrivateDbItem = useAppContext(
     (v) => v.requestHelpers.deletePrivateDbItem
   );
-  const scheduleBuildJob = useAppContext(
-    (v) => v.requestHelpers.scheduleBuildJob
-  );
-  const listBuildJobs = useAppContext((v) => v.requestHelpers.listBuildJobs);
-  const cancelBuildJob = useAppContext((v) => v.requestHelpers.cancelBuildJob);
-  const claimDueBuildJobs = useAppContext(
-    (v) => v.requestHelpers.claimDueBuildJobs
-  );
-  const sendBuildMail = useAppContext((v) => v.requestHelpers.sendBuildMail);
-  const listBuildMail = useAppContext((v) => v.requestHelpers.listBuildMail);
-  const updateMissionStatus = useAppContext(
-    (v) => v.requestHelpers.updateMissionStatus
-  );
-  const onUpdateUserMissionState = useAppContext(
-    (v) => v.user.actions.onUpdateUserMissionState
+  const onOpenSigninModal = useAppContext(
+    (v) => v.user.actions.onOpenSigninModal
   );
 
   const downloadBuildDatabaseRef = useRef(downloadBuildDatabase);
@@ -2088,36 +4914,13 @@ export default function PreviewPanel({
   const listBuildArtifactsRef = useRef(listBuildArtifacts);
   const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
   const restoreBuildArtifactVersionRef = useRef(restoreBuildArtifactVersion);
-  const followBuildUserRef = useRef(followBuildUser);
-  const unfollowBuildUserRef = useRef(unfollowBuildUser);
-  const loadBuildFollowersRef = useRef(loadBuildFollowers);
-  const loadBuildFollowingRef = useRef(loadBuildFollowing);
-  const isFollowingBuildUserRef = useRef(isFollowingBuildUser);
+  const createBuildPreviewSessionRef = useRef(createBuildPreviewSession);
   const queryViewerDbRef = useRef(queryViewerDb);
   const execViewerDbRef = useRef(execViewerDb);
   const getBuildApiTokenRef = useRef(getBuildApiToken);
   const getBuildApiUserRef = useRef(getBuildApiUser);
   const getBuildApiUsersRef = useRef(getBuildApiUsers);
   const getBuildDailyReflectionsRef = useRef(getBuildDailyReflections);
-  const getBuildAICardMarketTradesRef = useRef(getBuildAICardMarketTrades);
-  const getBuildAICardMarketCandlesRef = useRef(getBuildAICardMarketCandles);
-  const getBuildDocsStatusRef = useRef(getBuildDocsStatus);
-  const startBuildDocsConnectRef = useRef(startBuildDocsConnect);
-  const disconnectBuildDocsRef = useRef(disconnectBuildDocs);
-  const listBuildDocsFilesRef = useRef(listBuildDocsFiles);
-  const getBuildDocRef = useRef(getBuildDoc);
-  const getBuildDocTextRef = useRef(getBuildDocText);
-  const searchBuildDocsRef = useRef(searchBuildDocs);
-  const listBuildLlmModelsRef = useRef(listBuildLlmModels);
-  const generateBuildLlmResponseRef = useRef(generateBuildLlmResponse);
-  const lookupBuildVocabularyWordRef = useRef(lookupBuildVocabularyWord);
-  const collectBuildVocabularyWordRef = useRef(collectBuildVocabularyWord);
-  const getBuildVocabularyBreakStatusRef = useRef(
-    getBuildVocabularyBreakStatus
-  );
-  const getBuildCollectedVocabularyWordsRef = useRef(
-    getBuildCollectedVocabularyWords
-  );
   const getBuildMySubjectsRef = useRef(getBuildMySubjects);
   const getBuildSubjectRef = useRef(getBuildSubject);
   const getBuildSubjectCommentsRef = useRef(getBuildSubjectComments);
@@ -2125,13 +4928,6 @@ export default function PreviewPanel({
   const getBuildProfileCommentIdsRef = useRef(getBuildProfileCommentIds);
   const getBuildProfileCommentsByIdsRef = useRef(getBuildProfileCommentsByIds);
   const getBuildProfileCommentCountsRef = useRef(getBuildProfileCommentCounts);
-  const getBuildProfileCommentStatsRef = useRef(getBuildProfileCommentStats);
-  const getBuildProfileCommentCountRef = useRef(getBuildProfileCommentCount);
-  const getBuildProfileCommentSummaryRef = useRef(getBuildProfileCommentSummary);
-  const getBuildProfileTopCommentersRef = useRef(getBuildProfileTopCommenters);
-  const getBuildProfileMostLikedCommentRef = useRef(
-    getBuildProfileMostLikedComment
-  );
   const getSharedDbTopicsRef = useRef(getSharedDbTopics);
   const createSharedDbTopicRef = useRef(createSharedDbTopic);
   const getSharedDbEntriesRef = useRef(getSharedDbEntries);
@@ -2142,26 +4938,36 @@ export default function PreviewPanel({
   const listPrivateDbItemsRef = useRef(listPrivateDbItems);
   const setPrivateDbItemRef = useRef(setPrivateDbItem);
   const deletePrivateDbItemRef = useRef(deletePrivateDbItem);
-  const scheduleBuildJobRef = useRef(scheduleBuildJob);
-  const listBuildJobsRef = useRef(listBuildJobs);
-  const cancelBuildJobRef = useRef(cancelBuildJob);
-  const claimDueBuildJobsRef = useRef(claimDueBuildJobs);
-  const sendBuildMailRef = useRef(sendBuildMail);
-  const listBuildMailRef = useRef(listBuildMail);
-  const updateMissionStatusRef = useRef(updateMissionStatus);
-  const onUpdateUserMissionStateRef = useRef(onUpdateUserMissionState);
 
   const buildApiTokenRef = useRef<{
     token: string;
     scopes: string[];
     expiresAt: number;
   } | null>(null);
-  const docsConnectInFlightRef = useRef<PendingDocsConnectRequest | null>(null);
-  const docsConnectPopupRef = useRef<Window | null>(null);
   const hydratedBuildIdRef = useRef<number | null>(null);
+  const capabilitySnapshotRef = useRef<BuildCapabilitySnapshot | null>(
+    capabilitySnapshot
+  );
+  const runtimeExplorationPlanRef = useRef<BuildRuntimeExplorationPlan | null>(
+    normalizeRuntimeExplorationPlan(runtimeExplorationPlan)
+  );
+  const resolvedCapabilitySnapshot = useMemo(() => {
+    if (!capabilitySnapshot) return null;
+    return {
+      ...capabilitySnapshot,
+      build: {
+        ...capabilitySnapshot.build,
+        isPublic: Boolean(build.isPublic)
+      }
+    };
+  }, [build.isPublic, capabilitySnapshot]);
+  const resolvedRuntimeExplorationPlan = useMemo(
+    () => normalizeRuntimeExplorationPlan(runtimeExplorationPlan),
+    [runtimeExplorationPlan]
+  );
 
-  // Inject SDK into user code
-  const codeWithSdk = useMemo(() => {
+  const runtimeCodeWithSdk = useMemo(() => {
+    if (!runtimeOnly) return null;
     const indexFile = getPreferredIndexFile(deferredPreviewProjectFiles);
     const hasIndexFile = Boolean(indexFile);
     const runtimeIndexHtml = hasIndexFile
@@ -2172,36 +4978,114 @@ export default function PreviewPanel({
       html: runtimeIndexHtml,
       projectFiles: deferredPreviewProjectFiles
     });
+    return injectPreviewScriptsIntoHtml({
+      html: htmlWithInlinedAssets,
+      scriptsHtml: TWINKLE_SDK_SCRIPT
+    });
+  }, [code, deferredPreviewProjectFiles, runtimeOnly]);
 
-    // Insert SDK script right after <head> tag
-    if (htmlWithInlinedAssets.includes('<head>')) {
-      return htmlWithInlinedAssets.replace(
-        '<head>',
-        '<head>' + TWINKLE_SDK_SCRIPT
-      );
-    }
-
-    // If no head tag, insert before first script or at start of body
-    if (htmlWithInlinedAssets.includes('<body>')) {
-      return htmlWithInlinedAssets.replace(
-        '<body>',
-        '<body>' + TWINKLE_SDK_SCRIPT
-      );
-    }
-
-    // Fallback: prepend to entire code
-    return TWINKLE_SDK_SCRIPT + htmlWithInlinedAssets;
-  }, [code, deferredPreviewProjectFiles]);
-
-  const previewSrc = useMemo(() => {
-    if (!codeWithSdk) return null;
-    const blob = new Blob([codeWithSdk], { type: 'text/html' });
+  const runtimeBlobPreviewSrc = useMemo(() => {
+    if (!runtimeOnly || !runtimeCodeWithSdk) return null;
+    const blob = new Blob([runtimeCodeWithSdk], { type: 'text/html' });
     return URL.createObjectURL(blob);
-  }, [codeWithSdk]);
-  const previewCodeSignature = useMemo(
-    () => buildPreviewCodeSignature(codeWithSdk),
-    [codeWithSdk]
+  }, [runtimeCodeWithSdk, runtimeOnly]);
+
+  const rawPreviewProjectFilesSignature = useMemo(
+    () => serializeEditableProjectFiles(deferredPreviewProjectFiles),
+    [deferredPreviewProjectFiles]
   );
+  const workspacePreviewSessionId = useMemo(() => {
+    if (runtimeOnly || !rawPreviewProjectFilesSignature) return null;
+    return `preview_${build.id}_${hashPreviewCode(rawPreviewProjectFilesSignature)}`;
+  }, [build.id, rawPreviewProjectFilesSignature, runtimeOnly]);
+  const workspacePreviewSessionFiles = useMemo(() => {
+    if (runtimeOnly || !workspacePreviewSessionId) {
+      return [] as Array<{ path: string; content: string }>;
+    }
+    return buildPreviewSessionProjectFiles({
+      code,
+      projectFiles: deferredPreviewProjectFiles,
+      sessionId: workspacePreviewSessionId
+    });
+  }, [
+    code,
+    deferredPreviewProjectFiles,
+    runtimeOnly,
+    workspacePreviewSessionId
+  ]);
+  const workspacePreviewCodeSignature = useMemo(() => {
+    if (runtimeOnly || workspacePreviewSessionFiles.length === 0) return null;
+    return buildPreviewCodeSignature(
+      serializeEditableProjectFiles(workspacePreviewSessionFiles)
+    );
+  }, [runtimeOnly, workspacePreviewSessionFiles]);
+  const previewSrc = runtimeOnly ? runtimeBlobPreviewSrc : workspacePreviewSrc;
+  const previewCodeSignature = runtimeOnly
+    ? buildPreviewCodeSignature(runtimeCodeWithSdk)
+    : workspacePreviewCodeSignature;
+
+  useEffect(() => {
+    previewCodeSignatureRef.current = previewCodeSignature;
+  }, [previewCodeSignature]);
+
+  useEffect(() => {
+    if (runtimeOnly) {
+      setWorkspacePreviewSrc(null);
+      return;
+    }
+    if (!workspacePreviewSessionId || workspacePreviewSessionFiles.length === 0) {
+      setWorkspacePreviewSrc(null);
+      return;
+    }
+
+    let cancelled = false;
+    const requestSeq = ++previewSessionRequestSeqRef.current;
+    const entryPath =
+      getPreferredIndexPath(workspacePreviewSessionFiles) || '/index.html';
+
+    (async () => {
+      const result = await createBuildPreviewSessionRef.current({
+        buildId: build.id,
+        sessionId: workspacePreviewSessionId,
+        entryPath,
+        codeSignature: workspacePreviewCodeSignature,
+        files: workspacePreviewSessionFiles
+      });
+      if (cancelled || requestSeq !== previewSessionRequestSeqRef.current) {
+        return;
+      }
+      if (typeof result?.entryUrl === 'string' && result.entryUrl.trim()) {
+        setWorkspacePreviewSrc(result.entryUrl);
+        return;
+      }
+      console.error('Failed to create preview session:', result);
+      setWorkspacePreviewSrc(null);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    build.id,
+    runtimeOnly,
+    workspacePreviewCodeSignature,
+    workspacePreviewSessionFiles,
+    workspacePreviewSessionId
+  ]);
+
+  useEffect(() => {
+    const nextState = buildEmptyRuntimeObservationState({
+      buildId: build.id,
+      codeSignature: previewCodeSignature
+    });
+    runtimeObservationStateRef.current = nextState;
+    setRuntimeObservationState(nextState);
+  }, [build.id, previewCodeSignature]);
+
+  useEffect(() => {
+    runtimeObservationStateRef.current = runtimeObservationState;
+    onRuntimeObservationChange?.(runtimeObservationState);
+  }, [onRuntimeObservationChange, runtimeObservationState]);
 
   useEffect(() => {
     const activeFrame = activePreviewFrameRef.current;
@@ -2243,13 +5127,13 @@ export default function PreviewPanel({
     if (!previewSrc) {
       clearCachedPreviewSeed(build.id);
       if (currentSources.primary) {
-        URL.revokeObjectURL(currentSources.primary);
+        revokePreviewUrl(currentSources.primary);
       }
       if (
         currentSources.secondary &&
         currentSources.secondary !== currentSources.primary
       ) {
-        URL.revokeObjectURL(currentSources.secondary);
+        revokePreviewUrl(currentSources.secondary);
       }
       const cleared = { primary: null, secondary: null };
       previewFrameSourcesRef.current = cleared;
@@ -2268,7 +5152,7 @@ export default function PreviewPanel({
     }
 
     if (seededFromCache) {
-      URL.revokeObjectURL(previewSrc);
+      revokePreviewUrl(previewSrc);
       previewTransitioningRef.current = false;
       setPreviewTransitioning(false);
       return;
@@ -2322,7 +5206,7 @@ export default function PreviewPanel({
     }
 
     if (inactiveSrc && inactiveSrc !== previewSrc) {
-      URL.revokeObjectURL(inactiveSrc);
+      revokePreviewUrl(inactiveSrc);
     }
 
     const nextSources = {
@@ -2367,6 +5251,33 @@ export default function PreviewPanel({
   }, [previewTransitioning]);
 
   useEffect(() => {
+    if (!runtimeOnly) return;
+
+    const nextMeta = {
+      primary: {
+        buildId: build.id,
+        codeSignature: previewCodeSignature
+      },
+      secondary: {
+        buildId: null,
+        codeSignature: null
+      }
+    };
+    previewFrameMetaRef.current = nextMeta;
+    messageTargetFrameRef.current = 'primary';
+    activePreviewFrameRef.current = 'primary';
+    setActivePreviewFrame('primary');
+    previewTransitioningRef.current = false;
+    setPreviewTransitioning(false);
+    const nextReadyState = {
+      primary: false,
+      secondary: false
+    };
+    previewFrameReadyRef.current = nextReadyState;
+    setPreviewFrameReady(nextReadyState);
+  }, [build.id, previewCodeSignature, runtimeOnly]);
+
+  useEffect(() => {
     return () => {
       const activeFrame = activePreviewFrameRef.current;
       const sources = previewFrameSourcesRef.current;
@@ -2393,15 +5304,15 @@ export default function PreviewPanel({
           cachedAt: Date.now()
         });
       } else if (activeSrc) {
-        URL.revokeObjectURL(activeSrc);
+        revokePreviewUrl(activeSrc);
       }
 
       if (sources.primary && sources.primary !== activeSrc) {
-        URL.revokeObjectURL(sources.primary);
+        revokePreviewUrl(sources.primary);
       }
       if (sources.secondary && sources.secondary !== sources.primary) {
         if (sources.secondary !== activeSrc) {
-          URL.revokeObjectURL(sources.secondary);
+          revokePreviewUrl(sources.secondary);
         }
       }
     };
@@ -2432,6 +5343,82 @@ export default function PreviewPanel({
   }, [profilePicUrl]);
 
   useEffect(() => {
+    buildApiTokenRef.current = null;
+  }, [build.id, userId]);
+
+  useEffect(() => {
+    if (userId) {
+      setGuestRestrictionBannerVisible(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    capabilitySnapshotRef.current = resolvedCapabilitySnapshot;
+  }, [resolvedCapabilitySnapshot]);
+
+  useEffect(() => {
+    runtimeExplorationPlanRef.current = resolvedRuntimeExplorationPlan;
+  }, [resolvedRuntimeExplorationPlan]);
+
+  useEffect(() => {
+    const viewer = getViewerInfo();
+    const previewFrames = [
+      primaryIframeRef.current?.contentWindow,
+      secondaryIframeRef.current?.contentWindow
+    ];
+
+    for (const targetWindow of previewFrames) {
+      if (!targetWindow) continue;
+      targetWindow.postMessage(
+        {
+          source: 'twinkle-parent',
+          type: 'viewer:update',
+          viewer
+        },
+        '*'
+      );
+    }
+  }, [build.id, build.isPublic, isOwner, userId, username, profilePicUrl]);
+
+  useEffect(() => {
+    const previewFrames = [
+      primaryIframeRef.current?.contentWindow,
+      secondaryIframeRef.current?.contentWindow
+    ];
+
+    for (const targetWindow of previewFrames) {
+      if (!targetWindow) continue;
+      targetWindow.postMessage(
+        {
+          source: 'twinkle-parent',
+          type: 'capabilities:update',
+          capabilities: resolvedCapabilitySnapshot
+        },
+        '*'
+      );
+    }
+  }, [resolvedCapabilitySnapshot]);
+
+  useEffect(() => {
+    const previewFrames = [
+      primaryIframeRef.current?.contentWindow,
+      secondaryIframeRef.current?.contentWindow
+    ];
+
+    for (const targetWindow of previewFrames) {
+      if (!targetWindow) continue;
+      targetWindow.postMessage(
+        {
+          source: 'twinkle-parent',
+          type: 'exploration-plan:update',
+          explorationPlan: resolvedRuntimeExplorationPlan
+        },
+        '*'
+      );
+    }
+  }, [resolvedRuntimeExplorationPlan]);
+
+  useEffect(() => {
     const shouldHydrateForBuild =
       hydratedBuildIdRef.current === null || hydratedBuildIdRef.current !== build.id;
     if (!shouldHydrateForBuild) return;
@@ -2448,6 +5435,10 @@ export default function PreviewPanel({
     setSelectedFolderPath(null);
     setFolderMoveTargetPath('');
     setCollapsedFolders({});
+    wasShowingStreamingCodeRef.current = false;
+    streamingAutoFollowEnabledRef.current = false;
+    autoReturnToPreviewPendingRef.current = false;
+    lastStreamingFocusFilePathRef.current = null;
   }, [build.id, persistedProjectFiles, persistedProjectFilesSignature]);
 
   useEffect(() => {
@@ -2467,6 +5458,60 @@ export default function PreviewPanel({
     persistedProjectFilesSignature,
     hasUnsavedProjectFileChanges
   ]);
+
+  useEffect(() => {
+    const justStartedStreaming =
+      isShowingStreamingCode && !wasShowingStreamingCodeRef.current;
+    const justStoppedStreaming =
+      !isShowingStreamingCode && wasShowingStreamingCodeRef.current;
+    wasShowingStreamingCodeRef.current = isShowingStreamingCode;
+
+    if (justStartedStreaming) {
+      streamingAutoFollowEnabledRef.current = true;
+      autoReturnToPreviewPendingRef.current = false;
+      if (viewMode !== 'code') {
+        setViewMode('code');
+      }
+    } else if (justStoppedStreaming) {
+      streamingAutoFollowEnabledRef.current = false;
+      autoReturnToPreviewPendingRef.current = true;
+      lastStreamingFocusFilePathRef.current = null;
+    }
+  }, [isShowingStreamingCode, viewMode]);
+
+  useEffect(() => {
+    if (runtimeOnly) return;
+    if (isShowingStreamingCode) return;
+    if (!autoReturnToPreviewPendingRef.current) return;
+    const hasPreviewSurface = Boolean(
+      previewFrameSources.primary || previewFrameSources.secondary || previewSrc
+    );
+    if (!hasPreviewSurface) return;
+    autoReturnToPreviewPendingRef.current = false;
+    if (viewMode !== 'preview') {
+      setViewMode('preview');
+    }
+  }, [
+    isShowingStreamingCode,
+    previewFrameSources.primary,
+    previewFrameSources.secondary,
+    previewSrc,
+    runtimeOnly,
+    viewMode
+  ]);
+
+  useEffect(() => {
+    if (!isShowingStreamingCode || !streamingFocusFilePath) return;
+    const nextPath = normalizeProjectFilePath(streamingFocusFilePath);
+    if (lastStreamingFocusFilePathRef.current === nextPath) return;
+    lastStreamingFocusFilePathRef.current = nextPath;
+    if (!streamingAutoFollowEnabledRef.current) return;
+    setActiveFilePath((prev) => {
+      const exists = displayedProjectFiles.some((file) => file.path === nextPath);
+      if (!exists) return prev;
+      return nextPath;
+    });
+  }, [displayedProjectFiles, isShowingStreamingCode, streamingFocusFilePath]);
 
   useEffect(() => {
     onEditableProjectFilesStateChange?.({
@@ -2504,6 +5549,14 @@ export default function PreviewPanel({
         '/index.html'
       );
     });
+  }
+
+  function handleViewModeChange(nextMode: 'preview' | 'code') {
+    if (nextMode === viewMode) return;
+    if (isShowingStreamingCode) {
+      streamingAutoFollowEnabledRef.current = nextMode === 'code';
+    }
+    setViewMode(nextMode);
   }
 
   function toggleFolderCollapsed(folderPath: string) {
@@ -2714,7 +5767,62 @@ export default function PreviewPanel({
     setProjectFileError('');
   }
 
+  function isGuestViewerActive() {
+    return (
+      Boolean(buildRef.current?.isPublic) &&
+      !isOwnerRef.current &&
+      !userIdRef.current
+    );
+  }
+
+  function ensureGuestSessionId() {
+    if (guestSessionIdRef.current) {
+      return guestSessionIdRef.current;
+    }
+
+    try {
+      const storedGuestSessionId = window.localStorage.getItem(
+        GUEST_SESSION_STORAGE_KEY
+      );
+      if (storedGuestSessionId) {
+        guestSessionIdRef.current = storedGuestSessionId;
+        return storedGuestSessionId;
+      }
+    } catch {
+      // no-op
+    }
+
+    const generatedGuestSessionId = `guest_${
+      window.crypto?.randomUUID?.() ||
+      `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
+    }`;
+
+    guestSessionIdRef.current = generatedGuestSessionId;
+
+    try {
+      window.localStorage.setItem(
+        GUEST_SESSION_STORAGE_KEY,
+        generatedGuestSessionId
+      );
+    } catch {
+      // no-op
+    }
+
+    return generatedGuestSessionId;
+  }
+
+  function triggerGuestRestriction() {
+    setGuestRestrictionBannerVisible(true);
+    const error: any = new Error(GUEST_RESTRICTION_ERROR_MESSAGE);
+    error.code = 'guest_restricted';
+    throw error;
+  }
+
   async function ensureBuildApiToken(requiredScopes: string[]) {
+    if (isGuestViewerActive()) {
+      triggerGuestRestriction();
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const cached = buildApiTokenRef.current;
     if (
@@ -2752,181 +5860,37 @@ export default function PreviewPanel({
   }
 
   function getViewerInfo() {
+    if (userIdRef.current) {
+      return {
+        id: userIdRef.current,
+        username: usernameRef.current,
+        profilePicUrl: profilePicUrlRef.current,
+        isLoggedIn: true,
+        isOwner: Boolean(isOwnerRef.current),
+        isGuest: false
+      };
+    }
+
+    if (isGuestViewerActive()) {
+      return {
+        id: ensureGuestSessionId(),
+        username: 'Guest',
+        profilePicUrl: null,
+        isLoggedIn: false,
+        isOwner: false,
+        isGuest: true
+      };
+    }
+
     return {
-      id: userIdRef.current,
-      username: usernameRef.current,
-      profilePicUrl: profilePicUrlRef.current,
-      isLoggedIn: Boolean(userIdRef.current),
-      isOwner: Boolean(isOwnerRef.current)
+      id: null,
+      username: null,
+      profilePicUrl: null,
+      isLoggedIn: false,
+      isOwner: Boolean(isOwnerRef.current),
+      isGuest: false
     };
   }
-
-  async function startDocsConnectViaHost(
-    buildId: number
-  ): Promise<DocsConnectResult> {
-    let popup: Window | null = null;
-    try {
-      popup = window.open('', 'twinkle_docs_connect', 'width=560,height=720');
-    } catch {
-      popup = null;
-    }
-    if (!popup) {
-      throw new Error('Popup blocked. Please allow popups and try again.');
-    }
-
-    docsConnectPopupRef.current = popup;
-    try {
-      popup.document.title = 'Connect Google Docs';
-      popup.document.body.innerHTML =
-        '<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;padding:24px;color:#444;">Opening Google Docs authorization...</div>';
-    } catch {
-      // no-op
-    }
-
-    try {
-      const docsReadToken = await ensureBuildApiToken(['docs:read']);
-      const start = await startBuildDocsConnectRef.current({
-        buildId,
-        token: docsReadToken
-      });
-      if (!start?.url) {
-        throw new Error(
-          start?.error || 'Failed to start Google Docs connection'
-        );
-      }
-
-      if (popup.closed) {
-        throw new Error(
-          'Google Docs connection window was closed before completion.'
-        );
-      }
-
-      const connectNonce =
-        typeof start.connectNonce === 'string' && start.connectNonce.trim()
-          ? start.connectNonce.trim()
-          : null;
-      const timeoutMs =
-        Math.max(Number(start.timeoutSeconds || 600), 60) * 1000;
-
-      try {
-        popup.location.href = start.url;
-      } catch {
-        throw new Error('Failed to open Google Docs authorization window.');
-      }
-
-      return await new Promise((resolve, reject) => {
-        let done = false;
-        let closePoll: ReturnType<typeof setInterval> | null = null;
-        let timeout: ReturnType<typeof setTimeout> | null = null;
-
-        function cleanup() {
-          if (done) return;
-          done = true;
-          window.removeEventListener('message', handleOAuthMessage);
-          if (closePoll) {
-            clearInterval(closePoll);
-            closePoll = null;
-          }
-          if (timeout) {
-            clearTimeout(timeout);
-            timeout = null;
-          }
-          if (docsConnectPopupRef.current === popup) {
-            docsConnectPopupRef.current = null;
-          }
-        }
-
-        function handleOAuthMessage(event: MessageEvent) {
-          if (event.source !== popup) return;
-          const data = event?.data;
-          if (!data || data.source !== 'twinkle-build-docs-oauth') return;
-          if (connectNonce) {
-            const incomingNonce =
-              typeof data.connectNonce === 'string' ? data.connectNonce : '';
-            if (incomingNonce !== connectNonce) {
-              return;
-            }
-          }
-
-          const parsedBuildId = Number(data.buildId);
-          cleanup();
-          try {
-            if (popup && !popup.closed) popup.close();
-          } catch {
-            // no-op
-          }
-          resolve({
-            success: Boolean(data.success),
-            message: data.message ? String(data.message) : null,
-            buildId:
-              Number.isFinite(parsedBuildId) && parsedBuildId > 0
-                ? parsedBuildId
-                : buildId,
-            connectNonce:
-              typeof data.connectNonce === 'string'
-                ? data.connectNonce
-                : connectNonce
-          });
-        }
-
-        window.addEventListener('message', handleOAuthMessage);
-
-        closePoll = setInterval(() => {
-          if (!popup || popup.closed) {
-            cleanup();
-            reject(
-              new Error(
-                'Google Docs connection window was closed before completion.'
-              )
-            );
-          }
-        }, 500);
-
-        timeout = setTimeout(() => {
-          cleanup();
-          try {
-            if (popup && !popup.closed) popup.close();
-          } catch {
-            // no-op
-          }
-          reject(
-            new Error('Google Docs connection timed out. Please try again.')
-          );
-        }, timeoutMs);
-      });
-    } catch (error) {
-      if (docsConnectPopupRef.current === popup) {
-        docsConnectPopupRef.current = null;
-      }
-      try {
-        if (popup && !popup.closed) popup.close();
-      } catch {
-        // no-op
-      }
-      throw error;
-    }
-  }
-
-  useEffect(() => {
-    missionProgressRef.current = {
-      promptListUsed,
-      aiChatUsed,
-      dbUsed
-    };
-  }, [promptListUsed, aiChatUsed, dbUsed]);
-
-  useEffect(() => {
-    return () => {
-      docsConnectInFlightRef.current = null;
-      const popup = docsConnectPopupRef.current;
-      docsConnectPopupRef.current = null;
-      try {
-        if (popup && !popup.closed) popup.close();
-      } catch {
-        // no-op
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (historyOpen) {
@@ -3050,7 +6014,7 @@ export default function PreviewPanel({
     setPreviewTransitioning(false);
 
     if (outgoingSrc && outgoingSrc !== expectedSrc) {
-      URL.revokeObjectURL(outgoingSrc);
+      revokePreviewUrl(outgoingSrc);
     }
 
     const nextSources = {
@@ -3073,6 +6037,20 @@ export default function PreviewPanel({
     };
     previewFrameReadyRef.current = nextReady;
     setPreviewFrameReady(nextReady);
+  }
+
+  function handleRuntimePreviewFrameLoad() {
+    const nextReadyState = {
+      primary: true,
+      secondary: false
+    };
+    previewFrameReadyRef.current = nextReadyState;
+    setPreviewFrameReady(nextReadyState);
+    messageTargetFrameRef.current = 'primary';
+    activePreviewFrameRef.current = 'primary';
+    setActivePreviewFrame('primary');
+    previewTransitioningRef.current = false;
+    setPreviewTransitioning(false);
   }
 
   useEffect(() => {
@@ -3112,10 +6090,15 @@ export default function PreviewPanel({
         previewTransitioningRef.current &&
         alternateHasSource &&
         alternateMeta?.buildId === activeBuildId;
+      const allowRuntimePrimaryWindow =
+        runtimeOnly &&
+        targetFrame === 'primary' &&
+        primaryWindow &&
+        sourceWindow === primaryWindow;
       const fromTargetWindow = Boolean(
         targetWindow &&
         sourceWindow === targetWindow &&
-        targetMeta?.buildId === activeBuildId
+        (targetMeta?.buildId === activeBuildId || allowRuntimePrimaryWindow)
       );
       const fromAlternateWindow = Boolean(
         alternateWindow &&
@@ -3126,6 +6109,94 @@ export default function PreviewPanel({
         !fromTargetWindow &&
         !(shouldAcceptAlternate && fromAlternateWindow)
       ) {
+        return;
+      }
+
+      if (type === 'runtime-observation') {
+        const normalizedIssue = normalizeRuntimeObservationIssue(payload);
+        if (!normalizedIssue) return;
+        const observationCodeSignature = runtimeOnly
+          ? previewCodeSignatureRef.current
+          : frameMeta[sourceFrame]?.codeSignature ||
+            previewCodeSignatureRef.current;
+
+        setRuntimeObservationState((prev) => {
+          const baseState =
+            prev.buildId === activeBuildId &&
+            prev.codeSignature === observationCodeSignature
+              ? prev
+              : buildEmptyRuntimeObservationState({
+                  buildId: activeBuildId,
+                  codeSignature: observationCodeSignature
+                });
+          const isDuplicate = baseState.issues.some(
+            (issue) =>
+              issue.kind === normalizedIssue.kind &&
+              issue.message === normalizedIssue.message &&
+              issue.filename === normalizedIssue.filename &&
+              issue.lineNumber === normalizedIssue.lineNumber &&
+              issue.columnNumber === normalizedIssue.columnNumber
+          );
+          if (isDuplicate) {
+            return {
+              ...baseState,
+              updatedAt: Math.max(Date.now(), normalizedIssue.createdAt)
+            };
+          }
+          return {
+            ...baseState,
+            issues: [...baseState.issues, normalizedIssue].slice(-8),
+            updatedAt: Math.max(Date.now(), normalizedIssue.createdAt)
+          };
+        });
+        return;
+      }
+
+      if (type === 'preview-health') {
+        const normalizedHealth = normalizeRuntimeHealthSnapshot(payload);
+        if (!normalizedHealth) return;
+        const healthCodeSignature = runtimeOnly
+          ? previewCodeSignatureRef.current
+          : frameMeta[sourceFrame]?.codeSignature ||
+            previewCodeSignatureRef.current;
+
+        setRuntimeObservationState((prev) => {
+          const baseState =
+            prev.buildId === activeBuildId &&
+            prev.codeSignature === healthCodeSignature
+              ? prev
+              : buildEmptyRuntimeObservationState({
+                  buildId: activeBuildId,
+                  codeSignature: healthCodeSignature
+                });
+          const previousHealth = baseState.health;
+          const isUnchanged =
+            previousHealth &&
+            previousHealth.booted === normalizedHealth.booted &&
+            previousHealth.meaningfulRender === normalizedHealth.meaningfulRender &&
+            previousHealth.headingCount === normalizedHealth.headingCount &&
+            previousHealth.buttonCount === normalizedHealth.buttonCount &&
+            previousHealth.formCount === normalizedHealth.formCount &&
+            previousHealth.interactionStatus ===
+              normalizedHealth.interactionStatus &&
+            previousHealth.interactionTargetLabel ===
+              normalizedHealth.interactionTargetLabel &&
+            JSON.stringify(previousHealth.interactionSteps || []) ===
+              JSON.stringify(normalizedHealth.interactionSteps || []) &&
+            previousHealth.visibleTextSample ===
+              normalizedHealth.visibleTextSample;
+          if (isUnchanged) {
+            return {
+              ...baseState,
+              updatedAt: Math.max(Date.now(), normalizedHealth.observedAt)
+            };
+          }
+          return {
+            ...baseState,
+            health: normalizedHealth,
+            updatedAt: Math.max(Date.now(), normalizedHealth.observedAt)
+          };
+        });
         return;
       }
 
@@ -3164,8 +6235,14 @@ export default function PreviewPanel({
               id: activeBuild.id,
               title: activeBuild.title,
               username: activeBuild.username,
-              viewer: getViewerInfo()
+              viewer: getViewerInfo(),
+              capabilities: capabilitySnapshotRef.current,
+              explorationPlan: runtimeExplorationPlanRef.current
             };
+            break;
+
+          case 'capabilities:get':
+            response = { capabilities: capabilitySnapshotRef.current };
             break;
 
           case 'db:load':
@@ -3223,210 +6300,6 @@ export default function PreviewPanel({
             response = aiResult;
             break;
 
-          case 'docs:status': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const docsReadToken = await ensureBuildApiToken(['docs:read']);
-            response = await getBuildDocsStatusRef.current({
-              buildId: activeBuild.id,
-              token: docsReadToken
-            });
-            break;
-          }
-
-          case 'docs:connect-start': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const inFlightRequest = docsConnectInFlightRef.current;
-            if (inFlightRequest && inFlightRequest.buildId !== activeBuild.id) {
-              throw new Error(
-                'A Google Docs connection is already in progress for another build.'
-              );
-            }
-
-            if (!inFlightRequest) {
-              const promise = startDocsConnectViaHost(activeBuild.id).finally(
-                () => {
-                  if (docsConnectInFlightRef.current?.promise === promise) {
-                    docsConnectInFlightRef.current = null;
-                  }
-                }
-              );
-              docsConnectInFlightRef.current = {
-                buildId: activeBuild.id,
-                promise
-              };
-            }
-            response = await docsConnectInFlightRef.current?.promise;
-            break;
-          }
-
-          case 'docs:disconnect': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const docsWriteToken = await ensureBuildApiToken(['docs:write']);
-            response = await disconnectBuildDocsRef.current({
-              buildId: activeBuild.id,
-              token: docsWriteToken
-            });
-            break;
-          }
-
-          case 'docs:list-files': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const docsReadToken = await ensureBuildApiToken(['docs:read']);
-            response = await listBuildDocsFilesRef.current({
-              buildId: activeBuild.id,
-              query: payload?.query,
-              pageToken: payload?.pageToken,
-              pageSize: payload?.pageSize,
-              token: docsReadToken
-            });
-            break;
-          }
-
-          case 'docs:get-doc': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const docsReadToken = await ensureBuildApiToken(['docs:read']);
-            response = await getBuildDocRef.current({
-              buildId: activeBuild.id,
-              docId: payload?.docId,
-              token: docsReadToken
-            });
-            break;
-          }
-
-          case 'docs:get-doc-text': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const docsReadToken = await ensureBuildApiToken(['docs:read']);
-            response = await getBuildDocTextRef.current({
-              buildId: activeBuild.id,
-              docId: payload?.docId,
-              token: docsReadToken
-            });
-            break;
-          }
-
-          case 'docs:search': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const docsReadToken = await ensureBuildApiToken(['docs:read']);
-            response = await searchBuildDocsRef.current({
-              buildId: activeBuild.id,
-              query: payload?.query,
-              pageToken: payload?.pageToken,
-              pageSize: payload?.pageSize,
-              token: docsReadToken
-            });
-            break;
-          }
-
-          case 'llm:list-models': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const llmToken = await ensureBuildApiToken(['llm:generate']);
-            response = await listBuildLlmModelsRef.current({
-              buildId: activeBuild.id,
-              token: llmToken
-            });
-            break;
-          }
-
-          case 'llm:generate': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const llmToken = await ensureBuildApiToken(['llm:generate']);
-            response = await generateBuildLlmResponseRef.current({
-              buildId: activeBuild.id,
-              model: payload?.model,
-              prompt: payload?.prompt,
-              system: payload?.system,
-              messages: payload?.messages,
-              maxOutputTokens: payload?.maxOutputTokens,
-              token: llmToken
-            });
-            break;
-          }
-
-          case 'social:follow': {
-            const targetUserId = Number(payload?.userId);
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            if (!targetUserId || Number.isNaN(targetUserId)) {
-              throw new Error('userId is required');
-            }
-            response = await followBuildUserRef.current({
-              buildId: activeBuild.id,
-              userId: targetUserId
-            });
-            break;
-          }
-
-          case 'social:unfollow': {
-            const targetUserId = Number(payload?.userId);
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            if (!targetUserId || Number.isNaN(targetUserId)) {
-              throw new Error('userId is required');
-            }
-            response = await unfollowBuildUserRef.current({
-              buildId: activeBuild.id,
-              userId: targetUserId
-            });
-            break;
-          }
-
-          case 'social:get-followers':
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            response = await loadBuildFollowersRef.current({
-              buildId: activeBuild.id,
-              limit: payload?.limit,
-              offset: payload?.offset
-            });
-            break;
-
-          case 'social:get-following':
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            response = await loadBuildFollowingRef.current({
-              buildId: activeBuild.id,
-              limit: payload?.limit,
-              offset: payload?.offset
-            });
-            break;
-
-          case 'social:is-following': {
-            const targetUserId = Number(payload?.userId);
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            if (!targetUserId || Number.isNaN(targetUserId)) {
-              throw new Error('userId is required');
-            }
-            response = await isFollowingBuildUserRef.current({
-              buildId: activeBuild.id,
-              userId: targetUserId
-            });
-            break;
-          }
-
           case 'viewer:get':
             response = { viewer: getViewerInfo() };
             break;
@@ -3435,22 +6308,40 @@ export default function PreviewPanel({
             if (!activeBuild?.id) {
               throw new Error('Build not found');
             }
-            response = await queryViewerDbRef.current({
-              buildId: activeBuild.id,
-              sql: payload?.sql,
-              params: payload?.params
-            });
+            if (isGuestViewerActive()) {
+              response = await executeGuestViewerDbQuery({
+                buildId: activeBuild.id,
+                guestSessionId: ensureGuestSessionId(),
+                sql: payload?.sql,
+                params: payload?.params
+              });
+            } else {
+              response = await queryViewerDbRef.current({
+                buildId: activeBuild.id,
+                sql: payload?.sql,
+                params: payload?.params
+              });
+            }
             break;
 
           case 'viewer-db:exec':
             if (!activeBuild?.id) {
               throw new Error('Build not found');
             }
-            response = await execViewerDbRef.current({
-              buildId: activeBuild.id,
-              sql: payload?.sql,
-              params: payload?.params
-            });
+            if (isGuestViewerActive()) {
+              response = await executeGuestViewerDbExec({
+                buildId: activeBuild.id,
+                guestSessionId: ensureGuestSessionId(),
+                sql: payload?.sql,
+                params: payload?.params
+              });
+            } else {
+              response = await execViewerDbRef.current({
+                buildId: activeBuild.id,
+                sql: payload?.sql,
+                params: payload?.params
+              });
+            }
             break;
 
           case 'api:get-user': {
@@ -3491,52 +6382,11 @@ export default function PreviewPanel({
             ]);
             response = await getBuildDailyReflectionsRef.current({
               buildId: activeBuild.id,
-              following: payload?.following,
               userIds: payload?.userIds,
               lastId: payload?.lastId,
               cursor: payload?.cursor,
               limit: payload?.limit,
               token: reflectionsToken
-            });
-            break;
-          }
-
-          case 'api:get-ai-card-market-trades': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const aiCardsReadToken = await ensureBuildApiToken([
-              'aiCards:read'
-            ]);
-            response = await getBuildAICardMarketTradesRef.current({
-              buildId: activeBuild.id,
-              cardId: payload?.cardId,
-              side: payload?.side,
-              since: payload?.since,
-              until: payload?.until,
-              cursor: payload?.cursor,
-              limit: payload?.limit,
-              token: aiCardsReadToken
-            });
-            break;
-          }
-
-          case 'api:get-ai-card-market-candles': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const aiCardsReadToken = await ensureBuildApiToken([
-              'aiCards:read'
-            ]);
-            response = await getBuildAICardMarketCandlesRef.current({
-              buildId: activeBuild.id,
-              cardId: payload?.cardId,
-              side: payload?.side,
-              since: payload?.since,
-              until: payload?.until,
-              bucketSeconds: payload?.bucketSeconds,
-              limit: payload?.limit,
-              token: aiCardsReadToken
             });
             break;
           }
@@ -3659,162 +6509,6 @@ export default function PreviewPanel({
               buildId: activeBuild.id,
               ids: Array.isArray(payload?.ids) ? payload.ids : [],
               token: contentProfileCountsToken
-            });
-            break;
-          }
-
-          case 'content:profile-comment-stats': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const contentProfileStatsToken = await ensureBuildApiToken([
-              'content:read'
-            ]);
-            response = await getBuildProfileCommentStatsRef.current({
-              buildId: activeBuild.id,
-              profileUserId: payload?.profileUserId,
-              includeReplies: payload?.includeReplies,
-              range: payload?.range,
-              since: payload?.since,
-              until: payload?.until,
-              token: contentProfileStatsToken
-            });
-            break;
-          }
-
-          case 'content:profile-comment-count': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const contentProfileCountOnlyToken = await ensureBuildApiToken([
-              'content:read'
-            ]);
-            response = await getBuildProfileCommentCountRef.current({
-              buildId: activeBuild.id,
-              profileUserId: payload?.profileUserId,
-              includeReplies: payload?.includeReplies,
-              range: payload?.range,
-              since: payload?.since,
-              until: payload?.until,
-              token: contentProfileCountOnlyToken
-            });
-            break;
-          }
-
-          case 'content:profile-comment-summary': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const contentProfileSummaryToken = await ensureBuildApiToken([
-              'content:read'
-            ]);
-            response = await getBuildProfileCommentSummaryRef.current({
-              buildId: activeBuild.id,
-              profileUserId: payload?.profileUserId,
-              includeReplies: payload?.includeReplies,
-              range: payload?.range,
-              since: payload?.since,
-              until: payload?.until,
-              token: contentProfileSummaryToken
-            });
-            break;
-          }
-
-          case 'content:profile-comment-top-commenters': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const contentProfileTopCommentersToken = await ensureBuildApiToken([
-              'content:read'
-            ]);
-            response = await getBuildProfileTopCommentersRef.current({
-              buildId: activeBuild.id,
-              profileUserId: payload?.profileUserId,
-              includeReplies: payload?.includeReplies,
-              topCommentersLimit: payload?.topCommentersLimit,
-              range: payload?.range,
-              since: payload?.since,
-              until: payload?.until,
-              token: contentProfileTopCommentersToken
-            });
-            break;
-          }
-
-          case 'content:profile-comment-most-liked': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const contentProfileMostLikedToken = await ensureBuildApiToken([
-              'content:read'
-            ]);
-            response = await getBuildProfileMostLikedCommentRef.current({
-              buildId: activeBuild.id,
-              profileUserId: payload?.profileUserId,
-              includeReplies: payload?.includeReplies,
-              range: payload?.range,
-              since: payload?.since,
-              until: payload?.until,
-              token: contentProfileMostLikedToken
-            });
-            break;
-          }
-
-          case 'vocabulary:lookup-word': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const vocabLookupToken = await ensureBuildApiToken([
-              'vocabulary:read'
-            ]);
-            response = await lookupBuildVocabularyWordRef.current({
-              buildId: activeBuild.id,
-              word: payload?.word,
-              token: vocabLookupToken
-            });
-            break;
-          }
-
-          case 'vocabulary:collect-word': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const vocabCollectToken = await ensureBuildApiToken([
-              'vocabulary:write'
-            ]);
-            response = await collectBuildVocabularyWordRef.current({
-              buildId: activeBuild.id,
-              word: payload?.word,
-              token: vocabCollectToken
-            });
-            break;
-          }
-
-          case 'vocabulary:break-status': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const vocabBreakToken = await ensureBuildApiToken([
-              'vocabulary:read'
-            ]);
-            response = await getBuildVocabularyBreakStatusRef.current({
-              buildId: activeBuild.id,
-              token: vocabBreakToken
-            });
-            break;
-          }
-
-          case 'vocabulary:collected-words': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const vocabCollectedToken = await ensureBuildApiToken([
-              'vocabulary:read'
-            ]);
-            response = await getBuildCollectedVocabularyWordsRef.current({
-              buildId: activeBuild.id,
-              limit: payload?.limit,
-              cursor: payload?.cursor,
-              token: vocabCollectedToken
             });
             break;
           }
@@ -3977,101 +6671,6 @@ export default function PreviewPanel({
             break;
           }
 
-          case 'jobs:schedule': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const jobsWriteToken = await ensureBuildApiToken(['jobs:write']);
-            response = await scheduleBuildJobRef.current({
-              buildId: activeBuild.id,
-              name: payload?.name,
-              runAt: payload?.runAt,
-              intervalSeconds: payload?.intervalSeconds,
-              maxRuns: payload?.maxRuns,
-              data: payload?.data,
-              scope: payload?.scope,
-              token: jobsWriteToken
-            });
-            break;
-          }
-
-          case 'jobs:list': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const jobsReadToken = await ensureBuildApiToken(['jobs:read']);
-            response = await listBuildJobsRef.current({
-              buildId: activeBuild.id,
-              scope: payload?.scope,
-              status: payload?.status,
-              limit: payload?.limit,
-              cursor: payload?.cursor,
-              token: jobsReadToken
-            });
-            break;
-          }
-
-          case 'jobs:cancel': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const jobsCancelToken = await ensureBuildApiToken(['jobs:write']);
-            response = await cancelBuildJobRef.current({
-              buildId: activeBuild.id,
-              jobId: payload?.jobId,
-              token: jobsCancelToken
-            });
-            break;
-          }
-
-          case 'jobs:claim-due': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const jobsClaimToken = await ensureBuildApiToken(['jobs:write']);
-            response = await claimDueBuildJobsRef.current({
-              buildId: activeBuild.id,
-              scope: payload?.scope,
-              limit: payload?.limit,
-              token: jobsClaimToken
-            });
-            break;
-          }
-
-          case 'mail:send': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const mailSendToken = await ensureBuildApiToken(['mail:send']);
-            response = await sendBuildMailRef.current({
-              buildId: activeBuild.id,
-              to: payload?.to,
-              subject: payload?.subject,
-              text: payload?.text,
-              html: payload?.html,
-              from: payload?.from,
-              replyTo: payload?.replyTo,
-              meta: payload?.meta,
-              token: mailSendToken
-            });
-            break;
-          }
-
-          case 'mail:list': {
-            if (!activeBuild?.id) {
-              throw new Error('Build not found');
-            }
-            const mailReadToken = await ensureBuildApiToken(['mail:read']);
-            response = await listBuildMailRef.current({
-              buildId: activeBuild.id,
-              status: payload?.status,
-              limit: payload?.limit,
-              cursor: payload?.cursor,
-              token: mailReadToken
-            });
-            break;
-          }
-
           default:
             throw new Error(`Unknown request type: ${type}`);
         }
@@ -4087,20 +6686,6 @@ export default function PreviewPanel({
           '*'
         );
 
-        if (owner) {
-          if (type === 'ai:chat') {
-            void handleMissionProgress({
-              promptListUsed: true,
-              aiChatUsed: true
-            });
-          }
-          if (type === 'ai:list-prompts') {
-            void handleMissionProgress({ promptListUsed: true });
-          }
-          if (type === 'db:load' || type === 'db:save') {
-            void handleMissionProgress({ dbUsed: true });
-          }
-        }
       } catch (error: any) {
         sourceWindow.postMessage(
           {
@@ -4118,32 +6703,34 @@ export default function PreviewPanel({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className={panelClass}>
-      <div className={toolbarClass}>
-        <div className={toolbarTitleClass}>
-          <Icon icon="laptop-code" />
-          Workspace
-        </div>
-        <div className={toolbarActionsClass}>
-          {isOwner && (
-            <GameCTAButton
-              variant="purple"
+    <div className={runtimeOnly ? runtimePanelClass : panelClass}>
+      {!runtimeOnly && (
+        <div className={toolbarClass}>
+          <div className={toolbarTitleClass}>
+            <Icon icon="laptop-code" />
+            Workspace
+          </div>
+          <div className={toolbarActionsClass}>
+            {isOwner && (
+              <GameCTAButton
+                variant="purple"
+                size="md"
+                icon="clock"
+                onClick={() => setHistoryOpen(true)}
+              >
+                History
+              </GameCTAButton>
+            )}
+            <SegmentedToggle<'preview' | 'code'>
+              value={viewMode}
+              onChange={handleViewModeChange}
+              options={workspaceViewOptions}
               size="md"
-              icon="clock"
-              onClick={() => setHistoryOpen(true)}
-            >
-              History
-            </GameCTAButton>
-          )}
-          <SegmentedToggle<'preview' | 'code'>
-            value={viewMode}
-            onChange={setViewMode}
-            options={workspaceViewOptions}
-            size="md"
-            ariaLabel="Workspace mode"
-          />
+              ariaLabel="Workspace mode"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         className={css`
@@ -4153,7 +6740,65 @@ export default function PreviewPanel({
           min-height: 0;
         `}
       >
-        {viewMode === 'preview' ? (
+        {runtimeOnly ? (
+          codeWithSdk ? (
+            <div className={previewStageClass}>
+              {!previewFrameReady.primary && (
+                <div className={previewPreloadSurfaceClass}>
+                  <div className={previewPreloadIconWrapClass}>
+                    <Icon icon="spinner" className={previewSpinnerClass} />
+                  </div>
+                  <div className={previewPreloadLabelClass}>Loading...</div>
+                </div>
+              )}
+              <iframe
+                ref={primaryIframeRef}
+                srcDoc={codeWithSdk}
+                title="App preview"
+                sandbox="allow-scripts"
+                onLoad={handleRuntimePreviewFrameLoad}
+                className={previewIframeClass}
+                style={{
+                  opacity: previewFrameReady.primary ? 1 : 0,
+                  pointerEvents: previewFrameReady.primary ? 'auto' : 'none'
+                }}
+              />
+            </div>
+          ) : (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                color: var(--chat-text);
+                text-align: center;
+                padding: 2rem;
+                background: #fff;
+              `}
+            >
+              <Icon
+                icon="laptop-code"
+                size="3x"
+                style={{ marginBottom: '1rem', opacity: 0.6 }}
+              />
+              <p style={{ margin: 0, fontSize: '1.1rem' }}>
+                No preview available yet
+              </p>
+              <p
+                style={{
+                  margin: '0.5rem 0 0 0',
+                  fontSize: '0.9rem',
+                  color: 'var(--chat-text)',
+                  opacity: 0.6
+                }}
+              >
+                This build has no code yet
+              </p>
+            </div>
+          )
+        ) : viewMode === 'preview' ? (
           (previewFrameSources.primary ||
             previewFrameSources.secondary ||
             previewSrc) ? (
@@ -4306,9 +6951,9 @@ export default function PreviewPanel({
                 `}
               >
                 <span>Project files</span>
-                <span>{editableProjectFiles.length}</span>
+                <span>{displayedProjectFiles.length}</span>
               </div>
-              {isOwner && (
+              {isOwner && !isShowingStreamingCode && (
                 <div
                   className={css`
                     padding: 0.6rem 0.65rem;
@@ -4359,7 +7004,7 @@ export default function PreviewPanel({
                   </button>
                 </div>
               )}
-              {isOwner && (
+              {isOwner && !isShowingStreamingCode && (
                 <div
                   className={css`
                     padding: 0.55rem 0.7rem;
@@ -4500,8 +7145,9 @@ export default function PreviewPanel({
 
                   const file = entry.file;
                   const isActive = file.path === activeFilePath;
-                  const isDirty =
-                    persistedFileContentByPath.get(file.path) !== file.content;
+                    const isDirty =
+                      !isShowingStreamingCode &&
+                      persistedFileContentByPath.get(file.path) !== file.content;
                   const displayName = getFileNameFromPath(file.path);
                   return (
                     <div
@@ -4516,6 +7162,9 @@ export default function PreviewPanel({
                       <button
                         type="button"
                         onClick={() => {
+                          if (isShowingStreamingCode) {
+                            streamingAutoFollowEnabledRef.current = false;
+                          }
                           setActiveFilePath(file.path);
                           setSelectedFolderPath(null);
                           setProjectFileError('');
@@ -4565,7 +7214,9 @@ export default function PreviewPanel({
                           </span>
                         )}
                       </button>
-                      {isOwner && !isIndexHtmlPath(file.path) && (
+                      {isOwner &&
+                        !isShowingStreamingCode &&
+                        !isIndexHtmlPath(file.path) && (
                         <button
                           type="button"
                           onClick={() => handleDeleteProjectFile(file.path)}
@@ -4631,7 +7282,7 @@ export default function PreviewPanel({
                   >
                     {activeFile?.path || '/index.html'}
                   </div>
-                  {isOwner && activeFile && (
+                  {isOwner && activeFile && !isShowingStreamingCode && (
                     <div
                       className={css`
                         display: flex;
@@ -4690,7 +7341,40 @@ export default function PreviewPanel({
                     font-size: 0.72rem;
                   `}
                 >
-                  {hasUnsavedProjectFileChanges ? (
+                  {isShowingStreamingCode ? (
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        gap: 0.45rem;
+                        flex-wrap: wrap;
+                        justify-content: flex-end;
+                      `}
+                    >
+                      <span
+                        className={css`
+                          color: #93c5fd;
+                          font-weight: 700;
+                        `}
+                      >
+                        Lumine is writing...
+                      </span>
+                      {streamingAutoFollowEnabledRef.current && (
+                        <span
+                          className={css`
+                            color: #cbd5e1;
+                            opacity: 0.85;
+                            font-size: 0.69rem;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.03em;
+                          `}
+                        >
+                          Following edits
+                        </span>
+                      )}
+                    </div>
+                  ) : hasUnsavedProjectFileChanges ? (
                     <span
                       className={css`
                         color: #fbbf24;
@@ -4709,7 +7393,7 @@ export default function PreviewPanel({
                       Saved
                     </span>
                   )}
-                  {isOwner && (
+                  {isOwner && !isShowingStreamingCode && (
                     <GameCTAButton
                       variant="primary"
                       size="sm"
@@ -4730,7 +7414,7 @@ export default function PreviewPanel({
                   onChange={(e) =>
                     handleEditableFileContentChange(e.target.value)
                   }
-                  readOnly={!isOwner}
+                  readOnly={!isOwner || isShowingStreamingCode}
                   spellCheck={false}
                   className={css`
                     width: 100%;
@@ -4784,145 +7468,127 @@ export default function PreviewPanel({
           </div>
         )}
       </div>
-      <Modal
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        size="md"
-        modalKey="BuildVersionHistory"
-        hasHeader={false}
-        showCloseButton={false}
-        bodyPadding={0}
-        aria-label="Version history"
-        style={{
-          backgroundColor: '#fff',
-          boxShadow: 'none',
-          border: '1px solid var(--ui-border)'
-        }}
-      >
-        <div className={historyModalShellClass}>
-          <div className={historyModalHeaderClass}>
-            <div className={historyModalTitleClass}>Version History</div>
+      {guestRestrictionBannerVisible && !userId && (
+        <div className={guestRestrictionBannerClass}>
+          <div className={guestRestrictionBannerTextClass}>
+            <Icon icon="lock" />
+            <span>{GUEST_RESTRICTION_BANNER_TEXT}</span>
+          </div>
+          <div className={guestRestrictionBannerActionsClass}>
+            <GameCTAButton variant="gold" size="sm" onClick={onOpenSigninModal}>
+              Log In
+            </GameCTAButton>
             <button
-              className={historyModalCloseButtonClass}
-              onClick={() => setHistoryOpen(false)}
               type="button"
-              aria-label="Close version history"
+              className={guestRestrictionBannerDismissClass}
+              onClick={() => setGuestRestrictionBannerVisible(false)}
             >
-              <Icon icon="times" />
+              Dismiss
             </button>
           </div>
-          <div className={historyModalContentClass}>
-            {loadingVersions ? (
-              <div
-                className={css`
-                  padding: 1rem;
-                  text-align: center;
-                  color: var(--chat-text);
-                  opacity: 0.7;
-                `}
+        </div>
+      )}
+      {!runtimeOnly && (
+        <Modal
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          size="md"
+          modalKey="BuildVersionHistory"
+          hasHeader={false}
+          showCloseButton={false}
+          bodyPadding={0}
+          aria-label="Version history"
+          style={{
+            backgroundColor: '#fff',
+            boxShadow: 'none',
+            border: '1px solid var(--ui-border)'
+          }}
+        >
+          <div className={historyModalShellClass}>
+            <div className={historyModalHeaderClass}>
+              <div className={historyModalTitleClass}>Version History</div>
+              <button
+                className={historyModalCloseButtonClass}
+                onClick={() => setHistoryOpen(false)}
+                type="button"
+                aria-label="Close version history"
               >
-                Loading versions...
-              </div>
-            ) : versions.length === 0 ? (
-              <div
-                className={css`
-                  padding: 1rem;
-                  text-align: center;
-                  color: var(--chat-text);
-                  opacity: 0.7;
-                `}
-              >
-                No versions yet. Copilot runs and saved file changes will
-                create version history.
-              </div>
-            ) : (
-              versions.map((version) => (
-                <div key={version.id} className={versionRowClass}>
-                  <div>
-                    <div
-                      className={css`
-                        font-weight: 700;
-                        color: var(--chat-text);
-                      `}
-                    >
-                      v{version.version}
-                    </div>
-                    {version.summary ? (
+                <Icon icon="times" />
+              </button>
+            </div>
+            <div className={historyModalContentClass}>
+              {loadingVersions ? (
+                <div
+                  className={css`
+                    padding: 1rem;
+                    text-align: center;
+                    color: var(--chat-text);
+                    opacity: 0.7;
+                  `}
+                >
+                  Loading versions...
+                </div>
+              ) : versions.length === 0 ? (
+                <div
+                  className={css`
+                    padding: 1rem;
+                    text-align: center;
+                    color: var(--chat-text);
+                    opacity: 0.7;
+                  `}
+                >
+                  No versions yet. Lumine runs and saved file changes will
+                  create version history.
+                </div>
+              ) : (
+                versions.map((version) => (
+                  <div key={version.id} className={versionRowClass}>
+                    <div>
                       <div
                         className={css`
-                          font-size: 0.9rem;
+                          font-weight: 700;
                           color: var(--chat-text);
-                          opacity: 0.75;
                         `}
                       >
-                        {version.summary}
+                        v{version.version}
                       </div>
-                    ) : null}
-                    <div className={versionMetaClass}>
-                      {timeSince(version.createdAt)} ·{' '}
-                      {version.createdByRole === 'assistant' ? 'AI' : 'You'}
-                      {version.gitCommitSha
-                        ? ` · ${String(version.gitCommitSha).slice(0, 7)}`
-                        : ''}
+                      {version.summary ? (
+                        <div
+                          className={css`
+                            font-size: 0.9rem;
+                            color: var(--chat-text);
+                            opacity: 0.75;
+                          `}
+                        >
+                          {version.summary}
+                        </div>
+                      ) : null}
+                      <div className={versionMetaClass}>
+                        {timeSince(version.createdAt)} ·{' '}
+                        {version.createdByRole === 'assistant' ? 'AI' : 'You'}
+                        {version.gitCommitSha
+                          ? ` · ${String(version.gitCommitSha).slice(0, 7)}`
+                          : ''}
+                      </div>
                     </div>
+                    <GameCTAButton
+                      variant="orange"
+                      size="sm"
+                      onClick={() => handleRestoreVersion(version.id)}
+                      disabled={restoringVersionId === version.id}
+                      loading={restoringVersionId === version.id}
+                    >
+                      {restoringVersionId === version.id
+                        ? 'Restoring...'
+                        : 'Restore'}
+                    </GameCTAButton>
                   </div>
-                  <GameCTAButton
-                    variant="orange"
-                    size="sm"
-                    onClick={() => handleRestoreVersion(version.id)}
-                    disabled={restoringVersionId === version.id}
-                    loading={restoringVersionId === version.id}
-                  >
-                    {restoringVersionId === version.id
-                      ? 'Restoring...'
-                      : 'Restore'}
-                  </GameCTAButton>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
-
-  async function handleMissionProgress(newState: {
-    promptListUsed?: boolean;
-    aiChatUsed?: boolean;
-    dbUsed?: boolean;
-  }) {
-    if (!userIdRef.current || !isOwnerRef.current) return;
-    const current = missionProgressRef.current;
-    const nextState: {
-      promptListUsed?: boolean;
-      aiChatUsed?: boolean;
-      dbUsed?: boolean;
-    } = {};
-
-    if (newState.promptListUsed && !current.promptListUsed) {
-      nextState.promptListUsed = true;
-    }
-    if (newState.aiChatUsed && !current.aiChatUsed) {
-      nextState.aiChatUsed = true;
-    }
-    if (newState.dbUsed && !current.dbUsed) {
-      nextState.dbUsed = true;
-    }
-
-    if (Object.keys(nextState).length === 0) return;
-
-    missionProgressRef.current = { ...current, ...nextState };
-    onUpdateUserMissionStateRef.current({
-      missionType: 'build',
-      newState: nextState
-    });
-    try {
-      await updateMissionStatusRef.current({
-        missionType: 'build',
-        newStatus: nextState
-      });
-    } catch {
-      return;
-    }
-  }
 }

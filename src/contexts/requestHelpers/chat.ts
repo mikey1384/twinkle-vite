@@ -2018,7 +2018,12 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { wordleAttemptState, wordleStats, dailyTaskStatus }
+          data: {
+            wordleAttemptState,
+            wordleStats,
+            dailyTaskStatus,
+            needsReload
+          }
         } = await request.put(
           `${URL}/chat/wordle/attempt`,
           { channelName, channelId, guesses, solution, isSolved },
@@ -2027,7 +2032,8 @@ export default function chatRequestHelpers({
         return {
           dailyTaskStatus,
           wordleAttemptState,
-          wordleStats
+          wordleStats,
+          needsReload
         };
       } catch (error) {
         return handleError(error);

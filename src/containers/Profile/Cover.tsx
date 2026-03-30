@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import ColorSelector from '~/components/ColorSelector';
 import Button from '~/components/Button';
-import Icon from '~/components/Icon';
 import AlertModal from '~/components/Modals/AlertModal';
 import ImageModal from '~/components/Modals/ImageModal';
 import ImageEditModal from '~/components/Modals/ImageEditModal';
@@ -11,8 +10,6 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import UserTitle from '~/components/Texts/UserTitle';
 import AchievementBadges from '~/components/AchievementBadges';
 import UsernameHistoryModal from '~/components/Modals/UsernameHistoryModal';
-import BuildWallpaper from './BuildWallpaper';
-import WallpaperPickerModal from './WallpaperPickerModal';
 import { css } from '@emotion/css';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { cloudFrontURL, MAX_PROFILE_PIC_SIZE } from '~/constants/defaultValues';
@@ -38,13 +35,8 @@ export default function Cover({
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
-  const setFeaturedBuild = useAppContext(
-    (v) => v.requestHelpers.setFeaturedBuild
-  );
   const userId = useKeyContext((v) => v.myState.userId);
-  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const {
-    featuredBuildId,
     profilePicUrl,
     profileTheme,
     realName,
@@ -58,7 +50,6 @@ export default function Cover({
   const [imageModalShown, setImageModalShown] = useState(false);
   const [imageEditModalShown, setImageEditModalShown] = useState(false);
   const [profilePicModalShown, setProfilePicModalShown] = useState(false);
-  const [wallpaperPickerShown, setWallpaperPickerShown] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const FileInputRef: React.RefObject<any> = useRef(null);
 
@@ -125,27 +116,6 @@ export default function Cover({
             }
           `}
         >
-          {!deviceIsMobile && isAdmin && featuredBuildId && (
-            <BuildWallpaper buildId={featuredBuildId} />
-          )}
-          {!deviceIsMobile && isAdmin && featuredBuildId && (
-            <div
-              className={css`
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: 3;
-                pointer-events: none;
-                background: linear-gradient(
-                  to bottom,
-                  rgba(0, 0, 0, 0) 40%,
-                  rgba(0, 0, 0, 0.35) 100%
-                );
-              `}
-            />
-          )}
           <div
             style={{ position: 'relative', zIndex: 5 }}
             className={css`
@@ -244,18 +214,7 @@ export default function Cover({
               }}
             >
               {!colorSelectorShown && (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {!deviceIsMobile && isAdmin && (
-                    <Button
-                      style={{ marginBottom: '-1rem' }}
-                      variant="solid"
-                      tone="raised"
-                      onClick={() => setWallpaperPickerShown(true)}
-                    >
-                      <Icon icon="image" style={{ marginRight: '0.5rem' }} />
-                      Wallpaper
-                    </Button>
-                  )}
+                <div style={{ display: 'flex' }}>
                   <Button
                     style={{
                       marginBottom: '-1rem',
@@ -416,13 +375,6 @@ export default function Cover({
             onHide={() => setUsernameHistoryShown(false)}
           />
         )}
-        {isAdmin && wallpaperPickerShown && (
-          <WallpaperPickerModal
-            currentBuildId={featuredBuildId || null}
-            onSetWallpaper={handleSetWallpaper}
-            onHide={() => setWallpaperPickerShown(false)}
-          />
-        )}
       </ScopedTheme>
     </ErrorBoundary>
   );
@@ -445,16 +397,6 @@ export default function Cover({
   async function handleSetTheme() {
     setColorSelectorShown(false);
     onSetTheme();
-  }
-
-  async function handleSetWallpaper(buildId: number | null) {
-    if (!isAdmin) return;
-    await setFeaturedBuild({ buildId });
-    onSetUserState({
-      userId,
-      newState: { featuredBuildId: buildId }
-    });
-    setWallpaperPickerShown(false);
   }
 
   function handlePicture(event: any) {

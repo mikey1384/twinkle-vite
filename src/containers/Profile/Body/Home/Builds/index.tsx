@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import BuildProjectListItem, {
@@ -7,12 +8,11 @@ import BuildProjectListItem, {
 import { useAppContext, useKeyContext } from '~/contexts';
 import BuildDescriptionModal from '~/containers/Build/BuildDescriptionModal';
 import { css } from '@emotion/css';
-import { mobileMaxWidth } from '~/constants/css';
 
-const pageTitle = 'Builds';
+const panelTitle = 'Builds';
+const previewLimit = 3;
 const emptyOwnLabel = 'Publish a build to show it on your profile';
 const emptyVisitorLabel = 'No public builds yet';
-const pageSize = 20;
 
 export default function Builds({
   profile,
@@ -21,6 +21,7 @@ export default function Builds({
   profile: { id: number; username: string };
   selectedTheme: string;
 }) {
+  const navigate = useNavigate();
   const loadUserBuilds = useAppContext((v) => v.requestHelpers.loadUserBuilds);
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
@@ -46,82 +47,66 @@ export default function Builds({
       try {
         const data = await loadUserBuilds({
           userId: profile.id,
-          limit: pageSize
+          limit: previewLimit
         });
         setBuilds(data?.builds || []);
         setLoadMoreButton(Number(data?.loadMoreButton) || null);
       } catch (error) {
-        console.error('Failed to load user builds:', error);
+        console.error('Failed to load profile builds:', error);
       }
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.id]);
 
+  if (!loading && !isOwnProfile && builds.length === 0) {
+    return null;
+  }
+
   return (
-    <ErrorBoundary componentPath="Profile/Body/Builds">
-      <div
-        className={css`
-          width: 70vw;
-          @media (max-width: ${mobileMaxWidth}) {
-            width: 100%;
-          }
-        `}
+    <ErrorBoundary componentPath="Profile/Body/Home/Builds">
+      <SectionPanel
+        elevated
+        title={panelTitle}
+        loaded={!loading}
+        customColorTheme={selectedTheme}
+        loadMoreButtonShown={!!loadMoreButton}
+        onLoadMore={handleShowMore}
+        isEmpty={builds.length === 0}
+        emptyMessage={isOwnProfile ? emptyOwnLabel : emptyVisitorLabel}
       >
-        <SectionPanel
-          elevated
-          title={pageTitle}
-          loaded={!loading}
-          customColorTheme={selectedTheme}
-          loadMoreButtonShown={!!loadMoreButton}
-          onLoadMore={handleLoadMore}
-          isEmpty={builds.length === 0}
-          emptyMessage={isOwnProfile ? emptyOwnLabel : emptyVisitorLabel}
+        <div
+          className={css`
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+          `}
         >
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              gap: 1rem;
-            `}
-          >
-            {builds.map((build) => (
-              <BuildProjectListItem
-                key={build.id}
-                build={build}
-                to={`/app/${build.id}`}
-                isOwner={isOwnProfile}
-                onAddDescription={isOwnProfile ? setEditingBuild : undefined}
-              />
-            ))}
-          </div>
-        </SectionPanel>
-        {editingBuild && (
-          <BuildDescriptionModal
-            buildTitle={editingBuild.title}
-            initialDescription={editingBuild.description}
-            loading={savingDescription}
-            onHide={() => (savingDescription ? null : setEditingBuild(null))}
-            onSubmit={handleSubmitDescription}
-          />
-        )}
-      </div>
+          {builds.map((build) => (
+            <BuildProjectListItem
+              key={build.id}
+              build={build}
+              to={`/app/${build.id}`}
+              isOwner={isOwnProfile}
+              onAddDescription={isOwnProfile ? setEditingBuild : undefined}
+            />
+          ))}
+        </div>
+      </SectionPanel>
+      {editingBuild && (
+        <BuildDescriptionModal
+          buildTitle={editingBuild.title}
+          initialDescription={editingBuild.description}
+          loading={savingDescription}
+          onHide={() => (savingDescription ? null : setEditingBuild(null))}
+          onSubmit={handleSubmitDescription}
+        />
+      )}
     </ErrorBoundary>
   );
 
-  async function handleLoadMore() {
-    if (!loadMoreButton) return;
-    try {
-      const data = await loadUserBuilds({
-        userId: profile.id,
-        limit: pageSize,
-        lastId: loadMoreButton
-      });
-      setBuilds((prev) => [...prev, ...(data?.builds || [])]);
-      setLoadMoreButton(Number(data?.loadMoreButton) || null);
-    } catch (error) {
-      console.error('Failed to load more user builds:', error);
-    }
+  function handleShowMore() {
+    navigate(`/users/${profile.username}/builds`);
   }
 
   async function handleSubmitDescription(description: string) {

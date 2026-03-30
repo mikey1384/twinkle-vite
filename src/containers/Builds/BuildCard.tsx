@@ -4,6 +4,8 @@ import ProfilePic from '~/components/ProfilePic';
 import { css } from '@emotion/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 
+const buildForkUiEnabled = false;
+
 interface Build {
   id: number;
   userId: number;
@@ -12,18 +14,12 @@ interface Build {
   title: string;
   description: string | null;
   slug: string;
-  status: string;
   thumbnailUrl: string | null;
   publishedAt: number;
   sourceBuildId: number | null;
+  viewCount: number;
   createdAt: number;
   updatedAt: number;
-  stats: {
-    viewCount: number;
-    starCount: number;
-    commentCount: number;
-    forkCount: number;
-  };
 }
 
 interface BuildCardProps {
@@ -34,7 +30,6 @@ interface BuildCardProps {
 export default function BuildCard({ build, onClick }: BuildCardProps) {
   const publishedAt = build.publishedAt || build.updatedAt || build.createdAt;
   const publishedLabel = publishedAt ? timeSince(publishedAt) : 'Unpublished';
-  const accent = getBuildAccent(build.status);
 
   return (
     <div
@@ -42,7 +37,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
       className={css`
         background: #fff;
         border: 1px solid var(--ui-border);
-        border-top: 4px solid ${accent};
+        border-top: 4px solid #418CEB;
         border-radius: 16px;
         overflow: hidden;
         cursor: pointer;
@@ -82,7 +77,7 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
             style={{ color: '#1d4ed8', opacity: 0.5 }}
           />
         )}
-        {build.sourceBuildId && (
+        {buildForkUiEnabled && build.sourceBuildId && (
           <span
             className={css`
               position: absolute;
@@ -187,18 +182,8 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
                 gap: 0.3rem;
               `}
             >
-              <Icon icon="star" />
-              {build.stats.starCount}
-            </span>
-            <span
-              className={css`
-                display: inline-flex;
-                align-items: center;
-                gap: 0.3rem;
-              `}
-            >
-              <Icon icon="comment" />
-              {build.stats.commentCount}
+              <Icon icon="eye" />
+              {Math.max(0, Number(build.viewCount || 0))}
             </span>
           </div>
         </div>
@@ -215,11 +200,4 @@ export default function BuildCard({ build, onClick }: BuildCardProps) {
       </div>
     </div>
   );
-}
-
-function getBuildAccent(status: string) {
-  const normalized = (status || '').toLowerCase();
-  if (normalized === 'draft') return '#FF9A00';
-  if (normalized === 'published') return '#22c55e';
-  return '#418CEB';
 }

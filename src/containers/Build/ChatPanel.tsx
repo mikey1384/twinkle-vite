@@ -1,4 +1,4 @@
-import React, { RefObject, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import RichText from '~/components/Texts/RichText';
 import ThinkingIndicator from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
@@ -68,52 +68,27 @@ interface BuildUsageMetric {
 }
 
 interface BuildCopilotPolicy {
-  tier: 'free' | 'pro' | 'premium';
-  assignedTier?: 'free' | 'pro' | 'premium';
-  byo?: {
-    enabled: boolean;
-    requiredForPaidTiers: boolean;
-    blockedAssignedTier: boolean;
-  };
-  pricing: {
-    proMonthlyPriceUsd: number;
-  };
   limits: {
-    maxProjects: number;
     maxProjectBytes: number;
     maxFilesPerProject: number;
-    maxFileBytes: number;
-    maxPromptChars: number;
-    historyMaxAgeSeconds: number;
-    historyMaxMessages: number;
-    historyMessageCharLimit: number;
-    historyTotalCharBudget: number;
+    maxFileLines: number;
   };
   usage: {
-    projectCount: number;
-    projectCountRemaining: number;
     currentProjectBytes: number;
     projectBytesRemaining: number;
     projectFileCount: number;
     projectFileBytes: number;
     maxFilesPerProject: number;
-    maxFileBytes: number;
   };
-  requestBilling: {
+  requestLimits: {
     dayIndex: number;
     dayKey: string;
-    tier: 'free' | 'pro' | 'premium';
-    messageRequestsPerDay: number;
+    generationRequestsPerDay: number;
     reviewRequestsPerDay: number;
-    coinCostPerRequest: number;
-    billingEnabled: boolean;
-    messageRequestsToday: number;
-    messageRequestsRemaining: number;
+    generationRequestsToday: number;
+    generationRequestsRemaining: number;
     reviewRequestsToday: number;
     reviewRequestsRemaining: number;
-    paidRequestsToday: number;
-    coinSpentToday: number;
-    coinBalance: number | null;
   };
 }
 
@@ -151,8 +126,22 @@ interface BuildProjectFileChangeLog {
 
 type ChatPanelTab = 'chat' | 'debug';
 
+interface BuildExecutionPlanSummary {
+  status: 'active' | 'completed' | 'cancelled';
+}
+
+interface LimitProgressItem {
+  id: string;
+  label: string;
+  progress: number;
+  text: string;
+  caption?: string;
+  color?: string;
+}
+
 interface ChatPanelProps {
   messages: ChatMessage[];
+  executionPlan?: BuildExecutionPlanSummary | null;
   inputMessage: string;
   generating: boolean;
   generatingStatus: string | null;
@@ -173,6 +162,7 @@ interface ChatPanelProps {
   onChatScroll: () => void;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
+  onSendPresetMessage: (message: string) => void;
   onStopGeneration: () => void;
   onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
   onDeleteMessage: (message: ChatMessage) => void;
@@ -180,6 +170,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({
   messages,
+  executionPlan,
   inputMessage,
   generating,
   generatingStatus,
@@ -200,11 +191,14 @@ export default function ChatPanel({
   onChatScroll,
   onInputChange,
   onSendMessage,
+  onSendPresetMessage,
   onStopGeneration,
   onReloadProjectFileChangeLogs,
   onDeleteMessage
 }: ChatPanelProps) {
   const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat');
+  const [limitsExpanded, setLimitsExpanded] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const usageRows = useMemo(() => {
     const stageOrder = ['planner', 'reviewer', 'validator', 'codex', 'narration'];
     return Object.values(usageMetrics).sort((a, b) => {
@@ -239,47 +233,110 @@ export default function ChatPanel({
       }
     );
   }, [usageRows]);
+  const usageHasPositiveCost = useMemo(
+    () =>
+      usageRows.some(
+        (row) =>
+          row.estimatedCostUsd != null &&
+          Number.isFinite(row.estimatedCostUsd) &&
+          row.estimatedCostUsd > 0
+      ),
+    [usageRows]
+  );
+  const usageShowsMultipleModels = useMemo(
+    () =>
+      new Set(
+        usageRows
+          .map((row) => row.model.trim())
+          .filter((model) => Boolean(model))
+      ).size > 1,
+    [usageRows]
+  );
+  const debugRunEvents = useMemo(
+    () =>
+      runEvents
+        .filter((event) => event.kind !== 'usage' && event.kind !== 'phase')
+        .slice(-10),
+    [runEvents]
+  );
 
-  const inputCharCount = inputMessage.length;
-  const promptCharLimit = copilotPolicy?.limits.maxPromptChars ?? null;
-  const dailyMessageUsage = useMemo(() => {
+  const expandedLimitItems = useMemo(() => {
+    if (!copilotPolicy) return [];
+    const { limits, usage } = copilotPolicy;
+    return [
+      buildLimitProgressItem({
+        id: 'project-size',
+        label: 'Current project size',
+        used: usage.currentProjectBytes,
+        limit: limits.maxProjectBytes,
+        text: `${formatBytes(usage.currentProjectBytes)} / ${formatBytes(limits.maxProjectBytes)}`,
+        caption: `${formatBytes(usage.projectBytesRemaining)} left`,
+        color: 'pink'
+      }),
+      buildLimitProgressItem({
+        id: 'project-files',
+        label: 'Files in this project',
+        used: usage.projectFileCount,
+        limit: limits.maxFilesPerProject,
+        text: `${formatTokenCount(usage.projectFileCount)} / ${formatTokenCount(limits.maxFilesPerProject)} files`,
+        color: 'logoBlue'
+      })
+    ].filter(Boolean) as LimitProgressItem[];
+  }, [copilotPolicy]);
+  const dailyGenerationUsage = useMemo(() => {
     if (!copilotPolicy) return null;
-    const billing = copilotPolicy.requestBilling;
-    if (billing.messageRequestsPerDay <= 0) return null;
+    const requestLimits = copilotPolicy.requestLimits;
+    if (requestLimits.generationRequestsPerDay <= 0) return null;
     return Math.max(
       0,
       Math.min(
         100,
-        (billing.messageRequestsToday / billing.messageRequestsPerDay) * 100
+        (requestLimits.generationRequestsToday /
+          requestLimits.generationRequestsPerDay) *
+          100
       )
     );
   }, [copilotPolicy]);
-  const dailyMessageBarText = useMemo(() => {
+  const dailyGenerationBarText = useMemo(() => {
     if (!copilotPolicy) return null;
-    const billing = copilotPolicy.requestBilling;
-    if (billing.messageRequestsPerDay <= 0) {
-      return 'Unlimited messages';
-    }
-    return `${formatTokenCount(billing.messageRequestsToday)} / ${formatTokenCount(billing.messageRequestsPerDay)} messages`;
+    const requestLimits = copilotPolicy.requestLimits;
+    if (requestLimits.generationRequestsPerDay <= 0) return null;
+    return `${formatTokenCount(requestLimits.generationRequestsToday)} / ${formatTokenCount(requestLimits.generationRequestsPerDay)} generations`;
   }, [copilotPolicy]);
-  const dailyReviewLabel = useMemo(() => {
+  const dailyReviewUsage = useMemo(() => {
     if (!copilotPolicy) return null;
-    const billing = copilotPolicy.requestBilling;
-    if (billing.reviewRequestsPerDay <= 0) {
-      return 'Reviews: unlimited';
-    }
-    return `Reviews: ${formatTokenCount(billing.reviewRequestsToday)} / ${formatTokenCount(billing.reviewRequestsPerDay)}`;
+    const requestLimits = copilotPolicy.requestLimits;
+    if (requestLimits.reviewRequestsPerDay <= 0) return null;
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        (requestLimits.reviewRequestsToday / requestLimits.reviewRequestsPerDay) *
+          100
+      )
+    );
+  }, [copilotPolicy]);
+  const dailyReviewBarText = useMemo(() => {
+    if (!copilotPolicy) return null;
+    const requestLimits = copilotPolicy.requestLimits;
+    if (requestLimits.reviewRequestsPerDay <= 0) return null;
+    return `${formatTokenCount(requestLimits.reviewRequestsToday)} / ${formatTokenCount(requestLimits.reviewRequestsPerDay)} reviews`;
   }, [copilotPolicy]);
   const dailyLimitSummary = useMemo(() => {
     if (!copilotPolicy) return null;
-    const billing = copilotPolicy.requestBilling;
-    if (
-      billing.messageRequestsPerDay <= 0 &&
-      billing.reviewRequestsPerDay <= 0
-    ) {
-      return 'Unlimited daily messages and reviews';
+    const requestLimits = copilotPolicy.requestLimits;
+    const parts: string[] = [];
+    if (requestLimits.generationRequestsPerDay > 0) {
+      parts.push(
+        `${formatTokenCount(requestLimits.generationRequestsRemaining)} code generations left today`
+      );
     }
-    return `${formatTokenCount(billing.messageRequestsRemaining)} messages left today • ${formatTokenCount(billing.reviewRequestsRemaining)} reviews left`;
+    if (requestLimits.reviewRequestsPerDay > 0) {
+      parts.push(
+        `${formatTokenCount(requestLimits.reviewRequestsRemaining)} reviews left`
+      );
+    }
+    return parts.length > 0 ? parts.join(' • ') : null;
   }, [copilotPolicy]);
   const hasPromptContextPreview = Boolean(
     projectFilePromptContextPreview && projectFilePromptContextPreview.trim()
@@ -287,8 +344,16 @@ export default function ChatPanel({
   const hasProjectFileChangeLogs = projectFileChangeLogs.length > 0;
   const showDebugEmptyState =
     !projectFileChangeLogsError &&
+    usageRows.length === 0 &&
+    debugRunEvents.length === 0 &&
     !hasPromptContextPreview &&
     !hasProjectFileChangeLogs;
+  const showScopedPlanQuickReplies =
+    isOwner &&
+    activeTab === 'chat' &&
+    executionPlan?.status === 'active' &&
+    !generating &&
+    !inputMessage.trim();
 
   function handleTabChange(nextTab: ChatPanelTab) {
     if (nextTab === activeTab) return;
@@ -301,26 +366,16 @@ export default function ChatPanel({
       void onReloadProjectFileChangeLogs();
     }
     if (nextTab === 'chat') {
-      requestAnimationFrame(() => {
-        const container = chatScrollRef.current;
-        if (container) {
-          container.scrollTo({
-            top: container.scrollHeight,
-            behavior: 'auto'
-          });
-          return;
-        }
-        chatEndRef.current?.scrollIntoView({
-          behavior: 'auto',
-          block: 'end',
-          inline: 'nearest'
-        });
-      });
+      requestAnimationFrame(scrollChatToBottom);
     }
   }
 
   function handleRefreshCopilotDebug() {
     void onReloadProjectFileChangeLogs();
+  }
+
+  function handleToggleLimitsExpanded() {
+    setLimitsExpanded((prev) => !prev);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -330,12 +385,39 @@ export default function ChatPanel({
     }
   }
 
+  function handlePrefillRedirect() {
+    onInputChange('No. Instead, ');
+    window.requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      input.focus();
+      const value = input.value || '';
+      input.setSelectionRange(value.length, value.length);
+    });
+  }
+
+  function scrollChatToBottom() {
+    const container = chatScrollRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'auto'
+      });
+      return;
+    }
+    chatEndRef.current?.scrollIntoView({
+      behavior: 'auto',
+      block: 'end',
+      inline: 'nearest'
+    });
+  }
+
   return (
     <div className={panelClass}>
       <div className={headerClass}>
         <div className={headerTitleClass}>
           <Icon icon="sparkles" />
-          Build Copilot
+          Lumine
         </div>
         {copilotPolicy && (
           <div
@@ -369,35 +451,7 @@ export default function ChatPanel({
                 Daily limit
               </span>
             </div>
-            {copilotPolicy.byo?.blockedAssignedTier && (
-              <div
-                className={css`
-                  border: 1px solid ${Color.orange(0.35)};
-                  border-radius: 8px;
-                  background: ${Color.orange(0.08)};
-                  color: ${Color.orange(0.95)};
-                  padding: 0.42rem 0.5rem;
-                  font-size: 0.72rem;
-                  line-height: 1.35;
-                `}
-              >
-                Assigned {copilotPolicy.assignedTier || 'paid'} tier is inactive.
-                Enable BYO to unlock paid Build limits.
-                <a
-                  href="/mission"
-                  className={css`
-                    display: inline-flex;
-                    margin-top: 0.35rem;
-                    font-weight: 700;
-                    text-decoration: underline;
-                    color: inherit;
-                  `}
-                >
-                  Open Build Mission BYO setup
-                </a>
-              </div>
-            )}
-            {dailyMessageUsage != null && dailyMessageBarText ? (
+            {dailyGenerationUsage != null && dailyGenerationBarText && (
               <>
                 <div
                   className={css`
@@ -405,208 +459,180 @@ export default function ChatPanel({
                     font-weight: 700;
                   `}
                 >
-                  Copilot messages
+                  Code generations
                 </div>
                 <ProgressBar
-                  progress={dailyMessageUsage}
-                  text={dailyMessageBarText}
+                  progress={dailyGenerationUsage}
+                  text={dailyGenerationBarText}
                   style={{ marginTop: '-0.2rem' }}
                 />
-                {dailyReviewLabel && (
+              </>
+            )}
+            {dailyReviewUsage != null && dailyReviewBarText && (
+              <>
+                <div
+                  className={css`
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                  `}
+                >
+                  Reviews
+                </div>
+                <ProgressBar
+                  progress={dailyReviewUsage}
+                  text={dailyReviewBarText}
+                  color="orange"
+                  style={{ marginTop: '-0.2rem' }}
+                />
+              </>
+            )}
+            {limitsExpanded && (
+              <>
+                <div
+                  className={css`
+                    margin-top: 0.1rem;
+                    padding-top: 0.2rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.8rem;
+                  `}
+                >
                   <div
                     className={css`
-                      display: flex;
-                      align-items: center;
-                      font-size: 0.82rem;
-                      font-weight: 700;
+                      display: grid;
+                      grid-template-columns: repeat(2, minmax(0, 1fr));
+                      gap: 0.8rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        grid-template-columns: 1fr;
+                      }
                     `}
                   >
-                    <span>{dailyReviewLabel}</span>
+                    {expandedLimitItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className={css`
+                          border: 1px solid var(--ui-border);
+                          border-radius: 12px;
+                          background: #fff;
+                          padding: 0.9rem 0.95rem 0.8rem;
+                        `}
+                      >
+                        <div
+                          className={css`
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 0.6rem;
+                            margin-bottom: 0.35rem;
+                          `}
+                        >
+                          <span
+                            className={css`
+                              font-size: 0.92rem;
+                              font-weight: 800;
+                              color: var(--chat-text);
+                            `}
+                          >
+                            {item.label}
+                          </span>
+                          <span
+                            className={css`
+                              font-size: 0.74rem;
+                              font-family:
+                                'SF Mono',
+                                'Menlo',
+                                'Consolas',
+                                monospace;
+                              color: var(--chat-text);
+                              opacity: 0.7;
+                            `}
+                          >
+                            {Math.round(item.progress)}%
+                          </span>
+                        </div>
+                        <ProgressBar
+                          progress={item.progress}
+                          text={item.text}
+                          color={item.color}
+                          style={{ marginTop: '-0.15rem' }}
+                        />
+                        {item.caption ? (
+                          <div
+                            className={css`
+                              margin-top: 0.38rem;
+                              font-size: 0.75rem;
+                              line-height: 1.35;
+                              color: var(--chat-text);
+                              opacity: 0.68;
+                            `}
+                          >
+                            {item.caption}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
                   </div>
-                )}
+                  <div
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 12px;
+                      background: #fff;
+                      padding: 0.95rem 1rem;
+                      display: grid;
+                      grid-template-columns: repeat(2, minmax(0, 1fr));
+                      gap: 0.7rem 1rem;
+                      @media (max-width: ${mobileMaxWidth}) {
+                        grid-template-columns: 1fr;
+                      }
+                    `}
+                  >
+                    <LimitStat
+                      label="Single file max"
+                      value={`${formatTokenCount(
+                        copilotPolicy.limits.maxFileLines
+                      )} lines`}
+                    />
+                  </div>
+                </div>
               </>
-            ) : (
-              <div
-                className={css`
-                  border-radius: 8px;
-                  background: #fff;
-                  padding: 0.8rem 0.9rem;
-                  font-size: 0.88rem;
-                  font-weight: 700;
-                `}
-              >
-                Unlimited daily messages and reviews
-              </div>
             )}
-          </div>
-        )}
-        {usageRows.length > 0 && (
-          <div
-            className={css`
-              margin-top: 0.4rem;
-              border: 1px solid var(--ui-border);
-              border-radius: 10px;
-              background: var(--chat-bg);
-              padding: 0.55rem 0.65rem;
-              display: flex;
-              flex-direction: column;
-              gap: 0.4rem;
-              font-size: 0.76rem;
-              color: var(--chat-text);
-            `}
-          >
-            <div
-              className={css`
-                font-weight: 700;
-                opacity: 0.8;
-              `}
-            >
-              Current run usage
-            </div>
-            {usageRows.map((row) => (
-              <div
-                key={`${row.stage}-${row.model}`}
-                className={css`
-                  display: grid;
-                  grid-template-columns: minmax(80px, auto) 1fr auto;
-                  gap: 0.35rem 0.6rem;
-                  align-items: center;
-                `}
-              >
-                <span
-                  className={css`
-                    font-weight: 700;
-                    text-transform: capitalize;
-                  `}
-                >
-                  {getUsageStageLabel(row.stage)}
-                </span>
-                <span
-                  className={css`
-                    opacity: 0.75;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                  `}
-                  title={row.model}
-                >
-                  {row.model}
-                </span>
-                <span
-                  className={css`
-                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                    white-space: nowrap;
-                  `}
-                >
-                  {formatTokenCount(row.totalTokens)} tok
-                  {' / '}
-                  {formatUsageCost(row.estimatedCostUsd)}
-                </span>
-              </div>
-            ))}
             <div
               className={css`
                 display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.5rem;
-                padding-top: 0.35rem;
-                border-top: 1px solid var(--ui-border);
-                font-weight: 700;
+                justify-content: center;
+                padding-top: 0.65rem;
               `}
             >
-              <span>Total</span>
-              <span
+              <button
+                type="button"
+                onClick={handleToggleLimitsExpanded}
                 className={css`
-                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                  border: 1px solid var(--ui-border);
+                  background: #fff;
+                  color: var(--chat-text);
+                  border-radius: 999px;
+                  min-width: 8.5rem;
+                  padding: 0.42rem 1.1rem;
+                  font-size: 0.72rem;
+                  font-weight: 800;
+                  cursor: pointer;
+                  transition: border-color 0.15s ease, transform 0.15s ease;
+                  &:hover,
+                  &:focus-visible {
+                    border-color: var(--theme-border);
+                    transform: translateY(-1px);
+                  }
                 `}
               >
-                {formatTokenCount(usageTotals.inputTokens)} in /{' '}
-                {formatTokenCount(usageTotals.outputTokens)} out /{' '}
-                {formatTokenCount(usageTotals.totalTokens)} tok /{' '}
-                {formatUsageCost(usageTotals.estimatedCostUsd)}
-              </span>
+                {limitsExpanded ? 'Collapse' : 'Expand'}
+              </button>
             </div>
-          </div>
-        )}
-        {runEvents.length > 0 && (
-          <div
-            className={css`
-              border: 1px solid var(--ui-border);
-              border-radius: 10px;
-              background: #fff;
-              padding: 0.55rem 0.65rem;
-              display: flex;
-              flex-direction: column;
-              gap: 0.25rem;
-              font-size: 0.76rem;
-              color: var(--chat-text);
-              max-height: 160px;
-              overflow-y: auto;
-            `}
-          >
-            <div
-              className={css`
-                font-weight: 700;
-                opacity: 0.82;
-                margin-bottom: 0.1rem;
-              `}
-            >
-              Current run timeline
-            </div>
-            {runEvents.slice(-12).map((event) => (
-              <div
-                key={event.id}
-                className={css`
-                  display: grid;
-                  grid-template-columns: auto auto 1fr;
-                  gap: 0.35rem;
-                  align-items: baseline;
-                  line-height: 1.35;
-                `}
-              >
-                <span
-                  className={css`
-                    color: ${getRunEventColor(event.kind)};
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.03em;
-                    font-size: 0.68rem;
-                    white-space: nowrap;
-                  `}
-                >
-                  {getRunEventLabel(event.kind)}
-                </span>
-                <span
-                  className={css`
-                    color: ${Color.gray(0.9)};
-                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                    font-size: 0.68rem;
-                    white-space: nowrap;
-                  `}
-                >
-                  {formatRunEventTime(event.createdAt)}
-                </span>
-                <span
-                  className={css`
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    white-space: nowrap;
-                  `}
-                  title={event.message}
-                >
-                  {event.phase ? `[${event.phase}] ` : ''}
-                  {event.message}
-                </span>
-              </div>
-            ))}
           </div>
         )}
       </div>
       <div
         className={css`
           padding: 0 1rem;
-          margin-top: -0.05rem;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -620,12 +646,12 @@ export default function ChatPanel({
             { value: 'debug', label: 'Debug', icon: 'brain' }
           ]}
           size="sm"
-          ariaLabel="Build Copilot panel tab"
+          ariaLabel="Lumine panel tab"
         />
       </div>
       <div
         ref={chatScrollRef}
-        onScroll={activeTab === 'chat' ? onChatScroll : undefined}
+        onScroll={onChatScroll}
         className={css`
           flex: 1;
           overflow-y: auto;
@@ -639,8 +665,13 @@ export default function ChatPanel({
           messages.length === 0 ? (
             <div
               className={css`
+                min-height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
                 text-align: center;
-                padding: 2rem;
+                padding: 1.5rem;
                 color: var(--chat-text);
                 opacity: 0.7;
               `}
@@ -880,6 +911,205 @@ export default function ChatPanel({
                 {projectFileChangeLogsError}
               </div>
             ) : null}
+            {(usageRows.length > 0 || debugRunEvents.length > 0) && (
+              <div
+                className={css`
+                  display: grid;
+                  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+                  gap: 0.75rem;
+                  @media (max-width: ${mobileMaxWidth}) {
+                    grid-template-columns: 1fr;
+                  }
+                `}
+              >
+                {usageRows.length > 0 && (
+                  <div
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 10px;
+                      background: var(--chat-bg);
+                      padding: 0.65rem 0.7rem;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 0.45rem;
+                      font-size: 0.76rem;
+                      color: var(--chat-text);
+                    `}
+                  >
+                    <div
+                      className={css`
+                        font-weight: 700;
+                        opacity: 0.82;
+                      `}
+                    >
+                      Current run usage
+                    </div>
+                    {usageRows.map((row) => (
+                      <div
+                        key={`${row.stage}-${row.model}`}
+                        className={css`
+                          display: grid;
+                          grid-template-columns: minmax(72px, auto) 1fr;
+                          gap: 0.3rem 0.7rem;
+                          align-items: baseline;
+                        `}
+                      >
+                        <span
+                          className={css`
+                            font-weight: 700;
+                            text-transform: capitalize;
+                          `}
+                        >
+                          {getUsageStageLabel(row.stage)}
+                        </span>
+                        <div
+                          className={css`
+                            display: flex;
+                            justify-content: space-between;
+                            gap: 0.7rem;
+                            min-width: 0;
+                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                          `}
+                        >
+                          <span
+                            className={css`
+                              opacity: 0.72;
+                              overflow: hidden;
+                              text-overflow: ellipsis;
+                              white-space: nowrap;
+                            `}
+                            title={row.model}
+                          >
+                            {usageShowsMultipleModels ? row.model : null}
+                          </span>
+                          <span
+                            className={css`
+                              white-space: nowrap;
+                              margin-left: auto;
+                            `}
+                          >
+                            {formatTokenCount(row.totalTokens)} tok
+                            {usageHasPositiveCost &&
+                            row.estimatedCostUsd != null &&
+                            row.estimatedCostUsd > 0
+                              ? ` / ${formatUsageCost(row.estimatedCostUsd)}`
+                              : ''}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 0.5rem;
+                        padding-top: 0.4rem;
+                        border-top: 1px solid var(--ui-border);
+                        font-weight: 700;
+                      `}
+                    >
+                      <span>Total</span>
+                      <span
+                        className={css`
+                          font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                          text-align: right;
+                        `}
+                      >
+                        {formatTokenCount(usageTotals.inputTokens)} in /{' '}
+                        {formatTokenCount(usageTotals.outputTokens)} out /{' '}
+                        {formatTokenCount(usageTotals.totalTokens)} tok
+                        {usageHasPositiveCost &&
+                        usageTotals.estimatedCostUsd != null &&
+                        usageTotals.estimatedCostUsd > 0
+                          ? ` / ${formatUsageCost(usageTotals.estimatedCostUsd)}`
+                          : ''}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {debugRunEvents.length > 0 && (
+                  <div
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 10px;
+                      background: #fff;
+                      padding: 0.65rem 0.7rem;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 0.35rem;
+                      font-size: 0.76rem;
+                      color: var(--chat-text);
+                      max-height: 220px;
+                      overflow-y: auto;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        font-weight: 700;
+                        opacity: 0.82;
+                      `}
+                    >
+                      Current run timeline
+                    </div>
+                    {debugRunEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={css`
+                          display: grid;
+                          grid-template-columns: auto auto 1fr;
+                          gap: 0.35rem;
+                          align-items: baseline;
+                          line-height: 1.35;
+                          padding: ${event.kind === 'action'
+                            ? '0.1rem 0.2rem'
+                            : '0'};
+                          border-radius: 6px;
+                          background: ${event.kind === 'action'
+                            ? 'rgba(255, 166, 0, 0.08)'
+                            : 'transparent'};
+                        `}
+                      >
+                        <span
+                          className={css`
+                            color: ${getRunEventColor(event.kind)};
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.03em;
+                            font-size: 0.68rem;
+                            white-space: nowrap;
+                          `}
+                        >
+                          {getRunEventLabel(event.kind)}
+                        </span>
+                        <span
+                          className={css`
+                            color: ${Color.gray(0.9)};
+                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                            font-size: 0.68rem;
+                            white-space: nowrap;
+                          `}
+                        >
+                          {formatRunEventTime(event.createdAt)}
+                        </span>
+                        <span
+                          className={css`
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            font-weight: ${event.kind === 'action' ? 700 : 400};
+                          `}
+                          title={event.message}
+                        >
+                          {event.phase ? `[${event.phase}] ` : ''}
+                          {event.message}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {showDebugEmptyState ? (
               <div
                 className={css`
@@ -999,13 +1229,72 @@ export default function ChatPanel({
         )}
       </div>
 
-      {isOwner && activeTab === 'chat' && (
+      {isOwner && activeTab === 'chat' && !limitsExpanded && (
         <div
           className={css`
             padding: 0.9rem 1rem 1.1rem;
             background: #fff;
           `}
         >
+          {showScopedPlanQuickReplies && (
+            <div
+              className={css`
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.45rem;
+                margin-bottom: 0.7rem;
+              `}
+            >
+              <button
+                type="button"
+                onClick={() => onSendPresetMessage('Yes, continue.')}
+                className={css`
+                  border: 1px solid rgba(36, 99, 235, 0.18);
+                  background: rgba(59, 130, 246, 0.08);
+                  color: #1d4ed8;
+                  border-radius: 999px;
+                  padding: 0.42rem 0.82rem;
+                  font-size: 0.82rem;
+                  font-weight: 800;
+                  cursor: pointer;
+                `}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => onSendPresetMessage('No, stop this plan.')}
+                className={css`
+                  border: 1px solid rgba(148, 163, 184, 0.28);
+                  background: rgba(148, 163, 184, 0.1);
+                  color: #334155;
+                  border-radius: 999px;
+                  padding: 0.42rem 0.82rem;
+                  font-size: 0.82rem;
+                  font-weight: 800;
+                  cursor: pointer;
+                `}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={handlePrefillRedirect}
+                className={css`
+                  border: 1px solid rgba(217, 119, 6, 0.2);
+                  background: rgba(245, 158, 11, 0.11);
+                  color: #b45309;
+                  border-radius: 999px;
+                  padding: 0.42rem 0.82rem;
+                  font-size: 0.82rem;
+                  font-weight: 800;
+                  cursor: pointer;
+                `}
+              >
+                No (explain what you want instead)
+              </button>
+            </div>
+          )}
           <div
             className={css`
               display: flex;
@@ -1013,6 +1302,7 @@ export default function ChatPanel({
             `}
           >
             <textarea
+              ref={inputRef}
               value={inputMessage}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -1057,40 +1347,24 @@ export default function ChatPanel({
               />
             )}
           </div>
-          {promptCharLimit != null && (
+          {copilotPolicy && dailyLimitSummary && (
             <div
               className={css`
                 margin-top: 0.42rem;
                 display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.5rem;
+                justify-content: flex-end;
                 font-size: 0.72rem;
               `}
             >
               <span
                 className={css`
-                  color: ${inputCharCount > promptCharLimit
-                    ? Color.rose()
-                    : Color.gray(0.9)};
+                  color: var(--chat-text);
+                  opacity: 0.72;
                   font-weight: 700;
-                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
                 `}
               >
-                Prompt: {formatTokenCount(inputCharCount)} /{' '}
-                {formatTokenCount(promptCharLimit)} chars
+                {dailyLimitSummary}
               </span>
-              {copilotPolicy && (
-                <span
-                  className={css`
-                    color: var(--chat-text);
-                    opacity: 0.72;
-                    font-weight: 700;
-                  `}
-                >
-                  {dailyLimitSummary}
-                </span>
-              )}
             </div>
           )}
         </div>
@@ -1293,7 +1567,7 @@ function AssistantMessage({
               opacity: 0.85;
             `}
           >
-            Copilot replied like it made changes, but it did not return updated
+            Lumine replied like it made changes, but it did not return updated
             code. Your workspace stayed the same.
           </div>
         </div>
@@ -1477,10 +1751,87 @@ function formatTokenCount(value: number) {
   return new Intl.NumberFormat('en-US').format(safeValue);
 }
 
+function formatBytes(value: number) {
+  const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+  if (safeValue >= 1024 * 1024) {
+    return `${(safeValue / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  if (safeValue >= 1024) {
+    return `${(safeValue / 1024).toFixed(1)} KB`;
+  }
+  return `${Math.round(safeValue)} B`;
+}
+
+function buildLimitProgressItem({
+  id,
+  label,
+  used,
+  limit,
+  text,
+  caption,
+  color
+}: {
+  id: string;
+  label: string;
+  used: number;
+  limit: number;
+  text: string;
+  caption?: string;
+  color?: string;
+}): LimitProgressItem | null {
+  if (!Number.isFinite(limit) || limit <= 0) return null;
+  return {
+    id,
+    label,
+    progress: Math.max(0, Math.min(100, (used / limit) * 100)),
+    text,
+    caption,
+    color
+  };
+}
+
 function formatUsageCost(value: number | null) {
-  if (value == null || !Number.isFinite(value)) return 'n/a';
+  if (value == null || !Number.isFinite(value) || value <= 0) return 'n/a';
   if (value < 0.01) return `$${value.toFixed(4)}`;
   return `$${value.toFixed(2)}`;
+}
+
+function LimitStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className={css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        border: 1px solid var(--ui-border);
+        border-radius: 10px;
+        background: var(--chat-bg);
+        padding: 0.7rem 0.8rem;
+      `}
+    >
+      <span
+        className={css`
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: var(--chat-text);
+          opacity: 0.72;
+        `}
+      >
+        {label}
+      </span>
+      <span
+        className={css`
+          font-size: 0.84rem;
+          font-weight: 800;
+          color: var(--chat-text);
+          text-transform: capitalize;
+        `}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }
 
 function getUsageStageLabel(stage: string) {
@@ -1507,7 +1858,7 @@ function getRunEventLabel(kind: BuildRunEvent['kind']) {
     case 'phase':
       return 'phase';
     case 'action':
-      return 'action';
+      return 'agent';
     case 'usage':
       return 'usage';
     case 'status':

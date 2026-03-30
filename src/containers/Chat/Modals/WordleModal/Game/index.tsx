@@ -262,23 +262,6 @@ export default function Game({
       return;
     }
 
-    if (isStrictMode) {
-      const { isPass, message } = checkWordleAttemptStrictness({
-        guesses: guesses.concat([currentGuess]),
-        solution
-      });
-      if (!isPass) {
-        setCurrentRowClass('jiggle');
-        return handleShowAlert({
-          status: 'error',
-          message,
-          options: {
-            callback: () => setCurrentRowClass('')
-          }
-        });
-      }
-    }
-
     if (!(unicodeLength(currentGuess) === MAX_WORD_LENGTH)) {
       setCurrentRowClass('jiggle');
       return handleShowAlert({
@@ -309,6 +292,10 @@ export default function Game({
         solution
       });
     if (isDuplicate || needsReload) return window.location.reload();
+    const resolvedSolution = actualSolution || solution;
+    const resolvedWordLength =
+      unicodeLength(resolvedSolution) || MAX_WORD_LENGTH;
+    const resolvedDelayMs = REVEAL_TIME_MS * resolvedWordLength;
     if (actualSolution) {
       onSetChannelState({
         channelId,
@@ -317,18 +304,39 @@ export default function Game({
           wordleSolution: actualSolution
         }
       });
-      isProcessingGameResult.current = false;
+      if (resolvedWordLength !== MAX_WORD_LENGTH) {
+        return window.location.reload();
+      }
     }
-    if (
-      newGuesses.length < MAX_GUESSES &&
-      currentGuess !== (actualSolution || solution)
-    ) {
-      await updateWordleAttempt({
-        channelName,
-        channelId,
+    if (isStrictMode) {
+      const { isPass, message } = checkWordleAttemptStrictness({
         guesses: newGuesses,
-        solution: actualSolution || solution
+        solution: resolvedSolution
       });
+      if (!isPass) {
+        setIsChecking(false);
+        isProcessingGameResult.current = false;
+        setCurrentRowClass('jiggle');
+        return handleShowAlert({
+          status: 'error',
+          message,
+          options: {
+            callback: () => setCurrentRowClass('')
+          }
+        });
+      }
+    }
+    if (newGuesses.length < MAX_GUESSES && currentGuess !== resolvedSolution) {
+      const { needsReload: attemptNeedsReload } =
+        (await updateWordleAttempt({
+          channelName,
+          channelId,
+          guesses: newGuesses,
+          solution: resolvedSolution
+        })) || {};
+      if (attemptNeedsReload) {
+        return window.location.reload();
+      }
     }
     setIsChecking(false);
 
@@ -344,11 +352,11 @@ export default function Game({
     }, REVEAL_TIME_MS * MAX_WORD_LENGTH);
 
     if (
-      unicodeLength(currentGuess) === MAX_WORD_LENGTH &&
+      unicodeLength(currentGuess) === resolvedWordLength &&
       guesses.length < MAX_GUESSES &&
-      !isGameWon
+      !guesses.includes(resolvedSolution)
     ) {
-      if (currentGuess === solution) {
+      if (currentGuess === resolvedSolution) {
         return handleGameWon();
       }
 
@@ -359,14 +367,22 @@ export default function Game({
 
     async function handleGameLost() {
       const loadStartTime = Date.now();
-      const { dailyTaskStatus, wordleAttemptState, wordleStats } =
-        await updateWordleAttempt({
+      const {
+        dailyTaskStatus,
+        wordleAttemptState,
+        wordleStats,
+        needsReload: attemptNeedsReload
+      } =
+        (await updateWordleAttempt({
           channelName,
           channelId,
           guesses: guesses.concat([currentGuess]),
-          solution,
+          solution: resolvedSolution,
           isSolved: false
-        });
+        })) || {};
+      if (attemptNeedsReload) {
+        return window.location.reload();
+      }
       onSetChannelState({
         channelId,
         newState: { wordleAttemptState, wordleStats }
@@ -376,10 +392,10 @@ export default function Game({
       const loadTime = loadEndTime - loadStartTime;
       handleShowAlert({
         status: 'fail',
-        message: CORRECT_WORD_MESSAGE(solution),
+        message: CORRECT_WORD_MESSAGE(resolvedSolution),
         options: {
           persist: true,
-          delayMs: Math.max(delayMs - loadTime, 0),
+          delayMs: Math.max(resolvedDelayMs - loadTime, 0),
           callback: () => onSetOverviewModalShown(true)
         }
       });
@@ -387,14 +403,22 @@ export default function Game({
 
     async function handleGameWon() {
       const loadStartTime = Date.now();
-      const { dailyTaskStatus, wordleAttemptState, wordleStats } =
-        await updateWordleAttempt({
+      const {
+        dailyTaskStatus,
+        wordleAttemptState,
+        wordleStats,
+        needsReload: attemptNeedsReload
+      } =
+        (await updateWordleAttempt({
           channelName,
           channelId,
           guesses: guesses.concat([currentGuess]),
-          solution,
+          solution: resolvedSolution,
           isSolved: true
-        });
+        })) || {};
+      if (attemptNeedsReload) {
+        return window.location.reload();
+      }
       onSetChannelState({
         channelId,
         newState: { wordleAttemptState, wordleStats }
@@ -406,7 +430,7 @@ export default function Game({
         status: 'success',
         message: WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)],
         options: {
-          delayMs: Math.max(delayMs - loadTime, 0),
+          delayMs: Math.max(resolvedDelayMs - loadTime, 0),
           callback: () => onSetOverviewModalShown(true)
         }
       });

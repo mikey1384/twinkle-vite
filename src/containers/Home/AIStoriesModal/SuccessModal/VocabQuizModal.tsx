@@ -1001,7 +1001,7 @@ export default function VocabQuizModal({
     ) {
       const isDiscovered = answerResult.discovered;
       const word = currentQuestion?.word || '';
-      const wordLevel = currentQuestion?.wordLevel || 3;
+      const wordLevel = answerResult?.wordLevel || currentQuestion?.wordLevel || 3;
       const levelInfo = wordLevelHash[wordLevel] || wordLevelHash[3];
       const wordColor =
         Color[levelInfo.color as keyof typeof Color]?.() || Color.orange();
@@ -1124,7 +1124,7 @@ export default function VocabQuizModal({
           ...prev,
           {
             word: currentQuestion.word,
-            wordLevel: currentQuestion.wordLevel || 3,
+            wordLevel: result.wordLevel || currentQuestion.wordLevel || 3,
             isCorrect: result.isCorrect,
             collected: result.collected || false,
             discovered: result.discovered || false,
