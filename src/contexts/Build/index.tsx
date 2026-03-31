@@ -13,7 +13,8 @@ export const BuildContext = createContext<BuildCtx | undefined>(undefined);
 
 const initialBuildState: BuildState = {
   buildRuns: {},
-  buildRunRequestMap: {}
+  buildRunRequestMap: {},
+  buildWorkspaces: {}
 };
 
 export function BuildContextProvider({ children }: { children: ReactNode }) {

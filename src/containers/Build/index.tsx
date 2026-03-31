@@ -13,7 +13,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import BuildEditor from './BuildEditor';
 import BuildList from './BuildList';
 import Icon from '~/components/Icon';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useBuildContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 
@@ -263,18 +263,26 @@ function BuildEditorWrapper() {
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
-
-  const [loading, setLoading] = useState(true);
-  const [build, setBuild] = useState<any>(null);
-  const [chatMessages, setChatMessages] = useState<any[]>([]);
-  const [copilotPolicy, setCopilotPolicy] =
-    useState<BuildCopilotPolicy | null>(null);
-  const [error, setError] = useState('');
-
   const numericBuildId = useMemo(() => {
     const id = parseInt(buildId || '', 10);
     return isNaN(id) ? null : id;
   }, [buildId]);
+  const cachedWorkspace = useBuildContext((v) =>
+    numericBuildId ? v.state.buildWorkspaces[String(numericBuildId)] || null : null
+  );
+  const onSetBuildWorkspace = useBuildContext(
+    (v) => v.actions.onSetBuildWorkspace
+  );
+
+  const [loading, setLoading] = useState(() => !Boolean(cachedWorkspace?.build));
+  const [build, setBuild] = useState<any>(cachedWorkspace?.build || null);
+  const [chatMessages, setChatMessages] = useState<any[]>(
+    cachedWorkspace?.chatMessages || []
+  );
+  const [copilotPolicy, setCopilotPolicy] =
+    useState<BuildCopilotPolicy | null>(cachedWorkspace?.copilotPolicy || null);
+  const [error, setError] = useState('');
+
   const locationState = (location.state as any) || null;
   const seedGreeting = Boolean(locationState?.seedGreeting);
   const initialPrompt =
@@ -283,18 +291,35 @@ function BuildEditorWrapper() {
       : '';
 
   useEffect(() => {
+    setError('');
+    if (cachedWorkspace?.build) {
+      setBuild(cachedWorkspace.build);
+      setChatMessages(Array.isArray(cachedWorkspace.chatMessages) ? cachedWorkspace.chatMessages : []);
+      setCopilotPolicy(cachedWorkspace.copilotPolicy || null);
+      setLoading(false);
+      return;
+    }
+    setBuild(null);
+    setChatMessages([]);
+    setCopilotPolicy(null);
+    setLoading(true);
+  }, [cachedWorkspace, numericBuildId]);
+
+  useEffect(() => {
     if (numericBuildId) {
       handleLoad();
     }
 
     async function handleLoad() {
-      setLoading(true);
+      if (!cachedWorkspace?.build) {
+        setLoading(true);
+      }
       try {
         const data = await loadBuild(numericBuildId, {
           fromWriter: Boolean(initialPrompt || seedGreeting)
         });
         if (data?.build) {
-          setBuild({
+          const nextBuild = {
             ...data.build,
             executionPlan: data.executionPlan || null,
             projectManifest: data.projectManifest || null,
@@ -302,9 +327,13 @@ function BuildEditorWrapper() {
             projectFiles: Array.isArray(data.projectFiles)
               ? data.projectFiles
               : []
-          });
-          setChatMessages(data.chatMessages || []);
-          setCopilotPolicy(data.copilotPolicy || null);
+          };
+          const nextChatMessages = data.chatMessages || [];
+          const nextCopilotPolicy = data.copilotPolicy || null;
+          setBuild(nextBuild);
+          setChatMessages(nextChatMessages);
+          setCopilotPolicy(nextCopilotPolicy);
+          setError('');
           if (initialPrompt || seedGreeting) {
             navigate(location.pathname, { replace: true, state: null });
           }
@@ -318,7 +347,26 @@ function BuildEditorWrapper() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPrompt, location.pathname, navigate, numericBuildId, seedGreeting]);
+  }, [
+    cachedWorkspace?.build,
+    initialPrompt,
+    location.pathname,
+    navigate,
+    numericBuildId,
+    seedGreeting
+  ]);
+
+  useEffect(() => {
+    const workspaceBuildId = Number(build?.id || numericBuildId || 0);
+    if (!workspaceBuildId || !build) return;
+    onSetBuildWorkspace({
+      buildId: workspaceBuildId,
+      build,
+      chatMessages,
+      copilotPolicy
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build, chatMessages, copilotPolicy, numericBuildId]);
 
   if (!numericBuildId) {
     return (
@@ -334,7 +382,7 @@ function BuildEditorWrapper() {
     return <Loading />;
   }
 
-  if (error || !build) {
+  if (!build) {
     return (
       <BuildWorkspaceUnavailable
         title="Workspace Unavailable"

@@ -53,8 +53,18 @@ export interface BuildLiveRunState {
   updatedAt: number;
 }
 
+export interface BuildWorkspaceSnapshot {
+  build: any;
+  chatMessages: any[];
+  copilotPolicy: any | null;
+  updatedAt: number;
+}
+
 export interface BuildLiveRunActionPayload {
   buildId?: number;
+  build?: any;
+  chatMessages?: any[];
+  copilotPolicy?: any | null;
   requestId?: string;
   runMode?: BuildLiveRunState['runMode'];
   status?: string | null;
@@ -87,6 +97,7 @@ export interface BuildLiveRunActionPayload {
 export interface BuildState {
   buildRuns: Record<string, BuildLiveRunState>;
   buildRunRequestMap: Record<string, number>;
+  buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
 }
 
 export interface BuildAction {
@@ -99,6 +110,7 @@ export interface BuildAction {
     | 'COMPLETE_BUILD_RUN'
     | 'FAIL_BUILD_RUN'
     | 'STOP_BUILD_RUN'
+    | 'SET_BUILD_WORKSPACE'
     | 'CLEAR_BUILD_RUN'
     | 'RESET_BUILD_RUNS';
   buildRun?: BuildLiveRunActionPayload;
@@ -545,6 +557,28 @@ export default function BuildReducer(
         buildRunRequestMap: nextRequestMap
       };
     }
+    case 'SET_BUILD_WORKSPACE': {
+      const buildId = Number(action.buildRun?.buildId || 0);
+      if (!buildId || !action.buildRun?.build) return state;
+      const key = getBuildRunKey(buildId);
+      return {
+        ...state,
+        buildWorkspaces: {
+          ...state.buildWorkspaces,
+          [key]: {
+            build: action.buildRun.build,
+            chatMessages: Array.isArray(action.buildRun.chatMessages)
+              ? action.buildRun.chatMessages
+              : [],
+            copilotPolicy:
+              action.buildRun.copilotPolicy !== undefined
+                ? action.buildRun.copilotPolicy
+                : null,
+            updatedAt: Date.now()
+          }
+        }
+      };
+    }
     case 'CLEAR_BUILD_RUN': {
       const buildId = Number(action.buildRun?.buildId || 0);
       if (!buildId) return state;
@@ -566,7 +600,8 @@ export default function BuildReducer(
       return {
         ...state,
         buildRuns: {},
-        buildRunRequestMap: {}
+        buildRunRequestMap: {},
+        buildWorkspaces: {}
       };
     default:
       return state;

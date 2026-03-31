@@ -51,6 +51,12 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildRun
       });
     },
+    onSetBuildWorkspace(buildRun: BuildLiveRunActionPayload) {
+      return dispatch({
+        type: 'SET_BUILD_WORKSPACE',
+        buildRun
+      });
+    },
     onClearBuildRun(buildId: number) {
       return dispatch({
         type: 'CLEAR_BUILD_RUN',
