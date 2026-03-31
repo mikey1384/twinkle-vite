@@ -4,6 +4,7 @@ import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -139,16 +140,28 @@ export default function Review() {
                   justifyContent: 'center'
                 }}
               >
-                <GameCTAButton
-                  icon="exclamation-circle"
-                  variant="logoBlue"
-                  size="sm"
-                  onClick={() => {
-                    setChallengeQ(it);
-                  }}
-                >
-                  Challenge
-                </GameCTAButton>
+                {AI_FEATURES_DISABLED ? (
+                  <GameCTAButton
+                    icon="ban"
+                    variant="neutral"
+                    size="sm"
+                    onClick={() => {}}
+                    disabled
+                  >
+                    Challenge Unavailable
+                  </GameCTAButton>
+                ) : (
+                  <GameCTAButton
+                    icon="exclamation-circle"
+                    variant="logoBlue"
+                    size="sm"
+                    onClick={() => {
+                      setChallengeQ(it);
+                    }}
+                  >
+                    Challenge
+                  </GameCTAButton>
+                )}
               </div>
             )}
           </div>

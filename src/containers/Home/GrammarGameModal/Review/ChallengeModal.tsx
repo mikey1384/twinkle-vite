@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import StreamingThoughtContent from '~/components/StreamingThoughtContent';
@@ -40,6 +42,7 @@ export default function ChallengeModal({
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
+    if (AI_FEATURES_DISABLED) return;
     function handleThoughtStream({
       questionId: qid,
       thoughtContent
@@ -63,10 +66,25 @@ export default function ChallengeModal({
       modalKey="ChallengeModal"
       isOpen={isOpen}
       onClose={onClose}
-      title={accepted ? 'Challenge Accepted!' : 'Challenge Question'}
+      title={
+        AI_FEATURES_DISABLED
+          ? 'Challenge Unavailable'
+          : accepted
+            ? 'Challenge Accepted!'
+            : 'Challenge Question'
+      }
       size="md"
       footer={
-        accepted ? (
+        AI_FEATURES_DISABLED ? (
+          <GameCTAButton
+            icon="check"
+            variant="success"
+            size="sm"
+            onClick={onClose}
+          >
+            Close
+          </GameCTAButton>
+        ) : accepted ? (
           <GameCTAButton
             icon="check"
             variant="success"
@@ -99,7 +117,9 @@ export default function ChallengeModal({
         )
       }
     >
-      {accepted ? (
+      {AI_FEATURES_DISABLED ? (
+        <AIDisabledNotice title="Grammarbles Challenge Unavailable" />
+      ) : accepted ? (
         <div
           className={css`
             font-size: 1.5rem;
@@ -140,6 +160,7 @@ export default function ChallengeModal({
   );
 
   async function handleChallenge() {
+    if (AI_FEATURES_DISABLED) return;
     if (!questionId) return;
     if (isSubmittingRef.current) return;
     try {
