@@ -7,10 +7,12 @@ import CodeDiff from '~/components/CodeDiff';
 import ProgressBar from '~/components/ProgressBar';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { css } from '@emotion/css';
-import { AI_DISABLED_NOTICE, AI_FEATURES_DISABLED } from '~/constants/ai';
+import { useViewContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { computeLineDiff } from '~/components/CodeDiff/diffUtils';
+import { useLazyLoad } from '~/helpers/hooks';
+import { useInView } from 'react-intersection-observer';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 const panelClass = css`
@@ -139,7 +141,6 @@ interface LimitProgressItem {
 interface ChatPanelProps {
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
-  inputMessage: string;
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
@@ -156,8 +157,7 @@ interface ChatPanelProps {
   chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onChatScroll: () => void;
-  onInputChange: (value: string) => void;
-  onSendMessage: () => void;
+  onSendMessage: (message: string) => Promise<boolean> | boolean;
   onSendPresetMessage: (message: string) => void;
   onStopGeneration: () => void;
   onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
@@ -167,7 +167,6 @@ interface ChatPanelProps {
 export default function ChatPanel({
   messages,
   executionPlan,
-  inputMessage,
   generating,
   generatingStatus,
   assistantStatusSteps,
@@ -184,15 +183,19 @@ export default function ChatPanel({
   chatScrollRef,
   chatEndRef,
   onChatScroll,
-  onInputChange,
   onSendMessage,
   onSendPresetMessage,
   onStopGeneration,
   onReloadProjectFileChangeLogs,
   onDeleteMessage
 }: ChatPanelProps) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
+  const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
   const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat');
   const [limitsExpanded, setLimitsExpanded] = useState(false);
+  const [draftMessage, setDraftMessage] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const aiInputDisabled = AI_FEATURES_DISABLED;
   const usageRows = useMemo(() => {
@@ -308,7 +311,7 @@ export default function ChatPanel({
     activeTab === 'chat' &&
     executionPlan?.status === 'active' &&
     !generating &&
-    !inputMessage.trim();
+    !draftMessage.trim();
 
   function handleTabChange(nextTab: ChatPanelTab) {
     if (nextTab === activeTab) return;
@@ -336,12 +339,12 @@ export default function ChatPanel({
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSendMessage();
+      void handleSubmitMessage();
     }
   }
 
   function handlePrefillRedirect() {
-    onInputChange('No. Instead, ');
+    setDraftMessage('No. Instead, ');
     window.requestAnimationFrame(() => {
       const input = inputRef.current;
       if (!input) return;
@@ -349,6 +352,19 @@ export default function ChatPanel({
       const value = input.value || '';
       input.setSelectionRange(value.length, value.length);
     });
+  }
+
+  async function handleSubmitMessage() {
+    const messageText = draftMessage.trim();
+    if (!messageText) return;
+    try {
+      const didAccept = await Promise.resolve(onSendMessage(messageText));
+      if (didAccept) {
+        setDraftMessage('');
+      }
+    } catch (error) {
+      console.error('Failed to send build message:', error);
+    }
   }
 
   function scrollChatToBottom() {
@@ -598,531 +614,30 @@ export default function ChatPanel({
           min-height: 0;
         `}
       >
-        {activeTab === 'chat' ? (
-          messages.length === 0 ? (
-            <div
-              className={css`
-                min-height: 100%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-                padding: 1.5rem;
-                color: var(--chat-text);
-                opacity: 0.7;
-              `}
-            >
-              <Icon
-                icon="comments"
-                size="2x"
-                style={{ marginBottom: '0.8rem' }}
-              />
-              <p style={{ margin: 0, fontSize: '1.05rem' }}>
-                {isOwner
-                  ? 'Describe what you want to build and I will help you create it.'
-                  : 'No messages yet.'}
-              </p>
-            </div>
-          ) : (
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-              `}
-            >
-              {messages.map((message, index) => {
-                const isLastAssistant =
-                  message.role === 'assistant' &&
-                  index === findLastIndex(messages, (m) => m.role === 'assistant');
-                const isActiveStreamMessage = activeStreamMessageIds.includes(
-                  message.id
-                );
-                const isStreamingTarget =
-                  (generating && isActiveStreamMessage) ||
-                  (generating &&
-                    message.role === 'assistant' &&
-                    isLastAssistant);
-
-                return (
-                  <div
-                    key={message.id}
-                      className={css`
-                        display: flex;
-                        flex-direction: column;
-                        align-items: ${message.role === 'user'
-                          ? 'flex-end'
-                          : 'flex-start'};
-                        position: relative;
-                    `}
-                  >
-                    <button
-                      onClick={() => onDeleteMessage(message)}
-                      disabled={isStreamingTarget}
-                      title={
-                        isStreamingTarget
-                          ? 'Cannot delete while this request is in progress'
-                          : 'Delete message'
-                      }
-                      className={`${css`
-                        position: absolute;
-                        top: -0.35rem;
-                        right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
-                        left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
-                        padding: 0;
-                        border: none;
-                        background: transparent;
-                        color: var(--chat-text);
-                        font-size: 1.05rem;
-                        line-height: 1;
-                        opacity: 0.55;
-                        pointer-events: auto;
-                        transition: opacity 0.15s ease, transform 0.15s ease,
-                          color 0.15s ease;
-                        transform: translateY(0);
-                        cursor: pointer;
-                        z-index: 2;
-                        &:hover,
-                        &:focus-visible {
-                          opacity: 1;
-                          color: ${Color.rose()};
-                          transform: translateY(-1px);
-                        }
-
-                        &:disabled {
-                          opacity: 0.35;
-                          pointer-events: none;
-                          cursor: not-allowed;
-                        }
-                      `} build-chat-delete-button`}
-                    >
-                      <Icon icon="times-circle" />
-                    </button>
-                    <div
-                      className={css`
-                        max-width: 85%;
-                        padding: 0.75rem 1rem;
-                        border-radius: 12px;
-                        background: ${message.role === 'user'
-                          ? 'var(--theme-bg)'
-                          : 'var(--chat-bg)'};
-                        color: ${message.role === 'user'
-                          ? 'var(--theme-text)'
-                          : 'var(--chat-text)'};
-                        word-break: break-word;
-                        font-size: 0.95rem;
-                        line-height: 1.4;
-                        border: 1px solid var(--ui-border);
-                      `}
-                    >
-                      {message.role === 'assistant' ? (
-                        <AssistantMessage
-                          message={message}
-                          messages={messages}
-                          isLatestAssistant={isLastAssistant}
-                          generating={generating}
-                          generatingStatus={generatingStatus}
-                          statusSteps={isLastAssistant ? assistantStatusSteps : []}
-                        />
-                      ) : (
-                        <span style={{ whiteSpace: 'pre-wrap' }}>
-                          {message.content}
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      className={css`
-                        font-size: 0.7rem;
-                        color: var(--chat-text);
-                        opacity: 0.5;
-                        margin-top: 0.25rem;
-                        padding: 0 0.5rem;
-                      `}
-                    >
-                      {timeSince(message.createdAt)}
-                    </span>
-                  </div>
-                );
-              })}
-              <div ref={chatEndRef} />
-            </div>
-          )
-        ) : (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              gap: 0.75rem;
-            `}
-          >
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 0.6rem;
-                flex-wrap: wrap;
-              `}
-            >
-              <div
-                className={css`
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 0.45rem;
-                  font-size: 0.72rem;
-                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                  opacity: 0.8;
-                `}
-              >
-                {projectFileChangeLogsLoadedAt ? (
-                  <span>
-                    Updated {formatRunEventTime(projectFileChangeLogsLoadedAt)}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={handleRefreshCopilotDebug}
-                  disabled={projectFileChangeLogsLoading}
-                  className={css`
-                    border: 1px solid var(--ui-border);
-                    background: #fff;
-                    color: var(--chat-text);
-                    border-radius: 999px;
-                    padding: 0.22rem 0.55rem;
-                    font-size: 0.68rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    &:disabled {
-                      opacity: 0.5;
-                      cursor: not-allowed;
-                    }
-                  `}
-                >
-                  {projectFileChangeLogsLoading ? 'Loading...' : 'Refresh'}
-                </button>
-              </div>
-            </div>
-            {projectFileChangeLogsError ? (
-              <div
-                className={css`
-                  border: 1px solid ${Color.rose(0.35)};
-                  background: ${Color.rose(0.07)};
-                  color: ${Color.rose(0.95)};
-                  border-radius: 10px;
-                  padding: 0.6rem 0.7rem;
-                  font-size: 0.8rem;
-                `}
-              >
-                {projectFileChangeLogsError}
-              </div>
-            ) : null}
-            {(usageRows.length > 0 || debugRunEvents.length > 0) && (
-              <div
-                className={css`
-                  display: grid;
-                  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-                  gap: 0.75rem;
-                  @media (max-width: ${mobileMaxWidth}) {
-                    grid-template-columns: 1fr;
-                  }
-                `}
-              >
-                {usageRows.length > 0 && (
-                  <div
-                    className={css`
-                      border: 1px solid var(--ui-border);
-                      border-radius: 10px;
-                      background: var(--chat-bg);
-                      padding: 0.65rem 0.7rem;
-                      display: flex;
-                      flex-direction: column;
-                      gap: 0.45rem;
-                      font-size: 0.76rem;
-                      color: var(--chat-text);
-                    `}
-                  >
-                    <div
-                      className={css`
-                        font-weight: 700;
-                        opacity: 0.82;
-                      `}
-                    >
-                      Current run usage
-                    </div>
-                    {usageRows.map((row) => (
-                      <div
-                        key={`${row.stage}-${row.model}`}
-                        className={css`
-                          display: grid;
-                          grid-template-columns: minmax(72px, auto) 1fr;
-                          gap: 0.3rem 0.7rem;
-                          align-items: baseline;
-                        `}
-                      >
-                        <span
-                          className={css`
-                            font-weight: 700;
-                            text-transform: capitalize;
-                          `}
-                        >
-                          {getUsageStageLabel(row.stage)}
-                        </span>
-                        <div
-                          className={css`
-                            display: flex;
-                            justify-content: space-between;
-                            gap: 0.7rem;
-                            min-width: 0;
-                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                          `}
-                        >
-                          <span
-                            className={css`
-                              opacity: 0.72;
-                              overflow: hidden;
-                              text-overflow: ellipsis;
-                              white-space: nowrap;
-                            `}
-                            title={row.model}
-                          >
-                            {usageShowsMultipleModels ? row.model : null}
-                          </span>
-                          <span
-                            className={css`
-                              white-space: nowrap;
-                              margin-left: auto;
-                            `}
-                          >
-                            {formatTokenCount(row.totalTokens)} tok
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                    <div
-                      className={css`
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        gap: 0.5rem;
-                        padding-top: 0.4rem;
-                        border-top: 1px solid var(--ui-border);
-                        font-weight: 700;
-                      `}
-                    >
-                      <span>Total</span>
-                      <span
-                        className={css`
-                          font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                          text-align: right;
-                        `}
-                      >
-                        {formatTokenCount(usageTotals.inputTokens)} in /{' '}
-                        {formatTokenCount(usageTotals.outputTokens)} out /{' '}
-                        {formatTokenCount(usageTotals.totalTokens)} tok
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {debugRunEvents.length > 0 && (
-                  <div
-                    className={css`
-                      border: 1px solid var(--ui-border);
-                      border-radius: 10px;
-                      background: #fff;
-                      padding: 0.65rem 0.7rem;
-                      display: flex;
-                      flex-direction: column;
-                      gap: 0.35rem;
-                      font-size: 0.76rem;
-                      color: var(--chat-text);
-                      max-height: 220px;
-                      overflow-y: auto;
-                    `}
-                  >
-                    <div
-                      className={css`
-                        font-weight: 700;
-                        opacity: 0.82;
-                      `}
-                    >
-                      Current run timeline
-                    </div>
-                    {debugRunEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={css`
-                          display: grid;
-                          grid-template-columns: auto auto 1fr;
-                          gap: 0.35rem;
-                          align-items: baseline;
-                          line-height: 1.35;
-                          padding: ${event.kind === 'action'
-                            ? '0.1rem 0.2rem'
-                            : '0'};
-                          border-radius: 6px;
-                          background: ${event.kind === 'action'
-                            ? 'rgba(255, 166, 0, 0.08)'
-                            : 'transparent'};
-                        `}
-                      >
-                        <span
-                          className={css`
-                            color: ${getRunEventColor(event.kind)};
-                            font-weight: 700;
-                            text-transform: uppercase;
-                            letter-spacing: 0.03em;
-                            font-size: 0.68rem;
-                            white-space: nowrap;
-                          `}
-                        >
-                          {getRunEventLabel(event.kind)}
-                        </span>
-                        <span
-                          className={css`
-                            color: ${Color.gray(0.9)};
-                            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                            font-size: 0.68rem;
-                            white-space: nowrap;
-                          `}
-                        >
-                          {formatRunEventTime(event.createdAt)}
-                        </span>
-                        <span
-                          className={css`
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            white-space: nowrap;
-                            font-weight: ${event.kind === 'action' ? 700 : 400};
-                          `}
-                          title={event.message}
-                        >
-                          {event.phase ? `[${event.phase}] ` : ''}
-                          {event.message}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {showDebugEmptyState ? (
-              <div
-                className={css`
-                  border: 1px solid var(--ui-border);
-                  border-radius: 10px;
-                  background: var(--chat-bg);
-                  padding: 0.85rem 0.9rem;
-                  font-size: 0.86rem;
-                  font-weight: 700;
-                  color: var(--chat-text);
-                `}
-              >
-                No recent file changes yet.
-              </div>
-            ) : (
-              <>
-                {hasPromptContextPreview ? (
-                  <div
-                    className={css`
-                      border: 1px solid var(--ui-border);
-                      border-radius: 10px;
-                      background: var(--chat-bg);
-                      padding: 0.7rem 0.8rem;
-                    `}
-                  >
-                    <div
-                      className={css`
-                        font-weight: 700;
-                        margin-bottom: 0.4rem;
-                        font-size: 0.8rem;
-                      `}
-                    >
-                      Recent file context
-                    </div>
-                    <pre
-                      className={css`
-                        margin: 0;
-                        white-space: pre-wrap;
-                        word-break: break-word;
-                        font-size: 0.74rem;
-                        line-height: 1.45;
-                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                      `}
-                    >
-                      {projectFilePromptContextPreview}
-                    </pre>
-                  </div>
-                ) : null}
-                {hasProjectFileChangeLogs ? (
-                  <div
-                    className={css`
-                      display: flex;
-                      flex-direction: column;
-                      gap: 0.4rem;
-                    `}
-                  >
-                    {projectFileChangeLogs.map((entry) => {
-                      const totalChanges = countProjectFileChanges(entry.diff);
-                      return (
-                        <div
-                          key={entry.id}
-                          className={css`
-                            border: 1px solid var(--ui-border);
-                            border-radius: 10px;
-                            background: #fff;
-                            padding: 0.6rem 0.7rem;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 0.28rem;
-                          `}
-                        >
-                          <div
-                            className={css`
-                              display: flex;
-                              align-items: center;
-                              justify-content: space-between;
-                              gap: 0.5rem;
-                              font-size: 0.72rem;
-                              font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                              opacity: 0.85;
-                            `}
-                          >
-                            <span>
-                              {entry.actorRole.toUpperCase()} #{entry.id}
-                            </span>
-                            <span>
-                              {totalChanges} file change
-                              {totalChanges === 1 ? '' : 's'}
-                            </span>
-                          </div>
-                          <div
-                            className={css`
-                              font-size: 0.82rem;
-                              line-height: 1.45;
-                              color: var(--chat-text);
-                            `}
-                          >
-                            {entry.summaryText || '[no summary]'}
-                          </div>
-                          <div
-                            className={css`
-                              font-size: 0.7rem;
-                              font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                              opacity: 0.72;
-                            `}
-                          >
-                            {formatRunEventTime(entry.createdAt * 1000)}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </>
-            )}
-          </div>
-        )}
+        <BuildChatTranscript
+          activeTab={activeTab}
+          messages={messages}
+          generating={generating}
+          generatingStatus={generatingStatus}
+          assistantStatusSteps={assistantStatusSteps}
+          usageRows={usageRows}
+          usageTotals={usageTotals}
+          usageShowsMultipleModels={usageShowsMultipleModels}
+          debugRunEvents={debugRunEvents}
+          projectFileChangeLogs={projectFileChangeLogs}
+          projectFilePromptContextPreview={projectFilePromptContextPreview}
+          projectFileChangeLogsLoading={projectFileChangeLogsLoading}
+          projectFileChangeLogsError={projectFileChangeLogsError}
+          projectFileChangeLogsLoadedAt={projectFileChangeLogsLoadedAt}
+          activeStreamMessageIds={activeStreamMessageIds}
+          isOwner={isOwner}
+          chatEndRef={chatEndRef}
+          hasPromptContextPreview={hasPromptContextPreview}
+          hasProjectFileChangeLogs={hasProjectFileChangeLogs}
+          showDebugEmptyState={showDebugEmptyState}
+          onDeleteMessage={onDeleteMessage}
+          onReloadProjectFileChangeLogs={handleRefreshCopilotDebug}
+        />
       </div>
 
       {isOwner && activeTab === 'chat' && !limitsExpanded && (
@@ -1205,8 +720,8 @@ export default function ChatPanel({
           >
             <textarea
               ref={inputRef}
-              value={inputMessage}
-              onChange={(e) => onInputChange(e.target.value)}
+              value={draftMessage}
+              onChange={(e) => setDraftMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
                 aiInputDisabled
@@ -1235,8 +750,8 @@ export default function ChatPanel({
               rows={1}
             />
             <GameCTAButton
-              onClick={onSendMessage}
-              disabled={aiInputDisabled || !inputMessage.trim()}
+              onClick={() => void handleSubmitMessage()}
+              disabled={aiInputDisabled || !draftMessage.trim()}
               variant={generating ? 'orange' : 'logoBlue'}
               size="md"
               icon="paper-plane"
@@ -1272,6 +787,674 @@ export default function ChatPanel({
               </span>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const BuildChatTranscript = React.memo(function BuildChatTranscript({
+  activeTab,
+  messages,
+  generating,
+  generatingStatus,
+  assistantStatusSteps,
+  usageRows,
+  usageTotals,
+  usageShowsMultipleModels,
+  debugRunEvents,
+  projectFileChangeLogs,
+  projectFilePromptContextPreview,
+  projectFileChangeLogsLoading,
+  projectFileChangeLogsError,
+  projectFileChangeLogsLoadedAt,
+  activeStreamMessageIds,
+  isOwner,
+  chatEndRef,
+  hasPromptContextPreview,
+  hasProjectFileChangeLogs,
+  showDebugEmptyState,
+  onDeleteMessage,
+  onReloadProjectFileChangeLogs
+}: {
+  activeTab: ChatPanelTab;
+  messages: ChatMessage[];
+  generating: boolean;
+  generatingStatus: string | null;
+  assistantStatusSteps: string[];
+  usageRows: BuildUsageMetric[];
+  usageTotals: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+  usageShowsMultipleModels: boolean;
+  debugRunEvents: BuildRunEvent[];
+  projectFileChangeLogs: BuildProjectFileChangeLog[];
+  projectFilePromptContextPreview: string;
+  projectFileChangeLogsLoading: boolean;
+  projectFileChangeLogsError: string;
+  projectFileChangeLogsLoadedAt: number | null;
+  activeStreamMessageIds: number[];
+  isOwner: boolean;
+  chatEndRef: RefObject<HTMLDivElement | null>;
+  hasPromptContextPreview: boolean;
+  hasProjectFileChangeLogs: boolean;
+  showDebugEmptyState: boolean;
+  onDeleteMessage: (message: ChatMessage) => void;
+  onReloadProjectFileChangeLogs: () => void;
+}) {
+  if (activeTab === 'chat') {
+    if (messages.length === 0) {
+      return (
+        <div
+          className={css`
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--chat-text);
+            opacity: 0.7;
+          `}
+        >
+          <Icon
+            icon="comments"
+            size="2x"
+            style={{ marginBottom: '0.8rem' }}
+          />
+          <p style={{ margin: 0, fontSize: '1.05rem' }}>
+            {isOwner
+              ? 'Describe what you want to build and I will help you create it.'
+              : 'No messages yet.'}
+          </p>
+        </div>
+      );
+    }
+
+    const lastAssistantIndex = findLastIndex(
+      messages,
+      (message) => message.role === 'assistant'
+    );
+
+    return (
+      <div
+        className={css`
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        `}
+      >
+        {messages.map((message, index) => {
+          return (
+            <BuildChatMessageRow
+              key={message.id}
+              message={message}
+              messages={messages}
+              index={index}
+              lastAssistantIndex={lastAssistantIndex}
+              generating={generating}
+              generatingStatus={generatingStatus}
+              assistantStatusSteps={assistantStatusSteps}
+              activeStreamMessageIds={activeStreamMessageIds}
+              onDeleteMessage={onDeleteMessage}
+            />
+          );
+        })}
+        <div ref={chatEndRef} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      `}
+    >
+      <div
+        className={css`
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+        `}
+      >
+        <div
+          className={css`
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.72rem;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            opacity: 0.8;
+          `}
+        >
+          {projectFileChangeLogsLoadedAt ? (
+            <span>Updated {formatRunEventTime(projectFileChangeLogsLoadedAt)}</span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onReloadProjectFileChangeLogs}
+            disabled={projectFileChangeLogsLoading}
+            className={css`
+              border: 1px solid var(--ui-border);
+              background: #fff;
+              color: var(--chat-text);
+              border-radius: 999px;
+              padding: 0.22rem 0.55rem;
+              font-size: 0.68rem;
+              font-weight: 700;
+              cursor: pointer;
+              &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+              }
+            `}
+          >
+            {projectFileChangeLogsLoading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
+      {projectFileChangeLogsError ? (
+        <div
+          className={css`
+            border: 1px solid ${Color.rose(0.35)};
+            background: ${Color.rose(0.07)};
+            color: ${Color.rose(0.95)};
+            border-radius: 10px;
+            padding: 0.6rem 0.7rem;
+            font-size: 0.8rem;
+          `}
+        >
+          {projectFileChangeLogsError}
+        </div>
+      ) : null}
+      {(usageRows.length > 0 || debugRunEvents.length > 0) && (
+        <div
+          className={css`
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            gap: 0.75rem;
+            @media (max-width: ${mobileMaxWidth}) {
+              grid-template-columns: 1fr;
+            }
+          `}
+        >
+          {usageRows.length > 0 && (
+            <div
+              className={css`
+                border: 1px solid var(--ui-border);
+                border-radius: 10px;
+                background: var(--chat-bg);
+                padding: 0.65rem 0.7rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.45rem;
+                font-size: 0.76rem;
+                color: var(--chat-text);
+              `}
+            >
+              <div
+                className={css`
+                  font-weight: 700;
+                  opacity: 0.82;
+                `}
+              >
+                Current run usage
+              </div>
+              {usageRows.map((row) => (
+                <div
+                  key={`${row.stage}-${row.model}`}
+                  className={css`
+                    display: grid;
+                    grid-template-columns: minmax(72px, auto) 1fr;
+                    gap: 0.3rem 0.7rem;
+                    align-items: baseline;
+                  `}
+                >
+                  <span
+                    className={css`
+                      font-weight: 700;
+                      text-transform: capitalize;
+                    `}
+                  >
+                    {getUsageStageLabel(row.stage)}
+                  </span>
+                  <div
+                    className={css`
+                      display: flex;
+                      justify-content: space-between;
+                      gap: 0.7rem;
+                      min-width: 0;
+                      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                    `}
+                  >
+                    <span
+                      className={css`
+                        opacity: 0.72;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                      `}
+                      title={row.model}
+                    >
+                      {usageShowsMultipleModels ? row.model : null}
+                    </span>
+                    <span
+                      className={css`
+                        white-space: nowrap;
+                        margin-left: auto;
+                      `}
+                    >
+                      {formatTokenCount(row.totalTokens)} tok
+                    </span>
+                  </div>
+                </div>
+              ))}
+              <div
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  gap: 0.5rem;
+                  padding-top: 0.4rem;
+                  border-top: 1px solid var(--ui-border);
+                  font-weight: 700;
+                `}
+              >
+                <span>Total</span>
+                <span
+                  className={css`
+                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                    text-align: right;
+                  `}
+                >
+                  {formatTokenCount(usageTotals.inputTokens)} in /{' '}
+                  {formatTokenCount(usageTotals.outputTokens)} out /{' '}
+                  {formatTokenCount(usageTotals.totalTokens)} tok
+                </span>
+              </div>
+            </div>
+          )}
+          {debugRunEvents.length > 0 && (
+            <div
+              className={css`
+                border: 1px solid var(--ui-border);
+                border-radius: 10px;
+                background: #fff;
+                padding: 0.65rem 0.7rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+                font-size: 0.76rem;
+                color: var(--chat-text);
+                max-height: 220px;
+                overflow-y: auto;
+              `}
+            >
+              <div
+                className={css`
+                  font-weight: 700;
+                  opacity: 0.82;
+                `}
+              >
+                Current run timeline
+              </div>
+              {debugRunEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className={css`
+                    display: grid;
+                    grid-template-columns: auto auto 1fr;
+                    gap: 0.35rem;
+                    align-items: baseline;
+                    line-height: 1.35;
+                    padding: ${event.kind === 'action' ? '0.1rem 0.2rem' : '0'};
+                    border-radius: 6px;
+                    background: ${event.kind === 'action'
+                      ? 'rgba(255, 166, 0, 0.08)'
+                      : 'transparent'};
+                  `}
+                >
+                  <span
+                    className={css`
+                      color: ${getRunEventColor(event.kind)};
+                      font-weight: 700;
+                      text-transform: uppercase;
+                      letter-spacing: 0.03em;
+                      font-size: 0.68rem;
+                      white-space: nowrap;
+                    `}
+                  >
+                    {getRunEventLabel(event.kind)}
+                  </span>
+                  <span
+                    className={css`
+                      color: ${Color.gray(0.9)};
+                      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                      font-size: 0.68rem;
+                      white-space: nowrap;
+                    `}
+                  >
+                    {formatRunEventTime(event.createdAt)}
+                  </span>
+                  <span
+                    className={css`
+                      overflow: hidden;
+                      text-overflow: ellipsis;
+                      white-space: nowrap;
+                      font-weight: ${event.kind === 'action' ? 700 : 400};
+                    `}
+                    title={event.message}
+                  >
+                    {event.phase ? `[${event.phase}] ` : ''}
+                    {event.message}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {showDebugEmptyState ? (
+        <div
+          className={css`
+            border: 1px solid var(--ui-border);
+            border-radius: 10px;
+            background: var(--chat-bg);
+            padding: 0.85rem 0.9rem;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: var(--chat-text);
+          `}
+        >
+          No recent file changes yet.
+        </div>
+      ) : (
+        <>
+          {hasPromptContextPreview ? (
+            <div
+              className={css`
+                border: 1px solid var(--ui-border);
+                border-radius: 10px;
+                background: var(--chat-bg);
+                padding: 0.7rem 0.8rem;
+              `}
+            >
+              <div
+                className={css`
+                  font-weight: 700;
+                  margin-bottom: 0.4rem;
+                  font-size: 0.8rem;
+                `}
+              >
+                Recent file context
+              </div>
+              <pre
+                className={css`
+                  margin: 0;
+                  white-space: pre-wrap;
+                  word-break: break-word;
+                  font-size: 0.74rem;
+                  line-height: 1.45;
+                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                `}
+              >
+                {projectFilePromptContextPreview}
+              </pre>
+            </div>
+          ) : null}
+          {hasProjectFileChangeLogs ? (
+            <div
+              className={css`
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+              `}
+            >
+              {projectFileChangeLogs.map((entry) => {
+                const totalChanges = countProjectFileChanges(entry.diff);
+                return (
+                  <div
+                    key={entry.id}
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 10px;
+                      background: #fff;
+                      padding: 0.6rem 0.7rem;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 0.28rem;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 0.5rem;
+                        font-size: 0.72rem;
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                        opacity: 0.85;
+                      `}
+                    >
+                      <span>{entry.actorRole.toUpperCase()} #{entry.id}</span>
+                      <span>
+                        {totalChanges} file change
+                        {totalChanges === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                    <div
+                      className={css`
+                        font-size: 0.82rem;
+                        line-height: 1.45;
+                        color: var(--chat-text);
+                      `}
+                    >
+                      {entry.summaryText || '[no summary]'}
+                    </div>
+                    <div
+                      className={css`
+                        font-size: 0.7rem;
+                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+                        opacity: 0.72;
+                      `}
+                    >
+                      {formatRunEventTime(entry.createdAt * 1000)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+});
+
+function BuildChatMessageRow({
+  message,
+  messages,
+  index,
+  lastAssistantIndex,
+  generating,
+  generatingStatus,
+  assistantStatusSteps,
+  activeStreamMessageIds,
+  onDeleteMessage
+}: {
+  message: ChatMessage;
+  messages: ChatMessage[];
+  index: number;
+  lastAssistantIndex: number;
+  generating: boolean;
+  generatingStatus: string | null;
+  assistantStatusSteps: string[];
+  activeStreamMessageIds: number[];
+  onDeleteMessage: (message: ChatMessage) => void;
+}) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [componentRef, inView] = useInView({
+    rootMargin: '480px 0px'
+  });
+  const [placeholderHeight, setPlaceholderHeight] = useState(0);
+  const isLastAssistant =
+    message.role === 'assistant' && index === lastAssistantIndex;
+  const isActiveStreamMessage = activeStreamMessageIds.includes(message.id);
+  const isStreamingTarget =
+    (generating && isActiveStreamMessage) ||
+    (generating && message.role === 'assistant' && isLastAssistant);
+  const shouldLazyLoad =
+    messages.length > 10 && index < messages.length - 8 && !isStreamingTarget;
+  const isVisible = useLazyLoad({
+    id: `build-chat-message-${message.id}`,
+    PanelRef: panelRef,
+    inView,
+    onSetPlaceholderHeight: setPlaceholderHeight,
+    delay: 400
+  });
+  const contentShown =
+    !shouldLazyLoad || isVisible || inView || placeholderHeight <= 0;
+
+  return (
+    <div
+      ref={componentRef}
+      className={css`
+        display: flex;
+        flex-direction: column;
+        align-items: ${message.role === 'user' ? 'flex-end' : 'flex-start'};
+        position: relative;
+      `}
+    >
+      {contentShown ? (
+        <div
+          ref={panelRef}
+          className={css`
+            display: flex;
+            flex-direction: column;
+            align-items: ${message.role === 'user' ? 'flex-end' : 'flex-start'};
+            position: relative;
+            width: 100%;
+          `}
+        >
+          <button
+            onClick={() => onDeleteMessage(message)}
+            disabled={isStreamingTarget}
+            title={
+              isStreamingTarget
+                ? 'Cannot delete while this request is in progress'
+                : 'Delete message'
+            }
+            className={`${css`
+              position: absolute;
+              top: -0.35rem;
+              right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
+              left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
+              padding: 0;
+              border: none;
+              background: transparent;
+              color: var(--chat-text);
+              font-size: 1.05rem;
+              line-height: 1;
+              opacity: 0.55;
+              pointer-events: auto;
+              transition:
+                opacity 0.15s ease,
+                transform 0.15s ease,
+                color 0.15s ease;
+              transform: translateY(0);
+              cursor: pointer;
+              z-index: 2;
+              &:hover,
+              &:focus-visible {
+                opacity: 1;
+                color: ${Color.rose()};
+                transform: translateY(-1px);
+              }
+
+              &:disabled {
+                opacity: 0.35;
+                pointer-events: none;
+                cursor: not-allowed;
+              }
+            `} build-chat-delete-button`}
+          >
+            <Icon icon="times-circle" />
+          </button>
+          <div
+            className={css`
+              max-width: 85%;
+              padding: 0.75rem 1rem;
+              border-radius: 12px;
+              background: ${message.role === 'user'
+                ? 'var(--theme-bg)'
+                : 'var(--chat-bg)'};
+              color: ${message.role === 'user'
+                ? 'var(--theme-text)'
+                : 'var(--chat-text)'};
+              word-break: break-word;
+              font-size: 0.95rem;
+              line-height: 1.4;
+              border: 1px solid var(--ui-border);
+            `}
+          >
+            {message.role === 'assistant' ? (
+              <AssistantMessage
+                message={message}
+                messages={messages}
+                isLatestAssistant={isLastAssistant}
+                generating={generating}
+                generatingStatus={generatingStatus}
+                statusSteps={isLastAssistant ? assistantStatusSteps : []}
+              />
+            ) : (
+              <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
+            )}
+          </div>
+          <span
+            className={css`
+              font-size: 0.7rem;
+              color: var(--chat-text);
+              opacity: 0.5;
+              margin-top: 0.25rem;
+              padding: 0 0.5rem;
+            `}
+          >
+            {timeSince(message.createdAt)}
+          </span>
+        </div>
+      ) : (
+        <div
+          className={css`
+            width: 100%;
+            display: flex;
+            justify-content: ${message.role === 'user'
+              ? 'flex-end'
+              : 'flex-start'};
+          `}
+        >
+          <div
+            className={css`
+              width: min(85%, 42rem);
+              height: ${Math.max(placeholderHeight, 56)}px;
+              border-radius: 12px;
+              border: 1px solid var(--ui-border);
+              background: linear-gradient(
+                90deg,
+                rgba(236, 241, 246, 0.8) 0%,
+                rgba(247, 249, 252, 0.95) 45%,
+                rgba(236, 241, 246, 0.8) 100%
+              );
+              opacity: 0.72;
+            `}
+          />
         </div>
       )}
     </div>

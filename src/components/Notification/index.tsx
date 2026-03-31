@@ -18,7 +18,6 @@ import {
   isMobile,
   toValidNextDayTimeStamp
 } from '~/helpers';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 const deviceIsMobile = isMobile(navigator);
 const newsLabel = 'News';
 const rankingsLabel = 'Rankings';
@@ -67,6 +66,9 @@ export default function Notification({
   );
   const onLoadRewards = useNotiContext((v) => v.actions.onLoadRewards);
   const pageVisible = useViewContext((v) => v.state.pageVisible);
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const loadingNotificationRef = useRef(false);
   const rewardsTimeoutExecuted = useNotiContext(
     (v) => v.state.rewardsTimeoutExecuted

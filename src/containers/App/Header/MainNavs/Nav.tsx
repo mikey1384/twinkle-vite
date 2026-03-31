@@ -3,7 +3,6 @@ import Icon from '~/components/Icon';
 import { Link, useLocation } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import {
   useAppContext,
   useContentContext,
@@ -11,7 +10,8 @@ import {
   useHomeContext,
   useNotiContext,
   useProfileContext,
-  useKeyContext
+  useKeyContext,
+  useViewContext
 } from '~/contexts';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
@@ -39,6 +39,9 @@ function Nav({
   to: string;
   style?: React.CSSProperties;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const viewerTheme =
     useKeyContext((v) => v.myState.profileTheme) || DEFAULT_PROFILE_THEME;

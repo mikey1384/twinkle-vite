@@ -4,8 +4,7 @@ import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import StreamingThoughtContent from '~/components/StreamingThoughtContent';
 
@@ -24,6 +23,9 @@ export default function ChallengeModal({
     justified: boolean;
   }) => void;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const challengeGrammarQuestion = useAppContext(
     (v) => v.requestHelpers.challengeGrammarQuestion
   );

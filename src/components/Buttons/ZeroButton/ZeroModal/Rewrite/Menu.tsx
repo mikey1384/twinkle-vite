@@ -3,7 +3,7 @@ import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
+import { useViewContext } from '~/contexts';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
 import { ResponseObj } from '../types';
@@ -33,6 +33,9 @@ export default function Menu({
   onPrepareAudio: (contentToRead: string) => void;
   onUpdateIdentifier: (identifier: number) => void;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const styleLabelObj = useMemo(() => {
     if (selectedStyle === 'zero') {
       return { label: `In your own style`, key: 'zero' };

@@ -15,7 +15,6 @@ import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadFileModal from '../../../Modals/UploadFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { socket } from '~/constants/sockets/api';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { isMobile } from '~/helpers';
 import {
   stringIsEmpty,
@@ -28,7 +27,12 @@ import {
   GENERAL_CHAT_ID,
   priceTable
 } from '~/constants/defaultValues';
-import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
+import {
+  useChatContext,
+  useKeyContext,
+  useNotiContext,
+  useViewContext
+} from '~/contexts';
 import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
@@ -114,6 +118,9 @@ export default function MessageInput({
   legacyTopicObj: any;
   onRegisterSetText?: (handler: ((text: string) => void) | null) => void;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const banned = useKeyContext((v) => v.myState.banned);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);

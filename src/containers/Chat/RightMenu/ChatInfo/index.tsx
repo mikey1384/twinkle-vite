@@ -3,9 +3,13 @@ import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
-import { useChatContext, useNotiContext, useKeyContext } from '~/contexts';
+import {
+  useChatContext,
+  useNotiContext,
+  useKeyContext,
+  useViewContext
+} from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { v1 as uuidv1 } from 'uuid';
 import {
@@ -48,6 +52,9 @@ function ChatInfo({
   isClass: boolean;
   onScrollToBottom: () => void;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const myId = useKeyContext((v) => v.myState.userId);
   const username = useKeyContext((v) => v.myState.username);
   const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);

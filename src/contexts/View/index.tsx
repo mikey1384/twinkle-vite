@@ -7,7 +7,11 @@ import React, {
 } from 'react';
 import { createContext, useContext } from 'use-context-selector';
 import ViewActions from './actions';
-import ViewReducer, { ViewState, ViewAction } from './reducer';
+import ViewReducer, {
+  AI_DISABLED_NOTICE,
+  ViewState,
+  ViewAction
+} from './reducer';
 
 interface ViewCtx {
   state: ViewState;
@@ -37,7 +41,9 @@ const initialViewState: ViewState = {
   profileNav: '',
   boardNav: '/board',
   homeNav: '/',
-  audioKey: ''
+  audioKey: '',
+  aiFeaturesDisabled: true,
+  aiDisabledNotice: AI_DISABLED_NOTICE
 };
 
 export function ViewContextProvider({ children }: { children: ReactNode }) {

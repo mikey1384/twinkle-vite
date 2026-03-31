@@ -18,7 +18,8 @@ import {
   useChatContext,
   useHomeContext,
   useKeyContext,
-  useNotiContext
+  useNotiContext,
+  useViewContext
 } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth, borderRadius } from '~/constants/css';
@@ -30,7 +31,6 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -47,6 +47,9 @@ export default function TopMenu({
   showDailyRewardBoostStrip?: boolean;
   style?: React.CSSProperties;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const navigate = useNavigate();
   const wordleTimerIdRef = useRef<any>(null);
   const chessTimerIdRef = useRef<any>(null);

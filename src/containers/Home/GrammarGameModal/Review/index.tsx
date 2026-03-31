@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
 import LetterGrade from '../Marble/LetterGrade';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -27,6 +26,9 @@ interface ReviewItem {
 }
 
 export default function Review() {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const loadGrammarReview = useAppContext(
     (v) => v.requestHelpers.loadGrammarReview
   );

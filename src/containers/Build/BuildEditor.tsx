@@ -8,9 +8,8 @@ import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
 } from './runtimeObservationTypes';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
@@ -684,6 +683,9 @@ export default function BuildEditor({
   onUpdateChatMessages,
   onUpdateCopilotPolicy
 }: BuildEditorProps) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const navigate = useNavigate();
   const { userId, profileTheme } = useKeyContext((v) => v.myState);
   const updateBuildProjectFiles = useAppContext(
@@ -712,7 +714,6 @@ export default function BuildEditor({
   const [forking, setForking] = useState(false);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
   const [savingDescription, setSavingDescription] = useState(false);
-  const [inputMessage, setInputMessage] = useState('');
   const [usageMetrics, setUsageMetrics] = useState<
     Record<string, BuildUsageMetric>
   >({});
@@ -739,6 +740,8 @@ export default function BuildEditor({
     useState<BuildRuntimeObservationState | null>(null);
   const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
     useState<BuildRuntimeExplorationPlan | null>(null);
+  const [buildSocketListenersReady, setBuildSocketListenersReady] =
+    useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef(chatMessages);
@@ -747,6 +750,7 @@ export default function BuildEditor({
   const updateChatMessagesRef = useRef(onUpdateChatMessages);
   const updateCopilotPolicyRef = useRef(onUpdateCopilotPolicy);
   const streamRequestIdRef = useRef<string | null>(null);
+  const buildSocketListenersReadyRef = useRef(false);
   const userMessageIdRef = useRef<number | null>(null);
   const assistantMessageIdRef = useRef<number | null>(null);
   const streamingProjectFilesBaseRef = useRef<
@@ -846,6 +850,8 @@ export default function BuildEditor({
     didInitialChatScrollRef.current = false;
     didAutoPromptRef.current = false;
     didAutoGreetingRef.current = false;
+    buildSocketListenersReadyRef.current = false;
+    setBuildSocketListenersReady(false);
     shouldAutoScrollRef.current = true;
     setUsageMetrics({});
     setRunEvents([]);
@@ -885,6 +891,7 @@ export default function BuildEditor({
 
   useEffect(() => {
     if (didAutoPromptRef.current) return;
+    if (!buildSocketListenersReady) return;
     if (AI_FEATURES_DISABLED) return;
     if (!isOwner) return;
     const prompt = initialPrompt.trim();
@@ -893,10 +900,11 @@ export default function BuildEditor({
     didAutoPromptRef.current = true;
     void startGeneration(prompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, isOwner, initialPrompt]);
+  }, [build.id, buildSocketListenersReady, isOwner, initialPrompt]);
 
   useEffect(() => {
     if (didAutoGreetingRef.current) return;
+    if (!buildSocketListenersReady) return;
     if (AI_FEATURES_DISABLED) return;
     if (!isOwner) return;
     if (!seedGreeting) return;
@@ -905,7 +913,7 @@ export default function BuildEditor({
     didAutoGreetingRef.current = true;
     void startGreetingGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, initialPrompt, isOwner, seedGreeting]);
+  }, [build.id, buildSocketListenersReady, initialPrompt, isOwner, seedGreeting]);
 
   useEffect(() => {
     if (didInitialChatScrollRef.current) return;
@@ -1625,8 +1633,12 @@ export default function BuildEditor({
     socket.on('build_run_event', handleRunEvent);
     socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
     socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
+    buildSocketListenersReadyRef.current = true;
+    setBuildSocketListenersReady(true);
 
     return () => {
+      buildSocketListenersReadyRef.current = false;
+      setBuildSocketListenersReady(false);
       socket.off('build_generate_update', handleGenerateUpdate);
       socket.off('build_generate_complete', handleGenerateComplete);
       socket.off('build_generate_error', handleGenerateError);
@@ -2266,11 +2278,8 @@ export default function BuildEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id, isOwner, runtimeObservationState]);
 
-  async function handleSendMessage() {
-    if (!inputMessage.trim() || !isOwner) return;
-    const messageText = inputMessage.trim();
-    setInputMessage('');
-    await sendBuildMessageText(messageText);
+  async function handleSendMessage(messageText: string) {
+    return await sendBuildMessageText(messageText);
   }
 
   async function handleSendPresetMessage(messageText: string) {
@@ -2280,7 +2289,7 @@ export default function BuildEditor({
 
   async function sendBuildMessageText(messageText: string) {
     const trimmedMessage = String(messageText || '').trim();
-    if (!trimmedMessage || !isOwner) return;
+    if (!trimmedMessage || !isOwner) return false;
 
     if (
       isRunActivityInFlight() ||
@@ -2288,17 +2297,18 @@ export default function BuildEditor({
       pendingRuntimeVerificationRef.current
     ) {
       enqueueLatestBuildRequest(trimmedMessage);
-      return;
+      return true;
     }
 
     const started = await startGeneration(trimmedMessage);
     if (!started) {
       if (isRunActivityInFlight()) {
         enqueueLatestBuildRequest(trimmedMessage);
-        return;
+        return true;
       }
-      setInputMessage(trimmedMessage);
+      return false;
     }
+    return true;
   }
 
   function handleStopGeneration() {
@@ -2738,7 +2748,6 @@ export default function BuildEditor({
             <ChatPanel
               messages={chatMessages}
               executionPlan={build.executionPlan || null}
-              inputMessage={inputMessage}
               generating={generating}
               generatingStatus={generatingStatus}
               assistantStatusSteps={assistantStatusSteps}
@@ -2755,7 +2764,6 @@ export default function BuildEditor({
               chatScrollRef={chatScrollRef}
               chatEndRef={chatEndRef}
               onChatScroll={handleChatScroll}
-              onInputChange={setInputMessage}
               onSendMessage={handleSendMessage}
               onSendPresetMessage={handleSendPresetMessage}
               onStopGeneration={handleStopGeneration}

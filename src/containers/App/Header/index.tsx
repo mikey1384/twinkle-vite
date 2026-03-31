@@ -9,6 +9,7 @@ import TwinkleLogo from './TwinkleLogo';
 import MainNavs from './MainNavs';
 import AccountMenu from './AccountMenu';
 import BalanceModal from './BalanceModal';
+import loadAiFeatureFlags from './requestHelpers/loadAiFeatureFlags';
 import useAPISocket from './useAPISocket';
 
 import { Color, mobileMaxWidth, desktopMinWidth } from '~/constants/css';
@@ -64,6 +65,9 @@ export default function Header({
   const { pathname = '', search = '' } = useLocation();
 
   const pageTitle = useViewContext((v) => v.state.pageTitle);
+  const onSetAiFeaturesDisabled = useViewContext(
+    (v) => v.actions.onSetAiFeaturesDisabled
+  );
   const searchFilter = useKeyContext((v) => v.myState.searchFilter);
   const userId = useKeyContext((v) => v.myState.userId);
   const loggedIn = useKeyContext((v) => v.myState.loggedIn);
@@ -153,6 +157,21 @@ export default function Header({
   useEffect(() => {
     userIdRef.current = userId;
   }, [userId]);
+
+  useEffect(() => {
+    initAiFeatureFlags();
+
+    async function initAiFeatureFlags() {
+      try {
+        const { aiFeaturesDisabled } = await loadAiFeatureFlags();
+        onSetAiFeaturesDisabled(aiFeaturesDisabled);
+      } catch (error) {
+        console.error('Failed to load AI feature flags:', error);
+        onSetAiFeaturesDisabled(true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const { section, isSubsection } = getSectionFromPathname(pathname) || {};

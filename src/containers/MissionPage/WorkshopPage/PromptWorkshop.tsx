@@ -1,9 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useViewContext
+} from '~/contexts';
 import { useNavigate } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 import {
@@ -34,6 +38,9 @@ export default function PromptWorkshop({
   onSetMissionState: (params: { missionId: number; newState: any }) => void;
   style?: React.CSSProperties;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const navigate = useNavigate();
   const userId = useKeyContext((v) => v.myState.userId);
   const myUserState = useKeyContext((v) => v.myState.state);

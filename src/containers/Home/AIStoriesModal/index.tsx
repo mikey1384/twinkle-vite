@@ -8,8 +8,7 @@ import Button from '~/components/Button';
 import SuccessModal from './SuccessModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
-import { useAppContext, useNotiContext } from '~/contexts';
+import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 
 const rewardTable = {
@@ -36,6 +35,9 @@ const rewardTable = {
 };
 
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const MainRef: React.RefObject<any> = useRef(null);
   const [resetNumber, setResetNumber] = useState(0);
   const [activeTab, setActiveTab] = useState('game');

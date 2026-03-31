@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
@@ -9,7 +8,8 @@ import {
   useAppContext,
   useChatContext,
   useKeyContext,
-  useMissionContext
+  useMissionContext,
+  useViewContext
 } from '~/contexts';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 import Checklist from './Checklist';
@@ -88,6 +88,9 @@ export default function SystemPromptMission({
   onSetMissionState: (v: any) => void;
   style?: React.CSSProperties;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const [improving, setImproving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);

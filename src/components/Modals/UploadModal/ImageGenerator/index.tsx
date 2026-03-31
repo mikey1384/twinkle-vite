@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import {
   dataUrlToBlob,
   fileToBase64,
@@ -34,6 +33,9 @@ export default function ImageGenerator({
   onUseImageAvailabilityChange,
   onRegisterUseImageHandler
 }: ImageGeneratorProps) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const [prompt, setPrompt] = useState('');
   const [followUpPrompt, setFollowUpPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);

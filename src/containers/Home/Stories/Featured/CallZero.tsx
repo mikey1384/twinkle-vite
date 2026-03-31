@@ -1,13 +1,13 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import ZeroPic from '~/components/ZeroPic';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
   useChatContext,
   useNotiContext,
-  useKeyContext
+  useKeyContext,
+  useViewContext
 } from '~/contexts';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -204,6 +204,9 @@ export default function CallZero({
   zeroChannelId: number | null;
   aiCallOngoing: boolean;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const getCurrentNextDayTimeStamp = useAppContext(

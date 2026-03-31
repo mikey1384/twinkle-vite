@@ -3,11 +3,13 @@ import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import Modal from '~/components/Modal';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
-import { useAppContext, useNotiContext } from '~/contexts';
+import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import DailyQuestionPanel from './DailyQuestionPanel';
 
 export default function DailyQuestionModal({ onHide }: { onHide: () => void }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const clearUnavailableDailyQuestion = useAppContext(
     (v) => v.requestHelpers.clearUnavailableDailyQuestion
   );

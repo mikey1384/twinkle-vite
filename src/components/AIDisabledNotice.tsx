@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { AI_DISABLED_NOTICE } from '~/constants/ai';
+import { useViewContext } from '~/contexts';
 
 export default function AIDisabledNotice({
   title = 'AI Features Unavailable',
@@ -9,6 +9,8 @@ export default function AIDisabledNotice({
   title?: string;
   style?: React.CSSProperties;
 }) {
+  const aiDisabledNotice = useViewContext((v) => v.state.aiDisabledNotice);
+
   return (
     <div
       style={style}
@@ -35,7 +37,7 @@ export default function AIDisabledNotice({
           opacity: 0.86;
         `}
       >
-        {AI_DISABLED_NOTICE}
+        {aiDisabledNotice}
       </div>
     </div>
   );

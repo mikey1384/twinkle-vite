@@ -10,10 +10,9 @@ import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 import { useDraft } from '~/helpers/hooks';
 import { css } from '@emotion/css';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useViewContext } from '~/contexts';
 
 export default function AIChatTopicMenu({
   newCustomInstructions,
@@ -34,6 +33,9 @@ export default function AIChatTopicMenu({
   onSetIsCustomInstructionsOn: React.Dispatch<React.SetStateAction<boolean>>;
   onSetDeleteDraft?: (deleteFn: () => Promise<void>) => void;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const [generating, setGenerating] = useState(false);
   const [improving, setImproving] = useState(false);

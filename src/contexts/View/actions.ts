@@ -9,6 +9,12 @@ export default function ViewActions(dispatch: React.Dispatch<ViewAction>) {
         key
       });
     },
+    onSetAiFeaturesDisabled(disabled: boolean) {
+      return dispatch({
+        type: 'SET_AI_FEATURES_DISABLED',
+        disabled
+      });
+    },
     onChangePageVisibility(visible: boolean) {
       return dispatch({
         type: 'CHANGE_PAGE_VISIBILITY',

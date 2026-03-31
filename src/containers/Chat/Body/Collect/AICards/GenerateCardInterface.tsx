@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
-import { useKeyContext } from '~/contexts';
+import { useKeyContext, useViewContext } from '~/contexts';
 import { MAX_NUM_SUMMONS, priceTable } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
@@ -19,6 +18,9 @@ export default function GenerateCardInterface({
   onGenerateAICard: () => void;
   posting: boolean;
 }) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const maxSummoned = useMemo(
     () => numSummoned >= MAX_NUM_SUMMONS,
     [numSummoned]

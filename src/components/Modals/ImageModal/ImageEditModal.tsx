@@ -7,10 +7,9 @@ import React, {
 } from 'react';
 import { css } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
 import {
   dataUrlToBlob,
   extractBase64FromDataUrl
@@ -58,6 +57,9 @@ export default function ImageEditModal({
   onUseImageAvailabilityChange,
   onRegisterUseImageHandler
 }: ImageEditModalProps) {
+  const AI_FEATURES_DISABLED = useViewContext(
+    (v) => v.state.aiFeaturesDisabled
+  );
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originalCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);

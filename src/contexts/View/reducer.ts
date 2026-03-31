@@ -10,11 +10,14 @@ export interface ViewState {
   boardNav: string;
   homeNav: string;
   audioKey: string;
+  aiFeaturesDisabled: boolean;
+  aiDisabledNotice: string;
 }
 
 export interface ViewAction {
   type:
     | 'SET_AUDIO_KEY'
+    | 'SET_AI_FEATURES_DISABLED'
     | 'CHANGE_PAGE_VISIBILITY'
     | 'SET_EXPLORE_CATEGORY'
     | 'SET_CONTENT_PATH'
@@ -26,12 +29,16 @@ export interface ViewAction {
     | 'SET_PAGE_TITLE'
     | 'SET_PROFILE_NAV';
   key?: string;
+  disabled?: boolean;
   visible?: boolean;
   category?: ViewState['exploreCategory'];
   path?: string;
   nav?: string;
   title?: string;
 }
+
+export const AI_DISABLED_NOTICE =
+  "Twinkle's AI features are currently unavailable because our AI service providers have suspended service.";
 
 export default function ViewReducer(
   state: ViewState,
@@ -42,6 +49,11 @@ export default function ViewReducer(
       return {
         ...state,
         audioKey: action.key!
+      };
+    case 'SET_AI_FEATURES_DISABLED':
+      return {
+        ...state,
+        aiFeaturesDisabled: action.disabled!
       };
     case 'CHANGE_PAGE_VISIBILITY':
       return {
