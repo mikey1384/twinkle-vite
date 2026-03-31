@@ -1,3 +1,9 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [
+    {
+      "source": "/build/preview/(.*)",
+      "destination": "https://api.twinkle.network/build/preview/$1"
+    },
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }

@@ -142,15 +142,11 @@ export default function BuildMission({
   const successfulGenerationCount = Number(
     buildMissionProgress.successfulGenerationCount || 0
   );
-  const successfulReviewCount = Number(
-    buildMissionProgress.successfulReviewCount || 0
-  );
   const publishedBuildCount = Number(buildMissionProgress.publishedBuildCount || 0);
   const requiredBuildCount = Number(requirements.buildCount || 1);
   const requiredGenerationCount = Number(
     requirements.successfulGenerationCount || 10
   );
-  const requiredReviewCount = Number(requirements.successfulReviewCount || 1);
   const requiredPublishedBuildCount = Number(
     requirements.publishedBuildCount || 1
   );
@@ -160,8 +156,6 @@ export default function BuildMission({
     isMissionPassed ||
     successfulGenerationCount >= requiredGenerationCount;
   const step3Complete =
-    isMissionPassed || successfulReviewCount >= requiredReviewCount;
-  const step4Complete =
     isMissionPassed || publishedBuildCount >= requiredPublishedBuildCount;
 
   const checklistItems = [
@@ -180,36 +174,25 @@ export default function BuildMission({
         : `Use Lumine to generate ${requiredGenerationCount} real versions of your app`
     },
     {
-      label: `Run code review ${requiredReviewCount} time${requiredReviewCount !== 1 ? 's' : ''}`,
+      label: 'Publish one build',
       complete: step3Complete,
       detail: step3Complete
-        ? `${successfulReviewCount}/${requiredReviewCount} review${requiredReviewCount !== 1 ? 's' : ''} completed`
-        : 'Use Lumine review on one of your builds'
-    },
-    {
-      label: 'Publish one build',
-      complete: step4Complete,
-      detail: step4Complete
         ? `${publishedBuildCount}/${requiredPublishedBuildCount} build published`
         : 'Publish one of your builds so other people can use it'
     }
   ];
 
-  const missionCleared =
-    step1Complete && step2Complete && step3Complete && step4Complete;
+  const missionCleared = step1Complete && step2Complete && step3Complete;
   const currentStep = !step1Complete
     ? 1
     : !step2Complete
       ? 2
       : !step3Complete
         ? 3
-        : !step4Complete
-          ? 4
-          : 0;
+        : 0;
   const latestBuild = builds[0];
   const latestGeneratedBuild =
     builds.find((build) => build.hasCode) || latestBuild;
-  const latestReviewableBuild = latestGeneratedBuild || latestBuild;
   const latestPublishableBuild =
     builds.find((build) => build.hasCode && !build.isPublic) ||
     latestGeneratedBuild;
@@ -284,34 +267,7 @@ export default function BuildMission({
                   </div>
                 </>
               )}
-              {currentStep === 3 && latestReviewableBuild && (
-                <>
-                  <h2 className={titleClass}>Run one real review</h2>
-                  <p className={subtitleClass}>
-                    Use Lumine review on your build once so it can inspect the
-                    code and apply a real reviewed fix. You are at{' '}
-                    {successfulReviewCount}/{requiredReviewCount} completed
-                    reviews right now.
-                  </p>
-                  <div className={buttonRowClass}>
-                    <Button
-                      color="green"
-                      variant="solid"
-                      onClick={() => navigate(`/build/${latestReviewableBuild.id}`)}
-                    >
-                      Open Build To Review
-                    </Button>
-                    <Button
-                      color="logoBlue"
-                      variant="soft"
-                      onClick={() => navigate('/build')}
-                    >
-                      View All Builds
-                    </Button>
-                  </div>
-                </>
-              )}
-              {currentStep === 4 && latestPublishableBuild && (
+              {currentStep === 3 && latestPublishableBuild && (
                 <>
                   <h2 className={titleClass}>Publish one build</h2>
                   <p className={subtitleClass}>
@@ -342,8 +298,8 @@ export default function BuildMission({
                 <>
                   <h2 className={titleClass}>Mission Complete!</h2>
                   <p className={subtitleClass}>
-                    You created a build, generated code multiple times, ran a
-                    real Lumine review, and published it for others to use.
+                    You created a build, generated code multiple times, and
+                    published it for others to use.
                   </p>
                   <div className={buttonRowClass}>
                     <Button

@@ -32,6 +32,7 @@ import Outgoing from './Stream/Outgoing';
 import InvalidPage from '~/components/InvalidPage';
 import DailyRewardModal from '~/components/Modals/DailyRewardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import API_URL from '~/constants/URL';
 import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
@@ -93,6 +94,32 @@ function useOrientationReflow() {
       window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, []);
+}
+
+function BuildPreviewPassthrough() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const rawBackendUrl = String(API_URL || '').trim();
+    if (!rawBackendUrl) return;
+    try {
+      const destination = new URL(
+        `${location.pathname}${location.search}${location.hash}`,
+        rawBackendUrl
+      ).toString();
+      if (destination === window.location.href) return;
+      window.location.replace(destination);
+    } catch (error) {
+      console.error('Failed to redirect build preview request:', error);
+    }
+  }, [location.hash, location.pathname, location.search]);
+
+  return (
+    <InvalidPage
+      title="Redirecting Preview..."
+      text="This preview URL should be served by the backend. If it does not redirect, production routing still needs to be fixed."
+    />
+  );
 }
 
 export default function App() {
@@ -538,6 +565,10 @@ export default function App() {
             <Route path="/playlists/*" element={<PlaylistPage />} />
             <Route path="/missions/:missionType/*" element={<MissionPage />} />
             <Route path="/missions" element={<Mission />} />
+            <Route
+              path="/build/preview/*"
+              element={<BuildPreviewPassthrough />}
+            />
             <Route path="/build/*" element={<Build />} />
             <Route path="/app/:buildId" element={<BuildRuntime />} />
             <Route path="/builds" element={<Builds />} />
