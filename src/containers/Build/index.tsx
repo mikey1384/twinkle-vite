@@ -348,7 +348,6 @@ function BuildEditorWrapper() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    cachedWorkspace?.build,
     initialPrompt,
     location.pathname,
     navigate,
