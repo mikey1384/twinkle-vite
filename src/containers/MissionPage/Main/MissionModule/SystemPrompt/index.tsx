@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import ErrorBoundary from '~/components/ErrorBoundary';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
@@ -658,6 +660,14 @@ export default function SystemPromptMission({
   const showEditor = !missionCleared;
   const showPreview = !missionCleared && !!(trimmedTitle && hasPrompt);
   const showTargetSelector = !missionCleared && !!createdPrompt;
+
+  if (AI_FEATURES_DISABLED) {
+    return (
+      <ErrorBoundary componentPath="MissionPage/Main/MissionModule/SystemPrompt">
+        <AIDisabledNotice title="System Prompt Tools Are Unavailable" />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary componentPath="MissionModule/SystemPrompt">

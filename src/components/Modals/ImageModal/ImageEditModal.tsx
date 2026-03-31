@@ -6,6 +6,8 @@ import React, {
   useCallback
 } from 'react';
 import { css } from '@emotion/css';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
 import { useAppContext, useKeyContext } from '~/contexts';
@@ -97,6 +99,7 @@ export default function ImageEditModal({
   const canAffordGeneration = useMemo(() => {
     return twinkleCoins >= IMAGE_GENERATION_COST;
   }, [twinkleCoins]);
+  const aiModificationDisabled = AI_FEATURES_DISABLED;
 
   // Handle "Use This Image" for embedded mode
   const handleUseThisImage = useCallback(() => {
@@ -570,6 +573,12 @@ export default function ImageEditModal({
             <Icon icon="wand-magic-sparkles" />
             <span>AI Modification</span>
           </div>
+          {aiModificationDisabled && (
+            <AIDisabledNotice
+              title="AI Image Modification Is Unavailable"
+              style={{ marginBottom: '0.75rem' }}
+            />
+          )}
           <div
             className={css`
               display: flex;
@@ -583,7 +592,7 @@ export default function ImageEditModal({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe how you want to modify the image..."
-              disabled={isGenerating}
+              disabled={aiModificationDisabled || isGenerating}
               minRows={3}
               style={{ flex: 1 }}
               onKeyDown={handlePromptKeyDown}
@@ -600,7 +609,10 @@ export default function ImageEditModal({
                 color="logoBlue"
                 onClick={handleGenerate}
                 disabled={
-                  !prompt.trim() || isGenerating || !canAffordGeneration
+                  aiModificationDisabled ||
+                  !prompt.trim() ||
+                  isGenerating ||
+                  !canAffordGeneration
                 }
                 loading={isGenerating}
                 style={{ minWidth: '120px' }}
@@ -676,6 +688,7 @@ export default function ImageEditModal({
   }
 
   async function handleGenerate() {
+    if (aiModificationDisabled) return;
     if (!prompt.trim() || isGenerating || isGeneratingRef.current) return;
 
     if (!canAffordGeneration) {

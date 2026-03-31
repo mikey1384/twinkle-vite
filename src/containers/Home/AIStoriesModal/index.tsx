@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Modal from '~/components/Modal';
 import FilterBar from '~/components/FilterBar';
 import Game from './Game';
@@ -7,6 +8,7 @@ import Button from '~/components/Button';
 import SuccessModal from './SuccessModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { useAppContext, useNotiContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
 
@@ -47,6 +49,10 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
+  const clearUnavailableAIStoryDailyTask = useAppContext(
+    (v) => v.requestHelpers.clearUnavailableAIStoryDailyTask
+  );
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
@@ -68,14 +74,24 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [topicLoadError, setTopicLoadError] = useState(false);
   const [usermenuShown, setUsermenuShown] = useState(false);
   const [isCloseLocked, setIsCloseLocked] = useState(false);
+  const [preservingDailyTask, setPreservingDailyTask] = useState(false);
+  const [unavailableActionMessage, setUnavailableActionMessage] = useState('');
   const [solveObj, setSolveObj] = useState({
     numCorrect: 0,
     isGraded: false
   });
   const [gameMode, setGameMode] = useState('read');
   const requestRef: React.RefObject<any> = useRef(null);
+  const aiStoryTask = todayStats?.dailyTaskStatus?.aiStory;
+  const aiStoryTaskDone = !!aiStoryTask?.isPassed;
+  const aiStoryUnavailableCleared = !!aiStoryTask?.isUnavailableCleared;
 
   useEffect(() => {
+    if (AI_FEATURES_DISABLED) {
+      setLoadingTopic(false);
+      setTopicLoadError(false);
+      return;
+    }
     localStorage.setItem('story-difficulty', String(difficulty));
     const currentRequestId = Math.random();
     requestRef.current = currentRequestId;
@@ -149,7 +165,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             flexDirection: 'column'
           }}
         >
-          {!isGameStarted ? (
+          {!isGameStarted && !AI_FEATURES_DISABLED ? (
             <FilterBar
               style={{
                 height: '6rem',
@@ -185,7 +201,42 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             }}
             ref={MainRef}
           >
-            {activeTab === 'game' && (
+            {AI_FEATURES_DISABLED ? (
+              <div
+                style={{
+                  width: '100%',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '1rem'
+                }}
+              >
+                <AIDisabledNotice title="AI Stories Are Unavailable" />
+                <div
+                  style={{
+                    maxWidth: '52rem',
+                    textAlign: 'center',
+                    lineHeight: 1.5
+                  }}
+                >
+                  {aiStoryUnavailableCleared
+                    ? 'AI Story is marked complete for today so your Daily Tasks streak is protected.'
+                    : aiStoryTaskDone
+                    ? 'AI Story is already complete for today.'
+                    : unavailableActionMessage ||
+                      "Press the button below to preserve today's Daily Tasks streak while AI Story is unavailable."}
+                </div>
+                <Button
+                  color="logoBlue"
+                  loading={preservingDailyTask}
+                  disabled={aiStoryTaskDone}
+                  onClick={handleUnavailableAIStoryClear}
+                >
+                  Preserve Daily Task Streak
+                </Button>
+              </div>
+            ) : activeTab === 'game' ? (
               <Game
                 attemptId={attemptId}
                 dailyTask={dailyTask}
@@ -220,8 +271,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
                 topicLoadError={topicLoadError}
                 solveObj={solveObj}
               />
-            )}
-            {activeTab === 'rankings' && (
+            ) : null}
+            {!AI_FEATURES_DISABLED && activeTab === 'rankings' && (
               <div
                 style={{
                   width: '100%',
@@ -368,6 +419,34 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       }
     }
     throw new Error('Failed to load topic after maximum retries');
+  }
+
+  async function handleUnavailableAIStoryClear() {
+    if (preservingDailyTask || aiStoryTaskDone) return;
+    setPreservingDailyTask(true);
+    try {
+      const result = await clearUnavailableAIStoryDailyTask();
+      if (result?.dailyTaskStatus) {
+        setDailyTask(result.dailyTaskStatus.aiStory || null);
+        onApplyTodayStatsProgress({
+          newStats: buildTodayStatsPatchFromDailyTaskStatus(result.dailyTaskStatus)
+        });
+        setUnavailableActionMessage(
+          'AI Story was marked complete for Daily Tasks streak preservation.'
+        );
+      } else {
+        setUnavailableActionMessage(
+          'Could not preserve the AI Story Daily Task right now.'
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      setUnavailableActionMessage(
+        'Could not preserve the AI Story Daily Task right now.'
+      );
+    } finally {
+      setPreservingDailyTask(false);
+    }
   }
 
   function handleHide() {

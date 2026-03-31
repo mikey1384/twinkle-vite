@@ -3,6 +3,7 @@ import Icon from '~/components/Icon';
 import { Link, useLocation } from 'react-router-dom';
 import { Color, desktopMinWidth, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import {
   useAppContext,
   useContentContext,
@@ -100,7 +101,9 @@ function Nav({
   const isDailyTaskAlerted = useMemo(() => {
     if (!isHome || !isUsingChat) return false;
     const hasDailyBonusButNotAttempted =
-      !!todayStats.dailyHasBonus && !todayStats.dailyBonusAttempted;
+      !AI_FEATURES_DISABLED &&
+      !!todayStats.dailyHasBonus &&
+      !todayStats.dailyBonusAttempted;
     const resultNotViewed = !todayStats.dailyRewardResultViewed;
     return (
       todayStats.achievedDailyGoals.length === 3 &&

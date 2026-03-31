@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import ZeroPic from '~/components/ZeroPic';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { socket } from '~/constants/sockets/api';
 import {
   useAppContext,
@@ -252,7 +253,12 @@ export default function CallZero({
 
   const isCallButtonUnavailable = useMemo(() => {
     if (aiCallOngoing) return false;
-    return isZeroChannelLoading || aiCallEnding || hasReachedDailyLimit;
+    return (
+      AI_FEATURES_DISABLED ||
+      isZeroChannelLoading ||
+      aiCallEnding ||
+      hasReachedDailyLimit
+    );
   }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
 
   const showCallInfoPanel = useMemo(() => {
@@ -405,6 +411,9 @@ export default function CallZero({
     if (aiCallOngoing) {
       return 'Hang Up';
     }
+    if (AI_FEATURES_DISABLED) {
+      return 'Call Unavailable';
+    }
     if (isZeroChannelLoading) {
       return 'Connecting...';
     }
@@ -427,6 +436,7 @@ export default function CallZero({
   );
   const callButtonAriaLabel = useMemo(() => {
     if (aiCallOngoing) return 'Hang up the call with Zero';
+    if (AI_FEATURES_DISABLED) return 'Zero voice calls are unavailable.';
     if (isZeroChannelLoading) return 'Connecting to Zero';
     if (aiCallEnding) return 'Ending the previous call with Zero';
     if (hasReachedDailyLimit)

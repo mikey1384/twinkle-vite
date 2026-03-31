@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SwitchButton from '~/components/Buttons/SwitchButton';
 import Textarea from '~/components/Texts/Textarea';
@@ -9,6 +10,7 @@ import { exceedsCharLimit, addEmoji } from '~/helpers/stringHelpers';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
 import { useDraft } from '~/helpers/hooks';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
 import { useKeyContext } from '~/contexts';
@@ -98,6 +100,7 @@ export default function AIChatTopicMenu({
   }, [isCustomInstructionsOn, userId]);
 
   useEffect(() => {
+    if (AI_FEATURES_DISABLED) return;
     if (!customInstructions) {
       handleGenerateCustomInstructions();
     }
@@ -272,6 +275,14 @@ export default function AIChatTopicMenu({
       socket.off('improve_custom_instructions_error', handleImproveError);
     };
   }, [onSetCustomInstructions, setError]);
+
+  if (AI_FEATURES_DISABLED) {
+    return (
+      <ErrorBoundary componentPath="Chat/Modals/TopicSettingsModal/AIChatTopicMenu">
+        <AIDisabledNotice title="Custom AI Instructions Are Unavailable" />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary componentPath="Chat/Modals/TopicSettingsModal/AIChatMenu">

@@ -192,6 +192,30 @@ export default function notificationRequestHelpers({
         return handleError(error);
       }
     },
+    async clearUnavailableAIStoryDailyTask() {
+      try {
+        const { data } = await request.post(
+          `${URL}/notification/today/dailyTask/aiStory/unavailable-clear`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async clearUnavailableDailyQuestion() {
+      try {
+        const { data } = await request.post(
+          `${URL}/notification/today/dailyQuestion/unavailable-clear`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async setDailyTaskRepairNoticeHidden(hidden: boolean) {
       try {
         const { data } = await request.put(

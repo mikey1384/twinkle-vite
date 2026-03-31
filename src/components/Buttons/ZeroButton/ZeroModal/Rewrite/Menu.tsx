@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Button from '~/components/Button';
 import DropdownButton from '~/components/Buttons/DropdownButton';
 import Icon from '~/components/Icon';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
 import { ResponseObj } from '../types';
@@ -60,6 +62,10 @@ export default function Menu({
       return `Please rewrite the text ${styleLabelObj?.label?.toLowerCase()} using ${wordLevel} words.`;
     }
   }, [selectedStyle, wordLevel, styleLabelObj]);
+
+  if (AI_FEATURES_DISABLED) {
+    return <AIDisabledNotice title="Zero Rewrite Tools Are Unavailable" />;
+  }
 
   return (
     <div style={style}>

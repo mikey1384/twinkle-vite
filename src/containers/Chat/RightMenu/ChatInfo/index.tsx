@@ -3,6 +3,7 @@ import Members from './Members';
 import ChannelDetails from './ChannelDetails';
 import AIChatMenu from './AIChatMenu';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useChatContext, useNotiContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
@@ -148,6 +149,7 @@ function ChatInfo({
 
   const isCallButtonShown = useMemo(() => {
     if (banned?.chat) return false;
+    if (AI_FEATURES_DISABLED && (isZeroChat || isCielChat)) return false;
     const isRegularChat = !(isZeroChat || isCielChat);
     return (isZeroChat || isRegularChat) && isTwoPeopleConnected;
   }, [banned?.chat, isZeroChat, isCielChat, isTwoPeopleConnected]);
@@ -312,6 +314,9 @@ function ChatInfo({
   ]);
 
   const handleCallButtonClick = useCallback(async () => {
+    if (AI_FEATURES_DISABLED && (isZeroChat || isCielChat)) {
+      return;
+    }
     if (aiCallEndingOnThisChannel) {
       return;
     }

@@ -30,6 +30,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 
 export default function TopMenu({
   onInputModalButtonClick,
@@ -54,7 +55,8 @@ export default function TopMenu({
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
-    !!todayStats.dailyHasBonus &&
+    !AI_FEATURES_DISABLED &&
+      !!todayStats.dailyHasBonus &&
       !todayStats.dailyBonusAttempted &&
       todayStats.dailyRewardResultViewed
   );
@@ -147,7 +149,8 @@ export default function TopMenu({
   }, []);
   useEffect(() => {
     setIsDailyBonusButtonShown(
-      !!todayStats?.dailyHasBonus &&
+      !AI_FEATURES_DISABLED &&
+        !!todayStats?.dailyHasBonus &&
         !dailyRewardModalShown &&
         !todayStats?.dailyBonusAttempted &&
         !!todayStats?.dailyRewardResultViewed

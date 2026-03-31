@@ -275,6 +275,12 @@ function BuildEditorWrapper() {
     const id = parseInt(buildId || '', 10);
     return isNaN(id) ? null : id;
   }, [buildId]);
+  const locationState = (location.state as any) || null;
+  const seedGreeting = Boolean(locationState?.seedGreeting);
+  const initialPrompt =
+    typeof locationState?.initialPrompt === 'string'
+      ? locationState.initialPrompt
+      : '';
 
   useEffect(() => {
     if (numericBuildId) {
@@ -285,10 +291,7 @@ function BuildEditorWrapper() {
       setLoading(true);
       try {
         const data = await loadBuild(numericBuildId, {
-          fromWriter: Boolean(
-            (location.state as any)?.initialPrompt ||
-              (location.state as any)?.seedGreeting
-          )
+          fromWriter: Boolean(initialPrompt || seedGreeting)
         });
         if (data?.build) {
           setBuild({
@@ -302,6 +305,9 @@ function BuildEditorWrapper() {
           });
           setChatMessages(data.chatMessages || []);
           setCopilotPolicy(data.copilotPolicy || null);
+          if (initialPrompt || seedGreeting) {
+            navigate(location.pathname, { replace: true, state: null });
+          }
         } else {
           setError('Build not found');
         }
@@ -312,7 +318,7 @@ function BuildEditorWrapper() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state, numericBuildId]);
+  }, [initialPrompt, location.pathname, navigate, numericBuildId, seedGreeting]);
 
   if (!numericBuildId) {
     return (
@@ -339,11 +345,6 @@ function BuildEditorWrapper() {
   }
 
   const isOwner = Number(userId) > 0 && Number(userId) === Number(build.userId);
-  const seedGreeting = Boolean((location.state as any)?.seedGreeting);
-  const initialPrompt =
-    typeof (location.state as any)?.initialPrompt === 'string'
-      ? (location.state as any).initialPrompt
-      : '';
 
   return (
     <BuildEditor

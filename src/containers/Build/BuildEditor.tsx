@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
@@ -10,6 +10,7 @@ import type {
 } from './runtimeObservationTypes';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
@@ -482,7 +483,9 @@ function formatRuntimeObservationSummary(
   ) {
     return '';
   }
-  function formatIssueKindLabel(kind: BuildRuntimeObservationState['issues'][number]['kind']) {
+  function formatIssueKindLabel(
+    kind: BuildRuntimeObservationState['issues'][number]['kind']
+  ) {
     switch (kind) {
       case 'unhandledrejection':
         return 'Unhandled rejection';
@@ -562,8 +565,7 @@ function formatRuntimeObservationSummary(
               .map((text) => `"${text}"`)
               .join(', ')}`
           : null,
-        step.expectedSignals &&
-        step.expectedSignals.revealsLabels.length > 0
+        step.expectedSignals && step.expectedSignals.revealsLabels.length > 0
           ? `expected controls: ${step.expectedSignals.revealsLabels
               .map((label) => `"${label}"`)
               .join(', ')}`
@@ -572,7 +574,9 @@ function formatRuntimeObservationSummary(
           ? `route -> ${step.routeAfter}`
           : null,
         step.hashChanged && step.hashAfter ? `hash -> ${step.hashAfter}` : null,
-        step.headingDelta !== 0 || step.buttonDelta !== 0 || step.formDelta !== 0
+        step.headingDelta !== 0 ||
+        step.buttonDelta !== 0 ||
+        step.formDelta !== 0
           ? `headings/buttons/forms delta: ${step.headingDelta >= 0 ? '+' : ''}${step.headingDelta}/${step.buttonDelta >= 0 ? '+' : ''}${step.buttonDelta}/${step.formDelta >= 0 ? '+' : ''}${step.formDelta}`
           : null,
         step.revealedTargetLabels.length > 0
@@ -585,9 +589,7 @@ function formatRuntimeObservationSummary(
         step.visibleTextBefore !== step.visibleTextAfter &&
         (step.visibleTextBefore || step.visibleTextAfter)
           ? `   text: ${
-              step.visibleTextBefore
-                ? `"${step.visibleTextBefore}"`
-                : '[none]'
+              step.visibleTextBefore ? `"${step.visibleTextBefore}"` : '[none]'
             } -> ${
               step.visibleTextAfter ? `"${step.visibleTextAfter}"` : '[none]'
             }`
@@ -645,19 +647,19 @@ function cloneRuntimeObservationState(
           gameplayTelemetry: observationState.health.gameplayTelemetry
             ? {
                 ...observationState.health.gameplayTelemetry,
-                playfieldBounds:
-                  observationState.health.gameplayTelemetry.playfieldBounds
-                    ? {
-                        ...observationState.health.gameplayTelemetry
-                          .playfieldBounds
-                      }
-                    : null,
-                playerBounds:
-                  observationState.health.gameplayTelemetry.playerBounds
-                    ? {
-                        ...observationState.health.gameplayTelemetry.playerBounds
-                      }
-                    : null
+                playfieldBounds: observationState.health.gameplayTelemetry
+                  .playfieldBounds
+                  ? {
+                      ...observationState.health.gameplayTelemetry
+                        .playfieldBounds
+                    }
+                  : null,
+                playerBounds: observationState.health.gameplayTelemetry
+                  .playerBounds
+                  ? {
+                      ...observationState.health.gameplayTelemetry.playerBounds
+                    }
+                  : null
               }
             : null,
           interactionSteps: observationState.health.interactionSteps.map(
@@ -715,9 +717,10 @@ export default function BuildEditor({
     Record<string, BuildUsageMetric>
   >({});
   const [runEvents, setRunEvents] = useState<BuildRunEvent[]>([]);
-  const [streamingProjectFiles, setStreamingProjectFiles] = useState<
-    Array<{ path: string; content?: string }> | null
-  >(null);
+  const [streamingProjectFiles, setStreamingProjectFiles] = useState<Array<{
+    path: string;
+    content?: string;
+  }> | null>(null);
   const [streamingFocusFilePath, setStreamingFocusFilePath] = useState<
     string | null
   >(null);
@@ -736,9 +739,6 @@ export default function BuildEditor({
     useState<BuildRuntimeObservationState | null>(null);
   const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
     useState<BuildRuntimeExplorationPlan | null>(null);
-  const [queuedRequests, setQueuedRequests] = useState<QueuedBuildRequest[]>(
-    []
-  );
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatMessagesRef = useRef(chatMessages);
@@ -752,9 +752,10 @@ export default function BuildEditor({
   const streamingProjectFilesBaseRef = useRef<
     Array<{ path: string; content?: string }>
   >([]);
-  const streamingProjectFilesRef = useRef<
-    Array<{ path: string; content?: string }> | null
-  >(null);
+  const streamingProjectFilesRef = useRef<Array<{
+    path: string;
+    content?: string;
+  }> | null>(null);
   const dedupedProcessingReconcileRequestIdRef = useRef<string | null>(null);
   const dedupedProcessingReconcileStartedAtRef = useRef<number>(0);
   const dedupedProcessingReconcileTimerRef = useRef<ReturnType<
@@ -786,8 +787,9 @@ export default function BuildEditor({
   const pendingRuntimeAutoFixRef = useRef<PendingRuntimeAutoFix | null>(null);
   const pendingRuntimeVerificationRef =
     useRef<PendingRuntimeVerification | null>(null);
-  const activeRuntimeAutoFixContextRef =
-    useRef<RuntimeAutoFixContext | null>(null);
+  const activeRuntimeAutoFixContextRef = useRef<RuntimeAutoFixContext | null>(
+    null
+  );
   const runtimeAutoFixAttemptedSignaturesRef = useRef<Set<string>>(new Set());
   const activeRunModeRef = useRef<BuildRunMode>('user');
   const RUNTIME_AUTOFIX_ENABLED = false;
@@ -853,7 +855,6 @@ export default function BuildEditor({
     setProjectFileChangeLogsError('');
     setProjectFileChangeLogsLoadedAt(null);
     queuedRequestsRef.current = [];
-    setQueuedRequests([]);
     setDescriptionModalShown(false);
     dedupedProcessingInFlightRef.current = false;
     postCompleteSyncInFlightRef.current = false;
@@ -884,6 +885,7 @@ export default function BuildEditor({
 
   useEffect(() => {
     if (didAutoPromptRef.current) return;
+    if (AI_FEATURES_DISABLED) return;
     if (!isOwner) return;
     const prompt = initialPrompt.trim();
     if (!prompt) return;
@@ -895,6 +897,7 @@ export default function BuildEditor({
 
   useEffect(() => {
     if (didAutoGreetingRef.current) return;
+    if (AI_FEATURES_DISABLED) return;
     if (!isOwner) return;
     if (!seedGreeting) return;
     if (initialPrompt.trim()) return;
@@ -1151,10 +1154,7 @@ export default function BuildEditor({
           : null
       );
       let shouldDelayQueuedRequestsForRuntimeFollowUp = false;
-      if (
-        generatedCodeSuccessfully &&
-        completedRunMode === 'user'
-      ) {
+      if (generatedCodeSuccessfully && completedRunMode === 'user') {
         armRuntimeAutoFix({
           sourceRequestId: requestId || null,
           sourceArtifactVersionId: artifactVersionId,
@@ -1167,9 +1167,7 @@ export default function BuildEditor({
           message: 'Checking the updated preview for runtime issues...'
         });
         shouldDelayQueuedRequestsForRuntimeFollowUp = true;
-      } else if (
-        completedRunMode === 'runtime-autofix'
-      ) {
+      } else if (completedRunMode === 'runtime-autofix') {
         const runtimeAutoFixContext = activeRuntimeAutoFixContextRef.current;
         if (runtimeAutoFixContext) {
           if (generatedCodeSuccessfully) {
@@ -1195,7 +1193,7 @@ export default function BuildEditor({
               kind: 'action',
               phase: 'preview',
               message:
-                "Lumine revised the runtime plan and is re-checking the preview before changing code."
+                'Lumine revised the runtime plan and is re-checking the preview before changing code.'
             });
             shouldDelayQueuedRequestsForRuntimeFollowUp = true;
           } else {
@@ -1716,27 +1714,30 @@ export default function BuildEditor({
               ? `Preview booted, but the game overflows its viewport (${health.viewportOverflowY}px tall overflow, ${health.viewportOverflowX}px wide overflow).`
               : health.gameplayTelemetry?.status === 'out-of-bounds'
                 ? `Preview booted, but gameplay escaped the declared playfield (${health.gameplayTelemetry.overflowTop}px top, ${health.gameplayTelemetry.overflowRight}px right, ${health.gameplayTelemetry.overflowBottom}px bottom, ${health.gameplayTelemetry.overflowLeft}px left overflow).`
-              : interactionStepCount >= 2 &&
-                  health.interactionStatus === 'changed' &&
-                  latestInteractionStep?.source === 'planned'
-                ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
-                : interactionStepCount >= 2 && health.interactionStatus === 'changed'
-                  ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
-                  : health.interactionStatus === 'changed'
-                    ? latestInteractionStep?.source === 'planned'
-                      ? latestInteractionStep?.routeChanged && latestInteractionStep.routeAfter
-                        ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
-                        : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
-                      : latestInteractionStep?.routeChanged && latestInteractionStep.routeAfter
-                        ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
-                        : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
-                    : health.interactionStatus === 'unchanged'
+                : interactionStepCount >= 2 &&
+                    health.interactionStatus === 'changed' &&
+                    latestInteractionStep?.source === 'planned'
+                  ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
+                  : interactionStepCount >= 2 &&
+                      health.interactionStatus === 'changed'
+                    ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
+                    : health.interactionStatus === 'changed'
                       ? latestInteractionStep?.source === 'planned'
-                        ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
-                        : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
-                      : health.meaningfulRender
-                        ? 'Preview booted and rendered meaningful UI.'
-                        : 'Preview booted, but the UI still looks sparse.'
+                        ? latestInteractionStep?.routeChanged &&
+                          latestInteractionStep.routeAfter
+                          ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
+                          : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
+                        : latestInteractionStep?.routeChanged &&
+                            latestInteractionStep.routeAfter
+                          ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
+                          : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
+                      : health.interactionStatus === 'unchanged'
+                        ? latestInteractionStep?.source === 'planned'
+                          ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
+                          : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
+                        : health.meaningfulRender
+                          ? 'Preview booted and rendered meaningful UI.'
+                          : 'Preview booted, but the UI still looks sparse.'
         });
       }
     }
@@ -2053,7 +2054,6 @@ export default function BuildEditor({
 
   function updateQueuedRequests(next: QueuedBuildRequest[]) {
     queuedRequestsRef.current = next;
-    setQueuedRequests(next);
   }
 
   function isRunActivityInFlight({ includeBootstrap = true } = {}) {
@@ -2192,7 +2192,8 @@ export default function BuildEditor({
       RUNTIME_AUTOFIX_ENABLED &&
       (observationState.issues.length > 0 ||
         !observationState.health?.meaningfulRender ||
-        observationState.health?.gameplayTelemetry?.status === 'out-of-bounds' ||
+        observationState.health?.gameplayTelemetry?.status ===
+          'out-of-bounds' ||
         (observationState.health?.gameLike &&
           ((observationState.health?.viewportOverflowY || 0) > 48 ||
             (observationState.health?.viewportOverflowX || 0) > 24)))
@@ -2257,10 +2258,12 @@ export default function BuildEditor({
 
   useEffect(() => {
     maybeProcessPendingRuntimeAutoFix(runtimeObservationState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id, isOwner, runtimeObservationState]);
 
   useEffect(() => {
     maybeProcessPendingRuntimeVerification(runtimeObservationState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id, isOwner, runtimeObservationState]);
 
   async function handleSendMessage() {
@@ -2691,7 +2694,9 @@ export default function BuildEditor({
               size="md"
               icon="pencil-alt"
             >
-              {build.description?.trim() ? 'Edit Description' : 'Add Description'}
+              {build.description?.trim()
+                ? 'Edit Description'
+                : 'Add Description'}
             </GameCTAButton>
           )}
           {isOwner && (
@@ -2964,9 +2969,8 @@ export default function BuildEditor({
     return true;
   }
 
-  async function startGeneration(
-    messageText: string
-  ): Promise<boolean> {
+  async function startGeneration(messageText: string): Promise<boolean> {
+    if (AI_FEATURES_DISABLED) return false;
     if (!messageText.trim() || isRunActivityInFlight() || !isOwner) {
       return false;
     }
@@ -3057,6 +3061,7 @@ export default function BuildEditor({
   }
 
   async function startGreetingGeneration(): Promise<boolean> {
+    if (AI_FEATURES_DISABLED) return false;
     if (isRunActivityInFlight() || !isOwner) {
       return false;
     }

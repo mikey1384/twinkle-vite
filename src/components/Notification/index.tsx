@@ -18,6 +18,7 @@ import {
   isMobile,
   toValidNextDayTimeStamp
 } from '~/helpers';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 const deviceIsMobile = isMobile(navigator);
 const newsLabel = 'News';
 const rankingsLabel = 'Rankings';
@@ -95,7 +96,8 @@ export default function Notification({
   const loadMoreNotifications = myNotiState?.loadMore || false;
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
-    !!todayStats.dailyHasBonus &&
+    !AI_FEATURES_DISABLED &&
+      !!todayStats.dailyHasBonus &&
       !todayStats.dailyBonusAttempted &&
       todayStats.dailyRewardResultViewed
   );
@@ -119,7 +121,8 @@ export default function Notification({
 
   useEffect(() => {
     setIsDailyBonusButtonShown(
-      !!todayStats?.dailyHasBonus &&
+      !AI_FEATURES_DISABLED &&
+        !!todayStats?.dailyHasBonus &&
         !dailyRewardModalShown &&
         !todayStats?.dailyBonusAttempted &&
         !!todayStats?.dailyRewardResultViewed

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import {
   dataUrlToBlob,
   fileToBase64,
@@ -358,6 +360,10 @@ export default function ImageGenerator({
       onFollowUpEngineChange={handleFollowUpEngineChange}
     />
   );
+
+  if (AI_FEATURES_DISABLED) {
+    return <AIDisabledNotice title="AI Image Generation Is Unavailable" />;
+  }
 
   return (
     <div

@@ -15,6 +15,7 @@ import TargetSubjectPreview from '../TargetSubjectPreview';
 import UploadFileModal from '../../../Modals/UploadFileModal';
 import AlertModal from '~/components/Modals/AlertModal';
 import { socket } from '~/constants/sockets/api';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { isMobile } from '~/helpers';
 import {
   stringIsEmpty,
@@ -129,6 +130,10 @@ export default function MessageInput({
   const isAIChannel = useMemo(
     () => isZeroChannel || isCielChannel,
     [isZeroChannel, isCielChannel]
+  );
+  const aiInputDisabled = useMemo(
+    () => AI_FEATURES_DISABLED && isAIChannel,
+    [isAIChannel]
   );
   const isAIActuallyStreaming = useMemo(() => {
     if (!currentlyStreamingAIMsgId) return false;
@@ -271,6 +276,7 @@ export default function MessageInput({
   }, []);
 
   const handleSendMsg = useCallback(async () => {
+    if (aiInputDisabled) return;
     if (stringIsEmpty(inputText)) return;
 
     if (inputCoolingDown.current) {
@@ -358,6 +364,7 @@ export default function MessageInput({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    aiInputDisabled,
     banned?.chat,
     selectedChannelId,
     subchannelId,
@@ -477,6 +484,14 @@ export default function MessageInput({
           )}
         <InputArea
           currentTopic={currentTopic}
+          forcedDisabled={aiInputDisabled}
+          forcedPlaceholder={
+            aiInputDisabled
+              ? isCielChannel
+                ? 'Ciel is unavailable.'
+                : 'Zero is unavailable.'
+              : undefined
+          }
           isBanned={isBanned}
           isRestrictedChannel={isRestrictedChannel}
           isTwoPeopleChannel={!!isTwoPeopleChannel}
@@ -492,7 +507,7 @@ export default function MessageInput({
           onHeightChange={onHeightChange}
           onSetText={handleSetText}
         />
-        {!textIsEmpty && isRightButtonsShown && (
+        {!aiInputDisabled && !textIsEmpty && isRightButtonsShown && (
           <div
             style={{
               margin: `0.2rem 1rem 0.2rem 0`,
@@ -519,7 +534,7 @@ export default function MessageInput({
             </Button>
           </div>
         )}
-        {isRightButtonsShown && (
+        {!aiInputDisabled && isRightButtonsShown && (
           <RightButtons
             buttonColor={buttonColorKey}
             currentTransactionId={currentTransactionId}

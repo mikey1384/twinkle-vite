@@ -1,11 +1,13 @@
 import React, { RefObject, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import RichText from '~/components/Texts/RichText';
 import ThinkingIndicator from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import CodeDiff from '~/components/CodeDiff';
 import ProgressBar from '~/components/ProgressBar';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { css } from '@emotion/css';
+import { AI_DISABLED_NOTICE, AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSince } from '~/helpers/timeStampHelpers';
 import { computeLineDiff } from '~/components/CodeDiff/diffUtils';
@@ -192,6 +194,7 @@ export default function ChatPanel({
   const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat');
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const aiInputDisabled = AI_FEATURES_DISABLED;
   const usageRows = useMemo(() => {
     const stageOrder = ['planner', 'codex', 'narration'];
     return Object.values(usageMetrics).sort((a, b) => {
@@ -1188,6 +1191,12 @@ export default function ChatPanel({
               </button>
             </div>
           )}
+          {aiInputDisabled && (
+            <AIDisabledNotice
+              title="Build AI Is Unavailable"
+              style={{ marginBottom: '0.6rem' }}
+            />
+          )}
           <div
             className={css`
               display: flex;
@@ -1200,10 +1209,13 @@ export default function ChatPanel({
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                generating
-                  ? 'Describe what to change next...'
-                  : 'Describe what you want to build...'
+                aiInputDisabled
+                  ? AI_DISABLED_NOTICE
+                  : generating
+                    ? 'Describe what to change next...'
+                    : 'Describe what you want to build...'
               }
+              disabled={aiInputDisabled}
               className={css`
                 flex: 1;
                 padding: 0.75rem;
@@ -1224,7 +1236,7 @@ export default function ChatPanel({
             />
             <GameCTAButton
               onClick={onSendMessage}
-              disabled={!inputMessage.trim()}
+              disabled={aiInputDisabled || !inputMessage.trim()}
               variant={generating ? 'orange' : 'logoBlue'}
               size="md"
               icon="paper-plane"

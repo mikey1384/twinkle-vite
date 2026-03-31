@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { useKeyContext } from '~/contexts';
 import { MAX_NUM_SUMMONS, priceTable } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
@@ -23,6 +25,11 @@ export default function GenerateCardInterface({
   );
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
+
+  if (AI_FEATURES_DISABLED) {
+    return <AIDisabledNotice title="AI Card Generation Is Unavailable" />;
+  }
+
   return (
     <div
       style={{

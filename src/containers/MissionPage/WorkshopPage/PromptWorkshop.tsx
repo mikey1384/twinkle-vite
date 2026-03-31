@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { css } from '@emotion/css';
+import { AI_FEATURES_DISABLED } from '~/constants/ai';
 import { Color, borderRadius, mobileMaxWidth } from '~/constants/css';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -479,6 +481,10 @@ export default function PromptWorkshop({
     font-weight: 700;
     color: ${Color.darkerGray()};
   `;
+
+  if (AI_FEATURES_DISABLED) {
+    return <AIDisabledNotice title="Prompt Workshop Is Unavailable" />;
+  }
 
   return (
     <div

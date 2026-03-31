@@ -13,6 +13,8 @@ const deviceIsMobileOS = isMobile(navigator);
 
 export default function InputArea({
   currentTopic,
+  forcedDisabled = false,
+  forcedPlaceholder,
   isBanned,
   isRestrictedChannel,
   innerRef,
@@ -29,6 +31,8 @@ export default function InputArea({
   onSetText
 }: {
   currentTopic: any;
+  forcedDisabled?: boolean;
+  forcedPlaceholder?: string;
   isBanned: boolean;
   isRestrictedChannel: boolean;
   isOnlyOwnerPostingTopic: boolean;
@@ -93,6 +97,7 @@ export default function InputArea({
   }, [inputText]);
 
   const inputDisabled = useMemo(() => {
+    if (forcedDisabled) return true;
     if (isRestrictedChannel || isBanned) return true;
     if (isOnlyOwnerPostingTopic && !isMain) {
       if (isTwoPeopleChannel && currentTopic?.userId !== userId) {
@@ -105,6 +110,7 @@ export default function InputArea({
     }
     return false;
   }, [
+    forcedDisabled,
     isRestrictedChannel,
     isBanned,
     isOnlyOwnerPostingTopic,
@@ -158,6 +164,9 @@ export default function InputArea({
   );
 
   function getPlaceholder() {
+    if (forcedDisabled && forcedPlaceholder) {
+      return forcedPlaceholder;
+    }
     if (isBanned) {
       return 'You are banned from chatting with other users on this website...';
     }
