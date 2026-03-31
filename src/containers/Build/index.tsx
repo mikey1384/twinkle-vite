@@ -359,6 +359,14 @@ function BuildEditorWrapper() {
   useEffect(() => {
     const workspaceBuildId = Number(build?.id || numericBuildId || 0);
     if (!workspaceBuildId || !build) return;
+    if (
+      cachedWorkspace &&
+      cachedWorkspace.build === build &&
+      cachedWorkspace.chatMessages === chatMessages &&
+      cachedWorkspace.copilotPolicy === copilotPolicy
+    ) {
+      return;
+    }
     onSetBuildWorkspace({
       buildId: workspaceBuildId,
       build,

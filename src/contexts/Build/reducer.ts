@@ -561,6 +561,15 @@ export default function BuildReducer(
       const buildId = Number(action.buildRun?.buildId || 0);
       if (!buildId || !action.buildRun?.build) return state;
       const key = getBuildRunKey(buildId);
+      const currentWorkspace = state.buildWorkspaces[key];
+      if (
+        currentWorkspace &&
+        currentWorkspace.build === action.buildRun.build &&
+        currentWorkspace.chatMessages === action.buildRun.chatMessages &&
+        currentWorkspace.copilotPolicy === action.buildRun.copilotPolicy
+      ) {
+        return state;
+      }
       return {
         ...state,
         buildWorkspaces: {
