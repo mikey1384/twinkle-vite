@@ -1,5 +1,6 @@
 import { useContextSelector } from 'use-context-selector';
 import { AppContext } from './AppContext';
+import { BuildContext } from './Build';
 import { ChatContext } from './Chat';
 import { ChessContext } from './Chess';
 import { ContentContext } from './Content';
@@ -16,6 +17,9 @@ import { KeyContext } from './KeyContext';
 
 export function useAppContext(fn: (value: any) => any) {
   return useContextSelector(AppContext, fn);
+}
+export function useBuildContext(fn: (value: any) => any) {
+  return useContextSelector(BuildContext, fn);
 }
 export function useChatContext(fn: (value: any) => any) {
   return useContextSelector(ChatContext, fn);

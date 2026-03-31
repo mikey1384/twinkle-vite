@@ -10,6 +10,7 @@ import { getSectionFromPathname } from '~/helpers';
 
 import useAICardSocket from './useAICardSocket';
 import useAISocket from './useAISocket';
+import useBuildSocket from './useBuildSocket';
 import useCallSocket from './useCallSocket';
 import useChatSocket from './useChatSocket';
 import useChessSocket from './useChessSocket';
@@ -113,6 +114,7 @@ export default function useAPISocket({
   });
   useAICardSocket();
   useAISocket({ selectedChannelId, aiCallChannelId, usingChatRef });
+  useBuildSocket();
   useCallSocket({
     channelsObj,
     selectedChannelId

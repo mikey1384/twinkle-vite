@@ -1,5 +1,6 @@
 export {
   useAppContext,
+  useBuildContext,
   useChatContext,
   useChessContext,
   useContentContext,
@@ -15,4 +16,5 @@ export {
   useKeyContext
 } from './hooks';
 export { AppContextProvider } from './AppContext';
+export { BuildContextProvider } from './Build';
 export { KeyContext } from './KeyContext';

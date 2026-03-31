@@ -3,6 +3,7 @@ import { createContext } from 'use-context-selector';
 import UserActions from './User/actions';
 import UserReducer from './User/reducer';
 import requestHelpers from './requestHelpers';
+import { BuildContextProvider } from './Build';
 import { ChatContextProvider } from './Chat';
 import { ChessContextProvider } from './Chess';
 import { ContentContextProvider } from './Content';
@@ -157,11 +158,13 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
                     <ContentContextProvider>
                       <InteractiveContextProvider>
                         <AppContext.Provider value={contextValue}>
-                          <ChessContextProvider>
-                            <ChatContextProvider>
-                              {children}
-                            </ChatContextProvider>
-                          </ChessContextProvider>
+                          <BuildContextProvider>
+                            <ChessContextProvider>
+                              <ChatContextProvider>
+                                {children}
+                              </ChatContextProvider>
+                            </ChessContextProvider>
+                          </BuildContextProvider>
                         </AppContext.Provider>
                       </InteractiveContextProvider>
                     </ContentContextProvider>
