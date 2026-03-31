@@ -1152,5 +1152,168 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildReminders({
+      buildId,
+      includeDisabled,
+      limit,
+      token
+    }: {
+      buildId: number;
+      includeDisabled?: boolean;
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/reminders/list`,
+          { includeDisabled, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildReminder({
+      buildId,
+      title,
+      body,
+      targetPath,
+      payload,
+      schedule,
+      isEnabled,
+      token
+    }: {
+      buildId: number;
+      title: string;
+      body?: string | null;
+      targetPath?: string | null;
+      payload?: any;
+      schedule: Record<string, any>;
+      isEnabled?: boolean;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/reminders/create`,
+          { title, body, targetPath, payload, schedule, isEnabled },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async updateBuildReminder({
+      buildId,
+      reminderId,
+      title,
+      body,
+      targetPath,
+      payload,
+      schedule,
+      isEnabled,
+      token
+    }: {
+      buildId: number;
+      reminderId: number;
+      title?: string;
+      body?: string | null;
+      targetPath?: string | null;
+      payload?: any;
+      schedule?: Record<string, any>;
+      isEnabled?: boolean;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/reminders/update`,
+          { reminderId, title, body, targetPath, payload, schedule, isEnabled },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildReminder({
+      buildId,
+      reminderId,
+      token
+    }: {
+      buildId: number;
+      reminderId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/reminders/delete`,
+          { reminderId },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async getDueBuildReminders({
+      buildId,
+      now,
+      autoAcknowledge,
+      limit,
+      token
+    }: {
+      buildId: number;
+      now?: number;
+      autoAcknowledge?: boolean;
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/reminders/due`,
+          { now, autoAcknowledge, limit },
+          {
+            ...auth(),
+            headers: {
+              ...auth().headers,
+              ...(token ? { 'x-build-api-token': token } : {})
+            }
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
   };
 }

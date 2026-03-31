@@ -50,7 +50,7 @@ const headerTitleClass = css`
 
 interface ChatMessage {
   id: number;
-  role: 'user' | 'assistant' | 'reviewer';
+  role: 'user' | 'assistant';
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
@@ -64,7 +64,6 @@ interface BuildUsageMetric {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
-  estimatedCostUsd: number | null;
 }
 
 interface BuildCopilotPolicy {
@@ -84,11 +83,8 @@ interface BuildCopilotPolicy {
     dayIndex: number;
     dayKey: string;
     generationRequestsPerDay: number;
-    reviewRequestsPerDay: number;
     generationRequestsToday: number;
     generationRequestsRemaining: number;
-    reviewRequestsToday: number;
-    reviewRequestsRemaining: number;
   };
 }
 
@@ -105,7 +101,6 @@ interface BuildRunEvent {
     inputTokens?: number;
     outputTokens?: number;
     totalTokens?: number;
-    estimatedCostUsd?: number | null;
   } | null;
 }
 
@@ -145,7 +140,6 @@ interface ChatPanelProps {
   inputMessage: string;
   generating: boolean;
   generatingStatus: string | null;
-  reviewerStatusSteps: string[];
   assistantStatusSteps: string[];
   usageMetrics: Record<string, BuildUsageMetric>;
   copilotPolicy: BuildCopilotPolicy | null;
@@ -174,7 +168,6 @@ export default function ChatPanel({
   inputMessage,
   generating,
   generatingStatus,
-  reviewerStatusSteps,
   assistantStatusSteps,
   usageMetrics,
   copilotPolicy,
@@ -200,7 +193,7 @@ export default function ChatPanel({
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const usageRows = useMemo(() => {
-    const stageOrder = ['planner', 'reviewer', 'validator', 'codex', 'narration'];
+    const stageOrder = ['planner', 'codex', 'narration'];
     return Object.values(usageMetrics).sort((a, b) => {
       const aIndex = stageOrder.indexOf(a.stage);
       const bIndex = stageOrder.indexOf(b.stage);
@@ -217,32 +210,15 @@ export default function ChatPanel({
         acc.inputTokens += row.inputTokens || 0;
         acc.outputTokens += row.outputTokens || 0;
         acc.totalTokens += row.totalTokens || 0;
-        if (row.estimatedCostUsd != null) {
-          acc.estimatedCostUsd =
-            acc.estimatedCostUsd == null
-              ? row.estimatedCostUsd
-              : acc.estimatedCostUsd + row.estimatedCostUsd;
-        }
         return acc;
       },
       {
         inputTokens: 0,
         outputTokens: 0,
-        totalTokens: 0,
-        estimatedCostUsd: null as number | null
+        totalTokens: 0
       }
     );
   }, [usageRows]);
-  const usageHasPositiveCost = useMemo(
-    () =>
-      usageRows.some(
-        (row) =>
-          row.estimatedCostUsd != null &&
-          Number.isFinite(row.estimatedCostUsd) &&
-          row.estimatedCostUsd > 0
-      ),
-    [usageRows]
-  );
   const usageShowsMultipleModels = useMemo(
     () =>
       new Set(
@@ -303,25 +279,6 @@ export default function ChatPanel({
     if (requestLimits.generationRequestsPerDay <= 0) return null;
     return `${formatTokenCount(requestLimits.generationRequestsToday)} / ${formatTokenCount(requestLimits.generationRequestsPerDay)} generations`;
   }, [copilotPolicy]);
-  const dailyReviewUsage = useMemo(() => {
-    if (!copilotPolicy) return null;
-    const requestLimits = copilotPolicy.requestLimits;
-    if (requestLimits.reviewRequestsPerDay <= 0) return null;
-    return Math.max(
-      0,
-      Math.min(
-        100,
-        (requestLimits.reviewRequestsToday / requestLimits.reviewRequestsPerDay) *
-          100
-      )
-    );
-  }, [copilotPolicy]);
-  const dailyReviewBarText = useMemo(() => {
-    if (!copilotPolicy) return null;
-    const requestLimits = copilotPolicy.requestLimits;
-    if (requestLimits.reviewRequestsPerDay <= 0) return null;
-    return `${formatTokenCount(requestLimits.reviewRequestsToday)} / ${formatTokenCount(requestLimits.reviewRequestsPerDay)} reviews`;
-  }, [copilotPolicy]);
   const dailyLimitSummary = useMemo(() => {
     if (!copilotPolicy) return null;
     const requestLimits = copilotPolicy.requestLimits;
@@ -329,11 +286,6 @@ export default function ChatPanel({
     if (requestLimits.generationRequestsPerDay > 0) {
       parts.push(
         `${formatTokenCount(requestLimits.generationRequestsRemaining)} code generations left today`
-      );
-    }
-    if (requestLimits.reviewRequestsPerDay > 0) {
-      parts.push(
-        `${formatTokenCount(requestLimits.reviewRequestsRemaining)} reviews left`
       );
     }
     return parts.length > 0 ? parts.join(' • ') : null;
@@ -464,24 +416,6 @@ export default function ChatPanel({
                 <ProgressBar
                   progress={dailyGenerationUsage}
                   text={dailyGenerationBarText}
-                  style={{ marginTop: '-0.2rem' }}
-                />
-              </>
-            )}
-            {dailyReviewUsage != null && dailyReviewBarText && (
-              <>
-                <div
-                  className={css`
-                    font-size: 0.88rem;
-                    font-weight: 700;
-                  `}
-                >
-                  Reviews
-                </div>
-                <ProgressBar
-                  progress={dailyReviewUsage}
-                  text={dailyReviewBarText}
-                  color="orange"
                   style={{ marginTop: '-0.2rem' }}
                 />
               </>
@@ -696,9 +630,6 @@ export default function ChatPanel({
               `}
             >
               {messages.map((message, index) => {
-                const isLastReviewer =
-                  message.role === 'reviewer' &&
-                  index === findLastIndex(messages, (m) => m.role === 'reviewer');
                 const isLastAssistant =
                   message.role === 'assistant' &&
                   index === findLastIndex(messages, (m) => m.role === 'assistant');
@@ -708,8 +639,8 @@ export default function ChatPanel({
                 const isStreamingTarget =
                   (generating && isActiveStreamMessage) ||
                   (generating &&
-                    ((message.role === 'assistant' && isLastAssistant) ||
-                      (message.role === 'reviewer' && isLastReviewer)));
+                    message.role === 'assistant' &&
+                    isLastAssistant);
 
                 return (
                   <div
@@ -765,23 +696,6 @@ export default function ChatPanel({
                     >
                       <Icon icon="times-circle" />
                     </button>
-                    {message.role === 'reviewer' && (
-                      <span
-                        className={css`
-                          display: inline-flex;
-                          align-items: center;
-                          gap: 0.3rem;
-                          font-size: 0.75rem;
-                          font-weight: 700;
-                          color: ${Color.orange()};
-                          margin-bottom: 0.25rem;
-                          padding: 0 0.3rem;
-                        `}
-                      >
-                        <Icon icon="magnifying-glass" />
-                        Code Review
-                      </span>
-                    )}
                     <div
                       className={css`
                         max-width: 85%;
@@ -789,8 +703,6 @@ export default function ChatPanel({
                         border-radius: 12px;
                         background: ${message.role === 'user'
                           ? 'var(--theme-bg)'
-                          : message.role === 'reviewer'
-                          ? '#fff8f0'
                           : 'var(--chat-bg)'};
                         color: ${message.role === 'user'
                           ? 'var(--theme-text)'
@@ -798,9 +710,7 @@ export default function ChatPanel({
                         word-break: break-word;
                         font-size: 0.95rem;
                         line-height: 1.4;
-                        border: 1px solid ${message.role === 'reviewer'
-                          ? Color.orange(0.3)
-                          : 'var(--ui-border)'};
+                        border: 1px solid var(--ui-border);
                       `}
                     >
                       {message.role === 'assistant' ? (
@@ -811,13 +721,6 @@ export default function ChatPanel({
                           generating={generating}
                           generatingStatus={generatingStatus}
                           statusSteps={isLastAssistant ? assistantStatusSteps : []}
-                        />
-                      ) : message.role === 'reviewer' ? (
-                        <ReviewerMessage
-                          message={message}
-                          generating={generating}
-                          generatingStatus={generatingStatus}
-                          statusSteps={isLastReviewer ? reviewerStatusSteps : []}
                         />
                       ) : (
                         <span style={{ whiteSpace: 'pre-wrap' }}>
@@ -989,11 +892,6 @@ export default function ChatPanel({
                             `}
                           >
                             {formatTokenCount(row.totalTokens)} tok
-                            {usageHasPositiveCost &&
-                            row.estimatedCostUsd != null &&
-                            row.estimatedCostUsd > 0
-                              ? ` / ${formatUsageCost(row.estimatedCostUsd)}`
-                              : ''}
                           </span>
                         </div>
                       </div>
@@ -1019,11 +917,6 @@ export default function ChatPanel({
                         {formatTokenCount(usageTotals.inputTokens)} in /{' '}
                         {formatTokenCount(usageTotals.outputTokens)} out /{' '}
                         {formatTokenCount(usageTotals.totalTokens)} tok
-                        {usageHasPositiveCost &&
-                        usageTotals.estimatedCostUsd != null &&
-                        usageTotals.estimatedCostUsd > 0
-                          ? ` / ${formatUsageCost(usageTotals.estimatedCostUsd)}`
-                          : ''}
                       </span>
                     </div>
                   </div>
@@ -1584,33 +1477,6 @@ function AssistantMessage({
   );
 }
 
-function ReviewerMessage({
-  message,
-  generating,
-  generatingStatus,
-  statusSteps
-}: {
-  message: ChatMessage;
-  generating: boolean;
-  generatingStatus: string | null;
-  statusSteps: string[];
-}) {
-  const showSteps = statusSteps.length > 0 && generating;
-
-  return (
-    <div>
-      {message.content ? (
-        <RichText isAIMessage aiActionPlacement="inline" maxLines={20}>
-          {message.content}
-        </RichText>
-      ) : generating && !showSteps ? (
-        <ThinkingIndicator status={generatingStatus || 'Reviewing code...'} compact />
-      ) : null}
-      {showSteps && <StatusStepLog steps={statusSteps} />}
-    </div>
-  );
-}
-
 function StatusStepLog({ steps }: { steps: string[] }) {
   return (
     <div
@@ -1790,12 +1656,6 @@ function buildLimitProgressItem({
   };
 }
 
-function formatUsageCost(value: number | null) {
-  if (value == null || !Number.isFinite(value) || value <= 0) return 'n/a';
-  if (value < 0.01) return `$${value.toFixed(4)}`;
-  return `$${value.toFixed(2)}`;
-}
-
 function LimitStat({ label, value }: { label: string; value: string }) {
   return (
     <div
@@ -1838,8 +1698,6 @@ function getUsageStageLabel(stage: string) {
   switch (stage) {
     case 'planner':
       return 'Plan';
-    case 'reviewer':
-      return 'Review';
     case 'validator':
       return 'Validate';
     case 'codex':

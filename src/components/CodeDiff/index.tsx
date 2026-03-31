@@ -9,6 +9,7 @@ interface CodeDiffProps {
   newCode: string;
   maxPreviewLines?: number;
   collapsible?: boolean;
+  fullHeight?: boolean;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export default function CodeDiff({
   newCode,
   maxPreviewLines = 8,
   collapsible = true,
+  fullHeight = false,
   className
 }: CodeDiffProps) {
   const [expanded, setExpanded] = useState(false);
@@ -31,11 +33,12 @@ export default function CodeDiff({
     [lines]
   );
 
-  const displayLines = expanded
+  const shouldShowAllLines = !collapsible || expanded;
+  const displayLines = shouldShowAllLines
     ? changedLines
     : changedLines.slice(0, maxPreviewLines);
 
-  const hasMore = changedLines.length > maxPreviewLines;
+  const hasMore = collapsible && changedLines.length > maxPreviewLines;
 
   if (stats.added === 0 && stats.removed === 0) {
     return null;
@@ -44,6 +47,10 @@ export default function CodeDiff({
   return (
     <div
       className={`${css`
+        ${fullHeight ? 'height: 100%;' : ''}
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
         font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
         font-size: 0.8rem;
         border-radius: 8px;
@@ -118,7 +125,8 @@ export default function CodeDiff({
       </div>
       <div
         className={css`
-          max-height: ${expanded ? '400px' : '200px'};
+          ${fullHeight ? 'flex: 1; min-height: 0;' : ''}
+          max-height: ${fullHeight ? 'none' : expanded ? '400px' : '200px'};
           overflow-y: auto;
         `}
       >

@@ -59,6 +59,8 @@ export default function Invitation({
       const { channel } = await loadChatChannel({
         channelId,
         isForInvitation: true,
+        invitationSourceChannelId: currentChannelId,
+        invitationMessageId: messageId,
         skipUpdateChannelId: true
       });
       onSetChatInvitationDetail({
@@ -140,6 +142,8 @@ export default function Invitation({
           creatorId={invitationChannel.creatorId}
           allMemberIds={invitationChannel?.allMemberIds}
           channelId={invitationChannelId}
+          sourceChannelId={currentChannelId}
+          invitationMessageId={messageId}
         />
       )}
       {userId !== sender.id && (

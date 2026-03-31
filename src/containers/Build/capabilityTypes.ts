@@ -11,9 +11,7 @@ export type BuildCapabilitySnapshotLumineActionName =
   | 'lumine.readProjectFiles'
   | 'lumine.requestFocusedContext'
   | 'lumine.inspectRuntimeObservations'
-  | 'lumine.applyCodeChanges'
-  | 'lumine.triggerReview'
-  | 'lumine.autoFixRuntimeObservations';
+  | 'lumine.applyCodeChanges';
 
 export interface BuildCapabilitySnapshotLumineActionDetail {
   name: BuildCapabilitySnapshotLumineActionName;

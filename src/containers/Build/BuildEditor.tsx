@@ -153,6 +153,7 @@ interface Build {
   slug: string;
   code: string | null;
   primaryArtifactId?: number | null;
+  currentArtifactVersionId?: number | null;
   isPublic: boolean;
   publishedAt?: number | null;
   thumbnailUrl?: string | null;
@@ -206,7 +207,7 @@ interface BuildExecutionPlan {
 
 interface ChatMessage {
   id: number;
-  role: 'user' | 'assistant' | 'reviewer';
+  role: 'user' | 'assistant';
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
@@ -221,7 +222,6 @@ interface BuildUsageMetric {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
-  estimatedCostUsd: number | null;
 }
 
 interface BuildCopilotPolicy {
@@ -241,11 +241,8 @@ interface BuildCopilotPolicy {
     dayIndex: number;
     dayKey: string;
     generationRequestsPerDay: number;
-    reviewRequestsPerDay: number;
     generationRequestsToday: number;
     generationRequestsRemaining: number;
-    reviewRequestsToday: number;
-    reviewRequestsRemaining: number;
   };
 }
 
@@ -262,7 +259,6 @@ interface BuildRunEvent {
     inputTokens?: number;
     outputTokens?: number;
     totalTokens?: number;
-    estimatedCostUsd?: number | null;
   } | null;
 }
 
@@ -314,7 +310,7 @@ interface BuildEditorProjectFilesDraftState {
   saving: boolean;
 }
 
-type BuildRunMode = 'user' | 'review' | 'greeting' | 'runtime-autofix';
+type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
 
 interface RuntimeAutoFixContext {
   beforeObservation: BuildRuntimeObservationState;
@@ -328,6 +324,13 @@ interface PendingRuntimeVerification {
   allowSameCodeSignature: boolean;
   requestId: string | null;
   afterObservation: BuildRuntimeObservationState | null;
+}
+
+interface PendingRuntimeAutoFix {
+  armedAt: number;
+  sourceRequestId: string | null;
+  sourceArtifactVersionId: number | null;
+  sourceRunMode: BuildRunMode;
 }
 
 function normalizeProjectFilePath(rawPath: string) {
@@ -700,14 +703,9 @@ export default function BuildEditor({
 
   const [generating, setGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
-  const [reviewerStatusSteps, setReviewerStatusSteps] = useState<string[]>([]);
   const [assistantStatusSteps, setAssistantStatusSteps] = useState<string[]>(
     []
   );
-  const [reviewing, setReviewing] = useState(false);
-  const [_reviewPhase, setReviewPhase] = useState<
-    'reviewing' | 'fixing' | null
-  >(null);
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
@@ -751,7 +749,6 @@ export default function BuildEditor({
   const streamRequestIdRef = useRef<string | null>(null);
   const userMessageIdRef = useRef<number | null>(null);
   const assistantMessageIdRef = useRef<number | null>(null);
-  const reviewerMessageIdRef = useRef<number | null>(null);
   const streamingProjectFilesBaseRef = useRef<
     Array<{ path: string; content?: string }>
   >([]);
@@ -774,7 +771,6 @@ export default function BuildEditor({
   const queuedRequestsRef = useRef<QueuedBuildRequest[]>([]);
   const dedupedProcessingInFlightRef = useRef(false);
   const generatingRef = useRef(false);
-  const reviewingRef = useRef(false);
   const postCompleteSyncInFlightRef = useRef(false);
   const startingGenerationRef = useRef(false);
   const queuePausedForSaveRef = useRef(false);
@@ -787,15 +783,14 @@ export default function BuildEditor({
   const runtimeObservationStateRef =
     useRef<BuildRuntimeObservationState | null>(null);
   const lastRuntimeHealthEventKeyRef = useRef('');
-  const pendingRuntimeAutoFixRef = useRef<{
-    armedAt: number;
-  } | null>(null);
+  const pendingRuntimeAutoFixRef = useRef<PendingRuntimeAutoFix | null>(null);
   const pendingRuntimeVerificationRef =
     useRef<PendingRuntimeVerification | null>(null);
   const activeRuntimeAutoFixContextRef =
     useRef<RuntimeAutoFixContext | null>(null);
   const runtimeAutoFixAttemptedSignaturesRef = useRef<Set<string>>(new Set());
   const activeRunModeRef = useRef<BuildRunMode>('user');
+  const RUNTIME_AUTOFIX_ENABLED = false;
   const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
   const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
 
@@ -810,10 +805,6 @@ export default function BuildEditor({
   useEffect(() => {
     generatingRef.current = generating;
   }, [generating]);
-
-  useEffect(() => {
-    reviewingRef.current = reviewing;
-  }, [reviewing]);
 
   useEffect(() => {
     buildRef.current = build;
@@ -929,15 +920,15 @@ export default function BuildEditor({
       const { requestId, reply, codeGenerated, projectFiles } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
-      const assistantId = assistantMessageIdRef.current;
-      if (!assistantId) return;
+      const targetMessageId = assistantMessageIdRef.current;
+      if (!targetMessageId) return;
       const currentMessages = chatMessagesRef.current;
       const hasCodeGeneratedField = Object.prototype.hasOwnProperty.call(
         payload,
         'codeGenerated'
       );
       const nextMessages = currentMessages.map((message) => {
-        if (message.id !== assistantId) return message;
+        if (message.id !== targetMessageId) return message;
         const nextMessage: ChatMessage = {
           ...message,
           content: typeof reply === 'string' ? reply : message.content
@@ -1004,7 +995,6 @@ export default function BuildEditor({
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
-      const wasReviewRun = reviewingRef.current;
       const completedRunMode = activeRunModeRef.current;
       const userMessageTempId = userMessageIdRef.current;
       const assistantId = assistantMessageIdRef.current;
@@ -1025,9 +1015,6 @@ export default function BuildEditor({
         typeof message?.userMessageId === 'number' && message.userMessageId > 0
           ? message.userMessageId
           : null;
-      const shouldPreserveLocalCompletionMessages =
-        wasReviewRun && !persistedAssistantId && !persistedUserId;
-
       let nextMessages = currentMessages.map((entry) => {
         if (
           userMessageTempId &&
@@ -1124,6 +1111,8 @@ export default function BuildEditor({
             ...activeBuild,
             code: resolvedCode,
             primaryArtifactId: artifact?.id ?? activeBuild.primaryArtifactId,
+            currentArtifactVersionId:
+              artifactVersionId ?? activeBuild.currentArtifactVersionId ?? null,
             executionPlan:
               executionPlan !== undefined
                 ? executionPlan || null
@@ -1164,9 +1153,13 @@ export default function BuildEditor({
       let shouldDelayQueuedRequestsForRuntimeFollowUp = false;
       if (
         generatedCodeSuccessfully &&
-        (completedRunMode === 'user' || completedRunMode === 'review')
+        completedRunMode === 'user'
       ) {
-        armRuntimeAutoFix();
+        armRuntimeAutoFix({
+          sourceRequestId: requestId || null,
+          sourceArtifactVersionId: artifactVersionId,
+          sourceRunMode: completedRunMode
+        });
         clearRuntimeVerification();
         appendLocalRunEvent({
           kind: 'status',
@@ -1219,22 +1212,15 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
-      reviewerMessageIdRef.current = null;
       generatingRef.current = false;
-      reviewingRef.current = false;
       setGenerating(false);
-      setReviewing(false);
-      setReviewPhase(null);
       setGeneratingStatus(null);
-      setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
       activeRunModeRef.current = 'user';
       scrollChatToBottom();
       postCompleteSyncInFlightRef.current = true;
       try {
-        await syncChatMessagesFromServer(undefined, true, {
-          preserveLocalMessages: shouldPreserveLocalCompletionMessages
-        });
+        await syncChatMessagesFromServer(undefined, true);
         requiresProjectFilesResyncBeforeSaveRef.current = false;
       } catch (error) {
         console.error('Failed to sync chat messages after completion:', error);
@@ -1289,15 +1275,12 @@ export default function BuildEditor({
       resetDedupedProcessingReconcileState();
       resetRuntimeHealthFollowUpState();
       const assistantId = assistantMessageIdRef.current;
-      const reviewerId = reviewerMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
       const errorMessage = error || 'Failed to generate code.';
 
-      // If phase 1 failed (reviewer exists but no assistant yet), show error on reviewer bubble
-      const errorTargetId = assistantId || reviewerId;
-      const nextMessages = errorTargetId
+      const nextMessages = assistantId
         ? currentMessages.map((entry) =>
-            entry.id === errorTargetId
+            entry.id === assistantId
               ? {
                   ...entry,
                   content: errorMessage,
@@ -1327,14 +1310,9 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
-      reviewerMessageIdRef.current = null;
       generatingRef.current = false;
-      reviewingRef.current = false;
       setGenerating(false);
-      setReviewing(false);
-      setReviewPhase(null);
       setGeneratingStatus(null);
-      setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
       activeRunModeRef.current = 'user';
       scrollChatToBottom();
@@ -1367,7 +1345,6 @@ export default function BuildEditor({
             streamRequestIdRef.current = null;
             userMessageIdRef.current = null;
             assistantMessageIdRef.current = null;
-            reviewerMessageIdRef.current = null;
           }
         } else if (guardStatus === 'processing') {
           // Keep request refs briefly in case late events from the claimed
@@ -1386,18 +1363,13 @@ export default function BuildEditor({
             streamRequestIdRef.current = null;
             userMessageIdRef.current = null;
             assistantMessageIdRef.current = null;
-            reviewerMessageIdRef.current = null;
           }
         }
         generatingRef.current = false;
-        reviewingRef.current = false;
         setStreamingProjectFiles(null);
         setStreamingFocusFilePath(null);
         setGenerating(false);
-        setReviewing(false);
-        setReviewPhase(null);
         setGeneratingStatus(null);
-        setReviewerStatusSteps([]);
         setAssistantStatusSteps([]);
         activeRunModeRef.current = 'user';
         scrollChatToBottom();
@@ -1409,12 +1381,11 @@ export default function BuildEditor({
       resetDedupedProcessingReconcileState();
       resetRuntimeHealthFollowUpState();
       const assistantId = assistantMessageIdRef.current;
-      const reviewerId = reviewerMessageIdRef.current;
       const userId = userMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
 
       const activeIdSet = new Set(
-        [userId, assistantId, reviewerId].filter(
+        [userId, assistantId].filter(
           (id): id is number => typeof id === 'number' && id > 0
         )
       );
@@ -1429,14 +1400,9 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
-      reviewerMessageIdRef.current = null;
       generatingRef.current = false;
-      reviewingRef.current = false;
       setGenerating(false);
-      setReviewing(false);
-      setReviewPhase(null);
       setGeneratingStatus(null);
-      setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
       activeRunModeRef.current = 'user';
       postCompleteSyncInFlightRef.current = true;
@@ -1451,89 +1417,6 @@ export default function BuildEditor({
       await maybeStartNextQueuedRequest();
     }
 
-    function handleReviewUpdate({
-      requestId,
-      reviewText
-    }: {
-      requestId?: string;
-      reviewText?: string;
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      const reviewerId = reviewerMessageIdRef.current;
-      if (!reviewerId) return;
-      const currentMessages = chatMessagesRef.current;
-      const nextMessages = currentMessages.map((message) =>
-        message.id === reviewerId
-          ? { ...message, content: reviewText || '' }
-          : message
-      );
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
-      maybeAutoScrollDuringStream();
-    }
-
-    function handleReviewComplete({
-      requestId,
-      reviewText
-    }: {
-      requestId?: string;
-      reviewText?: string;
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      const reviewerId = reviewerMessageIdRef.current;
-      const currentMessages = chatMessagesRef.current;
-
-      let nextMessages = currentMessages;
-      if (reviewerId) {
-        nextMessages = currentMessages.map((entry) =>
-          entry.id === reviewerId
-            ? { ...entry, content: reviewText || entry.content }
-            : entry
-        );
-      }
-
-      // Add placeholder assistant message for phase 2
-      const assistantId = Date.now() + 2;
-      assistantMessageIdRef.current = assistantId;
-      nextMessages = [
-        ...nextMessages,
-        {
-          id: assistantId,
-          role: 'assistant' as const,
-          content: '',
-          codeGenerated: null,
-          streamCodePreview: null,
-          createdAt: Math.floor(Date.now() / 1000),
-          persisted: false
-        }
-      ];
-
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
-      setReviewPhase('fixing');
-      scrollChatToBottom();
-    }
-
-    function handleReviewStatus({
-      requestId,
-      status
-    }: {
-      requestId?: string;
-      status?: string;
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      setGeneratingStatus(status || null);
-      if (status) {
-        setReviewerStatusSteps((prev) =>
-          prev[prev.length - 1] === status ? prev : [...prev, status]
-        );
-      }
-      maybeAutoScrollDuringStream();
-    }
-
     function handleUsageUpdate({
       requestId,
       usage
@@ -1545,7 +1428,6 @@ export default function BuildEditor({
         inputTokens?: number;
         outputTokens?: number;
         totalTokens?: number;
-        estimatedCostUsd?: number | null;
       };
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
@@ -1555,19 +1437,9 @@ export default function BuildEditor({
       const inputTokens = Number(usage?.inputTokens || 0);
       const outputTokens = Number(usage?.outputTokens || 0);
       const totalTokens = Number(usage?.totalTokens || 0);
-      const estimatedCostUsd =
-        typeof usage?.estimatedCostUsd === 'number' &&
-        Number.isFinite(usage.estimatedCostUsd)
-          ? usage.estimatedCostUsd
-          : null;
 
       setUsageMetrics((prev) => {
         const existing = prev[stage];
-        const nextEstimatedCostUsd =
-          existing?.estimatedCostUsd != null && estimatedCostUsd != null
-            ? Number((existing.estimatedCostUsd + estimatedCostUsd).toFixed(6))
-            : (existing?.estimatedCostUsd ?? estimatedCostUsd);
-
         return {
           ...prev,
           [stage]: {
@@ -1575,8 +1447,7 @@ export default function BuildEditor({
             model,
             inputTokens: (existing?.inputTokens || 0) + inputTokens,
             outputTokens: (existing?.outputTokens || 0) + outputTokens,
-            totalTokens: (existing?.totalTokens || 0) + totalTokens,
-            estimatedCostUsd: nextEstimatedCostUsd
+            totalTokens: (existing?.totalTokens || 0) + totalTokens
           }
         };
       });
@@ -1599,7 +1470,6 @@ export default function BuildEditor({
           inputTokens?: number;
           outputTokens?: number;
           totalTokens?: number;
-          estimatedCostUsd?: number | null;
         } | null;
       };
     }) {
@@ -1753,9 +1623,6 @@ export default function BuildEditor({
     socket.on('build_generate_error', handleGenerateError);
     socket.on('build_generate_stopped', handleGenerateStopped);
     socket.on('build_generate_status', handleGenerateStatus);
-    socket.on('build_review_update', handleReviewUpdate);
-    socket.on('build_review_complete', handleReviewComplete);
-    socket.on('build_review_status', handleReviewStatus);
     socket.on('build_usage_update', handleUsageUpdate);
     socket.on('build_run_event', handleRunEvent);
     socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
@@ -1767,9 +1634,6 @@ export default function BuildEditor({
       socket.off('build_generate_error', handleGenerateError);
       socket.off('build_generate_stopped', handleGenerateStopped);
       socket.off('build_generate_status', handleGenerateStatus);
-      socket.off('build_review_update', handleReviewUpdate);
-      socket.off('build_review_complete', handleReviewComplete);
-      socket.off('build_review_status', handleReviewStatus);
       socket.off('build_usage_update', handleUsageUpdate);
       socket.off('build_run_event', handleRunEvent);
       socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
@@ -1883,9 +1747,20 @@ export default function BuildEditor({
     return formatRuntimeObservationSummary(runtimeObservationStateRef.current);
   }
 
-  function armRuntimeAutoFix() {
+  function armRuntimeAutoFix({
+    sourceRequestId = null,
+    sourceArtifactVersionId = null,
+    sourceRunMode = 'user'
+  }: {
+    sourceRequestId?: string | null;
+    sourceArtifactVersionId?: number | null;
+    sourceRunMode?: BuildRunMode;
+  } = {}) {
     pendingRuntimeAutoFixRef.current = {
-      armedAt: Date.now()
+      armedAt: Date.now(),
+      sourceRequestId,
+      sourceArtifactVersionId,
+      sourceRunMode
     };
   }
 
@@ -1949,7 +1824,7 @@ export default function BuildEditor({
   async function ensureProjectFilesPersistedBeforeRun({
     runType
   }: {
-    runType: 'copilot' | 'review';
+    runType: 'copilot';
   }) {
     const MAX_AUTOSAVE_ATTEMPTS = 3;
     const wait = (ms: number) =>
@@ -2186,7 +2061,6 @@ export default function BuildEditor({
       (includeBootstrap && startingGenerationRef.current) ||
       dedupedProcessingInFlightRef.current ||
       generatingRef.current ||
-      reviewingRef.current ||
       postCompleteSyncInFlightRef.current
     );
   }
@@ -2237,7 +2111,7 @@ export default function BuildEditor({
       phase: 'stopping',
       message: 'Switching to your latest request...'
     });
-    if (generatingRef.current || reviewingRef.current) {
+    if (generatingRef.current) {
       handleStopGeneration();
     }
   }
@@ -2314,7 +2188,22 @@ export default function BuildEditor({
     }
     runtimeAutoFixAttemptedSignaturesRef.current.add(signatureKey);
     disarmRuntimeAutoFix();
-    void startRuntimeAutoFix(observationState);
+    if (
+      RUNTIME_AUTOFIX_ENABLED &&
+      (observationState.issues.length > 0 ||
+        !observationState.health?.meaningfulRender ||
+        observationState.health?.gameplayTelemetry?.status === 'out-of-bounds' ||
+        (observationState.health?.gameLike &&
+          ((observationState.health?.viewportOverflowY || 0) > 48 ||
+            (observationState.health?.viewportOverflowX || 0) > 24)))
+    ) {
+      void startRuntimeAutoFix(observationState, {
+        sourceRequestId: pendingAutoFix.sourceRequestId,
+        sourceArtifactVersionId: pendingAutoFix.sourceArtifactVersionId
+      });
+      return true;
+    }
+    void Promise.resolve().then(() => maybeStartNextQueuedRequest());
     return true;
   }
 
@@ -2409,91 +2298,13 @@ export default function BuildEditor({
     }
   }
 
-  async function handleReview() {
-    if (
-      !isOwner ||
-      isRunActivityInFlight() ||
-      pendingRuntimeAutoFixRef.current ||
-      pendingRuntimeVerificationRef.current
-    ) {
-      return;
-    }
-    const projectFilesReady = await ensureProjectFilesPersistedBeforeRun({
-      runType: 'review'
-    });
-    if (!projectFilesReady) return;
-    if (isRunActivityInFlight()) return;
-    const activeBuild = buildRef.current;
-    if (!activeBuild?.code) return;
-    resetDedupedProcessingReconcileState();
-    const now = Math.floor(Date.now() / 1000);
-    const messageId = Date.now();
-    const requestId = `${activeBuild.id}-review-${messageId}`;
-    activeRunModeRef.current = 'review';
-    resetRuntimeHealthFollowUpState();
-    setRuntimeExplorationPlan(null);
-    streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
-      activeBuild.projectFiles || [],
-      activeBuild.code || ''
-    );
-    setStreamingProjectFiles(null);
-    setStreamingFocusFilePath(null);
-    generatingRef.current = true;
-    reviewingRef.current = true;
-    setGenerating(true);
-    setReviewing(true);
-    setReviewPhase('reviewing');
-    setReviewerStatusSteps([]);
-    setAssistantStatusSteps([]);
-    setUsageMetrics({});
-    setRunEvents([]);
-    streamRequestIdRef.current = requestId;
-    userMessageIdRef.current = null;
-
-    const reviewerMessage: ChatMessage = {
-      id: messageId,
-      role: 'reviewer',
-      content: '',
-      codeGenerated: null,
-      streamCodePreview: null,
-      createdAt: now,
-      persisted: false
-    };
-    reviewerMessageIdRef.current = reviewerMessage.id;
-
-    const messagesWithReviewer = [...chatMessagesRef.current, reviewerMessage];
-    chatMessagesRef.current = messagesWithReviewer;
-    updateChatMessagesRef.current(messagesWithReviewer);
-
-    shouldAutoScrollRef.current = true;
-    scrollChatToBottom('smooth', { force: true });
-
-    const runtimeObservation = runtimeObservationStateRef.current;
-    const runtimeObservationSummary =
-      formatRuntimeObservationSummary(runtimeObservation);
-
-    socket.emit('build_review', {
-      buildId: activeBuild.id,
-      requestId,
-      runtimeObservation,
-      runtimeObservationSummary: runtimeObservationSummary || undefined
-    });
-  }
-
   function handleStopGeneration() {
     const requestId = streamRequestIdRef.current;
-    if (
-      !requestId ||
-      (!generatingRef.current && !reviewingRef.current) ||
-      !isOwner
-    ) {
+    if (!requestId || !generatingRef.current || !isOwner) {
       return;
     }
     setGeneratingStatus('Stopping...');
     setAssistantStatusSteps((prev) =>
-      prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
-    );
-    setReviewerStatusSteps((prev) =>
       prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
     );
     socket.emit('build_stop', {
@@ -2505,10 +2316,6 @@ export default function BuildEditor({
   async function handleDeleteMessage(message: ChatMessage) {
     if (!isOwner) return;
     if (isMessageLockedForActiveRequest(message)) return;
-    if (message.role === 'reviewer') {
-      removeLocalMessageByIds([message.id]);
-      return;
-    }
 
     try {
       if (message.persisted === false) {
@@ -2553,7 +2360,11 @@ export default function BuildEditor({
 
   function handleApplyRestoredProjectFiles(
     restoredFilesInput: Array<{ path: string; content?: string }>,
-    restoredCode?: string | null
+    restoredCode?: string | null,
+    options?: {
+      artifactVersionId?: number | null;
+      primaryArtifactId?: number | null;
+    }
   ) {
     const activeBuild = buildRef.current;
     if (!activeBuild) return;
@@ -2576,6 +2387,12 @@ export default function BuildEditor({
     const nextBuild = {
       ...activeBuild,
       code: nextCode,
+      primaryArtifactId:
+        options?.primaryArtifactId ?? activeBuild.primaryArtifactId ?? null,
+      currentArtifactVersionId:
+        options?.artifactVersionId ??
+        activeBuild.currentArtifactVersionId ??
+        null,
       projectManifest: {
         entryPath: resolveIndexEntryPathFromProjectFiles(
           normalizedFiles,
@@ -2683,6 +2500,14 @@ export default function BuildEditor({
       const nextBuild = {
         ...latestBuild,
         code: nextCode,
+        primaryArtifactId:
+          result?.artifactVersion?.artifactId ??
+          latestBuild.primaryArtifactId ??
+          null,
+        currentArtifactVersionId:
+          result?.artifactVersion?.versionId ??
+          latestBuild.currentArtifactVersionId ??
+          null,
         projectManifest: result?.projectManifest || {
           entryPath: resolveIndexEntryPathFromProjectFiles(
             savedFiles,
@@ -2869,16 +2694,6 @@ export default function BuildEditor({
               {build.description?.trim() ? 'Edit Description' : 'Add Description'}
             </GameCTAButton>
           )}
-          {isOwner && build.code && !generating && !reviewing && (
-            <GameCTAButton
-              onClick={handleReview}
-              variant="orange"
-              size="md"
-              icon="magnifying-glass"
-            >
-              Review
-            </GameCTAButton>
-          )}
           {isOwner && (
             <GameCTAButton
               onClick={build.isPublic ? handleUnpublish : handlePublish}
@@ -2919,9 +2734,8 @@ export default function BuildEditor({
               messages={chatMessages}
               executionPlan={build.executionPlan || null}
               inputMessage={inputMessage}
-              generating={generating || reviewing}
+              generating={generating}
               generatingStatus={generatingStatus}
-              reviewerStatusSteps={reviewerStatusSteps}
               assistantStatusSteps={assistantStatusSteps}
               usageMetrics={usageMetrics}
               copilotPolicy={copilotPolicy}
@@ -3055,8 +2869,13 @@ export default function BuildEditor({
     options?: {
       remainingRepairsAfterVerification?: number;
       trigger?: 'initial' | 'verification';
+      sourceRequestId?: string | null;
+      sourceArtifactVersionId?: number | null;
     }
   ): Promise<boolean> {
+    if (!RUNTIME_AUTOFIX_ENABLED) {
+      return false;
+    }
     if (!isOwner || isRunActivityInFlight()) {
       return false;
     }
@@ -3093,17 +2912,14 @@ export default function BuildEditor({
     setStreamingProjectFiles(null);
     setStreamingFocusFilePath(null);
     generatingRef.current = true;
-    reviewingRef.current = false;
     setGenerating(true);
     setGeneratingStatus(null);
-    setReviewerStatusSteps([]);
     setAssistantStatusSteps([]);
     setUsageMetrics({});
     setRunEvents([]);
     streamRequestIdRef.current = requestId;
     userMessageIdRef.current = null;
     assistantMessageIdRef.current = assistantMessageId;
-    reviewerMessageIdRef.current = null;
 
     const assistantMessage: ChatMessage = {
       id: assistantMessageId,
@@ -3124,7 +2940,11 @@ export default function BuildEditor({
       message:
         options?.trigger === 'verification'
           ? 'Lumine is taking one final repair pass after re-checking the preview.'
-          : 'Preview explorer sent its findings to Lumine for automatic repair.'
+          : `Preview explorer sent its findings to Lumine for automatic repair${
+              options?.sourceArtifactVersionId
+                ? ` after artifact v${options.sourceArtifactVersionId}`
+                : ''
+            }.`
     });
     shouldAutoScrollRef.current = true;
     scrollChatToBottom('smooth', { force: true });
@@ -3136,7 +2956,10 @@ export default function BuildEditor({
       runtimeObservationSummary,
       runtimeObservation: observationState,
       runtimeExplorationPlan,
-      autoFixRuntimeObservation: true
+      autoFixRuntimeObservation: true,
+      runtimeAutoFixSourceRequestId: options?.sourceRequestId || null,
+      runtimeAutoFixSourceArtifactVersionId:
+        options?.sourceArtifactVersionId || null
     });
     return true;
   }
@@ -3184,9 +3007,7 @@ export default function BuildEditor({
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
       generatingRef.current = true;
-      reviewingRef.current = false;
       setGenerating(true);
-      setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
       setUsageMetrics({});
       setRunEvents([]);
@@ -3269,17 +3090,14 @@ export default function BuildEditor({
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
       generatingRef.current = true;
-      reviewingRef.current = false;
       setGenerating(true);
       setGeneratingStatus(null);
-      setReviewerStatusSteps([]);
       setAssistantStatusSteps([]);
       setUsageMetrics({});
       setRunEvents([]);
       streamRequestIdRef.current = requestId;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = assistantMessageId;
-      reviewerMessageIdRef.current = null;
 
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -3317,15 +3135,13 @@ export default function BuildEditor({
   }
 
   function getActiveStreamMessageIds() {
-    return [
-      userMessageIdRef.current,
-      assistantMessageIdRef.current,
-      reviewerMessageIdRef.current
-    ].filter((id): id is number => typeof id === 'number' && id > 0);
+    return [userMessageIdRef.current, assistantMessageIdRef.current].filter(
+      (id): id is number => typeof id === 'number' && id > 0
+    );
   }
 
   function isMessageLockedForActiveRequest(message: ChatMessage) {
-    if (!generating && !reviewing) return false;
+    if (!generating) return false;
     return getActiveStreamMessageIds().includes(message.id);
   }
 
@@ -3405,18 +3221,10 @@ export default function BuildEditor({
     ) {
       assistantMessageIdRef.current = null;
     }
-    if (
-      reviewerMessageIdRef.current &&
-      !messageIds.has(reviewerMessageIdRef.current)
-    ) {
-      reviewerMessageIdRef.current = null;
-    }
     scrollChatToBottom();
 
     const hasActiveStreamPlaceholders = Boolean(
-      userMessageIdRef.current ||
-      assistantMessageIdRef.current ||
-      reviewerMessageIdRef.current
+      userMessageIdRef.current || assistantMessageIdRef.current
     );
     if (!hasActiveStreamPlaceholders) {
       if (streamRequestIdRef.current === requestId) {
@@ -3433,7 +3241,6 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
-      reviewerMessageIdRef.current = null;
       resetDedupedProcessingReconcileState();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
       return;

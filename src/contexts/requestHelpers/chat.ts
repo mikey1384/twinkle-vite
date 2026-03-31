@@ -1030,11 +1030,15 @@ export default function chatRequestHelpers({
     async loadChatChannel({
       channelId,
       isForInvitation,
+      invitationSourceChannelId,
+      invitationMessageId,
       subchannelPath,
       skipUpdateChannelId
     }: {
       channelId: number;
       isForInvitation?: boolean;
+      invitationSourceChannelId?: number;
+      invitationMessageId?: number;
       subchannelPath?: string;
       skipUpdateChannelId?: boolean;
     }) {
@@ -1044,6 +1048,14 @@ export default function chatRequestHelpers({
             subchannelPath ? `&subchannelPath=${subchannelPath}` : ''
           }${skipUpdateChannelId ? '&skipUpdateChannelId=1' : ''}${
             isForInvitation ? '&isForInvitation=1' : ''
+          }${
+            isForInvitation && invitationSourceChannelId
+              ? `&invitationSourceChannelId=${invitationSourceChannelId}`
+              : ''
+          }${
+            isForInvitation && invitationMessageId
+              ? `&invitationMessageId=${invitationMessageId}`
+              : ''
           }`,
           {
             ...auth(),
@@ -1153,16 +1165,33 @@ export default function chatRequestHelpers({
     },
     async loadMoreChannelMembers({
       channelId,
-      lastId
+      lastId,
+      isForInvitation = false,
+      invitationSourceChannelId,
+      invitationMessageId
     }: {
       channelId: number;
       lastId: number;
+      isForInvitation?: boolean;
+      invitationSourceChannelId?: number;
+      invitationMessageId?: number;
     }) {
       try {
         const {
           data: { members, loadMoreShown }
         } = await request.get(
-          `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}`
+          `${URL}/chat/channel/members/more?channelId=${channelId}&lastId=${lastId}${
+            isForInvitation ? '&isForInvitation=1' : ''
+          }${
+            isForInvitation && invitationSourceChannelId
+              ? `&invitationSourceChannelId=${invitationSourceChannelId}`
+              : ''
+          }${
+            isForInvitation && invitationMessageId
+              ? `&invitationMessageId=${invitationMessageId}`
+              : ''
+          }`,
+          auth()
         );
         return { members, loadMoreShown };
       } catch (error) {

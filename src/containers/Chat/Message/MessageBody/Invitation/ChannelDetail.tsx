@@ -15,7 +15,9 @@ export default function ChannelDetail({
   channelId,
   creatorId,
   invitePath,
-  members
+  invitationMessageId,
+  members,
+  sourceChannelId
 }: {
   allMemberIds: number[];
   alreadyJoined: boolean;
@@ -23,11 +25,13 @@ export default function ChannelDetail({
   channelId: number;
   creatorId: number;
   invitePath: string;
+  invitationMessageId: number;
   members: {
     id: number;
     username: string;
     profilePicUrl: string;
   }[];
+  sourceChannelId: number;
 }) {
   const navigate = useNavigate();
   const chatInvitationRole = useRoleColor('chatInvitation', {
@@ -161,7 +165,10 @@ export default function ChannelDetail({
     const lastId = members[members.length - 1].id;
     const { members: loadedMembers } = await loadMoreChannelMembers({
       channelId,
-      lastId
+      lastId,
+      isForInvitation: true,
+      invitationSourceChannelId: sourceChannelId,
+      invitationMessageId
     });
     onLoadMoreChannelMembers({
       channelId,
