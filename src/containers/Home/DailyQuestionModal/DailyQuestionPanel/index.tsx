@@ -222,7 +222,9 @@ function loadPendingDailyQuestionSubmission(userId: number) {
     );
     if (!rawValue) return null;
 
-    const parsed = JSON.parse(rawValue) as Partial<PendingDailyQuestionSubmission>;
+    const parsed = JSON.parse(
+      rawValue
+    ) as Partial<PendingDailyQuestionSubmission>;
     if (
       Number(parsed?.userId) !== userId ||
       !Number.isFinite(Number(parsed?.questionId)) ||
@@ -393,7 +395,9 @@ export default function DailyQuestionPanel({
   const isComposingRef = useRef(false);
   const committedResponseRef = useRef('');
   const lastActivityRef = useRef<number>(Date.now());
-  const restoredDraftNeedsFreshTypingRef = useRef(restoredDraftNeedsFreshTyping);
+  const restoredDraftNeedsFreshTypingRef = useRef(
+    restoredDraftNeedsFreshTyping
+  );
   restoredDraftNeedsFreshTypingRef.current = restoredDraftNeedsFreshTyping;
   const handleSubmitRef = useRef<() => void>(() => {});
   const activeClientRequestIdRef = useRef<string | null>(null);
@@ -784,10 +788,7 @@ export default function DailyQuestionPanel({
       const shouldRetryNotFound =
         result.status === 'not_found' &&
         attempt < DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT;
-      if (
-        result.status === 'processing' ||
-        shouldRetryNotFound
-      ) {
+      if (result.status === 'processing' || shouldRetryNotFound) {
         setScreen('grading');
         setGradingMessage('Restoring your result...');
         setGradingProgress((current) => Math.max(current, 95));
@@ -838,7 +839,10 @@ export default function DailyQuestionPanel({
         return;
       }
 
-      console.error('Failed to recover pending daily question submission:', err);
+      console.error(
+        'Failed to recover pending daily question submission:',
+        err
+      );
       persistDraftRecovery({
         questionId,
         clientRequestId,
@@ -916,7 +920,10 @@ export default function DailyQuestionPanel({
         setIsAdultUser(!!data.isAdult);
 
         const pendingSubmission = loadPendingDailyQuestionSubmission(userId);
-        if (pendingSubmission && pendingSubmission.questionId !== data.questionId) {
+        if (
+          pendingSubmission &&
+          pendingSubmission.questionId !== data.questionId
+        ) {
           clearPendingDailyQuestionSubmission(userId);
         }
 
@@ -957,7 +964,8 @@ export default function DailyQuestionPanel({
             typingMetadataRef.current = pendingSubmission.typingMetadata
               ? cloneTypingMetadata(pendingSubmission.typingMetadata)
               : createEmptyTypingMetadata();
-            activeClientRequestIdRef.current = pendingSubmission.clientRequestId;
+            activeClientRequestIdRef.current =
+              pendingSubmission.clientRequestId;
             committedResponseRef.current = pendingSubmission.response || '';
             setResponse(pendingSubmission.response || '');
             setScreen('grading');

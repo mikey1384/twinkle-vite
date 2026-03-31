@@ -35,7 +35,7 @@ export default function XPAndStreakDisplay({
       `}
       style={style}
     >
-      {showXP && (
+      {!!showXP && (
         <span
           className={css`
             font-size: 1.2rem;
@@ -48,7 +48,7 @@ export default function XPAndStreakDisplay({
           <span style={{ color: Color.gold() }}>XP</span>
         </span>
       )}
-      {showStreak && (
+      {!!showStreak && (
         <span
           className={css`
             font-size: 1.2rem;
