@@ -142,7 +142,9 @@ export default function BuildMission({
   const successfulGenerationCount = Number(
     buildMissionProgress.successfulGenerationCount || 0
   );
-  const publishedBuildCount = Number(buildMissionProgress.publishedBuildCount || 0);
+  const publishedBuildCount = Number(
+    buildMissionProgress.publishedBuildCount || 0
+  );
   const requiredBuildCount = Number(requirements.buildCount || 1);
   const requiredGenerationCount = Number(
     requirements.successfulGenerationCount || 10
@@ -153,8 +155,7 @@ export default function BuildMission({
 
   const step1Complete = isMissionPassed || buildCount >= requiredBuildCount;
   const step2Complete =
-    isMissionPassed ||
-    successfulGenerationCount >= requiredGenerationCount;
+    isMissionPassed || successfulGenerationCount >= requiredGenerationCount;
   const step3Complete =
     isMissionPassed || publishedBuildCount >= requiredPublishedBuildCount;
 
@@ -245,9 +246,9 @@ export default function BuildMission({
                   <h2 className={titleClass}>Generate a few real versions</h2>
                   <p className={subtitleClass}>
                     Keep using Lumine until you have at least{' '}
-                    {requiredGenerationCount} successful code generations.
-                    You are at {successfulGenerationCount}/
-                    {requiredGenerationCount} right now.
+                    {requiredGenerationCount} successful code generations. You
+                    are at {successfulGenerationCount}/{requiredGenerationCount}{' '}
+                    right now.
                   </p>
                   <div className={buttonRowClass}>
                     <Button
@@ -280,7 +281,9 @@ export default function BuildMission({
                     <Button
                       color="green"
                       variant="solid"
-                      onClick={() => navigate(`/build/${latestPublishableBuild.id}`)}
+                      onClick={() =>
+                        navigate(`/build/${latestPublishableBuild.id}`)
+                      }
                     >
                       Open Build To Publish
                     </Button>
@@ -337,7 +340,7 @@ export default function BuildMission({
                 <MissionStatusCard
                   status="success"
                   title="Mission Accomplished"
-                  message="You created, iterated on, reviewed, and published your first Lumine build."
+                  message="You created, iterated on, and published your first Lumine App."
                   rewards={{
                     xp: mission.xpReward,
                     coins: mission.coinReward
@@ -345,7 +348,10 @@ export default function BuildMission({
                 />
               </div>
             ) : (
-              <TaskComplete taskId={mission.id} allTasksComplete={missionCleared} />
+              <TaskComplete
+                taskId={mission.id}
+                allTasksComplete={missionCleared}
+              />
             )}
           </div>
         </div>
