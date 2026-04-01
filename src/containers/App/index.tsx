@@ -317,6 +317,10 @@ export default function App() {
     () => getSectionFromPathname(location?.pathname)?.section === 'chat',
     [location?.pathname]
   );
+  const usingBuildRuntime = useMemo(
+    () => /^\/app\/[^/]+/.test(location.pathname),
+    [location.pathname]
+  );
 
   useScrollPosition({
     pathname: location.pathname,
@@ -494,7 +498,7 @@ export default function App() {
       componentPath="App/index"
       className={css`
         ${usingChat ? 'border-top: 1px solid transparent;' : ''}
-        height: CALC(100% - 4.5rem);
+        height: ${usingBuildRuntime ? '100%' : 'CALC(100% - 4.5rem)'};
         width: 100%;
         @media (max-width: ${mobileMaxWidth}) {
           height: 100%;
@@ -516,14 +520,16 @@ export default function App() {
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}
         {updateNoticeShown && <UpdateNotice updateDetail={updateDetail} />}
-        <Header
-          onInit={handleInit}
-          onMobileMenuOpen={() => setMobileMenuShown(true)}
-        />
+        {!usingBuildRuntime && (
+          <Header
+            onInit={handleInit}
+            onMobileMenuOpen={() => setMobileMenuShown(true)}
+          />
+        )}
         <div
           id="App"
           className={`${userIsUsingIOS && !usingChat ? 'ios ' : ''}${css`
-            margin-top: 4.5rem;
+            margin-top: ${usingBuildRuntime ? '0' : '4.5rem'};
             height: 100%;
             min-height: 100%;
             @media (max-width: ${mobileMaxWidth}) {

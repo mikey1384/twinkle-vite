@@ -33,12 +33,17 @@ interface RuntimeBuild {
 
 const shellClass = css`
   width: 100%;
+  min-width: 0;
   min-height: 0;
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-  background: var(--page-bg);
+  background: #fff;
+  @supports (height: 100dvh) {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
 `;
 
 const headerClass = css`
@@ -49,7 +54,8 @@ const headerClass = css`
   flex-direction: column;
   gap: 0.45rem;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.95rem 1rem 0.9rem;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.8rem) 0.95rem 0.75rem;
+    gap: 0.3rem;
   }
 `;
 
@@ -69,6 +75,9 @@ const titleClass = css`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 1.05rem;
+  }
 `;
 
 const metaClass = css`
@@ -79,6 +88,16 @@ const metaClass = css`
   color: var(--chat-text);
   opacity: 0.72;
   flex-wrap: wrap;
+  @media (max-width: ${mobileMaxWidth}) {
+    font-size: 0.82rem;
+    gap: 0.35rem;
+  }
+`;
+
+const metaDescriptionClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
 `;
 
 const panelWrapClass = css`
@@ -157,7 +176,11 @@ export default function BuildRuntime() {
           </div>
           <div className={metaClass}>
             <span>by {build.username}</span>
-            {build.description?.trim() ? <span>{build.description.trim()}</span> : null}
+            {build.description?.trim() ? (
+              <span className={metaDescriptionClass}>
+                {build.description.trim()}
+              </span>
+            ) : null}
           </div>
         </div>
         <div className={panelWrapClass}>
