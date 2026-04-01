@@ -139,6 +139,7 @@ interface LimitProgressItem {
 }
 
 interface ChatPanelProps {
+  className?: string;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   generating: boolean;
@@ -165,6 +166,7 @@ interface ChatPanelProps {
 }
 
 export default function ChatPanel({
+  className,
   messages,
   executionPlan,
   generating,
@@ -241,6 +243,18 @@ export default function ChatPanel({
         .slice(-10),
     [runEvents]
   );
+  const currentActivityMessage = useMemo(() => {
+    for (let index = runEvents.length - 1; index >= 0; index -= 1) {
+      const event = runEvents[index];
+      if (!event) continue;
+      const message = String(event.message || '').trim();
+      if (!message) continue;
+      if (event.kind === 'action' || event.kind === 'status') {
+        return message;
+      }
+    }
+    return null;
+  }, [runEvents]);
 
   const expandedLimitItems = useMemo(() => {
     if (!copilotPolicy) return [];
@@ -384,7 +398,7 @@ export default function ChatPanel({
   }
 
   return (
-    <div className={panelClass}>
+    <div className={className ? `${panelClass} ${className}` : panelClass}>
       <div className={headerClass}>
         <div className={headerTitleClass}>
           <Icon icon="sparkles" />
@@ -620,6 +634,7 @@ export default function ChatPanel({
           generating={generating}
           generatingStatus={generatingStatus}
           assistantStatusSteps={assistantStatusSteps}
+          currentActivityMessage={currentActivityMessage}
           usageRows={usageRows}
           usageTotals={usageTotals}
           usageShowsMultipleModels={usageShowsMultipleModels}
@@ -799,6 +814,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   generating,
   generatingStatus,
   assistantStatusSteps,
+  currentActivityMessage,
   usageRows,
   usageTotals,
   usageShowsMultipleModels,
@@ -822,6 +838,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
+  currentActivityMessage: string | null;
   usageRows: BuildUsageMetric[];
   usageTotals: {
     inputTokens: number;
@@ -898,6 +915,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
               generating={generating}
               generatingStatus={generatingStatus}
               assistantStatusSteps={assistantStatusSteps}
+              currentActivityMessage={currentActivityMessage}
               activeStreamMessageIds={activeStreamMessageIds}
               onDeleteMessage={onDeleteMessage}
             />
@@ -1287,6 +1305,7 @@ function BuildChatMessageRow({
   generating,
   generatingStatus,
   assistantStatusSteps,
+  currentActivityMessage,
   activeStreamMessageIds,
   onDeleteMessage
 }: {
@@ -1297,6 +1316,7 @@ function BuildChatMessageRow({
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
+  currentActivityMessage: string | null;
   activeStreamMessageIds: number[];
   onDeleteMessage: (message: ChatMessage) => void;
 }) {
@@ -1413,6 +1433,9 @@ function BuildChatMessageRow({
                 generating={generating}
                 generatingStatus={generatingStatus}
                 statusSteps={isLastAssistant ? assistantStatusSteps : []}
+                currentActivityMessage={
+                  isLastAssistant ? currentActivityMessage : null
+                }
               />
             ) : (
               <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
@@ -1467,7 +1490,8 @@ function AssistantMessage({
   isLatestAssistant,
   generating,
   generatingStatus,
-  statusSteps
+  statusSteps,
+  currentActivityMessage
 }: {
   message: ChatMessage;
   messages: ChatMessage[];
@@ -1475,6 +1499,7 @@ function AssistantMessage({
   generating: boolean;
   generatingStatus: string | null;
   statusSteps: string[];
+  currentActivityMessage: string | null;
 }) {
   const [showDiff, setShowDiff] = useState(true);
 
@@ -1503,6 +1528,14 @@ function AssistantMessage({
     !message.codeGenerated &&
     Boolean(message.streamCodePreview && message.streamCodePreview.trim());
   const showSteps = statusSteps.length > 0 && generating;
+  const normalizedCurrentActivityMessage = String(
+    currentActivityMessage || ''
+  ).trim();
+  const showCurrentActivity =
+    generating &&
+    isLatestAssistant &&
+    Boolean(normalizedCurrentActivityMessage) &&
+    normalizedCurrentActivityMessage !== String(generatingStatus || '').trim();
   const waitingForCurrentAssistantResponse = generating && isLatestAssistant;
   const showNoCodeWarning =
     !hasCodePayload &&
@@ -1667,6 +1700,40 @@ function AssistantMessage({
       ) : generating && !showSteps ? (
         <ThinkingIndicator status={generatingStatus || 'thinking'} compact />
       ) : null}
+      {showCurrentActivity && (
+        <div
+          className={css`
+            margin-top: 0.55rem;
+            padding: 0.55rem 0.7rem;
+            border-radius: 8px;
+            border: 1px solid rgba(52, 109, 255, 0.16);
+            background: rgba(52, 109, 255, 0.05);
+            color: var(--chat-text);
+            display: grid;
+            gap: 0.22rem;
+          `}
+        >
+          <div
+            className={css`
+              font-size: 0.68rem;
+              font-weight: 800;
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+              color: ${Color.logoBlue()};
+            `}
+          >
+            Current Activity
+          </div>
+          <div
+            className={css`
+              font-size: 0.82rem;
+              line-height: 1.4;
+            `}
+          >
+            {normalizedCurrentActivityMessage}
+          </div>
+        </div>
+      )}
       {showSteps && <StatusStepLog steps={statusSteps} />}
     </div>
   );

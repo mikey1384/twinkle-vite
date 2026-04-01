@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
+import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import BuildDescriptionModal from './BuildDescriptionModal';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 import type {
@@ -36,6 +37,9 @@ const pageClass = css`
   height: 100%;
   overflow: hidden;
   background: var(--page-bg);
+  @media (max-width: ${mobileMaxWidth}) {
+    height: calc(100% - var(--mobile-nav-total-height, 7rem));
+  }
 `;
 
 const headerClass = css`
@@ -126,6 +130,8 @@ const panelShellClass = css`
   min-height: 0;
   @media (max-width: ${mobileMaxWidth}) {
     padding: 0.75rem 1rem 1rem;
+    grid-template-rows: auto 1fr;
+    gap: 0.5rem;
   }
 `;
 
@@ -144,7 +150,23 @@ const workspaceWithChatClass = css`
   grid-template-columns: 380px 1fr;
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+`;
+
+const mobilePanelHiddenClass = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
+`;
+
+const mobileTabBarClass = css`
+  display: none;
+  @media (max-width: ${mobileMaxWidth}) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 1rem 0;
   }
 `;
 
@@ -836,6 +858,9 @@ export default function BuildEditor({
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
 
+  const [mobilePanelTab, setMobilePanelTab] = useState<'chat' | 'preview'>(
+    'chat'
+  );
   const [generating, setGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
   const [assistantStatusSteps, setAssistantStatusSteps] = useState<string[]>(
@@ -929,6 +954,7 @@ export default function BuildEditor({
   const runtimeAutoFixAttemptedSignaturesRef = useRef<Set<string>>(new Set());
   const activeRunModeRef = useRef<BuildRunMode>('user');
   const sharedRunReplicaCheckKeyRef = useRef('');
+  const lastResumeAttemptAtRef = useRef(0);
   const RUNTIME_AUTOFIX_ENABLED = false;
   const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
   const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
@@ -946,6 +972,18 @@ export default function BuildEditor({
   useEffect(() => {
     streamingProjectFilesRef.current = streamingProjectFiles;
   }, [streamingProjectFiles]);
+
+  useEffect(() => {
+    if (streamingProjectFiles && streamingProjectFiles.length > 0) {
+      setMobilePanelTab('preview');
+    }
+  }, [streamingProjectFiles]);
+
+  useEffect(() => {
+    if (!generating) {
+      setMobilePanelTab('chat');
+    }
+  }, [generating]);
 
   useEffect(() => {
     generatingRef.current = generating;
@@ -991,6 +1029,7 @@ export default function BuildEditor({
     activeRunModeRef.current = 'user';
     shouldHydrateSharedRunRef.current = true;
     sharedRunReplicaCheckKeyRef.current = '';
+    lastResumeAttemptAtRef.current = 0;
   }, [build.id]);
 
   useEffect(() => {
@@ -1207,6 +1246,37 @@ export default function BuildEditor({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    function handleSocketConnect() {
+      maybeResumeActiveBuildRun();
+    }
+
+    function handlePageShow() {
+      maybeResumeActiveBuildRun();
+    }
+
+    function handleOnline() {
+      maybeResumeActiveBuildRun();
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState !== 'visible') return;
+      maybeResumeActiveBuildRun();
+    }
+
+    socket.on('connect', handleSocketConnect);
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      socket.off('connect', handleSocketConnect);
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [build.id]);
 
   useEffect(() => {
     if (didAutoPromptRef.current) return;
@@ -1589,6 +1659,147 @@ export default function BuildEditor({
       maybeAutoScrollDuringStream();
     }
 
+    function handleResumeRunState({
+      requestId,
+      status,
+      assistantStatusSteps,
+      usageMetrics,
+      runEvents: resumedRunEvents,
+      streamUpdate,
+      terminal
+    }: {
+      requestId?: string;
+      status?: string | null;
+      assistantStatusSteps?: string[];
+      usageMetrics?: Record<
+        string,
+        {
+          stage?: string;
+          model?: string;
+          inputTokens?: number;
+          outputTokens?: number;
+          totalTokens?: number;
+        }
+      >;
+      runEvents?: Array<{
+        id?: string;
+        kind?: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
+        phase?: string | null;
+        message?: string;
+        createdAt?: number;
+        deduped?: boolean;
+        usage?: {
+          stage?: string | null;
+          model?: string | null;
+          inputTokens?: number;
+          outputTokens?: number;
+          totalTokens?: number;
+        } | null;
+      }>;
+      streamUpdate?: {
+        reply?: string;
+        codeGenerated?: string | null;
+        hasCodeGeneratedField?: boolean;
+        projectFiles?: Array<{ path: string; content?: string }> | null;
+      } | null;
+      terminal?: {
+        type?: 'complete' | 'error' | 'stopped';
+        payload?: any;
+      } | null;
+    }) {
+      if (!requestId || requestId !== streamRequestIdRef.current) return;
+      resetDedupedProcessingReconcileState();
+      if (terminal?.type === 'complete' && terminal.payload) {
+        void handleGenerateComplete(terminal.payload);
+        return;
+      }
+      if (terminal?.type === 'error' && terminal.payload) {
+        handleGenerateError(terminal.payload);
+        return;
+      }
+      if (terminal?.type === 'stopped' && terminal.payload) {
+        void handleGenerateStopped(terminal.payload);
+        return;
+      }
+      generatingRef.current = true;
+      setGenerating(true);
+      setGeneratingStatus(typeof status === 'string' ? status : null);
+      setAssistantStatusSteps(
+        Array.isArray(assistantStatusSteps)
+          ? assistantStatusSteps.filter(
+              (entry): entry is string =>
+                typeof entry === 'string' && entry.trim().length > 0
+            )
+          : []
+      );
+      setUsageMetrics(() => {
+        const nextMetrics: Record<string, BuildUsageMetric> = {};
+        for (const metric of Object.values(usageMetrics || {})) {
+          const stage = String(metric?.stage || '').trim();
+          const model = String(metric?.model || '').trim();
+          if (!stage || !model) continue;
+          nextMetrics[stage] = {
+            stage,
+            model,
+            inputTokens: Number(metric?.inputTokens || 0),
+            outputTokens: Number(metric?.outputTokens || 0),
+            totalTokens: Number(metric?.totalTokens || 0)
+          };
+        }
+        return nextMetrics;
+      });
+      setRunEvents(
+        Array.isArray(resumedRunEvents)
+          ? resumedRunEvents
+              .filter(
+                (event): event is NonNullable<typeof resumedRunEvents>[number] =>
+                  Boolean(event?.kind && event?.message)
+              )
+              .map((event, index) => ({
+                id:
+                  typeof event.id === 'string' && event.id.trim().length > 0
+                    ? event.id
+                    : `${requestId}-${event.createdAt || Date.now()}-${index}`,
+                kind: event.kind as BuildRunEvent['kind'],
+                phase: event.phase || null,
+                message: String(event.message || ''),
+                createdAt:
+                  typeof event.createdAt === 'number' &&
+                  Number.isFinite(event.createdAt)
+                    ? event.createdAt
+                    : Date.now(),
+                deduped: Boolean(event.deduped),
+                usage: event.usage || null
+              }))
+              .slice(-40)
+          : []
+      );
+      if (streamUpdate) {
+        const resumeUpdatePayload: {
+          requestId: string;
+          reply?: string;
+          codeGenerated?: string | null;
+          projectFiles?: Array<{ path: string; content?: string }> | null;
+        } = {
+          requestId
+        };
+        if (typeof streamUpdate.reply === 'string') {
+          resumeUpdatePayload.reply = streamUpdate.reply;
+        }
+        if (streamUpdate.hasCodeGeneratedField) {
+          resumeUpdatePayload.codeGenerated = streamUpdate.codeGenerated ?? null;
+        }
+        if (
+          Array.isArray(streamUpdate.projectFiles) &&
+          streamUpdate.projectFiles.length > 0
+        ) {
+          resumeUpdatePayload.projectFiles = streamUpdate.projectFiles;
+        }
+        handleGenerateUpdate(resumeUpdatePayload);
+      }
+      maybeAutoScrollDuringStream();
+    }
+
     function handleGenerateError({
       requestId,
       error
@@ -1784,6 +1995,7 @@ export default function BuildEditor({
     }: {
       requestId?: string;
       event?: {
+        id?: string;
         kind?: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
         phase?: string | null;
         message?: string;
@@ -1808,7 +2020,10 @@ export default function BuildEditor({
           : Date.now();
       setRunEvents((prev) => {
         const nextEvent: BuildRunEvent = {
-          id: `${createdAt}-${kind}-${prev.length}`,
+          id:
+            typeof event.id === 'string' && event.id.trim().length > 0
+              ? event.id
+              : `${createdAt}-${kind}-${prev.length}`,
           kind,
           phase: event.phase || null,
           message,
@@ -1816,6 +2031,9 @@ export default function BuildEditor({
           deduped: Boolean(event.deduped),
           usage: event.usage || null
         };
+        if (prev.some((existing) => existing.id === nextEvent.id)) {
+          return prev;
+        }
         const last = prev[prev.length - 1];
         if (
           last &&
@@ -1950,6 +2168,7 @@ export default function BuildEditor({
     socket.on('build_generate_status', handleGenerateStatus);
     socket.on('build_usage_update', handleUsageUpdate);
     socket.on('build_run_event', handleRunEvent);
+    socket.on('build_resume_run_state', handleResumeRunState);
     socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
     socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
     buildSocketListenersReadyRef.current = true;
@@ -1965,6 +2184,7 @@ export default function BuildEditor({
       socket.off('build_generate_status', handleGenerateStatus);
       socket.off('build_usage_update', handleUsageUpdate);
       socket.off('build_run_event', handleRunEvent);
+      socket.off('build_resume_run_state', handleResumeRunState);
       socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
       socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
     };
@@ -3060,11 +3280,28 @@ export default function BuildEditor({
       </header>
 
       <div className={panelShellClass}>
+        {isOwner && (
+          <div className={mobileTabBarClass}>
+            <SegmentedToggle
+              value={mobilePanelTab}
+              options={[
+                { value: 'chat' as const, label: 'Chat', icon: 'comments' },
+                { value: 'preview' as const, label: 'Preview', icon: 'eye' }
+              ]}
+              onChange={setMobilePanelTab}
+              ariaLabel="Switch between chat and preview"
+              size="sm"
+            />
+          </div>
+        )}
         <div
           className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
         >
           {isOwner && (
             <ChatPanel
+              className={
+                mobilePanelTab !== 'chat' ? mobilePanelHiddenClass : undefined
+              }
               messages={mergedChatMessages}
               executionPlan={build.executionPlan || null}
               generating={generating}
@@ -3091,6 +3328,11 @@ export default function BuildEditor({
             />
           )}
           <PreviewPanel
+            className={
+              isOwner && mobilePanelTab !== 'preview'
+                ? mobilePanelHiddenClass
+                : undefined
+            }
             build={build}
             code={build.code}
             projectFiles={build.projectFiles || []}
@@ -3509,6 +3751,22 @@ export default function BuildEditor({
   function maybeAutoScrollDuringStream() {
     if (!shouldAutoScrollRef.current) return;
     scrollChatToBottom('auto');
+  }
+
+  function maybeResumeActiveBuildRun() {
+    if (!buildSocketListenersReadyRef.current) return;
+    if (!generatingRef.current) return;
+    const requestId = String(streamRequestIdRef.current || '').trim();
+    if (!requestId) return;
+    const activeBuildId = Number(buildRef.current?.id || build.id);
+    if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
+    const now = Date.now();
+    if (now - lastResumeAttemptAtRef.current < 1500) return;
+    lastResumeAttemptAtRef.current = now;
+    socket.emit('build_resume_run', {
+      buildId: activeBuildId,
+      requestId
+    });
   }
 
   function clearDedupedProcessingReconcileTimer() {

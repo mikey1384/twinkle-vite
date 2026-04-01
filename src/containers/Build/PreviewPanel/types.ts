@@ -15,6 +15,7 @@ export interface Build {
 }
 
 export interface PreviewPanelProps {
+  className?: string;
   build: Build;
   code: string | null;
   projectFiles: Array<{

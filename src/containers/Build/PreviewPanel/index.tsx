@@ -186,6 +186,7 @@ const workspaceViewOptions = [
 ] as const;
 
 export default function PreviewPanel({
+  className,
   build,
   code,
   projectFiles,
@@ -1120,7 +1121,7 @@ export default function PreviewPanel({
   }
 
   return (
-    <div className={runtimeOnly ? runtimePanelClass : panelClass}>
+    <div className={`${runtimeOnly ? runtimePanelClass : panelClass}${className ? ` ${className}` : ''}`}>
       {!runtimeOnly && (
         <div className={toolbarClass}>
           <div className={toolbarTitleClass}>
