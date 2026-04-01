@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { socket } from '~/constants/sockets/api';
 import { useBuildContext, useKeyContext } from '~/contexts';
 
 export default function useBuildSocket() {
+  const { pathname } = useLocation();
   const userId = useKeyContext((v) => v.myState.userId);
   const onUpdateBuildRunStatus = useBuildContext(
     (v) => v.actions.onUpdateBuildRunStatus
@@ -22,6 +24,7 @@ export default function useBuildSocket() {
   const onFailBuildRun = useBuildContext((v) => v.actions.onFailBuildRun);
   const onStopBuildRun = useBuildContext((v) => v.actions.onStopBuildRun);
   const onResetBuildRuns = useBuildContext((v) => v.actions.onResetBuildRuns);
+  const usingBuildWorkspace = /^\/build\/\d+\/?$/.test(pathname);
 
   useEffect(() => {
     onResetBuildRuns();
@@ -29,6 +32,10 @@ export default function useBuildSocket() {
   }, [userId]);
 
   useEffect(() => {
+    if (usingBuildWorkspace) {
+      return;
+    }
+
     function handleGenerateStatus({
       requestId,
       status
@@ -228,5 +235,5 @@ export default function useBuildSocket() {
       socket.off('build_run_event', handleRunEvent);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [usingBuildWorkspace]);
 }
