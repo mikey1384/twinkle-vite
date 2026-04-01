@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import SectionPanel from '~/components/SectionPanel';
 import BuildProjectListItem, {
@@ -21,6 +22,7 @@ export default function Builds({
   profile: { id: number; username: string };
   selectedTheme: string;
 }) {
+  const location = useLocation();
   const loadUserBuilds = useAppContext((v) => v.requestHelpers.loadUserBuilds);
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
@@ -37,6 +39,15 @@ export default function Builds({
   const isOwnProfile =
     (myUsername && myUsername === profile.username) ||
     (Number(myId) > 0 && Number(myId) === Number(profile.id));
+  const buildRuntimeNavigationState = useMemo(
+    () => ({
+      runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+      runtimeBackLabel: isOwnProfile
+        ? 'Back to your profile'
+        : `Back to ${profile.username}'s profile`
+    }),
+    [isOwnProfile, location.hash, location.pathname, location.search, profile.username]
+  );
 
   useEffect(() => {
     init();
@@ -90,6 +101,7 @@ export default function Builds({
                 key={build.id}
                 build={build}
                 to={`/app/${build.id}`}
+                navigationState={buildRuntimeNavigationState}
                 isOwner={isOwnProfile}
                 onAddDescription={isOwnProfile ? setEditingBuild : undefined}
               />

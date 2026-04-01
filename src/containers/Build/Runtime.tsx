@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
@@ -59,11 +59,19 @@ const headerClass = css`
   }
 `;
 
+const headerTopRowClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+`;
+
 const titleRowClass = css`
   display: flex;
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
+  flex: 1;
   color: var(--chat-text);
 `;
 
@@ -100,6 +108,38 @@ const metaDescriptionClass = css`
   }
 `;
 
+const backButtonClass = css`
+  border: 1px solid var(--ui-border);
+  background: rgba(65, 140, 235, 0.08);
+  color: var(--chat-text);
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+  &:hover {
+    background: rgba(65, 140, 235, 0.14);
+    border-color: rgba(65, 140, 235, 0.24);
+    transform: translateY(-1px);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    padding: 0.48rem 0.72rem;
+    font-size: 0.8rem;
+    max-width: 46vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
 const panelWrapClass = css`
   min-height: 0;
   overflow: hidden;
@@ -116,6 +156,8 @@ const previewShellClass = css`
 
 export default function BuildRuntime() {
   const { buildId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const loadRuntimeBuild = useAppContext((v) => v.requestHelpers.loadRuntimeBuild);
   const userId = useKeyContext((v) => v.myState.userId);
   const [loading, setLoading] = useState(true);
@@ -126,6 +168,22 @@ export default function BuildRuntime() {
     const id = parseInt(buildId || '', 10);
     return Number.isNaN(id) ? null : id;
   }, [buildId]);
+  const canUseHistoryBack =
+    typeof window !== 'undefined' &&
+    Number.isFinite(Number(window.history.state?.idx)) &&
+    Number(window.history.state?.idx) > 0;
+  const backTo = useMemo(() => {
+    return typeof location.state?.runtimeBackTo === 'string'
+      ? location.state.runtimeBackTo
+      : '/';
+  }, [location.state]);
+  const backLabel = useMemo(() => {
+    return typeof location.state?.runtimeBackLabel === 'string'
+      ? location.state.runtimeBackLabel
+      : canUseHistoryBack
+        ? 'Go back'
+        : 'Back to Twinkle';
+  }, [canUseHistoryBack, location.state]);
 
   useEffect(() => {
     if (!numericBuildId) return;
@@ -166,13 +224,31 @@ export default function BuildRuntime() {
     return <InvalidPage text={error || 'Build not found'} />;
   }
 
+  function handleBack() {
+    if (canUseHistoryBack) {
+      navigate(-1);
+      return;
+    }
+    navigate(backTo, { replace: true });
+  }
+
   return (
     <ErrorBoundary componentPath="Build/Runtime">
       <div className={shellClass}>
         <div className={headerClass}>
-          <div className={titleRowClass}>
-            <Icon icon="laptop-code" />
-            <h1 className={titleClass}>{build.title}</h1>
+          <div className={headerTopRowClass}>
+            <button
+              type="button"
+              className={backButtonClass}
+              onClick={handleBack}
+            >
+              <Icon icon="arrow-left" />
+              <span>{backLabel}</span>
+            </button>
+            <div className={titleRowClass}>
+              <Icon icon="laptop-code" />
+              <h1 className={titleClass}>{build.title}</h1>
+            </div>
           </div>
           <div className={metaClass}>
             <span>by {build.username}</span>

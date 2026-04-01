@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext, useKeyContext } from '~/contexts';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -57,6 +57,7 @@ const galleryFilterClass = css`
 
 export default function Builds() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profileTheme } = useKeyContext((v) => v.myState);
   const loadPublicBuilds = useAppContext(
     (v) => v.requestHelpers.loadPublicBuilds
@@ -117,7 +118,12 @@ export default function Builds() {
   }
 
   function handleBuildClick(buildId: number) {
-    navigate(`/app/${buildId}`);
+    navigate(`/app/${buildId}`, {
+      state: {
+        runtimeBackTo: `${location.pathname}${location.search}${location.hash}`,
+        runtimeBackLabel: 'Back to Build Gallery'
+      }
+    });
   }
 
   function handleSortChange(sort: SortOption) {

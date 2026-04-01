@@ -169,12 +169,14 @@ export interface BuildProjectListItemData {
 export default function BuildProjectListItem({
   build,
   to,
+  navigationState,
   isOwner = false,
   onAddDescription,
   onDelete
 }: {
   build: BuildProjectListItemData;
   to?: string;
+  navigationState?: Record<string, any>;
   isOwner?: boolean;
   onAddDescription?: (build: BuildProjectListItemData) => void;
   onDelete?: (build: BuildProjectListItemData) => void;
@@ -269,7 +271,7 @@ export default function BuildProjectListItem({
   );
 
   function handleNavigate() {
-    navigate(targetPath);
+    navigate(targetPath, navigationState ? { state: navigationState } : undefined);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -286,7 +288,7 @@ export default function BuildProjectListItem({
       onAddDescription(build);
       return;
     }
-    navigate(targetPath);
+    navigate(targetPath, navigationState ? { state: navigationState } : undefined);
   }
 
   function handleDeleteClick(event: React.MouseEvent<HTMLButtonElement>) {
