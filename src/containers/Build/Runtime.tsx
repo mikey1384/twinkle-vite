@@ -185,6 +185,52 @@ export default function BuildRuntime() {
         : 'Back to Twinkle';
   }, [canUseHistoryBack, location.state]);
 
+  function handleBack() {
+    if (canUseHistoryBack) {
+      navigate(-1);
+      return;
+    }
+    navigate(backTo, { replace: true });
+  }
+
+  function renderRuntimeUnavailable({
+    title,
+    text
+  }: {
+    title?: string;
+    text: string;
+  }) {
+    return (
+      <ErrorBoundary componentPath="Build/Runtime">
+        <div className={shellClass}>
+          <div className={headerClass}>
+            <div className={headerTopRowClass}>
+              <button
+                type="button"
+                className={backButtonClass}
+                onClick={handleBack}
+              >
+                <Icon icon="arrow-left" />
+                <span>{backLabel}</span>
+              </button>
+              <div className={titleRowClass}>
+                <Icon icon="laptop-code" />
+                <h1 className={titleClass}>Build App</h1>
+              </div>
+            </div>
+          </div>
+          <div className={panelWrapClass}>
+            <InvalidPage
+              title={title}
+              text={text}
+              style={{ paddingTop: '12rem' }}
+            />
+          </div>
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
   useEffect(() => {
     if (!numericBuildId) return;
     void handleLoad();
@@ -213,7 +259,9 @@ export default function BuildRuntime() {
   }, [numericBuildId, userId]);
 
   if (!numericBuildId) {
-    return <InvalidPage text="Invalid build ID" />;
+    return renderRuntimeUnavailable({
+      text: 'Invalid build ID'
+    });
   }
 
   if (loading) {
@@ -221,15 +269,9 @@ export default function BuildRuntime() {
   }
 
   if (!build || error) {
-    return <InvalidPage text={error || 'Build not found'} />;
-  }
-
-  function handleBack() {
-    if (canUseHistoryBack) {
-      navigate(-1);
-      return;
-    }
-    navigate(backTo, { replace: true });
+    return renderRuntimeUnavailable({
+      text: error || 'Build not found'
+    });
   }
 
   return (

@@ -12,6 +12,7 @@ interface CodeWorkspacePaneProps {
   projectExplorerEntries: ProjectExplorerEntry[];
   selectedFolderPath: string | null;
   folderMoveTargetPath: string;
+  projectFileUploadAccept: string;
   newFilePath: string;
   activeFilePath: string;
   activeFile: EditableProjectFile | null;
@@ -25,6 +26,8 @@ interface CodeWorkspacePaneProps {
   persistedFileContentByPath: Map<string, string>;
   onNewFilePathChange: (value: string) => void;
   onAddProjectFile: () => void;
+  onOpenProjectFileUploadPicker: () => void;
+  onImportProjectFolder: (files: FileList | null) => void;
   onFolderMoveTargetPathChange: (value: string) => void;
   onMoveSelectedFolder: () => void;
   onSelectFolder: (path: string) => void;
@@ -42,6 +45,7 @@ export default function CodeWorkspacePane({
   projectExplorerEntries,
   selectedFolderPath,
   folderMoveTargetPath,
+  projectFileUploadAccept,
   newFilePath,
   activeFilePath,
   activeFile,
@@ -55,6 +59,8 @@ export default function CodeWorkspacePane({
   persistedFileContentByPath,
   onNewFilePathChange,
   onAddProjectFile,
+  onOpenProjectFileUploadPicker,
+  onImportProjectFolder,
   onFolderMoveTargetPathChange,
   onMoveSelectedFolder,
   onSelectFolder,
@@ -66,6 +72,7 @@ export default function CodeWorkspacePane({
   onSaveEditableProjectFiles,
   onActiveFileContentChange
 }: CodeWorkspacePaneProps) {
+  const projectFolderInputRef = React.useRef<HTMLInputElement | null>(null);
   const persistedActiveFileContent = activeFile
     ? persistedFileContentByPath.get(activeFile.path) || ''
     : '';
@@ -75,6 +82,13 @@ export default function CodeWorkspacePane({
   const activeFileHasStreamingDiff = activeFile
     ? persistedActiveFileContent !== activeFile.content
     : false;
+
+  React.useEffect(() => {
+    const folderInput = projectFolderInputRef.current;
+    if (!folderInput) return;
+    folderInput.setAttribute('webkitdirectory', '');
+    folderInput.setAttribute('directory', '');
+  }, []);
 
   return (
     <div
@@ -128,6 +142,7 @@ export default function CodeWorkspacePane({
               border-bottom: 1px solid rgba(255, 255, 255, 0.08);
               display: flex;
               gap: 0.4rem;
+              flex-wrap: wrap;
             `}
           >
             <input
@@ -169,6 +184,71 @@ export default function CodeWorkspacePane({
               title="Add file"
             >
               <Icon icon="plus" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenProjectFileUploadPicker}
+              className={css`
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 8px;
+                background: rgba(148, 163, 184, 0.16);
+                color: #e5e7eb;
+                padding: 0.4rem 0.6rem;
+                cursor: pointer;
+                font-size: 0.75rem;
+                font-weight: 700;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                white-space: nowrap;
+                &:hover {
+                  background: rgba(148, 163, 184, 0.26);
+                }
+              `}
+              aria-label="Upload files"
+              title="Upload flat files into the project explorer"
+            >
+              <Icon icon="upload" />
+              <span>Files</span>
+            </button>
+            <input
+              ref={projectFolderInputRef}
+              type="file"
+              multiple
+              accept={projectFileUploadAccept}
+              className={css`
+                display: none;
+              `}
+              onChange={(e) => {
+                onImportProjectFolder(e.target.files);
+                e.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => projectFolderInputRef.current?.click()}
+              className={css`
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 8px;
+                background: rgba(148, 163, 184, 0.16);
+                color: #e5e7eb;
+                padding: 0.4rem 0.6rem;
+                cursor: pointer;
+                font-size: 0.75rem;
+                font-weight: 700;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                white-space: nowrap;
+                &:hover {
+                  background: rgba(148, 163, 184, 0.26);
+                }
+              `}
+              aria-label="Import folder"
+              title="Import a project folder and preserve nested paths"
+            >
+              <Icon icon="folder-open" />
+              <span>Folder</span>
             </button>
           </div>
         )}

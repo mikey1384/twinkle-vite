@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
+import type {
+  PreviewPanelHandle,
+  PreviewRuntimeUploadsSyncPayload
+} from './PreviewPanel/types';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import BuildDescriptionModal from './BuildDescriptionModal';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
@@ -260,6 +264,9 @@ interface BuildCopilotPolicy {
     maxProjectBytes: number;
     maxFilesPerProject: number;
     maxFileLines: number;
+    maxPublishedBuildStorageBytes: number;
+    maxRuntimeFileStorageBytes: number;
+    maxRuntimeFileBytes: number;
   };
   usage: {
     currentProjectBytes: number;
@@ -267,6 +274,12 @@ interface BuildCopilotPolicy {
     projectFileCount: number;
     projectFileBytes: number;
     maxFilesPerProject: number;
+    publishedBuildStorageBytes: number;
+    publishedBuildStorageRemaining: number;
+    publishedBuildCount: number;
+    runtimeFileStorageBytes: number;
+    runtimeFileStorageRemaining: number;
+    runtimeFileCount: number;
   };
   requestLimits: {
     dayIndex: number;
@@ -308,6 +321,31 @@ interface BuildProjectFileChangeLog {
   createdAt: number;
 }
 
+interface BuildRuntimeUploadAsset {
+  id: number;
+  buildId: number;
+  buildTitle: string | null;
+  buildSlug: string | null;
+  buildIsPublic: boolean;
+  fileName: string;
+  originalFileName: string;
+  mimeType: string | null;
+  sizeBytes: number;
+  filePath: string;
+  url: string;
+  thumbUrl: string | null;
+  fileType: 'image' | 'audio' | 'pdf' | 'archive' | 'other';
+  uploadedByUserId: number;
+  createdAt: number;
+}
+
+interface BuildRuntimeUploadUsage {
+  totalBytes: number;
+  fileCount: number;
+  maxRuntimeFileStorageBytes: number;
+  remainingBytes: number;
+}
+
 interface QueuedBuildRequest {
   id: string;
   message: string;
@@ -346,6 +384,37 @@ type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
 interface RuntimeAutoFixContext {
   beforeObservation: BuildRuntimeObservationState;
   remainingRepairsAfterVerification: number;
+}
+
+function applyRuntimeUploadUsageToCopilotPolicy(
+  policy: BuildCopilotPolicy | null,
+  usage: BuildRuntimeUploadUsage | null | undefined
+) {
+  if (!policy || !usage) {
+    return policy;
+  }
+  return {
+    ...policy,
+    limits: {
+      ...policy.limits,
+      maxRuntimeFileStorageBytes: Math.max(
+        0,
+        Math.floor(Number(usage.maxRuntimeFileStorageBytes) || 0)
+      )
+    },
+    usage: {
+      ...policy.usage,
+      runtimeFileStorageBytes: Math.max(
+        0,
+        Math.floor(Number(usage.totalBytes) || 0)
+      ),
+      runtimeFileStorageRemaining: Math.max(
+        0,
+        Math.floor(Number(usage.remainingBytes) || 0)
+      ),
+      runtimeFileCount: Math.max(0, Math.floor(Number(usage.fileCount) || 0))
+    }
+  };
 }
 
 interface PendingRuntimeVerification {
@@ -522,7 +591,9 @@ function mergeChatMessagesWithBuildRun({
         ...liveMessage,
         id: nextMessages[existingIndex].id,
         persisted:
-          nextMessages[existingIndex].persisted || liveMessage.persisted || false
+          nextMessages[existingIndex].persisted ||
+          liveMessage.persisted ||
+          false
       };
       continue;
     }
@@ -561,9 +632,12 @@ function doChatMessagesRepresentSameBuildMessage(
   ) {
     return false;
   }
-  return Math.abs(
-    Number(persistedMessage.createdAt || 0) - Number(liveMessage.createdAt || 0)
-  ) <= 5;
+  return (
+    Math.abs(
+      Number(persistedMessage.createdAt || 0) -
+        Number(liveMessage.createdAt || 0)
+    ) <= 5
+  );
 }
 
 function chatMessagesEqual(a: ChatMessage[], b: ChatMessage[]) {
@@ -608,7 +682,7 @@ function projectFilesEqual(
 function serializedComparableValue(value: any) {
   try {
     return JSON.stringify(value ?? null) || 'null';
-  } catch (error) {
+  } catch {
     return String(value ?? null);
   }
 }
@@ -851,6 +925,12 @@ export default function BuildEditor({
     (v) => v.requestHelpers.loadBuildProjectFileChangeLogs
   );
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
+  const loadBuildRuntimeUploads = useAppContext(
+    (v) => v.requestHelpers.loadBuildRuntimeUploads
+  );
+  const deleteBuildRuntimeUpload = useAppContext(
+    (v) => v.requestHelpers.deleteBuildRuntimeUpload
+  );
   const deleteBuildChatMessage = useAppContext(
     (v) => v.requestHelpers.deleteBuildChatMessage
   );
@@ -896,12 +976,29 @@ export default function BuildEditor({
     useState<BuildRuntimeObservationState | null>(null);
   const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
     useState<BuildRuntimeExplorationPlan | null>(null);
+  const [runtimeUploadsModalShown, setRuntimeUploadsModalShown] =
+    useState(false);
+  const [runtimeUploadAssets, setRuntimeUploadAssets] = useState<
+    BuildRuntimeUploadAsset[]
+  >([]);
+  const [runtimeUploadsNextCursor, setRuntimeUploadsNextCursor] = useState<
+    number | null
+  >(null);
+  const [runtimeUploadsLoading, setRuntimeUploadsLoading] = useState(false);
+  const [runtimeUploadsLoadingMore, setRuntimeUploadsLoadingMore] =
+    useState(false);
+  const [runtimeUploadsError, setRuntimeUploadsError] = useState('');
+  const [runtimeUploadDeletingId, setRuntimeUploadDeletingId] = useState<
+    number | null
+  >(null);
   const [buildSocketListenersReady, setBuildSocketListenersReady] =
     useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const previewPanelRef = useRef<PreviewPanelHandle | null>(null);
   const chatMessagesRef = useRef(chatMessages);
   const buildRef = useRef(build);
+  const copilotPolicyRef = useRef(copilotPolicy);
   const updateBuildRef = useRef(onUpdateBuild);
   const updateChatMessagesRef = useRef(onUpdateChatMessages);
   const updateCopilotPolicyRef = useRef(onUpdateCopilotPolicy);
@@ -980,12 +1077,6 @@ export default function BuildEditor({
   }, [streamingProjectFiles]);
 
   useEffect(() => {
-    if (!generating) {
-      setMobilePanelTab('chat');
-    }
-  }, [generating]);
-
-  useEffect(() => {
     generatingRef.current = generating;
   }, [generating]);
 
@@ -1040,8 +1131,10 @@ export default function BuildEditor({
       return;
     }
 
-    const normalizedBaseProjectFiles = Array.isArray(sharedBuildRun.baseProjectFiles)
-      ? sharedBuildRun.baseProjectFiles.map((file) => ({
+    const normalizedBaseProjectFiles = Array.isArray(
+      sharedBuildRun.baseProjectFiles
+    )
+      ? sharedBuildRun.baseProjectFiles.map((file: any) => ({
           path: normalizeProjectFilePath(file.path),
           content: typeof file.content === 'string' ? file.content : ''
         }))
@@ -1059,7 +1152,8 @@ export default function BuildEditor({
       setStreamingFocusFilePath(sharedBuildRun.streamingFocusFilePath);
       streamRequestIdRef.current = sharedBuildRun.requestId;
       userMessageIdRef.current = sharedBuildRun.userMessage?.id || null;
-      assistantMessageIdRef.current = sharedBuildRun.assistantMessage?.id || null;
+      assistantMessageIdRef.current =
+        sharedBuildRun.assistantMessage?.id || null;
       activeRunModeRef.current = sharedBuildRun.runMode;
       shouldHydrateSharedRunRef.current = false;
       return;
@@ -1070,11 +1164,15 @@ export default function BuildEditor({
       if (currentBuild) {
         const nextProjectFiles = normalizeProjectFilesForBuild(
           normalizedBaseProjectFiles,
-          sharedBuildRun.assistantMessage?.codeGenerated ?? currentBuild.code ?? ''
+          sharedBuildRun.assistantMessage?.codeGenerated ??
+            currentBuild.code ??
+            ''
         );
         const nextCode = resolveIndexHtmlFromProjectFiles(
           nextProjectFiles,
-          sharedBuildRun.assistantMessage?.codeGenerated ?? currentBuild.code ?? ''
+          sharedBuildRun.assistantMessage?.codeGenerated ??
+            currentBuild.code ??
+            ''
         );
         const nextArtifactVersionId =
           sharedBuildRun.assistantMessage?.artifactVersionId ??
@@ -1118,11 +1216,12 @@ export default function BuildEditor({
       updateBuildRef.current(nextBuild);
     }
     if (
-      Object.prototype.hasOwnProperty.call(sharedBuildRun, 'runtimeExplorationPlan')
+      Object.prototype.hasOwnProperty.call(
+        sharedBuildRun,
+        'runtimeExplorationPlan'
+      )
     ) {
-      setRuntimeExplorationPlan(
-        sharedBuildRun.runtimeExplorationPlan ?? null
-      );
+      setRuntimeExplorationPlan(sharedBuildRun.runtimeExplorationPlan ?? null);
     }
     shouldHydrateSharedRunRef.current = false;
   }, [sharedBuildRun]);
@@ -1166,7 +1265,9 @@ export default function BuildEditor({
           return;
         }
         const replicaProjectFiles = normalizeProjectFilesForBuild(
-          Array.isArray(buildPayload.projectFiles) ? buildPayload.projectFiles : [],
+          Array.isArray(buildPayload.projectFiles)
+            ? buildPayload.projectFiles
+            : [],
           buildPayload.build.code || ''
         );
         const expectedProjectFiles = normalizeProjectFilesForBuild(
@@ -1179,7 +1280,8 @@ export default function BuildEditor({
         const replicaArtifactVersionId =
           Number(buildPayload.build.currentArtifactVersionId || 0) || null;
         const expectedArtifactVersionId =
-          Number(sharedBuildRun.assistantMessage?.artifactVersionId || 0) || null;
+          Number(sharedBuildRun.assistantMessage?.artifactVersionId || 0) ||
+          null;
         const hasExpectedExecutionPlan = Object.prototype.hasOwnProperty.call(
           sharedBuildRun,
           'executionPlan'
@@ -1221,8 +1323,19 @@ export default function BuildEditor({
     }));
     hasUnsavedProjectFilesRef.current = false;
     savingProjectFilesRef.current = false;
+    setRuntimeUploadsModalShown(false);
+    setRuntimeUploadAssets([]);
+    setRuntimeUploadsNextCursor(null);
+    setRuntimeUploadsLoading(false);
+    setRuntimeUploadsLoadingMore(false);
+    setRuntimeUploadsError('');
+    setRuntimeUploadDeletingId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
+
+  useEffect(() => {
+    copilotPolicyRef.current = copilotPolicy;
+  }, [copilotPolicy]);
 
   useEffect(() => {
     updateBuildRef.current = onUpdateBuild;
@@ -1276,6 +1389,7 @@ export default function BuildEditor({
       window.removeEventListener('online', handleOnline);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
 
   useEffect(() => {
@@ -1302,7 +1416,13 @@ export default function BuildEditor({
     didAutoGreetingRef.current = true;
     void startGreetingGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, buildSocketListenersReady, initialPrompt, isOwner, seedGreeting]);
+  }, [
+    build.id,
+    buildSocketListenersReady,
+    initialPrompt,
+    isOwner,
+    seedGreeting
+  ]);
 
   useEffect(() => {
     if (didInitialChatScrollRef.current) return;
@@ -1545,6 +1665,11 @@ export default function BuildEditor({
       const planWasRefined = Boolean(
         runtimePlanRefined && runtimeExplorationPlan
       );
+      if (generatedCodeSuccessfully || planWasRefined) {
+        setMobilePanelTab('preview');
+      } else {
+        setMobilePanelTab('chat');
+      }
       setRuntimeExplorationPlan(
         generatedCodeSuccessfully || planWasRefined
           ? runtimeExplorationPlan || null
@@ -1752,7 +1877,9 @@ export default function BuildEditor({
         Array.isArray(resumedRunEvents)
           ? resumedRunEvents
               .filter(
-                (event): event is NonNullable<typeof resumedRunEvents>[number] =>
+                (
+                  event
+                ): event is NonNullable<typeof resumedRunEvents>[number] =>
                   Boolean(event?.kind && event?.message)
               )
               .map((event, index) => ({
@@ -1787,7 +1914,8 @@ export default function BuildEditor({
           resumeUpdatePayload.reply = streamUpdate.reply;
         }
         if (streamUpdate.hasCodeGeneratedField) {
-          resumeUpdatePayload.codeGenerated = streamUpdate.codeGenerated ?? null;
+          resumeUpdatePayload.codeGenerated =
+            streamUpdate.codeGenerated ?? null;
         }
         if (
           Array.isArray(streamUpdate.projectFiles) &&
@@ -1843,6 +1971,7 @@ export default function BuildEditor({
       updateChatMessagesRef.current(nextMessages);
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
+      setMobilePanelTab('chat');
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
@@ -1904,6 +2033,7 @@ export default function BuildEditor({
         generatingRef.current = false;
         setStreamingProjectFiles(null);
         setStreamingFocusFilePath(null);
+        setMobilePanelTab('chat');
         setGenerating(false);
         setGeneratingStatus(null);
         setAssistantStatusSteps([]);
@@ -1933,6 +2063,7 @@ export default function BuildEditor({
       updateChatMessagesRef.current(nextMessages);
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
+      setMobilePanelTab('chat');
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
@@ -2826,6 +2957,12 @@ export default function BuildEditor({
     await sendBuildMessageText(messageText);
   }
 
+  function handleOpenProjectFileUpload() {
+    if (!isOwner || isRunActivityInFlight()) return;
+    setMobilePanelTab('preview');
+    previewPanelRef.current?.openProjectFileUploadPicker();
+  }
+
   async function sendBuildMessageText(messageText: string) {
     const trimmedMessage = String(messageText || '').trim();
     if (!trimmedMessage || !isOwner) return false;
@@ -3072,6 +3209,10 @@ export default function BuildEditor({
       };
       buildRef.current = nextBuild;
       updateBuildRef.current(nextBuild);
+      if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
+        copilotPolicyRef.current = result?.copilotPolicy || null;
+        updateCopilotPolicyRef.current(result?.copilotPolicy || null);
+      }
       if (options?.resumePausedQueue) {
         maybeResumePausedQueueAfterSave();
       }
@@ -3123,6 +3264,124 @@ export default function BuildEditor({
     }
   }
 
+  function updateRuntimeUploadQuotaUsage(
+    usage: BuildRuntimeUploadUsage | null | undefined
+  ) {
+    const nextPolicy = applyRuntimeUploadUsageToCopilotPolicy(
+      copilotPolicyRef.current,
+      usage
+    );
+    if (!nextPolicy) {
+      return;
+    }
+    copilotPolicyRef.current = nextPolicy;
+    updateCopilotPolicyRef.current(nextPolicy);
+  }
+
+  function handleRuntimeUploadsSyncFromPreview(
+    payload: PreviewRuntimeUploadsSyncPayload | null
+  ) {
+    if (!payload) {
+      return;
+    }
+    setRuntimeUploadsError('');
+    updateRuntimeUploadQuotaUsage(payload.usage || null);
+    if (runtimeUploadsModalShown) {
+      void loadRuntimeUploadsPage();
+    }
+  }
+
+  async function loadRuntimeUploadsPage(options?: { append?: boolean }) {
+    if (!isOwner) return;
+    const append = Boolean(options?.append);
+    const cursor = append ? runtimeUploadsNextCursor : null;
+    if (append) {
+      if (runtimeUploadsLoadingMore || !cursor) return;
+      setRuntimeUploadsLoadingMore(true);
+    } else {
+      if (runtimeUploadsLoading) return;
+      setRuntimeUploadsLoading(true);
+    }
+    setRuntimeUploadsError('');
+    try {
+      const payload = await loadBuildRuntimeUploads({
+        cursor,
+        limit: 30
+      });
+      const nextAssets = Array.isArray(payload?.assets) ? payload.assets : [];
+      const nextCursor = Number(payload?.nextCursor);
+      setRuntimeUploadAssets((prev) => {
+        if (!append) {
+          return nextAssets;
+        }
+        const merged = [...prev];
+        const seenIds = new Set(prev.map((asset) => asset.id));
+        for (const asset of nextAssets) {
+          if (seenIds.has(asset.id)) continue;
+          seenIds.add(asset.id);
+          merged.push(asset);
+        }
+        return merged;
+      });
+      setRuntimeUploadsNextCursor(
+        Number.isFinite(nextCursor) && nextCursor > 0 ? nextCursor : null
+      );
+      updateRuntimeUploadQuotaUsage(payload?.usage || null);
+    } catch (error: any) {
+      console.error('Failed to load runtime uploads:', error);
+      const message =
+        error?.response?.data?.error ||
+        error?.message ||
+        'Failed to load uploaded files';
+      setRuntimeUploadsError(message);
+    } finally {
+      setRuntimeUploadsLoading(false);
+      setRuntimeUploadsLoadingMore(false);
+    }
+  }
+
+  function handleOpenRuntimeUploadsManager() {
+    setRuntimeUploadsModalShown(true);
+    void loadRuntimeUploadsPage();
+  }
+
+  function handleCloseRuntimeUploadsManager() {
+    setRuntimeUploadsModalShown(false);
+  }
+
+  function handleLoadMoreRuntimeUploads() {
+    void loadRuntimeUploadsPage({ append: true });
+  }
+
+  async function handleDeleteRuntimeUploadManagerAsset(
+    asset: BuildRuntimeUploadAsset
+  ) {
+    if (!asset?.id || runtimeUploadDeletingId) return;
+    const fileLabel = asset.originalFileName || asset.fileName || 'this file';
+    const confirmed = window.confirm(
+      `Delete "${fileLabel}" from your Twinkle uploads?`
+    );
+    if (!confirmed) return;
+    setRuntimeUploadDeletingId(asset.id);
+    setRuntimeUploadsError('');
+    try {
+      const payload = await deleteBuildRuntimeUpload(asset.id);
+      setRuntimeUploadAssets((prev) =>
+        prev.filter((item) => item.id !== asset.id)
+      );
+      updateRuntimeUploadQuotaUsage(payload?.usage || null);
+    } catch (error: any) {
+      console.error('Failed to delete runtime upload:', error);
+      const message =
+        error?.response?.data?.error ||
+        error?.message ||
+        'Failed to delete uploaded file';
+      setRuntimeUploadsError(message);
+    } finally {
+      setRuntimeUploadDeletingId(null);
+    }
+  }
+
   async function handlePublish() {
     if (!isOwner || publishing) return;
 
@@ -3168,9 +3427,18 @@ export default function BuildEditor({
           publishedAt: result.build.publishedAt,
           thumbnailUrl: result.build.thumbnailUrl
         });
+        if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
+          copilotPolicyRef.current = result.copilotPolicy || null;
+          updateCopilotPolicyRef.current(result.copilotPolicy || null);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to publish build:', error);
+      appendLocalRunEvent({
+        kind: 'lifecycle',
+        phase: 'publish',
+        message: error?.message || 'Unable to publish this build right now.'
+      });
     } finally {
       setPublishing(false);
     }
@@ -3186,9 +3454,18 @@ export default function BuildEditor({
           ...build,
           isPublic: result.build.isPublic
         });
+        if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
+          copilotPolicyRef.current = result.copilotPolicy || null;
+          updateCopilotPolicyRef.current(result.copilotPolicy || null);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to unpublish build:', error);
+      appendLocalRunEvent({
+        kind: 'lifecycle',
+        phase: 'publish',
+        message: error?.message || 'Unable to unpublish this build right now.'
+      });
     }
     setPublishing(false);
   }
@@ -3322,12 +3599,25 @@ export default function BuildEditor({
               onChatScroll={handleChatScroll}
               onSendMessage={handleSendMessage}
               onSendPresetMessage={handleSendPresetMessage}
+              onOpenProjectFileUpload={handleOpenProjectFileUpload}
+              runtimeUploadsModalShown={runtimeUploadsModalShown}
+              runtimeUploadAssets={runtimeUploadAssets}
+              runtimeUploadsNextCursor={runtimeUploadsNextCursor}
+              runtimeUploadsLoading={runtimeUploadsLoading}
+              runtimeUploadsLoadingMore={runtimeUploadsLoadingMore}
+              runtimeUploadsError={runtimeUploadsError}
+              runtimeUploadDeletingId={runtimeUploadDeletingId}
+              onOpenRuntimeUploadsManager={handleOpenRuntimeUploadsManager}
+              onCloseRuntimeUploadsManager={handleCloseRuntimeUploadsManager}
+              onLoadMoreRuntimeUploads={handleLoadMoreRuntimeUploads}
+              onDeleteRuntimeUpload={handleDeleteRuntimeUploadManagerAsset}
               onStopGeneration={handleStopGeneration}
               onReloadProjectFileChangeLogs={handleReloadProjectFileChangeLogs}
               onDeleteMessage={handleDeleteMessage}
             />
           )}
           <PreviewPanel
+            ref={previewPanelRef}
             className={
               isOwner && mobilePanelTab !== 'preview'
                 ? mobilePanelHiddenClass
@@ -3350,6 +3640,7 @@ export default function BuildEditor({
               handleProjectFilesDraftStateChange
             }
             onRuntimeObservationChange={handleRuntimeObservationChange}
+            onRuntimeUploadsSync={handleRuntimeUploadsSyncFromPreview}
           />
         </div>
       </div>
@@ -3903,6 +4194,7 @@ export default function BuildEditor({
         buildPayload &&
         Object.prototype.hasOwnProperty.call(buildPayload, 'copilotPolicy')
       ) {
+        copilotPolicyRef.current = buildPayload.copilotPolicy || null;
         updateCopilotPolicyRef.current(buildPayload.copilotPolicy || null);
       }
     }

@@ -1,11 +1,241 @@
+import axios from 'axios';
 import request from './axiosInstance';
 import URL from '~/constants/URL';
+import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import { RequestHelpers } from '~/types';
 
 export default function buildRequestHelpers({
   auth,
   handleError
 }: RequestHelpers) {
+  const BUILD_RUNTIME_UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024;
+
+  function getBuildApiConfig(token?: string) {
+    return {
+      ...auth(),
+      headers: {
+        ...auth().headers,
+        ...(token ? { 'x-build-api-token': token } : {})
+      }
+    };
+  }
+
+  function isVideoRuntimeUploadCandidate(file: File) {
+    const mimeType = String(file?.type || '').toLowerCase();
+    if (mimeType.startsWith('video/')) {
+      return true;
+    }
+    return getFileInfoFromFileName(file?.name || '').fileType === 'video';
+  }
+
+  async function prepareBuildRuntimeFileUpload({
+    buildId,
+    file,
+    token
+  }: {
+    buildId: number;
+    file: File;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/files/prepare-upload`,
+      {
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || null
+      },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function completeBuildRuntimeFileUpload({
+    buildId,
+    assetId,
+    uploadId,
+    key,
+    parts,
+    token
+  }: {
+    buildId: number;
+    assetId: number;
+    uploadId: string;
+    key: string;
+    parts: Array<{ ETag: string; PartNumber: number }>;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/files/complete-upload`,
+      {
+        assetId,
+        uploadId,
+        key,
+        parts
+      },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function abortBuildRuntimeFileUpload({
+    buildId,
+    assetId,
+    reason,
+    token
+  }: {
+    buildId: number;
+    assetId: number;
+    reason?: string;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/files/abort-upload`,
+      {
+        assetId,
+        reason
+      },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function listBuildRuntimeFiles({
+    buildId,
+    cursor,
+    limit,
+    token
+  }: {
+    buildId: number;
+    cursor?: number | null;
+    limit?: number;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/files/list`,
+      {
+        cursor,
+        limit
+      },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function deleteBuildRuntimeFile({
+    buildId,
+    assetId,
+    token
+  }: {
+    buildId: number;
+    assetId: number;
+    token?: string;
+  }) {
+    const { data } = await request.post(
+      `${URL}/build/${buildId}/api/files/delete`,
+      {
+        assetId
+      },
+      getBuildApiConfig(token)
+    );
+    return data;
+  }
+
+  async function uploadBuildRuntimeFile({
+    buildId,
+    file,
+    token,
+    onUploadProgress
+  }: {
+    buildId: number;
+    file: File;
+    token?: string;
+    onUploadProgress?: (event: {
+      file: File;
+      loaded: number;
+      total: number;
+    }) => void;
+  }) {
+    if (isVideoRuntimeUploadCandidate(file)) {
+      throw new Error('Video uploads are not supported in Twinkle.files yet.');
+    }
+    const prepared = await prepareBuildRuntimeFileUpload({
+      buildId,
+      file,
+      token
+    });
+    const uploadId = String(prepared?.uploadId || '');
+    const key = String(prepared?.key || '');
+    const urls = Array.isArray(prepared?.urls) ? prepared.urls : [];
+    const assetId = Number(prepared?.asset?.id);
+
+    if (!uploadId || !key || urls.length === 0 || !assetId) {
+      throw new Error('Failed to prepare upload.');
+    }
+
+    let start = 0;
+    const parts: Array<{ ETag: string; PartNumber: number }> = [];
+    try {
+      for (let partNumber = 0; partNumber < urls.length; partNumber += 1) {
+        const end = Math.min(
+          start + BUILD_RUNTIME_UPLOAD_CHUNK_SIZE,
+          file.size
+        );
+        const chunk = file.slice(start, end);
+        const response = await axios.put(urls[partNumber], chunk, {
+          timeout: 0,
+          headers: {
+            'Content-Type': file.type || prepared?.asset?.mimeType || undefined
+          },
+          onUploadProgress: (progressEvent) => {
+            if (!onUploadProgress) return;
+            const loaded =
+              partNumber * BUILD_RUNTIME_UPLOAD_CHUNK_SIZE +
+              Number(progressEvent.loaded || 0);
+            onUploadProgress({
+              file,
+              loaded: Math.min(loaded, file.size),
+              total: file.size
+            });
+          }
+        });
+        const etag = response.headers?.etag || response.headers?.ETag;
+        if (!etag) {
+          throw new Error(
+            `Missing ETag in upload response for part ${partNumber + 1}.`
+          );
+        }
+        parts.push({
+          ETag: String(etag).replace(/['"]/g, ''),
+          PartNumber: partNumber + 1
+        });
+        start = end;
+      }
+
+      const completed = await completeBuildRuntimeFileUpload({
+        buildId,
+        assetId,
+        uploadId,
+        key,
+        parts,
+        token
+      });
+      onUploadProgress?.({
+        file,
+        loaded: file.size,
+        total: file.size
+      });
+      return completed?.asset || prepared?.asset || null;
+    } catch (error) {
+      await abortBuildRuntimeFileUpload({
+        buildId,
+        assetId,
+        reason: 'upload_failed',
+        token
+      }).catch(() => {});
+      throw error;
+    }
+  }
+
   return {
     async createBuild({
       title,
@@ -30,6 +260,40 @@ export default function buildRequestHelpers({
       try {
         const qs = options?.fromWriter ? '?fromWriter=1' : '';
         const { data } = await request.get(`${URL}/build/${buildId}${qs}`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadBuildRuntimeUploads(options?: {
+      cursor?: number | null;
+      limit?: number;
+    }) {
+      try {
+        const params: Record<string, any> = {};
+        if (Number.isFinite(Number(options?.cursor)) && Number(options?.cursor) > 0) {
+          params.cursor = Math.floor(Number(options?.cursor));
+        }
+        if (Number.isFinite(Number(options?.limit)) && Number(options?.limit) > 0) {
+          params.limit = Math.floor(Number(options?.limit));
+        }
+        const { data } = await request.get(`${URL}/build/runtime-files`, {
+          ...auth(),
+          params
+        });
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildRuntimeUpload(assetId: number) {
+      try {
+        const { data } = await request.delete(
+          `${URL}/build/runtime-files/${assetId}`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -527,6 +791,108 @@ export default function buildRequestHelpers({
           auth()
         );
         return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async uploadBuildRuntimeFiles({
+      buildId,
+      files,
+      token,
+      onUploadProgress
+    }: {
+      buildId: number;
+      files: File[];
+      token?: string;
+      onUploadProgress?: (event: {
+        file: File;
+        loaded: number;
+        total: number;
+      }) => void;
+    }) {
+      try {
+        const normalizedFiles = Array.isArray(files)
+          ? files.filter((file) => file instanceof File)
+          : [];
+        if (normalizedFiles.length === 0) {
+          return { assets: [] };
+        }
+
+        const assets = [];
+        const failed: Array<{ fileName: string; message: string }> = [];
+        for (const file of normalizedFiles) {
+          try {
+            const asset = await uploadBuildRuntimeFile({
+              buildId,
+              file,
+              token,
+              onUploadProgress
+            });
+            if (asset) {
+              assets.push(asset);
+            }
+          } catch (error: any) {
+            failed.push({
+              fileName: String(file?.name || 'file'),
+              message: String(error?.message || 'Upload failed')
+            });
+          }
+        }
+
+        if (assets.length === 0 && failed.length > 0) {
+          const error: any = new Error(
+            failed[0]?.message || 'Failed to upload files.'
+          );
+          error.code = 'build_runtime_upload_failed';
+          error.failed = failed;
+          throw error;
+        }
+
+        return failed.length > 0 ? { assets, failed } : { assets };
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildRuntimeFiles({
+      buildId,
+      cursor,
+      limit,
+      token
+    }: {
+      buildId: number;
+      cursor?: number | null;
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        return await listBuildRuntimeFiles({
+          buildId,
+          cursor,
+          limit,
+          token
+        });
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildRuntimeFile({
+      buildId,
+      assetId,
+      token
+    }: {
+      buildId: number;
+      assetId: number;
+      token?: string;
+    }) {
+      try {
+        return await deleteBuildRuntimeFile({
+          buildId,
+          assetId,
+          token
+        });
       } catch (error) {
         return handleError(error);
       }

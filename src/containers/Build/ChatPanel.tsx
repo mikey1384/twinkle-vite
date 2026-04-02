@@ -4,6 +4,8 @@ import AIDisabledNotice from '~/components/AIDisabledNotice';
 import RichText from '~/components/Texts/RichText';
 import ThinkingIndicator from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import CodeDiff from '~/components/CodeDiff';
+import Button from '~/components/Button';
+import Modal from '~/components/Modal';
 import ProgressBar from '~/components/ProgressBar';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { css } from '@emotion/css';
@@ -75,6 +77,9 @@ interface BuildCopilotPolicy {
     maxProjectBytes: number;
     maxFilesPerProject: number;
     maxFileLines: number;
+    maxPublishedBuildStorageBytes: number;
+    maxRuntimeFileStorageBytes: number;
+    maxRuntimeFileBytes: number;
   };
   usage: {
     currentProjectBytes: number;
@@ -82,6 +87,12 @@ interface BuildCopilotPolicy {
     projectFileCount: number;
     projectFileBytes: number;
     maxFilesPerProject: number;
+    publishedBuildStorageBytes: number;
+    publishedBuildStorageRemaining: number;
+    publishedBuildCount: number;
+    runtimeFileStorageBytes: number;
+    runtimeFileStorageRemaining: number;
+    runtimeFileCount: number;
   };
   requestLimits: {
     dayIndex: number;
@@ -123,6 +134,24 @@ interface BuildProjectFileChangeLog {
   createdAt: number;
 }
 
+interface BuildRuntimeUploadAsset {
+  id: number;
+  buildId: number;
+  buildTitle: string | null;
+  buildSlug: string | null;
+  buildIsPublic: boolean;
+  fileName: string;
+  originalFileName: string;
+  mimeType: string | null;
+  sizeBytes: number;
+  filePath: string;
+  url: string;
+  thumbUrl: string | null;
+  fileType: 'image' | 'audio' | 'pdf' | 'archive' | 'other';
+  uploadedByUserId: number;
+  createdAt: number;
+}
+
 type ChatPanelTab = 'chat' | 'debug';
 
 interface BuildExecutionPlanSummary {
@@ -160,6 +189,18 @@ interface ChatPanelProps {
   onChatScroll: () => void;
   onSendMessage: (message: string) => Promise<boolean> | boolean;
   onSendPresetMessage: (message: string) => void;
+  onOpenProjectFileUpload: () => void;
+  runtimeUploadsModalShown: boolean;
+  runtimeUploadAssets: BuildRuntimeUploadAsset[];
+  runtimeUploadsNextCursor: number | null;
+  runtimeUploadsLoading: boolean;
+  runtimeUploadsLoadingMore: boolean;
+  runtimeUploadsError: string;
+  runtimeUploadDeletingId: number | null;
+  onOpenRuntimeUploadsManager: () => void;
+  onCloseRuntimeUploadsManager: () => void;
+  onLoadMoreRuntimeUploads: () => void;
+  onDeleteRuntimeUpload: (asset: BuildRuntimeUploadAsset) => Promise<void> | void;
   onStopGeneration: () => void;
   onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
   onDeleteMessage: (message: ChatMessage) => void;
@@ -187,6 +228,18 @@ export default function ChatPanel({
   onChatScroll,
   onSendMessage,
   onSendPresetMessage,
+  onOpenProjectFileUpload,
+  runtimeUploadsModalShown,
+  runtimeUploadAssets,
+  runtimeUploadsNextCursor,
+  runtimeUploadsLoading,
+  runtimeUploadsLoadingMore,
+  runtimeUploadsError,
+  runtimeUploadDeletingId,
+  onOpenRuntimeUploadsManager,
+  onCloseRuntimeUploadsManager,
+  onLoadMoreRuntimeUploads,
+  onDeleteRuntimeUpload,
   onStopGeneration,
   onReloadProjectFileChangeLogs,
   onDeleteMessage
@@ -270,6 +323,24 @@ export default function ChatPanel({
         color: 'pink'
       }),
       buildLimitProgressItem({
+        id: 'published-storage',
+        label: 'Published build storage',
+        used: usage.publishedBuildStorageBytes,
+        limit: limits.maxPublishedBuildStorageBytes,
+        text: `${formatBytes(usage.publishedBuildStorageBytes)} / ${formatBytes(limits.maxPublishedBuildStorageBytes)}`,
+        caption: `${formatBytes(usage.publishedBuildStorageRemaining)} left across ${formatTokenCount(usage.publishedBuildCount)} published build${usage.publishedBuildCount === 1 ? '' : 's'}`,
+        color: 'logoBlue'
+      }),
+      buildLimitProgressItem({
+        id: 'runtime-file-storage',
+        label: 'Lumine file storage',
+        used: usage.runtimeFileStorageBytes,
+        limit: limits.maxRuntimeFileStorageBytes,
+        text: `${formatBytes(usage.runtimeFileStorageBytes)} / ${formatBytes(limits.maxRuntimeFileStorageBytes)}`,
+        caption: `${formatBytes(usage.runtimeFileStorageRemaining)} left across ${formatTokenCount(usage.runtimeFileCount)} uploaded file${usage.runtimeFileCount === 1 ? '' : 's'}`,
+        color: 'pink'
+      }),
+      buildLimitProgressItem({
         id: 'project-files',
         label: 'Files in this project',
         used: usage.projectFileCount,
@@ -279,6 +350,46 @@ export default function ChatPanel({
       })
     ].filter(Boolean) as LimitProgressItem[];
   }, [copilotPolicy]);
+  const groupedRuntimeUploadAssets = useMemo(() => {
+    const groups: Array<{
+      key: string;
+      buildId: number;
+      buildTitle: string;
+      buildExists: boolean;
+      assets: BuildRuntimeUploadAsset[];
+    }> = [];
+    const groupMap = new Map<
+      string,
+      {
+        key: string;
+        buildId: number;
+        buildTitle: string;
+        buildExists: boolean;
+        assets: BuildRuntimeUploadAsset[];
+      }
+    >();
+    for (const asset of runtimeUploadAssets) {
+      const buildExists = Boolean(asset.buildTitle?.trim());
+      const buildTitle =
+        asset.buildTitle?.trim() ||
+        `Deleted build #${formatTokenCount(asset.buildId)}`;
+      const key = `${asset.buildId}:${buildTitle}`;
+      let group = groupMap.get(key);
+      if (!group) {
+        group = {
+          key,
+          buildId: asset.buildId,
+          buildTitle,
+          buildExists,
+          assets: []
+        };
+        groupMap.set(key, group);
+        groups.push(group);
+      }
+      group.assets.push(asset);
+    }
+    return groups;
+  }, [runtimeUploadAssets]);
   const dailyGenerationUsage = useMemo(() => {
     if (!copilotPolicy) return null;
     const requestLimits = copilotPolicy.requestLimits;
@@ -305,7 +416,7 @@ export default function ChatPanel({
     const parts: string[] = [];
     if (requestLimits.generationRequestsPerDay > 0) {
       parts.push(
-        `${formatTokenCount(requestLimits.generationRequestsRemaining)} code generations left today`
+        `Daily code generations left today: ${formatTokenCount(requestLimits.generationRequestsRemaining)}`
       );
     }
     return parts.length > 0 ? parts.join(' • ') : null;
@@ -433,7 +544,7 @@ export default function ChatPanel({
                   opacity: 0.85;
                 `}
               >
-                Daily limit
+                Quotas
               </span>
             </div>
             {dailyGenerationUsage != null && dailyGenerationBarText && (
@@ -444,7 +555,7 @@ export default function ChatPanel({
                     font-weight: 700;
                   `}
                 >
-                  Code generations
+                  Daily Code Generations
                 </div>
                 <ProgressBar
                   progress={dailyGenerationUsage}
@@ -559,6 +670,68 @@ export default function ChatPanel({
                         copilotPolicy.limits.maxFileLines
                       )} lines`}
                     />
+                    <LimitStat
+                      label="Uploaded file max"
+                      value={formatBytes(copilotPolicy.limits.maxRuntimeFileBytes)}
+                    />
+                  </div>
+                  <div
+                    className={css`
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      gap: 0.75rem;
+                      flex-wrap: wrap;
+                      border: 1px solid var(--ui-border);
+                      border-radius: 12px;
+                      background: #fff;
+                      padding: 0.9rem 1rem;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.2rem;
+                      `}
+                    >
+                      <span
+                        className={css`
+                          font-size: 0.9rem;
+                          font-weight: 800;
+                          color: var(--chat-text);
+                        `}
+                      >
+                        Manage uploaded files
+                      </span>
+                      <span
+                        className={css`
+                          font-size: 0.76rem;
+                          color: var(--chat-text);
+                          opacity: 0.7;
+                        `}
+                      >
+                        Delete older Lumine file uploads across your builds to
+                        free space.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onOpenRuntimeUploadsManager}
+                      className={css`
+                        border: 1px solid rgba(36, 99, 235, 0.18);
+                        background: rgba(59, 130, 246, 0.08);
+                        color: #1d4ed8;
+                        border-radius: 999px;
+                        padding: 0.46rem 0.95rem;
+                        font-size: 0.8rem;
+                        font-weight: 800;
+                        cursor: pointer;
+                        white-space: nowrap;
+                      `}
+                    >
+                      Manage uploads
+                    </button>
                   </div>
                 </div>
               </>
@@ -765,6 +938,14 @@ export default function ChatPanel({
               rows={1}
             />
             <GameCTAButton
+              onClick={onOpenProjectFileUpload}
+              disabled={aiInputDisabled || generating}
+              variant="neutral"
+              size="md"
+              icon="upload"
+              style={{ minWidth: '3rem' }}
+            />
+            <GameCTAButton
               onClick={() => void handleSubmitMessage()}
               disabled={aiInputDisabled || !draftMessage.trim()}
               variant={generating ? 'orange' : 'logoBlue'}
@@ -803,6 +984,373 @@ export default function ChatPanel({
             </div>
           )}
         </div>
+      )}
+      {runtimeUploadsModalShown && (
+        <Modal
+          modalKey="BuildRuntimeUploadsModal"
+          isOpen
+          onClose={onCloseRuntimeUploadsManager}
+          title="Manage uploads"
+          size="lg"
+          footer={
+            <>
+              <Button
+                variant="ghost"
+                onClick={onCloseRuntimeUploadsManager}
+                uppercase={false}
+              >
+                Close
+              </Button>
+              {runtimeUploadsNextCursor && (
+                <Button
+                  color="blue"
+                  variant="solid"
+                  loading={runtimeUploadsLoadingMore}
+                  onClick={onLoadMoreRuntimeUploads}
+                  uppercase={false}
+                >
+                  Load more
+                </Button>
+              )}
+            </>
+          }
+        >
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
+              width: 80%;
+              @media (max-width: ${mobileMaxWidth}) {
+                width: 100%;
+              }
+            `}
+          >
+            {copilotPolicy && (
+              <div
+                className={css`
+                  border: 1px solid var(--ui-border);
+                  border-radius: 12px;
+                  background: var(--chat-bg);
+                  padding: 0.95rem 1rem;
+                `}
+              >
+                <div
+                  className={css`
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.8rem;
+                    margin-bottom: 0.45rem;
+                    flex-wrap: wrap;
+                  `}
+                >
+                  <span
+                    className={css`
+                      font-size: 1.3rem;
+                      font-weight: 800;
+                      color: var(--chat-text);
+                    `}
+                  >
+                    Lumine file storage
+                  </span>
+                  <span
+                    className={css`
+                      font-size: 1rem;
+                      color: var(--chat-text);
+                      opacity: 0.72;
+                    `}
+                  >
+                    {formatBytes(copilotPolicy.usage.runtimeFileStorageRemaining)} left
+                  </span>
+                </div>
+                <ProgressBar
+                  progress={Math.max(
+                    0,
+                    Math.min(
+                      100,
+                      (copilotPolicy.usage.runtimeFileStorageBytes /
+                        Math.max(
+                          copilotPolicy.limits.maxRuntimeFileStorageBytes,
+                          1
+                        )) *
+                        100
+                    )
+                  )}
+                  text={`${formatBytes(copilotPolicy.usage.runtimeFileStorageBytes)} / ${formatBytes(copilotPolicy.limits.maxRuntimeFileStorageBytes)}`}
+                  color="pink"
+                />
+                <div
+                  className={css`
+                    margin-top: 0.45rem;
+                    font-size: 1rem;
+                    color: var(--chat-text);
+                    opacity: 0.72;
+                  `}
+                >
+                  {formatTokenCount(copilotPolicy.usage.runtimeFileCount)} uploaded
+                  file{copilotPolicy.usage.runtimeFileCount === 1 ? '' : 's'} across
+                  your builds
+                </div>
+              </div>
+            )}
+            {runtimeUploadsError && (
+              <div
+                className={css`
+                  border: 1px solid rgba(220, 38, 38, 0.16);
+                  border-radius: 12px;
+                  background: rgba(254, 242, 242, 0.96);
+                  padding: 0.85rem 0.95rem;
+                  color: #b91c1c;
+                  font-size: 1.1rem;
+                  font-weight: 700;
+                `}
+              >
+                {runtimeUploadsError}
+              </div>
+            )}
+            {runtimeUploadsLoading && runtimeUploadAssets.length === 0 ? (
+              <div
+                className={css`
+                  border: 1px dashed var(--ui-border);
+                  border-radius: 12px;
+                  padding: 1.2rem 1rem;
+                  text-align: center;
+                  font-size: 1.1rem;
+                  color: var(--chat-text);
+                  opacity: 0.72;
+                `}
+              >
+                Loading uploaded files...
+              </div>
+            ) : groupedRuntimeUploadAssets.length === 0 ? (
+              <div
+                className={css`
+                  border: 1px dashed var(--ui-border);
+                  border-radius: 12px;
+                  padding: 1.2rem 1rem;
+                  text-align: center;
+                  font-size: 1.1rem;
+                  color: var(--chat-text);
+                  opacity: 0.72;
+                `}
+              >
+                No uploaded files yet.
+              </div>
+            ) : (
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.9rem;
+                  max-height: min(62vh, 620px);
+                  overflow-y: auto;
+                  padding-right: 0.15rem;
+                `}
+              >
+                {groupedRuntimeUploadAssets.map((group) => (
+                  <section
+                    key={group.key}
+                    className={css`
+                      border: 1px solid var(--ui-border);
+                      border-radius: 12px;
+                      background: #fff;
+                      overflow: hidden;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        padding: 0.85rem 1rem;
+                        border-bottom: 1px solid var(--ui-border);
+                        background: rgba(248, 250, 252, 0.9);
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 0.75rem;
+                        flex-wrap: wrap;
+                      `}
+                    >
+                      <div
+                        className={css`
+                          display: flex;
+                          flex-direction: column;
+                          gap: 0.2rem;
+                        `}
+                      >
+                        <span
+                          className={css`
+                            font-size: 1.2rem;
+                            font-weight: 800;
+                            color: var(--chat-text);
+                          `}
+                        >
+                          {group.buildTitle}
+                        </span>
+                        <span
+                          className={css`
+                            font-size: 1rem;
+                            color: var(--chat-text);
+                            opacity: 0.68;
+                          `}
+                        >
+                          Build #{formatTokenCount(group.buildId)}
+                        </span>
+                      </div>
+                      {group.buildExists ? (
+                        <a
+                          href={`/build/${group.buildId}`}
+                          className={css`
+                            font-size: 1rem;
+                            font-weight: 800;
+                            color: #1d4ed8;
+                            text-decoration: none;
+                          `}
+                        >
+                          Open build
+                        </a>
+                      ) : (
+                        <span
+                          className={css`
+                            font-size: 1rem;
+                            color: var(--chat-text);
+                            opacity: 0.6;
+                          `}
+                        >
+                          Build deleted
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={css`
+                        display: flex;
+                        flex-direction: column;
+                      `}
+                    >
+                      {group.assets.map((asset) => (
+                        <div
+                          key={asset.id}
+                          className={css`
+                            display: grid;
+                            grid-template-columns: auto minmax(0, 1fr) auto;
+                            gap: 0.85rem;
+                            align-items: center;
+                            padding: 0.9rem 1rem;
+                            border-top: 1px solid rgba(226, 232, 240, 0.65);
+                            &:first-child {
+                              border-top: none;
+                            }
+                            @media (max-width: ${mobileMaxWidth}) {
+                              grid-template-columns: minmax(0, 1fr);
+                            }
+                          `}
+                        >
+                          {asset.thumbUrl && asset.fileType === 'image' ? (
+                            <img
+                              src={asset.thumbUrl}
+                              alt={asset.originalFileName || asset.fileName}
+                              className={css`
+                                width: 56px;
+                                height: 56px;
+                                object-fit: cover;
+                                border-radius: 12px;
+                                border: 1px solid var(--ui-border);
+                              `}
+                            />
+                          ) : (
+                            <div
+                              className={css`
+                                width: 56px;
+                                height: 56px;
+                                border-radius: 12px;
+                                border: 1px solid var(--ui-border);
+                                background: rgba(59, 130, 246, 0.08);
+                                color: #1d4ed8;
+                                display: grid;
+                                place-items: center;
+                                font-size: 0.9rem;
+                                font-weight: 800;
+                                text-transform: uppercase;
+                              `}
+                            >
+                              {asset.fileType}
+                            </div>
+                          )}
+                          <div
+                            className={css`
+                              min-width: 0;
+                              display: flex;
+                              flex-direction: column;
+                              gap: 0.24rem;
+                            `}
+                          >
+                            <a
+                              href={asset.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={css`
+                                font-size: 1.1rem;
+                                font-weight: 800;
+                                color: var(--chat-text);
+                                text-decoration: none;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                white-space: nowrap;
+                              `}
+                            >
+                              {asset.originalFileName || asset.fileName}
+                            </a>
+                            <div
+                              className={css`
+                                font-size: 1rem;
+                                color: var(--chat-text);
+                                opacity: 0.72;
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 0.35rem;
+                              `}
+                            >
+                              <span>{formatBytes(asset.sizeBytes)}</span>
+                              <span>•</span>
+                              <span>{timeSince(asset.createdAt)}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void onDeleteRuntimeUpload(asset)}
+                            disabled={runtimeUploadDeletingId === asset.id}
+                            className={css`
+                              justify-self: end;
+                              border: 1px solid rgba(220, 38, 38, 0.16);
+                              background: rgba(254, 242, 242, 0.96);
+                              color: #b91c1c;
+                              border-radius: 999px;
+                              padding: 0.48rem 0.95rem;
+                              font-size: 1rem;
+                              font-weight: 800;
+                              cursor: pointer;
+                              white-space: nowrap;
+                              &:disabled {
+                                cursor: wait;
+                                opacity: 0.62;
+                              }
+                              @media (max-width: ${mobileMaxWidth}) {
+                                justify-self: start;
+                              }
+                            `}
+                          >
+                            {runtimeUploadDeletingId === asset.id
+                              ? 'Deleting...'
+                              : 'Delete'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -25,6 +25,9 @@ interface BuildCopilotPolicy {
     maxProjectBytes: number;
     maxFilesPerProject: number;
     maxFileLines: number;
+    maxPublishedBuildStorageBytes: number;
+    maxRuntimeFileStorageBytes: number;
+    maxRuntimeFileBytes: number;
   };
   usage: {
     currentProjectBytes: number;
@@ -32,6 +35,12 @@ interface BuildCopilotPolicy {
     projectFileCount: number;
     projectFileBytes: number;
     maxFilesPerProject: number;
+    publishedBuildStorageBytes: number;
+    publishedBuildStorageRemaining: number;
+    publishedBuildCount: number;
+    runtimeFileStorageBytes: number;
+    runtimeFileStorageRemaining: number;
+    runtimeFileCount: number;
   };
   requestLimits: {
     dayIndex: number;
@@ -41,6 +50,14 @@ interface BuildCopilotPolicy {
     generationRequestsRemaining: number;
   };
 }
+
+interface BuildWorkspaceAccessResult {
+  kind: 'redirect-runtime' | 'unpublished';
+  runtimePath?: string;
+}
+
+const BUILD_UNPUBLISHED_PUBLIC_TEXT =
+  "This project hasn't been published yet, so it can't be opened publicly.";
 
 export default function Build() {
   return (
@@ -273,14 +290,25 @@ function BuildEditorWrapper() {
   const onSetBuildWorkspace = useBuildContext(
     (v) => v.actions.onSetBuildWorkspace
   );
+  const canUseCachedWorkspace = useMemo(() => {
+    if (!cachedWorkspace?.build) return false;
+    const currentUserId = Number(userId) || 0;
+    const cachedBuildUserId = Number(cachedWorkspace.build.userId) || 0;
+    return currentUserId > 0 && currentUserId === cachedBuildUserId;
+  }, [cachedWorkspace, userId]);
+  const usableCachedWorkspace = canUseCachedWorkspace ? cachedWorkspace : null;
 
-  const [loading, setLoading] = useState(() => !Boolean(cachedWorkspace?.build));
-  const [build, setBuild] = useState<any>(cachedWorkspace?.build || null);
+  const [loading, setLoading] = useState(
+    () => !Boolean(usableCachedWorkspace?.build)
+  );
+  const [build, setBuild] = useState<any>(usableCachedWorkspace?.build || null);
   const [chatMessages, setChatMessages] = useState<any[]>(
-    cachedWorkspace?.chatMessages || []
+    usableCachedWorkspace?.chatMessages || []
   );
   const [copilotPolicy, setCopilotPolicy] =
-    useState<BuildCopilotPolicy | null>(cachedWorkspace?.copilotPolicy || null);
+    useState<BuildCopilotPolicy | null>(
+      usableCachedWorkspace?.copilotPolicy || null
+    );
   const [error, setError] = useState('');
 
   const locationState = (location.state as any) || null;
@@ -292,10 +320,14 @@ function BuildEditorWrapper() {
 
   useEffect(() => {
     setError('');
-    if (cachedWorkspace?.build) {
-      setBuild(cachedWorkspace.build);
-      setChatMessages(Array.isArray(cachedWorkspace.chatMessages) ? cachedWorkspace.chatMessages : []);
-      setCopilotPolicy(cachedWorkspace.copilotPolicy || null);
+    if (usableCachedWorkspace?.build) {
+      setBuild(usableCachedWorkspace.build);
+      setChatMessages(
+        Array.isArray(usableCachedWorkspace.chatMessages)
+          ? usableCachedWorkspace.chatMessages
+          : []
+      );
+      setCopilotPolicy(usableCachedWorkspace.copilotPolicy || null);
       setLoading(false);
       return;
     }
@@ -303,21 +335,36 @@ function BuildEditorWrapper() {
     setChatMessages([]);
     setCopilotPolicy(null);
     setLoading(true);
-  }, [cachedWorkspace, numericBuildId]);
+  }, [numericBuildId, usableCachedWorkspace]);
 
   useEffect(() => {
-    if (numericBuildId) {
-      handleLoad();
-    }
+    let cancelled = false;
+    if (numericBuildId) void handleLoad();
+    return () => {
+      cancelled = true;
+    };
 
     async function handleLoad() {
-      if (!cachedWorkspace?.build) {
+      if (!usableCachedWorkspace?.build) {
         setLoading(true);
       }
       try {
         const data = await loadBuild(numericBuildId, {
           fromWriter: Boolean(initialPrompt || seedGreeting)
         });
+        if (cancelled) return;
+        const access = data?.access as BuildWorkspaceAccessResult | undefined;
+        if (access?.kind === 'redirect-runtime' && access.runtimePath) {
+          navigate(access.runtimePath, { replace: true });
+          return;
+        }
+        if (access?.kind === 'unpublished') {
+          setBuild(null);
+          setChatMessages([]);
+          setCopilotPolicy(null);
+          setError(BUILD_UNPUBLISHED_PUBLIC_TEXT);
+          return;
+        }
         if (data?.build) {
           const nextBuild = {
             ...data.build,
@@ -338,13 +385,27 @@ function BuildEditorWrapper() {
             navigate(location.pathname, { replace: true, state: null });
           }
         } else {
+          if (!usableCachedWorkspace?.build) {
+            setBuild(null);
+            setChatMessages([]);
+            setCopilotPolicy(null);
+          }
           setError('Build not found');
         }
       } catch (err: any) {
+        if (cancelled) return;
         console.error('Failed to load build:', err);
+        if (!usableCachedWorkspace?.build) {
+          setBuild(null);
+          setChatMessages([]);
+          setCopilotPolicy(null);
+        }
         setError(err?.message || 'Failed to load build');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -352,12 +413,15 @@ function BuildEditorWrapper() {
     location.pathname,
     navigate,
     numericBuildId,
-    seedGreeting
+    seedGreeting,
+    usableCachedWorkspace,
+    userId
   ]);
 
   useEffect(() => {
     const workspaceBuildId = Number(build?.id || numericBuildId || 0);
     if (!workspaceBuildId || !build) return;
+    if (Number(userId) <= 0 || Number(build.userId) !== Number(userId)) return;
     if (
       cachedWorkspace &&
       cachedWorkspace.build === build &&
@@ -373,7 +437,7 @@ function BuildEditorWrapper() {
       copilotPolicy
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build, chatMessages, copilotPolicy, numericBuildId]);
+  }, [build, chatMessages, copilotPolicy, numericBuildId, userId]);
 
   if (!numericBuildId) {
     return (
@@ -392,9 +456,22 @@ function BuildEditorWrapper() {
   if (!build) {
     return (
       <BuildWorkspaceUnavailable
-        title="Workspace Unavailable"
+        title={
+          error === BUILD_UNPUBLISHED_PUBLIC_TEXT
+            ? 'Project Not Published Yet'
+            : 'Workspace Unavailable'
+        }
         text={error || 'Build not found'}
-        onBack={() => navigate('/build')}
+        onBack={() =>
+          navigate(
+            error === BUILD_UNPUBLISHED_PUBLIC_TEXT ? '/' : '/build'
+          )
+        }
+        buttonLabel={
+          error === BUILD_UNPUBLISHED_PUBLIC_TEXT
+            ? 'Go Home'
+            : undefined
+        }
       />
     );
   }
@@ -419,11 +496,13 @@ function BuildEditorWrapper() {
 function BuildWorkspaceUnavailable({
   title,
   text,
-  onBack
+  onBack,
+  buttonLabel
 }: {
   title: string;
   text: string;
   onBack: () => void;
+  buttonLabel?: string;
 }) {
   return (
     <div
@@ -503,7 +582,7 @@ function BuildWorkspaceUnavailable({
           icon="arrow-left"
           onClick={onBack}
         >
-          Back to Build Studio
+          {buttonLabel || 'Back to Build Studio'}
         </GameCTAButton>
       </div>
     </div>

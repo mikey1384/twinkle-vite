@@ -19,7 +19,11 @@ import {
   executeGuestViewerDbExec,
   executeGuestViewerDbQuery
 } from './guestViewerDb';
-import type { Build, PreviewFrameMeta } from './types';
+import type {
+  Build,
+  PreviewFrameMeta,
+  PreviewRuntimeUploadsSyncPayload
+} from './types';
 
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
@@ -27,6 +31,8 @@ const GUEST_RESTRICTION_ERROR_MESSAGE =
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
   'db:save',
+  'files:delete',
+  'files:upload-selected',
   'private-db:remove',
   'private-db:set',
   'reminders:create',
@@ -70,6 +76,9 @@ interface PreviewHostBridgeRequestRefs {
   getBuildApiUserRef: AsyncRequestRef;
   getBuildApiUsersRef: AsyncRequestRef;
   getBuildDailyReflectionsRef: AsyncRequestRef;
+  listBuildRuntimeFilesRef: AsyncRequestRef;
+  deleteBuildRuntimeFileRef: AsyncRequestRef;
+  uploadBuildRuntimeFilesRef: AsyncRequestRef;
   getBuildMySubjectsRef: AsyncRequestRef;
   getBuildSubjectRef: AsyncRequestRef;
   getBuildSubjectCommentsRef: AsyncRequestRef;
@@ -124,6 +133,9 @@ interface UsePreviewHostBridgeArgs {
   >;
   previewAuth: PreviewHostBridgeAuth;
   requestRefs: PreviewHostBridgeRequestRefs;
+  runtimeUploadsSyncRef: RefObject<
+    ((payload: PreviewRuntimeUploadsSyncPayload | null) => void) | null
+  >;
 }
 
 export function buildEmptyRuntimeObservationState({
@@ -638,6 +650,31 @@ function postToPreviewFrames(
   }
 }
 
+async function syncPreviewRuntimeUploadsState({
+  buildId,
+  previewAuth,
+  requestRefs,
+  runtimeUploadsSyncRef
+}: {
+  buildId: number;
+  previewAuth: PreviewHostBridgeAuth;
+  requestRefs: PreviewHostBridgeRequestRefs;
+  runtimeUploadsSyncRef: RefObject<
+    ((payload: PreviewRuntimeUploadsSyncPayload | null) => void) | null
+  >;
+}) {
+  if (!runtimeUploadsSyncRef.current || !Number.isFinite(buildId) || buildId <= 0) {
+    return;
+  }
+  const filesReadToken = await ensureBuildApiToken(['files:read'], previewAuth);
+  const payload = await requestRefs.listBuildRuntimeFilesRef.current({
+    buildId,
+    limit: 30,
+    token: filesReadToken
+  });
+  runtimeUploadsSyncRef.current?.(payload || null);
+}
+
 export function usePreviewHostBridge({
   runtimeOnly,
   buildId,
@@ -659,7 +696,8 @@ export function usePreviewHostBridge({
   secondaryIframeRef,
   setRuntimeObservationState,
   previewAuth,
-  requestRefs
+  requestRefs,
+  runtimeUploadsSyncRef
 }: UsePreviewHostBridgeArgs) {
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
@@ -1027,6 +1065,72 @@ export function usePreviewHostBridge({
             break;
           }
 
+          case 'files:upload-selected': {
+            const filesWriteToken = await ensureBuildApiToken(
+              ['files:write'],
+              previewAuth
+            );
+            response = await requestRefs.uploadBuildRuntimeFilesRef.current({
+              buildId: activeBuild.id,
+              files: Array.isArray(payload?.files) ? payload.files : [],
+              token: filesWriteToken
+            });
+            if (Array.isArray(response?.assets) && response.assets.length > 0) {
+              void syncPreviewRuntimeUploadsState({
+                buildId: activeBuild.id,
+                previewAuth,
+                requestRefs,
+                runtimeUploadsSyncRef
+              }).catch((error) => {
+                console.error(
+                  'Failed to sync runtime uploads after preview upload:',
+                  error
+                );
+              });
+            }
+            break;
+          }
+
+          case 'files:list': {
+            const filesReadToken = await ensureBuildApiToken(
+              ['files:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildRuntimeFilesRef.current({
+              buildId: activeBuild.id,
+              cursor: payload?.cursor,
+              limit: payload?.limit,
+              token: filesReadToken
+            });
+            break;
+          }
+
+          case 'files:delete': {
+            const filesWriteToken = await ensureBuildApiToken(
+              ['files:write'],
+              previewAuth
+            );
+            response = await requestRefs.deleteBuildRuntimeFileRef.current({
+              buildId: activeBuild.id,
+              assetId: payload?.assetId,
+              token: filesWriteToken
+            });
+            if (response?.success) {
+              void syncPreviewRuntimeUploadsState({
+                buildId: activeBuild.id,
+                previewAuth,
+                requestRefs,
+                runtimeUploadsSyncRef
+              }).catch((error) => {
+                console.error(
+                  'Failed to sync runtime uploads after preview delete:',
+                  error
+                );
+              });
+            }
+            break;
+          }
+
           case 'content:my-subjects': {
             const contentSubjectsToken = await ensureBuildApiToken(
               ['content:read'],
@@ -1390,6 +1494,7 @@ export function usePreviewHostBridge({
     previewTransitioningRef,
     primaryIframeRef,
     requestRefs,
+    runtimeUploadsSyncRef,
     runtimeExplorationPlanRef,
     runtimeOnly,
     secondaryIframeRef,
