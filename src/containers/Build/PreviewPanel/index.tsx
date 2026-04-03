@@ -320,7 +320,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const [artifactId, setArtifactId] = useState<number | null>(
       build.primaryArtifactId ?? null
     );
+    const onRuntimeObservationChangeRef = useRef(
+      onRuntimeObservationChange || null
+    );
     const onRuntimeUploadsSyncRef = useRef(onRuntimeUploadsSync || null);
+    const onEditableProjectFilesStateChangeRef = useRef(
+      onEditableProjectFilesStateChange || null
+    );
     const [editableProjectFiles, setEditableProjectFiles] = useState<
       EditableProjectFile[]
     >(() => buildEditableProjectFiles({ code, projectFiles }));
@@ -779,12 +785,21 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
 
     useEffect(() => {
       runtimeObservationStateRef.current = runtimeObservationState;
-      onRuntimeObservationChange?.(runtimeObservationState);
-    }, [onRuntimeObservationChange, runtimeObservationState]);
+      onRuntimeObservationChangeRef.current?.(runtimeObservationState);
+    }, [runtimeObservationState]);
+
+    useEffect(() => {
+      onRuntimeObservationChangeRef.current = onRuntimeObservationChange || null;
+    }, [onRuntimeObservationChange]);
 
     useEffect(() => {
       onRuntimeUploadsSyncRef.current = onRuntimeUploadsSync || null;
     }, [onRuntimeUploadsSync]);
+
+    useEffect(() => {
+      onEditableProjectFilesStateChangeRef.current =
+        onEditableProjectFilesStateChange || null;
+    }, [onEditableProjectFilesStateChange]);
 
     useEffect(() => {
       buildRef.current = build;
@@ -937,7 +952,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [displayedProjectFiles, isShowingStreamingCode, streamingFocusFilePath]);
 
     useEffect(() => {
-      onEditableProjectFilesStateChange?.({
+      onEditableProjectFilesStateChangeRef.current?.({
         files: projectFilesForParent,
         hasUnsavedChanges: hasUnsavedProjectFileChanges,
         saving: savingProjectFiles
@@ -945,8 +960,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [
       projectFilesForParent,
       hasUnsavedProjectFileChanges,
-      savingProjectFiles,
-      onEditableProjectFilesStateChange
+      savingProjectFiles
     ]);
 
     useEffect(() => {

@@ -713,9 +713,11 @@ export default function buildRequestHelpers({
         } else if (lastId) {
           params.lastId = lastId;
         }
-        const { data } = await request.get(`${URL}/build/public/list`, {
-          params
-        });
+        const { data } = cursor
+          ? await request.post(`${URL}/build/public/list`, params)
+          : await request.get(`${URL}/build/public/list`, {
+              params
+            });
         return data;
       } catch (error) {
         return handleError(error);

@@ -34,6 +34,7 @@ import { socket } from '~/constants/sockets/api';
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 const buildForkUiEnabled = false;
+const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 
 const pageClass = css`
   display: grid;
@@ -2351,6 +2352,9 @@ export default function BuildEditor({
   function handleRuntimeObservationChange(
     nextState: BuildRuntimeObservationState
   ) {
+    if (runtimeObservationStateRef.current === nextState) {
+      return;
+    }
     const health = nextState.health;
     if (health) {
       const healthEventKey = [
@@ -3484,6 +3488,10 @@ export default function BuildEditor({
     setForking(false);
   }
 
+  const previewProjectFiles = Array.isArray(build.projectFiles)
+    ? build.projectFiles
+    : EMPTY_BUILD_PROJECT_FILES;
+
   return (
     <div className={pageClass}>
       <header className={headerClass}>
@@ -3625,7 +3633,7 @@ export default function BuildEditor({
             }
             build={build}
             code={build.code}
-            projectFiles={build.projectFiles || []}
+            projectFiles={previewProjectFiles}
             streamingProjectFiles={streamingProjectFiles}
             streamingFocusFilePath={streamingFocusFilePath}
             isOwner={isOwner}

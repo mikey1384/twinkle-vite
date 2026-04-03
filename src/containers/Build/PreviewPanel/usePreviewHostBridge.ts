@@ -818,16 +818,23 @@ export function usePreviewHostBridge({
               issue.lineNumber === normalizedIssue.lineNumber &&
               issue.columnNumber === normalizedIssue.columnNumber
           );
+          const nextUpdatedAt = Math.max(
+            baseState.updatedAt,
+            normalizedIssue.createdAt
+          );
           if (isDuplicate) {
+            if (nextUpdatedAt === baseState.updatedAt) {
+              return prev;
+            }
             return {
               ...baseState,
-              updatedAt: Math.max(Date.now(), normalizedIssue.createdAt)
+              updatedAt: nextUpdatedAt
             };
           }
           return {
             ...baseState,
             issues: [...baseState.issues, normalizedIssue].slice(-8),
-            updatedAt: Math.max(Date.now(), normalizedIssue.createdAt)
+            updatedAt: nextUpdatedAt
           };
         });
         return;
@@ -867,16 +874,23 @@ export function usePreviewHostBridge({
               JSON.stringify(normalizedHealth.interactionSteps || []) &&
             previousHealth.visibleTextSample ===
               normalizedHealth.visibleTextSample;
+          const nextUpdatedAt = Math.max(
+            baseState.updatedAt,
+            normalizedHealth.observedAt
+          );
           if (isUnchanged) {
+            if (nextUpdatedAt === baseState.updatedAt) {
+              return prev;
+            }
             return {
               ...baseState,
-              updatedAt: Math.max(Date.now(), normalizedHealth.observedAt)
+              updatedAt: nextUpdatedAt
             };
           }
           return {
             ...baseState,
             health: normalizedHealth,
-            updatedAt: Math.max(Date.now(), normalizedHealth.observedAt)
+            updatedAt: nextUpdatedAt
           };
         });
         return;
