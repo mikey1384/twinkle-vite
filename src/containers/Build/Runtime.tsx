@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
@@ -141,10 +141,6 @@ const backButtonClass = css`
   }
 `;
 
-const navLinkClass = css`
-  text-decoration: none;
-`;
-
 const panelWrapClass = css`
   min-height: 0;
   overflow: hidden;
@@ -198,6 +194,10 @@ export default function BuildRuntime() {
     navigate(backTo, { replace: true });
   }
 
+  function handleGoToBuildMenu() {
+    navigate('/build');
+  }
+
   function renderRuntimeUnavailable({
     title,
     text
@@ -218,14 +218,15 @@ export default function BuildRuntime() {
                 <Icon icon="arrow-left" />
                 <span>{backLabel}</span>
               </button>
-              <Link
-                to="/build"
-                className={`${backButtonClass} ${navLinkClass}`}
+              <button
+                type="button"
+                className={backButtonClass}
+                onClick={handleGoToBuildMenu}
                 title="Go to build main menu"
               >
                 <Icon icon="rocket-launch" />
                 <span>Build Menu</span>
-              </Link>
+              </button>
             </div>
             <div className={titleRowClass}>
               <Icon icon="laptop-code" />
@@ -300,14 +301,15 @@ export default function BuildRuntime() {
               <Icon icon="arrow-left" />
               <span>{backLabel}</span>
             </button>
-            <Link
-              to="/build"
-              className={`${backButtonClass} ${navLinkClass}`}
+            <button
+              type="button"
+              className={backButtonClass}
+              onClick={handleGoToBuildMenu}
               title="Go to build main menu"
             >
               <Icon icon="rocket-launch" />
               <span>Build Menu</span>
-            </Link>
+            </button>
           </div>
           <div className={titleRowClass}>
             <Icon icon="laptop-code" />

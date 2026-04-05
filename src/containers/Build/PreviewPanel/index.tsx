@@ -245,6 +245,7 @@ const BUILD_PROJECT_UNSUPPORTED_UPLOAD_EXTENSIONS = [
   '.ts',
   '.tsx'
 ] as const;
+const EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS: PreviewRuntimeUploadAsset[] = [];
 const BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES = new Set([
   'application/json',
   'application/javascript',
@@ -1060,7 +1061,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onRuntimeObservationChange,
       onRuntimeUploadsSync,
       onOpenRuntimeUploadsManager,
-      currentBuildRuntimeAssets = []
+      currentBuildRuntimeAssets = EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS
     }: PreviewPanelProps,
     ref
   ) {
