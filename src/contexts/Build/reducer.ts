@@ -4,6 +4,7 @@ export interface BuildLiveRunMessage {
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
+  billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
   createdAt: number;
   persisted?: boolean;
@@ -50,6 +51,7 @@ export interface BuildLiveRunState {
   executionPlan?: any | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
+  billingState?: 'charged' | 'not_charged' | 'pending' | null;
   updatedAt: number;
 }
 
@@ -77,6 +79,8 @@ export interface BuildLiveRunActionPayload {
   executionPlan?: any | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
+  billingState?: 'charged' | 'not_charged' | 'pending' | null;
+  workspaceChanged?: boolean;
   event?: BuildLiveRunEvent | null;
   usage?: {
     stage?: string | null;
@@ -257,6 +261,7 @@ export default function BuildReducer(
         executionPlan: null,
         runtimeExplorationPlan: null,
         runtimePlanRefined: false,
+        billingState: null,
         updatedAt: Date.now()
       });
     }
@@ -339,6 +344,11 @@ export default function BuildReducer(
           typeof action.buildRun?.runtimePlanRefined === 'boolean'
             ? action.buildRun.runtimePlanRefined
             : currentRun.runtimePlanRefined,
+        billingState:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(action.buildRun, 'billingState')
+            ? action.buildRun.billingState ?? null
+            : currentRun.billingState,
         updatedAt: Date.now()
       });
     }
@@ -436,6 +446,11 @@ export default function BuildReducer(
                 Object.prototype.hasOwnProperty.call(action.buildRun, 'artifactCode')
                   ? action.buildRun?.artifactCode ?? null
                   : currentRun.assistantMessage.codeGenerated,
+              billingState:
+                action.buildRun &&
+                Object.prototype.hasOwnProperty.call(action.buildRun, 'billingState')
+                  ? action.buildRun.billingState ?? null
+                  : currentRun.assistantMessage.billingState ?? null,
               streamCodePreview: null,
               artifactVersionId:
                 Number(action.buildRun?.artifactVersionId || 0) > 0
@@ -451,6 +466,8 @@ export default function BuildReducer(
           Array.isArray(action.buildRun?.projectFiles) &&
           action.buildRun.projectFiles.length > 0
             ? normalizeBuildRunProjectFiles(action.buildRun.projectFiles)
+            : action.buildRun?.workspaceChanged === false
+              ? currentRun.baseProjectFiles
             : currentRun.streamingProjectFiles?.length
               ? currentRun.streamingProjectFiles
               : currentRun.baseProjectFiles,
@@ -473,6 +490,11 @@ export default function BuildReducer(
           typeof action.buildRun?.runtimePlanRefined === 'boolean'
             ? action.buildRun.runtimePlanRefined
             : currentRun.runtimePlanRefined,
+        billingState:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(action.buildRun, 'billingState')
+            ? action.buildRun.billingState ?? null
+            : currentRun.billingState,
         updatedAt: Date.now()
       };
       return {

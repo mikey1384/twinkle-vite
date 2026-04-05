@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
@@ -62,8 +62,9 @@ const headerClass = css`
 const headerTopRowClass = css`
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.7rem;
   min-width: 0;
+  flex-wrap: wrap;
 `;
 
 const titleRowClass = css`
@@ -140,6 +141,10 @@ const backButtonClass = css`
   }
 `;
 
+const navLinkClass = css`
+  text-decoration: none;
+`;
+
 const panelWrapClass = css`
   min-height: 0;
   overflow: hidden;
@@ -213,10 +218,18 @@ export default function BuildRuntime() {
                 <Icon icon="arrow-left" />
                 <span>{backLabel}</span>
               </button>
-              <div className={titleRowClass}>
-                <Icon icon="laptop-code" />
-                <h1 className={titleClass}>Build App</h1>
-              </div>
+              <Link
+                to="/build"
+                className={`${backButtonClass} ${navLinkClass}`}
+                title="Go to build main menu"
+              >
+                <Icon icon="rocket-launch" />
+                <span>Build Menu</span>
+              </Link>
+            </div>
+            <div className={titleRowClass}>
+              <Icon icon="laptop-code" />
+              <h1 className={titleClass}>Build App</h1>
             </div>
           </div>
           <div className={panelWrapClass}>
@@ -287,10 +300,18 @@ export default function BuildRuntime() {
               <Icon icon="arrow-left" />
               <span>{backLabel}</span>
             </button>
-            <div className={titleRowClass}>
-              <Icon icon="laptop-code" />
-              <h1 className={titleClass}>{build.title}</h1>
-            </div>
+            <Link
+              to="/build"
+              className={`${backButtonClass} ${navLinkClass}`}
+              title="Go to build main menu"
+            >
+              <Icon icon="rocket-launch" />
+              <span>Build Menu</span>
+            </Link>
+          </div>
+          <div className={titleRowClass}>
+            <Icon icon="laptop-code" />
+            <h1 className={titleClass}>{build.title}</h1>
           </div>
           <div className={metaClass}>
             <span>by {build.username}</span>

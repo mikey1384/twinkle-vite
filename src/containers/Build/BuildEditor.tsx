@@ -310,6 +310,7 @@ interface ChatMessage {
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
+  billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
   createdAt: number;
   persisted?: boolean;
@@ -370,6 +371,8 @@ interface BuildRunEvent {
   } | null;
 }
 
+type BuildPlanAction = 'continue' | 'cancel';
+
 interface BuildProjectFileDiff {
   addedPaths: string[];
   updatedPaths: string[];
@@ -413,6 +416,7 @@ interface BuildRuntimeUploadUsage {
 interface QueuedBuildRequest {
   id: string;
   message: string;
+  planAction?: BuildPlanAction | null;
   createdAt: number;
 }
 
@@ -1596,6 +1600,7 @@ export default function BuildEditor({
       executionPlan,
       runtimeExplorationPlan,
       runtimePlanRefined,
+      billingState,
       message
     }: {
       requestId?: string;
@@ -1610,6 +1615,7 @@ export default function BuildEditor({
       executionPlan?: BuildExecutionPlan | null;
       runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
       runtimePlanRefined?: boolean;
+      billingState?: 'charged' | 'not_charged' | 'pending' | null;
       message?: {
         id?: number | null;
         userMessageId?: number | null;
@@ -1654,6 +1660,7 @@ export default function BuildEditor({
             persisted: Boolean(persistedAssistantId),
             content: assistantText || entry.content,
             codeGenerated: artifactCode,
+            billingState: billingState ?? null,
             streamCodePreview: null,
             artifactVersionId,
             createdAt
@@ -1670,6 +1677,7 @@ export default function BuildEditor({
             role: 'assistant' as const,
             content: assistantText || '',
             codeGenerated: artifactCode,
+            billingState: billingState ?? null,
             streamCodePreview: null,
             artifactVersionId,
             createdAt,
@@ -1759,6 +1767,17 @@ export default function BuildEditor({
             requiresProjectFilesResyncBeforeSaveRef.current = true;
           }
         }
+      } else if (
+        executionPlan !== undefined &&
+        buildRef.current &&
+        buildRef.current.executionPlan !== (executionPlan || null)
+      ) {
+        const nextBuild = {
+          ...buildRef.current,
+          executionPlan: executionPlan || null
+        };
+        buildRef.current = nextBuild;
+        updateBuildRef.current(nextBuild);
       }
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
@@ -2854,7 +2873,10 @@ export default function BuildEditor({
     );
   }
 
-  function enqueueLatestBuildRequest(messageText: string) {
+  function enqueueLatestBuildRequest(
+    messageText: string,
+    options?: { planAction?: BuildPlanAction | null }
+  ) {
     const trimmed = String(messageText || '').trim();
     if (!trimmed) return;
     const normalized = normalizeQueuedMessage(trimmed);
@@ -2892,6 +2914,7 @@ export default function BuildEditor({
       {
         id: `${Date.now()}-steer`,
         message: trimmed,
+        planAction: options?.planAction || null,
         createdAt: Date.now()
       }
     ]);
@@ -2923,7 +2946,9 @@ export default function BuildEditor({
       phase: 'queued',
       message: 'Starting your latest request.'
     });
-    const started = await startGeneration(nextRequest.message);
+    const started = await startGeneration(nextRequest.message, {
+      planAction: nextRequest.planAction || null
+    });
     if (!started) {
       queuePausedForSaveRef.current = true;
       updateQueuedRequests([nextRequest, ...queuedRequestsRef.current]);
@@ -3059,9 +3084,18 @@ export default function BuildEditor({
     return await sendBuildMessageText(messageText);
   }
 
-  async function handleSendPresetMessage(messageText: string) {
-    if (!String(messageText || '').trim() || !isOwner) return;
-    await sendBuildMessageText(messageText);
+  async function handleContinueScopedPlan() {
+    if (!isOwner) return;
+    await sendBuildMessageText('Continue current plan.', {
+      planAction: 'continue'
+    });
+  }
+
+  async function handleCancelScopedPlan() {
+    if (!isOwner) return;
+    await sendBuildMessageText('Stop current plan.', {
+      planAction: 'cancel'
+    });
   }
 
   function appendPersistedBuildChatMessage(
@@ -3583,7 +3617,10 @@ export default function BuildEditor({
     setBuildChatUploadModalShown(true);
   }
 
-  async function sendBuildMessageText(messageText: string) {
+  async function sendBuildMessageText(
+    messageText: string,
+    options?: { planAction?: BuildPlanAction | null }
+  ) {
     const trimmedMessage = String(messageText || '').trim();
     if (!trimmedMessage || !isOwner || buildChatUploadInFlight) return false;
     const pendingBuildChatUploadClarification =
@@ -3613,14 +3650,14 @@ export default function BuildEditor({
       pendingRuntimeAutoFixRef.current ||
       pendingRuntimeVerificationRef.current
     ) {
-      enqueueLatestBuildRequest(trimmedMessage);
+      enqueueLatestBuildRequest(trimmedMessage, options);
       return true;
     }
 
-    const started = await startGeneration(trimmedMessage);
+    const started = await startGeneration(trimmedMessage, options);
     if (!started) {
       if (isRunActivityInFlight()) {
-        enqueueLatestBuildRequest(trimmedMessage);
+        enqueueLatestBuildRequest(trimmedMessage, options);
         return true;
       }
       return false;
@@ -4285,7 +4322,8 @@ export default function BuildEditor({
               draftMessage={buildChatDraftMessage}
               onDraftMessageChange={setBuildChatDraftMessage}
               onSendMessage={handleSendMessage}
-              onSendPresetMessage={handleSendPresetMessage}
+              onContinueScopedPlan={handleContinueScopedPlan}
+              onCancelScopedPlan={handleCancelScopedPlan}
               onOpenBuildChatUpload={handleOpenBuildChatUpload}
               uploadInFlight={buildChatUploadInFlight}
               runtimeUploadsModalShown={runtimeUploadsModalShown}
@@ -4576,7 +4614,10 @@ export default function BuildEditor({
     return true;
   }
 
-  async function startGeneration(messageText: string): Promise<boolean> {
+  async function startGeneration(
+    messageText: string,
+    options?: { planAction?: BuildPlanAction | null }
+  ): Promise<boolean> {
     if (AI_FEATURES_DISABLED) return false;
     if (!messageText.trim() || isRunActivityInFlight() || !isOwner) {
       return false;
@@ -4630,6 +4671,7 @@ export default function BuildEditor({
         role: 'user',
         content: messageText,
         codeGenerated: null,
+        billingState: null,
         streamCodePreview: null,
         createdAt: now,
         persisted: false
@@ -4639,6 +4681,7 @@ export default function BuildEditor({
         role: 'assistant',
         content: '',
         codeGenerated: null,
+        billingState: null,
         streamCodePreview: null,
         createdAt: now + 1,
         persisted: false
@@ -4668,7 +4711,8 @@ export default function BuildEditor({
         buildId: activeBuild.id,
         message: messageText,
         requestId,
-        runtimeObservationSummary: runtimeObservationSummary || undefined
+        runtimeObservationSummary: runtimeObservationSummary || undefined,
+        planAction: options?.planAction || undefined
       });
       return true;
     } finally {
@@ -4938,8 +4982,16 @@ export default function BuildEditor({
       }
     }
     if (!Array.isArray(messages)) return;
+    const localBillingStateById = new Map<number, ChatMessage['billingState']>();
+    for (const message of chatMessagesRef.current) {
+      if (typeof message?.id !== 'number' || message.id <= 0) continue;
+      if (message.billingState == null) continue;
+      localBillingStateById.set(message.id, message.billingState);
+    }
     const normalized = messages.map((entry: any) => ({
       ...entry,
+      billingState:
+        localBillingStateById.get(Number(entry?.id || 0)) ?? null,
       persisted: true,
       streamCodePreview: null
     }));

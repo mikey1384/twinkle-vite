@@ -60,6 +60,7 @@ interface ChatMessage {
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
+  billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
   createdAt: number;
 }
@@ -190,7 +191,8 @@ interface ChatPanelProps {
   draftMessage: string;
   onDraftMessageChange: (value: string) => void;
   onSendMessage: (message: string) => Promise<boolean> | boolean;
-  onSendPresetMessage: (message: string) => void;
+  onContinueScopedPlan: () => void;
+  onCancelScopedPlan: () => void;
   onOpenBuildChatUpload: () => void;
   uploadInFlight: boolean;
   runtimeUploadsModalShown: boolean;
@@ -232,7 +234,8 @@ export default function ChatPanel({
   draftMessage,
   onDraftMessageChange,
   onSendMessage,
-  onSendPresetMessage,
+  onContinueScopedPlan,
+  onCancelScopedPlan,
   onOpenBuildChatUpload,
   uploadInFlight,
   runtimeUploadsModalShown,
@@ -851,7 +854,7 @@ export default function ChatPanel({
             >
               <button
                 type="button"
-                onClick={() => onSendPresetMessage('Yes, continue.')}
+                onClick={onContinueScopedPlan}
                 className={css`
                   border: 1px solid rgba(36, 99, 235, 0.18);
                   background: rgba(59, 130, 246, 0.08);
@@ -867,7 +870,7 @@ export default function ChatPanel({
               </button>
               <button
                 type="button"
-                onClick={() => onSendPresetMessage('No, stop this plan.')}
+                onClick={onCancelScopedPlan}
                 className={css`
                   border: 1px solid rgba(148, 163, 184, 0.28);
                   background: rgba(148, 163, 184, 0.1);
@@ -2093,7 +2096,9 @@ function AssistantMessage({
   const showNoCodeWarning =
     !hasCodePayload &&
     !waitingForCurrentAssistantResponse &&
-    looksLikeCompletedCodeChangeClaim(message.content);
+    (looksLikeCompletedCodeChangeClaim(message.content) ||
+      message.billingState === 'not_charged' ||
+      message.billingState === 'pending');
 
   return (
     <div>
@@ -2241,8 +2246,11 @@ function AssistantMessage({
               opacity: 0.85;
             `}
           >
-            Lumine replied like it made changes, but it did not return updated
-            code. Your workspace stayed the same.
+            {message.billingState === 'not_charged'
+              ? 'No workspace changes were saved, and this run was not charged.'
+              : message.billingState === 'pending'
+                ? 'No workspace changes were saved. Billing reconciliation is still pending.'
+                : 'Lumine replied like it made changes, but it did not return updated code. Your workspace stayed the same.'}
           </div>
         </div>
       )}

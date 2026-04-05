@@ -84,6 +84,8 @@ export default function useBuildSocket() {
       executionPlan,
       runtimeExplorationPlan,
       runtimePlanRefined,
+      workspaceChanged,
+      billingState,
       message
     }: {
       requestId?: string;
@@ -97,6 +99,8 @@ export default function useBuildSocket() {
       executionPlan?: any | null;
       runtimeExplorationPlan?: any | null;
       runtimePlanRefined?: boolean;
+      workspaceChanged?: boolean;
+      billingState?: 'charged' | 'not_charged' | 'pending' | null;
       message?: {
         id?: number | null;
         userMessageId?: number | null;
@@ -116,6 +120,13 @@ export default function useBuildSocket() {
         executionPlan,
         runtimeExplorationPlan,
         runtimePlanRefined: Boolean(runtimePlanRefined),
+        ...(Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'workspaceChanged'
+        )
+          ? { workspaceChanged: workspaceChanged === true }
+          : {}),
+        billingState: billingState ?? null,
         artifactVersionId:
           Number(message?.artifactVersionId || 0) > 0
             ? Number(message?.artifactVersionId)
