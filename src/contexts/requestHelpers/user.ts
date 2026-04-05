@@ -233,11 +233,33 @@ export default function userRequestHelpers({
         return handleError(error);
       }
     },
+    async loadPinnedBuildsOnProfile(userId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/user/profile/pinnedBuilds?userId=${userId}`
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async pinAICardsOnProfile({ cardIds }: { cardIds: number[] }) {
       try {
         const { data } = await request.put(
           `${URL}/user/profile/pinnedAICards`,
           { cardIds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async pinBuildsOnProfile({ buildIds }: { buildIds: number[] }) {
+      try {
+        const { data } = await request.put(
+          `${URL}/user/profile/pinnedBuilds`,
+          { buildIds },
           auth()
         );
         return data;

@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react';
+import { parse as parseJavaScriptModule } from '@babel/parser';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
@@ -24,6 +25,7 @@ import {
   getPreferredIndexPath,
   isIndexHtmlPath,
   isPathWithinFolder,
+  listCaseInsensitiveProjectFileCollisionPaths,
   normalizeProjectFilePath,
   remapPathPrefix,
   serializeEditableProjectFiles
@@ -32,6 +34,7 @@ import CodeWorkspacePane from './CodeWorkspacePane';
 import { usePreviewFrameManager } from './usePreviewFrameManager';
 import {
   buildEmptyRuntimeObservationState,
+  ensureBuildApiToken,
   normalizeRuntimeExplorationPlan,
   usePreviewHostBridge
 } from './usePreviewHostBridge';
@@ -39,11 +42,13 @@ import {
   buildPreviewBaseSrc,
   useWorkspacePreviewSrc
 } from './usePreviewSource';
+import { resolveLocalProjectPathFromBase } from './moduleRewrite';
 import type {
   ArtifactVersion,
   EditableProjectFile,
   PreviewPanelHandle,
-  PreviewPanelProps
+  PreviewPanelProps,
+  PreviewRuntimeUploadAsset
 } from './types';
 import VersionHistoryModal from './VersionHistoryModal';
 const GUEST_RESTRICTION_BANNER_TEXT =
@@ -188,6 +193,15 @@ const workspaceViewOptions = [
 ] as const;
 const BUILD_PROJECT_UPLOAD_ACCEPT =
   '.html,.htm,.css,.js,.mjs,.cjs,.json,.txt,.md,.svg,.xml,.csv,.yml,.yaml';
+const BUILD_PROJECT_ASSET_UPLOAD_ACCEPT =
+  'image/*,audio/*,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp,.tiff,.tif,.heic,.heif,.avif,.mp3,.wav,.ogg,.m4a,.aac,.flac,.aif,.aiff';
+
+function normalizeUploadInputFiles(uploadInput: FileList | File[] | null) {
+  if (!uploadInput) {
+    return [];
+  }
+  return Array.from(uploadInput);
+}
 const BUILD_PROJECT_TEXT_UPLOAD_EXTENSIONS = [
   '.html',
   '.htm',
@@ -203,6 +217,28 @@ const BUILD_PROJECT_TEXT_UPLOAD_EXTENSIONS = [
   '.csv',
   '.yml',
   '.yaml'
+] as const;
+const BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.svg',
+  '.bmp',
+  '.tiff',
+  '.tif',
+  '.heic',
+  '.heif',
+  '.avif',
+  '.mp3',
+  '.wav',
+  '.ogg',
+  '.m4a',
+  '.aac',
+  '.flac',
+  '.aif',
+  '.aiff'
 ] as const;
 const BUILD_PROJECT_UNSUPPORTED_UPLOAD_EXTENSIONS = [
   '.jsx',
@@ -221,6 +257,38 @@ const BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES = new Set([
   'text/yaml',
   'application/x-yaml'
 ]);
+
+function buildProjectExportBaseName(title: string, buildId: number) {
+  const normalized = String(title || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return normalized || `lumine-project-${buildId}`;
+}
+
+function triggerBrowserDownload({
+  bytes,
+  fileName,
+  mimeType
+}: {
+  bytes: ArrayBuffer;
+  fileName: string;
+  mimeType: string;
+}) {
+  const blob = new Blob([bytes], { type: mimeType });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+  }, 0);
+}
 
 function isSupportedBuildProjectUploadFile(file: File) {
   const lowerName = String(file?.name || '').toLowerCase();
@@ -242,6 +310,21 @@ function isSupportedBuildProjectUploadFile(file: File) {
   return (
     normalizedType.startsWith('text/') ||
     BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES.has(normalizedType)
+  );
+}
+
+function isSupportedBuildAssetUploadFile(file: File) {
+  const lowerName = String(file?.name || '').toLowerCase();
+  if (
+    BUILD_PROJECT_ASSET_UPLOAD_EXTENSIONS.some((extension) =>
+      lowerName.endsWith(extension)
+    )
+  ) {
+    return true;
+  }
+  const normalizedType = String(file?.type || '').toLowerCase();
+  return (
+    normalizedType.startsWith('image/') || normalizedType.startsWith('audio/')
   );
 }
 
@@ -268,6 +351,63 @@ function resolveUploadedProjectFilePath({
   return normalizeProjectFilePath(`${selectedFolderPath}/${relativePath}`);
 }
 
+function hasPreservedUploadedProjectRelativePath(file: File) {
+  const normalizedRelativePath = String(file.webkitRelativePath || '')
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean);
+  return normalizedRelativePath.length > 1;
+}
+
+function getUploadedProjectFolderRelativePath(file: File) {
+  const normalizedRelativePath = String(file.webkitRelativePath || '')
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean);
+  if (normalizedRelativePath.length <= 1) {
+    return null;
+  }
+  return normalizeProjectFilePath(`/${normalizedRelativePath.slice(1).join('/')}`);
+}
+
+function getImportedRuntimeAttachmentSourcePath(file: File) {
+  const folderRelativePath = getUploadedProjectFolderRelativePath(file);
+  if (!folderRelativePath) {
+    return null;
+  }
+  if (
+    folderRelativePath.startsWith(IMPORTED_RUNTIME_ORIGINAL_ATTACHMENT_PATH_PREFIX) ||
+    folderRelativePath.startsWith(IMPORTED_RUNTIME_THUMB_ATTACHMENT_PATH_PREFIX)
+  ) {
+    return folderRelativePath;
+  }
+  return null;
+}
+
+function listCaseInsensitiveFileNameCollisions(files: File[]) {
+  const originalNameByLowerCaseName = new Map<string, string>();
+  const collisionNames = new Set<string>();
+  for (const file of files) {
+    const fileName = String(file?.name || '').trim();
+    if (!fileName) {
+      continue;
+    }
+    const normalizedFileName = fileName.toLowerCase();
+    const existingName = originalNameByLowerCaseName.get(normalizedFileName);
+    if (existingName && existingName !== fileName) {
+      collisionNames.add(existingName);
+      collisionNames.add(fileName);
+      continue;
+    }
+    if (existingName) {
+      collisionNames.add(fileName);
+      continue;
+    }
+    originalNameByLowerCaseName.set(normalizedFileName, fileName);
+  }
+  return Array.from(collisionNames).sort((a, b) => a.localeCompare(b));
+}
+
 function summarizeUploadedFileNames(names: string[]) {
   const uniqueNames = Array.from(
     new Set(names.map((name) => String(name || '').trim()).filter(Boolean))
@@ -280,12 +420,624 @@ function summarizeUploadedFileNames(names: string[]) {
   } more`;
 }
 
+const IMPORTED_RUNTIME_ORIGINAL_ATTACHMENT_PATH_PREFIX =
+  '/attachments/build-runtime/';
+const IMPORTED_RUNTIME_THUMB_ATTACHMENT_PATH_PREFIX =
+  '/attachments/optimized/build-runtime/';
+
+const IMPORTED_RUNTIME_ATTACHMENT_URL_NEIGHBOR_CHAR_REGEX =
+  /[A-Za-z0-9._~!$&+,;=:@%/-]/;
+
+function isNumericPathSegment(value: string | null | undefined) {
+  return /^[0-9]+$/.test(String(value || '').trim());
+}
+
+function getImportedRuntimeAttachmentTailSegments({
+  filePath,
+  prefix
+}: {
+  filePath: string;
+  prefix: string;
+}) {
+  const normalizedPath = normalizeProjectFilePath(filePath);
+  const prefixIndex = normalizedPath.indexOf(prefix);
+  if (prefixIndex === -1) {
+    return null;
+  }
+  const suffix = normalizedPath.slice(prefixIndex + prefix.length);
+  const segments = suffix.split('/').filter(Boolean);
+  return segments.length > 0 ? segments : null;
+}
+
+function getImportedRuntimeOriginalAttachmentAssetId(filePath: string) {
+  const segments = getImportedRuntimeAttachmentTailSegments({
+    filePath,
+    prefix: IMPORTED_RUNTIME_ORIGINAL_ATTACHMENT_PATH_PREFIX
+  });
+  if (
+    !segments ||
+    segments.length < 4 ||
+    !isNumericPathSegment(segments[0]) ||
+    !isNumericPathSegment(segments[1]) ||
+    !isNumericPathSegment(segments[2])
+  ) {
+    return null;
+  }
+  return segments[2];
+}
+
+function getImportedRuntimeThumbAttachmentAssetId(filePath: string) {
+  const segments = getImportedRuntimeAttachmentTailSegments({
+    filePath,
+    prefix: IMPORTED_RUNTIME_THUMB_ATTACHMENT_PATH_PREFIX
+  });
+  if (
+    !segments ||
+    segments.length < 2 ||
+    !isNumericPathSegment(segments[0])
+  ) {
+    return null;
+  }
+  return segments[0];
+}
+
+function encodeImportedProjectAssetPathForUrl(assetPath: string) {
+  const normalizedPath = normalizeProjectFilePath(assetPath);
+  const encodedSegments = normalizedPath
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => {
+      try {
+        return encodeURIComponent(decodeURIComponent(segment));
+      } catch {
+        return encodeURIComponent(segment);
+      }
+    });
+  return encodedSegments.length > 0 ? `/${encodedSegments.join('/')}` : '/';
+}
+
+function buildProjectRootRelativeImportPath(targetPath: string) {
+  return normalizeProjectFilePath(targetPath).replace(/^\/+/, '');
+}
+
+function buildRelativeProjectImportPath({
+  fromFilePath,
+  targetPath
+}: {
+  fromFilePath: string;
+  targetPath: string;
+}) {
+  const fromSegments = normalizeProjectFilePath(fromFilePath)
+    .split('/')
+    .filter(Boolean);
+  const targetSegments = normalizeProjectFilePath(targetPath)
+    .split('/')
+    .filter(Boolean);
+
+  if (fromSegments.length > 0) {
+    fromSegments.pop();
+  }
+
+  let sharedIndex = 0;
+  while (
+    sharedIndex < fromSegments.length &&
+    sharedIndex < targetSegments.length &&
+    fromSegments[sharedIndex] === targetSegments[sharedIndex]
+  ) {
+    sharedIndex += 1;
+  }
+
+  const relativeSegments = [
+    ...fromSegments.slice(sharedIndex).map(() => '..'),
+    ...targetSegments.slice(sharedIndex)
+  ];
+  return relativeSegments.join('/') || targetSegments[targetSegments.length - 1] || '';
+}
+
+function isHtmlImportedProjectFilePath(filePath: string) {
+  const normalizedPath = normalizeProjectFilePath(filePath).toLowerCase();
+  return normalizedPath.endsWith('.html') || normalizedPath.endsWith('.htm');
+}
+
+function isPotentialImportedProjectModuleFile(filePath: string) {
+  const normalizedPath = normalizeProjectFilePath(filePath).toLowerCase();
+  return (
+    normalizedPath.endsWith('.js') ||
+    normalizedPath.endsWith('.mjs') ||
+    normalizedPath.endsWith('.cjs') ||
+    normalizedPath.endsWith('.jsx') ||
+    normalizedPath.endsWith('.ts') ||
+    normalizedPath.endsWith('.tsx') ||
+    normalizedPath.endsWith('.json')
+  );
+}
+
+function getImportedProjectFileCandidateUrls({
+  filePath,
+  targetPath
+}: {
+  filePath: string;
+  targetPath: string;
+}) {
+  const normalizedTargetPath = normalizeProjectFilePath(targetPath);
+  const urls = new Set<string>([normalizedTargetPath]);
+  const rootRelativePath = buildProjectRootRelativeImportPath(normalizedTargetPath);
+  if (rootRelativePath) {
+    urls.add(rootRelativePath);
+    if (
+      !rootRelativePath.startsWith('../') &&
+      !rootRelativePath.startsWith('./')
+    ) {
+      urls.add(`./${rootRelativePath}`);
+    }
+  }
+  const relativePath = buildRelativeProjectImportPath({
+    fromFilePath: filePath,
+    targetPath: normalizedTargetPath
+  });
+  if (relativePath) {
+    urls.add(relativePath);
+    if (!relativePath.startsWith('../') && !relativePath.startsWith('./')) {
+      urls.add(`./${relativePath}`);
+    }
+  }
+  return Array.from(urls).filter(Boolean);
+}
+
+function importedProjectFileReferencesProjectFile({
+  filePath,
+  content,
+  targetPath
+}: {
+  filePath: string;
+  content: string;
+  targetPath: string;
+}) {
+  return getImportedProjectFileCandidateUrls({
+    filePath,
+    targetPath
+  }).some((candidateUrl) => candidateUrl && content.includes(candidateUrl));
+}
+
+function collectImportedProjectModuleDependencyPaths({
+  filePath,
+  content,
+  localModulePaths
+}: {
+  filePath: string;
+  content: string;
+  localModulePaths: Set<string>;
+}) {
+  if (!content || localModulePaths.size === 0) {
+    return [];
+  }
+
+  const dependencyPaths = new Set<string>();
+
+  function maybeAddDependency(node: any) {
+    if (!node || typeof node !== 'object') return;
+    if (node.type !== 'StringLiteral') return;
+    const resolvedPath = resolveLocalProjectPathFromBase(
+      String(node.value || ''),
+      filePath
+    );
+    if (resolvedPath && localModulePaths.has(resolvedPath)) {
+      dependencyPaths.add(resolvedPath);
+    }
+  }
+
+  function visitNode(node: any) {
+    if (!node || typeof node !== 'object') return;
+
+    if (node.type === 'ImportDeclaration') {
+      maybeAddDependency(node.source);
+    } else if (
+      node.type === 'ExportNamedDeclaration' ||
+      node.type === 'ExportAllDeclaration'
+    ) {
+      maybeAddDependency(node.source);
+    } else if (node.type === 'ImportExpression') {
+      maybeAddDependency(node.source);
+    } else if (
+      node.type === 'CallExpression' &&
+      node.callee?.type === 'Import' &&
+      Array.isArray(node.arguments) &&
+      node.arguments.length > 0
+    ) {
+      maybeAddDependency(node.arguments[0]);
+    }
+
+    for (const value of Object.values(node)) {
+      if (!value) continue;
+      if (Array.isArray(value)) {
+        for (const child of value) {
+          if (child && typeof child === 'object') {
+            visitNode(child);
+          }
+        }
+        continue;
+      }
+      if (value && typeof value === 'object') {
+        visitNode(value);
+      }
+    }
+  }
+
+  try {
+    const ast = parseJavaScriptModule(content, {
+      sourceType: 'unambiguous',
+      errorRecovery: true,
+      plugins: [
+        'jsx',
+        'typescript',
+        'dynamicImport',
+        'importAttributes',
+        'topLevelAwait',
+        'classProperties',
+        'classPrivateProperties',
+        'classPrivateMethods',
+        'decorators-legacy'
+      ]
+    });
+    visitNode(ast.program);
+  } catch (error) {
+    console.error('Failed to collect imported project module dependency paths', {
+      filePath,
+      error
+    });
+  }
+
+  return Array.from(dependencyPaths);
+}
+
+function buildImportedRuntimeAttachmentDocumentBasePathsByScript(
+  files: EditableProjectFile[]
+) {
+  const htmlFiles = files.filter((file) => isHtmlImportedProjectFilePath(file.path));
+  const moduleFiles = files.filter((file) =>
+    isPotentialImportedProjectModuleFile(file.path)
+  );
+  const localModulePaths = new Set(
+    moduleFiles.map((file) => normalizeProjectFilePath(file.path))
+  );
+  const documentBasePathsByScriptPath = new Map<string, Map<string, string>>();
+  const dependencyPathsByScriptPath = new Map<string, string[]>();
+
+  function seedDocumentBasePath(scriptPath: string, htmlFilePath: string) {
+    const htmlDirectory = normalizeProjectFilePath(htmlFilePath)
+      .split('/')
+      .filter(Boolean)
+      .slice(0, -1)
+      .join('/');
+    const lookupKey = `/${htmlDirectory}`.replace(/\/+$/, '') || '/';
+    const nextDocumentBasePaths =
+      documentBasePathsByScriptPath.get(scriptPath) || new Map<string, string>();
+    if (!nextDocumentBasePaths.has(lookupKey)) {
+      nextDocumentBasePaths.set(lookupKey, normalizeProjectFilePath(htmlFilePath));
+      documentBasePathsByScriptPath.set(scriptPath, nextDocumentBasePaths);
+      return true;
+    }
+    return false;
+  }
+
+  for (const file of moduleFiles) {
+    const normalizedPath = normalizeProjectFilePath(file.path);
+    for (const htmlFile of htmlFiles) {
+      if (
+        importedProjectFileReferencesProjectFile({
+          filePath: htmlFile.path,
+          content: String(htmlFile.content || ''),
+          targetPath: normalizedPath
+        })
+      ) {
+        seedDocumentBasePath(normalizedPath, htmlFile.path);
+      }
+    }
+    dependencyPathsByScriptPath.set(
+      normalizedPath,
+      collectImportedProjectModuleDependencyPaths({
+        filePath: normalizedPath,
+        content: String(file.content || ''),
+        localModulePaths
+      })
+    );
+  }
+
+  const pendingPaths = Array.from(documentBasePathsByScriptPath.keys());
+  while (pendingPaths.length > 0) {
+    const currentPath = String(pendingPaths.shift() || '');
+    const documentBasePaths =
+      documentBasePathsByScriptPath.get(currentPath) || null;
+    if (!documentBasePaths || documentBasePaths.size === 0) {
+      continue;
+    }
+
+    for (const dependencyPath of dependencyPathsByScriptPath.get(currentPath) || []) {
+      let didChange = false;
+      for (const htmlFilePath of documentBasePaths.values()) {
+        if (seedDocumentBasePath(dependencyPath, htmlFilePath)) {
+          didChange = true;
+        }
+      }
+      if (didChange) {
+        pendingPaths.push(dependencyPath);
+      }
+    }
+  }
+
+  const documentBaseFilePathByScriptPath = new Map<string, string>();
+  const documentBaseFilePathsByScriptPath = new Map<string, string[]>();
+  for (const [scriptPath, documentBasePaths] of documentBasePathsByScriptPath) {
+    const baseFilePaths = Array.from(documentBasePaths.values());
+    if (baseFilePaths.length > 0) {
+      documentBaseFilePathsByScriptPath.set(scriptPath, baseFilePaths);
+    }
+    if (baseFilePaths.length === 1) {
+      documentBaseFilePathByScriptPath.set(
+        scriptPath,
+        baseFilePaths[0]
+      );
+    }
+  }
+
+  return {
+    documentBaseFilePathByScriptPath,
+    documentBaseFilePathsByScriptPath
+  };
+}
+
+function getImportedProjectAssetCandidateUrls({
+  filePath,
+  assetPath,
+  documentBaseFilePath,
+  documentBaseFilePaths
+}: {
+  filePath: string;
+  assetPath: string;
+  documentBaseFilePath?: string | null;
+  documentBaseFilePaths?: string[] | null;
+}) {
+  const normalizedAssetPath = normalizeProjectFilePath(assetPath);
+  const encodedAssetPath =
+    encodeImportedProjectAssetPathForUrl(normalizedAssetPath);
+  const urls = new Set<string>([normalizedAssetPath, encodedAssetPath]);
+  const projectRootRelativePaths = [
+    buildProjectRootRelativeImportPath(normalizedAssetPath),
+    buildProjectRootRelativeImportPath(encodedAssetPath)
+  ];
+  for (const rootRelativePath of projectRootRelativePaths) {
+    if (!rootRelativePath) continue;
+    urls.add(rootRelativePath);
+    if (
+      !rootRelativePath.startsWith('../') &&
+      !rootRelativePath.startsWith('./')
+    ) {
+      urls.add(`./${rootRelativePath}`);
+    }
+  }
+  const relativePaths = [
+    buildRelativeProjectImportPath({
+      fromFilePath: filePath,
+      targetPath: normalizedAssetPath
+    }),
+    buildRelativeProjectImportPath({
+      fromFilePath: filePath,
+      targetPath: encodedAssetPath
+    })
+  ];
+  for (const relativePath of relativePaths) {
+    if (!relativePath) continue;
+    urls.add(relativePath);
+    if (
+      !relativePath.startsWith('../') &&
+      !relativePath.startsWith('./')
+    ) {
+      urls.add(`./${relativePath}`);
+    }
+  }
+  const candidateDocumentBasePaths = Array.from(
+    new Set(
+      [
+        documentBaseFilePath,
+        ...(Array.isArray(documentBaseFilePaths) ? documentBaseFilePaths : [])
+      ]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+        .map((value) => normalizeProjectFilePath(value))
+    )
+  );
+  for (const normalizedDocumentBaseFilePath of candidateDocumentBasePaths) {
+    const documentRelativePaths = [
+      buildRelativeProjectImportPath({
+        fromFilePath: normalizedDocumentBaseFilePath,
+        targetPath: normalizedAssetPath
+      }),
+      buildRelativeProjectImportPath({
+        fromFilePath: normalizedDocumentBaseFilePath,
+        targetPath: encodedAssetPath
+      })
+    ];
+    for (const documentRelativePath of documentRelativePaths) {
+      if (!documentRelativePath) continue;
+      urls.add(documentRelativePath);
+      if (
+        !documentRelativePath.startsWith('../') &&
+        !documentRelativePath.startsWith('./')
+      ) {
+        urls.add(`./${documentRelativePath}`);
+      }
+    }
+  }
+  return Array.from(urls).filter(Boolean);
+}
+
+function isStandaloneImportedRuntimeAttachmentBoundary(
+  char: string | undefined
+) {
+  return !char || !IMPORTED_RUNTIME_ATTACHMENT_URL_NEIGHBOR_CHAR_REGEX.test(char);
+}
+
+function replaceStandaloneImportedRuntimeAttachmentUrl({
+  content,
+  candidateUrl,
+  replacementUrl
+}: {
+  content: string;
+  candidateUrl: string;
+  replacementUrl: string;
+}) {
+  if (!candidateUrl || !replacementUrl || !content.includes(candidateUrl)) {
+    return content;
+  }
+
+  let nextContent = '';
+  let searchIndex = 0;
+
+  while (searchIndex < content.length) {
+    const matchIndex = content.indexOf(candidateUrl, searchIndex);
+    if (matchIndex === -1) {
+      nextContent += content.slice(searchIndex);
+      break;
+    }
+
+    const afterIndex = matchIndex + candidateUrl.length;
+    const beforeChar = matchIndex > 0 ? content[matchIndex - 1] : '';
+    const afterChar = afterIndex < content.length ? content[afterIndex] : '';
+
+    nextContent += content.slice(searchIndex, matchIndex);
+    if (
+      isStandaloneImportedRuntimeAttachmentBoundary(beforeChar) &&
+      isStandaloneImportedRuntimeAttachmentBoundary(afterChar)
+    ) {
+      nextContent += replacementUrl;
+    } else {
+      nextContent += content.slice(matchIndex, afterIndex);
+    }
+
+    searchIndex = afterIndex;
+  }
+
+  return nextContent;
+}
+
+function importedProjectFileReferencesRuntimeAttachment({
+  filePath,
+  content,
+  attachmentPath,
+  documentBaseFilePath,
+  documentBaseFilePaths
+}: {
+  filePath: string;
+  content: string;
+  attachmentPath: string;
+  documentBaseFilePath?: string | null;
+  documentBaseFilePaths?: string[] | null;
+}) {
+  return getImportedProjectAssetCandidateUrls({
+    filePath,
+    assetPath: attachmentPath,
+    documentBaseFilePath,
+    documentBaseFilePaths
+  }).some((candidateUrl) => candidateUrl && content.includes(candidateUrl));
+}
+
+function importedProjectFileReferencesLocalAsset({
+  filePath,
+  content,
+  assetPath,
+  documentBaseFilePath,
+  documentBaseFilePaths
+}: {
+  filePath: string;
+  content: string;
+  assetPath: string;
+  documentBaseFilePath?: string | null;
+  documentBaseFilePaths?: string[] | null;
+}) {
+  return getImportedProjectAssetCandidateUrls({
+    filePath,
+    assetPath,
+    documentBaseFilePath,
+    documentBaseFilePaths
+  }).some((candidateUrl) => candidateUrl && content.includes(candidateUrl));
+}
+
+function rewriteImportedProjectFilesWithRuntimeAssetUrls({
+  files,
+  replacementUrlByAttachmentPath,
+  documentBaseFilePathByScriptPath,
+  documentBaseFilePathsByScriptPath
+}: {
+  files: EditableProjectFile[];
+  replacementUrlByAttachmentPath: Map<string, string>;
+  documentBaseFilePathByScriptPath?: Map<string, string>;
+  documentBaseFilePathsByScriptPath?: Map<string, string[]>;
+}) {
+  if (replacementUrlByAttachmentPath.size === 0) {
+    return files;
+  }
+
+  return files.map((file) => {
+    let nextContent = String(file.content || '');
+
+    for (const [
+      attachmentPath,
+      replacementUrl
+    ] of replacementUrlByAttachmentPath.entries()) {
+      const candidateUrls = getImportedProjectAssetCandidateUrls({
+        filePath: file.path,
+        assetPath: attachmentPath,
+        documentBaseFilePath:
+          documentBaseFilePathByScriptPath?.get(
+            normalizeProjectFilePath(file.path)
+          ) || null,
+        documentBaseFilePaths:
+          documentBaseFilePathsByScriptPath?.get(
+            normalizeProjectFilePath(file.path)
+          ) || null
+      });
+      for (const candidateUrl of candidateUrls) {
+        nextContent = replaceStandaloneImportedRuntimeAttachmentUrl({
+          content: nextContent,
+          candidateUrl,
+          replacementUrl
+        });
+      }
+    }
+
+    if (nextContent === file.content) {
+      return file;
+    }
+    return {
+      ...file,
+      content: nextContent
+    };
+  });
+}
+
 function readLatestEditableProjectFiles(
   editableProjectFilesRef: React.MutableRefObject<EditableProjectFile[]>
 ) {
   return Array.isArray(editableProjectFilesRef.current)
     ? editableProjectFilesRef.current
     : [];
+}
+
+function mergeEditableProjectFiles(
+  baseFiles: EditableProjectFile[],
+  overrideFiles: EditableProjectFile[]
+) {
+  const nextFileContentByPath = new Map<string, string>();
+  for (const file of baseFiles) {
+    nextFileContentByPath.set(file.path, file.content);
+  }
+  for (const file of overrideFiles) {
+    nextFileContentByPath.set(file.path, file.content);
+  }
+  return Array.from(nextFileContentByPath.entries()).map(([path, content]) => ({
+    path,
+    content
+  }));
 }
 
 const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
@@ -306,7 +1058,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onEditableProjectFilesStateChange,
       runtimeExplorationPlan = null,
       onRuntimeObservationChange,
-      onRuntimeUploadsSync
+      onRuntimeUploadsSync,
+      onOpenRuntimeUploadsManager,
+      currentBuildRuntimeAssets = []
     }: PreviewPanelProps,
     ref
   ) {
@@ -345,7 +1099,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       Record<string, boolean>
     >({});
     const [savingProjectFiles, setSavingProjectFiles] = useState(false);
+    const [downloadingProjectArchive, setDownloadingProjectArchive] =
+      useState(false);
     const [projectFileError, setProjectFileError] = useState('');
+    const [workspaceRuntimeAssets, setWorkspaceRuntimeAssets] = useState<
+      PreviewRuntimeUploadAsset[]
+    >(currentBuildRuntimeAssets);
     const [guestRestrictionBannerVisible, setGuestRestrictionBannerVisible] =
       useState(false);
     const [runtimeObservationState, setRuntimeObservationState] =
@@ -357,9 +1116,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     const buildRef = useRef(build);
     const projectFileInputRef = useRef<HTMLInputElement | null>(null);
+    const projectFolderInputRef = useRef<HTMLInputElement | null>(null);
+    const projectAssetInputRef = useRef<HTMLInputElement | null>(null);
     const editableProjectFilesRef = useRef<EditableProjectFile[]>(
       buildEditableProjectFiles({ code, projectFiles })
     );
+    const savingProjectFilesRef = useRef(false);
+    const downloadingProjectArchiveRef = useRef(false);
     const wasShowingStreamingCodeRef = useRef(false);
     const streamingAutoFollowEnabledRef = useRef(false);
     const autoReturnToPreviewPendingRef = useRef(false);
@@ -437,21 +1200,107 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
 
     function openProjectFileUploadPicker() {
-      if (!isOwner) return;
+      if (!isOwner || areProjectFileMutationsLocked()) return;
       if (viewMode !== 'code') {
         setViewMode('code');
       }
       projectFileInputRef.current?.click();
     }
 
+    function openProjectFolderImportPicker() {
+      if (!isOwner || areProjectFileMutationsLocked()) return;
+      if (viewMode !== 'code') {
+        setViewMode('code');
+      }
+      projectFolderInputRef.current?.click();
+    }
+
+    function openProjectAssetUploadPicker() {
+      if (!isOwner || areProjectFileMutationsLocked()) return;
+      if (viewMode !== 'code') {
+        setViewMode('code');
+      }
+      projectAssetInputRef.current?.click();
+    }
+
     useImperativeHandle(
       ref,
       () => ({
-        openProjectFileUploadPicker
-      }),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [isOwner, viewMode]
+        openProjectFileUploadPicker,
+        openProjectFolderImportPicker,
+        openProjectAssetUploadPicker,
+        async importProjectFilesFromChatUpload(files: File[]) {
+          const normalizedFiles = normalizeUploadInputFiles(files);
+          const filesWithPreservedPaths = normalizedFiles.filter(
+            hasPreservedUploadedProjectRelativePath
+          );
+          const requiresPreservedPaths = filesWithPreservedPaths.length > 0;
+          if (
+            requiresPreservedPaths &&
+            filesWithPreservedPaths.length !== normalizedFiles.length
+          ) {
+            const message =
+              'This upload mixes files with and without folder paths. Use the manual workspace import controls for project files instead.';
+            setProjectFileError(message);
+            return {
+              success: false,
+              importedCount: 0,
+              error: message
+            };
+          }
+          if (!requiresPreservedPaths && normalizedFiles.length > 1) {
+            const nameCollisions =
+              listCaseInsensitiveFileNameCollisions(normalizedFiles);
+            if (nameCollisions.length > 0) {
+              const message = `These files would collide at the project root: ${summarizeUploadedFileNames(
+                nameCollisions
+              )}. Use the manual workspace import controls instead.`;
+              setProjectFileError(message);
+              return {
+                success: false,
+                importedCount: 0,
+                error: message
+              };
+            }
+          }
+          const result = await handleUploadProjectFiles(normalizedFiles, {
+            requireRelativePaths: requiresPreservedPaths,
+            targetFolderPath: null
+          });
+          if (
+            result?.success &&
+            !requiresPreservedPaths &&
+            normalizedFiles.length > 1
+          ) {
+            const rootImportWarning =
+              'Imported these files at the project root because folder paths were not included.';
+            const nextWarningText = String(result.warningText || '').trim();
+            const combinedWarningText = nextWarningText
+              ? `${nextWarningText} ${rootImportWarning}`
+              : rootImportWarning;
+            setProjectFileError(combinedWarningText);
+            return {
+              ...result,
+              warningText: combinedWarningText
+            };
+          }
+          return result;
+        },
+        async uploadProjectAssetsFromChatUpload(files: File[]) {
+          return await handleUploadProjectAssets(files);
+        }
+      })
     );
+
+    useEffect(() => {
+      const folderInput = projectFolderInputRef.current;
+      if (!folderInput) return;
+      folderInput.setAttribute('webkitdirectory', '');
+      folderInput.setAttribute('directory', '');
+    }, []);
+    useEffect(() => {
+      setWorkspaceRuntimeAssets(currentBuildRuntimeAssets);
+    }, [currentBuildRuntimeAssets]);
     const persistedFileContentByPath = useMemo(() => {
       const byPath = new Map<string, string>();
       for (const file of persistedProjectFiles) {
@@ -473,6 +1322,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
     const downloadBuildDatabase = useAppContext(
       (v) => v.requestHelpers.downloadBuildDatabase
+    );
+    const downloadBuildProjectArchive = useAppContext(
+      (v) => v.requestHelpers.downloadBuildProjectArchive
     );
     const uploadBuildDatabase = useAppContext(
       (v) => v.requestHelpers.uploadBuildDatabase
@@ -629,6 +1481,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const getDueBuildRemindersRef = useRef(getDueBuildReminders);
 
     const buildApiTokenRef = useRef<{
+      buildId?: number;
       token: string;
       scopes: string[];
       expiresAt: number;
@@ -789,7 +1642,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [runtimeObservationState]);
 
     useEffect(() => {
-      onRuntimeObservationChangeRef.current = onRuntimeObservationChange || null;
+      onRuntimeObservationChangeRef.current =
+        onRuntimeObservationChange || null;
     }, [onRuntimeObservationChange]);
 
     useEffect(() => {
@@ -993,6 +1847,89 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       });
     }
 
+    function setSavingProjectFilesState(next: boolean) {
+      savingProjectFilesRef.current = next;
+      setSavingProjectFiles(next);
+    }
+
+    function setDownloadingProjectArchiveState(next: boolean) {
+      downloadingProjectArchiveRef.current = next;
+      setDownloadingProjectArchive(next);
+    }
+
+    function areProjectFileMutationsLocked() {
+      return (
+        savingProjectFilesRef.current || downloadingProjectArchiveRef.current
+      );
+    }
+
+    function isActiveBuildId(targetBuildId: number) {
+      return Number(buildRef.current?.id || 0) === Number(targetBuildId || 0);
+    }
+
+    async function ensureBuildApiTokenForBuild(
+      requiredScopes: string[],
+      targetBuildId: number
+    ) {
+      if (
+        !Number.isFinite(Number(targetBuildId)) ||
+        Number(targetBuildId) <= 0
+      ) {
+        throw new Error('Build not found');
+      }
+      const now = Math.floor(Date.now() / 1000);
+      const cached = buildApiTokenRef.current;
+      if (
+        cached &&
+        cached.buildId === targetBuildId &&
+        cached.expiresAt - 30 > now &&
+        requiredScopes.every((scope) => cached.scopes.includes(scope))
+      ) {
+        return cached.token;
+      }
+
+      const requestedScopes = Array.from(
+        new Set<string>([
+          ...(cached?.buildId === targetBuildId ? cached.scopes : []),
+          ...requiredScopes
+        ])
+      );
+      const result = await getBuildApiTokenRef.current({
+        buildId: targetBuildId,
+        scopes: requestedScopes
+      });
+      if (!result?.token) {
+        throw new Error('Failed to obtain API token');
+      }
+      buildApiTokenRef.current = {
+        buildId: targetBuildId,
+        token: result.token,
+        scopes: result.scopes || requestedScopes,
+        expiresAt: result.expiresAt || now + 600
+      };
+      return result.token;
+    }
+
+    function cloneLatestEditableProjectFiles() {
+      return readLatestEditableProjectFiles(editableProjectFilesRef).map(
+        (file) => ({
+          path: file.path,
+          content: file.content
+        })
+      );
+    }
+
+    function getProjectFileCaseCollisionError(files: EditableProjectFile[]) {
+      const collisionPaths =
+        listCaseInsensitiveProjectFileCollisionPaths(files);
+      if (collisionPaths.length === 0) {
+        return null;
+      }
+      return `Project files cannot differ only by letter casing: ${summarizeUploadedFileNames(
+        collisionPaths
+      )}`;
+    }
+
     function handleViewModeChange(nextMode: 'preview' | 'code') {
       if (nextMode === viewMode) return;
       if (isShowingStreamingCode) {
@@ -1014,7 +1951,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     function handleEditableFileContentChange(content: string) {
-      if (!isOwner || !activeFile) return;
+      if (!isOwner || !activeFile || areProjectFileMutationsLocked()) return;
       setEditableFiles(
         editableProjectFiles.map((file) =>
           file.path === activeFile.path ? { ...file, content } : file
@@ -1025,7 +1962,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     function handleAddProjectFile() {
-      if (!isOwner) return;
+      if (!isOwner || areProjectFileMutationsLocked()) return;
       const normalizedPath = normalizeProjectFilePath(newFilePath);
       if (
         !normalizedPath ||
@@ -1051,87 +1988,159 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     async function handleUploadProjectFiles(
-      fileList: FileList | null,
+      uploadInput: FileList | File[] | null,
       options?: {
         requireRelativePaths?: boolean;
         requireRootIndexHtml?: boolean;
+        restoreExportedRuntimeAssets?: boolean;
+        restoreReferencedLocalAssets?: boolean;
+        targetFolderPath?: string | null;
       }
     ) {
-      if (!isOwner) return;
-      const uploadedFiles = Array.from(fileList || []);
-      if (uploadedFiles.length === 0) return;
-      const selectedFolderPathAtStart = selectedFolderPath;
-
-      const supportedFiles = uploadedFiles.filter(
-        isSupportedBuildProjectUploadFile
-      );
-      const unsupportedFileNames = uploadedFiles
-        .filter((file) => !isSupportedBuildProjectUploadFile(file))
-        .map((file) => file.name);
-
-      if (supportedFiles.length === 0) {
-        setProjectFileError(
-          `Only text project files are supported right now. Unsupported: ${summarizeUploadedFileNames(
-            unsupportedFileNames
-          )}`
-        );
-        return;
+      if (!isOwner || areProjectFileMutationsLocked()) {
+        return {
+          success: false,
+          importedCount: 0,
+          error: 'Project files are temporarily locked.'
+        };
       }
+      const uploadedFiles = normalizeUploadInputFiles(uploadInput);
+      if (uploadedFiles.length === 0) {
+        return {
+          success: false,
+          importedCount: 0,
+          error: 'No files were selected.'
+        };
+      }
+      const selectedFolderPathAtStart =
+        options && Object.prototype.hasOwnProperty.call(options, 'targetFolderPath')
+          ? options.targetFolderPath ?? null
+          : selectedFolderPath;
 
       if (
         options?.requireRelativePaths &&
-        supportedFiles.some(
-          (file) => !String(file.webkitRelativePath || '').trim()
-        )
+        uploadedFiles.some((file) => !String(file.webkitRelativePath || '').trim())
       ) {
-        setProjectFileError(
-          'This browser did not preserve folder paths for the selected project. Try importing the folder again.'
-        );
-        return;
+        const message =
+          'This browser did not preserve folder paths for the selected project. Try importing the folder again.';
+        setProjectFileError(message);
+        return {
+          success: false,
+          importedCount: 0,
+          error: message
+        };
       }
 
-      const uploadedProjectFiles: EditableProjectFile[] = [];
-      const failedFileNames: string[] = [];
-
-      for (const file of supportedFiles) {
+      const resolvedUploadEntries = uploadedFiles.map((file) => {
         const normalizedPath = resolveUploadedProjectFilePath({
           file,
           selectedFolderPath: selectedFolderPathAtStart
         });
-        if (
-          !normalizedPath ||
-          normalizedPath === '/' ||
-          normalizedPath.endsWith('/')
-        ) {
-          failedFileNames.push(file.name);
-          continue;
-        }
+        const importedRuntimeAttachmentSourcePath =
+          getImportedRuntimeAttachmentSourcePath(file);
+        const isValidPath =
+          Boolean(normalizedPath) &&
+          normalizedPath !== '/' &&
+          !normalizedPath.endsWith('/');
+        return {
+          file,
+          normalizedPath,
+          isValidPath,
+          isProjectTextFile: isSupportedBuildProjectUploadFile(file),
+          isSupportedAssetFile: isSupportedBuildAssetUploadFile(file),
+          importedRuntimeAttachmentSourcePath,
+          isImportedRuntimeAttachment:
+            isValidPath && Boolean(importedRuntimeAttachmentSourcePath)
+        };
+      });
+
+      const textUploadEntries = resolvedUploadEntries.filter(
+        (entry) =>
+          entry.isProjectTextFile &&
+          entry.isValidPath &&
+          !(options?.restoreExportedRuntimeAssets && entry.isImportedRuntimeAttachment)
+      );
+      const importableRuntimeAttachmentEntries =
+        options?.restoreExportedRuntimeAssets
+          ? resolvedUploadEntries.filter(
+              (entry) => entry.isValidPath && entry.isImportedRuntimeAttachment
+            )
+          : [];
+      const importableLocalAssetEntries = options?.restoreReferencedLocalAssets
+        ? resolvedUploadEntries.filter(
+            (entry) =>
+              entry.isValidPath &&
+              entry.isSupportedAssetFile &&
+              !entry.isProjectTextFile &&
+              !entry.isImportedRuntimeAttachment
+          )
+        : [];
+      const unsupportedFileNames = resolvedUploadEntries
+        .filter(
+          (entry) =>
+            !entry.isProjectTextFile &&
+            !importableRuntimeAttachmentEntries.some(
+              (candidate) => candidate.file === entry.file
+            ) &&
+            !importableLocalAssetEntries.some(
+              (candidate) => candidate.file === entry.file
+            )
+        )
+        .map((entry) => entry.file.name);
+
+      if (textUploadEntries.length === 0) {
+        const message = `Only text project files are supported right now. Unsupported: ${summarizeUploadedFileNames(
+          unsupportedFileNames
+        )}`;
+        setProjectFileError(message);
+        return {
+          success: false,
+          importedCount: 0,
+          error: message
+        };
+      }
+
+      const uploadedProjectFiles: EditableProjectFile[] = [];
+      const failedFileNames: string[] = resolvedUploadEntries
+        .filter(
+          (entry) =>
+            entry.isProjectTextFile &&
+            !entry.isValidPath &&
+            !(options?.restoreExportedRuntimeAssets && entry.isImportedRuntimeAttachment)
+        )
+        .map((entry) => entry.file.name);
+
+      for (const entry of textUploadEntries) {
         try {
-          const content = await file.text();
+          const content = await entry.file.text();
           uploadedProjectFiles.push({
-            path: normalizedPath,
+            path: entry.normalizedPath,
             content
           });
         } catch (error) {
           console.error('Failed to read uploaded project file', error);
-          failedFileNames.push(file.name);
+          failedFileNames.push(entry.file.name);
         }
       }
 
       if (uploadedProjectFiles.length === 0) {
-        setProjectFileError(
+        const message =
           failedFileNames.length > 0
             ? `Failed to read: ${summarizeUploadedFileNames(failedFileNames)}`
-            : 'No valid project files were uploaded.'
-        );
-        return;
+            : 'No valid project files were uploaded.';
+        setProjectFileError(message);
+        return {
+          success: false,
+          importedCount: 0,
+          error: message
+        };
       }
 
       const uploadByPath = new Map<string, string>();
       for (const file of uploadedProjectFiles) {
         uploadByPath.set(file.path, file.content);
       }
-      const dedupedUploads = Array.from(uploadByPath.entries()).map(
+      let dedupedUploads = Array.from(uploadByPath.entries()).map(
         ([path, content]) => ({
           path,
           content
@@ -1141,10 +2150,14 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         options?.requireRootIndexHtml &&
         !dedupedUploads.some((file) => isIndexHtmlPath(file.path))
       ) {
-        setProjectFileError(
-          'Imported project folders must contain a root index.html or index.htm file.'
-        );
-        return;
+        const message =
+          'Imported project folders must contain a root index.html or index.htm file.';
+        setProjectFileError(message);
+        return {
+          success: false,
+          importedCount: 0,
+          error: message
+        };
       }
       const latestEditableProjectFiles = readLatestEditableProjectFiles(
         editableProjectFilesRef
@@ -1165,66 +2178,594 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           )}`
         );
         if (!shouldReplace) {
-          setProjectFileError(
-            'Upload cancelled. Existing files were not replaced.'
+          const message = 'Upload cancelled. Existing files were not replaced.';
+          setProjectFileError(message);
+          return {
+            success: false,
+            importedCount: 0,
+            error: message
+          };
+        }
+      }
+      const mergedProjectFilesForReferenceDetection = mergeEditableProjectFiles(
+        latestEditableProjectFiles,
+        dedupedUploads
+      );
+      const mergedProjectFileContentByPath = new Map(
+        mergedProjectFilesForReferenceDetection.map((file) => [
+          file.path,
+          file.content || ''
+        ])
+      );
+      const {
+        documentBaseFilePathByScriptPath,
+        documentBaseFilePathsByScriptPath
+      } = buildImportedRuntimeAttachmentDocumentBasePathsByScript(
+        mergedProjectFilesForReferenceDetection
+      );
+
+      const uploadWarnings: string[] = [];
+      let runtimeAssetToken: string | null = null;
+      const restoredRuntimeAssets: PreviewRuntimeUploadAsset[] = [];
+      const uploadTargetBuildId = Number(buildRef.current?.id || build.id || 0);
+
+      function didUploadTargetBuildChange() {
+        return !isActiveBuildId(uploadTargetBuildId);
+      }
+      if (
+        importableRuntimeAttachmentEntries.length > 0 ||
+        importableLocalAssetEntries.length > 0
+      ) {
+        const referencedRuntimeAttachmentEntries =
+          importableRuntimeAttachmentEntries.filter((entry) =>
+            mergedProjectFilesForReferenceDetection.some((file) =>
+              importedProjectFileReferencesRuntimeAttachment({
+                filePath: file.path,
+                content: file.content,
+                attachmentPath: entry.normalizedPath,
+                documentBaseFilePath:
+                  documentBaseFilePathByScriptPath.get(
+                    normalizeProjectFilePath(file.path)
+                  ) || null,
+                documentBaseFilePaths:
+                  documentBaseFilePathsByScriptPath.get(
+                    normalizeProjectFilePath(file.path)
+                  ) || null
+              })
+            )
           );
-          return;
+        const referencedLocalAssetEntries = importableLocalAssetEntries.filter(
+          (entry) =>
+            mergedProjectFilesForReferenceDetection.some((file) =>
+              importedProjectFileReferencesLocalAsset({
+                filePath: file.path,
+                content: file.content,
+                assetPath: entry.normalizedPath,
+                documentBaseFilePath:
+                  documentBaseFilePathByScriptPath.get(
+                    normalizeProjectFilePath(file.path)
+                  ) || null,
+                documentBaseFilePaths:
+                  documentBaseFilePathsByScriptPath.get(
+                    normalizeProjectFilePath(file.path)
+                  ) || null
+              })
+            )
+        );
+        const skippedLocalAssetNames = importableLocalAssetEntries
+          .filter(
+            (entry) =>
+              !referencedLocalAssetEntries.some(
+                (candidate) => candidate.file === entry.file
+              )
+          )
+          .map((entry) => entry.file.name);
+
+        if (
+          referencedRuntimeAttachmentEntries.length > 0 ||
+          referencedLocalAssetEntries.length > 0
+        ) {
+          const uploadedRuntimeAssets: PreviewRuntimeUploadAsset[] = [];
+          const replacementUrlByAttachmentPath = new Map<string, string>();
+
+          try {
+            runtimeAssetToken = await ensureBuildApiTokenForBuild(
+              ['files:read', 'files:write'],
+              uploadTargetBuildId
+            );
+
+            const referencedOriginalEntriesByAssetId = new Map<
+              string,
+              (typeof referencedRuntimeAttachmentEntries)[number]
+            >();
+            for (const entry of referencedRuntimeAttachmentEntries) {
+              const originalAssetId =
+                getImportedRuntimeOriginalAttachmentAssetId(
+                  entry.importedRuntimeAttachmentSourcePath ||
+                    entry.normalizedPath
+                );
+              if (originalAssetId) {
+                referencedOriginalEntriesByAssetId.set(originalAssetId, entry);
+              }
+            }
+
+            const pairedThumbEntriesByOriginalAssetId = new Map<
+              string,
+              Array<(typeof referencedRuntimeAttachmentEntries)[number]>
+            >();
+            const runtimeAttachmentEntriesToUpload: Array<
+              (typeof referencedRuntimeAttachmentEntries)[number]
+            > = [];
+
+            for (const entry of referencedRuntimeAttachmentEntries) {
+              const thumbAssetId = getImportedRuntimeThumbAttachmentAssetId(
+                entry.importedRuntimeAttachmentSourcePath ||
+                  entry.normalizedPath
+              );
+              if (
+                thumbAssetId &&
+                referencedOriginalEntriesByAssetId.has(thumbAssetId)
+              ) {
+                const nextEntries =
+                  pairedThumbEntriesByOriginalAssetId.get(thumbAssetId) || [];
+                nextEntries.push(entry);
+                pairedThumbEntriesByOriginalAssetId.set(
+                  thumbAssetId,
+                  nextEntries
+                );
+                continue;
+              }
+              runtimeAttachmentEntriesToUpload.push(entry);
+            }
+
+            const deferredThumbEntries: Array<
+              (typeof referencedRuntimeAttachmentEntries)[number]
+            > = [];
+
+            async function uploadRuntimeAttachmentEntry(
+              entry: (typeof referencedRuntimeAttachmentEntries)[number]
+            ) {
+              const payload = await uploadBuildRuntimeFilesRef.current({
+                buildId: uploadTargetBuildId,
+                files: [entry.file],
+                token: runtimeAssetToken
+              });
+              const asset = Array.isArray(payload?.assets)
+                ? payload.assets[0]
+                : null;
+              const runtimeAttachmentSourcePath =
+                entry.importedRuntimeAttachmentSourcePath ||
+                entry.normalizedPath;
+              const replacementUrl = runtimeAttachmentSourcePath.startsWith(
+                IMPORTED_RUNTIME_THUMB_ATTACHMENT_PATH_PREFIX
+              )
+                ? String(asset?.thumbUrl || asset?.url || '')
+                : String(asset?.url || '');
+
+              if (!asset || !replacementUrl) {
+                throw new Error(
+                  `Failed to restore bundled asset "${entry.file.name}".`
+                );
+              }
+
+              uploadedRuntimeAssets.push(asset);
+              restoredRuntimeAssets.push(asset);
+              replacementUrlByAttachmentPath.set(
+                entry.normalizedPath,
+                replacementUrl
+              );
+
+              return asset;
+            }
+
+            for (const entry of runtimeAttachmentEntriesToUpload) {
+              const asset = await uploadRuntimeAttachmentEntry(entry);
+              const originalAssetId = getImportedRuntimeOriginalAttachmentAssetId(
+                entry.importedRuntimeAttachmentSourcePath ||
+                  entry.normalizedPath
+              );
+              if (!originalAssetId) {
+                continue;
+              }
+              const pairedThumbEntries =
+                pairedThumbEntriesByOriginalAssetId.get(originalAssetId) || [];
+              if (pairedThumbEntries.length === 0) {
+                continue;
+              }
+              const pairedThumbUrl = String(asset?.thumbUrl || '');
+              if (!pairedThumbUrl) {
+                deferredThumbEntries.push(...pairedThumbEntries);
+                continue;
+              }
+              for (const thumbEntry of pairedThumbEntries) {
+                replacementUrlByAttachmentPath.set(
+                  thumbEntry.normalizedPath,
+                  pairedThumbUrl
+                );
+              }
+            }
+
+            for (const thumbEntry of deferredThumbEntries) {
+              await uploadRuntimeAttachmentEntry(thumbEntry);
+            }
+
+            for (const entry of referencedLocalAssetEntries) {
+              await uploadRuntimeAttachmentEntry(entry);
+            }
+          } catch (error: any) {
+            await cleanupRestoredRuntimeAssets(
+              uploadedRuntimeAssets,
+              runtimeAssetToken,
+              uploadTargetBuildId
+            );
+            console.error('Failed to restore bundled runtime assets', error);
+            const message =
+              error?.message || 'Failed to restore imported media assets.';
+            setProjectFileError(message);
+            return {
+              success: false,
+              importedCount: 0,
+              error: message
+            };
+          }
+
+          const rewrittenMergedProjectFiles =
+            rewriteImportedProjectFilesWithRuntimeAssetUrls({
+              files: mergedProjectFilesForReferenceDetection,
+              replacementUrlByAttachmentPath,
+              documentBaseFilePathByScriptPath,
+              documentBaseFilePathsByScriptPath
+            });
+          const nextUploadsByPath = new Map(
+            dedupedUploads.map((file) => [file.path, file.content || ''])
+          );
+          for (const file of rewrittenMergedProjectFiles) {
+            const previousContent =
+              mergedProjectFileContentByPath.get(file.path) ?? '';
+            const nextContent = file.content || '';
+            if (previousContent !== nextContent) {
+              nextUploadsByPath.set(file.path, nextContent);
+            }
+          }
+          dedupedUploads = Array.from(nextUploadsByPath.entries()).map(
+            ([path, content]) => ({
+              path,
+              content
+            })
+          );
+        }
+        if (skippedLocalAssetNames.length > 0) {
+          uploadWarnings.push(
+            `Skipped local media files that were not referenced by imported code: ${summarizeUploadedFileNames(
+              skippedLocalAssetNames
+            )}`
+          );
         }
       }
 
-      const mergeBaseFiles = readLatestEditableProjectFiles(
-        editableProjectFilesRef
+      const nextEditableFiles = mergeEditableProjectFiles(
+        readLatestEditableProjectFiles(editableProjectFilesRef),
+        dedupedUploads
       );
-      const nextFileContentByPath = new Map<string, string>();
-      for (const file of mergeBaseFiles) {
-        nextFileContentByPath.set(file.path, file.content);
-      }
-      for (const file of dedupedUploads) {
-        nextFileContentByPath.set(file.path, file.content);
-      }
-      const nextFiles = Array.from(nextFileContentByPath.entries()).map(
-        ([path, content]) => ({
-          path,
-          content
-        })
+      const nextPersistedFiles = mergeEditableProjectFiles(
+        persistedProjectFiles,
+        dedupedUploads
       );
+      function buildProjectImportWarningText(
+        additionalWarnings: string[] = []
+      ) {
+        const nextWarnings = [...uploadWarnings];
+        if (unsupportedFileNames.length > 0) {
+          nextWarnings.push(
+            `Skipped unsupported files: ${summarizeUploadedFileNames(
+              unsupportedFileNames
+            )}`
+          );
+        }
+        if (failedFileNames.length > 0) {
+          nextWarnings.push(
+            `Failed to read: ${summarizeUploadedFileNames(failedFileNames)}`
+          );
+        }
+        nextWarnings.push(
+          ...additionalWarnings
+            .map((warning) => String(warning || '').trim())
+            .filter(Boolean)
+        );
+        return nextWarnings.join(' ');
+      }
+      const collisionError = getProjectFileCaseCollisionError(nextEditableFiles);
+      if (collisionError) {
+        await cleanupRestoredRuntimeAssets(
+          restoredRuntimeAssets,
+          runtimeAssetToken,
+          uploadTargetBuildId
+        );
+        setProjectFileError(collisionError);
+        return {
+          success: false,
+          importedCount: 0,
+          error: collisionError
+        };
+      }
       const preferredUploadedPath =
         dedupedUploads.find((file) => isIndexHtmlPath(file.path))?.path ||
         dedupedUploads[0]?.path ||
-        getPreferredIndexPath(nextFiles) ||
-        nextFiles[0]?.path ||
+        getPreferredIndexPath(nextEditableFiles) ||
+        nextEditableFiles[0]?.path ||
         '/index.html';
 
-      setEditableFiles(nextFiles, { markDirty: true });
+      if (runtimeAssetToken && restoredRuntimeAssets.length > 0) {
+        const saveResult = await saveEditableProjectFilesWithTracking({
+          files: nextPersistedFiles,
+          fallbackError: 'Failed to save imported project files',
+          targetBuildId: uploadTargetBuildId,
+          targetBuildCode: code
+        });
+        if (!saveResult.success) {
+          await cleanupRestoredRuntimeAssets(
+            restoredRuntimeAssets,
+            runtimeAssetToken,
+            uploadTargetBuildId
+          );
+          return {
+            success: false,
+            importedCount: 0,
+            error:
+              saveResult.error || 'Failed to save imported project files.'
+          };
+        }
+        if (didUploadTargetBuildChange()) {
+          const warningText = buildProjectImportWarningText([
+            'Import finished on the previous build because you switched builds before it completed.'
+          ]);
+          setProjectFileError(warningText);
+          return {
+            success: true,
+            importedCount: dedupedUploads.length,
+            warningText
+          };
+        }
+        // Keep unrelated draft edits local instead of silently committing them
+        // just because bundled runtime assets needed an immediate save.
+        setEditableFiles(nextEditableFiles, { markDirty: true });
+      } else {
+        if (didUploadTargetBuildChange()) {
+          return {
+            success: false,
+            importedCount: 0,
+            error:
+              'Build changed while the import was in progress. Please retry on the active build.'
+          };
+        }
+        setEditableFiles(nextEditableFiles, { markDirty: true });
+      }
       setActiveFilePath(preferredUploadedPath);
       setSelectedFolderPath(null);
       setNewFilePath('');
 
-      const uploadWarnings: string[] = [];
-      if (unsupportedFileNames.length > 0) {
-        uploadWarnings.push(
-          `Skipped unsupported files: ${summarizeUploadedFileNames(
-            unsupportedFileNames
-          )}`
-        );
+      if (runtimeAssetToken) {
+        await syncCurrentBuildRuntimeUploads(runtimeAssetToken, uploadTargetBuildId);
       }
-      if (failedFileNames.length > 0) {
-        uploadWarnings.push(
-          `Failed to read: ${summarizeUploadedFileNames(failedFileNames)}`
-        );
-      }
-      setProjectFileError(uploadWarnings.join(' '));
+      const warningText = buildProjectImportWarningText();
+      setProjectFileError(warningText);
+      return {
+        success: true,
+        importedCount: dedupedUploads.length,
+        warningText
+      };
     }
 
     async function handleImportProjectFolder(fileList: FileList | null) {
       await handleUploadProjectFiles(fileList, {
         requireRelativePaths: true,
-        requireRootIndexHtml: !selectedFolderPath
+        requireRootIndexHtml: !selectedFolderPath,
+        restoreExportedRuntimeAssets: true,
+        restoreReferencedLocalAssets: true
       });
     }
 
+    async function syncCurrentBuildRuntimeUploads(
+      token: string,
+      targetBuildId = Number(buildRef.current?.id || build.id || 0)
+    ) {
+      try {
+        const payload = await listBuildRuntimeFilesRef.current({
+          buildId: targetBuildId,
+          limit: 30,
+          token
+        });
+        if (!isActiveBuildId(targetBuildId)) {
+          return payload;
+        }
+        setWorkspaceRuntimeAssets(
+          Array.isArray(payload?.assets) ? payload.assets : []
+        );
+        onRuntimeUploadsSyncRef.current?.({
+          assets: Array.isArray(payload?.assets) ? payload.assets : [],
+          nextCursor:
+            Number.isFinite(Number(payload?.nextCursor)) &&
+            Number(payload?.nextCursor) > 0
+              ? Math.floor(Number(payload.nextCursor))
+              : null,
+          usage: payload?.usage || null
+        });
+      } catch (error) {
+        console.error(
+          'Failed to sync current build assets after upload',
+          error
+        );
+      }
+    }
+
+    async function cleanupRestoredRuntimeAssets(
+      assets: PreviewRuntimeUploadAsset[],
+      token: string | null,
+      targetBuildId = Number(buildRef.current?.id || build.id || 0)
+    ) {
+      if (!token || assets.length === 0) {
+        return;
+      }
+      for (const asset of assets) {
+        await deleteBuildRuntimeFileRef.current({
+          buildId: targetBuildId,
+          assetId: asset.id,
+          token
+        }).catch(() => {});
+      }
+      await syncCurrentBuildRuntimeUploads(token, targetBuildId).catch((error) => {
+        console.error(
+          'Failed to sync runtime uploads after cleanup of imported assets',
+          error
+        );
+      });
+    }
+
+    useEffect(() => {
+      if (!isOwner || runtimeOnly) return;
+      let cancelled = false;
+
+      async function loadWorkspaceRuntimeAssets() {
+        try {
+          const token = await ensureBuildApiToken(['files:read'], previewAuth);
+          const payload = await listBuildRuntimeFilesRef.current({
+            buildId: build.id,
+            limit: 30,
+            token
+          });
+          if (cancelled) return;
+          const nextAssets = Array.isArray(payload?.assets)
+            ? payload.assets
+            : [];
+          setWorkspaceRuntimeAssets(nextAssets);
+          onRuntimeUploadsSyncRef.current?.({
+            assets: nextAssets,
+            nextCursor:
+              Number.isFinite(Number(payload?.nextCursor)) &&
+              Number(payload?.nextCursor) > 0
+                ? Math.floor(Number(payload.nextCursor))
+                : null,
+            usage: payload?.usage || null
+          });
+        } catch (error) {
+          if (cancelled) return;
+          console.error('Failed to load current build assets', error);
+        }
+      }
+
+      void loadWorkspaceRuntimeAssets();
+      return () => {
+        cancelled = true;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [build.id, isOwner, runtimeOnly]);
+
+    async function handleUploadProjectAssets(
+      uploadInput: FileList | File[] | null
+    ) {
+      if (!isOwner || areProjectFileMutationsLocked()) {
+        return {
+          success: false,
+          uploadedCount: 0,
+          error: 'Project files are temporarily locked.'
+        };
+      }
+      const uploadedFiles = normalizeUploadInputFiles(uploadInput);
+      if (uploadedFiles.length === 0) {
+        return {
+          success: false,
+          uploadedCount: 0,
+          error: 'No files were selected.'
+        };
+      }
+
+      const supportedFiles = uploadedFiles.filter(
+        isSupportedBuildAssetUploadFile
+      );
+      const unsupportedFileNames = uploadedFiles
+        .filter((file) => !isSupportedBuildAssetUploadFile(file))
+        .map((file) => file.name);
+
+      if (supportedFiles.length === 0) {
+        const message = `Only image and audio assets are supported right now. Unsupported: ${summarizeUploadedFileNames(
+          unsupportedFileNames
+        )}`;
+        setProjectFileError(message);
+        return {
+          success: false,
+          uploadedCount: 0,
+          error: message
+        };
+      }
+
+      setProjectFileError('');
+
+      try {
+        const uploadTargetBuildId = Number(buildRef.current?.id || build.id || 0);
+        const token = await ensureBuildApiTokenForBuild(
+          ['files:read', 'files:write'],
+          uploadTargetBuildId
+        );
+        const payload = await uploadBuildRuntimeFilesRef.current({
+          buildId: uploadTargetBuildId,
+          files: supportedFiles,
+          token
+        });
+        await syncCurrentBuildRuntimeUploads(token, uploadTargetBuildId);
+        const failedUploads = Array.isArray(payload?.failed)
+          ? payload.failed
+          : [];
+        const warnings: string[] = [];
+        if (unsupportedFileNames.length > 0) {
+          warnings.push(
+            `Skipped unsupported assets: ${summarizeUploadedFileNames(
+              unsupportedFileNames
+            )}`
+          );
+        }
+        if (failedUploads.length > 0) {
+          warnings.push(
+            `Some assets failed to upload: ${summarizeUploadedFileNames(
+              failedUploads.map((entry: any) => entry.fileName)
+            )}`
+          );
+        }
+        if (!isActiveBuildId(uploadTargetBuildId)) {
+          const warningText = [
+            ...warnings,
+            'Asset upload finished on the previous build because you switched builds before it completed.'
+          ].join(' ');
+          setProjectFileError(warningText);
+          return {
+            success: true,
+            uploadedCount: Array.isArray(payload?.assets) ? payload.assets.length : 0,
+            warningText
+          };
+        }
+        if (Array.isArray(payload?.assets) && payload.assets.length > 0) {
+          onOpenRuntimeUploadsManager?.();
+        }
+        const warningText = warnings.join(' ');
+        setProjectFileError(warningText);
+        return {
+          success: true,
+          uploadedCount: Array.isArray(payload?.assets) ? payload.assets.length : 0,
+          warningText
+        };
+      } catch (error: any) {
+        console.error('Failed to upload project assets', error);
+        const message = error?.message || 'Failed to upload project assets.';
+        setProjectFileError(message);
+        return {
+          success: false,
+          uploadedCount: 0,
+          error: message
+        };
+      }
+    }
+
     function handleDeleteProjectFile(filePath: string) {
-      if (!isOwner) return;
+      if (!isOwner || areProjectFileMutationsLocked()) return;
       if (isIndexHtmlPath(filePath)) {
         setProjectFileError('Cannot delete /index.html');
         return;
@@ -1239,7 +2780,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     function handleRenameOrMoveActiveFile() {
-      if (!isOwner || !activeFile) return;
+      if (!isOwner || !activeFile || areProjectFileMutationsLocked()) return;
       const normalizedPath = normalizeProjectFilePath(renamePathInput);
       if (
         !normalizedPath ||
@@ -1283,7 +2824,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     function handleMoveSelectedFolder() {
-      if (!isOwner || !selectedFolderPath) return;
+      if (!isOwner || !selectedFolderPath || areProjectFileMutationsLocked()) {
+        return;
+      }
       const sourceFolder = normalizeProjectFilePath(selectedFolderPath);
       const targetFolder = normalizeProjectFilePath(folderMoveTargetPath);
       if (!targetFolder || targetFolder === '/') {
@@ -1379,17 +2922,138 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }
 
     async function handleSaveEditableProjectFiles() {
-      if (!isOwner || savingProjectFiles || !hasUnsavedProjectFileChanges)
-        return;
-      setSavingProjectFiles(true);
-      setProjectFileError('');
-      const result = await onSaveProjectFiles(editableProjectFiles);
-      setSavingProjectFiles(false);
-      if (!result?.success) {
-        setProjectFileError(result?.error || 'Failed to save project files');
+      if (
+        !isOwner ||
+        areProjectFileMutationsLocked() ||
+        !hasUnsavedProjectFileChanges
+      ) {
         return;
       }
+      const saveResult = await saveEditableProjectFilesWithTracking({
+        files: cloneLatestEditableProjectFiles(),
+        fallbackError: 'Failed to save project files'
+      });
+      if (!saveResult.success) {
+        return;
+      }
+    }
+
+    async function saveEditableProjectFilesWithTracking({
+      files,
+      fallbackError,
+      targetBuildId,
+      targetBuildCode
+    }: {
+      files: EditableProjectFile[];
+      fallbackError: string;
+      targetBuildId?: number | null;
+      targetBuildCode?: string | null;
+    }) {
+      const collisionError = getProjectFileCaseCollisionError(files);
+      if (collisionError) {
+        setProjectFileError(collisionError);
+        return {
+          success: false,
+          error: collisionError
+        };
+      }
+
+      const savedSignature = serializeEditableProjectFiles(files);
+      setSavingProjectFilesState(true);
       setProjectFileError('');
+      try {
+        const result = await onSaveProjectFiles(files, {
+          targetBuildId,
+          targetBuildCode
+        });
+        if (!result?.success) {
+          const message = result?.error || fallbackError;
+          setProjectFileError(message);
+          return {
+            success: false,
+            error: message
+          };
+        }
+        setProjectFileError('');
+        return {
+          success: true,
+          savedSignature
+        };
+      } finally {
+        setSavingProjectFilesState(false);
+      }
+    }
+
+    async function ensureLatestEditableProjectFilesSavedForExport() {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const files = cloneLatestEditableProjectFiles();
+        const saveResult = await saveEditableProjectFilesWithTracking({
+          files,
+          fallbackError: 'Failed to save project files before export'
+        });
+        if (!saveResult?.success) {
+          return saveResult;
+        }
+
+        const latestSignature = serializeEditableProjectFiles(
+          cloneLatestEditableProjectFiles()
+        );
+        if (latestSignature === saveResult.savedSignature) {
+          return {
+            success: true
+          };
+        }
+      }
+
+      const message =
+        'Project files changed while export was preparing. Please stop editing for a moment and try again.';
+      setProjectFileError(message);
+      return {
+        success: false,
+        error: message
+      };
+    }
+
+    const projectFilesLocked = savingProjectFiles || downloadingProjectArchive;
+
+    async function handleDownloadProjectArchive() {
+      if (
+        !isOwner ||
+        isShowingStreamingCode ||
+        areProjectFileMutationsLocked()
+      ) {
+        return;
+      }
+
+      setProjectFileError('');
+      setDownloadingProjectArchiveState(true);
+      try {
+        if (hasUnsavedProjectFileChanges) {
+          const saveResult =
+            await ensureLatestEditableProjectFilesSavedForExport();
+          if (!saveResult?.success) {
+            return;
+          }
+        }
+
+        const archiveBytes = await downloadBuildProjectArchive(build.id);
+        if (!(archiveBytes instanceof ArrayBuffer)) {
+          throw new Error('Failed to download the exported project zip');
+        }
+
+        triggerBrowserDownload({
+          bytes: archiveBytes,
+          fileName: `${buildProjectExportBaseName(build.title, build.id)}.zip`,
+          mimeType: 'application/zip'
+        });
+      } catch (error: any) {
+        console.error('Failed to download build project archive:', error);
+        setProjectFileError(
+          error?.message || 'Failed to download the exported project zip'
+        );
+      } finally {
+        setDownloadingProjectArchiveState(false);
+      }
     }
 
     useEffect(() => {
@@ -1498,6 +3162,31 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           `}
           onChange={(e) => {
             void handleUploadProjectFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
+        <input
+          ref={projectFolderInputRef}
+          type="file"
+          multiple
+          className={css`
+            display: none;
+          `}
+          onChange={(e) => {
+            void handleImportProjectFolder(e.target.files);
+            e.target.value = '';
+          }}
+        />
+        <input
+          ref={projectAssetInputRef}
+          type="file"
+          multiple
+          accept={BUILD_PROJECT_ASSET_UPLOAD_ACCEPT}
+          className={css`
+            display: none;
+          `}
+          onChange={(e) => {
+            void handleUploadProjectAssets(e.target.files);
             e.target.value = '';
           }}
         />
@@ -1716,7 +3405,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               projectExplorerEntries={projectExplorerEntries}
               selectedFolderPath={selectedFolderPath}
               folderMoveTargetPath={folderMoveTargetPath}
-              projectFileUploadAccept={BUILD_PROJECT_UPLOAD_ACCEPT}
               newFilePath={newFilePath}
               activeFilePath={activeFilePath}
               activeFile={activeFile}
@@ -1725,14 +3413,19 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               isShowingStreamingCode={isShowingStreamingCode}
               hasUnsavedProjectFileChanges={hasUnsavedProjectFileChanges}
               savingProjectFiles={savingProjectFiles}
+              downloadingProjectArchive={downloadingProjectArchive}
+              projectFilesLocked={projectFilesLocked}
               projectFileError={projectFileError}
+              currentBuildRuntimeAssets={workspaceRuntimeAssets}
               streamingAutoFollowEnabled={streamingAutoFollowEnabledRef.current}
               persistedFileContentByPath={persistedFileContentByPath}
               onNewFilePathChange={setNewFilePath}
               onAddProjectFile={handleAddProjectFile}
               onOpenProjectFileUploadPicker={openProjectFileUploadPicker}
-              onImportProjectFolder={(files) => {
-                void handleImportProjectFolder(files);
+              onOpenProjectFolderImportPicker={openProjectFolderImportPicker}
+              onOpenProjectAssetUploadPicker={openProjectAssetUploadPicker}
+              onOpenRuntimeUploadsManager={() => {
+                onOpenRuntimeUploadsManager?.();
               }}
               onFolderMoveTargetPathChange={setFolderMoveTargetPath}
               onMoveSelectedFolder={handleMoveSelectedFolder}
@@ -1750,6 +3443,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               onRenamePathInputChange={setRenamePathInput}
               onRenameOrMoveActiveFile={handleRenameOrMoveActiveFile}
               onSaveEditableProjectFiles={handleSaveEditableProjectFiles}
+              onDownloadProjectArchive={handleDownloadProjectArchive}
+              onDismissProjectFileError={() => {
+                setProjectFileError('');
+              }}
               onActiveFileContentChange={handleEditableFileContentChange}
             />
           )}

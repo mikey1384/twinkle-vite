@@ -28,24 +28,71 @@ interface FileUploadOptionProps {
   onFilesSelect?: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
+  allowMultipleGenericFileSelection?: boolean;
 }
 
 export default function FileUploadOption({
   onFileSelect,
   onFilesSelect,
   accept,
-  multiple = false
+  multiple = false,
+  allowMultipleGenericFileSelection = false
 }: FileUploadOptionProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const { colorKey: buttonColorKey } = useRoleColor('button', {
     fallback: 'logoBlue'
   });
-  const isMultiImageSelectEnabled = Boolean(multiple && onFilesSelect);
+  const allowsMultiplePhotoSelection = Boolean(multiple && onFilesSelect);
+  const allowsMultipleGenericFileSelection = Boolean(
+    allowMultipleGenericFileSelection && multiple && onFilesSelect
+  );
+  const normalizedAccept = String(accept || '')
+    .trim()
+    .toLowerCase();
+  const acceptTokens = normalizedAccept
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean);
+  const acceptAllowsImages =
+    acceptTokens.length === 0 ||
+    acceptTokens.includes('*/*') ||
+    acceptTokens.some((token) => {
+      return (
+        token === 'image' ||
+        token === 'image/*' ||
+        token.startsWith('image/') ||
+        [
+          '.png',
+          '.jpg',
+          '.jpeg',
+          '.gif',
+          '.webp',
+          '.svg',
+          '.bmp',
+          '.avif',
+          '.heic',
+          '.heif',
+          '.tif',
+          '.tiff'
+        ].includes(token)
+      );
+    });
+  const isImageOnlyAccept =
+    normalizedAccept === 'image/*' || normalizedAccept === 'image';
+  const shouldShowPhotoPicker =
+    allowsMultiplePhotoSelection && acceptAllowsImages;
+  const shouldUsePhotoPickerAsPrimary =
+    shouldShowPhotoPicker && isImageOnlyAccept;
+  const genericFileChooserLabel = allowsMultipleGenericFileSelection
+    ? 'Choose Files'
+    : 'Choose File';
   const buttonPhotoInputRef = useRef<HTMLInputElement>(null);
   const buttonFileInputRef = useRef<HTMLInputElement>(null);
   const photoInputId = useId();
   const fileInputId = useId();
-  const primaryInputId = isMultiImageSelectEnabled ? photoInputId : fileInputId;
+  const primaryInputId = shouldUsePhotoPickerAsPrimary
+    ? photoInputId
+    : fileInputId;
 
   return (
     <div style={{ textAlign: 'center', padding: '2rem', width: '100%' }}>
@@ -88,14 +135,14 @@ export default function FileUploadOption({
           style={{ marginTop: '1rem', fontSize: '1.2rem', color: Color.gray() }}
         >
           {isDragOver
-            ? isMultiImageSelectEnabled
+            ? shouldUsePhotoPickerAsPrimary
               ? 'Drop photos here'
               : 'Drop files here'
-            : isMultiImageSelectEnabled
+            : shouldUsePhotoPickerAsPrimary
             ? 'Drag and drop photos here or click to browse'
             : 'Drag and drop files here or click to browse'}
         </div>
-        {accept && !isMultiImageSelectEnabled && (
+        {accept && !shouldUsePhotoPickerAsPrimary && (
           <div
             style={{
               marginTop: '0.5rem',
@@ -116,7 +163,7 @@ export default function FileUploadOption({
           flexWrap: 'wrap'
         }}
       >
-        {isMultiImageSelectEnabled ? (
+        {shouldShowPhotoPicker ? (
           <>
             <div style={{ position: 'relative', display: 'inline-flex' }}>
               <Button
@@ -157,17 +204,19 @@ export default function FileUploadOption({
                 style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
               >
                 <Icon icon="folder-open" />
-                <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
+                <span style={{ marginLeft: '0.7rem' }}>
+                  {genericFileChooserLabel}
+                </span>
               </Button>
               <input
                 ref={buttonFileInputRef}
                 type="file"
                 accept={accept}
-                multiple={false}
+                multiple={allowsMultipleGenericFileSelection}
                 tabIndex={-1}
                 onChange={handleFileChange}
                 style={buttonFileInputOverlayStyle}
-                aria-label="Choose File"
+                aria-label={genericFileChooserLabel}
               />
             </div>
           </>
@@ -185,23 +234,25 @@ export default function FileUploadOption({
               style={{ fontSize: '1.4rem', padding: '1rem 2rem' }}
             >
               <Icon icon="folder-open" />
-              <span style={{ marginLeft: '0.7rem' }}>Choose File</span>
+              <span style={{ marginLeft: '0.7rem' }}>
+                {genericFileChooserLabel}
+              </span>
             </Button>
             <input
               ref={buttonFileInputRef}
               type="file"
               accept={accept}
-              multiple={false}
+              multiple={allowsMultipleGenericFileSelection}
               tabIndex={-1}
               onChange={handleFileChange}
               style={buttonFileInputOverlayStyle}
-              aria-label="Choose File"
+              aria-label={genericFileChooserLabel}
             />
           </div>
         )}
       </div>
 
-      {isMultiImageSelectEnabled && (
+      {shouldShowPhotoPicker && (
         <div style={{ marginTop: '1rem', fontSize: '1.1rem', color: Color.gray() }}>
           Tip: Choose multiple photos to send them in one message.
         </div>
@@ -221,7 +272,7 @@ export default function FileUploadOption({
         id={fileInputId}
         type="file"
         accept={accept}
-        multiple={false}
+        multiple={allowsMultipleGenericFileSelection}
         tabIndex={-1}
         onChange={handleFileChange}
         style={hiddenFileInputStyle}
@@ -241,7 +292,11 @@ export default function FileUploadOption({
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
     if (files && files.length > 0) {
-      onFileSelect(files[0]);
+      if (allowsMultipleGenericFileSelection && onFilesSelect) {
+        onFilesSelect(Array.from(files));
+      } else {
+        onFileSelect(files[0]);
+      }
     }
     event.target.value = '';
   }
@@ -285,7 +340,9 @@ export default function FileUploadOption({
 
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
-      if (multiple && onFilesSelect) onFilesSelect(Array.from(files));
+      if (allowsMultiplePhotoSelection && onFilesSelect) {
+        onFilesSelect(Array.from(files));
+      }
       else onFileSelect(files[0]);
     }
   }

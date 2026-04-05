@@ -49,6 +49,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
 type AsyncRequestRef = RefObject<(...args: any[]) => Promise<any>>;
 
 interface BuildApiTokenState {
+  buildId?: number;
   token: string;
   scopes: string[];
   expiresAt: number;
@@ -566,22 +567,24 @@ export async function ensureBuildApiToken(
   }
 
   const now = Math.floor(Date.now() / 1000);
+  const activeBuild = previewAuth.buildRef.current;
+  if (!activeBuild?.id) {
+    throw new Error('Build not found');
+  }
   const cached = previewAuth.buildApiTokenRef.current;
   if (
     cached &&
+    Number(cached.buildId || 0) === Number(activeBuild.id || 0) &&
     cached.expiresAt - 30 > now &&
     requiredScopes.every((scope) => cached.scopes.includes(scope))
   ) {
     return cached.token;
   }
 
-  const activeBuild = previewAuth.buildRef.current;
-  if (!activeBuild?.id) {
-    throw new Error('Build not found');
-  }
-
   const scopeSet = new Set<string>([
-    ...(cached?.scopes || []),
+    ...(Number(cached?.buildId || 0) === Number(activeBuild.id || 0)
+      ? cached?.scopes || []
+      : []),
     ...requiredScopes
   ]);
   const requestedScopes = Array.from(scopeSet);
@@ -594,6 +597,7 @@ export async function ensureBuildApiToken(
     throw new Error('Failed to obtain API token');
   }
   previewAuth.buildApiTokenRef.current = {
+    buildId: Number(activeBuild.id || 0) || undefined,
     token: result.token,
     scopes: result.scopes || requestedScopes,
     expiresAt: result.expiresAt || now + 600

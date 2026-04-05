@@ -29,6 +29,10 @@ export function normalizeProjectFilePath(rawPath: string) {
   return `/${out.join('/')}`;
 }
 
+function normalizeProjectFileLookupPath(rawPath: string) {
+  return normalizeProjectFilePath(rawPath).toLowerCase();
+}
+
 export function isIndexHtmlPath(filePath: string) {
   const normalized = normalizeProjectFilePath(filePath).toLowerCase();
   return normalized === '/index.html' || normalized === '/index.htm';
@@ -85,6 +89,32 @@ export function buildEditableProjectFiles({
 
 export function serializeEditableProjectFiles(files: EditableProjectFile[]) {
   return files.map((file) => `${file.path}\n${file.content}`).join('\n---\n');
+}
+
+export function listCaseInsensitiveProjectFileCollisionPaths<
+  T extends { path: string }
+>(files: T[]) {
+  const firstPathByLookup = new Map<string, string>();
+  const collisionPaths = new Set<string>();
+
+  for (const file of files || []) {
+    if (!file || typeof file.path !== 'string') continue;
+    const normalizedPath = normalizeProjectFilePath(file.path);
+    const lookupPath = normalizeProjectFileLookupPath(normalizedPath);
+    const firstPath = firstPathByLookup.get(lookupPath);
+
+    if (!firstPath) {
+      firstPathByLookup.set(lookupPath, normalizedPath);
+      continue;
+    }
+
+    if (firstPath !== normalizedPath) {
+      collisionPaths.add(firstPath);
+      collisionPaths.add(normalizedPath);
+    }
+  }
+
+  return Array.from(collisionPaths).sort((a, b) => a.localeCompare(b));
 }
 
 export function isPathWithinFolder(filePath: string, folderPath: string) {

@@ -122,6 +122,9 @@ function InputForm({
     useState(false);
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [multiSelectAlertShown, setMultiSelectAlertShown] = useState(false);
+  const [multiSelectAlertContent, setMultiSelectAlertContent] = useState(
+    'Please upload non-image files one at a time using “Choose File.”'
+  );
   const [photoUploadModalShown, setPhotoUploadModalShown] = useState(false);
   const [photoUploadFileObj, setPhotoUploadFileObj] = useState<
     File | File[] | null
@@ -587,7 +590,7 @@ function InputForm({
       {multiSelectAlertShown && (
         <AlertModal
           title="Multi-select is photos only"
-          content="Please upload non-image files one at a time using “Choose File.”"
+          content={multiSelectAlertContent}
           onHide={() => setMultiSelectAlertShown(false)}
         />
       )}
@@ -722,16 +725,29 @@ function InputForm({
     if (files.length === 0) return;
 
     const imageFiles = files.filter(isImageCandidate);
-    if (imageFiles.length === 0) {
-      if (files.length > 1) {
-        setMultiSelectAlertShown(true);
-      }
-      handleUpload(files[0]);
+    if (imageFiles.length === files.length) {
+      setPhotoUploadFileObj(files);
+      setPhotoUploadModalShown(true);
       return;
     }
 
-    setPhotoUploadFileObj(files);
-    setPhotoUploadModalShown(true);
+    if (imageFiles.length > 0) {
+      setMultiSelectAlertContent(
+        'Please upload photos by themselves, or upload non-image files one at a time using “Choose File.”'
+      );
+      setMultiSelectAlertShown(true);
+      return;
+    }
+
+    if (files.length > 1) {
+      setMultiSelectAlertContent(
+        'Please upload non-image files one at a time using “Choose File.”'
+      );
+      setMultiSelectAlertShown(true);
+      return;
+    }
+
+    handleUpload(files[0]);
   }
 
   function handlePhotoUploadModalHide() {

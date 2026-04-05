@@ -70,6 +70,47 @@ function shouldReloadForRedirect() {
   }
 }
 
+function decodeBinaryErrorText(data: ArrayBuffer | ArrayBufferView) {
+  try {
+    const view =
+      data instanceof ArrayBuffer
+        ? new Uint8Array(data)
+        : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+    return new TextDecoder().decode(view);
+  } catch {
+    return '';
+  }
+}
+
+function getErrorMessageFromResponseData(data: unknown): string | null {
+  if (!data) {
+    return null;
+  }
+
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    if (!trimmed) {
+      return null;
+    }
+    try {
+      return getErrorMessageFromResponseData(JSON.parse(trimmed)) || trimmed;
+    } catch {
+      return trimmed;
+    }
+  }
+
+  if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
+    return getErrorMessageFromResponseData(decodeBinaryErrorText(data));
+  }
+
+  if (typeof data === 'object') {
+    const errorData = data as { error?: string; message?: string };
+    return errorData.error || errorData.message || null;
+  }
+
+  return null;
+}
+
 export function AppContextProvider({ children }: { children: ReactNode }) {
   const [userState, userDispatch] = useReducer(UserReducer, {
     myState: initialMyState,
@@ -90,6 +131,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
     (error: any) => {
       if (error?.response) {
         const { status, data } = error.response;
+        const message =
+          getErrorMessageFromResponseData(data) ||
+          'An unexpected error occurred';
 
         if (status === 401) {
           localStorage.removeItem('token');
@@ -113,8 +157,7 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
 
         return Promise.reject({
           status,
-          message:
-            data?.error || data?.message || 'An unexpected error occurred'
+          message
         });
       }
 

@@ -16,6 +16,7 @@ export default function UploadModalContent({
   onRegisterUseImageHandler,
   accept,
   multiple,
+  allowMultipleGenericFileSelection,
   onError
 }: {
   selectedOption: 'select' | 'upload' | 'generate';
@@ -31,6 +32,7 @@ export default function UploadModalContent({
   ) => void;
   accept: string;
   multiple?: boolean;
+  allowMultipleGenericFileSelection?: boolean;
   onError?: (error: string) => void;
 }) {
   switch (selectedOption) {
@@ -41,6 +43,7 @@ export default function UploadModalContent({
           onFilesSelect={onFilesSelect}
           accept={accept}
           multiple={multiple}
+          allowMultipleGenericFileSelection={allowMultipleGenericFileSelection}
         />
       );
     case 'generate':

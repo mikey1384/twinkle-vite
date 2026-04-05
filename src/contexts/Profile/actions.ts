@@ -44,6 +44,22 @@ export default function ProfileActions(dispatch: Dispatch) {
         username
       });
     },
+    onLoadPinnedBuilds({
+      builds,
+      isTopBuilds,
+      username
+    }: {
+      builds: object[];
+      isTopBuilds?: boolean;
+      username: string;
+    }) {
+      return dispatch({
+        type: 'LOAD_PINNED_BUILDS',
+        builds,
+        isTopBuilds,
+        username
+      });
+    },
     onLoadMoreNotables({
       feeds,
       loadMoreButton,
@@ -203,6 +219,22 @@ export default function ProfileActions(dispatch: Dispatch) {
       return dispatch({
         type: 'SET_PINNED_AI_CARDS',
         cardIds,
+        username
+      });
+    },
+    onSetPinnedBuilds({
+      builds,
+      isTopBuilds,
+      username
+    }: {
+      builds: object[];
+      isTopBuilds?: boolean;
+      username: string;
+    }) {
+      return dispatch({
+        type: 'SET_PINNED_BUILDS',
+        builds,
+        isTopBuilds,
         username
       });
     },

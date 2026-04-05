@@ -3,7 +3,6 @@ import { mobileMaxWidth } from '~/constants/css';
 import { useViewContext } from '~/contexts';
 import FilterBar from '~/components/FilterBar';
 import Home from './Home';
-import Builds from './Builds';
 import LikedPosts from './LikedPosts';
 import Posts from './Posts';
 import {
@@ -19,7 +18,6 @@ import { css } from '@emotion/css';
 const profileLabel = 'Profile';
 const watchedLabel = 'Watched';
 const likesLabel = 'Likes';
-const buildsLabel = 'Builds';
 const postsLabel = 'Posts';
 
 export default function Body({
@@ -64,28 +62,15 @@ export default function Body({
       ),
     [location.pathname]
   );
-  const buildsMatch = useMemo(
-    () =>
-      matchPath(
-        {
-          path: '/users/:username/builds'
-        },
-        location.pathname
-      ),
-    [location.pathname]
-  );
-
   useEffect(() => {
-    const postsMatch = !mainMatch && !watchedMatch && !likesMatch && !buildsMatch;
+    const postsMatch = !mainMatch && !watchedMatch && !likesMatch;
     const subTitle = watchedMatch
       ? watchedLabel
       : likesMatch
-      ? likesLabel
-      : buildsMatch
-      ? buildsLabel
-      : postsMatch
-      ? postsLabel
-      : '';
+        ? likesLabel
+        : postsMatch
+          ? postsLabel
+          : '';
     if (username) {
       onSetPageTitle(
         `${subTitle ? `${subTitle} | ` : ''}${
@@ -95,7 +80,7 @@ export default function Body({
     }
     return () => onSetPageTitle('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username, mainMatch, watchedMatch, likesMatch, buildsMatch]);
+  }, [username, mainMatch, watchedMatch, likesMatch]);
 
   return (
     <div
@@ -166,11 +151,7 @@ export default function Body({
             <a>{likesLabel}</a>
           </nav>
           <nav
-            className={
-              !mainMatch && !watchedMatch && !likesMatch && !buildsMatch
-                ? 'active'
-                : ''
-            }
+            className={!mainMatch && !watchedMatch && !likesMatch ? 'active' : ''}
             style={{ cursor: 'pointer' }}
             onClick={() =>
               location.pathname === `/users/${username}/all`
@@ -200,14 +181,6 @@ export default function Body({
               path="/likes/:section"
               element={<LikedPosts selectedTheme={selectedTheme} />}
             />
-            {username && (
-            <Route
-              path="/builds"
-              element={
-                <Builds profile={profile} selectedTheme={selectedTheme} />
-              }
-            />
-            )}
             <Route
               path="/:section/*"
               element={<Posts selectedTheme={selectedTheme} />}

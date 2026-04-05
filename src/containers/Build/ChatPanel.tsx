@@ -187,9 +187,12 @@ interface ChatPanelProps {
   chatScrollRef: RefObject<HTMLDivElement | null>;
   chatEndRef: RefObject<HTMLDivElement | null>;
   onChatScroll: () => void;
+  draftMessage: string;
+  onDraftMessageChange: (value: string) => void;
   onSendMessage: (message: string) => Promise<boolean> | boolean;
   onSendPresetMessage: (message: string) => void;
-  onOpenProjectFileUpload: () => void;
+  onOpenBuildChatUpload: () => void;
+  uploadInFlight: boolean;
   runtimeUploadsModalShown: boolean;
   runtimeUploadAssets: BuildRuntimeUploadAsset[];
   runtimeUploadsNextCursor: number | null;
@@ -226,9 +229,12 @@ export default function ChatPanel({
   chatScrollRef,
   chatEndRef,
   onChatScroll,
+  draftMessage,
+  onDraftMessageChange,
   onSendMessage,
   onSendPresetMessage,
-  onOpenProjectFileUpload,
+  onOpenBuildChatUpload,
+  uploadInFlight,
   runtimeUploadsModalShown,
   runtimeUploadAssets,
   runtimeUploadsNextCursor,
@@ -250,7 +256,6 @@ export default function ChatPanel({
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
   const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat');
   const [limitsExpanded, setLimitsExpanded] = useState(false);
-  const [draftMessage, setDraftMessage] = useState('');
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const aiInputDisabled = AI_FEATURES_DISABLED;
   const usageRows = useMemo(() => {
@@ -469,7 +474,7 @@ export default function ChatPanel({
   }
 
   function handlePrefillRedirect() {
-    setDraftMessage('No. Instead, ');
+    onDraftMessageChange('No. Instead, ');
     window.requestAnimationFrame(() => {
       const input = inputRef.current;
       if (!input) return;
@@ -481,11 +486,11 @@ export default function ChatPanel({
 
   async function handleSubmitMessage() {
     const messageText = draftMessage.trim();
-    if (!messageText) return;
+    if (!messageText || uploadInFlight) return;
     try {
       const didAccept = await Promise.resolve(onSendMessage(messageText));
       if (didAccept) {
-        setDraftMessage('');
+        onDraftMessageChange('');
       }
     } catch (error) {
       console.error('Failed to send build message:', error);
@@ -909,7 +914,7 @@ export default function ChatPanel({
             <textarea
               ref={inputRef}
               value={draftMessage}
-              onChange={(e) => setDraftMessage(e.target.value)}
+              onChange={(e) => onDraftMessageChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
                 aiInputDisabled
@@ -938,8 +943,8 @@ export default function ChatPanel({
               rows={1}
             />
             <GameCTAButton
-              onClick={onOpenProjectFileUpload}
-              disabled={aiInputDisabled || generating}
+              onClick={onOpenBuildChatUpload}
+              disabled={aiInputDisabled || generating || uploadInFlight}
               variant="neutral"
               size="md"
               icon="upload"
@@ -947,7 +952,7 @@ export default function ChatPanel({
             />
             <GameCTAButton
               onClick={() => void handleSubmitMessage()}
-              disabled={aiInputDisabled || !draftMessage.trim()}
+              disabled={aiInputDisabled || uploadInFlight || !draftMessage.trim()}
               variant={generating ? 'orange' : 'logoBlue'}
               size="md"
               icon="paper-plane"

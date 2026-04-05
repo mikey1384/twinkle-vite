@@ -62,6 +62,7 @@ function UploadFileModal({
   onHide,
   onScrollToBottom,
   onTextMessageSubmit,
+  onCustomUploadSubmit,
   onUpload,
   replyTarget,
   recipientId,
@@ -80,6 +81,10 @@ function UploadFileModal({
   onHide: () => any;
   onScrollToBottom: () => any;
   onTextMessageSubmit?: (arg0: any) => any;
+  onCustomUploadSubmit?: (params: {
+    files: File[];
+    caption: string;
+  }) => void | Promise<void>;
   onUpload: () => any;
   recipientId?: number;
   recipientUsername?: string;
@@ -117,6 +122,8 @@ function UploadFileModal({
   const imageAttachmentsRef = useRef<ImageAttachment[]>([]);
   const isMountedRef = useRef(true);
   const [multiImageUploading, setMultiImageUploading] = useState(false);
+  const [customUploadSubmitting, setCustomUploadSubmitting] = useState(false);
+  const customUploadSubmittingRef = useRef(false);
   const [embeddingAttachmentId, setEmbeddingAttachmentId] = useState('');
   const addMoreInputRef = useRef<HTMLInputElement>(null);
   const maxSize = useMemo(
@@ -127,10 +134,17 @@ function UploadFileModal({
     () => (isCielChat || isZeroChat ? 20 * mb : maxSize),
     [isCielChat, isZeroChat, maxSize]
   );
-  const selectedFiles: File[] = useMemo(() => {
+  const initialSelectedFiles = useMemo(() => {
     if (!fileObj) return [];
     return Array.isArray(fileObj) ? fileObj : [fileObj];
   }, [fileObj]);
+  const isCustomUploadMode = typeof onCustomUploadSubmit === 'function';
+  const [customSelectedFiles, setCustomSelectedFiles] = useState<File[]>(
+    initialSelectedFiles
+  );
+  const selectedFiles = isCustomUploadMode
+    ? customSelectedFiles
+    : initialSelectedFiles;
 
   const imageFiles: File[] = useMemo(
     () => selectedFiles.filter(isImageCandidate),
@@ -145,6 +159,12 @@ function UploadFileModal({
     () => selectedFiles.filter((file) => !isImageCandidate(file)),
     [selectedFiles]
   );
+  const customFilesToSubmit = useMemo(() => {
+    if (!isCustomUploadMode) {
+      return [];
+    }
+    return selectedFiles.filter((file) => file instanceof File);
+  }, [isCustomUploadMode, selectedFiles]);
 
   const primaryFileObj = useMemo(() => selectedFiles[0], [selectedFiles]);
 
@@ -153,6 +173,11 @@ function UploadFileModal({
   }, [primaryFileObj?.name]);
   // Track effective file type - may differ from original if conversion succeeded
   const [effectiveFileType, setEffectiveFileType] = useState(originalFileType);
+
+  useEffect(() => {
+    if (!isCustomUploadMode) return;
+    setCustomSelectedFiles(initialSelectedFiles);
+  }, [initialSelectedFiles, isCustomUploadMode]);
 
   useEffect(() => {
     imageAttachmentsRef.current = imageAttachments;
@@ -297,8 +322,39 @@ function UploadFileModal({
     // attachment pipeline (exactly one remaining attachment).
     return imageAttachments.length === 1;
   }, [aiFileNotSupported, imageAttachments.length, isMultiImageMode]);
+  const isModalInteractionLocked =
+    multiImageUploading || customUploadSubmitting || !!embeddingAttachmentId;
 
   async function handleSubmit() {
+    if (isCustomUploadMode) {
+      if (customUploadSubmittingRef.current) {
+        return;
+      }
+      const filesToSubmit = customFilesToSubmit;
+      if (filesToSubmit.length === 0 || !!captionExceedsCharLimit) {
+        return;
+      }
+      customUploadSubmittingRef.current = true;
+      setCustomUploadSubmitting(true);
+      let didClose = false;
+      try {
+        await Promise.resolve(
+          onCustomUploadSubmit?.({
+            files: filesToSubmit,
+            caption: finalizeEmoji(caption)
+          })
+        );
+        didClose = true;
+        onUpload();
+      } finally {
+        if (!didClose) {
+          customUploadSubmittingRef.current = false;
+          setCustomUploadSubmittingSafely(false);
+        }
+      }
+      return;
+    }
+
     if (isMultiImageMode) {
       await handleSubmitMultipleImages();
       return;
@@ -404,8 +460,9 @@ function UploadFileModal({
                       fontSize: '1.2rem'
                     }}
                   >
-                    Non-image files aren&apos;t included in multi-photo messages (
-                    {nonImageSelectedFiles.length}). Please upload them one at a time.
+                    {isCustomUploadMode
+                      ? `Other files will be uploaded too (${nonImageSelectedFiles.length}). Only photos are previewed here.`
+                      : `Non-image files aren't included in multi-photo messages (${nonImageSelectedFiles.length}). Please upload them one at a time.`}
                   </div>
                 )}
                   <div
@@ -426,7 +483,7 @@ function UploadFileModal({
                     <Button
                       variant="soft"
                       tone="raised"
-                      disabled={multiImageUploading || !!embeddingAttachmentId}
+                      disabled={isModalInteractionLocked}
                       onClick={handleAddMorePhotosClick}
                       style={{ whiteSpace: 'nowrap' }}
                     >
@@ -441,7 +498,7 @@ function UploadFileModal({
                       accept="image/*"
                       multiple
                       tabIndex={-1}
-                      disabled={multiImageUploading || !!embeddingAttachmentId}
+                      disabled={isModalInteractionLocked}
                       onChange={handleAddMorePhotosChange}
                       style={buttonFileInputOverlayStyle}
                       aria-label="Add more photos"
@@ -451,9 +508,9 @@ function UploadFileModal({
                 <ImageAttachmentsBar
                   attachments={imageAttachments}
                   onRemove={handleRemoveImageAttachment}
-                  removeDisabled={multiImageUploading || !!embeddingAttachmentId}
+                  removeDisabled={isModalInteractionLocked}
                   onEmbedAttachment={handleEmbedImageAttachment}
-                  embedDisabled={multiImageUploading || !!embeddingAttachmentId}
+                  embedDisabled={isModalInteractionLocked}
                 />
                 <Textarea
                   autoFocus
@@ -477,9 +534,64 @@ function UploadFileModal({
                   </div>
                 )}
               </div>
+            ) : isCustomUploadMode && selectedFiles.length > 1 ? (
+              <div style={{ width: '100%' }}>
+                <div
+                  style={{
+                    margin: '0 0 1rem 0',
+                    padding: '0.9rem 1rem',
+                    borderRadius: '0.7rem',
+                    background: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.18)'
+                  }}
+                >
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                    {selectedFiles.length} files selected
+                  </div>
+                  <div
+                    style={{
+                      marginTop: '0.7rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.45rem',
+                      fontSize: '1.2rem'
+                    }}
+                  >
+                    {selectedFiles.slice(0, 8).map((file, index) => (
+                      <div key={`${file.name}-${file.size}-${index}`}>
+                        {file.name}
+                      </div>
+                    ))}
+                    {selectedFiles.length > 8 && (
+                      <div>+ {selectedFiles.length - 8} more</div>
+                    )}
+                  </div>
+                </div>
+                <Textarea
+                  autoFocus
+                  placeholder="Add a caption..."
+                  hasError={!!captionExceedsCharLimit}
+                  value={caption}
+                  onChange={(event: any) => setCaption(event.target.value)}
+                  onKeyUp={handleCaptionKeyUp}
+                  minRows={3}
+                />
+                {captionExceedsCharLimit && (
+                  <div
+                    style={{
+                      marginTop: '0.7rem',
+                      fontWeight: 'normal',
+                      fontSize: '1.3rem',
+                      color: 'red'
+                    }}
+                  >
+                    {captionExceedsCharLimit.message}
+                  </div>
+                )}
+              </div>
             ) : primaryFileObj ? (
               <>
-                {selectedFiles.length > 1 && (
+                {!isCustomUploadMode && selectedFiles.length > 1 && (
                   <div
                     style={{
                       margin: '0 0 1rem 0',
@@ -549,17 +661,20 @@ function UploadFileModal({
             <Button
               variant="ghost"
               style={{ marginRight: '0.7rem' }}
-              disabled={multiImageUploading || !!embeddingAttachmentId}
+              disabled={isModalInteractionLocked}
               onClick={handleHide}
             >
               Cancel
             </Button>
             <Button
               disabled={
-                isMultiImageMode
+                isCustomUploadMode
                   ? !!captionExceedsCharLimit ||
-                    multiImageUploading ||
-                    !!embeddingAttachmentId ||
+                    customFilesToSubmit.length === 0 ||
+                    customUploadSubmitting
+                  : isMultiImageMode
+                  ? !!captionExceedsCharLimit ||
+                    isModalInteractionLocked ||
                     (imageAttachments.length === 0 &&
                       (stringIsEmpty(caption) || !onTextMessageSubmit)) ||
                     shouldBlockForAiUnsupportedFile ||
@@ -590,7 +705,7 @@ function UploadFileModal({
   );
 
   function handleHide() {
-    if (multiImageUploading || !!embeddingAttachmentId) return;
+    if (isModalInteractionLocked) return;
     onHide();
   }
 
@@ -616,14 +731,14 @@ function UploadFileModal({
   }
 
   function handleRemoveImageAttachment(attachmentId: string) {
-    if (multiImageUploading || !!embeddingAttachmentId) return;
+    if (isModalInteractionLocked) return;
     removeImageAttachmentById(attachmentId);
     setAiFileNotSupported(false);
     setMultiImageUploadErrorText('');
   }
 
   async function handleEmbedImageAttachment(attachmentId: string) {
-    if (multiImageUploading || !!embeddingAttachmentId) return;
+    if (isModalInteractionLocked) return;
     const attachment = imageAttachmentsRef.current.find(
       (entry) => entry.id === attachmentId
     );
@@ -654,7 +769,7 @@ function UploadFileModal({
   }
 
   function handleAddMorePhotosClick() {
-    if (multiImageUploading || !!embeddingAttachmentId) return;
+    if (isModalInteractionLocked) return;
     if (!addMoreInputRef.current) return;
     addMoreInputRef.current.value = '';
     addMoreInputRef.current.click();
@@ -663,7 +778,7 @@ function UploadFileModal({
   function handleAddMorePhotosChange(
     event: React.ChangeEvent<HTMLInputElement>
   ) {
-    if (multiImageUploading || !!embeddingAttachmentId) {
+    if (isModalInteractionLocked) {
       event.target.value = '';
       return;
     }
@@ -686,6 +801,9 @@ function UploadFileModal({
     }
 
     if (allowedFiles.length > 0) {
+      if (isCustomUploadMode) {
+        setCustomSelectedFiles((prev) => [...prev, ...allowedFiles]);
+      }
       setAiFileNotSupported(false);
       const newAttachments: ImageAttachment[] = allowedFiles.map(
         (file) => ({
@@ -1056,6 +1174,11 @@ function UploadFileModal({
     setImageAttachmentsSafely((prev) =>
       prev.filter((attachment) => attachment.id !== attachmentId)
     );
+    if (isCustomUploadMode && currentAttachment?.file instanceof File) {
+      setCustomSelectedFiles((prev) =>
+        prev.filter((file) => file !== currentAttachment.file)
+      );
+    }
   }
 
   function setAiFileNotSupportedSafely(value: boolean) {
@@ -1071,6 +1194,12 @@ function UploadFileModal({
   function setMultiImageUploadingSafely(value: boolean) {
     if (!isMountedRef.current) return;
     setMultiImageUploading(value);
+  }
+
+  function setCustomUploadSubmittingSafely(value: boolean) {
+    customUploadSubmittingRef.current = value;
+    if (!isMountedRef.current) return;
+    setCustomUploadSubmitting(value);
   }
 
   function setEmbeddingAttachmentIdSafely(value: string) {

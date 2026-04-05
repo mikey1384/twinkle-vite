@@ -38,7 +38,11 @@ export interface PreviewPanelProps {
     }
   ) => void;
   onSaveProjectFiles: (
-    files: Array<{ path: string; content?: string }>
+    files: Array<{ path: string; content?: string }>,
+    options?: {
+      targetBuildId?: number | null;
+      targetBuildCode?: string | null;
+    }
   ) => Promise<{ success: boolean; error?: string }>;
   runtimeOnly?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
@@ -54,10 +58,26 @@ export interface PreviewPanelProps {
   onRuntimeUploadsSync?: (
     payload: PreviewRuntimeUploadsSyncPayload | null
   ) => void;
+  onOpenRuntimeUploadsManager?: () => void;
+  currentBuildRuntimeAssets?: PreviewRuntimeUploadAsset[];
 }
 
 export interface PreviewPanelHandle {
   openProjectFileUploadPicker: () => void;
+  openProjectFolderImportPicker: () => void;
+  openProjectAssetUploadPicker: () => void;
+  importProjectFilesFromChatUpload: (files: File[]) => Promise<{
+    success: boolean;
+    importedCount: number;
+    warningText?: string;
+    error?: string;
+  }>;
+  uploadProjectAssetsFromChatUpload: (files: File[]) => Promise<{
+    success: boolean;
+    uploadedCount: number;
+    warningText?: string;
+    error?: string;
+  }>;
 }
 
 export interface ArtifactVersion {

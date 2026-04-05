@@ -20,6 +20,11 @@ export default function ProfileReducer(
       cardIds: [],
       loaded: false
     },
+    pinnedBuilds: {
+      builds: [],
+      loaded: false,
+      isTopBuilds: false
+    },
     likes: {
       ['ai-stories']: [],
       all: [],
@@ -127,6 +132,19 @@ export default function ProfileReducer(
             ...prevContentState.pinnedAICards,
             cardIds: action.cardIds,
             loaded: true
+          }
+        }
+      };
+    case 'LOAD_PINNED_BUILDS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          pinnedBuilds: {
+            ...prevContentState.pinnedBuilds,
+            builds: action.builds,
+            loaded: true,
+            isTopBuilds: Boolean(action.isTopBuilds)
           }
         }
       };
@@ -281,6 +299,19 @@ export default function ProfileReducer(
             ...prevContentState.pinnedAICards,
             cardIds: action.cardIds,
             loaded: true
+          }
+        }
+      };
+    case 'SET_PINNED_BUILDS':
+      return {
+        ...state,
+        [username]: {
+          ...prevContentState,
+          pinnedBuilds: {
+            ...prevContentState.pinnedBuilds,
+            builds: action.builds,
+            loaded: true,
+            isTopBuilds: Boolean(action.isTopBuilds)
           }
         }
       };

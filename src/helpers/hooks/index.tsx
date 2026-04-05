@@ -52,6 +52,11 @@ const DEFAULT_PROFILE_PINNED_AI_CARDS = {
   cardIds: EMPTY_PROFILE_FEEDS,
   loaded: false
 };
+const DEFAULT_PROFILE_PINNED_BUILDS = {
+  builds: EMPTY_PROFILE_FEEDS,
+  loaded: false,
+  isTopBuilds: false
+};
 const DEFAULT_PROFILE_LIKES = {
   all: EMPTY_PROFILE_FEEDS,
   comments: EMPTY_PROFILE_FEEDS,
@@ -429,6 +434,8 @@ export function useProfileState(username: string) {
   const subjects = userState.subjects || DEFAULT_PROFILE_SUBJECTS;
   const pinnedAICards =
     userState.pinnedAICards || DEFAULT_PROFILE_PINNED_AI_CARDS;
+  const pinnedBuilds =
+    userState.pinnedBuilds || DEFAULT_PROFILE_PINNED_BUILDS;
   const likes = userState.likes || DEFAULT_PROFILE_LIKES;
   const posts = userState.posts || DEFAULT_PROFILE_POSTS;
   const profileId = userState.profileId;
@@ -438,12 +445,22 @@ export function useProfileState(username: string) {
       likes,
       subjects,
       pinnedAICards,
+      pinnedBuilds,
       notables,
       posts,
       notExist,
       profileId
     }),
-    [likes, subjects, pinnedAICards, notables, posts, notExist, profileId]
+    [
+      likes,
+      subjects,
+      pinnedAICards,
+      pinnedBuilds,
+      notables,
+      posts,
+      notExist,
+      profileId
+    ]
   );
 }
 

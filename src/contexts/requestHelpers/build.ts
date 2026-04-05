@@ -315,15 +315,17 @@ export default function buildRequestHelpers({
 
     async updateBuildMetadata({
       buildId,
+      title,
       description
     }: {
       buildId: number;
+      title?: string;
       description?: string | null;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/build/${buildId}`,
-          { description },
+          { title, description },
           auth()
         );
         return data;
@@ -350,9 +352,137 @@ export default function buildRequestHelpers({
       }
     },
 
+    async routeBuildChatUpload({
+      buildId,
+      messageText,
+      files
+    }: {
+      buildId: number;
+      messageText?: string;
+      files: Array<{
+        fileName: string;
+        mimeType?: string | null;
+        sizeBytes?: number | null;
+      }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/upload-route`,
+          {
+            messageText,
+            files
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildChatAssistantNote({
+      buildId,
+      text
+    }: {
+      buildId: number;
+      text: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/assistant-note`,
+          { text },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildChatUserNote({
+      buildId,
+      text
+    }: {
+      buildId: number;
+      text: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/user-note`,
+          { text },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildChatReferenceNote({
+      buildId,
+      messageText,
+      references
+    }: {
+      buildId: number;
+      messageText?: string;
+      references: Array<{
+        fileName: string;
+        url: string;
+        mimeType?: string | null;
+      }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/reference-note`,
+          {
+            messageText,
+            references
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async cleanupBuildChatReferenceUploads({
+      buildId,
+      uploads
+    }: {
+      buildId: number;
+      uploads: Array<{
+        filePath: string;
+        storedFileName: string;
+      }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/chat/reference-upload-cleanup`,
+          { uploads },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async loadMyBuilds() {
       try {
         const { data } = await request.get(`${URL}/build/list/mine`, auth());
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async loadMyPublicBuildsForPinning() {
+      try {
+        const { data } = await request.get(
+          `${URL}/build/list/mine/public`,
+          auth()
+        );
         return data;
       } catch (error) {
         return handleError(error);
@@ -547,6 +677,26 @@ export default function buildRequestHelpers({
         if (response.status === 204) {
           return null;
         }
+        return response.data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async downloadBuildProjectArchive(buildId: number) {
+      try {
+        const response = await request.get(
+          `${URL}/build/${buildId}/project-export`,
+          {
+            ...auth(),
+            responseType: 'arraybuffer',
+            timeout: 0,
+            meta: {
+              enforceTimeout: false,
+              allowExtendedTimeout: true
+            }
+          }
+        );
         return response.data;
       } catch (error) {
         return handleError(error);

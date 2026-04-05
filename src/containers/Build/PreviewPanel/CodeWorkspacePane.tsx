@@ -5,14 +5,17 @@ import CodeDiff from '~/components/CodeDiff';
 import Icon from '~/components/Icon';
 import { mobileMaxWidth } from '~/constants/css';
 import { getFileNameFromPath, isIndexHtmlPath } from './projectFiles';
-import type { EditableProjectFile, ProjectExplorerEntry } from './types';
+import type {
+  EditableProjectFile,
+  PreviewRuntimeUploadAsset,
+  ProjectExplorerEntry
+} from './types';
 
 interface CodeWorkspacePaneProps {
   displayedProjectFiles: EditableProjectFile[];
   projectExplorerEntries: ProjectExplorerEntry[];
   selectedFolderPath: string | null;
   folderMoveTargetPath: string;
-  projectFileUploadAccept: string;
   newFilePath: string;
   activeFilePath: string;
   activeFile: EditableProjectFile | null;
@@ -21,13 +24,18 @@ interface CodeWorkspacePaneProps {
   isShowingStreamingCode: boolean;
   hasUnsavedProjectFileChanges: boolean;
   savingProjectFiles: boolean;
+  downloadingProjectArchive: boolean;
+  projectFilesLocked: boolean;
   projectFileError: string;
+  currentBuildRuntimeAssets: PreviewRuntimeUploadAsset[];
   streamingAutoFollowEnabled: boolean;
   persistedFileContentByPath: Map<string, string>;
   onNewFilePathChange: (value: string) => void;
   onAddProjectFile: () => void;
   onOpenProjectFileUploadPicker: () => void;
-  onImportProjectFolder: (files: FileList | null) => void;
+  onOpenProjectFolderImportPicker: () => void;
+  onOpenProjectAssetUploadPicker: () => void;
+  onOpenRuntimeUploadsManager: () => void;
   onFolderMoveTargetPathChange: (value: string) => void;
   onMoveSelectedFolder: () => void;
   onSelectFolder: (path: string) => void;
@@ -37,6 +45,8 @@ interface CodeWorkspacePaneProps {
   onRenamePathInputChange: (value: string) => void;
   onRenameOrMoveActiveFile: () => void;
   onSaveEditableProjectFiles: () => void;
+  onDownloadProjectArchive: () => void;
+  onDismissProjectFileError: () => void;
   onActiveFileContentChange: (value: string) => void;
 }
 
@@ -45,7 +55,6 @@ export default function CodeWorkspacePane({
   projectExplorerEntries,
   selectedFolderPath,
   folderMoveTargetPath,
-  projectFileUploadAccept,
   newFilePath,
   activeFilePath,
   activeFile,
@@ -54,13 +63,18 @@ export default function CodeWorkspacePane({
   isShowingStreamingCode,
   hasUnsavedProjectFileChanges,
   savingProjectFiles,
+  downloadingProjectArchive,
+  projectFilesLocked,
   projectFileError,
+  currentBuildRuntimeAssets,
   streamingAutoFollowEnabled,
   persistedFileContentByPath,
   onNewFilePathChange,
   onAddProjectFile,
   onOpenProjectFileUploadPicker,
-  onImportProjectFolder,
+  onOpenProjectFolderImportPicker,
+  onOpenProjectAssetUploadPicker,
+  onOpenRuntimeUploadsManager,
   onFolderMoveTargetPathChange,
   onMoveSelectedFolder,
   onSelectFolder,
@@ -70,9 +84,10 @@ export default function CodeWorkspacePane({
   onRenamePathInputChange,
   onRenameOrMoveActiveFile,
   onSaveEditableProjectFiles,
+  onDownloadProjectArchive,
+  onDismissProjectFileError,
   onActiveFileContentChange
 }: CodeWorkspacePaneProps) {
-  const projectFolderInputRef = React.useRef<HTMLInputElement | null>(null);
   const persistedActiveFileContent = activeFile
     ? persistedFileContentByPath.get(activeFile.path) || ''
     : '';
@@ -82,13 +97,7 @@ export default function CodeWorkspacePane({
   const activeFileHasStreamingDiff = activeFile
     ? persistedActiveFileContent !== activeFile.content
     : false;
-
-  React.useEffect(() => {
-    const folderInput = projectFolderInputRef.current;
-    if (!folderInput) return;
-    folderInput.setAttribute('webkitdirectory', '');
-    folderInput.setAttribute('directory', '');
-  }, []);
+  const displayedAssetEntries = currentBuildRuntimeAssets.slice(0, 8);
 
   return (
     <div
@@ -148,6 +157,7 @@ export default function CodeWorkspacePane({
             <input
               value={newFilePath}
               onChange={(e) => onNewFilePathChange(e.target.value)}
+              disabled={projectFilesLocked}
               placeholder="/src/app.js"
               className={css`
                 flex: 1;
@@ -167,6 +177,7 @@ export default function CodeWorkspacePane({
             <button
               type="button"
               onClick={onAddProjectFile}
+              disabled={projectFilesLocked}
               className={css`
                 border: 1px solid rgba(255, 255, 255, 0.16);
                 border-radius: 8px;
@@ -188,6 +199,7 @@ export default function CodeWorkspacePane({
             <button
               type="button"
               onClick={onOpenProjectFileUploadPicker}
+              disabled={projectFilesLocked}
               className={css`
                 border: 1px solid rgba(255, 255, 255, 0.16);
                 border-radius: 8px;
@@ -205,28 +217,16 @@ export default function CodeWorkspacePane({
                   background: rgba(148, 163, 184, 0.26);
                 }
               `}
-              aria-label="Upload files"
-              title="Upload flat files into the project explorer"
+              aria-label="Import project files"
+              title="Import project files into the workspace"
             >
-              <Icon icon="upload" />
+              <Icon icon="file" />
               <span>Files</span>
             </button>
-            <input
-              ref={projectFolderInputRef}
-              type="file"
-              multiple
-              accept={projectFileUploadAccept}
-              className={css`
-                display: none;
-              `}
-              onChange={(e) => {
-                onImportProjectFolder(e.target.files);
-                e.target.value = '';
-              }}
-            />
             <button
               type="button"
-              onClick={() => projectFolderInputRef.current?.click()}
+              onClick={onOpenProjectFolderImportPicker}
+              disabled={projectFilesLocked}
               className={css`
                 border: 1px solid rgba(255, 255, 255, 0.16);
                 border-radius: 8px;
@@ -244,11 +244,38 @@ export default function CodeWorkspacePane({
                   background: rgba(148, 163, 184, 0.26);
                 }
               `}
-              aria-label="Import folder"
+              aria-label="Import project folder"
               title="Import a project folder and preserve nested paths"
             >
               <Icon icon="folder-open" />
               <span>Folder</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenProjectAssetUploadPicker}
+              disabled={projectFilesLocked}
+              className={css`
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                border-radius: 8px;
+                background: rgba(148, 163, 184, 0.16);
+                color: #e5e7eb;
+                padding: 0.4rem 0.6rem;
+                cursor: pointer;
+                font-size: 0.75rem;
+                font-weight: 700;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                white-space: nowrap;
+                &:hover {
+                  background: rgba(148, 163, 184, 0.26);
+                }
+              `}
+              aria-label="Upload build assets"
+              title="Upload images or audio as build assets"
+            >
+              <Icon icon="images" />
+              <span>Assets</span>
             </button>
           </div>
         )}
@@ -273,6 +300,7 @@ export default function CodeWorkspacePane({
                 <input
                   value={folderMoveTargetPath}
                   onChange={(e) => onFolderMoveTargetPathChange(e.target.value)}
+                  disabled={projectFilesLocked}
                   placeholder="/new/folder/path"
                   className={css`
                     flex: 1;
@@ -288,6 +316,7 @@ export default function CodeWorkspacePane({
                 <button
                   type="button"
                   onClick={onMoveSelectedFolder}
+                  disabled={projectFilesLocked}
                   className={css`
                     border: 1px solid rgba(255, 255, 255, 0.18);
                     border-radius: 8px;
@@ -459,6 +488,7 @@ export default function CodeWorkspacePane({
                     <button
                       type="button"
                       onClick={() => onDeleteProjectFile(file.path)}
+                      disabled={projectFilesLocked}
                       className={css`
                         border: 1px solid rgba(255, 255, 255, 0.12);
                         background: rgba(239, 68, 68, 0.14);
@@ -479,6 +509,164 @@ export default function CodeWorkspacePane({
             );
           })}
         </div>
+        {isOwner && (
+          <div
+            className={css`
+              border-top: 1px solid rgba(255, 255, 255, 0.08);
+              background: rgba(2, 6, 23, 0.94);
+              padding: 0.65rem 0.6rem 0.7rem;
+              display: flex;
+              flex-direction: column;
+              gap: 0.5rem;
+            `}
+          >
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                color: #cbd5e1;
+                font-size: 0.72rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+              `}
+            >
+              <span>Build assets</span>
+              <button
+                type="button"
+                onClick={onOpenRuntimeUploadsManager}
+                className={css`
+                  border: 1px solid rgba(255, 255, 255, 0.14);
+                  border-radius: 999px;
+                  background: rgba(148, 163, 184, 0.14);
+                  color: #e2e8f0;
+                  padding: 0.2rem 0.5rem;
+                  font-size: 0.67rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                `}
+              >
+                Manage
+              </button>
+            </div>
+            {displayedAssetEntries.length === 0 ? (
+              <div
+                className={css`
+                  border: 1px dashed rgba(255, 255, 255, 0.14);
+                  border-radius: 10px;
+                  padding: 0.75rem 0.7rem;
+                  color: #94a3b8;
+                  font-size: 0.74rem;
+                  line-height: 1.45;
+                `}
+              >
+                Uploaded sprites, backgrounds, GIFs, and audio will show up
+                here.
+              </div>
+            ) : (
+              <div
+                className={css`
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.35rem;
+                `}
+              >
+                {displayedAssetEntries.map((asset) => {
+                  const isImage = asset.fileType === 'image';
+                  const label = asset.originalFileName || asset.fileName;
+                  return (
+                    <button
+                      key={asset.id}
+                      type="button"
+                      onClick={() =>
+                        window.open(asset.url, '_blank', 'noopener')
+                      }
+                      className={css`
+                        width: 100%;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 10px;
+                        background: rgba(15, 23, 42, 0.9);
+                        color: #e5e7eb;
+                        padding: 0.45rem 0.5rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        cursor: pointer;
+                        text-align: left;
+                      `}
+                      title={label}
+                    >
+                      <div
+                        className={css`
+                          width: 2rem;
+                          height: 2rem;
+                          border-radius: 8px;
+                          overflow: hidden;
+                          flex-shrink: 0;
+                          background: rgba(30, 41, 59, 0.95);
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          color: #93c5fd;
+                        `}
+                      >
+                        {isImage ? (
+                          <img
+                            src={asset.thumbUrl || asset.url}
+                            alt={label}
+                            className={css`
+                              width: 100%;
+                              height: 100%;
+                              object-fit: cover;
+                              display: block;
+                            `}
+                          />
+                        ) : (
+                          <Icon
+                            icon={asset.fileType === 'audio' ? 'music' : 'file'}
+                          />
+                        )}
+                      </div>
+                      <div
+                        className={css`
+                          flex: 1;
+                          min-width: 0;
+                          display: flex;
+                          flex-direction: column;
+                          gap: 0.12rem;
+                        `}
+                      >
+                        <span
+                          className={css`
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            font-size: 0.74rem;
+                            font-weight: 700;
+                          `}
+                        >
+                          {label}
+                        </span>
+                        <span
+                          className={css`
+                            font-size: 0.68rem;
+                            color: #94a3b8;
+                            text-transform: uppercase;
+                            letter-spacing: 0.03em;
+                          `}
+                        >
+                          {asset.fileType}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div
         className={css`
@@ -532,6 +720,7 @@ export default function CodeWorkspacePane({
                 <input
                   value={renamePathInput}
                   onChange={(e) => onRenamePathInputChange(e.target.value)}
+                  disabled={projectFilesLocked}
                   placeholder="/src/new-path.js"
                   className={css`
                     flex: 1;
@@ -552,6 +741,7 @@ export default function CodeWorkspacePane({
                 <button
                   type="button"
                   onClick={onRenameOrMoveActiveFile}
+                  disabled={projectFilesLocked}
                   className={css`
                     border: 1px solid rgba(255, 255, 255, 0.18);
                     border-radius: 8px;
@@ -613,35 +803,39 @@ export default function CodeWorkspacePane({
                   </span>
                 )}
               </div>
-            ) : hasUnsavedProjectFileChanges ? (
-              <span
-                className={css`
-                  color: #fbbf24;
-                  font-weight: 700;
-                `}
-              >
-                Unsaved
-              </span>
-            ) : (
-              <span
-                className={css`
-                  color: #86efac;
-                  font-weight: 700;
-                `}
-              >
-                Saved
-              </span>
-            )}
+            ) : null}
             {isOwner && !isShowingStreamingCode && (
-              <GameCTAButton
-                variant="primary"
-                size="sm"
-                disabled={savingProjectFiles || !hasUnsavedProjectFileChanges}
-                loading={savingProjectFiles}
-                onClick={onSaveEditableProjectFiles}
-              >
-                {savingProjectFiles ? 'Saving...' : 'Save files'}
-              </GameCTAButton>
+              <>
+                <GameCTAButton
+                  variant="neutral"
+                  size="sm"
+                  icon="download"
+                  disabled={savingProjectFiles || downloadingProjectArchive}
+                  loading={downloadingProjectArchive}
+                  onClick={onDownloadProjectArchive}
+                >
+                  {hasUnsavedProjectFileChanges
+                    ? 'Save & download'
+                    : 'Download zip'}
+                </GameCTAButton>
+                <GameCTAButton
+                  variant="primary"
+                  size="sm"
+                  disabled={
+                    savingProjectFiles ||
+                    downloadingProjectArchive ||
+                    !hasUnsavedProjectFileChanges
+                  }
+                  loading={savingProjectFiles}
+                  onClick={onSaveEditableProjectFiles}
+                >
+                  {savingProjectFiles
+                    ? 'Saving...'
+                    : hasUnsavedProjectFileChanges
+                      ? 'Save files'
+                      : 'Saved'}
+                </GameCTAButton>
+              </>
             )}
           </div>
         </div>
@@ -723,7 +917,9 @@ export default function CodeWorkspacePane({
             <textarea
               value={activeFile.content}
               onChange={(e) => onActiveFileContentChange(e.target.value)}
-              readOnly={!isOwner || isShowingStreamingCode}
+              readOnly={
+                !isOwner || isShowingStreamingCode || projectFilesLocked
+              }
               spellCheck={false}
               className={css`
                 width: 100%;
@@ -766,12 +962,45 @@ export default function CodeWorkspacePane({
               border: 1px solid rgba(239, 68, 68, 0.35);
               color: #fecaca;
               border-radius: 8px;
-              padding: 0.45rem 0.6rem;
+              padding: 0.45rem 0.5rem 0.45rem 0.6rem;
               font-size: 0.75rem;
               max-width: 28rem;
+              display: flex;
+              align-items: flex-start;
+              gap: 0.45rem;
             `}
           >
-            {projectFileError}
+            <div
+              className={css`
+                flex: 1;
+                min-width: 0;
+                line-height: 1.45;
+              `}
+            >
+              {projectFileError}
+            </div>
+            <button
+              type="button"
+              onClick={onDismissProjectFileError}
+              className={css`
+                border: none;
+                background: transparent;
+                color: #fecaca;
+                cursor: pointer;
+                padding: 0.05rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0.9;
+                &:hover {
+                  opacity: 1;
+                }
+              `}
+              aria-label="Close warning"
+              title="Close"
+            >
+              <Icon icon="times" />
+            </button>
           </div>
         )}
       </div>

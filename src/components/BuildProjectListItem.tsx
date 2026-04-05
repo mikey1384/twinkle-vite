@@ -67,10 +67,12 @@ const buildDescriptionClass = css`
   line-height: 1.45;
 `;
 
-const addDescriptionButtonClass = css`
+const detailsButtonClass = css`
   border: 0;
   background: transparent;
   padding: 0;
+  margin-top: 0.3rem;
+  display: inline-flex;
   color: var(--chat-text);
   opacity: 0.7;
   font-size: 1.35rem;
@@ -184,7 +186,7 @@ export default function BuildProjectListItem({
   const navigate = useNavigate();
   const visibilityTone = getVisibilityTone(build.isPublic);
   const description = build.description?.trim() || '';
-  const descriptionPlaceholder = isOwner ? 'Add description' : '';
+  const detailsActionLabel = isOwner ? 'Edit Details' : '';
   const targetPath = to || `/build/${build.id}`;
 
   return (
@@ -199,19 +201,29 @@ export default function BuildProjectListItem({
       <div className={buildCardHeaderClass}>
         <div>
           <h3 className={buildTitleClass}>{build.title}</h3>
-          {(description || descriptionPlaceholder) && (
-            description ? (
-              <p className={buildDescriptionClass}>{description}</p>
+          {(description || detailsActionLabel) &&
+            (description ? (
+              <>
+                <p className={buildDescriptionClass}>{description}</p>
+                {isOwner && onAddDescription && (
+                  <button
+                    type="button"
+                    className={detailsButtonClass}
+                    onClick={handleAddDescriptionClick}
+                  >
+                    {detailsActionLabel}
+                  </button>
+                )}
+              </>
             ) : (
               <button
                 type="button"
-                className={addDescriptionButtonClass}
+                className={detailsButtonClass}
                 onClick={handleAddDescriptionClick}
               >
-                {descriptionPlaceholder}
+                {detailsActionLabel}
               </button>
-            )
-          )}
+            ))}
         </div>
         <div className={buildHeaderAsideClass}>
           <span className={buildUpdatedClass}>

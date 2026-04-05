@@ -154,7 +154,7 @@ export default function BuildList() {
   );
   const [deletingBuild, setDeletingBuild] =
     useState<BuildProjectListItemData | null>(null);
-  const [savingDescription, setSavingDescription] = useState(false);
+  const [savingMetadata, setSavingMetadata] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [promptInput, setPromptInput] = useState('');
   const [creatingFromPrompt, setCreatingFromPrompt] = useState(false);
@@ -284,11 +284,11 @@ export default function BuildList() {
       )}
       {editingBuild && (
         <BuildDescriptionModal
-          buildTitle={editingBuild.title}
+          initialTitle={editingBuild.title}
           initialDescription={editingBuild.description}
-          loading={savingDescription}
-          onHide={() => (savingDescription ? null : setEditingBuild(null))}
-          onSubmit={handleSubmitDescription}
+          loading={savingMetadata}
+          onHide={() => (savingMetadata ? null : setEditingBuild(null))}
+          onSubmit={handleSubmitMetadata}
         />
       )}
       {deletingBuild && (
@@ -320,12 +320,19 @@ export default function BuildList() {
     setCreatingFromPrompt(false);
   }
 
-  async function handleSubmitDescription(description: string) {
-    if (!editingBuild || savingDescription) return;
-    setSavingDescription(true);
+  async function handleSubmitMetadata({
+    title,
+    description
+  }: {
+    title: string;
+    description: string;
+  }) {
+    if (!editingBuild || savingMetadata) return;
+    setSavingMetadata(true);
     try {
       const result = await updateBuildMetadata({
         buildId: editingBuild.id,
+        title,
         description
       });
       if (result?.success && result?.build) {
@@ -337,9 +344,9 @@ export default function BuildList() {
         setEditingBuild(null);
       }
     } catch (error) {
-      console.error('Failed to update build description:', error);
+      console.error('Failed to update build metadata:', error);
     } finally {
-      setSavingDescription(false);
+      setSavingMetadata(false);
     }
   }
 
