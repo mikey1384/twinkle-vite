@@ -46,9 +46,14 @@ export default function ContentLink({
     contentType === 'achievementPass';
   const isAchievementPass =
     contentType === 'achievementPass' || _rootType === 'achievement';
+  const buildPath = useMemo(() => {
+    return id ? `/app/${id}` : '';
+  }, [id]);
   const rootPath = useMemo(() => {
     let result = '';
-    if (contentType === 'aiStory') {
+    if (contentType === 'build') {
+      result = '';
+    } else if (contentType === 'aiStory') {
       result = 'ai-stories';
     } else if (contentType === 'url') {
       result = 'links';
@@ -66,6 +71,7 @@ export default function ContentLink({
     return result;
   }, [contentType, isPassType, isAchievementPass]);
   const subPath = useMemo(() => {
+    if (contentType === 'build') return '';
     if (contentType === 'achievement') return '';
     if (isPassType) return id ? `/${id}` : '';
     const path =
@@ -90,7 +96,7 @@ export default function ContentLink({
         color: byUser ? userLinkColor : linkColor,
         ...style
       }}
-      to={`/${rootPath}${subPath}`}
+      to={contentType === 'build' ? buildPath : `/${rootPath}${subPath}`}
     >
       {removeLineBreaks(appliedLabel)}
     </Link>

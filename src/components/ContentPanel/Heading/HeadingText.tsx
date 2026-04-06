@@ -46,6 +46,8 @@ export default function HeadingText({
       ? 'link'
       : rootType === 'subject'
       ? 'subject'
+      : rootType === 'build'
+      ? 'app'
       : isPassType
       ? isAchievementPass
         ? 'achievement unlock'
@@ -215,6 +217,19 @@ export default function HeadingText({
             Level {contentObj.difficulty} AI Story
           </b>
           :{' '}
+          <ContentLink
+            content={contentObj}
+            contentType={contentType}
+            theme={theme}
+            label=""
+          />{' '}
+        </>
+      );
+    case 'build':
+      return (
+        <>
+          <UsernameText user={uploader} color={Color[linkColor]()} /> published
+          an app:{' '}
           <ContentLink
             content={contentObj}
             contentType={contentType}

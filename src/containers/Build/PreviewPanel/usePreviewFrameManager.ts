@@ -34,12 +34,17 @@ function prunePreviewSeedCache() {
   }
 }
 
-function takeCachedPreviewSeed(buildId: number, codeSignature: string | null) {
+function takeCachedPreviewSeed(
+  buildId: number,
+  codeSignature: string | null,
+  expectedSrc: string | null
+) {
   prunePreviewSeedCache();
   if (!codeSignature) return null;
   const entry = previewSeedCache.get(buildId);
   if (!entry) return null;
   if (entry.codeSignature !== codeSignature) return null;
+  if (expectedSrc && entry.src !== expectedSrc) return null;
   previewSeedCache.delete(buildId);
   return entry;
 }
@@ -146,7 +151,11 @@ export function usePreviewFrameManager({
     let seededFromCache = false;
 
     if (!activeSrc && !inactiveSrc && previewCodeSignature) {
-      const cached = takeCachedPreviewSeed(buildId, previewCodeSignature);
+      const cached = takeCachedPreviewSeed(
+        buildId,
+        previewCodeSignature,
+        previewSrc
+      );
       if (cached?.src) {
         const seededSources = {
           ...currentSources,

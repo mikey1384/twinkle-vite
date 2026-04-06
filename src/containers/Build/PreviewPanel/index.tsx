@@ -1061,7 +1061,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onRuntimeObservationChange,
       onRuntimeUploadsSync,
       onOpenRuntimeUploadsManager,
-      currentBuildRuntimeAssets = EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS
+      currentBuildRuntimeAssets = EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
+      previewSrcOverride = null,
+      viewerOverride = null,
+      onCaptureReadyChange
     }: PreviewPanelProps,
     ref
   ) {
@@ -1224,12 +1227,65 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       projectAssetInputRef.current?.click();
     }
 
+    async function captureThumbnail() {
+      const previewPath = await resolveFreshCapturePreviewPath();
+      if (!previewPath) {
+        throw new Error('Preview is unavailable right now');
+      }
+      const result = await captureBuildThumbnailPreview({
+        buildId: build.id,
+        previewPath
+      });
+      const imageUrl = String(result?.imageUrl || '').trim();
+      if (imageUrl) {
+        return imageUrl;
+      }
+      throw new Error(
+        String(result?.error || 'Failed to capture preview thumbnail')
+      );
+    }
+
+    async function resolveFreshCapturePreviewPath() {
+      const preferredOverride = String(normalizedPreviewSrcOverride || '').trim();
+      if (preferredOverride) {
+        return await withFreshPreviewAccessToken(preferredOverride);
+      }
+
+      const basePreviewSrc = buildPreviewBaseSrc(build);
+      if (Boolean(build.isPublic) || !previewAuth.isOwnerRef.current) {
+        return basePreviewSrc;
+      }
+
+      const token = await ensureBuildApiToken(['preview:read'], previewAuth);
+      const separator = basePreviewSrc.includes('?') ? '&' : '?';
+      return `${basePreviewSrc}${separator}buildApiToken=${encodeURIComponent(token)}`;
+    }
+
+    async function withFreshPreviewAccessToken(rawPreviewPath: string) {
+      try {
+        const parsedUrl = new URL(rawPreviewPath, window.location.href);
+        if (
+          !parsedUrl.pathname.startsWith('/build/preview/') ||
+          Boolean(build.isPublic) ||
+          !previewAuth.isOwnerRef.current
+        ) {
+          return parsedUrl.toString();
+        }
+        const token = await ensureBuildApiToken(['preview:read'], previewAuth);
+        parsedUrl.searchParams.set('buildApiToken', token);
+        return parsedUrl.toString();
+      } catch {
+        return rawPreviewPath;
+      }
+    }
+
     useImperativeHandle(
       ref,
       () => ({
         openProjectFileUploadPicker,
         openProjectFolderImportPicker,
         openProjectAssetUploadPicker,
+        captureThumbnail,
         async importProjectFilesFromChatUpload(files: File[]) {
           const normalizedFiles = normalizeUploadInputFiles(files);
           const filesWithPreservedPaths = normalizedFiles.filter(
@@ -1318,11 +1374,28 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       [displayedProjectFiles, collapsedFolders]
     );
 
-    const userId = useKeyContext((v) => v.myState.userId);
-    const username = useKeyContext((v) => v.myState.username);
-    const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+    const keyUserId = useKeyContext((v) => v.myState.userId);
+    const keyUsername = useKeyContext((v) => v.myState.username);
+    const keyProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+    const resolvedUserId =
+      typeof viewerOverride?.id === 'number' ? viewerOverride.id : keyUserId;
+    const resolvedUsername =
+      typeof viewerOverride?.username === 'string'
+        ? viewerOverride.username
+        : keyUsername;
+    const resolvedProfilePicUrl =
+      typeof viewerOverride?.profilePicUrl === 'string'
+        ? viewerOverride.profilePicUrl
+        : keyProfilePicUrl;
+    const normalizedPreviewSrcOverride = useMemo(() => {
+      const normalized = String(previewSrcOverride || '').trim();
+      return normalized || null;
+    }, [previewSrcOverride]);
     const downloadBuildDatabase = useAppContext(
       (v) => v.requestHelpers.downloadBuildDatabase
+    );
+    const captureBuildThumbnailPreview = useAppContext(
+      (v) => v.requestHelpers.captureBuildThumbnailPreview
     );
     const downloadBuildProjectArchive = useAppContext(
       (v) => v.requestHelpers.downloadBuildProjectArchive
@@ -1565,15 +1638,18 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [code, previewProjectFiles, runtimeOnly]);
 
     const runtimePreviewSrc = useMemo(() => {
+      if (normalizedPreviewSrcOverride) {
+        return normalizedPreviewSrcOverride;
+      }
       if (!runtimeOnly || !hasRuntimePreview) return null;
       return buildPreviewBaseSrc(build);
-    }, [build, hasRuntimePreview, runtimeOnly]);
+    }, [build, hasRuntimePreview, normalizedPreviewSrcOverride, runtimeOnly]);
 
     const workspacePreviewSrc = useWorkspacePreviewSrc({
       build,
       runtimeOnly,
       viewMode,
-      userId: userId || null,
+      userId: resolvedUserId || null,
       previewAuth
     });
     const previewCodeSignature =
@@ -1600,17 +1676,33 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       runtimeOnly,
       previewCodeSignature,
       runtimePreviewSrc,
-      workspacePreviewSrc
+      workspacePreviewSrc:
+        normalizedPreviewSrcOverride || workspacePreviewSrc
     });
+
+    useEffect(() => {
+      if (!onCaptureReadyChange) return;
+      const ready =
+        Boolean(previewSrc) &&
+        previewFrameReady[activePreviewFrame] &&
+        !previewTransitioning;
+      onCaptureReadyChange(ready);
+    }, [
+      activePreviewFrame,
+      onCaptureReadyChange,
+      previewFrameReady,
+      previewSrc,
+      previewTransitioning
+    ]);
 
     usePreviewHostBridge({
       runtimeOnly,
       buildId: build.id,
       buildIsPublic: build.isPublic,
       isOwner,
-      userId: userId || null,
-      username: username || null,
-      profilePicUrl: profilePicUrl || null,
+      userId: resolvedUserId || null,
+      username: resolvedUsername || null,
+      profilePicUrl: resolvedProfilePicUrl || null,
       resolvedCapabilitySnapshot,
       resolvedRuntimeExplorationPlan,
       capabilitySnapshotRef,
@@ -1669,26 +1761,26 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [isOwner]);
 
     useEffect(() => {
-      userIdRef.current = userId || null;
-    }, [userId]);
+      userIdRef.current = resolvedUserId || null;
+    }, [resolvedUserId]);
 
     useEffect(() => {
-      usernameRef.current = username || null;
-    }, [username]);
+      usernameRef.current = resolvedUsername || null;
+    }, [resolvedUsername]);
 
     useEffect(() => {
-      profilePicUrlRef.current = profilePicUrl || null;
-    }, [profilePicUrl]);
+      profilePicUrlRef.current = resolvedProfilePicUrl || null;
+    }, [resolvedProfilePicUrl]);
 
     useEffect(() => {
       buildApiTokenRef.current = null;
-    }, [build.id, userId]);
+    }, [build.id, resolvedUserId]);
 
     useEffect(() => {
-      if (userId) {
+      if (resolvedUserId) {
         setGuestRestrictionBannerVisible(false);
       }
-    }, [userId]);
+    }, [resolvedUserId]);
 
     useEffect(() => {
       capabilitySnapshotRef.current = resolvedCapabilitySnapshot;
@@ -3454,7 +3546,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         </div>
         <GuestRestrictionBanner
           visible={guestRestrictionBannerVisible}
-          userId={userId}
+          userId={resolvedUserId}
           message={GUEST_RESTRICTION_BANNER_TEXT}
           onOpenSigninModal={onOpenSigninModal}
           onDismiss={() => setGuestRestrictionBannerVisible(false)}

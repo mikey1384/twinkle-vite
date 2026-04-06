@@ -60,12 +60,20 @@ export interface PreviewPanelProps {
   ) => void;
   onOpenRuntimeUploadsManager?: () => void;
   currentBuildRuntimeAssets?: PreviewRuntimeUploadAsset[];
+  previewSrcOverride?: string | null;
+  viewerOverride?: {
+    id: number | null;
+    username: string | null;
+    profilePicUrl: string | null;
+  } | null;
+  onCaptureReadyChange?: (ready: boolean) => void;
 }
 
 export interface PreviewPanelHandle {
   openProjectFileUploadPicker: () => void;
   openProjectFolderImportPicker: () => void;
   openProjectAssetUploadPicker: () => void;
+  captureThumbnail: () => Promise<string>;
   importProjectFilesFromChatUpload: (files: File[]) => Promise<{
     success: boolean;
     importedCount: number;

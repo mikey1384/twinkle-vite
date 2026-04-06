@@ -55,6 +55,9 @@ function Heading({
     if (contentType === 'dailyReflection') {
       return `/daily-reflections/${id}`;
     }
+    if (contentType === 'build') {
+      return `/app/${id}`;
+    }
     const subPath = `/${id}`;
     return `/${
       contentType === 'url'

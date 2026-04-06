@@ -18,6 +18,7 @@ import UsernameText from '~/components/Texts/UsernameText';
 import CardThumb from '~/components/CardThumb';
 import AICardModal from '~/components/Modals/AICardModal';
 import AIStoryView from './AIStoryView';
+import BuildContent from './BuildContent';
 import SanitizedHTML from 'react-sanitized-html';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { Subject, User, Content } from '~/types';
@@ -265,6 +266,20 @@ export default function Content({
             title={title}
             topic={contentObj.topic}
             story={story}
+            theme={theme}
+          />
+        );
+      case 'build':
+        return (
+          <BuildContent
+            build={{
+              id: contentObj.id || contentId,
+              title,
+              description,
+              thumbnailUrl: contentObj.thumbnailUrl,
+              updatedAt: contentObj.updatedAt
+            }}
+            navigate={navigate}
             theme={theme}
           />
         );

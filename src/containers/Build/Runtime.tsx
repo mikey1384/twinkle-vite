@@ -173,6 +173,9 @@ export default function BuildRuntime() {
     typeof window !== 'undefined' &&
     Number.isFinite(Number(window.history.state?.idx)) &&
     Number(window.history.state?.idx) > 0;
+  const isEmbedded = useMemo(() => {
+    return new URLSearchParams(location.search).get('embedded') === '1';
+  }, [location.search]);
   const backTo = useMemo(() => {
     return typeof location.state?.runtimeBackTo === 'string'
       ? location.state.runtimeBackTo
@@ -207,37 +210,42 @@ export default function BuildRuntime() {
   }) {
     return (
       <ErrorBoundary componentPath="Build/Runtime">
-        <div className={shellClass}>
-          <div className={headerClass}>
-            <div className={headerTopRowClass}>
-              <button
-                type="button"
-                className={backButtonClass}
-                onClick={handleBack}
-              >
-                <Icon icon="arrow-left" />
-                <span>{backLabel}</span>
-              </button>
-              <button
-                type="button"
-                className={backButtonClass}
-                onClick={handleGoToBuildMenu}
-                title="Go to build main menu"
-              >
-                <Icon icon="rocket-launch" />
-                <span>Build Menu</span>
-              </button>
+        <div
+          className={shellClass}
+          style={{ gridTemplateRows: isEmbedded ? '1fr' : undefined }}
+        >
+          {!isEmbedded && (
+            <div className={headerClass}>
+              <div className={headerTopRowClass}>
+                <button
+                  type="button"
+                  className={backButtonClass}
+                  onClick={handleBack}
+                >
+                  <Icon icon="arrow-left" />
+                  <span>{backLabel}</span>
+                </button>
+                <button
+                  type="button"
+                  className={backButtonClass}
+                  onClick={handleGoToBuildMenu}
+                  title="Go to build main menu"
+                >
+                  <Icon icon="rocket-launch" />
+                  <span>Build Menu</span>
+                </button>
+              </div>
+              <div className={titleRowClass}>
+                <Icon icon="laptop-code" />
+                <h1 className={titleClass}>Build App</h1>
+              </div>
             </div>
-            <div className={titleRowClass}>
-              <Icon icon="laptop-code" />
-              <h1 className={titleClass}>Build App</h1>
-            </div>
-          </div>
+          )}
           <div className={panelWrapClass}>
             <InvalidPage
               title={title}
               text={text}
-              style={{ paddingTop: '12rem' }}
+              style={{ paddingTop: isEmbedded ? '6rem' : '12rem' }}
             />
           </div>
         </div>
@@ -290,40 +298,45 @@ export default function BuildRuntime() {
 
   return (
     <ErrorBoundary componentPath="Build/Runtime">
-      <div className={shellClass}>
-        <div className={headerClass}>
-          <div className={headerTopRowClass}>
-            <button
-              type="button"
-              className={backButtonClass}
-              onClick={handleBack}
-            >
-              <Icon icon="arrow-left" />
-              <span>{backLabel}</span>
-            </button>
-            <button
-              type="button"
-              className={backButtonClass}
-              onClick={handleGoToBuildMenu}
-              title="Go to build main menu"
-            >
-              <Icon icon="rocket-launch" />
-              <span>Build Menu</span>
-            </button>
+      <div
+        className={shellClass}
+        style={{ gridTemplateRows: isEmbedded ? '1fr' : undefined }}
+      >
+        {!isEmbedded && (
+          <div className={headerClass}>
+            <div className={headerTopRowClass}>
+              <button
+                type="button"
+                className={backButtonClass}
+                onClick={handleBack}
+              >
+                <Icon icon="arrow-left" />
+                <span>{backLabel}</span>
+              </button>
+              <button
+                type="button"
+                className={backButtonClass}
+                onClick={handleGoToBuildMenu}
+                title="Go to build main menu"
+              >
+                <Icon icon="rocket-launch" />
+                <span>Build Menu</span>
+              </button>
+            </div>
+            <div className={titleRowClass}>
+              <Icon icon="laptop-code" />
+              <h1 className={titleClass}>{build.title}</h1>
+            </div>
+            <div className={metaClass}>
+              <span>by {build.username}</span>
+              {build.description?.trim() ? (
+                <span className={metaDescriptionClass}>
+                  {build.description.trim()}
+                </span>
+              ) : null}
+            </div>
           </div>
-          <div className={titleRowClass}>
-            <Icon icon="laptop-code" />
-            <h1 className={titleClass}>{build.title}</h1>
-          </div>
-          <div className={metaClass}>
-            <span>by {build.username}</span>
-            {build.description?.trim() ? (
-              <span className={metaDescriptionClass}>
-                {build.description.trim()}
-              </span>
-            ) : null}
-          </div>
-        </div>
+        )}
         <div className={panelWrapClass}>
           <div className={previewShellClass}>
             <PreviewPanel

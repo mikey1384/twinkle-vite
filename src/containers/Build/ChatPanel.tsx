@@ -2,7 +2,6 @@ import React, { RefObject, useMemo, useRef, useState } from 'react';
 import Icon from '~/components/Icon';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import RichText from '~/components/Texts/RichText';
-import ThinkingIndicator from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator';
 import CodeDiff from '~/components/CodeDiff';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
@@ -172,6 +171,7 @@ interface ChatPanelProps {
   className?: string;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
+  scopedPlanQuestion?: string | null;
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
@@ -215,6 +215,7 @@ export default function ChatPanel({
   className,
   messages,
   executionPlan,
+  scopedPlanQuestion,
   generating,
   generatingStatus,
   assistantStatusSteps,
@@ -445,6 +446,7 @@ export default function ChatPanel({
     executionPlan?.status === 'active' &&
     !generating &&
     !draftMessage.trim();
+  const normalizedScopedPlanQuestion = String(scopedPlanQuestion || '').trim();
 
   function handleTabChange(nextTab: ChatPanelTab) {
     if (nextTab === activeTab) return;
@@ -846,60 +848,79 @@ export default function ChatPanel({
           {showScopedPlanQuickReplies && (
             <div
               className={css`
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.45rem;
+                display: grid;
+                gap: 0.65rem;
                 margin-bottom: 0.7rem;
               `}
             >
-              <button
-                type="button"
-                onClick={onContinueScopedPlan}
+              {normalizedScopedPlanQuestion && (
+                <div
+                  className={css`
+                    font-size: 0.9rem;
+                    line-height: 1.45;
+                    color: var(--chat-text);
+                    font-weight: 700;
+                  `}
+                >
+                  {normalizedScopedPlanQuestion}
+                </div>
+              )}
+              <div
                 className={css`
-                  border: 1px solid rgba(36, 99, 235, 0.18);
-                  background: rgba(59, 130, 246, 0.08);
-                  color: #1d4ed8;
-                  border-radius: 999px;
-                  padding: 0.42rem 0.82rem;
-                  font-size: 0.82rem;
-                  font-weight: 800;
-                  cursor: pointer;
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 0.45rem;
                 `}
               >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={onCancelScopedPlan}
-                className={css`
-                  border: 1px solid rgba(148, 163, 184, 0.28);
-                  background: rgba(148, 163, 184, 0.1);
-                  color: #334155;
-                  border-radius: 999px;
-                  padding: 0.42rem 0.82rem;
-                  font-size: 0.82rem;
-                  font-weight: 800;
-                  cursor: pointer;
-                `}
-              >
-                No
-              </button>
-              <button
-                type="button"
-                onClick={handlePrefillRedirect}
-                className={css`
-                  border: 1px solid rgba(217, 119, 6, 0.2);
-                  background: rgba(245, 158, 11, 0.11);
-                  color: #b45309;
-                  border-radius: 999px;
-                  padding: 0.42rem 0.82rem;
-                  font-size: 0.82rem;
-                  font-weight: 800;
-                  cursor: pointer;
-                `}
-              >
-                No (explain what you want instead)
-              </button>
+                <button
+                  type="button"
+                  onClick={onContinueScopedPlan}
+                  className={css`
+                    border: 1px solid rgba(36, 99, 235, 0.18);
+                    background: rgba(59, 130, 246, 0.08);
+                    color: #1d4ed8;
+                    border-radius: 999px;
+                    padding: 0.42rem 0.82rem;
+                    font-size: 0.82rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                  `}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancelScopedPlan}
+                  className={css`
+                    border: 1px solid rgba(148, 163, 184, 0.28);
+                    background: rgba(148, 163, 184, 0.1);
+                    color: #334155;
+                    border-radius: 999px;
+                    padding: 0.42rem 0.82rem;
+                    font-size: 0.82rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                  `}
+                >
+                  No
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrefillRedirect}
+                  className={css`
+                    border: 1px solid rgba(217, 119, 6, 0.2);
+                    background: rgba(245, 158, 11, 0.11);
+                    color: #b45309;
+                    border-radius: 999px;
+                    padding: 0.42rem 0.82rem;
+                    font-size: 0.82rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                  `}
+                >
+                  No (explain what you want instead)
+                </button>
+              </div>
             </div>
           )}
           {aiInputDisabled && (
@@ -2083,15 +2104,23 @@ function AssistantMessage({
     isLatestAssistant &&
     !message.codeGenerated &&
     Boolean(message.streamCodePreview && message.streamCodePreview.trim());
-  const showSteps = statusSteps.length > 0 && generating;
   const normalizedCurrentActivityMessage = String(
     currentActivityMessage || ''
   ).trim();
-  const showCurrentActivity =
+  const fallbackActivityMessage = useMemo(() => {
+    return formatStepLabel(String(generatingStatus || 'thinking').trim());
+  }, [generatingStatus]);
+  const displayedCurrentActivityMessage =
+    normalizedCurrentActivityMessage || fallbackActivityMessage;
+  const showCurrentActivity = generating && isLatestAssistant;
+  const shouldShowFallbackStep =
     generating &&
     isLatestAssistant &&
-    Boolean(normalizedCurrentActivityMessage) &&
-    normalizedCurrentActivityMessage !== String(generatingStatus || '').trim();
+    statusSteps.length === 0 &&
+    !message.content;
+  const displayedStatusSteps = shouldShowFallbackStep
+    ? [String(generatingStatus || 'thinking').trim() || 'thinking']
+    : statusSteps;
   const waitingForCurrentAssistantResponse = generating && isLatestAssistant;
   const showNoCodeWarning =
     !hasCodePayload &&
@@ -2258,13 +2287,11 @@ function AssistantMessage({
         <RichText isAIMessage aiActionPlacement="inline" maxLines={15}>
           {message.content}
         </RichText>
-      ) : generating && !showSteps ? (
-        <ThinkingIndicator status={generatingStatus || 'thinking'} compact />
       ) : null}
       {showCurrentActivity && (
         <div
           className={css`
-            margin-top: 0.55rem;
+            margin-top: ${message.content ? '0.55rem' : '0'};
             padding: 0.55rem 0.7rem;
             border-radius: 8px;
             border: 1px solid rgba(52, 109, 255, 0.16);
@@ -2291,11 +2318,13 @@ function AssistantMessage({
               line-height: 1.4;
             `}
           >
-            {normalizedCurrentActivityMessage}
+            {displayedCurrentActivityMessage}
           </div>
         </div>
       )}
-      {showSteps && <StatusStepLog steps={statusSteps} />}
+      {displayedStatusSteps.length > 0 && (
+        <StatusStepLog steps={displayedStatusSteps} />
+      )}
     </div>
   );
 }

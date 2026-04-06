@@ -232,23 +232,30 @@ export default function ContentPreview({
     return contentType;
   }, [contentType]);
 
+  const contentPath = useMemo(() => {
+    if (contentType === 'build') {
+      return `/app/${contentId}`;
+    }
+    return `/${getContentPath()}s/${contentId}`;
+  }, [contentId, contentType, getContentPath]);
+
   const handleNavigate = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       const target = event.target as HTMLElement;
       if (target.closest('a, button, video, audio')) return;
-      navigate(`/${getContentPath()}s/${contentId}`);
+      navigate(contentPath);
     },
-    [contentId, getContentPath, navigate]
+    [contentPath, navigate]
   );
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        navigate(`/${getContentPath()}s/${contentId}`);
+        navigate(contentPath);
       }
     },
-    [contentId, getContentPath, navigate]
+    [contentPath, navigate]
   );
 
   const renderStoryContent = () => {
@@ -339,6 +346,31 @@ export default function ContentPreview({
           >
             {description || content || ''}
           </RichText>
+        </div>
+      );
+    }
+
+    if (contentType === 'build') {
+      return (
+        <div className={previewContentClass}>
+          <div className={storyTitleClass}>{title || 'Published app'}</div>
+          <div
+            className={css`
+              display: inline-flex;
+              align-items: center;
+              gap: 0.6rem;
+              align-self: flex-start;
+              padding: 0.6rem 1rem;
+              border-radius: 999px;
+              background: ${Color.logoBlue(0.12)};
+              color: ${Color.logoBlue()};
+              font-size: 1.3rem;
+              font-weight: 700;
+            `}
+          >
+            <Icon icon="rocket" />
+            <span>Open Lumine App</span>
+          </div>
         </div>
       );
     }

@@ -19,10 +19,10 @@ const displayFontFamily =
 const pageClass = css`
   width: 100%;
   max-width: 980px;
-  margin: 2rem auto 3rem;
-  padding: 0 2rem;
+  margin: 2rem auto 0;
+  padding: 0 2rem 3rem;
   @media (max-width: ${mobileMaxWidth}) {
-    padding: 0 1rem;
+    padding: 0 1rem 3rem;
   }
 `;
 

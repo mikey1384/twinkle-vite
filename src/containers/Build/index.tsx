@@ -287,6 +287,9 @@ function BuildEditorWrapper() {
   const cachedWorkspace = useBuildContext((v) =>
     numericBuildId ? v.state.buildWorkspaces[String(numericBuildId)] || null : null
   );
+  const activeBuildRun = useBuildContext((v) =>
+    numericBuildId ? v.state.buildRuns[String(numericBuildId)] || null : null
+  );
   const onSetBuildWorkspace = useBuildContext(
     (v) => v.actions.onSetBuildWorkspace
   );
@@ -345,6 +348,10 @@ function BuildEditorWrapper() {
     };
 
     async function handleLoad() {
+      if (activeBuildRun?.generating && usableCachedWorkspace?.build) {
+        setLoading(false);
+        return;
+      }
       if (!usableCachedWorkspace?.build) {
         setLoading(true);
       }
@@ -409,12 +416,12 @@ function BuildEditorWrapper() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    activeBuildRun?.generating,
     initialPrompt,
     location.pathname,
     navigate,
     numericBuildId,
     seedGreeting,
-    usableCachedWorkspace,
     userId
   ]);
 
@@ -464,12 +471,12 @@ function BuildEditorWrapper() {
         text={error || 'Build not found'}
         onBack={() =>
           navigate(
-            error === BUILD_UNPUBLISHED_PUBLIC_TEXT ? '/' : '/build'
+            '/build'
           )
         }
         buttonLabel={
           error === BUILD_UNPUBLISHED_PUBLIC_TEXT
-            ? 'Go Home'
+            ? 'Build Menu'
             : undefined
         }
       />

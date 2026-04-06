@@ -8,6 +8,7 @@ import type {
 } from './PreviewPanel/types';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import BuildDescriptionModal from './BuildDescriptionModal';
+import BuildThumbnailModal from './BuildThumbnailModal';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 import type {
   BuildLiveRunMessage,
@@ -33,6 +34,7 @@ import { socket } from '~/constants/sockets/api';
 import UploadModal from '~/components/Modals/UploadModal';
 import UploadFileModal from '~/containers/Chat/Modals/UploadFileModal';
 import { generateFileName } from '~/helpers/stringHelpers';
+import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
 
 const displayFontFamily =
@@ -291,10 +293,12 @@ interface BuildExecutionPlan {
   mode: 'large' | 'too_broad';
   status: 'active' | 'completed' | 'cancelled';
   summary: string;
+  question?: string | null;
   plan: {
     version: 1;
     mode: 'large' | 'too_broad';
     summary: string;
+    question?: string | null;
     chunks: BuildExecutionPlanChunk[];
   };
   currentBigChunkId: string | null;
@@ -757,6 +761,80 @@ function serializedComparableValue(value: any) {
   }
 }
 
+function isExecutableBuildExecutionChunkStatus(
+  status: BuildExecutionPlanChunk['status']
+) {
+  return (
+    status === 'pending' || status === 'in_progress' || status === 'blocked'
+  );
+}
+
+function resolveBuildExecutionPlanTarget(
+  plan: BuildExecutionPlan | null | undefined
+) {
+  if (!plan?.plan?.chunks?.length) return null;
+  if (plan.plan.mode === 'too_broad') {
+    if (plan.currentBigChunkId && plan.currentChunkId) {
+      const currentBigChunk = plan.plan.chunks.find(
+        (chunk) => chunk.id === plan.currentBigChunkId
+      );
+      const currentChunk = currentBigChunk?.chunks.find(
+        (chunk) => chunk.id === plan.currentChunkId
+      );
+      if (currentBigChunk && currentChunk) {
+        return {
+          chunkTitle: currentChunk.title,
+          bigChunkTitle: currentBigChunk.title
+        };
+      }
+    }
+    for (const bigChunk of plan.plan.chunks) {
+      for (const chunk of bigChunk.chunks || []) {
+        if (!isExecutableBuildExecutionChunkStatus(chunk.status)) continue;
+        return {
+          chunkTitle: chunk.title,
+          bigChunkTitle: bigChunk.title
+        };
+      }
+    }
+    return null;
+  }
+
+  if (plan.currentChunkId) {
+    const currentChunk = plan.plan.chunks.find(
+      (chunk) => chunk.id === plan.currentChunkId
+    );
+    if (currentChunk) {
+      return {
+        chunkTitle: currentChunk.title,
+        bigChunkTitle: null
+      };
+    }
+  }
+
+  const nextChunk = plan.plan.chunks.find((chunk) =>
+    isExecutableBuildExecutionChunkStatus(chunk.status)
+  );
+  return nextChunk
+    ? {
+        chunkTitle: nextChunk.title,
+        bigChunkTitle: null
+      }
+    : null;
+}
+
+function resolveScopedPlanQuestion(plan: BuildExecutionPlan | null | undefined) {
+  const explicitQuestion = String(
+    plan?.question || plan?.plan?.question || ''
+  ).trim();
+  if (explicitQuestion) return explicitQuestion;
+  const target = resolveBuildExecutionPlanTarget(plan);
+  if (!target) return '';
+  return target.bigChunkTitle
+    ? `Should Lumine keep going with ${target.chunkTitle} under ${target.bigChunkTitle}?`
+    : `Should Lumine keep going with ${target.chunkTitle}?`;
+}
+
 function isCodexChecklistStepCompleted(message: string) {
   return /^Codex completed checklist step \d+\/\d+/i.test(
     String(message || '').trim()
@@ -982,6 +1060,23 @@ export default function BuildEditor({
   const onRegisterBuildRun = useBuildContext(
     (v) => v.actions.onRegisterBuildRun
   );
+  const onUpdateBuildRunStatus = useBuildContext(
+    (v) => v.actions.onUpdateBuildRunStatus
+  );
+  const onUpdateBuildRunStream = useBuildContext(
+    (v) => v.actions.onUpdateBuildRunStream
+  );
+  const onAppendBuildRunEvent = useBuildContext(
+    (v) => v.actions.onAppendBuildRunEvent
+  );
+  const onUpdateBuildRunUsage = useBuildContext(
+    (v) => v.actions.onUpdateBuildRunUsage
+  );
+  const onCompleteBuildRun = useBuildContext(
+    (v) => v.actions.onCompleteBuildRun
+  );
+  const onFailBuildRun = useBuildContext((v) => v.actions.onFailBuildRun);
+  const onStopBuildRun = useBuildContext((v) => v.actions.onStopBuildRun);
   const onClearBuildRun = useBuildContext((v) => v.actions.onClearBuildRun);
   const navigate = useNavigate();
   const { userId, profileTheme } = useKeyContext((v) => v.myState);
@@ -990,6 +1085,9 @@ export default function BuildEditor({
   );
   const updateBuildMetadata = useAppContext(
     (v) => v.requestHelpers.updateBuildMetadata
+  );
+  const uploadBuildThumbnail = useAppContext(
+    (v) => v.requestHelpers.uploadBuildThumbnail
   );
   const loadBuildProjectFileChangeLogs = useAppContext(
     (v) => v.requestHelpers.loadBuildProjectFileChangeLogs
@@ -1037,6 +1135,9 @@ export default function BuildEditor({
   const [forking, setForking] = useState(false);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
   const [savingDescription, setSavingDescription] = useState(false);
+  const [thumbnailModalShown, setThumbnailModalShown] = useState(false);
+  const [savingThumbnail, setSavingThumbnail] = useState(false);
+  const [thumbnailSaveError, setThumbnailSaveError] = useState('');
   const [usageMetrics, setUsageMetrics] = useState<
     Record<string, BuildUsageMetric>
   >({});
@@ -1158,6 +1259,26 @@ export default function BuildEditor({
     persistedMessages: chatMessages,
     buildRun: sharedBuildRun
   });
+  const renderRun = sharedBuildRun?.generating ? sharedBuildRun : null;
+  const displayedGenerating = renderRun ? true : generating;
+  const displayedGeneratingStatus = renderRun
+    ? renderRun.status
+    : generatingStatus;
+  const displayedAssistantStatusSteps = renderRun
+    ? renderRun.assistantStatusSteps
+    : assistantStatusSteps;
+  const displayedUsageMetrics = renderRun ? renderRun.usageMetrics : usageMetrics;
+  const displayedRunEvents = renderRun ? renderRun.runEvents : runEvents;
+  const displayedExecutionPlan =
+    renderRun &&
+    Object.prototype.hasOwnProperty.call(renderRun, 'executionPlan')
+      ? renderRun.executionPlan ?? build.executionPlan ?? null
+      : build.executionPlan || null;
+  const displayedActiveStreamMessageIds = renderRun
+    ? [renderRun.userMessage?.id, renderRun.assistantMessage?.id].filter(
+        (id): id is number => typeof id === 'number' && id > 0
+      )
+    : getActiveStreamMessageIds();
 
   useEffect(() => {
     if (!chatMessagesEqual(chatMessagesRef.current, mergedChatMessages)) {
@@ -1211,6 +1332,9 @@ export default function BuildEditor({
     setProjectFileChangeLogsLoadedAt(null);
     queuedRequestsRef.current = [];
     setDescriptionModalShown(false);
+    setThumbnailModalShown(false);
+    setSavingThumbnail(false);
+    setThumbnailSaveError('');
     dedupedProcessingInFlightRef.current = false;
     postCompleteSyncInFlightRef.current = false;
     startingGenerationRef.current = false;
@@ -1570,6 +1694,22 @@ export default function BuildEditor({
       });
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      const sharedRunStreamUpdate: {
+        requestId: string;
+        reply?: string;
+        codeGenerated?: string | null;
+        projectFiles?: Array<{ path: string; content?: string }> | null;
+      } = { requestId };
+      if (typeof reply === 'string') {
+        sharedRunStreamUpdate.reply = reply;
+      }
+      if (hasCodeGeneratedField) {
+        sharedRunStreamUpdate.codeGenerated = codeGenerated ?? null;
+      }
+      if (Array.isArray(projectFiles) && projectFiles.length > 0) {
+        sharedRunStreamUpdate.projectFiles = projectFiles;
+      }
+      onUpdateBuildRunStream(sharedRunStreamUpdate);
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
         const activeBuild = buildRef.current;
         const fallbackCode = activeBuild?.code || '';
@@ -1645,6 +1785,23 @@ export default function BuildEditor({
         typeof message?.userMessageId === 'number' && message.userMessageId > 0
           ? message.userMessageId
           : null;
+      onCompleteBuildRun({
+        requestId,
+        assistantText,
+        artifactCode,
+        projectFiles: payloadProjectFiles,
+        executionPlan,
+        runtimeExplorationPlan,
+        runtimePlanRefined,
+        billingState,
+        artifactVersionId,
+        persistedAssistantId,
+        persistedUserId,
+        createdAt,
+        workspaceChanged:
+          artifactCode !== null ||
+          (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0)
+      });
       let nextMessages = currentMessages.map((entry) => {
         if (
           userMessageTempId &&
@@ -1904,6 +2061,10 @@ export default function BuildEditor({
           prev[prev.length - 1] === status ? prev : [...prev, status]
         );
       }
+      onUpdateBuildRunStatus({
+        requestId,
+        status: status || null
+      });
       maybeAutoScrollDuringStream();
     }
 
@@ -1971,59 +2132,100 @@ export default function BuildEditor({
       }
       generatingRef.current = true;
       setGenerating(true);
-      setGeneratingStatus(typeof status === 'string' ? status : null);
-      setAssistantStatusSteps(
-        Array.isArray(assistantStatusSteps)
-          ? assistantStatusSteps.filter(
-              (entry): entry is string =>
-                typeof entry === 'string' && entry.trim().length > 0
+      const nextStatus = typeof status === 'string' ? status : null;
+      const nextAssistantStatusSteps = Array.isArray(assistantStatusSteps)
+        ? assistantStatusSteps.filter(
+            (entry): entry is string =>
+              typeof entry === 'string' && entry.trim().length > 0
+          )
+        : [];
+      const nextUsageMetrics = Object.values(usageMetrics || {}).reduce<
+        Record<string, BuildUsageMetric>
+      >((result, metric) => {
+        const stage = String(metric?.stage || '').trim();
+        const model = String(metric?.model || '').trim();
+        if (!stage || !model) return result;
+        result[stage] = {
+          stage,
+          model,
+          inputTokens: Number(metric?.inputTokens || 0),
+          outputTokens: Number(metric?.outputTokens || 0),
+          totalTokens: Number(metric?.totalTokens || 0)
+        };
+        return result;
+      }, {});
+      const nextRunEvents = Array.isArray(resumedRunEvents)
+        ? resumedRunEvents
+            .filter(
+              (
+                event
+              ): event is NonNullable<typeof resumedRunEvents>[number] =>
+                Boolean(event?.kind && event?.message)
             )
-          : []
-      );
-      setUsageMetrics(() => {
-        const nextMetrics: Record<string, BuildUsageMetric> = {};
-        for (const metric of Object.values(usageMetrics || {})) {
-          const stage = String(metric?.stage || '').trim();
-          const model = String(metric?.model || '').trim();
-          if (!stage || !model) continue;
-          nextMetrics[stage] = {
-            stage,
-            model,
-            inputTokens: Number(metric?.inputTokens || 0),
-            outputTokens: Number(metric?.outputTokens || 0),
-            totalTokens: Number(metric?.totalTokens || 0)
-          };
-        }
-        return nextMetrics;
+            .map((event, index) => ({
+              id:
+                typeof event.id === 'string' && event.id.trim().length > 0
+                  ? event.id
+                  : `${requestId}-${event.createdAt || Date.now()}-${index}`,
+              kind: event.kind as BuildRunEvent['kind'],
+              phase: event.phase || null,
+              message: String(event.message || ''),
+              createdAt:
+                typeof event.createdAt === 'number' &&
+                Number.isFinite(event.createdAt)
+                  ? event.createdAt
+                  : Date.now(),
+              deduped: Boolean(event.deduped),
+              usage: event.usage || null
+            }))
+            .slice(-40)
+        : [];
+      setGeneratingStatus(nextStatus);
+      setAssistantStatusSteps(nextAssistantStatusSteps);
+      setUsageMetrics(nextUsageMetrics);
+      setRunEvents(nextRunEvents);
+      onRegisterBuildRun({
+        buildId: buildRef.current?.id || build.id,
+        requestId,
+        runMode: activeRunModeRef.current,
+        userMessage:
+          userMessageIdRef.current && userMessageIdRef.current > 0
+            ? (chatMessagesRef.current.find(
+                (message) => message.id === userMessageIdRef.current
+              ) as ChatMessage | undefined) || null
+            : null,
+        assistantMessage:
+          assistantMessageIdRef.current && assistantMessageIdRef.current > 0
+            ? (chatMessagesRef.current.find(
+                (message) => message.id === assistantMessageIdRef.current
+              ) as ChatMessage | undefined) || null
+            : null,
+        baseProjectFiles: streamingProjectFilesBaseRef.current
       });
-      setRunEvents(
-        Array.isArray(resumedRunEvents)
-          ? resumedRunEvents
-              .filter(
-                (
-                  event
-                ): event is NonNullable<typeof resumedRunEvents>[number] =>
-                  Boolean(event?.kind && event?.message)
-              )
-              .map((event, index) => ({
-                id:
-                  typeof event.id === 'string' && event.id.trim().length > 0
-                    ? event.id
-                    : `${requestId}-${event.createdAt || Date.now()}-${index}`,
-                kind: event.kind as BuildRunEvent['kind'],
-                phase: event.phase || null,
-                message: String(event.message || ''),
-                createdAt:
-                  typeof event.createdAt === 'number' &&
-                  Number.isFinite(event.createdAt)
-                    ? event.createdAt
-                    : Date.now(),
-                deduped: Boolean(event.deduped),
-                usage: event.usage || null
-              }))
-              .slice(-40)
-          : []
-      );
+      const resumeStatusStepsToReplay =
+        nextAssistantStatusSteps.length > 0
+          ? nextAssistantStatusSteps
+          : nextStatus
+            ? [nextStatus]
+            : [];
+      for (const step of resumeStatusStepsToReplay) {
+        onUpdateBuildRunStatus({
+          requestId,
+          status: step
+        });
+      }
+      for (const metric of Object.values(nextUsageMetrics)) {
+        onUpdateBuildRunUsage({
+          requestId,
+          usage: metric
+        });
+      }
+      for (const runEvent of nextRunEvents) {
+        onAppendBuildRunEvent({
+          requestId,
+          event: runEvent
+        });
+      }
       if (streamUpdate) {
         const resumeUpdatePayload: {
           requestId: string;
@@ -2092,6 +2294,10 @@ export default function BuildEditor({
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      onFailBuildRun({
+        requestId,
+        error: errorMessage
+      });
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
       setMobilePanelTab('chat');
@@ -2154,6 +2360,9 @@ export default function BuildEditor({
           }
         }
         generatingRef.current = false;
+        onStopBuildRun({
+          requestId
+        });
         setStreamingProjectFiles(null);
         setStreamingFocusFilePath(null);
         setMobilePanelTab('chat');
@@ -2184,6 +2393,9 @@ export default function BuildEditor({
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      onStopBuildRun({
+        requestId
+      });
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
       setMobilePanelTab('chat');
@@ -2241,6 +2453,16 @@ export default function BuildEditor({
           }
         };
       });
+      onUpdateBuildRunUsage({
+        requestId,
+        usage: {
+          stage,
+          model,
+          inputTokens,
+          outputTokens,
+          totalTokens
+        }
+      });
     }
 
     function handleRunEvent({
@@ -2272,19 +2494,19 @@ export default function BuildEditor({
         typeof event.createdAt === 'number' && Number.isFinite(event.createdAt)
           ? event.createdAt
           : Date.now();
+      const nextEvent: BuildRunEvent = {
+        id:
+          typeof event.id === 'string' && event.id.trim().length > 0
+            ? event.id
+            : `${createdAt}-${kind}-${message}`,
+        kind,
+        phase: event.phase || null,
+        message,
+        createdAt,
+        deduped: Boolean(event.deduped),
+        usage: event.usage || null
+      };
       setRunEvents((prev) => {
-        const nextEvent: BuildRunEvent = {
-          id:
-            typeof event.id === 'string' && event.id.trim().length > 0
-              ? event.id
-              : `${createdAt}-${kind}-${prev.length}`,
-          kind,
-          phase: event.phase || null,
-          message,
-          createdAt,
-          deduped: Boolean(event.deduped),
-          usage: event.usage || null
-        };
         if (prev.some((existing) => existing.id === nextEvent.id)) {
           return prev;
         }
@@ -2300,6 +2522,10 @@ export default function BuildEditor({
         }
         const next = [...prev, nextEvent];
         return next.slice(-40);
+      });
+      onAppendBuildRunEvent({
+        requestId,
+        event: nextEvent
       });
       if (kind === 'action') {
         const implementationAttempt = parseCodexImplementationAttempt(message);
@@ -2459,16 +2685,23 @@ export default function BuildEditor({
     message: string;
   }) {
     const createdAt = Date.now();
+    const requestId = String(streamRequestIdRef.current || '').trim();
+    const nextEvent: BuildRunEvent = {
+      id: `${createdAt}-${kind}-${message}`,
+      kind,
+      phase,
+      message,
+      createdAt
+    };
     setRunEvents((prev) => {
-      const next: BuildRunEvent = {
-        id: `${createdAt}-${kind}-${prev.length}`,
-        kind,
-        phase,
-        message,
-        createdAt
-      };
-      return [...prev, next].slice(-40);
+      return [...prev, nextEvent].slice(-40);
     });
+    if (requestId) {
+      onAppendBuildRunEvent({
+        requestId,
+        event: nextEvent
+      });
+    }
   }
 
   function handleRuntimeObservationChange(
@@ -2510,43 +2743,49 @@ export default function BuildEditor({
           interactionStepCount > 0
             ? health.interactionSteps[interactionStepCount - 1]
             : null;
-        appendLocalRunEvent({
-          kind:
-            health.interactionStatus === 'changed' || health.meaningfulRender
-              ? 'action'
-              : 'status',
-          phase: 'preview',
-          message:
-            health.gameLike &&
-            (health.viewportOverflowY > 48 || health.viewportOverflowX > 24)
-              ? `Preview booted, but the game overflows its viewport (${health.viewportOverflowY}px tall overflow, ${health.viewportOverflowX}px wide overflow).`
-              : health.gameplayTelemetry?.status === 'out-of-bounds'
-                ? `Preview booted, but gameplay escaped the declared playfield (${health.gameplayTelemetry.overflowTop}px top, ${health.gameplayTelemetry.overflowRight}px right, ${health.gameplayTelemetry.overflowBottom}px bottom, ${health.gameplayTelemetry.overflowLeft}px left overflow).`
+        const previewHealthMessage =
+          health.gameLike &&
+          (health.viewportOverflowY > 48 || health.viewportOverflowX > 24)
+            ? `Preview booted, but the game overflows its viewport (${health.viewportOverflowY}px tall overflow, ${health.viewportOverflowX}px wide overflow).`
+            : health.gameplayTelemetry?.status === 'out-of-bounds'
+              ? `Preview booted, but gameplay escaped the declared playfield (${health.gameplayTelemetry.overflowTop}px top, ${health.gameplayTelemetry.overflowRight}px right, ${health.gameplayTelemetry.overflowBottom}px bottom, ${health.gameplayTelemetry.overflowLeft}px left overflow).`
+              : interactionStepCount >= 2 &&
+                  health.interactionStatus === 'changed' &&
+                  latestInteractionStep?.source === 'planned'
+                ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
                 : interactionStepCount >= 2 &&
-                    health.interactionStatus === 'changed' &&
-                    latestInteractionStep?.source === 'planned'
-                  ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
-                  : interactionStepCount >= 2 &&
-                      health.interactionStatus === 'changed'
-                    ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
-                    : health.interactionStatus === 'changed'
-                      ? latestInteractionStep?.source === 'planned'
-                        ? latestInteractionStep?.routeChanged &&
+                    health.interactionStatus === 'changed'
+                  ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
+                  : health.interactionStatus === 'changed'
+                    ? latestInteractionStep?.source === 'planned'
+                      ? latestInteractionStep?.routeChanged &&
+                        latestInteractionStep.routeAfter
+                        ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
+                        : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
+                      : latestInteractionStep?.routeChanged &&
                           latestInteractionStep.routeAfter
-                          ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
-                          : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
-                        : latestInteractionStep?.routeChanged &&
-                            latestInteractionStep.routeAfter
-                          ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
-                          : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
-                      : health.interactionStatus === 'unchanged'
-                        ? latestInteractionStep?.source === 'planned'
-                          ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
-                          : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
-                        : health.meaningfulRender
-                          ? 'Preview booted and rendered meaningful UI.'
-                          : 'Preview booted, but the UI still looks sparse.'
-        });
+                        ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
+                        : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
+                    : health.interactionStatus === 'unchanged'
+                      ? latestInteractionStep?.source === 'planned'
+                        ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
+                        : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
+                      : health.meaningfulRender
+                        ? 'Preview booted and rendered meaningful UI.'
+                        : 'Preview booted, but the UI still looks sparse.';
+        if (
+          previewHealthMessage !== 'Preview booted and rendered meaningful UI.' &&
+          previewHealthMessage !== 'Preview booted, but the UI still looks sparse.'
+        ) {
+          appendLocalRunEvent({
+            kind:
+              health.interactionStatus === 'changed' || health.meaningfulRender
+                ? 'action'
+                : 'status',
+            phase: 'preview',
+            message: previewHealthMessage
+          });
+        }
       }
     }
     setRuntimeObservationState(nextState);
@@ -3674,6 +3913,10 @@ export default function BuildEditor({
     setAssistantStatusSteps((prev) =>
       prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
     );
+    onUpdateBuildRunStatus({
+      requestId,
+      status: 'Stopping...'
+    });
     socket.emit('build_stop', {
       buildId: build.id,
       requestId
@@ -4089,6 +4332,49 @@ export default function BuildEditor({
     }
   }
 
+  function applyBuildUpdate(nextBuild: Build) {
+    buildRef.current = nextBuild;
+    updateBuildRef.current(nextBuild);
+  }
+
+  async function captureThumbnailFromPreview() {
+    const previewPanel = previewPanelRef.current;
+    if (!previewPanel) {
+      throw new Error('Preview is unavailable right now');
+    }
+    return await previewPanel.captureThumbnail();
+  }
+
+  async function persistBuildThumbnailFromDataUrl(imageUrl: string) {
+    const latestBuild = buildRef.current;
+    const file = returnImageFileFromUrl({
+      imageUrl,
+      fileName: `build-thumbnail-${latestBuild.id}.jpg`
+    });
+    const result = await uploadBuildThumbnail({
+      buildId: latestBuild.id,
+      file
+    });
+    if (!result?.success || !result?.build) {
+      throw new Error('Failed to save build thumbnail');
+    }
+    const nextBuild = {
+      ...latestBuild,
+      ...result.build
+    };
+    applyBuildUpdate(nextBuild);
+    return nextBuild;
+  }
+
+  async function ensureBuildThumbnailBeforePublish() {
+    const latestBuild = buildRef.current;
+    if (String(latestBuild.thumbnailUrl || '').trim()) {
+      return latestBuild;
+    }
+    const capturedImageUrl = await captureThumbnailFromPreview();
+    return await persistBuildThumbnailFromDataUrl(capturedImageUrl);
+  }
+
   async function handlePublish() {
     if (!isOwner || publishing) return;
 
@@ -4126,10 +4412,29 @@ export default function BuildEditor({
         });
         return;
       }
-      const result = await publishBuild({ buildId: latestBuild.id });
+      let publishTargetBuild = latestBuild;
+      if (!String(latestBuild.thumbnailUrl || '').trim()) {
+        try {
+          publishTargetBuild = await ensureBuildThumbnailBeforePublish();
+        } catch (error: any) {
+          console.error('Failed to auto-generate build thumbnail:', error);
+          appendLocalRunEvent({
+            kind: 'lifecycle',
+            phase: 'publish',
+            message:
+              error?.message
+                ? `${error.message} Publishing without a thumbnail instead.`
+                : 'Preview thumbnail could not be generated automatically. Publishing without a thumbnail instead.'
+          });
+        }
+      }
+      const result = await publishBuild({
+        buildId: publishTargetBuild.id,
+        thumbnailUrl: String(publishTargetBuild.thumbnailUrl || '').trim() || undefined
+      });
       if (result?.success && result?.build) {
-        onUpdateBuild({
-          ...latestBuild,
+        applyBuildUpdate({
+          ...publishTargetBuild,
           isPublic: result.build.isPublic,
           publishedAt: result.build.publishedAt,
           thumbnailUrl: result.build.thumbnailUrl
@@ -4155,10 +4460,11 @@ export default function BuildEditor({
     if (!isOwner || publishing) return;
     setPublishing(true);
     try {
-      const result = await unpublishBuild(build.id);
+      const latestBuild = buildRef.current;
+      const result = await unpublishBuild(latestBuild.id);
       if (result?.success && result?.build) {
-        onUpdateBuild({
-          ...build,
+        applyBuildUpdate({
+          ...latestBuild,
           isPublic: result.build.isPublic
         });
         if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
@@ -4249,6 +4555,18 @@ export default function BuildEditor({
           )}
           {isOwner && (
             <GameCTAButton
+              onClick={handleOpenThumbnailModal}
+              disabled={savingThumbnail || publishing}
+              loading={savingThumbnail}
+              variant="neutral"
+              size="md"
+              icon="image"
+            >
+              Thumbnail
+            </GameCTAButton>
+          )}
+          {isOwner && (
+            <GameCTAButton
               onClick={build.isPublic ? handleUnpublish : handlePublish}
               disabled={publishing || (!build.isPublic && !build.code)}
               loading={publishing}
@@ -4302,19 +4620,20 @@ export default function BuildEditor({
                 mobilePanelTab !== 'chat' ? mobilePanelHiddenClass : undefined
               }
               messages={mergedChatMessages}
-              executionPlan={build.executionPlan || null}
-              generating={generating}
-              generatingStatus={generatingStatus}
-              assistantStatusSteps={assistantStatusSteps}
-              usageMetrics={usageMetrics}
+              executionPlan={displayedExecutionPlan}
+              scopedPlanQuestion={resolveScopedPlanQuestion(displayedExecutionPlan)}
+              generating={displayedGenerating}
+              generatingStatus={displayedGeneratingStatus}
+              assistantStatusSteps={displayedAssistantStatusSteps}
+              usageMetrics={displayedUsageMetrics}
               copilotPolicy={copilotPolicy}
               projectFileChangeLogs={projectFileChangeLogs}
               projectFilePromptContextPreview={projectFilePromptContextPreview}
               projectFileChangeLogsLoading={projectFileChangeLogsLoading}
               projectFileChangeLogsError={projectFileChangeLogsError}
               projectFileChangeLogsLoadedAt={projectFileChangeLogsLoadedAt}
-              runEvents={runEvents}
-              activeStreamMessageIds={getActiveStreamMessageIds()}
+              runEvents={displayedRunEvents}
+              activeStreamMessageIds={displayedActiveStreamMessageIds}
               isOwner={isOwner}
               chatScrollRef={chatScrollRef}
               chatEndRef={chatEndRef}
@@ -4419,6 +4738,16 @@ export default function BuildEditor({
           onSubmit={handleSaveMetadata}
         />
       )}
+      {thumbnailModalShown && isOwner && (
+        <BuildThumbnailModal
+          initialImageUrl={build.thumbnailUrl || buildRef.current?.thumbnailUrl || null}
+          loading={savingThumbnail}
+          saveError={thumbnailSaveError}
+          onHide={handleCloseThumbnailModal}
+          onSave={handleSaveThumbnail}
+          onCaptureFromPreview={captureThumbnailFromPreview}
+        />
+      )}
     </div>
   );
 
@@ -4437,6 +4766,17 @@ export default function BuildEditor({
   function handleCloseDescriptionModal() {
     if (savingDescription) return;
     setDescriptionModalShown(false);
+  }
+
+  function handleOpenThumbnailModal() {
+    setThumbnailSaveError('');
+    setThumbnailModalShown(true);
+  }
+
+  function handleCloseThumbnailModal() {
+    if (savingThumbnail) return;
+    setThumbnailSaveError('');
+    setThumbnailModalShown(false);
   }
 
   async function handleSaveMetadata({
@@ -4477,6 +4817,46 @@ export default function BuildEditor({
       console.error('Failed to update build metadata:', error);
     } finally {
       setSavingDescription(false);
+    }
+  }
+
+  async function handleSaveThumbnail(croppedImageUrl: string | null) {
+    if (!isOwner || savingThumbnail) return;
+    const latestBuild = buildRef.current;
+    const currentThumbnailUrl = String(latestBuild.thumbnailUrl || '').trim();
+    if (!croppedImageUrl && !currentThumbnailUrl) {
+      setThumbnailSaveError('');
+      setThumbnailModalShown(false);
+      return;
+    }
+    setSavingThumbnail(true);
+    setThumbnailSaveError('');
+    try {
+      if (!croppedImageUrl) {
+        const result = await updateBuildMetadata({
+          buildId: latestBuild.id,
+          thumbnailUrl: null
+        });
+        if (!result?.success || !result?.build) {
+          throw new Error('Failed to remove build thumbnail');
+        }
+        applyBuildUpdate({
+          ...latestBuild,
+          ...result.build
+        });
+      } else {
+        await persistBuildThumbnailFromDataUrl(croppedImageUrl);
+      }
+      setThumbnailModalShown(false);
+    } catch (error: any) {
+      console.error('Failed to save build thumbnail:', error);
+      setThumbnailSaveError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to save build thumbnail'
+      );
+    } finally {
+      setSavingThumbnail(false);
     }
   }
 
@@ -4814,8 +5194,8 @@ export default function BuildEditor({
   }
 
   function isMessageLockedForActiveRequest(message: ChatMessage) {
-    if (!generating) return false;
-    return getActiveStreamMessageIds().includes(message.id);
+    if (!displayedGenerating) return false;
+    return displayedActiveStreamMessageIds.includes(message.id);
   }
 
   function handleChatScroll() {

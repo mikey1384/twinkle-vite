@@ -316,16 +316,71 @@ export default function buildRequestHelpers({
     async updateBuildMetadata({
       buildId,
       title,
-      description
+      description,
+      thumbnailUrl
     }: {
       buildId: number;
       title?: string;
       description?: string | null;
+      thumbnailUrl?: string | null;
     }) {
       try {
         const { data } = await request.put(
           `${URL}/build/${buildId}`,
-          { title, description },
+          { title, description, thumbnailUrl },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async uploadBuildThumbnail({
+      buildId,
+      file
+    }: {
+      buildId: number;
+      file: File;
+    }) {
+      try {
+        const {
+          data: { signedRequest, thumbnailUrl }
+        } = await request.post(
+          `${URL}/build/${buildId}/thumbnail`,
+          {
+            fileSize: file.size,
+            contentType: file.type || 'image/jpeg'
+          },
+          auth()
+        );
+        await axios.put(signedRequest, file, {
+          headers: {
+            'Content-Type': file.type || 'image/jpeg'
+          }
+        });
+        const { data } = await request.put(
+          `${URL}/build/${buildId}`,
+          { thumbnailUrl },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async captureBuildThumbnailPreview({
+      buildId,
+      previewPath
+    }: {
+      buildId: number;
+      previewPath: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/thumbnail/capture-preview`,
+          { previewPath },
           auth()
         );
         return data;

@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import Build from '~/containers/Build';
 import BuildRuntime from '~/containers/Build/Runtime';
+import BuildThumbnailCaptureHost from '~/containers/Build/ThumbnailCaptureHost';
 import Builds from '~/containers/Builds';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
@@ -318,7 +319,7 @@ export default function App() {
     [location?.pathname]
   );
   const usingBuildRuntime = useMemo(
-    () => /^\/app\/[^/]+/.test(location.pathname),
+    () => /^\/(app|app-capture)\/[^/]+/.test(location.pathname),
     [location.pathname]
   );
 
@@ -576,6 +577,10 @@ export default function App() {
               element={<BuildPreviewPassthrough />}
             />
             <Route path="/build/*" element={<Build />} />
+            <Route
+              path="/app-capture/:buildId"
+              element={<BuildThumbnailCaptureHost />}
+            />
             <Route path="/app/:buildId" element={<BuildRuntime />} />
             <Route path="/builds" element={<Builds />} />
             <Route
