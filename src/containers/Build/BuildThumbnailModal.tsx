@@ -4,8 +4,6 @@ import Modal from '~/components/Modal';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import ReactCrop, {
-  centerCrop,
-  makeAspectCrop,
   type Crop,
   type PixelCrop
 } from 'react-image-crop';
@@ -16,6 +14,32 @@ import { convertToWebFriendlyFormat } from '~/helpers/imageHelpers';
 import StatusDots from '~/containers/Chat/Message/MessageBody/TextMessage/ThinkingIndicator/StatusDots';
 
 const THUMBNAIL_ASPECT_RATIO = 16 / 9;
+
+function buildInitialThumbnailCrop(image: HTMLImageElement): Crop {
+  const imageWidth = Math.max(1, image.width);
+  const imageHeight = Math.max(1, image.height);
+  const imageAspectRatio = imageWidth / imageHeight;
+
+  if (imageAspectRatio >= THUMBNAIL_ASPECT_RATIO) {
+    const width = imageHeight * THUMBNAIL_ASPECT_RATIO;
+    return {
+      unit: 'px',
+      x: (imageWidth - width) / 2,
+      y: 0,
+      width,
+      height: imageHeight
+    };
+  }
+
+  const height = imageWidth / THUMBNAIL_ASPECT_RATIO;
+  return {
+    unit: 'px',
+    x: 0,
+    y: (imageHeight - height) / 2,
+    width: imageWidth,
+    height
+  };
+}
 
 function getEditableCanvasImageUrl(imageUrl: string) {
   const normalizedImageUrl = String(imageUrl || '').trim();
@@ -319,19 +343,7 @@ export default function BuildThumbnailModal({
   function handleImageLoad(event: React.SyntheticEvent<HTMLImageElement>) {
     const image = event.currentTarget;
     imageRef.current = image;
-    const nextCrop = centerCrop(
-      makeAspectCrop(
-        {
-          unit: '%',
-          width: 90
-        },
-        THUMBNAIL_ASPECT_RATIO,
-        image.width,
-        image.height
-      ),
-      image.width,
-      image.height
-    );
+    const nextCrop = buildInitialThumbnailCrop(image);
     setCrop(nextCrop);
     void updateCroppedImage(normalizePixelCrop(nextCrop, image), image);
   }
