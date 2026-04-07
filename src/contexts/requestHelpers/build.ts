@@ -476,7 +476,8 @@ export default function buildRequestHelpers({
     async createBuildChatReferenceNote({
       buildId,
       messageText,
-      references
+      references,
+      hidden
     }: {
       buildId: number;
       messageText?: string;
@@ -485,13 +486,15 @@ export default function buildRequestHelpers({
         url: string;
         mimeType?: string | null;
       }>;
+      hidden?: boolean;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/chat/reference-note`,
           {
             messageText,
-            references
+            references,
+            hidden: Boolean(hidden)
           },
           auth()
         );
@@ -896,6 +899,45 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async purchaseBuildGenerationReset(buildId: number) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/purchase-generation-reset`,
+          {},
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        if (
+          error?.response &&
+          error.response.status !== 401 &&
+          error.response.status !== 301
+        ) {
+          const nextError: any = new Error(
+            error.response.data?.error ||
+              error.response.data?.message ||
+              error.message ||
+              'Failed to purchase generation quota reset'
+          );
+          nextError.status = error.response.status;
+          if (error.response.data?.code) {
+            nextError.code = error.response.data.code;
+          }
+          if (typeof error.response.data?.requiredCoins === 'number') {
+            nextError.requiredCoins = error.response.data.requiredCoins;
+          }
+          if (typeof error.response.data?.currentCoins === 'number') {
+            nextError.currentCoins = error.response.data.currentCoins;
+          }
+          if (error.response.data?.requestLimits) {
+            nextError.requestLimits = error.response.data.requestLimits;
+          }
+          return Promise.reject(nextError);
+        }
         return handleError(error);
       }
     },

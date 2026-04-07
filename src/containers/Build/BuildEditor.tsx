@@ -11,6 +11,7 @@ import BuildDescriptionModal from './BuildDescriptionModal';
 import BuildThumbnailModal from './BuildThumbnailModal';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 import type {
+  BuildLiveRunEvent,
   BuildLiveRunMessage,
   BuildLiveRunState
 } from '~/contexts/Build/reducer';
@@ -275,6 +276,7 @@ interface Build {
   }>;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   executionPlan?: BuildExecutionPlan | null;
+  followUpPrompt?: BuildFollowUpPrompt | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -291,7 +293,7 @@ interface BuildExecutionPlanChunk {
 interface BuildExecutionPlan {
   buildId: number;
   mode: 'large' | 'too_broad';
-  status: 'active' | 'completed' | 'cancelled';
+  status: 'awaiting_confirmation' | 'running' | 'completed' | 'cancelled';
   summary: string;
   question?: string | null;
   plan: {
@@ -306,6 +308,12 @@ interface BuildExecutionPlan {
   createdByUserId: number;
   createdAt: number;
   updatedAt: number;
+}
+
+interface BuildFollowUpPrompt {
+  question?: string | null;
+  suggestedMessage?: string | null;
+  sourceMessageId?: number | null;
 }
 
 interface ChatMessage {
@@ -353,6 +361,9 @@ interface BuildCopilotPolicy {
   requestLimits: {
     dayIndex: number;
     dayKey: string;
+    generationBaseRequestsPerDay: number;
+    generationResetPurchasesToday: number;
+    generationResetCost: number;
     generationRequestsPerDay: number;
     generationRequestsToday: number;
     generationRequestsRemaining: number;
@@ -366,6 +377,11 @@ interface BuildRunEvent {
   message: string;
   createdAt: number;
   deduped?: boolean;
+  details?: {
+    thoughtContent?: string | null;
+    isComplete?: boolean;
+    isThinkingHard?: boolean;
+  } | null;
   usage?: {
     stage?: string | null;
     model?: string | null;
@@ -421,7 +437,17 @@ interface QueuedBuildRequest {
   id: string;
   message: string;
   planAction?: BuildPlanAction | null;
+  messageContext?: string | null;
+  existingUserMessageId?: number | null;
   createdAt: number;
+}
+
+interface BuildHiddenMessageContextOptions {
+  messageText?: string;
+  references: Array<{
+    fileName: string;
+    url: string;
+  }>;
 }
 
 interface BuildEditorProps {
@@ -435,6 +461,9 @@ interface BuildEditorProps {
   onUpdateChatMessages: (messages: ChatMessage[]) => void;
   onUpdateCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
 }
+
+const BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX =
+  '[[[reference_context]]]';
 
 interface ProjectFileSaveResult {
   success: boolean;
@@ -487,6 +516,25 @@ function applyRuntimeUploadUsageToCopilotPolicy(
         Math.floor(Number(usage.remainingBytes) || 0)
       ),
       runtimeFileCount: Math.max(0, Math.floor(Number(usage.fileCount) || 0))
+    }
+  };
+}
+
+function applyRequestLimitsToCopilotPolicy(
+  policy: BuildCopilotPolicy | null,
+  requestLimits:
+    | BuildCopilotPolicy['requestLimits']
+    | null
+    | undefined
+) {
+  if (!policy || !requestLimits) {
+    return policy;
+  }
+  return {
+    ...policy,
+    requestLimits: {
+      ...policy.requestLimits,
+      ...requestLimits
     }
   };
 }
@@ -835,6 +883,21 @@ function resolveScopedPlanQuestion(plan: BuildExecutionPlan | null | undefined) 
     : `Should Lumine keep going with ${target.chunkTitle}?`;
 }
 
+function resolveBuildFollowUpPromptKey(
+  prompt: BuildFollowUpPrompt | null | undefined
+) {
+  const sourceMessageId = Number(prompt?.sourceMessageId || 0);
+  if (sourceMessageId > 0) {
+    return `message:${sourceMessageId}`;
+  }
+  const question = String(prompt?.question || '').trim();
+  const suggestedMessage = String(prompt?.suggestedMessage || '').trim();
+  if (!question && !suggestedMessage) {
+    return '';
+  }
+  return `${question}::${suggestedMessage}`;
+}
+
 function isCodexChecklistStepCompleted(message: string) {
   return /^Codex completed checklist step \d+\/\d+/i.test(
     String(message || '').trim()
@@ -1079,7 +1142,10 @@ export default function BuildEditor({
   const onStopBuildRun = useBuildContext((v) => v.actions.onStopBuildRun);
   const onClearBuildRun = useBuildContext((v) => v.actions.onClearBuildRun);
   const navigate = useNavigate();
-  const { userId, profileTheme } = useKeyContext((v) => v.myState);
+  const { userId, profileTheme, twinkleCoins } = useKeyContext(
+    (v) => v.myState
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const updateBuildProjectFiles = useAppContext(
     (v) => v.requestHelpers.updateBuildProjectFiles
   );
@@ -1122,6 +1188,9 @@ export default function BuildEditor({
   const publishBuild = useAppContext((v) => v.requestHelpers.publishBuild);
   const unpublishBuild = useAppContext((v) => v.requestHelpers.unpublishBuild);
   const forkBuild = useAppContext((v) => v.requestHelpers.forkBuild);
+  const purchaseBuildGenerationReset = useAppContext(
+    (v) => v.requestHelpers.purchaseBuildGenerationReset
+  );
 
   const [mobilePanelTab, setMobilePanelTab] = useState<'chat' | 'preview'>(
     'chat'
@@ -1182,6 +1251,9 @@ export default function BuildEditor({
   const [runtimeUploadDeletingId, setRuntimeUploadDeletingId] = useState<
     number | null
   >(null);
+  const [purchasingGenerationReset, setPurchasingGenerationReset] =
+    useState(false);
+  const [generationResetError, setGenerationResetError] = useState('');
   const [buildChatDraftMessage, setBuildChatDraftMessage] = useState('');
   const [buildChatUploadModalShown, setBuildChatUploadModalShown] =
     useState(false);
@@ -1189,6 +1261,8 @@ export default function BuildEditor({
     File | File[] | null
   >(null);
   const [buildChatUploadInFlight, setBuildChatUploadInFlight] = useState(false);
+  const [dismissedFollowUpPromptKey, setDismissedFollowUpPromptKey] =
+    useState('');
   const [buildSocketListenersReady, setBuildSocketListenersReady] =
     useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -1204,6 +1278,7 @@ export default function BuildEditor({
   const buildSocketListenersReadyRef = useRef(false);
   const userMessageIdRef = useRef<number | null>(null);
   const assistantMessageIdRef = useRef<number | null>(null);
+  const activeRunMessageContextRef = useRef<string | null>(null);
   const streamingProjectFilesBaseRef = useRef<
     Array<{ path: string; content?: string }>
   >([]);
@@ -1274,6 +1349,17 @@ export default function BuildEditor({
     Object.prototype.hasOwnProperty.call(renderRun, 'executionPlan')
       ? renderRun.executionPlan ?? build.executionPlan ?? null
       : build.executionPlan || null;
+  const baseDisplayedFollowUpPrompt =
+    renderRun &&
+    Object.prototype.hasOwnProperty.call(renderRun, 'followUpPrompt')
+      ? renderRun.followUpPrompt ?? build.followUpPrompt ?? null
+      : build.followUpPrompt || null;
+  const displayedFollowUpPrompt =
+    resolveBuildFollowUpPromptKey(baseDisplayedFollowUpPrompt) &&
+    resolveBuildFollowUpPromptKey(baseDisplayedFollowUpPrompt) ===
+      dismissedFollowUpPromptKey
+      ? null
+      : baseDisplayedFollowUpPrompt;
   const displayedActiveStreamMessageIds = renderRun
     ? [renderRun.userMessage?.id, renderRun.assistantMessage?.id].filter(
         (id): id is number => typeof id === 'number' && id > 0
@@ -1291,6 +1377,7 @@ export default function BuildEditor({
     setBuildChatUploadModalShown(false);
     setBuildChatUploadFileObj(null);
     setBuildChatUploadInFlight(false);
+    setDismissedFollowUpPromptKey('');
     pendingBuildChatUploadClarificationRef.current = [];
   }, [build.id]);
 
@@ -1385,6 +1472,7 @@ export default function BuildEditor({
       userMessageIdRef.current = sharedBuildRun.userMessage?.id || null;
       assistantMessageIdRef.current =
         sharedBuildRun.assistantMessage?.id || null;
+      activeRunMessageContextRef.current = null;
       activeRunModeRef.current = sharedBuildRun.runMode;
       shouldHydrateSharedRunRef.current = false;
       return;
@@ -1441,7 +1529,23 @@ export default function BuildEditor({
     ) {
       const nextBuild = {
         ...buildRef.current,
-        executionPlan: sharedBuildRun.executionPlan ?? null
+        executionPlan: sharedBuildRun.executionPlan ?? null,
+        followUpPrompt:
+          Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt')
+            ? sharedBuildRun.followUpPrompt ?? null
+            : buildRef.current.followUpPrompt ?? null
+      };
+      buildRef.current = nextBuild;
+      updateBuildRef.current(nextBuild);
+    } else if (
+      Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt') &&
+      buildRef.current &&
+      buildRef.current.followUpPrompt !==
+        (sharedBuildRun.followUpPrompt ?? null)
+    ) {
+      const nextBuild = {
+        ...buildRef.current,
+        followUpPrompt: sharedBuildRun.followUpPrompt ?? null
       };
       buildRef.current = nextBuild;
       updateBuildRef.current(nextBuild);
@@ -1668,8 +1772,17 @@ export default function BuildEditor({
       reply?: string;
       codeGenerated?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
+      projectFilesMode?: 'patch' | 'snapshot' | null;
+      projectFilesPersisted?: boolean;
     }) {
-      const { requestId, reply, codeGenerated, projectFiles } = payload;
+      const {
+        requestId,
+        reply,
+        codeGenerated,
+        projectFiles,
+        projectFilesMode,
+        projectFilesPersisted
+      } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
       const targetMessageId = assistantMessageIdRef.current;
@@ -1699,6 +1812,8 @@ export default function BuildEditor({
         reply?: string;
         codeGenerated?: string | null;
         projectFiles?: Array<{ path: string; content?: string }> | null;
+        projectFilesMode?: 'patch' | 'snapshot' | null;
+        projectFilesPersisted?: boolean;
       } = { requestId };
       if (typeof reply === 'string') {
         sharedRunStreamUpdate.reply = reply;
@@ -1708,24 +1823,61 @@ export default function BuildEditor({
       }
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
         sharedRunStreamUpdate.projectFiles = projectFiles;
+        sharedRunStreamUpdate.projectFilesMode =
+          projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
+        sharedRunStreamUpdate.projectFilesPersisted =
+          projectFilesPersisted === true;
       }
       onUpdateBuildRunStream(sharedRunStreamUpdate);
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
         const activeBuild = buildRef.current;
         const fallbackCode = activeBuild?.code || '';
+        const normalizedProjectFiles = normalizeProjectFilesForBuild(
+          projectFiles,
+          fallbackCode
+        );
         const nextFocusFilePath =
-          projectFiles
+          normalizedProjectFiles
             .map((file) => normalizeProjectFilePath(file.path))
             .find((filePath) => !isIndexHtmlProjectFilePath(filePath)) || null;
-        const nextStreamingProjectFiles = overlayStreamedProjectFilesForBuild({
-          baseFiles: streamingProjectFilesBaseRef.current,
-          updates: projectFiles,
-          fallbackCode
-        });
-        streamingProjectFilesRef.current = nextStreamingProjectFiles;
-        setStreamingProjectFiles(nextStreamingProjectFiles);
-        if (nextFocusFilePath) {
-          setStreamingFocusFilePath(nextFocusFilePath);
+        const nextStreamingProjectFiles =
+          projectFilesMode === 'snapshot'
+            ? normalizedProjectFiles
+            : overlayStreamedProjectFilesForBuild({
+                baseFiles: streamingProjectFilesBaseRef.current,
+                updates: projectFiles,
+                fallbackCode
+              });
+        if (projectFilesPersisted && activeBuild) {
+          const nextCode = resolveIndexHtmlFromProjectFiles(
+            nextStreamingProjectFiles,
+            fallbackCode
+          );
+          const nextBuild = {
+            ...activeBuild,
+            code: nextCode,
+            projectManifest: {
+              entryPath: resolveIndexEntryPathFromProjectFiles(
+                nextStreamingProjectFiles,
+                activeBuild.projectManifest?.entryPath || '/index.html'
+              ),
+              storageMode: 'project-files',
+              fileCount: nextStreamingProjectFiles.length
+            },
+            projectFiles: nextStreamingProjectFiles
+          };
+          buildRef.current = nextBuild;
+          updateBuildRef.current(nextBuild);
+          streamingProjectFilesBaseRef.current = nextStreamingProjectFiles;
+          streamingProjectFilesRef.current = null;
+          setStreamingProjectFiles(null);
+          setStreamingFocusFilePath(null);
+        } else {
+          streamingProjectFilesRef.current = nextStreamingProjectFiles;
+          setStreamingProjectFiles(nextStreamingProjectFiles);
+          if (nextFocusFilePath) {
+            setStreamingFocusFilePath(nextFocusFilePath);
+          }
         }
       }
       maybeAutoScrollDuringStream();
@@ -1738,6 +1890,7 @@ export default function BuildEditor({
       code,
       projectFiles,
       executionPlan,
+      followUpPrompt,
       runtimeExplorationPlan,
       runtimePlanRefined,
       billingState,
@@ -1753,6 +1906,7 @@ export default function BuildEditor({
       code?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
       executionPlan?: BuildExecutionPlan | null;
+      followUpPrompt?: BuildFollowUpPrompt | null;
       runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
       runtimePlanRefined?: boolean;
       billingState?: 'charged' | 'not_charged' | 'pending' | null;
@@ -1779,6 +1933,10 @@ export default function BuildEditor({
       const artifactVersionId =
         message?.artifactVersionId ?? artifact?.versionId ?? null;
       const createdAt = message?.createdAt ?? Math.floor(Date.now() / 1000);
+      const hasFollowUpPromptField = Object.prototype.hasOwnProperty.call(
+        arguments[0] || {},
+        'followUpPrompt'
+      );
       const persistedAssistantId =
         typeof message?.id === 'number' && message.id > 0 ? message.id : null;
       const persistedUserId =
@@ -1791,6 +1949,7 @@ export default function BuildEditor({
         artifactCode,
         projectFiles: payloadProjectFiles,
         executionPlan,
+        followUpPrompt: hasFollowUpPromptField ? followUpPrompt ?? null : undefined,
         runtimeExplorationPlan,
         runtimePlanRefined,
         billingState,
@@ -1906,6 +2065,9 @@ export default function BuildEditor({
               executionPlan !== undefined
                 ? executionPlan || null
                 : activeBuild.executionPlan || null,
+            followUpPrompt: hasFollowUpPromptField
+              ? followUpPrompt || null
+              : activeBuild.followUpPrompt || null,
             projectManifest: {
               entryPath: resolveIndexEntryPathFromProjectFiles(
                 nextProjectFiles,
@@ -1925,13 +2087,21 @@ export default function BuildEditor({
           }
         }
       } else if (
-        executionPlan !== undefined &&
         buildRef.current &&
-        buildRef.current.executionPlan !== (executionPlan || null)
+        ((executionPlan !== undefined &&
+          buildRef.current.executionPlan !== (executionPlan || null)) ||
+          (hasFollowUpPromptField &&
+            buildRef.current.followUpPrompt !== (followUpPrompt || null)))
       ) {
         const nextBuild = {
           ...buildRef.current,
-          executionPlan: executionPlan || null
+          executionPlan:
+            executionPlan !== undefined
+              ? executionPlan || null
+              : buildRef.current.executionPlan || null,
+          followUpPrompt: hasFollowUpPromptField
+            ? followUpPrompt || null
+            : buildRef.current.followUpPrompt || null
         };
         buildRef.current = nextBuild;
         updateBuildRef.current(nextBuild);
@@ -2012,6 +2182,7 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
+      activeRunMessageContextRef.current = null;
       generatingRef.current = false;
       setGenerating(false);
       setGeneratingStatus(null);
@@ -2092,24 +2263,21 @@ export default function BuildEditor({
       >;
       runEvents?: Array<{
         id?: string;
-        kind?: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
+        kind?: BuildLiveRunEvent['kind'];
         phase?: string | null;
         message?: string;
         createdAt?: number;
         deduped?: boolean;
-        usage?: {
-          stage?: string | null;
-          model?: string | null;
-          inputTokens?: number;
-          outputTokens?: number;
-          totalTokens?: number;
-        } | null;
+        details?: BuildLiveRunEvent['details'];
+        usage?: BuildLiveRunEvent['usage'];
       }>;
       streamUpdate?: {
         reply?: string;
         codeGenerated?: string | null;
         hasCodeGeneratedField?: boolean;
         projectFiles?: Array<{ path: string; content?: string }> | null;
+        projectFilesMode?: 'patch' | 'snapshot' | null;
+        projectFilesPersisted?: boolean;
       } | null;
       terminal?: {
         type?: 'complete' | 'error' | 'stopped';
@@ -2176,6 +2344,7 @@ export default function BuildEditor({
                   ? event.createdAt
                   : Date.now(),
               deduped: Boolean(event.deduped),
+              details: event.details || null,
               usage: event.usage || null
             }))
             .slice(-40)
@@ -2232,6 +2401,8 @@ export default function BuildEditor({
           reply?: string;
           codeGenerated?: string | null;
           projectFiles?: Array<{ path: string; content?: string }> | null;
+          projectFilesMode?: 'patch' | 'snapshot' | null;
+          projectFilesPersisted?: boolean;
         } = {
           requestId
         };
@@ -2247,6 +2418,10 @@ export default function BuildEditor({
           streamUpdate.projectFiles.length > 0
         ) {
           resumeUpdatePayload.projectFiles = streamUpdate.projectFiles;
+          resumeUpdatePayload.projectFilesMode =
+            streamUpdate.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
+          resumeUpdatePayload.projectFilesPersisted =
+            streamUpdate.projectFilesPersisted === true;
         }
         handleGenerateUpdate(resumeUpdatePayload);
       }
@@ -2255,10 +2430,12 @@ export default function BuildEditor({
 
     function handleGenerateError({
       requestId,
-      error
+      error,
+      requestLimits
     }: {
       requestId?: string;
       error?: string;
+      requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
@@ -2266,6 +2443,14 @@ export default function BuildEditor({
       const assistantId = assistantMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
       const errorMessage = error || 'Failed to generate code.';
+      const nextPolicy = applyRequestLimitsToCopilotPolicy(
+        copilotPolicyRef.current,
+        requestLimits
+      );
+      if (nextPolicy) {
+        copilotPolicyRef.current = nextPolicy;
+        updateCopilotPolicyRef.current(nextPolicy);
+      }
 
       const nextMessages = assistantId
         ? currentMessages.map((entry) =>
@@ -2304,6 +2489,7 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
+      activeRunMessageContextRef.current = null;
       generatingRef.current = false;
       setGenerating(false);
       setGeneratingStatus(null);
@@ -2339,6 +2525,7 @@ export default function BuildEditor({
             streamRequestIdRef.current = null;
             userMessageIdRef.current = null;
             assistantMessageIdRef.current = null;
+            activeRunMessageContextRef.current = null;
           }
         } else if (guardStatus === 'processing') {
           // Keep request refs briefly in case late events from the claimed
@@ -2357,6 +2544,7 @@ export default function BuildEditor({
             streamRequestIdRef.current = null;
             userMessageIdRef.current = null;
             assistantMessageIdRef.current = null;
+            activeRunMessageContextRef.current = null;
           }
         }
         generatingRef.current = false;
@@ -2381,9 +2569,13 @@ export default function BuildEditor({
       const assistantId = assistantMessageIdRef.current;
       const userId = userMessageIdRef.current;
       const currentMessages = chatMessagesRef.current;
+      const activeUserMessage =
+        typeof userId === 'number' && userId > 0
+          ? currentMessages.find((entry) => entry.id === userId) || null
+          : null;
 
       const activeIdSet = new Set(
-        [userId, assistantId].filter(
+        [activeUserMessage?.persisted ? null : userId, assistantId].filter(
           (id): id is number => typeof id === 'number' && id > 0
         )
       );
@@ -2402,6 +2594,7 @@ export default function BuildEditor({
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
+      activeRunMessageContextRef.current = null;
       generatingRef.current = false;
       setGenerating(false);
       setGeneratingStatus(null);
@@ -2472,18 +2665,13 @@ export default function BuildEditor({
       requestId?: string;
       event?: {
         id?: string;
-        kind?: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
+        kind?: BuildLiveRunEvent['kind'];
         phase?: string | null;
         message?: string;
         createdAt?: number;
         deduped?: boolean;
-        usage?: {
-          stage?: string | null;
-          model?: string | null;
-          inputTokens?: number;
-          outputTokens?: number;
-          totalTokens?: number;
-        } | null;
+        details?: BuildLiveRunEvent['details'];
+        usage?: BuildLiveRunEvent['usage'];
       };
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
@@ -2504,6 +2692,7 @@ export default function BuildEditor({
         message,
         createdAt,
         deduped: Boolean(event.deduped),
+        details: event.details || null,
         usage: event.usage || null
       };
       setRunEvents((prev) => {
@@ -2518,7 +2707,16 @@ export default function BuildEditor({
           last.message === nextEvent.message &&
           Math.abs(last.createdAt - nextEvent.createdAt) < 1500
         ) {
-          return prev;
+          return [
+            ...prev.slice(0, -1),
+            {
+              ...last,
+              createdAt: nextEvent.createdAt,
+              deduped: nextEvent.deduped,
+              details: nextEvent.details ?? last.details ?? null,
+              usage: nextEvent.usage ?? last.usage ?? null
+            }
+          ];
         }
         const next = [...prev, nextEvent];
         return next.slice(-40);
@@ -3114,9 +3312,14 @@ export default function BuildEditor({
 
   function enqueueLatestBuildRequest(
     messageText: string,
-    options?: { planAction?: BuildPlanAction | null }
+    options?: {
+      planAction?: BuildPlanAction | null;
+      messageContext?: string | null;
+      existingUserMessageId?: number | null;
+    }
   ) {
     const trimmed = String(messageText || '').trim();
+    const trimmedMessageContext = String(options?.messageContext || '').trim();
     if (!trimmed) return;
     const normalized = normalizeQueuedMessage(trimmed);
     const activeMessage = normalizeQueuedMessage(
@@ -3126,12 +3329,21 @@ export default function BuildEditor({
         )?.content || ''
       )
     );
+    const activeMessageContext = normalizeQueuedMessage(
+      String(activeRunMessageContextRef.current || '')
+    );
+    const normalizedMessageContext = normalizeQueuedMessage(
+      trimmedMessageContext
+    );
     const existing = queuedRequestsRef.current;
     const duplicateIndex = existing.findIndex(
       (entry) => normalizeQueuedMessage(entry.message) === normalized
     );
 
-    if (normalized === activeMessage) {
+    if (
+      normalized === activeMessage &&
+      normalizedMessageContext === activeMessageContext
+    ) {
       appendLocalRunEvent({
         kind: 'status',
         phase: 'queued',
@@ -3141,6 +3353,15 @@ export default function BuildEditor({
     }
 
     if (duplicateIndex >= 0) {
+      const nextQueuedRequests = [...existing];
+      nextQueuedRequests[duplicateIndex] = {
+        ...nextQueuedRequests[duplicateIndex],
+        planAction: options?.planAction || null,
+        messageContext: trimmedMessageContext || null,
+        existingUserMessageId:
+          Number(options?.existingUserMessageId || 0) || null
+      };
+      updateQueuedRequests(nextQueuedRequests);
       appendLocalRunEvent({
         kind: 'status',
         phase: 'queued',
@@ -3154,6 +3375,9 @@ export default function BuildEditor({
         id: `${Date.now()}-steer`,
         message: trimmed,
         planAction: options?.planAction || null,
+        messageContext: trimmedMessageContext || null,
+        existingUserMessageId:
+          Number(options?.existingUserMessageId || 0) || null,
         createdAt: Date.now()
       }
     ]);
@@ -3186,7 +3410,9 @@ export default function BuildEditor({
       message: 'Starting your latest request.'
     });
     const started = await startGeneration(nextRequest.message, {
-      planAction: nextRequest.planAction || null
+      planAction: nextRequest.planAction || null,
+      messageContext: nextRequest.messageContext || null,
+      existingUserMessageId: nextRequest.existingUserMessageId || null
     });
     if (!started) {
       queuePausedForSaveRef.current = true;
@@ -3337,6 +3563,21 @@ export default function BuildEditor({
     });
   }
 
+  async function handleAcceptFollowUpPrompt() {
+    if (!isOwner) return;
+    const suggestedMessage = String(
+      displayedFollowUpPrompt?.suggestedMessage || ''
+    ).trim();
+    if (!suggestedMessage) return;
+    await sendBuildMessageText(suggestedMessage);
+  }
+
+  function handleDismissFollowUpPrompt() {
+    const nextKey = resolveBuildFollowUpPromptKey(displayedFollowUpPrompt);
+    if (!nextKey) return;
+    setDismissedFollowUpPromptKey(nextKey);
+  }
+
   function appendPersistedBuildChatMessage(
     message: any,
     options?: { buildId?: number | null }
@@ -3349,6 +3590,13 @@ export default function BuildEditor({
         }
       : null;
     if (!persistedMessage?.id) {
+      return;
+    }
+    if (
+      String(persistedMessage.content || '')
+        .trim()
+        .startsWith(BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX)
+    ) {
       return;
     }
     const targetBuildId = Number(options?.buildId || 0);
@@ -3557,6 +3805,44 @@ export default function BuildEditor({
       .map((part) => String(part || '').trim())
       .filter(Boolean)
       .join('\n\n');
+  }
+
+  function buildBuildChatHiddenMessageContext({
+    messageText,
+    references
+  }: BuildHiddenMessageContextOptions) {
+    const trimmedMessageText = String(messageText || '').trim();
+    const normalizedReferences = Array.isArray(references)
+      ? references
+          .map((reference) => ({
+            fileName: String(reference?.fileName || '').trim(),
+            url: String(reference?.url || '').trim()
+          }))
+          .filter((reference) => reference.fileName && reference.url)
+      : [];
+
+    const lines = [
+      'The user uploaded screenshots or mockups for this request.',
+      'Treat them as visual evidence for what is wrong or what should change.',
+      'Do not repeat them back as filler, chat clutter, or product UI.'
+    ];
+    if (trimmedMessageText) {
+      lines.push(`User intent: ${trimmedMessageText}`);
+    }
+    if (normalizedReferences.length > 0) {
+      lines.push('Reference image URLs:');
+      for (const reference of normalizedReferences.slice(0, 4)) {
+        lines.push(`- ${reference.fileName}: ${reference.url}`);
+      }
+      if (normalizedReferences.length > 4) {
+        lines.push(
+          `- plus ${normalizedReferences.length - 4} more reference image${
+            normalizedReferences.length - 4 === 1 ? '' : 's'
+          }`
+        );
+      }
+    }
+    return lines.join('\n').slice(0, 1800);
   }
 
   async function handleBuildChatFileSelection(
@@ -3778,6 +4064,63 @@ export default function BuildEditor({
           );
           return { handled: true };
         }
+        const hiddenMessageContext = buildBuildChatHiddenMessageContext({
+          messageText: routingMessageText,
+          references: references.map((reference) => ({
+            fileName: reference.fileName,
+            url: reference.url
+          }))
+        });
+        if (!resolvingPendingClarification && routingMessageText.trim()) {
+          let hiddenReferenceContext = hiddenMessageContext;
+          let existingUserMessageId = null as number | null;
+          try {
+            const result = await createBuildChatReferenceNote({
+              buildId: uploadBuildId,
+              messageText: routingMessageText,
+              references: references.map((reference) => ({
+                fileName: reference.fileName,
+                url: reference.url,
+                mimeType: reference.mimeType || null
+              })),
+              hidden: true
+            });
+            const resolvedMessageContext = String(
+              result?.messageContext || ''
+            ).trim();
+            if (resolvedMessageContext) {
+              hiddenReferenceContext = resolvedMessageContext;
+            }
+            if (result?.userMessage) {
+              appendPersistedBuildChatMessage(result.userMessage, {
+                buildId: uploadBuildId
+              });
+              existingUserMessageId =
+                Number(result.userMessage?.id || 0) || null;
+            }
+          } catch (error) {
+            await cleanupBuildChatReferenceUploadsQuietly(
+              cleanupUploads,
+              uploadBuildId
+            );
+            throw error;
+          }
+          setBuildChatUploadInFlight(false);
+          const started = await sendBuildMessageText(routingMessageText, {
+            messageContext: hiddenReferenceContext,
+            existingUserMessageId,
+            ignoreUploadInFlight: true
+          });
+          if (started) {
+            clearConsumedBuildChatUploadDraft();
+            return { handled: true };
+          }
+          await persistBuildChatAssistantNote(
+            'I saved the screenshot reference, but the run did not start. Retry your message when ready.',
+            { buildId: uploadBuildId }
+          );
+          return { handled: true };
+        }
         let result;
         try {
           result = await createBuildChatReferenceNote({
@@ -3858,10 +4201,21 @@ export default function BuildEditor({
 
   async function sendBuildMessageText(
     messageText: string,
-    options?: { planAction?: BuildPlanAction | null }
+    options?: {
+      planAction?: BuildPlanAction | null;
+      messageContext?: string | null;
+      existingUserMessageId?: number | null;
+      ignoreUploadInFlight?: boolean;
+    }
   ) {
     const trimmedMessage = String(messageText || '').trim();
-    if (!trimmedMessage || !isOwner || buildChatUploadInFlight) return false;
+    if (
+      !trimmedMessage ||
+      !isOwner ||
+      (buildChatUploadInFlight && options?.ignoreUploadInFlight !== true)
+    ) {
+      return false;
+    }
     const pendingBuildChatUploadClarification =
       pendingBuildChatUploadClarificationRef.current[
         pendingBuildChatUploadClarificationRef.current.length - 1
@@ -4337,6 +4691,15 @@ export default function BuildEditor({
     updateBuildRef.current(nextBuild);
   }
 
+  function clearLocalFollowUpPrompt() {
+    const activeBuild = buildRef.current;
+    if (!activeBuild?.followUpPrompt) return;
+    applyBuildUpdate({
+      ...activeBuild,
+      followUpPrompt: null
+    });
+  }
+
   async function captureThumbnailFromPreview() {
     const previewPanel = previewPanelRef.current;
     if (!previewPanel) {
@@ -4497,6 +4860,44 @@ export default function BuildEditor({
     setForking(false);
   }
 
+  async function handlePurchaseGenerationReset() {
+    if (!isOwner || !userId || purchasingGenerationReset) return;
+    setPurchasingGenerationReset(true);
+    setGenerationResetError('');
+    try {
+      const result = await purchaseBuildGenerationReset(build.id);
+      if (typeof result?.newBalance === 'number') {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: result.newBalance }
+        });
+      }
+      if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
+        copilotPolicyRef.current = result?.copilotPolicy || null;
+        updateCopilotPolicyRef.current(result?.copilotPolicy || null);
+      }
+    } catch (error: any) {
+      console.error('Failed to purchase build generation reset:', error);
+      const nextRequestLimits =
+        error?.response?.data?.requestLimits || error?.requestLimits || null;
+      const nextPolicy = applyRequestLimitsToCopilotPolicy(
+        copilotPolicyRef.current,
+        nextRequestLimits
+      );
+      if (nextPolicy) {
+        copilotPolicyRef.current = nextPolicy;
+        updateCopilotPolicyRef.current(nextPolicy);
+      }
+      setGenerationResetError(
+        error?.response?.data?.error ||
+          error?.message ||
+          'Failed to purchase generation quota reset'
+      );
+    } finally {
+      setPurchasingGenerationReset(false);
+    }
+  }
+
   const previewProjectFiles = Array.isArray(build.projectFiles)
     ? build.projectFiles
     : EMPTY_BUILD_PROJECT_FILES;
@@ -4622,6 +5023,7 @@ export default function BuildEditor({
               messages={mergedChatMessages}
               executionPlan={displayedExecutionPlan}
               scopedPlanQuestion={resolveScopedPlanQuestion(displayedExecutionPlan)}
+              followUpPrompt={displayedFollowUpPrompt}
               generating={displayedGenerating}
               generatingStatus={displayedGeneratingStatus}
               assistantStatusSteps={displayedAssistantStatusSteps}
@@ -4643,6 +5045,8 @@ export default function BuildEditor({
               onSendMessage={handleSendMessage}
               onContinueScopedPlan={handleContinueScopedPlan}
               onCancelScopedPlan={handleCancelScopedPlan}
+              onAcceptFollowUpPrompt={handleAcceptFollowUpPrompt}
+              onDismissFollowUpPrompt={handleDismissFollowUpPrompt}
               onOpenBuildChatUpload={handleOpenBuildChatUpload}
               uploadInFlight={buildChatUploadInFlight}
               runtimeUploadsModalShown={runtimeUploadsModalShown}
@@ -4656,6 +5060,10 @@ export default function BuildEditor({
               onCloseRuntimeUploadsManager={handleCloseRuntimeUploadsManager}
               onLoadMoreRuntimeUploads={handleLoadMoreRuntimeUploads}
               onDeleteRuntimeUpload={handleDeleteRuntimeUploadManagerAsset}
+              twinkleCoins={Number(twinkleCoins) || 0}
+              purchasingGenerationReset={purchasingGenerationReset}
+              generationResetError={generationResetError}
+              onPurchaseGenerationReset={handlePurchaseGenerationReset}
               onStopGeneration={handleStopGeneration}
               onReloadProjectFileChangeLogs={handleReloadProjectFileChangeLogs}
               onDeleteMessage={handleDeleteMessage}
@@ -4926,11 +5334,13 @@ export default function BuildEditor({
     const now = Math.floor(Date.now() / 1000);
     const assistantMessageId = Date.now();
     const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
-    activeRunModeRef.current = 'runtime-autofix';
-    shouldHydrateSharedRunRef.current = false;
-    streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
-      activeBuild?.projectFiles || [],
-      activeBuild?.code || ''
+      activeRunModeRef.current = 'runtime-autofix';
+      shouldHydrateSharedRunRef.current = false;
+      setDismissedFollowUpPromptKey('');
+      clearLocalFollowUpPrompt();
+      streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+        activeBuild?.projectFiles || [],
+        activeBuild?.code || ''
     );
     setStreamingProjectFiles(null);
     setStreamingFocusFilePath(null);
@@ -4943,6 +5353,7 @@ export default function BuildEditor({
     streamRequestIdRef.current = requestId;
     userMessageIdRef.current = null;
     assistantMessageIdRef.current = assistantMessageId;
+    activeRunMessageContextRef.current = null;
 
     const assistantMessage: ChatMessage = {
       id: assistantMessageId,
@@ -4989,14 +5400,22 @@ export default function BuildEditor({
       autoFixRuntimeObservation: true,
       runtimeAutoFixSourceRequestId: options?.sourceRequestId || null,
       runtimeAutoFixSourceArtifactVersionId:
-        options?.sourceArtifactVersionId || null
+        options?.sourceArtifactVersionId || null,
+      expectedCurrentArtifactVersionId:
+        Number(buildRef.current?.currentArtifactVersionId || 0) > 0
+          ? Number(buildRef.current?.currentArtifactVersionId)
+          : undefined
     });
     return true;
   }
 
   async function startGeneration(
     messageText: string,
-    options?: { planAction?: BuildPlanAction | null }
+    options?: {
+      planAction?: BuildPlanAction | null;
+      messageContext?: string | null;
+      existingUserMessageId?: number | null;
+    }
   ): Promise<boolean> {
     if (AI_FEATURES_DISABLED) return false;
     if (!messageText.trim() || isRunActivityInFlight() || !isOwner) {
@@ -5029,8 +5448,15 @@ export default function BuildEditor({
       const messageId = Date.now();
       const requestId = `${activeBuild.id}-${messageId}`;
       const runtimeObservationSummary = getCurrentRuntimeObservationSummary();
+      const trimmedMessageContext = String(
+        options?.messageContext || ''
+      ).trim();
+      const existingUserMessageId =
+        Number(options?.existingUserMessageId || 0) || null;
       activeRunModeRef.current = 'user';
       shouldHydrateSharedRunRef.current = false;
+      setDismissedFollowUpPromptKey('');
+      clearLocalFollowUpPrompt();
       resetRuntimeHealthFollowUpState();
       setRuntimeExplorationPlan(null);
       streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
@@ -5045,17 +5471,29 @@ export default function BuildEditor({
       setUsageMetrics({});
       setRunEvents([]);
       streamRequestIdRef.current = requestId;
+      activeRunMessageContextRef.current = trimmedMessageContext || null;
 
-      const userMessage: ChatMessage = {
-        id: messageId,
-        role: 'user',
-        content: messageText,
-        codeGenerated: null,
-        billingState: null,
-        streamCodePreview: null,
-        createdAt: now,
-        persisted: false
-      };
+      const existingUserMessage =
+        existingUserMessageId && existingUserMessageId > 0
+          ? chatMessagesRef.current.find(
+              (entry) => entry.id === existingUserMessageId
+            ) || null
+          : null;
+      const userMessage: ChatMessage = existingUserMessage
+        ? {
+            ...existingUserMessage,
+            persisted: true
+          }
+        : {
+            id: messageId,
+            role: 'user',
+            content: messageText,
+            codeGenerated: null,
+            billingState: null,
+            streamCodePreview: null,
+            createdAt: now,
+            persisted: false
+          };
       const assistantMessage: ChatMessage = {
         id: messageId + 1,
         role: 'assistant',
@@ -5066,14 +5504,13 @@ export default function BuildEditor({
         createdAt: now + 1,
         persisted: false
       };
-      userMessageIdRef.current = userMessage.id;
+      userMessageIdRef.current =
+        (existingUserMessage && existingUserMessage.id) || userMessage.id;
       assistantMessageIdRef.current = assistantMessage.id;
 
-      const messagesWithUser = [
-        ...chatMessagesRef.current,
-        userMessage,
-        assistantMessage
-      ];
+      const messagesWithUser = existingUserMessage
+        ? [...chatMessagesRef.current, assistantMessage]
+        : [...chatMessagesRef.current, userMessage, assistantMessage];
       chatMessagesRef.current = messagesWithUser;
       updateChatMessagesRef.current(messagesWithUser);
       onRegisterBuildRun({
@@ -5092,7 +5529,13 @@ export default function BuildEditor({
         message: messageText,
         requestId,
         runtimeObservationSummary: runtimeObservationSummary || undefined,
-        planAction: options?.planAction || undefined
+        messageContext: trimmedMessageContext || undefined,
+        existingUserMessageId: existingUserMessageId || undefined,
+        planAction: options?.planAction || undefined,
+        expectedCurrentArtifactVersionId:
+          Number(activeBuild.currentArtifactVersionId || 0) > 0
+            ? Number(activeBuild.currentArtifactVersionId)
+            : undefined
       });
       return true;
     } finally {
@@ -5127,6 +5570,8 @@ export default function BuildEditor({
       const requestId = `${activeBuild.id}-greeting-${assistantMessageId}`;
       activeRunModeRef.current = 'greeting';
       shouldHydrateSharedRunRef.current = false;
+      setDismissedFollowUpPromptKey('');
+      clearLocalFollowUpPrompt();
       resetRuntimeHealthFollowUpState();
       setRuntimeExplorationPlan(null);
       streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
@@ -5144,6 +5589,7 @@ export default function BuildEditor({
       streamRequestIdRef.current = requestId;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = assistantMessageId;
+      activeRunMessageContextRef.current = null;
 
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -5341,6 +5787,7 @@ export default function BuildEditor({
         const nextBuild = {
           ...buildPayload.build,
           executionPlan: buildPayload.executionPlan || null,
+          followUpPrompt: buildPayload.followUpPrompt || null,
           projectManifest: buildPayload.projectManifest || null,
           projectFiles: Array.isArray(buildPayload.projectFiles)
             ? buildPayload.projectFiles

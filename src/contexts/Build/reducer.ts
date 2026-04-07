@@ -25,6 +25,11 @@ export interface BuildLiveRunEvent {
   message: string;
   createdAt: number;
   deduped?: boolean;
+  details?: {
+    thoughtContent?: string | null;
+    isComplete?: boolean;
+    isThinkingHard?: boolean;
+  } | null;
   usage?: {
     stage?: string | null;
     model?: string | null;
@@ -32,6 +37,12 @@ export interface BuildLiveRunEvent {
     outputTokens?: number;
     totalTokens?: number;
   } | null;
+}
+
+export interface BuildLiveRunFollowUpPrompt {
+  question?: string | null;
+  suggestedMessage?: string | null;
+  sourceMessageId?: number | null;
 }
 
 export interface BuildLiveRunState {
@@ -49,6 +60,7 @@ export interface BuildLiveRunState {
   streamingProjectFiles: Array<{ path: string; content?: string }> | null;
   streamingFocusFilePath: string | null;
   executionPlan?: any | null;
+  followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
@@ -73,10 +85,13 @@ export interface BuildLiveRunActionPayload {
   reply?: string;
   codeGenerated?: string | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
+  projectFilesMode?: 'patch' | 'snapshot' | null;
+  projectFilesPersisted?: boolean;
   userMessage?: BuildLiveRunMessage | null;
   assistantMessage?: BuildLiveRunMessage | null;
   baseProjectFiles?: Array<{ path: string; content?: string }> | null;
   executionPlan?: any | null;
+  followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
@@ -259,6 +274,7 @@ export default function BuildReducer(
         streamingProjectFiles: null,
         streamingFocusFilePath: null,
         executionPlan: null,
+        followUpPrompt: null,
         runtimeExplorationPlan: null,
         runtimePlanRefined: false,
         billingState: null,
@@ -298,6 +314,23 @@ export default function BuildReducer(
       const hasProjectFileUpdates =
         Array.isArray(action.buildRun?.projectFiles) &&
         action.buildRun.projectFiles.length > 0;
+      const normalizedProjectFiles = hasProjectFileUpdates
+        ? normalizeBuildRunProjectFiles(action.buildRun?.projectFiles)
+        : null;
+      const projectFilesMode =
+        action.buildRun?.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
+      const projectFilesPersisted = action.buildRun?.projectFilesPersisted === true;
+      const nextStreamingProjectFiles = hasProjectFileUpdates
+        ? projectFilesMode === 'snapshot'
+          ? normalizedProjectFiles
+          : overlayBuildRunProjectFiles({
+              baseFiles:
+                currentRun.streamingProjectFiles?.length
+                  ? currentRun.streamingProjectFiles
+                  : currentRun.baseProjectFiles,
+              updates: normalizedProjectFiles
+            })
+        : currentRun.streamingProjectFiles;
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         generating: true,
@@ -315,16 +348,17 @@ export default function BuildReducer(
                 : {})
             }
           : currentRun.assistantMessage,
-        streamingProjectFiles: hasProjectFileUpdates
-          ? overlayBuildRunProjectFiles({
-              baseFiles:
-                currentRun.streamingProjectFiles?.length
-                  ? currentRun.streamingProjectFiles
-                  : currentRun.baseProjectFiles,
-              updates: action.buildRun?.projectFiles
-            })
-          : currentRun.streamingProjectFiles,
-        streamingFocusFilePath: hasProjectFileUpdates
+        baseProjectFiles:
+          projectFilesPersisted && normalizedProjectFiles?.length
+            ? normalizedProjectFiles
+            : currentRun.baseProjectFiles,
+        streamingProjectFiles: projectFilesPersisted
+          ? null
+          : nextStreamingProjectFiles,
+        streamingFocusFilePath:
+          projectFilesPersisted
+            ? null
+            : hasProjectFileUpdates
           ? getStreamingFocusFilePath(action.buildRun?.projectFiles)
           : currentRun.streamingFocusFilePath,
         executionPlan:
@@ -332,6 +366,11 @@ export default function BuildReducer(
           Object.prototype.hasOwnProperty.call(action.buildRun, 'executionPlan')
             ? action.buildRun.executionPlan ?? null
             : currentRun.executionPlan,
+        followUpPrompt:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(action.buildRun, 'followUpPrompt')
+            ? action.buildRun.followUpPrompt ?? null
+            : currentRun.followUpPrompt,
         runtimeExplorationPlan:
           action.buildRun &&
           Object.prototype.hasOwnProperty.call(
@@ -366,7 +405,16 @@ export default function BuildReducer(
         lastEvent.phase === nextEvent.phase &&
         lastEvent.message === nextEvent.message &&
         Math.abs(lastEvent.createdAt - nextEvent.createdAt) < 1500
-          ? currentRun.runEvents
+          ? [
+              ...currentRun.runEvents.slice(0, -1),
+              {
+                ...lastEvent,
+                createdAt: nextEvent.createdAt,
+                deduped: nextEvent.deduped,
+                details: nextEvent.details ?? lastEvent.details ?? null,
+                usage: nextEvent.usage ?? lastEvent.usage ?? null
+              }
+            ]
           : [...currentRun.runEvents, nextEvent].slice(-40);
       return upsertBuildRun(state, buildId, {
         ...currentRun,
@@ -478,6 +526,11 @@ export default function BuildReducer(
           Object.prototype.hasOwnProperty.call(action.buildRun, 'executionPlan')
             ? action.buildRun.executionPlan ?? null
             : currentRun.executionPlan,
+        followUpPrompt:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(action.buildRun, 'followUpPrompt')
+            ? action.buildRun.followUpPrompt ?? null
+            : currentRun.followUpPrompt,
         runtimeExplorationPlan:
           action.buildRun &&
           Object.prototype.hasOwnProperty.call(

@@ -45,6 +45,9 @@ interface BuildCopilotPolicy {
   requestLimits: {
     dayIndex: number;
     dayKey: string;
+    generationBaseRequestsPerDay: number;
+    generationResetPurchasesToday: number;
+    generationResetCost: number;
     generationRequestsPerDay: number;
     generationRequestsToday: number;
     generationRequestsRemaining: number;
@@ -376,6 +379,7 @@ function BuildEditorWrapper() {
           const nextBuild = {
             ...data.build,
             executionPlan: data.executionPlan || null,
+            followUpPrompt: data.followUpPrompt || null,
             projectManifest: data.projectManifest || null,
             capabilitySnapshot: data.capabilitySnapshot || null,
             projectFiles: Array.isArray(data.projectFiles)

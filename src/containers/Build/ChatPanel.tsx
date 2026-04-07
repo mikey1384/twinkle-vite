@@ -97,6 +97,9 @@ interface BuildCopilotPolicy {
   requestLimits: {
     dayIndex: number;
     dayKey: string;
+    generationBaseRequestsPerDay: number;
+    generationResetPurchasesToday: number;
+    generationResetCost: number;
     generationRequestsPerDay: number;
     generationRequestsToday: number;
     generationRequestsRemaining: number;
@@ -110,6 +113,11 @@ interface BuildRunEvent {
   message: string;
   createdAt: number;
   deduped?: boolean;
+  details?: {
+    thoughtContent?: string | null;
+    isComplete?: boolean;
+    isThinkingHard?: boolean;
+  } | null;
   usage?: {
     stage?: string | null;
     model?: string | null;
@@ -117,6 +125,17 @@ interface BuildRunEvent {
     outputTokens?: number;
     totalTokens?: number;
   } | null;
+}
+
+interface BuildCurrentActivity {
+  message: string;
+}
+
+interface BuildStatusStepEntry {
+  status: string;
+  thoughtContent: string;
+  thoughtIsComplete: boolean;
+  thoughtIsThinkingHard: boolean;
 }
 
 interface BuildProjectFileDiff {
@@ -155,7 +174,13 @@ interface BuildRuntimeUploadAsset {
 type ChatPanelTab = 'chat' | 'debug';
 
 interface BuildExecutionPlanSummary {
-  status: 'active' | 'completed' | 'cancelled';
+  status: 'awaiting_confirmation' | 'running' | 'completed' | 'cancelled';
+}
+
+interface BuildFollowUpPrompt {
+  question?: string | null;
+  suggestedMessage?: string | null;
+  sourceMessageId?: number | null;
 }
 
 interface LimitProgressItem {
@@ -172,6 +197,7 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;
+  followUpPrompt?: BuildFollowUpPrompt | null;
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
@@ -193,6 +219,8 @@ interface ChatPanelProps {
   onSendMessage: (message: string) => Promise<boolean> | boolean;
   onContinueScopedPlan: () => void;
   onCancelScopedPlan: () => void;
+  onAcceptFollowUpPrompt: () => void;
+  onDismissFollowUpPrompt: () => void;
   onOpenBuildChatUpload: () => void;
   uploadInFlight: boolean;
   runtimeUploadsModalShown: boolean;
@@ -206,6 +234,10 @@ interface ChatPanelProps {
   onCloseRuntimeUploadsManager: () => void;
   onLoadMoreRuntimeUploads: () => void;
   onDeleteRuntimeUpload: (asset: BuildRuntimeUploadAsset) => Promise<void> | void;
+  twinkleCoins: number;
+  purchasingGenerationReset: boolean;
+  generationResetError: string;
+  onPurchaseGenerationReset: () => Promise<void> | void;
   onStopGeneration: () => void;
   onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
   onDeleteMessage: (message: ChatMessage) => void;
@@ -216,6 +248,7 @@ export default function ChatPanel({
   messages,
   executionPlan,
   scopedPlanQuestion,
+  followUpPrompt,
   generating,
   generatingStatus,
   assistantStatusSteps,
@@ -237,6 +270,8 @@ export default function ChatPanel({
   onSendMessage,
   onContinueScopedPlan,
   onCancelScopedPlan,
+  onAcceptFollowUpPrompt,
+  onDismissFollowUpPrompt,
   onOpenBuildChatUpload,
   uploadInFlight,
   runtimeUploadsModalShown,
@@ -250,6 +285,10 @@ export default function ChatPanel({
   onCloseRuntimeUploadsManager,
   onLoadMoreRuntimeUploads,
   onDeleteRuntimeUpload,
+  twinkleCoins,
+  purchasingGenerationReset,
+  generationResetError,
+  onPurchaseGenerationReset,
   onStopGeneration,
   onReloadProjectFileChangeLogs,
   onDeleteMessage
@@ -305,18 +344,68 @@ export default function ChatPanel({
         .slice(-10),
     [runEvents]
   );
-  const currentActivityMessage = useMemo(() => {
+  const currentActivity = useMemo(() => {
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
       const event = runEvents[index];
       if (!event) continue;
       const message = String(event.message || '').trim();
       if (!message) continue;
-      if (event.kind === 'action' || event.kind === 'status') {
-        return message;
+      if (String(event.details?.thoughtContent || '').trim()) {
+        continue;
+      }
+      if (
+        event.kind === 'action' ||
+        event.kind === 'status' ||
+        event.kind === 'phase'
+      ) {
+        return {
+          message
+        };
       }
     }
-    return null;
-  }, [runEvents]);
+    const fallbackStatus =
+      assistantStatusSteps.length > 0
+        ? String(assistantStatusSteps[assistantStatusSteps.length - 1] || '').trim()
+        : '';
+    return fallbackStatus ? { message: fallbackStatus } : null;
+  }, [assistantStatusSteps, runEvents]);
+  const statusStepEntries = useMemo(() => {
+    const entries = assistantStatusSteps
+      .map((status) => String(status || '').trim())
+      .filter(Boolean)
+      .map((status) => ({
+        status,
+        thoughtContent: '',
+        thoughtIsComplete: false,
+        thoughtIsThinkingHard: false
+      }));
+    if (entries.length === 0) return entries;
+    let currentStepIndex = -1;
+    let nextStepIndex = 0;
+    for (const event of runEvents) {
+      const message = String(event?.message || '').trim();
+      if (!message) continue;
+      if (
+        nextStepIndex < entries.length &&
+        message === entries[nextStepIndex].status
+      ) {
+        currentStepIndex = nextStepIndex;
+        nextStepIndex += 1;
+      }
+      const thoughtContent = String(event?.details?.thoughtContent || '').trim();
+      if (!thoughtContent) continue;
+      const targetIndex =
+        currentStepIndex >= 0 ? currentStepIndex : entries.length - 1;
+      if (targetIndex < 0) continue;
+      entries[targetIndex] = {
+        ...entries[targetIndex],
+        thoughtContent,
+        thoughtIsComplete: Boolean(event?.details?.isComplete),
+        thoughtIsThinkingHard: Boolean(event?.details?.isThinkingHard)
+      };
+    }
+    return entries;
+  }, [assistantStatusSteps, runEvents]);
 
   const expandedLimitItems = useMemo(() => {
     if (!copilotPolicy) return [];
@@ -430,6 +519,34 @@ export default function ChatPanel({
     }
     return parts.length > 0 ? parts.join(' • ') : null;
   }, [copilotPolicy]);
+  const generationResetUi = useMemo(() => {
+    if (!copilotPolicy) return null;
+    const requestLimits = copilotPolicy.requestLimits;
+    const resetCost = Math.max(
+      0,
+      Math.floor(Number(requestLimits.generationResetCost) || 0)
+    );
+    const resetPurchasesToday = Math.max(
+      0,
+      Math.floor(Number(requestLimits.generationResetPurchasesToday) || 0)
+    );
+    const baseGenerationLimit = Math.max(
+      0,
+      Math.floor(Number(requestLimits.generationBaseRequestsPerDay) || 0)
+    );
+    const quotaMaxed =
+      requestLimits.generationRequestsPerDay > 0 &&
+      requestLimits.generationRequestsRemaining <= 0;
+    if (!quotaMaxed || generating || resetCost < 1 || baseGenerationLimit < 1) {
+      return null;
+    }
+    return {
+      resetCost,
+      resetPurchasesToday,
+      baseGenerationLimit,
+      hasEnoughCoins: twinkleCoins >= resetCost
+    };
+  }, [copilotPolicy, generating, twinkleCoins]);
   const hasPromptContextPreview = Boolean(
     projectFilePromptContextPreview && projectFilePromptContextPreview.trim()
   );
@@ -443,10 +560,22 @@ export default function ChatPanel({
   const showScopedPlanQuickReplies =
     isOwner &&
     activeTab === 'chat' &&
-    executionPlan?.status === 'active' &&
+    executionPlan?.status === 'awaiting_confirmation' &&
     !generating &&
     !draftMessage.trim();
   const normalizedScopedPlanQuestion = String(scopedPlanQuestion || '').trim();
+  const normalizedFollowUpQuestion = String(followUpPrompt?.question || '').trim();
+  const normalizedFollowUpSuggestedMessage = String(
+    followUpPrompt?.suggestedMessage || ''
+  ).trim();
+  const showGenericFollowUpQuickReplies =
+    isOwner &&
+    activeTab === 'chat' &&
+    !showScopedPlanQuickReplies &&
+    !generating &&
+    !draftMessage.trim() &&
+    Boolean(normalizedFollowUpQuestion) &&
+    Boolean(normalizedFollowUpSuggestedMessage);
 
   function handleTabChange(nextTab: ChatPanelTab) {
     if (nextTab === activeTab) return;
@@ -572,6 +701,54 @@ export default function ChatPanel({
                   text={dailyGenerationBarText}
                   style={{ marginTop: '-0.2rem' }}
                 />
+                {generationResetUi ? (
+                  <div
+                    className={css`
+                      margin-top: 0.35rem;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 0.45rem;
+                    `}
+                  >
+                    <div
+                      className={css`
+                        font-size: 0.8rem;
+                        line-height: 1.45;
+                        color: var(--chat-text);
+                        opacity: 0.78;
+                      `}
+                    >
+                      {`You've used today's full quota. Reset #${generationResetUi.resetPurchasesToday + 1} adds ${formatTokenCount(generationResetUi.baseGenerationLimit)} more generations today.`}
+                    </div>
+                    <GameCTAButton
+                      icon="redo"
+                      variant="orange"
+                      shiny
+                      loading={purchasingGenerationReset}
+                      disabled={
+                        purchasingGenerationReset ||
+                        !generationResetUi.hasEnoughCoins
+                      }
+                      onClick={onPurchaseGenerationReset}
+                    >
+                      {generationResetUi.hasEnoughCoins
+                        ? `Reset quota (${generationResetUi.resetCost.toLocaleString()} coins)`
+                        : `Need ${generationResetUi.resetCost.toLocaleString()} coins (you have ${twinkleCoins.toLocaleString()})`}
+                    </GameCTAButton>
+                    {generationResetError ? (
+                      <div
+                        className={css`
+                          font-size: 0.8rem;
+                          line-height: 1.4;
+                          color: ${Color.rose()};
+                          font-weight: 700;
+                        `}
+                      >
+                        {generationResetError}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </>
             )}
             {limitsExpanded && (
@@ -817,7 +994,8 @@ export default function ChatPanel({
           generating={generating}
           generatingStatus={generatingStatus}
           assistantStatusSteps={assistantStatusSteps}
-          currentActivityMessage={currentActivityMessage}
+          currentActivity={currentActivity}
+          statusStepEntries={statusStepEntries}
           usageRows={usageRows}
           usageTotals={usageTotals}
           usageShowsMultipleModels={usageShowsMultipleModels}
@@ -845,7 +1023,7 @@ export default function ChatPanel({
             background: #fff;
           `}
         >
-          {showScopedPlanQuickReplies && (
+          {(showScopedPlanQuickReplies || showGenericFollowUpQuickReplies) && (
             <div
               className={css`
                 display: grid;
@@ -853,7 +1031,9 @@ export default function ChatPanel({
                 margin-bottom: 0.7rem;
               `}
             >
-              {normalizedScopedPlanQuestion && (
+              {(showScopedPlanQuickReplies
+                ? normalizedScopedPlanQuestion
+                : normalizedFollowUpQuestion) && (
                 <div
                   className={css`
                     font-size: 0.9rem;
@@ -862,7 +1042,9 @@ export default function ChatPanel({
                     font-weight: 700;
                   `}
                 >
-                  {normalizedScopedPlanQuestion}
+                  {showScopedPlanQuickReplies
+                    ? normalizedScopedPlanQuestion
+                    : normalizedFollowUpQuestion}
                 </div>
               )}
               <div
@@ -874,7 +1056,11 @@ export default function ChatPanel({
               >
                 <button
                   type="button"
-                  onClick={onContinueScopedPlan}
+                  onClick={
+                    showScopedPlanQuickReplies
+                      ? onContinueScopedPlan
+                      : onAcceptFollowUpPrompt
+                  }
                   className={css`
                     border: 1px solid rgba(36, 99, 235, 0.18);
                     background: rgba(59, 130, 246, 0.08);
@@ -890,7 +1076,11 @@ export default function ChatPanel({
                 </button>
                 <button
                   type="button"
-                  onClick={onCancelScopedPlan}
+                  onClick={
+                    showScopedPlanQuickReplies
+                      ? onCancelScopedPlan
+                      : onDismissFollowUpPrompt
+                  }
                   className={css`
                     border: 1px solid rgba(148, 163, 184, 0.28);
                     background: rgba(148, 163, 184, 0.1);
@@ -1391,7 +1581,8 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   generating,
   generatingStatus,
   assistantStatusSteps,
-  currentActivityMessage,
+  currentActivity,
+  statusStepEntries,
   usageRows,
   usageTotals,
   usageShowsMultipleModels,
@@ -1415,7 +1606,8 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
-  currentActivityMessage: string | null;
+  currentActivity: BuildCurrentActivity | null;
+  statusStepEntries: BuildStatusStepEntry[];
   usageRows: BuildUsageMetric[];
   usageTotals: {
     inputTokens: number;
@@ -1492,7 +1684,8 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
               generating={generating}
               generatingStatus={generatingStatus}
               assistantStatusSteps={assistantStatusSteps}
-              currentActivityMessage={currentActivityMessage}
+              currentActivity={currentActivity}
+              statusStepEntries={statusStepEntries}
               activeStreamMessageIds={activeStreamMessageIds}
               onDeleteMessage={onDeleteMessage}
             />
@@ -1882,7 +2075,8 @@ function BuildChatMessageRow({
   generating,
   generatingStatus,
   assistantStatusSteps,
-  currentActivityMessage,
+  currentActivity,
+  statusStepEntries,
   activeStreamMessageIds,
   onDeleteMessage
 }: {
@@ -1893,7 +2087,8 @@ function BuildChatMessageRow({
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
-  currentActivityMessage: string | null;
+  currentActivity: BuildCurrentActivity | null;
+  statusStepEntries: BuildStatusStepEntry[];
   activeStreamMessageIds: number[];
   onDeleteMessage: (message: ChatMessage) => void;
 }) {
@@ -2010,9 +2205,10 @@ function BuildChatMessageRow({
                 generating={generating}
                 generatingStatus={generatingStatus}
                 statusSteps={isLastAssistant ? assistantStatusSteps : []}
-                currentActivityMessage={
-                  isLastAssistant ? currentActivityMessage : null
+                currentActivity={
+                  isLastAssistant ? currentActivity : null
                 }
+                statusStepEntries={isLastAssistant ? statusStepEntries : []}
               />
             ) : (
               <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
@@ -2068,7 +2264,8 @@ function AssistantMessage({
   generating,
   generatingStatus,
   statusSteps,
-  currentActivityMessage
+  currentActivity,
+  statusStepEntries
 }: {
   message: ChatMessage;
   messages: ChatMessage[];
@@ -2076,7 +2273,8 @@ function AssistantMessage({
   generating: boolean;
   generatingStatus: string | null;
   statusSteps: string[];
-  currentActivityMessage: string | null;
+  currentActivity: BuildCurrentActivity | null;
+  statusStepEntries: BuildStatusStepEntry[];
 }) {
   const [showDiff, setShowDiff] = useState(true);
 
@@ -2105,7 +2303,7 @@ function AssistantMessage({
     !message.codeGenerated &&
     Boolean(message.streamCodePreview && message.streamCodePreview.trim());
   const normalizedCurrentActivityMessage = String(
-    currentActivityMessage || ''
+    currentActivity?.message || ''
   ).trim();
   const fallbackActivityMessage = useMemo(() => {
     return formatStepLabel(String(generatingStatus || 'thinking').trim());
@@ -2118,9 +2316,26 @@ function AssistantMessage({
     isLatestAssistant &&
     statusSteps.length === 0 &&
     !message.content;
-  const displayedStatusSteps = shouldShowFallbackStep
-    ? [String(generatingStatus || 'thinking').trim() || 'thinking']
-    : statusSteps;
+  const displayedStatusStepEntries = shouldShowFallbackStep
+    ? [
+        {
+          status: String(generatingStatus || 'thinking').trim() || 'thinking',
+          thoughtContent: '',
+          thoughtIsComplete: false,
+          thoughtIsThinkingHard: false
+        }
+      ]
+    : statusStepEntries.length > 0
+      ? statusStepEntries
+      : statusSteps
+          .map((status) => String(status || '').trim())
+          .filter(Boolean)
+          .map((status) => ({
+            status,
+            thoughtContent: '',
+            thoughtIsComplete: false,
+            thoughtIsThinkingHard: false
+          }));
   const waitingForCurrentAssistantResponse = generating && isLatestAssistant;
   const showNoCodeWarning =
     !hasCodePayload &&
@@ -2322,14 +2537,14 @@ function AssistantMessage({
           </div>
         </div>
       )}
-      {displayedStatusSteps.length > 0 && (
-        <StatusStepLog steps={displayedStatusSteps} />
+      {displayedStatusStepEntries.length > 0 && (
+        <StatusStepLog steps={displayedStatusStepEntries} />
       )}
     </div>
   );
 }
 
-function StatusStepLog({ steps }: { steps: string[] }) {
+function StatusStepLog({ steps }: { steps: BuildStatusStepEntry[] }) {
   return (
     <div
       className={css`
@@ -2343,30 +2558,90 @@ function StatusStepLog({ steps }: { steps: string[] }) {
     >
       {steps.map((step, index) => {
         const isCurrent = index === steps.length - 1;
-        const label = formatStepLabel(step);
+        const label = formatStepLabel(step.status);
         return (
           <div
             key={index}
             className={css`
               display: flex;
-              align-items: center;
-              gap: 0.4rem;
+              flex-direction: column;
+              gap: 0.2rem;
               color: ${isCurrent ? 'var(--chat-text)' : Color.gray()};
               line-height: 1.5;
             `}
           >
-            {isCurrent ? (
-              <span style={{ color: Color.logoBlue() }}>&#9679;</span>
-            ) : (
-              <Icon
-                icon="check"
-                style={{ color: Color.green(), fontSize: '0.7rem' }}
-              />
+            <div
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+              `}
+            >
+              {isCurrent ? (
+                <span style={{ color: Color.logoBlue() }}>&#9679;</span>
+              ) : (
+                <Icon
+                  icon="check"
+                  style={{ color: Color.green(), fontSize: '0.7rem' }}
+                />
+              )}
+              <span>
+                {label}
+                {isCurrent && <AnimatedDots />}
+              </span>
+            </div>
+            {step.thoughtContent && (
+              <div
+                className={css`
+                  margin-left: 1.15rem;
+                  display: grid;
+                  gap: 0.22rem;
+                `}
+              >
+                <div
+                  className={css`
+                    padding: 0.42rem 0.58rem;
+                    border-radius: 7px;
+                    background: rgba(52, 109, 255, 0.05);
+                    border-left: 3px solid
+                      ${step.thoughtIsThinkingHard
+                        ? Color.orange()
+                        : Color.logoBlue()};
+                    white-space: pre-wrap;
+                    word-break: break-word;
+                    font-family: inherit;
+                    font-size: 0.76rem;
+                    line-height: 1.45;
+                    color: var(--chat-text);
+                    opacity: 0.94;
+                  `}
+                >
+                  {step.thoughtContent}
+                  {!step.thoughtIsComplete && (
+                    <AnimatedDots style={{ marginLeft: '0.18rem' }} />
+                  )}
+                </div>
+                <div
+                  className={css`
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.12rem;
+                    font-size: 0.67rem;
+                    line-height: 1.1;
+                    font-weight: 700;
+                    color: ${step.thoughtIsThinkingHard
+                      ? Color.orange()
+                      : Color.logoBlue()};
+                    opacity: 0.92;
+                  `}
+                >
+                  <span>
+                    {step.thoughtIsThinkingHard ? 'Thinking hard' : 'Thinking'}
+                  </span>
+                  <AnimatedDots />
+                </div>
+              </div>
             )}
-            <span>
-              {label}
-              {isCurrent && <AnimatedDots />}
-            </span>
           </div>
         );
       })}
@@ -2382,9 +2657,10 @@ const dotAnimation = css`
   }
 `;
 
-function AnimatedDots() {
+function AnimatedDots({ style }: { style?: React.CSSProperties }) {
   return (
     <span
+      style={style}
       className={css`
         ${dotAnimation}
         margin-left: 1px;

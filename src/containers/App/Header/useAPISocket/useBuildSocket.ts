@@ -54,12 +54,16 @@ export default function useBuildSocket() {
       requestId,
       reply,
       codeGenerated,
-      projectFiles
+      projectFiles,
+      projectFilesMode,
+      projectFilesPersisted
     }: {
       requestId?: string;
       reply?: string;
       codeGenerated?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
+      projectFilesMode?: 'patch' | 'snapshot' | null;
+      projectFilesPersisted?: boolean;
     }) {
       if (!requestId) return;
       const buildRun: any = { requestId };
@@ -71,6 +75,9 @@ export default function useBuildSocket() {
       }
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
         buildRun.projectFiles = projectFiles;
+        buildRun.projectFilesMode =
+          projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
+        buildRun.projectFilesPersisted = projectFilesPersisted === true;
       }
       onUpdateBuildRunStream(buildRun);
     }
@@ -82,6 +89,7 @@ export default function useBuildSocket() {
       code,
       projectFiles,
       executionPlan,
+      followUpPrompt,
       runtimeExplorationPlan,
       runtimePlanRefined,
       workspaceChanged,
@@ -97,6 +105,13 @@ export default function useBuildSocket() {
       code?: string | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
       executionPlan?: any | null;
+      followUpPrompt?:
+        | {
+            question?: string | null;
+            suggestedMessage?: string | null;
+            sourceMessageId?: number | null;
+          }
+        | null;
       runtimeExplorationPlan?: any | null;
       runtimePlanRefined?: boolean;
       workspaceChanged?: boolean;
@@ -118,6 +133,13 @@ export default function useBuildSocket() {
             ? projectFiles
             : null,
         executionPlan,
+        followUpPrompt:
+          Object.prototype.hasOwnProperty.call(
+            arguments[0] || {},
+            'followUpPrompt'
+          )
+            ? followUpPrompt ?? null
+            : undefined,
         runtimeExplorationPlan,
         runtimePlanRefined: Boolean(runtimePlanRefined),
         ...(Object.prototype.hasOwnProperty.call(
@@ -200,6 +222,11 @@ export default function useBuildSocket() {
         message?: string;
         createdAt?: number;
         deduped?: boolean;
+        details?: {
+          thoughtContent?: string | null;
+          isComplete?: boolean;
+          isThinkingHard?: boolean;
+        } | null;
         usage?: {
           stage?: string | null;
           model?: string | null;
@@ -223,6 +250,7 @@ export default function useBuildSocket() {
               ? event.createdAt
               : Date.now(),
           deduped: Boolean(event.deduped),
+          details: event.details || null,
           usage: event.usage || null
         }
       });

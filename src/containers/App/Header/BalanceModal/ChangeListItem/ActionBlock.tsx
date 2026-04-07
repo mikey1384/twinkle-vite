@@ -163,6 +163,9 @@ export default function ActionBlock({
     if (action === 'dailyTaskStreakRepair') {
       return 'purchased a Daily Tasks streak repair';
     }
+    if (action === 'buildGenerationQuotaReset') {
+      return "purchased today's build generation quota reset";
+    }
     if (
       action === 'dailyQuestionTomorrowVibeSelection' &&
       target === 'dailyQuestionTomorrowVibe'
