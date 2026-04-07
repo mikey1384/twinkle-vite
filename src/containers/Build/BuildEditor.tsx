@@ -1373,7 +1373,12 @@ export default function BuildEditor({
   }, [streamingProjectFiles]);
 
   useEffect(() => {
-    if (streamingProjectFiles && streamingProjectFiles.length > 0) {
+    if (!streamingProjectFiles || streamingProjectFiles.length === 0) return;
+    const isMobileWorkspace =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
+    if (!isMobileWorkspace) {
       setMobilePanelTab('preview');
     }
   }, [streamingProjectFiles]);

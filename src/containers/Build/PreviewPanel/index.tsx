@@ -1875,9 +1875,15 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       wasShowingStreamingCodeRef.current = isShowingStreamingCode;
 
       if (justStartedStreaming) {
+        const isMobileWorkspace =
+          typeof window !== 'undefined' &&
+          typeof window.matchMedia === 'function' &&
+          window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
+
         streamingAutoFollowEnabledRef.current = true;
         autoReturnToPreviewPendingRef.current = false;
-        if (viewMode !== 'code') {
+        // Keep the live simulator visible on mobile while Lumine streams code.
+        if (!isMobileWorkspace && viewMode !== 'code') {
           setViewMode('code');
         }
       } else if (justStoppedStreaming) {
