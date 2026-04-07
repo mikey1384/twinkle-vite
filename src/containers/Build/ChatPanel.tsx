@@ -183,6 +183,14 @@ interface BuildFollowUpPrompt {
   sourceMessageId?: number | null;
 }
 
+interface BuildDebugFailureSummary {
+  error: string;
+  failedAt: number | null;
+  phase: string | null;
+  lastStep: string | null;
+  savedWork: 'yes' | 'no' | 'unknown';
+}
+
 interface LimitProgressItem {
   id: string;
   label: string;
@@ -209,6 +217,7 @@ interface ChatPanelProps {
   projectFileChangeLogsError: string;
   projectFileChangeLogsLoadedAt: number | null;
   runEvents: BuildRunEvent[];
+  runError: string | null;
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatScrollRef: RefObject<HTMLDivElement | null>;
@@ -260,6 +269,7 @@ export default function ChatPanel({
   projectFileChangeLogsError,
   projectFileChangeLogsLoadedAt,
   runEvents,
+  runError,
   activeStreamMessageIds,
   isOwner,
   chatScrollRef,
@@ -343,6 +353,15 @@ export default function ChatPanel({
         .filter((event) => event.kind !== 'usage' && event.kind !== 'phase')
         .slice(-10),
     [runEvents]
+  );
+  const debugFailureSummary = useMemo(
+    () =>
+      buildDebugFailureSummary({
+        runError,
+        runEvents,
+        generating
+      }),
+    [generating, runError, runEvents]
   );
   const currentActivity = useMemo(() => {
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
@@ -553,6 +572,7 @@ export default function ChatPanel({
   const hasProjectFileChangeLogs = projectFileChangeLogs.length > 0;
   const showDebugEmptyState =
     !projectFileChangeLogsError &&
+    !debugFailureSummary &&
     usageRows.length === 0 &&
     debugRunEvents.length === 0 &&
     !hasPromptContextPreview &&
@@ -999,6 +1019,7 @@ export default function ChatPanel({
           usageRows={usageRows}
           usageTotals={usageTotals}
           usageShowsMultipleModels={usageShowsMultipleModels}
+          debugFailureSummary={debugFailureSummary}
           debugRunEvents={debugRunEvents}
           projectFileChangeLogs={projectFileChangeLogs}
           projectFilePromptContextPreview={projectFilePromptContextPreview}
@@ -1586,6 +1607,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   usageRows,
   usageTotals,
   usageShowsMultipleModels,
+  debugFailureSummary,
   debugRunEvents,
   projectFileChangeLogs,
   projectFilePromptContextPreview,
@@ -1615,6 +1637,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
     totalTokens: number;
   };
   usageShowsMultipleModels: boolean;
+  debugFailureSummary: BuildDebugFailureSummary | null;
   debugRunEvents: BuildRunEvent[];
   projectFileChangeLogs: BuildProjectFileChangeLog[];
   projectFilePromptContextPreview: string;
@@ -1761,6 +1784,72 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
           `}
         >
           {projectFileChangeLogsError}
+        </div>
+      ) : null}
+      {debugFailureSummary ? (
+        <div
+          className={css`
+            border: 1px solid ${Color.rose(0.32)};
+            background: ${Color.rose(0.08)};
+            border-radius: 10px;
+            padding: 0.75rem 0.8rem;
+            display: grid;
+            gap: 0.55rem;
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              color: ${Color.rose()};
+              font-weight: 800;
+              font-size: 0.84rem;
+            `}
+          >
+            <Icon icon="exclamation-triangle" />
+            <span>Last run failed</span>
+          </div>
+          <div
+            className={css`
+              font-size: 0.86rem;
+              line-height: 1.45;
+              color: var(--chat-text);
+            `}
+          >
+            {debugFailureSummary.error}
+          </div>
+          <div
+            className={css`
+              display: grid;
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              gap: 0.45rem 0.7rem;
+              @media (max-width: ${mobileMaxWidth}) {
+                grid-template-columns: 1fr;
+              }
+            `}
+          >
+            <DebugSummaryField
+              label="When"
+              value={
+                debugFailureSummary.failedAt
+                  ? formatRunEventTime(debugFailureSummary.failedAt)
+                  : 'Unknown'
+              }
+            />
+            <DebugSummaryField
+              label="Stage"
+              value={formatRunEventPhase(debugFailureSummary.phase)}
+            />
+            <DebugSummaryField
+              label="Saved code"
+              value={formatSavedWorkState(debugFailureSummary.savedWork)}
+            />
+            <DebugSummaryField
+              label="Last step"
+              value={debugFailureSummary.lastStep || 'Unknown'}
+            />
+          </div>
         </div>
       ) : null}
       {(usageRows.length > 0 || debugRunEvents.length > 0) && (
@@ -2822,6 +2911,46 @@ function LimitStat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function DebugSummaryField({
+  label,
+  value
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div
+      className={css`
+        display: grid;
+        gap: 0.14rem;
+        min-width: 0;
+      `}
+    >
+      <span
+        className={css`
+          font-size: 0.68rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: ${Color.rose(0.92)};
+        `}
+      >
+        {label}
+      </span>
+      <span
+        className={css`
+          font-size: 0.8rem;
+          line-height: 1.35;
+          color: var(--chat-text);
+          word-break: break-word;
+        `}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function getUsageStageLabel(stage: string) {
   switch (stage) {
     case 'planner':
@@ -2880,6 +3009,107 @@ function formatRunEventTime(timestamp: number) {
     minute: '2-digit',
     second: '2-digit'
   });
+}
+
+function formatRunEventPhase(phase: string | null) {
+  const normalized = String(phase || '').trim().toLowerCase();
+  switch (normalized) {
+    case 'planning':
+      return 'Planning';
+    case 'implementing':
+      return 'Making code';
+    case 'validating':
+      return 'Checking code';
+    case 'preview':
+      return 'Checking preview';
+    case 'completed':
+      return 'Done';
+    case 'error':
+      return 'Error';
+    case 'blocked':
+      return 'Blocked';
+    default:
+      return normalized
+        ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+        : 'Unknown';
+  }
+}
+
+function formatSavedWorkState(state: BuildDebugFailureSummary['savedWork']) {
+  switch (state) {
+    case 'yes':
+      return 'Yes';
+    case 'no':
+      return 'No';
+    default:
+      return 'Unknown';
+  }
+}
+
+function buildDebugFailureSummary({
+  runError,
+  runEvents,
+  generating
+}: {
+  runError: string | null;
+  runEvents: BuildRunEvent[];
+  generating: boolean;
+}): BuildDebugFailureSummary | null {
+  const normalizedError = String(runError || '').trim();
+  if (!normalizedError || generating) return null;
+
+  const errorEvent =
+    [...runEvents]
+      .reverse()
+      .find(
+        (event) =>
+          event.kind === 'lifecycle' &&
+          String(event.phase || '').trim().toLowerCase() === 'error'
+      ) || null;
+  const failureCutoffIndex = errorEvent
+    ? runEvents.findIndex((event) => event.id === errorEvent.id)
+    : -1;
+  const precedingEvents =
+    failureCutoffIndex >= 0
+      ? runEvents.slice(0, failureCutoffIndex)
+      : [...runEvents];
+  const lastMeaningfulEvent =
+    [...precedingEvents]
+      .reverse()
+      .find((event) => {
+        if (!event) return false;
+        if (event.kind === 'usage') return false;
+        const message = String(event.message || '').trim();
+        if (!message) return false;
+        return !(
+          event.kind === 'lifecycle' &&
+          String(event.phase || '').trim().toLowerCase() === 'error'
+        );
+      }) || null;
+  const lastApplyEvent =
+    [...precedingEvents]
+      .reverse()
+      .find(
+        (event) =>
+          event.kind === 'action' &&
+          /apply step/i.test(String(event.message || ''))
+      ) || null;
+  const applyMessage = String(lastApplyEvent?.message || '');
+  const savedWork =
+    /Persisted:\s*yes\b/i.test(applyMessage)
+      ? 'yes'
+      : /Persisted:\s*no\b/i.test(applyMessage) ||
+          /produced no net diff/i.test(applyMessage)
+        ? 'no'
+        : 'unknown';
+
+  return {
+    error: normalizedError,
+    failedAt: errorEvent?.createdAt || null,
+    phase: errorEvent?.phase || lastMeaningfulEvent?.phase || null,
+    lastStep: String(lastMeaningfulEvent?.message || '').trim() || null,
+    savedWork
+  };
 }
 
 function countProjectFileChanges(diff: BuildProjectFileDiff | null | undefined) {

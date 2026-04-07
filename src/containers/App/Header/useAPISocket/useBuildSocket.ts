@@ -56,7 +56,8 @@ export default function useBuildSocket() {
       codeGenerated,
       projectFiles,
       projectFilesMode,
-      projectFilesPersisted
+      projectFilesPersisted,
+      projectFilesFocusPath
     }: {
       requestId?: string;
       reply?: string;
@@ -64,6 +65,7 @@ export default function useBuildSocket() {
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesMode?: 'patch' | 'snapshot' | null;
       projectFilesPersisted?: boolean;
+      projectFilesFocusPath?: string | null;
     }) {
       if (!requestId) return;
       const buildRun: any = { requestId };
@@ -78,6 +80,8 @@ export default function useBuildSocket() {
         buildRun.projectFilesMode =
           projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
         buildRun.projectFilesPersisted = projectFilesPersisted === true;
+        buildRun.projectFilesFocusPath =
+          String(projectFilesFocusPath || '').trim() || null;
       }
       onUpdateBuildRunStream(buildRun);
     }

@@ -50,6 +50,7 @@ export interface BuildLiveRunState {
   requestId: string;
   runMode: 'user' | 'greeting' | 'runtime-autofix';
   generating: boolean;
+  error: string | null;
   status: string | null;
   assistantStatusSteps: string[];
   usageMetrics: Record<string, BuildLiveRunUsageMetric>;
@@ -87,6 +88,7 @@ export interface BuildLiveRunActionPayload {
   projectFiles?: Array<{ path: string; content?: string }> | null;
   projectFilesMode?: 'patch' | 'snapshot' | null;
   projectFilesPersisted?: boolean;
+  projectFilesFocusPath?: string | null;
   userMessage?: BuildLiveRunMessage | null;
   assistantMessage?: BuildLiveRunMessage | null;
   baseProjectFiles?: Array<{ path: string; content?: string }> | null;
@@ -150,16 +152,22 @@ function getBuildRunKey(buildId: number) {
   return String(Number(buildId) || 0);
 }
 
+function normalizeBuildRunProjectFilePath(rawPath: string) {
+  const trimmedPath = String(rawPath || '').trim().replace(/\\/g, '/');
+  if (!trimmedPath) return null;
+  const normalized = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
+  return normalized.replace(/\/{2,}/g, '/');
+}
+
 function getStreamingFocusFilePath(
   projectFiles?: Array<{ path: string; content?: string }> | null
 ) {
   const firstNonIndexPath = (projectFiles || [])
     .map((file) => {
-      const rawPath = String(file?.path || '').trim().replace(/\\/g, '/');
-      const normalized = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
-      return normalized.replace(/\/{2,}/g, '/');
+      return normalizeBuildRunProjectFilePath(String(file?.path || ''));
     })
-    .find((path) => {
+    .find((path): path is string => {
+      if (!path) return false;
       const lowerPath = path.toLowerCase();
       return lowerPath !== '/index.html' && lowerPath !== '/index.htm';
     });
@@ -262,6 +270,7 @@ export default function BuildReducer(
         requestId,
         runMode: action.buildRun?.runMode || 'user',
         generating: true,
+        error: null,
         status: null,
         assistantStatusSteps: [],
         usageMetrics: {},
@@ -294,6 +303,7 @@ export default function BuildReducer(
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         generating: true,
+        error: null,
         status: nextStatus,
         assistantStatusSteps: appendAssistantStatusStep(
           currentRun.assistantStatusSteps,
@@ -317,6 +327,9 @@ export default function BuildReducer(
       const normalizedProjectFiles = hasProjectFileUpdates
         ? normalizeBuildRunProjectFiles(action.buildRun?.projectFiles)
         : null;
+      const explicitProjectFilesFocusPath = normalizeBuildRunProjectFilePath(
+        String(action.buildRun?.projectFilesFocusPath || '')
+      );
       const projectFilesMode =
         action.buildRun?.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
       const projectFilesPersisted = action.buildRun?.projectFilesPersisted === true;
@@ -334,6 +347,7 @@ export default function BuildReducer(
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         generating: true,
+        error: null,
         assistantMessage: currentRun.assistantMessage
           ? {
               ...currentRun.assistantMessage,
@@ -359,7 +373,8 @@ export default function BuildReducer(
           projectFilesPersisted
             ? null
             : hasProjectFileUpdates
-          ? getStreamingFocusFilePath(action.buildRun?.projectFiles)
+          ? explicitProjectFilesFocusPath ||
+            getStreamingFocusFilePath(action.buildRun?.projectFiles)
           : currentRun.streamingFocusFilePath,
         executionPlan:
           action.buildRun &&
@@ -416,9 +431,17 @@ export default function BuildReducer(
               }
             ]
           : [...currentRun.runEvents, nextEvent].slice(-40);
+      const lifecycleErrorMessage =
+        nextEvent.kind === 'lifecycle' &&
+        String(nextEvent.phase || '').trim().toLowerCase() === 'error'
+          ? String(nextEvent.message || '')
+              .replace(/^.*?failed:\s*/i, '')
+              .trim()
+          : '';
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         runEvents: nextRunEvents,
+        error: lifecycleErrorMessage || currentRun.error,
         updatedAt: Date.now()
       });
     }
@@ -447,6 +470,7 @@ export default function BuildReducer(
             totalTokens: (existing?.totalTokens || 0) + totalTokens
           }
         },
+        error: null,
         updatedAt: Date.now()
       });
     }
@@ -463,6 +487,7 @@ export default function BuildReducer(
       const nextRun = {
         ...currentRun,
         generating: false,
+        error: null,
         status: null,
         assistantStatusSteps: [],
         userMessage:
@@ -569,6 +594,8 @@ export default function BuildReducer(
         state.buildRunRequestMap,
         currentRun.requestId
       );
+      const errorMessage =
+        String(action.buildRun?.error || '').trim() || 'Failed to generate code.';
       return {
         ...state,
         buildRuns: {
@@ -576,6 +603,7 @@ export default function BuildReducer(
           [key]: {
             ...currentRun,
             generating: false,
+            error: errorMessage,
             status: null,
             assistantStatusSteps: [],
             userMessage: currentRun.userMessage?.persisted
@@ -584,8 +612,7 @@ export default function BuildReducer(
             assistantMessage: currentRun.assistantMessage?.persisted
               ? {
                   ...currentRun.assistantMessage,
-                  content:
-                    action.buildRun?.error || 'Failed to generate code.',
+                  content: errorMessage,
                   codeGenerated: null,
                   streamCodePreview: null,
                   artifactVersionId: null
@@ -616,6 +643,7 @@ export default function BuildReducer(
           [key]: {
             ...currentRun,
             generating: false,
+            error: null,
             status: null,
             assistantStatusSteps: [],
             userMessage: currentRun.userMessage?.persisted

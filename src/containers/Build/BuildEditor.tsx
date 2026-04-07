@@ -1211,6 +1211,7 @@ export default function BuildEditor({
     Record<string, BuildUsageMetric>
   >({});
   const [runEvents, setRunEvents] = useState<BuildRunEvent[]>([]);
+  const [runError, setRunError] = useState<string | null>(null);
   const [streamingProjectFiles, setStreamingProjectFiles] = useState<Array<{
     path: string;
     content?: string;
@@ -1343,7 +1344,18 @@ export default function BuildEditor({
     ? renderRun.assistantStatusSteps
     : assistantStatusSteps;
   const displayedUsageMetrics = renderRun ? renderRun.usageMetrics : usageMetrics;
-  const displayedRunEvents = renderRun ? renderRun.runEvents : runEvents;
+  const displayedRunEvents =
+    renderRun || generating
+      ? renderRun?.runEvents || runEvents
+      : runEvents.length > 0
+        ? runEvents
+        : Array.isArray(sharedBuildRun?.runEvents)
+          ? sharedBuildRun.runEvents
+          : [];
+  const displayedRunError =
+    typeof sharedBuildRun?.error === 'string' && sharedBuildRun.error.trim()
+      ? sharedBuildRun.error
+      : runError;
   const displayedExecutionPlan =
     renderRun &&
     Object.prototype.hasOwnProperty.call(renderRun, 'executionPlan')
@@ -1412,6 +1424,7 @@ export default function BuildEditor({
     shouldAutoScrollRef.current = true;
     setUsageMetrics({});
     setRunEvents([]);
+    setRunError(null);
     setProjectFileChangeLogs([]);
     setProjectFilePromptContextPreview('');
     setProjectFileChangeLogsLoading(false);
@@ -1461,6 +1474,7 @@ export default function BuildEditor({
     if (sharedBuildRun.generating) {
       generatingRef.current = true;
       setGenerating(true);
+      setRunError(null);
       setGeneratingStatus(sharedBuildRun.status);
       setAssistantStatusSteps(sharedBuildRun.assistantStatusSteps);
       setUsageMetrics(sharedBuildRun.usageMetrics);
@@ -1476,6 +1490,22 @@ export default function BuildEditor({
       activeRunModeRef.current = sharedBuildRun.runMode;
       shouldHydrateSharedRunRef.current = false;
       return;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(sharedBuildRun, 'error')) {
+      setRunError(
+        typeof sharedBuildRun.error === 'string' && sharedBuildRun.error.trim()
+          ? sharedBuildRun.error
+          : null
+      );
+    }
+    if (
+      Array.isArray(sharedBuildRun.runEvents) &&
+      sharedBuildRun.runEvents.length > 0
+    ) {
+      setRunEvents((prev) =>
+        prev.length > 0 ? prev : sharedBuildRun.runEvents
+      );
     }
 
     if (normalizedBaseProjectFiles.length > 0) {
@@ -1774,6 +1804,7 @@ export default function BuildEditor({
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesMode?: 'patch' | 'snapshot' | null;
       projectFilesPersisted?: boolean;
+      projectFilesFocusPath?: string | null;
     }) {
       const {
         requestId,
@@ -1781,7 +1812,8 @@ export default function BuildEditor({
         codeGenerated,
         projectFiles,
         projectFilesMode,
-        projectFilesPersisted
+        projectFilesPersisted,
+        projectFilesFocusPath
       } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
@@ -1814,6 +1846,7 @@ export default function BuildEditor({
         projectFiles?: Array<{ path: string; content?: string }> | null;
         projectFilesMode?: 'patch' | 'snapshot' | null;
         projectFilesPersisted?: boolean;
+        projectFilesFocusPath?: string | null;
       } = { requestId };
       if (typeof reply === 'string') {
         sharedRunStreamUpdate.reply = reply;
@@ -1827,6 +1860,8 @@ export default function BuildEditor({
           projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
         sharedRunStreamUpdate.projectFilesPersisted =
           projectFilesPersisted === true;
+        sharedRunStreamUpdate.projectFilesFocusPath =
+          String(projectFilesFocusPath || '').trim() || null;
       }
       onUpdateBuildRunStream(sharedRunStreamUpdate);
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
@@ -1836,10 +1871,15 @@ export default function BuildEditor({
           projectFiles,
           fallbackCode
         );
+        const explicitFocusFilePath = String(projectFilesFocusPath || '').trim()
+          ? normalizeProjectFilePath(String(projectFilesFocusPath || ''))
+          : null;
         const nextFocusFilePath =
+          explicitFocusFilePath ||
           normalizedProjectFiles
             .map((file) => normalizeProjectFilePath(file.path))
-            .find((filePath) => !isIndexHtmlProjectFilePath(filePath)) || null;
+            .find((filePath) => !isIndexHtmlProjectFilePath(filePath)) ||
+          null;
         const nextStreamingProjectFiles =
           projectFilesMode === 'snapshot'
             ? normalizedProjectFiles
@@ -2004,6 +2044,7 @@ export default function BuildEditor({
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      setRunError(null);
 
       if (artifactCode !== null || payloadProjectFiles) {
         const activeBuild = buildRef.current;
@@ -2278,6 +2319,7 @@ export default function BuildEditor({
         projectFiles?: Array<{ path: string; content?: string }> | null;
         projectFilesMode?: 'patch' | 'snapshot' | null;
         projectFilesPersisted?: boolean;
+        projectFilesFocusPath?: string | null;
       } | null;
       terminal?: {
         type?: 'complete' | 'error' | 'stopped';
@@ -2403,6 +2445,7 @@ export default function BuildEditor({
           projectFiles?: Array<{ path: string; content?: string }> | null;
           projectFilesMode?: 'patch' | 'snapshot' | null;
           projectFilesPersisted?: boolean;
+          projectFilesFocusPath?: string | null;
         } = {
           requestId
         };
@@ -2422,6 +2465,8 @@ export default function BuildEditor({
             streamUpdate.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
           resumeUpdatePayload.projectFilesPersisted =
             streamUpdate.projectFilesPersisted === true;
+          resumeUpdatePayload.projectFilesFocusPath =
+            String(streamUpdate.projectFilesFocusPath || '').trim() || null;
         }
         handleGenerateUpdate(resumeUpdatePayload);
       }
@@ -2479,6 +2524,7 @@ export default function BuildEditor({
 
       chatMessagesRef.current = nextMessages;
       updateChatMessagesRef.current(nextMessages);
+      setRunError(errorMessage);
       onFailBuildRun({
         requestId,
         error: errorMessage
@@ -2509,6 +2555,7 @@ export default function BuildEditor({
       guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      setRunError(null);
       if (deduped) {
         resetDedupedProcessingReconcileState();
         resetRuntimeHealthFollowUpState();
@@ -5035,6 +5082,7 @@ export default function BuildEditor({
               projectFileChangeLogsError={projectFileChangeLogsError}
               projectFileChangeLogsLoadedAt={projectFileChangeLogsLoadedAt}
               runEvents={displayedRunEvents}
+              runError={displayedRunError}
               activeStreamMessageIds={displayedActiveStreamMessageIds}
               isOwner={isOwner}
               chatScrollRef={chatScrollRef}
@@ -5335,6 +5383,7 @@ export default function BuildEditor({
     const assistantMessageId = Date.now();
     const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
       activeRunModeRef.current = 'runtime-autofix';
+      setRunError(null);
       shouldHydrateSharedRunRef.current = false;
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();
@@ -5454,6 +5503,7 @@ export default function BuildEditor({
       const existingUserMessageId =
         Number(options?.existingUserMessageId || 0) || null;
       activeRunModeRef.current = 'user';
+      setRunError(null);
       shouldHydrateSharedRunRef.current = false;
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();
@@ -5569,6 +5619,7 @@ export default function BuildEditor({
       const assistantMessageId = Date.now();
       const requestId = `${activeBuild.id}-greeting-${assistantMessageId}`;
       activeRunModeRef.current = 'greeting';
+      setRunError(null);
       shouldHydrateSharedRunRef.current = false;
       setDismissedFollowUpPromptKey('');
       clearLocalFollowUpPrompt();

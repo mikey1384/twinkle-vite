@@ -38,11 +38,13 @@ var Twinkle;
   };
   var viewportModeState = {
     mode: 'document',
-    styleInjected: false
+    styleInjected: false,
+    autoFitOptOut: false
   };
   var viewportFitState = {
     scheduled: false,
     candidate: null,
+    waitingForCandidate: false,
     scale: 1,
     baseWidth: 0,
     baseHeight: 0
@@ -1066,6 +1068,24 @@ var Twinkle;
   }
 
   function getPreviewViewportSize() {
+    var documentElement = document.documentElement;
+    var body = document.body;
+    var stableWidth = Math.max(
+      window.innerWidth || 0,
+      documentElement ? documentElement.clientWidth || 0 : 0,
+      body ? body.clientWidth || 0 : 0
+    );
+    var stableHeight = Math.max(
+      window.innerHeight || 0,
+      documentElement ? documentElement.clientHeight || 0 : 0,
+      body ? body.clientHeight || 0 : 0
+    );
+    if (stableWidth > 0 && stableHeight > 0) {
+      return {
+        width: Math.max(1, Math.round(stableWidth)),
+        height: Math.max(1, Math.round(stableHeight))
+      };
+    }
     var visualViewport = window.visualViewport;
     var visualViewportWidth =
       visualViewport && Number.isFinite(Number(visualViewport.width))
@@ -1113,6 +1133,25 @@ var Twinkle;
       return normalizedBaseTransform + ' scale(' + scaleValue + ')';
     }
     return 'scale(' + scaleValue + ')';
+  }
+
+  function shouldApplyViewportFit(scale, candidateHadViewportFit) {
+    if (!Number.isFinite(scale) || scale <= 0) return false;
+    return candidateHadViewportFit ? scale < 0.999 : scale < 0.995;
+  }
+
+  function viewportFitScaleMatches(candidate, scaleValue) {
+    if (!candidate || !candidate.style) return false;
+    var currentScaleValue = String(
+      candidate.style.getPropertyValue('scale') || ''
+    ).trim();
+    if (!currentScaleValue) return false;
+    var currentScale = Number(currentScaleValue);
+    var targetScale = Number(scaleValue);
+    if (Number.isFinite(currentScale) && Number.isFinite(targetScale)) {
+      return Math.abs(currentScale - targetScale) < 0.0005;
+    }
+    return currentScaleValue === scaleValue;
   }
 
   function buildPreviewLayoutSnapshot() {
@@ -1367,6 +1406,9 @@ var Twinkle;
   }
 
   function shouldUseViewportAppMode(visibleText) {
+    if (viewportModeState.autoFitOptOut) {
+      return false;
+    }
     var body = document.body;
     if (body && body.querySelector('canvas')) {
       return true;
@@ -1400,6 +1442,18 @@ var Twinkle;
 
   function syncViewportAppMode(visibleText) {
     applyViewportAppMode(shouldUseViewportAppMode(visibleText));
+  }
+
+  function disableAutomaticViewportAppMode() {
+    if (viewportModeState.autoFitOptOut) {
+      return;
+    }
+    viewportModeState.autoFitOptOut = true;
+    if (viewportModeState.mode === 'viewport-app') {
+      applyViewportAppMode(false);
+      return;
+    }
+    publishPreviewLayout(true);
   }
 
   function clearViewportFitCandidate(candidate) {
@@ -1653,10 +1707,12 @@ var Twinkle;
       if (viewportFitState.candidate) {
         clearViewportFitCandidate(viewportFitState.candidate);
         viewportFitState.candidate = null;
+        viewportFitState.waitingForCandidate = false;
         viewportFitState.scale = 1;
         viewportFitState.baseWidth = 0;
         viewportFitState.baseHeight = 0;
       }
+      viewportFitState.waitingForCandidate = false;
       publishPreviewLayout(false);
       return;
     }
@@ -1669,12 +1725,14 @@ var Twinkle;
       viewportFitState.baseHeight = 0;
     }
     if (!candidate) {
+      viewportFitState.waitingForCandidate = true;
       publishPreviewLayout(false);
       return;
     }
     if (candidateHasAuthoredScale(candidate)) {
       clearViewportFitCandidate(candidate);
       viewportFitState.candidate = null;
+      viewportFitState.waitingForCandidate = false;
       viewportFitState.scale = 1;
       viewportFitState.baseWidth = 0;
       viewportFitState.baseHeight = 0;
@@ -1706,6 +1764,7 @@ var Twinkle;
     var viewportWidth = viewport.width;
     var viewportHeight = viewport.height;
     if (baseWidth <= 0 || baseHeight <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
+      viewportFitState.waitingForCandidate = true;
       return;
     }
     var padding = 12;
@@ -1717,20 +1776,26 @@ var Twinkle;
     if (maxScale > 0) {
       scale = Math.min(maxScale, scale);
     }
+    var candidateHadViewportFit = candidate.hasAttribute(
+      'data-twinkle-preview-fit'
+    );
     viewportFitState.candidate = candidate;
     viewportFitState.scale = scale;
     viewportFitState.baseWidth = baseWidth;
     viewportFitState.baseHeight = baseHeight;
-    if (scale > 0.995 && scale < 1.005) {
+    if (!shouldApplyViewportFit(scale, candidateHadViewportFit)) {
       clearViewportFitCandidate(candidate);
       viewportFitState.candidate = null;
+      viewportFitState.waitingForCandidate = false;
       viewportFitState.scale = 1;
       viewportFitState.baseWidth = 0;
       viewportFitState.baseHeight = 0;
       publishPreviewLayout(false);
       return;
     }
-    candidate.setAttribute('data-twinkle-preview-fit', '1');
+    if (!candidateHadViewportFit) {
+      candidate.setAttribute('data-twinkle-preview-fit', '1');
+    }
     if (
       !candidate.hasAttribute('data-twinkle-preview-fit-inline-scale')
     ) {
@@ -1741,7 +1806,9 @@ var Twinkle;
     }
     var fitScaleValue = scale.toFixed(4);
     if (previewFitSupportsScaleProperty()) {
-      candidate.style.setProperty('scale', fitScaleValue);
+      if (!viewportFitScaleMatches(candidate, fitScaleValue)) {
+        candidate.style.setProperty('scale', fitScaleValue);
+      }
     } else {
       if (
         !candidate.hasAttribute('data-twinkle-preview-fit-inline-transform')
@@ -1751,14 +1818,18 @@ var Twinkle;
           candidate.style.getPropertyValue('transform')
         );
       }
-      candidate.style.setProperty(
-        'transform',
-        buildPreviewFitTransformValue(
-          getViewportFitBaseTransform(candidate),
-          fitScaleValue
-        )
+      var nextFitTransformValue = buildPreviewFitTransformValue(
+        getViewportFitBaseTransform(candidate),
+        fitScaleValue
       );
+      if (
+        String(candidate.style.getPropertyValue('transform') || '').trim() !==
+        nextFitTransformValue
+      ) {
+        candidate.style.setProperty('transform', nextFitTransformValue);
+      }
     }
+    viewportFitState.waitingForCandidate = false;
     publishPreviewLayout(false);
   }
 
@@ -1769,6 +1840,42 @@ var Twinkle;
       viewportFitState.scheduled = false;
       fitViewportAppCandidate();
     });
+  }
+
+  function isTopLevelViewportFitMutationTarget(target) {
+    var body = document.body;
+    if (!target || !body) return false;
+    return (
+      target === document.documentElement ||
+      target === body ||
+      target.parentNode === body
+    );
+  }
+
+  function shouldScheduleViewportFitFromMutations(mutations) {
+    if (viewportModeState.mode !== 'viewport-app') return false;
+    var currentCandidate = viewportFitState.candidate;
+    if (currentCandidate && !currentCandidate.isConnected) {
+      return true;
+    }
+    for (var i = 0; i < mutations.length; i += 1) {
+      var mutation = mutations[i];
+      if (!mutation || mutation.type !== 'childList') continue;
+      if (viewportFitState.waitingForCandidate) {
+        if (isTopLevelViewportFitMutationTarget(mutation.target)) {
+          return true;
+        }
+        continue;
+      }
+      if (
+        currentCandidate &&
+        currentCandidate.parentNode &&
+        mutation.target === currentCandidate.parentNode
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function rememberRuntimeObservationKey(key) {
@@ -1866,7 +1973,6 @@ var Twinkle;
       180
     );
     syncViewportAppMode(text);
-    fitViewportAppCandidate();
     var headingCount = body
       ? body.querySelectorAll('h1,h2,h3,[role="heading"]').length
       : 0;
@@ -1995,6 +2101,14 @@ var Twinkle;
       previewHealthMutationTimer = null;
       reportPreviewHealthSnapshot(false);
     }, 120);
+  }
+
+  function scheduleForcedPreviewHealthSnapshot() {
+    requestAnimationFrame(function() {
+      // Let the queued viewport-fit pass settle first so overflow checks
+      // reflect the fitted game canvas instead of the pre-fit layout.
+      reportPreviewHealthSnapshot(true);
+    });
   }
 
   function isSafeInteractionTarget(node) {
@@ -2470,7 +2584,10 @@ var Twinkle;
 
   function installPreviewHealthObserver() {
     if (previewHealthObserver || typeof MutationObserver !== 'function') return;
-    previewHealthObserver = new MutationObserver(function() {
+    previewHealthObserver = new MutationObserver(function(mutations) {
+      if (shouldScheduleViewportFitFromMutations(mutations || [])) {
+        scheduleViewportAppFit();
+      }
       schedulePreviewHealthSnapshot();
     });
     try {
@@ -2586,7 +2703,7 @@ var Twinkle;
     installKeyboardScrollGuard();
     publishPreviewLayout(true);
     scheduleViewportAppFit();
-    reportPreviewHealthSnapshot(true);
+    scheduleForcedPreviewHealthSnapshot();
     scheduleBlankRenderProbe();
     schedulePreviewInteractionProbe();
   });
@@ -2594,7 +2711,7 @@ var Twinkle;
   window.addEventListener('load', function() {
     publishPreviewLayout(true);
     scheduleViewportAppFit();
-    reportPreviewHealthSnapshot(true);
+    scheduleForcedPreviewHealthSnapshot();
     scheduleBlankRenderProbe();
     schedulePreviewInteractionProbe();
   });
@@ -2604,22 +2721,6 @@ var Twinkle;
     scheduleViewportAppFit();
     schedulePreviewHealthSnapshot();
   });
-
-  if (
-    window.visualViewport &&
-    typeof window.visualViewport.addEventListener === 'function'
-  ) {
-    window.visualViewport.addEventListener('resize', function() {
-      publishPreviewLayout(true);
-      scheduleViewportAppFit();
-      schedulePreviewHealthSnapshot();
-    });
-    window.visualViewport.addEventListener('scroll', function() {
-      publishPreviewLayout(false);
-      scheduleViewportAppFit();
-      schedulePreviewHealthSnapshot();
-    });
-  }
 
   function loadSqlJs() {
     if (SQL) return Promise.resolve(SQL);
@@ -2804,6 +2905,7 @@ var Twinkle;
       current: null,
 
       getLayout() {
+        disableAutomaticViewportAppMode();
         return readPreviewLayout();
       },
 
@@ -2849,6 +2951,7 @@ var Twinkle;
       },
 
       reserveInsets(insets) {
+        disableAutomaticViewportAppMode();
         var currentInsets = clonePreviewInsets(previewLayoutState.reservedInsets);
         var nextInsets = {
           top:
@@ -2905,6 +3008,7 @@ var Twinkle;
       },
 
       clearReservedInsets() {
+        disableAutomaticViewportAppMode();
         var clearedInsets = {
           top: 0,
           right: 0,
@@ -2929,6 +3033,7 @@ var Twinkle;
         if (typeof listener !== 'function') {
           throw new Error('listener is required');
         }
+        disableAutomaticViewportAppMode();
         previewLayoutState.listeners.push(listener);
         var shouldEmitImmediately =
           !options || options.immediate !== false;
