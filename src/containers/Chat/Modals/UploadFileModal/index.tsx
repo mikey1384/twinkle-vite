@@ -84,7 +84,7 @@ function UploadFileModal({
   onCustomUploadSubmit?: (params: {
     files: File[];
     caption: string;
-  }) => void | Promise<void>;
+  }) => boolean | void | Promise<boolean | void>;
   onUpload: () => any;
   recipientId?: number;
   recipientUsername?: string;
@@ -338,12 +338,15 @@ function UploadFileModal({
       setCustomUploadSubmitting(true);
       let didClose = false;
       try {
-        await Promise.resolve(
+        const submitResult = await Promise.resolve(
           onCustomUploadSubmit?.({
             files: filesToSubmit,
             caption: finalizeEmoji(caption)
           })
         );
+        if (submitResult === false) {
+          return;
+        }
         didClose = true;
         onUpload();
       } finally {

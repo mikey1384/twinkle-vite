@@ -6,7 +6,6 @@ import CodeDiff from '~/components/CodeDiff';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import ProgressBar from '~/components/ProgressBar';
-import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { css } from '@emotion/css';
 import { useViewContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -18,7 +17,7 @@ import GameCTAButton from '~/components/Buttons/GameCTAButton';
 
 const panelClass = css`
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   min-height: 0;
   overflow: hidden;
   border-right: 1px solid var(--ui-border);
@@ -59,17 +58,10 @@ interface ChatMessage {
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
+  uploadProgressPercent?: number | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
   createdAt: number;
-}
-
-interface BuildUsageMetric {
-  stage: string;
-  model: string;
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
 }
 
 interface BuildCopilotPolicy {
@@ -138,21 +130,6 @@ interface BuildStatusStepEntry {
   thoughtIsThinkingHard: boolean;
 }
 
-interface BuildProjectFileDiff {
-  addedPaths: string[];
-  updatedPaths: string[];
-  deletedPaths: string[];
-}
-
-interface BuildProjectFileChangeLog {
-  id: number;
-  buildId: number;
-  actorRole: 'user' | 'assistant' | 'system';
-  summaryText: string;
-  diff: BuildProjectFileDiff;
-  createdAt: number;
-}
-
 interface BuildRuntimeUploadAsset {
   id: number;
   buildId: number;
@@ -171,8 +148,6 @@ interface BuildRuntimeUploadAsset {
   createdAt: number;
 }
 
-type ChatPanelTab = 'chat' | 'debug';
-
 interface BuildExecutionPlanSummary {
   status: 'awaiting_confirmation' | 'running' | 'completed' | 'cancelled';
 }
@@ -181,14 +156,6 @@ interface BuildFollowUpPrompt {
   question?: string | null;
   suggestedMessage?: string | null;
   sourceMessageId?: number | null;
-}
-
-interface BuildDebugFailureSummary {
-  error: string;
-  failedAt: number | null;
-  phase: string | null;
-  lastStep: string | null;
-  savedWork: 'yes' | 'no' | 'unknown';
 }
 
 interface LimitProgressItem {
@@ -209,13 +176,7 @@ interface ChatPanelProps {
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
-  usageMetrics: Record<string, BuildUsageMetric>;
   copilotPolicy: BuildCopilotPolicy | null;
-  projectFileChangeLogs: BuildProjectFileChangeLog[];
-  projectFilePromptContextPreview: string;
-  projectFileChangeLogsLoading: boolean;
-  projectFileChangeLogsError: string;
-  projectFileChangeLogsLoadedAt: number | null;
   runEvents: BuildRunEvent[];
   runError: string | null;
   activeStreamMessageIds: number[];
@@ -248,7 +209,6 @@ interface ChatPanelProps {
   generationResetError: string;
   onPurchaseGenerationReset: () => Promise<void> | void;
   onStopGeneration: () => void;
-  onReloadProjectFileChangeLogs: (options?: { silent?: boolean }) => Promise<void>;
   onDeleteMessage: (message: ChatMessage) => void;
 }
 
@@ -261,13 +221,7 @@ export default function ChatPanel({
   generating,
   generatingStatus,
   assistantStatusSteps,
-  usageMetrics,
   copilotPolicy,
-  projectFileChangeLogs,
-  projectFilePromptContextPreview,
-  projectFileChangeLogsLoading,
-  projectFileChangeLogsError,
-  projectFileChangeLogsLoadedAt,
   runEvents,
   runError,
   activeStreamMessageIds,
@@ -300,69 +254,15 @@ export default function ChatPanel({
   generationResetError,
   onPurchaseGenerationReset,
   onStopGeneration,
-  onReloadProjectFileChangeLogs,
   onDeleteMessage
 }: ChatPanelProps) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
-  const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat');
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const aiInputDisabled = AI_FEATURES_DISABLED;
-  const usageRows = useMemo(() => {
-    const stageOrder = ['planner', 'codex', 'narration'];
-    return Object.values(usageMetrics).sort((a, b) => {
-      const aIndex = stageOrder.indexOf(a.stage);
-      const bIndex = stageOrder.indexOf(b.stage);
-      if (aIndex === -1 && bIndex === -1) return a.stage.localeCompare(b.stage);
-      if (aIndex === -1) return 1;
-      if (bIndex === -1) return -1;
-      return aIndex - bIndex;
-    });
-  }, [usageMetrics]);
-
-  const usageTotals = useMemo(() => {
-    return usageRows.reduce(
-      (acc, row) => {
-        acc.inputTokens += row.inputTokens || 0;
-        acc.outputTokens += row.outputTokens || 0;
-        acc.totalTokens += row.totalTokens || 0;
-        return acc;
-      },
-      {
-        inputTokens: 0,
-        outputTokens: 0,
-        totalTokens: 0
-      }
-    );
-  }, [usageRows]);
-  const usageShowsMultipleModels = useMemo(
-    () =>
-      new Set(
-        usageRows
-          .map((row) => row.model.trim())
-          .filter((model) => Boolean(model))
-      ).size > 1,
-    [usageRows]
-  );
-  const debugRunEvents = useMemo(
-    () =>
-      runEvents
-        .filter((event) => event.kind !== 'usage' && event.kind !== 'phase')
-        .slice(-10),
-    [runEvents]
-  );
-  const debugFailureSummary = useMemo(
-    () =>
-      buildDebugFailureSummary({
-        runError,
-        runEvents,
-        generating
-      }),
-    [generating, runError, runEvents]
-  );
   const currentActivity = useMemo(() => {
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
       const event = runEvents[index];
@@ -566,20 +466,8 @@ export default function ChatPanel({
       hasEnoughCoins: twinkleCoins >= resetCost
     };
   }, [copilotPolicy, generating, twinkleCoins]);
-  const hasPromptContextPreview = Boolean(
-    projectFilePromptContextPreview && projectFilePromptContextPreview.trim()
-  );
-  const hasProjectFileChangeLogs = projectFileChangeLogs.length > 0;
-  const showDebugEmptyState =
-    !projectFileChangeLogsError &&
-    !debugFailureSummary &&
-    usageRows.length === 0 &&
-    debugRunEvents.length === 0 &&
-    !hasPromptContextPreview &&
-    !hasProjectFileChangeLogs;
   const showScopedPlanQuickReplies =
     isOwner &&
-    activeTab === 'chat' &&
     executionPlan?.status === 'awaiting_confirmation' &&
     !generating &&
     !draftMessage.trim();
@@ -590,31 +478,11 @@ export default function ChatPanel({
   ).trim();
   const showGenericFollowUpQuickReplies =
     isOwner &&
-    activeTab === 'chat' &&
     !showScopedPlanQuickReplies &&
     !generating &&
     !draftMessage.trim() &&
     Boolean(normalizedFollowUpQuestion) &&
     Boolean(normalizedFollowUpSuggestedMessage);
-
-  function handleTabChange(nextTab: ChatPanelTab) {
-    if (nextTab === activeTab) return;
-    setActiveTab(nextTab);
-    if (
-      nextTab === 'debug' &&
-      !projectFileChangeLogsLoading &&
-      !projectFileChangeLogsLoadedAt
-    ) {
-      void onReloadProjectFileChangeLogs();
-    }
-    if (nextTab === 'chat') {
-      requestAnimationFrame(scrollChatToBottom);
-    }
-  }
-
-  function handleRefreshCopilotDebug() {
-    void onReloadProjectFileChangeLogs();
-  }
 
   function handleToggleLimitsExpanded() {
     setLimitsExpanded((prev) => !prev);
@@ -649,22 +517,6 @@ export default function ChatPanel({
     } catch (error) {
       console.error('Failed to send build message:', error);
     }
-  }
-
-  function scrollChatToBottom() {
-    const container = chatScrollRef.current;
-    if (container) {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'auto'
-      });
-      return;
-    }
-    chatEndRef.current?.scrollIntoView({
-      behavior: 'auto',
-      block: 'end',
-      inline: 'nearest'
-    });
   }
 
   return (
@@ -978,25 +830,6 @@ export default function ChatPanel({
         )}
       </div>
       <div
-        className={css`
-          padding: 0 1rem;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        `}
-      >
-        <SegmentedToggle<ChatPanelTab>
-          value={activeTab}
-          onChange={handleTabChange}
-          options={[
-            { value: 'chat', label: 'Chat', icon: 'comments' },
-            { value: 'debug', label: 'Debug', icon: 'brain' }
-          ]}
-          size="sm"
-          ariaLabel="Lumine panel tab"
-        />
-      </div>
-      <div
         ref={chatScrollRef}
         onScroll={onChatScroll}
         className={css`
@@ -1007,37 +840,23 @@ export default function ChatPanel({
           background: #fff;
           min-height: 0;
         `}
-      >
+        >
         <BuildChatTranscript
-          activeTab={activeTab}
           messages={messages}
           generating={generating}
           generatingStatus={generatingStatus}
           assistantStatusSteps={assistantStatusSteps}
           currentActivity={currentActivity}
           statusStepEntries={statusStepEntries}
-          usageRows={usageRows}
-          usageTotals={usageTotals}
-          usageShowsMultipleModels={usageShowsMultipleModels}
-          debugFailureSummary={debugFailureSummary}
-          debugRunEvents={debugRunEvents}
-          projectFileChangeLogs={projectFileChangeLogs}
-          projectFilePromptContextPreview={projectFilePromptContextPreview}
-          projectFileChangeLogsLoading={projectFileChangeLogsLoading}
-          projectFileChangeLogsError={projectFileChangeLogsError}
-          projectFileChangeLogsLoadedAt={projectFileChangeLogsLoadedAt}
+          runError={runError}
           activeStreamMessageIds={activeStreamMessageIds}
           isOwner={isOwner}
           chatEndRef={chatEndRef}
-          hasPromptContextPreview={hasPromptContextPreview}
-          hasProjectFileChangeLogs={hasProjectFileChangeLogs}
-          showDebugEmptyState={showDebugEmptyState}
           onDeleteMessage={onDeleteMessage}
-          onReloadProjectFileChangeLogs={handleRefreshCopilotDebug}
         />
       </div>
 
-      {isOwner && activeTab === 'chat' && !limitsExpanded && (
+      {isOwner && !limitsExpanded && (
         <div
           className={css`
             padding: 0.9rem 1rem 1.1rem;
@@ -1260,7 +1079,9 @@ export default function ChatPanel({
               display: flex;
               flex-direction: column;
               gap: 1rem;
-              width: 80%;
+              width: 100%;
+              max-width: 100%;
+              min-height: 0;
               @media (max-width: ${mobileMaxWidth}) {
                 width: 100%;
               }
@@ -1383,6 +1204,7 @@ export default function ChatPanel({
                   display: flex;
                   flex-direction: column;
                   gap: 0.9rem;
+                  min-height: 0;
                   max-height: min(62vh, 620px);
                   overflow-y: auto;
                   padding-right: 0.15rem;
@@ -1392,10 +1214,16 @@ export default function ChatPanel({
                   <section
                     key={group.key}
                     className={css`
+                      display: grid;
+                      grid-template-rows: auto minmax(0, 1fr);
                       border: 1px solid var(--ui-border);
                       border-radius: 12px;
                       background: #fff;
                       overflow: hidden;
+                      max-height: min(36vh, 320px);
+                      @media (max-width: ${mobileMaxWidth}) {
+                        max-height: min(40vh, 320px);
+                      }
                     `}
                   >
                     <div
@@ -1464,6 +1292,9 @@ export default function ChatPanel({
                       className={css`
                         display: flex;
                         flex-direction: column;
+                        min-height: 0;
+                        overflow-y: auto;
+                        overscroll-behavior: contain;
                       `}
                     >
                       {group.assets.map((asset) => (
@@ -1596,562 +1427,156 @@ export default function ChatPanel({
   );
 }
 
-const BuildChatTranscript = React.memo(function BuildChatTranscript({
-  activeTab,
-  messages,
-  generating,
-  generatingStatus,
-  assistantStatusSteps,
-  currentActivity,
-  statusStepEntries,
-  usageRows,
-  usageTotals,
-  usageShowsMultipleModels,
-  debugFailureSummary,
-  debugRunEvents,
-  projectFileChangeLogs,
-  projectFilePromptContextPreview,
-  projectFileChangeLogsLoading,
-  projectFileChangeLogsError,
-  projectFileChangeLogsLoadedAt,
-  activeStreamMessageIds,
-  isOwner,
-  chatEndRef,
-  hasPromptContextPreview,
-  hasProjectFileChangeLogs,
-  showDebugEmptyState,
-  onDeleteMessage,
-  onReloadProjectFileChangeLogs
-}: {
-  activeTab: ChatPanelTab;
-  messages: ChatMessage[];
-  generating: boolean;
-  generatingStatus: string | null;
-  assistantStatusSteps: string[];
-  currentActivity: BuildCurrentActivity | null;
-  statusStepEntries: BuildStatusStepEntry[];
-  usageRows: BuildUsageMetric[];
-  usageTotals: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-  };
-  usageShowsMultipleModels: boolean;
-  debugFailureSummary: BuildDebugFailureSummary | null;
-  debugRunEvents: BuildRunEvent[];
-  projectFileChangeLogs: BuildProjectFileChangeLog[];
-  projectFilePromptContextPreview: string;
-  projectFileChangeLogsLoading: boolean;
-  projectFileChangeLogsError: string;
-  projectFileChangeLogsLoadedAt: number | null;
-  activeStreamMessageIds: number[];
-  isOwner: boolean;
-  chatEndRef: RefObject<HTMLDivElement | null>;
-  hasPromptContextPreview: boolean;
-  hasProjectFileChangeLogs: boolean;
-  showDebugEmptyState: boolean;
-  onDeleteMessage: (message: ChatMessage) => void;
-  onReloadProjectFileChangeLogs: () => void;
-}) {
-  if (activeTab === 'chat') {
-    if (messages.length === 0) {
-      return (
-        <div
-          className={css`
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--chat-text);
-            opacity: 0.7;
-          `}
-        >
-          <Icon
-            icon="comments"
-            size="2x"
-            style={{ marginBottom: '0.8rem' }}
-          />
-          <p style={{ margin: 0, fontSize: '1.05rem' }}>
-            {isOwner
-              ? 'Describe what you want to build and I will help you create it.'
-              : 'No messages yet.'}
-          </p>
-        </div>
-      );
-    }
-
-    const lastAssistantIndex = findLastIndex(
-      messages,
-      (message) => message.role === 'assistant'
-    );
-
-    return (
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        `}
-      >
-        {messages.map((message, index) => {
-          return (
-            <BuildChatMessageRow
-              key={message.id}
-              message={message}
-              messages={messages}
-              index={index}
-              lastAssistantIndex={lastAssistantIndex}
-              generating={generating}
-              generatingStatus={generatingStatus}
-              assistantStatusSteps={assistantStatusSteps}
-              currentActivity={currentActivity}
-              statusStepEntries={statusStepEntries}
-              activeStreamMessageIds={activeStreamMessageIds}
-              onDeleteMessage={onDeleteMessage}
-            />
-          );
-        })}
-        <div ref={chatEndRef} />
-      </div>
-    );
-  }
+function BuildRunFailureNotice({ runError }: { runError: string }) {
+  const normalizedRunError = String(runError || '').trim();
+  if (!normalizedRunError) return null;
 
   return (
     <div
       className={css`
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        border: 1px solid ${Color.rose(0.32)};
+        background: ${Color.rose(0.08)};
+        border-radius: 10px;
+        padding: 0.75rem 0.8rem;
+        display: grid;
+        gap: 0.45rem;
       `}
     >
       <div
         className={css`
           display: flex;
           align-items: center;
-          justify-content: flex-end;
-          gap: 0.6rem;
-          flex-wrap: wrap;
+          gap: 0.5rem;
+          color: ${Color.rose()};
+          font-weight: 800;
+          font-size: 0.84rem;
         `}
       >
-        <div
-          className={css`
-            display: inline-flex;
-            align-items: center;
-            gap: 0.45rem;
-            font-size: 0.72rem;
-            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-            opacity: 0.8;
-          `}
-        >
-          {projectFileChangeLogsLoadedAt ? (
-            <span>Updated {formatRunEventTime(projectFileChangeLogsLoadedAt)}</span>
-          ) : null}
-          <button
-            type="button"
-            onClick={onReloadProjectFileChangeLogs}
-            disabled={projectFileChangeLogsLoading}
-            className={css`
-              border: 1px solid var(--ui-border);
-              background: #fff;
-              color: var(--chat-text);
-              border-radius: 999px;
-              padding: 0.22rem 0.55rem;
-              font-size: 0.68rem;
-              font-weight: 700;
-              cursor: pointer;
-              &:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-              }
-            `}
-          >
-            {projectFileChangeLogsLoading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
+        <Icon icon="exclamation-triangle" />
+        <span>Last run failed</span>
       </div>
-      {projectFileChangeLogsError ? (
-        <div
-          className={css`
-            border: 1px solid ${Color.rose(0.35)};
-            background: ${Color.rose(0.07)};
-            color: ${Color.rose(0.95)};
-            border-radius: 10px;
-            padding: 0.6rem 0.7rem;
-            font-size: 0.8rem;
-          `}
-        >
-          {projectFileChangeLogsError}
-        </div>
+      <div
+        className={css`
+          font-size: 0.86rem;
+          line-height: 1.45;
+          color: var(--chat-text);
+          white-space: pre-wrap;
+          word-break: break-word;
+        `}
+      >
+        {normalizedRunError}
+      </div>
+    </div>
+  );
+}
+
+const BuildChatTranscript = React.memo(function BuildChatTranscript({
+  messages,
+  generating,
+  generatingStatus,
+  assistantStatusSteps,
+  currentActivity,
+  statusStepEntries,
+  runError,
+  activeStreamMessageIds,
+  isOwner,
+  chatEndRef,
+  onDeleteMessage
+}: {
+  messages: ChatMessage[];
+  generating: boolean;
+  generatingStatus: string | null;
+  assistantStatusSteps: string[];
+  currentActivity: BuildCurrentActivity | null;
+  statusStepEntries: BuildStatusStepEntry[];
+  runError: string | null;
+  activeStreamMessageIds: number[];
+  isOwner: boolean;
+  chatEndRef: RefObject<HTMLDivElement | null>;
+  onDeleteMessage: (message: ChatMessage) => void;
+}) {
+  const normalizedRunError =
+    !generating && typeof runError === 'string' ? runError.trim() : '';
+  const emptyState = (
+    <div
+      className={css`
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--chat-text);
+        opacity: 0.7;
+      `}
+    >
+      <Icon
+        icon="comments"
+        size="2x"
+        style={{ marginBottom: '0.8rem' }}
+      />
+      <p style={{ margin: 0, fontSize: '1.05rem' }}>
+        {isOwner
+          ? 'Describe what you want to build and I will help you create it.'
+          : 'No messages yet.'}
+      </p>
+    </div>
+  );
+
+  if (messages.length === 0) {
+    if (!normalizedRunError) {
+      return emptyState;
+    }
+    return (
+      <div
+        className={css`
+          display: grid;
+          gap: 1rem;
+        `}
+      >
+        <BuildRunFailureNotice runError={normalizedRunError} />
+        {emptyState}
+        <div ref={chatEndRef} />
+      </div>
+    );
+  }
+
+  const lastAssistantIndex = findLastIndex(
+    messages,
+    (message) => message.role === 'assistant'
+  );
+
+  return (
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      `}
+    >
+      {normalizedRunError ? (
+        <BuildRunFailureNotice runError={normalizedRunError} />
       ) : null}
-      {debugFailureSummary ? (
-        <div
-          className={css`
-            border: 1px solid ${Color.rose(0.32)};
-            background: ${Color.rose(0.08)};
-            border-radius: 10px;
-            padding: 0.75rem 0.8rem;
-            display: grid;
-            gap: 0.55rem;
-          `}
-        >
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              gap: 0.5rem;
-              color: ${Color.rose()};
-              font-weight: 800;
-              font-size: 0.84rem;
-            `}
-          >
-            <Icon icon="exclamation-triangle" />
-            <span>Last run failed</span>
-          </div>
-          <div
-            className={css`
-              font-size: 0.86rem;
-              line-height: 1.45;
-              color: var(--chat-text);
-            `}
-          >
-            {debugFailureSummary.error}
-          </div>
-          <div
-            className={css`
-              display: grid;
-              grid-template-columns: repeat(2, minmax(0, 1fr));
-              gap: 0.45rem 0.7rem;
-              @media (max-width: ${mobileMaxWidth}) {
-                grid-template-columns: 1fr;
-              }
-            `}
-          >
-            <DebugSummaryField
-              label="When"
-              value={
-                debugFailureSummary.failedAt
-                  ? formatRunEventTime(debugFailureSummary.failedAt)
-                  : 'Unknown'
-              }
-            />
-            <DebugSummaryField
-              label="Stage"
-              value={formatRunEventPhase(debugFailureSummary.phase)}
-            />
-            <DebugSummaryField
-              label="Saved code"
-              value={formatSavedWorkState(debugFailureSummary.savedWork)}
-            />
-            <DebugSummaryField
-              label="Last step"
-              value={debugFailureSummary.lastStep || 'Unknown'}
-            />
-          </div>
-        </div>
-      ) : null}
-      {(usageRows.length > 0 || debugRunEvents.length > 0) && (
-        <div
-          className={css`
-            display: grid;
-            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-            gap: 0.75rem;
-            @media (max-width: ${mobileMaxWidth}) {
-              grid-template-columns: 1fr;
-            }
-          `}
-        >
-          {usageRows.length > 0 && (
-            <div
-              className={css`
-                border: 1px solid var(--ui-border);
-                border-radius: 10px;
-                background: var(--chat-bg);
-                padding: 0.65rem 0.7rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.45rem;
-                font-size: 0.76rem;
-                color: var(--chat-text);
-              `}
-            >
-              <div
-                className={css`
-                  font-weight: 700;
-                  opacity: 0.82;
-                `}
-              >
-                Current run usage
-              </div>
-              {usageRows.map((row) => (
-                <div
-                  key={`${row.stage}-${row.model}`}
-                  className={css`
-                    display: grid;
-                    grid-template-columns: minmax(72px, auto) 1fr;
-                    gap: 0.3rem 0.7rem;
-                    align-items: baseline;
-                  `}
-                >
-                  <span
-                    className={css`
-                      font-weight: 700;
-                      text-transform: capitalize;
-                    `}
-                  >
-                    {getUsageStageLabel(row.stage)}
-                  </span>
-                  <div
-                    className={css`
-                      display: flex;
-                      justify-content: space-between;
-                      gap: 0.7rem;
-                      min-width: 0;
-                      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                    `}
-                  >
-                    <span
-                      className={css`
-                        opacity: 0.72;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                      `}
-                      title={row.model}
-                    >
-                      {usageShowsMultipleModels ? row.model : null}
-                    </span>
-                    <span
-                      className={css`
-                        white-space: nowrap;
-                        margin-left: auto;
-                      `}
-                    >
-                      {formatTokenCount(row.totalTokens)} tok
-                    </span>
-                  </div>
-                </div>
-              ))}
-              <div
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  gap: 0.5rem;
-                  padding-top: 0.4rem;
-                  border-top: 1px solid var(--ui-border);
-                  font-weight: 700;
-                `}
-              >
-                <span>Total</span>
-                <span
-                  className={css`
-                    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                    text-align: right;
-                  `}
-                >
-                  {formatTokenCount(usageTotals.inputTokens)} in /{' '}
-                  {formatTokenCount(usageTotals.outputTokens)} out /{' '}
-                  {formatTokenCount(usageTotals.totalTokens)} tok
-                </span>
-              </div>
-            </div>
-          )}
-          {debugRunEvents.length > 0 && (
-            <div
-              className={css`
-                border: 1px solid var(--ui-border);
-                border-radius: 10px;
-                background: #fff;
-                padding: 0.65rem 0.7rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.35rem;
-                font-size: 0.76rem;
-                color: var(--chat-text);
-                max-height: 220px;
-                overflow-y: auto;
-              `}
-            >
-              <div
-                className={css`
-                  font-weight: 700;
-                  opacity: 0.82;
-                `}
-              >
-                Current run timeline
-              </div>
-              {debugRunEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className={css`
-                    display: grid;
-                    grid-template-columns: auto auto 1fr;
-                    gap: 0.35rem;
-                    align-items: baseline;
-                    line-height: 1.35;
-                    padding: ${event.kind === 'action' ? '0.1rem 0.2rem' : '0'};
-                    border-radius: 6px;
-                    background: ${event.kind === 'action'
-                      ? 'rgba(255, 166, 0, 0.08)'
-                      : 'transparent'};
-                  `}
-                >
-                  <span
-                    className={css`
-                      color: ${getRunEventColor(event.kind)};
-                      font-weight: 700;
-                      text-transform: uppercase;
-                      letter-spacing: 0.03em;
-                      font-size: 0.68rem;
-                      white-space: nowrap;
-                    `}
-                  >
-                    {getRunEventLabel(event.kind)}
-                  </span>
-                  <span
-                    className={css`
-                      color: ${Color.gray(0.9)};
-                      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                      font-size: 0.68rem;
-                      white-space: nowrap;
-                    `}
-                  >
-                    {formatRunEventTime(event.createdAt)}
-                  </span>
-                  <span
-                    className={css`
-                      overflow: hidden;
-                      text-overflow: ellipsis;
-                      white-space: nowrap;
-                      font-weight: ${event.kind === 'action' ? 700 : 400};
-                    `}
-                    title={event.message}
-                  >
-                    {event.phase ? `[${event.phase}] ` : ''}
-                    {event.message}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      {showDebugEmptyState ? (
-        <div
-          className={css`
-            border: 1px solid var(--ui-border);
-            border-radius: 10px;
-            background: var(--chat-bg);
-            padding: 0.85rem 0.9rem;
-            font-size: 0.86rem;
-            font-weight: 700;
-            color: var(--chat-text);
-          `}
-        >
-          No recent file changes yet.
-        </div>
-      ) : (
-        <>
-          {hasPromptContextPreview ? (
-            <div
-              className={css`
-                border: 1px solid var(--ui-border);
-                border-radius: 10px;
-                background: var(--chat-bg);
-                padding: 0.7rem 0.8rem;
-              `}
-            >
-              <div
-                className={css`
-                  font-weight: 700;
-                  margin-bottom: 0.4rem;
-                  font-size: 0.8rem;
-                `}
-              >
-                Recent file context
-              </div>
-              <pre
-                className={css`
-                  margin: 0;
-                  white-space: pre-wrap;
-                  word-break: break-word;
-                  font-size: 0.74rem;
-                  line-height: 1.45;
-                  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                `}
-              >
-                {projectFilePromptContextPreview}
-              </pre>
-            </div>
-          ) : null}
-          {hasProjectFileChangeLogs ? (
-            <div
-              className={css`
-                display: flex;
-                flex-direction: column;
-                gap: 0.4rem;
-              `}
-            >
-              {projectFileChangeLogs.map((entry) => {
-                const totalChanges = countProjectFileChanges(entry.diff);
-                return (
-                  <div
-                    key={entry.id}
-                    className={css`
-                      border: 1px solid var(--ui-border);
-                      border-radius: 10px;
-                      background: #fff;
-                      padding: 0.6rem 0.7rem;
-                      display: flex;
-                      flex-direction: column;
-                      gap: 0.28rem;
-                    `}
-                  >
-                    <div
-                      className={css`
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        gap: 0.5rem;
-                        font-size: 0.72rem;
-                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                        opacity: 0.85;
-                      `}
-                    >
-                      <span>{entry.actorRole.toUpperCase()} #{entry.id}</span>
-                      <span>
-                        {totalChanges} file change
-                        {totalChanges === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                    <div
-                      className={css`
-                        font-size: 0.82rem;
-                        line-height: 1.45;
-                        color: var(--chat-text);
-                      `}
-                    >
-                      {entry.summaryText || '[no summary]'}
-                    </div>
-                    <div
-                      className={css`
-                        font-size: 0.7rem;
-                        font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-                        opacity: 0.72;
-                      `}
-                    >
-                      {formatRunEventTime(entry.createdAt * 1000)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-        </>
-      )}
+      {messages.map((message, index) => {
+        return (
+          <BuildChatMessageRow
+            key={message.id}
+            message={message}
+            messages={messages}
+            index={index}
+            lastAssistantIndex={lastAssistantIndex}
+            generating={generating}
+            generatingStatus={generatingStatus}
+            assistantStatusSteps={assistantStatusSteps}
+            currentActivity={currentActivity}
+            statusStepEntries={statusStepEntries}
+            activeStreamMessageIds={activeStreamMessageIds}
+            onDeleteMessage={onDeleteMessage}
+          />
+        );
+      })}
+      <div ref={chatEndRef} />
     </div>
   );
 });
@@ -2432,9 +1857,60 @@ function AssistantMessage({
     (looksLikeCompletedCodeChangeClaim(message.content) ||
       message.billingState === 'not_charged' ||
       message.billingState === 'pending');
+  const uploadProgressPercent = Number(message.uploadProgressPercent ?? -1);
+  const showUploadProgressBar =
+    !hasCodePayload &&
+    message.role === 'assistant' &&
+    Number.isFinite(uploadProgressPercent) &&
+    uploadProgressPercent >= 0;
 
   return (
     <div>
+      {showUploadProgressBar && (
+        <div
+          className={css`
+            margin-bottom: 0.55rem;
+          `}
+        >
+          <div
+            className={css`
+              height: 0.38rem;
+              width: 100%;
+              overflow: hidden;
+              border-radius: 999px;
+              background: rgba(148, 163, 184, 0.18);
+            `}
+          >
+            <div
+              className={css`
+                height: 100%;
+                border-radius: 999px;
+                background: linear-gradient(
+                  90deg,
+                  ${Color.logoBlue(0.82)},
+                  ${Color.green(0.9)}
+                );
+                transition: width 220ms ease;
+              `}
+              style={{
+                width: `${Math.max(3, Math.min(100, uploadProgressPercent))}%`
+              }}
+            />
+          </div>
+          <div
+            className={css`
+              margin-top: 0.3rem;
+              display: flex;
+              justify-content: flex-end;
+              font-size: 0.7rem;
+              color: var(--chat-text);
+              opacity: 0.58;
+            `}
+          >
+            {Math.round(Math.max(0, Math.min(100, uploadProgressPercent)))}%
+          </div>
+        </div>
+      )}
       {hasCodePayload && (
         <div
           className={css`
@@ -2908,215 +2384,5 @@ function LimitStat({ label, value }: { label: string; value: string }) {
         {value}
       </span>
     </div>
-  );
-}
-
-function DebugSummaryField({
-  label,
-  value
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div
-      className={css`
-        display: grid;
-        gap: 0.14rem;
-        min-width: 0;
-      `}
-    >
-      <span
-        className={css`
-          font-size: 0.68rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: ${Color.rose(0.92)};
-        `}
-      >
-        {label}
-      </span>
-      <span
-        className={css`
-          font-size: 0.8rem;
-          line-height: 1.35;
-          color: var(--chat-text);
-          word-break: break-word;
-        `}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function getUsageStageLabel(stage: string) {
-  switch (stage) {
-    case 'planner':
-      return 'Plan';
-    case 'validator':
-      return 'Validate';
-    case 'codex':
-      return 'Code';
-    case 'narration':
-      return 'Reply';
-    default:
-      return stage;
-  }
-}
-
-function getRunEventLabel(kind: BuildRunEvent['kind']) {
-  switch (kind) {
-    case 'lifecycle':
-      return 'run';
-    case 'phase':
-      return 'phase';
-    case 'action':
-      return 'agent';
-    case 'usage':
-      return 'usage';
-    case 'status':
-      return 'status';
-    default:
-      return kind;
-  }
-}
-
-function getRunEventColor(kind: BuildRunEvent['kind']) {
-  switch (kind) {
-    case 'lifecycle':
-      return Color.logoBlue();
-    case 'phase':
-      return Color.pink();
-    case 'action':
-      return Color.orange();
-    case 'usage':
-      return Color.green();
-    case 'status':
-      return Color.gray(0.9);
-    default:
-      return Color.gray();
-  }
-}
-
-function formatRunEventTime(timestamp: number) {
-  if (!Number.isFinite(timestamp) || timestamp <= 0) return '--:--:--';
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-}
-
-function formatRunEventPhase(phase: string | null) {
-  const normalized = String(phase || '').trim().toLowerCase();
-  switch (normalized) {
-    case 'planning':
-      return 'Planning';
-    case 'implementing':
-      return 'Making code';
-    case 'validating':
-      return 'Checking code';
-    case 'preview':
-      return 'Checking preview';
-    case 'completed':
-      return 'Done';
-    case 'error':
-      return 'Error';
-    case 'blocked':
-      return 'Blocked';
-    default:
-      return normalized
-        ? normalized.charAt(0).toUpperCase() + normalized.slice(1)
-        : 'Unknown';
-  }
-}
-
-function formatSavedWorkState(state: BuildDebugFailureSummary['savedWork']) {
-  switch (state) {
-    case 'yes':
-      return 'Yes';
-    case 'no':
-      return 'No';
-    default:
-      return 'Unknown';
-  }
-}
-
-function buildDebugFailureSummary({
-  runError,
-  runEvents,
-  generating
-}: {
-  runError: string | null;
-  runEvents: BuildRunEvent[];
-  generating: boolean;
-}): BuildDebugFailureSummary | null {
-  const normalizedError = String(runError || '').trim();
-  if (!normalizedError || generating) return null;
-
-  const errorEvent =
-    [...runEvents]
-      .reverse()
-      .find(
-        (event) =>
-          event.kind === 'lifecycle' &&
-          String(event.phase || '').trim().toLowerCase() === 'error'
-      ) || null;
-  const failureCutoffIndex = errorEvent
-    ? runEvents.findIndex((event) => event.id === errorEvent.id)
-    : -1;
-  const precedingEvents =
-    failureCutoffIndex >= 0
-      ? runEvents.slice(0, failureCutoffIndex)
-      : [...runEvents];
-  const lastMeaningfulEvent =
-    [...precedingEvents]
-      .reverse()
-      .find((event) => {
-        if (!event) return false;
-        if (event.kind === 'usage') return false;
-        const message = String(event.message || '').trim();
-        if (!message) return false;
-        return !(
-          event.kind === 'lifecycle' &&
-          String(event.phase || '').trim().toLowerCase() === 'error'
-        );
-      }) || null;
-  const lastApplyEvent =
-    [...precedingEvents]
-      .reverse()
-      .find(
-        (event) =>
-          event.kind === 'action' &&
-          /apply step/i.test(String(event.message || ''))
-      ) || null;
-  const applyMessage = String(lastApplyEvent?.message || '');
-  const savedWork =
-    /Persisted:\s*yes\b/i.test(applyMessage)
-      ? 'yes'
-      : /Persisted:\s*no\b/i.test(applyMessage) ||
-          /produced no net diff/i.test(applyMessage)
-        ? 'no'
-        : 'unknown';
-
-  return {
-    error: normalizedError,
-    failedAt: errorEvent?.createdAt || null,
-    phase: errorEvent?.phase || lastMeaningfulEvent?.phase || null,
-    lastStep: String(lastMeaningfulEvent?.message || '').trim() || null,
-    savedWork
-  };
-}
-
-function countProjectFileChanges(diff: BuildProjectFileDiff | null | undefined) {
-  if (!diff) return 0;
-  return (
-    (Array.isArray(diff.addedPaths) ? diff.addedPaths.length : 0) +
-    (Array.isArray(diff.updatedPaths) ? diff.updatedPaths.length : 0) +
-    (Array.isArray(diff.deletedPaths) ? diff.deletedPaths.length : 0)
   );
 }

@@ -27,7 +27,10 @@ import {
 } from '~/contexts';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
-import { cloudFrontURL, DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import {
+  cloudFrontURL,
+  DEFAULT_PROFILE_THEME
+} from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import ScopedTheme from '~/theme/ScopedTheme';
@@ -322,6 +325,7 @@ interface ChatMessage {
   content: string;
   codeGenerated: string | null;
   streamCodePreview?: string | null;
+  uploadProgressPercent?: number | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
   createdAt: number;
@@ -393,21 +397,6 @@ interface BuildRunEvent {
 
 type BuildPlanAction = 'continue' | 'cancel';
 
-interface BuildProjectFileDiff {
-  addedPaths: string[];
-  updatedPaths: string[];
-  deletedPaths: string[];
-}
-
-interface BuildProjectFileChangeLog {
-  id: number;
-  buildId: number;
-  actorRole: 'user' | 'assistant' | 'system';
-  summaryText: string;
-  diff: BuildProjectFileDiff;
-  createdAt: number;
-}
-
 interface BuildRuntimeUploadAsset {
   id: number;
   buildId: number;
@@ -462,8 +451,7 @@ interface BuildEditorProps {
   onUpdateCopilotPolicy: (policy: BuildCopilotPolicy | null) => void;
 }
 
-const BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX =
-  '[[[reference_context]]]';
+const BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX = '[[[reference_context]]]';
 
 interface ProjectFileSaveResult {
   success: boolean;
@@ -522,10 +510,7 @@ function applyRuntimeUploadUsageToCopilotPolicy(
 
 function applyRequestLimitsToCopilotPolicy(
   policy: BuildCopilotPolicy | null,
-  requestLimits:
-    | BuildCopilotPolicy['requestLimits']
-    | null
-    | undefined
+  requestLimits: BuildCopilotPolicy['requestLimits'] | null | undefined
 ) {
   if (!policy || !requestLimits) {
     return policy;
@@ -773,6 +758,8 @@ function chatMessagesEqual(a: ChatMessage[], b: ChatMessage[]) {
       left.content !== right.content ||
       left.codeGenerated !== right.codeGenerated ||
       left.streamCodePreview !== right.streamCodePreview ||
+      Number(left.uploadProgressPercent ?? -1) !==
+        Number(right.uploadProgressPercent ?? -1) ||
       left.artifactVersionId !== right.artifactVersionId ||
       left.createdAt !== right.createdAt ||
       Boolean(left.persisted) !== Boolean(right.persisted)
@@ -871,7 +858,9 @@ function resolveBuildExecutionPlanTarget(
     : null;
 }
 
-function resolveScopedPlanQuestion(plan: BuildExecutionPlan | null | undefined) {
+function resolveScopedPlanQuestion(
+  plan: BuildExecutionPlan | null | undefined
+) {
   const explicitQuestion = String(
     plan?.question || plan?.plan?.question || ''
   ).trim();
@@ -1155,9 +1144,6 @@ export default function BuildEditor({
   const uploadBuildThumbnail = useAppContext(
     (v) => v.requestHelpers.uploadBuildThumbnail
   );
-  const loadBuildProjectFileChangeLogs = useAppContext(
-    (v) => v.requestHelpers.loadBuildProjectFileChangeLogs
-  );
   const loadBuild = useAppContext((v) => v.requestHelpers.loadBuild);
   const loadBuildRuntimeUploads = useAppContext(
     (v) => v.requestHelpers.loadBuildRuntimeUploads
@@ -1207,9 +1193,7 @@ export default function BuildEditor({
   const [thumbnailModalShown, setThumbnailModalShown] = useState(false);
   const [savingThumbnail, setSavingThumbnail] = useState(false);
   const [thumbnailSaveError, setThumbnailSaveError] = useState('');
-  const [usageMetrics, setUsageMetrics] = useState<
-    Record<string, BuildUsageMetric>
-  >({});
+  const [, setUsageMetrics] = useState<Record<string, BuildUsageMetric>>({});
   const [runEvents, setRunEvents] = useState<BuildRunEvent[]>([]);
   const [runError, setRunError] = useState<string | null>(null);
   const [streamingProjectFiles, setStreamingProjectFiles] = useState<Array<{
@@ -1219,17 +1203,6 @@ export default function BuildEditor({
   const [streamingFocusFilePath, setStreamingFocusFilePath] = useState<
     string | null
   >(null);
-  const [projectFileChangeLogs, setProjectFileChangeLogs] = useState<
-    BuildProjectFileChangeLog[]
-  >([]);
-  const [projectFilePromptContextPreview, setProjectFilePromptContextPreview] =
-    useState('');
-  const [projectFileChangeLogsLoading, setProjectFileChangeLogsLoading] =
-    useState(false);
-  const [projectFileChangeLogsError, setProjectFileChangeLogsError] =
-    useState('');
-  const [projectFileChangeLogsLoadedAt, setProjectFileChangeLogsLoadedAt] =
-    useState<number | null>(null);
   const [runtimeObservationState, setRuntimeObservationState] =
     useState<BuildRuntimeObservationState | null>(null);
   const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
@@ -1299,8 +1272,10 @@ export default function BuildEditor({
   const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
   const scrollRafRef = useRef<number | null>(null);
   const shouldHydrateSharedRunRef = useRef(true);
-  const pendingBuildChatUploadClarificationRef =
-    useRef<PendingBuildChatUploadClarification[]>([]);
+  const pendingBuildChatUploadClarificationRef = useRef<
+    PendingBuildChatUploadClarification[]
+  >([]);
+  const buildChatUploadProgressMessageIdRef = useRef<number | null>(null);
   const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
   const DEDUPED_PROCESSING_RECONCILE_MAX_MS = 3 * 60 * 1000;
   const queuedRequestsRef = useRef<QueuedBuildRequest[]>([]);
@@ -1343,7 +1318,6 @@ export default function BuildEditor({
   const displayedAssistantStatusSteps = renderRun
     ? renderRun.assistantStatusSteps
     : assistantStatusSteps;
-  const displayedUsageMetrics = renderRun ? renderRun.usageMetrics : usageMetrics;
   const displayedRunEvents =
     renderRun || generating
       ? renderRun?.runEvents || runEvents
@@ -1359,12 +1333,12 @@ export default function BuildEditor({
   const displayedExecutionPlan =
     renderRun &&
     Object.prototype.hasOwnProperty.call(renderRun, 'executionPlan')
-      ? renderRun.executionPlan ?? build.executionPlan ?? null
+      ? (renderRun.executionPlan ?? build.executionPlan ?? null)
       : build.executionPlan || null;
   const baseDisplayedFollowUpPrompt =
     renderRun &&
     Object.prototype.hasOwnProperty.call(renderRun, 'followUpPrompt')
-      ? renderRun.followUpPrompt ?? build.followUpPrompt ?? null
+      ? (renderRun.followUpPrompt ?? build.followUpPrompt ?? null)
       : build.followUpPrompt || null;
   const displayedFollowUpPrompt =
     resolveBuildFollowUpPromptKey(baseDisplayedFollowUpPrompt) &&
@@ -1391,6 +1365,7 @@ export default function BuildEditor({
     setBuildChatUploadInFlight(false);
     setDismissedFollowUpPromptKey('');
     pendingBuildChatUploadClarificationRef.current = [];
+    buildChatUploadProgressMessageIdRef.current = null;
   }, [build.id]);
 
   useEffect(() => {
@@ -1425,11 +1400,6 @@ export default function BuildEditor({
     setUsageMetrics({});
     setRunEvents([]);
     setRunError(null);
-    setProjectFileChangeLogs([]);
-    setProjectFilePromptContextPreview('');
-    setProjectFileChangeLogsLoading(false);
-    setProjectFileChangeLogsError('');
-    setProjectFileChangeLogsLoadedAt(null);
     queuedRequestsRef.current = [];
     setDescriptionModalShown(false);
     setThumbnailModalShown(false);
@@ -1560,10 +1530,12 @@ export default function BuildEditor({
       const nextBuild = {
         ...buildRef.current,
         executionPlan: sharedBuildRun.executionPlan ?? null,
-        followUpPrompt:
-          Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt')
-            ? sharedBuildRun.followUpPrompt ?? null
-            : buildRef.current.followUpPrompt ?? null
+        followUpPrompt: Object.prototype.hasOwnProperty.call(
+          sharedBuildRun,
+          'followUpPrompt'
+        )
+          ? (sharedBuildRun.followUpPrompt ?? null)
+          : (buildRef.current.followUpPrompt ?? null)
       };
       buildRef.current = nextBuild;
       updateBuildRef.current(nextBuild);
@@ -1989,7 +1961,9 @@ export default function BuildEditor({
         artifactCode,
         projectFiles: payloadProjectFiles,
         executionPlan,
-        followUpPrompt: hasFollowUpPromptField ? followUpPrompt ?? null : undefined,
+        followUpPrompt: hasFollowUpPromptField
+          ? (followUpPrompt ?? null)
+          : undefined,
         runtimeExplorationPlan,
         runtimePlanRefined,
         billingState,
@@ -2367,9 +2341,7 @@ export default function BuildEditor({
       const nextRunEvents = Array.isArray(resumedRunEvents)
         ? resumedRunEvents
             .filter(
-              (
-                event
-              ): event is NonNullable<typeof resumedRunEvents>[number] =>
+              (event): event is NonNullable<typeof resumedRunEvents>[number] =>
                 Boolean(event?.kind && event?.message)
             )
             .map((event, index) => ({
@@ -3019,8 +2991,10 @@ export default function BuildEditor({
                         ? 'Preview booted and rendered meaningful UI.'
                         : 'Preview booted, but the UI still looks sparse.';
         if (
-          previewHealthMessage !== 'Preview booted and rendered meaningful UI.' &&
-          previewHealthMessage !== 'Preview booted, but the UI still looks sparse.'
+          previewHealthMessage !==
+            'Preview booted and rendered meaningful UI.' &&
+          previewHealthMessage !==
+            'Preview booted, but the UI still looks sparse.'
         ) {
           appendLocalRunEvent({
             kind:
@@ -3647,10 +3621,15 @@ export default function BuildEditor({
       return;
     }
     const targetBuildId = Number(options?.buildId || 0);
-    if (targetBuildId > 0 && Number(buildRef.current?.id || 0) !== targetBuildId) {
+    if (
+      targetBuildId > 0 &&
+      Number(buildRef.current?.id || 0) !== targetBuildId
+    ) {
       return;
     }
-    const existingIds = new Set(chatMessagesRef.current.map((entry) => entry.id));
+    const existingIds = new Set(
+      chatMessagesRef.current.map((entry) => entry.id)
+    );
     if (existingIds.has(persistedMessage.id)) {
       return;
     }
@@ -3666,6 +3645,181 @@ export default function BuildEditor({
     updateChatMessagesRef.current(nextMessages);
     shouldAutoScrollRef.current = true;
     scrollChatToBottom('smooth', { force: true });
+  }
+
+  function appendLocalBuildChatAssistantMessage(text: string) {
+    const trimmedText = String(text || '').trim();
+    if (!trimmedText) {
+      return null;
+    }
+    const messageId = Date.now() + Math.floor(Math.random() * 1000);
+    const nextMessage: ChatMessage = {
+      id: messageId,
+      role: 'assistant',
+      content: trimmedText,
+      codeGenerated: null,
+      billingState: null,
+      streamCodePreview: null,
+      uploadProgressPercent: 6,
+      createdAt: Math.floor(Date.now() / 1000),
+      persisted: false
+    };
+    const nextMessages = [...chatMessagesRef.current, nextMessage].sort(
+      (a, b) => {
+        if (a.createdAt !== b.createdAt) {
+          return a.createdAt - b.createdAt;
+        }
+        return a.id - b.id;
+      }
+    );
+    chatMessagesRef.current = nextMessages;
+    updateChatMessagesRef.current(nextMessages);
+    shouldAutoScrollRef.current = true;
+    scrollChatToBottom('smooth', { force: true });
+    return messageId;
+  }
+
+  function clampBuildChatUploadProgressPercent(
+    value: number | null | undefined
+  ) {
+    if (!Number.isFinite(Number(value))) {
+      return null;
+    }
+    return Math.max(0, Math.min(100, Math.round(Number(value))));
+  }
+
+  function updateLocalBuildChatMessage(
+    messageId: number | null,
+    options: {
+      text?: string;
+      uploadProgressPercent?: number | null;
+    }
+  ) {
+    if (!messageId) return;
+    const nextText = Object.prototype.hasOwnProperty.call(options, 'text')
+      ? String(options.text || '').trim()
+      : null;
+    const nextProgress = Object.prototype.hasOwnProperty.call(
+      options,
+      'uploadProgressPercent'
+    )
+      ? clampBuildChatUploadProgressPercent(options.uploadProgressPercent)
+      : null;
+    const nextMessages = chatMessagesRef.current.map((entry) =>
+      entry.id === messageId
+        ? {
+            ...entry,
+            ...(nextText !== null ? { content: nextText } : null),
+            ...(Object.prototype.hasOwnProperty.call(
+              options,
+              'uploadProgressPercent'
+            )
+              ? { uploadProgressPercent: nextProgress }
+              : null)
+          }
+        : entry
+    );
+    chatMessagesRef.current = nextMessages;
+    updateChatMessagesRef.current(nextMessages);
+  }
+
+  function removeLocalBuildChatMessage(messageId: number | null) {
+    if (!messageId) return;
+    const nextMessages = chatMessagesRef.current.filter(
+      (entry) => entry.id !== messageId
+    );
+    if (nextMessages.length === chatMessagesRef.current.length) {
+      return;
+    }
+    chatMessagesRef.current = nextMessages;
+    updateChatMessagesRef.current(nextMessages);
+  }
+
+  function buildBuildChatUploadPendingMessage(files: File[]) {
+    const normalizedFiles = Array.isArray(files)
+      ? files.filter((file) => file instanceof File)
+      : [];
+    const imageFiles = normalizedFiles.filter(isImageChatReferenceFile);
+    if (normalizedFiles.length === 1 && imageFiles.length === 1) {
+      return 'Checking your image...';
+    }
+    if (
+      normalizedFiles.length > 1 &&
+      imageFiles.length === normalizedFiles.length
+    ) {
+      return 'Checking your images...';
+    }
+    return 'Checking your upload...';
+  }
+
+  function buildBuildChatUploadRouteProgressMessage(
+    route: BuildChatUploadRoute,
+    files: File[]
+  ) {
+    const normalizedFiles = Array.isArray(files)
+      ? files.filter((file) => file instanceof File)
+      : [];
+    const imageFiles = normalizedFiles.filter(isImageChatReferenceFile);
+    if (route === 'project_files_import') {
+      return normalizedFiles.length > 1
+        ? 'Importing your files...'
+        : 'Importing your file...';
+    }
+    if (route === 'runtime_asset_upload') {
+      return imageFiles.length === normalizedFiles.length &&
+        normalizedFiles.length > 0
+        ? normalizedFiles.length === 1
+          ? 'Uploading your image asset...'
+          : 'Uploading your image assets...'
+        : normalizedFiles.length > 1
+          ? 'Uploading your assets...'
+          : 'Uploading your asset...';
+    }
+    if (route === 'chat_reference') {
+      if (
+        imageFiles.length === normalizedFiles.length &&
+        normalizedFiles.length > 0
+      ) {
+        return normalizedFiles.length === 1
+          ? 'Using your image...'
+          : 'Using your images...';
+      }
+      return 'Using your upload as reference...';
+    }
+    return 'Checking your upload...';
+  }
+
+  function buildBuildChatUploadRouteProgressPercent(
+    route: BuildChatUploadRoute
+  ) {
+    if (route === 'project_files_import') {
+      return 28;
+    }
+    if (route === 'runtime_asset_upload') {
+      return 26;
+    }
+    if (route === 'chat_reference') {
+      return 20;
+    }
+    return 14;
+  }
+
+  async function maybeContinueBuildChatRequestAfterMutationUpload({
+    routingMessageText,
+    existingUserMessageId
+  }: {
+    routingMessageText: string;
+    existingUserMessageId?: number | null;
+  }) {
+    const trimmedMessage = String(routingMessageText || '').trim();
+    if (!trimmedMessage) {
+      return false;
+    }
+    setBuildChatUploadInFlight(false);
+    return await sendBuildMessageText(trimmedMessage, {
+      existingUserMessageId: Number(existingUserMessageId || 0) || null,
+      ignoreUploadInFlight: true
+    });
   }
 
   async function persistBuildChatAssistantNote(
@@ -3745,7 +3899,10 @@ export default function BuildEditor({
 
   async function uploadBuildChatReferenceFiles(
     files: File[],
-    targetBuildId: number
+    targetBuildId: number,
+    options?: {
+      onProgress?: (progressPercent: number) => void;
+    }
   ) {
     const uploadedReferences: Array<{
       fileName: string;
@@ -3756,6 +3913,12 @@ export default function BuildEditor({
     }> = [];
 
     try {
+      const totalBytes = files.reduce((sum, file) => {
+        const size = Number(file?.size || 0);
+        return sum + (Number.isFinite(size) && size > 0 ? size : 0);
+      }, 0);
+      let completedBytes = 0;
+      const fallbackTotalFiles = Math.max(files.length, 1);
       for (const file of files) {
         const filePath = buildBuildChatReferenceUploadPath(targetBuildId);
         const appliedFileName = generateFileName(file.name || 'reference.png');
@@ -3763,7 +3926,32 @@ export default function BuildEditor({
           filePath,
           fileName: appliedFileName,
           file,
-          context: 'embed'
+          context: 'embed',
+          onUploadProgress: (progressEvent: any) => {
+            const loadedBytes = Number(progressEvent?.loaded || 0);
+            const effectiveTotalBytes =
+              totalBytes > 0 ? totalBytes : fallbackTotalFiles;
+            const currentFileProgress =
+              totalBytes > 0
+                ? Math.max(
+                    0,
+                    Math.min(Number(file.size || 0), loadedBytes || 0)
+                  )
+                : Math.max(
+                    0,
+                    Math.min(1, Number(progressEvent?.progress || 0) || 0)
+                  );
+            const overallRatio =
+              totalBytes > 0
+                ? (completedBytes + currentFileProgress) / effectiveTotalBytes
+                : Math.min(
+                    1,
+                    files.findIndex((entry) => entry === file) /
+                      fallbackTotalFiles +
+                      currentFileProgress / fallbackTotalFiles
+                  );
+            options?.onProgress?.(24 + overallRatio * 54);
+          }
         });
         uploadedReferences.push({
           fileName: file.name || appliedFileName,
@@ -3780,6 +3968,13 @@ export default function BuildEditor({
           actualFileName: file.name || appliedFileName,
           rootType: 'embed'
         });
+        completedBytes += Math.max(0, Number(file?.size || 0));
+        const completedFileCount = uploadedReferences.length;
+        const overallRatio =
+          totalBytes > 0
+            ? Math.max(0, Math.min(1, completedBytes / totalBytes))
+            : Math.max(0, Math.min(1, completedFileCount / fallbackTotalFiles));
+        options?.onProgress?.(24 + overallRatio * 54);
       }
     } catch (error) {
       await cleanupBuildChatReferenceUploadsQuietly(
@@ -3847,7 +4042,9 @@ export default function BuildEditor({
     return warningText ? `${baseText} ${warningText}` : baseText;
   }
 
-  function buildBuildChatUploadRoutingMessage(...parts: Array<string | undefined>) {
+  function buildBuildChatUploadRoutingMessage(
+    ...parts: Array<string | undefined>
+  ) {
     return parts
       .map((part) => String(part || '').trim())
       .filter(Boolean)
@@ -3869,7 +4066,7 @@ export default function BuildEditor({
       : [];
 
     const lines = [
-      'The user uploaded screenshots or mockups for this request.',
+      'The user uploaded images or mockups for this request.',
       'Treat them as visual evidence for what is wrong or what should change.',
       'Do not repeat them back as filler, chat clutter, or product UI.'
     ];
@@ -3898,6 +4095,7 @@ export default function BuildEditor({
       messageText?: string;
       historyUserNoteText?: string | null;
       resolvingPendingClarification?: boolean;
+      localProgressMessageId?: number | null;
     }
   ): Promise<BuildChatFileSelectionResult> {
     if (!isOwner || isRunActivityInFlight() || buildChatUploadInFlight) {
@@ -3914,12 +4112,15 @@ export default function BuildEditor({
       options?.messageText ?? buildChatDraftMessage
     );
     const historyUserNoteText =
-      options && Object.prototype.hasOwnProperty.call(options, 'historyUserNoteText')
+      options &&
+      Object.prototype.hasOwnProperty.call(options, 'historyUserNoteText')
         ? options.historyUserNoteText
         : buildChatDraftMessage;
     const resolvingPendingClarification = Boolean(
       options?.resolvingPendingClarification
     );
+    const localProgressMessageId =
+      Number(options?.localProgressMessageId || 0) || null;
     const currentPendingBuildChatUploadClarification =
       resolvingPendingClarification
         ? pendingBuildChatUploadClarificationRef.current[
@@ -3930,8 +4131,7 @@ export default function BuildEditor({
       currentPendingBuildChatUploadClarification?.intentPersisted
     );
     const consumedComposerDraft =
-      !options ||
-      !Object.prototype.hasOwnProperty.call(options, 'messageText');
+      !options || !Object.prototype.hasOwnProperty.call(options, 'messageText');
 
     function didBuildChatUploadTargetChange() {
       return Number(buildRef.current?.id || 0) !== uploadBuildId;
@@ -3940,6 +4140,15 @@ export default function BuildEditor({
     function clearConsumedBuildChatUploadDraft() {
       if (!consumedComposerDraft) return;
       setBuildChatDraftMessage('');
+    }
+
+    function clearLocalProgressMessage() {
+      removeLocalBuildChatMessage(localProgressMessageId);
+      if (
+        buildChatUploadProgressMessageIdRef.current === localProgressMessageId
+      ) {
+        buildChatUploadProgressMessageIdRef.current = null;
+      }
     }
 
     function pushPendingBuildChatUploadClarification(
@@ -3954,9 +4163,7 @@ export default function BuildEditor({
       const pendingClarifications =
         pendingBuildChatUploadClarificationRef.current;
       if (pendingClarifications.length === 0) {
-        pendingBuildChatUploadClarificationRef.current = [
-          pendingClarification
-        ];
+        pendingBuildChatUploadClarificationRef.current = [pendingClarification];
         return;
       }
       pendingBuildChatUploadClarificationRef.current = [
@@ -3978,7 +4185,9 @@ export default function BuildEditor({
       if (pendingClarificationIntentAlreadyPersisted) {
         return true;
       }
-      const trimmedHistoryUserNoteText = String(historyUserNoteText || '').trim();
+      const trimmedHistoryUserNoteText = String(
+        historyUserNoteText || ''
+      ).trim();
       if (!trimmedHistoryUserNoteText) {
         return false;
       }
@@ -4003,12 +4212,20 @@ export default function BuildEditor({
         return { handled: true };
       }
 
-      const route = String(decision?.route || '').trim() as BuildChatUploadRoute;
+      const route = String(
+        decision?.route || ''
+      ).trim() as BuildChatUploadRoute;
       if (!route) {
         throw new Error('Failed to determine what to do with these files.');
       }
 
+      updateLocalBuildChatMessage(localProgressMessageId, {
+        text: buildBuildChatUploadRouteProgressMessage(route, files),
+        uploadProgressPercent: buildBuildChatUploadRouteProgressPercent(route)
+      });
+
       if (route === 'clarify') {
+        clearLocalProgressMessage();
         const intentPersisted = await persistClarificationIntentIfNeeded();
         const pendingClarification = {
           files: [...files],
@@ -4038,10 +4255,15 @@ export default function BuildEditor({
         if (!previewPanel || didBuildChatUploadTargetChange()) {
           return { handled: true };
         }
-        const result = await previewPanel.importProjectFilesFromChatUpload(files);
+        const result =
+          await previewPanel.importProjectFilesFromChatUpload(files);
         if (didBuildChatUploadTargetChange()) {
           return { handled: true };
         }
+        updateLocalBuildChatMessage(localProgressMessageId, {
+          uploadProgressPercent: 86
+        });
+        clearLocalProgressMessage();
         if (!result?.success) {
           await persistBuildChatAssistantNote(
             result?.error || 'I could not import those project files.',
@@ -4049,13 +4271,31 @@ export default function BuildEditor({
           );
           return { handled: true };
         }
-        await persistBuildChatUploadIntentNote(historyUserNoteText, {
-          buildId: uploadBuildId
-        });
+        const persistedUserNote = await persistBuildChatUploadIntentNote(
+          historyUserNoteText,
+          {
+            buildId: uploadBuildId
+          }
+        );
+        const continued =
+          await maybeContinueBuildChatRequestAfterMutationUpload({
+            routingMessageText,
+            existingUserMessageId: persistedUserNote?.id || null
+          });
+        if (continued) {
+          clearConsumedBuildChatUploadDraft();
+          return { handled: true };
+        }
         await persistBuildChatAssistantNote(
           buildImportedProjectFilesNote(result),
           { buildId: uploadBuildId }
         );
+        if (String(routingMessageText || '').trim()) {
+          await persistBuildChatAssistantNote(
+            'I imported the files, but the run did not start. Retry your message when ready.',
+            { buildId: uploadBuildId }
+          );
+        }
         clearConsumedBuildChatUploadDraft();
         return { handled: true };
       }
@@ -4065,10 +4305,15 @@ export default function BuildEditor({
         if (!previewPanel || didBuildChatUploadTargetChange()) {
           return { handled: true };
         }
-        const result = await previewPanel.uploadProjectAssetsFromChatUpload(files);
+        const result =
+          await previewPanel.uploadProjectAssetsFromChatUpload(files);
         if (didBuildChatUploadTargetChange()) {
           return { handled: true };
         }
+        updateLocalBuildChatMessage(localProgressMessageId, {
+          uploadProgressPercent: 86
+        });
+        clearLocalProgressMessage();
         if (!result?.success) {
           await persistBuildChatAssistantNote(
             result?.error || 'I could not upload those build assets.',
@@ -4076,13 +4321,31 @@ export default function BuildEditor({
           );
           return { handled: true };
         }
-        await persistBuildChatUploadIntentNote(historyUserNoteText, {
-          buildId: uploadBuildId
-        });
+        const persistedUserNote = await persistBuildChatUploadIntentNote(
+          historyUserNoteText,
+          {
+            buildId: uploadBuildId
+          }
+        );
+        const continued =
+          await maybeContinueBuildChatRequestAfterMutationUpload({
+            routingMessageText,
+            existingUserMessageId: persistedUserNote?.id || null
+          });
+        if (continued) {
+          clearConsumedBuildChatUploadDraft();
+          return { handled: true };
+        }
         await persistBuildChatAssistantNote(
           buildUploadedRuntimeAssetsNote(result),
           { buildId: uploadBuildId }
         );
+        if (String(routingMessageText || '').trim()) {
+          await persistBuildChatAssistantNote(
+            'I uploaded the asset, but the run did not start. Retry your message when ready.',
+            { buildId: uploadBuildId }
+          );
+        }
         clearConsumedBuildChatUploadDraft();
         return { handled: true };
       }
@@ -4090,6 +4353,7 @@ export default function BuildEditor({
       if (route === 'chat_reference') {
         const referenceFiles = files.filter(isImageChatReferenceFile);
         if (referenceFiles.length === 0) {
+          clearLocalProgressMessage();
           await persistBuildChatAssistantNote(
             'I can only use image uploads as chat reference right now.',
             { buildId: uploadBuildId }
@@ -4098,7 +4362,14 @@ export default function BuildEditor({
         }
         const references = await uploadBuildChatReferenceFiles(
           referenceFiles,
-          uploadBuildId
+          uploadBuildId,
+          {
+            onProgress: (progressPercent) => {
+              updateLocalBuildChatMessage(localProgressMessageId, {
+                uploadProgressPercent: progressPercent
+              });
+            }
+          }
         );
         const cleanupUploads = references.map((reference) => ({
           filePath: reference.filePath,
@@ -4152,6 +4423,10 @@ export default function BuildEditor({
             );
             throw error;
           }
+          updateLocalBuildChatMessage(localProgressMessageId, {
+            uploadProgressPercent: 92
+          });
+          clearLocalProgressMessage();
           setBuildChatUploadInFlight(false);
           const started = await sendBuildMessageText(routingMessageText, {
             messageContext: hiddenReferenceContext,
@@ -4163,7 +4438,7 @@ export default function BuildEditor({
             return { handled: true };
           }
           await persistBuildChatAssistantNote(
-            'I saved the screenshot reference, but the run did not start. Retry your message when ready.',
+            'I saved the image reference, but the run did not start. Retry your message when ready.',
             { buildId: uploadBuildId }
           );
           return { handled: true };
@@ -4186,6 +4461,10 @@ export default function BuildEditor({
           );
           throw error;
         }
+        updateLocalBuildChatMessage(localProgressMessageId, {
+          uploadProgressPercent: 92
+        });
+        clearLocalProgressMessage();
         if (result?.userMessage) {
           appendPersistedBuildChatMessage(result.userMessage, {
             buildId: uploadBuildId
@@ -4210,16 +4489,16 @@ export default function BuildEditor({
         return { handled: true };
       }
 
-      const fallbackIntentPersisted = await persistClarificationIntentIfNeeded();
+      const fallbackIntentPersisted =
+        await persistClarificationIntentIfNeeded();
       const pendingClarification = {
         files: [...files],
         messageText: routingMessageText,
         intentPersisted: fallbackIntentPersisted
       };
+      clearLocalProgressMessage();
       if (resolvingPendingClarification) {
-        replaceCurrentPendingBuildChatUploadClarification(
-          pendingClarification
-        );
+        replaceCurrentPendingBuildChatUploadClarification(pendingClarification);
       } else {
         pushPendingBuildChatUploadClarification(pendingClarification);
       }
@@ -4231,14 +4510,44 @@ export default function BuildEditor({
       return { handled: true };
     } catch (error: any) {
       console.error('Failed to process build chat upload:', error);
+      clearLocalProgressMessage();
       await persistBuildChatAssistantNote(
         error?.message || 'I could not process those uploaded files.',
         { buildId: uploadBuildId }
       );
       return { handled: true };
     } finally {
+      clearLocalProgressMessage();
       setBuildChatUploadInFlight(false);
     }
+  }
+
+  function startBuildChatUploadProcessing(
+    selectedFiles: File[],
+    options?: {
+      messageText?: string;
+      historyUserNoteText?: string | null;
+      resolvingPendingClarification?: boolean;
+    }
+  ) {
+    if (!isOwner || isRunActivityInFlight() || buildChatUploadInFlight) {
+      return false;
+    }
+    const files = Array.isArray(selectedFiles)
+      ? selectedFiles.filter((file) => file instanceof File)
+      : [];
+    if (files.length === 0) {
+      return false;
+    }
+    const progressMessageId = appendLocalBuildChatAssistantMessage(
+      buildBuildChatUploadPendingMessage(files)
+    );
+    buildChatUploadProgressMessageIdRef.current = progressMessageId;
+    void handleBuildChatFileSelection(files, {
+      ...options,
+      localProgressMessageId: progressMessageId
+    });
+    return true;
   }
 
   function handleOpenBuildChatUpload() {
@@ -4276,9 +4585,10 @@ export default function BuildEditor({
             pendingBuildChatUploadClarification.messageText,
             trimmedMessage
           ),
-          historyUserNoteText: pendingBuildChatUploadClarification.intentPersisted
-            ? null
-            : pendingBuildChatUploadClarification.messageText,
+          historyUserNoteText:
+            pendingBuildChatUploadClarification.intentPersisted
+              ? null
+              : pendingBuildChatUploadClarification.messageText,
           resolvingPendingClarification: true
         }
       );
@@ -4563,43 +4873,6 @@ export default function BuildEditor({
     }
   }
 
-  async function handleReloadProjectFileChangeLogs(options?: {
-    silent?: boolean;
-  }) {
-    if (!isOwner) return;
-    const silent = Boolean(options?.silent);
-    if (!silent) {
-      setProjectFileChangeLogsLoading(true);
-    }
-    setProjectFileChangeLogsError('');
-    try {
-      const payload = await loadBuildProjectFileChangeLogs(build.id, {
-        fromWriter: true,
-        limit: 12
-      });
-      const logs = Array.isArray(payload?.projectFileChangeLogs)
-        ? payload.projectFileChangeLogs
-        : [];
-      const contextPreview =
-        typeof payload?.promptContextPreview === 'string'
-          ? payload.promptContextPreview
-          : '';
-      setProjectFileChangeLogs(logs);
-      setProjectFilePromptContextPreview(contextPreview);
-      setProjectFileChangeLogsLoadedAt(Date.now());
-      setProjectFileChangeLogsError('');
-    } catch (error: any) {
-      console.error('Failed to load project file change logs:', error);
-      const message =
-        error?.response?.data?.error ||
-        error?.message ||
-        'Failed to load project file change logs';
-      setProjectFileChangeLogsError(message);
-    } finally {
-      setProjectFileChangeLogsLoading(false);
-    }
-  }
-
   function updateRuntimeUploadQuotaUsage(
     usage: BuildRuntimeUploadUsage | null | undefined
   ) {
@@ -4622,7 +4895,9 @@ export default function BuildEditor({
     }
     setRuntimeUploadsError('');
     updateRuntimeUploadQuotaUsage(payload.usage || null);
-    const currentBuildTitle = String(buildRef.current?.title || build.title || '');
+    const currentBuildTitle = String(
+      buildRef.current?.title || build.title || ''
+    );
     const currentBuildIsPublic = Boolean(buildRef.current?.isPublic);
     const currentBuildAssets = Array.isArray(payload.assets)
       ? payload.assets.map((asset) => ({
@@ -4831,16 +5106,16 @@ export default function BuildEditor({
           appendLocalRunEvent({
             kind: 'lifecycle',
             phase: 'publish',
-            message:
-              error?.message
-                ? `${error.message} Publishing without a thumbnail instead.`
-                : 'Preview thumbnail could not be generated automatically. Publishing without a thumbnail instead.'
+            message: error?.message
+              ? `${error.message} Publishing without a thumbnail instead.`
+              : 'Preview thumbnail could not be generated automatically. Publishing without a thumbnail instead.'
           });
         }
       }
       const result = await publishBuild({
         buildId: publishTargetBuild.id,
-        thumbnailUrl: String(publishTargetBuild.thumbnailUrl || '').trim() || undefined
+        thumbnailUrl:
+          String(publishTargetBuild.thumbnailUrl || '').trim() || undefined
       });
       if (result?.success && result?.build) {
         applyBuildUpdate({
@@ -5069,18 +5344,14 @@ export default function BuildEditor({
               }
               messages={mergedChatMessages}
               executionPlan={displayedExecutionPlan}
-              scopedPlanQuestion={resolveScopedPlanQuestion(displayedExecutionPlan)}
+              scopedPlanQuestion={resolveScopedPlanQuestion(
+                displayedExecutionPlan
+              )}
               followUpPrompt={displayedFollowUpPrompt}
               generating={displayedGenerating}
               generatingStatus={displayedGeneratingStatus}
               assistantStatusSteps={displayedAssistantStatusSteps}
-              usageMetrics={displayedUsageMetrics}
               copilotPolicy={copilotPolicy}
-              projectFileChangeLogs={projectFileChangeLogs}
-              projectFilePromptContextPreview={projectFilePromptContextPreview}
-              projectFileChangeLogsLoading={projectFileChangeLogsLoading}
-              projectFileChangeLogsError={projectFileChangeLogsError}
-              projectFileChangeLogsLoadedAt={projectFileChangeLogsLoadedAt}
               runEvents={displayedRunEvents}
               runError={displayedRunError}
               activeStreamMessageIds={displayedActiveStreamMessageIds}
@@ -5113,7 +5384,6 @@ export default function BuildEditor({
               generationResetError={generationResetError}
               onPurchaseGenerationReset={handlePurchaseGenerationReset}
               onStopGeneration={handleStopGeneration}
-              onReloadProjectFileChangeLogs={handleReloadProjectFileChangeLogs}
               onDeleteMessage={handleDeleteMessage}
             />
           )}
@@ -5172,8 +5442,8 @@ export default function BuildEditor({
           fileObj={buildChatUploadFileObj}
           onEmbed={() => {}}
           onScrollToBottom={() => {}}
-          onCustomUploadSubmit={async ({ files, caption }) => {
-            await handleBuildChatFileSelection(files, {
+          onCustomUploadSubmit={({ files, caption }) => {
+            return startBuildChatUploadProcessing(files, {
               messageText: caption,
               historyUserNoteText: caption
             });
@@ -5196,7 +5466,9 @@ export default function BuildEditor({
       )}
       {thumbnailModalShown && isOwner && (
         <BuildThumbnailModal
-          initialImageUrl={build.thumbnailUrl || buildRef.current?.thumbnailUrl || null}
+          initialImageUrl={
+            build.thumbnailUrl || buildRef.current?.thumbnailUrl || null
+          }
           loading={savingThumbnail}
           saveError={thumbnailSaveError}
           onHide={handleCloseThumbnailModal}
@@ -5382,14 +5654,14 @@ export default function BuildEditor({
     const now = Math.floor(Date.now() / 1000);
     const assistantMessageId = Date.now();
     const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
-      activeRunModeRef.current = 'runtime-autofix';
-      setRunError(null);
-      shouldHydrateSharedRunRef.current = false;
-      setDismissedFollowUpPromptKey('');
-      clearLocalFollowUpPrompt();
-      streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
-        activeBuild?.projectFiles || [],
-        activeBuild?.code || ''
+    activeRunModeRef.current = 'runtime-autofix';
+    setRunError(null);
+    shouldHydrateSharedRunRef.current = false;
+    setDismissedFollowUpPromptKey('');
+    clearLocalFollowUpPrompt();
+    streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+      activeBuild?.projectFiles || [],
+      activeBuild?.code || ''
     );
     setStreamingProjectFiles(null);
     setStreamingFocusFilePath(null);
@@ -5860,7 +6132,10 @@ export default function BuildEditor({
       }
     }
     if (!Array.isArray(messages)) return;
-    const localBillingStateById = new Map<number, ChatMessage['billingState']>();
+    const localBillingStateById = new Map<
+      number,
+      ChatMessage['billingState']
+    >();
     for (const message of chatMessagesRef.current) {
       if (typeof message?.id !== 'number' || message.id <= 0) continue;
       if (message.billingState == null) continue;
@@ -5868,8 +6143,7 @@ export default function BuildEditor({
     }
     const normalized = messages.map((entry: any) => ({
       ...entry,
-      billingState:
-        localBillingStateById.get(Number(entry?.id || 0)) ?? null,
+      billingState: localBillingStateById.get(Number(entry?.id || 0)) ?? null,
       persisted: true,
       streamCodePreview: null
     }));
