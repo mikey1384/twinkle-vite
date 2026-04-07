@@ -63,6 +63,573 @@ var Twinkle;
     playerBounds: null,
     scheduled: false
   };
+  var hostVisibilityState = {
+    visible: true,
+    rafIdCounter: 0,
+    queuedCallbacks: new Map(),
+    scheduledCallbacks: new Map(),
+    scheduledHandles: new Map(),
+    pausedMediaElements: [],
+    trackedMediaElements: [],
+    hiddenCallbacks: new Map(),
+    hiddenCallbackIdsByCallback: new Map()
+  };
+  var HOST_VISIBILITY_HIDDEN_RAF_LIMIT = 48;
+  var nativeRequestAnimationFrame =
+    typeof window.requestAnimationFrame === 'function'
+      ? window.requestAnimationFrame.bind(window)
+      : null;
+  var nativeCancelAnimationFrame =
+    typeof window.cancelAnimationFrame === 'function'
+      ? window.cancelAnimationFrame.bind(window)
+      : null;
+  var nativeMediaPlay =
+    window.HTMLMediaElement &&
+    window.HTMLMediaElement.prototype &&
+    typeof window.HTMLMediaElement.prototype.play === 'function'
+      ? window.HTMLMediaElement.prototype.play
+      : null;
+  var nativeMediaPause =
+    window.HTMLMediaElement &&
+    window.HTMLMediaElement.prototype &&
+    typeof window.HTMLMediaElement.prototype.pause === 'function'
+      ? window.HTMLMediaElement.prototype.pause
+      : null;
+
+  function trackMediaElementForHostVisibility(mediaElement) {
+    if (!mediaElement) return;
+    for (var i = 0; i < hostVisibilityState.trackedMediaElements.length; i += 1) {
+      if (hostVisibilityState.trackedMediaElements[i] === mediaElement) {
+        return;
+      }
+    }
+    hostVisibilityState.trackedMediaElements.push(mediaElement);
+  }
+
+  function untrackMediaElementForHostVisibility(mediaElement) {
+    if (!mediaElement || hostVisibilityState.trackedMediaElements.length === 0) {
+      return;
+    }
+    hostVisibilityState.trackedMediaElements =
+      hostVisibilityState.trackedMediaElements.filter(function(candidate) {
+        return candidate !== mediaElement;
+      });
+  }
+
+  function pruneTrackedMediaElementsForHostVisibility() {
+    if (hostVisibilityState.trackedMediaElements.length === 0) return;
+    hostVisibilityState.trackedMediaElements =
+      hostVisibilityState.trackedMediaElements.filter(function(mediaElement) {
+        return !!mediaElement && !mediaElement.ended;
+      });
+  }
+
+  function createHostVisibilityDeferredPlayError(message) {
+    try {
+      return new Error(message || 'Playback was cancelled while hidden');
+    } catch (_) {
+      return {
+        message: String(message || 'Playback was cancelled while hidden')
+      };
+    }
+  }
+
+  function getPausedMediaEntryForHostVisibility(mediaElement) {
+    if (!mediaElement || hostVisibilityState.pausedMediaElements.length === 0) {
+      return null;
+    }
+    for (var i = 0; i < hostVisibilityState.pausedMediaElements.length; i += 1) {
+      if (hostVisibilityState.pausedMediaElements[i].element === mediaElement) {
+        return hostVisibilityState.pausedMediaElements[i];
+      }
+    }
+    return null;
+  }
+
+  function clearPausedMediaEntryPlayPromiseForHostVisibility(pausedEntry) {
+    if (!pausedEntry) return;
+    pausedEntry.pendingPlayPromise = null;
+    pausedEntry.resolvePendingPlay = null;
+    pausedEntry.rejectPendingPlay = null;
+  }
+
+  function resolvePausedMediaEntryPlayPromiseForHostVisibility(pausedEntry) {
+    if (!pausedEntry || typeof pausedEntry.resolvePendingPlay !== 'function') {
+      clearPausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+      return;
+    }
+    var resolvePendingPlay = pausedEntry.resolvePendingPlay;
+    clearPausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+    try {
+      resolvePendingPlay();
+    } catch (_) {}
+  }
+
+  function rejectPausedMediaEntryPlayPromiseForHostVisibility(
+    pausedEntry,
+    message
+  ) {
+    if (!pausedEntry || typeof pausedEntry.rejectPendingPlay !== 'function') {
+      clearPausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+      return;
+    }
+    var rejectPendingPlay = pausedEntry.rejectPendingPlay;
+    clearPausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+    try {
+      rejectPendingPlay(createHostVisibilityDeferredPlayError(message));
+    } catch (_) {}
+  }
+
+  function getOrCreatePausedMediaEntryPlayPromiseForHostVisibility(pausedEntry) {
+    if (!pausedEntry || typeof Promise !== 'function') return null;
+    if (pausedEntry.pendingPlayPromise) {
+      return pausedEntry.pendingPlayPromise;
+    }
+    pausedEntry.pendingPlayPromise = new Promise(function(resolve, reject) {
+      pausedEntry.resolvePendingPlay = resolve;
+      pausedEntry.rejectPendingPlay = reject;
+    });
+    return pausedEntry.pendingPlayPromise;
+  }
+
+  function handlePausedMediaEntryResumePlayPromiseForHostVisibility(
+    pausedEntry,
+    playPromise
+  ) {
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.then(
+        function() {
+          resolvePausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+        },
+        function(error) {
+          rejectPausedMediaEntryPlayPromiseForHostVisibility(
+            pausedEntry,
+            error && error.message
+          );
+        }
+      );
+      return;
+    }
+    resolvePausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+  }
+
+  function addPausedMediaElementForHostVisibility(mediaElement, allowDetachedResume) {
+    if (!mediaElement) return;
+    trackMediaElementForHostVisibility(mediaElement);
+    var existingEntry = getPausedMediaEntryForHostVisibility(mediaElement);
+    if (existingEntry) {
+      if (allowDetachedResume === true) {
+        existingEntry.allowDetachedResume = true;
+      }
+      return existingEntry;
+    }
+    var pausedEntry = {
+      element: mediaElement,
+      allowDetachedResume: allowDetachedResume === true,
+      pendingPlayPromise: null,
+      resolvePendingPlay: null,
+      rejectPendingPlay: null
+    };
+    hostVisibilityState.pausedMediaElements.push(pausedEntry);
+    return pausedEntry;
+  }
+
+  function removePausedMediaElementForHostVisibility(mediaElement) {
+    if (!mediaElement || hostVisibilityState.pausedMediaElements.length === 0) {
+      return;
+    }
+    hostVisibilityState.pausedMediaElements =
+      hostVisibilityState.pausedMediaElements.filter(function(candidate) {
+        if (candidate.element === mediaElement) {
+          rejectPausedMediaEntryPlayPromiseForHostVisibility(candidate);
+          return false;
+        }
+        return candidate.element !== mediaElement;
+      });
+  }
+
+  function hasPausedMediaElementForHostVisibility(mediaElement) {
+    return !!getPausedMediaEntryForHostVisibility(mediaElement);
+  }
+
+  function pushUniqueMediaElementForHostVisibility(mediaElements, mediaElement) {
+    if (!mediaElement) return;
+    for (var i = 0; i < mediaElements.length; i += 1) {
+      if (mediaElements[i] === mediaElement) return;
+    }
+    mediaElements.push(mediaElement);
+  }
+
+  function getKnownMediaElementsForHostVisibility() {
+    pruneTrackedMediaElementsForHostVisibility();
+    var mediaElements = [];
+    var connectedMediaElements = document.querySelectorAll('audio,video');
+    for (var i = 0; i < connectedMediaElements.length; i += 1) {
+      pushUniqueMediaElementForHostVisibility(
+        mediaElements,
+        connectedMediaElements[i]
+      );
+    }
+    for (var j = 0; j < hostVisibilityState.trackedMediaElements.length; j += 1) {
+      pushUniqueMediaElementForHostVisibility(
+        mediaElements,
+        hostVisibilityState.trackedMediaElements[j]
+      );
+    }
+    return mediaElements;
+  }
+
+  function trimHiddenHostVisibilityAnimationFrames() {
+    while (hostVisibilityState.hiddenCallbacks.size > HOST_VISIBILITY_HIDDEN_RAF_LIMIT) {
+      var oldestHiddenEntry = hostVisibilityState.hiddenCallbacks.entries().next();
+      if (!oldestHiddenEntry || oldestHiddenEntry.done) break;
+      clearHiddenHostVisibilityAnimationFrame(oldestHiddenEntry.value[0]);
+    }
+  }
+
+  function rememberHiddenHostVisibilityAnimationFrame(id, callback) {
+    if (typeof callback !== 'function') return;
+    var normalizedId = Number(id);
+    var existingId = hostVisibilityState.hiddenCallbackIdsByCallback.get(callback);
+    if (Number(existingId) > 0) {
+      hostVisibilityState.hiddenCallbacks.delete(existingId);
+    }
+    hostVisibilityState.hiddenCallbacks.set(normalizedId, callback);
+    hostVisibilityState.hiddenCallbackIdsByCallback.set(callback, normalizedId);
+    trimHiddenHostVisibilityAnimationFrames();
+  }
+
+  function clearHiddenHostVisibilityAnimationFrame(id) {
+    var normalizedId = Number(id);
+    var hiddenCallback = hostVisibilityState.hiddenCallbacks.get(normalizedId);
+    hostVisibilityState.hiddenCallbacks.delete(normalizedId);
+    if (
+      hiddenCallback &&
+      Number(hostVisibilityState.hiddenCallbackIdsByCallback.get(hiddenCallback)) ===
+        normalizedId
+    ) {
+      hostVisibilityState.hiddenCallbackIdsByCallback.delete(hiddenCallback);
+    }
+  }
+
+  function cancelScheduledHostVisibilityAnimationFrame(id) {
+    if (!hostVisibilityState.scheduledHandles.has(id)) return;
+    var scheduledHandle = hostVisibilityState.scheduledHandles.get(id);
+    hostVisibilityState.scheduledHandles.delete(id);
+    if (!scheduledHandle) return;
+    if (scheduledHandle.kind === 'raf' && nativeCancelAnimationFrame) {
+      nativeCancelAnimationFrame(scheduledHandle.handle);
+      return;
+    }
+    clearTimeout(scheduledHandle.handle);
+  }
+
+  function scheduleHostVisibilityAnimationFrame(id, callback) {
+    if (typeof callback !== 'function') return;
+    hostVisibilityState.scheduledCallbacks.set(id, callback);
+    if (nativeRequestAnimationFrame) {
+      var nativeHandle = nativeRequestAnimationFrame(function(timestamp) {
+        hostVisibilityState.scheduledHandles.delete(id);
+        var scheduledCallback = hostVisibilityState.scheduledCallbacks.get(id);
+        hostVisibilityState.scheduledCallbacks.delete(id);
+        if (typeof scheduledCallback !== 'function') return;
+        if (!hostVisibilityState.visible) {
+          hostVisibilityState.queuedCallbacks.set(id, scheduledCallback);
+          return;
+        }
+        try {
+          scheduledCallback(timestamp);
+        } catch (error) {
+          setTimeout(function() {
+            throw error;
+          }, 0);
+        }
+      });
+      hostVisibilityState.scheduledHandles.set(id, {
+        kind: 'raf',
+        handle: nativeHandle
+      });
+      return;
+    }
+    var timeoutHandle = setTimeout(function() {
+      hostVisibilityState.scheduledHandles.delete(id);
+      var scheduledCallback = hostVisibilityState.scheduledCallbacks.get(id);
+      hostVisibilityState.scheduledCallbacks.delete(id);
+      if (typeof scheduledCallback !== 'function') return;
+      if (!hostVisibilityState.visible) {
+        hostVisibilityState.queuedCallbacks.set(id, scheduledCallback);
+        return;
+      }
+      try {
+        scheduledCallback(Date.now());
+      } catch (error) {
+        setTimeout(function() {
+          throw error;
+        }, 0);
+      }
+    }, 16);
+    hostVisibilityState.scheduledHandles.set(id, {
+      kind: 'timeout',
+      handle: timeoutHandle
+    });
+  }
+
+  function queueScheduledHostVisibilityAnimationFrames() {
+    var scheduledEntries = Array.from(
+      hostVisibilityState.scheduledCallbacks.entries()
+    );
+    for (var i = 0; i < scheduledEntries.length; i += 1) {
+      var scheduledEntry = scheduledEntries[i];
+      var id = scheduledEntry[0];
+      var callback = scheduledEntry[1];
+      cancelScheduledHostVisibilityAnimationFrame(id);
+      if (typeof callback === 'function') {
+        hostVisibilityState.queuedCallbacks.set(id, callback);
+      }
+    }
+    hostVisibilityState.scheduledCallbacks.clear();
+  }
+
+  function flushQueuedHostVisibilityAnimationFrames() {
+    if (!hostVisibilityState.visible) return;
+    var queuedEntries = Array.from(hostVisibilityState.queuedCallbacks.entries());
+    hostVisibilityState.queuedCallbacks.clear();
+    for (var i = 0; i < queuedEntries.length; i += 1) {
+      scheduleHostVisibilityAnimationFrame(
+        queuedEntries[i][0],
+        queuedEntries[i][1]
+      );
+    }
+    var hiddenEntries = Array.from(hostVisibilityState.hiddenCallbacks.entries());
+    hostVisibilityState.hiddenCallbacks.clear();
+    hostVisibilityState.hiddenCallbackIdsByCallback.clear();
+    for (var j = 0; j < hiddenEntries.length; j += 1) {
+      scheduleHostVisibilityAnimationFrame(
+        hiddenEntries[j][0],
+        hiddenEntries[j][1]
+      );
+    }
+  }
+
+  function pauseActiveMediaElementsForHostVisibility() {
+    hostVisibilityState.pausedMediaElements = [];
+    var mediaElements = getKnownMediaElementsForHostVisibility();
+    for (var i = 0; i < mediaElements.length; i += 1) {
+      var mediaElement = mediaElements[i];
+      if (
+        !mediaElement ||
+        typeof mediaElement.pause !== 'function' ||
+        mediaElement.paused ||
+        mediaElement.ended
+      ) {
+        continue;
+      }
+      try {
+        if (nativeMediaPause) {
+          nativeMediaPause.call(mediaElement);
+        } else {
+          mediaElement.pause();
+        }
+        addPausedMediaElementForHostVisibility(
+          mediaElement,
+          mediaElement.isConnected !== true
+        );
+      } catch (_) {}
+    }
+  }
+
+  function resumePausedMediaElementsForHostVisibility() {
+    var pausedMediaElements = hostVisibilityState.pausedMediaElements.slice();
+    hostVisibilityState.pausedMediaElements = [];
+    for (var i = 0; i < pausedMediaElements.length; i += 1) {
+      var pausedEntry = pausedMediaElements[i];
+      var mediaElement = pausedEntry && pausedEntry.element;
+      if (!mediaElement || mediaElement.ended) {
+        rejectPausedMediaEntryPlayPromiseForHostVisibility(
+          pausedEntry,
+          'Playback ended before the preview became visible'
+        );
+        continue;
+      }
+      if (!pausedEntry.allowDetachedResume && !mediaElement.isConnected) {
+        rejectPausedMediaEntryPlayPromiseForHostVisibility(
+          pausedEntry,
+          'Playback could not resume because the media element was removed'
+        );
+        continue;
+      }
+      try {
+        var playPromise = nativeMediaPlay
+          ? nativeMediaPlay.call(mediaElement)
+          : mediaElement.play();
+        handlePausedMediaEntryResumePlayPromiseForHostVisibility(
+          pausedEntry,
+          playPromise
+        );
+      } catch (error) {
+        rejectPausedMediaEntryPlayPromiseForHostVisibility(
+          pausedEntry,
+          error && error.message
+        );
+      }
+    }
+  }
+
+  function applyHostVisibility(visible) {
+    var nextVisible = visible !== false;
+    if (hostVisibilityState.visible === nextVisible) return false;
+    hostVisibilityState.visible = nextVisible;
+    var documentElement = document.documentElement;
+    if (documentElement) {
+      if (nextVisible) {
+        documentElement.removeAttribute('data-twinkle-host-hidden');
+      } else {
+        documentElement.setAttribute('data-twinkle-host-hidden', '1');
+      }
+    }
+    if (nextVisible) {
+      resumePausedMediaElementsForHostVisibility();
+      flushQueuedHostVisibilityAnimationFrames();
+      publishPreviewLayout(false);
+      scheduleViewportAppFit();
+      schedulePreviewHealthSnapshot();
+    } else {
+      queueScheduledHostVisibilityAnimationFrames();
+      pauseActiveMediaElementsForHostVisibility();
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent('twinkle:host-visibility', {
+          detail: { visible: nextVisible }
+        })
+      );
+    } catch (_) {}
+    return true;
+  }
+
+  function installHostVisibilityAnimationFrameInterceptor() {
+    window.requestAnimationFrame = function(callback) {
+      if (typeof callback !== 'function') {
+        return nativeRequestAnimationFrame
+          ? nativeRequestAnimationFrame(callback)
+          : setTimeout(callback, 16);
+      }
+      var id = ++hostVisibilityState.rafIdCounter;
+      if (!hostVisibilityState.visible) {
+        rememberHiddenHostVisibilityAnimationFrame(id, callback);
+        return id;
+      }
+      scheduleHostVisibilityAnimationFrame(id, callback);
+      return id;
+    };
+
+    window.cancelAnimationFrame = function(id) {
+      var normalizedId = Number(id);
+      clearHiddenHostVisibilityAnimationFrame(normalizedId);
+      hostVisibilityState.queuedCallbacks.delete(normalizedId);
+      hostVisibilityState.scheduledCallbacks.delete(normalizedId);
+      cancelScheduledHostVisibilityAnimationFrame(normalizedId);
+    };
+  }
+
+  function installHostVisibilityMediaInterceptor() {
+    if (
+      !window.HTMLMediaElement ||
+      !window.HTMLMediaElement.prototype ||
+      typeof nativeMediaPlay !== 'function'
+    ) {
+      return;
+    }
+    try {
+      window.HTMLMediaElement.prototype.play = function() {
+        trackMediaElementForHostVisibility(this);
+        if (hostVisibilityState.visible) {
+          removePausedMediaElementForHostVisibility(this);
+          return nativeMediaPlay.call(this);
+        }
+        var pausedEntry = addPausedMediaElementForHostVisibility(
+          this,
+          this.isConnected !== true
+        );
+        if (nativeMediaPause) {
+          try {
+            nativeMediaPause.call(this);
+          } catch (error) {
+            removePausedMediaElementForHostVisibility(this);
+            if (typeof Promise === 'function') {
+              return Promise.reject(error);
+            }
+            throw error;
+          }
+        }
+        var pendingPlayPromise =
+          getOrCreatePausedMediaEntryPlayPromiseForHostVisibility(pausedEntry);
+        return typeof pendingPlayPromise !== 'undefined'
+          ? pendingPlayPromise
+          : typeof Promise === 'function'
+            ? Promise.resolve()
+            : undefined;
+      };
+    } catch (_) {}
+    if (typeof nativeMediaPause === 'function') {
+      try {
+        window.HTMLMediaElement.prototype.pause = function() {
+          removePausedMediaElementForHostVisibility(this);
+          return nativeMediaPause.call(this);
+        };
+      } catch (_) {}
+    }
+    document.addEventListener(
+      'play',
+      function(event) {
+        var mediaElement = event.target;
+        trackMediaElementForHostVisibility(mediaElement);
+        if (
+          hostVisibilityState.visible ||
+          !mediaElement ||
+          typeof mediaElement.pause !== 'function'
+        ) {
+          return;
+        }
+        addPausedMediaElementForHostVisibility(
+          mediaElement,
+          mediaElement.isConnected !== true
+        );
+        try {
+          if (nativeMediaPause) {
+            nativeMediaPause.call(mediaElement);
+          } else {
+            mediaElement.pause();
+          }
+        } catch (_) {}
+      },
+      true
+    );
+    document.addEventListener(
+      'pause',
+      function(event) {
+        if (
+          !hostVisibilityState.visible &&
+          hasPausedMediaElementForHostVisibility(event.target)
+        ) {
+          return;
+        }
+        removePausedMediaElementForHostVisibility(event.target);
+      },
+      true
+    );
+    document.addEventListener(
+      'ended',
+      function(event) {
+        removePausedMediaElementForHostVisibility(event.target);
+        untrackMediaElementForHostVisibility(event.target);
+      },
+      true
+    );
+  }
+
+  installHostVisibilityAnimationFrameInterceptor();
+  installHostVisibilityMediaInterceptor();
 
   function createMemoryStorage() {
     var values = Object.create(null);
@@ -499,6 +1066,21 @@ var Twinkle;
   }
 
   function getPreviewViewportSize() {
+    var visualViewport = window.visualViewport;
+    var visualViewportWidth =
+      visualViewport && Number.isFinite(Number(visualViewport.width))
+        ? Math.max(1, Math.round(Number(visualViewport.width)))
+        : 0;
+    var visualViewportHeight =
+      visualViewport && Number.isFinite(Number(visualViewport.height))
+        ? Math.max(1, Math.round(Number(visualViewport.height)))
+        : 0;
+    if (visualViewportWidth > 0 && visualViewportHeight > 0) {
+      return {
+        width: visualViewportWidth,
+        height: visualViewportHeight
+      };
+    }
     return {
       width: Math.max(
         window.innerWidth || 0,
@@ -509,6 +1091,28 @@ var Twinkle;
         document.documentElement ? document.documentElement.clientHeight || 0 : 0
       )
     };
+  }
+
+  function previewFitSupportsScaleProperty() {
+    try {
+      if (window.CSS && typeof window.CSS.supports === 'function') {
+        return !!window.CSS.supports('scale', '1');
+      }
+    } catch (_) {}
+    var documentElement = document.documentElement;
+    return !!(
+      documentElement &&
+      documentElement.style &&
+      'scale' in documentElement.style
+    );
+  }
+
+  function buildPreviewFitTransformValue(baseTransform, scaleValue) {
+    var normalizedBaseTransform = String(baseTransform || '').trim();
+    if (normalizedBaseTransform && normalizedBaseTransform !== 'none') {
+      return normalizedBaseTransform + ' scale(' + scaleValue + ')';
+    }
+    return 'scale(' + scaleValue + ')';
   }
 
   function buildPreviewLayoutSnapshot() {
@@ -732,15 +1336,15 @@ var Twinkle;
       'max-width:100% !important;' +
       'max-height:100% !important;' +
       '}' +
+      'html[data-twinkle-preview-mode="viewport-app"] [data-twinkle-preview-fit="1"]{' +
+      'transform-origin:center center !important;' +
+      '}' +
       'html[data-twinkle-preview-mode="viewport-app"] canvas,' +
       'html[data-twinkle-preview-mode="viewport-app"] svg,' +
       'html[data-twinkle-preview-mode="viewport-app"] video,' +
       'html[data-twinkle-preview-mode="viewport-app"] img{' +
       'max-width:100% !important;' +
       'max-height:100% !important;' +
-      '}' +
-      'html[data-twinkle-preview-mode="viewport-app"] [data-twinkle-preview-fit="1"]{' +
-      'transform-origin:center center !important;' +
       '}';
     (document.head || document.documentElement).appendChild(styleNode);
   }
@@ -800,9 +1404,213 @@ var Twinkle;
 
   function clearViewportFitCandidate(candidate) {
     if (!candidate || !candidate.style) return;
+    var hadViewportFit = candidate.hasAttribute('data-twinkle-preview-fit');
+    var hadInlineScaleSnapshot = candidate.hasAttribute(
+      'data-twinkle-preview-fit-inline-scale'
+    );
+    var hadInlineTransformSnapshot = candidate.hasAttribute(
+      'data-twinkle-preview-fit-inline-transform'
+    );
+    if (!hadViewportFit && !hadInlineScaleSnapshot && !hadInlineTransformSnapshot) {
+      return;
+    }
+    var previousInlineScale = hadInlineScaleSnapshot
+      ? candidate.getAttribute('data-twinkle-preview-fit-inline-scale') || ''
+      : '';
+    var previousInlineTransform = hadInlineTransformSnapshot
+      ? candidate.getAttribute('data-twinkle-preview-fit-inline-transform') || ''
+      : '';
     candidate.removeAttribute('data-twinkle-preview-fit');
-    candidate.style.transform = '';
-    candidate.style.transformOrigin = '';
+    candidate.removeAttribute('data-twinkle-preview-fit-inline-scale');
+    candidate.removeAttribute('data-twinkle-preview-fit-inline-transform');
+    if (hadInlineScaleSnapshot) {
+      if (previousInlineScale && previousInlineScale.length > 0) {
+        candidate.style.setProperty('scale', previousInlineScale);
+      } else {
+        candidate.style.removeProperty('scale');
+      }
+    }
+    if (hadInlineTransformSnapshot) {
+      if (previousInlineTransform && previousInlineTransform.length > 0) {
+        candidate.style.setProperty('transform', previousInlineTransform);
+      } else {
+        candidate.style.removeProperty('transform');
+      }
+    }
+  }
+
+  function computedStyleHasMeaningfulScale(computedStyle) {
+    if (!computedStyle) return false;
+    var scaleValue = String(computedStyle.scale || '').trim();
+    if (
+      scaleValue &&
+      scaleValue !== 'none' &&
+      scaleValue
+        .split(/\s+/)
+        .filter(Boolean)
+        .some(function(part) {
+          var numericValue = Number(part);
+          return (
+            !Number.isFinite(numericValue) ||
+            Math.abs(numericValue - 1) > 0.001
+          );
+        })
+    ) {
+      return true;
+    }
+    var transformValue = String(computedStyle.transform || '').trim();
+    if (!transformValue || transformValue === 'none') return false;
+    var matrix3dMatch = transformValue.match(/^matrix3d\(([^)]+)\)$/i);
+    if (matrix3dMatch) {
+      var matrix3dParts = matrix3dMatch[1]
+        .split(',')
+        .map(function(part) {
+          return Number(String(part).trim());
+        });
+      if (matrix3dParts.length === 16 && matrix3dParts.every(Number.isFinite)) {
+        var scale3dX = Math.sqrt(
+          matrix3dParts[0] * matrix3dParts[0] +
+            matrix3dParts[1] * matrix3dParts[1] +
+            matrix3dParts[2] * matrix3dParts[2]
+        );
+        var scale3dY = Math.sqrt(
+          matrix3dParts[4] * matrix3dParts[4] +
+            matrix3dParts[5] * matrix3dParts[5] +
+            matrix3dParts[6] * matrix3dParts[6]
+        );
+        var scale3dZ = Math.sqrt(
+          matrix3dParts[8] * matrix3dParts[8] +
+            matrix3dParts[9] * matrix3dParts[9] +
+            matrix3dParts[10] * matrix3dParts[10]
+        );
+        return (
+          Math.abs(scale3dX - 1) > 0.001 ||
+          Math.abs(scale3dY - 1) > 0.001 ||
+          Math.abs(scale3dZ - 1) > 0.001
+        );
+      }
+      return false;
+    }
+    var matrixMatch = transformValue.match(/^matrix\(([^)]+)\)$/i);
+    if (matrixMatch) {
+      var matrixParts = matrixMatch[1]
+        .split(',')
+        .map(function(part) {
+          return Number(String(part).trim());
+        });
+      if (matrixParts.length === 6 && matrixParts.every(Number.isFinite)) {
+        var scaleX = Math.sqrt(
+          matrixParts[0] * matrixParts[0] + matrixParts[1] * matrixParts[1]
+        );
+        var scaleY = Math.sqrt(
+          matrixParts[2] * matrixParts[2] + matrixParts[3] * matrixParts[3]
+        );
+        return Math.abs(scaleX - 1) > 0.001 || Math.abs(scaleY - 1) > 0.001;
+      }
+      return false;
+    }
+    return /scale(?:3d|x|y|z)?\(/i.test(transformValue);
+  }
+
+  function getViewportFitBaseTransform(candidate) {
+    if (!candidate || !candidate.style) return '';
+    var previousInlineTransform = candidate.hasAttribute(
+      'data-twinkle-preview-fit-inline-transform'
+    )
+      ? candidate.getAttribute('data-twinkle-preview-fit-inline-transform') || ''
+      : candidate.style.getPropertyValue('transform');
+    if (previousInlineTransform) {
+      return previousInlineTransform;
+    }
+    var hadViewportFit = candidate.hasAttribute('data-twinkle-preview-fit');
+    var fitTransform = hadViewportFit
+      ? candidate.style.getPropertyValue('transform')
+      : '';
+    if (hadViewportFit) {
+      candidate.removeAttribute('data-twinkle-preview-fit');
+      candidate.style.removeProperty('transform');
+    }
+    var computedTransform = '';
+    try {
+      computedTransform = String(
+        window.getComputedStyle(candidate).transform || ''
+      ).trim();
+    } catch (_) {}
+    if (hadViewportFit) {
+      candidate.setAttribute('data-twinkle-preview-fit', '1');
+      if (fitTransform) {
+        candidate.style.setProperty('transform', fitTransform);
+      } else {
+        candidate.style.removeProperty('transform');
+      }
+    }
+    if (!computedTransform || computedTransform === 'none') {
+      return '';
+    }
+    return computedTransform;
+  }
+
+  function candidateHasAuthoredScale(candidate) {
+    if (
+      !candidate ||
+      typeof window.getComputedStyle !== 'function' ||
+      !candidate.style
+    ) {
+      return false;
+    }
+    var hadViewportFit = candidate.hasAttribute('data-twinkle-preview-fit');
+    var fitScale = hadViewportFit
+      ? candidate.style.getPropertyValue('scale')
+      : '';
+    var previousInlineScale = hadViewportFit
+      ? candidate.getAttribute('data-twinkle-preview-fit-inline-scale') || ''
+      : '';
+    var hadInlineTransformSnapshot = hadViewportFit
+      ? candidate.hasAttribute('data-twinkle-preview-fit-inline-transform')
+      : false;
+    var fitTransform = hadViewportFit
+      ? candidate.style.getPropertyValue('transform')
+      : '';
+    var previousInlineTransform =
+      hadViewportFit && hadInlineTransformSnapshot
+        ? candidate.getAttribute('data-twinkle-preview-fit-inline-transform') || ''
+        : '';
+    if (hadViewportFit) {
+      if (previousInlineScale) {
+        candidate.style.setProperty('scale', previousInlineScale);
+      } else {
+        candidate.style.removeProperty('scale');
+      }
+      if (hadInlineTransformSnapshot) {
+        if (previousInlineTransform) {
+          candidate.style.setProperty('transform', previousInlineTransform);
+        } else {
+          candidate.style.removeProperty('transform');
+        }
+      }
+      candidate.removeAttribute('data-twinkle-preview-fit');
+    }
+    var computedStyle = null;
+    try {
+      computedStyle = window.getComputedStyle(candidate);
+    } catch (_) {}
+    if (hadViewportFit) {
+      candidate.setAttribute('data-twinkle-preview-fit', '1');
+      if (fitScale) {
+        candidate.style.setProperty('scale', fitScale);
+      } else {
+        candidate.style.removeProperty('scale');
+      }
+      if (hadInlineTransformSnapshot) {
+        if (fitTransform) {
+          candidate.style.setProperty('transform', fitTransform);
+        } else {
+          candidate.style.removeProperty('transform');
+        }
+      }
+    }
+    if (!computedStyle) return false;
+    return computedStyleHasMeaningfulScale(computedStyle);
   }
 
   function getViewportAppFitCandidate() {
@@ -864,35 +1672,56 @@ var Twinkle;
       publishPreviewLayout(false);
       return;
     }
+    if (candidateHasAuthoredScale(candidate)) {
+      clearViewportFitCandidate(candidate);
+      viewportFitState.candidate = null;
+      viewportFitState.scale = 1;
+      viewportFitState.baseWidth = 0;
+      viewportFitState.baseHeight = 0;
+      publishPreviewLayout(false);
+      return;
+    }
     var rect = candidate.getBoundingClientRect();
+    var appliedScale =
+      viewportFitState.candidate === candidate && viewportFitState.scale > 0
+        ? viewportFitState.scale
+        : 1;
+    var rectBaseWidth =
+      rect && rect.width ? Math.round((rect.width || 0) / appliedScale) : 0;
+    var rectBaseHeight =
+      rect && rect.height ? Math.round((rect.height || 0) / appliedScale) : 0;
     var baseWidth = Math.max(
       candidate.offsetWidth || 0,
       candidate.clientWidth || 0,
       candidate.scrollWidth || 0,
-      rect && rect.width ? Math.round(rect.width) : 0
+      rectBaseWidth
     );
     var baseHeight = Math.max(
       candidate.offsetHeight || 0,
       candidate.clientHeight || 0,
       candidate.scrollHeight || 0,
-      rect && rect.height ? Math.round(rect.height) : 0
+      rectBaseHeight
     );
-    var viewportWidth = Math.max(window.innerWidth || 0, document.documentElement ? document.documentElement.clientWidth || 0 : 0);
-    var viewportHeight = Math.max(window.innerHeight || 0, document.documentElement ? document.documentElement.clientHeight || 0 : 0);
+    var viewport = getPreviewViewportSize();
+    var viewportWidth = viewport.width;
+    var viewportHeight = viewport.height;
     if (baseWidth <= 0 || baseHeight <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
       return;
     }
     var padding = 12;
+    var maxScale = 1;
     var scale = Math.min(
-      1,
       Math.max(0.1, (viewportWidth - padding * 2) / baseWidth),
       Math.max(0.1, (viewportHeight - padding * 2) / baseHeight)
     );
+    if (maxScale > 0) {
+      scale = Math.min(maxScale, scale);
+    }
     viewportFitState.candidate = candidate;
     viewportFitState.scale = scale;
     viewportFitState.baseWidth = baseWidth;
     viewportFitState.baseHeight = baseHeight;
-    if (scale >= 0.995) {
+    if (scale > 0.995 && scale < 1.005) {
       clearViewportFitCandidate(candidate);
       viewportFitState.candidate = null;
       viewportFitState.scale = 1;
@@ -902,8 +1731,34 @@ var Twinkle;
       return;
     }
     candidate.setAttribute('data-twinkle-preview-fit', '1');
-    candidate.style.transformOrigin = 'center center';
-    candidate.style.transform = 'scale(' + scale.toFixed(4) + ')';
+    if (
+      !candidate.hasAttribute('data-twinkle-preview-fit-inline-scale')
+    ) {
+      candidate.setAttribute(
+        'data-twinkle-preview-fit-inline-scale',
+        candidate.style.getPropertyValue('scale')
+      );
+    }
+    var fitScaleValue = scale.toFixed(4);
+    if (previewFitSupportsScaleProperty()) {
+      candidate.style.setProperty('scale', fitScaleValue);
+    } else {
+      if (
+        !candidate.hasAttribute('data-twinkle-preview-fit-inline-transform')
+      ) {
+        candidate.setAttribute(
+          'data-twinkle-preview-fit-inline-transform',
+          candidate.style.getPropertyValue('transform')
+        );
+      }
+      candidate.style.setProperty(
+        'transform',
+        buildPreviewFitTransformValue(
+          getViewportFitBaseTransform(candidate),
+          fitScaleValue
+        )
+      );
+    }
     publishPreviewLayout(false);
   }
 
@@ -1025,14 +1880,9 @@ var Twinkle;
       buttonCount > 0 ||
       formCount > 0 ||
       hasMeaningfulRender();
-    var viewportHeight = Math.max(
-      window.innerHeight || 0,
-      documentElement ? documentElement.clientHeight || 0 : 0
-    );
-    var viewportWidth = Math.max(
-      window.innerWidth || 0,
-      documentElement ? documentElement.clientWidth || 0 : 0
-    );
+    var viewport = getPreviewViewportSize();
+    var viewportHeight = viewport.height;
+    var viewportWidth = viewport.width;
     var contentHeight = Math.max(
       body ? body.scrollHeight || 0 : 0,
       body ? body.offsetHeight || 0 : 0,
@@ -1683,8 +2533,13 @@ var Twinkle;
 
   window.addEventListener('message', (event) => {
     if (event.source !== window.parent) return;
-    const { source, id, payload, error } = event.data || {};
-    if (source !== 'twinkle-parent' || !pendingRequests.has(id)) return;
+    const { source, id, type, payload, error } = event.data || {};
+    if (source !== 'twinkle-parent') return;
+    if (type === 'host-visibility:update') {
+      applyHostVisibility(!payload || payload.visible !== false);
+      return;
+    }
+    if (!pendingRequests.has(id)) return;
 
     const { resolve, reject, timeout } = pendingRequests.get(id);
     clearTimeout(timeout);
@@ -1749,6 +2604,22 @@ var Twinkle;
     scheduleViewportAppFit();
     schedulePreviewHealthSnapshot();
   });
+
+  if (
+    window.visualViewport &&
+    typeof window.visualViewport.addEventListener === 'function'
+  ) {
+    window.visualViewport.addEventListener('resize', function() {
+      publishPreviewLayout(true);
+      scheduleViewportAppFit();
+      schedulePreviewHealthSnapshot();
+    });
+    window.visualViewport.addEventListener('scroll', function() {
+      publishPreviewLayout(false);
+      scheduleViewportAppFit();
+      schedulePreviewHealthSnapshot();
+    });
+  }
 
   function loadSqlJs() {
     if (SQL) return Promise.resolve(SQL);

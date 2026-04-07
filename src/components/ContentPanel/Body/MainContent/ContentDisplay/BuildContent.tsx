@@ -1,12 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import { borderRadius, Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
+import { useContentContext } from '~/contexts';
+import { useInView } from 'react-intersection-observer';
 
 export default function BuildContent({
   build,
+  contentId,
   navigate,
   theme
 }: {
@@ -17,9 +20,18 @@ export default function BuildContent({
     thumbnailUrl?: string | null;
     updatedAt?: number | null;
   };
+  contentId: number;
   navigate: (url: string) => void;
   theme?: string;
 }) {
+  const onSetMediaStarted = useContentContext(
+    (v) => v.actions.onSetMediaStarted
+  );
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [VisibilityRef, previewInView] = useInView({
+    initialInView: true,
+    threshold: 0.05
+  });
   const [iframeActivated, setIframeActivated] = useState(false);
   const [iframeReady, setIframeReady] = useState(false);
   const buildId = Number(build?.id || 0);
@@ -51,9 +63,13 @@ export default function BuildContent({
   }, [appPath, build?.updatedAt]);
 
   useEffect(() => {
-    setIframeActivated(false);
     setIframeReady(false);
   }, [embeddedAppPath]);
+
+  useEffect(() => {
+    if (!iframeActivated || !iframeReady) return;
+    postRuntimeVisibility(previewInView);
+  }, [iframeActivated, iframeReady, previewInView]);
 
   if (!buildId || !embeddedAppPath) {
     return (
@@ -142,6 +158,7 @@ export default function BuildContent({
         </Button>
       </div>
       <div
+        ref={VisibilityRef}
         className={css`
           position: relative;
           width: 100%;
@@ -238,7 +255,7 @@ export default function BuildContent({
               shape="pill"
               size="lg"
               uppercase={false}
-              onClick={() => setIframeActivated(true)}
+              onClick={handlePlay}
               style={{
                 minWidth: '14rem',
                 justifyContent: 'center',
@@ -280,10 +297,14 @@ export default function BuildContent({
         )}
         {iframeActivated && (
           <iframe
+            ref={iframeRef}
             src={embeddedAppPath}
             title={build.title || 'Lumine App'}
             loading="lazy"
-            onLoad={() => setIframeReady(true)}
+            onLoad={() => {
+              setIframeReady(true);
+              postRuntimeVisibility(previewInView);
+            }}
             className={css`
               position: absolute;
               inset: 0;
@@ -299,4 +320,29 @@ export default function BuildContent({
       </div>
     </div>
   );
+
+  function handlePlay() {
+    onSetMediaStarted({
+      contentType: 'build',
+      contentId,
+      started: true
+    });
+    setIframeActivated(true);
+    setIframeReady(false);
+  }
+
+  function postRuntimeVisibility(visible: boolean) {
+    const runtimeWindow = iframeRef.current?.contentWindow;
+    if (!runtimeWindow) return;
+    runtimeWindow.postMessage(
+      {
+        source: 'twinkle-content-panel',
+        type: 'runtime-visibility:update',
+        payload: {
+          visible
+        }
+      },
+      '*'
+    );
+  }
 }

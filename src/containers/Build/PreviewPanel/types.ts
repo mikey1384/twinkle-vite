@@ -45,6 +45,7 @@ export interface PreviewPanelProps {
     }
   ) => Promise<{ success: boolean; error?: string }>;
   runtimeOnly?: boolean;
+  runtimeHostVisible?: boolean;
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   onEditableProjectFilesStateChange?: (state: {
     files: Array<{ path: string; content?: string }>;

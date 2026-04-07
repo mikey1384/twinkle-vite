@@ -1055,6 +1055,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onApplyRestoredProjectFiles,
       onSaveProjectFiles,
       runtimeOnly = false,
+      runtimeHostVisible = true,
       capabilitySnapshot = null,
       onEditableProjectFilesStateChange,
       runtimeExplorationPlan = null,
@@ -1693,6 +1694,32 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       previewFrameReady,
       previewSrc,
       previewTransitioning
+    ]);
+
+    useEffect(() => {
+      if (!previewSrc) return;
+      const message = {
+        source: 'twinkle-parent',
+        type: 'host-visibility:update',
+        payload: {
+          visible: runtimeHostVisible !== false
+        }
+      };
+      const previewFrames = [
+        primaryIframeRef.current?.contentWindow,
+        secondaryIframeRef.current?.contentWindow
+      ];
+      for (const targetWindow of previewFrames) {
+        if (!targetWindow) continue;
+        targetWindow.postMessage(message, '*');
+      }
+    }, [
+      previewSrc,
+      previewFrameReady.primary,
+      previewFrameReady.secondary,
+      primaryIframeRef,
+      runtimeHostVisible,
+      secondaryIframeRef
     ]);
 
     usePreviewHostBridge({

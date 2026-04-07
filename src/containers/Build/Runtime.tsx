@@ -164,6 +164,7 @@ export default function BuildRuntime() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
+  const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
 
   const numericBuildId = useMemo(() => {
     const id = parseInt(buildId || '', 10);
@@ -280,6 +281,26 @@ export default function BuildRuntime() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numericBuildId, userId]);
 
+  useEffect(() => {
+    if (!isEmbedded) return;
+
+    function handleMessage(event: MessageEvent) {
+      if (event.source !== window.parent) return;
+      const data = event.data;
+      if (
+        !data ||
+        data.source !== 'twinkle-content-panel' ||
+        data.type !== 'runtime-visibility:update'
+      ) {
+        return;
+      }
+      setRuntimeHostVisible(data.payload?.visible !== false);
+    }
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [isEmbedded]);
+
   if (!numericBuildId) {
     return renderRuntimeUnavailable({
       text: 'Invalid build ID'
@@ -345,6 +366,7 @@ export default function BuildRuntime() {
               projectFiles={build.projectFiles || []}
               isOwner={false}
               runtimeOnly
+              runtimeHostVisible={runtimeHostVisible}
               capabilitySnapshot={build.capabilitySnapshot || null}
               onReplaceCode={() => {}}
               onApplyRestoredProjectFiles={() => {}}

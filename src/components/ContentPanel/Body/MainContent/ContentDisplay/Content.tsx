@@ -279,6 +279,7 @@ export default function Content({
               thumbnailUrl: contentObj.thumbnailUrl,
               updatedAt: contentObj.updatedAt
             }}
+            contentId={contentId}
             navigate={navigate}
             theme={theme}
           />
