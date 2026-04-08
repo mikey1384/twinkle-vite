@@ -15,20 +15,10 @@ var Twinkle;
   let requestId = 0;
   let viewerInfo = null;
   let capabilitySnapshot = null;
-  let runtimeExplorationPlan = null;
   var blankRenderProbeState = {
     scheduled: false,
     resolved: false,
     reported: false
-  };
-  var previewInteractionProbeState = {
-    scheduled: false,
-    completed: false,
-    status: 'idle',
-    targetLabel: '',
-    steps: [],
-    usedTargetLabels: Object.create(null),
-    planStepIndex: 0
   };
   var previewHealthLastKey = '';
   var previewHealthMutationTimer = null;
@@ -793,113 +783,6 @@ var Twinkle;
     window.Twinkle.capabilities.current = capabilitySnapshot;
   }
 
-  function normalizeExplorationPlanStep(rawStep) {
-    if (!rawStep || typeof rawStep !== 'object') return null;
-    function normalizeExpectedSignals(rawExpectedSignals) {
-      if (!rawExpectedSignals || typeof rawExpectedSignals !== 'object') {
-        return null;
-      }
-      var routeChange =
-        typeof rawExpectedSignals.routeChange === 'boolean'
-          ? rawExpectedSignals.routeChange
-          : null;
-      var textIncludes = Array.isArray(rawExpectedSignals.textIncludes)
-        ? rawExpectedSignals.textIncludes
-            .map(function(text) {
-              return trimObservationText(text, 80);
-            })
-            .filter(Boolean)
-            .slice(0, 4)
-        : [];
-      var revealsLabels = Array.isArray(rawExpectedSignals.revealsLabels)
-        ? rawExpectedSignals.revealsLabels
-            .map(function(label) {
-              return trimObservationText(label, 80);
-            })
-            .filter(Boolean)
-            .slice(0, 4)
-        : [];
-      if (
-        routeChange === null &&
-        textIncludes.length === 0 &&
-        revealsLabels.length === 0
-      ) {
-        return null;
-      }
-      return {
-        routeChange: routeChange,
-        textIncludes: textIncludes,
-        revealsLabels: revealsLabels
-      };
-    }
-    var kind =
-      rawStep.kind === 'submit-form'
-        ? 'submit-form'
-        : rawStep.kind === 'click'
-          ? 'click'
-          : null;
-    if (!kind) return null;
-    var goal = trimObservationText(rawStep.goal, 220);
-    var labelHints = Array.isArray(rawStep.labelHints)
-      ? rawStep.labelHints
-          .map(function(label) {
-            return trimObservationText(label, 80);
-          })
-          .filter(Boolean)
-          .slice(0, 4)
-      : [];
-    var inputHints = Array.isArray(rawStep.inputHints)
-      ? rawStep.inputHints
-          .map(function(hint) {
-            return trimObservationText(hint, 80);
-          })
-          .filter(Boolean)
-          .slice(0, 4)
-      : [];
-    var expectedSignals = normalizeExpectedSignals(rawStep.expectedSignals);
-    if (!goal || labelHints.length === 0) return null;
-    return {
-      kind: kind,
-      goal: goal,
-      labelHints: labelHints,
-      inputHints: inputHints,
-      expectedSignals: expectedSignals
-    };
-  }
-
-  function applyRuntimeExplorationPlan(plan) {
-    var shouldRestartProbe =
-      previewInteractionProbeState.scheduled ||
-      previewInteractionProbeState.completed ||
-      previewInteractionProbeState.steps.length > 0;
-    var normalizedPlan =
-      plan && typeof plan === 'object'
-        ? {
-            summary: trimObservationText(plan.summary, 240),
-            generatedFrom:
-              plan.generatedFrom === 'planner' ? 'planner' : 'heuristic',
-            steps: Array.isArray(plan.steps)
-              ? plan.steps
-                  .map(normalizeExplorationPlanStep)
-                  .filter(Boolean)
-                  .slice(0, 3)
-              : []
-          }
-        : null;
-    runtimeExplorationPlan =
-      normalizedPlan &&
-      normalizedPlan.summary &&
-      normalizedPlan.steps &&
-      normalizedPlan.steps.length > 0
-        ? normalizedPlan
-        : null;
-    syncViewportAppMode('');
-    previewInteractionProbeState.planStepIndex = 0;
-    if (shouldRestartProbe && runtimeExplorationPlan) {
-      restartPreviewInteractionProbe();
-    }
-  }
-
   var runtimeObservationKeys = Object.create(null);
   var runtimeObservationCount = 0;
 
@@ -1388,23 +1271,6 @@ var Twinkle;
     (document.head || document.documentElement).appendChild(styleNode);
   }
 
-  function getRuntimePlanText() {
-    var planText = '';
-    if (!runtimeExplorationPlan) return planText;
-    planText += ' ' + String(runtimeExplorationPlan.summary || '');
-    if (Array.isArray(runtimeExplorationPlan.steps)) {
-      for (var i = 0; i < runtimeExplorationPlan.steps.length; i += 1) {
-        var step = runtimeExplorationPlan.steps[i];
-        if (!step) continue;
-        planText += ' ' + String(step.goal || '');
-        if (Array.isArray(step.labelHints)) {
-          planText += ' ' + step.labelHints.join(' ');
-        }
-      }
-    }
-    return planText;
-  }
-
   function shouldUseViewportAppMode(visibleText) {
     if (viewportModeState.autoFitOptOut) {
       return false;
@@ -1416,9 +1282,7 @@ var Twinkle;
     var haystack = (
       String(visibleText || '') +
       ' ' +
-      String(document.title || '') +
-      ' ' +
-      getRuntimePlanText()
+      String(document.title || '')
     ).toLowerCase();
     return /\\b(game|play|player|score|level|enemy|boss|jump|dodge|flappy|restart|game over|lives?)\\b/.test(
       haystack
@@ -1924,8 +1788,6 @@ var Twinkle;
                     ? 'keyboardscroll'
                     : kind === 'playfieldmismatch'
                       ? 'playfieldmismatch'
-                  : kind === 'interactionnoop'
-                    ? 'interactionnoop'
                   : 'error',
           message: message,
           stack: stack || null,
@@ -1938,31 +1800,6 @@ var Twinkle;
         }
       }, '*');
     } catch (_) {}
-  }
-
-  function collectSafeInteractionTargetLabels(limit, excludeUsed) {
-    var labels = [];
-    var seen = Object.create(null);
-    var candidates = document.querySelectorAll(
-      'button,[role="button"],input[type="button"],a[href]'
-    );
-    for (var i = 0; i < candidates.length; i += 1) {
-      var candidate = candidates[i];
-      if (!isSafeInteractionTarget(candidate)) continue;
-      var label = getPreviewInteractionTargetLabel(candidate);
-      var normalizedLabel = String(label || '').trim().toLowerCase();
-      if (!normalizedLabel || seen[normalizedLabel]) continue;
-      if (
-        excludeUsed &&
-        previewInteractionProbeState.usedTargetLabels[normalizedLabel]
-      ) {
-        continue;
-      }
-      seen[normalizedLabel] = true;
-      labels.push(label);
-      if (labels.length >= (limit || 6)) break;
-    }
-    return labels;
   }
 
   function collectPreviewUiState() {
@@ -2028,7 +1865,6 @@ var Twinkle;
     var elementOverflowX =
       viewportWidth > 0 ? Math.max(0, Math.ceil(maxElementRight - viewportWidth)) : 0;
     var gameLike = shouldUseViewportAppMode(text);
-    var safeInteractionLabels = collectSafeInteractionTargetLabels(8, false);
     return {
       text: text,
       headingCount: headingCount,
@@ -2043,8 +1879,7 @@ var Twinkle;
       documentOverflowX: documentOverflowX,
       elementOverflowY: elementOverflowY,
       elementOverflowX: elementOverflowX,
-      gameLike: gameLike,
-      safeInteractionLabels: safeInteractionLabels
+      gameLike: gameLike
     };
   }
 
@@ -2059,8 +1894,7 @@ var Twinkle;
       documentOverflowX: state.documentOverflowX,
       elementOverflowY: state.elementOverflowY,
       elementOverflowX: state.elementOverflowX,
-      gameLike: state.gameLike,
-      safeInteractionLabels: state.safeInteractionLabels
+      gameLike: state.gameLike
     });
   }
 
@@ -2088,7 +1922,6 @@ var Twinkle;
           elementOverflowY: nextState.elementOverflowY,
           elementOverflowX: nextState.elementOverflowX,
           gameLike: nextState.gameLike,
-          safeInteractionLabels: nextState.safeInteractionLabels,
           updatedAt: Date.now()
         }
       }, '*');
@@ -2111,14 +1944,6 @@ var Twinkle;
     });
   }
 
-  function isSafeInteractionTarget(node) {
-    if (!node || typeof node.matches !== 'function') return false;
-    if (node.matches('input,textarea,select,[contenteditable="true"]')) {
-      return false;
-    }
-    return isVisibleUiElement(node);
-  }
-
   function isVisibleUiElement(node) {
     if (!node || typeof node.getBoundingClientRect !== 'function') {
       return false;
@@ -2135,418 +1960,6 @@ var Twinkle;
     var rect = node.getBoundingClientRect();
     if (!rect) return false;
     return rect.width >= 8 && rect.height >= 8;
-  }
-
-  function normalizeExplorationHint(value) {
-    return String(value || '')
-      .trim()
-      .toLowerCase()
-      .replace(/\\s+/g, ' ');
-  }
-
-  function getPreviewInteractionTargetLabel(element) {
-    if (!element) return '';
-    var label =
-      element.getAttribute('aria-label') ||
-      element.getAttribute('title') ||
-      element.getAttribute('placeholder') ||
-      element.innerText ||
-      element.textContent ||
-      '';
-    return trimObservationText(String(label || '').replace(/\\s+/g, ' '), 80);
-  }
-
-  function rememberPreviewInteractionTargetLabel(label) {
-    var normalizedLabel = String(label || '')
-      .trim()
-      .toLowerCase();
-    if (!normalizedLabel) return;
-    previewInteractionProbeState.usedTargetLabels[normalizedLabel] = true;
-  }
-
-  function doesLabelMatchHints(label, hints) {
-    var normalizedLabel = normalizeExplorationHint(label);
-    if (!normalizedLabel) return false;
-    for (var i = 0; i < hints.length; i += 1) {
-      var normalizedHint = normalizeExplorationHint(hints[i]);
-      if (!normalizedHint) continue;
-      if (
-        normalizedLabel.indexOf(normalizedHint) !== -1 ||
-        normalizedHint.indexOf(normalizedLabel) !== -1
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function getSafeInteractionCandidates() {
-    var candidates = document.querySelectorAll(
-      'button,[role="button"],input[type="button"],input[type="submit"],a[href],input:not([type="hidden"]),textarea,select,[contenteditable="true"]'
-    );
-    return Array.prototype.filter.call(candidates, isVisibleUiElement);
-  }
-
-  function clickPreviewInteractionTarget(target, label) {
-    try {
-      target.focus();
-    } catch (_) {}
-    try {
-      target.click();
-      rememberPreviewInteractionTargetLabel(label);
-      previewInteractionProbeState.targetLabel = label;
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function buildFormPlanTarget() {
-    var forms = document.querySelectorAll('form');
-    for (var i = 0; i < forms.length; i += 1) {
-      var form = forms[i];
-      if (!isVisibleUiElement(form)) continue;
-      var submit =
-        form.querySelector('button[type="submit"],input[type="submit"],button:not([type])') ||
-        null;
-      if (!submit || !isVisibleUiElement(submit)) continue;
-      var formLabel =
-        form.getAttribute('aria-label') ||
-        form.getAttribute('title') ||
-        getPreviewInteractionTargetLabel(submit);
-      var inputs = Array.prototype.filter.call(
-        form.querySelectorAll('input,textarea,select'),
-        function(input) {
-          if (!isVisibleUiElement(input)) return false;
-          var tagName = String(input.tagName || '').toLowerCase();
-          if (tagName === 'input') {
-            var type = String(input.getAttribute('type') || 'text').toLowerCase();
-            if (
-              type === 'submit' ||
-              type === 'button' ||
-              type === 'reset' ||
-              type === 'hidden'
-            ) {
-              return false;
-            }
-          }
-          return true;
-        }
-      );
-      if (inputs.length === 0) continue;
-      var inputLabels = inputs
-        .map(function(input) {
-          return trimObservationText(
-            input.getAttribute('aria-label'),
-            80
-          ) || trimObservationText(
-            input.getAttribute('placeholder'),
-            80
-          ) || trimObservationText(
-            input.getAttribute('name'),
-            80
-          ) || trimObservationText(
-            input.getAttribute('id'),
-            80
-          );
-        })
-        .filter(Boolean);
-      return {
-        form: form,
-        submit: submit,
-        label: formLabel || getPreviewInteractionTargetLabel(submit),
-        inputLabels: inputLabels
-      };
-    }
-    return null;
-  }
-
-  function fillPreviewFormInput(input) {
-    try {
-      var tagName = String(input.tagName || '').toLowerCase();
-      if (tagName === 'textarea') {
-        input.value = 'Hello from Twinkle';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
-      if (tagName === 'select') {
-        if (input.options && input.options.length > 1) {
-          input.selectedIndex = 1;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-          return true;
-        }
-        return false;
-      }
-      var type = String(input.getAttribute('type') || 'text').toLowerCase();
-      if (type === 'checkbox' || type === 'radio') {
-        input.checked = true;
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
-      if (
-        /email/.test(type) ||
-        /email/.test(
-          String(
-            input.getAttribute('name') ||
-              input.getAttribute('placeholder') ||
-              ''
-          ).toLowerCase()
-        )
-      ) {
-        input.value = 'hello@twinkle.app';
-      } else if (
-        /name|title|label|task|item|goal|prompt|message|note|text|description/.test(
-          String(
-            input.getAttribute('name') ||
-              input.getAttribute('placeholder') ||
-              ''
-          ).toLowerCase()
-        )
-      ) {
-        input.value = 'Hello from Twinkle';
-      } else if (type === 'number') {
-        input.value = '1';
-      } else {
-        input.value = 'Hello from Twinkle';
-      }
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function buildPlannedFormTarget(planStep) {
-    var forms = document.querySelectorAll('form');
-    for (var i = 0; i < forms.length; i += 1) {
-      var form = forms[i];
-      if (!isVisibleUiElement(form)) continue;
-      var submit =
-        form.querySelector('button[type="submit"],input[type="submit"],button:not([type])') ||
-        null;
-      if (!submit || !isVisibleUiElement(submit)) continue;
-      var formLabel =
-        form.getAttribute('aria-label') ||
-        form.getAttribute('title') ||
-        getPreviewInteractionTargetLabel(submit);
-      var submitLabel = getPreviewInteractionTargetLabel(submit);
-      if (
-        !doesLabelMatchHints(formLabel, planStep.labelHints) &&
-        !doesLabelMatchHints(submitLabel, planStep.labelHints)
-      ) {
-        continue;
-      }
-      var inputs = Array.prototype.filter.call(
-        form.querySelectorAll('input,textarea,select'),
-        function(input) {
-          if (!isVisibleUiElement(input)) return false;
-          var tagName = String(input.tagName || '').toLowerCase();
-          if (tagName === 'input') {
-            var type = String(input.getAttribute('type') || 'text').toLowerCase();
-            if (
-              type === 'submit' ||
-              type === 'button' ||
-              type === 'reset' ||
-              type === 'hidden'
-            ) {
-              return false;
-            }
-          }
-          return true;
-        }
-      );
-      if (inputs.length === 0) continue;
-      return {
-        form: form,
-        submit: submit,
-        label: formLabel || submitLabel,
-        inputLabels: planStep.inputHints || []
-      };
-    }
-    return null;
-  }
-
-  function runSubmitFormProbe(planStep) {
-    var formTarget = planStep ? buildPlannedFormTarget(planStep) : buildFormPlanTarget();
-    if (!formTarget) {
-      return false;
-    }
-    var inputs = Array.prototype.filter.call(
-      formTarget.form.querySelectorAll('input,textarea,select'),
-      function(input) {
-        if (!isVisibleUiElement(input)) return false;
-        var tagName = String(input.tagName || '').toLowerCase();
-        if (tagName === 'input') {
-          var type = String(input.getAttribute('type') || 'text').toLowerCase();
-          if (
-            type === 'submit' ||
-            type === 'button' ||
-            type === 'reset' ||
-            type === 'hidden'
-          ) {
-            return false;
-          }
-        }
-        return true;
-      }
-    );
-    var filledAny = false;
-    for (var i = 0; i < inputs.length; i += 1) {
-      filledAny = fillPreviewFormInput(inputs[i]) || filledAny;
-    }
-    if (!filledAny) return false;
-    var targetLabel =
-      formTarget.label || getPreviewInteractionTargetLabel(formTarget.submit);
-    if (clickPreviewInteractionTarget(formTarget.submit, targetLabel)) {
-      previewInteractionProbeState.steps.push({
-        kind: 'submit-form',
-        label: targetLabel
-      });
-      return true;
-    }
-    return false;
-  }
-
-  function getNextClickTarget(planStep) {
-    var candidates = getSafeInteractionCandidates();
-    for (var i = 0; i < candidates.length; i += 1) {
-      var candidate = candidates[i];
-      var label = getPreviewInteractionTargetLabel(candidate).toLowerCase();
-      if (!label) continue;
-      if (
-        previewInteractionProbeState.usedTargetLabels[label] ||
-        /close|dismiss|cancel|delete|remove|sign out|logout/.test(label)
-      ) {
-        continue;
-      }
-      if (planStep && !doesLabelMatchHints(label, planStep.labelHints)) {
-        continue;
-      }
-      return candidate;
-    }
-    return null;
-  }
-
-  function runClickProbe(planStep) {
-    var target = getNextClickTarget(planStep);
-    if (!target) return false;
-    var label = getPreviewInteractionTargetLabel(target);
-    if (!label) return false;
-    if (clickPreviewInteractionTarget(target, label)) {
-      previewInteractionProbeState.steps.push({
-        kind: 'click',
-        label: label
-      });
-      return true;
-    }
-    return false;
-  }
-
-  function checkExpectedSignals(expectedSignals) {
-    if (!expectedSignals) return true;
-    var passed = false;
-    if (expectedSignals.routeChange) {
-      try {
-        passed = passed || window.location.href !== window.location.origin + window.location.pathname;
-      } catch (_) {}
-    }
-    var bodyText = String(document.body && document.body.innerText || '').toLowerCase();
-    for (var i = 0; i < (expectedSignals.textIncludes || []).length; i += 1) {
-      var text = String(expectedSignals.textIncludes[i] || '').toLowerCase();
-      if (text && bodyText.indexOf(text) !== -1) {
-        passed = true;
-        break;
-      }
-    }
-    if (!passed) {
-      var labels = collectSafeInteractionTargetLabels(10, false).map(function(label) {
-        return String(label || '').toLowerCase();
-      });
-      for (var j = 0; j < (expectedSignals.revealsLabels || []).length; j += 1) {
-        var labelHint = String(expectedSignals.revealsLabels[j] || '').toLowerCase();
-        if (!labelHint) continue;
-        for (var k = 0; k < labels.length; k += 1) {
-          if (labels[k].indexOf(labelHint) !== -1 || labelHint.indexOf(labels[k]) !== -1) {
-            passed = true;
-            break;
-          }
-        }
-        if (passed) break;
-      }
-    }
-    return passed;
-  }
-
-  function probeNextPlannedInteraction() {
-    if (!runtimeExplorationPlan || !Array.isArray(runtimeExplorationPlan.steps)) {
-      return false;
-    }
-    if (
-      previewInteractionProbeState.planStepIndex < 0 ||
-      previewInteractionProbeState.planStepIndex >= runtimeExplorationPlan.steps.length
-    ) {
-      return false;
-    }
-    var planStep = runtimeExplorationPlan.steps[previewInteractionProbeState.planStepIndex];
-    if (!planStep) return false;
-    var didInteract = false;
-    if (planStep.kind === 'submit-form') {
-      didInteract = runSubmitFormProbe(planStep);
-    } else {
-      didInteract = runClickProbe(planStep);
-    }
-    if (!didInteract) {
-      return false;
-    }
-    var nextLabel =
-      previewInteractionProbeState.steps[previewInteractionProbeState.steps.length - 1]
-        ?.label || '';
-    previewInteractionProbeState.targetLabel = nextLabel;
-    previewInteractionProbeState.planStepIndex += 1;
-    if (planStep.expectedSignals && !checkExpectedSignals(planStep.expectedSignals)) {
-      reportRuntimeObservation('interactionnoop', {
-        message:
-          'Preview interaction did not reveal the expected UI changes after "' +
-          trimObservationText(planStep.goal, 120) +
-          '".'
-      });
-    }
-    return true;
-  }
-
-  function performPreviewInteractionProbe() {
-    if (previewInteractionProbeState.completed) return;
-    if (runtimeExplorationPlan && probeNextPlannedInteraction()) {
-      if (previewInteractionProbeState.planStepIndex >= runtimeExplorationPlan.steps.length) {
-        previewInteractionProbeState.completed = true;
-      }
-      return;
-    }
-    var didSubmit = runSubmitFormProbe(null);
-    if (!didSubmit) {
-      runClickProbe(null);
-    }
-    previewInteractionProbeState.completed = true;
-  }
-
-  function schedulePreviewInteractionProbe() {
-    if (previewInteractionProbeState.scheduled) return;
-    previewInteractionProbeState.scheduled = true;
-    setTimeout(function() {
-      previewInteractionProbeState.scheduled = false;
-      performPreviewInteractionProbe();
-    }, 450);
-  }
-
-  function restartPreviewInteractionProbe() {
-    previewInteractionProbeState.completed = false;
-    previewInteractionProbeState.targetLabel = '';
-    previewInteractionProbeState.steps = [];
-    previewInteractionProbeState.usedTargetLabels = Object.create(null);
-    previewInteractionProbeState.planStepIndex = 0;
-    schedulePreviewInteractionProbe();
   }
 
   function hasMeaningfulRender() {
@@ -2705,7 +2118,6 @@ var Twinkle;
     scheduleViewportAppFit();
     scheduleForcedPreviewHealthSnapshot();
     scheduleBlankRenderProbe();
-    schedulePreviewInteractionProbe();
   });
 
   window.addEventListener('load', function() {
@@ -2713,7 +2125,6 @@ var Twinkle;
     scheduleViewportAppFit();
     scheduleForcedPreviewHealthSnapshot();
     scheduleBlankRenderProbe();
-    schedulePreviewInteractionProbe();
   });
 
   window.addEventListener('resize', function() {
@@ -3319,7 +2730,6 @@ var Twinkle;
       this.build.username = info.username;
       applyViewerInfo(info.viewer);
       applyCapabilitySnapshot(info.capabilities);
-      applyRuntimeExplorationPlan(info.explorationPlan);
       publishPreviewLayout(true);
     }
   });

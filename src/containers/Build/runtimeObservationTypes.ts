@@ -22,8 +22,10 @@ export interface BuildRuntimeExplorationPlan {
 
 export type BuildRuntimeObservationIssueKind =
   | 'error'
+  | 'consoleerror'
   | 'unhandledrejection'
   | 'blankrender'
+  | 'formsubmitblocked'
   | 'sdkblocked'
   | 'interactionnoop'
   | 'keyboardscroll'

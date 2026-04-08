@@ -85,6 +85,9 @@ export interface BuildLiveRunActionPayload {
   status?: string | null;
   reply?: string;
   codeGenerated?: string | null;
+  userMessageId?: number | null;
+  assistantMessageId?: number | null;
+  assistantMessageCreatedAt?: number | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
   projectFilesMode?: 'patch' | 'snapshot' | null;
   projectFilesPersisted?: boolean;
@@ -113,6 +116,8 @@ export interface BuildLiveRunActionPayload {
   persistedUserId?: number | null;
   createdAt?: number;
   error?: string;
+  preserveTransientUserMessage?: boolean;
+  preserveTransientAssistantMessage?: boolean;
 }
 
 export interface BuildState {
@@ -333,6 +338,18 @@ export default function BuildReducer(
       const projectFilesMode =
         action.buildRun?.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
       const projectFilesPersisted = action.buildRun?.projectFilesPersisted === true;
+      const persistedUserMessageId =
+        Number(action.buildRun?.userMessageId || 0) > 0
+          ? Number(action.buildRun?.userMessageId)
+          : null;
+      const persistedAssistantMessageId =
+        Number(action.buildRun?.assistantMessageId || 0) > 0
+          ? Number(action.buildRun?.assistantMessageId)
+          : null;
+      const persistedAssistantMessageCreatedAt =
+        Number(action.buildRun?.assistantMessageCreatedAt || 0) > 0
+          ? Number(action.buildRun?.assistantMessageCreatedAt)
+          : null;
       const nextStreamingProjectFiles = hasProjectFileUpdates
         ? projectFilesMode === 'snapshot'
           ? normalizedProjectFiles
@@ -348,20 +365,61 @@ export default function BuildReducer(
         ...currentRun,
         generating: true,
         error: null,
+        userMessage:
+          currentRun.userMessage && persistedUserMessageId
+            ? {
+                ...currentRun.userMessage,
+                id: persistedUserMessageId,
+                persisted: true
+              }
+            : currentRun.userMessage,
         assistantMessage: currentRun.assistantMessage
           ? {
               ...currentRun.assistantMessage,
+              id:
+                persistedAssistantMessageId || currentRun.assistantMessage.id,
+              persisted:
+                persistedAssistantMessageId !== null
+                  ? true
+                  : currentRun.assistantMessage.persisted,
               content:
                 typeof action.buildRun?.reply === 'string'
                   ? action.buildRun.reply
                   : currentRun.assistantMessage.content,
+              createdAt:
+                persistedAssistantMessageCreatedAt ||
+                currentRun.assistantMessage.createdAt,
               ...(hasCodeGeneratedField
                 ? {
                     streamCodePreview: action.buildRun?.codeGenerated ?? null
                   }
                 : {})
             }
-          : currentRun.assistantMessage,
+          : persistedAssistantMessageId ||
+              typeof action.buildRun?.reply === 'string'
+            ? {
+                id:
+                  persistedAssistantMessageId ||
+                  Math.max(1, Math.floor(Date.now() / 1000)),
+                role: 'assistant',
+                content:
+                  typeof action.buildRun?.reply === 'string'
+                    ? action.buildRun.reply
+                    : '',
+                codeGenerated: null,
+                ...(hasCodeGeneratedField
+                  ? {
+                      streamCodePreview: action.buildRun?.codeGenerated ?? null
+                    }
+                  : {}),
+                billingState: null,
+                artifactVersionId: null,
+                createdAt:
+                  persistedAssistantMessageCreatedAt ||
+                  Math.floor(Date.now() / 1000),
+                persisted: persistedAssistantMessageId !== null
+              }
+            : currentRun.assistantMessage,
         baseProjectFiles:
           projectFilesPersisted && normalizedProjectFiles?.length
             ? normalizedProjectFiles
@@ -596,6 +654,14 @@ export default function BuildReducer(
       );
       const errorMessage =
         String(action.buildRun?.error || '').trim() || 'Failed to generate code.';
+      const preserveTransientUserMessage =
+        action.buildRun?.preserveTransientUserMessage === true;
+      const preserveTransientAssistantMessage =
+        action.buildRun?.preserveTransientAssistantMessage === true;
+      const nextAssistantText =
+        typeof action.buildRun?.assistantText === 'string'
+          ? action.buildRun.assistantText
+          : errorMessage;
       return {
         ...state,
         buildRuns: {
@@ -606,17 +672,22 @@ export default function BuildReducer(
             error: errorMessage,
             status: null,
             assistantStatusSteps: [],
-            userMessage: currentRun.userMessage?.persisted
-              ? currentRun.userMessage
-              : null,
-            assistantMessage: currentRun.assistantMessage?.persisted
-              ? {
-                  ...currentRun.assistantMessage,
-                  content: errorMessage,
-                  codeGenerated: null,
-                  streamCodePreview: null,
-                  artifactVersionId: null
-                }
+            userMessage:
+              currentRun.userMessage?.persisted || preserveTransientUserMessage
+                ? currentRun.userMessage
+                : null,
+            assistantMessage:
+              currentRun.assistantMessage?.persisted ||
+              preserveTransientAssistantMessage
+              ? currentRun.assistantMessage
+                ? {
+                    ...currentRun.assistantMessage,
+                    content: nextAssistantText,
+                    codeGenerated: null,
+                    streamCodePreview: null,
+                    artifactVersionId: null
+                  }
+                : null
               : null,
             streamingProjectFiles: null,
             streamingFocusFilePath: null,
@@ -636,6 +707,10 @@ export default function BuildReducer(
         state.buildRunRequestMap,
         currentRun.requestId
       );
+      const preserveTransientUserMessage =
+        action.buildRun?.preserveTransientUserMessage === true;
+      const preserveTransientAssistantMessage =
+        action.buildRun?.preserveTransientAssistantMessage === true;
       return {
         ...state,
         buildRuns: {
@@ -646,11 +721,25 @@ export default function BuildReducer(
             error: null,
             status: null,
             assistantStatusSteps: [],
-            userMessage: currentRun.userMessage?.persisted
-              ? currentRun.userMessage
-              : null,
-            assistantMessage: currentRun.assistantMessage?.persisted
+            userMessage:
+              currentRun.userMessage?.persisted || preserveTransientUserMessage
+                ? currentRun.userMessage
+                : null,
+            assistantMessage:
+              currentRun.assistantMessage?.persisted ||
+              preserveTransientAssistantMessage
               ? currentRun.assistantMessage
+                ? {
+                    ...currentRun.assistantMessage,
+                    content:
+                      typeof action.buildRun?.assistantText === 'string'
+                        ? action.buildRun.assistantText
+                        : currentRun.assistantMessage.content,
+                    codeGenerated: null,
+                    streamCodePreview: null,
+                    artifactVersionId: null
+                  }
+                : null
               : null,
             streamingProjectFiles: null,
             streamingFocusFilePath: null,

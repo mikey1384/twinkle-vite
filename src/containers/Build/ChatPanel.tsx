@@ -62,6 +62,7 @@ interface ChatMessage {
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
   createdAt: number;
+  source?: 'runtime_observation';
 }
 
 interface BuildCopilotPolicy {
@@ -209,6 +210,7 @@ interface ChatPanelProps {
   generationResetError: string;
   onPurchaseGenerationReset: () => Promise<void> | void;
   onStopGeneration: () => void;
+  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }
 
@@ -254,6 +256,7 @@ export default function ChatPanel({
   generationResetError,
   onPurchaseGenerationReset,
   onStopGeneration,
+  onFixRuntimeObservationMessage,
   onDeleteMessage
 }: ChatPanelProps) {
   const AI_FEATURES_DISABLED = useViewContext(
@@ -852,6 +855,7 @@ export default function ChatPanel({
           activeStreamMessageIds={activeStreamMessageIds}
           isOwner={isOwner}
           chatEndRef={chatEndRef}
+          onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
           onDeleteMessage={onDeleteMessage}
         />
       </div>
@@ -1481,6 +1485,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   activeStreamMessageIds,
   isOwner,
   chatEndRef,
+  onFixRuntimeObservationMessage,
   onDeleteMessage
 }: {
   messages: ChatMessage[];
@@ -1493,10 +1498,18 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   activeStreamMessageIds: number[];
   isOwner: boolean;
   chatEndRef: RefObject<HTMLDivElement | null>;
+  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }) {
   const normalizedRunError =
     !generating && typeof runError === 'string' ? runError.trim() : '';
+  const shouldShowRunFailureNotice =
+    Boolean(normalizedRunError) &&
+    !messages.some(
+      (message) =>
+        message.role === 'assistant' &&
+        String(message.content || '').trim() === normalizedRunError
+    );
   const emptyState = (
     <div
       className={css`
@@ -1544,7 +1557,8 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
 
   const lastAssistantIndex = findLastIndex(
     messages,
-    (message) => message.role === 'assistant'
+    (message) =>
+      message.role === 'assistant' && message.source !== 'runtime_observation'
   );
 
   return (
@@ -1555,7 +1569,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
         gap: 1rem;
       `}
     >
-      {normalizedRunError ? (
+      {shouldShowRunFailureNotice ? (
         <BuildRunFailureNotice runError={normalizedRunError} />
       ) : null}
       {messages.map((message, index) => {
@@ -1572,6 +1586,8 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
             currentActivity={currentActivity}
             statusStepEntries={statusStepEntries}
             activeStreamMessageIds={activeStreamMessageIds}
+            isOwner={isOwner}
+            onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
             onDeleteMessage={onDeleteMessage}
           />
         );
@@ -1592,6 +1608,8 @@ function BuildChatMessageRow({
   currentActivity,
   statusStepEntries,
   activeStreamMessageIds,
+  isOwner,
+  onFixRuntimeObservationMessage,
   onDeleteMessage
 }: {
   message: ChatMessage;
@@ -1604,6 +1622,8 @@ function BuildChatMessageRow({
   currentActivity: BuildCurrentActivity | null;
   statusStepEntries: BuildStatusStepEntry[];
   activeStreamMessageIds: number[];
+  isOwner: boolean;
+  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
   onDeleteMessage: (message: ChatMessage) => void;
 }) {
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -1723,6 +1743,9 @@ function BuildChatMessageRow({
                   isLastAssistant ? currentActivity : null
                 }
                 statusStepEntries={isLastAssistant ? statusStepEntries : []}
+                isOwner={isOwner}
+                onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
+                isStreamingTarget={isStreamingTarget}
               />
             ) : (
               <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
@@ -1779,7 +1802,10 @@ function AssistantMessage({
   generatingStatus,
   statusSteps,
   currentActivity,
-  statusStepEntries
+  statusStepEntries,
+  isOwner,
+  onFixRuntimeObservationMessage,
+  isStreamingTarget
 }: {
   message: ChatMessage;
   messages: ChatMessage[];
@@ -1789,6 +1815,9 @@ function AssistantMessage({
   statusSteps: string[];
   currentActivity: BuildCurrentActivity | null;
   statusStepEntries: BuildStatusStepEntry[];
+  isOwner: boolean;
+  onFixRuntimeObservationMessage: (message: ChatMessage) => Promise<boolean> | boolean;
+  isStreamingTarget: boolean;
 }) {
   const [showDiff, setShowDiff] = useState(true);
 
@@ -1863,6 +1892,10 @@ function AssistantMessage({
     message.role === 'assistant' &&
     Number.isFinite(uploadProgressPercent) &&
     uploadProgressPercent >= 0;
+  const showFixRuntimeObservationButton =
+    isOwner &&
+    message.source === 'runtime_observation' &&
+    Boolean(String(message.content || '').trim());
 
   return (
     <div>
@@ -2068,6 +2101,29 @@ function AssistantMessage({
           {message.content}
         </RichText>
       ) : null}
+      {showFixRuntimeObservationButton && (
+        <div
+          className={css`
+            margin-top: ${message.content ? '0.8rem' : '0'};
+            display: flex;
+            justify-content: center;
+          `}
+        >
+          <GameCTAButton
+            disabled={isStreamingTarget}
+            onClick={() => void onFixRuntimeObservationMessage(message)}
+            variant="pink"
+            size="md"
+            shiny
+            style={{
+              minWidth: '10.5rem',
+              justifyContent: 'center'
+            }}
+          >
+            Fix It
+          </GameCTAButton>
+        </div>
+      )}
       {showCurrentActivity && (
         <div
           className={css`

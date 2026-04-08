@@ -17,6 +17,7 @@ import type {
 } from '~/contexts/Build/reducer';
 import type {
   BuildRuntimeExplorationPlan,
+  BuildRuntimeObservationIssue,
   BuildRuntimeObservationState
 } from './runtimeObservationTypes';
 import {
@@ -330,6 +331,7 @@ interface ChatMessage {
   artifactVersionId?: number | null;
   createdAt: number;
   persisted?: boolean;
+  source?: 'runtime_observation';
 }
 
 interface BuildUsageMetric {
@@ -716,6 +718,273 @@ function mergeChatMessagesWithBuildRun({
   return nextMessages;
 }
 
+function mergeDisplayedChatMessages({
+  baseMessages,
+  supplementalMessages
+}: {
+  baseMessages: ChatMessage[];
+  supplementalMessages: ChatMessage[];
+}) {
+  if (supplementalMessages.length === 0) {
+    return baseMessages;
+  }
+  const nextMessages = [...baseMessages];
+  for (const supplementalMessage of supplementalMessages) {
+    if (nextMessages.some((message) => message.id === supplementalMessage.id)) {
+      continue;
+    }
+    nextMessages.push(supplementalMessage);
+  }
+  nextMessages.sort((a, b) => {
+    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+    return a.id - b.id;
+  });
+  return nextMessages;
+}
+
+function formatTrailingRuntimeObservationMessageContext(
+  messages: ChatMessage[]
+) {
+  const trailingNotes: string[] = [];
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message.source !== 'runtime_observation') {
+      break;
+    }
+    const content = String(message.content || '').trim();
+    if (!content) {
+      continue;
+    }
+    trailingNotes.unshift(content);
+  }
+  if (trailingNotes.length === 0) {
+    return '';
+  }
+  return [
+    'RECENT_PREVIEW_CHAT_NOTES:',
+    ...trailingNotes.map((note, index) => {
+      const normalizedNote = note.replace(/\s*\n\s*/g, '\n').trim();
+      return `${index + 1}. ${normalizedNote.replace(/\n/g, '\n   ')}`;
+    }),
+    'The user may be referring to one of these preview issue notes directly.'
+  ].join('\n');
+}
+
+function mergeHiddenBuildMessageContext(
+  ...parts: Array<string | null | undefined>
+) {
+  const seen = new Set<string>();
+  return parts
+    .map((part) => String(part || '').trim())
+    .filter((part) => {
+      if (!part || seen.has(part)) {
+        return false;
+      }
+      seen.add(part);
+      return true;
+    })
+    .join('\n\n');
+}
+
+function mergePersistedChatMessagesIntoLocalMessages({
+  localMessages,
+  persistedMessages,
+  activeUserMessage,
+  activeAssistantMessageId,
+  preserveActiveAssistantState = false
+}: {
+  localMessages: ChatMessage[];
+  persistedMessages: ChatMessage[];
+  activeUserMessage?: ChatMessage | null;
+  activeAssistantMessageId?: number | null;
+  preserveActiveAssistantState?: boolean;
+}) {
+  const nextMessages = [...localMessages];
+  for (const persistedMessage of persistedMessages) {
+    let existingIndex = nextMessages.findIndex((message) => {
+      if (message.id === persistedMessage.id) return true;
+      return doChatMessagesRepresentSameBuildMessage(
+        message,
+        persistedMessage as BuildLiveRunMessage
+      );
+    });
+    if (existingIndex < 0) {
+      existingIndex = nextMessages.findIndex((message) => {
+        if (
+          message.id !== Number(activeAssistantMessageId || 0) ||
+          message.persisted
+        ) {
+          return false;
+        }
+        return doesRecoveredBuildAssistantMessageMatchTarget({
+          candidateMessage: persistedMessage,
+          targetMessage: message,
+          activeUserMessage
+        });
+      });
+    }
+    if (existingIndex >= 0) {
+      const existingMessage = nextMessages[existingIndex];
+      const isActiveAssistantMessage =
+        preserveActiveAssistantState &&
+        existingMessage.role === 'assistant' &&
+        Number(activeAssistantMessageId || 0) > 0 &&
+        (existingMessage.id === Number(activeAssistantMessageId) ||
+          persistedMessage.id === Number(activeAssistantMessageId));
+      const persistedAssistantContent = String(
+        persistedMessage.content || ''
+      ).trim();
+      const shouldPreserveLocalAssistantState =
+        isActiveAssistantMessage &&
+        !String(persistedMessage.codeGenerated || '').trim() &&
+        Number(persistedMessage.artifactVersionId || 0) <= 0 &&
+        (!persistedAssistantContent ||
+          persistedAssistantContent ===
+            'Would you like me to continue working on this?');
+      nextMessages[existingIndex] = {
+        ...existingMessage,
+        ...persistedMessage,
+        persisted: true,
+        content:
+          shouldPreserveLocalAssistantState &&
+          String(existingMessage.content || '').trim()
+            ? existingMessage.content
+            : persistedMessage.content,
+        streamCodePreview: shouldPreserveLocalAssistantState
+          ? (existingMessage.streamCodePreview ?? null)
+          : null
+      };
+      continue;
+    }
+    nextMessages.push({
+      ...persistedMessage,
+      persisted: true,
+      streamCodePreview: null
+    });
+  }
+  nextMessages.sort((a, b) => {
+    if (a.createdAt !== b.createdAt) return a.createdAt - b.createdAt;
+    return a.id - b.id;
+  });
+  return nextMessages;
+}
+
+function isBuildAssistantPlaceholderContent(content: string) {
+  const normalizedContent = String(content || '').trim();
+  return (
+    !normalizedContent ||
+    normalizedContent === 'Would you like me to continue working on this?'
+  );
+}
+
+function hasBuildAssistantStructuredOutput(
+  message:
+    | Pick<ChatMessage, 'codeGenerated' | 'artifactVersionId'>
+    | null
+    | undefined
+) {
+  return (
+    Boolean(String(message?.codeGenerated || '').trim()) ||
+    Number(message?.artifactVersionId || 0) > 0
+  );
+}
+
+function doesRecoveredBuildAssistantMessageMatchTarget({
+  candidateMessage,
+  targetMessage,
+  activeUserMessage
+}: {
+  candidateMessage: ChatMessage;
+  targetMessage: ChatMessage;
+  activeUserMessage?: ChatMessage | null;
+}) {
+  if (
+    candidateMessage.role !== 'assistant' ||
+    targetMessage.role !== 'assistant'
+  ) {
+    return false;
+  }
+  if (!candidateMessage.persisted) {
+    return false;
+  }
+  if (hasBuildAssistantStructuredOutput(targetMessage)) {
+    return false;
+  }
+  const candidateCreatedAt = Number(candidateMessage.createdAt || 0);
+  const targetCreatedAt = Number(targetMessage.createdAt || 0);
+  if (!candidateCreatedAt || !targetCreatedAt) {
+    return false;
+  }
+  if (Math.abs(candidateCreatedAt - targetCreatedAt) > 5) {
+    return false;
+  }
+  const activeUserCreatedAt = Number(activeUserMessage?.createdAt || 0);
+  return (
+    activeUserCreatedAt <= 0 || candidateCreatedAt >= activeUserCreatedAt - 5
+  );
+}
+
+function isRecoveredBuildAssistantMessageResolved(message: ChatMessage | null) {
+  if (!message || message.role !== 'assistant' || !message.persisted) {
+    return false;
+  }
+  if (hasBuildAssistantStructuredOutput(message)) {
+    return true;
+  }
+  return !isBuildAssistantPlaceholderContent(String(message.content || ''));
+}
+
+function mergeDuplicateAssistantMessages(
+  left: ChatMessage,
+  right: ChatMessage
+) {
+  const leftContent = String(left.content || '').trim();
+  const rightContent = String(right.content || '').trim();
+  const leftHasStructuredOutput = hasBuildAssistantStructuredOutput(left);
+  const rightHasStructuredOutput = hasBuildAssistantStructuredOutput(right);
+  const leftHasStreamPreview = Boolean(left.streamCodePreview?.trim());
+  const rightHasStreamPreview = Boolean(right.streamCodePreview?.trim());
+  const leftHasMeaningfulContent =
+    Boolean(leftContent) && !isBuildAssistantPlaceholderContent(leftContent);
+  const rightHasMeaningfulContent =
+    Boolean(rightContent) && !isBuildAssistantPlaceholderContent(rightContent);
+  const preferRight =
+    (!leftHasStructuredOutput && rightHasStructuredOutput) ||
+    (!leftHasStreamPreview && rightHasStreamPreview) ||
+    (!leftHasMeaningfulContent &&
+      rightHasMeaningfulContent &&
+      !rightHasStructuredOutput) ||
+    (leftHasMeaningfulContent === rightHasMeaningfulContent &&
+      leftHasStructuredOutput === rightHasStructuredOutput &&
+      leftHasStreamPreview === rightHasStreamPreview &&
+      rightContent.length > leftContent.length);
+  const preferred = preferRight ? right : left;
+  const fallback = preferRight ? left : right;
+
+  return {
+    ...fallback,
+    ...preferred,
+    id: preferred.id,
+    role: 'assistant' as const,
+    content:
+      preferred.content ||
+      (!isBuildAssistantPlaceholderContent(fallback.content)
+        ? fallback.content
+        : preferred.content),
+    codeGenerated: preferred.codeGenerated ?? fallback.codeGenerated ?? null,
+    streamCodePreview:
+      preferred.streamCodePreview ?? fallback.streamCodePreview ?? null,
+    billingState: preferred.billingState ?? fallback.billingState ?? null,
+    artifactVersionId:
+      preferred.artifactVersionId ?? fallback.artifactVersionId ?? null,
+    createdAt: Math.min(
+      Number(left.createdAt || 0) || Number(right.createdAt || 0),
+      Number(right.createdAt || 0) || Number(left.createdAt || 0)
+    ),
+    persisted: Boolean(left.persisted || right.persisted)
+  };
+}
+
 function doChatMessagesRepresentSameBuildMessage(
   persistedMessage: ChatMessage,
   liveMessage: BuildLiveRunMessage
@@ -745,6 +1014,71 @@ function doChatMessagesRepresentSameBuildMessage(
         Number(liveMessage.createdAt || 0)
     ) <= 5
   );
+}
+
+function findMatchingBuildChatMessageId({
+  messages,
+  targetMessage,
+  activeUserMessage
+}: {
+  messages: ChatMessage[];
+  targetMessage: ChatMessage | null;
+  activeUserMessage?: ChatMessage | null;
+}) {
+  if (!targetMessage) {
+    return null;
+  }
+  const matchedMessage = messages.find((message) => {
+    if (message.id === targetMessage.id) {
+      return true;
+    }
+    return doChatMessagesRepresentSameBuildMessage(
+      message,
+      targetMessage as BuildLiveRunMessage
+    );
+  });
+  if (matchedMessage) {
+    return matchedMessage.id || null;
+  }
+  if (targetMessage.role !== 'assistant') {
+    return null;
+  }
+  const recoveredAssistantMessage = messages.find((message) =>
+    doesRecoveredBuildAssistantMessageMatchTarget({
+      candidateMessage: message,
+      targetMessage,
+      activeUserMessage
+    })
+  );
+  return recoveredAssistantMessage?.id || null;
+}
+
+function appendUniqueStatusStep(steps: string[], nextStep: string | null) {
+  const trimmedStep = String(nextStep || '').trim();
+  if (!trimmedStep) {
+    return steps;
+  }
+  return steps[steps.length - 1] === trimmedStep
+    ? steps
+    : [...steps, trimmedStep];
+}
+
+function resolveStoppedRunAssistantMessage({
+  runMode,
+  userRequestedStop
+}: {
+  runMode: 'user' | 'greeting' | 'runtime-autofix';
+  userRequestedStop: boolean;
+}) {
+  if (userRequestedStop) {
+    return runMode === 'user'
+      ? 'Stopped before finishing this run. No code changes were saved.'
+      : 'Stopped before finishing this run.';
+  }
+  if (runMode === 'user') {
+    return 'I stopped before finishing this run, so no code changes were saved. Please retry your request.';
+  }
+  return 'I stopped before finishing this run. Please try again.';
 }
 
 function chatMessagesEqual(a: ChatMessage[], b: ChatMessage[]) {
@@ -893,6 +1227,98 @@ function isCodexChecklistStepCompleted(message: string) {
   );
 }
 
+function formatRuntimeObservationIssueKindLabel(
+  kind: BuildRuntimeObservationIssue['kind']
+) {
+  switch (kind) {
+    case 'consoleerror':
+      return 'Console message';
+    case 'unhandledrejection':
+      return 'Unhandled rejection';
+    case 'blankrender':
+      return 'Blank render';
+    case 'formsubmitblocked':
+      return 'Sandbox-blocked form submit';
+    case 'sdkblocked':
+      return 'Blocked capability call';
+    case 'interactionnoop':
+      return 'No-op interaction';
+    case 'keyboardscroll':
+      return 'Keyboard scroll leak';
+    case 'playfieldmismatch':
+      return 'Gameplay escaped playfield';
+    case 'error':
+    default:
+      return 'Runtime error';
+  }
+}
+
+function shouldSurfaceRuntimeObservationIssueInChat(
+  issue: BuildRuntimeObservationIssue
+) {
+  switch (issue.kind) {
+    case 'consoleerror':
+    case 'error':
+    case 'unhandledrejection':
+    case 'formsubmitblocked':
+    case 'sdkblocked':
+      return true;
+    case 'blankrender':
+    case 'interactionnoop':
+    case 'keyboardscroll':
+    case 'playfieldmismatch':
+    default:
+      return false;
+  }
+}
+
+function formatRuntimeObservationIssueLocationText(
+  issue: BuildRuntimeObservationIssue
+) {
+  const locationParts = [
+    issue.filename || null,
+    issue.lineNumber != null ? `line ${issue.lineNumber}` : null,
+    issue.columnNumber != null ? `col ${issue.columnNumber}` : null
+  ].filter(Boolean);
+  return locationParts.length > 0 ? ` (${locationParts.join(', ')})` : '';
+}
+
+function formatRuntimeObservationChatNote(issue: BuildRuntimeObservationIssue) {
+  const kindLabel = formatRuntimeObservationIssueKindLabel(issue.kind);
+  const locationText = formatRuntimeObservationIssueLocationText(issue);
+  const stackLine = String(issue.stack || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+  return [
+    'Preview issue detected.',
+    `${kindLabel}: ${issue.message}${locationText}`,
+    stackLine ? `Stack: ${stackLine.slice(0, 260)}` : null
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function buildRuntimeObservationIssueChatKey({
+  buildId,
+  codeSignature,
+  issue
+}: {
+  buildId: number;
+  codeSignature: string | null;
+  issue: BuildRuntimeObservationIssue;
+}) {
+  return [
+    buildId,
+    codeSignature || '',
+    issue.kind,
+    issue.message,
+    issue.filename || '',
+    issue.lineNumber || 0,
+    issue.columnNumber || 0
+  ].join('|');
+}
+
 function formatRuntimeObservationSummary(
   observationState: BuildRuntimeObservationState | null
 ) {
@@ -902,43 +1328,16 @@ function formatRuntimeObservationSummary(
   ) {
     return '';
   }
-  function formatIssueKindLabel(
-    kind: BuildRuntimeObservationState['issues'][number]['kind']
-  ) {
-    switch (kind) {
-      case 'unhandledrejection':
-        return 'Unhandled rejection';
-      case 'blankrender':
-        return 'Blank render';
-      case 'sdkblocked':
-        return 'Blocked capability call';
-      case 'interactionnoop':
-        return 'No-op interaction';
-      case 'keyboardscroll':
-        return 'Keyboard scroll leak';
-      case 'playfieldmismatch':
-        return 'Gameplay escaped playfield';
-      case 'error':
-      default:
-        return 'Runtime error';
-    }
-  }
   const issuesText = observationState.issues
     .slice(-5)
     .map((issue, index) => {
-      const locationParts = [
-        issue.filename || null,
-        issue.lineNumber != null ? `line ${issue.lineNumber}` : null,
-        issue.columnNumber != null ? `col ${issue.columnNumber}` : null
-      ].filter(Boolean);
-      const locationText =
-        locationParts.length > 0 ? ` (${locationParts.join(', ')})` : '';
+      const locationText = formatRuntimeObservationIssueLocationText(issue);
       const stackLine = String(issue.stack || '')
         .split('\n')
         .map((line) => line.trim())
         .find(Boolean);
       return [
-        `${index + 1}. ${formatIssueKindLabel(issue.kind)}: ${issue.message}${locationText}`,
+        `${index + 1}. ${formatRuntimeObservationIssueKindLabel(issue.kind)}: ${issue.message}${locationText}`,
         stackLine ? `   stack: ${stackLine.slice(0, 260)}` : null
       ]
         .filter(Boolean)
@@ -1205,6 +1604,8 @@ export default function BuildEditor({
   >(null);
   const [runtimeObservationState, setRuntimeObservationState] =
     useState<BuildRuntimeObservationState | null>(null);
+  const [runtimeObservationChatNotes, setRuntimeObservationChatNotes] =
+    useState<ChatMessage[]>([]);
   const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
     useState<BuildRuntimeExplorationPlan | null>(null);
   const [runtimeUploadsModalShown, setRuntimeUploadsModalShown] =
@@ -1285,6 +1686,7 @@ export default function BuildEditor({
   const startingGenerationRef = useRef(false);
   const queuePausedForSaveRef = useRef(false);
   const requiresProjectFilesResyncBeforeSaveRef = useRef(false);
+  const userRequestedStopRef = useRef(false);
   const projectFilesDraftRef = useRef<
     Array<{ path: string; content?: string }>
   >([]);
@@ -1292,6 +1694,7 @@ export default function BuildEditor({
   const savingProjectFilesRef = useRef(false);
   const runtimeObservationStateRef =
     useRef<BuildRuntimeObservationState | null>(null);
+  const runtimeObservationChatNoteKeysRef = useRef<Set<string>>(new Set());
   const lastRuntimeHealthEventKeyRef = useRef('');
   const pendingRuntimeAutoFixRef = useRef<PendingRuntimeAutoFix | null>(null);
   const pendingRuntimeVerificationRef =
@@ -1306,9 +1709,13 @@ export default function BuildEditor({
   const RUNTIME_AUTOFIX_ENABLED = false;
   const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
   const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
-  const mergedChatMessages = mergeChatMessagesWithBuildRun({
+  const mergedPersistedAndLiveChatMessages = mergeChatMessagesWithBuildRun({
     persistedMessages: chatMessages,
     buildRun: sharedBuildRun
+  });
+  const mergedChatMessages = mergeDisplayedChatMessages({
+    baseMessages: mergedPersistedAndLiveChatMessages,
+    supplementalMessages: runtimeObservationChatNotes
   });
   const renderRun = sharedBuildRun?.generating ? sharedBuildRun : null;
   const displayedGenerating = renderRun ? true : generating;
@@ -1353,10 +1760,15 @@ export default function BuildEditor({
     : getActiveStreamMessageIds();
 
   useEffect(() => {
-    if (!chatMessagesEqual(chatMessagesRef.current, mergedChatMessages)) {
-      chatMessagesRef.current = mergedChatMessages;
+    if (
+      !chatMessagesEqual(
+        chatMessagesRef.current,
+        mergedPersistedAndLiveChatMessages
+      )
+    ) {
+      chatMessagesRef.current = mergedPersistedAndLiveChatMessages;
     }
-  }, [mergedChatMessages]);
+  }, [mergedPersistedAndLiveChatMessages]);
 
   useEffect(() => {
     setBuildChatDraftMessage('');
@@ -1415,9 +1827,12 @@ export default function BuildEditor({
     startingGenerationRef.current = false;
     queuePausedForSaveRef.current = false;
     requiresProjectFilesResyncBeforeSaveRef.current = false;
+    userRequestedStopRef.current = false;
     runtimeObservationStateRef.current = null;
     lastRuntimeHealthEventKeyRef.current = '';
     setRuntimeObservationState(null);
+    setRuntimeObservationChatNotes([]);
+    runtimeObservationChatNoteKeysRef.current = new Set();
     setRuntimeExplorationPlan(null);
     pendingRuntimeAutoFixRef.current = null;
     pendingRuntimeVerificationRef.current = null;
@@ -1778,6 +2193,9 @@ export default function BuildEditor({
       requestId?: string;
       reply?: string;
       codeGenerated?: string | null;
+      userMessageId?: number | null;
+      assistantMessageId?: number | null;
+      assistantMessageCreatedAt?: number | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesMode?: 'patch' | 'snapshot' | null;
       projectFilesPersisted?: boolean;
@@ -1787,6 +2205,9 @@ export default function BuildEditor({
         requestId,
         reply,
         codeGenerated,
+        userMessageId,
+        assistantMessageId,
+        assistantMessageCreatedAt,
         projectFiles,
         projectFilesMode,
         projectFilesPersisted,
@@ -1794,6 +2215,11 @@ export default function BuildEditor({
       } = payload;
       if (!requestId || requestId !== streamRequestIdRef.current) return;
       resetDedupedProcessingReconcileState();
+      adoptPersistedBuildRunMessages({
+        userMessageId,
+        assistantMessageId,
+        assistantMessageCreatedAt
+      });
       const targetMessageId = assistantMessageIdRef.current;
       if (!targetMessageId) return;
       const currentMessages = chatMessagesRef.current;
@@ -1820,6 +2246,9 @@ export default function BuildEditor({
         requestId: string;
         reply?: string;
         codeGenerated?: string | null;
+        userMessageId?: number | null;
+        assistantMessageId?: number | null;
+        assistantMessageCreatedAt?: number | null;
         projectFiles?: Array<{ path: string; content?: string }> | null;
         projectFilesMode?: 'patch' | 'snapshot' | null;
         projectFilesPersisted?: boolean;
@@ -1830,6 +2259,27 @@ export default function BuildEditor({
       }
       if (hasCodeGeneratedField) {
         sharedRunStreamUpdate.codeGenerated = codeGenerated ?? null;
+      }
+      if (Object.prototype.hasOwnProperty.call(payload, 'userMessageId')) {
+        sharedRunStreamUpdate.userMessageId =
+          Number(userMessageId || 0) > 0 ? Number(userMessageId) : null;
+      }
+      if (Object.prototype.hasOwnProperty.call(payload, 'assistantMessageId')) {
+        sharedRunStreamUpdate.assistantMessageId =
+          Number(assistantMessageId || 0) > 0
+            ? Number(assistantMessageId)
+            : null;
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(
+          payload,
+          'assistantMessageCreatedAt'
+        )
+      ) {
+        sharedRunStreamUpdate.assistantMessageCreatedAt =
+          Number(assistantMessageCreatedAt || 0) > 0
+            ? Number(assistantMessageCreatedAt)
+            : null;
       }
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
         sharedRunStreamUpdate.projectFiles = projectFiles;
@@ -2203,6 +2653,7 @@ export default function BuildEditor({
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
       activeRunMessageContextRef.current = null;
+      userRequestedStopRef.current = false;
       generatingRef.current = false;
       setGenerating(false);
       setGeneratingStatus(null);
@@ -2295,6 +2746,9 @@ export default function BuildEditor({
         reply?: string;
         codeGenerated?: string | null;
         hasCodeGeneratedField?: boolean;
+        userMessageId?: number | null;
+        assistantMessageId?: number | null;
+        assistantMessageCreatedAt?: number | null;
         projectFiles?: Array<{ path: string; content?: string }> | null;
         projectFilesMode?: 'patch' | 'snapshot' | null;
         projectFilesPersisted?: boolean;
@@ -2312,7 +2766,7 @@ export default function BuildEditor({
         return;
       }
       if (terminal?.type === 'error' && terminal.payload) {
-        handleGenerateError(terminal.payload);
+        void handleGenerateError(terminal.payload);
         return;
       }
       if (terminal?.type === 'stopped' && terminal.payload) {
@@ -2372,6 +2826,11 @@ export default function BuildEditor({
       setAssistantStatusSteps(nextAssistantStatusSteps);
       setUsageMetrics(nextUsageMetrics);
       setRunEvents(nextRunEvents);
+      adoptPersistedBuildRunMessages({
+        userMessageId: streamUpdate?.userMessageId,
+        assistantMessageId: streamUpdate?.assistantMessageId,
+        assistantMessageCreatedAt: streamUpdate?.assistantMessageCreatedAt
+      });
       onRegisterBuildRun({
         buildId: buildRef.current?.id || build.id,
         requestId,
@@ -2419,6 +2878,9 @@ export default function BuildEditor({
           requestId: string;
           reply?: string;
           codeGenerated?: string | null;
+          userMessageId?: number | null;
+          assistantMessageId?: number | null;
+          assistantMessageCreatedAt?: number | null;
           projectFiles?: Array<{ path: string; content?: string }> | null;
           projectFilesMode?: 'patch' | 'snapshot' | null;
           projectFilesPersisted?: boolean;
@@ -2432,6 +2894,36 @@ export default function BuildEditor({
         if (streamUpdate.hasCodeGeneratedField) {
           resumeUpdatePayload.codeGenerated =
             streamUpdate.codeGenerated ?? null;
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageId')
+        ) {
+          resumeUpdatePayload.userMessageId =
+            Number(streamUpdate.userMessageId || 0) > 0
+              ? Number(streamUpdate.userMessageId)
+              : null;
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(
+            streamUpdate,
+            'assistantMessageId'
+          )
+        ) {
+          resumeUpdatePayload.assistantMessageId =
+            Number(streamUpdate.assistantMessageId || 0) > 0
+              ? Number(streamUpdate.assistantMessageId)
+              : null;
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(
+            streamUpdate,
+            'assistantMessageCreatedAt'
+          )
+        ) {
+          resumeUpdatePayload.assistantMessageCreatedAt =
+            Number(streamUpdate.assistantMessageCreatedAt || 0) > 0
+              ? Number(streamUpdate.assistantMessageCreatedAt)
+              : null;
         }
         if (
           Array.isArray(streamUpdate.projectFiles) &&
@@ -2450,7 +2942,7 @@ export default function BuildEditor({
       maybeAutoScrollDuringStream();
     }
 
-    function handleGenerateError({
+    async function handleGenerateError({
       requestId,
       error,
       requestLimits
@@ -2463,7 +2955,6 @@ export default function BuildEditor({
       resetDedupedProcessingReconcileState();
       resetRuntimeHealthFollowUpState();
       const assistantId = assistantMessageIdRef.current;
-      const currentMessages = chatMessagesRef.current;
       const errorMessage = error || 'Failed to generate code.';
       const nextPolicy = applyRequestLimitsToCopilotPolicy(
         copilotPolicyRef.current,
@@ -2473,50 +2964,43 @@ export default function BuildEditor({
         copilotPolicyRef.current = nextPolicy;
         updateCopilotPolicyRef.current(nextPolicy);
       }
-
-      const nextMessages = assistantId
-        ? currentMessages.map((entry) =>
-            entry.id === assistantId
-              ? {
-                  ...entry,
-                  content: errorMessage,
-                  codeGenerated: null,
-                  streamCodePreview: null,
-                  artifactVersionId: null
-                }
-              : entry
-          )
-        : [
-            ...currentMessages,
-            {
-              id: Date.now(),
-              role: 'assistant' as const,
-              content: errorMessage,
-              codeGenerated: null,
-              streamCodePreview: null,
-              createdAt: Math.floor(Date.now() / 1000),
-              persisted: false
-            }
-          ];
-
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
-      setRunError(errorMessage);
+      const nextAssistantId = upsertLocalBuildChatAssistantMessage(
+        assistantId,
+        errorMessage
+      );
+      if (nextAssistantId) {
+        assistantMessageIdRef.current = nextAssistantId;
+      }
+      setRunError(null);
       onFailBuildRun({
         requestId,
-        error: errorMessage
+        error: errorMessage,
+        assistantText: errorMessage,
+        preserveTransientUserMessage: true,
+        preserveTransientAssistantMessage: true
       });
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
       setMobilePanelTab('chat');
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      activeRunMessageContextRef.current = null;
       generatingRef.current = false;
       setGenerating(false);
       setGeneratingStatus(null);
       setAssistantStatusSteps([]);
+      postCompleteSyncInFlightRef.current = true;
+      try {
+        await syncChatMessagesFromServer(undefined, true, {
+          preserveLocalMessages: true
+        });
+      } catch (syncError) {
+        console.error('Failed to sync chat messages after error:', syncError);
+      } finally {
+        postCompleteSyncInFlightRef.current = false;
+      }
+      streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      activeRunMessageContextRef.current = null;
+      userRequestedStopRef.current = false;
       activeRunModeRef.current = 'user';
       scrollChatToBottom();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
@@ -2532,12 +3016,15 @@ export default function BuildEditor({
       guardStatus?: 'processing' | 'completed' | 'conflict';
     }) {
       if (!requestId || requestId !== streamRequestIdRef.current) return;
+      const stoppedRunMode = activeRunModeRef.current;
+      const userRequestedStop = userRequestedStopRef.current;
       setRunError(null);
       if (deduped) {
         resetDedupedProcessingReconcileState();
         resetRuntimeHealthFollowUpState();
         let shouldStartQueuedRequest = true;
         if (guardStatus === 'completed') {
+          userRequestedStopRef.current = false;
           try {
             await syncChatMessagesFromServer(undefined, true);
           } catch (error) {
@@ -2552,11 +3039,54 @@ export default function BuildEditor({
             activeRunMessageContextRef.current = null;
           }
         } else if (guardStatus === 'processing') {
+          userRequestedStopRef.current = userRequestedStop;
           // Keep request refs briefly in case late events from the claimed
           // worker arrive, then reconcile from writer if they do not.
-          scheduleDedupedProcessingReconcile(requestId);
           shouldStartQueuedRequest = false;
+          if (!userRequestedStop) {
+            const nextAssistantId = upsertLocalBuildChatAssistantMessage(
+              assistantMessageIdRef.current,
+              'I lost the live response for this run, but another Lumine worker still reports it in progress. I am trying to recover the latest result.'
+            );
+            if (nextAssistantId) {
+              assistantMessageIdRef.current = nextAssistantId;
+            }
+          }
+          generatingRef.current = true;
+          setGenerating(true);
+          setGeneratingStatus(
+            userRequestedStop ? 'Stopping...' : 'Recovering live response...'
+          );
+          setAssistantStatusSteps((prev) =>
+            appendUniqueStatusStep(
+              prev,
+              userRequestedStop ? 'Stopping...' : 'Recovering live response...'
+            )
+          );
+          onUpdateBuildRunStatus({
+            requestId,
+            status: userRequestedStop
+              ? 'Stopping...'
+              : 'Recovering live response...'
+          });
+          try {
+            await syncChatMessagesFromServer(undefined, true, {
+              preserveLocalMessages: true,
+              preserveActiveAssistantState: true
+            });
+          } catch (error) {
+            console.error(
+              'Failed to sync chat messages during deduped processing recovery:',
+              error
+            );
+          }
+          maybeResumeActiveBuildRun();
+          scheduleDedupedProcessingReconcile(requestId);
+          setMobilePanelTab('chat');
+          scrollChatToBottom();
+          return;
         } else {
+          userRequestedStopRef.current = false;
           try {
             await syncChatMessagesFromServer(undefined, true);
           } catch (error) {
@@ -2573,7 +3103,9 @@ export default function BuildEditor({
         }
         generatingRef.current = false;
         onStopBuildRun({
-          requestId
+          requestId,
+          preserveTransientUserMessage: true,
+          preserveTransientAssistantMessage: true
         });
         setStreamingProjectFiles(null);
         setStreamingFocusFilePath(null);
@@ -2588,37 +3120,29 @@ export default function BuildEditor({
         }
         return;
       }
+      userRequestedStopRef.current = false;
       resetDedupedProcessingReconcileState();
       resetRuntimeHealthFollowUpState();
-      const assistantId = assistantMessageIdRef.current;
-      const userId = userMessageIdRef.current;
-      const currentMessages = chatMessagesRef.current;
-      const activeUserMessage =
-        typeof userId === 'number' && userId > 0
-          ? currentMessages.find((entry) => entry.id === userId) || null
-          : null;
-
-      const activeIdSet = new Set(
-        [activeUserMessage?.persisted ? null : userId, assistantId].filter(
-          (id): id is number => typeof id === 'number' && id > 0
-        )
+      const stopMessage = resolveStoppedRunAssistantMessage({
+        runMode: stoppedRunMode,
+        userRequestedStop
+      });
+      const nextAssistantId = upsertLocalBuildChatAssistantMessage(
+        assistantMessageIdRef.current,
+        stopMessage
       );
-      const nextMessages = currentMessages.filter(
-        (entry) => !activeIdSet.has(entry.id)
-      );
-
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
+      if (nextAssistantId) {
+        assistantMessageIdRef.current = nextAssistantId;
+      }
       onStopBuildRun({
-        requestId
+        requestId,
+        assistantText: stopMessage,
+        preserveTransientUserMessage: true,
+        preserveTransientAssistantMessage: true
       });
       setStreamingProjectFiles(null);
       setStreamingFocusFilePath(null);
       setMobilePanelTab('chat');
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      activeRunMessageContextRef.current = null;
       generatingRef.current = false;
       setGenerating(false);
       setGeneratingStatus(null);
@@ -2626,12 +3150,19 @@ export default function BuildEditor({
       activeRunModeRef.current = 'user';
       postCompleteSyncInFlightRef.current = true;
       try {
-        await syncChatMessagesFromServer(undefined, true);
+        await syncChatMessagesFromServer(undefined, true, {
+          preserveLocalMessages: true
+        });
       } catch (error) {
         console.error('Failed to sync chat messages after stop:', error);
       } finally {
         postCompleteSyncInFlightRef.current = false;
       }
+      streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      activeRunMessageContextRef.current = null;
+      setRunError(null);
       scrollChatToBottom();
       await maybeStartNextQueuedRequest();
     }
@@ -2931,6 +3462,54 @@ export default function BuildEditor({
   ) {
     if (runtimeObservationStateRef.current === nextState) {
       return;
+    }
+    const previousState = runtimeObservationStateRef.current;
+    const previousIssueKeys = new Set(
+      (previousState?.issues || []).map((issue) =>
+        buildRuntimeObservationIssueChatKey({
+          buildId: previousState?.buildId || nextState.buildId,
+          codeSignature: previousState?.codeSignature || null,
+          issue
+        })
+      )
+    );
+    const nextChatNotes: ChatMessage[] = [];
+    for (const issue of nextState.issues) {
+      if (!shouldSurfaceRuntimeObservationIssueInChat(issue)) {
+        continue;
+      }
+      const issueKey = buildRuntimeObservationIssueChatKey({
+        buildId: nextState.buildId,
+        codeSignature: nextState.codeSignature || null,
+        issue
+      });
+      if (
+        previousIssueKeys.has(issueKey) ||
+        runtimeObservationChatNoteKeysRef.current.has(issueKey)
+      ) {
+        continue;
+      }
+      runtimeObservationChatNoteKeysRef.current.add(issueKey);
+      nextChatNotes.push({
+        id: -(Date.now() + Math.floor(Math.random() * 1000)),
+        role: 'assistant',
+        content: formatRuntimeObservationChatNote(issue),
+        codeGenerated: null,
+        billingState: null,
+        streamCodePreview: null,
+        createdAt: Math.max(
+          1,
+          Math.floor(Number(issue.createdAt || Date.now()) / 1000)
+        ),
+        persisted: false,
+        source: 'runtime_observation'
+      });
+    }
+    if (isOwner && nextChatNotes.length > 0) {
+      setRuntimeObservationChatNotes((prev) =>
+        [...prev, ...nextChatNotes].slice(-12)
+      );
+      scrollChatToBottom('smooth');
     }
     const health = nextState.health;
     if (health) {
@@ -3495,7 +4074,7 @@ export default function BuildEditor({
     disarmRuntimeAutoFix();
     if (
       RUNTIME_AUTOFIX_ENABLED &&
-      (observationState.issues.length > 0 ||
+      (observationState.issues.some((issue) => issue.kind !== 'consoleerror') ||
         !observationState.health?.meaningfulRender ||
         observationState.health?.gameplayTelemetry?.status ===
           'out-of-bounds' ||
@@ -3726,6 +4305,167 @@ export default function BuildEditor({
     );
     chatMessagesRef.current = nextMessages;
     updateChatMessagesRef.current(nextMessages);
+  }
+
+  function upsertLocalBuildChatAssistantMessage(
+    messageId: number | null,
+    text: string
+  ) {
+    const trimmedText = String(text || '').trim();
+    if (!trimmedText) {
+      return messageId;
+    }
+    if (
+      messageId &&
+      chatMessagesRef.current.some((entry) => entry.id === messageId)
+    ) {
+      const nextMessages = chatMessagesRef.current.map((entry) =>
+        entry.id === messageId
+          ? {
+              ...entry,
+              role: 'assistant' as const,
+              content: trimmedText,
+              codeGenerated: null,
+              streamCodePreview: null,
+              artifactVersionId: null
+            }
+          : entry
+      );
+      chatMessagesRef.current = nextMessages;
+      updateChatMessagesRef.current(nextMessages);
+      return messageId;
+    }
+    return appendLocalBuildChatAssistantMessage(trimmedText);
+  }
+
+  function adoptPersistedBuildRunMessages({
+    userMessageId,
+    assistantMessageId,
+    assistantMessageCreatedAt
+  }: {
+    userMessageId?: number | null;
+    assistantMessageId?: number | null;
+    assistantMessageCreatedAt?: number | null;
+  }) {
+    const normalizedUserMessageId =
+      Number(userMessageId || 0) > 0 ? Number(userMessageId) : null;
+    const normalizedAssistantMessageId =
+      Number(assistantMessageId || 0) > 0 ? Number(assistantMessageId) : null;
+    const normalizedAssistantCreatedAt =
+      Number(assistantMessageCreatedAt || 0) > 0
+        ? Number(assistantMessageCreatedAt)
+        : null;
+    let nextMessages = chatMessagesRef.current;
+    let changed = false;
+    const currentUserMessageId = userMessageIdRef.current;
+    const currentAssistantMessageId = assistantMessageIdRef.current;
+
+    if (normalizedUserMessageId) {
+      nextMessages = nextMessages.map((entry) => {
+        if (
+          entry.id !== normalizedUserMessageId &&
+          entry.id !== currentUserMessageId
+        ) {
+          return entry;
+        }
+        const nextEntry = {
+          ...entry,
+          id: normalizedUserMessageId,
+          persisted: true
+        };
+        if (
+          nextEntry.id !== entry.id ||
+          Boolean(nextEntry.persisted) !== Boolean(entry.persisted)
+        ) {
+          changed = true;
+        }
+        return nextEntry;
+      });
+      userMessageIdRef.current = normalizedUserMessageId;
+    }
+
+    if (normalizedAssistantMessageId) {
+      let matchedAssistant = false;
+      nextMessages = nextMessages.map((entry) => {
+        if (
+          entry.id !== normalizedAssistantMessageId &&
+          entry.id !== currentAssistantMessageId
+        ) {
+          return entry;
+        }
+        matchedAssistant = true;
+        const nextEntry = {
+          ...entry,
+          id: normalizedAssistantMessageId,
+          persisted: true,
+          createdAt: normalizedAssistantCreatedAt || entry.createdAt
+        };
+        if (
+          nextEntry.id !== entry.id ||
+          nextEntry.createdAt !== entry.createdAt ||
+          Boolean(nextEntry.persisted) !== Boolean(entry.persisted)
+        ) {
+          changed = true;
+        }
+        return nextEntry;
+      });
+      if (!matchedAssistant) {
+        nextMessages = [
+          ...nextMessages,
+          {
+            id: normalizedAssistantMessageId,
+            role: 'assistant' as const,
+            content: '',
+            codeGenerated: null,
+            billingState: null,
+            streamCodePreview: null,
+            createdAt:
+              normalizedAssistantCreatedAt || Math.floor(Date.now() / 1000),
+            persisted: true
+          }
+        ];
+        changed = true;
+      }
+      const assistantEntries = nextMessages
+        .map((entry, index) => ({ entry, index }))
+        .filter(
+          ({ entry }: { entry: ChatMessage; index: number }) =>
+            entry.role === 'assistant' &&
+            entry.id === normalizedAssistantMessageId
+        );
+      if (assistantEntries.length > 1) {
+        const mergedAssistant = assistantEntries
+          .map(({ entry }) => entry)
+          .reduce((result, entry) =>
+            mergeDuplicateAssistantMessages(result, entry)
+          );
+        const primaryAssistantIndex = assistantEntries[0].index;
+        nextMessages = nextMessages.filter((entry, index) => {
+          if (
+            entry.role !== 'assistant' ||
+            entry.id !== normalizedAssistantMessageId
+          ) {
+            return true;
+          }
+          return index === primaryAssistantIndex;
+        });
+        nextMessages[primaryAssistantIndex] = mergedAssistant;
+        changed = true;
+      }
+      assistantMessageIdRef.current = normalizedAssistantMessageId;
+    }
+
+    if (!changed) {
+      return;
+    }
+    const sortedMessages = [...nextMessages].sort((a, b) => {
+      if (a.createdAt !== b.createdAt) {
+        return a.createdAt - b.createdAt;
+      }
+      return a.id - b.id;
+    });
+    chatMessagesRef.current = sortedMessages;
+    updateChatMessagesRef.current(sortedMessages);
   }
 
   function removeLocalBuildChatMessage(messageId: number | null) {
@@ -4577,6 +5317,19 @@ export default function BuildEditor({
     ) {
       return false;
     }
+    const trailingRuntimeObservationMessageContext =
+      formatTrailingRuntimeObservationMessageContext(mergedChatMessages);
+    const enrichedMessageContext = mergeHiddenBuildMessageContext(
+      options?.messageContext,
+      trailingRuntimeObservationMessageContext
+    );
+    const requestOptions =
+      enrichedMessageContext || options
+        ? {
+            ...options,
+            messageContext: enrichedMessageContext || null
+          }
+        : undefined;
     const pendingBuildChatUploadClarification =
       pendingBuildChatUploadClarificationRef.current[
         pendingBuildChatUploadClarificationRef.current.length - 1
@@ -4605,11 +5358,11 @@ export default function BuildEditor({
       pendingRuntimeAutoFixRef.current ||
       pendingRuntimeVerificationRef.current
     ) {
-      enqueueLatestBuildRequest(trimmedMessage, options);
+      enqueueLatestBuildRequest(trimmedMessage, requestOptions);
       return true;
     }
 
-    const started = await startGeneration(trimmedMessage, options);
+    const started = await startGeneration(trimmedMessage, requestOptions);
     if (!started) {
       if (isRunActivityInFlight()) {
         enqueueLatestBuildRequest(trimmedMessage, options);
@@ -4625,6 +5378,25 @@ export default function BuildEditor({
     if (!requestId || !generatingRef.current || !isOwner) {
       return;
     }
+    if (dedupedProcessingInFlightRef.current) {
+      userRequestedStopRef.current = true;
+      resetRuntimeHealthFollowUpState();
+      setRunError(null);
+      setGeneratingStatus('Stopping...');
+      setAssistantStatusSteps((prev) =>
+        appendUniqueStatusStep(prev, 'Stopping...')
+      );
+      onUpdateBuildRunStatus({
+        requestId,
+        status: 'Stopping...'
+      });
+      setMobilePanelTab('chat');
+      scrollChatToBottom();
+      requestStopForRecoveredBuildRun(requestId);
+      scheduleDedupedProcessingReconcile(requestId);
+      return;
+    }
+    userRequestedStopRef.current = true;
     setGeneratingStatus('Stopping...');
     setAssistantStatusSteps((prev) =>
       prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
@@ -4641,6 +5413,12 @@ export default function BuildEditor({
 
   async function handleDeleteMessage(message: ChatMessage) {
     if (!isOwner) return;
+    if (message.source === 'runtime_observation') {
+      setRuntimeObservationChatNotes((prev) =>
+        prev.filter((entry) => entry.id !== message.id)
+      );
+      return;
+    }
     if (isMessageLockedForActiveRequest(message)) return;
 
     try {
@@ -4667,6 +5445,21 @@ export default function BuildEditor({
       console.error('Failed to delete build chat message:', error);
       await syncChatMessagesFromServer(undefined, true);
     }
+  }
+
+  async function handleFixRuntimeObservationMessage(message: ChatMessage) {
+    if (!isOwner || message.source !== 'runtime_observation') {
+      return false;
+    }
+    const accepted = await sendBuildMessageText('Fix this preview issue.', {
+      messageContext: String(message.content || '').trim() || null
+    });
+    if (accepted) {
+      setRuntimeObservationChatNotes((prev) =>
+        prev.filter((entry) => entry.id !== message.id)
+      );
+    }
+    return accepted;
   }
 
   function handleReplaceCode(newCode: string) {
@@ -5389,6 +6182,9 @@ export default function BuildEditor({
               generationResetError={generationResetError}
               onPurchaseGenerationReset={handlePurchaseGenerationReset}
               onStopGeneration={handleStopGeneration}
+              onFixRuntimeObservationMessage={
+                handleFixRuntimeObservationMessage
+              }
               onDeleteMessage={handleDeleteMessage}
             />
           )}
@@ -5646,6 +6442,7 @@ export default function BuildEditor({
     }
 
     resetDedupedProcessingReconcileState();
+    userRequestedStopRef.current = false;
     disarmRuntimeAutoFix();
     pendingRuntimeVerificationRef.current = null;
     setRuntimeExplorationPlan(null);
@@ -5770,6 +6567,7 @@ export default function BuildEditor({
         return false;
       }
       resetDedupedProcessingReconcileState();
+      userRequestedStopRef.current = false;
       const now = Math.floor(Date.now() / 1000);
       const messageId = Date.now();
       const requestId = `${activeBuild.id}-${messageId}`;
@@ -5892,6 +6690,7 @@ export default function BuildEditor({
         return false;
       }
       resetDedupedProcessingReconcileState();
+      userRequestedStopRef.current = false;
       const now = Math.floor(Date.now() / 1000);
       const assistantMessageId = Date.now();
       const requestId = `${activeBuild.id}-greeting-${assistantMessageId}`;
@@ -5997,6 +6796,23 @@ export default function BuildEditor({
     });
   }
 
+  function requestStopForRecoveredBuildRun(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (!normalizedRequestId) return;
+    const activeBuildId = Number(buildRef.current?.id || build.id);
+    if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
+    if (buildSocketListenersReadyRef.current && generatingRef.current) {
+      socket.emit('build_resume_run', {
+        buildId: activeBuildId,
+        requestId: normalizedRequestId
+      });
+    }
+    socket.emit('build_stop', {
+      buildId: activeBuildId,
+      requestId: normalizedRequestId
+    });
+  }
+
   function clearDedupedProcessingReconcileTimer() {
     if (!dedupedProcessingReconcileTimerRef.current) return;
     clearTimeout(dedupedProcessingReconcileTimerRef.current);
@@ -6034,7 +6850,10 @@ export default function BuildEditor({
     }
     let shouldReschedule = false;
     try {
-      await syncChatMessagesFromServer(undefined, true);
+      await syncChatMessagesFromServer(undefined, true, {
+        preserveLocalMessages: true,
+        preserveActiveAssistantState: true
+      });
     } catch (error) {
       console.error('Failed to reconcile deduped build request:', error);
       shouldReschedule = true;
@@ -6052,27 +6871,92 @@ export default function BuildEditor({
       resetDedupedProcessingReconcileState();
       return;
     }
-    const messageIds = new Set(
-      chatMessagesRef.current.map((entry) => entry.id)
-    );
-    if (userMessageIdRef.current && !messageIds.has(userMessageIdRef.current)) {
-      userMessageIdRef.current = null;
-    }
-    if (
-      assistantMessageIdRef.current &&
-      !messageIds.has(assistantMessageIdRef.current)
-    ) {
-      assistantMessageIdRef.current = null;
-    }
+    const activeUserMessage =
+      typeof userMessageIdRef.current === 'number' &&
+      userMessageIdRef.current > 0
+        ? chatMessagesRef.current.find(
+            (entry) => entry.id === userMessageIdRef.current
+          ) || null
+        : null;
+    const activeAssistantMessage =
+      typeof assistantMessageIdRef.current === 'number' &&
+      assistantMessageIdRef.current > 0
+        ? chatMessagesRef.current.find(
+            (entry) => entry.id === assistantMessageIdRef.current
+          ) || null
+        : null;
     scrollChatToBottom();
 
-    const hasActiveStreamPlaceholders = Boolean(
-      userMessageIdRef.current || assistantMessageIdRef.current
+    if (
+      isRecoveredBuildAssistantMessageResolved(activeAssistantMessage) &&
+      (!activeUserMessage || activeUserMessage.persisted)
+    ) {
+      onCompleteBuildRun({
+        requestId,
+        assistantText: activeAssistantMessage?.content,
+        artifactCode: activeAssistantMessage?.codeGenerated ?? null,
+        artifactVersionId:
+          Number(activeAssistantMessage?.artifactVersionId || 0) > 0
+            ? Number(activeAssistantMessage?.artifactVersionId)
+            : null,
+        persistedAssistantId: activeAssistantMessage?.id,
+        persistedUserId:
+          typeof activeUserMessage?.id === 'number' && activeUserMessage.id > 0
+            ? activeUserMessage.id
+            : null,
+        createdAt:
+          Number(activeAssistantMessage?.createdAt || 0) > 0
+            ? Number(activeAssistantMessage?.createdAt)
+            : undefined
+      });
+      streamRequestIdRef.current = null;
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      generatingRef.current = false;
+      setGenerating(false);
+      setGeneratingStatus(null);
+      setAssistantStatusSteps([]);
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
+      activeRunModeRef.current = 'user';
+      activeRunMessageContextRef.current = null;
+      userRequestedStopRef.current = false;
+      setRunError(null);
+      resetDedupedProcessingReconcileState();
+      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+      return;
+    }
+
+    const hasAnyActiveMessages = Boolean(
+      activeUserMessage || activeAssistantMessage
     );
-    if (!hasActiveStreamPlaceholders) {
+    if (!hasAnyActiveMessages) {
+      const stopAssistantText = userRequestedStopRef.current
+        ? resolveStoppedRunAssistantMessage({
+            runMode: activeRunModeRef.current,
+            userRequestedStop: true
+          })
+        : undefined;
       if (streamRequestIdRef.current === requestId) {
         streamRequestIdRef.current = null;
       }
+      userMessageIdRef.current = null;
+      assistantMessageIdRef.current = null;
+      generatingRef.current = false;
+      setGenerating(false);
+      setGeneratingStatus(null);
+      setAssistantStatusSteps([]);
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
+      activeRunModeRef.current = 'user';
+      activeRunMessageContextRef.current = null;
+      userRequestedStopRef.current = false;
+      onStopBuildRun({
+        requestId,
+        assistantText: stopAssistantText,
+        preserveTransientUserMessage: true,
+        preserveTransientAssistantMessage: true
+      });
       resetDedupedProcessingReconcileState();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
       return;
@@ -6081,14 +6965,42 @@ export default function BuildEditor({
     const startedAt =
       dedupedProcessingReconcileStartedAtRef.current || Date.now();
     if (Date.now() - startedAt >= DEDUPED_PROCESSING_RECONCILE_MAX_MS) {
+      const recoveryFailureMessage = userRequestedStopRef.current
+        ? 'I lost the live response for this run after requesting stop and could not confirm the final result. Please refresh to verify the latest build state.'
+        : 'I lost the live response for this run and could not recover the result. Please retry your request.';
+      const nextAssistantId = upsertLocalBuildChatAssistantMessage(
+        assistantMessageIdRef.current,
+        recoveryFailureMessage
+      );
+      if (nextAssistantId) {
+        assistantMessageIdRef.current = nextAssistantId;
+      }
+      onFailBuildRun({
+        requestId,
+        error: recoveryFailureMessage,
+        assistantText: recoveryFailureMessage,
+        preserveTransientUserMessage: true,
+        preserveTransientAssistantMessage: true
+      });
       streamRequestIdRef.current = null;
       userMessageIdRef.current = null;
       assistantMessageIdRef.current = null;
+      generatingRef.current = false;
+      setGenerating(false);
+      setGeneratingStatus(null);
+      setAssistantStatusSteps([]);
+      setStreamingProjectFiles(null);
+      setStreamingFocusFilePath(null);
+      activeRunModeRef.current = 'user';
+      activeRunMessageContextRef.current = null;
+      userRequestedStopRef.current = false;
+      setRunError(null);
       resetDedupedProcessingReconcileState();
       void Promise.resolve().then(() => maybeStartNextQueuedRequest());
       return;
     }
 
+    maybeResumeActiveBuildRun();
     scheduleDedupedProcessingReconcile(requestId);
   }
 
@@ -6103,7 +7015,10 @@ export default function BuildEditor({
   async function syncChatMessagesFromServer(
     serverMessages?: any[],
     fromWriter = false,
-    options?: { preserveLocalMessages?: boolean }
+    options?: {
+      preserveLocalMessages?: boolean;
+      preserveActiveAssistantState?: boolean;
+    }
   ) {
     let messages = Array.isArray(serverMessages) ? serverMessages : null;
     if (!messages) {
@@ -6137,11 +7052,28 @@ export default function BuildEditor({
       }
     }
     if (!Array.isArray(messages)) return;
+    // Re-read local chat state after any async writer fetch so streamed assistant
+    // updates that arrived mid-sync are merged against the freshest local row.
+    const currentMessages = chatMessagesRef.current;
+    const activeUserMessage =
+      typeof userMessageIdRef.current === 'number' &&
+      userMessageIdRef.current > 0
+        ? currentMessages.find(
+            (message) => message.id === userMessageIdRef.current
+          ) || null
+        : null;
+    const activeAssistantMessage =
+      typeof assistantMessageIdRef.current === 'number' &&
+      assistantMessageIdRef.current > 0
+        ? currentMessages.find(
+            (message) => message.id === assistantMessageIdRef.current
+          ) || null
+        : null;
     const localBillingStateById = new Map<
       number,
       ChatMessage['billingState']
     >();
-    for (const message of chatMessagesRef.current) {
+    for (const message of currentMessages) {
       if (typeof message?.id !== 'number' || message.id <= 0) continue;
       if (message.billingState == null) continue;
       localBillingStateById.set(message.id, message.billingState);
@@ -6152,10 +7084,27 @@ export default function BuildEditor({
       persisted: true,
       streamCodePreview: null
     }));
-    if (!options?.preserveLocalMessages) {
-      chatMessagesRef.current = normalized;
-      updateChatMessagesRef.current(normalized);
-    }
+    const nextMessages = options?.preserveLocalMessages
+      ? mergePersistedChatMessagesIntoLocalMessages({
+          localMessages: currentMessages,
+          persistedMessages: normalized,
+          activeUserMessage,
+          activeAssistantMessageId: activeAssistantMessage?.id || null,
+          preserveActiveAssistantState:
+            options?.preserveActiveAssistantState === true
+        })
+      : normalized;
+    userMessageIdRef.current = findMatchingBuildChatMessageId({
+      messages: nextMessages,
+      targetMessage: activeUserMessage
+    });
+    assistantMessageIdRef.current = findMatchingBuildChatMessageId({
+      messages: nextMessages,
+      targetMessage: activeAssistantMessage,
+      activeUserMessage
+    });
+    chatMessagesRef.current = nextMessages;
+    updateChatMessagesRef.current(nextMessages);
   }
 }
 

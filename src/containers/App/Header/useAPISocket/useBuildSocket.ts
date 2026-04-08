@@ -54,6 +54,9 @@ export default function useBuildSocket() {
       requestId,
       reply,
       codeGenerated,
+      userMessageId,
+      assistantMessageId,
+      assistantMessageCreatedAt,
       projectFiles,
       projectFilesMode,
       projectFilesPersisted,
@@ -62,6 +65,9 @@ export default function useBuildSocket() {
       requestId?: string;
       reply?: string;
       codeGenerated?: string | null;
+      userMessageId?: number | null;
+      assistantMessageId?: number | null;
+      assistantMessageCreatedAt?: number | null;
       projectFiles?: Array<{ path: string; content?: string }> | null;
       projectFilesMode?: 'patch' | 'snapshot' | null;
       projectFilesPersisted?: boolean;
@@ -74,6 +80,29 @@ export default function useBuildSocket() {
       }
       if (Object.prototype.hasOwnProperty.call(arguments[0] || {}, 'codeGenerated')) {
         buildRun.codeGenerated = codeGenerated ?? null;
+      }
+      if (Object.prototype.hasOwnProperty.call(arguments[0] || {}, 'userMessageId')) {
+        buildRun.userMessageId =
+          Number(userMessageId || 0) > 0 ? Number(userMessageId) : null;
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(arguments[0] || {}, 'assistantMessageId')
+      ) {
+        buildRun.assistantMessageId =
+          Number(assistantMessageId || 0) > 0
+            ? Number(assistantMessageId)
+            : null;
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'assistantMessageCreatedAt'
+        )
+      ) {
+        buildRun.assistantMessageCreatedAt =
+          Number(assistantMessageCreatedAt || 0) > 0
+            ? Number(assistantMessageCreatedAt)
+            : null;
       }
       if (Array.isArray(projectFiles) && projectFiles.length > 0) {
         buildRun.projectFiles = projectFiles;
@@ -184,13 +213,27 @@ export default function useBuildSocket() {
     }
 
     function handleGenerateStopped({
-      requestId
+      requestId,
+      deduped,
+      guardStatus,
+      assistantText
     }: {
       requestId?: string;
+      deduped?: boolean;
+      guardStatus?: 'processing' | 'completed' | 'conflict';
+      assistantText?: string;
     }) {
       if (!requestId) return;
+      if (deduped && guardStatus === 'processing') {
+        onUpdateBuildRunStatus({
+          requestId,
+          status: 'Recovering live response...'
+        });
+        return;
+      }
       onStopBuildRun({
-        requestId
+        requestId,
+        ...(typeof assistantText === 'string' ? { assistantText } : {})
       });
     }
 

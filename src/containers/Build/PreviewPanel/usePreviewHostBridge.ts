@@ -161,8 +161,12 @@ function normalizeRuntimeObservationIssue(
   const kind =
     payload?.kind === 'unhandledrejection'
       ? 'unhandledrejection'
+      : payload?.kind === 'consoleerror'
+        ? 'consoleerror'
       : payload?.kind === 'blankrender'
         ? 'blankrender'
+        : payload?.kind === 'formsubmitblocked'
+          ? 'formsubmitblocked'
         : payload?.kind === 'sdkblocked'
           ? 'sdkblocked'
           : payload?.kind === 'keyboardscroll'
