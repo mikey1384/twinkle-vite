@@ -1,3 +1,8 @@
+import {
+  getBuildRunEventLogicalIdentity,
+  normalizeBuildRunEventCreatedAt
+} from './runEventIdentity';
+
 export interface BuildLiveRunMessage {
   id: number;
   role: 'user' | 'assistant';
@@ -50,6 +55,8 @@ export interface BuildLiveRunState {
   requestId: string;
   runMode: 'user' | 'greeting' | 'runtime-autofix';
   generating: boolean;
+  terminalState?: 'complete' | 'error' | 'stopped' | null;
+  interruptionReason?: 'tool_limit' | null;
   error: string | null;
   status: string | null;
   assistantStatusSteps: string[];
@@ -75,55 +82,93 @@ export interface BuildWorkspaceSnapshot {
   updatedAt: number;
 }
 
-export interface BuildLiveRunActionPayload {
+export interface BuildLiveRunStreamUpdatePayload {
+  userMessageContent?: string | null;
+  status?: string | null;
+  assistantStatusSteps?: string[];
+  reply?: string;
+  codeGenerated?: string | null;
+  userMessageId?: number | null;
+  assistantMessageId?: number | null;
+  assistantMessageCreatedAt?: number | null;
+  usageMetrics?: Record<string, BuildLiveRunUsageMetric>;
+  baseProjectFiles?: Array<{ path: string; content?: string }> | null;
+  projectFiles?: Array<{ path: string; content?: string }> | null;
+  projectFilesMode?: 'patch' | 'snapshot' | null;
+  projectFilesPersisted?: boolean;
+  projectFilesFocusPath?: string | null;
+  executionPlan?: any | null;
+  followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
+  runtimeExplorationPlan?: any | null;
+  runtimePlanRefined?: boolean;
+  billingState?: 'charged' | 'not_charged' | 'pending' | null;
+}
+
+export interface BuildLiveRunRunningSnapshotPayload {
+  status?: string | null;
+  assistantStatusSteps?: string[];
+  usageMetrics?: Record<string, BuildLiveRunUsageMetric>;
+  updatedAt?: number | null;
+}
+
+export interface BuildLiveRunActionPayload
+  extends BuildLiveRunStreamUpdatePayload {
   buildId?: number;
   build?: any;
   chatMessages?: any[];
   copilotPolicy?: any | null;
   requestId?: string;
   runMode?: BuildLiveRunState['runMode'];
+  generating?: boolean;
   status?: string | null;
-  reply?: string;
-  codeGenerated?: string | null;
-  userMessageId?: number | null;
-  assistantMessageId?: number | null;
-  assistantMessageCreatedAt?: number | null;
-  projectFiles?: Array<{ path: string; content?: string }> | null;
-  projectFilesMode?: 'patch' | 'snapshot' | null;
-  projectFilesPersisted?: boolean;
-  projectFilesFocusPath?: string | null;
+  assistantStatusSteps?: string[];
   userMessage?: BuildLiveRunMessage | null;
   assistantMessage?: BuildLiveRunMessage | null;
   baseProjectFiles?: Array<{ path: string; content?: string }> | null;
-  executionPlan?: any | null;
-  followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
-  runtimeExplorationPlan?: any | null;
-  runtimePlanRefined?: boolean;
-  billingState?: 'charged' | 'not_charged' | 'pending' | null;
+  runningSnapshot?: BuildLiveRunRunningSnapshotPayload | null;
   workspaceChanged?: boolean;
   event?: BuildLiveRunEvent | null;
-  usage?: {
-    stage?: string | null;
-    model?: string | null;
-    inputTokens?: number;
-    outputTokens?: number;
-    totalTokens?: number;
-  } | null;
   assistantText?: string;
   artifactCode?: string | null;
   artifactVersionId?: number | null;
   persistedAssistantId?: number | null;
   persistedUserId?: number | null;
   createdAt?: number;
+  interruptionReason?: 'tool_limit' | null;
   error?: string;
+  preserveAssistantArtifactsOnError?: boolean;
   preserveTransientUserMessage?: boolean;
   preserveTransientAssistantMessage?: boolean;
+  updatedAt?: number;
+}
+
+export interface BuildRuntimeVerifyResultPayload {
+  buildId?: number | null;
+  requestId?: string;
+  status?: 'complete' | 'error' | null;
+  improved?: boolean;
+  reason?: string | null;
+  shouldRepairAgain?: boolean;
+  nextRemainingRepairs?: number | null;
+  error?: string | null;
+}
+
+export interface BuildRuntimeVerifyResult {
+  buildId: number | null;
+  requestId: string;
+  status: 'complete' | 'error';
+  improved: boolean;
+  reason: string | null;
+  shouldRepairAgain: boolean;
+  nextRemainingRepairs: number;
+  error: string | null;
 }
 
 export interface BuildState {
   buildRuns: Record<string, BuildLiveRunState>;
   buildRunRequestMap: Record<string, number>;
   buildWorkspaces: Record<string, BuildWorkspaceSnapshot>;
+  runtimeVerifyResults: Record<string, BuildRuntimeVerifyResult>;
 }
 
 export interface BuildAction {
@@ -131,15 +176,18 @@ export interface BuildAction {
     | 'REGISTER_BUILD_RUN'
     | 'UPDATE_BUILD_RUN_STATUS'
     | 'UPDATE_BUILD_RUN_STREAM'
+    | 'APPLY_BUILD_RUN_RUNNING_SNAPSHOT'
     | 'APPEND_BUILD_RUN_EVENT'
-    | 'UPDATE_BUILD_RUN_USAGE'
     | 'COMPLETE_BUILD_RUN'
     | 'FAIL_BUILD_RUN'
     | 'STOP_BUILD_RUN'
     | 'SET_BUILD_WORKSPACE'
+    | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
+    | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUN'
     | 'RESET_BUILD_RUNS';
   buildRun?: BuildLiveRunActionPayload;
+  runtimeVerifyResult?: BuildRuntimeVerifyResultPayload;
 }
 
 function getBuildRunLookupBuildId(
@@ -155,6 +203,15 @@ function getBuildRunLookupBuildId(
 
 function getBuildRunKey(buildId: number) {
   return String(Number(buildId) || 0);
+}
+
+function getBuildRuntimeVerifyResultKey(
+  runtimeVerifyResult?: BuildRuntimeVerifyResultPayload
+) {
+  const requestId = String(runtimeVerifyResult?.requestId || '').trim();
+  if (!requestId) return '';
+  const buildId = Number(runtimeVerifyResult?.buildId || 0);
+  return `${buildId > 0 ? buildId : 0}:${requestId}`;
 }
 
 function normalizeBuildRunProjectFilePath(rawPath: string) {
@@ -231,6 +288,297 @@ function appendAssistantStatusStep(
   return steps[steps.length - 1] === nextStatus ? steps : [...steps, nextStatus];
 }
 
+function normalizeBuildRunAssistantStatusSteps(
+  assistantStatusSteps?: string[],
+  fallbackStatus?: string | null
+) {
+  const normalizedAssistantStatusSteps = Array.isArray(assistantStatusSteps)
+    ? assistantStatusSteps.filter(
+        (step): step is string =>
+          typeof step === 'string' && step.trim().length > 0
+      )
+    : [];
+
+  if (normalizedAssistantStatusSteps.length > 0) {
+    return normalizedAssistantStatusSteps;
+  }
+
+  const normalizedFallbackStatus = String(fallbackStatus || '').trim();
+  return normalizedFallbackStatus ? [normalizedFallbackStatus] : [];
+}
+
+function normalizeBuildRunUsageMetrics(
+  usageMetrics?: Record<string, BuildLiveRunUsageMetric>
+) {
+  return Object.values(usageMetrics || {}).reduce<
+    Record<string, BuildLiveRunUsageMetric>
+  >((result, metric) => {
+    const stage = String(metric?.stage || '').trim();
+    const model = String(metric?.model || '').trim();
+    if (!stage || !model) return result;
+    result[stage] = {
+      stage,
+      model,
+      inputTokens: Number(metric?.inputTokens || 0),
+      outputTokens: Number(metric?.outputTokens || 0),
+      totalTokens: Number(metric?.totalTokens || 0)
+    };
+    return result;
+  }, {});
+}
+
+function resolveBuildRunUpdatedAt(
+  updatedAt?: number | null,
+  fallbackUpdatedAt?: number
+) {
+  const normalizedUpdatedAt = Number(updatedAt || 0);
+  if (normalizedUpdatedAt > 0) {
+    return normalizedUpdatedAt;
+  }
+  const normalizedFallbackUpdatedAt = Number(fallbackUpdatedAt || 0);
+  return normalizedFallbackUpdatedAt > 0
+    ? normalizedFallbackUpdatedAt
+    : Date.now();
+}
+
+function applyBuildRunStreamUpdate(
+  currentRun: BuildLiveRunState,
+  buildRun?: BuildLiveRunStreamUpdatePayload | null,
+  options?: {
+    updatedAt?: number | null;
+  }
+): BuildLiveRunState {
+  const hasStatusField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'status'
+  );
+  const hasUserMessageContentField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'userMessageContent'
+  );
+  const hasAssistantStatusStepsField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'assistantStatusSteps'
+  );
+  const hasCodeGeneratedField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'codeGenerated'
+  );
+  const hasUsageMetricsField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'usageMetrics'
+  );
+  const hasBaseProjectFilesField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'baseProjectFiles'
+  );
+  const normalizedBaseProjectFiles = hasBaseProjectFilesField
+    ? normalizeBuildRunProjectFiles(
+        Array.isArray(buildRun?.baseProjectFiles) ? buildRun.baseProjectFiles : []
+      )
+    : null;
+  const projectFilesMode =
+    buildRun?.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
+  const incomingProjectFiles = Array.isArray(buildRun?.projectFiles)
+    ? buildRun.projectFiles
+    : null;
+  const hasProjectFilesField = incomingProjectFiles !== null;
+  const hasProjectFileUpdates =
+    hasProjectFilesField &&
+    (projectFilesMode === 'snapshot' ||
+      incomingProjectFiles.length > 0 ||
+      buildRun?.projectFilesPersisted === true);
+  const normalizedProjectFiles = hasProjectFilesField
+    ? normalizeBuildRunProjectFiles(incomingProjectFiles)
+    : null;
+  const hasExplicitProjectFilesFocusPath = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'projectFilesFocusPath'
+  );
+  const explicitProjectFilesFocusPath = hasExplicitProjectFilesFocusPath
+    ? typeof buildRun?.projectFilesFocusPath === 'string'
+      ? normalizeBuildRunProjectFilePath(buildRun.projectFilesFocusPath)
+      : null
+    : undefined;
+  const projectFilesPersisted = buildRun?.projectFilesPersisted === true;
+  const persistedUserMessageId =
+    Number(buildRun?.userMessageId || 0) > 0
+      ? Number(buildRun?.userMessageId)
+      : null;
+  const persistedAssistantMessageId =
+    Number(buildRun?.assistantMessageId || 0) > 0
+      ? Number(buildRun?.assistantMessageId)
+      : null;
+  const persistedAssistantMessageCreatedAt =
+    Number(buildRun?.assistantMessageCreatedAt || 0) > 0
+      ? Number(buildRun?.assistantMessageCreatedAt)
+      : null;
+  const normalizedUserMessageContent = hasUserMessageContentField
+    ? typeof buildRun?.userMessageContent === 'string'
+      ? buildRun.userMessageContent
+      : ''
+    : null;
+  const latestAssistantStatusStep = Array.isArray(buildRun?.assistantStatusSteps)
+    ? String(
+        buildRun.assistantStatusSteps[buildRun.assistantStatusSteps.length - 1] ||
+          ''
+      ).trim() || null
+    : null;
+  const nextStatus = hasStatusField
+    ? typeof buildRun?.status === 'string'
+      ? buildRun.status
+      : null
+    : hasAssistantStatusStepsField
+      ? latestAssistantStatusStep
+      : currentRun.status;
+  const nextAssistantStatusSteps = hasAssistantStatusStepsField
+    ? normalizeBuildRunAssistantStatusSteps(
+        buildRun?.assistantStatusSteps,
+        nextStatus
+      )
+    : hasStatusField
+      ? appendAssistantStatusStep(currentRun.assistantStatusSteps, nextStatus)
+      : currentRun.assistantStatusSteps;
+  const nextBaseProjectFiles = hasBaseProjectFilesField
+    ? normalizedBaseProjectFiles || []
+    : projectFilesPersisted && normalizedProjectFiles
+      ? normalizedProjectFiles
+      : currentRun.baseProjectFiles;
+  const nextStreamingProjectFiles = hasProjectFileUpdates
+    ? projectFilesMode === 'snapshot'
+      ? normalizedProjectFiles
+      : overlayBuildRunProjectFiles({
+          baseFiles:
+            currentRun.streamingProjectFiles !== null
+              ? currentRun.streamingProjectFiles
+              : hasBaseProjectFilesField
+                ? nextBaseProjectFiles
+                : currentRun.baseProjectFiles,
+          updates: normalizedProjectFiles
+        })
+    : currentRun.streamingProjectFiles;
+
+  return {
+    ...currentRun,
+    generating: true,
+    terminalState: null,
+    interruptionReason: null,
+    error: null,
+    status: nextStatus,
+    assistantStatusSteps: nextAssistantStatusSteps,
+    userMessage:
+      currentRun.userMessage
+        ? {
+            ...currentRun.userMessage,
+            ...(persistedUserMessageId
+              ? {
+                  id: persistedUserMessageId,
+                  persisted: true
+                }
+              : {}),
+            ...(hasUserMessageContentField
+              ? {
+                  content: normalizedUserMessageContent || currentRun.userMessage.content
+                }
+              : {})
+          }
+        : persistedUserMessageId !== null || hasUserMessageContentField
+          ? {
+              id:
+                persistedUserMessageId ||
+                Math.max(1, Math.floor(Date.now() / 1000)),
+              role: 'user' as const,
+              content: normalizedUserMessageContent || '',
+              codeGenerated: null,
+              billingState: null,
+              artifactVersionId: null,
+              createdAt: Math.floor(Date.now() / 1000),
+              persisted: persistedUserMessageId !== null
+            }
+          : currentRun.userMessage,
+    assistantMessage: currentRun.assistantMessage
+      ? {
+          ...currentRun.assistantMessage,
+          id: persistedAssistantMessageId || currentRun.assistantMessage.id,
+          persisted:
+            persistedAssistantMessageId !== null
+              ? true
+              : currentRun.assistantMessage.persisted,
+          content:
+            typeof buildRun?.reply === 'string'
+              ? buildRun.reply
+              : currentRun.assistantMessage.content,
+          createdAt:
+            persistedAssistantMessageCreatedAt ||
+            currentRun.assistantMessage.createdAt,
+          ...(hasCodeGeneratedField
+            ? {
+                streamCodePreview: buildRun?.codeGenerated ?? null
+              }
+            : {})
+        }
+      : persistedAssistantMessageId || typeof buildRun?.reply === 'string'
+        ? {
+            id:
+              persistedAssistantMessageId ||
+              Math.max(1, Math.floor(Date.now() / 1000)),
+            role: 'assistant' as const,
+            content: typeof buildRun?.reply === 'string' ? buildRun.reply : '',
+            codeGenerated: null,
+            ...(hasCodeGeneratedField
+              ? {
+                  streamCodePreview: buildRun?.codeGenerated ?? null
+                }
+              : {}),
+            billingState: null,
+            artifactVersionId: null,
+            createdAt:
+              persistedAssistantMessageCreatedAt ||
+              Math.floor(Date.now() / 1000),
+            persisted: persistedAssistantMessageId !== null
+          }
+        : currentRun.assistantMessage,
+    usageMetrics: hasUsageMetricsField
+      ? normalizeBuildRunUsageMetrics(buildRun?.usageMetrics)
+      : currentRun.usageMetrics,
+    baseProjectFiles: nextBaseProjectFiles,
+    streamingProjectFiles: projectFilesPersisted
+      ? null
+      : nextStreamingProjectFiles,
+    streamingFocusFilePath:
+      projectFilesPersisted
+        ? null
+        : hasExplicitProjectFilesFocusPath
+          ? explicitProjectFilesFocusPath ?? null
+          : hasProjectFileUpdates
+            ? getStreamingFocusFilePath(buildRun?.projectFiles)
+            : currentRun.streamingFocusFilePath,
+    executionPlan:
+      Object.prototype.hasOwnProperty.call(buildRun || {}, 'executionPlan')
+        ? buildRun?.executionPlan ?? null
+        : currentRun.executionPlan,
+    followUpPrompt:
+      Object.prototype.hasOwnProperty.call(buildRun || {}, 'followUpPrompt')
+        ? buildRun?.followUpPrompt ?? null
+        : currentRun.followUpPrompt,
+    runtimeExplorationPlan: Object.prototype.hasOwnProperty.call(
+      buildRun || {},
+      'runtimeExplorationPlan'
+    )
+      ? buildRun?.runtimeExplorationPlan ?? null
+      : currentRun.runtimeExplorationPlan,
+    runtimePlanRefined:
+      typeof buildRun?.runtimePlanRefined === 'boolean'
+        ? buildRun.runtimePlanRefined
+        : currentRun.runtimePlanRefined,
+    billingState:
+      Object.prototype.hasOwnProperty.call(buildRun || {}, 'billingState')
+        ? buildRun?.billingState ?? null
+        : currentRun.billingState,
+    updatedAt: resolveBuildRunUpdatedAt(options?.updatedAt)
+  };
+}
+
 function upsertBuildRun(
   state: BuildState,
   buildId: number,
@@ -270,14 +618,28 @@ export default function BuildReducer(
       const buildId = Number(action.buildRun?.buildId || 0);
       const requestId = String(action.buildRun?.requestId || '').trim();
       if (!buildId || !requestId) return state;
+      const nextStatus =
+        typeof action.buildRun?.status === 'string'
+          ? action.buildRun.status
+          : null;
+      const nextAssistantStatusSteps = normalizeBuildRunAssistantStatusSteps(
+        action.buildRun?.assistantStatusSteps,
+        nextStatus
+      );
       return upsertBuildRun(state, buildId, {
         buildId,
         requestId,
         runMode: action.buildRun?.runMode || 'user',
-        generating: true,
-        error: null,
-        status: null,
-        assistantStatusSteps: [],
+        generating: action.buildRun?.generating !== false,
+        terminalState: null,
+        interruptionReason: null,
+        error:
+          typeof action.buildRun?.error === 'string' &&
+          action.buildRun.error.trim()
+            ? action.buildRun.error
+            : null,
+        status: nextStatus,
+        assistantStatusSteps: nextAssistantStatusSteps,
         usageMetrics: {},
         runEvents: [],
         userMessage: action.buildRun?.userMessage || null,
@@ -292,7 +654,10 @@ export default function BuildReducer(
         runtimeExplorationPlan: null,
         runtimePlanRefined: false,
         billingState: null,
-        updatedAt: Date.now()
+        updatedAt:
+          Number(action.buildRun?.updatedAt || 0) > 0
+            ? Number(action.buildRun?.updatedAt)
+            : Date.now()
       });
     }
     case 'UPDATE_BUILD_RUN_STATUS': {
@@ -308,6 +673,8 @@ export default function BuildReducer(
       return upsertBuildRun(state, buildId, {
         ...currentRun,
         generating: true,
+        terminalState: null,
+        interruptionReason: null,
         error: null,
         status: nextStatus,
         assistantStatusSteps: appendAssistantStatusStep(
@@ -323,146 +690,45 @@ export default function BuildReducer(
       const key = getBuildRunKey(buildId);
       const currentRun = state.buildRuns[key];
       if (!currentRun) return state;
-      const hasCodeGeneratedField =
-        action.buildRun &&
-        Object.prototype.hasOwnProperty.call(action.buildRun, 'codeGenerated');
-      const hasProjectFileUpdates =
-        Array.isArray(action.buildRun?.projectFiles) &&
-        action.buildRun.projectFiles.length > 0;
-      const normalizedProjectFiles = hasProjectFileUpdates
-        ? normalizeBuildRunProjectFiles(action.buildRun?.projectFiles)
-        : null;
-      const explicitProjectFilesFocusPath = normalizeBuildRunProjectFilePath(
-        String(action.buildRun?.projectFilesFocusPath || '')
+      const nextUpdatedAt = resolveBuildRunUpdatedAt(action.buildRun?.updatedAt);
+      return upsertBuildRun(
+        state,
+        buildId,
+        applyBuildRunStreamUpdate(currentRun, action.buildRun, {
+          updatedAt: nextUpdatedAt
+        })
       );
-      const projectFilesMode =
-        action.buildRun?.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
-      const projectFilesPersisted = action.buildRun?.projectFilesPersisted === true;
-      const persistedUserMessageId =
-        Number(action.buildRun?.userMessageId || 0) > 0
-          ? Number(action.buildRun?.userMessageId)
+    }
+    case 'APPLY_BUILD_RUN_RUNNING_SNAPSHOT': {
+      const buildId = getBuildRunLookupBuildId(state, action.buildRun);
+      if (!buildId) return state;
+      const key = getBuildRunKey(buildId);
+      const currentRun = state.buildRuns[key];
+      const runningSnapshot = action.buildRun?.runningSnapshot;
+      if (!currentRun || !runningSnapshot) return state;
+      const nextStatus =
+        typeof runningSnapshot.status === 'string'
+          ? runningSnapshot.status
           : null;
-      const persistedAssistantMessageId =
-        Number(action.buildRun?.assistantMessageId || 0) > 0
-          ? Number(action.buildRun?.assistantMessageId)
-          : null;
-      const persistedAssistantMessageCreatedAt =
-        Number(action.buildRun?.assistantMessageCreatedAt || 0) > 0
-          ? Number(action.buildRun?.assistantMessageCreatedAt)
-          : null;
-      const nextStreamingProjectFiles = hasProjectFileUpdates
-        ? projectFilesMode === 'snapshot'
-          ? normalizedProjectFiles
-          : overlayBuildRunProjectFiles({
-              baseFiles:
-                currentRun.streamingProjectFiles?.length
-                  ? currentRun.streamingProjectFiles
-                  : currentRun.baseProjectFiles,
-              updates: normalizedProjectFiles
-            })
-        : currentRun.streamingProjectFiles;
-      return upsertBuildRun(state, buildId, {
+      const nextUpdatedAt = resolveBuildRunUpdatedAt(
+        runningSnapshot.updatedAt,
+        currentRun.updatedAt
+      );
+      const nextRunWithoutStreamUpdate: BuildLiveRunState = {
         ...currentRun,
         generating: true,
+        terminalState: null,
+        interruptionReason: null,
         error: null,
-        userMessage:
-          currentRun.userMessage && persistedUserMessageId
-            ? {
-                ...currentRun.userMessage,
-                id: persistedUserMessageId,
-                persisted: true
-              }
-            : currentRun.userMessage,
-        assistantMessage: currentRun.assistantMessage
-          ? {
-              ...currentRun.assistantMessage,
-              id:
-                persistedAssistantMessageId || currentRun.assistantMessage.id,
-              persisted:
-                persistedAssistantMessageId !== null
-                  ? true
-                  : currentRun.assistantMessage.persisted,
-              content:
-                typeof action.buildRun?.reply === 'string'
-                  ? action.buildRun.reply
-                  : currentRun.assistantMessage.content,
-              createdAt:
-                persistedAssistantMessageCreatedAt ||
-                currentRun.assistantMessage.createdAt,
-              ...(hasCodeGeneratedField
-                ? {
-                    streamCodePreview: action.buildRun?.codeGenerated ?? null
-                  }
-                : {})
-            }
-          : persistedAssistantMessageId ||
-              typeof action.buildRun?.reply === 'string'
-            ? {
-                id:
-                  persistedAssistantMessageId ||
-                  Math.max(1, Math.floor(Date.now() / 1000)),
-                role: 'assistant',
-                content:
-                  typeof action.buildRun?.reply === 'string'
-                    ? action.buildRun.reply
-                    : '',
-                codeGenerated: null,
-                ...(hasCodeGeneratedField
-                  ? {
-                      streamCodePreview: action.buildRun?.codeGenerated ?? null
-                    }
-                  : {}),
-                billingState: null,
-                artifactVersionId: null,
-                createdAt:
-                  persistedAssistantMessageCreatedAt ||
-                  Math.floor(Date.now() / 1000),
-                persisted: persistedAssistantMessageId !== null
-              }
-            : currentRun.assistantMessage,
-        baseProjectFiles:
-          projectFilesPersisted && normalizedProjectFiles?.length
-            ? normalizedProjectFiles
-            : currentRun.baseProjectFiles,
-        streamingProjectFiles: projectFilesPersisted
-          ? null
-          : nextStreamingProjectFiles,
-        streamingFocusFilePath:
-          projectFilesPersisted
-            ? null
-            : hasProjectFileUpdates
-          ? explicitProjectFilesFocusPath ||
-            getStreamingFocusFilePath(action.buildRun?.projectFiles)
-          : currentRun.streamingFocusFilePath,
-        executionPlan:
-          action.buildRun &&
-          Object.prototype.hasOwnProperty.call(action.buildRun, 'executionPlan')
-            ? action.buildRun.executionPlan ?? null
-            : currentRun.executionPlan,
-        followUpPrompt:
-          action.buildRun &&
-          Object.prototype.hasOwnProperty.call(action.buildRun, 'followUpPrompt')
-            ? action.buildRun.followUpPrompt ?? null
-            : currentRun.followUpPrompt,
-        runtimeExplorationPlan:
-          action.buildRun &&
-          Object.prototype.hasOwnProperty.call(
-            action.buildRun,
-            'runtimeExplorationPlan'
-          )
-            ? action.buildRun.runtimeExplorationPlan ?? null
-            : currentRun.runtimeExplorationPlan,
-        runtimePlanRefined:
-          typeof action.buildRun?.runtimePlanRefined === 'boolean'
-            ? action.buildRun.runtimePlanRefined
-            : currentRun.runtimePlanRefined,
-        billingState:
-          action.buildRun &&
-          Object.prototype.hasOwnProperty.call(action.buildRun, 'billingState')
-            ? action.buildRun.billingState ?? null
-            : currentRun.billingState,
-        updatedAt: Date.now()
-      });
+        status: nextStatus,
+        assistantStatusSteps: normalizeBuildRunAssistantStatusSteps(
+          runningSnapshot.assistantStatusSteps,
+          nextStatus
+        ),
+        usageMetrics: normalizeBuildRunUsageMetrics(runningSnapshot.usageMetrics),
+        updatedAt: nextUpdatedAt
+      };
+      return upsertBuildRun(state, buildId, nextRunWithoutStreamUpdate);
     }
     case 'APPEND_BUILD_RUN_EVENT': {
       const buildId = getBuildRunLookupBuildId(state, action.buildRun);
@@ -471,24 +737,61 @@ export default function BuildReducer(
       const currentRun = state.buildRuns[key];
       if (!currentRun) return state;
       const nextEvent = action.buildRun.event;
-      const lastEvent = currentRun.runEvents[currentRun.runEvents.length - 1];
-      const nextRunEvents =
-        lastEvent &&
-        lastEvent.kind === nextEvent.kind &&
-        lastEvent.phase === nextEvent.phase &&
-        lastEvent.message === nextEvent.message &&
-        Math.abs(lastEvent.createdAt - nextEvent.createdAt) < 1500
-          ? [
-              ...currentRun.runEvents.slice(0, -1),
-              {
-                ...lastEvent,
-                createdAt: nextEvent.createdAt,
-                deduped: nextEvent.deduped,
-                details: nextEvent.details ?? lastEvent.details ?? null,
-                usage: nextEvent.usage ?? lastEvent.usage ?? null
-              }
-            ]
-          : [...currentRun.runEvents, nextEvent].slice(-40);
+      const nextEventIdentity = getBuildRunEventLogicalIdentity(nextEvent);
+      let nextRunEvents: BuildLiveRunEvent[];
+
+      if (nextEventIdentity.hasStableId) {
+        const existingEventIndex = currentRun.runEvents.findIndex((event) => {
+          const existingEventIdentity = getBuildRunEventLogicalIdentity(event);
+          return (
+            existingEventIdentity.hasStableId &&
+            existingEventIdentity.key === nextEventIdentity.key
+          );
+        });
+
+        nextRunEvents =
+          existingEventIndex >= 0
+            ? currentRun.runEvents.map((event, index) => {
+                if (index !== existingEventIndex) {
+                  return event;
+                }
+                return {
+                  ...event,
+                  ...nextEvent,
+                  id: event.id
+                };
+              })
+            : [...currentRun.runEvents, nextEvent].slice(-40);
+      } else {
+        const lastEvent = currentRun.runEvents[currentRun.runEvents.length - 1];
+        const normalizedNextEventCreatedAt = normalizeBuildRunEventCreatedAt(
+          nextEvent.createdAt
+        );
+        const normalizedLastEventCreatedAt = normalizeBuildRunEventCreatedAt(
+          lastEvent?.createdAt
+        );
+
+        nextRunEvents =
+          lastEvent &&
+          lastEvent.kind === nextEvent.kind &&
+          lastEvent.phase === nextEvent.phase &&
+          lastEvent.message === nextEvent.message &&
+          Math.abs(
+            normalizedLastEventCreatedAt - normalizedNextEventCreatedAt
+          ) < 1500
+            ? [
+                ...currentRun.runEvents.slice(0, -1),
+                {
+                  ...lastEvent,
+                  createdAt:
+                    normalizedNextEventCreatedAt || lastEvent.createdAt,
+                  deduped: nextEvent.deduped,
+                  details: nextEvent.details ?? lastEvent.details ?? null,
+                  usage: nextEvent.usage ?? lastEvent.usage ?? null
+                }
+              ]
+            : [...currentRun.runEvents, nextEvent].slice(-40);
+      }
       const lifecycleErrorMessage =
         nextEvent.kind === 'lifecycle' &&
         String(nextEvent.phase || '').trim().toLowerCase() === 'error'
@@ -500,36 +803,7 @@ export default function BuildReducer(
         ...currentRun,
         runEvents: nextRunEvents,
         error: lifecycleErrorMessage || currentRun.error,
-        updatedAt: Date.now()
-      });
-    }
-    case 'UPDATE_BUILD_RUN_USAGE': {
-      const buildId = getBuildRunLookupBuildId(state, action.buildRun);
-      const usage = action.buildRun?.usage;
-      const stage = String(usage?.stage || '').trim();
-      const model = String(usage?.model || '').trim();
-      if (!buildId || !stage || !model) return state;
-      const key = getBuildRunKey(buildId);
-      const currentRun = state.buildRuns[key];
-      if (!currentRun) return state;
-      const existing = currentRun.usageMetrics[stage];
-      const inputTokens = Number(usage?.inputTokens || 0);
-      const outputTokens = Number(usage?.outputTokens || 0);
-      const totalTokens = Number(usage?.totalTokens || 0);
-      return upsertBuildRun(state, buildId, {
-        ...currentRun,
-        usageMetrics: {
-          ...currentRun.usageMetrics,
-          [stage]: {
-            stage,
-            model,
-            inputTokens: (existing?.inputTokens || 0) + inputTokens,
-            outputTokens: (existing?.outputTokens || 0) + outputTokens,
-            totalTokens: (existing?.totalTokens || 0) + totalTokens
-          }
-        },
-        error: null,
-        updatedAt: Date.now()
+        updatedAt: resolveBuildRunUpdatedAt(action.buildRun?.updatedAt)
       });
     }
     case 'COMPLETE_BUILD_RUN': {
@@ -545,6 +819,15 @@ export default function BuildReducer(
       const nextRun = {
         ...currentRun,
         generating: false,
+        terminalState: 'complete' as const,
+        interruptionReason:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(
+            action.buildRun,
+            'interruptionReason'
+          )
+            ? action.buildRun.interruptionReason ?? null
+            : currentRun.interruptionReason ?? null,
         error: null,
         status: null,
         assistantStatusSteps: [],
@@ -599,7 +882,7 @@ export default function BuildReducer(
             ? normalizeBuildRunProjectFiles(action.buildRun.projectFiles)
             : action.buildRun?.workspaceChanged === false
               ? currentRun.baseProjectFiles
-            : currentRun.streamingProjectFiles?.length
+            : currentRun.streamingProjectFiles !== null
               ? currentRun.streamingProjectFiles
               : currentRun.baseProjectFiles,
         streamingProjectFiles: null,
@@ -658,6 +941,12 @@ export default function BuildReducer(
         action.buildRun?.preserveTransientUserMessage === true;
       const preserveTransientAssistantMessage =
         action.buildRun?.preserveTransientAssistantMessage === true;
+      const preserveAssistantArtifactsOnError =
+        action.buildRun?.preserveAssistantArtifactsOnError === true ||
+        (currentRun.assistantMessage?.persisted === true &&
+          (Number(currentRun.assistantMessage.artifactVersionId || 0) > 0 ||
+            (typeof currentRun.assistantMessage.codeGenerated === 'string' &&
+              currentRun.assistantMessage.codeGenerated.trim().length > 0)));
       const nextAssistantText =
         typeof action.buildRun?.assistantText === 'string'
           ? action.buildRun.assistantText
@@ -669,6 +958,8 @@ export default function BuildReducer(
           [key]: {
             ...currentRun,
             generating: false,
+            terminalState: 'error' as const,
+            interruptionReason: null,
             error: errorMessage,
             status: null,
             assistantStatusSteps: [],
@@ -682,10 +973,16 @@ export default function BuildReducer(
               ? currentRun.assistantMessage
                 ? {
                     ...currentRun.assistantMessage,
-                    content: nextAssistantText,
-                    codeGenerated: null,
+                    content: preserveAssistantArtifactsOnError
+                      ? currentRun.assistantMessage.content
+                      : nextAssistantText,
+                    codeGenerated: preserveAssistantArtifactsOnError
+                      ? currentRun.assistantMessage.codeGenerated ?? null
+                      : null,
                     streamCodePreview: null,
-                    artifactVersionId: null
+                    artifactVersionId: preserveAssistantArtifactsOnError
+                      ? currentRun.assistantMessage.artifactVersionId ?? null
+                      : null
                   }
                 : null
               : null,
@@ -718,6 +1015,8 @@ export default function BuildReducer(
           [key]: {
             ...currentRun,
             generating: false,
+            terminalState: 'stopped' as const,
+            interruptionReason: null,
             error: null,
             status: null,
             assistantStatusSteps: [],
@@ -780,6 +1079,56 @@ export default function BuildReducer(
         }
       };
     }
+    case 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT': {
+      const resultKey = getBuildRuntimeVerifyResultKey(action.runtimeVerifyResult);
+      const requestId = String(action.runtimeVerifyResult?.requestId || '').trim();
+      const status =
+        action.runtimeVerifyResult?.status === 'error' ? 'error' : 'complete';
+      if (!resultKey || !requestId) return state;
+      const buildId = Number(action.runtimeVerifyResult?.buildId || 0);
+      return {
+        ...state,
+        runtimeVerifyResults: {
+          ...state.runtimeVerifyResults,
+          [resultKey]: {
+            buildId: buildId > 0 ? buildId : null,
+            requestId,
+            status,
+            improved: action.runtimeVerifyResult?.improved === true,
+            reason:
+              typeof action.runtimeVerifyResult?.reason === 'string' &&
+              action.runtimeVerifyResult.reason.trim().length > 0
+                ? action.runtimeVerifyResult.reason
+                : null,
+            shouldRepairAgain:
+              action.runtimeVerifyResult?.shouldRepairAgain === true,
+            nextRemainingRepairs: Number.isFinite(
+              Number(action.runtimeVerifyResult?.nextRemainingRepairs)
+            )
+              ? Math.max(
+                  0,
+                  Math.floor(Number(action.runtimeVerifyResult?.nextRemainingRepairs))
+                )
+              : 0,
+            error:
+              typeof action.runtimeVerifyResult?.error === 'string' &&
+              action.runtimeVerifyResult.error.trim().length > 0
+                ? action.runtimeVerifyResult.error
+                : null
+          }
+        }
+      };
+    }
+    case 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT': {
+      const resultKey = getBuildRuntimeVerifyResultKey(action.runtimeVerifyResult);
+      if (!resultKey || !state.runtimeVerifyResults[resultKey]) return state;
+      const nextRuntimeVerifyResults = { ...state.runtimeVerifyResults };
+      delete nextRuntimeVerifyResults[resultKey];
+      return {
+        ...state,
+        runtimeVerifyResults: nextRuntimeVerifyResults
+      };
+    }
     case 'CLEAR_BUILD_RUN': {
       const buildId = Number(action.buildRun?.buildId || 0);
       if (!buildId) return state;
@@ -802,7 +1151,8 @@ export default function BuildReducer(
         ...state,
         buildRuns: {},
         buildRunRequestMap: {},
-        buildWorkspaces: {}
+        buildWorkspaces: {},
+        runtimeVerifyResults: {}
       };
     default:
       return state;

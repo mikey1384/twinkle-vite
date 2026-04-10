@@ -2,6 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ChatPanel from './ChatPanel';
 import PreviewPanel from './PreviewPanel';
+import useBuildRunIdentity, {
+  getSharedBuildRunIdentityState,
+  type BuildRunMode,
+  type SharedBuildRunIdentityState
+} from './useBuildRunIdentity';
+import useBuildProjectFileDrafts from './useBuildProjectFileDrafts';
+import useBuildEditorMutableState from './useBuildEditorMutableState';
+import useBuildRunOrchestration from './useBuildRunOrchestration';
+import useRuntimeBuildFollowUp from './useRuntimeBuildFollowUp';
+import useSharedBuildRunReconciliation from './useSharedBuildRunReconciliation';
 import type {
   PreviewPanelHandle,
   PreviewRuntimeUploadsSyncPayload
@@ -11,13 +21,11 @@ import BuildDescriptionModal from './BuildDescriptionModal';
 import BuildThumbnailModal from './BuildThumbnailModal';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 import type {
-  BuildLiveRunEvent,
   BuildLiveRunMessage,
   BuildLiveRunState
 } from '~/contexts/Build/reducer';
 import type {
   BuildRuntimeExplorationPlan,
-  BuildRuntimeObservationIssue,
   BuildRuntimeObservationState
 } from './runtimeObservationTypes';
 import {
@@ -46,6 +54,8 @@ const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 const buildForkUiEnabled = false;
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
+const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
+const STALLED_RUN_RECOVERY_STATUS = 'Resuming live response...';
 
 type BuildChatUploadRoute =
   | 'project_files_import'
@@ -281,6 +291,7 @@ interface Build {
   capabilitySnapshot?: BuildCapabilitySnapshot | null;
   executionPlan?: BuildExecutionPlan | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
+  runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -332,14 +343,6 @@ interface ChatMessage {
   createdAt: number;
   persisted?: boolean;
   source?: 'runtime_observation';
-}
-
-interface BuildUsageMetric {
-  stage: string;
-  model: string;
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
 }
 
 interface BuildCopilotPolicy {
@@ -466,19 +469,6 @@ interface ProjectFileSaveOptions {
   targetBuildCode?: string | null;
 }
 
-interface BuildEditorProjectFilesDraftState {
-  files: Array<{ path: string; content?: string }>;
-  hasUnsavedChanges: boolean;
-  saving: boolean;
-}
-
-type BuildRunMode = 'user' | 'greeting' | 'runtime-autofix';
-
-interface RuntimeAutoFixContext {
-  beforeObservation: BuildRuntimeObservationState;
-  remainingRepairsAfterVerification: number;
-}
-
 function applyRuntimeUploadUsageToCopilotPolicy(
   policy: BuildCopilotPolicy | null,
   usage: BuildRuntimeUploadUsage | null | undefined
@@ -526,20 +516,22 @@ function applyRequestLimitsToCopilotPolicy(
   };
 }
 
-interface PendingRuntimeVerification {
-  armedAt: number;
-  beforeObservation: BuildRuntimeObservationState;
-  remainingRepairs: number;
-  allowSameCodeSignature: boolean;
+interface CurrentBuildRunView {
   requestId: string | null;
-  afterObservation: BuildRuntimeObservationState | null;
-}
-
-interface PendingRuntimeAutoFix {
-  armedAt: number;
-  sourceRequestId: string | null;
-  sourceArtifactVersionId: number | null;
-  sourceRunMode: BuildRunMode;
+  runMode: BuildLiveRunState['runMode'];
+  generating: boolean;
+  status: string | null;
+  assistantStatusSteps: string[];
+  usageMetrics: BuildLiveRunState['usageMetrics'];
+  runEvents: BuildRunEvent[];
+  streamingProjectFiles: Array<{ path: string; content?: string }> | null;
+  streamingFocusFilePath: string | null;
+  error: string | null;
+  terminalState: BuildLiveRunState['terminalState'] | null;
+  executionPlan: BuildExecutionPlan | null;
+  followUpPrompt: BuildFollowUpPrompt | null;
+  runtimeExplorationPlan: BuildRuntimeExplorationPlan | null;
+  activeStreamMessageIds: number[];
 }
 
 function normalizeProjectFilePath(rawPath: string) {
@@ -578,11 +570,6 @@ function resolveIndexHtmlFromProjectFiles(
     return byPath.get('/index.htm') ?? '';
   }
   return String(fallbackCode || '');
-}
-
-function isIndexHtmlProjectFilePath(filePath: string) {
-  const normalized = normalizeProjectFilePath(filePath).toLowerCase();
-  return normalized === '/index.html' || normalized === '/index.htm';
 }
 
 function resolveIndexEntryPathFromProjectFiles(
@@ -635,45 +622,46 @@ function normalizeProjectFilesForBuild(
     }));
 }
 
-function overlayStreamedProjectFilesForBuild({
-  baseFiles,
-  updates,
-  fallbackCode
+function applyArtifactCodeToProjectFiles({
+  projectFiles,
+  artifactCode,
+  entryPath
 }: {
-  baseFiles: Array<{ path: string; content?: string }>;
-  updates: Array<{ path: string; content?: string }>;
-  fallbackCode: string | null | undefined;
+  projectFiles: Array<{ path: string; content?: string }>;
+  artifactCode: string;
+  entryPath?: string | null;
 }) {
-  const merged = new Map<string, string>();
-  for (const file of baseFiles || []) {
-    if (!file || typeof file !== 'object') continue;
-    merged.set(
-      normalizeProjectFilePath(file.path),
-      typeof file.content === 'string' ? file.content : ''
-    );
-  }
-  for (const file of updates || []) {
-    if (!file || typeof file !== 'object') continue;
-    merged.set(
-      normalizeProjectFilePath(file.path),
-      typeof file.content === 'string' ? file.content : ''
-    );
+  const normalizedProjectFiles = normalizeProjectFilesForBuild(
+    projectFiles,
+    artifactCode
+  );
+  const resolvedEntryPath = resolveIndexEntryPathFromProjectFiles(
+    normalizedProjectFiles,
+    entryPath || '/index.html'
+  );
+  const entryLookupPath = normalizeProjectFilePath(resolvedEntryPath).toLowerCase();
+  let updatedEntry = false;
+  const nextProjectFiles = normalizedProjectFiles.map((file) => {
+    if (normalizeProjectFilePath(file.path).toLowerCase() !== entryLookupPath) {
+      return file;
+    }
+    updatedEntry = true;
+    if (String(file.content || '') === artifactCode) {
+      return file;
+    }
+    return {
+      ...file,
+      content: artifactCode,
+      sizeBytes: artifactCode.length
+    };
+  });
+  if (updatedEntry) {
+    return nextProjectFiles;
   }
   return normalizeProjectFilesForBuild(
-    Array.from(merged.entries()).map(([path, content]) => ({
-      path,
-      content
-    })),
-    fallbackCode
+    [...normalizedProjectFiles, { path: resolvedEntryPath, content: artifactCode }],
+    artifactCode
   );
-}
-
-function parseCodexImplementationAttempt(message: string) {
-  const match = /^Codex started implementation attempt (\d+)\/\d+\./i.exec(
-    String(message || '').trim()
-  );
-  if (!match) return null;
-  return Number(match[1] || 0) || null;
 }
 
 function mergeChatMessagesWithBuildRun({
@@ -690,24 +678,43 @@ function mergeChatMessagesWithBuildRun({
   );
 
   for (const liveMessage of liveMessages) {
+    const nextLiveMessage =
+      liveMessage.role === 'assistant' &&
+      isBuildAssistantPlaceholderContent(liveMessage.content)
+        ? {
+            ...liveMessage,
+            content: ''
+          }
+        : liveMessage;
     const existingIndex = nextMessages.findIndex((message) => {
-      if (message.id === liveMessage.id) return true;
-      return doChatMessagesRepresentSameBuildMessage(message, liveMessage);
+      if (message.id === nextLiveMessage.id) return true;
+      return doChatMessagesRepresentSameBuildMessage(message, nextLiveMessage);
     });
     if (existingIndex >= 0) {
+      const existingMessage = nextMessages[existingIndex];
+      const shouldPreserveExistingAssistantContent =
+        existingMessage.role === 'assistant' &&
+        nextLiveMessage.role === 'assistant' &&
+        isBuildAssistantPlaceholderContent(nextLiveMessage.content);
       nextMessages[existingIndex] = {
-        ...nextMessages[existingIndex],
-        ...liveMessage,
-        id: nextMessages[existingIndex].id,
+        ...existingMessage,
+        ...nextLiveMessage,
+        id: existingMessage.id,
+        content: shouldPreserveExistingAssistantContent
+          ? existingMessage.content
+          : nextLiveMessage.content,
+        streamCodePreview: shouldPreserveExistingAssistantContent
+          ? (existingMessage.streamCodePreview ?? null)
+          : (nextLiveMessage.streamCodePreview ?? null),
         persisted:
-          nextMessages[existingIndex].persisted ||
-          liveMessage.persisted ||
+          existingMessage.persisted ||
+          nextLiveMessage.persisted ||
           false
       };
       continue;
     }
     nextMessages.push({
-      ...liveMessage
+      ...nextLiveMessage
     });
   }
 
@@ -716,6 +723,17 @@ function mergeChatMessagesWithBuildRun({
     return a.id - b.id;
   });
   return nextMessages;
+}
+
+function normalizeSharedBuildRunBaseProjectFiles(
+  buildRun: BuildLiveRunState | null | undefined
+) {
+  return Array.isArray(buildRun?.baseProjectFiles)
+    ? buildRun.baseProjectFiles.map((file: any) => ({
+        path: normalizeProjectFilePath(file.path),
+        content: typeof file.content === 'string' ? file.content : ''
+      }))
+    : [];
 }
 
 function mergeDisplayedChatMessages({
@@ -801,11 +819,19 @@ function mergePersistedChatMessagesIntoLocalMessages({
 }) {
   const nextMessages = [...localMessages];
   for (const persistedMessage of persistedMessages) {
+    const normalizedPersistedMessage =
+      persistedMessage.role === 'assistant' &&
+      isBuildAssistantPlaceholderContent(persistedMessage.content)
+        ? {
+            ...persistedMessage,
+            content: ''
+          }
+        : persistedMessage;
     let existingIndex = nextMessages.findIndex((message) => {
-      if (message.id === persistedMessage.id) return true;
+      if (message.id === normalizedPersistedMessage.id) return true;
       return doChatMessagesRepresentSameBuildMessage(
         message,
-        persistedMessage as BuildLiveRunMessage
+        normalizedPersistedMessage as BuildLiveRunMessage
       );
     });
     if (existingIndex < 0) {
@@ -817,7 +843,7 @@ function mergePersistedChatMessagesIntoLocalMessages({
           return false;
         }
         return doesRecoveredBuildAssistantMessageMatchTarget({
-          candidateMessage: persistedMessage,
+          candidateMessage: normalizedPersistedMessage,
           targetMessage: message,
           activeUserMessage
         });
@@ -830,26 +856,24 @@ function mergePersistedChatMessagesIntoLocalMessages({
         existingMessage.role === 'assistant' &&
         Number(activeAssistantMessageId || 0) > 0 &&
         (existingMessage.id === Number(activeAssistantMessageId) ||
-          persistedMessage.id === Number(activeAssistantMessageId));
+          normalizedPersistedMessage.id === Number(activeAssistantMessageId));
       const persistedAssistantContent = String(
-        persistedMessage.content || ''
+        normalizedPersistedMessage.content || ''
       ).trim();
       const shouldPreserveLocalAssistantState =
         isActiveAssistantMessage &&
-        !String(persistedMessage.codeGenerated || '').trim() &&
-        Number(persistedMessage.artifactVersionId || 0) <= 0 &&
+        !String(normalizedPersistedMessage.codeGenerated || '').trim() &&
+        Number(normalizedPersistedMessage.artifactVersionId || 0) <= 0 &&
         (!persistedAssistantContent ||
-          persistedAssistantContent ===
-            'Would you like me to continue working on this?');
+          isBuildAssistantPlaceholderContent(persistedAssistantContent));
       nextMessages[existingIndex] = {
         ...existingMessage,
-        ...persistedMessage,
+        ...normalizedPersistedMessage,
         persisted: true,
         content:
-          shouldPreserveLocalAssistantState &&
-          String(existingMessage.content || '').trim()
+          shouldPreserveLocalAssistantState
             ? existingMessage.content
-            : persistedMessage.content,
+            : normalizedPersistedMessage.content,
         streamCodePreview: shouldPreserveLocalAssistantState
           ? (existingMessage.streamCodePreview ?? null)
           : null
@@ -857,7 +881,7 @@ function mergePersistedChatMessagesIntoLocalMessages({
       continue;
     }
     nextMessages.push({
-      ...persistedMessage,
+      ...normalizedPersistedMessage,
       persisted: true,
       streamCodePreview: null
     });
@@ -922,16 +946,6 @@ function doesRecoveredBuildAssistantMessageMatchTarget({
   return (
     activeUserCreatedAt <= 0 || candidateCreatedAt >= activeUserCreatedAt - 5
   );
-}
-
-function isRecoveredBuildAssistantMessageResolved(message: ChatMessage | null) {
-  if (!message || message.role !== 'assistant' || !message.persisted) {
-    return false;
-  }
-  if (hasBuildAssistantStructuredOutput(message)) {
-    return true;
-  }
-  return !isBuildAssistantPlaceholderContent(String(message.content || ''));
 }
 
 function mergeDuplicateAssistantMessages(
@@ -1051,16 +1065,6 @@ function findMatchingBuildChatMessageId({
     })
   );
   return recoveredAssistantMessage?.id || null;
-}
-
-function appendUniqueStatusStep(steps: string[], nextStep: string | null) {
-  const trimmedStep = String(nextStep || '').trim();
-  if (!trimmedStep) {
-    return steps;
-  }
-  return steps[steps.length - 1] === trimmedStep
-    ? steps
-    : [...steps, trimmedStep];
 }
 
 function resolveStoppedRunAssistantMessage({
@@ -1221,276 +1225,6 @@ function resolveBuildFollowUpPromptKey(
   return `${question}::${suggestedMessage}`;
 }
 
-function isCodexChecklistStepCompleted(message: string) {
-  return /^Codex completed checklist step \d+\/\d+/i.test(
-    String(message || '').trim()
-  );
-}
-
-function formatRuntimeObservationIssueKindLabel(
-  kind: BuildRuntimeObservationIssue['kind']
-) {
-  switch (kind) {
-    case 'consoleerror':
-      return 'Console message';
-    case 'unhandledrejection':
-      return 'Unhandled rejection';
-    case 'blankrender':
-      return 'Blank render';
-    case 'formsubmitblocked':
-      return 'Sandbox-blocked form submit';
-    case 'sdkblocked':
-      return 'Blocked capability call';
-    case 'interactionnoop':
-      return 'No-op interaction';
-    case 'keyboardscroll':
-      return 'Keyboard scroll leak';
-    case 'playfieldmismatch':
-      return 'Gameplay escaped playfield';
-    case 'error':
-    default:
-      return 'Runtime error';
-  }
-}
-
-function shouldSurfaceRuntimeObservationIssueInChat(
-  issue: BuildRuntimeObservationIssue
-) {
-  switch (issue.kind) {
-    case 'consoleerror':
-    case 'error':
-    case 'unhandledrejection':
-    case 'formsubmitblocked':
-    case 'sdkblocked':
-      return true;
-    case 'blankrender':
-    case 'interactionnoop':
-    case 'keyboardscroll':
-    case 'playfieldmismatch':
-    default:
-      return false;
-  }
-}
-
-function formatRuntimeObservationIssueLocationText(
-  issue: BuildRuntimeObservationIssue
-) {
-  const locationParts = [
-    issue.filename || null,
-    issue.lineNumber != null ? `line ${issue.lineNumber}` : null,
-    issue.columnNumber != null ? `col ${issue.columnNumber}` : null
-  ].filter(Boolean);
-  return locationParts.length > 0 ? ` (${locationParts.join(', ')})` : '';
-}
-
-function formatRuntimeObservationChatNote(issue: BuildRuntimeObservationIssue) {
-  const kindLabel = formatRuntimeObservationIssueKindLabel(issue.kind);
-  const locationText = formatRuntimeObservationIssueLocationText(issue);
-  const stackLine = String(issue.stack || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .find(Boolean);
-  return [
-    'Preview issue detected.',
-    `${kindLabel}: ${issue.message}${locationText}`,
-    stackLine ? `Stack: ${stackLine.slice(0, 260)}` : null
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
-
-function buildRuntimeObservationIssueChatKey({
-  buildId,
-  codeSignature,
-  issue
-}: {
-  buildId: number;
-  codeSignature: string | null;
-  issue: BuildRuntimeObservationIssue;
-}) {
-  return [
-    buildId,
-    codeSignature || '',
-    issue.kind,
-    issue.message,
-    issue.filename || '',
-    issue.lineNumber || 0,
-    issue.columnNumber || 0
-  ].join('|');
-}
-
-function formatRuntimeObservationSummary(
-  observationState: BuildRuntimeObservationState | null
-) {
-  if (
-    !observationState ||
-    (observationState.issues.length === 0 && !observationState.health)
-  ) {
-    return '';
-  }
-  const issuesText = observationState.issues
-    .slice(-5)
-    .map((issue, index) => {
-      const locationText = formatRuntimeObservationIssueLocationText(issue);
-      const stackLine = String(issue.stack || '')
-        .split('\n')
-        .map((line) => line.trim())
-        .find(Boolean);
-      return [
-        `${index + 1}. ${formatRuntimeObservationIssueKindLabel(issue.kind)}: ${issue.message}${locationText}`,
-        stackLine ? `   stack: ${stackLine.slice(0, 260)}` : null
-      ]
-        .filter(Boolean)
-        .join('\n');
-    })
-    .join('\n');
-  const health = observationState.health;
-  const interactionText =
-    health?.interactionStatus === 'changed'
-      ? `changed the UI after clicking ${
-          health.interactionTargetLabel
-            ? `"${health.interactionTargetLabel}"`
-            : 'a control'
-        }`
-      : health?.interactionStatus === 'unchanged'
-        ? `clicked ${
-            health.interactionTargetLabel
-              ? `"${health.interactionTargetLabel}"`
-              : 'a control'
-          }, but nothing visibly changed`
-        : health?.interactionStatus === 'skipped'
-          ? 'skipped because no safe startup control was found'
-          : null;
-  const interactionStepLines = (health?.interactionSteps || [])
-    .slice(-2)
-    .map((step, index) => {
-      const prefix =
-        step.source === 'planned'
-          ? `${index + 1}. planned ${step.actionKind || 'step'}`
-          : `${index + 1}. clicked`;
-      const parts = [
-        prefix +
-          ' ' +
-          (step.targetLabel ? `"${step.targetLabel}"` : 'a control'),
-        step.goal ? `goal: ${step.goal}` : null,
-        step.expectedSignals?.routeChange === true
-          ? 'expected: route should change'
-          : step.expectedSignals?.routeChange === false
-            ? 'expected: stay on same route'
-            : null,
-        step.expectedSignals && step.expectedSignals.textIncludes.length > 0
-          ? `expected text: ${step.expectedSignals.textIncludes
-              .map((text) => `"${text}"`)
-              .join(', ')}`
-          : null,
-        step.expectedSignals && step.expectedSignals.revealsLabels.length > 0
-          ? `expected controls: ${step.expectedSignals.revealsLabels
-              .map((label) => `"${label}"`)
-              .join(', ')}`
-          : null,
-        step.routeChanged && step.routeAfter
-          ? `route -> ${step.routeAfter}`
-          : null,
-        step.hashChanged && step.hashAfter ? `hash -> ${step.hashAfter}` : null,
-        step.headingDelta !== 0 ||
-        step.buttonDelta !== 0 ||
-        step.formDelta !== 0
-          ? `headings/buttons/forms delta: ${step.headingDelta >= 0 ? '+' : ''}${step.headingDelta}/${step.buttonDelta >= 0 ? '+' : ''}${step.buttonDelta}/${step.formDelta >= 0 ? '+' : ''}${step.formDelta}`
-          : null,
-        step.revealedTargetLabels.length > 0
-          ? `revealed: ${step.revealedTargetLabels
-              .map((label) => `"${label}"`)
-              .join(', ')}`
-          : null
-      ].filter(Boolean);
-      const textDelta =
-        step.visibleTextBefore !== step.visibleTextAfter &&
-        (step.visibleTextBefore || step.visibleTextAfter)
-          ? `   text: ${
-              step.visibleTextBefore ? `"${step.visibleTextBefore}"` : '[none]'
-            } -> ${
-              step.visibleTextAfter ? `"${step.visibleTextAfter}"` : '[none]'
-            }`
-          : null;
-      return [parts.join('; '), textDelta].filter(Boolean).join('\n');
-    });
-  const healthLines = health
-    ? [
-        'Preview health:',
-        `- booted: ${health.booted ? 'yes' : 'no'}`,
-        `- meaningful UI: ${health.meaningfulRender ? 'yes' : 'no'}`,
-        health.gameLike ? '- game-like preview: yes' : null,
-        `- headings/buttons/forms: ${health.headingCount}/${health.buttonCount}/${health.formCount}`,
-        health.viewportOverflowY > 0 || health.viewportOverflowX > 0
-          ? `- viewport overflow (y/x): ${health.viewportOverflowY}px / ${health.viewportOverflowX}px`
-          : null,
-        health.gameplayTelemetry
-          ? `- gameplay telemetry: ${health.gameplayTelemetry.status}`
-          : null,
-        health.gameplayTelemetry &&
-        (health.gameplayTelemetry.overflowTop > 0 ||
-          health.gameplayTelemetry.overflowRight > 0 ||
-          health.gameplayTelemetry.overflowBottom > 0 ||
-          health.gameplayTelemetry.overflowLeft > 0)
-          ? `- gameplay overflow (top/right/bottom/left): ${health.gameplayTelemetry.overflowTop}px / ${health.gameplayTelemetry.overflowRight}px / ${health.gameplayTelemetry.overflowBottom}px / ${health.gameplayTelemetry.overflowLeft}px`
-          : null,
-        interactionText ? `- interaction probe: ${interactionText}` : null,
-        interactionStepLines.length > 0
-          ? `- interaction steps:\n${interactionStepLines
-              .map((line) => `  ${line.replace(/\n/g, '\n  ')}`)
-              .join('\n')}`
-          : null,
-        health.visibleTextSample
-          ? `- visible text: ${health.visibleTextSample}`
-          : null
-      ]
-        .filter(Boolean)
-        .join('\n')
-    : '';
-  if (!issuesText) {
-    return healthLines;
-  }
-  return [healthLines, issuesText].filter(Boolean).join('\n\n');
-}
-
-function cloneRuntimeObservationState(
-  observationState: BuildRuntimeObservationState
-): BuildRuntimeObservationState {
-  return {
-    ...observationState,
-    issues: observationState.issues.map((issue) => ({ ...issue })),
-    health: observationState.health
-      ? {
-          ...observationState.health,
-          gameplayTelemetry: observationState.health.gameplayTelemetry
-            ? {
-                ...observationState.health.gameplayTelemetry,
-                playfieldBounds: observationState.health.gameplayTelemetry
-                  .playfieldBounds
-                  ? {
-                      ...observationState.health.gameplayTelemetry
-                        .playfieldBounds
-                    }
-                  : null,
-                playerBounds: observationState.health.gameplayTelemetry
-                  .playerBounds
-                  ? {
-                      ...observationState.health.gameplayTelemetry.playerBounds
-                    }
-                  : null
-              }
-            : null,
-          interactionSteps: observationState.health.interactionSteps.map(
-            (step) => ({
-              ...step,
-              revealedTargetLabels: [...step.revealedTargetLabels]
-            })
-          )
-        }
-      : null
-  };
-}
-
 export default function BuildEditor({
   build,
   chatMessages,
@@ -1508,20 +1242,22 @@ export default function BuildEditor({
   const sharedBuildRun = useBuildContext(
     (v) => v.state.buildRuns[String(build.id)] || null
   );
+  const getBuildRunIdentity: (
+    buildId: number
+  ) => SharedBuildRunIdentityState | null = useBuildContext(
+    (v) => v.getBuildRunIdentity
+  );
+  const sharedRuntimeVerifyResults = useBuildContext(
+    (v) => v.state.runtimeVerifyResults
+  );
   const onRegisterBuildRun = useBuildContext(
     (v) => v.actions.onRegisterBuildRun
   );
   const onUpdateBuildRunStatus = useBuildContext(
     (v) => v.actions.onUpdateBuildRunStatus
   );
-  const onUpdateBuildRunStream = useBuildContext(
-    (v) => v.actions.onUpdateBuildRunStream
-  );
   const onAppendBuildRunEvent = useBuildContext(
     (v) => v.actions.onAppendBuildRunEvent
-  );
-  const onUpdateBuildRunUsage = useBuildContext(
-    (v) => v.actions.onUpdateBuildRunUsage
   );
   const onCompleteBuildRun = useBuildContext(
     (v) => v.actions.onCompleteBuildRun
@@ -1529,6 +1265,9 @@ export default function BuildEditor({
   const onFailBuildRun = useBuildContext((v) => v.actions.onFailBuildRun);
   const onStopBuildRun = useBuildContext((v) => v.actions.onStopBuildRun);
   const onClearBuildRun = useBuildContext((v) => v.actions.onClearBuildRun);
+  const onClearBuildRuntimeVerifyResult = useBuildContext(
+    (v) => v.actions.onClearBuildRuntimeVerifyResult
+  );
   const navigate = useNavigate();
   const { userId, profileTheme, twinkleCoins } = useKeyContext(
     (v) => v.myState
@@ -1580,11 +1319,6 @@ export default function BuildEditor({
   const [mobilePanelTab, setMobilePanelTab] = useState<'chat' | 'preview'>(
     'chat'
   );
-  const [generating, setGenerating] = useState(false);
-  const [generatingStatus, setGeneratingStatus] = useState<string | null>(null);
-  const [assistantStatusSteps, setAssistantStatusSteps] = useState<string[]>(
-    []
-  );
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
@@ -1592,22 +1326,6 @@ export default function BuildEditor({
   const [thumbnailModalShown, setThumbnailModalShown] = useState(false);
   const [savingThumbnail, setSavingThumbnail] = useState(false);
   const [thumbnailSaveError, setThumbnailSaveError] = useState('');
-  const [, setUsageMetrics] = useState<Record<string, BuildUsageMetric>>({});
-  const [runEvents, setRunEvents] = useState<BuildRunEvent[]>([]);
-  const [runError, setRunError] = useState<string | null>(null);
-  const [streamingProjectFiles, setStreamingProjectFiles] = useState<Array<{
-    path: string;
-    content?: string;
-  }> | null>(null);
-  const [streamingFocusFilePath, setStreamingFocusFilePath] = useState<
-    string | null
-  >(null);
-  const [runtimeObservationState, setRuntimeObservationState] =
-    useState<BuildRuntimeObservationState | null>(null);
-  const [runtimeObservationChatNotes, setRuntimeObservationChatNotes] =
-    useState<ChatMessage[]>([]);
-  const [runtimeExplorationPlan, setRuntimeExplorationPlan] =
-    useState<BuildRuntimeExplorationPlan | null>(null);
   const [runtimeUploadsModalShown, setRuntimeUploadsModalShown] =
     useState(false);
   const [runtimeUploadAssets, setRuntimeUploadAssets] = useState<
@@ -1629,6 +1347,9 @@ export default function BuildEditor({
   const [purchasingGenerationReset, setPurchasingGenerationReset] =
     useState(false);
   const [generationResetError, setGenerationResetError] = useState('');
+  const [pageFeedbackEvents, setPageFeedbackEvents] = useState<BuildRunEvent[]>(
+    []
+  );
   const [buildChatDraftMessage, setBuildChatDraftMessage] = useState('');
   const [buildChatUploadModalShown, setBuildChatUploadModalShown] =
     useState(false);
@@ -1638,137 +1359,155 @@ export default function BuildEditor({
   const [buildChatUploadInFlight, setBuildChatUploadInFlight] = useState(false);
   const [dismissedFollowUpPromptKey, setDismissedFollowUpPromptKey] =
     useState('');
-  const [buildSocketListenersReady, setBuildSocketListenersReady] =
-    useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const previewPanelRef = useRef<PreviewPanelHandle | null>(null);
-  const chatMessagesRef = useRef(chatMessages);
-  const buildRef = useRef(build);
-  const copilotPolicyRef = useRef(copilotPolicy);
-  const updateBuildRef = useRef(onUpdateBuild);
-  const updateChatMessagesRef = useRef(onUpdateChatMessages);
-  const updateCopilotPolicyRef = useRef(onUpdateCopilotPolicy);
-  const streamRequestIdRef = useRef<string | null>(null);
-  const buildSocketListenersReadyRef = useRef(false);
-  const userMessageIdRef = useRef<number | null>(null);
-  const assistantMessageIdRef = useRef<number | null>(null);
-  const activeRunMessageContextRef = useRef<string | null>(null);
-  const streamingProjectFilesBaseRef = useRef<
-    Array<{ path: string; content?: string }>
-  >([]);
-  const streamingProjectFilesRef = useRef<Array<{
-    path: string;
-    content?: string;
-  }> | null>(null);
-  const dedupedProcessingReconcileRequestIdRef = useRef<string | null>(null);
-  const dedupedProcessingReconcileStartedAtRef = useRef<number>(0);
-  const dedupedProcessingReconcileTimerRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
   const didInitialChatScrollRef = useRef(false);
   const didAutoPromptRef = useRef(false);
   const didAutoGreetingRef = useRef(false);
   const shouldAutoScrollRef = useRef(true);
   const pendingScrollBehaviorRef = useRef<ScrollBehavior>('auto');
   const scrollRafRef = useRef<number | null>(null);
-  const shouldHydrateSharedRunRef = useRef(true);
   const pendingBuildChatUploadClarificationRef = useRef<
     PendingBuildChatUploadClarification[]
   >([]);
   const buildChatUploadProgressMessageIdRef = useRef<number | null>(null);
+  const handledSharedTerminalStateKeyRef = useRef('');
   const DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS = 8000;
-  const DEDUPED_PROCESSING_RECONCILE_MAX_MS = 3 * 60 * 1000;
-  const queuedRequestsRef = useRef<QueuedBuildRequest[]>([]);
-  const dedupedProcessingInFlightRef = useRef(false);
-  const generatingRef = useRef(false);
-  const postCompleteSyncInFlightRef = useRef(false);
-  const startingGenerationRef = useRef(false);
-  const queuePausedForSaveRef = useRef(false);
-  const requiresProjectFilesResyncBeforeSaveRef = useRef(false);
-  const userRequestedStopRef = useRef(false);
-  const projectFilesDraftRef = useRef<
-    Array<{ path: string; content?: string }>
-  >([]);
-  const hasUnsavedProjectFilesRef = useRef(false);
-  const savingProjectFilesRef = useRef(false);
-  const runtimeObservationStateRef =
-    useRef<BuildRuntimeObservationState | null>(null);
-  const runtimeObservationChatNoteKeysRef = useRef<Set<string>>(new Set());
-  const lastRuntimeHealthEventKeyRef = useRef('');
-  const pendingRuntimeAutoFixRef = useRef<PendingRuntimeAutoFix | null>(null);
-  const pendingRuntimeVerificationRef =
-    useRef<PendingRuntimeVerification | null>(null);
-  const activeRuntimeAutoFixContextRef = useRef<RuntimeAutoFixContext | null>(
-    null
-  );
-  const runtimeAutoFixAttemptedSignaturesRef = useRef<Set<string>>(new Set());
-  const activeRunModeRef = useRef<BuildRunMode>('user');
-  const sharedRunReplicaCheckKeyRef = useRef('');
-  const lastResumeAttemptAtRef = useRef(0);
+  const runOrchestration = useBuildRunOrchestration<
+    QueuedBuildRequest,
+    BuildRunEvent
+  >();
+  const runIdentity = useBuildRunIdentity();
+  const projectFileDrafts = useBuildProjectFileDrafts({
+    isOwner,
+    normalizeProjectFilePath,
+    persistProjectFilesDraft,
+    onAppendFeedbackEvent: appendLocalRunEvent
+  });
+  const sharedRunReconciliation = useSharedBuildRunReconciliation();
   const RUNTIME_AUTOFIX_ENABLED = false;
   const RUNTIME_AUTO_FIX_WINDOW_MS = 12000;
   const RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS = 18000;
+  const STALLED_RUN_RESUME_AFTER_MS = 25000;
+  const STALLED_RUN_RECOVER_AFTER_MS = 60000;
+  const runtimeFollowUp = useRuntimeBuildFollowUp({
+    buildId: build.id,
+    isOwner,
+    runtimeAutoFixEnabled: RUNTIME_AUTOFIX_ENABLED,
+    runtimeAutoFixWindowMs: RUNTIME_AUTO_FIX_WINDOW_MS,
+    runtimePostFixVerificationWindowMs:
+      RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS,
+    sharedRuntimeVerifyResults,
+    claimRuntimeVerifyResult: sharedRunReconciliation.claimRuntimeVerifyResult,
+    onClearBuildRuntimeVerifyResult,
+    onAppendLocalRunEvent: appendLocalRunEvent,
+    onScrollChatToBottom: scrollChatToBottom,
+    onMaybeStartNextQueuedRequest: maybeStartNextQueuedRequest,
+    onStartRuntimeAutoFix: startRuntimeAutoFix,
+    isRunActivityInFlight
+  });
   const mergedPersistedAndLiveChatMessages = mergeChatMessagesWithBuildRun({
     persistedMessages: chatMessages,
     buildRun: sharedBuildRun
   });
+  const {
+    getLatestBuild,
+    applyBuildUpdate,
+    getLatestChatMessages,
+    replaceChatMessages,
+    getLatestCopilotPolicy,
+    replaceCopilotPolicy
+  } = useBuildEditorMutableState<Build, ChatMessage, BuildCopilotPolicy | null>(
+    {
+      build,
+      chatMessages: mergedPersistedAndLiveChatMessages,
+      copilotPolicy,
+      onUpdateBuild,
+      onUpdateChatMessages,
+      onUpdateCopilotPolicy,
+      areChatMessagesEqual: chatMessagesEqual
+    }
+  );
   const mergedChatMessages = mergeDisplayedChatMessages({
     baseMessages: mergedPersistedAndLiveChatMessages,
-    supplementalMessages: runtimeObservationChatNotes
+    supplementalMessages: runtimeFollowUp.runtimeObservationChatNotes
   });
-  const renderRun = sharedBuildRun?.generating ? sharedBuildRun : null;
-  const displayedGenerating = renderRun ? true : generating;
-  const displayedGeneratingStatus = renderRun
-    ? renderRun.status
-    : generatingStatus;
-  const displayedAssistantStatusSteps = renderRun
-    ? renderRun.assistantStatusSteps
-    : assistantStatusSteps;
-  const displayedRunEvents =
-    renderRun || generating
-      ? renderRun?.runEvents || runEvents
-      : runEvents.length > 0
-        ? runEvents
-        : Array.isArray(sharedBuildRun?.runEvents)
-          ? sharedBuildRun.runEvents
-          : [];
-  const displayedRunError =
-    typeof sharedBuildRun?.error === 'string' && sharedBuildRun.error.trim()
-      ? sharedBuildRun.error
-      : runError;
-  const displayedExecutionPlan =
-    renderRun &&
-    Object.prototype.hasOwnProperty.call(renderRun, 'executionPlan')
-      ? (renderRun.executionPlan ?? build.executionPlan ?? null)
-      : build.executionPlan || null;
-  const baseDisplayedFollowUpPrompt =
-    renderRun &&
-    Object.prototype.hasOwnProperty.call(renderRun, 'followUpPrompt')
-      ? (renderRun.followUpPrompt ?? build.followUpPrompt ?? null)
-      : build.followUpPrompt || null;
-  const displayedFollowUpPrompt =
-    resolveBuildFollowUpPromptKey(baseDisplayedFollowUpPrompt) &&
-    resolveBuildFollowUpPromptKey(baseDisplayedFollowUpPrompt) ===
-      dismissedFollowUpPromptKey
-      ? null
-      : baseDisplayedFollowUpPrompt;
-  const displayedActiveStreamMessageIds = renderRun
-    ? [renderRun.userMessage?.id, renderRun.assistantMessage?.id].filter(
-        (id): id is number => typeof id === 'number' && id > 0
-      )
-    : getActiveStreamMessageIds();
+  const sharedRunHasExecutionPlan =
+    Boolean(sharedBuildRun) &&
+    Object.prototype.hasOwnProperty.call(sharedBuildRun, 'executionPlan');
+  const sharedRunHasFollowUpPrompt =
+    Boolean(sharedBuildRun) &&
+    Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt');
+  const sharedRunHasRuntimeExplorationPlan =
+    Boolean(sharedBuildRun) &&
+    Object.prototype.hasOwnProperty.call(sharedBuildRun, 'runtimeExplorationPlan');
+  const sharedFirstExecutionPlan = sharedRunHasExecutionPlan
+    ? (sharedBuildRun?.executionPlan ?? null)
+    : (build.executionPlan ?? null);
+  const sharedFirstFollowUpPrompt = sharedRunHasFollowUpPrompt
+    ? (sharedBuildRun?.followUpPrompt ?? null)
+    : (build.followUpPrompt ?? null);
+  const sharedFirstRuntimeExplorationPlan = sharedRunHasRuntimeExplorationPlan
+    ? (sharedBuildRun?.runtimeExplorationPlan ?? null)
+    : (build.runtimeExplorationPlan ?? null);
+  const currentSharedRunIdentityState =
+    getSharedBuildRunIdentityState(sharedBuildRun);
+  const currentBuildRunView: CurrentBuildRunView = (() => {
+    const sharedGeneratingRun = sharedBuildRun?.generating ? sharedBuildRun : null;
+    const activeRequestId = getCurrentActiveRunRequestId(
+      currentSharedRunIdentityState
+    );
+    const hasLocalGeneratingRun =
+      !sharedGeneratingRun &&
+      runOrchestration.hasCurrentPageRunActivity() &&
+      Boolean(activeRequestId);
+    const followUpPromptKey = resolveBuildFollowUpPromptKey(
+      sharedFirstFollowUpPrompt
+    );
 
-  useEffect(() => {
-    if (
-      !chatMessagesEqual(
-        chatMessagesRef.current,
-        mergedPersistedAndLiveChatMessages
-      )
-    ) {
-      chatMessagesRef.current = mergedPersistedAndLiveChatMessages;
-    }
-  }, [mergedPersistedAndLiveChatMessages]);
+    return {
+      requestId: activeRequestId || String(sharedBuildRun?.requestId || '').trim() || null,
+      runMode:
+        sharedBuildRun?.runMode ||
+        (activeRequestId
+          ? getCurrentRunMode(activeRequestId, currentSharedRunIdentityState)
+          : 'user'),
+      generating: Boolean(sharedGeneratingRun) || hasLocalGeneratingRun,
+      status: sharedBuildRun?.status ?? null,
+      assistantStatusSteps: sharedBuildRun?.assistantStatusSteps || [],
+      usageMetrics: sharedBuildRun?.usageMetrics || {},
+      runEvents: Array.isArray(sharedBuildRun?.runEvents)
+        ? sharedBuildRun.runEvents
+        : [],
+      streamingProjectFiles: sharedGeneratingRun?.streamingProjectFiles ?? null,
+      streamingFocusFilePath:
+        sharedGeneratingRun?.streamingFocusFilePath ?? null,
+      error:
+        typeof sharedBuildRun?.error === 'string' && sharedBuildRun.error.trim()
+          ? sharedBuildRun.error
+          : null,
+      terminalState: sharedBuildRun?.terminalState ?? null,
+      executionPlan: sharedFirstExecutionPlan,
+      followUpPrompt:
+        followUpPromptKey && followUpPromptKey === dismissedFollowUpPromptKey
+          ? null
+          : sharedFirstFollowUpPrompt,
+      runtimeExplorationPlan: sharedFirstRuntimeExplorationPlan,
+      activeStreamMessageIds: sharedGeneratingRun
+        ? [
+            getCurrentActiveUserMessageId(
+              sharedGeneratingRun.requestId,
+              currentSharedRunIdentityState
+            ),
+            getCurrentActiveAssistantMessageId(
+              sharedGeneratingRun.requestId,
+              currentSharedRunIdentityState
+            )
+          ].filter((id): id is number => typeof id === 'number' && id > 0)
+        : getActiveStreamMessageIds(currentSharedRunIdentityState)
+    };
+  })();
 
   useEffect(() => {
     setBuildChatDraftMessage('');
@@ -1781,11 +1520,12 @@ export default function BuildEditor({
   }, [build.id]);
 
   useEffect(() => {
-    streamingProjectFilesRef.current = streamingProjectFiles;
-  }, [streamingProjectFiles]);
-
-  useEffect(() => {
-    if (!streamingProjectFiles || streamingProjectFiles.length === 0) return;
+    if (
+      !currentBuildRunView.streamingProjectFiles ||
+      currentBuildRunView.streamingProjectFiles.length === 0
+    ) {
+      return;
+    }
     const isMobileWorkspace =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
@@ -1793,198 +1533,373 @@ export default function BuildEditor({
     if (!isMobileWorkspace) {
       setMobilePanelTab('preview');
     }
-  }, [streamingProjectFiles]);
-
-  useEffect(() => {
-    generatingRef.current = generating;
-  }, [generating]);
-
-  useEffect(() => {
-    buildRef.current = build;
-  }, [build]);
-
-  useEffect(() => {
-    runtimeObservationStateRef.current = runtimeObservationState;
-  }, [runtimeObservationState]);
+  }, [currentBuildRunView.streamingProjectFiles]);
 
   useEffect(() => {
     didInitialChatScrollRef.current = false;
     didAutoPromptRef.current = false;
     didAutoGreetingRef.current = false;
-    buildSocketListenersReadyRef.current = false;
-    setBuildSocketListenersReady(false);
     shouldAutoScrollRef.current = true;
-    setUsageMetrics({});
-    setRunEvents([]);
-    setRunError(null);
-    queuedRequestsRef.current = [];
+    runOrchestration.reset();
     setDescriptionModalShown(false);
     setThumbnailModalShown(false);
     setSavingThumbnail(false);
     setThumbnailSaveError('');
-    dedupedProcessingInFlightRef.current = false;
-    postCompleteSyncInFlightRef.current = false;
-    startingGenerationRef.current = false;
-    queuePausedForSaveRef.current = false;
-    requiresProjectFilesResyncBeforeSaveRef.current = false;
-    userRequestedStopRef.current = false;
-    runtimeObservationStateRef.current = null;
-    lastRuntimeHealthEventKeyRef.current = '';
-    setRuntimeObservationState(null);
-    setRuntimeObservationChatNotes([]);
-    runtimeObservationChatNoteKeysRef.current = new Set();
-    setRuntimeExplorationPlan(null);
-    pendingRuntimeAutoFixRef.current = null;
-    pendingRuntimeVerificationRef.current = null;
-    activeRuntimeAutoFixContextRef.current = null;
-    runtimeAutoFixAttemptedSignaturesRef.current = new Set();
-    activeRunModeRef.current = 'user';
-    shouldHydrateSharedRunRef.current = true;
-    sharedRunReplicaCheckKeyRef.current = '';
-    lastResumeAttemptAtRef.current = 0;
-  }, [build.id]);
+    setPageFeedbackEvents([]);
+    runtimeFollowUp.reset();
+    runIdentity.resetRunMode();
+    sharedRunReconciliation.reset();
+    handledSharedTerminalStateKeyRef.current = '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [build.id, runOrchestration, sharedRunReconciliation]);
 
   useEffect(() => {
-    if (!sharedBuildRun) return;
-    if (!shouldHydrateSharedRunRef.current) return;
-    if (streamRequestIdRef.current === sharedBuildRun.requestId) {
-      shouldHydrateSharedRunRef.current = false;
+    if (!sharedBuildRun || sharedBuildRun.generating || !sharedBuildRun.terminalState) {
       return;
     }
 
-    const normalizedBaseProjectFiles = Array.isArray(
-      sharedBuildRun.baseProjectFiles
-    )
-      ? sharedBuildRun.baseProjectFiles.map((file: any) => ({
-          path: normalizeProjectFilePath(file.path),
-          content: typeof file.content === 'string' ? file.content : ''
-        }))
-      : [];
-
-    if (sharedBuildRun.generating) {
-      generatingRef.current = true;
-      setGenerating(true);
-      setRunError(null);
-      setGeneratingStatus(sharedBuildRun.status);
-      setAssistantStatusSteps(sharedBuildRun.assistantStatusSteps);
-      setUsageMetrics(sharedBuildRun.usageMetrics);
-      setRunEvents(sharedBuildRun.runEvents);
-      streamingProjectFilesBaseRef.current = normalizedBaseProjectFiles;
-      setStreamingProjectFiles(sharedBuildRun.streamingProjectFiles);
-      setStreamingFocusFilePath(sharedBuildRun.streamingFocusFilePath);
-      streamRequestIdRef.current = sharedBuildRun.requestId;
-      userMessageIdRef.current = sharedBuildRun.userMessage?.id || null;
-      assistantMessageIdRef.current =
-        sharedBuildRun.assistantMessage?.id || null;
-      activeRunMessageContextRef.current = null;
-      activeRunModeRef.current = sharedBuildRun.runMode;
-      shouldHydrateSharedRunRef.current = false;
+    const sharedRequestId = String(sharedBuildRun.requestId || '').trim();
+    const activeCurrentPageRequestId = getCurrentActiveRunRequestId(
+      currentSharedRunIdentityState
+    );
+    if (!sharedRequestId || sharedRequestId !== activeCurrentPageRequestId) {
       return;
     }
 
-    if (Object.prototype.hasOwnProperty.call(sharedBuildRun, 'error')) {
-      setRunError(
-        typeof sharedBuildRun.error === 'string' && sharedBuildRun.error.trim()
-          ? sharedBuildRun.error
-          : null
-      );
+    const sharedTerminalStateKey = [
+      sharedRequestId,
+      sharedBuildRun.terminalState
+    ].join(':');
+    if (handledSharedTerminalStateKeyRef.current === sharedTerminalStateKey) {
+      return;
     }
-    if (
-      Array.isArray(sharedBuildRun.runEvents) &&
-      sharedBuildRun.runEvents.length > 0
-    ) {
-      setRunEvents((prev) =>
-        prev.length > 0 ? prev : sharedBuildRun.runEvents
-      );
-    }
+    handledSharedTerminalStateKeyRef.current = sharedTerminalStateKey;
 
-    if (normalizedBaseProjectFiles.length > 0) {
-      const currentBuild = buildRef.current;
-      if (currentBuild) {
-        const nextProjectFiles = normalizeProjectFilesForBuild(
-          normalizedBaseProjectFiles,
-          sharedBuildRun.assistantMessage?.codeGenerated ??
-            currentBuild.code ??
-            ''
-        );
-        const nextCode = resolveIndexHtmlFromProjectFiles(
-          nextProjectFiles,
-          sharedBuildRun.assistantMessage?.codeGenerated ??
-            currentBuild.code ??
-            ''
-        );
-        const nextArtifactVersionId =
-          sharedBuildRun.assistantMessage?.artifactVersionId ??
-          currentBuild.currentArtifactVersionId ??
-          null;
-        if (
-          !projectFilesEqual(currentBuild.projectFiles, nextProjectFiles) ||
-          String(currentBuild.code || '') !== String(nextCode || '') ||
-          Number(currentBuild.currentArtifactVersionId || 0) !==
-            Number(nextArtifactVersionId || 0)
-        ) {
-          const nextBuild = {
-            ...currentBuild,
-            code: nextCode,
-            currentArtifactVersionId: nextArtifactVersionId,
-            projectManifest: {
-              entryPath: resolveIndexEntryPathFromProjectFiles(
-                nextProjectFiles,
-                currentBuild.projectManifest?.entryPath || '/index.html'
-              ),
-              storageMode: 'project-files',
-              fileCount: nextProjectFiles.length
-            },
-            projectFiles: nextProjectFiles
-          };
-          buildRef.current = nextBuild;
-          updateBuildRef.current(nextBuild);
+    const normalizedBaseProjectFiles =
+      normalizeSharedBuildRunBaseProjectFiles(sharedBuildRun);
+    const sharedUserMessage = sharedBuildRun.userMessage;
+    const sharedAssistantMessage = sharedBuildRun.assistantMessage;
+    const sharedAssistantText = String(sharedAssistantMessage?.content || '').trim();
+
+    if (sharedBuildRun.terminalState === 'complete') {
+      const currentBuild = getLatestBuild();
+      const shouldApplySharedProjectFiles =
+        normalizedBaseProjectFiles.length > 0 &&
+        (!currentBuild ||
+          !projectFilesEqual(currentBuild.projectFiles, normalizedBaseProjectFiles));
+      void applyGenerateComplete({
+        requestId: sharedRequestId,
+        assistantText: sharedAssistantText || undefined,
+        code: sharedAssistantMessage?.codeGenerated ?? null,
+        projectFiles: shouldApplySharedProjectFiles
+          ? normalizedBaseProjectFiles
+          : null,
+        interruptionReason: sharedBuildRun.interruptionReason ?? null,
+        executionPlan: sharedBuildRun.executionPlan ?? null,
+        followUpPrompt: sharedBuildRun.followUpPrompt ?? null,
+        runtimeExplorationPlan: sharedBuildRun.runtimeExplorationPlan ?? null,
+        runtimePlanRefined: Boolean(sharedBuildRun.runtimePlanRefined),
+        billingState:
+          sharedAssistantMessage?.billingState ?? sharedBuildRun.billingState ?? null,
+        message: {
+          id: sharedAssistantMessage?.id,
+          userMessageId: sharedUserMessage?.id,
+          artifactVersionId: sharedAssistantMessage?.artifactVersionId,
+          createdAt: sharedAssistantMessage?.createdAt
         }
+      });
+      return;
+    }
+
+    if (sharedBuildRun.terminalState === 'error') {
+      void applyGenerateError({
+        requestId: sharedRequestId,
+        error:
+          sharedBuildRun.error ||
+          sharedAssistantText ||
+          'Failed to generate code.'
+      });
+      return;
+    }
+
+    void applyGenerateStopped({
+      requestId: sharedRequestId,
+      runMode: sharedBuildRun.runMode,
+      assistantText:
+        sharedAssistantText &&
+        !isBuildAssistantPlaceholderContent(sharedAssistantText)
+          ? sharedAssistantMessage?.content
+          : undefined
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedBuildRun]);
+
+  useEffect(() => {
+    if (
+      !sharedBuildRun ||
+      sharedBuildRun.generating ||
+      sharedBuildRun.terminalState !== 'complete'
+    ) {
+      return;
+    }
+
+    const sharedRequestId = String(sharedBuildRun.requestId || '').trim();
+    const activeCurrentPageRequestId = getCurrentActiveRunRequestId(
+      currentSharedRunIdentityState
+    );
+    if (
+      sharedRequestId &&
+      sharedRequestId === activeCurrentPageRequestId
+    ) {
+      return;
+    }
+
+    const currentBuild = getLatestBuild();
+    if (!currentBuild) {
+      return;
+    }
+
+    const normalizedBaseProjectFiles =
+      normalizeSharedBuildRunBaseProjectFiles(sharedBuildRun);
+    const sharedArtifactCode =
+      typeof sharedBuildRun.assistantMessage?.codeGenerated === 'string'
+        ? sharedBuildRun.assistantMessage.codeGenerated
+        : null;
+    const sharedArtifactVersionId =
+      Number(sharedBuildRun.assistantMessage?.artifactVersionId || 0) > 0
+        ? Number(sharedBuildRun.assistantMessage?.artifactVersionId)
+        : null;
+    const sharedHasFollowUpPrompt = Object.prototype.hasOwnProperty.call(
+      sharedBuildRun,
+      'followUpPrompt'
+    );
+    const nextFollowUpPrompt = sharedHasFollowUpPrompt
+      ? (sharedBuildRun.followUpPrompt ?? null)
+      : currentBuild.followUpPrompt ?? null;
+    const shouldUpdateFollowUpPrompt =
+      sharedHasFollowUpPrompt &&
+      serializedComparableValue(currentBuild.followUpPrompt ?? null) !==
+        serializedComparableValue(nextFollowUpPrompt);
+    const sharedHasRuntimeExplorationPlan = Object.prototype.hasOwnProperty.call(
+      sharedBuildRun,
+      'runtimeExplorationPlan'
+    );
+    const nextRuntimeExplorationPlan = sharedHasRuntimeExplorationPlan
+      ? (sharedBuildRun.runtimeExplorationPlan ?? null)
+      : currentBuild.runtimeExplorationPlan ?? null;
+    const shouldUpdateRuntimeExplorationPlan =
+      sharedHasRuntimeExplorationPlan &&
+      serializedComparableValue(currentBuild.runtimeExplorationPlan ?? null) !==
+        serializedComparableValue(nextRuntimeExplorationPlan);
+
+    const hasSharedTerminalWorkspaceSnapshot =
+      (normalizedBaseProjectFiles.length > 0 ||
+        sharedArtifactCode !== null ||
+        sharedArtifactVersionId !== null);
+    let nextProjectFiles =
+      hasSharedTerminalWorkspaceSnapshot &&
+      normalizedBaseProjectFiles.length > 0
+        ? normalizeProjectFilesForBuild(
+            normalizedBaseProjectFiles,
+            currentBuild.code || ''
+          )
+        : currentBuild.projectFiles || [];
+    let shouldUpdateProjectFiles =
+      hasSharedTerminalWorkspaceSnapshot &&
+      normalizedBaseProjectFiles.length > 0 &&
+      !projectFilesEqual(currentBuild.projectFiles, nextProjectFiles);
+
+    if (hasSharedTerminalWorkspaceSnapshot && sharedArtifactCode !== null) {
+      const nextProjectFilesWithArtifactCode = applyArtifactCodeToProjectFiles({
+        projectFiles: nextProjectFiles,
+        artifactCode: sharedArtifactCode,
+        entryPath: currentBuild.projectManifest?.entryPath || '/index.html'
+      });
+      if (!projectFilesEqual(nextProjectFiles, nextProjectFilesWithArtifactCode)) {
+        shouldUpdateProjectFiles = true;
+        nextProjectFiles = nextProjectFilesWithArtifactCode;
       }
     }
+
+    const nextCode =
+      hasSharedTerminalWorkspaceSnapshot && sharedArtifactCode !== null
+        ? sharedArtifactCode
+        : hasSharedTerminalWorkspaceSnapshot &&
+            normalizedBaseProjectFiles.length > 0
+          ? resolveIndexHtmlFromProjectFiles(
+              nextProjectFiles,
+              currentBuild.code || ''
+            )
+          : currentBuild.code || null;
+    const nextArtifactVersionId =
+      hasSharedTerminalWorkspaceSnapshot
+        ? sharedArtifactVersionId ?? currentBuild.currentArtifactVersionId ?? null
+        : currentBuild.currentArtifactVersionId ?? null;
+
     if (
-      Object.prototype.hasOwnProperty.call(sharedBuildRun, 'executionPlan') &&
-      buildRef.current &&
-      buildRef.current.executionPlan !== sharedBuildRun.executionPlan
+      !shouldUpdateProjectFiles &&
+      !shouldUpdateRuntimeExplorationPlan &&
+      !shouldUpdateFollowUpPrompt &&
+      String(currentBuild.code || '') === String(nextCode || '') &&
+      Number(currentBuild.currentArtifactVersionId || 0) ===
+        Number(nextArtifactVersionId || 0)
     ) {
-      const nextBuild = {
-        ...buildRef.current,
-        executionPlan: sharedBuildRun.executionPlan ?? null,
-        followUpPrompt: Object.prototype.hasOwnProperty.call(
-          sharedBuildRun,
-          'followUpPrompt'
-        )
-          ? (sharedBuildRun.followUpPrompt ?? null)
-          : (buildRef.current.followUpPrompt ?? null)
-      };
-      buildRef.current = nextBuild;
-      updateBuildRef.current(nextBuild);
-    } else if (
-      Object.prototype.hasOwnProperty.call(sharedBuildRun, 'followUpPrompt') &&
-      buildRef.current &&
-      buildRef.current.followUpPrompt !==
-        (sharedBuildRun.followUpPrompt ?? null)
-    ) {
-      const nextBuild = {
-        ...buildRef.current,
-        followUpPrompt: sharedBuildRun.followUpPrompt ?? null
-      };
-      buildRef.current = nextBuild;
-      updateBuildRef.current(nextBuild);
+      return;
     }
+
+    const nextBuild = {
+      ...currentBuild,
+      code: nextCode,
+      currentArtifactVersionId: nextArtifactVersionId,
+      followUpPrompt: nextFollowUpPrompt,
+      runtimeExplorationPlan: nextRuntimeExplorationPlan,
+      projectManifest: shouldUpdateProjectFiles
+        ? {
+            entryPath: resolveIndexEntryPathFromProjectFiles(
+              nextProjectFiles,
+              currentBuild.projectManifest?.entryPath || '/index.html'
+            ),
+            storageMode: 'project-files',
+            fileCount: nextProjectFiles.length
+          }
+        : currentBuild.projectManifest || null,
+      projectFiles: shouldUpdateProjectFiles
+        ? nextProjectFiles
+        : currentBuild.projectFiles
+    };
+    applyBuildUpdate(nextBuild);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedBuildRun]);
+
+  useEffect(() => {
+    if (!sharedBuildRun?.generating) return;
+    const sharedRequestId = String(sharedBuildRun.requestId || '').trim();
+    const currentRequestId = getCurrentRunRequestId(
+      sharedRequestId,
+      currentSharedRunIdentityState
+    );
+    if (!sharedRequestId || !currentRequestId) return;
+
+    adoptPersistedBuildRunMessages({
+      userMessageId: sharedBuildRun.userMessage?.id,
+      assistantMessageId: sharedBuildRun.assistantMessage?.id,
+      assistantMessageCreatedAt: sharedBuildRun.assistantMessage?.createdAt
+    });
+
+    const nextMessages = mergeChatMessagesWithBuildRun({
+      persistedMessages: getLatestChatMessages(),
+      buildRun: sharedBuildRun
+    });
+    if (!chatMessagesEqual(getLatestChatMessages(), nextMessages)) {
+      replaceChatMessages(nextMessages);
+    }
+
+    const nextStreamSyncKey = serializedComparableValue({
+      requestId: sharedRequestId,
+      userMessage: sharedBuildRun.userMessage
+        ? {
+            id: sharedBuildRun.userMessage.id,
+            role: sharedBuildRun.userMessage.role,
+            content: sharedBuildRun.userMessage.content,
+            codeGenerated: sharedBuildRun.userMessage.codeGenerated,
+            streamCodePreview: sharedBuildRun.userMessage.streamCodePreview ?? null,
+            createdAt: sharedBuildRun.userMessage.createdAt,
+            persisted: Boolean(sharedBuildRun.userMessage.persisted)
+          }
+        : null,
+      assistantMessage: sharedBuildRun.assistantMessage
+        ? {
+            id: sharedBuildRun.assistantMessage.id,
+            role: sharedBuildRun.assistantMessage.role,
+            content: sharedBuildRun.assistantMessage.content,
+            codeGenerated: sharedBuildRun.assistantMessage.codeGenerated,
+            streamCodePreview:
+              sharedBuildRun.assistantMessage.streamCodePreview ?? null,
+            artifactVersionId:
+              sharedBuildRun.assistantMessage.artifactVersionId ?? null,
+            createdAt: sharedBuildRun.assistantMessage.createdAt,
+            persisted: Boolean(sharedBuildRun.assistantMessage.persisted)
+          }
+        : null,
+      baseProjectFiles: normalizeSharedBuildRunBaseProjectFiles(sharedBuildRun),
+      streamingProjectFiles: sharedBuildRun.streamingProjectFiles || null,
+      streamingFocusFilePath: sharedBuildRun.streamingFocusFilePath || null
+    });
+    const {
+      isInitialSync: isInitialStreamSync,
+      didChange: didStreamSyncChange
+    } = sharedRunReconciliation.recordSharedRunStreamSync(nextStreamSyncKey);
+
+    if (!currentRequestId || sharedRequestId !== currentRequestId) {
+      return;
+    }
+
+    if (isInitialStreamSync) {
+      if (!runOrchestration.hasCurrentPageRunActivity()) {
+        runIdentity.beginRun({
+          requestId: sharedRequestId,
+          runMode: sharedBuildRun.runMode || 'user',
+          userMessageId: sharedBuildRun.userMessage?.id,
+          assistantMessageId: sharedBuildRun.assistantMessage?.id
+        });
+      }
+      markCurrentPageRunActivityActive();
+      runOrchestration.clearPendingRunStartEvents();
+      markActiveBuildRunActivity(sharedBuildRun.updatedAt);
+      return;
+    }
+
+    if (!didStreamSyncChange) {
+      return;
+    }
+
+    markActiveBuildRunActivity(sharedBuildRun.updatedAt);
+    resetDedupedProcessingReconcileState();
+    maybeAutoScrollDuringStream();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedBuildRun]);
+
+  useEffect(() => {
+    if (!sharedBuildRun?.generating) return;
+    const sharedRequestId = String(sharedBuildRun.requestId || '').trim();
+    const currentRequestId = getCurrentRunRequestId(
+      sharedRequestId,
+      currentSharedRunIdentityState
+    );
+    if (!sharedRequestId || sharedRequestId !== currentRequestId) return;
+    const nextStatus = String(sharedBuildRun.status || '').trim();
+    if (!nextStatus) return;
     if (
-      Object.prototype.hasOwnProperty.call(
-        sharedBuildRun,
-        'runtimeExplorationPlan'
+      !sharedRunReconciliation.claimSharedRunStatusSync({
+        requestId: sharedRequestId,
+        status: nextStatus,
+        assistantStatusStepCount: sharedBuildRun.assistantStatusSteps.length
+      })
+    ) {
+      return;
+    }
+    if (nextStatus === DEDUPED_PROCESSING_RECOVERY_STATUS) {
+      maybeStartSharedDedupedProcessingRecovery(sharedRequestId);
+    } else if (
+      !(
+        nextStatus === 'Stopping...' &&
+        runOrchestration.isDedupedProcessingInFlight(sharedRequestId)
       )
     ) {
-      setRuntimeExplorationPlan(sharedBuildRun.runtimeExplorationPlan ?? null);
+      resetDedupedProcessingReconcileState();
     }
-    shouldHydrateSharedRunRef.current = false;
+    maybeAutoScrollDuringStream();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedBuildRun]);
 
   useEffect(() => {
     if (!sharedBuildRun || sharedBuildRun.generating) return;
+    if (runOrchestration.isPostCompleteSyncInFlight()) {
+      return;
+    }
+    if (runtimeFollowUp.shouldHoldTerminalSharedBuildRun(sharedBuildRun.requestId)) {
+      return;
+    }
     const liveMessages = [
       sharedBuildRun.userMessage,
       sharedBuildRun.assistantMessage
@@ -1996,29 +1911,42 @@ export default function BuildEditor({
             (message) =>
               message.id === liveMessage.id ||
               doChatMessagesRepresentSameBuildMessage(message, liveMessage)
-          )
+        )
       )
     ) {
       return;
     }
-    const sharedRunKey = `${build.id}:${sharedBuildRun.updatedAt}`;
-    if (sharedRunReplicaCheckKeyRef.current === sharedRunKey) {
+    const sharedHasRuntimeExplorationPlan = Object.prototype.hasOwnProperty.call(
+      sharedBuildRun,
+      'runtimeExplorationPlan'
+    );
+    if (
+      !sharedRunReconciliation.claimSharedRunReplicaCheck({
+        buildId: build.id,
+        updatedAt: sharedBuildRun.updatedAt
+      })
+    ) {
       return;
     }
-    sharedRunReplicaCheckKeyRef.current = sharedRunKey;
     let cancelled = false;
 
     async function maybeClearSharedBuildRun() {
+      const sharedHasFollowUpPrompt = Object.prototype.hasOwnProperty.call(
+        sharedBuildRun,
+        'followUpPrompt'
+      );
       const shouldVerifyReplica =
         sharedBuildRun.baseProjectFiles.length > 0 ||
         Object.prototype.hasOwnProperty.call(sharedBuildRun, 'executionPlan') ||
-        Number(sharedBuildRun.assistantMessage?.artifactVersionId || 0) > 0;
+        Number(sharedBuildRun.assistantMessage?.artifactVersionId || 0) > 0 ||
+        sharedHasFollowUpPrompt ||
+        sharedHasRuntimeExplorationPlan;
 
       if (shouldVerifyReplica) {
-        const buildPayload = await loadBuild(build.id);
+        const buildPayload = await loadBuild(build.id, { fromWriter: true });
         if (cancelled) return;
         if (!buildPayload?.build) {
-          sharedRunReplicaCheckKeyRef.current = '';
+          sharedRunReconciliation.resetSharedRunReplicaCheck();
           return;
         }
         const replicaProjectFiles = normalizeProjectFilesForBuild(
@@ -2044,6 +1972,9 @@ export default function BuildEditor({
           'executionPlan'
         );
         const replicaExecutionPlan = buildPayload.executionPlan || null;
+        const replicaFollowUpPrompt = buildPayload.followUpPrompt || null;
+        const replicaRuntimeExplorationPlan =
+          buildPayload.runtimeExplorationPlan || null;
 
         if (
           (hasExpectedProjectFiles &&
@@ -2052,9 +1983,17 @@ export default function BuildEditor({
             replicaArtifactVersionId !== expectedArtifactVersionId) ||
           (hasExpectedExecutionPlan &&
             serializedComparableValue(replicaExecutionPlan) !==
-              serializedComparableValue(sharedBuildRun.executionPlan ?? null))
+              serializedComparableValue(sharedBuildRun.executionPlan ?? null)) ||
+          (sharedHasFollowUpPrompt &&
+            serializedComparableValue(replicaFollowUpPrompt) !==
+              serializedComparableValue(sharedBuildRun.followUpPrompt ?? null)) ||
+          (sharedHasRuntimeExplorationPlan &&
+            serializedComparableValue(replicaRuntimeExplorationPlan) !==
+              serializedComparableValue(
+                sharedBuildRun.runtimeExplorationPlan ?? null
+              ))
         ) {
-          sharedRunReplicaCheckKeyRef.current = '';
+          sharedRunReconciliation.resetSharedRunReplicaCheck();
           return;
         }
       }
@@ -2067,19 +2006,19 @@ export default function BuildEditor({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, chatMessages, sharedBuildRun]);
+  }, [
+    build.id,
+    chatMessages,
+    runtimeFollowUp.runtimeFollowUpRevision,
+    sharedBuildRun
+  ]);
 
   useEffect(() => {
     const normalizedFiles = normalizeProjectFilesForBuild(
       build.projectFiles || [],
       build.code || ''
     );
-    projectFilesDraftRef.current = normalizedFiles.map((file) => ({
-      path: file.path,
-      content: file.content
-    }));
-    hasUnsavedProjectFilesRef.current = false;
-    savingProjectFilesRef.current = false;
+    projectFileDrafts.resetDraftState(normalizedFiles);
     setRuntimeUploadsModalShown(false);
     setRuntimeUploadAssets([]);
     setCurrentBuildRuntimeAssets([]);
@@ -2090,22 +2029,6 @@ export default function BuildEditor({
     setRuntimeUploadDeletingId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [build.id]);
-
-  useEffect(() => {
-    copilotPolicyRef.current = copilotPolicy;
-  }, [copilotPolicy]);
-
-  useEffect(() => {
-    updateBuildRef.current = onUpdateBuild;
-  }, [onUpdateBuild]);
-
-  useEffect(() => {
-    updateChatMessagesRef.current = onUpdateChatMessages;
-  }, [onUpdateChatMessages]);
-
-  useEffect(() => {
-    updateCopilotPolicyRef.current = onUpdateCopilotPolicy;
-  }, [onUpdateCopilotPolicy]);
 
   useEffect(() => {
     return () => {
@@ -2119,64 +2042,56 @@ export default function BuildEditor({
   }, []);
 
   useEffect(() => {
-    function handleSocketConnect() {
-      maybeResumeActiveBuildRun();
-    }
+    if (!sharedBuildRun?.generating) return;
 
-    function handlePageShow() {
-      maybeResumeActiveBuildRun();
-    }
-
-    function handleOnline() {
-      maybeResumeActiveBuildRun();
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState !== 'visible') return;
-      maybeResumeActiveBuildRun();
-    }
-
-    socket.on('connect', handleSocketConnect);
-    window.addEventListener('pageshow', handlePageShow);
-    window.addEventListener('online', handleOnline);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const interval = window.setInterval(() => {
+      const requestId = getCurrentPageRunActivityRequestId(
+        getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+      );
+      if (!requestId) return;
+      const inactivityMs = runOrchestration.getRunInactivityMs();
+      if (inactivityMs >= STALLED_RUN_RESUME_AFTER_MS) {
+        maybeResumeActiveBuildRun();
+      }
+      if (inactivityMs >= STALLED_RUN_RECOVER_AFTER_MS) {
+        recoverStalledActiveBuildRun(requestId);
+      }
+    }, 5000);
 
     return () => {
-      socket.off('connect', handleSocketConnect);
-      window.removeEventListener('pageshow', handlePageShow);
-      window.removeEventListener('online', handleOnline);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id]);
+  }, [
+    build.id,
+    sharedBuildRun?.generating,
+    sharedBuildRun?.requestId
+  ]);
 
   useEffect(() => {
     if (didAutoPromptRef.current) return;
-    if (!buildSocketListenersReady) return;
     if (AI_FEATURES_DISABLED) return;
     if (!isOwner) return;
     const prompt = initialPrompt.trim();
     if (!prompt) return;
-    if (chatMessagesRef.current.length > 0) return;
+    if (getLatestChatMessages().length > 0) return;
     didAutoPromptRef.current = true;
     void startGeneration(prompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, buildSocketListenersReady, isOwner, initialPrompt]);
+  }, [build.id, isOwner, initialPrompt]);
 
   useEffect(() => {
     if (didAutoGreetingRef.current) return;
-    if (!buildSocketListenersReady) return;
     if (AI_FEATURES_DISABLED) return;
     if (!isOwner) return;
     if (!seedGreeting) return;
     if (initialPrompt.trim()) return;
-    if (chatMessagesRef.current.length > 0) return;
+    if (getLatestChatMessages().length > 0) return;
     didAutoGreetingRef.current = true;
     void startGreetingGeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     build.id,
-    buildSocketListenersReady,
     initialPrompt,
     isOwner,
     seedGreeting
@@ -2188,1257 +2103,634 @@ export default function BuildEditor({
     scrollChatToBottom('auto', { force: true });
   }, [mergedChatMessages.length, build.id]);
 
-  useEffect(() => {
-    function handleGenerateUpdate(payload: {
-      requestId?: string;
-      reply?: string;
-      codeGenerated?: string | null;
+  async function applyGenerateComplete({
+    requestId,
+    assistantText,
+    artifact,
+    code,
+    projectFiles,
+    interruptionReason,
+    executionPlan,
+    followUpPrompt,
+    runtimeExplorationPlan,
+    runtimePlanRefined,
+    billingState,
+    message
+  }: {
+    requestId?: string;
+    assistantText?: string;
+    artifact?: {
+      content?: string;
+      id?: number | null;
+      versionId?: number | null;
+    };
+    code?: string | null;
+    projectFiles?: Array<{ path: string; content?: string }> | null;
+    interruptionReason?: 'tool_limit' | null;
+    executionPlan?: BuildExecutionPlan | null;
+    followUpPrompt?: BuildFollowUpPrompt | null;
+    runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
+    runtimePlanRefined?: boolean;
+    billingState?: 'charged' | 'not_charged' | 'pending' | null;
+    message?: {
+      id?: number | null;
       userMessageId?: number | null;
-      assistantMessageId?: number | null;
-      assistantMessageCreatedAt?: number | null;
-      projectFiles?: Array<{ path: string; content?: string }> | null;
-      projectFilesMode?: 'patch' | 'snapshot' | null;
-      projectFilesPersisted?: boolean;
-      projectFilesFocusPath?: string | null;
-    }) {
-      const {
-        requestId,
-        reply,
-        codeGenerated,
-        userMessageId,
-        assistantMessageId,
-        assistantMessageCreatedAt,
-        projectFiles,
-        projectFilesMode,
-        projectFilesPersisted,
-        projectFilesFocusPath
-      } = payload;
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      adoptPersistedBuildRunMessages({
-        userMessageId,
-        assistantMessageId,
-        assistantMessageCreatedAt
-      });
-      const targetMessageId = assistantMessageIdRef.current;
-      if (!targetMessageId) return;
-      const currentMessages = chatMessagesRef.current;
-      const hasCodeGeneratedField = Object.prototype.hasOwnProperty.call(
-        payload,
-        'codeGenerated'
-      );
-      const nextMessages = currentMessages.map((message) => {
-        if (message.id !== targetMessageId) return message;
-        const nextMessage: ChatMessage = {
-          ...message,
-          content: typeof reply === 'string' ? reply : message.content
-        };
-        if (hasCodeGeneratedField) {
-          // Keep streamed artifact text out of the final diff payload to avoid
-          // recomputing expensive diffs on every chunk.
-          nextMessage.streamCodePreview = codeGenerated ?? null;
-        }
-        return nextMessage;
-      });
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
-      const sharedRunStreamUpdate: {
-        requestId: string;
-        reply?: string;
-        codeGenerated?: string | null;
-        userMessageId?: number | null;
-        assistantMessageId?: number | null;
-        assistantMessageCreatedAt?: number | null;
-        projectFiles?: Array<{ path: string; content?: string }> | null;
-        projectFilesMode?: 'patch' | 'snapshot' | null;
-        projectFilesPersisted?: boolean;
-        projectFilesFocusPath?: string | null;
-      } = { requestId };
-      if (typeof reply === 'string') {
-        sharedRunStreamUpdate.reply = reply;
-      }
-      if (hasCodeGeneratedField) {
-        sharedRunStreamUpdate.codeGenerated = codeGenerated ?? null;
-      }
-      if (Object.prototype.hasOwnProperty.call(payload, 'userMessageId')) {
-        sharedRunStreamUpdate.userMessageId =
-          Number(userMessageId || 0) > 0 ? Number(userMessageId) : null;
-      }
-      if (Object.prototype.hasOwnProperty.call(payload, 'assistantMessageId')) {
-        sharedRunStreamUpdate.assistantMessageId =
-          Number(assistantMessageId || 0) > 0
-            ? Number(assistantMessageId)
-            : null;
-      }
-      if (
-        Object.prototype.hasOwnProperty.call(
-          payload,
-          'assistantMessageCreatedAt'
-        )
-      ) {
-        sharedRunStreamUpdate.assistantMessageCreatedAt =
-          Number(assistantMessageCreatedAt || 0) > 0
-            ? Number(assistantMessageCreatedAt)
-            : null;
-      }
-      if (Array.isArray(projectFiles) && projectFiles.length > 0) {
-        sharedRunStreamUpdate.projectFiles = projectFiles;
-        sharedRunStreamUpdate.projectFilesMode =
-          projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
-        sharedRunStreamUpdate.projectFilesPersisted =
-          projectFilesPersisted === true;
-        sharedRunStreamUpdate.projectFilesFocusPath =
-          String(projectFilesFocusPath || '').trim() || null;
-      }
-      onUpdateBuildRunStream(sharedRunStreamUpdate);
-      if (Array.isArray(projectFiles) && projectFiles.length > 0) {
-        const activeBuild = buildRef.current;
-        const fallbackCode = activeBuild?.code || '';
-        const normalizedProjectFiles = normalizeProjectFilesForBuild(
+      artifactVersionId?: number | null;
+      createdAt?: number;
+    };
+  }) {
+    const latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    const currentRequestId = getCurrentRunRequestId(
+      requestId,
+      latestSharedRunIdentityState
+    );
+    if (!requestId || requestId !== currentRequestId) return;
+    markActiveBuildRunActivity();
+    resetDedupedProcessingReconcileState();
+    const completedRunMode = getCurrentRunMode(
+      requestId,
+      latestSharedRunIdentityState
+    );
+    const userMessageTempId = getCurrentActiveUserMessageId(
+      requestId,
+      latestSharedRunIdentityState
+    );
+    const assistantId = getCurrentActiveAssistantMessageId(
+      requestId,
+      latestSharedRunIdentityState
+    );
+    const currentMessages = getLatestChatMessages();
+    const artifactCode = artifact?.content ?? code ?? null;
+    const payloadProjectFiles = Array.isArray(projectFiles)
+      ? normalizeProjectFilesForBuild(
           projectFiles,
-          fallbackCode
-        );
-        const explicitFocusFilePath = String(projectFilesFocusPath || '').trim()
-          ? normalizeProjectFilePath(String(projectFilesFocusPath || ''))
-          : null;
-        const nextFocusFilePath =
-          explicitFocusFilePath ||
-          normalizedProjectFiles
-            .map((file) => normalizeProjectFilePath(file.path))
-            .find((filePath) => !isIndexHtmlProjectFilePath(filePath)) ||
-          null;
-        const nextStreamingProjectFiles =
-          projectFilesMode === 'snapshot'
-            ? normalizedProjectFiles
-            : overlayStreamedProjectFilesForBuild({
-                baseFiles: streamingProjectFilesBaseRef.current,
-                updates: projectFiles,
-                fallbackCode
-              });
-        if (projectFilesPersisted && activeBuild) {
-          const nextCode = resolveIndexHtmlFromProjectFiles(
-            nextStreamingProjectFiles,
-            fallbackCode
-          );
-          const nextBuild = {
-            ...activeBuild,
-            code: nextCode,
-            projectManifest: {
-              entryPath: resolveIndexEntryPathFromProjectFiles(
-                nextStreamingProjectFiles,
-                activeBuild.projectManifest?.entryPath || '/index.html'
-              ),
-              storageMode: 'project-files',
-              fileCount: nextStreamingProjectFiles.length
-            },
-            projectFiles: nextStreamingProjectFiles
-          };
-          buildRef.current = nextBuild;
-          updateBuildRef.current(nextBuild);
-          streamingProjectFilesBaseRef.current = nextStreamingProjectFiles;
-          streamingProjectFilesRef.current = null;
-          setStreamingProjectFiles(null);
-          setStreamingFocusFilePath(null);
-        } else {
-          streamingProjectFilesRef.current = nextStreamingProjectFiles;
-          setStreamingProjectFiles(nextStreamingProjectFiles);
-          if (nextFocusFilePath) {
-            setStreamingFocusFilePath(nextFocusFilePath);
-          }
-        }
-      }
-      maybeAutoScrollDuringStream();
-    }
-
-    async function handleGenerateComplete({
+          artifactCode ?? getLatestBuild()?.code ?? ''
+        )
+      : null;
+    const artifactVersionId =
+      message?.artifactVersionId ?? artifact?.versionId ?? null;
+    const createdAt = message?.createdAt ?? Math.floor(Date.now() / 1000);
+    const hasFollowUpPromptField = Object.prototype.hasOwnProperty.call(
+      arguments[0] || {},
+      'followUpPrompt'
+    );
+    const hasRuntimeExplorationPlanField = Object.prototype.hasOwnProperty.call(
+      arguments[0] || {},
+      'runtimeExplorationPlan'
+    );
+    const persistedAssistantId =
+      typeof message?.id === 'number' && message.id > 0 ? message.id : null;
+    const persistedUserId =
+      typeof message?.userMessageId === 'number' && message.userMessageId > 0
+        ? message.userMessageId
+        : null;
+    onCompleteBuildRun({
       requestId,
       assistantText,
-      artifact,
-      code,
-      projectFiles,
+      artifactCode,
+      projectFiles: payloadProjectFiles,
       executionPlan,
-      followUpPrompt,
+      followUpPrompt: hasFollowUpPromptField
+        ? (followUpPrompt ?? null)
+        : undefined,
       runtimeExplorationPlan,
       runtimePlanRefined,
       billingState,
-      message
-    }: {
-      requestId?: string;
-      assistantText?: string;
-      artifact?: {
-        content?: string;
-        id?: number | null;
-        versionId?: number | null;
-      };
-      code?: string | null;
-      projectFiles?: Array<{ path: string; content?: string }> | null;
-      executionPlan?: BuildExecutionPlan | null;
-      followUpPrompt?: BuildFollowUpPrompt | null;
-      runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
-      runtimePlanRefined?: boolean;
-      billingState?: 'charged' | 'not_charged' | 'pending' | null;
-      message?: {
-        id?: number | null;
-        userMessageId?: number | null;
-        artifactVersionId?: number | null;
-        createdAt?: number;
-      };
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      const completedRunMode = activeRunModeRef.current;
-      const userMessageTempId = userMessageIdRef.current;
-      const assistantId = assistantMessageIdRef.current;
-      const currentMessages = chatMessagesRef.current;
-      const artifactCode = artifact?.content ?? code ?? null;
-      const payloadProjectFiles = Array.isArray(projectFiles)
-        ? normalizeProjectFilesForBuild(
-            projectFiles,
-            artifactCode ?? buildRef.current?.code ?? ''
-          )
-        : null;
-      const artifactVersionId =
-        message?.artifactVersionId ?? artifact?.versionId ?? null;
-      const createdAt = message?.createdAt ?? Math.floor(Date.now() / 1000);
-      const hasFollowUpPromptField = Object.prototype.hasOwnProperty.call(
-        arguments[0] || {},
-        'followUpPrompt'
-      );
-      const persistedAssistantId =
-        typeof message?.id === 'number' && message.id > 0 ? message.id : null;
-      const persistedUserId =
-        typeof message?.userMessageId === 'number' && message.userMessageId > 0
-          ? message.userMessageId
-          : null;
-      onCompleteBuildRun({
-        requestId,
-        assistantText,
-        artifactCode,
-        projectFiles: payloadProjectFiles,
-        executionPlan,
-        followUpPrompt: hasFollowUpPromptField
-          ? (followUpPrompt ?? null)
-          : undefined,
-        runtimeExplorationPlan,
-        runtimePlanRefined,
-        billingState,
-        artifactVersionId,
-        persistedAssistantId,
-        persistedUserId,
-        createdAt,
-        workspaceChanged:
-          artifactCode !== null ||
-          (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0)
-      });
-      let nextMessages = currentMessages.map((entry) => {
-        if (
-          userMessageTempId &&
-          persistedUserId &&
-          entry.id === userMessageTempId
-        ) {
-          return { ...entry, id: persistedUserId, persisted: true };
-        }
-        if (assistantId && entry.id === assistantId) {
-          return {
-            ...entry,
-            id: persistedAssistantId || entry.id,
-            persisted: Boolean(persistedAssistantId),
-            content: assistantText || entry.content,
-            codeGenerated: artifactCode,
-            billingState: billingState ?? null,
-            streamCodePreview: null,
-            artifactVersionId,
-            createdAt
-          };
-        }
-        return entry;
-      });
-
-      if (!assistantId) {
-        nextMessages = [
-          ...nextMessages,
-          {
-            id: persistedAssistantId || Date.now(),
-            role: 'assistant' as const,
-            content: assistantText || '',
-            codeGenerated: artifactCode,
-            billingState: billingState ?? null,
-            streamCodePreview: null,
-            artifactVersionId,
-            createdAt,
-            persisted: Boolean(persistedAssistantId)
-          }
-        ];
+      artifactVersionId,
+      persistedAssistantId,
+      persistedUserId,
+      createdAt,
+      workspaceChanged:
+        artifactCode !== null ||
+        (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0)
+    });
+    let nextMessages = currentMessages.map((entry) => {
+      if (
+        userMessageTempId &&
+        persistedUserId &&
+        entry.id === userMessageTempId
+      ) {
+        return { ...entry, id: persistedUserId, persisted: true };
       }
+      if (assistantId && entry.id === assistantId) {
+        return {
+          ...entry,
+          id: persistedAssistantId || entry.id,
+          persisted: Boolean(persistedAssistantId),
+          content: assistantText || entry.content,
+          codeGenerated: artifactCode,
+          billingState: billingState ?? null,
+          streamCodePreview: null,
+          artifactVersionId,
+          createdAt
+        };
+      }
+      return entry;
+    });
 
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
-      setRunError(null);
+    if (!assistantId) {
+      nextMessages = [
+        ...nextMessages,
+        {
+          id: persistedAssistantId || Date.now(),
+          role: 'assistant' as const,
+          content: assistantText || '',
+          codeGenerated: artifactCode,
+          billingState: billingState ?? null,
+          streamCodePreview: null,
+          artifactVersionId,
+          createdAt,
+          persisted: Boolean(persistedAssistantId)
+        }
+      ];
+    }
 
-      if (artifactCode !== null || payloadProjectFiles) {
-        const activeBuild = buildRef.current;
-        if (activeBuild) {
-          let completionUsedFallbackProjectFiles = false;
-          let nextProjectFiles = payloadProjectFiles
-            ? payloadProjectFiles
-            : normalizeProjectFilesForBuild(
-                activeBuild.projectFiles || [],
+    replaceChatMessages(nextMessages);
+
+    if (artifactCode !== null || payloadProjectFiles) {
+      const activeBuild = getLatestBuild();
+      if (activeBuild) {
+        let completionUsedFallbackProjectFiles = false;
+        let nextProjectFiles = payloadProjectFiles
+          ? payloadProjectFiles
+          : normalizeProjectFilesForBuild(
+              activeBuild.projectFiles || [],
+              activeBuild.code || ''
+            );
+        if (!payloadProjectFiles && artifactCode !== null) {
+          completionUsedFallbackProjectFiles = true;
+          const entryPath = resolveIndexEntryPathFromProjectFiles(
+            nextProjectFiles,
+            activeBuild.projectManifest?.entryPath || '/index.html'
+          );
+          const entryLookupPath =
+            normalizeProjectFilePath(entryPath).toLowerCase();
+          let updatedEntry = false;
+          nextProjectFiles = nextProjectFiles.map((file) => {
+            if (
+              normalizeProjectFilePath(file.path).toLowerCase() !==
+              entryLookupPath
+            ) {
+              return file;
+            }
+            updatedEntry = true;
+            return {
+              ...file,
+              content: artifactCode,
+              sizeBytes: artifactCode.length
+            };
+          });
+          if (!updatedEntry) {
+            nextProjectFiles = normalizeProjectFilesForBuild(
+              [...nextProjectFiles, { path: entryPath, content: artifactCode }],
+              artifactCode
+            );
+          }
+        }
+        const resolvedCode =
+          artifactCode !== null
+            ? artifactCode
+            : resolveIndexHtmlFromProjectFiles(
+                nextProjectFiles,
                 activeBuild.code || ''
               );
-          if (!payloadProjectFiles && artifactCode !== null) {
-            completionUsedFallbackProjectFiles = true;
-            const entryPath = resolveIndexEntryPathFromProjectFiles(
-              nextProjectFiles,
-              activeBuild.projectManifest?.entryPath || '/index.html'
-            );
-            const entryLookupPath =
-              normalizeProjectFilePath(entryPath).toLowerCase();
-            let updatedEntry = false;
-            nextProjectFiles = nextProjectFiles.map((file) => {
-              if (
-                normalizeProjectFilePath(file.path).toLowerCase() !==
-                entryLookupPath
-              ) {
-                return file;
-              }
-              updatedEntry = true;
-              return {
-                ...file,
-                content: artifactCode,
-                sizeBytes: artifactCode.length
-              };
-            });
-            if (!updatedEntry) {
-              nextProjectFiles = normalizeProjectFilesForBuild(
-                [
-                  ...nextProjectFiles,
-                  { path: entryPath, content: artifactCode }
-                ],
-                artifactCode
-              );
-            }
-          }
-          const resolvedCode =
-            artifactCode !== null
-              ? artifactCode
-              : resolveIndexHtmlFromProjectFiles(
-                  nextProjectFiles,
-                  activeBuild.code || ''
-                );
-          const nextBuild = {
-            ...activeBuild,
-            code: resolvedCode,
-            primaryArtifactId: artifact?.id ?? activeBuild.primaryArtifactId,
-            currentArtifactVersionId:
-              artifactVersionId ?? activeBuild.currentArtifactVersionId ?? null,
-            executionPlan:
-              executionPlan !== undefined
-                ? executionPlan || null
-                : activeBuild.executionPlan || null,
-            followUpPrompt: hasFollowUpPromptField
-              ? followUpPrompt || null
-              : activeBuild.followUpPrompt || null,
-            projectManifest: {
-              entryPath: resolveIndexEntryPathFromProjectFiles(
-                nextProjectFiles,
-                activeBuild.projectManifest?.entryPath || '/index.html'
-              ),
-              storageMode: 'project-files',
-              fileCount: nextProjectFiles.length
-            },
-            projectFiles: nextProjectFiles
-          };
-          buildRef.current = nextBuild;
-          updateBuildRef.current(nextBuild);
-          if (payloadProjectFiles) {
-            requiresProjectFilesResyncBeforeSaveRef.current = false;
-          } else if (completionUsedFallbackProjectFiles) {
-            requiresProjectFilesResyncBeforeSaveRef.current = true;
-          }
-        }
-      } else if (
-        buildRef.current &&
-        ((executionPlan !== undefined &&
-          buildRef.current.executionPlan !== (executionPlan || null)) ||
-          (hasFollowUpPromptField &&
-            buildRef.current.followUpPrompt !== (followUpPrompt || null)))
-      ) {
         const nextBuild = {
-          ...buildRef.current,
+          ...activeBuild,
+          code: resolvedCode,
+          primaryArtifactId: artifact?.id ?? activeBuild.primaryArtifactId,
+          currentArtifactVersionId:
+            artifactVersionId ?? activeBuild.currentArtifactVersionId ?? null,
           executionPlan:
             executionPlan !== undefined
               ? executionPlan || null
-              : buildRef.current.executionPlan || null,
+              : activeBuild.executionPlan || null,
           followUpPrompt: hasFollowUpPromptField
             ? followUpPrompt || null
-            : buildRef.current.followUpPrompt || null
+            : activeBuild.followUpPrompt || null,
+          runtimeExplorationPlan: hasRuntimeExplorationPlanField
+            ? runtimeExplorationPlan || null
+            : activeBuild.runtimeExplorationPlan || null,
+          projectManifest: {
+            entryPath: resolveIndexEntryPathFromProjectFiles(
+              nextProjectFiles,
+              activeBuild.projectManifest?.entryPath || '/index.html'
+            ),
+            storageMode: 'project-files',
+            fileCount: nextProjectFiles.length
+          },
+          projectFiles: nextProjectFiles
         };
-        buildRef.current = nextBuild;
-        updateBuildRef.current(nextBuild);
+        applyBuildUpdate(nextBuild);
+        if (payloadProjectFiles) {
+          runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
+        } else if (completionUsedFallbackProjectFiles) {
+          runOrchestration.setRequiresProjectFilesResyncBeforeSave(true);
+        }
       }
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-
-      const generatedCodeSuccessfully =
-        artifactCode !== null ||
-        (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0);
-      const planWasRefined = Boolean(
-        runtimePlanRefined && runtimeExplorationPlan
-      );
-      if (generatedCodeSuccessfully || planWasRefined) {
-        setMobilePanelTab('preview');
-      } else {
-        setMobilePanelTab('chat');
-      }
-      setRuntimeExplorationPlan(
-        generatedCodeSuccessfully || planWasRefined
+    } else if (
+      getLatestBuild() &&
+      ((executionPlan !== undefined &&
+        getLatestBuild().executionPlan !== (executionPlan || null)) ||
+        (hasFollowUpPromptField &&
+          getLatestBuild().followUpPrompt !== (followUpPrompt || null)) ||
+        (hasRuntimeExplorationPlanField &&
+          serializedComparableValue(
+            getLatestBuild().runtimeExplorationPlan ?? null
+          ) !== serializedComparableValue(runtimeExplorationPlan || null)))
+    ) {
+      const nextBuild = {
+        ...getLatestBuild(),
+        executionPlan:
+          executionPlan !== undefined
+            ? executionPlan || null
+            : getLatestBuild().executionPlan || null,
+        followUpPrompt: hasFollowUpPromptField
+          ? followUpPrompt || null
+          : getLatestBuild().followUpPrompt || null,
+        runtimeExplorationPlan: hasRuntimeExplorationPlanField
           ? runtimeExplorationPlan || null
-          : null
-      );
-      let shouldDelayQueuedRequestsForRuntimeFollowUp = false;
-      if (generatedCodeSuccessfully && completedRunMode === 'user') {
-        armRuntimeAutoFix({
-          sourceRequestId: requestId || null,
-          sourceArtifactVersionId: artifactVersionId,
-          sourceRunMode: completedRunMode
-        });
-        clearRuntimeVerification();
+          : getLatestBuild().runtimeExplorationPlan || null
+      };
+      applyBuildUpdate(nextBuild);
+    }
+    const generatedCodeSuccessfully =
+      artifactCode !== null ||
+      (Array.isArray(payloadProjectFiles) && payloadProjectFiles.length > 0);
+    const pausedForToolLimit = interruptionReason === 'tool_limit';
+    const planWasRefined = Boolean(runtimePlanRefined && runtimeExplorationPlan);
+    if (generatedCodeSuccessfully || planWasRefined) {
+      setMobilePanelTab('preview');
+    } else {
+      setMobilePanelTab('chat');
+    }
+    const shouldDelayQueuedRequestsForRuntimeFollowUp =
+      runtimeFollowUp.handleCompletedRunFollowUp({
+        completedRunMode,
+        requestId: requestId || null,
+        artifactVersionId,
+        generatedCodeSuccessfully,
+        pausedForToolLimit,
+        planWasRefined
+      });
+
+    runIdentity.clearRunOwnership();
+    runOrchestration.setUserRequestedStop(false);
+    clearCurrentPageRunActivity();
+    runIdentity.resetRunMode();
+    scrollChatToBottom();
+    runOrchestration.setPostCompleteSyncInFlight(true);
+    runtimeFollowUp.bumpRuntimeFollowUpRevision();
+    try {
+      await syncChatMessagesFromServer(undefined, true);
+      runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
+    } catch (error) {
+      console.error('Failed to sync chat messages after completion:', error);
+      if (runOrchestration.requiresProjectFilesResyncBeforeSave()) {
         appendLocalRunEvent({
           kind: 'status',
           phase: 'completed',
-          message: 'Checking the updated preview for runtime issues...'
+          message:
+            'Build completed, but project file sync is pending. Save is temporarily blocked until a refresh succeeds.',
+          targetRequestId: requestId || null
         });
-        shouldDelayQueuedRequestsForRuntimeFollowUp = true;
-      } else if (completedRunMode === 'runtime-autofix') {
-        const runtimeAutoFixContext = activeRuntimeAutoFixContextRef.current;
-        if (runtimeAutoFixContext) {
-          if (generatedCodeSuccessfully) {
-            armRuntimeVerification({
-              beforeObservation: runtimeAutoFixContext.beforeObservation,
-              remainingRepairs:
-                runtimeAutoFixContext.remainingRepairsAfterVerification
-            });
-            appendLocalRunEvent({
-              kind: 'status',
-              phase: 'completed',
-              message: 'Re-checking the repaired preview...'
-            });
-            shouldDelayQueuedRequestsForRuntimeFollowUp = true;
-          } else if (planWasRefined) {
-            armRuntimeVerification({
-              beforeObservation: runtimeAutoFixContext.beforeObservation,
-              remainingRepairs:
-                runtimeAutoFixContext.remainingRepairsAfterVerification,
-              allowSameCodeSignature: true
-            });
-            appendLocalRunEvent({
-              kind: 'action',
-              phase: 'preview',
-              message:
-                'Lumine revised the runtime plan and is re-checking the preview before changing code.'
-            });
-            shouldDelayQueuedRequestsForRuntimeFollowUp = true;
-          } else {
-            clearRuntimeVerification();
-          }
-        } else {
-          clearRuntimeVerification();
-        }
-        disarmRuntimeAutoFix();
-      } else {
-        resetRuntimeHealthFollowUpState();
       }
-
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      activeRunMessageContextRef.current = null;
-      userRequestedStopRef.current = false;
-      generatingRef.current = false;
-      setGenerating(false);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      activeRunModeRef.current = 'user';
-      scrollChatToBottom();
-      postCompleteSyncInFlightRef.current = true;
-      try {
-        await syncChatMessagesFromServer(undefined, true);
-        requiresProjectFilesResyncBeforeSaveRef.current = false;
-      } catch (error) {
-        console.error('Failed to sync chat messages after completion:', error);
-        if (requiresProjectFilesResyncBeforeSaveRef.current) {
-          appendLocalRunEvent({
-            kind: 'status',
-            phase: 'completed',
-            message:
-              'Build completed, but project file sync is pending. Save is temporarily blocked until a refresh succeeds.'
-          });
-        }
-      } finally {
-        postCompleteSyncInFlightRef.current = false;
-      }
-      if (
-        maybeProcessPendingRuntimeAutoFix() ||
-        maybeProcessPendingRuntimeVerification()
-      ) {
-        return;
-      }
-      if (!shouldDelayQueuedRequestsForRuntimeFollowUp) {
-        await maybeStartNextQueuedRequest();
-      }
+    } finally {
+      runOrchestration.setPostCompleteSyncInFlight(false);
+      runtimeFollowUp.bumpRuntimeFollowUpRevision();
     }
-
-    function handleGenerateStatus({
-      requestId,
-      status
-    }: {
-      requestId?: string;
-      status?: string;
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      setGeneratingStatus(status || null);
-      if (status) {
-        setAssistantStatusSteps((prev) =>
-          prev[prev.length - 1] === status ? prev : [...prev, status]
-        );
-      }
-      onUpdateBuildRunStatus({
-        requestId,
-        status: status || null
-      });
-      maybeAutoScrollDuringStream();
+    if (runtimeFollowUp.processPendingRuntimeFollowUp()) {
+      return;
     }
-
-    function handleResumeRunState({
-      requestId,
-      status,
-      assistantStatusSteps,
-      usageMetrics,
-      runEvents: resumedRunEvents,
-      streamUpdate,
-      terminal
-    }: {
-      requestId?: string;
-      status?: string | null;
-      assistantStatusSteps?: string[];
-      usageMetrics?: Record<
-        string,
-        {
-          stage?: string;
-          model?: string;
-          inputTokens?: number;
-          outputTokens?: number;
-          totalTokens?: number;
-        }
-      >;
-      runEvents?: Array<{
-        id?: string;
-        kind?: BuildLiveRunEvent['kind'];
-        phase?: string | null;
-        message?: string;
-        createdAt?: number;
-        deduped?: boolean;
-        details?: BuildLiveRunEvent['details'];
-        usage?: BuildLiveRunEvent['usage'];
-      }>;
-      streamUpdate?: {
-        reply?: string;
-        codeGenerated?: string | null;
-        hasCodeGeneratedField?: boolean;
-        userMessageId?: number | null;
-        assistantMessageId?: number | null;
-        assistantMessageCreatedAt?: number | null;
-        projectFiles?: Array<{ path: string; content?: string }> | null;
-        projectFilesMode?: 'patch' | 'snapshot' | null;
-        projectFilesPersisted?: boolean;
-        projectFilesFocusPath?: string | null;
-      } | null;
-      terminal?: {
-        type?: 'complete' | 'error' | 'stopped';
-        payload?: any;
-      } | null;
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      if (terminal?.type === 'complete' && terminal.payload) {
-        void handleGenerateComplete(terminal.payload);
-        return;
-      }
-      if (terminal?.type === 'error' && terminal.payload) {
-        void handleGenerateError(terminal.payload);
-        return;
-      }
-      if (terminal?.type === 'stopped' && terminal.payload) {
-        void handleGenerateStopped(terminal.payload);
-        return;
-      }
-      generatingRef.current = true;
-      setGenerating(true);
-      const nextStatus = typeof status === 'string' ? status : null;
-      const nextAssistantStatusSteps = Array.isArray(assistantStatusSteps)
-        ? assistantStatusSteps.filter(
-            (entry): entry is string =>
-              typeof entry === 'string' && entry.trim().length > 0
-          )
-        : [];
-      const nextUsageMetrics = Object.values(usageMetrics || {}).reduce<
-        Record<string, BuildUsageMetric>
-      >((result, metric) => {
-        const stage = String(metric?.stage || '').trim();
-        const model = String(metric?.model || '').trim();
-        if (!stage || !model) return result;
-        result[stage] = {
-          stage,
-          model,
-          inputTokens: Number(metric?.inputTokens || 0),
-          outputTokens: Number(metric?.outputTokens || 0),
-          totalTokens: Number(metric?.totalTokens || 0)
-        };
-        return result;
-      }, {});
-      const nextRunEvents = Array.isArray(resumedRunEvents)
-        ? resumedRunEvents
-            .filter(
-              (event): event is NonNullable<typeof resumedRunEvents>[number] =>
-                Boolean(event?.kind && event?.message)
-            )
-            .map((event, index) => ({
-              id:
-                typeof event.id === 'string' && event.id.trim().length > 0
-                  ? event.id
-                  : `${requestId}-${event.createdAt || Date.now()}-${index}`,
-              kind: event.kind as BuildRunEvent['kind'],
-              phase: event.phase || null,
-              message: String(event.message || ''),
-              createdAt:
-                typeof event.createdAt === 'number' &&
-                Number.isFinite(event.createdAt)
-                  ? event.createdAt
-                  : Date.now(),
-              deduped: Boolean(event.deduped),
-              details: event.details || null,
-              usage: event.usage || null
-            }))
-            .slice(-40)
-        : [];
-      setGeneratingStatus(nextStatus);
-      setAssistantStatusSteps(nextAssistantStatusSteps);
-      setUsageMetrics(nextUsageMetrics);
-      setRunEvents(nextRunEvents);
-      adoptPersistedBuildRunMessages({
-        userMessageId: streamUpdate?.userMessageId,
-        assistantMessageId: streamUpdate?.assistantMessageId,
-        assistantMessageCreatedAt: streamUpdate?.assistantMessageCreatedAt
-      });
-      onRegisterBuildRun({
-        buildId: buildRef.current?.id || build.id,
-        requestId,
-        runMode: activeRunModeRef.current,
-        userMessage:
-          userMessageIdRef.current && userMessageIdRef.current > 0
-            ? (chatMessagesRef.current.find(
-                (message) => message.id === userMessageIdRef.current
-              ) as ChatMessage | undefined) || null
-            : null,
-        assistantMessage:
-          assistantMessageIdRef.current && assistantMessageIdRef.current > 0
-            ? (chatMessagesRef.current.find(
-                (message) => message.id === assistantMessageIdRef.current
-              ) as ChatMessage | undefined) || null
-            : null,
-        baseProjectFiles: streamingProjectFilesBaseRef.current
-      });
-      const resumeStatusStepsToReplay =
-        nextAssistantStatusSteps.length > 0
-          ? nextAssistantStatusSteps
-          : nextStatus
-            ? [nextStatus]
-            : [];
-      for (const step of resumeStatusStepsToReplay) {
-        onUpdateBuildRunStatus({
-          requestId,
-          status: step
-        });
-      }
-      for (const metric of Object.values(nextUsageMetrics)) {
-        onUpdateBuildRunUsage({
-          requestId,
-          usage: metric
-        });
-      }
-      for (const runEvent of nextRunEvents) {
-        onAppendBuildRunEvent({
-          requestId,
-          event: runEvent
-        });
-      }
-      if (streamUpdate) {
-        const resumeUpdatePayload: {
-          requestId: string;
-          reply?: string;
-          codeGenerated?: string | null;
-          userMessageId?: number | null;
-          assistantMessageId?: number | null;
-          assistantMessageCreatedAt?: number | null;
-          projectFiles?: Array<{ path: string; content?: string }> | null;
-          projectFilesMode?: 'patch' | 'snapshot' | null;
-          projectFilesPersisted?: boolean;
-          projectFilesFocusPath?: string | null;
-        } = {
-          requestId
-        };
-        if (typeof streamUpdate.reply === 'string') {
-          resumeUpdatePayload.reply = streamUpdate.reply;
-        }
-        if (streamUpdate.hasCodeGeneratedField) {
-          resumeUpdatePayload.codeGenerated =
-            streamUpdate.codeGenerated ?? null;
-        }
-        if (
-          Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageId')
-        ) {
-          resumeUpdatePayload.userMessageId =
-            Number(streamUpdate.userMessageId || 0) > 0
-              ? Number(streamUpdate.userMessageId)
-              : null;
-        }
-        if (
-          Object.prototype.hasOwnProperty.call(
-            streamUpdate,
-            'assistantMessageId'
-          )
-        ) {
-          resumeUpdatePayload.assistantMessageId =
-            Number(streamUpdate.assistantMessageId || 0) > 0
-              ? Number(streamUpdate.assistantMessageId)
-              : null;
-        }
-        if (
-          Object.prototype.hasOwnProperty.call(
-            streamUpdate,
-            'assistantMessageCreatedAt'
-          )
-        ) {
-          resumeUpdatePayload.assistantMessageCreatedAt =
-            Number(streamUpdate.assistantMessageCreatedAt || 0) > 0
-              ? Number(streamUpdate.assistantMessageCreatedAt)
-              : null;
-        }
-        if (
-          Array.isArray(streamUpdate.projectFiles) &&
-          streamUpdate.projectFiles.length > 0
-        ) {
-          resumeUpdatePayload.projectFiles = streamUpdate.projectFiles;
-          resumeUpdatePayload.projectFilesMode =
-            streamUpdate.projectFilesMode === 'snapshot' ? 'snapshot' : 'patch';
-          resumeUpdatePayload.projectFilesPersisted =
-            streamUpdate.projectFilesPersisted === true;
-          resumeUpdatePayload.projectFilesFocusPath =
-            String(streamUpdate.projectFilesFocusPath || '').trim() || null;
-        }
-        handleGenerateUpdate(resumeUpdatePayload);
-      }
-      maybeAutoScrollDuringStream();
+    if (!shouldDelayQueuedRequestsForRuntimeFollowUp) {
+      await maybeStartNextQueuedRequest();
     }
+  }
 
-    async function handleGenerateError({
+  async function applyGenerateError({
+    requestId,
+    error,
+    requestLimits
+  }: {
+    requestId?: string;
+    error?: string;
+    requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
+  }) {
+    const latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    const currentRequestId = getCurrentRunRequestId(
       requestId,
-      error,
+      latestSharedRunIdentityState
+    );
+    if (!requestId || requestId !== currentRequestId) return;
+    markActiveBuildRunActivity();
+    resetDedupedProcessingReconcileState();
+    runtimeFollowUp.resetRuntimeHealthFollowUpState();
+    const assistantId = getCurrentActiveAssistantMessageId(
+      requestId,
+      latestSharedRunIdentityState
+    );
+    const errorMessage = error || 'Failed to generate code.';
+    const shouldPreserveAssistantArtifacts = Boolean(
+      assistantId &&
+        getLatestChatMessages().some(
+          (entry) =>
+            entry.id === assistantId &&
+            entry.role === 'assistant' &&
+            (Number(entry.artifactVersionId || 0) > 0 ||
+              (typeof entry.codeGenerated === 'string' &&
+                entry.codeGenerated.trim().length > 0))
+        )
+    );
+    const nextPolicy = applyRequestLimitsToCopilotPolicy(
+      getLatestCopilotPolicy(),
       requestLimits
-    }: {
-      requestId?: string;
-      error?: string;
-      requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      resetDedupedProcessingReconcileState();
-      resetRuntimeHealthFollowUpState();
-      const assistantId = assistantMessageIdRef.current;
-      const errorMessage = error || 'Failed to generate code.';
-      const nextPolicy = applyRequestLimitsToCopilotPolicy(
-        copilotPolicyRef.current,
-        requestLimits
-      );
-      if (nextPolicy) {
-        copilotPolicyRef.current = nextPolicy;
-        updateCopilotPolicyRef.current(nextPolicy);
-      }
+    );
+    if (nextPolicy) {
+      replaceCopilotPolicy(nextPolicy);
+    }
+    if (!shouldPreserveAssistantArtifacts) {
       const nextAssistantId = upsertLocalBuildChatAssistantMessage(
         assistantId,
         errorMessage
       );
       if (nextAssistantId) {
-        assistantMessageIdRef.current = nextAssistantId;
+        runIdentity.setAssistantMessageId(nextAssistantId);
       }
-      setRunError(null);
-      onFailBuildRun({
-        requestId,
-        error: errorMessage,
-        assistantText: errorMessage,
-        preserveTransientUserMessage: true,
-        preserveTransientAssistantMessage: true
-      });
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-      setMobilePanelTab('chat');
-      generatingRef.current = false;
-      setGenerating(false);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      postCompleteSyncInFlightRef.current = true;
-      try {
-        await syncChatMessagesFromServer(undefined, true, {
-          preserveLocalMessages: true
-        });
-      } catch (syncError) {
-        console.error('Failed to sync chat messages after error:', syncError);
-      } finally {
-        postCompleteSyncInFlightRef.current = false;
-      }
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      activeRunMessageContextRef.current = null;
-      userRequestedStopRef.current = false;
-      activeRunModeRef.current = 'user';
-      scrollChatToBottom();
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
     }
-
-    async function handleGenerateStopped({
+    onFailBuildRun({
       requestId,
-      deduped,
-      guardStatus
-    }: {
-      requestId?: string;
-      deduped?: boolean;
-      guardStatus?: 'processing' | 'completed' | 'conflict';
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      const stoppedRunMode = activeRunModeRef.current;
-      const userRequestedStop = userRequestedStopRef.current;
-      setRunError(null);
-      if (deduped) {
-        resetDedupedProcessingReconcileState();
-        resetRuntimeHealthFollowUpState();
-        let shouldStartQueuedRequest = true;
-        if (guardStatus === 'completed') {
-          userRequestedStopRef.current = false;
-          try {
-            await syncChatMessagesFromServer(undefined, true);
-          } catch (error) {
-            console.error(
-              'Failed to sync chat messages after deduped completed stop:',
-              error
-            );
-          } finally {
-            streamRequestIdRef.current = null;
-            userMessageIdRef.current = null;
-            assistantMessageIdRef.current = null;
-            activeRunMessageContextRef.current = null;
-          }
-        } else if (guardStatus === 'processing') {
-          userRequestedStopRef.current = userRequestedStop;
-          // Keep request refs briefly in case late events from the claimed
-          // worker arrive, then reconcile from writer if they do not.
-          shouldStartQueuedRequest = false;
-          if (!userRequestedStop) {
-            const nextAssistantId = upsertLocalBuildChatAssistantMessage(
-              assistantMessageIdRef.current,
-              'I lost the live response for this run, but another Lumine worker still reports it in progress. I am trying to recover the latest result.'
-            );
-            if (nextAssistantId) {
-              assistantMessageIdRef.current = nextAssistantId;
-            }
-          }
-          generatingRef.current = true;
-          setGenerating(true);
-          setGeneratingStatus(
-            userRequestedStop ? 'Stopping...' : 'Recovering live response...'
-          );
-          setAssistantStatusSteps((prev) =>
-            appendUniqueStatusStep(
-              prev,
-              userRequestedStop ? 'Stopping...' : 'Recovering live response...'
-            )
-          );
-          onUpdateBuildRunStatus({
-            requestId,
-            status: userRequestedStop
-              ? 'Stopping...'
-              : 'Recovering live response...'
-          });
-          try {
-            await syncChatMessagesFromServer(undefined, true, {
-              preserveLocalMessages: true,
-              preserveActiveAssistantState: true
-            });
-          } catch (error) {
-            console.error(
-              'Failed to sync chat messages during deduped processing recovery:',
-              error
-            );
-          }
-          maybeResumeActiveBuildRun();
-          scheduleDedupedProcessingReconcile(requestId);
-          setMobilePanelTab('chat');
-          scrollChatToBottom();
-          return;
-        } else {
-          userRequestedStopRef.current = false;
-          try {
-            await syncChatMessagesFromServer(undefined, true);
-          } catch (error) {
-            console.error(
-              'Failed to sync chat messages after deduped stop:',
-              error
-            );
-          } finally {
-            streamRequestIdRef.current = null;
-            userMessageIdRef.current = null;
-            assistantMessageIdRef.current = null;
-            activeRunMessageContextRef.current = null;
-          }
-        }
-        generatingRef.current = false;
-        onStopBuildRun({
-          requestId,
-          preserveTransientUserMessage: true,
-          preserveTransientAssistantMessage: true
-        });
-        setStreamingProjectFiles(null);
-        setStreamingFocusFilePath(null);
-        setMobilePanelTab('chat');
-        setGenerating(false);
-        setGeneratingStatus(null);
-        setAssistantStatusSteps([]);
-        activeRunModeRef.current = 'user';
-        scrollChatToBottom();
-        if (shouldStartQueuedRequest) {
-          await maybeStartNextQueuedRequest();
-        }
-        return;
-      }
-      userRequestedStopRef.current = false;
-      resetDedupedProcessingReconcileState();
-      resetRuntimeHealthFollowUpState();
-      const stopMessage = resolveStoppedRunAssistantMessage({
-        runMode: stoppedRunMode,
-        userRequestedStop
+      error: errorMessage,
+      assistantText: errorMessage,
+      preserveAssistantArtifactsOnError: shouldPreserveAssistantArtifacts,
+      preserveTransientUserMessage: true,
+      preserveTransientAssistantMessage: true
+    });
+    setMobilePanelTab('chat');
+    clearCurrentPageRunActivity();
+    runOrchestration.setPostCompleteSyncInFlight(true);
+    runtimeFollowUp.bumpRuntimeFollowUpRevision();
+    try {
+      await syncChatMessagesFromServer(undefined, true, {
+        preserveLocalMessages: true
       });
-      const nextAssistantId = upsertLocalBuildChatAssistantMessage(
-        assistantMessageIdRef.current,
-        stopMessage
-      );
-      if (nextAssistantId) {
-        assistantMessageIdRef.current = nextAssistantId;
+    } catch (syncError) {
+      console.error('Failed to sync chat messages after error:', syncError);
+    } finally {
+      runOrchestration.setPostCompleteSyncInFlight(false);
+      runtimeFollowUp.bumpRuntimeFollowUpRevision();
+    }
+    runIdentity.clearRunOwnership();
+    runOrchestration.setUserRequestedStop(false);
+    runIdentity.resetRunMode();
+    scrollChatToBottom();
+    void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+  }
+
+  async function applyGenerateStopped({
+    requestId,
+    deduped,
+    guardStatus,
+    runMode,
+    assistantText
+  }: {
+    requestId?: string;
+    deduped?: boolean;
+    guardStatus?: 'processing' | 'completed' | 'conflict';
+    runMode?: BuildRunMode;
+    assistantText?: string;
+  }) {
+    const latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    const currentRequestId = getCurrentRunRequestId(
+      requestId,
+      latestSharedRunIdentityState
+    );
+    if (!requestId || requestId !== currentRequestId) return;
+    markActiveBuildRunActivity();
+    const stoppedRunMode =
+      runMode || getCurrentRunMode(requestId, latestSharedRunIdentityState);
+    const userRequestedStop = runOrchestration.didUserRequestStop();
+    if (deduped) {
+      resetDedupedProcessingReconcileState();
+      runtimeFollowUp.resetRuntimeHealthFollowUpState();
+      let shouldStartQueuedRequest = true;
+      if (guardStatus === 'completed') {
+        runOrchestration.setUserRequestedStop(false);
+        try {
+          await syncChatMessagesFromServer(undefined, true);
+        } catch (error) {
+          console.error(
+            'Failed to sync chat messages after deduped completed stop:',
+            error
+          );
+        } finally {
+          runIdentity.clearRunOwnership();
+        }
+      } else if (guardStatus === 'processing') {
+        runOrchestration.setUserRequestedStop(userRequestedStop);
+        // Keep request refs live and recover through canonical shared replay.
+        shouldStartQueuedRequest = false;
+        if (!userRequestedStop) {
+          const nextAssistantId = upsertLocalBuildChatAssistantMessage(
+            getCurrentActiveAssistantMessageId(
+              requestId,
+              latestSharedRunIdentityState
+            ),
+            'I lost the live response for this run, but another Lumine worker still reports it in progress. I am trying to recover the latest result.'
+          );
+          if (nextAssistantId) {
+            runIdentity.setAssistantMessageId(nextAssistantId);
+          }
+        }
+        markCurrentPageRunActivityActive();
+        onUpdateBuildRunStatus({
+          requestId,
+          status: userRequestedStop
+            ? 'Stopping...'
+            : DEDUPED_PROCESSING_RECOVERY_STATUS
+        });
+        setMobilePanelTab('chat');
+        scrollChatToBottom();
+        beginDedupedProcessingRecovery(requestId);
+        return;
+      } else {
+        runOrchestration.setUserRequestedStop(false);
+        try {
+          await syncChatMessagesFromServer(undefined, true);
+        } catch (error) {
+          console.error(
+            'Failed to sync chat messages after deduped stop:',
+            error
+          );
+        } finally {
+          runIdentity.clearRunOwnership();
+        }
       }
+      clearCurrentPageRunActivity();
       onStopBuildRun({
         requestId,
-        assistantText: stopMessage,
         preserveTransientUserMessage: true,
         preserveTransientAssistantMessage: true
       });
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
       setMobilePanelTab('chat');
-      generatingRef.current = false;
-      setGenerating(false);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      activeRunModeRef.current = 'user';
-      postCompleteSyncInFlightRef.current = true;
-      try {
-        await syncChatMessagesFromServer(undefined, true, {
-          preserveLocalMessages: true
-        });
-      } catch (error) {
-        console.error('Failed to sync chat messages after stop:', error);
-      } finally {
-        postCompleteSyncInFlightRef.current = false;
-      }
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      activeRunMessageContextRef.current = null;
-      setRunError(null);
+      runIdentity.resetRunMode();
       scrollChatToBottom();
-      await maybeStartNextQueuedRequest();
+      if (shouldStartQueuedRequest) {
+        await maybeStartNextQueuedRequest();
+      }
+      return;
     }
-
-    function handleUsageUpdate({
-      requestId,
-      usage
-    }: {
-      requestId?: string;
-      usage?: {
-        stage?: string;
-        model?: string;
-        inputTokens?: number;
-        outputTokens?: number;
-        totalTokens?: number;
-      };
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      const stage = usage?.stage?.trim();
-      const model = usage?.model?.trim();
-      if (!stage || !model) return;
-      const inputTokens = Number(usage?.inputTokens || 0);
-      const outputTokens = Number(usage?.outputTokens || 0);
-      const totalTokens = Number(usage?.totalTokens || 0);
-
-      setUsageMetrics((prev) => {
-        const existing = prev[stage];
-        return {
-          ...prev,
-          [stage]: {
-            stage,
-            model,
-            inputTokens: (existing?.inputTokens || 0) + inputTokens,
-            outputTokens: (existing?.outputTokens || 0) + outputTokens,
-            totalTokens: (existing?.totalTokens || 0) + totalTokens
-          }
-        };
-      });
-      onUpdateBuildRunUsage({
+    runOrchestration.setUserRequestedStop(false);
+    resetDedupedProcessingReconcileState();
+    runtimeFollowUp.resetRuntimeHealthFollowUpState();
+    const stopMessage =
+      typeof assistantText === 'string' && assistantText.trim().length > 0
+        ? assistantText
+        : resolveStoppedRunAssistantMessage({
+            runMode: stoppedRunMode,
+            userRequestedStop
+          });
+    const nextAssistantId = upsertLocalBuildChatAssistantMessage(
+      getCurrentActiveAssistantMessageId(
         requestId,
-        usage: {
-          stage,
-          model,
-          inputTokens,
-          outputTokens,
-          totalTokens
-        }
-      });
+        latestSharedRunIdentityState
+      ),
+      stopMessage
+    );
+    if (nextAssistantId) {
+      runIdentity.setAssistantMessageId(nextAssistantId);
     }
-
-    function handleRunEvent({
+    onStopBuildRun({
       requestId,
-      event
-    }: {
-      requestId?: string;
-      event?: {
-        id?: string;
-        kind?: BuildLiveRunEvent['kind'];
-        phase?: string | null;
-        message?: string;
-        createdAt?: number;
-        deduped?: boolean;
-        details?: BuildLiveRunEvent['details'];
-        usage?: BuildLiveRunEvent['usage'];
-      };
-    }) {
-      if (!requestId || requestId !== streamRequestIdRef.current) return;
-      if (!event?.kind || !event?.message) return;
-      const kind = event.kind;
-      const message = event.message;
-      const createdAt =
-        typeof event.createdAt === 'number' && Number.isFinite(event.createdAt)
-          ? event.createdAt
-          : Date.now();
-      const nextEvent: BuildRunEvent = {
-        id:
-          typeof event.id === 'string' && event.id.trim().length > 0
-            ? event.id
-            : `${createdAt}-${kind}-${message}`,
-        kind,
-        phase: event.phase || null,
-        message,
-        createdAt,
-        deduped: Boolean(event.deduped),
-        details: event.details || null,
-        usage: event.usage || null
-      };
-      setRunEvents((prev) => {
-        if (prev.some((existing) => existing.id === nextEvent.id)) {
-          return prev;
-        }
-        const last = prev[prev.length - 1];
-        if (
-          last &&
-          last.kind === nextEvent.kind &&
-          last.phase === nextEvent.phase &&
-          last.message === nextEvent.message &&
-          Math.abs(last.createdAt - nextEvent.createdAt) < 1500
-        ) {
-          return [
-            ...prev.slice(0, -1),
-            {
-              ...last,
-              createdAt: nextEvent.createdAt,
-              deduped: nextEvent.deduped,
-              details: nextEvent.details ?? last.details ?? null,
-              usage: nextEvent.usage ?? last.usage ?? null
-            }
-          ];
-        }
-        const next = [...prev, nextEvent];
-        return next.slice(-40);
+      assistantText: stopMessage,
+      preserveTransientUserMessage: true,
+      preserveTransientAssistantMessage: true
+    });
+    setMobilePanelTab('chat');
+    clearCurrentPageRunActivity();
+    runIdentity.resetRunMode();
+    runOrchestration.setPostCompleteSyncInFlight(true);
+    runtimeFollowUp.bumpRuntimeFollowUpRevision();
+    try {
+      await syncChatMessagesFromServer(undefined, true, {
+        preserveLocalMessages: true
       });
+    } catch (error) {
+      console.error('Failed to sync chat messages after stop:', error);
+    } finally {
+      runOrchestration.setPostCompleteSyncInFlight(false);
+      runtimeFollowUp.bumpRuntimeFollowUpRevision();
+    }
+    runIdentity.clearRunOwnership();
+    scrollChatToBottom();
+    await maybeStartNextQueuedRequest();
+  }
+
+  function clearBufferedRunStartEvents() {
+    runOrchestration.clearPendingRunStartEvents();
+  }
+
+  function flushBufferedRunStartEvents(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    const buildId = Number(getLatestBuild()?.id || build.id);
+    const bufferedEvents = runOrchestration.consumePendingRunStartEvents();
+    if (!normalizedRequestId || !Number.isFinite(buildId) || buildId <= 0) {
+      return;
+    }
+    for (const event of bufferedEvents) {
       onAppendBuildRunEvent({
-        requestId,
-        event: nextEvent
+        buildId,
+        requestId: normalizedRequestId,
+        event
       });
-      if (kind === 'action') {
-        const implementationAttempt = parseCodexImplementationAttempt(message);
-        if (implementationAttempt) {
-          const committedBase = normalizeProjectFilesForBuild(
-            streamingProjectFilesBaseRef.current,
-            buildRef.current?.code || ''
-          );
-          streamingProjectFilesRef.current =
-            committedBase.length > 0 ? committedBase : null;
-          setStreamingProjectFiles(
-            committedBase.length > 0 ? committedBase : null
-          );
-          if (implementationAttempt > 1) {
-            setStreamingFocusFilePath(null);
-          }
-          return;
+    }
+  }
+
+  function flushBufferedRunStartEventsToPageFeedback() {
+    const bufferedEvents = runOrchestration.consumePendingRunStartEvents();
+    if (!bufferedEvents.length) {
+      return;
+    }
+    setPageFeedbackEvents((prev) => {
+      let nextEvents = prev;
+      for (const event of bufferedEvents) {
+        const lastEvent = nextEvents[nextEvents.length - 1];
+        if (
+          lastEvent &&
+          lastEvent.kind === event.kind &&
+          lastEvent.phase === event.phase &&
+          lastEvent.message === event.message
+        ) {
+          nextEvents = [...nextEvents.slice(0, -1), event];
+          continue;
         }
-        if (isCodexChecklistStepCompleted(message)) {
-          const currentStreamingProjectFiles = streamingProjectFilesRef.current;
-          if (
-            Array.isArray(currentStreamingProjectFiles) &&
-            currentStreamingProjectFiles.length > 0
-          ) {
-            const committedBase = normalizeProjectFilesForBuild(
-              currentStreamingProjectFiles,
-              buildRef.current?.code || ''
-            );
-            streamingProjectFilesBaseRef.current = committedBase;
-            streamingProjectFilesRef.current = committedBase;
-            setStreamingProjectFiles(committedBase);
-          }
-        }
+        nextEvents = [...nextEvents, event].slice(-8);
       }
+      return nextEvents;
+    });
+  }
+
+  function resolveBuildRunEventTargetRequestId(
+    sharedRunState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    )
+  ) {
+    const activeRequestId = getCurrentActiveRunRequestId(sharedRunState);
+    if (activeRequestId) {
+      return activeRequestId;
     }
-
-    function handleRuntimeVerifyComplete({
-      requestId,
-      improved,
-      reason,
-      shouldRepairAgain,
-      nextRemainingRepairs
-    }: {
-      requestId?: string;
-      improved?: boolean;
-      reason?: string;
-      shouldRepairAgain?: boolean;
-      nextRemainingRepairs?: number;
-    }) {
-      const pendingVerification = pendingRuntimeVerificationRef.current;
-      if (
-        !requestId ||
-        !pendingVerification ||
-        requestId !== pendingVerification.requestId
-      ) {
-        return;
-      }
-      const afterObservation = pendingVerification.afterObservation;
-      clearRuntimeVerification();
-      if (improved && reason) {
-        appendLocalRunEvent({
-          kind: 'action',
-          phase: 'preview',
-          message: `Lumine re-checked the repaired preview and it looks healthier: ${reason}.`
-        });
-      }
-      if (shouldRepairAgain && afterObservation) {
-        appendLocalRunEvent({
-          kind: 'status',
-          phase: 'preview',
-          message: `Lumine re-checked the repaired preview, but it did not improve enough: ${reason || 'preview health did not improve'}. Trying one last repair pass.`
-        });
-        void startRuntimeAutoFix(afterObservation, {
-          remainingRepairsAfterVerification: Math.max(
-            0,
-            Number(nextRemainingRepairs || 0)
-          ),
-          trigger: 'verification'
-        });
-        return;
-      }
-      if (!improved && reason) {
-        appendLocalRunEvent({
-          kind: 'status',
-          phase: 'preview',
-          message: `Lumine re-checked the repaired preview, but it still does not look healthier: ${reason}.`
-        });
-      }
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+    const sharedRequestId = String(sharedRunState?.requestId || '').trim();
+    if (!sharedRequestId) {
+      return '';
     }
-
-    function handleRuntimeVerifyError({
-      requestId,
-      error
-    }: {
-      requestId?: string;
-      error?: string;
-    }) {
-      const pendingVerification = pendingRuntimeVerificationRef.current;
-      if (
-        !requestId ||
-        !pendingVerification ||
-        requestId !== pendingVerification.requestId
-      ) {
-        return;
-      }
-      clearRuntimeVerification();
-      appendLocalRunEvent({
-        kind: 'status',
-        phase: 'preview',
-        message: error || 'Runtime verification failed.'
-      });
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+    if (
+      sharedRunState?.generating ||
+      runOrchestration.isPostCompleteSyncInFlight() ||
+      runtimeFollowUp.shouldHoldTerminalSharedBuildRun(sharedRequestId)
+    ) {
+      return sharedRequestId;
     }
-
-    socket.on('build_generate_update', handleGenerateUpdate);
-    socket.on('build_generate_complete', handleGenerateComplete);
-    socket.on('build_generate_error', handleGenerateError);
-    socket.on('build_generate_stopped', handleGenerateStopped);
-    socket.on('build_generate_status', handleGenerateStatus);
-    socket.on('build_usage_update', handleUsageUpdate);
-    socket.on('build_run_event', handleRunEvent);
-    socket.on('build_resume_run_state', handleResumeRunState);
-    socket.on('build_runtime_verify_complete', handleRuntimeVerifyComplete);
-    socket.on('build_runtime_verify_error', handleRuntimeVerifyError);
-    buildSocketListenersReadyRef.current = true;
-    setBuildSocketListenersReady(true);
-
-    return () => {
-      buildSocketListenersReadyRef.current = false;
-      setBuildSocketListenersReady(false);
-      socket.off('build_generate_update', handleGenerateUpdate);
-      socket.off('build_generate_complete', handleGenerateComplete);
-      socket.off('build_generate_error', handleGenerateError);
-      socket.off('build_generate_stopped', handleGenerateStopped);
-      socket.off('build_generate_status', handleGenerateStatus);
-      socket.off('build_usage_update', handleUsageUpdate);
-      socket.off('build_run_event', handleRunEvent);
-      socket.off('build_resume_run_state', handleResumeRunState);
-      socket.off('build_runtime_verify_complete', handleRuntimeVerifyComplete);
-      socket.off('build_runtime_verify_error', handleRuntimeVerifyError);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return '';
+  }
 
   function normalizeQueuedMessage(message: string) {
     return message.replace(/\s+/g, ' ').trim().toLowerCase();
   }
 
+  function appendPageFeedbackEvent(event: BuildRunEvent) {
+    setPageFeedbackEvents((prev) => {
+      const lastEvent = prev[prev.length - 1];
+      if (
+        lastEvent &&
+        lastEvent.kind === event.kind &&
+        lastEvent.phase === event.phase &&
+        lastEvent.message === event.message
+      ) {
+        return [...prev.slice(0, -1), event];
+      }
+      return [...prev, event].slice(-8);
+    });
+  }
+
   function appendLocalRunEvent({
     kind,
     phase,
-    message
+    message,
+    targetRequestId = null,
+    pageFeedbackOnMissingRequestId = false
   }: {
     kind: BuildRunEvent['kind'];
     phase: string | null;
     message: string;
+    targetRequestId?: string | null;
+    pageFeedbackOnMissingRequestId?: boolean;
   }) {
     const createdAt = Date.now();
-    const requestId = String(streamRequestIdRef.current || '').trim();
+    const explicitRequestId = String(targetRequestId || '').trim();
     const nextEvent: BuildRunEvent = {
       id: `${createdAt}-${kind}-${message}`,
       kind,
@@ -3446,472 +2738,124 @@ export default function BuildEditor({
       message,
       createdAt
     };
-    setRunEvents((prev) => {
-      return [...prev, nextEvent].slice(-40);
-    });
+    if (explicitRequestId) {
+      onAppendBuildRunEvent({
+        buildId: Number(getLatestBuild()?.id || build.id),
+        requestId: explicitRequestId,
+        event: nextEvent
+      });
+      return;
+    }
+    if (pageFeedbackOnMissingRequestId) {
+      appendPageFeedbackEvent(nextEvent);
+      return;
+    }
+    const requestId = resolveBuildRunEventTargetRequestId();
     if (requestId) {
       onAppendBuildRunEvent({
+        buildId: Number(getLatestBuild()?.id || build.id),
         requestId,
         event: nextEvent
       });
-    }
-  }
-
-  function handleRuntimeObservationChange(
-    nextState: BuildRuntimeObservationState
-  ) {
-    if (runtimeObservationStateRef.current === nextState) {
       return;
     }
-    const previousState = runtimeObservationStateRef.current;
-    const previousIssueKeys = new Set(
-      (previousState?.issues || []).map((issue) =>
-        buildRuntimeObservationIssueChatKey({
-          buildId: previousState?.buildId || nextState.buildId,
-          codeSignature: previousState?.codeSignature || null,
-          issue
-        })
-      )
-    );
-    const nextChatNotes: ChatMessage[] = [];
-    for (const issue of nextState.issues) {
-      if (!shouldSurfaceRuntimeObservationIssueInChat(issue)) {
-        continue;
-      }
-      const issueKey = buildRuntimeObservationIssueChatKey({
-        buildId: nextState.buildId,
-        codeSignature: nextState.codeSignature || null,
-        issue
-      });
-      if (
-        previousIssueKeys.has(issueKey) ||
-        runtimeObservationChatNoteKeysRef.current.has(issueKey)
-      ) {
-        continue;
-      }
-      runtimeObservationChatNoteKeysRef.current.add(issueKey);
-      nextChatNotes.push({
-        id: -(Date.now() + Math.floor(Math.random() * 1000)),
-        role: 'assistant',
-        content: formatRuntimeObservationChatNote(issue),
-        codeGenerated: null,
-        billingState: null,
-        streamCodePreview: null,
-        createdAt: Math.max(
-          1,
-          Math.floor(Number(issue.createdAt || Date.now()) / 1000)
-        ),
-        persisted: false,
-        source: 'runtime_observation'
-      });
+    if (runOrchestration.isStartingGeneration()) {
+      runOrchestration.bufferPendingRunStartEvent(nextEvent);
     }
-    if (isOwner && nextChatNotes.length > 0) {
-      setRuntimeObservationChatNotes((prev) =>
-        [...prev, ...nextChatNotes].slice(-12)
-      );
-      scrollChatToBottom('smooth');
-    }
-    const health = nextState.health;
-    if (health) {
-      const healthEventKey = [
-        nextState.buildId,
-        nextState.codeSignature || '',
-        health.booted ? '1' : '0',
-        health.meaningfulRender ? '1' : '0',
-        health.gameLike ? '1' : '0',
-        health.headingCount,
-        health.buttonCount,
-        health.formCount,
-        health.viewportOverflowY,
-        health.viewportOverflowX,
-        health.gameplayTelemetry?.status || '',
-        health.gameplayTelemetry?.overflowTop || 0,
-        health.gameplayTelemetry?.overflowRight || 0,
-        health.gameplayTelemetry?.overflowBottom || 0,
-        health.gameplayTelemetry?.overflowLeft || 0,
-        health.interactionStatus,
-        health.interactionTargetLabel || '',
-        JSON.stringify(health.interactionSteps || []),
-        health.visibleTextSample || ''
-      ].join('|');
-      if (lastRuntimeHealthEventKeyRef.current !== healthEventKey) {
-        lastRuntimeHealthEventKeyRef.current = healthEventKey;
-        const interactionTargetText = health.interactionTargetLabel
-          ? `"${health.interactionTargetLabel}"`
-          : 'a control';
-        const interactionStepCount = (health.interactionSteps || []).length;
-        const latestInteractionStep =
-          interactionStepCount > 0
-            ? health.interactionSteps[interactionStepCount - 1]
-            : null;
-        const previewHealthMessage =
-          health.gameLike &&
-          (health.viewportOverflowY > 48 || health.viewportOverflowX > 24)
-            ? `Preview booted, but the game overflows its viewport (${health.viewportOverflowY}px tall overflow, ${health.viewportOverflowX}px wide overflow).`
-            : health.gameplayTelemetry?.status === 'out-of-bounds'
-              ? `Preview booted, but gameplay escaped the declared playfield (${health.gameplayTelemetry.overflowTop}px top, ${health.gameplayTelemetry.overflowRight}px right, ${health.gameplayTelemetry.overflowBottom}px bottom, ${health.gameplayTelemetry.overflowLeft}px left overflow).`
-              : interactionStepCount >= 2 &&
-                  health.interactionStatus === 'changed' &&
-                  latestInteractionStep?.source === 'planned'
-                ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
-                : interactionStepCount >= 2 &&
-                    health.interactionStatus === 'changed'
-                  ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
-                  : health.interactionStatus === 'changed'
-                    ? latestInteractionStep?.source === 'planned'
-                      ? latestInteractionStep?.routeChanged &&
-                        latestInteractionStep.routeAfter
-                        ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
-                        : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
-                      : latestInteractionStep?.routeChanged &&
-                          latestInteractionStep.routeAfter
-                        ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
-                        : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
-                    : health.interactionStatus === 'unchanged'
-                      ? latestInteractionStep?.source === 'planned'
-                        ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
-                        : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
-                      : health.meaningfulRender
-                        ? 'Preview booted and rendered meaningful UI.'
-                        : 'Preview booted, but the UI still looks sparse.';
-        if (
-          previewHealthMessage !==
-            'Preview booted and rendered meaningful UI.' &&
-          previewHealthMessage !==
-            'Preview booted, but the UI still looks sparse.'
-        ) {
-          appendLocalRunEvent({
-            kind:
-              health.interactionStatus === 'changed' || health.meaningfulRender
-                ? 'action'
-                : 'status',
-            phase: 'preview',
-            message: previewHealthMessage
-          });
-        }
-      }
-    }
-    setRuntimeObservationState(nextState);
-  }
-
-  function getCurrentRuntimeObservationSummary() {
-    return formatRuntimeObservationSummary(runtimeObservationStateRef.current);
-  }
-
-  function armRuntimeAutoFix({
-    sourceRequestId = null,
-    sourceArtifactVersionId = null,
-    sourceRunMode = 'user'
-  }: {
-    sourceRequestId?: string | null;
-    sourceArtifactVersionId?: number | null;
-    sourceRunMode?: BuildRunMode;
-  } = {}) {
-    pendingRuntimeAutoFixRef.current = {
-      armedAt: Date.now(),
-      sourceRequestId,
-      sourceArtifactVersionId,
-      sourceRunMode
-    };
-  }
-
-  function disarmRuntimeAutoFix() {
-    pendingRuntimeAutoFixRef.current = null;
-  }
-
-  function armRuntimeVerification({
-    beforeObservation,
-    remainingRepairs,
-    allowSameCodeSignature = false
-  }: {
-    beforeObservation: BuildRuntimeObservationState;
-    remainingRepairs: number;
-    allowSameCodeSignature?: boolean;
-  }) {
-    pendingRuntimeVerificationRef.current = {
-      armedAt: Date.now(),
-      beforeObservation: cloneRuntimeObservationState(beforeObservation),
-      remainingRepairs: Math.max(0, remainingRepairs),
-      allowSameCodeSignature,
-      requestId: null,
-      afterObservation: null
-    };
-  }
-
-  function clearRuntimeVerification() {
-    pendingRuntimeVerificationRef.current = null;
-    activeRuntimeAutoFixContextRef.current = null;
-  }
-
-  function resetRuntimeHealthFollowUpState() {
-    disarmRuntimeAutoFix();
-    clearRuntimeVerification();
-  }
-
-  function handleProjectFilesDraftStateChange(
-    state: BuildEditorProjectFilesDraftState
-  ) {
-    projectFilesDraftRef.current = Array.isArray(state.files)
-      ? state.files.map((file) => ({
-          path: normalizeProjectFilePath(file.path),
-          content: typeof file.content === 'string' ? file.content : ''
-        }))
-      : [];
-    hasUnsavedProjectFilesRef.current = Boolean(state.hasUnsavedChanges);
-    savingProjectFilesRef.current = Boolean(state.saving);
-  }
-
-  async function waitForProjectFileSaveToSettle(timeoutMs = 12000) {
-    const startedAt = Date.now();
-    while (
-      savingProjectFilesRef.current &&
-      Date.now() - startedAt < timeoutMs
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    return !savingProjectFilesRef.current;
-  }
-
-  async function ensureProjectFilesPersistedBeforeRun({
-    runType
-  }: {
-    runType: 'copilot';
-  }) {
-    const MAX_AUTOSAVE_ATTEMPTS = 3;
-    const wait = (ms: number) =>
-      new Promise<void>((resolve) => setTimeout(resolve, ms));
-    const normalizeDraftForSave = (
-      files: Array<{ path: string; content?: string }>
-    ) =>
-      files.map((file) => ({
-        path: normalizeProjectFilePath(file.path),
-        content: typeof file.content === 'string' ? file.content : ''
-      }));
-    const draftSignature = (files: Array<{ path: string; content?: string }>) =>
-      files
-        .map(
-          (file) =>
-            `${file.path}\n${typeof file.content === 'string' ? file.content : ''}`
-        )
-        .join('\n---\n');
-
-    if (!isOwner) return true;
-    const settled = await waitForProjectFileSaveToSettle();
-    if (!settled) {
-      appendLocalRunEvent({
-        kind: 'lifecycle',
-        phase: 'error',
-        message:
-          'Please wait for file save to finish before starting a new run.'
-      });
-      return false;
-    }
-
-    let attempt = 0;
-    while (hasUnsavedProjectFilesRef.current) {
-      if (attempt >= MAX_AUTOSAVE_ATTEMPTS) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message:
-            'Unable to start run: file drafts kept changing during auto-save. Please stop editing and try again.'
-        });
-        return false;
-      }
-      attempt += 1;
-
-      const pendingFiles = normalizeDraftForSave(projectFilesDraftRef.current);
-      if (!pendingFiles.length) {
-        return true;
-      }
-      const pendingSignature = draftSignature(pendingFiles);
-
-      appendLocalRunEvent({
-        kind: 'status',
-        phase: 'planning',
-        message:
-          attempt === 1
-            ? 'Saving unsaved files before starting run...'
-            : 'Draft changed during save. Saving latest edits again...'
-      });
-      const saveResult = await handleSaveProjectFiles(pendingFiles, {
-        resumePausedQueue: false
-      });
-      if (!saveResult.success) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message: `Unable to start ${runType}: ${saveResult.error || 'failed to save files'}`
-        });
-        return false;
-      }
-
-      // Allow draft/persisted-state sync effects to propagate before checking again.
-      await wait(40);
-      const settledAfterSave = await waitForProjectFileSaveToSettle(4000);
-      if (!settledAfterSave) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message:
-            'Please wait for file save to finish before starting a new run.'
-        });
-        return false;
-      }
-
-      if (!hasUnsavedProjectFilesRef.current) {
-        appendLocalRunEvent({
-          kind: 'status',
-          phase: 'planning',
-          message: 'Saved pending file edits.'
-        });
-        return true;
-      }
-
-      const latestSignature = draftSignature(
-        normalizeDraftForSave(projectFilesDraftRef.current)
-      );
-      if (latestSignature === pendingSignature) {
-        // No new edits, but local unsaved marker has not converged yet.
-        const settleDeadline = Date.now() + 1200;
-        while (
-          hasUnsavedProjectFilesRef.current &&
-          Date.now() < settleDeadline
-        ) {
-          await wait(60);
-        }
-        if (!hasUnsavedProjectFilesRef.current) {
-          appendLocalRunEvent({
-            kind: 'status',
-            phase: 'planning',
-            message: 'Saved pending file edits.'
-          });
-          return true;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  async function ensureProjectFilesPersistedBeforePublish() {
-    const MAX_AUTOSAVE_ATTEMPTS = 3;
-    const wait = (ms: number) =>
-      new Promise<void>((resolve) => setTimeout(resolve, ms));
-    const normalizeDraftForSave = (
-      files: Array<{ path: string; content?: string }>
-    ) =>
-      files.map((file) => ({
-        path: normalizeProjectFilePath(file.path),
-        content: typeof file.content === 'string' ? file.content : ''
-      }));
-    const draftSignature = (files: Array<{ path: string; content?: string }>) =>
-      files
-        .map(
-          (file) =>
-            `${file.path}\n${typeof file.content === 'string' ? file.content : ''}`
-        )
-        .join('\n---\n');
-
-    const settled = await waitForProjectFileSaveToSettle();
-    if (!settled) {
-      appendLocalRunEvent({
-        kind: 'lifecycle',
-        phase: 'error',
-        message: 'Please wait for file save to finish before publishing.'
-      });
-      return false;
-    }
-
-    let attempt = 0;
-    while (hasUnsavedProjectFilesRef.current) {
-      if (attempt >= MAX_AUTOSAVE_ATTEMPTS) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message:
-            'Unable to publish: file drafts kept changing during auto-save. Please stop editing and publish again.'
-        });
-        return false;
-      }
-      attempt += 1;
-
-      const pendingFiles = normalizeDraftForSave(projectFilesDraftRef.current);
-      const pendingSignature = draftSignature(pendingFiles);
-      appendLocalRunEvent({
-        kind: 'status',
-        phase: 'publish',
-        message:
-          attempt === 1
-            ? 'Saving unsaved files before publish...'
-            : 'Draft changed during save. Saving latest edits before publish...'
-      });
-      const saveResult = await handleSaveProjectFiles(pendingFiles, {
-        resumePausedQueue: false
-      });
-      if (!saveResult.success) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message: `Unable to publish: ${saveResult.error || 'failed to save files'}`
-        });
-        return false;
-      }
-
-      await wait(40);
-      const settledAfterSave = await waitForProjectFileSaveToSettle(4000);
-      if (!settledAfterSave) {
-        appendLocalRunEvent({
-          kind: 'lifecycle',
-          phase: 'error',
-          message: 'Please wait for file save to finish before publishing.'
-        });
-        return false;
-      }
-      if (!hasUnsavedProjectFilesRef.current) {
-        appendLocalRunEvent({
-          kind: 'status',
-          phase: 'publish',
-          message: 'Saved pending file edits before publish.'
-        });
-        return true;
-      }
-
-      const latestSignature = draftSignature(
-        normalizeDraftForSave(projectFilesDraftRef.current)
-      );
-      if (latestSignature === pendingSignature) {
-        const settleDeadline = Date.now() + 1200;
-        while (
-          hasUnsavedProjectFilesRef.current &&
-          Date.now() < settleDeadline
-        ) {
-          await wait(60);
-        }
-        if (!hasUnsavedProjectFilesRef.current) {
-          appendLocalRunEvent({
-            kind: 'status',
-            phase: 'publish',
-            message: 'Saved pending file edits before publish.'
-          });
-          return true;
-        }
-      }
-    }
-
-    return true;
   }
 
   function updateQueuedRequests(next: QueuedBuildRequest[]) {
-    queuedRequestsRef.current = next;
+    runOrchestration.setQueuedRequests(next);
   }
 
-  function isRunActivityInFlight({ includeBootstrap = true } = {}) {
+  function getCurrentActiveRunRequestId(
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return runIdentity.getCurrentActiveRunRequestId(
+      sharedRunState,
+      runOrchestration.hasCurrentPageRunActivity()
+    );
+  }
+
+  function getCurrentRunRequestId(
+    requestId?: string | null,
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return runIdentity.getCurrentRunRequestId(
+      requestId,
+      sharedRunState,
+      runOrchestration.hasCurrentPageRunActivity()
+    );
+  }
+
+  function getCurrentRunMode(
+    requestId?: string | null,
+    sharedRunState = currentSharedRunIdentityState
+  ): BuildRunMode {
+    return runIdentity.getCurrentRunMode(requestId, sharedRunState);
+  }
+
+  function getCurrentActiveUserMessageId(
+    requestId?: string | null,
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return runIdentity.getCurrentActiveUserMessageId(
+      requestId,
+      sharedRunState,
+      runOrchestration.hasCurrentPageRunActivity()
+    );
+  }
+
+  function getCurrentActiveAssistantMessageId(
+    requestId?: string | null,
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return runIdentity.getCurrentActiveAssistantMessageId(
+      requestId,
+      sharedRunState,
+      runOrchestration.hasCurrentPageRunActivity()
+    );
+  }
+
+  function markCurrentPageRunActivityActive() {
+    runOrchestration.markCurrentPageRunActive();
+  }
+
+  function clearCurrentPageRunActivity() {
+    runOrchestration.clearCurrentPageRunActive();
+  }
+
+  function getCurrentPageRunActivityRequestId(
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return getCurrentActiveRunRequestId(sharedRunState);
+  }
+
+  function hasCurrentPageRunActivity(
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return Boolean(getCurrentPageRunActivityRequestId(sharedRunState));
+  }
+
+  function hasSharedGeneratingRun(
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return Boolean(sharedRunState?.generating);
+  }
+
+  function isRunActivityInFlight({
+    includeBootstrap = true,
+    sharedRunState = currentSharedRunIdentityState
+  }: {
+    includeBootstrap?: boolean;
+    sharedRunState?: SharedBuildRunIdentityState | null;
+  } = {}) {
     return (
-      (includeBootstrap && startingGenerationRef.current) ||
-      dedupedProcessingInFlightRef.current ||
-      generatingRef.current ||
-      postCompleteSyncInFlightRef.current
+      (includeBootstrap && runOrchestration.isStartingGeneration()) ||
+      hasSharedGeneratingRun(sharedRunState) ||
+      runOrchestration.isDedupedProcessingInFlight() ||
+      hasCurrentPageRunActivity(sharedRunState) ||
+      runOrchestration.isPostCompleteSyncInFlight()
     );
   }
 
@@ -3929,18 +2873,23 @@ export default function BuildEditor({
     const normalized = normalizeQueuedMessage(trimmed);
     const activeMessage = normalizeQueuedMessage(
       String(
-        chatMessagesRef.current.find(
-          (entry) => entry.id === userMessageIdRef.current
+        getLatestChatMessages().find(
+          (entry) =>
+            entry.id ===
+            getCurrentActiveUserMessageId(
+              undefined,
+              currentSharedRunIdentityState
+            )
         )?.content || ''
       )
     );
     const activeMessageContext = normalizeQueuedMessage(
-      String(activeRunMessageContextRef.current || '')
+      String(runIdentity.getMessageContext() || '')
     );
     const normalizedMessageContext = normalizeQueuedMessage(
       trimmedMessageContext
     );
-    const existing = queuedRequestsRef.current;
+    const existing = runOrchestration.getQueuedRequests();
     const duplicateIndex = existing.findIndex(
       (entry) => normalizeQueuedMessage(entry.message) === normalized
     );
@@ -3991,22 +2940,26 @@ export default function BuildEditor({
       phase: 'stopping',
       message: 'Switching to your latest request...'
     });
-    if (generatingRef.current) {
+    if (
+      hasCurrentPageRunActivity(
+        getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+      )
+    ) {
       handleStopGeneration();
     }
   }
 
   async function maybeStartNextQueuedRequest() {
-    if (
-      pendingRuntimeAutoFixRef.current ||
-      pendingRuntimeVerificationRef.current
-    ) {
+    if (runtimeFollowUp.hasPendingRuntimeFollowUp()) {
       return;
     }
-    if (isRunActivityInFlight()) {
+    const latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    if (isRunActivityInFlight({ sharedRunState: latestSharedRunIdentityState })) {
       return;
     }
-    const [nextRequest, ...rest] = queuedRequestsRef.current;
+    const [nextRequest, ...rest] = runOrchestration.getQueuedRequests();
     if (!nextRequest) return;
     updateQueuedRequests(rest);
     appendLocalRunEvent({
@@ -4020,8 +2973,8 @@ export default function BuildEditor({
       existingUserMessageId: nextRequest.existingUserMessageId || null
     });
     if (!started) {
-      queuePausedForSaveRef.current = true;
-      updateQueuedRequests([nextRequest, ...queuedRequestsRef.current]);
+      runOrchestration.setQueuePausedForSave(true);
+      updateQueuedRequests([nextRequest, ...runOrchestration.getQueuedRequests()]);
       appendLocalRunEvent({
         kind: 'status',
         phase: 'queued',
@@ -4029,126 +2982,23 @@ export default function BuildEditor({
       });
       return;
     }
-    queuePausedForSaveRef.current = false;
+    runOrchestration.setQueuePausedForSave(false);
   }
 
   function maybeResumePausedQueueAfterSave() {
-    if (!queuePausedForSaveRef.current) return;
-    if (isRunActivityInFlight()) {
+    if (!runOrchestration.isQueuePausedForSave()) return;
+    if (
+      isRunActivityInFlight({
+        sharedRunState: getBuildRunIdentity(
+          Number(getLatestBuild()?.id || build.id)
+        )
+      })
+    ) {
       return;
     }
-    queuePausedForSaveRef.current = false;
+    runOrchestration.setQueuePausedForSave(false);
     void Promise.resolve().then(() => maybeStartNextQueuedRequest());
   }
-
-  function maybeProcessPendingRuntimeAutoFix(
-    observationState = runtimeObservationStateRef.current
-  ) {
-    const pendingAutoFix = pendingRuntimeAutoFixRef.current;
-    if (!observationState || !pendingAutoFix || !isOwner) return false;
-    if (isRunActivityInFlight({ includeBootstrap: true })) return false;
-    if (Date.now() - pendingAutoFix.armedAt > RUNTIME_AUTO_FIX_WINDOW_MS) {
-      disarmRuntimeAutoFix();
-      appendLocalRunEvent({
-        kind: 'status',
-        phase: 'preview',
-        message:
-          'Timed out while checking the updated preview for runtime issues.'
-      });
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
-      return true;
-    }
-    if (!observationState.codeSignature) {
-      return false;
-    }
-    if (observationState.updatedAt < pendingAutoFix.armedAt) {
-      return false;
-    }
-    const signatureKey = `${build.id}:${observationState.codeSignature}`;
-    if (runtimeAutoFixAttemptedSignaturesRef.current.has(signatureKey)) {
-      disarmRuntimeAutoFix();
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
-      return true;
-    }
-    runtimeAutoFixAttemptedSignaturesRef.current.add(signatureKey);
-    disarmRuntimeAutoFix();
-    if (
-      RUNTIME_AUTOFIX_ENABLED &&
-      (observationState.issues.some((issue) => issue.kind !== 'consoleerror') ||
-        !observationState.health?.meaningfulRender ||
-        observationState.health?.gameplayTelemetry?.status ===
-          'out-of-bounds' ||
-        (observationState.health?.gameLike &&
-          ((observationState.health?.viewportOverflowY || 0) > 48 ||
-            (observationState.health?.viewportOverflowX || 0) > 24)))
-    ) {
-      void startRuntimeAutoFix(observationState, {
-        sourceRequestId: pendingAutoFix.sourceRequestId,
-        sourceArtifactVersionId: pendingAutoFix.sourceArtifactVersionId
-      });
-      return true;
-    }
-    void Promise.resolve().then(() => maybeStartNextQueuedRequest());
-    return true;
-  }
-
-  function maybeProcessPendingRuntimeVerification(
-    observationState = runtimeObservationStateRef.current
-  ) {
-    const pendingVerification = pendingRuntimeVerificationRef.current;
-    if (!observationState || !pendingVerification || !isOwner) return false;
-    if (isRunActivityInFlight({ includeBootstrap: true })) return false;
-    if (
-      Date.now() - pendingVerification.armedAt >
-      RUNTIME_POST_FIX_VERIFICATION_WINDOW_MS
-    ) {
-      clearRuntimeVerification();
-      appendLocalRunEvent({
-        kind: 'status',
-        phase: 'preview',
-        message:
-          'Timed out while re-checking the repaired preview. Continuing without another automatic repair.'
-      });
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
-      return true;
-    }
-    if (
-      !observationState.codeSignature ||
-      observationState.updatedAt < pendingVerification.armedAt ||
-      (!pendingVerification.allowSameCodeSignature &&
-        observationState.codeSignature ===
-          pendingVerification.beforeObservation.codeSignature)
-    ) {
-      return false;
-    }
-    if (pendingVerification.requestId) {
-      return false;
-    }
-    const verificationRequestId = `${build.id}-runtime-verify-${Date.now()}`;
-    pendingRuntimeVerificationRef.current = {
-      ...pendingVerification,
-      requestId: verificationRequestId,
-      afterObservation: cloneRuntimeObservationState(observationState)
-    };
-    socket.emit('build_runtime_verify', {
-      buildId: build.id,
-      requestId: verificationRequestId,
-      beforeObservation: pendingVerification.beforeObservation,
-      afterObservation: observationState,
-      remainingRepairs: pendingVerification.remainingRepairs
-    });
-    return true;
-  }
-
-  useEffect(() => {
-    maybeProcessPendingRuntimeAutoFix(runtimeObservationState);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, isOwner, runtimeObservationState]);
-
-  useEffect(() => {
-    maybeProcessPendingRuntimeVerification(runtimeObservationState);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [build.id, isOwner, runtimeObservationState]);
 
   async function handleSendMessage(messageText: string) {
     return await sendBuildMessageText(messageText);
@@ -4171,14 +3021,16 @@ export default function BuildEditor({
   async function handleAcceptFollowUpPrompt() {
     if (!isOwner) return;
     const suggestedMessage = String(
-      displayedFollowUpPrompt?.suggestedMessage || ''
+      currentBuildRunView.followUpPrompt?.suggestedMessage || ''
     ).trim();
     if (!suggestedMessage) return;
     await sendBuildMessageText(suggestedMessage);
   }
 
   function handleDismissFollowUpPrompt() {
-    const nextKey = resolveBuildFollowUpPromptKey(displayedFollowUpPrompt);
+    const nextKey = resolveBuildFollowUpPromptKey(
+      currentBuildRunView.followUpPrompt
+    );
     if (!nextKey) return;
     setDismissedFollowUpPromptKey(nextKey);
   }
@@ -4207,17 +3059,17 @@ export default function BuildEditor({
     const targetBuildId = Number(options?.buildId || 0);
     if (
       targetBuildId > 0 &&
-      Number(buildRef.current?.id || 0) !== targetBuildId
+      Number(getLatestBuild()?.id || 0) !== targetBuildId
     ) {
       return;
     }
     const existingIds = new Set(
-      chatMessagesRef.current.map((entry) => entry.id)
+      getLatestChatMessages().map((entry) => entry.id)
     );
     if (existingIds.has(persistedMessage.id)) {
       return;
     }
-    const nextMessages = [...chatMessagesRef.current, persistedMessage].sort(
+    const nextMessages = [...getLatestChatMessages(), persistedMessage].sort(
       (a, b) => {
         if (a.createdAt !== b.createdAt) {
           return a.createdAt - b.createdAt;
@@ -4225,8 +3077,7 @@ export default function BuildEditor({
         return a.id - b.id;
       }
     );
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    replaceChatMessages(nextMessages);
     shouldAutoScrollRef.current = true;
     scrollChatToBottom('smooth', { force: true });
   }
@@ -4248,7 +3099,7 @@ export default function BuildEditor({
       createdAt: Math.floor(Date.now() / 1000),
       persisted: false
     };
-    const nextMessages = [...chatMessagesRef.current, nextMessage].sort(
+    const nextMessages = [...getLatestChatMessages(), nextMessage].sort(
       (a, b) => {
         if (a.createdAt !== b.createdAt) {
           return a.createdAt - b.createdAt;
@@ -4256,8 +3107,7 @@ export default function BuildEditor({
         return a.id - b.id;
       }
     );
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    replaceChatMessages(nextMessages);
     shouldAutoScrollRef.current = true;
     scrollChatToBottom('smooth', { force: true });
     return messageId;
@@ -4289,7 +3139,7 @@ export default function BuildEditor({
     )
       ? clampBuildChatUploadProgressPercent(options.uploadProgressPercent)
       : null;
-    const nextMessages = chatMessagesRef.current.map((entry) =>
+    const nextMessages = getLatestChatMessages().map((entry) =>
       entry.id === messageId
         ? {
             ...entry,
@@ -4303,8 +3153,7 @@ export default function BuildEditor({
           }
         : entry
     );
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    replaceChatMessages(nextMessages);
   }
 
   function upsertLocalBuildChatAssistantMessage(
@@ -4317,9 +3166,9 @@ export default function BuildEditor({
     }
     if (
       messageId &&
-      chatMessagesRef.current.some((entry) => entry.id === messageId)
+      getLatestChatMessages().some((entry) => entry.id === messageId)
     ) {
-      const nextMessages = chatMessagesRef.current.map((entry) =>
+      const nextMessages = getLatestChatMessages().map((entry) =>
         entry.id === messageId
           ? {
               ...entry,
@@ -4331,8 +3180,7 @@ export default function BuildEditor({
             }
           : entry
       );
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
+      replaceChatMessages(nextMessages);
       return messageId;
     }
     return appendLocalBuildChatAssistantMessage(trimmedText);
@@ -4355,16 +3203,34 @@ export default function BuildEditor({
       Number(assistantMessageCreatedAt || 0) > 0
         ? Number(assistantMessageCreatedAt)
         : null;
-    let nextMessages = chatMessagesRef.current;
+    let nextMessages = getLatestChatMessages();
     let changed = false;
-    const currentUserMessageId = userMessageIdRef.current;
-    const currentAssistantMessageId = assistantMessageIdRef.current;
+    const currentUserMessageId = getCurrentActiveUserMessageId(
+      undefined,
+      currentSharedRunIdentityState
+    );
+    const localCurrentUserMessageId = runIdentity.getCurrentActiveUserMessageId(
+      undefined,
+      null,
+      runOrchestration.hasCurrentPageRunActivity()
+    );
+    const currentAssistantMessageId = getCurrentActiveAssistantMessageId(
+      undefined,
+      currentSharedRunIdentityState
+    );
+    const localCurrentAssistantMessageId =
+      runIdentity.getCurrentActiveAssistantMessageId(
+        undefined,
+        null,
+        runOrchestration.hasCurrentPageRunActivity()
+      );
 
     if (normalizedUserMessageId) {
       nextMessages = nextMessages.map((entry) => {
         if (
           entry.id !== normalizedUserMessageId &&
-          entry.id !== currentUserMessageId
+          entry.id !== currentUserMessageId &&
+          entry.id !== localCurrentUserMessageId
         ) {
           return entry;
         }
@@ -4381,7 +3247,6 @@ export default function BuildEditor({
         }
         return nextEntry;
       });
-      userMessageIdRef.current = normalizedUserMessageId;
     }
 
     if (normalizedAssistantMessageId) {
@@ -4389,7 +3254,8 @@ export default function BuildEditor({
       nextMessages = nextMessages.map((entry) => {
         if (
           entry.id !== normalizedAssistantMessageId &&
-          entry.id !== currentAssistantMessageId
+          entry.id !== currentAssistantMessageId &&
+          entry.id !== localCurrentAssistantMessageId
         ) {
           return entry;
         }
@@ -4452,7 +3318,6 @@ export default function BuildEditor({
         nextMessages[primaryAssistantIndex] = mergedAssistant;
         changed = true;
       }
-      assistantMessageIdRef.current = normalizedAssistantMessageId;
     }
 
     if (!changed) {
@@ -4464,20 +3329,18 @@ export default function BuildEditor({
       }
       return a.id - b.id;
     });
-    chatMessagesRef.current = sortedMessages;
-    updateChatMessagesRef.current(sortedMessages);
+    replaceChatMessages(sortedMessages);
   }
 
   function removeLocalBuildChatMessage(messageId: number | null) {
     if (!messageId) return;
-    const nextMessages = chatMessagesRef.current.filter(
+    const nextMessages = getLatestChatMessages().filter(
       (entry) => entry.id !== messageId
     );
-    if (nextMessages.length === chatMessagesRef.current.length) {
+    if (nextMessages.length === getLatestChatMessages().length) {
       return;
     }
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    replaceChatMessages(nextMessages);
   }
 
   function buildBuildChatUploadPendingMessage(files: File[]) {
@@ -4879,7 +3742,7 @@ export default function BuildEditor({
       !options || !Object.prototype.hasOwnProperty.call(options, 'messageText');
 
     function didBuildChatUploadTargetChange() {
-      return Number(buildRef.current?.id || 0) !== uploadBuildId;
+      return Number(getLatestBuild()?.id || 0) !== uploadBuildId;
     }
 
     function clearConsumedBuildChatUploadDraft() {
@@ -5355,8 +4218,7 @@ export default function BuildEditor({
 
     if (
       isRunActivityInFlight() ||
-      pendingRuntimeAutoFixRef.current ||
-      pendingRuntimeVerificationRef.current
+      runtimeFollowUp.hasPendingRuntimeFollowUp()
     ) {
       enqueueLatestBuildRequest(trimmedMessage, requestOptions);
       return true;
@@ -5364,7 +4226,13 @@ export default function BuildEditor({
 
     const started = await startGeneration(trimmedMessage, requestOptions);
     if (!started) {
-      if (isRunActivityInFlight()) {
+      if (
+        isRunActivityInFlight({
+          sharedRunState: getBuildRunIdentity(
+            Number(getLatestBuild()?.id || build.id)
+          )
+        })
+      ) {
         enqueueLatestBuildRequest(trimmedMessage, options);
         return true;
       }
@@ -5374,18 +4242,15 @@ export default function BuildEditor({
   }
 
   function handleStopGeneration() {
-    const requestId = streamRequestIdRef.current;
-    if (!requestId || !generatingRef.current || !isOwner) {
+    const requestId = getCurrentPageRunActivityRequestId(
+      getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+    );
+    if (!requestId || !isOwner) {
       return;
     }
-    if (dedupedProcessingInFlightRef.current) {
-      userRequestedStopRef.current = true;
-      resetRuntimeHealthFollowUpState();
-      setRunError(null);
-      setGeneratingStatus('Stopping...');
-      setAssistantStatusSteps((prev) =>
-        appendUniqueStatusStep(prev, 'Stopping...')
-      );
+    if (runOrchestration.isDedupedProcessingInFlight()) {
+      runOrchestration.setUserRequestedStop(true);
+      runtimeFollowUp.resetRuntimeHealthFollowUpState();
       onUpdateBuildRunStatus({
         requestId,
         status: 'Stopping...'
@@ -5396,11 +4261,7 @@ export default function BuildEditor({
       scheduleDedupedProcessingReconcile(requestId);
       return;
     }
-    userRequestedStopRef.current = true;
-    setGeneratingStatus('Stopping...');
-    setAssistantStatusSteps((prev) =>
-      prev[prev.length - 1] === 'Stopping...' ? prev : [...prev, 'Stopping...']
-    );
+    runOrchestration.setUserRequestedStop(true);
     onUpdateBuildRunStatus({
       requestId,
       status: 'Stopping...'
@@ -5414,9 +4275,7 @@ export default function BuildEditor({
   async function handleDeleteMessage(message: ChatMessage) {
     if (!isOwner) return;
     if (message.source === 'runtime_observation') {
-      setRuntimeObservationChatNotes((prev) =>
-        prev.filter((entry) => entry.id !== message.id)
-      );
+      runtimeFollowUp.removeRuntimeObservationChatNote(message.id);
       return;
     }
     if (isMessageLockedForActiveRequest(message)) return;
@@ -5455,15 +4314,13 @@ export default function BuildEditor({
       messageContext: String(message.content || '').trim() || null
     });
     if (accepted) {
-      setRuntimeObservationChatNotes((prev) =>
-        prev.filter((entry) => entry.id !== message.id)
-      );
+      runtimeFollowUp.removeRuntimeObservationChatNote(message.id);
     }
     return accepted;
   }
 
   function handleReplaceCode(newCode: string) {
-    const activeBuild = buildRef.current;
+    const activeBuild = getLatestBuild();
     const currentFiles = normalizeProjectFilesForBuild(
       activeBuild?.projectFiles || [],
       activeBuild?.code || ''
@@ -5485,7 +4342,7 @@ export default function BuildEditor({
       primaryArtifactId?: number | null;
     }
   ) {
-    const activeBuild = buildRef.current;
+    const activeBuild = getLatestBuild();
     if (!activeBuild) return;
     if (!Array.isArray(restoredFilesInput) || restoredFilesInput.length === 0) {
       if (typeof restoredCode === 'string') {
@@ -5522,14 +4379,13 @@ export default function BuildEditor({
       },
       projectFiles: normalizedFiles
     };
-    buildRef.current = nextBuild;
-    updateBuildRef.current(nextBuild);
+    applyBuildUpdate(nextBuild);
   }
 
   function handleProjectFilesChange(
     nextFilesInput: Array<{ path: string; content?: string }>
   ) {
-    const activeBuild = buildRef.current;
+    const activeBuild = getLatestBuild();
     if (!activeBuild) return;
     const normalizedFiles = normalizeProjectFilesForBuild(
       nextFilesInput,
@@ -5552,8 +4408,7 @@ export default function BuildEditor({
       },
       projectFiles: normalizedFiles
     };
-    buildRef.current = nextBuild;
-    updateBuildRef.current(nextBuild);
+    applyBuildUpdate(nextBuild);
   }
 
   async function handleSaveProjectFiles(
@@ -5563,7 +4418,7 @@ export default function BuildEditor({
     if (!isOwner) {
       return { success: false, error: 'Not authorized' };
     }
-    const activeBuild = buildRef.current;
+    const activeBuild = getLatestBuild();
     const explicitTargetBuildId = Number(options?.targetBuildId || 0);
     const hasExplicitTargetBuild =
       Number.isFinite(explicitTargetBuildId) && explicitTargetBuildId > 0;
@@ -5574,10 +4429,10 @@ export default function BuildEditor({
     if (!Number.isFinite(requestBuildId) || requestBuildId <= 0) {
       return { success: false, error: 'Build not found' };
     }
-    if (requiresProjectFilesResyncBeforeSaveRef.current) {
+    if (runOrchestration.requiresProjectFilesResyncBeforeSave()) {
       try {
         await syncChatMessagesFromServer(undefined, true);
-        requiresProjectFilesResyncBeforeSaveRef.current = false;
+        runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
       } catch (syncError) {
         console.error(
           'Failed to refresh project files before save after generation:',
@@ -5616,7 +4471,7 @@ export default function BuildEditor({
         savedFiles,
         requestBuildCode
       );
-      const latestBuild = buildRef.current;
+      const latestBuild = getLatestBuild();
       if (!latestBuild || Number(latestBuild.id) !== requestBuildId) {
         if (options?.resumePausedQueue && !hasExplicitTargetBuild) {
           maybeResumePausedQueueAfterSave();
@@ -5651,11 +4506,9 @@ export default function BuildEditor({
         },
         projectFiles: savedFiles
       };
-      buildRef.current = nextBuild;
-      updateBuildRef.current(nextBuild);
+      applyBuildUpdate(nextBuild);
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
-        copilotPolicyRef.current = result?.copilotPolicy || null;
-        updateCopilotPolicyRef.current(result?.copilotPolicy || null);
+        replaceCopilotPolicy(result?.copilotPolicy || null);
       }
       if (options?.resumePausedQueue) {
         maybeResumePausedQueueAfterSave();
@@ -5671,18 +4524,25 @@ export default function BuildEditor({
     }
   }
 
+  async function persistProjectFilesDraft(
+    files: Array<{ path: string; content?: string }>
+  ): Promise<ProjectFileSaveResult> {
+    return await handleSaveProjectFiles(files, {
+      resumePausedQueue: false
+    });
+  }
+
   function updateRuntimeUploadQuotaUsage(
     usage: BuildRuntimeUploadUsage | null | undefined
   ) {
     const nextPolicy = applyRuntimeUploadUsageToCopilotPolicy(
-      copilotPolicyRef.current,
+      getLatestCopilotPolicy(),
       usage
     );
     if (!nextPolicy) {
       return;
     }
-    copilotPolicyRef.current = nextPolicy;
-    updateCopilotPolicyRef.current(nextPolicy);
+    replaceCopilotPolicy(nextPolicy);
   }
 
   function handleRuntimeUploadsSyncFromPreview(
@@ -5694,9 +4554,9 @@ export default function BuildEditor({
     setRuntimeUploadsError('');
     updateRuntimeUploadQuotaUsage(payload.usage || null);
     const currentBuildTitle = String(
-      buildRef.current?.title || build.title || ''
+      getLatestBuild()?.title || build.title || ''
     );
-    const currentBuildIsPublic = Boolean(buildRef.current?.isPublic);
+    const currentBuildIsPublic = Boolean(getLatestBuild()?.isPublic);
     const currentBuildAssets = Array.isArray(payload.assets)
       ? payload.assets.map((asset) => ({
           ...asset,
@@ -5806,13 +4666,25 @@ export default function BuildEditor({
     }
   }
 
-  function applyBuildUpdate(nextBuild: Build) {
-    buildRef.current = nextBuild;
-    updateBuildRef.current(nextBuild);
+  function setBuildRuntimeExplorationPlanValue(
+    nextRuntimeExplorationPlan: BuildRuntimeExplorationPlan | null
+  ) {
+    const activeBuild = getLatestBuild();
+    if (!activeBuild) return;
+    if (
+      serializedComparableValue(activeBuild.runtimeExplorationPlan ?? null) ===
+      serializedComparableValue(nextRuntimeExplorationPlan)
+    ) {
+      return;
+    }
+    applyBuildUpdate({
+      ...activeBuild,
+      runtimeExplorationPlan: nextRuntimeExplorationPlan
+    });
   }
 
   function clearLocalFollowUpPrompt() {
-    const activeBuild = buildRef.current;
+    const activeBuild = getLatestBuild();
     if (!activeBuild?.followUpPrompt) return;
     applyBuildUpdate({
       ...activeBuild,
@@ -5829,7 +4701,7 @@ export default function BuildEditor({
   }
 
   async function persistBuildThumbnailFromDataUrl(imageUrl: string) {
-    const latestBuild = buildRef.current;
+    const latestBuild = getLatestBuild();
     const file = returnImageFileFromUrl({
       imageUrl,
       fileName: `build-thumbnail-${latestBuild.id}.jpg`
@@ -5850,7 +4722,7 @@ export default function BuildEditor({
   }
 
   async function ensureBuildThumbnailBeforePublish() {
-    const latestBuild = buildRef.current;
+    const latestBuild = getLatestBuild();
     if (String(latestBuild.thumbnailUrl || '').trim()) {
       return latestBuild;
     }
@@ -5863,27 +4735,29 @@ export default function BuildEditor({
 
     setPublishing(true);
     try {
-      const requestedBuildId = Number(buildRef.current?.id || build.id);
+      const requestedBuildId = Number(getLatestBuild()?.id || build.id);
       if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
         appendLocalRunEvent({
           kind: 'lifecycle',
           phase: 'error',
-          message: 'Unable to publish: build not found.'
+          message: 'Unable to publish: build not found.',
+          pageFeedbackOnMissingRequestId: true
         });
         return;
       }
       const projectFilesReady =
-        await ensureProjectFilesPersistedBeforePublish();
+        await projectFileDrafts.ensureProjectFilesPersistedBeforePublish();
       if (!projectFilesReady) {
         return;
       }
-      const latestBuild = buildRef.current;
+      const latestBuild = getLatestBuild();
       if (!latestBuild || Number(latestBuild.id) !== requestedBuildId) {
         appendLocalRunEvent({
           kind: 'lifecycle',
           phase: 'error',
           message:
-            'Build changed before publish. Please retry on the active build.'
+            'Build changed before publish. Please retry on the active build.',
+          pageFeedbackOnMissingRequestId: true
         });
         return;
       }
@@ -5891,7 +4765,8 @@ export default function BuildEditor({
         appendLocalRunEvent({
           kind: 'lifecycle',
           phase: 'error',
-          message: 'Add code before publishing your build.'
+          message: 'Add code before publishing your build.',
+          pageFeedbackOnMissingRequestId: true
         });
         return;
       }
@@ -5906,7 +4781,8 @@ export default function BuildEditor({
             phase: 'publish',
             message: error?.message
               ? `${error.message} Publishing without a thumbnail instead.`
-              : 'Preview thumbnail could not be generated automatically. Publishing without a thumbnail instead.'
+              : 'Preview thumbnail could not be generated automatically. Publishing without a thumbnail instead.',
+            pageFeedbackOnMissingRequestId: true
           });
         }
       }
@@ -5923,8 +4799,7 @@ export default function BuildEditor({
           thumbnailUrl: result.build.thumbnailUrl
         });
         if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
-          copilotPolicyRef.current = result.copilotPolicy || null;
-          updateCopilotPolicyRef.current(result.copilotPolicy || null);
+          replaceCopilotPolicy(result.copilotPolicy || null);
         }
       }
     } catch (error: any) {
@@ -5932,7 +4807,8 @@ export default function BuildEditor({
       appendLocalRunEvent({
         kind: 'lifecycle',
         phase: 'publish',
-        message: error?.message || 'Unable to publish this build right now.'
+        message: error?.message || 'Unable to publish this build right now.',
+        pageFeedbackOnMissingRequestId: true
       });
     } finally {
       setPublishing(false);
@@ -5943,7 +4819,7 @@ export default function BuildEditor({
     if (!isOwner || publishing) return;
     setPublishing(true);
     try {
-      const latestBuild = buildRef.current;
+      const latestBuild = getLatestBuild();
       const result = await unpublishBuild(latestBuild.id);
       if (result?.success && result?.build) {
         applyBuildUpdate({
@@ -5951,8 +4827,7 @@ export default function BuildEditor({
           isPublic: result.build.isPublic
         });
         if (Object.prototype.hasOwnProperty.call(result, 'copilotPolicy')) {
-          copilotPolicyRef.current = result.copilotPolicy || null;
-          updateCopilotPolicyRef.current(result.copilotPolicy || null);
+          replaceCopilotPolicy(result.copilotPolicy || null);
         }
       }
     } catch (error: any) {
@@ -5960,7 +4835,8 @@ export default function BuildEditor({
       appendLocalRunEvent({
         kind: 'lifecycle',
         phase: 'publish',
-        message: error?.message || 'Unable to unpublish this build right now.'
+        message: error?.message || 'Unable to unpublish this build right now.',
+        pageFeedbackOnMissingRequestId: true
       });
     }
     setPublishing(false);
@@ -5993,20 +4869,18 @@ export default function BuildEditor({
         });
       }
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
-        copilotPolicyRef.current = result?.copilotPolicy || null;
-        updateCopilotPolicyRef.current(result?.copilotPolicy || null);
+        replaceCopilotPolicy(result?.copilotPolicy || null);
       }
     } catch (error: any) {
       console.error('Failed to purchase build generation reset:', error);
       const nextRequestLimits =
         error?.response?.data?.requestLimits || error?.requestLimits || null;
       const nextPolicy = applyRequestLimitsToCopilotPolicy(
-        copilotPolicyRef.current,
+        getLatestCopilotPolicy(),
         nextRequestLimits
       );
       if (nextPolicy) {
-        copilotPolicyRef.current = nextPolicy;
-        updateCopilotPolicyRef.current(nextPolicy);
+        replaceCopilotPolicy(nextPolicy);
       }
       setGenerationResetError(
         error?.response?.data?.error ||
@@ -6141,18 +5015,20 @@ export default function BuildEditor({
                 mobilePanelTab !== 'chat' ? mobilePanelHiddenClass : undefined
               }
               messages={mergedChatMessages}
-              executionPlan={displayedExecutionPlan}
+              executionPlan={currentBuildRunView.executionPlan}
               scopedPlanQuestion={resolveScopedPlanQuestion(
-                displayedExecutionPlan
+                currentBuildRunView.executionPlan
               )}
-              followUpPrompt={displayedFollowUpPrompt}
-              generating={displayedGenerating}
-              generatingStatus={displayedGeneratingStatus}
-              assistantStatusSteps={displayedAssistantStatusSteps}
+              followUpPrompt={currentBuildRunView.followUpPrompt}
+              runMode={currentBuildRunView.runMode}
+              generating={currentBuildRunView.generating}
+              generatingStatus={currentBuildRunView.status}
+              assistantStatusSteps={currentBuildRunView.assistantStatusSteps}
               copilotPolicy={copilotPolicy}
-              runEvents={displayedRunEvents}
-              runError={displayedRunError}
-              activeStreamMessageIds={displayedActiveStreamMessageIds}
+              pageFeedbackEvents={pageFeedbackEvents}
+              runEvents={currentBuildRunView.runEvents}
+              runError={currentBuildRunView.error}
+              activeStreamMessageIds={currentBuildRunView.activeStreamMessageIds}
               isOwner={isOwner}
               chatScrollRef={chatScrollRef}
               chatEndRef={chatEndRef}
@@ -6198,11 +5074,11 @@ export default function BuildEditor({
             build={build}
             code={build.code}
             projectFiles={previewProjectFiles}
-            streamingProjectFiles={streamingProjectFiles}
-            streamingFocusFilePath={streamingFocusFilePath}
+            streamingProjectFiles={currentBuildRunView.streamingProjectFiles}
+            streamingFocusFilePath={currentBuildRunView.streamingFocusFilePath}
             isOwner={isOwner}
             capabilitySnapshot={build.capabilitySnapshot || null}
-            runtimeExplorationPlan={runtimeExplorationPlan}
+            runtimeExplorationPlan={currentBuildRunView.runtimeExplorationPlan}
             onReplaceCode={handleReplaceCode}
             onApplyRestoredProjectFiles={handleApplyRestoredProjectFiles}
             onSaveProjectFiles={(files, options) =>
@@ -6212,9 +5088,9 @@ export default function BuildEditor({
               })
             }
             onEditableProjectFilesStateChange={
-              handleProjectFilesDraftStateChange
+              projectFileDrafts.handleProjectFilesDraftStateChange
             }
-            onRuntimeObservationChange={handleRuntimeObservationChange}
+            onRuntimeObservationChange={runtimeFollowUp.handleRuntimeObservationChange}
             onRuntimeUploadsSync={handleRuntimeUploadsSyncFromPreview}
             onOpenRuntimeUploadsManager={handleOpenRuntimeUploadsManager}
             currentBuildRuntimeAssets={currentBuildRuntimeAssets}
@@ -6268,7 +5144,7 @@ export default function BuildEditor({
       {thumbnailModalShown && isOwner && (
         <BuildThumbnailModal
           initialImageUrl={
-            build.thumbnailUrl || buildRef.current?.thumbnailUrl || null
+            build.thumbnailUrl || getLatestBuild()?.thumbnailUrl || null
           }
           loading={savingThumbnail}
           saveError={thumbnailSaveError}
@@ -6316,7 +5192,7 @@ export default function BuildEditor({
     description: string;
   }) {
     if (!isOwner || savingDescription) return;
-    const latestBuild = buildRef.current;
+    const latestBuild = getLatestBuild();
     const nextTitle = title.trim();
     const nextDescription = description.trim();
     if (
@@ -6338,8 +5214,7 @@ export default function BuildEditor({
           ...latestBuild,
           ...result.build
         };
-        buildRef.current = nextBuild;
-        updateBuildRef.current(nextBuild);
+        applyBuildUpdate(nextBuild);
         setDescriptionModalShown(false);
       }
     } catch (error) {
@@ -6351,7 +5226,7 @@ export default function BuildEditor({
 
   async function handleSaveThumbnail(croppedImageUrl: string | null) {
     if (!isOwner || savingThumbnail) return;
-    const latestBuild = buildRef.current;
+    const latestBuild = getLatestBuild();
     const currentThumbnailUrl = String(latestBuild.thumbnailUrl || '').trim();
     if (!croppedImageUrl && !currentThumbnailUrl) {
       setThumbnailSaveError('');
@@ -6431,52 +5306,32 @@ export default function BuildEditor({
       return false;
     }
     const runtimeObservationSummary =
-      formatRuntimeObservationSummary(observationState);
+      runtimeFollowUp.getCurrentRuntimeObservationSummary(observationState);
     if (!runtimeObservationSummary) {
       return false;
     }
-    const activeBuild = buildRef.current;
+    const activeBuild = getLatestBuild();
     const requestedBuildId = Number(activeBuild?.id || build.id);
     if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
       return false;
     }
 
     resetDedupedProcessingReconcileState();
-    userRequestedStopRef.current = false;
-    disarmRuntimeAutoFix();
-    pendingRuntimeVerificationRef.current = null;
-    setRuntimeExplorationPlan(null);
-    activeRuntimeAutoFixContextRef.current = {
-      beforeObservation: cloneRuntimeObservationState(observationState),
-      remainingRepairsAfterVerification: Math.max(
-        0,
-        options?.remainingRepairsAfterVerification ?? 1
-      )
-    };
+    runOrchestration.setUserRequestedStop(false);
+    runtimeFollowUp.prepareRuntimeAutoFixRun(observationState, {
+      remainingRepairsAfterVerification:
+        options?.remainingRepairsAfterVerification
+    });
+    setBuildRuntimeExplorationPlanValue(null);
     const now = Math.floor(Date.now() / 1000);
     const assistantMessageId = Date.now();
     const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
-    activeRunModeRef.current = 'runtime-autofix';
-    setRunError(null);
-    shouldHydrateSharedRunRef.current = false;
-    setDismissedFollowUpPromptKey('');
-    clearLocalFollowUpPrompt();
-    streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+    const baseProjectFiles = normalizeProjectFilesForBuild(
       activeBuild?.projectFiles || [],
       activeBuild?.code || ''
     );
-    setStreamingProjectFiles(null);
-    setStreamingFocusFilePath(null);
-    generatingRef.current = true;
-    setGenerating(true);
-    setGeneratingStatus(null);
-    setAssistantStatusSteps([]);
-    setUsageMetrics({});
-    setRunEvents([]);
-    streamRequestIdRef.current = requestId;
-    userMessageIdRef.current = null;
-    assistantMessageIdRef.current = assistantMessageId;
-    activeRunMessageContextRef.current = null;
+    setDismissedFollowUpPromptKey('');
+    clearLocalFollowUpPrompt();
 
     const assistantMessage: ChatMessage = {
       id: assistantMessageId,
@@ -6488,15 +5343,23 @@ export default function BuildEditor({
       persisted: false
     };
 
-    const nextMessages = [...chatMessagesRef.current, assistantMessage];
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    const nextMessages = [...getLatestChatMessages(), assistantMessage];
+    replaceChatMessages(nextMessages);
+    runIdentity.beginRun({
+      requestId,
+      runMode: 'runtime-autofix',
+      assistantMessageId
+    });
+    markCurrentPageRunActivityActive();
+    clearBufferedRunStartEvents();
+    markActiveBuildRunActivity();
+    runOrchestration.resetStalledRunRecovery();
     onRegisterBuildRun({
       buildId: requestedBuildId,
       requestId,
       runMode: 'runtime-autofix',
       assistantMessage,
-      baseProjectFiles: streamingProjectFilesBaseRef.current
+      baseProjectFiles
     });
     appendLocalRunEvent({
       kind: 'action',
@@ -6519,14 +5382,14 @@ export default function BuildEditor({
       message: 'Investigate and fix the observed runtime issues.',
       runtimeObservationSummary,
       runtimeObservation: observationState,
-      runtimeExplorationPlan,
+      runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,
       autoFixRuntimeObservation: true,
       runtimeAutoFixSourceRequestId: options?.sourceRequestId || null,
       runtimeAutoFixSourceArtifactVersionId:
         options?.sourceArtifactVersionId || null,
       expectedCurrentArtifactVersionId:
-        Number(buildRef.current?.currentArtifactVersionId || 0) > 0
-          ? Number(buildRef.current?.currentArtifactVersionId)
+        Number(getLatestBuild()?.currentArtifactVersionId || 0) > 0
+          ? Number(getLatestBuild()?.currentArtifactVersionId)
           : undefined
     });
     return true;
@@ -6544,19 +5407,21 @@ export default function BuildEditor({
     if (!messageText.trim() || isRunActivityInFlight() || !isOwner) {
       return false;
     }
-    startingGenerationRef.current = true;
+    runOrchestration.setStartingGeneration(true);
+    let didRegisterRun = false;
     try {
-      const requestedBuildId = Number(buildRef.current?.id || build.id);
+      const requestedBuildId = Number(getLatestBuild()?.id || build.id);
       if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
         return false;
       }
-      const projectFilesReady = await ensureProjectFilesPersistedBeforeRun({
-        runType: 'copilot'
-      });
+      const projectFilesReady =
+        await projectFileDrafts.ensureProjectFilesPersistedBeforeRun({
+          runType: 'copilot'
+        });
       if (!projectFilesReady) {
         return false;
       }
-      const activeBuild = buildRef.current;
+      const activeBuild = getLatestBuild();
       if (!activeBuild || Number(activeBuild.id) !== requestedBuildId) {
         appendLocalRunEvent({
           kind: 'lifecycle',
@@ -6567,40 +5432,29 @@ export default function BuildEditor({
         return false;
       }
       resetDedupedProcessingReconcileState();
-      userRequestedStopRef.current = false;
+      runOrchestration.setUserRequestedStop(false);
       const now = Math.floor(Date.now() / 1000);
       const messageId = Date.now();
       const requestId = `${activeBuild.id}-${messageId}`;
-      const runtimeObservationSummary = getCurrentRuntimeObservationSummary();
+      const runtimeObservationSummary =
+        runtimeFollowUp.getCurrentRuntimeObservationSummary();
       const trimmedMessageContext = String(
         options?.messageContext || ''
       ).trim();
       const existingUserMessageId =
         Number(options?.existingUserMessageId || 0) || null;
-      activeRunModeRef.current = 'user';
-      setRunError(null);
-      shouldHydrateSharedRunRef.current = false;
-      setDismissedFollowUpPromptKey('');
-      clearLocalFollowUpPrompt();
-      resetRuntimeHealthFollowUpState();
-      setRuntimeExplorationPlan(null);
-      streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+      const baseProjectFiles = normalizeProjectFilesForBuild(
         activeBuild.projectFiles || [],
         activeBuild.code || ''
       );
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-      generatingRef.current = true;
-      setGenerating(true);
-      setAssistantStatusSteps([]);
-      setUsageMetrics({});
-      setRunEvents([]);
-      streamRequestIdRef.current = requestId;
-      activeRunMessageContextRef.current = trimmedMessageContext || null;
+      setDismissedFollowUpPromptKey('');
+      clearLocalFollowUpPrompt();
+      runtimeFollowUp.resetRuntimeHealthFollowUpState();
+      setBuildRuntimeExplorationPlanValue(null);
 
       const existingUserMessage =
         existingUserMessageId && existingUserMessageId > 0
-          ? chatMessagesRef.current.find(
+          ? getLatestChatMessages().find(
               (entry) => entry.id === existingUserMessageId
             ) || null
           : null;
@@ -6629,23 +5483,32 @@ export default function BuildEditor({
         createdAt: now + 1,
         persisted: false
       };
-      userMessageIdRef.current =
-        (existingUserMessage && existingUserMessage.id) || userMessage.id;
-      assistantMessageIdRef.current = assistantMessage.id;
+      runIdentity.beginRun({
+        requestId,
+        runMode: 'user',
+        userMessageId:
+          (existingUserMessage && existingUserMessage.id) || userMessage.id,
+        assistantMessageId: assistantMessage.id,
+        messageContext: trimmedMessageContext || null
+      });
+      markCurrentPageRunActivityActive();
+      markActiveBuildRunActivity();
+      runOrchestration.resetStalledRunRecovery();
 
       const messagesWithUser = existingUserMessage
-        ? [...chatMessagesRef.current, assistantMessage]
-        : [...chatMessagesRef.current, userMessage, assistantMessage];
-      chatMessagesRef.current = messagesWithUser;
-      updateChatMessagesRef.current(messagesWithUser);
+        ? [...getLatestChatMessages(), assistantMessage]
+        : [...getLatestChatMessages(), userMessage, assistantMessage];
+      replaceChatMessages(messagesWithUser);
       onRegisterBuildRun({
         buildId: activeBuild.id,
         requestId,
         runMode: 'user',
         userMessage,
         assistantMessage,
-        baseProjectFiles: streamingProjectFilesBaseRef.current
+        baseProjectFiles
       });
+      didRegisterRun = true;
+      flushBufferedRunStartEvents(requestId);
       shouldAutoScrollRef.current = true;
       scrollChatToBottom('smooth', { force: true });
 
@@ -6664,7 +5527,10 @@ export default function BuildEditor({
       });
       return true;
     } finally {
-      startingGenerationRef.current = false;
+      runOrchestration.setStartingGeneration(false);
+      if (!didRegisterRun) {
+        flushBufferedRunStartEventsToPageFeedback();
+      }
     }
   }
 
@@ -6673,9 +5539,10 @@ export default function BuildEditor({
     if (isRunActivityInFlight() || !isOwner) {
       return false;
     }
-    startingGenerationRef.current = true;
+    runOrchestration.setStartingGeneration(true);
+    let didRegisterRun = false;
     try {
-      const activeBuild = buildRef.current;
+      const activeBuild = getLatestBuild();
       const requestedBuildId = Number(activeBuild?.id || build.id);
       if (!Number.isFinite(requestedBuildId) || requestedBuildId <= 0) {
         return false;
@@ -6690,33 +5557,18 @@ export default function BuildEditor({
         return false;
       }
       resetDedupedProcessingReconcileState();
-      userRequestedStopRef.current = false;
+      runOrchestration.setUserRequestedStop(false);
       const now = Math.floor(Date.now() / 1000);
       const assistantMessageId = Date.now();
       const requestId = `${activeBuild.id}-greeting-${assistantMessageId}`;
-      activeRunModeRef.current = 'greeting';
-      setRunError(null);
-      shouldHydrateSharedRunRef.current = false;
-      setDismissedFollowUpPromptKey('');
-      clearLocalFollowUpPrompt();
-      resetRuntimeHealthFollowUpState();
-      setRuntimeExplorationPlan(null);
-      streamingProjectFilesBaseRef.current = normalizeProjectFilesForBuild(
+      const baseProjectFiles = normalizeProjectFilesForBuild(
         activeBuild.projectFiles || [],
         activeBuild.code || ''
       );
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-      generatingRef.current = true;
-      setGenerating(true);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      setUsageMetrics({});
-      setRunEvents([]);
-      streamRequestIdRef.current = requestId;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = assistantMessageId;
-      activeRunMessageContextRef.current = null;
+      setDismissedFollowUpPromptKey('');
+      clearLocalFollowUpPrompt();
+      runtimeFollowUp.resetRuntimeHealthFollowUpState();
+      setBuildRuntimeExplorationPlanValue(null);
 
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -6728,16 +5580,25 @@ export default function BuildEditor({
         persisted: false
       };
 
-      const nextMessages = [...chatMessagesRef.current, assistantMessage];
-      chatMessagesRef.current = nextMessages;
-      updateChatMessagesRef.current(nextMessages);
+      const nextMessages = [...getLatestChatMessages(), assistantMessage];
+      replaceChatMessages(nextMessages);
+      runIdentity.beginRun({
+        requestId,
+        runMode: 'greeting',
+        assistantMessageId
+      });
+      markCurrentPageRunActivityActive();
+      markActiveBuildRunActivity();
+      runOrchestration.resetStalledRunRecovery();
       onRegisterBuildRun({
         buildId: activeBuild.id,
         requestId,
         runMode: 'greeting',
         assistantMessage,
-        baseProjectFiles: streamingProjectFilesBaseRef.current
+        baseProjectFiles
       });
+      didRegisterRun = true;
+      flushBufferedRunStartEvents(requestId);
       shouldAutoScrollRef.current = true;
       scrollChatToBottom('smooth', { force: true });
 
@@ -6747,28 +5608,33 @@ export default function BuildEditor({
       });
       return true;
     } finally {
-      startingGenerationRef.current = false;
+      runOrchestration.setStartingGeneration(false);
+      if (!didRegisterRun) {
+        flushBufferedRunStartEventsToPageFeedback();
+      }
     }
   }
 
   function removeLocalMessageByIds(ids: number[]) {
     const idSet = new Set(ids);
-    const nextMessages = chatMessagesRef.current.filter(
+    const nextMessages = getLatestChatMessages().filter(
       (entry) => !idSet.has(entry.id)
     );
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    replaceChatMessages(nextMessages);
   }
 
-  function getActiveStreamMessageIds() {
-    return [userMessageIdRef.current, assistantMessageIdRef.current].filter(
-      (id): id is number => typeof id === 'number' && id > 0
-    );
+  function getActiveStreamMessageIds(
+    sharedRunState = currentSharedRunIdentityState
+  ) {
+    return [
+      getCurrentActiveUserMessageId(undefined, sharedRunState),
+      getCurrentActiveAssistantMessageId(undefined, sharedRunState)
+    ].filter((id): id is number => typeof id === 'number' && id > 0);
   }
 
   function isMessageLockedForActiveRequest(message: ChatMessage) {
-    if (!displayedGenerating) return false;
-    return displayedActiveStreamMessageIds.includes(message.id);
+    if (!currentBuildRunView.generating) return false;
+    return currentBuildRunView.activeStreamMessageIds.includes(message.id);
   }
 
   function handleChatScroll() {
@@ -6780,28 +5646,58 @@ export default function BuildEditor({
     scrollChatToBottom('auto');
   }
 
+  function markActiveBuildRunActivity(activityAt?: number | null) {
+    runOrchestration.markRunActivity(activityAt);
+  }
+
   function maybeResumeActiveBuildRun() {
-    if (!buildSocketListenersReadyRef.current) return;
-    if (!generatingRef.current) return;
-    const requestId = String(streamRequestIdRef.current || '').trim();
+    const requestId = getCurrentPageRunActivityRequestId(
+      getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+    );
     if (!requestId) return;
-    const activeBuildId = Number(buildRef.current?.id || build.id);
+    const activeBuildId = Number(getLatestBuild()?.id || build.id);
     if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
     const now = Date.now();
-    if (now - lastResumeAttemptAtRef.current < 1500) return;
-    lastResumeAttemptAtRef.current = now;
+    if (!runOrchestration.claimResumeAttempt(now, 1500)) return;
     socket.emit('build_resume_run', {
       buildId: activeBuildId,
       requestId
     });
   }
 
+  function updateSharedStalledRunRecoveryStatus(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (!normalizedRequestId) return;
+    const activeBuildId = Number(getLatestBuild()?.id || build.id);
+    if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
+    const nextStatus = runOrchestration.didUserRequestStop()
+      ? 'Stopping...'
+      : runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)
+        ? DEDUPED_PROCESSING_RECOVERY_STATUS
+        : STALLED_RUN_RECOVERY_STATUS;
+    if (
+      String(sharedBuildRun?.requestId || '').trim() === normalizedRequestId &&
+      String(sharedBuildRun?.status || '').trim() === nextStatus
+    ) {
+      return;
+    }
+    onUpdateBuildRunStatus({
+      buildId: activeBuildId,
+      requestId: normalizedRequestId,
+      status: nextStatus
+    });
+  }
+
   function requestStopForRecoveredBuildRun(requestId: string) {
     const normalizedRequestId = String(requestId || '').trim();
     if (!normalizedRequestId) return;
-    const activeBuildId = Number(buildRef.current?.id || build.id);
+    const activeBuildId = Number(getLatestBuild()?.id || build.id);
     if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
-    if (buildSocketListenersReadyRef.current && generatingRef.current) {
+    if (
+      getCurrentPageRunActivityRequestId(
+        getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+      ) === normalizedRequestId
+    ) {
       socket.emit('build_resume_run', {
         buildId: activeBuildId,
         requestId: normalizedRequestId
@@ -6813,195 +5709,110 @@ export default function BuildEditor({
     });
   }
 
-  function clearDedupedProcessingReconcileTimer() {
-    if (!dedupedProcessingReconcileTimerRef.current) return;
-    clearTimeout(dedupedProcessingReconcileTimerRef.current);
-    dedupedProcessingReconcileTimerRef.current = null;
+  function resetDedupedProcessingReconcileState() {
+    runOrchestration.resetDedupedProcessingReconcileState();
   }
 
-  function resetDedupedProcessingReconcileState() {
-    clearDedupedProcessingReconcileTimer();
-    dedupedProcessingInFlightRef.current = false;
-    dedupedProcessingReconcileRequestIdRef.current = null;
-    dedupedProcessingReconcileStartedAtRef.current = 0;
+  function beginDedupedProcessingRecovery(requestId: string) {
+    const normalizedRequestId = runOrchestration.beginDedupedProcessingRecovery(
+      requestId
+    );
+    if (!normalizedRequestId) return;
+    reconcileDedupedProcessingRequest(normalizedRequestId);
+  }
+
+  function maybeStartSharedDedupedProcessingRecovery(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (!normalizedRequestId) return;
+    if (
+      getCurrentRunRequestId(
+        normalizedRequestId,
+        getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+      ) !== normalizedRequestId
+    ) {
+      return;
+    }
+    if (runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)) {
+      return;
+    }
+    setMobilePanelTab('chat');
+    scrollChatToBottom();
+    beginDedupedProcessingRecovery(normalizedRequestId);
   }
 
   function scheduleDedupedProcessingReconcile(requestId: string) {
-    dedupedProcessingInFlightRef.current = true;
-    if (dedupedProcessingReconcileRequestIdRef.current !== requestId) {
-      dedupedProcessingReconcileRequestIdRef.current = requestId;
-      dedupedProcessingReconcileStartedAtRef.current = Date.now();
-    } else if (!dedupedProcessingReconcileStartedAtRef.current) {
-      dedupedProcessingReconcileStartedAtRef.current = Date.now();
-    }
-    clearDedupedProcessingReconcileTimer();
-    dedupedProcessingReconcileTimerRef.current = setTimeout(() => {
-      void reconcileDedupedProcessingRequest(requestId);
-    }, DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS);
+    runOrchestration.scheduleDedupedProcessingReconcile({
+      requestId,
+      delayMs: DEDUPED_PROCESSING_RECONCILE_INTERVAL_MS,
+      onReconcile(nextRequestId) {
+        reconcileDedupedProcessingRequest(nextRequestId);
+      }
+    });
   }
 
-  async function reconcileDedupedProcessingRequest(requestId: string) {
-    if (
-      streamRequestIdRef.current !== requestId ||
-      dedupedProcessingReconcileRequestIdRef.current !== requestId
-    ) {
-      resetDedupedProcessingReconcileState();
-      return;
-    }
-    let shouldReschedule = false;
-    try {
-      await syncChatMessagesFromServer(undefined, true, {
-        preserveLocalMessages: true,
-        preserveActiveAssistantState: true
-      });
-    } catch (error) {
-      console.error('Failed to reconcile deduped build request:', error);
-      shouldReschedule = true;
-    } finally {
-      clearDedupedProcessingReconcileTimer();
-    }
-    if (shouldReschedule) {
-      scheduleDedupedProcessingReconcile(requestId);
-      return;
-    }
-    if (
-      streamRequestIdRef.current !== requestId ||
-      dedupedProcessingReconcileRequestIdRef.current !== requestId
-    ) {
-      resetDedupedProcessingReconcileState();
-      return;
-    }
-    const activeUserMessage =
-      typeof userMessageIdRef.current === 'number' &&
-      userMessageIdRef.current > 0
-        ? chatMessagesRef.current.find(
-            (entry) => entry.id === userMessageIdRef.current
-          ) || null
-        : null;
-    const activeAssistantMessage =
-      typeof assistantMessageIdRef.current === 'number' &&
-      assistantMessageIdRef.current > 0
-        ? chatMessagesRef.current.find(
-            (entry) => entry.id === assistantMessageIdRef.current
-          ) || null
-        : null;
-    scrollChatToBottom();
-
-    if (
-      isRecoveredBuildAssistantMessageResolved(activeAssistantMessage) &&
-      (!activeUserMessage || activeUserMessage.persisted)
-    ) {
-      onCompleteBuildRun({
-        requestId,
-        assistantText: activeAssistantMessage?.content,
-        artifactCode: activeAssistantMessage?.codeGenerated ?? null,
-        artifactVersionId:
-          Number(activeAssistantMessage?.artifactVersionId || 0) > 0
-            ? Number(activeAssistantMessage?.artifactVersionId)
-            : null,
-        persistedAssistantId: activeAssistantMessage?.id,
-        persistedUserId:
-          typeof activeUserMessage?.id === 'number' && activeUserMessage.id > 0
-            ? activeUserMessage.id
-            : null,
-        createdAt:
-          Number(activeAssistantMessage?.createdAt || 0) > 0
-            ? Number(activeAssistantMessage?.createdAt)
-            : undefined
-      });
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      generatingRef.current = false;
-      setGenerating(false);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-      activeRunModeRef.current = 'user';
-      activeRunMessageContextRef.current = null;
-      userRequestedStopRef.current = false;
-      setRunError(null);
-      resetDedupedProcessingReconcileState();
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
-      return;
-    }
-
-    const hasAnyActiveMessages = Boolean(
-      activeUserMessage || activeAssistantMessage
+  function reconcileDedupedProcessingRequest(requestId: string) {
+    let latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
     );
-    if (!hasAnyActiveMessages) {
-      const stopAssistantText = userRequestedStopRef.current
-        ? resolveStoppedRunAssistantMessage({
-            runMode: activeRunModeRef.current,
-            userRequestedStop: true
-          })
-        : undefined;
-      if (streamRequestIdRef.current === requestId) {
-        streamRequestIdRef.current = null;
-      }
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      generatingRef.current = false;
-      setGenerating(false);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-      activeRunModeRef.current = 'user';
-      activeRunMessageContextRef.current = null;
-      userRequestedStopRef.current = false;
-      onStopBuildRun({
-        requestId,
-        assistantText: stopAssistantText,
-        preserveTransientUserMessage: true,
-        preserveTransientAssistantMessage: true
-      });
+    if (
+      getCurrentRunRequestId(requestId, latestSharedRunIdentityState) !==
+        requestId ||
+      runOrchestration.getDedupedProcessingRequestId() !== requestId
+    ) {
       resetDedupedProcessingReconcileState();
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
       return;
     }
-
-    const startedAt =
-      dedupedProcessingReconcileStartedAtRef.current || Date.now();
-    if (Date.now() - startedAt >= DEDUPED_PROCESSING_RECONCILE_MAX_MS) {
-      const recoveryFailureMessage = userRequestedStopRef.current
-        ? 'I lost the live response for this run after requesting stop and could not confirm the final result. Please refresh to verify the latest build state.'
-        : 'I lost the live response for this run and could not recover the result. Please retry your request.';
-      const nextAssistantId = upsertLocalBuildChatAssistantMessage(
-        assistantMessageIdRef.current,
-        recoveryFailureMessage
-      );
-      if (nextAssistantId) {
-        assistantMessageIdRef.current = nextAssistantId;
-      }
-      onFailBuildRun({
-        requestId,
-        error: recoveryFailureMessage,
-        assistantText: recoveryFailureMessage,
-        preserveTransientUserMessage: true,
-        preserveTransientAssistantMessage: true
-      });
-      streamRequestIdRef.current = null;
-      userMessageIdRef.current = null;
-      assistantMessageIdRef.current = null;
-      generatingRef.current = false;
-      setGenerating(false);
-      setGeneratingStatus(null);
-      setAssistantStatusSteps([]);
-      setStreamingProjectFiles(null);
-      setStreamingFocusFilePath(null);
-      activeRunModeRef.current = 'user';
-      activeRunMessageContextRef.current = null;
-      userRequestedStopRef.current = false;
-      setRunError(null);
-      resetDedupedProcessingReconcileState();
-      void Promise.resolve().then(() => maybeStartNextQueuedRequest());
-      return;
-    }
-
+    // During deduped recovery, the page only re-requests canonical shared run
+    // state. Terminal outcomes come from shared replay or terminal socket events.
     maybeResumeActiveBuildRun();
+    latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    if (
+      getCurrentRunRequestId(requestId, latestSharedRunIdentityState) !==
+        requestId ||
+      runOrchestration.getDedupedProcessingRequestId() !== requestId
+    ) {
+      resetDedupedProcessingReconcileState();
+      return;
+    }
     scheduleDedupedProcessingReconcile(requestId);
+  }
+
+  function recoverStalledActiveBuildRun(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (!normalizedRequestId) return;
+    const latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    if (
+      runOrchestration.isStalledRunRecoveryInFlight() ||
+      !hasCurrentPageRunActivity(latestSharedRunIdentityState) ||
+      getCurrentRunRequestId(
+        normalizedRequestId,
+        latestSharedRunIdentityState
+      ) !== normalizedRequestId ||
+      runOrchestration.isPostCompleteSyncInFlight()
+    ) {
+      return;
+    }
+    const now = Date.now();
+    if (
+      now - runOrchestration.getLastStalledRunSyncAt() <
+      STALLED_RUN_RESUME_AFTER_MS
+    ) {
+      maybeResumeActiveBuildRun();
+      return;
+    }
+    runOrchestration.beginStalledRunRecovery(now);
+    try {
+      updateSharedStalledRunRecoveryStatus(normalizedRequestId);
+      setMobilePanelTab('chat');
+      scrollChatToBottom();
+      maybeResumeActiveBuildRun();
+    } finally {
+      runOrchestration.finishStalledRunRecovery();
+    }
   }
 
   function isChatNearBottom(threshold = 120) {
@@ -7026,47 +5837,74 @@ export default function BuildEditor({
         build.id,
         fromWriter ? { fromWriter: true } : undefined
       );
+      const latestSharedRunIdentityState = getBuildRunIdentity(
+        Number(getLatestBuild()?.id || build.id)
+      );
       if (buildPayload?.build) {
         const nextBuild = {
           ...buildPayload.build,
           executionPlan: buildPayload.executionPlan || null,
           followUpPrompt: buildPayload.followUpPrompt || null,
+          runtimeExplorationPlan: buildPayload.runtimeExplorationPlan || null,
           projectManifest: buildPayload.projectManifest || null,
           projectFiles: Array.isArray(buildPayload.projectFiles)
             ? buildPayload.projectFiles
             : []
         };
-        buildRef.current = nextBuild;
-        updateBuildRef.current(nextBuild);
+        applyBuildUpdate(nextBuild);
         if (fromWriter) {
-          requiresProjectFilesResyncBeforeSaveRef.current = false;
+          runOrchestration.setRequiresProjectFilesResyncBeforeSave(false);
         }
+      }
+      if (
+        buildPayload?.activeRun?.requestId &&
+        buildPayload.activeRun.requestId ===
+          getCurrentRunRequestId(
+            buildPayload.activeRun.requestId,
+            latestSharedRunIdentityState
+          ) &&
+        Number(buildPayload.activeRun.lastActivityAt || 0) > 0
+      ) {
+        markActiveBuildRunActivity(Number(buildPayload.activeRun.lastActivityAt));
       }
       messages = buildPayload?.chatMessages;
       if (
         buildPayload &&
         Object.prototype.hasOwnProperty.call(buildPayload, 'copilotPolicy')
       ) {
-        copilotPolicyRef.current = buildPayload.copilotPolicy || null;
-        updateCopilotPolicyRef.current(buildPayload.copilotPolicy || null);
+        replaceCopilotPolicy(buildPayload.copilotPolicy || null);
       }
     }
     if (!Array.isArray(messages)) return;
     // Re-read local chat state after any async writer fetch so streamed assistant
     // updates that arrived mid-sync are merged against the freshest local row.
-    const currentMessages = chatMessagesRef.current;
+    const currentMessages = getLatestChatMessages();
+    const latestSharedRunIdentityState = getBuildRunIdentity(
+      Number(getLatestBuild()?.id || build.id)
+    );
+    const activeRequestId = getCurrentActiveRunRequestId(
+      latestSharedRunIdentityState
+    );
+    const activeUserMessageId = getCurrentActiveUserMessageId(
+      activeRequestId,
+      latestSharedRunIdentityState
+    );
+    const activeAssistantMessageId =
+      getCurrentActiveAssistantMessageId(
+        activeRequestId,
+        latestSharedRunIdentityState
+      );
     const activeUserMessage =
-      typeof userMessageIdRef.current === 'number' &&
-      userMessageIdRef.current > 0
+      typeof activeUserMessageId === 'number' && activeUserMessageId > 0
         ? currentMessages.find(
-            (message) => message.id === userMessageIdRef.current
+            (message) => message.id === activeUserMessageId
           ) || null
         : null;
     const activeAssistantMessage =
-      typeof assistantMessageIdRef.current === 'number' &&
-      assistantMessageIdRef.current > 0
+      typeof activeAssistantMessageId === 'number' &&
+      activeAssistantMessageId > 0
         ? currentMessages.find(
-            (message) => message.id === assistantMessageIdRef.current
+            (message) => message.id === activeAssistantMessageId
           ) || null
         : null;
     const localBillingStateById = new Map<
@@ -7094,17 +5932,18 @@ export default function BuildEditor({
             options?.preserveActiveAssistantState === true
         })
       : normalized;
-    userMessageIdRef.current = findMatchingBuildChatMessageId({
-      messages: nextMessages,
-      targetMessage: activeUserMessage
+    runIdentity.adoptMessageIds({
+      userMessageId: findMatchingBuildChatMessageId({
+        messages: nextMessages,
+        targetMessage: activeUserMessage
+      }),
+      assistantMessageId: findMatchingBuildChatMessageId({
+        messages: nextMessages,
+        targetMessage: activeAssistantMessage,
+        activeUserMessage
+      })
     });
-    assistantMessageIdRef.current = findMatchingBuildChatMessageId({
-      messages: nextMessages,
-      targetMessage: activeAssistantMessage,
-      activeUserMessage
-    });
-    chatMessagesRef.current = nextMessages;
-    updateChatMessagesRef.current(nextMessages);
+    replaceChatMessages(nextMessages);
   }
 }
 

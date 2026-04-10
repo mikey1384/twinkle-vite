@@ -51,6 +51,17 @@ const headerTitleClass = css`
   font-size: 1.1rem;
 `;
 
+const BUILD_ASSISTANT_PLACEHOLDER_TEXT =
+  'Would you like me to continue working on this?';
+
+function isBuildAssistantPlaceholderContent(content: string | null | undefined) {
+  const normalizedContent = String(content || '').trim();
+  return (
+    !normalizedContent ||
+    normalizedContent === BUILD_ASSISTANT_PLACEHOLDER_TEXT
+  );
+}
+
 
 interface ChatMessage {
   id: number;
@@ -174,10 +185,12 @@ interface ChatPanelProps {
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;
   followUpPrompt?: BuildFollowUpPrompt | null;
+  runMode: 'user' | 'greeting' | 'runtime-autofix';
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
   copilotPolicy: BuildCopilotPolicy | null;
+  pageFeedbackEvents: BuildRunEvent[];
   runEvents: BuildRunEvent[];
   runError: string | null;
   activeStreamMessageIds: number[];
@@ -220,10 +233,12 @@ export default function ChatPanel({
   executionPlan,
   scopedPlanQuestion,
   followUpPrompt,
+  runMode,
   generating,
   generatingStatus,
   assistantStatusSteps,
   copilotPolicy,
+  pageFeedbackEvents,
   runEvents,
   runError,
   activeStreamMessageIds,
@@ -474,6 +489,7 @@ export default function ChatPanel({
     executionPlan?.status === 'awaiting_confirmation' &&
     !generating &&
     !draftMessage.trim();
+  const visiblePageFeedbackEvents = pageFeedbackEvents.slice(-3).reverse();
   const normalizedScopedPlanQuestion = String(scopedPlanQuestion || '').trim();
   const normalizedFollowUpQuestion = String(followUpPrompt?.question || '').trim();
   const normalizedFollowUpSuggestedMessage = String(
@@ -831,6 +847,18 @@ export default function ChatPanel({
             </div>
           </div>
         )}
+        {visiblePageFeedbackEvents.length > 0 ? (
+          <div
+            className={css`
+              display: grid;
+              gap: 0.55rem;
+            `}
+          >
+            {visiblePageFeedbackEvents.map((event) => (
+              <BuildPageFeedbackNotice key={event.id} event={event} />
+            ))}
+          </div>
+        ) : null}
       </div>
       <div
         ref={chatScrollRef}
@@ -846,6 +874,7 @@ export default function ChatPanel({
         >
         <BuildChatTranscript
           messages={messages}
+          runMode={runMode}
           generating={generating}
           generatingStatus={generatingStatus}
           assistantStatusSteps={assistantStatusSteps}
@@ -1474,8 +1503,80 @@ function BuildRunFailureNotice({ runError }: { runError: string }) {
   );
 }
 
+function BuildPageFeedbackNotice({ event }: { event: BuildRunEvent }) {
+  const normalizedMessage = String(event.message || '').trim();
+  if (!normalizedMessage) return null;
+
+  const label = formatStepLabel(String(event.phase || 'build').trim() || 'build');
+  const normalizedMessageKey = normalizedMessage.toLowerCase();
+  const isErrorLike =
+    label === 'Error' ||
+    normalizedMessageKey.startsWith('unable ') ||
+    normalizedMessageKey.startsWith('please wait') ||
+    normalizedMessageKey.includes('failed');
+  const isWarningLike = normalizedMessageKey.includes(
+    'without a thumbnail instead'
+  );
+  const accentColor = isErrorLike
+    ? Color.rose()
+    : isWarningLike
+      ? '#b45309'
+      : '#1d4ed8';
+  const backgroundColor = isErrorLike
+    ? 'rgba(244, 63, 94, 0.08)'
+    : isWarningLike
+      ? 'rgba(245, 158, 11, 0.12)'
+      : 'rgba(59, 130, 246, 0.08)';
+  const borderColor = isErrorLike
+    ? 'rgba(244, 63, 94, 0.16)'
+    : isWarningLike
+      ? 'rgba(245, 158, 11, 0.2)'
+      : 'rgba(59, 130, 246, 0.18)';
+
+  return (
+    <div
+      className={css`
+        border: 1px solid ${borderColor};
+        border-radius: 12px;
+        background: ${backgroundColor};
+        padding: 0.7rem 0.8rem;
+        display: grid;
+        gap: 0.3rem;
+      `}
+    >
+      <div
+        className={css`
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.78rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: ${accentColor};
+        `}
+      >
+        <Icon icon={isErrorLike ? 'exclamation-triangle' : 'info-circle'} />
+        {label}
+      </div>
+      <div
+        className={css`
+          font-size: 0.86rem;
+          line-height: 1.45;
+          color: var(--chat-text);
+          white-space: pre-wrap;
+          word-break: break-word;
+        `}
+      >
+        {normalizedMessage}
+      </div>
+    </div>
+  );
+}
+
 const BuildChatTranscript = React.memo(function BuildChatTranscript({
   messages,
+  runMode,
   generating,
   generatingStatus,
   assistantStatusSteps,
@@ -1489,6 +1590,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
   onDeleteMessage
 }: {
   messages: ChatMessage[];
+  runMode: 'user' | 'greeting' | 'runtime-autofix';
   generating: boolean;
   generatingStatus: string | null;
   assistantStatusSteps: string[];
@@ -1578,6 +1680,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
             key={message.id}
             message={message}
             messages={messages}
+            runMode={runMode}
             index={index}
             lastAssistantIndex={lastAssistantIndex}
             generating={generating}
@@ -1600,6 +1703,7 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
 function BuildChatMessageRow({
   message,
   messages,
+  runMode,
   index,
   lastAssistantIndex,
   generating,
@@ -1614,6 +1718,7 @@ function BuildChatMessageRow({
 }: {
   message: ChatMessage;
   messages: ChatMessage[];
+  runMode: 'user' | 'greeting' | 'runtime-autofix';
   index: number;
   lastAssistantIndex: number;
   generating: boolean;
@@ -1634,9 +1739,16 @@ function BuildChatMessageRow({
   const isLastAssistant =
     message.role === 'assistant' && index === lastAssistantIndex;
   const isActiveStreamMessage = activeStreamMessageIds.includes(message.id);
+  const hasMeaningfulAssistantContent =
+    message.role === 'assistant' &&
+    !isBuildAssistantPlaceholderContent(message.content);
   const isStreamingTarget =
-    (generating && isActiveStreamMessage) ||
-    (generating && message.role === 'assistant' && isLastAssistant);
+    generating &&
+    (isActiveStreamMessage ||
+      (activeStreamMessageIds.length === 0 &&
+        message.role === 'assistant' &&
+        isLastAssistant &&
+        (runMode === 'greeting' || !hasMeaningfulAssistantContent)));
   const shouldLazyLoad =
     messages.length > 10 && index < messages.length - 8 && !isStreamingTarget;
   const isVisible = useLazyLoad({
@@ -1670,50 +1782,41 @@ function BuildChatMessageRow({
             width: 100%;
           `}
         >
-          <button
-            onClick={() => onDeleteMessage(message)}
-            disabled={isStreamingTarget}
-            title={
-              isStreamingTarget
-                ? 'Cannot delete while this request is in progress'
-                : 'Delete message'
-            }
-            className={`${css`
-              position: absolute;
-              top: -0.35rem;
-              right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
-              left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
-              padding: 0;
-              border: none;
-              background: transparent;
-              color: var(--chat-text);
-              font-size: 1.05rem;
-              line-height: 1;
-              opacity: 0.55;
-              pointer-events: auto;
-              transition:
-                opacity 0.15s ease,
-                transform 0.15s ease,
-                color 0.15s ease;
-              transform: translateY(0);
-              cursor: pointer;
-              z-index: 2;
-              &:hover,
-              &:focus-visible {
-                opacity: 1;
-                color: ${Color.rose()};
-                transform: translateY(-1px);
-              }
-
-              &:disabled {
-                opacity: 0.35;
-                pointer-events: none;
-                cursor: not-allowed;
-              }
-            `} build-chat-delete-button`}
-          >
-            <Icon icon="times-circle" />
-          </button>
+          {!isStreamingTarget ? (
+            <button
+              onClick={() => onDeleteMessage(message)}
+              title="Delete message"
+              className={`${css`
+                position: absolute;
+                top: -0.35rem;
+                right: ${message.role === 'user' ? '-0.25rem' : 'auto'};
+                left: ${message.role === 'user' ? 'auto' : '-0.25rem'};
+                padding: 0;
+                border: none;
+                background: transparent;
+                color: var(--chat-text);
+                font-size: 1.05rem;
+                line-height: 1;
+                opacity: 0.55;
+                pointer-events: auto;
+                transition:
+                  opacity 0.15s ease,
+                  transform 0.15s ease,
+                  color 0.15s ease;
+                transform: translateY(0);
+                cursor: pointer;
+                z-index: 2;
+                &:hover,
+                &:focus-visible {
+                  opacity: 1;
+                  color: ${Color.rose()};
+                  transform: translateY(-1px);
+                }
+              `} build-chat-delete-button`}
+            >
+              <Icon icon="times-circle" />
+            </button>
+          ) : null}
           <div
             className={css`
               max-width: 85%;
@@ -1735,14 +1838,11 @@ function BuildChatMessageRow({
               <AssistantMessage
                 message={message}
                 messages={messages}
-                isLatestAssistant={isLastAssistant}
                 generating={generating}
                 generatingStatus={generatingStatus}
-                statusSteps={isLastAssistant ? assistantStatusSteps : []}
-                currentActivity={
-                  isLastAssistant ? currentActivity : null
-                }
-                statusStepEntries={isLastAssistant ? statusStepEntries : []}
+                statusSteps={isStreamingTarget ? assistantStatusSteps : []}
+                currentActivity={isStreamingTarget ? currentActivity : null}
+                statusStepEntries={isStreamingTarget ? statusStepEntries : []}
                 isOwner={isOwner}
                 onFixRuntimeObservationMessage={onFixRuntimeObservationMessage}
                 isStreamingTarget={isStreamingTarget}
@@ -1797,7 +1897,6 @@ function BuildChatMessageRow({
 function AssistantMessage({
   message,
   messages,
-  isLatestAssistant,
   generating,
   generatingStatus,
   statusSteps,
@@ -1809,7 +1908,6 @@ function AssistantMessage({
 }: {
   message: ChatMessage;
   messages: ChatMessage[];
-  isLatestAssistant: boolean;
   generating: boolean;
   generatingStatus: string | null;
   statusSteps: string[];
@@ -1840,9 +1938,15 @@ function AssistantMessage({
 
   const hasCodePayload = Boolean(message.codeGenerated || message.artifactVersionId);
   const hasChanges = diffStats && (diffStats.added > 0 || diffStats.removed > 0);
+  const rawVisibleMessageContent = isBuildAssistantPlaceholderContent(
+    message.content
+  )
+    ? ''
+    : message.content;
+  const visibleMessageContent = rawVisibleMessageContent;
   const hasStreamingCodePreview =
     generating &&
-    isLatestAssistant &&
+    isStreamingTarget &&
     !message.codeGenerated &&
     Boolean(message.streamCodePreview && message.streamCodePreview.trim());
   const normalizedCurrentActivityMessage = String(
@@ -1853,12 +1957,12 @@ function AssistantMessage({
   }, [generatingStatus]);
   const displayedCurrentActivityMessage =
     normalizedCurrentActivityMessage || fallbackActivityMessage;
-  const showCurrentActivity = generating && isLatestAssistant;
+  const showCurrentActivity = generating && isStreamingTarget;
   const shouldShowFallbackStep =
     generating &&
-    isLatestAssistant &&
+    isStreamingTarget &&
     statusSteps.length === 0 &&
-    !message.content;
+    !rawVisibleMessageContent;
   const displayedStatusStepEntries = shouldShowFallbackStep
     ? [
         {
@@ -1879,11 +1983,11 @@ function AssistantMessage({
             thoughtIsComplete: false,
             thoughtIsThinkingHard: false
           }));
-  const waitingForCurrentAssistantResponse = generating && isLatestAssistant;
+  const waitingForCurrentAssistantResponse = generating && isStreamingTarget;
   const showNoCodeWarning =
     !hasCodePayload &&
     !waitingForCurrentAssistantResponse &&
-    (looksLikeCompletedCodeChangeClaim(message.content) ||
+    (looksLikeCompletedCodeChangeClaim(visibleMessageContent) ||
       message.billingState === 'not_charged' ||
       message.billingState === 'pending');
   const uploadProgressPercent = Number(message.uploadProgressPercent ?? -1);
@@ -2096,15 +2200,15 @@ function AssistantMessage({
           </div>
         </div>
       )}
-      {message.content ? (
+      {visibleMessageContent ? (
         <RichText isAIMessage aiActionPlacement="inline" maxLines={15}>
-          {message.content}
+          {visibleMessageContent}
         </RichText>
       ) : null}
       {showFixRuntimeObservationButton && (
         <div
           className={css`
-            margin-top: ${message.content ? '0.8rem' : '0'};
+            margin-top: ${visibleMessageContent ? '0.8rem' : '0'};
             display: flex;
             justify-content: center;
           `}
@@ -2127,7 +2231,7 @@ function AssistantMessage({
       {showCurrentActivity && (
         <div
           className={css`
-            margin-top: ${message.content ? '0.55rem' : '0'};
+            margin-top: ${visibleMessageContent ? '0.55rem' : '0'};
             padding: 0.55rem 0.7rem;
             border-radius: 8px;
             border: 1px solid rgba(52, 109, 255, 0.16);

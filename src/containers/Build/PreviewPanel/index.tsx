@@ -1897,21 +1897,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       if (runtimeOnly) return;
       if (isShowingStreamingCode) return;
       if (!autoReturnToPreviewPendingRef.current) return;
-      const hasPreviewSurface = Boolean(
-        previewFrameSources.primary ||
-        previewFrameSources.secondary ||
-        previewSrc
-      );
-      if (!hasPreviewSurface) return;
       autoReturnToPreviewPendingRef.current = false;
       if (viewMode !== 'preview') {
         setViewMode('preview');
       }
     }, [
       isShowingStreamingCode,
-      previewFrameSources.primary,
-      previewFrameSources.secondary,
-      previewSrc,
       runtimeOnly,
       viewMode
     ]);

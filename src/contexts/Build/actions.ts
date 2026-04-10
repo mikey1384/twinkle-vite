@@ -1,5 +1,9 @@
 import React from 'react';
-import { BuildAction, BuildLiveRunActionPayload } from './reducer';
+import {
+  BuildAction,
+  BuildLiveRunActionPayload,
+  BuildRuntimeVerifyResultPayload
+} from './reducer';
 
 export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
   return {
@@ -21,15 +25,15 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
         buildRun
       });
     },
-    onAppendBuildRunEvent(buildRun: BuildLiveRunActionPayload) {
+    onApplyBuildRunRunningSnapshot(buildRun: BuildLiveRunActionPayload) {
       return dispatch({
-        type: 'APPEND_BUILD_RUN_EVENT',
+        type: 'APPLY_BUILD_RUN_RUNNING_SNAPSHOT',
         buildRun
       });
     },
-    onUpdateBuildRunUsage(buildRun: BuildLiveRunActionPayload) {
+    onAppendBuildRunEvent(buildRun: BuildLiveRunActionPayload) {
       return dispatch({
-        type: 'UPDATE_BUILD_RUN_USAGE',
+        type: 'APPEND_BUILD_RUN_EVENT',
         buildRun
       });
     },
@@ -55,6 +59,25 @@ export default function BuildActions(dispatch: React.Dispatch<BuildAction>) {
       return dispatch({
         type: 'SET_BUILD_WORKSPACE',
         buildRun
+      });
+    },
+    onPublishBuildRuntimeVerifyResult(
+      runtimeVerifyResult: BuildRuntimeVerifyResultPayload
+    ) {
+      return dispatch({
+        type: 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT',
+        runtimeVerifyResult
+      });
+    },
+    onClearBuildRuntimeVerifyResult(
+      runtimeVerifyResult: Pick<
+        BuildRuntimeVerifyResultPayload,
+        'buildId' | 'requestId'
+      >
+    ) {
+      return dispatch({
+        type: 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT',
+        runtimeVerifyResult
       });
     },
     onClearBuildRun(buildId: number) {
