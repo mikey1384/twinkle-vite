@@ -402,6 +402,23 @@ interface BuildRunEvent {
 
 type BuildPlanAction = 'continue' | 'cancel';
 
+interface BuildScopedPlanContinuePromptBinding {
+  kind: 'scoped_plan_continue';
+  question?: string | null;
+  executionPlan: BuildExecutionPlan;
+}
+
+interface BuildFollowUpAcceptPromptBinding {
+  kind: 'follow_up_accept';
+  question?: string | null;
+  suggestedMessage: string;
+  sourceMessageId?: number | null;
+}
+
+type BuildPromptBinding =
+  | BuildScopedPlanContinuePromptBinding
+  | BuildFollowUpAcceptPromptBinding;
+
 interface BuildRuntimeUploadAsset {
   id: number;
   buildId: number;
@@ -431,6 +448,7 @@ interface QueuedBuildRequest {
   id: string;
   message: string;
   planAction?: BuildPlanAction | null;
+  promptBinding?: BuildPromptBinding | null;
   messageContext?: string | null;
   existingUserMessageId?: number | null;
   createdAt: number;
@@ -1223,6 +1241,37 @@ function resolveBuildFollowUpPromptKey(
     return '';
   }
   return `${question}::${suggestedMessage}`;
+}
+
+function buildScopedPlanContinuePromptBinding(
+  plan: BuildExecutionPlan | null | undefined
+): BuildScopedPlanContinuePromptBinding | null {
+  if (!plan || plan.status !== 'awaiting_confirmation') {
+    return null;
+  }
+  const question = resolveScopedPlanQuestion(plan);
+  return {
+    kind: 'scoped_plan_continue',
+    question: question || null,
+    executionPlan: plan
+  };
+}
+
+function buildFollowUpAcceptPromptBinding(
+  prompt: BuildFollowUpPrompt | null | undefined
+): BuildFollowUpAcceptPromptBinding | null {
+  const suggestedMessage = String(prompt?.suggestedMessage || '').trim();
+  if (!suggestedMessage) {
+    return null;
+  }
+  const question = String(prompt?.question || '').trim();
+  const sourceMessageId = Number(prompt?.sourceMessageId || 0);
+  return {
+    kind: 'follow_up_accept',
+    question: question || null,
+    suggestedMessage,
+    sourceMessageId: sourceMessageId > 0 ? sourceMessageId : null
+  };
 }
 
 export default function BuildEditor({
@@ -2863,6 +2912,7 @@ export default function BuildEditor({
     messageText: string,
     options?: {
       planAction?: BuildPlanAction | null;
+      promptBinding?: BuildPromptBinding | null;
       messageContext?: string | null;
       existingUserMessageId?: number | null;
     }
@@ -2911,6 +2961,7 @@ export default function BuildEditor({
       nextQueuedRequests[duplicateIndex] = {
         ...nextQueuedRequests[duplicateIndex],
         planAction: options?.planAction || null,
+        promptBinding: options?.promptBinding || null,
         messageContext: trimmedMessageContext || null,
         existingUserMessageId:
           Number(options?.existingUserMessageId || 0) || null
@@ -2929,6 +2980,7 @@ export default function BuildEditor({
         id: `${Date.now()}-steer`,
         message: trimmed,
         planAction: options?.planAction || null,
+        promptBinding: options?.promptBinding || null,
         messageContext: trimmedMessageContext || null,
         existingUserMessageId:
           Number(options?.existingUserMessageId || 0) || null,
@@ -2969,6 +3021,7 @@ export default function BuildEditor({
     });
     const started = await startGeneration(nextRequest.message, {
       planAction: nextRequest.planAction || null,
+      promptBinding: nextRequest.promptBinding || null,
       messageContext: nextRequest.messageContext || null,
       existingUserMessageId: nextRequest.existingUserMessageId || null
     });
@@ -3006,8 +3059,13 @@ export default function BuildEditor({
 
   async function handleContinueScopedPlan() {
     if (!isOwner) return;
+    const promptBinding = buildScopedPlanContinuePromptBinding(
+      currentBuildRunView.executionPlan
+    );
+    if (!promptBinding) return;
     await sendBuildMessageText('Continue current plan.', {
-      planAction: 'continue'
+      planAction: 'continue',
+      promptBinding
     });
   }
 
@@ -3020,11 +3078,13 @@ export default function BuildEditor({
 
   async function handleAcceptFollowUpPrompt() {
     if (!isOwner) return;
-    const suggestedMessage = String(
-      currentBuildRunView.followUpPrompt?.suggestedMessage || ''
-    ).trim();
-    if (!suggestedMessage) return;
-    await sendBuildMessageText(suggestedMessage);
+    const promptBinding = buildFollowUpAcceptPromptBinding(
+      currentBuildRunView.followUpPrompt
+    );
+    if (!promptBinding) return;
+    await sendBuildMessageText(promptBinding.suggestedMessage, {
+      promptBinding
+    });
   }
 
   function handleDismissFollowUpPrompt() {
@@ -4167,6 +4227,7 @@ export default function BuildEditor({
     messageText: string,
     options?: {
       planAction?: BuildPlanAction | null;
+      promptBinding?: BuildPromptBinding | null;
       messageContext?: string | null;
       existingUserMessageId?: number | null;
       ignoreUploadInFlight?: boolean;
@@ -4233,7 +4294,7 @@ export default function BuildEditor({
           )
         })
       ) {
-        enqueueLatestBuildRequest(trimmedMessage, options);
+        enqueueLatestBuildRequest(trimmedMessage, requestOptions);
         return true;
       }
       return false;
@@ -5399,6 +5460,7 @@ export default function BuildEditor({
     messageText: string,
     options?: {
       planAction?: BuildPlanAction | null;
+      promptBinding?: BuildPromptBinding | null;
       messageContext?: string | null;
       existingUserMessageId?: number | null;
     }
@@ -5520,6 +5582,7 @@ export default function BuildEditor({
         messageContext: trimmedMessageContext || undefined,
         existingUserMessageId: existingUserMessageId || undefined,
         planAction: options?.planAction || undefined,
+        promptBinding: options?.promptBinding || undefined,
         expectedCurrentArtifactVersionId:
           Number(activeBuild.currentArtifactVersionId || 0) > 0
             ? Number(activeBuild.currentArtifactVersionId)
