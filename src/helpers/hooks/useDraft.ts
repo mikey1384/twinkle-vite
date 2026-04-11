@@ -89,58 +89,67 @@ export default function useDraft({
         }
       }, SAVE_DEBOUNCE_MS);
     },
-    [contentType, enabled, rootId, rootType, saveDraftApi]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [contentType, enabled, rootId, rootType]
   );
 
-  const deleteDraft = useCallback(async () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    if (draftIdRef.current) {
-      try {
-        await deleteDraftApi(draftIdRef.current);
-        setDraftId(null);
-        draftIdRef.current = null;
-      } catch (error) {
-        console.error('Failed to delete draft:', error);
+  const deleteDraft = useCallback(
+    async () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
-    }
-  }, [deleteDraftApi]);
 
-  const loadDraft = useCallback(async () => {
-    if (!enabled) return null;
-
-    try {
-      const drafts = await checkDraftsApi({
-        contentType,
-        rootType,
-        rootId
-      });
-
-      const draft = drafts.find(
-        (d: { type: string; rootType?: string; rootId?: number }) => {
-          if (d.type !== contentType) return false;
-          // Always filter by rootType/rootId if they're provided
-          if (rootType && rootId) {
-            return d.rootType === rootType && d.rootId === rootId;
-          }
-          return true;
+      if (draftIdRef.current) {
+        try {
+          await deleteDraftApi(draftIdRef.current);
+          setDraftId(null);
+          draftIdRef.current = null;
+        } catch (error) {
+          console.error('Failed to delete draft:', error);
         }
-      );
-
-      if (draft) {
-        setDraftId(draft.id);
-        draftIdRef.current = draft.id;
-        return draft;
       }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
-      return null;
-    } catch (error) {
-      console.error('Error loading draft:', error);
-      return null;
-    }
-  }, [checkDraftsApi, contentType, enabled, rootId, rootType]);
+  const loadDraft = useCallback(
+    async () => {
+      if (!enabled) return null;
+
+      try {
+        const drafts = await checkDraftsApi({
+          contentType,
+          rootType,
+          rootId
+        });
+
+        const draft = drafts.find(
+          (d: { type: string; rootType?: string; rootId?: number }) => {
+            if (d.type !== contentType) return false;
+            // Always filter by rootType/rootId if they're provided
+            if (rootType && rootId) {
+              return d.rootType === rootType && d.rootId === rootId;
+            }
+            return true;
+          }
+        );
+
+        if (draft) {
+          setDraftId(draft.id);
+          draftIdRef.current = draft.id;
+          return draft;
+        }
+
+        return null;
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        return null;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [contentType, enabled, rootId, rootType]
+  );
 
   const cancelPendingSave = useCallback(() => {
     if (saveTimeoutRef.current) {

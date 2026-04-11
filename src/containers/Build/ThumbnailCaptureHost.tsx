@@ -205,7 +205,8 @@ export default function BuildThumbnailCaptureHost() {
         }
       }
     }
-  }, [authReady, loadBuild, numericBuildId, previewPath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, numericBuildId, previewPath]);
 
   if (loading || !authReady) {
     return (

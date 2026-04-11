@@ -176,7 +176,9 @@ export default function Main({
         }
       }
     }
-  }, [
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [
     autoExpand,
     comments,
     commentsLoadLimit,
@@ -184,7 +186,6 @@ export default function Main({
     inputAtBottom,
     isLoading,
     isLoadingMore,
-    loadComments,
     onLoadMoreComments,
     parent.contentId,
     parent.contentType,

@@ -35,12 +35,11 @@ export default function DidNotPassCopyAndPaste() {
         setLoading(false);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     copyAndPasteMission,
-    loadMission,
     missionObj,
-    missionTypeIdHash,
-    onLoadMission
+    missionTypeIdHash
   ]);
 
   return (

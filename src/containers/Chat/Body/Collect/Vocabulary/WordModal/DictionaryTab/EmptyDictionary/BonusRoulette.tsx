@@ -82,8 +82,8 @@ function BonusRoulette({
         data: { coins }
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    getVocabRouletteResult,
     onAIDefinitionsGenerated,
     onWordMasterBreak,
     word

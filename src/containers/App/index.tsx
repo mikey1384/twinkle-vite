@@ -452,7 +452,7 @@ export default function App() {
       onSetAchievementsObj(data);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, location.pathname, pageVisible, signinModalShown, userId]);
+  }, [location.pathname, pageVisible, signinModalShown, userId]);
 
   const handleVisibilityChange = useCallback(() => {
     const visible = !document[hiddenRef.current as keyof Document];

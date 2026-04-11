@@ -103,13 +103,8 @@ function AIChatMenu({
       }
     }
     loadBookmarks();
-  }, [
-    topicId,
-    channelId,
-    bookmarksLoaded,
-    loadBookmarksForTopic,
-    onLoadTopicBookmarks
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicId, channelId, bookmarksLoaded]);
 
   const aiType = isCielChat ? 'ciel' : 'zero';
   const key = topicId ? topicId.toString() : 'global';

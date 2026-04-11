@@ -216,7 +216,8 @@ function SubjectInput({
         }
       }, 3000);
     },
-    [draftIdRef, saveDraft]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draftIdRef]
   );
 
   useEffect(() => {
