@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { PreviewHostBridgeAuth } from './usePreviewHostBridge';
-import { ensureBuildApiToken } from './usePreviewHostBridge';
+import {
+  ensureBuildApiToken,
+  type PreviewHostBridgeAuth
+} from './usePreviewHostBridge';
 import type { Build } from './types';
 
 function toPreviewBaseSrc(build: Build) {

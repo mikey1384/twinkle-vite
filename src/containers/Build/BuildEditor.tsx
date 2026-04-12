@@ -400,7 +400,7 @@ interface BuildRunEvent {
   } | null;
 }
 
-type BuildPlanAction = 'continue' | 'cancel';
+type BuildPlanAction = 'continue' | 'cancel' | 'pivot';
 
 interface BuildScopedPlanContinuePromptBinding {
   kind: 'scoped_plan_continue';
@@ -451,7 +451,16 @@ interface QueuedBuildRequest {
   promptBinding?: BuildPromptBinding | null;
   messageContext?: string | null;
   existingUserMessageId?: number | null;
+  waitForStopRequestId?: string | null;
   createdAt: number;
+}
+
+interface DeferredBuildRequest {
+  message: string;
+  messageContext?: string | null;
+  planAction?: BuildPlanAction | null;
+  stopActiveRun?: boolean | null;
+  stopRequestId?: string | null;
 }
 
 interface BuildHiddenMessageContextOptions {
@@ -1296,6 +1305,8 @@ export default function BuildEditor({
   ) => SharedBuildRunIdentityState | null = useBuildContext(
     (v) => v.getBuildRunIdentity
   );
+  const getLatestBuildRun: (buildId: number) => BuildLiveRunState | null =
+    useBuildContext((v) => v.getLatestBuildRun);
   const sharedRuntimeVerifyResults = useBuildContext(
     (v) => v.state.runtimeVerifyResults
   );
@@ -1612,6 +1623,13 @@ export default function BuildEditor({
       currentSharedRunIdentityState
     );
     if (!sharedRequestId || sharedRequestId !== activeCurrentPageRequestId) {
+      if (
+        sharedRequestId &&
+        sharedBuildRun.terminalState &&
+        releaseQueuedRequestsWaitingForStop(sharedRequestId)
+      ) {
+        void Promise.resolve().then(() => maybeStartNextQueuedRequest());
+      }
       return;
     }
 
@@ -1646,6 +1664,7 @@ export default function BuildEditor({
         interruptionReason: sharedBuildRun.interruptionReason ?? null,
         executionPlan: sharedBuildRun.executionPlan ?? null,
         followUpPrompt: sharedBuildRun.followUpPrompt ?? null,
+        deferredBuildRequest: sharedBuildRun.deferredBuildRequest ?? null,
         runtimeExplorationPlan: sharedBuildRun.runtimeExplorationPlan ?? null,
         runtimePlanRefined: Boolean(sharedBuildRun.runtimePlanRefined),
         billingState:
@@ -2161,6 +2180,7 @@ export default function BuildEditor({
     interruptionReason,
     executionPlan,
     followUpPrompt,
+    deferredBuildRequest,
     runtimeExplorationPlan,
     runtimePlanRefined,
     billingState,
@@ -2178,6 +2198,7 @@ export default function BuildEditor({
     interruptionReason?: 'tool_limit' | null;
     executionPlan?: BuildExecutionPlan | null;
     followUpPrompt?: BuildFollowUpPrompt | null;
+    deferredBuildRequest?: DeferredBuildRequest | null;
     runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
     runtimePlanRefined?: boolean;
     billingState?: 'charged' | 'not_charged' | 'pending' | null;
@@ -2452,7 +2473,31 @@ export default function BuildEditor({
     if (runtimeFollowUp.processPendingRuntimeFollowUp()) {
       return;
     }
-    if (!shouldDelayQueuedRequestsForRuntimeFollowUp) {
+    let shouldHoldQueuedRequestForDeferredStop = false;
+    if (deferredBuildRequest?.message?.trim()) {
+      const deferredStopRequestId =
+        String(deferredBuildRequest.stopRequestId || '').trim() || null;
+      shouldHoldQueuedRequestForDeferredStop = Boolean(
+        deferredBuildRequest.stopActiveRun === true && deferredStopRequestId
+      );
+      enqueueLatestBuildRequest(deferredBuildRequest.message, {
+        messageContext: deferredBuildRequest.messageContext || null,
+        planAction: deferredBuildRequest.planAction || null,
+        stopActiveRun: deferredBuildRequest.stopActiveRun === true,
+        stopRequestId: deferredStopRequestId
+      });
+      if (
+        shouldHoldQueuedRequestForDeferredStop &&
+        deferredStopRequestId &&
+        releaseQueuedRequestsIfStopTargetAlreadySettled(deferredStopRequestId)
+      ) {
+        shouldHoldQueuedRequestForDeferredStop = false;
+      }
+    }
+    if (
+      !shouldDelayQueuedRequestsForRuntimeFollowUp &&
+      !shouldHoldQueuedRequestForDeferredStop
+    ) {
       await maybeStartNextQueuedRequest();
     }
   }
@@ -2551,17 +2596,28 @@ export default function BuildEditor({
     runMode?: BuildRunMode;
     assistantText?: string;
   }) {
+    const normalizedRequestId = String(requestId || '').trim();
+    const releasedQueuedStop =
+      guardStatus !== 'processing'
+        ? releaseQueuedRequestsWaitingForStop(normalizedRequestId)
+        : false;
     const latestSharedRunIdentityState = getBuildRunIdentity(
       Number(getLatestBuild()?.id || build.id)
     );
     const currentRequestId = getCurrentRunRequestId(
-      requestId,
+      normalizedRequestId,
       latestSharedRunIdentityState
     );
-    if (!requestId || requestId !== currentRequestId) return;
+    if (!normalizedRequestId || normalizedRequestId !== currentRequestId) {
+      if (releasedQueuedStop) {
+        await maybeStartNextQueuedRequest();
+      }
+      return;
+    }
     markActiveBuildRunActivity();
     const stoppedRunMode =
-      runMode || getCurrentRunMode(requestId, latestSharedRunIdentityState);
+      runMode ||
+      getCurrentRunMode(normalizedRequestId, latestSharedRunIdentityState);
     const userRequestedStop = runOrchestration.didUserRequestStop();
     if (deduped) {
       resetDedupedProcessingReconcileState();
@@ -2586,7 +2642,7 @@ export default function BuildEditor({
         if (!userRequestedStop) {
           const nextAssistantId = upsertLocalBuildChatAssistantMessage(
             getCurrentActiveAssistantMessageId(
-              requestId,
+              normalizedRequestId,
               latestSharedRunIdentityState
             ),
             'I lost the live response for this run, but another Lumine worker still reports it in progress. I am trying to recover the latest result.'
@@ -2597,14 +2653,14 @@ export default function BuildEditor({
         }
         markCurrentPageRunActivityActive();
         onUpdateBuildRunStatus({
-          requestId,
+          requestId: normalizedRequestId,
           status: userRequestedStop
             ? 'Stopping...'
             : DEDUPED_PROCESSING_RECOVERY_STATUS
         });
         setMobilePanelTab('chat');
         scrollChatToBottom();
-        beginDedupedProcessingRecovery(requestId);
+        beginDedupedProcessingRecovery(normalizedRequestId);
         return;
       } else {
         runOrchestration.setUserRequestedStop(false);
@@ -2621,7 +2677,7 @@ export default function BuildEditor({
       }
       clearCurrentPageRunActivity();
       onStopBuildRun({
-        requestId,
+        requestId: normalizedRequestId,
         preserveTransientUserMessage: true,
         preserveTransientAssistantMessage: true
       });
@@ -2645,7 +2701,7 @@ export default function BuildEditor({
           });
     const nextAssistantId = upsertLocalBuildChatAssistantMessage(
       getCurrentActiveAssistantMessageId(
-        requestId,
+        normalizedRequestId,
         latestSharedRunIdentityState
       ),
       stopMessage
@@ -2654,7 +2710,7 @@ export default function BuildEditor({
       runIdentity.setAssistantMessageId(nextAssistantId);
     }
     onStopBuildRun({
-      requestId,
+      requestId: normalizedRequestId,
       assistantText: stopMessage,
       preserveTransientUserMessage: true,
       preserveTransientAssistantMessage: true
@@ -2817,6 +2873,47 @@ export default function BuildEditor({
     runOrchestration.setQueuedRequests(next);
   }
 
+  function releaseQueuedRequestsWaitingForStop(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (!normalizedRequestId) return false;
+
+    const existing = runOrchestration.getQueuedRequests();
+    let changed = false;
+    const next = existing.map((entry) => {
+      if (
+        String(entry.waitForStopRequestId || '').trim() !== normalizedRequestId
+      ) {
+        return entry;
+      }
+      changed = true;
+      return {
+        ...entry,
+        waitForStopRequestId: null
+      };
+    });
+
+    if (changed) {
+      updateQueuedRequests(next);
+    }
+    return changed;
+  }
+
+  function releaseQueuedRequestsIfStopTargetAlreadySettled(requestId: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (!normalizedRequestId) return false;
+    const activeBuildId = Number(getLatestBuild()?.id || build.id);
+    if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return false;
+    const latestBuildRun = getLatestBuildRun(activeBuildId);
+    if (
+      String(latestBuildRun?.requestId || '').trim() !== normalizedRequestId ||
+      latestBuildRun?.generating ||
+      !latestBuildRun?.terminalState
+    ) {
+      return false;
+    }
+    return releaseQueuedRequestsWaitingForStop(normalizedRequestId);
+  }
+
   function getCurrentActiveRunRequestId(
     sharedRunState = currentSharedRunIdentityState
   ) {
@@ -2915,10 +3012,13 @@ export default function BuildEditor({
       promptBinding?: BuildPromptBinding | null;
       messageContext?: string | null;
       existingUserMessageId?: number | null;
+      stopActiveRun?: boolean;
+      stopRequestId?: string | null;
     }
   ) {
     const trimmed = String(messageText || '').trim();
     const trimmedMessageContext = String(options?.messageContext || '').trim();
+    const stopRequestId = String(options?.stopRequestId || '').trim() || null;
     if (!trimmed) return;
     const normalized = normalizeQueuedMessage(trimmed);
     const activeMessage = normalizeQueuedMessage(
@@ -2940,6 +3040,7 @@ export default function BuildEditor({
       trimmedMessageContext
     );
     const existing = runOrchestration.getQueuedRequests();
+    const shouldStopActiveRun = options?.stopActiveRun !== false;
     const duplicateIndex = existing.findIndex(
       (entry) => normalizeQueuedMessage(entry.message) === normalized
     );
@@ -2964,7 +3065,8 @@ export default function BuildEditor({
         promptBinding: options?.promptBinding || null,
         messageContext: trimmedMessageContext || null,
         existingUserMessageId:
-          Number(options?.existingUserMessageId || 0) || null
+          Number(options?.existingUserMessageId || 0) || null,
+        waitForStopRequestId: shouldStopActiveRun ? stopRequestId : null
       };
       updateQueuedRequests(nextQueuedRequests);
       appendLocalRunEvent({
@@ -2984,20 +3086,27 @@ export default function BuildEditor({
         messageContext: trimmedMessageContext || null,
         existingUserMessageId:
           Number(options?.existingUserMessageId || 0) || null,
+        waitForStopRequestId: shouldStopActiveRun ? stopRequestId : null,
         createdAt: Date.now()
       }
     ]);
     appendLocalRunEvent({
       kind: 'action',
-      phase: 'stopping',
-      message: 'Switching to your latest request...'
+      phase: shouldStopActiveRun ? 'stopping' : 'queued',
+      message: shouldStopActiveRun
+        ? 'Switching to your latest request...'
+        : 'Queued your next request.'
     });
-    if (
-      hasCurrentPageRunActivity(
-        getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
-      )
-    ) {
-      handleStopGeneration();
+    if (shouldStopActiveRun) {
+      if (stopRequestId) {
+        requestStopForRecoveredBuildRun(stopRequestId);
+      } else if (
+        hasCurrentPageRunActivity(
+          getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
+        )
+      ) {
+        handleStopGeneration();
+      }
     }
   }
 
@@ -3013,6 +3122,17 @@ export default function BuildEditor({
     }
     const [nextRequest, ...rest] = runOrchestration.getQueuedRequests();
     if (!nextRequest) return;
+    const waitForStopRequestId = String(
+      nextRequest.waitForStopRequestId || ''
+    ).trim();
+    if (
+      waitForStopRequestId &&
+      (String(latestSharedRunIdentityState?.requestId || '').trim() !==
+        waitForStopRequestId ||
+        latestSharedRunIdentityState?.generating)
+    ) {
+      return;
+    }
     updateQueuedRequests(rest);
     appendLocalRunEvent({
       kind: 'status',
@@ -5756,16 +5876,6 @@ export default function BuildEditor({
     if (!normalizedRequestId) return;
     const activeBuildId = Number(getLatestBuild()?.id || build.id);
     if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
-    if (
-      getCurrentPageRunActivityRequestId(
-        getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
-      ) === normalizedRequestId
-    ) {
-      socket.emit('build_resume_run', {
-        buildId: activeBuildId,
-        requestId: normalizedRequestId
-      });
-    }
     socket.emit('build_stop', {
       buildId: activeBuildId,
       requestId: normalizedRequestId

@@ -1667,23 +1667,28 @@ export default function contentRequestHelpers({
     async updateTotalViewDuration({
       videoId,
       currentTime,
-      totalTime
+      totalTime,
+      watchCode
     }: {
       videoId: number;
       currentTime: number;
       totalTime: number;
+      watchCode?: number;
     }) {
       try {
-        await request.put(
+        const {
+          data: { currentlyWatchingAnotherVideo }
+        } = await request.put(
           `${URL}/video/duration`,
           {
             videoId,
             currentTime,
-            totalTime
+            totalTime,
+            watchCode
           },
           auth()
         );
-        return { success: true };
+        return { success: true, currentlyWatchingAnotherVideo };
       } catch (error) {
         return handleError(error);
       }

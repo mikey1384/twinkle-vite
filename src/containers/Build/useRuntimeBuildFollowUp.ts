@@ -621,7 +621,7 @@ export default function useRuntimeBuildFollowUp({
             kind: 'action',
             phase: 'preview',
             message:
-              'Lumine revised the runtime plan and is re-checking the preview before changing code.'
+              'Lumine updated the plan and is checking the preview again before changing code.'
           });
           shouldDelayQueuedRequestsForRuntimeFollowUp = true;
         } else {
@@ -728,38 +728,38 @@ export default function useRuntimeBuildFollowUp({
         const previewHealthMessage =
           health.gameLike &&
           (health.viewportOverflowY > 48 || health.viewportOverflowX > 24)
-            ? `Preview booted, but the game overflows its viewport (${health.viewportOverflowY}px tall overflow, ${health.viewportOverflowX}px wide overflow).`
+            ? 'The preview opened, but the game is spilling outside the screen.'
             : health.gameplayTelemetry?.status === 'out-of-bounds'
-              ? `Preview booted, but gameplay escaped the declared playfield (${health.gameplayTelemetry.overflowTop}px top, ${health.gameplayTelemetry.overflowRight}px right, ${health.gameplayTelemetry.overflowBottom}px bottom, ${health.gameplayTelemetry.overflowLeft}px left overflow).`
+              ? 'The preview opened, but the game is letting the player move outside the play area.'
               : interactionStepCount >= 2 &&
                   health.interactionStatus === 'changed' &&
                   latestInteractionStep?.source === 'planned'
-                ? `Preview followed Lumine's runtime plan for ${interactionStepCount} steps through the app.`
+                ? `Lumine tried ${interactionStepCount} steps in the preview and the app changed.`
                 : interactionStepCount >= 2 &&
                     health.interactionStatus === 'changed'
-                  ? `Preview interaction probe advanced ${interactionStepCount} startup steps through the app.`
+                  ? `Lumine tried ${interactionStepCount} startup steps in the preview and the app changed.`
                   : health.interactionStatus === 'changed'
                     ? latestInteractionStep?.source === 'planned'
                       ? latestInteractionStep?.routeChanged &&
                         latestInteractionStep.routeAfter
-                        ? `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app to ${latestInteractionStep.routeAfter}.`
-                        : `Preview followed Lumine's runtime plan and ${interactionTargetText} moved the app forward.`
+                        ? `Lumine clicked ${interactionTargetText} and the app moved to ${latestInteractionStep.routeAfter}.`
+                        : `Lumine clicked ${interactionTargetText} and the app moved forward.`
                       : latestInteractionStep?.routeChanged &&
                           latestInteractionStep.routeAfter
-                        ? `Preview interaction probe changed the UI after clicking ${interactionTargetText} and moved to ${latestInteractionStep.routeAfter}.`
-                        : `Preview interaction probe changed the UI after clicking ${interactionTargetText}.`
+                        ? `Lumine clicked ${interactionTargetText} and the app moved to ${latestInteractionStep.routeAfter}.`
+                        : `Lumine clicked ${interactionTargetText} and the screen changed.`
                     : health.interactionStatus === 'unchanged'
                       ? latestInteractionStep?.source === 'planned'
-                        ? `Preview followed Lumine's runtime plan, but ${interactionTargetText} did not move the app forward.`
-                        : `Preview interaction probe clicked ${interactionTargetText}, but the UI did not change.`
+                        ? `Lumine clicked ${interactionTargetText}, but the app did not move forward.`
+                        : `Lumine clicked ${interactionTargetText}, but the screen did not change.`
                       : health.meaningfulRender
-                        ? 'Preview booted and rendered meaningful UI.'
-                        : 'Preview booted, but the UI still looks sparse.';
+                        ? 'The preview opened and looks ready.'
+                        : 'The preview opened, but it still looks empty.';
         if (
           previewHealthMessage !==
-            'Preview booted and rendered meaningful UI.' &&
+            'The preview opened and looks ready.' &&
           previewHealthMessage !==
-            'Preview booted, but the UI still looks sparse.'
+            'The preview opened, but it still looks empty.'
         ) {
           externalRef.current.onAppendLocalRunEvent({
             kind:
@@ -795,7 +795,7 @@ export default function useRuntimeBuildFollowUp({
       externalRef.current.onAppendLocalRunEvent({
         kind: 'action',
         phase: 'preview',
-        message: `Lumine re-checked the repaired preview and it looks healthier: ${reason}.`,
+        message: `Lumine checked the preview again and it looks better: ${reason}.`,
         targetRequestId: sourceRunRequestId
       });
     }
@@ -803,7 +803,7 @@ export default function useRuntimeBuildFollowUp({
       externalRef.current.onAppendLocalRunEvent({
         kind: 'status',
         phase: 'preview',
-        message: `Lumine re-checked the repaired preview, but it did not improve enough: ${reason || 'preview health did not improve'}. Trying one last repair pass.`,
+        message: `Lumine checked the preview again, but it still needs work: ${reason || 'the preview did not get better'}. Trying one more fix.`,
         targetRequestId: sourceRunRequestId
       });
       void externalRef.current.onStartRuntimeAutoFix(afterObservation, {
@@ -819,7 +819,7 @@ export default function useRuntimeBuildFollowUp({
       externalRef.current.onAppendLocalRunEvent({
         kind: 'status',
         phase: 'preview',
-        message: `Lumine re-checked the repaired preview, but it still does not look healthier: ${reason}.`,
+        message: `Lumine checked the preview again, but it still does not look better: ${reason}.`,
         targetRequestId: sourceRunRequestId
       });
     }
@@ -867,8 +867,7 @@ export default function useRuntimeBuildFollowUp({
       currentAppendLocalRunEvent({
         kind: 'status',
         phase: 'preview',
-        message:
-          'Timed out while checking the updated preview for runtime issues.',
+        message: 'Timed out while checking the updated preview.',
         targetRequestId: sourceRunRequestId
       });
       queueNextRequest();

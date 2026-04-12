@@ -50,6 +50,14 @@ export interface BuildLiveRunFollowUpPrompt {
   sourceMessageId?: number | null;
 }
 
+export interface BuildLiveRunDeferredRequest {
+  message: string;
+  messageContext?: string | null;
+  planAction?: 'continue' | 'cancel' | 'pivot' | null;
+  stopActiveRun?: boolean | null;
+  stopRequestId?: string | null;
+}
+
 export interface BuildLiveRunState {
   buildId: number;
   requestId: string;
@@ -69,6 +77,7 @@ export interface BuildLiveRunState {
   streamingFocusFilePath: string | null;
   executionPlan?: any | null;
   followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
+  deferredBuildRequest?: BuildLiveRunDeferredRequest | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
@@ -99,6 +108,7 @@ export interface BuildLiveRunStreamUpdatePayload {
   projectFilesFocusPath?: string | null;
   executionPlan?: any | null;
   followUpPrompt?: BuildLiveRunFollowUpPrompt | null;
+  deferredBuildRequest?: BuildLiveRunDeferredRequest | null;
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
@@ -325,6 +335,33 @@ function normalizeBuildRunUsageMetrics(
     };
     return result;
   }, {});
+}
+
+function normalizeBuildRunDeferredRequest(
+  deferredBuildRequest?: BuildLiveRunDeferredRequest | null
+) {
+  const message = String(deferredBuildRequest?.message || '').trim();
+  if (!message) return null;
+  const messageContext =
+    String(deferredBuildRequest?.messageContext || '').trim() || null;
+  const planAction =
+    deferredBuildRequest?.planAction === 'continue' ||
+    deferredBuildRequest?.planAction === 'cancel' ||
+    deferredBuildRequest?.planAction === 'pivot'
+      ? deferredBuildRequest.planAction
+      : null;
+  const stopRequestId =
+    String(deferredBuildRequest?.stopRequestId || '').trim() || null;
+  return {
+    message,
+    messageContext,
+    planAction,
+    stopActiveRun:
+      typeof deferredBuildRequest?.stopActiveRun === 'boolean'
+        ? deferredBuildRequest.stopActiveRun
+        : null,
+    stopRequestId
+  };
 }
 
 function resolveBuildRunUpdatedAt(
@@ -561,6 +598,13 @@ function applyBuildRunStreamUpdate(
       Object.prototype.hasOwnProperty.call(buildRun || {}, 'followUpPrompt')
         ? buildRun?.followUpPrompt ?? null
         : currentRun.followUpPrompt,
+    deferredBuildRequest:
+      Object.prototype.hasOwnProperty.call(
+        buildRun || {},
+        'deferredBuildRequest'
+      )
+        ? normalizeBuildRunDeferredRequest(buildRun?.deferredBuildRequest)
+        : currentRun.deferredBuildRequest,
     runtimeExplorationPlan: Object.prototype.hasOwnProperty.call(
       buildRun || {},
       'runtimeExplorationPlan'
@@ -651,6 +695,7 @@ export default function BuildReducer(
         streamingFocusFilePath: null,
         executionPlan: null,
         followUpPrompt: null,
+        deferredBuildRequest: null,
         runtimeExplorationPlan: null,
         runtimePlanRefined: false,
         billingState: null,
@@ -897,6 +942,14 @@ export default function BuildReducer(
           Object.prototype.hasOwnProperty.call(action.buildRun, 'followUpPrompt')
             ? action.buildRun.followUpPrompt ?? null
             : currentRun.followUpPrompt,
+        deferredBuildRequest:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(
+            action.buildRun,
+            'deferredBuildRequest'
+          )
+            ? normalizeBuildRunDeferredRequest(action.buildRun.deferredBuildRequest)
+            : currentRun.deferredBuildRequest,
         runtimeExplorationPlan:
           action.buildRun &&
           Object.prototype.hasOwnProperty.call(

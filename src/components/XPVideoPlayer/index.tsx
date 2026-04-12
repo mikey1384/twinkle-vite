@@ -82,9 +82,6 @@ function XPVideoPlayer({
 }) {
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const addVideoView = useAppContext((v) => v.requestHelpers.addVideoView);
-  const checkCurrentlyWatchingAnotherVideo = useAppContext(
-    (v) => v.requestHelpers.checkCurrentlyWatchingAnotherVideo
-  );
   const finishWatchingVideo = useAppContext(
     (v) => v.requestHelpers.finishWatchingVideo
   );
@@ -618,11 +615,22 @@ function XPVideoPlayer({
     const totalDuration = youtubePlayerRef.current?.getDuration() || 0;
     if (!totalDuration) return;
 
-    checkAlreadyWatchingAnotherVideo();
-    updateTotalViewDuration({
+    void updateTotalViewDuration({
       videoId,
       currentTime: timeAt,
-      totalTime: totalDuration
+      totalTime: totalDuration,
+      watchCode: watchCodeRef.current
+    }).then((result: { currentlyWatchingAnotherVideo?: boolean }) => {
+      if (
+        result?.currentlyWatchingAnotherVideo &&
+        youtubePlayerRef.current?.pauseVideo
+      ) {
+        try {
+          youtubePlayerRef.current.pauseVideo();
+        } catch (error) {
+          console.error('Error pausing YouTube player in timer:', error);
+        }
+      }
     });
 
     if (
@@ -735,25 +743,6 @@ function XPVideoPlayer({
       )
     });
 
-    async function checkAlreadyWatchingAnotherVideo() {
-      if (rewardLevelRef.current) {
-        const currentlyWatchingAnotherVideo =
-          await checkCurrentlyWatchingAnotherVideo({
-            rewardLevel: rewardLevelRef.current,
-            watchCode: watchCodeRef.current
-          });
-        if (
-          currentlyWatchingAnotherVideo &&
-          youtubePlayerRef.current?.pauseVideo
-        ) {
-          try {
-            youtubePlayerRef.current.pauseVideo();
-          } catch (error) {
-            console.error('Error pausing YouTube player in timer:', error);
-          }
-        }
-      }
-    }
   }
 }
 

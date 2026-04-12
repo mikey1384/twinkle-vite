@@ -84,7 +84,6 @@ export default function Game({
     (v) => v.state.todayStats.dailyTaskStreak
   );
   const MAX_WORD_LENGTH = useMemo(() => solution?.length || 5, [solution]);
-  const delayMs = REVEAL_TIME_MS * MAX_WORD_LENGTH;
   const [alertMessage, setAlertMessage] = useState<any>({});
   const [isWaving, setIsWaving] = useState(false);
   const [currentGuess, setCurrentGuess] = useState('');

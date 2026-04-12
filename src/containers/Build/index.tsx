@@ -843,6 +843,12 @@ function hydrateBuildRunFromPersistedSnapshot({
           Object.prototype.hasOwnProperty.call(terminalPayload || {}, 'followUpPrompt')
             ? terminalPayload.followUpPrompt ?? null
             : undefined,
+        deferredBuildRequest: Object.prototype.hasOwnProperty.call(
+          terminalPayload || {},
+          'deferredBuildRequest'
+        )
+          ? terminalPayload.deferredBuildRequest ?? null
+          : undefined,
         ...(Object.prototype.hasOwnProperty.call(
           terminalPayload || {},
           'runtimeExplorationPlan'

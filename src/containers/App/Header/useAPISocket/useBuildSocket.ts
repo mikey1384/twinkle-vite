@@ -278,6 +278,12 @@ export default function useBuildSocket() {
               )
                 ? terminalPayload.followUpPrompt ?? null
                 : undefined,
+            deferredBuildRequest: Object.prototype.hasOwnProperty.call(
+              terminalPayload || {},
+              'deferredBuildRequest'
+            )
+              ? terminalPayload.deferredBuildRequest ?? null
+              : undefined,
             ...(Object.prototype.hasOwnProperty.call(
               terminalPayload || {},
               'runtimeExplorationPlan'
@@ -502,6 +508,7 @@ export default function useBuildSocket() {
       runtimePlanRefined,
       workspaceChanged,
       billingState,
+      deferredBuildRequest,
       message
     }: {
       requestId?: string;
@@ -527,6 +534,13 @@ export default function useBuildSocket() {
       runtimePlanRefined?: boolean;
       workspaceChanged?: boolean;
       billingState?: 'charged' | 'not_charged' | 'pending' | null;
+      deferredBuildRequest?: {
+        message?: string | null;
+        messageContext?: string | null;
+        planAction?: 'continue' | 'cancel' | 'pivot' | null;
+        stopActiveRun?: boolean | null;
+        stopRequestId?: string | null;
+      } | null;
       message?: {
         id?: number | null;
         userMessageId?: number | null;
@@ -567,6 +581,12 @@ export default function useBuildSocket() {
           )
             ? followUpPrompt ?? null
             : undefined,
+        deferredBuildRequest: Object.prototype.hasOwnProperty.call(
+          arguments[0] || {},
+          'deferredBuildRequest'
+        )
+          ? deferredBuildRequest ?? null
+          : undefined,
         ...(Object.prototype.hasOwnProperty.call(
           arguments[0] || {},
           'runtimeExplorationPlan'
