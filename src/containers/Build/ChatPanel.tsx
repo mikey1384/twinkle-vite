@@ -72,6 +72,7 @@ interface ChatMessage {
   uploadProgressPercent?: number | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
+  clientMessageId?: string | null;
   createdAt: number;
   source?: 'runtime_observation';
 }
@@ -497,6 +498,7 @@ export default function ChatPanel({
   ).trim();
   const showGenericFollowUpQuickReplies =
     isOwner &&
+    runMode === 'user' &&
     !showScopedPlanQuickReplies &&
     !generating &&
     !draftMessage.trim() &&

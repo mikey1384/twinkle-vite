@@ -2,6 +2,7 @@ import {
   getBuildRunEventLogicalIdentity,
   normalizeBuildRunEventCreatedAt
 } from './runEventIdentity';
+import { createFallbackBuildRunMessageId } from './messageIdentity';
 
 export interface BuildLiveRunMessage {
   id: number;
@@ -11,6 +12,7 @@ export interface BuildLiveRunMessage {
   streamCodePreview?: string | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
+  clientMessageId?: string | null;
   createdAt: number;
   persisted?: boolean;
 }
@@ -64,6 +66,7 @@ export interface BuildLiveRunState {
   runMode: 'user' | 'greeting' | 'runtime-autofix';
   generating: boolean;
   terminalState?: 'complete' | 'error' | 'stopped' | null;
+  stopReason?: 'user' | 'replacement' | null;
   interruptionReason?: 'tool_limit' | null;
   error: string | null;
   status: string | null;
@@ -93,12 +96,14 @@ export interface BuildWorkspaceSnapshot {
 
 export interface BuildLiveRunStreamUpdatePayload {
   userMessageContent?: string | null;
+  userClientMessageId?: string | null;
   status?: string | null;
   assistantStatusSteps?: string[];
   reply?: string;
   codeGenerated?: string | null;
   userMessageId?: number | null;
   assistantMessageId?: number | null;
+  assistantClientMessageId?: string | null;
   assistantMessageCreatedAt?: number | null;
   usageMetrics?: Record<string, BuildLiveRunUsageMetric>;
   baseProjectFiles?: Array<{ path: string; content?: string }> | null;
@@ -138,7 +143,11 @@ export interface BuildLiveRunActionPayload
   runningSnapshot?: BuildLiveRunRunningSnapshotPayload | null;
   workspaceChanged?: boolean;
   event?: BuildLiveRunEvent | null;
+  messageId?: number | null;
+  messageRole?: BuildLiveRunMessage['role'] | null;
+  clientMessageId?: string | null;
   assistantText?: string;
+  stopReason?: 'user' | 'replacement' | null;
   artifactCode?: string | null;
   artifactVersionId?: number | null;
   persistedAssistantId?: number | null;
@@ -191,6 +200,7 @@ export interface BuildAction {
     | 'COMPLETE_BUILD_RUN'
     | 'FAIL_BUILD_RUN'
     | 'STOP_BUILD_RUN'
+    | 'REMOVE_BUILD_RUN_MESSAGE'
     | 'SET_BUILD_WORKSPACE'
     | 'PUBLISH_BUILD_RUNTIME_VERIFY_RESULT'
     | 'CLEAR_BUILD_RUNTIME_VERIFY_RESULT'
@@ -229,6 +239,11 @@ function normalizeBuildRunProjectFilePath(rawPath: string) {
   if (!trimmedPath) return null;
   const normalized = trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`;
   return normalized.replace(/\/{2,}/g, '/');
+}
+
+function normalizeBuildRunClientMessageId(value: unknown) {
+  const normalized = String(value || '').trim();
+  return normalized || null;
 }
 
 function getStreamingFocusFilePath(
@@ -393,6 +408,15 @@ function applyBuildRunStreamUpdate(
     buildRun || {},
     'userMessageContent'
   );
+  const hasUserClientMessageIdField = Object.prototype.hasOwnProperty.call(
+    buildRun || {},
+    'userClientMessageId'
+  );
+  const hasAssistantClientMessageIdField =
+    Object.prototype.hasOwnProperty.call(
+      buildRun || {},
+      'assistantClientMessageId'
+    );
   const hasAssistantStatusStepsField = Object.prototype.hasOwnProperty.call(
     buildRun || {},
     'assistantStatusSteps'
@@ -455,6 +479,12 @@ function applyBuildRunStreamUpdate(
       ? buildRun.userMessageContent
       : ''
     : null;
+  const normalizedUserClientMessageId = hasUserClientMessageIdField
+    ? normalizeBuildRunClientMessageId(buildRun?.userClientMessageId)
+    : null;
+  const normalizedAssistantClientMessageId = hasAssistantClientMessageIdField
+    ? normalizeBuildRunClientMessageId(buildRun?.assistantClientMessageId)
+    : null;
   const latestAssistantStatusStep = Array.isArray(buildRun?.assistantStatusSteps)
     ? String(
         buildRun.assistantStatusSteps[buildRun.assistantStatusSteps.length - 1] ||
@@ -499,6 +529,7 @@ function applyBuildRunStreamUpdate(
     ...currentRun,
     generating: true,
     terminalState: null,
+    stopReason: null,
     interruptionReason: null,
     error: null,
     status: nextStatus,
@@ -517,18 +548,26 @@ function applyBuildRunStreamUpdate(
               ? {
                   content: normalizedUserMessageContent || currentRun.userMessage.content
                 }
+              : {}),
+            ...(hasUserClientMessageIdField
+              ? {
+                  clientMessageId: normalizedUserClientMessageId
+                }
               : {})
           }
-        : persistedUserMessageId !== null || hasUserMessageContentField
+        : persistedUserMessageId !== null ||
+            hasUserMessageContentField ||
+            hasUserClientMessageIdField
           ? {
               id:
                 persistedUserMessageId ||
-                Math.max(1, Math.floor(Date.now() / 1000)),
+                createFallbackBuildRunMessageId(),
               role: 'user' as const,
               content: normalizedUserMessageContent || '',
               codeGenerated: null,
               billingState: null,
               artifactVersionId: null,
+              clientMessageId: normalizedUserClientMessageId,
               createdAt: Math.floor(Date.now() / 1000),
               persisted: persistedUserMessageId !== null
             }
@@ -552,13 +591,20 @@ function applyBuildRunStreamUpdate(
             ? {
                 streamCodePreview: buildRun?.codeGenerated ?? null
               }
+            : {}),
+          ...(hasAssistantClientMessageIdField
+            ? {
+                clientMessageId: normalizedAssistantClientMessageId
+              }
             : {})
         }
-      : persistedAssistantMessageId || typeof buildRun?.reply === 'string'
+      : persistedAssistantMessageId ||
+          typeof buildRun?.reply === 'string' ||
+          hasAssistantClientMessageIdField
         ? {
             id:
               persistedAssistantMessageId ||
-              Math.max(1, Math.floor(Date.now() / 1000)),
+              createFallbackBuildRunMessageId(),
             role: 'assistant' as const,
             content: typeof buildRun?.reply === 'string' ? buildRun.reply : '',
             codeGenerated: null,
@@ -569,6 +615,7 @@ function applyBuildRunStreamUpdate(
               : {}),
             billingState: null,
             artifactVersionId: null,
+            clientMessageId: normalizedAssistantClientMessageId,
             createdAt:
               persistedAssistantMessageCreatedAt ||
               Math.floor(Date.now() / 1000),
@@ -676,6 +723,7 @@ export default function BuildReducer(
         runMode: action.buildRun?.runMode || 'user',
         generating: action.buildRun?.generating !== false,
         terminalState: null,
+        stopReason: null,
         interruptionReason: null,
         error:
           typeof action.buildRun?.error === 'string' &&
@@ -719,6 +767,7 @@ export default function BuildReducer(
         ...currentRun,
         generating: true,
         terminalState: null,
+        stopReason: null,
         interruptionReason: null,
         error: null,
         status: nextStatus,
@@ -763,6 +812,7 @@ export default function BuildReducer(
         ...currentRun,
         generating: true,
         terminalState: null,
+        stopReason: null,
         interruptionReason: null,
         error: null,
         status: nextStatus,
@@ -865,6 +915,7 @@ export default function BuildReducer(
         ...currentRun,
         generating: false,
         terminalState: 'complete' as const,
+        stopReason: null,
         interruptionReason:
           action.buildRun &&
           Object.prototype.hasOwnProperty.call(
@@ -882,6 +933,16 @@ export default function BuildReducer(
             ? {
                 ...currentRun.userMessage,
                 id: Number(action.buildRun?.persistedUserId),
+                ...(Object.prototype.hasOwnProperty.call(
+                  action.buildRun || {},
+                  'userClientMessageId'
+                )
+                  ? {
+                      clientMessageId: normalizeBuildRunClientMessageId(
+                        action.buildRun?.userClientMessageId
+                      )
+                    }
+                  : {}),
                 persisted: true
               }
             : currentRun.userMessage,
@@ -892,6 +953,16 @@ export default function BuildReducer(
                 Number(action.buildRun?.persistedAssistantId || 0) > 0
                   ? Number(action.buildRun?.persistedAssistantId)
                   : currentRun.assistantMessage.id,
+              ...(Object.prototype.hasOwnProperty.call(
+                action.buildRun || {},
+                'assistantClientMessageId'
+              )
+                ? {
+                    clientMessageId: normalizeBuildRunClientMessageId(
+                      action.buildRun?.assistantClientMessageId
+                    )
+                  }
+                : {}),
               persisted:
                 Number(action.buildRun?.persistedAssistantId || 0) > 0
                   ? true
@@ -1012,6 +1083,7 @@ export default function BuildReducer(
             ...currentRun,
             generating: false,
             terminalState: 'error' as const,
+            stopReason: null,
             interruptionReason: null,
             error: errorMessage,
             status: null,
@@ -1061,6 +1133,13 @@ export default function BuildReducer(
         action.buildRun?.preserveTransientUserMessage === true;
       const preserveTransientAssistantMessage =
         action.buildRun?.preserveTransientAssistantMessage === true;
+      const stopReason =
+        action.buildRun?.stopReason === 'replacement'
+          ? 'replacement'
+          : action.buildRun?.stopReason === 'user'
+            ? 'user'
+            : null;
+      const shouldClearAssistantMessage = stopReason === 'replacement';
       return {
         ...state,
         buildRuns: {
@@ -1069,6 +1148,7 @@ export default function BuildReducer(
             ...currentRun,
             generating: false,
             terminalState: 'stopped' as const,
+            stopReason,
             interruptionReason: null,
             error: null,
             status: null,
@@ -1078,8 +1158,9 @@ export default function BuildReducer(
                 ? currentRun.userMessage
                 : null,
             assistantMessage:
-              currentRun.assistantMessage?.persisted ||
-              preserveTransientAssistantMessage
+              !shouldClearAssistantMessage &&
+              (currentRun.assistantMessage?.persisted ||
+                preserveTransientAssistantMessage)
               ? currentRun.assistantMessage
                 ? {
                     ...currentRun.assistantMessage,
@@ -1100,6 +1181,47 @@ export default function BuildReducer(
         },
         buildRunRequestMap: nextRequestMap
       };
+    }
+    case 'REMOVE_BUILD_RUN_MESSAGE': {
+      const buildId = getBuildRunLookupBuildId(state, action.buildRun);
+      if (!buildId) return state;
+      const key = getBuildRunKey(buildId);
+      const currentRun = state.buildRuns[key];
+      if (!currentRun) return state;
+      const messageId = Number(action.buildRun?.messageId || 0);
+      const messageRole = action.buildRun?.messageRole || null;
+      const clientMessageId = normalizeBuildRunClientMessageId(
+        action.buildRun?.clientMessageId
+      );
+      function matchesMessage(message: BuildLiveRunMessage | null) {
+        if (!message) return false;
+        if (messageRole && message.role !== messageRole) return false;
+        if (messageId > 0 && Number(message.id || 0) === messageId) {
+          return true;
+        }
+        if (
+          clientMessageId &&
+          normalizeBuildRunClientMessageId(message.clientMessageId) ===
+            clientMessageId
+        ) {
+          return true;
+        }
+        return false;
+      }
+      const shouldRemoveUserMessage = matchesMessage(currentRun.userMessage);
+      const shouldRemoveAssistantMessage = matchesMessage(
+        currentRun.assistantMessage
+      );
+      if (!shouldRemoveUserMessage && !shouldRemoveAssistantMessage) return state;
+      return upsertBuildRun(state, buildId, {
+        ...currentRun,
+        userMessage: shouldRemoveUserMessage ? null : currentRun.userMessage,
+        assistantMessage: shouldRemoveAssistantMessage
+          ? null
+          : currentRun.assistantMessage,
+        error: shouldRemoveAssistantMessage ? null : currentRun.error,
+        updatedAt: Date.now()
+      });
     }
     case 'SET_BUILD_WORKSPACE': {
       const buildId = Number(action.buildRun?.buildId || 0);

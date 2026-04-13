@@ -55,7 +55,6 @@ const displayFontFamily =
 const buildForkUiEnabled = false;
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
-const STALLED_RUN_RECOVERY_STATUS = 'Resuming live response...';
 
 type BuildChatUploadRoute =
   | 'project_files_import'
@@ -340,6 +339,7 @@ interface ChatMessage {
   uploadProgressPercent?: number | null;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
   artifactVersionId?: number | null;
+  clientMessageId?: string | null;
   createdAt: number;
   persisted?: boolean;
   source?: 'runtime_observation';
@@ -484,8 +484,6 @@ interface BuildEditorProps {
 }
 
 const BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX = '[[[reference_context]]]';
-const OPTIMISTIC_USER_MESSAGE_PERSISTENCE_WINDOW_SECONDS = 5 * 60;
-const OPTIMISTIC_USER_MESSAGE_CLOCK_SKEW_SECONDS = 5;
 
 interface ProjectFileSaveResult {
   success: boolean;
@@ -719,33 +717,22 @@ function mergeChatMessagesWithBuildRun({
       if (message.id === nextLiveMessage.id) return true;
       return doChatMessagesRepresentSameBuildMessage(message, nextLiveMessage);
     });
-    const optimisticUserMessageIndex =
-      existingIndex < 0
-        ? nextMessages.findIndex((message) =>
-            doesPersistedUserMessageMatchOptimisticUserMessage({
-              persistedMessage: nextLiveMessage,
-              optimisticMessage: message
-            })
-          )
-        : -1;
-    const matchedExistingIndex =
-      existingIndex >= 0 ? existingIndex : optimisticUserMessageIndex;
-    if (matchedExistingIndex >= 0) {
-      const existingMessage = nextMessages[matchedExistingIndex];
+    if (existingIndex >= 0) {
+      const existingMessage = nextMessages[existingIndex];
       const shouldPreserveExistingAssistantContent =
         existingMessage.role === 'assistant' &&
         nextLiveMessage.role === 'assistant' &&
         isBuildAssistantPlaceholderContent(nextLiveMessage.content);
-      const shouldAdoptPersistedUserId =
-        nextLiveMessage.role === 'user' &&
-        existingMessage.role === 'user' &&
+      const shouldAdoptPersistedMessageId =
         existingMessage.persisted !== true &&
         nextLiveMessage.persisted === true &&
-        Number(nextLiveMessage.id || 0) > 0;
-      nextMessages[matchedExistingIndex] = {
+        Number(nextLiveMessage.id || 0) > 0 &&
+        (doChatMessagesShareClientMessageId(existingMessage, nextLiveMessage) ||
+          nextLiveMessage.role === 'user');
+      nextMessages[existingIndex] = {
         ...existingMessage,
         ...nextLiveMessage,
-        id: shouldAdoptPersistedUserId
+        id: shouldAdoptPersistedMessageId
           ? Number(nextLiveMessage.id)
           : existingMessage.id,
         content: shouldPreserveExistingAssistantContent
@@ -759,10 +746,10 @@ function mergeChatMessagesWithBuildRun({
           nextLiveMessage.persisted ||
           false
       };
-      removeOptimisticDuplicatesForPersistedUserMessage(
+      removeDuplicateMessagesForClientMessageId(
         nextMessages,
-        nextMessages[matchedExistingIndex],
-        matchedExistingIndex
+        nextMessages[existingIndex],
+        existingIndex
       );
       continue;
     }
@@ -888,14 +875,6 @@ function mergePersistedChatMessagesIntoLocalMessages({
       );
     });
     if (existingIndex < 0) {
-      existingIndex = nextMessages.findIndex((message) =>
-        doesPersistedUserMessageMatchOptimisticUserMessage({
-          persistedMessage: normalizedPersistedMessage,
-          optimisticMessage: message
-        })
-      );
-    }
-    if (existingIndex < 0) {
       existingIndex = nextMessages.findIndex((message) => {
         if (
           message.id !== Number(activeAssistantMessageId || 0) ||
@@ -939,7 +918,7 @@ function mergePersistedChatMessagesIntoLocalMessages({
           ? (existingMessage.streamCodePreview ?? null)
           : null
       };
-      removeOptimisticDuplicatesForPersistedUserMessage(
+      removeDuplicateMessagesForClientMessageId(
         nextMessages,
         nextMessages[existingIndex],
         existingIndex
@@ -1071,6 +1050,18 @@ function doChatMessagesRepresentSameBuildMessage(
 ) {
   if (!persistedMessage || !liveMessage) return false;
   if (persistedMessage.role !== liveMessage.role) return false;
+  if (doChatMessagesShareClientMessageId(persistedMessage, liveMessage)) {
+    return true;
+  }
+  const persistedClientMessageId = normalizeBuildChatClientMessageId(
+    persistedMessage.clientMessageId
+  );
+  const liveClientMessageId = normalizeBuildChatClientMessageId(
+    liveMessage.clientMessageId
+  );
+  if (persistedClientMessageId && liveClientMessageId) {
+    return false;
+  }
   if (
     String(persistedMessage.content || '') !== String(liveMessage.content || '')
   ) {
@@ -1096,57 +1087,38 @@ function doChatMessagesRepresentSameBuildMessage(
   );
 }
 
-function normalizeOptimisticUserMessageText(value: unknown) {
-  return String(value || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+function normalizeBuildChatClientMessageId(value: unknown) {
+  return String(value || '').trim();
 }
 
-function doesPersistedUserMessageMatchOptimisticUserMessage({
-  persistedMessage,
-  optimisticMessage
-}: {
-  persistedMessage: ChatMessage;
-  optimisticMessage: ChatMessage;
-}) {
-  if (
-    persistedMessage.role !== 'user' ||
-    optimisticMessage.role !== 'user' ||
-    persistedMessage.persisted !== true ||
-    optimisticMessage.persisted === true ||
-    Number(persistedMessage.id || 0) <= 0
-  ) {
-    return false;
-  }
-  const persistedText = normalizeOptimisticUserMessageText(
-    persistedMessage.content
+function doChatMessagesShareClientMessageId(
+  left:
+    | Pick<ChatMessage, 'clientMessageId' | 'role'>
+    | Pick<BuildLiveRunMessage, 'clientMessageId' | 'role'>,
+  right:
+    | Pick<ChatMessage, 'clientMessageId' | 'role'>
+    | Pick<BuildLiveRunMessage, 'clientMessageId' | 'role'>
+) {
+  const leftClientMessageId = normalizeBuildChatClientMessageId(
+    left.clientMessageId
   );
-  if (
-    !persistedText ||
-    persistedText !== normalizeOptimisticUserMessageText(optimisticMessage.content)
-  ) {
-    return false;
-  }
-  const persistedCreatedAt = Number(persistedMessage.createdAt || 0);
-  const optimisticCreatedAt = Number(optimisticMessage.createdAt || 0);
-  if (persistedCreatedAt <= 0 || optimisticCreatedAt <= 0) {
-    return false;
-  }
-  return (
-    persistedCreatedAt >=
-      optimisticCreatedAt - OPTIMISTIC_USER_MESSAGE_CLOCK_SKEW_SECONDS &&
-    persistedCreatedAt <=
-      optimisticCreatedAt + OPTIMISTIC_USER_MESSAGE_PERSISTENCE_WINDOW_SECONDS
+  return Boolean(
+    leftClientMessageId &&
+      left.role === right.role &&
+      leftClientMessageId ===
+        normalizeBuildChatClientMessageId(right.clientMessageId)
   );
 }
 
-function removeOptimisticDuplicatesForPersistedUserMessage(
+function removeDuplicateMessagesForClientMessageId(
   messages: ChatMessage[],
-  persistedMessage: ChatMessage,
+  canonicalMessage: ChatMessage,
   preservedIndex: number
 ) {
-  if (persistedMessage.role !== 'user' || persistedMessage.persisted !== true) {
+  const canonicalClientMessageId = normalizeBuildChatClientMessageId(
+    canonicalMessage.clientMessageId
+  );
+  if (!canonicalClientMessageId) {
     return;
   }
   for (let index = messages.length - 1; index >= 0; index -= 1) {
@@ -1154,14 +1126,27 @@ function removeOptimisticDuplicatesForPersistedUserMessage(
       continue;
     }
     if (
-      doesPersistedUserMessageMatchOptimisticUserMessage({
-        persistedMessage,
-        optimisticMessage: messages[index]
-      })
+      messages[index].role === canonicalMessage.role &&
+      normalizeBuildChatClientMessageId(messages[index].clientMessageId) ===
+        canonicalClientMessageId
     ) {
       messages.splice(index, 1);
     }
   }
+}
+
+function createBuildChatClientMessageId({
+  buildId,
+  role
+}: {
+  buildId: number;
+  role: 'user' | 'assistant';
+}) {
+  const randomSegment =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `build-${Number(buildId) || 0}-${role}-${randomSegment}`;
 }
 
 function findMatchingBuildChatMessageId({
@@ -1209,14 +1194,9 @@ function resolveStoppedRunAssistantMessage({
   userRequestedStop: boolean;
 }) {
   if (userRequestedStop) {
-    return runMode === 'user'
-      ? 'Stopped before finishing this run. No code changes were saved.'
-      : 'Stopped before finishing this run.';
+    return 'Stopped this run.';
   }
-  if (runMode === 'user') {
-    return 'I stopped before finishing this run, so no code changes were saved. Please retry your request.';
-  }
-  return 'I stopped before finishing this run. Please try again.';
+  return runMode === 'user' ? 'Lumine stopped this run.' : 'Lumine stopped.';
 }
 
 function chatMessagesEqual(a: ChatMessage[], b: ChatMessage[]) {
@@ -1431,6 +1411,9 @@ export default function BuildEditor({
   );
   const onFailBuildRun = useBuildContext((v) => v.actions.onFailBuildRun);
   const onStopBuildRun = useBuildContext((v) => v.actions.onStopBuildRun);
+  const onRemoveBuildRunMessage = useBuildContext(
+    (v) => v.actions.onRemoveBuildRunMessage
+  );
   const onClearBuildRun = useBuildContext((v) => v.actions.onClearBuildRun);
   const onClearBuildRuntimeVerifyResult = useBuildContext(
     (v) => v.actions.onClearBuildRuntimeVerifyResult
@@ -1800,6 +1783,7 @@ export default function BuildEditor({
     void applyGenerateStopped({
       requestId: sharedRequestId,
       runMode: sharedBuildRun.runMode,
+      stopReason: sharedBuildRun.stopReason ?? null,
       assistantText:
         sharedAssistantText &&
         !isBuildAssistantPlaceholderContent(sharedAssistantText)
@@ -2695,13 +2679,15 @@ export default function BuildEditor({
     deduped,
     guardStatus,
     runMode,
-    assistantText
+    assistantText,
+    stopReason
   }: {
     requestId?: string;
     deduped?: boolean;
     guardStatus?: 'processing' | 'completed' | 'conflict';
     runMode?: BuildRunMode;
     assistantText?: string;
+    stopReason?: 'user' | 'replacement' | string | null;
   }) {
     const normalizedRequestId = String(requestId || '').trim();
     const releasedQueuedStop =
@@ -2725,6 +2711,12 @@ export default function BuildEditor({
     const stoppedRunMode =
       runMode ||
       getCurrentRunMode(normalizedRequestId, latestSharedRunIdentityState);
+    const queuedReplacementStop =
+      runOrchestration.consumeReplacementStop(normalizedRequestId);
+    const isReplacementStop =
+      stopReason === 'replacement' || queuedReplacementStop;
+    const normalizedStopReason =
+      isReplacementStop ? 'replacement' : stopReason === 'user' ? 'user' : null;
     const userRequestedStop = runOrchestration.didUserRequestStop();
     if (deduped) {
       resetDedupedProcessingReconcileState();
@@ -2746,7 +2738,7 @@ export default function BuildEditor({
         runOrchestration.setUserRequestedStop(userRequestedStop);
         // Keep request refs live and recover through canonical shared replay.
         shouldStartQueuedRequest = false;
-        if (!userRequestedStop) {
+        if (!userRequestedStop && !isReplacementStop) {
           const nextAssistantId = upsertLocalBuildChatAssistantMessage(
             getCurrentActiveAssistantMessageId(
               normalizedRequestId,
@@ -2761,9 +2753,11 @@ export default function BuildEditor({
         markCurrentPageRunActivityActive();
         onUpdateBuildRunStatus({
           requestId: normalizedRequestId,
-          status: userRequestedStop
-            ? 'Stopping...'
-            : DEDUPED_PROCESSING_RECOVERY_STATUS
+          status: isReplacementStop
+            ? 'Switching to your latest request...'
+            : userRequestedStop
+              ? 'Stopping...'
+              : DEDUPED_PROCESSING_RECOVERY_STATUS
         });
         setMobilePanelTab('chat');
         scrollChatToBottom();
@@ -2785,8 +2779,9 @@ export default function BuildEditor({
       clearCurrentPageRunActivity();
       onStopBuildRun({
         requestId: normalizedRequestId,
+        stopReason: normalizedStopReason,
         preserveTransientUserMessage: true,
-        preserveTransientAssistantMessage: true
+        preserveTransientAssistantMessage: !isReplacementStop
       });
       setMobilePanelTab('chat');
       runIdentity.resetRunMode();
@@ -2799,6 +2794,69 @@ export default function BuildEditor({
     runOrchestration.setUserRequestedStop(false);
     resetDedupedProcessingReconcileState();
     runtimeFollowUp.resetRuntimeHealthFollowUpState();
+    if (isReplacementStop) {
+      const latestBuildRun = getLatestBuildRun(
+        Number(getLatestBuild()?.id || build.id)
+      );
+      const replacementAssistantMessage =
+        String(latestBuildRun?.requestId || '').trim() === normalizedRequestId
+          ? latestBuildRun?.assistantMessage || null
+          : null;
+      const replacementAssistantMessageId = getCurrentActiveAssistantMessageId(
+        normalizedRequestId,
+        latestSharedRunIdentityState
+      );
+      const localReplacementAssistantMessageId =
+        runIdentity.getCurrentActiveAssistantMessageId(
+          normalizedRequestId,
+          null,
+          runOrchestration.hasCurrentPageRunActivity()
+        );
+      const replacementAssistantClientMessageId =
+        normalizeBuildChatClientMessageId(
+          replacementAssistantMessage?.clientMessageId ||
+            getLatestChatMessages().find(
+              (message) =>
+                message.role === 'assistant' &&
+                (message.id === replacementAssistantMessageId ||
+                  message.id === localReplacementAssistantMessageId)
+            )?.clientMessageId
+        );
+      onStopBuildRun({
+        requestId: normalizedRequestId,
+        stopReason: 'replacement',
+        preserveTransientUserMessage: true
+      });
+      removeLocalMessagesByIdentity({
+        ids: [
+          replacementAssistantMessageId,
+          localReplacementAssistantMessageId,
+          replacementAssistantMessage?.id
+        ],
+        clientMessageIds: [replacementAssistantClientMessageId]
+      });
+      setMobilePanelTab('chat');
+      clearCurrentPageRunActivity();
+      runIdentity.resetRunMode();
+      runOrchestration.setPostCompleteSyncInFlight(true);
+      runtimeFollowUp.bumpRuntimeFollowUpRevision();
+      try {
+        await syncChatMessagesFromServer(undefined, true, {
+          preserveLocalMessages: true
+        });
+      } catch (error) {
+        console.error(
+          'Failed to sync chat messages after replacement stop:',
+          error
+        );
+      } finally {
+        runOrchestration.setPostCompleteSyncInFlight(false);
+        runtimeFollowUp.bumpRuntimeFollowUpRevision();
+      }
+      runIdentity.clearRunOwnership();
+      await maybeStartNextQueuedRequest();
+      return;
+    }
     const stopMessage =
       typeof assistantText === 'string' && assistantText.trim().length > 0
         ? assistantText
@@ -2819,6 +2877,7 @@ export default function BuildEditor({
     onStopBuildRun({
       requestId: normalizedRequestId,
       assistantText: stopMessage,
+      stopReason: normalizedStopReason,
       preserveTransientUserMessage: true,
       preserveTransientAssistantMessage: true
     });
@@ -3206,13 +3265,14 @@ export default function BuildEditor({
     });
     if (shouldStopActiveRun) {
       if (stopRequestId) {
-        requestStopForRecoveredBuildRun(stopRequestId);
+        runOrchestration.markReplacementStop(stopRequestId);
+        requestStopForRecoveredBuildRun(stopRequestId, 'replacement');
       } else if (
         hasCurrentPageRunActivity(
           getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
         )
       ) {
-        handleStopGeneration();
+        handleStopGeneration({ stopReason: 'replacement' });
       }
     }
   }
@@ -3537,6 +3597,7 @@ export default function BuildEditor({
     }
 
     if (normalizedAssistantMessageId) {
+      runIdentity.setAssistantMessageId(normalizedAssistantMessageId);
       let matchedAssistant = false;
       nextMessages = nextMessages.map((entry) => {
         if (
@@ -4529,34 +4590,51 @@ export default function BuildEditor({
     return true;
   }
 
-  function handleStopGeneration() {
+  function handleStopGeneration(options?: {
+    stopReason?: 'user' | 'replacement';
+  }) {
     const requestId = getCurrentPageRunActivityRequestId(
       getBuildRunIdentity(Number(getLatestBuild()?.id || build.id))
     );
     if (!requestId || !isOwner) {
       return;
     }
+    const stopReason =
+      options?.stopReason === 'replacement' ? 'replacement' : 'user';
     if (runOrchestration.isDedupedProcessingInFlight()) {
-      runOrchestration.setUserRequestedStop(true);
+      runOrchestration.setUserRequestedStop(stopReason !== 'replacement');
+      if (stopReason === 'replacement') {
+        runOrchestration.markReplacementStop(requestId);
+      }
       runtimeFollowUp.resetRuntimeHealthFollowUpState();
       onUpdateBuildRunStatus({
         requestId,
-        status: 'Stopping...'
+        status:
+          stopReason === 'replacement'
+            ? 'Switching to your latest request...'
+            : 'Stopping...'
       });
       setMobilePanelTab('chat');
       scrollChatToBottom();
-      requestStopForRecoveredBuildRun(requestId);
+      requestStopForRecoveredBuildRun(requestId, stopReason);
       scheduleDedupedProcessingReconcile(requestId);
       return;
     }
-    runOrchestration.setUserRequestedStop(true);
+    runOrchestration.setUserRequestedStop(stopReason !== 'replacement');
+    if (stopReason === 'replacement') {
+      runOrchestration.markReplacementStop(requestId);
+    }
     onUpdateBuildRunStatus({
       requestId,
-      status: 'Stopping...'
+      status:
+        stopReason === 'replacement'
+          ? 'Switching to your latest request...'
+          : 'Stopping...'
     });
     socket.emit('build_stop', {
       buildId: build.id,
-      requestId
+      requestId,
+      stopReason
     });
   }
 
@@ -4572,7 +4650,7 @@ export default function BuildEditor({
       if (message.persisted === false) {
         // Fail closed for optimistic-only rows: do not delete any server row by
         // fuzzy matching. Remove local bubble and reconcile from writer.
-        removeLocalMessageByIds([message.id]);
+        removeDeletedBuildRunMessage(message);
         await syncChatMessagesFromServer(undefined, true);
         return;
       }
@@ -4582,12 +4660,15 @@ export default function BuildEditor({
         messageId: message.id
       });
 
-      if (result?.success !== true || result?.deleted !== true) {
+      if (result?.success !== true) {
         await syncChatMessagesFromServer(undefined, true);
         return;
       }
 
-      removeLocalMessageByIds([message.id]);
+      removeDeletedBuildRunMessage(message);
+      if (result?.deleted !== true) {
+        await syncChatMessagesFromServer(undefined, true);
+      }
     } catch (error) {
       console.error('Failed to delete build chat message:', error);
       await syncChatMessagesFromServer(undefined, true);
@@ -5614,6 +5695,10 @@ export default function BuildEditor({
     const now = Math.floor(Date.now() / 1000);
     const assistantMessageId = Date.now();
     const requestId = `${requestedBuildId}-runtime-fix-${assistantMessageId}`;
+    const assistantClientMessageId = createBuildChatClientMessageId({
+      buildId: requestedBuildId,
+      role: 'assistant'
+    });
     const baseProjectFiles = normalizeProjectFilesForBuild(
       activeBuild?.projectFiles || [],
       activeBuild?.code || ''
@@ -5627,6 +5712,7 @@ export default function BuildEditor({
       content: '',
       codeGenerated: null,
       streamCodePreview: null,
+      clientMessageId: assistantClientMessageId,
       createdAt: now,
       persisted: false
     };
@@ -5675,6 +5761,7 @@ export default function BuildEditor({
       runtimeAutoFixSourceRequestId: options?.sourceRequestId || null,
       runtimeAutoFixSourceArtifactVersionId:
         options?.sourceArtifactVersionId || null,
+      assistantClientMessageId,
       expectedCurrentArtifactVersionId:
         Number(getLatestBuild()?.currentArtifactVersionId || 0) > 0
           ? Number(getLatestBuild()?.currentArtifactVersionId)
@@ -5732,6 +5819,10 @@ export default function BuildEditor({
       ).trim();
       const existingUserMessageId =
         Number(options?.existingUserMessageId || 0) || null;
+      const assistantClientMessageId = createBuildChatClientMessageId({
+        buildId: activeBuild.id,
+        role: 'assistant'
+      });
       const baseProjectFiles = normalizeProjectFilesForBuild(
         activeBuild.projectFiles || [],
         activeBuild.code || ''
@@ -5747,6 +5838,14 @@ export default function BuildEditor({
               (entry) => entry.id === existingUserMessageId
             ) || null
           : null;
+      const userClientMessageId = existingUserMessage
+        ? normalizeBuildChatClientMessageId(
+            existingUserMessage.clientMessageId
+          ) || null
+        : createBuildChatClientMessageId({
+            buildId: activeBuild.id,
+            role: 'user'
+          });
       const userMessage: ChatMessage = existingUserMessage
         ? {
             ...existingUserMessage,
@@ -5759,6 +5858,7 @@ export default function BuildEditor({
             codeGenerated: null,
             billingState: null,
             streamCodePreview: null,
+            clientMessageId: userClientMessageId,
             createdAt: now,
             persisted: false
           };
@@ -5769,6 +5869,7 @@ export default function BuildEditor({
         codeGenerated: null,
         billingState: null,
         streamCodePreview: null,
+        clientMessageId: assistantClientMessageId,
         createdAt: now + 1,
         persisted: false
       };
@@ -5808,6 +5909,8 @@ export default function BuildEditor({
         runtimeObservationSummary: runtimeObservationSummary || undefined,
         messageContext: trimmedMessageContext || undefined,
         existingUserMessageId: existingUserMessageId || undefined,
+        clientMessageId: userClientMessageId || undefined,
+        assistantClientMessageId,
         planAction: options?.planAction || undefined,
         promptBinding: options?.promptBinding || undefined,
         expectedCurrentArtifactVersionId:
@@ -5851,6 +5954,10 @@ export default function BuildEditor({
       const now = Math.floor(Date.now() / 1000);
       const assistantMessageId = Date.now();
       const requestId = `${activeBuild.id}-greeting-${assistantMessageId}`;
+      const assistantClientMessageId = createBuildChatClientMessageId({
+        buildId: activeBuild.id,
+        role: 'assistant'
+      });
       const baseProjectFiles = normalizeProjectFilesForBuild(
         activeBuild.projectFiles || [],
         activeBuild.code || ''
@@ -5866,6 +5973,7 @@ export default function BuildEditor({
         content: '',
         codeGenerated: null,
         streamCodePreview: null,
+        clientMessageId: assistantClientMessageId,
         createdAt: now,
         persisted: false
       };
@@ -5894,7 +6002,8 @@ export default function BuildEditor({
 
       socket.emit('build_generate_greeting', {
         buildId: activeBuild.id,
-        requestId
+        requestId,
+        assistantClientMessageId
       });
       return true;
     } finally {
@@ -5906,11 +6015,49 @@ export default function BuildEditor({
   }
 
   function removeLocalMessageByIds(ids: number[]) {
-    const idSet = new Set(ids);
+    removeLocalMessagesByIdentity({ ids });
+  }
+
+  function removeLocalMessagesByIdentity({
+    ids = [],
+    clientMessageIds = []
+  }: {
+    ids?: Array<number | null | undefined>;
+    clientMessageIds?: Array<string | null | undefined>;
+  }) {
+    const idSet = new Set(
+      ids
+        .map((id) => Number(id || 0))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    );
+    const clientMessageIdSet = new Set(
+      clientMessageIds
+        .map((clientMessageId) =>
+          normalizeBuildChatClientMessageId(clientMessageId)
+        )
+        .filter(Boolean)
+    );
+    if (idSet.size === 0 && clientMessageIdSet.size === 0) {
+      return;
+    }
     const nextMessages = getLatestChatMessages().filter(
-      (entry) => !idSet.has(entry.id)
+      (entry) =>
+        !idSet.has(entry.id) &&
+        !clientMessageIdSet.has(
+          normalizeBuildChatClientMessageId(entry.clientMessageId)
+        )
     );
     replaceChatMessages(nextMessages);
+  }
+
+  function removeDeletedBuildRunMessage(message: ChatMessage) {
+    onRemoveBuildRunMessage({
+      buildId: build.id,
+      messageId: message.id,
+      messageRole: message.role,
+      clientMessageId: normalizeBuildChatClientMessageId(message.clientMessageId)
+    });
+    removeLocalMessageByIds([message.id]);
   }
 
   function getActiveStreamMessageIds(
@@ -5957,35 +6104,44 @@ export default function BuildEditor({
 
   function updateSharedStalledRunRecoveryStatus(requestId: string) {
     const normalizedRequestId = String(requestId || '').trim();
-    if (!normalizedRequestId) return;
+    if (!normalizedRequestId) return false;
     const activeBuildId = Number(getLatestBuild()?.id || build.id);
-    if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
+    if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return false;
+    if (
+      !runOrchestration.didUserRequestStop() &&
+      !runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)
+    ) {
+      return false;
+    }
     const nextStatus = runOrchestration.didUserRequestStop()
       ? 'Stopping...'
-      : runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)
-        ? DEDUPED_PROCESSING_RECOVERY_STATUS
-        : STALLED_RUN_RECOVERY_STATUS;
+      : DEDUPED_PROCESSING_RECOVERY_STATUS;
     if (
       String(sharedBuildRun?.requestId || '').trim() === normalizedRequestId &&
       String(sharedBuildRun?.status || '').trim() === nextStatus
     ) {
-      return;
+      return false;
     }
     onUpdateBuildRunStatus({
       buildId: activeBuildId,
       requestId: normalizedRequestId,
       status: nextStatus
     });
+    return true;
   }
 
-  function requestStopForRecoveredBuildRun(requestId: string) {
+  function requestStopForRecoveredBuildRun(
+    requestId: string,
+    stopReason: 'user' | 'replacement' = 'user'
+  ) {
     const normalizedRequestId = String(requestId || '').trim();
     if (!normalizedRequestId) return;
     const activeBuildId = Number(getLatestBuild()?.id || build.id);
     if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return;
     socket.emit('build_stop', {
       buildId: activeBuildId,
-      requestId: normalizedRequestId
+      requestId: normalizedRequestId,
+      stopReason
     });
   }
 
@@ -6086,9 +6242,13 @@ export default function BuildEditor({
     }
     runOrchestration.beginStalledRunRecovery(now);
     try {
-      updateSharedStalledRunRecoveryStatus(normalizedRequestId);
-      setMobilePanelTab('chat');
-      scrollChatToBottom();
+      const didShowRecoveryStatus = updateSharedStalledRunRecoveryStatus(
+        normalizedRequestId
+      );
+      if (didShowRecoveryStatus) {
+        setMobilePanelTab('chat');
+        scrollChatToBottom();
+      }
       maybeResumeActiveBuildRun();
     } finally {
       runOrchestration.finishStalledRunRecovery();

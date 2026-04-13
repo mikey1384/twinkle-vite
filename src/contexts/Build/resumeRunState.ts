@@ -30,11 +30,13 @@ export interface BuildResumeRunStateRunEventPayload {
 
 export interface BuildResumeRunStateStreamUpdatePayload {
   userMessageContent?: string | null;
+  userClientMessageId?: string | null;
   reply?: string;
   codeGenerated?: string | null;
   hasCodeGeneratedField?: boolean;
   userMessageId?: number | null;
   assistantMessageId?: number | null;
+  assistantClientMessageId?: string | null;
   assistantMessageCreatedAt?: number | null;
   baseProjectFiles?: Array<{ path: string; content?: string }> | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
@@ -63,10 +65,12 @@ export interface BuildResumeRunStatePayload {
 
 export interface BuildResumeRunStateNormalizedStreamUpdate {
   userMessageContent?: string | null;
+  userClientMessageId?: string | null;
   reply?: string;
   codeGenerated?: string | null;
   userMessageId?: number | null;
   assistantMessageId?: number | null;
+  assistantClientMessageId?: string | null;
   assistantMessageCreatedAt?: number | null;
   baseProjectFiles?: Array<{ path: string; content?: string }> | null;
   projectFiles?: Array<{ path: string; content?: string }> | null;
@@ -206,6 +210,12 @@ function normalizeBuildResumeRunStreamUpdate(
         ? streamUpdate.userMessageContent
         : null;
   }
+  if (Object.prototype.hasOwnProperty.call(streamUpdate, 'userClientMessageId')) {
+    normalizedStreamUpdate.userClientMessageId =
+      typeof streamUpdate.userClientMessageId === 'string'
+        ? streamUpdate.userClientMessageId.trim() || null
+        : null;
+  }
   if (typeof streamUpdate.reply === 'string') {
     normalizedStreamUpdate.reply = streamUpdate.reply;
   }
@@ -222,6 +232,17 @@ function normalizeBuildResumeRunStreamUpdate(
     normalizedStreamUpdate.assistantMessageId =
       Number(streamUpdate.assistantMessageId || 0) > 0
         ? Number(streamUpdate.assistantMessageId)
+        : null;
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(
+      streamUpdate,
+      'assistantClientMessageId'
+    )
+  ) {
+    normalizedStreamUpdate.assistantClientMessageId =
+      typeof streamUpdate.assistantClientMessageId === 'string'
+        ? streamUpdate.assistantClientMessageId.trim() || null
         : null;
   }
   if (
@@ -329,11 +350,16 @@ export function getBuildResumeRunStateReplayKey(
           reply: normalizedResumeRunState.streamUpdate.reply,
           userMessageContent:
             normalizedResumeRunState.streamUpdate.userMessageContent ?? null,
+          userClientMessageId:
+            normalizedResumeRunState.streamUpdate.userClientMessageId ?? null,
           codeGenerated: normalizedResumeRunState.streamUpdate.codeGenerated,
           userMessageId:
             normalizedResumeRunState.streamUpdate.userMessageId ?? null,
           assistantMessageId:
             normalizedResumeRunState.streamUpdate.assistantMessageId ?? null,
+          assistantClientMessageId:
+            normalizedResumeRunState.streamUpdate.assistantClientMessageId ??
+            null,
           assistantMessageCreatedAt:
             normalizedResumeRunState.streamUpdate.assistantMessageCreatedAt ??
             null,

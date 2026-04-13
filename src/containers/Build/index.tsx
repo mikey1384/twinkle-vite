@@ -32,6 +32,7 @@ import {
   getBuildRunEventLogicalIdentity,
   normalizeBuildRunEventCreatedAt
 } from '~/contexts/Build/runEventIdentity';
+import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -183,55 +184,70 @@ function findPersistedBuildRunMessage(
 
 function createFallbackPersistedAssistantMessage({
   assistantMessageId,
-  assistantMessageCreatedAt
+  assistantMessageCreatedAt,
+  assistantClientMessageId
 }: {
   assistantMessageId?: number | null;
   assistantMessageCreatedAt?: number | null;
+  assistantClientMessageId?: string | null;
 }) {
   const normalizedAssistantMessageId = Number(assistantMessageId || 0);
-  if (normalizedAssistantMessageId <= 0) return null;
+  const normalizedAssistantClientMessageId = String(
+    assistantClientMessageId || ''
+  ).trim();
+  if (normalizedAssistantMessageId > 0) {
+    return null;
+  }
+  if (!normalizedAssistantClientMessageId) return null;
   return {
-    id: normalizedAssistantMessageId,
+    id: createFallbackBuildRunMessageId(),
     role: 'assistant' as const,
     content: '',
     codeGenerated: null,
     billingState: null,
     streamCodePreview: null,
     artifactVersionId: null,
+    clientMessageId: normalizedAssistantClientMessageId || null,
     createdAt:
       Number(assistantMessageCreatedAt || 0) > 0
         ? Number(assistantMessageCreatedAt)
         : Math.floor(Date.now() / 1000),
-    persisted: true
+    persisted: false
   };
 }
 
 function createFallbackPersistedUserMessage({
   userMessageId,
-  userMessageContent
+  userMessageContent,
+  userClientMessageId
 }: {
   userMessageId?: number | null;
   userMessageContent?: string | null;
+  userClientMessageId?: string | null;
 }) {
+  const normalizedUserClientMessageId = String(
+    userClientMessageId || ''
+  ).trim();
+  if (Number(userMessageId || 0) > 0) {
+    return null;
+  }
   if (
-    Number(userMessageId || 0) <= 0 &&
-    typeof userMessageContent !== 'string'
+    typeof userMessageContent !== 'string' &&
+    !normalizedUserClientMessageId
   ) {
     return null;
   }
   return {
-    id:
-      Number(userMessageId || 0) > 0
-        ? Number(userMessageId)
-        : Math.max(1, Math.floor(Date.now() / 1000)),
+    id: createFallbackBuildRunMessageId(),
     role: 'user' as const,
     content: typeof userMessageContent === 'string' ? userMessageContent : '',
     codeGenerated: null,
     billingState: null,
     streamCodePreview: null,
     artifactVersionId: null,
+    clientMessageId: normalizedUserClientMessageId || null,
     createdAt: Math.floor(Date.now() / 1000),
-    persisted: Number(userMessageId || 0) > 0
+    persisted: false
   };
 }
 
@@ -518,9 +534,30 @@ function streamUpdateCoveredByCurrentRun(
   }
 
   if (
+    Object.prototype.hasOwnProperty.call(streamUpdate, 'userClientMessageId') &&
+    String(streamUpdate.userClientMessageId || '').trim() &&
+    String(currentRun.userMessage?.clientMessageId || '').trim() !==
+      String(streamUpdate.userClientMessageId || '').trim()
+  ) {
+    return false;
+  }
+
+  if (
     Object.prototype.hasOwnProperty.call(streamUpdate, 'userMessageContent') &&
     typeof streamUpdate.userMessageContent === 'string' &&
     !textCoversSnapshot(currentRun.userMessage?.content, streamUpdate.userMessageContent)
+  ) {
+    return false;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      streamUpdate,
+      'assistantClientMessageId'
+    ) &&
+    String(streamUpdate.assistantClientMessageId || '').trim() &&
+    String(currentRun.assistantMessage?.clientMessageId || '').trim() !==
+      String(streamUpdate.assistantClientMessageId || '').trim()
   ) {
     return false;
   }
@@ -784,7 +821,8 @@ function hydrateBuildRunFromPersistedSnapshot({
   ) ||
     createFallbackPersistedUserMessage({
       userMessageId: normalized.streamUpdate?.userMessageId,
-      userMessageContent: normalized.streamUpdate?.userMessageContent
+      userMessageContent: normalized.streamUpdate?.userMessageContent,
+      userClientMessageId: normalized.streamUpdate?.userClientMessageId
     });
   const persistedAssistantMessage =
     normalizeBuildRunMessageForSharedState(
@@ -796,7 +834,9 @@ function hydrateBuildRunFromPersistedSnapshot({
     createFallbackPersistedAssistantMessage({
       assistantMessageId: normalized.streamUpdate?.assistantMessageId,
       assistantMessageCreatedAt:
-        normalized.streamUpdate?.assistantMessageCreatedAt
+        normalized.streamUpdate?.assistantMessageCreatedAt,
+      assistantClientMessageId:
+        normalized.streamUpdate?.assistantClientMessageId
     });
 
   actions.onRegisterBuildRun({
@@ -880,6 +920,14 @@ function hydrateBuildRunFromPersistedSnapshot({
           Number(terminalPayload?.message?.userMessageId || 0) > 0
             ? Number(terminalPayload.message.userMessageId)
             : null,
+        userClientMessageId:
+          typeof terminalPayload?.message?.userClientMessageId === 'string'
+            ? terminalPayload.message.userClientMessageId
+            : undefined,
+        assistantClientMessageId:
+          typeof terminalPayload?.message?.assistantClientMessageId === 'string'
+            ? terminalPayload.message.assistantClientMessageId
+            : undefined,
         createdAt:
           Number(terminalPayload?.message?.createdAt || 0) > 0
             ? Number(terminalPayload.message.createdAt)
@@ -897,6 +945,7 @@ function hydrateBuildRunFromPersistedSnapshot({
       actions.onStopBuildRun({
         buildId,
         requestId,
+        stopReason: terminalPayload.stopReason || null,
         ...(typeof terminalPayload.assistantText === 'string'
           ? { assistantText: terminalPayload.assistantText }
           : {})

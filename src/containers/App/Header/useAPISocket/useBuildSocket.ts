@@ -17,6 +17,7 @@ import {
   normalizeBuildRunEventCreatedAt,
   normalizeBuildRunEventId
 } from '~/contexts/Build/runEventIdentity';
+import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
 
 export default function useBuildSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -116,7 +117,9 @@ export default function useBuildSocket() {
       status,
       userMessageContent,
       userMessageId,
+      userClientMessageId,
       assistantMessageId,
+      assistantClientMessageId,
       assistantMessageCreatedAt,
       lastActivityAt
     }: {
@@ -126,7 +129,9 @@ export default function useBuildSocket() {
       status?: string | null;
       userMessageContent?: string | null;
       userMessageId?: number | null;
+      userClientMessageId?: string | null;
       assistantMessageId?: number | null;
+      assistantClientMessageId?: string | null;
       assistantMessageCreatedAt?: number | null;
       lastActivityAt?: number | null;
     }) {
@@ -140,33 +145,40 @@ export default function useBuildSocket() {
               id:
                 Number(userMessageId || 0) > 0
                   ? Number(userMessageId)
-                  : Math.max(1, Math.floor(Date.now() / 1000)),
+                  : createFallbackBuildRunMessageId(),
               role: 'user' as const,
               content: userMessageContent,
               codeGenerated: null,
               billingState: null,
               streamCodePreview: null,
               artifactVersionId: null,
+              clientMessageId: String(userClientMessageId || '').trim() || null,
               createdAt: Math.floor(Date.now() / 1000),
               persisted: Number(userMessageId || 0) > 0
             }
           : null);
       const assistantMessage =
         findWorkspaceMessage(buildId, assistantMessageId) ||
-        (Number(assistantMessageId || 0) > 0
+        (Number(assistantMessageId || 0) > 0 ||
+          String(assistantClientMessageId || '').trim()
           ? {
-              id: Number(assistantMessageId || 0),
+              id:
+                Number(assistantMessageId || 0) > 0
+                  ? Number(assistantMessageId || 0)
+                  : createFallbackBuildRunMessageId(),
               role: 'assistant' as const,
               content: '',
               codeGenerated: null,
               billingState: null,
               streamCodePreview: null,
               artifactVersionId: null,
+              clientMessageId:
+                String(assistantClientMessageId || '').trim() || null,
               createdAt:
                 Number(assistantMessageCreatedAt || 0) > 0
                   ? Number(assistantMessageCreatedAt)
                   : Math.floor(Date.now() / 1000),
-              persisted: true
+              persisted: Number(assistantMessageId || 0) > 0
             }
           : null);
       const existingRun = buildRunsRef.current[String(buildId)] || null;
@@ -180,6 +192,8 @@ export default function useBuildSocket() {
           userMessageId:
             Number(userMessageId || 0) > 0 ? Number(userMessageId) : null,
           userMessageContent: userMessage.content,
+          userClientMessageId:
+            String(userClientMessageId || '').trim() || undefined,
           updatedAt:
             Number(lastActivityAt || 0) > 0 ? Number(lastActivityAt) : Date.now()
         });
@@ -234,8 +248,12 @@ export default function useBuildSocket() {
         userMessageContent:
           normalizedResumeRunState.streamUpdate?.userMessageContent,
         userMessageId: normalizedResumeRunState.streamUpdate?.userMessageId,
+        userClientMessageId:
+          normalizedResumeRunState.streamUpdate?.userClientMessageId,
         assistantMessageId:
           normalizedResumeRunState.streamUpdate?.assistantMessageId,
+        assistantClientMessageId:
+          normalizedResumeRunState.streamUpdate?.assistantClientMessageId,
         assistantMessageCreatedAt:
           normalizedResumeRunState.streamUpdate?.assistantMessageCreatedAt,
         lastActivityAt: normalizedResumeRunState.lastActivityAt
@@ -316,6 +334,15 @@ export default function useBuildSocket() {
               Number(terminalPayload?.message?.userMessageId || 0) > 0
                 ? Number(terminalPayload.message.userMessageId)
                 : null,
+            userClientMessageId:
+              typeof terminalPayload?.message?.userClientMessageId === 'string'
+                ? terminalPayload.message.userClientMessageId
+                : undefined,
+            assistantClientMessageId:
+              typeof terminalPayload?.message?.assistantClientMessageId ===
+              'string'
+                ? terminalPayload.message.assistantClientMessageId
+                : undefined,
             createdAt:
               Number(terminalPayload?.message?.createdAt || 0) > 0
                 ? Number(terminalPayload.message.createdAt)
@@ -333,6 +360,7 @@ export default function useBuildSocket() {
           onStopBuildRun({
             buildId: resolvedRun.buildId,
             requestId: normalizedResumeRunState.requestId,
+            stopReason: terminalPayload.stopReason || null,
             ...(typeof terminalPayload.assistantText === 'string'
               ? { assistantText: terminalPayload.assistantText }
               : {})
@@ -378,8 +406,10 @@ export default function useBuildSocket() {
       reply,
       codeGenerated,
       userMessageId,
+      userClientMessageId,
       userMessageContent,
       assistantMessageId,
+      assistantClientMessageId,
       assistantMessageCreatedAt,
       usageMetrics,
       baseProjectFiles,
@@ -396,8 +426,10 @@ export default function useBuildSocket() {
       reply?: string;
       codeGenerated?: string | null;
       userMessageId?: number | null;
+      userClientMessageId?: string | null;
       userMessageContent?: string | null;
       assistantMessageId?: number | null;
+      assistantClientMessageId?: string | null;
       assistantMessageCreatedAt?: number | null;
       usageMetrics?: Record<string, BuildLiveRunUsageMetric> | null;
       baseProjectFiles?: Array<{ path: string; content?: string }> | null;
@@ -424,7 +456,9 @@ export default function useBuildSocket() {
         status: latestAssistantStatus,
         userMessageContent,
         userMessageId,
+        userClientMessageId,
         assistantMessageId,
+        assistantClientMessageId,
         assistantMessageCreatedAt
       });
       const buildRun: any = {
@@ -456,10 +490,27 @@ export default function useBuildSocket() {
         buildRun.userMessageContent =
           typeof userMessageContent === 'string' ? userMessageContent : null;
       }
+      if (Object.prototype.hasOwnProperty.call(payload, 'userClientMessageId')) {
+        buildRun.userClientMessageId =
+          typeof userClientMessageId === 'string'
+            ? userClientMessageId.trim() || null
+            : null;
+      }
       if (Object.prototype.hasOwnProperty.call(payload, 'assistantMessageId')) {
         buildRun.assistantMessageId =
           Number(assistantMessageId || 0) > 0
             ? Number(assistantMessageId)
+            : null;
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(
+          payload,
+          'assistantClientMessageId'
+        )
+      ) {
+        buildRun.assistantClientMessageId =
+          typeof assistantClientMessageId === 'string'
+            ? assistantClientMessageId.trim() || null
             : null;
       }
       if (
@@ -545,6 +596,8 @@ export default function useBuildSocket() {
         id?: number | null;
         userMessageId?: number | null;
         userMessageContent?: string | null;
+        userClientMessageId?: string | null;
+        assistantClientMessageId?: string | null;
         artifactVersionId?: number | null;
         createdAt?: number;
       };
@@ -560,7 +613,9 @@ export default function useBuildSocket() {
             ? message.userMessageContent
             : null,
         userMessageId: message?.userMessageId,
+        userClientMessageId: message?.userClientMessageId,
         assistantMessageId: message?.id,
+        assistantClientMessageId: message?.assistantClientMessageId,
         assistantMessageCreatedAt: message?.createdAt
       });
       onCompleteBuildRun({
@@ -622,6 +677,14 @@ export default function useBuildSocket() {
           Number(message?.userMessageId || 0) > 0
             ? Number(message?.userMessageId)
             : null,
+        userClientMessageId:
+          typeof message?.userClientMessageId === 'string'
+            ? message.userClientMessageId
+            : undefined,
+        assistantClientMessageId:
+          typeof message?.assistantClientMessageId === 'string'
+            ? message.assistantClientMessageId
+            : undefined,
         createdAt:
           Number(message?.createdAt || 0) > 0 ? message?.createdAt : undefined
       });
@@ -658,7 +721,8 @@ export default function useBuildSocket() {
       runMode,
       deduped,
       guardStatus,
-      assistantText
+      assistantText,
+      stopReason
     }: {
       requestId?: string;
       buildId?: number | null;
@@ -666,6 +730,7 @@ export default function useBuildSocket() {
       deduped?: boolean;
       guardStatus?: 'processing' | 'completed' | 'conflict';
       assistantText?: string;
+      stopReason?: 'user' | 'replacement' | null;
     }) {
       const resolvedRun = shouldHandleRun(requestId, buildId);
       if (!resolvedRun.shouldHandle || !requestId) return;
@@ -690,6 +755,7 @@ export default function useBuildSocket() {
       onStopBuildRun({
         buildId: resolvedRun.buildId,
         requestId,
+        stopReason: stopReason || null,
         ...(typeof assistantText === 'string' ? { assistantText } : {})
       });
     }

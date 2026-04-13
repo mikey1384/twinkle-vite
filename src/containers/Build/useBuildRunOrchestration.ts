@@ -26,6 +26,8 @@ interface BuildRunOrchestrationApi<TQueuedRequest, TRunEvent> {
   requiresProjectFilesResyncBeforeSave(): boolean;
   setUserRequestedStop(requested: boolean): void;
   didUserRequestStop(): boolean;
+  markReplacementStop(requestId?: string | null): void;
+  consumeReplacementStop(requestId?: string | null): boolean;
   isDedupedProcessingInFlight(requestId?: string | null): boolean;
   getDedupedProcessingRequestId(): string;
   beginDedupedProcessingRecovery(requestId?: string | null): string;
@@ -61,6 +63,7 @@ export default function useBuildRunOrchestration<
   const queuePausedForSaveRef = useRef(false);
   const requiresProjectFilesResyncBeforeSaveRef = useRef(false);
   const userRequestedStopRef = useRef(false);
+  const replacementStopRequestIdsRef = useRef<Set<string>>(new Set());
   const lastResumeAttemptAtRef = useRef(0);
   const lastRunActivityAtRef = useRef(0);
   const stalledRunRecoveryInFlightRef = useRef(false);
@@ -102,6 +105,7 @@ export default function useBuildRunOrchestration<
         queuePausedForSaveRef.current = false;
         requiresProjectFilesResyncBeforeSaveRef.current = false;
         userRequestedStopRef.current = false;
+        replacementStopRequestIdsRef.current.clear();
         dedupedProcessingReconcileRequestIdRef.current = null;
         lastResumeAttemptAtRef.current = 0;
         lastRunActivityAtRef.current = 0;
@@ -185,6 +189,21 @@ export default function useBuildRunOrchestration<
 
       didUserRequestStop() {
         return userRequestedStopRef.current;
+      },
+
+      markReplacementStop(requestId?: string | null) {
+        const normalizedRequestId = String(requestId || '').trim();
+        if (!normalizedRequestId) return;
+        replacementStopRequestIdsRef.current.add(normalizedRequestId);
+      },
+
+      consumeReplacementStop(requestId?: string | null) {
+        const normalizedRequestId = String(requestId || '').trim();
+        if (!normalizedRequestId) return false;
+        const wasReplacementStop =
+          replacementStopRequestIdsRef.current.has(normalizedRequestId);
+        replacementStopRequestIdsRef.current.delete(normalizedRequestId);
+        return wasReplacementStop;
       },
 
       isDedupedProcessingInFlight(requestId?: string | null) {

@@ -246,6 +246,8 @@ const BUILD_PROJECT_UNSUPPORTED_UPLOAD_EXTENSIONS = [
   '.tsx'
 ] as const;
 const EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS: PreviewRuntimeUploadAsset[] = [];
+const PREVIEW_IFRAME_SANDBOX =
+  'allow-scripts allow-downloads allow-pointer-lock';
 const BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES = new Set([
   'application/json',
   'application/javascript',
@@ -3358,7 +3360,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                   ref={primaryIframeRef}
                   src={previewFrameSources.primary || previewSrc || undefined}
                   title="App preview"
-                  sandbox="allow-scripts allow-downloads"
+                  sandbox={PREVIEW_IFRAME_SANDBOX}
                   onLoad={() =>
                     handlePreviewFrameLoad(
                       'primary',
@@ -3424,7 +3426,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     ref={primaryIframeRef}
                     src={previewFrameSources.primary}
                     title="Preview (primary)"
-                    sandbox="allow-scripts allow-downloads"
+                    sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(
                         'primary',
@@ -3451,7 +3453,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     ref={secondaryIframeRef}
                     src={previewFrameSources.secondary}
                     title="Preview (secondary)"
-                    sandbox="allow-scripts allow-downloads"
+                    sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(
                         'secondary',
