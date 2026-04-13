@@ -484,6 +484,8 @@ interface BuildEditorProps {
 }
 
 const BUILD_CHAT_HIDDEN_REFERENCE_CONTEXT_PREFIX = '[[[reference_context]]]';
+const OPTIMISTIC_USER_MESSAGE_PERSISTENCE_WINDOW_SECONDS = 5 * 60;
+const OPTIMISTIC_USER_MESSAGE_CLOCK_SKEW_SECONDS = 5;
 
 interface ProjectFileSaveResult {
   success: boolean;
@@ -717,16 +719,35 @@ function mergeChatMessagesWithBuildRun({
       if (message.id === nextLiveMessage.id) return true;
       return doChatMessagesRepresentSameBuildMessage(message, nextLiveMessage);
     });
-    if (existingIndex >= 0) {
-      const existingMessage = nextMessages[existingIndex];
+    const optimisticUserMessageIndex =
+      existingIndex < 0
+        ? nextMessages.findIndex((message) =>
+            doesPersistedUserMessageMatchOptimisticUserMessage({
+              persistedMessage: nextLiveMessage,
+              optimisticMessage: message
+            })
+          )
+        : -1;
+    const matchedExistingIndex =
+      existingIndex >= 0 ? existingIndex : optimisticUserMessageIndex;
+    if (matchedExistingIndex >= 0) {
+      const existingMessage = nextMessages[matchedExistingIndex];
       const shouldPreserveExistingAssistantContent =
         existingMessage.role === 'assistant' &&
         nextLiveMessage.role === 'assistant' &&
         isBuildAssistantPlaceholderContent(nextLiveMessage.content);
-      nextMessages[existingIndex] = {
+      const shouldAdoptPersistedUserId =
+        nextLiveMessage.role === 'user' &&
+        existingMessage.role === 'user' &&
+        existingMessage.persisted !== true &&
+        nextLiveMessage.persisted === true &&
+        Number(nextLiveMessage.id || 0) > 0;
+      nextMessages[matchedExistingIndex] = {
         ...existingMessage,
         ...nextLiveMessage,
-        id: existingMessage.id,
+        id: shouldAdoptPersistedUserId
+          ? Number(nextLiveMessage.id)
+          : existingMessage.id,
         content: shouldPreserveExistingAssistantContent
           ? existingMessage.content
           : nextLiveMessage.content,
@@ -738,6 +759,11 @@ function mergeChatMessagesWithBuildRun({
           nextLiveMessage.persisted ||
           false
       };
+      removeOptimisticDuplicatesForPersistedUserMessage(
+        nextMessages,
+        nextMessages[matchedExistingIndex],
+        matchedExistingIndex
+      );
       continue;
     }
     nextMessages.push({
@@ -862,6 +888,14 @@ function mergePersistedChatMessagesIntoLocalMessages({
       );
     });
     if (existingIndex < 0) {
+      existingIndex = nextMessages.findIndex((message) =>
+        doesPersistedUserMessageMatchOptimisticUserMessage({
+          persistedMessage: normalizedPersistedMessage,
+          optimisticMessage: message
+        })
+      );
+    }
+    if (existingIndex < 0) {
       existingIndex = nextMessages.findIndex((message) => {
         if (
           message.id !== Number(activeAssistantMessageId || 0) ||
@@ -905,6 +939,11 @@ function mergePersistedChatMessagesIntoLocalMessages({
           ? (existingMessage.streamCodePreview ?? null)
           : null
       };
+      removeOptimisticDuplicatesForPersistedUserMessage(
+        nextMessages,
+        nextMessages[existingIndex],
+        existingIndex
+      );
       continue;
     }
     nextMessages.push({
@@ -1055,6 +1094,74 @@ function doChatMessagesRepresentSameBuildMessage(
         Number(liveMessage.createdAt || 0)
     ) <= 5
   );
+}
+
+function normalizeOptimisticUserMessageText(value: unknown) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function doesPersistedUserMessageMatchOptimisticUserMessage({
+  persistedMessage,
+  optimisticMessage
+}: {
+  persistedMessage: ChatMessage;
+  optimisticMessage: ChatMessage;
+}) {
+  if (
+    persistedMessage.role !== 'user' ||
+    optimisticMessage.role !== 'user' ||
+    persistedMessage.persisted !== true ||
+    optimisticMessage.persisted === true ||
+    Number(persistedMessage.id || 0) <= 0
+  ) {
+    return false;
+  }
+  const persistedText = normalizeOptimisticUserMessageText(
+    persistedMessage.content
+  );
+  if (
+    !persistedText ||
+    persistedText !== normalizeOptimisticUserMessageText(optimisticMessage.content)
+  ) {
+    return false;
+  }
+  const persistedCreatedAt = Number(persistedMessage.createdAt || 0);
+  const optimisticCreatedAt = Number(optimisticMessage.createdAt || 0);
+  if (persistedCreatedAt <= 0 || optimisticCreatedAt <= 0) {
+    return false;
+  }
+  return (
+    persistedCreatedAt >=
+      optimisticCreatedAt - OPTIMISTIC_USER_MESSAGE_CLOCK_SKEW_SECONDS &&
+    persistedCreatedAt <=
+      optimisticCreatedAt + OPTIMISTIC_USER_MESSAGE_PERSISTENCE_WINDOW_SECONDS
+  );
+}
+
+function removeOptimisticDuplicatesForPersistedUserMessage(
+  messages: ChatMessage[],
+  persistedMessage: ChatMessage,
+  preservedIndex: number
+) {
+  if (persistedMessage.role !== 'user' || persistedMessage.persisted !== true) {
+    return;
+  }
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (index === preservedIndex) {
+      continue;
+    }
+    if (
+      doesPersistedUserMessageMatchOptimisticUserMessage({
+        persistedMessage,
+        optimisticMessage: messages[index]
+      })
+    ) {
+      messages.splice(index, 1);
+    }
+  }
 }
 
 function findMatchingBuildChatMessageId({

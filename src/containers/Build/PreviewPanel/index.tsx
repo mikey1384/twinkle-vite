@@ -3358,7 +3358,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                   ref={primaryIframeRef}
                   src={previewFrameSources.primary || previewSrc || undefined}
                   title="App preview"
-                  sandbox="allow-scripts"
+                  sandbox="allow-scripts allow-downloads"
                   onLoad={() =>
                     handlePreviewFrameLoad(
                       'primary',
@@ -3424,7 +3424,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     ref={primaryIframeRef}
                     src={previewFrameSources.primary}
                     title="Preview (primary)"
-                    sandbox="allow-scripts"
+                    sandbox="allow-scripts allow-downloads"
                     onLoad={() =>
                       handlePreviewFrameLoad(
                         'primary',
@@ -3451,7 +3451,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     ref={secondaryIframeRef}
                     src={previewFrameSources.secondary}
                     title="Preview (secondary)"
-                    sandbox="allow-scripts"
+                    sandbox="allow-scripts allow-downloads"
                     onLoad={() =>
                       handlePreviewFrameLoad(
                         'secondary',
