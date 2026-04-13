@@ -74,7 +74,9 @@ export default function Results({
     let cancelled = false;
     searchTextRef.current = searchText;
 
-    if (!stringIsEmpty(searchText) && searchText !== prevSearchText) {
+    if (stringIsEmpty(searchText) || searchText === prevSearchText) {
+      setSearching(false);
+    } else {
       clearTimeout(timerRef.current);
       setSearching(true);
       timerRef.current = setTimeout(() => {
@@ -87,7 +89,6 @@ export default function Results({
       cancelled = true;
       clearTimeout(timerRef.current);
       timerRef.current = null;
-      setSearching(false);
     };
 
     async function doSearch(text: string) {
