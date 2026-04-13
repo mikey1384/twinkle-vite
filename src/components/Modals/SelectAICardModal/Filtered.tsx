@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Loading from '~/components/Loading';
 import CardItem from './CardItem';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -46,6 +46,7 @@ export default function Filtered({
 }) {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   const [loadMoreShown, setLoadMoreShown] = useState(false);
   const [cardIds, setCardIds] = useState<any[]>([]);
   const cards = cardIds
@@ -150,28 +151,54 @@ export default function Filtered({
   );
 
   async function handleLoadMore() {
-    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
-    const lastId = cards[cards.length - 1]?.id;
-    setLoadingMore(true);
-    const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
-      lastInteraction,
-      lastId,
-      filters: {
-        owner: aiCardModalType === 'want' ? partnerName : myUsername,
-        ...(!color || color === 'any' ? {} : { color }),
-        ...(!quality || quality === 'any' ? {} : { quality }),
-        ...(!cardStyle ? {} : { style: cardStyle }),
-        ...(engine ? { engine } : {})
-      }
-    });
-    for (const card of newCards) {
-      onUpdateAICard({ cardId: card.id, newState: card });
+    if (loadingMoreRef.current) return;
+    const lastCard = cards[cards.length - 1];
+    const lastInteraction = lastCard?.lastInteraction;
+    const lastId = lastCard?.id;
+    if (!lastInteraction || !lastId) {
+      setLoadMoreShown(false);
+      return;
     }
-    setCardIds((prevCardIds: any) => [
-      ...prevCardIds,
-      ...newCards.map((card: { id: number }) => card.id)
-    ]);
-    setLoadMoreShown(loadMoreShown);
-    setLoadingMore(false);
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
+        lastInteraction,
+        lastId,
+        filters: {
+          owner: aiCardModalType === 'want' ? partnerName : myUsername,
+          ...(!color || color === 'any' ? {} : { color }),
+          ...(!quality || quality === 'any' ? {} : { quality }),
+          ...(!cardStyle ? {} : { style: cardStyle }),
+          ...(engine ? { engine } : {})
+        }
+      });
+      for (const card of newCards) {
+        onUpdateAICard({ cardId: card.id, newState: card });
+      }
+      const shownCardIds = new Set(cards.map((card) => card.id));
+      const newCardIds: number[] = [];
+      for (const card of newCards) {
+        if (!shownCardIds.has(card.id)) {
+          shownCardIds.add(card.id);
+          newCardIds.push(card.id);
+        }
+      }
+      setCardIds((prevCardIds: number[]) => {
+        const existingCardIds = new Set(prevCardIds);
+        const cardIdsToAppend = newCardIds.filter(
+          (cardId) => !existingCardIds.has(cardId)
+        );
+        return cardIdsToAppend.length
+          ? [...prevCardIds, ...cardIdsToAppend]
+          : prevCardIds;
+      });
+      setLoadMoreShown(loadMoreShown && newCardIds.length > 0);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
   }
 }

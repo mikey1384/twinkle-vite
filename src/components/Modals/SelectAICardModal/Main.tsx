@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import CardItem from './CardItem';
 import Loading from '~/components/Loading';
 import LoadMoreButton from '~/components/Buttons/LoadMoreButton';
@@ -37,6 +37,7 @@ export default function Main({
   onUpdateAICard: (v: any) => any;
 }) {
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false);
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', width: '100%' }}>
       {loading ? (
@@ -100,24 +101,50 @@ export default function Main({
   );
 
   async function handleLoadMore() {
-    const lastInteraction = cards[cards.length - 1]?.lastInteraction;
-    const lastId = cards[cards.length - 1]?.id;
-    setLoadingMore(true);
-    const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
-      lastInteraction,
-      lastId,
-      filters: {
-        owner: aiCardModalType === 'want' ? partnerName : myUsername
-      }
-    });
-    for (const card of newCards) {
-      onUpdateAICard({ cardId: card.id, newState: card });
+    if (loadingMoreRef.current) return;
+    const lastCard = cards[cards.length - 1];
+    const lastInteraction = lastCard?.lastInteraction;
+    const lastId = lastCard?.id;
+    if (!lastInteraction || !lastId) {
+      onSetLoadMoreShown(false);
+      return;
     }
-    onSetCardIds((prevCardIds: number[]) => [
-      ...prevCardIds,
-      ...newCards.map((card: { id: number }) => card.id)
-    ]);
-    onSetLoadMoreShown(loadMoreShown);
-    setLoadingMore(false);
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const { cards: newCards, loadMoreShown } = await loadFilteredAICards({
+        lastInteraction,
+        lastId,
+        filters: {
+          owner: aiCardModalType === 'want' ? partnerName : myUsername
+        }
+      });
+      for (const card of newCards) {
+        onUpdateAICard({ cardId: card.id, newState: card });
+      }
+      const shownCardIds = new Set(cards.map((card) => card.id));
+      const newCardIds: number[] = [];
+      for (const card of newCards) {
+        if (!shownCardIds.has(card.id)) {
+          shownCardIds.add(card.id);
+          newCardIds.push(card.id);
+        }
+      }
+      onSetCardIds((prevCardIds: number[]) => {
+        const existingCardIds = new Set(prevCardIds);
+        const cardIdsToAppend = newCardIds.filter(
+          (cardId) => !existingCardIds.has(cardId)
+        );
+        return cardIdsToAppend.length
+          ? [...prevCardIds, ...cardIdsToAppend]
+          : prevCardIds;
+      });
+      onSetLoadMoreShown(loadMoreShown && newCardIds.length > 0);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
   }
 }
