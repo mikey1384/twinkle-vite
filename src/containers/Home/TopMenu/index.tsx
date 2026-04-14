@@ -164,7 +164,8 @@ export default function TopMenu({
     dailyRewardModalShown,
     todayStats?.dailyBonusAttempted,
     todayStats?.dailyRewardResultViewed,
-    todayStats?.dailyHasBonus
+    todayStats?.dailyHasBonus,
+    AI_FEATURES_DISABLED
   ]);
   const achievedDailyGoals = todayStats.achievedDailyGoals;
   const dailyQuestionCompleted = !!todayStats?.dailyQuestionCompleted;
