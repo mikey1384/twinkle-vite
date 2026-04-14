@@ -16,6 +16,7 @@ export default function ListenSection({
   onLoadQuestions,
   onReset,
   onGrade,
+  onOpenSuccessModal,
   onSetAttemptId,
   onSetStoryId,
   onSetUserChoiceObj,
@@ -34,6 +35,7 @@ export default function ListenSection({
   onLoadQuestions: (storyId: number) => void;
   onReset: () => void;
   onGrade: () => void;
+  onOpenSuccessModal: () => void;
   onSetAttemptId: (attemptId: number) => void;
   onSetStoryId: (storyId: number) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
@@ -168,6 +170,7 @@ export default function ListenSection({
           questionsLoaded={questionsLoaded}
           onGrade={onGrade}
           onLoadQuestions={onLoadQuestions}
+          onOpenSuccessModal={onOpenSuccessModal}
           questionsLoadError={questionsLoadError}
           storyId={storyId}
           isGrading={isGrading}

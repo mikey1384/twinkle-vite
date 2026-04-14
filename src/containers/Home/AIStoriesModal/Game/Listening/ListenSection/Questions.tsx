@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MultipleChoiceQuestion from '~/components/MultipleChoiceQuestion';
+import Button from '~/components/Button';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Loading from '~/components/Loading';
 import ProgressBar from '~/components/ProgressBar';
@@ -10,6 +11,7 @@ export default function Questions({
   isGrading,
   solveObj,
   onGrade,
+  onOpenSuccessModal,
   questions,
   questionsLoaded,
   onLoadQuestions,
@@ -21,6 +23,7 @@ export default function Questions({
   isGrading: boolean;
   solveObj: any;
   onGrade: () => void;
+  onOpenSuccessModal: () => void;
   questions: any[];
   questionsLoaded: boolean;
   storyId: number;
@@ -164,6 +167,17 @@ export default function Questions({
                     {solveObj.numCorrect} / {questions.length} correct
                     {solveObj.numCorrect === questions.length ? '!' : ''}
                   </div>
+                  {solveObj.numCorrect === questions.length ? (
+                    <div style={{ marginTop: '2rem' }}>
+                      <Button
+                        variant="solid"
+                        color="gold"
+                        onClick={() => onOpenSuccessModal()}
+                      >
+                        Reopen Clear Screen
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div

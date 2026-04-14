@@ -17,6 +17,7 @@ export default function ContentContainer({
   onLoadQuestions,
   onReset,
   onGrade,
+  onOpenSuccessModal,
   onSetDisplayedSection,
   onSetUserChoiceObj,
   onScrollToTop,
@@ -37,6 +38,7 @@ export default function ContentContainer({
   onLoadQuestions: (storyId: number) => void;
   onReset: () => void;
   onGrade: () => void;
+  onOpenSuccessModal: () => void;
   onSetDisplayedSection: (section: string) => void;
   onSetSolveObj: (solveObj: any) => void;
   onSetUserChoiceObj: (userChoiceObj: any) => void;
@@ -115,6 +117,7 @@ export default function ContentContainer({
               questionsLoaded={questionsLoaded}
               onGrade={onGrade}
               onLoadQuestions={onLoadQuestions}
+              onOpenSuccessModal={onOpenSuccessModal}
               questionsLoadError={questionsLoadError}
               isGrading={isGrading}
             />

@@ -34,6 +34,15 @@ const rewardTable = {
   }
 };
 
+interface AIStoryClearFollowUp {
+  storyId: number;
+  difficulty: number;
+  isListening: boolean;
+  numQuestions: number;
+  imageGeneratedCount: number;
+  imagePath?: string;
+}
+
 export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -51,6 +60,9 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
   );
+  const loadAIStoryClear = useAppContext(
+    (v) => v.requestHelpers.loadAIStoryClear
+  );
   const clearUnavailableAIStoryDailyTask = useAppContext(
     (v) => v.requestHelpers.clearUnavailableAIStoryDailyTask
   );
@@ -58,10 +70,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
-  const [listeningImageGeneratedCount, setListeningImageGeneratedCount] =
-    useState(0);
-  const [readingImageGeneratedCount, setReadingImageGeneratedCount] =
-    useState(0);
   const [dailyTask, setDailyTask] = useState<any>(null);
   const [readCount, setReadCount] = useState(0);
   const [listenCount, setListenCount] = useState(0);
@@ -70,6 +78,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [topic, setTopic] = useState('');
   const [topicKey, setTopicKey] = useState('');
   const [successModalShown, setSuccessModalShown] = useState(false);
+  const [successModalStory, setSuccessModalStory] =
+    useState<AIStoryClearFollowUp | null>(null);
   const [storyId, setStoryId] = useState(0);
   const [storyType, setStoryType] = useState('');
   const [loadingTopic, setLoadingTopic] = useState(true);
@@ -259,8 +269,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
                 onSetDisplayedSection={setDisplayedSection}
                 onSetIsCloseLocked={setIsCloseLocked}
                 onSetDailyTask={setDailyTask}
+                onOpenSuccessModal={handleOpenCurrentSuccessModal}
                 onSetQuestions={setQuestions}
-                onSetSuccessModalShown={setSuccessModalShown}
                 onSetTopicLoadError={setTopicLoadError}
                 readCount={readCount}
                 listenCount={listenCount}
@@ -292,19 +302,16 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             )}
           </div>
         </div>
-        {successModalShown && (
+        {successModalShown && successModalStory && (
           <SuccessModal
-            imageGeneratedCount={
-              gameMode === 'listen'
-                ? listeningImageGeneratedCount
-                : readingImageGeneratedCount
-            }
-            isListening={gameMode === 'listen'}
-            onHide={() => setSuccessModalShown(false)}
-            numQuestions={questions.length}
-            difficulty={difficulty}
+            imageGeneratedCount={successModalStory.imageGeneratedCount}
+            initialImagePath={successModalStory.imagePath}
+            isListening={successModalStory.isListening}
+            onHide={handleCloseSuccessModal}
+            numQuestions={successModalStory.numQuestions}
+            difficulty={successModalStory.difficulty}
             rewardTable={rewardTable}
-            storyId={storyId}
+            storyId={successModalStory.storyId}
           />
         )}
         {showConfirm && (
@@ -340,9 +347,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         type,
         dailyTask,
         readCount,
-        listenCount,
-        listeningImageGeneratedCount,
-        readingImageGeneratedCount
+        listenCount
       } = await tryLoadTopic({
         difficulty,
         retries: 3,
@@ -354,8 +359,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         setStoryType(type);
         setTopicKey(topicKey);
         setDailyTask(dailyTaskStatus?.aiStory || dailyTask || null);
-        setListeningImageGeneratedCount(listeningImageGeneratedCount);
-        setReadingImageGeneratedCount(readingImageGeneratedCount);
         setReadCount(readCount);
         setListenCount(listenCount);
         if (dailyTaskStatus) {
@@ -391,11 +394,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
           topicKey,
           type,
           dailyTask,
-          imageGeneratedCount,
           readCount,
-          listenCount,
-          listeningImageGeneratedCount,
-          readingImageGeneratedCount
+          listenCount
         } = await loadAIStoryTopic(difficulty);
         if (currentRequestId === requestRef.current) {
           return {
@@ -404,11 +404,8 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
             type,
             dailyTaskStatus,
             dailyTask,
-            imageGeneratedCount,
             readCount,
-            listenCount,
-            listeningImageGeneratedCount,
-            readingImageGeneratedCount
+            listenCount
           };
         } else {
           return {};
@@ -421,6 +418,37 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       }
     }
     throw new Error('Failed to load topic after maximum retries');
+  }
+
+  async function loadClearedStory(storyId: number) {
+    const result = await loadAIStoryClear(storyId);
+    const story = result?.story;
+    if (!story?.storyId) return null;
+    return {
+      storyId: Number(story.storyId),
+      difficulty: Number(story.difficulty || 1),
+      isListening: Boolean(story.isListening),
+      numQuestions: Number(story.numQuestions || 0),
+      imageGeneratedCount: Number(story.imageGeneratedCount || 0),
+      imagePath: story.imagePath || ''
+    };
+  }
+
+  async function handleOpenCurrentSuccessModal(targetStoryId = storyId) {
+    if (!targetStoryId) return;
+    try {
+      const story = await loadClearedStory(targetStoryId);
+      if (!story) return;
+      setSuccessModalStory(story);
+      setSuccessModalShown(true);
+    } catch (error) {
+      console.error('Failed to open AI Story rewards:', error);
+    }
+  }
+
+  function handleCloseSuccessModal() {
+    setSuccessModalShown(false);
+    setSuccessModalStory(null);
   }
 
   async function handleUnavailableAIStoryClear() {

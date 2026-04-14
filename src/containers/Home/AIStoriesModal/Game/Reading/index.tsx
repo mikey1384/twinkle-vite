@@ -14,6 +14,7 @@ export default function Reading({
   MainRef,
   onLoadQuestions,
   onGrade,
+  onOpenSuccessModal,
   onReset,
   onSetAttemptId,
   onSetDisplayedSection,
@@ -46,6 +47,7 @@ export default function Reading({
   MainRef: React.RefObject<any>;
   onLoadQuestions: (storyId: number) => void;
   onGrade: () => void;
+  onOpenSuccessModal: () => void;
   onReset: () => void;
   onSetAttemptId: (v: number) => void;
   onSetDisplayedSection: (v: string) => void;
@@ -235,6 +237,7 @@ export default function Reading({
           loading={story?.length < 10}
           loadComplete={loadStoryComplete}
           onGrade={onGrade}
+          onOpenSuccessModal={onOpenSuccessModal}
           questions={questions}
           questionsButtonEnabled={questionsButtonEnabled}
           questionsLoadError={questionsLoadError}

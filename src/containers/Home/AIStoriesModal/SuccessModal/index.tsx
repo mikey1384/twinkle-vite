@@ -13,6 +13,7 @@ import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { useRoleColor } from '~/theme/useRoleColor';
 import VocabQuizModal from './VocabQuizModal';
+import { cloudFrontURL } from '~/constants/defaultValues';
 
 const colorHash: Record<
   number,
@@ -88,6 +89,7 @@ function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
 
 export default function SuccessModal({
   difficulty,
+  initialImagePath,
   isListening,
   imageGeneratedCount,
   onHide,
@@ -96,6 +98,7 @@ export default function SuccessModal({
   storyId
 }: {
   difficulty: number;
+  initialImagePath?: string;
   isListening: boolean;
   imageGeneratedCount: number;
   onHide: () => void;
@@ -119,7 +122,21 @@ export default function SuccessModal({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
-  const [imageUrl, setImageUrl] = useState('');
+  const initialImageUrl = useMemo(() => {
+    if (!initialImagePath) return '';
+    if (
+      initialImagePath.startsWith('http') ||
+      initialImagePath.startsWith('data:')
+    ) {
+      return initialImagePath;
+    }
+    return `${cloudFrontURL}/ai-story/${initialImagePath.replace(
+      /^\/?ai-story\//,
+      ''
+    )}`;
+  }, [initialImagePath]);
+
+  const [imageUrl, setImageUrl] = useState(initialImageUrl);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
@@ -176,6 +193,10 @@ export default function SuccessModal({
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    setImageUrl(initialImageUrl);
+  }, [initialImageUrl, storyId]);
 
   useEffect(() => {
     // Always use 'openai' (image-1) - ignoring user preferences since Gemini is unstable

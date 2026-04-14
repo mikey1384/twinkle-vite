@@ -1653,6 +1653,123 @@ export default function buildRequestHelpers({
       }
     },
 
+    async listBuildChatRooms({
+      buildId,
+      token
+    }: {
+      buildId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/chat/rooms/list`,
+          {},
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async createBuildChatRoom({
+      buildId,
+      roomKey,
+      name,
+      token
+    }: {
+      buildId: number;
+      roomKey: string;
+      name?: string | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/chat/rooms/create`,
+          { roomKey, name },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async listBuildChatMessages({
+      buildId,
+      roomKey,
+      cursor,
+      limit,
+      token
+    }: {
+      buildId: number;
+      roomKey: string;
+      cursor?: { id?: number };
+      limit?: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/chat/messages/list`,
+          { roomKey, cursor, limit },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async sendBuildChatMessage({
+      buildId,
+      roomKey,
+      roomName,
+      text,
+      metadata,
+      clientMessageId,
+      token
+    }: {
+      buildId: number;
+      roomKey: string;
+      roomName?: string | null;
+      text: string;
+      metadata?: Record<string, any> | null;
+      clientMessageId?: string | null;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/chat/messages/send`,
+          { roomKey, roomName, text, metadata, clientMessageId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async deleteBuildRuntimeChatMessage({
+      buildId,
+      messageId,
+      token
+    }: {
+      buildId: number;
+      messageId: number;
+      token?: string;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/api/chat/messages/delete`,
+          { messageId },
+          getBuildApiConfig(token)
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+
     async getPrivateDbItem({
       buildId,
       key,

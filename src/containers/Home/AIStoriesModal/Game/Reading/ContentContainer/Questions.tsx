@@ -12,6 +12,7 @@ export default function Questions({
   solveObj,
   storyId,
   onGrade,
+  onOpenSuccessModal,
   questions,
   onReadAgain,
   questionsLoaded,
@@ -24,6 +25,7 @@ export default function Questions({
   solveObj: any;
   storyId: number;
   onGrade: () => void;
+  onOpenSuccessModal: () => void;
   questions: any[];
   onReadAgain: () => void;
   questionsLoaded: boolean;
@@ -175,6 +177,17 @@ export default function Questions({
                       Read Again
                     </Button>
                   </div>
+                  {solveObj.numCorrect === questions.length ? (
+                    <div style={{ marginTop: '1rem' }}>
+                      <Button
+                        variant="solid"
+                        color="gold"
+                        onClick={() => onOpenSuccessModal()}
+                      >
+                        Reopen Clear Screen
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div

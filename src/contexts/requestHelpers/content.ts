@@ -718,6 +718,17 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAIStoryClear(storyId: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/content/game/story/clear?storyId=${storyId}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAIStory({
       difficulty,
       topic,

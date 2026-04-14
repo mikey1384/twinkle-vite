@@ -15,6 +15,7 @@ var Twinkle;
   let requestId = 0;
   let viewerInfo = null;
   let capabilitySnapshot = null;
+  let chatSubscriptionListeners = new Map();
   var blankRenderProbeState = {
     scheduled: false,
     resolved: false,
@@ -753,6 +754,37 @@ var Twinkle;
         type: type,
         payload: payload
       }, '*');
+    });
+  }
+
+  function normalizeChatRoomKey(roomKey) {
+    var normalized = String(roomKey || '').trim();
+    if (!normalized) throw new Error('roomKey is required');
+    return normalized;
+  }
+
+  function getChatListenerSet(roomKey) {
+    var listeners = chatSubscriptionListeners.get(roomKey);
+    if (!listeners) {
+      listeners = new Set();
+      chatSubscriptionListeners.set(roomKey, listeners);
+    }
+    return listeners;
+  }
+
+  function dispatchChatEvent(payload) {
+    var roomKey = String(payload && payload.roomKey ? payload.roomKey : '').trim();
+    if (!roomKey) return;
+    var listeners = chatSubscriptionListeners.get(roomKey);
+    if (!listeners || listeners.size === 0) return;
+    Array.from(listeners).forEach(function(listener) {
+      try {
+        listener(payload);
+      } catch (error) {
+        setTimeout(function() {
+          throw error;
+        }, 0);
+      }
     });
   }
 
@@ -2069,6 +2101,10 @@ var Twinkle;
       applyHostVisibility(!payload || payload.visible !== false);
       return;
     }
+    if (type === 'chat:event') {
+      dispatchChatEvent(payload);
+      return;
+    }
     if (!pendingRequests.has(id)) return;
 
     const { resolve, reject, timeout } = pendingRequests.get(id);
@@ -2637,6 +2673,91 @@ var Twinkle;
         return await sendRequest('shared-db:delete-entry', {
           entryId: entryId
         });
+      }
+    },
+
+    chat: {
+      async listRooms() {
+        return await sendRequest('chat:list-rooms', {});
+      },
+
+      async createRoom(roomOrOptions) {
+        var options =
+          typeof roomOrOptions === 'string'
+            ? { roomKey: roomOrOptions }
+            : roomOrOptions || {};
+        var roomKey = normalizeChatRoomKey(options.roomKey || options.key);
+        return await sendRequest('chat:create-room', {
+          roomKey: roomKey,
+          name: options.name
+        });
+      },
+
+      async listMessages(roomKey, opts) {
+        var normalizedRoomKey = normalizeChatRoomKey(roomKey);
+        var options = opts || {};
+        return await sendRequest('chat:list-messages', {
+          roomKey: normalizedRoomKey,
+          cursor: options.cursor,
+          limit: options.limit
+        });
+      },
+
+      async sendMessage(roomKey, messageOrOptions, opts) {
+        var normalizedRoomKey = normalizeChatRoomKey(roomKey);
+        var options =
+          typeof messageOrOptions === 'string'
+            ? Object.assign({}, opts || {}, { text: messageOrOptions })
+            : messageOrOptions || {};
+        var rawText =
+          options.text != null
+            ? options.text
+            : options.message != null
+              ? options.message
+              : options.content;
+        var text = String(rawText || '').trim();
+        if (!text) throw new Error('text is required');
+        return await sendRequest('chat:send-message', {
+          roomKey: normalizedRoomKey,
+          roomName: options.roomName,
+          text: text,
+          metadata: options.metadata,
+          clientMessageId: options.clientMessageId || getRequestId()
+        });
+      },
+
+      async deleteMessage(messageId) {
+        if (!messageId) throw new Error('messageId is required');
+        return await sendRequest('chat:delete-message', {
+          messageId: messageId
+        });
+      },
+
+      subscribe(roomKey, listener) {
+        var normalizedRoomKey = normalizeChatRoomKey(roomKey);
+        if (typeof listener !== 'function') {
+          throw new Error('listener is required');
+        }
+        var listeners = getChatListenerSet(normalizedRoomKey);
+        listeners.add(listener);
+        sendRequest('chat:subscribe', {
+          roomKey: normalizedRoomKey
+        }).catch(function(error) {
+          console.warn('Twinkle.chat.subscribe failed:', error);
+        });
+        return function unsubscribe() {
+          var currentListeners =
+            chatSubscriptionListeners.get(normalizedRoomKey);
+          if (!currentListeners) return;
+          currentListeners.delete(listener);
+          if (currentListeners.size > 0) return;
+          chatSubscriptionListeners.delete(normalizedRoomKey);
+          sendRequest('chat:unsubscribe', {
+            roomKey: normalizedRoomKey
+          }).catch(function(error) {
+            console.warn('Twinkle.chat.unsubscribe failed:', error);
+          });
+        };
       }
     },
 

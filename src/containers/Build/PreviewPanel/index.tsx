@@ -1483,6 +1483,21 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const deleteSharedDbEntry = useAppContext(
       (v) => v.requestHelpers.deleteSharedDbEntry
     );
+    const listBuildChatRooms = useAppContext(
+      (v) => v.requestHelpers.listBuildChatRooms
+    );
+    const createBuildChatRoom = useAppContext(
+      (v) => v.requestHelpers.createBuildChatRoom
+    );
+    const listBuildChatMessages = useAppContext(
+      (v) => v.requestHelpers.listBuildChatMessages
+    );
+    const sendBuildChatMessage = useAppContext(
+      (v) => v.requestHelpers.sendBuildChatMessage
+    );
+    const deleteBuildRuntimeChatMessage = useAppContext(
+      (v) => v.requestHelpers.deleteBuildRuntimeChatMessage
+    );
     const getPrivateDbItem = useAppContext(
       (v) => v.requestHelpers.getPrivateDbItem
     );
@@ -1547,6 +1562,13 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const addSharedDbEntryRef = useRef(addSharedDbEntry);
     const updateSharedDbEntryRef = useRef(updateSharedDbEntry);
     const deleteSharedDbEntryRef = useRef(deleteSharedDbEntry);
+    const listBuildChatRoomsRef = useRef(listBuildChatRooms);
+    const createBuildChatRoomRef = useRef(createBuildChatRoom);
+    const listBuildChatMessagesRef = useRef(listBuildChatMessages);
+    const sendBuildChatMessageRef = useRef(sendBuildChatMessage);
+    const deleteBuildRuntimeChatMessageRef = useRef(
+      deleteBuildRuntimeChatMessage
+    );
     const getPrivateDbItemRef = useRef(getPrivateDbItem);
     const listPrivateDbItemsRef = useRef(listPrivateDbItems);
     const setPrivateDbItemRef = useRef(setPrivateDbItem);
@@ -1608,6 +1630,11 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       addSharedDbEntryRef,
       updateSharedDbEntryRef,
       deleteSharedDbEntryRef,
+      listBuildChatRoomsRef,
+      createBuildChatRoomRef,
+      listBuildChatMessagesRef,
+      sendBuildChatMessageRef,
+      deleteBuildRuntimeChatMessageRef,
       getPrivateDbItemRef,
       listPrivateDbItemsRef,
       setPrivateDbItemRef,

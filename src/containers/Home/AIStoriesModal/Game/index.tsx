@@ -18,6 +18,7 @@ export default function Game({
   loadingTopic,
   MainRef,
   onLoadTopic,
+  onOpenSuccessModal,
   onSetAttemptId,
   onSetIsGameStarted,
   onSetResetNumber,
@@ -29,7 +30,6 @@ export default function Game({
   onSetIsCloseLocked,
   onSetDailyTask,
   onSetQuestions,
-  onSetSuccessModalShown,
   onSetTopicLoadError,
   onSetSolveObj,
   readCount,
@@ -51,6 +51,7 @@ export default function Game({
   loadingTopic: boolean;
   MainRef: React.RefObject<any>;
   onLoadTopic: (v: any) => void;
+  onOpenSuccessModal: (storyId?: number) => void;
   onSetAttemptId: (v: number) => void;
   onSetStoryId: (v: number) => void;
   onSetIsGameStarted: (v: boolean) => void;
@@ -62,7 +63,6 @@ export default function Game({
   onSetIsCloseLocked: (v: boolean) => void;
   onSetDailyTask: (v: any) => void;
   onSetQuestions: (v: any) => void;
-  onSetSuccessModalShown: (v: boolean) => void;
   onSetTopicLoadError: (v: boolean) => void;
   onSetSolveObj: (v: any) => void;
   readCount: number;
@@ -141,6 +141,7 @@ export default function Game({
               MainRef={MainRef}
               onGrade={handleGrade}
               onLoadQuestions={handleLoadQuestions}
+              onOpenSuccessModal={onOpenSuccessModal}
               onSetDisplayedSection={onSetDisplayedSection}
               onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
@@ -171,6 +172,7 @@ export default function Game({
               isGrading={isGrading}
               onLoadQuestions={handleLoadQuestions}
               onGrade={handleGrade}
+              onOpenSuccessModal={onOpenSuccessModal}
               onReset={handleReset}
               onSetAttemptId={onSetAttemptId}
               onSetUserChoiceObj={handleSetUserChoiceObj}
@@ -245,7 +247,7 @@ export default function Game({
         isGraded: true
       });
       if (isPassed) {
-        onSetSuccessModalShown(true);
+        onOpenSuccessModal(storyId);
       }
       setIsGrading(false);
     } catch (error) {

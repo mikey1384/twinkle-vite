@@ -7,6 +7,7 @@ import {
   ZERO_TWINKLE_ID,
   CIEL_TWINKLE_ID
 } from '~/constants/defaultValues';
+import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { logForAdmin, parseChannelPath } from '~/helpers';
 import { getStoredItem } from '~/helpers/userDataHelpers';
 import {
@@ -16,6 +17,19 @@ import {
   useChatContext,
   useKeyContext
 } from '~/contexts';
+
+function dispatchSocketAuthReady(userId?: number | null) {
+  const normalizedUserId = Number(userId || 0);
+  if (!normalizedUserId) return;
+  window.dispatchEvent(
+    new CustomEvent(TWINKLE_SOCKET_AUTH_READY_EVENT, {
+      detail: {
+        socketId: socket.id,
+        userId: normalizedUserId
+      }
+    })
+  );
+}
 
 export default function useInitSocket({
   chatType,
@@ -447,6 +461,7 @@ export default function useInitSocket({
               window.location.reload();
               return;
             }
+            dispatchSocketAuthReady(userIdRef.current);
             socket.emit('change_busy_status', !usingChatRef.current);
             userActionAckedRef.current = false;
             userActionAttemptsRef.current = 0;
@@ -784,6 +799,7 @@ export default function useInitSocket({
             window.location.reload();
             return;
           }
+          dispatchSocketAuthReady(userId);
         }
       );
       socket.emit('enter_my_notification_channel', userId);

@@ -19,17 +19,22 @@ import {
   executeGuestViewerDbExec,
   executeGuestViewerDbQuery
 } from './guestViewerDb';
+import { socket } from '~/constants/sockets/api';
 import type {
   Build,
   PreviewFrameMeta,
   PreviewRuntimeUploadsSyncPayload
 } from './types';
+import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
   'This feature requires signing in because it uses user-only data.';
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
+  'chat:create-room',
+  'chat:delete-message',
+  'chat:send-message',
   'db:save',
   'files:delete',
   'files:upload-selected',
@@ -93,6 +98,11 @@ interface PreviewHostBridgeRequestRefs {
   addSharedDbEntryRef: AsyncRequestRef;
   updateSharedDbEntryRef: AsyncRequestRef;
   deleteSharedDbEntryRef: AsyncRequestRef;
+  listBuildChatRoomsRef: AsyncRequestRef;
+  createBuildChatRoomRef: AsyncRequestRef;
+  listBuildChatMessagesRef: AsyncRequestRef;
+  sendBuildChatMessageRef: AsyncRequestRef;
+  deleteBuildRuntimeChatMessageRef: AsyncRequestRef;
   getPrivateDbItemRef: AsyncRequestRef;
   listPrivateDbItemsRef: AsyncRequestRef;
   setPrivateDbItemRef: AsyncRequestRef;
@@ -683,6 +693,46 @@ async function syncPreviewRuntimeUploadsState({
   runtimeUploadsSyncRef.current?.(payload || null);
 }
 
+function normalizeBuildRuntimeChatRoomKey(value: unknown) {
+  const roomKey = String(value || '').trim();
+  if (!roomKey) {
+    throw new Error('roomKey is required');
+  }
+  return roomKey;
+}
+
+function getBuildRuntimeChatSubscriptionKey(buildId: number, roomKey: string) {
+  return `${Number(buildId)}:${roomKey}`;
+}
+
+function postBuildRuntimeChatEventToFrames({
+  subscriptions,
+  payload
+}: {
+  subscriptions: Map<string, Set<Window>>;
+  payload: any;
+}) {
+  const buildId = Number(payload?.buildId || 0);
+  const roomKey = String(payload?.roomKey || '').trim();
+  if (!buildId || !roomKey) return;
+
+  const frames = subscriptions.get(
+    getBuildRuntimeChatSubscriptionKey(buildId, roomKey)
+  );
+  if (!frames?.size) return;
+
+  for (const targetWindow of Array.from(frames)) {
+    targetWindow.postMessage(
+      {
+        source: 'twinkle-parent',
+        type: 'chat:event',
+        payload
+      },
+      '*'
+    );
+  }
+}
+
 export function usePreviewHostBridge({
   runtimeOnly,
   buildId,
@@ -743,6 +793,43 @@ export function usePreviewHostBridge({
   }, [primaryIframeRef, resolvedRuntimeExplorationPlan, secondaryIframeRef]);
 
   useEffect(() => {
+    const chatSubscriptions = new Map<string, Set<Window>>();
+
+    function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
+      socket.emit('build_app_chat_subscribe', {
+        buildId,
+        roomKey
+      });
+    }
+
+    function unsubscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
+      socket.emit('build_app_chat_unsubscribe', {
+        buildId,
+        roomKey
+      });
+    }
+
+    function handleBuildRuntimeChatEvent(payload: any) {
+      postBuildRuntimeChatEventToFrames({
+        subscriptions: chatSubscriptions,
+        payload
+      });
+    }
+
+    function replayBuildRuntimeChatSubscriptions() {
+      for (const subscriptionKey of chatSubscriptions.keys()) {
+        const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
+        const subscribedBuildId = Number(rawBuildId);
+        const subscribedRoomKey = roomKeyParts.join(':');
+        if (!subscribedBuildId || !subscribedRoomKey) continue;
+        subscribeBuildRuntimeChatRoom(subscribedBuildId, subscribedRoomKey);
+      }
+    }
+
+    function handleSocketAuthReady() {
+      replayBuildRuntimeChatSubscriptions();
+    }
+
     async function handleMessage(event: MessageEvent) {
       const data = event.data;
       if (!data || data.source !== 'twinkle-build') return;
@@ -1346,6 +1433,113 @@ export function usePreviewHostBridge({
             break;
           }
 
+          case 'chat:list-rooms': {
+            const chatReadToken = await ensureBuildApiToken(
+              ['chat:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildChatRoomsRef.current({
+              buildId: activeBuild.id,
+              token: chatReadToken
+            });
+            break;
+          }
+
+          case 'chat:create-room': {
+            const chatWriteToken = await ensureBuildApiToken(
+              ['chat:write'],
+              previewAuth
+            );
+            response = await requestRefs.createBuildChatRoomRef.current({
+              buildId: activeBuild.id,
+              roomKey: payload?.roomKey,
+              name: payload?.name,
+              token: chatWriteToken
+            });
+            break;
+          }
+
+          case 'chat:list-messages': {
+            const chatReadToken = await ensureBuildApiToken(
+              ['chat:read'],
+              previewAuth
+            );
+            response = await requestRefs.listBuildChatMessagesRef.current({
+              buildId: activeBuild.id,
+              roomKey: payload?.roomKey,
+              cursor: payload?.cursor,
+              limit: payload?.limit,
+              token: chatReadToken
+            });
+            break;
+          }
+
+          case 'chat:send-message': {
+            const chatWriteToken = await ensureBuildApiToken(
+              ['chat:write'],
+              previewAuth
+            );
+            response = await requestRefs.sendBuildChatMessageRef.current({
+              buildId: activeBuild.id,
+              roomKey: payload?.roomKey,
+              roomName: payload?.roomName,
+              text: payload?.text,
+              metadata: payload?.metadata,
+              clientMessageId: payload?.clientMessageId,
+              token: chatWriteToken
+            });
+            break;
+          }
+
+          case 'chat:delete-message': {
+            const chatWriteToken = await ensureBuildApiToken(
+              ['chat:write'],
+              previewAuth
+            );
+            response =
+              await requestRefs.deleteBuildRuntimeChatMessageRef.current({
+                buildId: activeBuild.id,
+                messageId: payload?.messageId,
+                token: chatWriteToken
+              });
+            break;
+          }
+
+          case 'chat:subscribe': {
+            await ensureBuildApiToken(['chat:read'], previewAuth);
+            const roomKey = normalizeBuildRuntimeChatRoomKey(payload?.roomKey);
+            const subscriptionKey = getBuildRuntimeChatSubscriptionKey(
+              activeBuild.id,
+              roomKey
+            );
+            const frames =
+              chatSubscriptions.get(subscriptionKey) || new Set<Window>();
+            const wasEmpty = frames.size === 0;
+            frames.add(sourceWindow);
+            chatSubscriptions.set(subscriptionKey, frames);
+            if (wasEmpty) {
+              subscribeBuildRuntimeChatRoom(activeBuild.id, roomKey);
+            }
+            response = { success: true };
+            break;
+          }
+
+          case 'chat:unsubscribe': {
+            const roomKey = normalizeBuildRuntimeChatRoomKey(payload?.roomKey);
+            const subscriptionKey = getBuildRuntimeChatSubscriptionKey(
+              activeBuild.id,
+              roomKey
+            );
+            const frames = chatSubscriptions.get(subscriptionKey);
+            frames?.delete(sourceWindow);
+            if (!frames?.size) {
+              chatSubscriptions.delete(subscriptionKey);
+              unsubscribeBuildRuntimeChatRoom(activeBuild.id, roomKey);
+            }
+            response = { success: true };
+            break;
+          }
+
           case 'private-db:get': {
             const privateDbReadToken = await ensureBuildApiToken(
               ['privateDb:read'],
@@ -1505,8 +1699,29 @@ export function usePreviewHostBridge({
     }
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener(
+      TWINKLE_SOCKET_AUTH_READY_EVENT,
+      handleSocketAuthReady
+    );
+    socket.on('build_app_chat_event', handleBuildRuntimeChatEvent);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener(
+        TWINKLE_SOCKET_AUTH_READY_EVENT,
+        handleSocketAuthReady
+      );
+      socket.off('build_app_chat_event', handleBuildRuntimeChatEvent);
+      for (const subscriptionKey of chatSubscriptions.keys()) {
+        const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
+        const subscribedBuildId = Number(rawBuildId);
+        const subscribedRoomKey = roomKeyParts.join(':');
+        if (!subscribedBuildId || !subscribedRoomKey) continue;
+        unsubscribeBuildRuntimeChatRoom(subscribedBuildId, subscribedRoomKey);
+      }
+      chatSubscriptions.clear();
+    };
   }, [
+    buildId,
     capabilitySnapshotRef,
     messageTargetFrameRef,
     previewAuth,
