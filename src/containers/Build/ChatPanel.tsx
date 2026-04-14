@@ -22,6 +22,18 @@ const panelClass = css`
   overflow: hidden;
   border-right: 1px solid var(--ui-border);
   background: #fff;
+  --build-workshop-title-font-size: 1.2rem;
+  --build-workshop-body-font-size: 1rem;
+  --build-workshop-label-font-size: 0.96rem;
+  --build-workshop-meta-font-size: 0.88rem;
+  --build-workshop-small-font-size: 0.84rem;
+  --build-workshop-tiny-font-size: 0.78rem;
+  --build-workshop-message-font-size: 1.1rem;
+  --build-workshop-message-meta-font-size: 0.82rem;
+  --build-workshop-input-font-size: 1.06rem;
+  --build-workshop-prompt-font-size: 1.08rem;
+  --build-workshop-choice-font-size: 1rem;
+  font-size: var(--build-workshop-body-font-size);
   gap: 0.6rem;
   @media (max-width: ${mobileMaxWidth}) {
     border-right: none;
@@ -48,7 +60,7 @@ const headerTitleClass = css`
   gap: 0.6rem;
   font-weight: 800;
   color: var(--chat-text);
-  font-size: 1.1rem;
+  font-size: var(--build-workshop-title-font-size);
 `;
 
 const BUILD_ASSISTANT_PLACEHOLDER_TEXT =
@@ -446,17 +458,6 @@ export default function ChatPanel({
     if (requestLimits.generationRequestsPerDay <= 0) return null;
     return `${formatTokenCount(requestLimits.generationRequestsToday)} / ${formatTokenCount(requestLimits.generationRequestsPerDay)} generations`;
   }, [copilotPolicy]);
-  const dailyLimitSummary = useMemo(() => {
-    if (!copilotPolicy) return null;
-    const requestLimits = copilotPolicy.requestLimits;
-    const parts: string[] = [];
-    if (requestLimits.generationRequestsPerDay > 0) {
-      parts.push(
-        `Daily code generations left today: ${formatTokenCount(requestLimits.generationRequestsRemaining)}`
-      );
-    }
-    return parts.length > 0 ? parts.join(' • ') : null;
-  }, [copilotPolicy]);
   const generationResetUi = useMemo(() => {
     if (!copilotPolicy) return null;
     const requestLimits = copilotPolicy.requestLimits;
@@ -559,7 +560,7 @@ export default function ChatPanel({
               display: flex;
               flex-direction: column;
               gap: 0.6rem;
-              font-size: 0.86rem;
+              font-size: var(--build-workshop-body-font-size);
               color: var(--chat-text);
             `}
           >
@@ -583,7 +584,7 @@ export default function ChatPanel({
               <>
                 <div
                   className={css`
-                    font-size: 0.88rem;
+                    font-size: var(--build-workshop-label-font-size);
                     font-weight: 700;
                   `}
                 >
@@ -605,7 +606,7 @@ export default function ChatPanel({
                   >
                     <div
                       className={css`
-                        font-size: 0.8rem;
+                        font-size: var(--build-workshop-meta-font-size);
                         line-height: 1.45;
                         color: var(--chat-text);
                         opacity: 0.78;
@@ -631,7 +632,7 @@ export default function ChatPanel({
                     {generationResetError ? (
                       <div
                         className={css`
-                          font-size: 0.8rem;
+                          font-size: var(--build-workshop-meta-font-size);
                           line-height: 1.4;
                           color: ${Color.rose()};
                           font-weight: 700;
@@ -686,7 +687,7 @@ export default function ChatPanel({
                         >
                           <span
                             className={css`
-                              font-size: 0.92rem;
+                              font-size: var(--build-workshop-label-font-size);
                               font-weight: 800;
                               color: var(--chat-text);
                             `}
@@ -695,7 +696,7 @@ export default function ChatPanel({
                           </span>
                           <span
                             className={css`
-                              font-size: 0.74rem;
+                              font-size: var(--build-workshop-small-font-size);
                               font-family:
                                 'SF Mono',
                                 'Menlo',
@@ -718,7 +719,7 @@ export default function ChatPanel({
                           <div
                             className={css`
                               margin-top: 0.38rem;
-                              font-size: 0.75rem;
+                              font-size: var(--build-workshop-small-font-size);
                               line-height: 1.35;
                               color: var(--chat-text);
                               opacity: 0.68;
@@ -777,7 +778,7 @@ export default function ChatPanel({
                     >
                       <span
                         className={css`
-                          font-size: 0.9rem;
+                          font-size: var(--build-workshop-label-font-size);
                           font-weight: 800;
                           color: var(--chat-text);
                         `}
@@ -786,7 +787,7 @@ export default function ChatPanel({
                       </span>
                       <span
                         className={css`
-                          font-size: 0.76rem;
+                          font-size: var(--build-workshop-meta-font-size);
                           color: var(--chat-text);
                           opacity: 0.7;
                         `}
@@ -804,7 +805,7 @@ export default function ChatPanel({
                         color: #1d4ed8;
                         border-radius: 999px;
                         padding: 0.46rem 0.95rem;
-                        font-size: 0.8rem;
+                        font-size: var(--build-workshop-meta-font-size);
                         font-weight: 800;
                         cursor: pointer;
                         white-space: nowrap;
@@ -833,7 +834,7 @@ export default function ChatPanel({
                   border-radius: 999px;
                   min-width: 8.5rem;
                   padding: 0.42rem 1.1rem;
-                  font-size: 0.72rem;
+                  font-size: var(--build-workshop-small-font-size);
                   font-weight: 800;
                   cursor: pointer;
                   transition: border-color 0.15s ease, transform 0.15s ease;
@@ -911,7 +912,7 @@ export default function ChatPanel({
                 : normalizedFollowUpQuestion) && (
                 <div
                   className={css`
-                    font-size: 0.9rem;
+                    font-size: var(--build-workshop-prompt-font-size);
                     line-height: 1.45;
                     color: var(--chat-text);
                     font-weight: 700;
@@ -937,14 +938,24 @@ export default function ChatPanel({
                       : onAcceptFollowUpPrompt
                   }
                   className={css`
-                    border: 1px solid rgba(36, 99, 235, 0.18);
-                    background: rgba(59, 130, 246, 0.08);
-                    color: #1d4ed8;
+                    border: 1px solid ${Color.green(0.24)};
+                    background: ${Color.green(0.12)};
+                    color: ${Color.green()};
                     border-radius: 999px;
-                    padding: 0.42rem 0.82rem;
-                    font-size: 0.82rem;
+                    padding: 0.5rem 0.9rem;
+                    font-size: var(--build-workshop-choice-font-size);
                     font-weight: 800;
                     cursor: pointer;
+                    transition:
+                      background-color 0.16s ease,
+                      border-color 0.16s ease,
+                      color 0.16s ease;
+                    &:hover,
+                    &:focus-visible {
+                      border-color: ${Color.green(0.42)};
+                      background: ${Color.green(0.2)};
+                      color: ${Color.green()};
+                    }
                   `}
                 >
                   Yes
@@ -961,10 +972,20 @@ export default function ChatPanel({
                     background: rgba(148, 163, 184, 0.1);
                     color: #334155;
                     border-radius: 999px;
-                    padding: 0.42rem 0.82rem;
-                    font-size: 0.82rem;
+                    padding: 0.5rem 0.9rem;
+                    font-size: var(--build-workshop-choice-font-size);
                     font-weight: 800;
                     cursor: pointer;
+                    transition:
+                      background-color 0.16s ease,
+                      border-color 0.16s ease,
+                      color 0.16s ease;
+                    &:hover,
+                    &:focus-visible {
+                      border-color: rgba(100, 116, 139, 0.42);
+                      background: rgba(148, 163, 184, 0.18);
+                      color: #1e293b;
+                    }
                   `}
                 >
                   No
@@ -977,10 +998,20 @@ export default function ChatPanel({
                     background: rgba(245, 158, 11, 0.11);
                     color: #b45309;
                     border-radius: 999px;
-                    padding: 0.42rem 0.82rem;
-                    font-size: 0.82rem;
+                    padding: 0.5rem 0.9rem;
+                    font-size: var(--build-workshop-choice-font-size);
                     font-weight: 800;
                     cursor: pointer;
+                    transition:
+                      background-color 0.16s ease,
+                      border-color 0.16s ease,
+                      color 0.16s ease;
+                    &:hover,
+                    &:focus-visible {
+                      border-color: rgba(217, 119, 6, 0.36);
+                      background: rgba(245, 158, 11, 0.18);
+                      color: #92400e;
+                    }
                   `}
                 >
                   No (explain what you want instead)
@@ -1019,9 +1050,9 @@ export default function ChatPanel({
                 border: 1px solid var(--ui-border);
                 border-radius: 10px;
                 resize: none;
-                font-size: 0.95rem;
+                font-size: var(--build-workshop-input-font-size);
                 font-family: inherit;
-                min-height: 44px;
+                min-height: 48px;
                 max-height: 120px;
                 background: #fff;
                 &:focus {
@@ -1057,26 +1088,6 @@ export default function ChatPanel({
               />
             )}
           </div>
-          {copilotPolicy && dailyLimitSummary && (
-            <div
-              className={css`
-                margin-top: 0.42rem;
-                display: flex;
-                justify-content: flex-end;
-                font-size: 0.72rem;
-              `}
-            >
-              <span
-                className={css`
-                  color: var(--chat-text);
-                  opacity: 0.72;
-                  font-weight: 700;
-                `}
-              >
-                {dailyLimitSummary}
-              </span>
-            </div>
-          )}
         </div>
       )}
       {runtimeUploadsModalShown && (
@@ -1484,7 +1495,7 @@ function BuildRunFailureNotice({ runError }: { runError: string }) {
           gap: 0.5rem;
           color: ${Color.rose()};
           font-weight: 800;
-          font-size: 0.84rem;
+          font-size: var(--build-workshop-label-font-size);
         `}
       >
         <Icon icon="exclamation-triangle" />
@@ -1492,7 +1503,7 @@ function BuildRunFailureNotice({ runError }: { runError: string }) {
       </div>
       <div
         className={css`
-          font-size: 0.86rem;
+          font-size: var(--build-workshop-body-font-size);
           line-height: 1.45;
           color: var(--chat-text);
           white-space: pre-wrap;
@@ -1551,10 +1562,10 @@ function BuildPageFeedbackNotice({ event }: { event: BuildRunEvent }) {
           display: inline-flex;
           align-items: center;
           gap: 0.4rem;
-          font-size: 0.78rem;
+          font-size: var(--build-workshop-small-font-size);
           font-weight: 800;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: 0;
           color: ${accentColor};
         `}
       >
@@ -1563,7 +1574,7 @@ function BuildPageFeedbackNotice({ event }: { event: BuildRunEvent }) {
       </div>
       <div
         className={css`
-          font-size: 0.86rem;
+          font-size: var(--build-workshop-body-font-size);
           line-height: 1.45;
           color: var(--chat-text);
           white-space: pre-wrap;
@@ -1633,7 +1644,12 @@ const BuildChatTranscript = React.memo(function BuildChatTranscript({
         size="2x"
         style={{ marginBottom: '0.8rem' }}
       />
-      <p style={{ margin: 0, fontSize: '1.05rem' }}>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 'var(--build-workshop-message-font-size)'
+        }}
+      >
         {isOwner
           ? 'Describe what you want to build and I will help you create it.'
           : 'No messages yet.'}
@@ -1822,7 +1838,7 @@ function BuildChatMessageRow({
           <div
             className={css`
               max-width: 85%;
-              padding: 0.75rem 1rem;
+              padding: 0.85rem 1.05rem;
               border-radius: 12px;
               background: ${message.role === 'user'
                 ? 'var(--theme-bg)'
@@ -1831,8 +1847,8 @@ function BuildChatMessageRow({
                 ? 'var(--theme-text)'
                 : 'var(--chat-text)'};
               word-break: break-word;
-              font-size: 0.95rem;
-              line-height: 1.4;
+              font-size: var(--build-workshop-message-font-size);
+              line-height: 1.48;
               border: 1px solid var(--ui-border);
             `}
           >
@@ -1855,7 +1871,7 @@ function BuildChatMessageRow({
           </div>
           <span
             className={css`
-              font-size: 0.7rem;
+              font-size: var(--build-workshop-message-meta-font-size);
               color: var(--chat-text);
               opacity: 0.5;
               margin-top: 0.25rem;
@@ -2041,7 +2057,7 @@ function AssistantMessage({
               margin-top: 0.3rem;
               display: flex;
               justify-content: flex-end;
-              font-size: 0.7rem;
+              font-size: var(--build-workshop-small-font-size);
               color: var(--chat-text);
               opacity: 0.58;
             `}
@@ -2068,7 +2084,7 @@ function AssistantMessage({
               padding: 0.5rem 0.75rem;
               background: var(--chat-bg);
               color: var(--chat-text);
-              font-size: 0.85rem;
+              font-size: var(--build-workshop-meta-font-size);
               font-weight: 600;
             `}
           >
@@ -2087,7 +2103,7 @@ function AssistantMessage({
                     display: inline-flex;
                     gap: 0.4rem;
                     font-family: 'SF Mono', monospace;
-                    font-size: 0.8rem;
+                    font-size: var(--build-workshop-small-font-size);
                     font-weight: 500;
                   `}
                 >
@@ -2104,7 +2120,7 @@ function AssistantMessage({
                   border: none;
                   color: ${Color.logoBlue()};
                   cursor: pointer;
-                  font-size: 0.8rem;
+                  font-size: var(--build-workshop-small-font-size);
                   padding: 0;
                   display: flex;
                   align-items: center;
@@ -2146,7 +2162,7 @@ function AssistantMessage({
             align-items: center;
             justify-content: space-between;
             gap: 0.5rem;
-            font-size: 0.8rem;
+            font-size: var(--build-workshop-meta-font-size);
           `}
         >
           <span>Generating code draft...</span>
@@ -2178,7 +2194,7 @@ function AssistantMessage({
               display: flex;
               align-items: center;
               gap: 0.45rem;
-              font-size: 0.82rem;
+              font-size: var(--build-workshop-meta-font-size);
               font-weight: 700;
               color: ${Color.orange()};
             `}
@@ -2188,7 +2204,7 @@ function AssistantMessage({
           </div>
           <div
             className={css`
-              font-size: 0.8rem;
+              font-size: var(--build-workshop-meta-font-size);
               line-height: 1.35;
               color: var(--chat-text);
               opacity: 0.85;
@@ -2245,9 +2261,9 @@ function AssistantMessage({
         >
           <div
             className={css`
-              font-size: 0.68rem;
+              font-size: var(--build-workshop-tiny-font-size);
               font-weight: 800;
-              letter-spacing: 0.04em;
+              letter-spacing: 0;
               text-transform: uppercase;
               color: ${Color.logoBlue()};
             `}
@@ -2256,7 +2272,7 @@ function AssistantMessage({
           </div>
           <div
             className={css`
-              font-size: 0.82rem;
+              font-size: var(--build-workshop-meta-font-size);
               line-height: 1.4;
             `}
           >
@@ -2279,7 +2295,7 @@ function StatusStepLog({ steps }: { steps: BuildStatusStepEntry[] }) {
         flex-direction: column;
         gap: 0.2rem;
         margin-top: 0.5rem;
-        font-size: 0.8rem;
+        font-size: var(--build-workshop-meta-font-size);
         font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
       `}
     >
@@ -2309,7 +2325,10 @@ function StatusStepLog({ steps }: { steps: BuildStatusStepEntry[] }) {
               ) : (
                 <Icon
                   icon="check"
-                  style={{ color: Color.green(), fontSize: '0.7rem' }}
+                  style={{
+                    color: Color.green(),
+                    fontSize: 'var(--build-workshop-tiny-font-size)'
+                  }}
                 />
               )}
               <span>
@@ -2337,7 +2356,7 @@ function StatusStepLog({ steps }: { steps: BuildStatusStepEntry[] }) {
                     white-space: pre-wrap;
                     word-break: break-word;
                     font-family: inherit;
-                    font-size: 0.76rem;
+                    font-size: var(--build-workshop-small-font-size);
                     line-height: 1.45;
                     color: var(--chat-text);
                     opacity: 0.94;
@@ -2353,7 +2372,7 @@ function StatusStepLog({ steps }: { steps: BuildStatusStepEntry[] }) {
                     display: inline-flex;
                     align-items: center;
                     gap: 0.12rem;
-                    font-size: 0.67rem;
+                    font-size: var(--build-workshop-tiny-font-size);
                     line-height: 1.1;
                     font-weight: 700;
                     color: ${step.thoughtIsThinkingHard
@@ -2527,7 +2546,7 @@ function LimitStat({ label, value }: { label: string; value: string }) {
     >
       <span
         className={css`
-          font-size: 0.82rem;
+          font-size: var(--build-workshop-meta-font-size);
           font-weight: 700;
           color: var(--chat-text);
           opacity: 0.72;
@@ -2537,7 +2556,7 @@ function LimitStat({ label, value }: { label: string; value: string }) {
       </span>
       <span
         className={css`
-          font-size: 0.84rem;
+          font-size: var(--build-workshop-label-font-size);
           font-weight: 800;
           color: var(--chat-text);
           text-transform: capitalize;

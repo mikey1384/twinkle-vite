@@ -48,6 +48,9 @@ export default function ReplyInputArea({
   const onSetUploadingFile = useContentContext(
     (v) => v.actions.onSetUploadingFile
   );
+  const onClearCommentFileUploadProgress = useContentContext(
+    (v) => v.actions.onClearCommentFileUploadProgress
+  );
   const { fileUploadProgress, uploadingFile } = useContentState({
     contentId: targetCommentId,
     contentType: 'comment'
@@ -136,6 +139,12 @@ export default function ReplyInputArea({
         contentType: 'comment',
         isUploading: false
       });
+      if (attachment) {
+        onClearCommentFileUploadProgress({
+          contentId: targetCommentId,
+          contentType: 'comment'
+        });
+      }
     }
     return Promise.resolve();
   }

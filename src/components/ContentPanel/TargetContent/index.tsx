@@ -776,6 +776,18 @@ export default function TargetContent({
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      if (attachment) {
+        onSetUploadingFile({
+          contentId: comment.id,
+          contentType: 'comment',
+          isUploading: false
+        });
+        onClearCommentFileUploadProgress({
+          contentType: 'comment',
+          contentId: comment.id
+        });
+      }
     }
 
     function handleUploadProgress({

@@ -92,6 +92,9 @@ export default function CommentInputArea({
   const onSetUploadingFile = useContentContext(
     (v) => v.actions.onSetUploadingFile
   );
+  const onClearCommentFileUploadProgress = useContentContext(
+    (v) => v.actions.onClearCommentFileUploadProgress
+  );
   const { fileUploadProgress, uploadingFile } = useContentState({
     contentId,
     contentType
@@ -175,15 +178,22 @@ export default function CommentInputArea({
         });
         setUploading(false);
       }
-      onSetUploadingFile({
-        contentId,
-        contentType,
-        isUploading: false
-      });
       return Promise.resolve();
     } catch (error) {
       setUploading(false);
       return Promise.reject(error);
+    } finally {
+      if (attachment) {
+        onSetUploadingFile({
+          contentId,
+          contentType,
+          isUploading: false
+        });
+        onClearCommentFileUploadProgress({
+          contentId,
+          contentType
+        });
+      }
     }
   }
 }

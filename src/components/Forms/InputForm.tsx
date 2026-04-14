@@ -32,7 +32,7 @@ import {
   getFileInfoFromFileName
 } from '~/helpers/stringHelpers';
 import { css } from '@emotion/css';
-import { useInputContext, useKeyContext } from '~/contexts';
+import { useContentContext, useInputContext, useKeyContext } from '~/contexts';
 import { Content } from '~/types';
 import { inputStates } from '~/constants/state';
 import { useDraft } from '~/helpers/hooks';
@@ -167,6 +167,12 @@ function InputForm({
   const onSetCommentAttachment = useInputContext(
     (v) => v.actions.onSetCommentAttachment
   );
+  const onClearCommentFileUploadProgress = useContentContext(
+    (v) => v.actions.onClearCommentFileUploadProgress
+  );
+  const onSetUploadingFile = useContentContext(
+    (v) => v.actions.onSetUploadingFile
+  );
 
   const inputState = inputStates[`${contentType}${contentId}`] as any;
   const initialText = disableReason ? '' : inputState?.text || '';
@@ -261,6 +267,15 @@ function InputForm({
 
   const handleUpload = useCallback(
     async (fileObj: File) => {
+      onSetUploadingFile({
+        contentId,
+        contentType,
+        isUploading: false
+      });
+      onClearCommentFileUploadProgress({
+        contentType,
+        contentId
+      });
       if (fileObj.size / mb > maxSize) {
         return setAlertModalShown(true);
       }
@@ -408,9 +423,16 @@ function InputForm({
     () =>
       parent.contentType === 'subject' &&
       isComment &&
+      !attachment &&
       !!text.length &&
       !!expectedContentLength,
-    [expectedContentLength, isComment, parent.contentType, text.length]
+    [
+      attachment,
+      expectedContentLength,
+      isComment,
+      parent.contentType,
+      text.length
+    ]
   );
 
   const effortProgress = useMemo(
