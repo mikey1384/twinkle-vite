@@ -55,6 +55,78 @@ const displayFontFamily =
 const buildForkUiEnabled = false;
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
+const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
+  'twinkle:build-workshop-chat-panel-width';
+const DEFAULT_BUILD_CHAT_PANEL_WIDTH = 380;
+const MIN_BUILD_CHAT_PANEL_WIDTH = 320;
+const MAX_BUILD_CHAT_PANEL_WIDTH = 720;
+const MIN_BUILD_PREVIEW_PANEL_WIDTH = 360;
+const BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH = 12;
+
+function clampBuildChatPanelWidth(width: number, workspaceWidth = 0) {
+  const safeWidth = Number.isFinite(width)
+    ? width
+    : DEFAULT_BUILD_CHAT_PANEL_WIDTH;
+  const maxWidthFromWorkspace =
+    workspaceWidth > 0
+      ? workspaceWidth -
+        MIN_BUILD_PREVIEW_PANEL_WIDTH -
+        BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH
+      : MAX_BUILD_CHAT_PANEL_WIDTH;
+  const maxWidth = Math.max(
+    MIN_BUILD_CHAT_PANEL_WIDTH,
+    Math.min(MAX_BUILD_CHAT_PANEL_WIDTH, maxWidthFromWorkspace)
+  );
+  return Math.round(
+    Math.min(maxWidth, Math.max(MIN_BUILD_CHAT_PANEL_WIDTH, safeWidth))
+  );
+}
+
+function readInitialBuildChatPanelWidth() {
+  if (typeof window === 'undefined') return DEFAULT_BUILD_CHAT_PANEL_WIDTH;
+  try {
+    const storedValue = window.localStorage.getItem(
+      BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY
+    );
+    if (!storedValue) return DEFAULT_BUILD_CHAT_PANEL_WIDTH;
+    const storedWidth = Number(storedValue);
+    if (!Number.isFinite(storedWidth) || storedWidth <= 0) {
+      return DEFAULT_BUILD_CHAT_PANEL_WIDTH;
+    }
+    return clampBuildChatPanelWidth(storedWidth);
+  } catch {
+    return DEFAULT_BUILD_CHAT_PANEL_WIDTH;
+  }
+}
+
+function persistBuildChatPanelWidth(width: number) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY,
+      String(clampBuildChatPanelWidth(width))
+    );
+  } catch {
+    // The resize still works for the current session when storage is blocked.
+  }
+}
+
+function getBuildWorkshopScale(chatPanelWidth: number) {
+  return Math.max(
+    0.96,
+    Math.min(
+      1.25,
+      1 + (chatPanelWidth - DEFAULT_BUILD_CHAT_PANEL_WIDTH) / 900
+    )
+  );
+}
+
+function getIsDesktopBuildWorkspaceLayout() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return true;
+  }
+  return !window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
+}
 
 type BuildChatUploadRoute =
   | 'project_files_import'
@@ -231,10 +303,54 @@ const workspaceShellBase = css`
 
 const workspaceWithChatClass = css`
   ${workspaceShellBase};
-  grid-template-columns: 380px 1fr;
+  grid-template-columns:
+    var(--build-chat-panel-width, ${DEFAULT_BUILD_CHAT_PANEL_WIDTH}px)
+    ${BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH}px minmax(0, 1fr);
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
+  }
+`;
+
+const workspaceResizeHandleClass = css`
+  position: relative;
+  width: 100%;
+  min-width: ${BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH}px;
+  min-height: 0;
+  border: none;
+  border-left: 1px solid var(--ui-border);
+  border-right: 1px solid var(--ui-border);
+  background: #fff;
+  cursor: col-resize;
+  padding: 0;
+  touch-action: none;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 2.7rem;
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.35);
+    transform: translate(-50%, -50%);
+    transition: background-color 0.16s ease;
+  }
+  &:hover,
+  &:focus-visible {
+    background: rgba(59, 130, 246, 0.06);
+    border-color: var(--theme-border);
+    outline: none;
+  }
+  &:hover::before,
+  &:focus-visible::before {
+    background: var(--theme-border);
+  }
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
   }
 `;
 
@@ -1509,9 +1625,17 @@ export default function BuildEditor({
   const [buildChatUploadInFlight, setBuildChatUploadInFlight] = useState(false);
   const [dismissedFollowUpPromptKey, setDismissedFollowUpPromptKey] =
     useState('');
+  const [buildChatPanelWidth, setBuildChatPanelWidth] = useState(
+    readInitialBuildChatPanelWidth
+  );
+  const [isDesktopWorkspaceLayout, setIsDesktopWorkspaceLayout] = useState(
+    getIsDesktopBuildWorkspaceLayout
+  );
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const workspaceShellRef = useRef<HTMLDivElement>(null);
   const previewPanelRef = useRef<PreviewPanelHandle | null>(null);
+  const workspaceResizeCleanupRef = useRef<(() => void) | null>(null);
   const didInitialChatScrollRef = useRef(false);
   const didAutoPromptRef = useRef(false);
   const didAutoGreetingRef = useRef(false);
@@ -1579,6 +1703,33 @@ export default function BuildEditor({
       areChatMessagesEqual: chatMessagesEqual
     }
   );
+
+  useEffect(() => {
+    function handleWindowResize() {
+      const isDesktopLayout = getIsDesktopBuildWorkspaceLayout();
+      setIsDesktopWorkspaceLayout(isDesktopLayout);
+      if (!isDesktopLayout) return;
+      const workspaceWidth =
+        workspaceShellRef.current?.getBoundingClientRect().width || 0;
+      setBuildChatPanelWidth((currentWidth) =>
+        clampBuildChatPanelWidth(currentWidth, workspaceWidth)
+      );
+    }
+
+    handleWindowResize();
+    window.addEventListener('resize', handleWindowResize);
+    return () => {
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      workspaceResizeCleanupRef.current?.();
+      workspaceResizeCleanupRef.current = null;
+    };
+  }, []);
+
   const mergedChatMessages = mergeDisplayedChatMessages({
     baseMessages: mergedPersistedAndLiveChatMessages,
     supplementalMessages: runtimeFollowUp.runtimeObservationChatNotes
@@ -5264,6 +5415,14 @@ export default function BuildEditor({
   const previewProjectFiles = Array.isArray(build.projectFiles)
     ? build.projectFiles
     : EMPTY_BUILD_PROJECT_FILES;
+  const buildWorkshopScale = isDesktopWorkspaceLayout
+    ? getBuildWorkshopScale(buildChatPanelWidth)
+    : 1;
+  const workspaceShellStyle = isOwner
+    ? ({
+        '--build-chat-panel-width': `${buildChatPanelWidth}px`
+      } as React.CSSProperties)
+    : undefined;
 
   return (
     <div className={pageClass}>
@@ -5376,13 +5535,16 @@ export default function BuildEditor({
           </div>
         )}
         <div
+          ref={workspaceShellRef}
           className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
+          style={workspaceShellStyle}
         >
           {isOwner && (
             <ChatPanel
               className={
                 mobilePanelTab !== 'chat' ? mobilePanelHiddenClass : undefined
               }
+              workshopScale={buildWorkshopScale}
               messages={mergedChatMessages}
               executionPlan={currentBuildRunView.executionPlan}
               scopedPlanQuestion={resolveScopedPlanQuestion(
@@ -5431,6 +5593,21 @@ export default function BuildEditor({
                 handleFixRuntimeObservationMessage
               }
               onDeleteMessage={handleDeleteMessage}
+            />
+          )}
+          {isOwner && (
+            <button
+              type="button"
+              className={workspaceResizeHandleClass}
+              onPointerDown={handleWorkspaceResizePointerDown}
+              onKeyDown={handleWorkspaceResizeKeyDown}
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize Lumine chat and workspace"
+              aria-valuemin={MIN_BUILD_CHAT_PANEL_WIDTH}
+              aria-valuemax={MAX_BUILD_CHAT_PANEL_WIDTH}
+              aria-valuenow={buildChatPanelWidth}
+              title="Drag to resize Lumine and workspace"
             />
           )}
           <PreviewPanel
@@ -5531,6 +5708,89 @@ export default function BuildEditor({
     }
 
     return <span className={headerSubtitleClass}>by {build.username}</span>;
+  }
+
+  function handleWorkspaceResizePointerDown(
+    event: React.PointerEvent<HTMLButtonElement>
+  ) {
+    if (!isDesktopWorkspaceLayout) return;
+    if (event.button !== 0) return;
+    event.preventDefault();
+    workspaceResizeCleanupRef.current?.();
+
+    const handleElement = event.currentTarget;
+    const pointerId = event.pointerId;
+    const workspaceWidth =
+      workspaceShellRef.current?.getBoundingClientRect().width || 0;
+    const startX = event.clientX;
+    const startWidth = buildChatPanelWidth;
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    let latestWidth = clampBuildChatPanelWidth(startWidth, workspaceWidth);
+
+    try {
+      handleElement.setPointerCapture(pointerId);
+    } catch {
+      // Pointer capture is best effort; window listeners still handle normal drags.
+    }
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function cleanup() {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', cleanup);
+      window.removeEventListener('pointercancel', cleanup);
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+      try {
+        handleElement.releasePointerCapture(pointerId);
+      } catch {
+        // The pointer may already be released by the browser.
+      }
+      persistBuildChatPanelWidth(latestWidth);
+      workspaceResizeCleanupRef.current = null;
+    }
+
+    function handlePointerMove(moveEvent: PointerEvent) {
+      moveEvent.preventDefault();
+      latestWidth = clampBuildChatPanelWidth(
+        startWidth + moveEvent.clientX - startX,
+        workspaceWidth
+      );
+      setBuildChatPanelWidth(latestWidth);
+    }
+
+    workspaceResizeCleanupRef.current = cleanup;
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', cleanup);
+    window.addEventListener('pointercancel', cleanup);
+  }
+
+  function handleWorkspaceResizeKeyDown(
+    event: React.KeyboardEvent<HTMLButtonElement>
+  ) {
+    if (!isDesktopWorkspaceLayout) return;
+    const step = event.shiftKey ? 64 : 24;
+    const workspaceWidth =
+      workspaceShellRef.current?.getBoundingClientRect().width || 0;
+    let nextWidth: number | null = null;
+
+    if (event.key === 'ArrowLeft') {
+      nextWidth = buildChatPanelWidth - step;
+    } else if (event.key === 'ArrowRight') {
+      nextWidth = buildChatPanelWidth + step;
+    } else if (event.key === 'Home') {
+      nextWidth = MIN_BUILD_CHAT_PANEL_WIDTH;
+    } else if (event.key === 'End') {
+      nextWidth = MAX_BUILD_CHAT_PANEL_WIDTH;
+    }
+
+    if (nextWidth === null) return;
+    event.preventDefault();
+    const clampedWidth = clampBuildChatPanelWidth(nextWidth, workspaceWidth);
+    setBuildChatPanelWidth(clampedWidth);
+    persistBuildChatPanelWidth(clampedWidth);
   }
 
   function handleOpenDescriptionModal() {

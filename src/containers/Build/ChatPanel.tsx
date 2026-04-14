@@ -74,6 +74,9 @@ function isBuildAssistantPlaceholderContent(content: string | null | undefined) 
   );
 }
 
+function formatScaledRem(baseRem: number, scale: number) {
+  return `${(baseRem * scale).toFixed(3)}rem`;
+}
 
 interface ChatMessage {
   id: number;
@@ -194,6 +197,7 @@ interface LimitProgressItem {
 
 interface ChatPanelProps {
   className?: string;
+  workshopScale?: number;
   messages: ChatMessage[];
   executionPlan?: BuildExecutionPlanSummary | null;
   scopedPlanQuestion?: string | null;
@@ -242,6 +246,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({
   className,
+  workshopScale = 1,
   messages,
   executionPlan,
   scopedPlanQuestion,
@@ -287,6 +292,9 @@ export default function ChatPanel({
   onFixRuntimeObservationMessage,
   onDeleteMessage
 }: ChatPanelProps) {
+  const normalizedWorkshopScale = Number.isFinite(workshopScale)
+    ? Math.max(0.96, Math.min(1.25, workshopScale))
+    : 1;
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
@@ -542,7 +550,57 @@ export default function ChatPanel({
   }
 
   return (
-    <div className={className ? `${panelClass} ${className}` : panelClass}>
+    <div
+      className={className ? `${panelClass} ${className}` : panelClass}
+      style={
+        {
+          '--build-workshop-title-font-size': formatScaledRem(
+            1.2,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-body-font-size': formatScaledRem(
+            1,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-label-font-size': formatScaledRem(
+            0.96,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-meta-font-size': formatScaledRem(
+            0.88,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-small-font-size': formatScaledRem(
+            0.84,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-tiny-font-size': formatScaledRem(
+            0.78,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-message-font-size': formatScaledRem(
+            1.1,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-message-meta-font-size': formatScaledRem(
+            0.82,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-input-font-size': formatScaledRem(
+            1.06,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-prompt-font-size': formatScaledRem(
+            1.08,
+            normalizedWorkshopScale
+          ),
+          '--build-workshop-choice-font-size': formatScaledRem(
+            1,
+            normalizedWorkshopScale
+          )
+        } as React.CSSProperties
+      }
+    >
       <div className={headerClass}>
         <div className={headerTitleClass}>
           <Icon icon="sparkles" />
