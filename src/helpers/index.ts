@@ -284,6 +284,24 @@ export function buildTodayStatsPatchFromDailyTaskStatus(dailyTaskStatus?: any) {
   };
 }
 
+export function getDailyRewardPreviewStreak(todayStats?: any) {
+  const dailyTaskStatus = todayStats?.dailyTaskStatus;
+  if (!dailyTaskStatus) {
+    return toNonNegativeInt(todayStats?.dailyTaskStreak);
+  }
+
+  if (!todayStats?.dailyRewardResultViewed) {
+    const rewardStreak = toNullableInt(dailyTaskStatus.reward?.currentStreak);
+    if (rewardStreak !== null && rewardStreak >= 0) {
+      return rewardStreak;
+    }
+  }
+
+  return toNonNegativeInt(
+    dailyTaskStatus.streak?.currentStreak ?? todayStats?.dailyTaskStreak
+  );
+}
+
 export function buildTodayStatsFromResponse({
   achievedDailyGoals,
   dailyTaskStreak,

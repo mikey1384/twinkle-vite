@@ -10,7 +10,11 @@ import {
   useKeyContext,
   useNotiContext
 } from '~/contexts';
-import { buildTodayStatsPatchFromDailyTaskStatus, isMobile } from '~/helpers';
+import {
+  buildTodayStatsPatchFromDailyTaskStatus,
+  getDailyRewardPreviewStreak,
+  isMobile
+} from '~/helpers';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import {
@@ -62,8 +66,8 @@ export default function StartScreen({
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
-  const dailyTaskStreak = useNotiContext(
-    (v) => v.state.todayStats.dailyTaskStreak
+  const dailyRewardPreviewStreak = useNotiContext((v) =>
+    getDailyRewardPreviewStreak(v.state.todayStats)
   );
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
@@ -463,7 +467,7 @@ export default function StartScreen({
         >
           <DailyRewardBoostStrip
             focus="grammarbles"
-            streak={dailyTaskStreak}
+            streak={dailyRewardPreviewStreak}
             grammarbles={dailyTask}
             loadingStates={{ grammarbles: !loaded }}
             style={{ marginTop: '2rem', maxWidth: '46rem' }}

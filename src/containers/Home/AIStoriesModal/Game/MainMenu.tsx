@@ -3,6 +3,7 @@ import DropdownButton from '~/components/Buttons/DropdownButton';
 import GradientButton from '~/components/Buttons/GradientButton';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 import { useNotiContext } from '~/contexts';
+import { getDailyRewardPreviewStreak } from '~/helpers';
 
 const levelHash: Record<string, string> = {
   '1': 'Level 1 (AR 1)',
@@ -128,8 +129,8 @@ export default function MainMenu({
   listenCount: number;
   topicLoadError: boolean;
 }) {
-  const dailyTaskStreak = useNotiContext(
-    (v) => v.state.todayStats.dailyTaskStreak
+  const dailyRewardPreviewStreak = useNotiContext((v) =>
+    getDailyRewardPreviewStreak(v.state.todayStats)
   );
 
   if (topicLoadError) {
@@ -198,7 +199,7 @@ export default function MainMenu({
       >
         <DailyRewardBoostStrip
           focus="aiStory"
-          streak={dailyTaskStreak}
+          streak={dailyRewardPreviewStreak}
           aiStory={dailyTask}
           loadingStates={{ aiStory: loadingTopic }}
         />

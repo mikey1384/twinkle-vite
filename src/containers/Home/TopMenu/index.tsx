@@ -29,6 +29,7 @@ import CollectRewardsButton from '~/components/Buttons/CollectRewardsButton';
 import ChessOptionsModal from './ChessOptionsModal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
+import { getDailyRewardPreviewStreak } from '~/helpers';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { resolveColorValue } from '~/theme/resolveColor';
 
@@ -56,6 +57,7 @@ export default function TopMenu({
   const omokTimerIdRef = useRef<any>(null);
   const chatLoadedRef = useRef(false);
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const dailyRewardPreviewStreak = getDailyRewardPreviewStreak(todayStats);
   const chatLoaded = useChatContext((v) => v.state.loaded);
   const [isDailyBonusButtonShown, setIsDailyBonusButtonShown] = useState(
     !AI_FEATURES_DISABLED &&
@@ -253,7 +255,7 @@ export default function TopMenu({
           <DailyRewardBoostStrip
             allowCompactToggle
             hideCompactSummaryOnMobile
-            streak={todayStats.dailyTaskStreak}
+            streak={dailyRewardPreviewStreak}
             wordle={todayStats.dailyTaskStatus?.wordle}
             grammarbles={todayStats.dailyTaskStatus?.grammarbles}
             aiStory={todayStats.dailyTaskStatus?.aiStory}

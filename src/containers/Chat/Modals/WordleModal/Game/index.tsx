@@ -21,7 +21,11 @@ import {
   WORD_NOT_FOUND_MESSAGE
 } from '../constants/strings';
 import { useAppContext, useChatContext, useNotiContext } from '~/contexts';
-import { buildTodayStatsPatchFromDailyTaskStatus, isMobile } from '~/helpers';
+import {
+  buildTodayStatsPatchFromDailyTaskStatus,
+  getDailyRewardPreviewStreak,
+  isMobile
+} from '~/helpers';
 import DailyRewardBoostStrip from '~/components/DailyRewardBoostStrip';
 
 const deviceIsMobile = isMobile(navigator);
@@ -80,8 +84,8 @@ export default function Game({
   const onApplyTodayStatsProgress = useNotiContext(
     (v) => v.actions.onApplyTodayStatsProgress
   );
-  const dailyTaskStreak = useNotiContext(
-    (v) => v.state.todayStats.dailyTaskStreak
+  const dailyRewardPreviewStreak = useNotiContext((v) =>
+    getDailyRewardPreviewStreak(v.state.todayStats)
   );
   const MAX_WORD_LENGTH = useMemo(() => solution?.length || 5, [solution]);
   const [alertMessage, setAlertMessage] = useState<any>({});
@@ -188,7 +192,7 @@ export default function Game({
       >
         <DailyRewardBoostStrip
           focus="wordle"
-          streak={dailyTaskStreak}
+          streak={dailyRewardPreviewStreak}
           wordle={attemptState?.dailyTask}
         />
       </div>
