@@ -135,7 +135,8 @@ export default function Card({
     return `${cloudFrontURL}${finalCard.imagePath}`;
   }, [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]);
   const isImageOne = useMemo(
-    () => finalCard?.engine === 'image-1',
+    () =>
+      finalCard?.engine === 'image-1' || finalCard?.engine === 'image-1.5',
     [finalCard?.engine]
   );
   const { cardCss, cardColor } = useAICard(finalCard);

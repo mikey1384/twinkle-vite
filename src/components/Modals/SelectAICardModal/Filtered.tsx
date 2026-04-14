@@ -31,7 +31,12 @@ export default function Filtered({
   color: string;
   quality: string;
   cardStyle: string;
-  engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1';
+  engine?:
+    | 'DALL-E 2'
+    | 'DALL-E 3'
+    | 'image-1'
+    | 'image-1.5'
+    | 'Nano Banana';
   loadFilteredAICards: (v: any) => any;
   myId: number;
   myUsername: string;

@@ -9,20 +9,41 @@ export default function EngineFilter({
   selectedFilter,
   style
 }: {
-  selectedEngine?: 'any' | 'DALL-E 2' | 'DALL-E 3' | 'image-1';
+  selectedEngine?:
+    | 'any'
+    | 'DALL-E 2'
+    | 'DALL-E 3'
+    | 'image-1'
+    | 'image-1.5'
+    | 'Nano Banana';
   onSelectEngine: (
-    v: 'any' | 'DALL-E 2' | 'DALL-E 3' | 'image-1'
+    v:
+      | 'any'
+      | 'DALL-E 2'
+      | 'DALL-E 3'
+      | 'image-1'
+      | 'image-1.5'
+      | 'Nano Banana'
   ) => void;
   onDropdownShown: (isShown: boolean) => void;
   selectedFilter: string;
   style?: React.CSSProperties;
 }) {
   const menuProps = useMemo(() => {
-    const engines: Array<'any' | 'DALL-E 2' | 'DALL-E 3' | 'image-1'> = [
+    const engines: Array<
+      | 'any'
+      | 'DALL-E 2'
+      | 'DALL-E 3'
+      | 'image-1'
+      | 'image-1.5'
+      | 'Nano Banana'
+    > = [
       'any',
       'DALL-E 2',
       'DALL-E 3',
-      'image-1'
+      'image-1',
+      'image-1.5',
+      'Nano Banana'
     ];
     const rearranged = engines.filter((e) => e !== selectedEngine);
     return rearranged.map((engine) => ({

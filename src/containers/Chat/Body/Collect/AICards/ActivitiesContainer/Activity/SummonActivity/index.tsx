@@ -11,6 +11,8 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 
 export default function SummonActivity({ card }: { card: any }) {
   const navigate = useNavigate();
+  const isNanoBananaEngine =
+    card.engine === 'Nano Banana' || card.engine === 'Nano Banana 2';
   const displayedTime = useMemo(
     () => moment.unix(card.timeStamp).format('hh:mm a'),
     [card.timeStamp]
@@ -131,28 +133,40 @@ export default function SummonActivity({ card }: { card: any }) {
         >
           {card.style}
         </div>
-        {(card.engine === 'DALL-E 3' || card.engine === 'image-1') && (
+        {(card.engine === 'DALL-E 3' ||
+          card.engine === 'image-1' ||
+          card.engine === 'image-1.5' ||
+          isNanoBananaEngine) && (
           <div
             className={css`
               text-align: center;
-              font-size: 1.2rem;
+              font-size: ${isNanoBananaEngine ? '1.35rem' : '1.2rem'};
               font-family: ${
-                card.engine === 'image-1'
-                  ? `'Roboto Mono', monospace`
-                  : `'Orbitron', 'Roboto Mono', sans-serif`
+                isNanoBananaEngine
+                  ? `'Baloo 2', 'Poppins', sans-serif`
+                  : card.engine === 'DALL-E 3'
+                    ? `'Orbitron', 'Roboto Mono', sans-serif`
+                    : `'Roboto Mono', monospace`
               };
-              text-transform: ${card.engine === 'image-1' ? 'none' : 'uppercase'};
-              letter-spacing: ${card.engine === 'image-1' ? '0.02em' : '0.1em'};
-              font-weight: 700;
+              text-transform: ${card.engine === 'DALL-E 3'
+                ? 'uppercase'
+                : 'none'};
+              letter-spacing: ${isNanoBananaEngine
+                ? '0'
+                : card.engine === 'DALL-E 3'
+                  ? '0.1em'
+                  : '0.02em'};
+              font-weight: ${isNanoBananaEngine ? 800 : 700};
               color: ${Color.darkerGray()};
               margin-top: 0.5rem;
+              line-height: 1;
               text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
               @media (max-width: ${mobileMaxWidth}) {
-                font-size: 1rem;
+                font-size: ${isNanoBananaEngine ? '1.12rem' : '1rem'};
               }
             `}
           >
-            {card.engine === 'DALL-E 3' ? 'DALL·E 3' : 'image-1'}
+            {card.engine === 'DALL-E 3' ? 'DALL·E 3' : card.engine}
           </div>
         )}
       </div>

@@ -69,7 +69,15 @@ export default function FilterPanel({
               label: 'DALL-E 3',
               onClick: () => handleSelectEngine('DALL-E 3')
             },
-            { label: 'image-1', onClick: () => handleSelectEngine('image-1') }
+            { label: 'image-1', onClick: () => handleSelectEngine('image-1') },
+            {
+              label: 'image-1.5',
+              onClick: () => handleSelectEngine('image-1.5')
+            },
+            {
+              label: 'Nano Banana',
+              onClick: () => handleSelectEngine('Nano Banana')
+            }
           ]}
         />
       </div>
@@ -111,7 +119,14 @@ export default function FilterPanel({
     }));
   }
 
-  function handleSelectEngine(engine: 'DALL-E 2' | 'DALL-E 3' | 'image-1') {
+  function handleSelectEngine(
+    engine:
+      | 'DALL-E 2'
+      | 'DALL-E 3'
+      | 'image-1'
+      | 'image-1.5'
+      | 'Nano Banana'
+  ) {
     onSetFilters((prevFilters: any) => ({
       ...prevFilters,
       engine

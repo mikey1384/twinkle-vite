@@ -16,6 +16,8 @@ export default function AICardDetails({
   card: Card;
 }) {
   const { promptText, engine } = useAICard(card);
+  const isNanoBananaEngine =
+    engine === 'Nano Banana' || engine === 'Nano Banana 2';
 
   const formattedDate = new Date(card.timeStamp * 1000).toLocaleDateString(
     'en-US',
@@ -113,26 +115,36 @@ export default function AICardDetails({
           >
             {card.imagePath ? card.style : '???'}
           </div>
-          {(engine === 'DALL-E 3' || engine === 'image-1') && (
+          {(engine === 'DALL-E 3' ||
+            engine === 'image-1' ||
+            engine === 'image-1.5' ||
+            isNanoBananaEngine) && (
             <div
               className={css`
-                font-size: 1.2rem;
-                font-family: ${engine === 'image-1'
-                  ? `'Roboto Mono', monospace`
-                  : `'Orbitron', 'Roboto Mono', sans-serif`};
-                text-transform: ${engine === 'image-1' ? 'none' : 'uppercase'};
-                letter-spacing: ${engine === 'image-1' ? '0.02em' : '0.1em'};
-                font-weight: 700;
+                font-size: ${isNanoBananaEngine ? '1.35rem' : '1.2rem'};
+                font-family: ${isNanoBananaEngine
+                  ? `'Baloo 2', 'Poppins', sans-serif`
+                  : engine === 'DALL-E 3'
+                    ? `'Orbitron', 'Roboto Mono', sans-serif`
+                    : `'Roboto Mono', monospace`};
+                text-transform: ${engine === 'DALL-E 3' ? 'uppercase' : 'none'};
+                letter-spacing: ${isNanoBananaEngine
+                  ? '0'
+                  : engine === 'DALL-E 3'
+                    ? '0.1em'
+                    : '0.02em'};
+                font-weight: ${isNanoBananaEngine ? 800 : 700};
                 color: ${Color.darkerGray()};
                 margin-top: 0.5rem;
+                line-height: 1;
                 text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 
                 @media (max-width: ${mobileMaxWidth}) {
-                  font-size: 1rem;
+                  font-size: ${isNanoBananaEngine ? '1.12rem' : '1rem'};
                 }
               `}
             >
-              {engine === 'DALL-E 3' ? 'DALL·E 3' : 'image-1'}
+              {engine === 'DALL-E 3' ? 'DALL·E 3' : engine}
             </div>
           )}
         </div>

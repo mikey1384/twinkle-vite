@@ -33,7 +33,12 @@ export default function FilterModal({
     filters.quality || 'any'
   );
   const [selectedEngine, setSelectedEngine] = useState<
-    'any' | 'DALL-E 2' | 'DALL-E 3' | 'image-1'
+    | 'any'
+    | 'DALL-E 2'
+    | 'DALL-E 3'
+    | 'image-1'
+    | 'image-1.5'
+    | 'Nano Banana'
   >(filters.engine || 'any');
   const filterComponents = useMemo(() => {
     const defaultFilters = [
@@ -169,7 +174,12 @@ export default function FilterModal({
       color?: string;
       quality?: string;
       style?: string;
-      engine?: 'DALL-E 2' | 'DALL-E 3' | 'image-1';
+      engine?:
+        | 'DALL-E 2'
+        | 'DALL-E 3'
+        | 'image-1'
+        | 'image-1.5'
+        | 'Nano Banana';
     } = {};
     if (selectedOwner) {
       obj.owner = selectedOwner;
