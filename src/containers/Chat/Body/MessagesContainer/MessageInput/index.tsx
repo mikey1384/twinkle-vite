@@ -140,7 +140,7 @@ export default function MessageInput({
   );
   const aiInputDisabled = useMemo(
     () => AI_FEATURES_DISABLED && isAIChannel,
-    [isAIChannel]
+    [AI_FEATURES_DISABLED, isAIChannel]
   );
   const isAIActuallyStreaming = useMemo(() => {
     if (!currentlyStreamingAIMsgId) return false;

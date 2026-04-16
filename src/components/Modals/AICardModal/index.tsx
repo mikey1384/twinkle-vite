@@ -135,10 +135,13 @@ export default function AICardModal({
   const isMountedRef = useRef(true);
   const card = cardObj[cardId];
   const userIsOwner = card?.ownerId === userId;
+  const cardIsLive = useMemo(() => {
+    return Number(card?.isLive) === 1;
+  }, [card?.isLive]);
 
   const showMenuTabs = useMemo(() => {
-    return !!card?.id && !card?.isBurned && card?.isLive !== false;
-  }, [card?.id, card?.isBurned, card?.isLive]);
+    return !!card?.id && !card?.isBurned && cardIsLive;
+  }, [card?.id, card?.isBurned, cardIsLive]);
   const generatingImage = useMemo(() => {
     return !!card?.imageGenerationInProgress || !!card?.isImageGenerating;
   }, [card?.imageGenerationInProgress, card?.isImageGenerating]);
@@ -581,37 +584,38 @@ export default function AICardModal({
                           {buttonLabel}
                         </GradientButton>
                       )}
-                      {card.isListed ? (
-                        <ListedMenu
-                          burnXP={burnXP}
-                          cardId={card.id}
-                          myId={userId}
-                          myOffer={card.myOffer}
-                          userIsOwner={userIsOwner}
-                          askPrice={card.askPrice}
-                          onSetWithdrawOfferModalShown={
-                            setWithdrawOfferModalShown
-                          }
-                          onSetOfferModalShown={setOfferModalShown}
-                        />
-                      ) : (
-                        <UnlistedMenu
-                          burnXP={burnXP}
-                          cardId={card.id}
-                          cardLevel={card.level}
-                          cardQuality={card.quality}
-                          userIsOwner={userIsOwner}
-                          myId={userId}
-                          myOffer={card.myOffer}
-                          onSetSellModalShown={setSellModalShown}
-                          owner={card.owner}
-                          onUserMenuShownChange={setUsermenuShown}
-                          onSetWithdrawOfferModalShown={
-                            setWithdrawOfferModalShown
-                          }
-                          onSetOfferModalShown={setOfferModalShown}
-                        />
-                      )}
+                      {cardIsLive &&
+                        (card.isListed ? (
+                          <ListedMenu
+                            burnXP={burnXP}
+                            cardId={card.id}
+                            myId={userId}
+                            myOffer={card.myOffer}
+                            userIsOwner={userIsOwner}
+                            askPrice={card.askPrice}
+                            onSetWithdrawOfferModalShown={
+                              setWithdrawOfferModalShown
+                            }
+                            onSetOfferModalShown={setOfferModalShown}
+                          />
+                        ) : (
+                          <UnlistedMenu
+                            burnXP={burnXP}
+                            cardId={card.id}
+                            cardLevel={card.level}
+                            cardQuality={card.quality}
+                            userIsOwner={userIsOwner}
+                            myId={userId}
+                            myOffer={card.myOffer}
+                            onSetSellModalShown={setSellModalShown}
+                            owner={card.owner}
+                            onUserMenuShownChange={setUsermenuShown}
+                            onSetWithdrawOfferModalShown={
+                              setWithdrawOfferModalShown
+                            }
+                            onSetOfferModalShown={setOfferModalShown}
+                          />
+                        ))}
                     </>
                   )}
                 </div>
