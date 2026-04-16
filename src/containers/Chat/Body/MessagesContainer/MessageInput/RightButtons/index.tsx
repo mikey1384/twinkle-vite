@@ -11,6 +11,7 @@ export default function RightButtons({
   currentlyStreamingAIMsgId,
   isChatBanned,
   isLoading,
+  isAiUsageBlocked,
   isRestrictedChannel,
   isTradeButtonShown,
   isTwoPeopleChannel,
@@ -32,6 +33,7 @@ export default function RightButtons({
   currentlyStreamingAIMsgId: number;
   isChatBanned: boolean;
   isLoading: boolean;
+  isAiUsageBlocked?: boolean;
   isRestrictedChannel: boolean;
   isTradeButtonShown: boolean;
   isTwoPeopleChannel: boolean;
@@ -90,6 +92,7 @@ export default function RightButtons({
         currentTransactionId={currentTransactionId}
         inputText={inputText}
         isChatBanned={isChatBanned}
+        isAiUsageBlocked={isAiUsageBlocked}
         isTradeButtonShown={isTradeButtonShown}
         isLoading={isLoading}
         isRestrictedChannel={isRestrictedChannel}
@@ -111,6 +114,7 @@ export default function RightButtons({
       currentTransactionId={currentTransactionId}
       inputText={inputText}
       isChatBanned={isChatBanned}
+      isAiUsageBlocked={isAiUsageBlocked}
       isTradeButtonShown={isTradeButtonShown}
       isLoading={isLoading}
       isRestrictedChannel={isRestrictedChannel}

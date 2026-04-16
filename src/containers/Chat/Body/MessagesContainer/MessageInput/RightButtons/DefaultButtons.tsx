@@ -6,6 +6,7 @@ import { mb } from '~/constants/defaultValues';
 export default function DefaultButtons({
   currentTransactionId,
   isChatBanned,
+  isAiUsageBlocked,
   isLoading,
   isRestrictedChannel,
   isTradeButtonShown,
@@ -24,6 +25,7 @@ export default function DefaultButtons({
   currentTransactionId: number;
   inputText: string;
   isChatBanned: boolean;
+  isAiUsageBlocked?: boolean;
   isLoading: boolean;
   isRestrictedChannel: boolean;
   isTradeButtonShown: boolean;
@@ -44,7 +46,11 @@ export default function DefaultButtons({
       <AddButtons
         channelId={selectedChannelId}
         disabled={
-          isRestrictedChannel || isLoading || isChatBanned || !socketConnected
+          isRestrictedChannel ||
+          isLoading ||
+          isChatBanned ||
+          !socketConnected ||
+          !!isAiUsageBlocked
         }
         currentTransactionId={currentTransactionId}
         isTradeButtonShown={isTradeButtonShown}

@@ -2893,6 +2893,69 @@ export default function ChatReducer(
         }
       };
     }
+    case 'REMOVE_TEMP_MESSAGE': {
+      const prevChannelObj = state.channelsObj[action.channelId] || {};
+      const nextMessagesObj = { ...prevChannelObj.messagesObj };
+      delete nextMessagesObj[action.tempMessageId];
+
+      const nextTopicObj =
+        action.topicId || action.topicId === 0
+          ? {
+              ...prevChannelObj.topicObj,
+              [action.topicId]: {
+                ...prevChannelObj.topicObj?.[action.topicId],
+                messageIds: (
+                  prevChannelObj.topicObj?.[action.topicId]?.messageIds || []
+                ).filter(
+                  (messageId: number | string) =>
+                    messageId !== action.tempMessageId
+                )
+              }
+            }
+          : prevChannelObj.topicObj;
+
+      const subchannelObj = action.subchannelId
+        ? {
+            ...prevChannelObj.subchannelObj,
+            [action.subchannelId]: {
+              ...prevChannelObj.subchannelObj?.[action.subchannelId],
+              messageIds: (
+                prevChannelObj.subchannelObj?.[action.subchannelId]
+                  ?.messageIds || []
+              ).filter(
+                (messageId: number | string) =>
+                  messageId !== action.tempMessageId
+              ),
+              messagesObj: {
+                ...prevChannelObj.subchannelObj?.[action.subchannelId]
+                  ?.messagesObj
+              }
+            }
+          }
+        : prevChannelObj.subchannelObj;
+
+      if (action.subchannelId) {
+        delete subchannelObj[action.subchannelId].messagesObj[
+          action.tempMessageId
+        ];
+      }
+
+      return {
+        ...state,
+        channelsObj: {
+          ...state.channelsObj,
+          [action.channelId]: {
+            ...prevChannelObj,
+            topicObj: nextTopicObj,
+            messageIds: (prevChannelObj.messageIds || []).filter(
+              (messageId: number | string) => messageId !== action.tempMessageId
+            ),
+            messagesObj: nextMessagesObj,
+            ...(subchannelObj ? { subchannelObj } : {})
+          }
+        }
+      };
+    }
     case 'POST_UPLOAD_COMPLETE': {
       const prevChannelObj = state.channelsObj[action.channelId];
       const subchannelObj = action.subchannelId

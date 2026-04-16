@@ -28,6 +28,7 @@ import {
   priceTable
 } from '~/constants/defaultValues';
 import {
+  useAppContext,
   useChatContext,
   useKeyContext,
   useNotiContext,
@@ -37,8 +38,33 @@ import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
 import { useRoleColor } from '~/theme/useRoleColor';
+import { css } from '@emotion/css';
+import { Color, mobileMaxWidth } from '~/constants/css';
 
 const deviceIsMobileOS = isMobile(navigator);
+
+interface AiUsageRequirement {
+  key: string;
+  label: string;
+  done: boolean;
+  current?: number;
+  required?: number;
+}
+
+interface AiUsagePolicy {
+  dayIndex?: number;
+  hasVerifiedEmail: boolean;
+  baseRepliesPerDay: number;
+  resetPurchasesToday: number;
+  resetCost: number;
+  repliesPerDay: number;
+  repliesToday: number;
+  repliesRemaining: number;
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: AiUsageRequirement[];
+  };
+}
 
 export default function MessageInput({
   currentTransactionId,
@@ -76,7 +102,10 @@ export default function MessageInput({
   socketConnected,
   subchannelId,
   legacyTopicObj,
-  onRegisterSetText = () => null
+  onRegisterSetText = () => null,
+  onRegisterAiUsagePolicyUpdate = () => null,
+  onRegisterAiMessageSaveError = () => null,
+  onAiUsagePolicyHeightChange = () => null
 }: {
   currentTransactionId: number;
   currentTopic: any;
@@ -117,6 +146,22 @@ export default function MessageInput({
   topicId: number;
   legacyTopicObj: any;
   onRegisterSetText?: (handler: ((text: string) => void) | null) => void;
+  onRegisterAiUsagePolicyUpdate?: (
+    handler: ((policy?: AiUsagePolicy | null) => void) | null
+  ) => void;
+  onRegisterAiMessageSaveError?: (
+    handler:
+      | ((payload: {
+          content?: string;
+          error?: any;
+          aiUsagePolicy?: AiUsagePolicy | null;
+          channelId?: number;
+          subchannelId?: number;
+          topicId?: number;
+        }) => void)
+      | null
+  ) => void;
+  onAiUsagePolicyHeightChange?: (height: number) => void;
 }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -126,6 +171,13 @@ export default function MessageInput({
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const communityFunds = useKeyContext((v) => v.myState.communityFunds);
   const myId = useKeyContext((v) => v.myState.userId);
+  const getZeroCielAiUsagePolicy = useAppContext(
+    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  );
+  const purchaseZeroCielAiUsageReset = useAppContext(
+    (v) => v.requestHelpers.purchaseZeroCielAiUsageReset
+  );
+  const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelState =
@@ -211,14 +263,54 @@ export default function MessageInput({
   const timerRef: React.RefObject<any> = useRef(null);
   const timerRef2: React.RefObject<any> = useRef(null);
   const [alertModalShown, setAlertModalShown] = useState(false);
+  const [alertModalTitle, setAlertModalTitle] = useState('');
   const [alertModalContent, setAlertModalContent] = useState('');
   const [fileObj, setFileObj] = useState<File | File[] | null>(null);
   const [uploadModalShown, setUploadModalShown] = useState(false);
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
+    null
+  );
+  const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
+  const [aiUsagePolicyLoadFailed, setAiUsagePolicyLoadFailed] =
+    useState(false);
+  const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
+  const aiUsagePolicyRef = useRef<AiUsagePolicy | null>(null);
+  const aiUsagePolicyCardRef = useRef<HTMLDivElement | null>(null);
+  const aiUsagePolicyHeightRef = useRef(0);
+  const isAIChannelRef = useRef(false);
+  const aiMessageSaveErrorContextRef = useRef({
+    selectedChannelId,
+    selectedTab,
+    subchannelId,
+    topicId
+  });
+
+  aiUsagePolicyRef.current = aiUsagePolicy;
+  isAIChannelRef.current = isAIChannel;
+  aiMessageSaveErrorContextRef.current = {
+    selectedChannelId,
+    selectedTab,
+    subchannelId,
+    topicId
+  };
+
   useEffect(() => {
     onRegisterSetText(handleSetText);
     return () => onRegisterSetText(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterSetText, selectedChannelId, subchannelId]);
+
+  useEffect(() => {
+    onRegisterAiUsagePolicyUpdate(applyConfirmedAiUsagePolicy);
+    return () => onRegisterAiUsagePolicyUpdate(null);
+  }, [onRegisterAiUsagePolicyUpdate, selectedChannelId, subchannelId]);
+
+  useEffect(() => {
+    onRegisterAiMessageSaveError(handleAiMessageSaveError);
+    return () => onRegisterAiMessageSaveError(null);
+    // handleAiMessageSaveError reads topic/tab state from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterAiMessageSaveError, selectedChannelId, subchannelId]);
 
   useEffect(() => {
     if (
@@ -257,6 +349,65 @@ export default function MessageInput({
     }
   }, [selectedChannelId, subchannelId, innerRef]);
 
+  useEffect(() => {
+    if (!isAIChannel || !myId) {
+      setAiUsagePolicy(null);
+      setAiUsagePolicyLoadFailed(false);
+      return;
+    }
+    setAiUsagePolicyLoadFailed(false);
+    let cancelled = false;
+    refreshAiUsagePolicy({ silent: false, isCancelled: () => cancelled });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAIChannel, myId, selectedChannelId]);
+
+  useEffect(() => {
+    let animationFrame: number | null = null;
+    const reportHeight = () => {
+      animationFrame = null;
+      reportAiUsagePolicyHeight();
+    };
+    const scheduleHeightReport = () => {
+      if (typeof requestAnimationFrame === 'function') {
+        if (animationFrame !== null) {
+          cancelAnimationFrame(animationFrame);
+        }
+        animationFrame = requestAnimationFrame(reportHeight);
+        return;
+      }
+      reportHeight();
+    };
+
+    scheduleHeightReport();
+
+    const policyCard = aiUsagePolicyCardRef.current;
+    let observer: ResizeObserver | null = null;
+    if (policyCard && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(scheduleHeightReport);
+      observer.observe(policyCard);
+    }
+
+    return () => {
+      if (
+        animationFrame !== null &&
+        typeof cancelAnimationFrame === 'function'
+      ) {
+        cancelAnimationFrame(animationFrame);
+      }
+      observer?.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    aiUsagePolicy,
+    aiUsagePolicyLoadFailed,
+    aiUsagePolicyLoading,
+    aiUsageResetLoading,
+    isAIChannel
+  ]);
+
   const messageExceedsCharLimit = useMemo(() => {
     const result = exceedsCharLimit({
       inputType: 'message',
@@ -269,6 +420,14 @@ export default function MessageInput({
   const isExceedingCharLimit = useMemo(() => {
     return !!messageExceedsCharLimit;
   }, [messageExceedsCharLimit]);
+
+  const aiUsageBlocked = useMemo(() => {
+    if (!isAIChannel) return false;
+    if (!aiUsagePolicy) return true;
+    return (
+      !aiUsagePolicy.hasVerifiedEmail || aiUsagePolicy.repliesRemaining <= 0
+    );
+  }, [aiUsagePolicy, isAIChannel]);
 
   useEffect(() => {
     return function saveTextBeforeUnmount() {
@@ -286,15 +445,13 @@ export default function MessageInput({
     if (aiInputDisabled) return;
     if (stringIsEmpty(inputText)) return;
 
-    if (inputCoolingDown.current) {
-      resetCoolingDown(700);
-      return;
-    }
-
-    // Lock immediately to prevent race condition with rapid clicks
-    inputCoolingDown.current = true;
-
     if (isAICallOngoing) {
+      if (inputCoolingDown.current) {
+        resetCoolingDown(700);
+        return;
+      }
+
+      inputCoolingDown.current = true;
       socket.emit('ai_call_message_submit', {
         message: finalizeEmoji(inputText),
         topicId: selectedTab === 'topic' ? topicId : undefined,
@@ -306,6 +463,42 @@ export default function MessageInput({
       onSetTextAreaHeight(0);
       return;
     }
+
+    const currentAiUsagePolicy = aiUsagePolicyRef.current;
+    if (isAIChannelRef.current) {
+      if (!currentAiUsagePolicy) {
+        setAlertModalTitle('AI Replies');
+        setAlertModalContent(
+          'Checking AI reply usage. Please try again in a moment.'
+        );
+        setAlertModalShown(true);
+        return;
+      }
+      if (!currentAiUsagePolicy.hasVerifiedEmail) {
+        setAlertModalTitle('Verify Email');
+        setAlertModalContent(
+          'Please verify your email before using Zero or Ciel AI replies.'
+        );
+        setAlertModalShown(true);
+        return;
+      }
+      if (currentAiUsagePolicy.repliesRemaining <= 0) {
+        setAlertModalTitle('AI Replies');
+        setAlertModalContent(
+          `You have used all ${currentAiUsagePolicy.repliesPerDay} Zero/Ciel AI replies for today. Reset for ${currentAiUsagePolicy.resetCost.toLocaleString()} coins to keep going.`
+        );
+        setAlertModalShown(true);
+        return;
+      }
+    }
+
+    if (inputCoolingDown.current) {
+      resetCoolingDown(700);
+      return;
+    }
+
+    // Lock immediately to prevent race condition with rapid clicks
+    inputCoolingDown.current = true;
 
     if (isExceedingCharLimit) {
       inputCoolingDown.current = false;
@@ -321,6 +514,7 @@ export default function MessageInput({
       inputCoolingDown.current = false;
       const userCoins = twinkleCoins || 0;
       const availableFunds = communityFunds || 0;
+      setAlertModalTitle('Insufficient Coins');
       setAlertModalContent(
         `Not enough Twinkle Coins for Think Hard mode. You need ${priceTable.thinkHard} coins. ` +
           `You have ${userCoins} coins and community funds have ${availableFunds} coins.`
@@ -335,12 +529,13 @@ export default function MessageInput({
 
     innerRef.current?.focus();
 
+    const submittedMessage = finalizeEmoji(inputText);
     try {
       if (selectedChannelId === 0) {
         handleSetText('');
       }
       await onMessageSubmit({
-        message: finalizeEmoji(inputText),
+        message: submittedMessage,
         subchannelId,
         selectedTab,
         topicId
@@ -352,8 +547,23 @@ export default function MessageInput({
         targetKey: subchannelId,
         text: ''
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      if (selectedChannelId === 0) {
+        handleSetText(submittedMessage);
+      }
+      if (error?.aiUsagePolicy) {
+        applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
+      }
+      if (error?.code?.startsWith?.('zero_ciel_ai_') || error?.message) {
+        setAlertModalTitle(
+          error?.code === 'zero_ciel_ai_verified_email_required'
+            ? 'Verify Email'
+            : 'AI Replies'
+        );
+        setAlertModalContent(error?.message || 'Unable to send AI message.');
+        setAlertModalShown(true);
+      }
     }
 
     function resetCoolingDown(delay = 500) {
@@ -462,6 +672,7 @@ export default function MessageInput({
           }
         />
       ) : null}
+      {renderAiUsagePolicy()}
       <div style={{ display: 'flex' }}>
         {!isAIChannel &&
           (isTwoPeopleChannel || hasWordleButton || legacyTopicButtonShown) && (
@@ -531,7 +742,8 @@ export default function MessageInput({
                 isAIActuallyStreaming ||
                 coolingDown ||
                 isExceedingCharLimit ||
-                hasInsufficientCoinsForThinkHard
+                hasInsufficientCoinsForThinkHard ||
+                aiUsageBlocked
               }
               color={sendButtonColorKey}
               hoverColor={sendButtonHoverColorKey}
@@ -549,6 +761,7 @@ export default function MessageInput({
             currentlyStreamingAIMsgId={currentlyStreamingAIMsgId}
             isChatBanned={!!banned?.chat}
             isLoading={loading}
+            isAiUsageBlocked={aiUsageBlocked}
             isTwoPeopleChannel={!!isTwoPeopleChannel}
             isRestrictedChannel={isRestrictedChannel}
             isTradeButtonShown={selectedTab === 'all'}
@@ -559,6 +772,7 @@ export default function MessageInput({
             onSelectVideoButtonClick={onSelectVideoButtonClick}
             onSetAlertModalShown={(shown: boolean) => {
               if (shown) {
+                setAlertModalTitle('');
                 setAlertModalContent('');
               }
               setAlertModalShown(shown);
@@ -573,7 +787,10 @@ export default function MessageInput({
       </div>
       {alertModalShown && (
         <AlertModal
-          title={alertModalContent ? 'Insufficient Coins' : 'File is too large'}
+          title={
+            alertModalTitle ||
+            (alertModalContent ? 'Insufficient Coins' : 'File is too large')
+          }
           content={
             alertModalContent ||
             (isAIChannel
@@ -582,6 +799,7 @@ export default function MessageInput({
           }
           onHide={() => {
             setAlertModalShown(false);
+            setAlertModalTitle('');
             setAlertModalContent('');
           }}
         />
@@ -608,7 +826,8 @@ export default function MessageInput({
             }, 10);
           }}
           onScrollToBottom={onScrollToBottom}
-          onTextMessageSubmit={onMessageSubmit}
+          onAiUsagePolicyUpdate={applyConfirmedAiUsagePolicy}
+          onTextMessageSubmit={handleUploadModalTextMessageSubmit}
           onUpload={() => {
             handleSetText('');
             onSetTextAreaHeight(0);
@@ -622,6 +841,353 @@ export default function MessageInput({
       )}
     </div>
   );
+
+  async function refreshAiUsagePolicy({
+    silent = true,
+    isCancelled = () => false
+  }: {
+    silent?: boolean;
+    isCancelled?: () => boolean;
+  } = {}) {
+    if (!isAIChannel || !myId) return;
+    if (!silent) {
+      setAiUsagePolicyLoading(true);
+      setAiUsagePolicyLoadFailed(false);
+    }
+    try {
+      const result = await getZeroCielAiUsagePolicy();
+      if (!isCancelled()) {
+        setAiUsagePolicy(result?.aiUsagePolicy || null);
+        setAiUsagePolicyLoadFailed(false);
+      }
+    } catch (error) {
+      if (!isCancelled()) {
+        console.error(error);
+        setAiUsagePolicyLoadFailed(true);
+      }
+    } finally {
+      if (!silent && !isCancelled()) {
+        setAiUsagePolicyLoading(false);
+      }
+    }
+  }
+
+  async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
+    if (aiUsageResetLoading) return;
+    setAiUsageResetLoading(true);
+    try {
+      const result = await purchaseZeroCielAiUsageReset({
+        useCommunityFunds
+      });
+      if (result?.aiUsagePolicy) {
+        setAiUsagePolicy(result.aiUsagePolicy);
+      }
+      if (typeof result?.newBalance === 'number') {
+        onSetUserState({
+          userId: myId,
+          newState: { twinkleCoins: result.newBalance }
+        });
+      }
+      if (typeof result?.communityFunds === 'number') {
+        onSetUserState({
+          userId: myId,
+          newState: { communityFunds: result.communityFunds }
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      if (error?.aiUsagePolicy) {
+        applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
+      }
+      setAlertModalTitle('AI Replies');
+      setAlertModalContent(
+        error?.message || 'Unable to reset AI replies right now.'
+      );
+      setAlertModalShown(true);
+    } finally {
+      setAiUsageResetLoading(false);
+    }
+  }
+
+  function renderAiUsagePolicy() {
+    if (!isAIChannel) return null;
+    if (!aiUsagePolicy) {
+      return (
+        <div
+          ref={aiUsagePolicyCardRef}
+          className={css`
+            margin: 0.4rem 1rem 0;
+            padding: 0.8rem 1rem;
+            border: 1px solid ${Color.borderGray()};
+            border-radius: 8px;
+            background: ${Color.white()};
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            font-size: 1.2rem;
+            color: ${Color.darkerGray()};
+
+            @media (max-width: ${mobileMaxWidth}) {
+              margin: 0.4rem 0.6rem 0;
+              font-size: 1.1rem;
+            }
+          `}
+        >
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 1rem;
+            `}
+          >
+            <b>
+              {aiUsagePolicyLoadFailed
+                ? 'Unable to load Zero/Ciel replies'
+                : 'Checking Zero/Ciel replies'}
+            </b>
+            <Button
+              variant="soft"
+              disabled={aiUsagePolicyLoading}
+              onClick={() => refreshAiUsagePolicy({ silent: false })}
+            >
+              {aiUsagePolicyLoading ? 'Checking' : 'Refresh'}
+            </Button>
+          </div>
+          {aiUsagePolicyLoadFailed && (
+            <span>Refresh to check your reply limit before sending.</span>
+          )}
+        </div>
+      );
+    }
+    const resetNeeded =
+      aiUsagePolicy.hasVerifiedEmail && aiUsagePolicy.repliesRemaining <= 0;
+    const communityEligibility =
+      aiUsagePolicy.communityFundResetEligibility || null;
+    const communityFundResetAvailable = !!communityEligibility?.eligible;
+
+    return (
+      <div
+        ref={aiUsagePolicyCardRef}
+        className={css`
+          margin: 0.4rem 1rem 0;
+          padding: 0.8rem 1rem;
+          border: 1px solid ${Color.borderGray()};
+          border-radius: 8px;
+          background: ${Color.white()};
+          display: flex;
+          flex-direction: column;
+          gap: 0.7rem;
+          font-size: 1.2rem;
+          color: ${Color.darkerGray()};
+
+          @media (max-width: ${mobileMaxWidth}) {
+            margin: 0.4rem 0.6rem 0;
+            font-size: 1.1rem;
+          }
+        `}
+      >
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+          `}
+        >
+          <b>
+            {aiUsagePolicy.hasVerifiedEmail
+              ? `${aiUsagePolicy.repliesRemaining}/${aiUsagePolicy.repliesPerDay} Zero/Ciel replies left today`
+              : 'Verify your email to use Zero or Ciel AI replies'}
+          </b>
+          <Button
+            variant="soft"
+            disabled={aiUsagePolicyLoading}
+            onClick={() => refreshAiUsagePolicy({ silent: false })}
+          >
+            Refresh
+          </Button>
+        </div>
+        {resetNeeded && (
+          <div
+            className={css`
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 0.6rem;
+            `}
+          >
+            <span>
+              Reset for {aiUsagePolicy.resetCost.toLocaleString()} coins.
+            </span>
+            <Button
+              variant="soft"
+              disabled={aiUsageResetLoading}
+              onClick={() => handlePurchaseAiUsageReset(false)}
+            >
+              Use coins
+            </Button>
+            <Button
+              variant="soft"
+              disabled={aiUsageResetLoading || !communityFundResetAvailable}
+              onClick={() => handlePurchaseAiUsageReset(true)}
+            >
+              Use community funds
+            </Button>
+          </div>
+        )}
+        {resetNeeded && communityEligibility && (
+          <div
+            className={css`
+              display: flex;
+              flex-direction: column;
+              gap: 0.45rem;
+            `}
+          >
+            {communityEligibility.requirements.map((requirement) => (
+              <div
+                key={requirement.key}
+                className={css`
+                  display: flex;
+                  align-items: center;
+                  gap: 0.6rem;
+                  font-weight: 600;
+                  color: ${requirement.done
+                    ? Color.green()
+                    : Color.darkerGray()};
+                `}
+              >
+                <Icon
+                  icon={requirement.done ? 'check' : 'times'}
+                  style={{
+                    color: requirement.done ? Color.green() : Color.gray()
+                  }}
+                />
+                <span>
+                  {requirement.label}
+                  {typeof requirement.required === 'number'
+                    ? ` (${requirement.current || 0}/${requirement.required})`
+                    : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function applyConfirmedAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+    if (!isAIChannelRef.current || !nextPolicy) return;
+    setAiUsagePolicy((policy) => ({
+      ...nextPolicy,
+      ...(policy?.communityFundResetEligibility &&
+      !nextPolicy.communityFundResetEligibility &&
+      (!nextPolicy.dayIndex || nextPolicy.dayIndex === policy.dayIndex)
+        ? {
+            communityFundResetEligibility:
+              policy.communityFundResetEligibility
+          }
+        : {})
+    }));
+  }
+
+  function handleAiMessageSaveError({
+    content,
+    error,
+    aiUsagePolicy,
+    channelId: sourceChannelId,
+    subchannelId: sourceSubchannelId,
+    topicId: sourceTopicId
+  }: {
+    content?: string;
+    error?: any;
+    aiUsagePolicy?: AiUsagePolicy | null;
+    channelId?: number;
+    subchannelId?: number;
+    topicId?: number;
+  }) {
+    const {
+      selectedChannelId: currentChannelId,
+      selectedTab: currentSelectedTab,
+      subchannelId: currentSubchannelId,
+      topicId: currentContextTopicId
+    } = aiMessageSaveErrorContextRef.current;
+    const normalizedSourceChannelId = Number(sourceChannelId) || 0;
+    if (
+      normalizedSourceChannelId &&
+      normalizedSourceChannelId !== Number(currentChannelId)
+    ) {
+      return;
+    }
+    const normalizedSourceSubchannelId = Number(sourceSubchannelId) || 0;
+    if (
+      normalizedSourceSubchannelId !== (Number(currentSubchannelId) || 0)
+    ) {
+      return;
+    }
+    const normalizedSourceTopicId = Number(sourceTopicId) || 0;
+    const sourceIsTopicMessage = normalizedSourceTopicId > 0;
+    const currentIsTopicMessage = currentSelectedTab === 'topic';
+    if (sourceIsTopicMessage !== currentIsTopicMessage) {
+      return;
+    }
+    if (sourceIsTopicMessage) {
+      const currentTopicId = Number(currentContextTopicId) || 0;
+      if (!currentTopicId || normalizedSourceTopicId !== currentTopicId) {
+        return;
+      }
+    }
+    if (aiUsagePolicy) {
+      applyConfirmedAiUsagePolicy(aiUsagePolicy);
+    }
+    const failedText = typeof content === 'string' ? content : '';
+    const restoredDraft = !!failedText && stringIsEmpty(textRef.current);
+    if (restoredDraft) {
+      handleSetText(failedText);
+    }
+    const message =
+      error?.message ||
+      error?.error ||
+      'Unable to save this AI message right now.';
+    setAlertModalTitle(
+      error?.code === 'zero_ciel_ai_verified_email_required'
+        ? 'Verify Email'
+        : 'AI Replies'
+    );
+    setAlertModalContent(
+      restoredDraft
+        ? `${message} Your message was restored so you can try again.`
+        : message
+    );
+    setAlertModalShown(true);
+  }
+
+  async function handleUploadModalTextMessageSubmit(params: any) {
+    return onMessageSubmit(params);
+  }
+
+  function reportAiUsagePolicyHeight() {
+    const policyCard = aiUsagePolicyCardRef.current;
+    let height = 0;
+    if (isAIChannel && policyCard) {
+      const { marginBottom, marginTop } = window.getComputedStyle(policyCard);
+      height = Math.ceil(
+        policyCard.getBoundingClientRect().height +
+          getPixelValue(marginTop) +
+          getPixelValue(marginBottom)
+      );
+    }
+    if (height !== aiUsagePolicyHeightRef.current) {
+      aiUsagePolicyHeightRef.current = height;
+      onAiUsagePolicyHeightChange(height);
+    }
+  }
+
+  function getPixelValue(value: string) {
+    const parsedValue = parseFloat(value);
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+  }
 
   function handleSetText(newText: string) {
     setInputText(newText);

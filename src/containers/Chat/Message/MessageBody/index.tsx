@@ -135,6 +135,8 @@ function MessageBody({
   onOmokBoardClick,
   onOmokSpoilerClick,
   onReceiveNewMessage,
+  onAiUsagePolicyUpdate,
+  onOptimisticAiMessageSaveError,
   onReplyClick,
   onRequestRewind,
   onRewardMessageSubmit,
@@ -179,6 +181,15 @@ function MessageBody({
   onAcceptRewind: (v: any) => void;
   onDeclineRewind: () => void;
   onReceiveNewMessage: () => void;
+  onAiUsagePolicyUpdate?: (policy?: any) => void;
+  onOptimisticAiMessageSaveError?: (payload: {
+    content?: string;
+    error?: any;
+    aiUsagePolicy?: any;
+    channelId?: number;
+    subchannelId?: number;
+    topicId?: number;
+  }) => void;
   onReplyClick: (target: any) => void;
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
@@ -218,6 +229,8 @@ function MessageBody({
       onHideAttachment,
       onRemoveReactionFromMessage,
       onSaveMessage,
+      onRemoveTempMessage,
+      onSetMessageState,
       onSetIsEditing,
       onSetReplyTarget,
       onUpdateLastChessMessageId,
@@ -402,13 +415,14 @@ function MessageBody({
       !message.id &&
       !message.fileToUpload &&
       !message.isSubject &&
+      !message.settings?.saveFailed &&
       (!(message.isNotification && !message.chessState) || isCallMsg)
     ) {
       handleSaveMessage(message);
     }
 
     async function handleSaveMessage(newMessage: {
-      tempMessageId: number;
+      tempMessageId: number | string;
       userId: number;
       isChessMsg: boolean;
       isDrawOffer: boolean;
@@ -458,24 +472,67 @@ function MessageBody({
         subjectId: newMessage.subjectId || 0,
         subchannelId: newMessage.subchannelId
       };
-      const { messageId, timeStamp, netCoins } = await saveChatMessage({
-        message: post,
-        targetMessageId: targetMessage?.id,
-        targetSubject,
-        isCielChat,
-        isZeroChat,
-        thinkHard:
-          (isCielChat &&
-            (thinkHardState.ciel[subjectId] ?? thinkHardState.ciel.global)) ||
-          (isZeroChat &&
-            (thinkHardState.zero[subjectId] ?? thinkHardState.zero.global))
-      });
+      let savedMessage;
+      try {
+        savedMessage = await saveChatMessage({
+          message: post,
+          targetMessageId: targetMessage?.id,
+          targetSubject,
+          isCielChat,
+          isZeroChat,
+          thinkHard:
+            (isCielChat &&
+              (thinkHardState.ciel[subjectId] ?? thinkHardState.ciel.global)) ||
+            (isZeroChat &&
+              (thinkHardState.zero[subjectId] ?? thinkHardState.zero.global))
+        });
+      } catch (error: any) {
+        console.error('Failed to save optimistic chat message:', error);
+        const isAIChat = isCielChat || isZeroChat;
+        if (error?.aiUsagePolicy) {
+          onAiUsagePolicyUpdate?.(error.aiUsagePolicy);
+        }
+        if (isAIChat) {
+          onOptimisticAiMessageSaveError?.({
+            content: newMessage.content,
+            error,
+            aiUsagePolicy: error?.aiUsagePolicy,
+            channelId,
+            subchannelId: newMessage.subchannelId,
+            topicId: newMessage.subjectId || 0
+          });
+          onRemoveTempMessage({
+            channelId,
+            subchannelId: newMessage.subchannelId,
+            topicId: newMessage.subjectId || 0,
+            tempMessageId
+          });
+          return;
+        }
+
+        onSetMessageState({
+          channelId,
+          messageId: tempMessageId,
+          newState: {
+            settings: {
+              ...(message.settings || {}),
+              saveFailed: true
+            }
+          }
+        });
+        return;
+      }
+
+      const { messageId, timeStamp, netCoins, aiUsagePolicy } = savedMessage;
 
       if (typeof netCoins === 'number') {
         onSetUserState({
           userId,
           newState: { twinkleCoins: netCoins }
         });
+      }
+      if (aiUsagePolicy) {
+        onAiUsagePolicyUpdate?.(aiUsagePolicy);
       }
       onSaveMessage({
         messageId,
@@ -1245,6 +1302,18 @@ function MessageBody({
                       subjectId={subjectId}
                       userCanEditThis={userCanEditThis}
                     />
+                  )}
+                  {message.settings?.saveFailed && (
+                    <div
+                      className={css`
+                        margin-top: 0.75rem;
+                        color: ${Color.red()};
+                        font-size: 1.2rem;
+                        font-weight: bold;
+                      `}
+                    >
+                      Message failed to send. Copy it and try again.
+                    </div>
                   )}
                   {!isEditing && !isNotification && (
                     <div style={{ marginTop: '2rem', height: '2.5rem' }}>

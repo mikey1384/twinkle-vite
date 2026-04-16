@@ -307,6 +307,9 @@ export default function Main({
   const onRemoveReactionFromMessage = useChatContext(
     (v) => v.actions.onRemoveReactionFromMessage
   );
+  const onRemoveTempMessage = useChatContext(
+    (v) => v.actions.onRemoveTempMessage
+  );
   const onSeachChatMessages = useChatContext(
     (v) => v.actions.onSeachChatMessages
   );
@@ -960,6 +963,7 @@ export default function Main({
           onReceiveMessageOnDifferentChannel,
           onReloadChatSubject,
           onRemoveReactionFromMessage,
+          onRemoveTempMessage,
           onSaveMessage,
           onSearchChatSubject,
           onCreateNewDMChannel,

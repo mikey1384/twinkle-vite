@@ -55,6 +55,8 @@ export default function DisplayedMessages({
   onOmokSpoilerClick,
   onDeclineRewind,
   onMessageSubmit,
+  onAiUsagePolicyUpdate,
+  onOptimisticAiMessageSaveError,
   onSetAICardModalCardId,
   onSetDeleteModal,
   onSetSubjectMsgsModalShown,
@@ -98,6 +100,15 @@ export default function DisplayedMessages({
   onOmokSpoilerClick: (senderId: number) => void;
   onDeclineRewind: () => void;
   onMessageSubmit: (message: any) => void;
+  onAiUsagePolicyUpdate?: (policy?: any) => void;
+  onOptimisticAiMessageSaveError?: (payload: {
+    content?: string;
+    error?: any;
+    aiUsagePolicy?: any;
+    channelId?: number;
+    subchannelId?: number;
+    topicId?: number;
+  }) => void;
   onSetAICardModalCardId: (cardId: number) => void;
   onSetDeleteModal: (obj: {
     shown: boolean;
@@ -825,6 +836,10 @@ export default function DisplayedMessages({
                     onCancelRewindRequest={onCancelRewindRequest}
                     onAcceptRewind={onAcceptRewind}
                     onDeclineRewind={onDeclineRewind}
+                    onAiUsagePolicyUpdate={onAiUsagePolicyUpdate}
+                    onOptimisticAiMessageSaveError={
+                      onOptimisticAiMessageSaveError
+                    }
                     onDelete={handleShowDeleteModal}
                     onReceiveNewMessage={handleReceiveNewMessage}
                     onReplyClick={handleReplyClick}
