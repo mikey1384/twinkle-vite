@@ -18,6 +18,28 @@ export default function chatRequestHelpers({
     return null;
   }
 
+  function handleChatError(error: any) {
+    const status = error?.response?.status;
+    const data = error?.response?.data;
+    if (status === 401 || status === 301) {
+      return handleError(error);
+    }
+    const errorCode = typeof data?.code === 'string' ? data.code : '';
+    if (
+      status &&
+      data &&
+      typeof data === 'object' &&
+      (data.aiUsagePolicy || errorCode.startsWith('zero_ciel_ai_'))
+    ) {
+      return Promise.reject({
+        status,
+        ...data,
+        message: data.message || data.error || 'An unexpected error occurred'
+      });
+    }
+    return handleError(error);
+  }
+
   return {
     async acceptInvitation(channelId: number) {
       try {
@@ -1964,6 +1986,33 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
+    async getZeroCielAiUsagePolicy() {
+      try {
+        const { data } = await request.get(
+          `${URL}/chat/ai-usage-policy`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async purchaseZeroCielAiUsageReset({
+      useCommunityFunds = false
+    }: {
+      useCommunityFunds?: boolean;
+    } = {}) {
+      try {
+        const { data } = await request.post(
+          `${URL}/chat/ai-usage-reset`,
+          { useCommunityFunds },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleChatError(error);
+      }
+    },
     async saveChatMessage({
       message,
       targetMessageId,
@@ -1981,7 +2030,7 @@ export default function chatRequestHelpers({
     }) {
       try {
         const {
-          data: { messageId, timeStamp, netCoins }
+          data: { messageId, timeStamp, netCoins, aiUsagePolicy }
         } = await request.post(
           `${URL}/chat`,
           {
@@ -2000,9 +2049,9 @@ export default function chatRequestHelpers({
           },
           auth()
         );
-        return { messageId, timeStamp, netCoins };
+        return { messageId, timeStamp, netCoins, aiUsagePolicy };
       } catch (error) {
-        return handleError(error);
+        return handleChatError(error);
       }
     },
     async checkIfDuplicateWordleAttempt({
@@ -2231,11 +2280,11 @@ export default function chatRequestHelpers({
     async startNewDMChannel(params: object) {
       try {
         const {
-          data: { alreadyExists, channel, message, pathId }
+          data: { alreadyExists, channel, message, pathId, aiUsagePolicy }
         } = await request.post(`${URL}/chat/channel/twoPeople`, params, auth());
-        return { alreadyExists, channel, message, pathId };
+        return { alreadyExists, channel, message, pathId, aiUsagePolicy };
       } catch (error) {
-        return handleError(error);
+        return handleChatError(error);
       }
     },
     async setOmokMoveViewTimeStamp({
@@ -2420,37 +2469,49 @@ export default function chatRequestHelpers({
       isZeroChat: boolean;
       thinkHard?: boolean;
     }) {
-      const {
-        data: { channel, message, messageId, alreadyExists, netCoins }
-      } = await request.post(
-        `${URL}/chat/file`,
-        {
-          actualFileName,
+      try {
+        const {
+          data: {
+            channel,
+            message,
+            messageId,
+            alreadyExists,
+            netCoins,
+            aiUsagePolicy
+          }
+        } = await request.post(
+          `${URL}/chat/file`,
+          {
+            actualFileName,
+            fileName,
+            fileSize,
+            path,
+            channelId,
+            content,
+            chessState,
+            recipientId,
+            targetMessageId,
+            subchannelId,
+            topicId: topicId || 0,
+            thumbUrl,
+            isCielChat,
+            isZeroChat,
+            thinkHard
+          },
+          auth()
+        );
+        return {
+          channel,
+          message,
+          messageId,
+          alreadyExists,
           fileName,
-          fileSize,
-          path,
-          channelId,
-          content,
-          chessState,
-          recipientId,
-          targetMessageId,
-          subchannelId,
-          topicId: topicId || 0,
-          thumbUrl,
-          isCielChat,
-          isZeroChat,
-          thinkHard
-        },
-        auth()
-      );
-      return {
-        channel,
-        message,
-        messageId,
-        alreadyExists,
-        fileName,
-        netCoins
-      };
+          netCoins,
+          aiUsagePolicy
+        };
+      } catch (error) {
+        return handleChatError(error);
+      }
     }
   };
 }

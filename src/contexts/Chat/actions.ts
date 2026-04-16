@@ -1165,6 +1165,25 @@ export default function ChatActions(dispatch: Dispatch) {
         filePath
       });
     },
+    onRemoveTempMessage({
+      channelId,
+      subchannelId,
+      tempMessageId,
+      topicId
+    }: {
+      channelId: number;
+      subchannelId?: number;
+      tempMessageId: number | string;
+      topicId?: number;
+    }) {
+      return dispatch({
+        type: 'REMOVE_TEMP_MESSAGE',
+        channelId,
+        subchannelId,
+        tempMessageId,
+        topicId
+      });
+    },
     onPostFileUploadStatus({
       channelId,
       content,
@@ -1709,7 +1728,7 @@ export default function ChatActions(dispatch: Dispatch) {
       newState
     }: {
       channelId: number;
-      messageId: number;
+      messageId: number | string;
       newState: object;
     }) {
       return dispatch({

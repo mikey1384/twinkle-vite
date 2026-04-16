@@ -61,6 +61,7 @@ function UploadFileModal({
   onEmbed,
   onHide,
   onScrollToBottom,
+  onAiUsagePolicyUpdate,
   onTextMessageSubmit,
   onCustomUploadSubmit,
   onUpload,
@@ -80,6 +81,7 @@ function UploadFileModal({
   onEmbed: (text: string) => any;
   onHide: () => any;
   onScrollToBottom: () => any;
+  onAiUsagePolicyUpdate?: (policy?: any) => void;
   onTextMessageSubmit?: (arg0: any) => any;
   onCustomUploadSubmit?: (params: {
     files: File[];
@@ -391,6 +393,7 @@ function UploadFileModal({
         fileToUpload: selectedFile,
         isCielChat,
         isZeroChat,
+        onAiUsagePolicyUpdate,
         userId,
         recipientId,
         recipientUsername,
@@ -969,6 +972,7 @@ function UploadFileModal({
         fileToUpload,
         isCielChat,
         isZeroChat,
+        onAiUsagePolicyUpdate,
         userId,
         recipientId,
         recipientUsername,

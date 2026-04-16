@@ -192,6 +192,7 @@ export default function MessagesContainer({
     Record<number, Partial<Record<'chess' | 'omok', number | null>>>
   >({});
   const [textAreaHeight, setTextAreaHeight] = useState(0);
+  const [aiUsagePolicyHeight, setAiUsagePolicyHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
@@ -231,6 +232,20 @@ export default function MessagesContainer({
   const MessageToScrollToFromTopic = useRef<number | null>(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
   const messageInputSetTextRef = useRef<((text: string) => void) | null>(null);
+  const messageInputAiUsagePolicyUpdateRef = useRef<
+    ((policy?: any) => void) | null
+  >(null);
+  const messageInputAiMessageSaveErrorRef = useRef<
+    | ((payload: {
+        content?: string;
+        error?: any;
+        aiUsagePolicy?: any;
+        channelId?: number;
+        subchannelId?: number;
+        topicId?: number;
+      }) => void)
+    | null
+  >(null);
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
@@ -347,6 +362,31 @@ export default function MessagesContainer({
     []
   );
 
+  const handleRegisterAiUsagePolicyUpdate = useCallback(
+    (handler: ((policy?: any) => void) | null) => {
+      messageInputAiUsagePolicyUpdateRef.current = handler;
+    },
+    []
+  );
+
+  const handleRegisterAiMessageSaveError = useCallback(
+    (
+      handler:
+        | ((payload: {
+            content?: string;
+            error?: any;
+            aiUsagePolicy?: any;
+            channelId?: number;
+            subchannelId?: number;
+            topicId?: number;
+          }) => void)
+        | null
+    ) => {
+      messageInputAiMessageSaveErrorRef.current = handler;
+    },
+    []
+  );
+
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
     return (
@@ -358,6 +398,8 @@ export default function MessagesContainer({
 
   const containerHeight = `CALC(100% - 1rem - 2px - ${
     socketConnected && textAreaHeight ? `${textAreaHeight}px - 1rem` : '5.5rem'
+  }${
+    aiUsagePolicyHeight ? ` - ${aiUsagePolicyHeight}px` : ''
   }${
     socketConnected && appliedIsRespondingToSubject
       ? ' - 8rem - 2px'
@@ -935,7 +977,7 @@ export default function MessagesContainer({
             });
             return window.location.reload();
           }
-          const { alreadyExists, channel, message, pathId } =
+          const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
             await startNewDMChannel({
               userId,
               chessState,
@@ -946,6 +988,9 @@ export default function MessagesContainer({
             });
           if (alreadyExists) {
             return window.location.reload();
+          }
+          if (aiUsagePolicy) {
+            handleAiUsagePolicyUpdate(aiUsagePolicy);
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
@@ -1063,7 +1108,7 @@ export default function MessagesContainer({
             });
             return window.location.reload();
           }
-          const { alreadyExists, channel, message, pathId } =
+          const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
             await startNewDMChannel({
               userId,
               omokState,
@@ -1074,6 +1119,9 @@ export default function MessagesContainer({
             });
           if (alreadyExists) {
             return window.location.reload();
+          }
+          if (aiUsagePolicy) {
+            handleAiUsagePolicyUpdate(aiUsagePolicy);
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
@@ -1435,7 +1483,7 @@ export default function MessagesContainer({
         }
         onSetCreatingNewDMChannel(true);
         try {
-          const { alreadyExists, channel, message, pathId } =
+          const { alreadyExists, channel, message, pathId, aiUsagePolicy } =
             await startNewDMChannel({
               content,
               userId,
@@ -1443,6 +1491,9 @@ export default function MessagesContainer({
             });
           if (alreadyExists) {
             return window.location.reload();
+          }
+          if (aiUsagePolicy) {
+            handleAiUsagePolicyUpdate(aiUsagePolicy);
           }
           socket.emit('join_chat_group', message.channelId);
           socket.emit('send_bi_chat_invitation', {
@@ -1454,10 +1505,14 @@ export default function MessagesContainer({
           onUpdateChannelPathIdHash({ channelId: channel.id, pathId });
           navigate(`/chat/${pathId}`, { replace: true });
           onCreateNewDMChannel({ channel, message, withoutMessage: true });
-          onSetCreatingNewDMChannel(false);
           return Promise.resolve();
-        } catch (error) {
+        } catch (error: any) {
+          if (error?.aiUsagePolicy) {
+            handleAiUsagePolicyUpdate(error.aiUsagePolicy);
+          }
           return Promise.reject(error);
+        } finally {
+          onSetCreatingNewDMChannel(false);
         }
       }
       const isTopicMessage =
@@ -1687,6 +1742,8 @@ export default function MessagesContainer({
           onOmokSpoilerClick={handleOmokSpoilerClick}
           onDeclineRewind={handleDeclineRewind}
           onMessageSubmit={handleMessageSubmit}
+          onAiUsagePolicyUpdate={handleAiUsagePolicyUpdate}
+          onOptimisticAiMessageSaveError={handleOptimisticAiMessageSaveError}
           onReplyTargetSelected={(target: any) => {
             replyTargetRef.current = target;
           }}
@@ -1790,10 +1847,17 @@ export default function MessagesContainer({
               setTextAreaHeight(height > 46 ? height : 0);
             }
           }}
+          onAiUsagePolicyHeightChange={(height) => {
+            setAiUsagePolicyHeight((currentHeight) =>
+              currentHeight === height ? currentHeight : height
+            );
+          }}
           onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
           onSetTextAreaHeight={setTextAreaHeight}
           onSetTransactionModalShown={setTransactionModalShown}
           onRegisterSetText={handleRegisterMessageInputSetText}
+          onRegisterAiUsagePolicyUpdate={handleRegisterAiUsagePolicyUpdate}
+          onRegisterAiMessageSaveError={handleRegisterAiMessageSaveError}
           recipientId={partner?.id}
           recipientUsername={partner?.username}
           chessTarget={chessTarget}
@@ -1986,6 +2050,29 @@ export default function MessagesContainer({
     } finally {
       setIsLoadingTopicMessages(false);
     }
+  }
+
+  function handleAiUsagePolicyUpdate(policy?: any) {
+    messageInputAiUsagePolicyUpdateRef.current?.(policy);
+  }
+
+  function handleOptimisticAiMessageSaveError(payload: {
+    content?: string;
+    error?: any;
+    aiUsagePolicy?: any;
+    channelId?: number;
+    subchannelId?: number;
+    topicId?: number;
+  }) {
+    const sourceChannelId = Number(payload.channelId) || 0;
+    if (sourceChannelId && sourceChannelId !== Number(selectedChannelId)) {
+      return;
+    }
+    const sourceSubchannelId = Number(payload.subchannelId) || 0;
+    if (sourceSubchannelId !== (Number(subchannelId) || 0)) {
+      return;
+    }
+    messageInputAiMessageSaveErrorRef.current?.(payload);
   }
 
   function handleChessSpoilerClick(senderId: number) {

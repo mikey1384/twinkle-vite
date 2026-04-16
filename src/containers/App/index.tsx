@@ -211,6 +211,9 @@ export default function App() {
   const onRemoveFileUploadStatus = useChatContext(
     (v) => v.actions.onRemoveFileUploadStatus
   );
+  const onRemoveTempMessage = useChatContext(
+    (v) => v.actions.onRemoveTempMessage
+  );
   const onPostUploadComplete = useChatContext(
     (v) => v.actions.onPostUploadComplete
   );
@@ -848,7 +851,8 @@ export default function App() {
     topicId,
     thumbnail,
     isCielChat,
-    isZeroChat
+    isZeroChat,
+    onAiUsagePolicyUpdate
   }: {
     channelId: number;
     content: string;
@@ -864,6 +868,7 @@ export default function App() {
     thumbnail: string;
     isCielChat: boolean;
     isZeroChat: boolean;
+    onAiUsagePolicyUpdate?: (policy?: any) => void;
   }) {
     const currentChannel = channelsObj[channelId];
     if (channelId === 0 && !recipientId) {
@@ -897,23 +902,32 @@ export default function App() {
     } catch (error) {
       onRemoveFileUploadStatus({
         channelId,
+        subchannelId,
         filePath
+      });
+      onRemoveTempMessage({
+        channelId,
+        subchannelId,
+        topicId,
+        tempMessageId
       });
       throw error;
     }
 
-    const thumbUrl = await handleThumbnailUpload({
-      thumbnail,
-      file: fileToUpload
-    });
+    let thumbUrl;
+    let savedFileMessage;
+    try {
+      thumbUrl = await handleThumbnailUpload({
+        thumbnail,
+        file: fileToUpload
+      });
 
-    const userChanged = checkUserChange(userId);
-    if (userChanged) {
-      return;
-    }
+      const userChanged = checkUserChange(userId);
+      if (userChanged) {
+        return;
+      }
 
-    const { channel, message, messageId, alreadyExists, netCoins } =
-      await saveChatMessageWithFileAttachment({
+      savedFileMessage = await saveChatMessageWithFileAttachment({
         channelId,
         content,
         fileName,
@@ -934,12 +948,42 @@ export default function App() {
           (isZeroChat &&
             (thinkHardState.zero[topicId] ?? thinkHardState.zero.global))
       });
+    } catch (error: any) {
+      console.error('Failed to save uploaded chat file:', error);
+      onRemoveFileUploadStatus({
+        channelId,
+        subchannelId,
+        filePath
+      });
+      onRemoveTempMessage({
+        channelId,
+        subchannelId,
+        topicId,
+        tempMessageId
+      });
+      if (error?.aiUsagePolicy) {
+        onAiUsagePolicyUpdate?.(error.aiUsagePolicy);
+      }
+      throw error;
+    }
+
+    const {
+      channel,
+      message,
+      messageId,
+      alreadyExists,
+      netCoins,
+      aiUsagePolicy
+    } = savedFileMessage;
 
     if (typeof netCoins === 'number') {
       onSetUserState({
         userId,
         newState: { twinkleCoins: netCoins }
       });
+    }
+    if (aiUsagePolicy) {
+      onAiUsagePolicyUpdate?.(aiUsagePolicy);
     }
 
     if (alreadyExists) {

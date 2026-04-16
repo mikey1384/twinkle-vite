@@ -49,6 +49,8 @@ function Message({
   onOmokBoardClick,
   onOmokSpoilerClick,
   onReceiveNewMessage,
+  onAiUsagePolicyUpdate,
+  onOptimisticAiMessageSaveError,
   onReplyClick,
   onRequestRewind,
   onRewardMessageSubmit,
@@ -85,7 +87,11 @@ function Message({
     rootType?: string | null;
     userId?: number;
     isNotification?: boolean;
-    settings?: { hasError?: boolean; errorType?: 'moderation' | 'general' };
+    settings?: {
+      hasError?: boolean;
+      errorType?: 'moderation' | 'general';
+      saveFailed?: boolean;
+    };
   };
   nextMessageHasTopic: boolean;
   prevMessageHasTopic: boolean;
@@ -99,6 +105,15 @@ function Message({
   onOmokBoardClick: () => void;
   onOmokSpoilerClick: (v: number) => void;
   onReceiveNewMessage: () => void;
+  onAiUsagePolicyUpdate?: (policy?: any) => void;
+  onOptimisticAiMessageSaveError?: (payload: {
+    content?: string;
+    error?: any;
+    aiUsagePolicy?: any;
+    channelId?: number;
+    subchannelId?: number;
+    topicId?: number;
+  }) => void;
   onReplyClick: (target: any) => void;
   onRequestRewind: (v: any) => void;
   onSetAICardModalCardId: (v: any) => void;
@@ -293,6 +308,8 @@ function Message({
                 onAcceptRewind={onAcceptRewind}
                 onDeclineRewind={onDeclineRewind}
                 onReceiveNewMessage={onReceiveNewMessage}
+                onAiUsagePolicyUpdate={onAiUsagePolicyUpdate}
+                onOptimisticAiMessageSaveError={onOptimisticAiMessageSaveError}
                 onReplyClick={onReplyClick}
                 onRequestRewind={onRequestRewind}
                 onSetAICardModalCardId={onSetAICardModalCardId}
