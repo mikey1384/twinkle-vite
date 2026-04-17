@@ -21,6 +21,12 @@ export default function SummonActivity({ card }: { card: any }) {
     () => moment.unix(card.timeStamp).format('MMM D'),
     [card.timeStamp]
   );
+  const displayedStyle = useMemo(() => {
+    if (!card.imagePath && Number(card.isBurned) !== 1) {
+      return '???';
+    }
+    return card.style;
+  }, [card.imagePath, card.isBurned, card.style]);
   const { promptText } = useAICard(card);
 
   return (
@@ -131,7 +137,7 @@ export default function SummonActivity({ card }: { card: any }) {
             }
           `}
         >
-          {card.style}
+          {displayedStyle}
         </div>
         {(card.engine === 'DALL-E 3' ||
           card.engine === 'image-1' ||
