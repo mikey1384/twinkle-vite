@@ -70,6 +70,7 @@ export interface Comment {
   replyId: number;
   replies: Comment[];
   rootReplyId: number;
+  settings?: any;
   targetObj: any;
   targetUserId: number;
   targetUserName: string;

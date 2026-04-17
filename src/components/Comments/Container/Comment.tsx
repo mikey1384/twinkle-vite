@@ -30,6 +30,9 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
+import AiEnergySponsorButton, {
+  shouldRenderAiEnergySponsorNotice
+} from '~/components/Comments/AiEnergySponsorButton';
 import { placeholderHeights } from '~/constants/state';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
@@ -716,6 +719,12 @@ function Comment({
                               ? viewedTheSecretMessageLabel
                               : commentWasDeletedLabel}
                           </div>
+                        ) : shouldRenderAiEnergySponsorNotice(comment) &&
+                          !isHidden ? (
+                          <AiEnergySponsorButton
+                            comment={comment}
+                            theme={theme}
+                          />
                         ) : !commentIsEmpty ? (
                           <RichText
                             isAIMessage={

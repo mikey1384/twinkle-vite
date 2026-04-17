@@ -1752,6 +1752,36 @@ export default function contentRequestHelpers({
         return handleError(error);
       }
     },
+    async sponsorAiEnergyCommentReply({
+      placeholderCommentId
+    }: {
+      placeholderCommentId: number;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/content/comments/ai-energy/sponsor`,
+          {
+            placeholderCommentId
+          },
+          auth()
+        );
+        return data;
+      } catch (error) {
+        const response = (error as any)?.response;
+        if (response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: response.status,
+            message:
+              response.data.error ||
+              response.data.message ||
+              'Unable to sponsor this reply.',
+            code: response.data.code,
+            aiUsagePolicy: response.data.aiUsagePolicy
+          });
+        }
+        return handleError(error);
+      }
+    },
     async uploadContent({
       byUser,
       url,
