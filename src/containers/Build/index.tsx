@@ -40,6 +40,10 @@ import { borderRadius, mobileMaxWidth } from '~/constants/css';
 const displayFontFamily =
   "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
 
+function getBuildRequestLimitsFromPayload(payload: any) {
+  return payload?.requestLimits || payload?.billing?.snapshot || null;
+}
+
 interface BuildCopilotPolicy {
   limits: {
     maxProjectBytes: number;
@@ -923,6 +927,7 @@ function hydrateBuildRunFromPersistedSnapshot({
             }
           : {}),
         billingState: terminalPayload.billingState ?? null,
+        requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
         artifactVersionId:
           Number(terminalPayload?.message?.artifactVersionId || 0) > 0
             ? Number(terminalPayload.message.artifactVersionId)
@@ -955,7 +960,8 @@ function hydrateBuildRunFromPersistedSnapshot({
       actions.onFailBuildRun({
         buildId,
         requestId,
-        error: terminalPayload.error || 'Failed to generate code.'
+        error: terminalPayload.error || 'Failed to generate code.',
+        requestLimits: getBuildRequestLimitsFromPayload(terminalPayload)
       });
     },
     onTerminalStopped: (terminalPayload) => {

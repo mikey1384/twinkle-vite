@@ -19,6 +19,10 @@ import {
 } from '~/contexts/Build/runEventIdentity';
 import { createFallbackBuildRunMessageId } from '~/contexts/Build/messageIdentity';
 
+function getBuildRequestLimitsFromPayload(payload: any) {
+  return payload?.requestLimits || payload?.billing?.snapshot || null;
+}
+
 export default function useBuildSocket() {
   const userId = useKeyContext((v) => v.myState.userId);
   const buildRuns = useBuildContext(
@@ -320,6 +324,7 @@ export default function useBuildSocket() {
                 }
               : {}),
             billingState: terminalPayload.billingState ?? null,
+            requestLimits: getBuildRequestLimitsFromPayload(terminalPayload),
             artifactVersionId:
               Number(terminalPayload?.message?.artifactVersionId || 0) > 0
                 ? Number(terminalPayload.message.artifactVersionId)
@@ -353,7 +358,8 @@ export default function useBuildSocket() {
           onFailBuildRun({
             buildId: resolvedRun.buildId,
             requestId: normalizedResumeRunState.requestId,
-            error: terminalPayload.error || 'Failed to generate code.'
+            error: terminalPayload.error || 'Failed to generate code.',
+            requestLimits: getBuildRequestLimitsFromPayload(terminalPayload)
           });
         },
         onTerminalStopped: (terminalPayload) => {
@@ -559,6 +565,8 @@ export default function useBuildSocket() {
       runtimePlanRefined,
       workspaceChanged,
       billingState,
+      requestLimits,
+      billing,
       deferredBuildRequest,
       message
     }: {
@@ -585,6 +593,8 @@ export default function useBuildSocket() {
       runtimePlanRefined?: boolean;
       workspaceChanged?: boolean;
       billingState?: 'charged' | 'not_charged' | 'pending' | null;
+      requestLimits?: any | null;
+      billing?: { snapshot?: any | null } | null;
       deferredBuildRequest?: {
         message?: string | null;
         messageContext?: string | null;
@@ -665,6 +675,7 @@ export default function useBuildSocket() {
           ? { workspaceChanged: workspaceChanged === true }
           : {}),
         billingState: billingState ?? null,
+        requestLimits: requestLimits || billing?.snapshot || null,
         artifactVersionId:
           Number(message?.artifactVersionId || 0) > 0
             ? Number(message?.artifactVersionId)
@@ -694,12 +705,14 @@ export default function useBuildSocket() {
       requestId,
       buildId,
       runMode,
-      error
+      error,
+      requestLimits
     }: {
       requestId?: string;
       buildId?: number | null;
       runMode?: 'user' | 'greeting' | 'runtime-autofix' | null;
       error?: string;
+      requestLimits?: any | null;
     }) {
       const resolvedRun = shouldHandleRun(requestId, buildId);
       if (!resolvedRun.shouldHandle || !requestId) return;
@@ -711,7 +724,8 @@ export default function useBuildSocket() {
       onFailBuildRun({
         buildId: resolvedRun.buildId,
         requestId,
-        error: error || 'Failed to generate code.'
+        error: error || 'Failed to generate code.',
+        requestLimits: requestLimits || null
       });
     }
 

@@ -1927,6 +1927,7 @@ export default function BuildEditor({
         runtimePlanRefined: Boolean(sharedBuildRun.runtimePlanRefined),
         billingState:
           sharedAssistantMessage?.billingState ?? sharedBuildRun.billingState ?? null,
+        requestLimits: sharedBuildRun.requestLimits ?? null,
         message: {
           id: sharedAssistantMessage?.id,
           userMessageId: sharedUserMessage?.id,
@@ -1943,7 +1944,8 @@ export default function BuildEditor({
         error:
           sharedBuildRun.error ||
           sharedAssistantText ||
-          'Failed to generate code.'
+          'Failed to generate code.',
+        requestLimits: sharedBuildRun.requestLimits ?? null
       });
       return;
     }
@@ -2443,6 +2445,7 @@ export default function BuildEditor({
     runtimeExplorationPlan,
     runtimePlanRefined,
     billingState,
+    requestLimits,
     message
   }: {
     requestId?: string;
@@ -2461,6 +2464,7 @@ export default function BuildEditor({
     runtimeExplorationPlan?: BuildRuntimeExplorationPlan | null;
     runtimePlanRefined?: boolean;
     billingState?: 'charged' | 'not_charged' | 'pending' | null;
+    requestLimits?: BuildCopilotPolicy['requestLimits'] | null;
     message?: {
       id?: number | null;
       userMessageId?: number | null;
@@ -2478,6 +2482,13 @@ export default function BuildEditor({
     if (!requestId || requestId !== currentRequestId) return;
     markActiveBuildRunActivity();
     resetDedupedProcessingReconcileState();
+    const nextPolicy = applyRequestLimitsToCopilotPolicy(
+      getLatestCopilotPolicy(),
+      requestLimits
+    );
+    if (nextPolicy) {
+      replaceCopilotPolicy(nextPolicy);
+    }
     const completedRunMode = getCurrentRunMode(
       requestId,
       latestSharedRunIdentityState
