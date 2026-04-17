@@ -486,6 +486,21 @@ interface BuildCopilotPolicy {
   requestLimits: {
     dayIndex: number;
     dayKey: string;
+    hasVerifiedEmail?: boolean;
+    baseEnergyUnitsPerDay?: number;
+    energyLimit?: number;
+    energyUsed?: number;
+    energyCharged?: number;
+    energyOverflow?: number;
+    energyRemaining?: number;
+    energyPercent?: number;
+    energySegments?: number;
+    energySegmentsRemaining?: number;
+    energyUnitsPerSegment?: number;
+    currentMode?: 'full_quality' | 'low_energy';
+    lastUsageOverflowed?: boolean;
+    resetPurchasesToday?: number;
+    resetCost?: number;
     generationBaseRequestsPerDay: number;
     generationResetPurchasesToday: number;
     generationResetCost: number;
@@ -5392,7 +5407,7 @@ export default function BuildEditor({
         replaceCopilotPolicy(result?.copilotPolicy || null);
       }
     } catch (error: any) {
-      console.error('Failed to purchase build generation reset:', error);
+      console.error('Failed to recharge Build AI Energy:', error);
       const nextRequestLimits =
         error?.response?.data?.requestLimits || error?.requestLimits || null;
       const nextPolicy = applyRequestLimitsToCopilotPolicy(
@@ -5405,7 +5420,7 @@ export default function BuildEditor({
       setGenerationResetError(
         error?.response?.data?.error ||
           error?.message ||
-          'Failed to purchase generation quota reset'
+          'Failed to recharge AI Energy'
       );
     } finally {
       setPurchasingGenerationReset(false);

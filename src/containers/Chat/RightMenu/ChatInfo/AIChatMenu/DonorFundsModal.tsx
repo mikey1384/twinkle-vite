@@ -115,7 +115,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
           `}
         >
           <Icon icon="heart" style={{ color: Color.rose() }} />
-          Community Sponsored Think Hard
+          Community Sponsored AI Energy
         </div>
       }
       closeOnBackdropClick={!userMenuShown}
@@ -227,7 +227,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                       opacity: 0.9;
                     `}
                   >
-                    Twinkle Coins available for sponsoring Think Hard mode
+                    Twinkle Coins available for AI Energy recharge
                   </p>
                 </div>
 

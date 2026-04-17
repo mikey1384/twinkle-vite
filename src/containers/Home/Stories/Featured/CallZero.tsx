@@ -18,9 +18,17 @@ import {
   toValidNextDayTimeStamp
 } from '~/helpers';
 import MicrophoneAccessModal from '~/components/Modals/MicrophoneAccessModal';
-import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 import NextDayCountdown from '~/components/NextDayCountdown';
 import { useRoleColor } from '~/theme/useRoleColor';
+
+interface AiUsagePolicy {
+  hasVerifiedEmail?: boolean;
+  energyPercent?: number;
+  energyRemaining?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+  currentMode?: string;
+}
 
 interface RGBA {
   r: number;
@@ -222,6 +230,7 @@ export default function CallZero({
     (v) => v.actions.onHydrateTodayStats
   );
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
   );
@@ -232,18 +241,31 @@ export default function CallZero({
 
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStats?.aiCallDuration]);
-
   const batteryLevel = useMemo(() => {
     if (isAdmin) return 100;
-    return Math.round(
-      ((MAX_AI_CALL_DURATION - aiCallDuration) / MAX_AI_CALL_DURATION) * 100
+    return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
+  }, [aiUsagePolicy?.energyPercent, isAdmin]);
+
+  const energySegments = useMemo(() => {
+    return Math.max(1, aiUsagePolicy?.energySegments || 5);
+  }, [aiUsagePolicy?.energySegments]);
+
+  const energySegmentsRemaining = useMemo(() => {
+    if (isAdmin) return energySegments;
+    return Math.max(
+      0,
+      Math.min(
+        energySegments,
+        aiUsagePolicy?.energySegmentsRemaining ??
+          Math.ceil((batteryLevel / 100) * energySegments)
+      )
     );
-  }, [aiCallDuration, isAdmin]);
+  }, [
+    aiUsagePolicy?.energySegmentsRemaining,
+    batteryLevel,
+    energySegments,
+    isAdmin
+  ]);
 
   const isZeroChannelLoading = useMemo(() => {
     return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
@@ -251,8 +273,13 @@ export default function CallZero({
 
   const hasReachedDailyLimit = useMemo(() => {
     if (isAdmin) return false;
-    return batteryLevel <= 0;
-  }, [batteryLevel, isAdmin]);
+    if (!aiUsagePolicy) return false;
+    return (
+      !aiUsagePolicy.hasVerifiedEmail ||
+      (typeof aiUsagePolicy.energyRemaining === 'number' &&
+        aiUsagePolicy.energyRemaining <= 0)
+    );
+  }, [aiUsagePolicy, isAdmin]);
 
   const isCallButtonUnavailable = useMemo(() => {
     if (aiCallOngoing) return false;
@@ -262,7 +289,13 @@ export default function CallZero({
       aiCallEnding ||
       hasReachedDailyLimit
     );
-  }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
+  }, [
+    AI_FEATURES_DISABLED,
+    aiCallEnding,
+    aiCallOngoing,
+    hasReachedDailyLimit,
+    isZeroChannelLoading
+  ]);
 
   const showCallInfoPanel = useMemo(() => {
     return (
@@ -282,8 +315,11 @@ export default function CallZero({
 
   const getCallQuotaMessage = useMemo(() => {
     if (!hasReachedDailyLimit) return '';
-    return 'More call time unlocks tomorrow.';
-  }, [hasReachedDailyLimit]);
+    if (aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail) {
+      return 'Verify your email to call Zero.';
+    }
+    return 'Recharge AI Energy or come back tomorrow.';
+  }, [aiUsagePolicy, hasReachedDailyLimit]);
 
   const accentBaseColor = useMemo(() => {
     if (aiCallOngoing) return Color.rose();
@@ -424,10 +460,19 @@ export default function CallZero({
       return 'Ending...';
     }
     if (hasReachedDailyLimit) {
-      return 'Call Locked';
+      return aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail
+        ? 'Verify Email'
+        : 'No Energy';
     }
     return 'Call Zero';
-  }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
+  }, [
+    AI_FEATURES_DISABLED,
+    aiCallEnding,
+    aiCallOngoing,
+    aiUsagePolicy,
+    hasReachedDailyLimit,
+    isZeroChannelLoading
+  ]);
   const callButtonIcon = useMemo(
     () =>
       aiCallOngoing
@@ -442,10 +487,20 @@ export default function CallZero({
     if (AI_FEATURES_DISABLED) return 'Zero voice calls are unavailable.';
     if (isZeroChannelLoading) return 'Connecting to Zero';
     if (aiCallEnding) return 'Ending the previous call with Zero';
-    if (hasReachedDailyLimit)
-      return 'AI call limit reached. Zero will be available again tomorrow.';
+    if (hasReachedDailyLimit) {
+      return aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail
+        ? 'Verify your email to call Zero.'
+        : 'AI Energy is empty. Recharge or come back tomorrow.';
+    }
     return 'Call Zero for voice assistance';
-  }, [aiCallEnding, aiCallOngoing, hasReachedDailyLimit, isZeroChannelLoading]);
+  }, [
+    AI_FEATURES_DISABLED,
+    aiCallEnding,
+    aiCallOngoing,
+    aiUsagePolicy,
+    hasReachedDailyLimit,
+    isZeroChannelLoading
+  ]);
 
   return (
     <div
@@ -486,7 +541,9 @@ export default function CallZero({
                 color: ${Color.rose()};
               `}
             >
-              Daily Limit Reached
+              {aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail
+                ? 'Email Verification Needed'
+                : 'AI Energy Empty'}
             </h2>
             <p
               className={css`
@@ -512,7 +569,7 @@ export default function CallZero({
                   color: ${Color.darkBlue()};
                 `}
               >
-                Time until reset:
+                Energy refills in:
               </p>
               <NextDayCountdown
                 inline
@@ -596,12 +653,25 @@ export default function CallZero({
             <div
               className={css`
                 height: 100%;
-                width: ${batteryLevel}%;
-                background-color: #4caf50;
-                border-radius: 15px;
-                transition: width 0.3s ease-in-out;
+                display: grid;
+                grid-template-columns: repeat(${energySegments}, 1fr);
+                gap: 4px;
               `}
-            />
+            >
+              {Array.from({ length: energySegments }).map((_, index) => (
+                <span
+                  key={index}
+                  className={css`
+                    height: 100%;
+                    border-radius: 8px;
+                    background-color: ${index < energySegmentsRemaining
+                      ? '#4caf50'
+                      : 'rgba(255, 255, 255, 0.55)'};
+                    transition: background-color 0.3s ease-in-out;
+                  `}
+                />
+              ))}
+            </div>
             <div
               className={css`
                 position: absolute;
@@ -617,7 +687,7 @@ export default function CallZero({
                 font-size: 1rem;
               `}
             >
-              AI Power: {batteryLevel}%
+              AI Energy: {batteryLevel}%
             </div>
           </div>
         </div>

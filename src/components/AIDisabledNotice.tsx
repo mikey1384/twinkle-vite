@@ -4,12 +4,15 @@ import { useViewContext } from '~/contexts';
 
 export default function AIDisabledNotice({
   title = 'AI Features Unavailable',
+  notice,
   style
 }: {
   title?: string;
+  notice?: React.ReactNode;
   style?: React.CSSProperties;
 }) {
   const aiDisabledNotice = useViewContext((v) => v.state.aiDisabledNotice);
+  const displayedNotice = notice ?? aiDisabledNotice;
 
   return (
     <div
@@ -37,7 +40,7 @@ export default function AIDisabledNotice({
           opacity: 0.86;
         `}
       >
-        {aiDisabledNotice}
+        {displayedNotice}
       </div>
     </div>
   );

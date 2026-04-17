@@ -117,6 +117,21 @@ interface BuildCopilotPolicy {
   requestLimits: {
     dayIndex: number;
     dayKey: string;
+    hasVerifiedEmail?: boolean;
+    baseEnergyUnitsPerDay?: number;
+    energyLimit?: number;
+    energyUsed?: number;
+    energyCharged?: number;
+    energyOverflow?: number;
+    energyRemaining?: number;
+    energyPercent?: number;
+    energySegments?: number;
+    energySegmentsRemaining?: number;
+    energyUnitsPerSegment?: number;
+    currentMode?: 'full_quality' | 'low_energy';
+    lastUsageOverflowed?: boolean;
+    resetPurchasesToday?: number;
+    resetCost?: number;
     generationBaseRequestsPerDay: number;
     generationResetPurchasesToday: number;
     generationResetCost: number;
@@ -301,7 +316,20 @@ export default function ChatPanel({
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const aiInputDisabled = AI_FEATURES_DISABLED;
+  const energyPolicy = copilotPolicy?.requestLimits || null;
+  const energyUnavailable =
+    !!energyPolicy &&
+    (energyPolicy.hasVerifiedEmail === false ||
+      (typeof energyPolicy.energyRemaining === 'number' &&
+        energyPolicy.energyRemaining <= 0));
+  const aiInputDisabled = AI_FEATURES_DISABLED || energyUnavailable;
+  const aiInputDisabledNotice = AI_FEATURES_DISABLED
+    ? AI_DISABLED_NOTICE
+    : energyPolicy?.hasVerifiedEmail === false
+      ? 'Verify your email to use Lumine.'
+      : energyUnavailable
+        ? 'Recharge AI Energy to use Lumine.'
+        : '';
   const currentActivity = useMemo(() => {
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
       const event = runEvents[index];
@@ -449,6 +477,10 @@ export default function ChatPanel({
   const dailyGenerationUsage = useMemo(() => {
     if (!copilotPolicy) return null;
     const requestLimits = copilotPolicy.requestLimits;
+    if (requestLimits.hasVerifiedEmail === false) return 0;
+    if (typeof requestLimits.energyPercent === 'number') {
+      return Math.max(0, Math.min(100, requestLimits.energyPercent));
+    }
     if (requestLimits.generationRequestsPerDay <= 0) return null;
     return Math.max(
       0,
@@ -463,6 +495,27 @@ export default function ChatPanel({
   const dailyGenerationBarText = useMemo(() => {
     if (!copilotPolicy) return null;
     const requestLimits = copilotPolicy.requestLimits;
+    if (requestLimits.hasVerifiedEmail === false) {
+      return 'Verify email to use AI Energy';
+    }
+    if (typeof requestLimits.energyPercent === 'number') {
+      const energyPercent = Math.max(
+        0,
+        Math.min(100, Math.floor(requestLimits.energyPercent))
+      );
+      const segments = Math.max(1, requestLimits.energySegments || 5);
+      const segmentsRemaining = Math.max(
+        0,
+        Math.min(
+          segments,
+          requestLimits.energySegmentsRemaining ??
+            Math.ceil((energyPercent / 100) * segments)
+        )
+      );
+      return `${energyPercent}% Energy · ${segmentsRemaining}/${segments} bars${
+        requestLimits.lastUsageOverflowed ? ' · extra used' : ''
+      }`;
+    }
     if (requestLimits.generationRequestsPerDay <= 0) return null;
     return `${formatTokenCount(requestLimits.generationRequestsToday)} / ${formatTokenCount(requestLimits.generationRequestsPerDay)} generations`;
   }, [copilotPolicy]);
@@ -471,26 +524,31 @@ export default function ChatPanel({
     const requestLimits = copilotPolicy.requestLimits;
     const resetCost = Math.max(
       0,
-      Math.floor(Number(requestLimits.generationResetCost) || 0)
+      Math.floor(
+        Number(requestLimits.resetCost ?? requestLimits.generationResetCost) ||
+          0
+      )
     );
     const resetPurchasesToday = Math.max(
       0,
-      Math.floor(Number(requestLimits.generationResetPurchasesToday) || 0)
-    );
-    const baseGenerationLimit = Math.max(
-      0,
-      Math.floor(Number(requestLimits.generationBaseRequestsPerDay) || 0)
+      Math.floor(
+        Number(
+          requestLimits.resetPurchasesToday ??
+            requestLimits.generationResetPurchasesToday
+        ) || 0
+      )
     );
     const quotaMaxed =
-      requestLimits.generationRequestsPerDay > 0 &&
-      requestLimits.generationRequestsRemaining <= 0;
-    if (!quotaMaxed || generating || resetCost < 1 || baseGenerationLimit < 1) {
+      typeof requestLimits.energyRemaining === 'number'
+        ? requestLimits.energyRemaining <= 0
+        : requestLimits.generationRequestsPerDay > 0 &&
+          requestLimits.generationRequestsRemaining <= 0;
+    if (!quotaMaxed || generating || resetCost < 1) {
       return null;
     }
     return {
       resetCost,
       resetPurchasesToday,
-      baseGenerationLimit,
       hasEnoughCoins: twinkleCoins >= resetCost
     };
   }, [copilotPolicy, generating, twinkleCoins]);
@@ -538,7 +596,7 @@ export default function ChatPanel({
 
   async function handleSubmitMessage() {
     const messageText = draftMessage.trim();
-    if (!messageText || uploadInFlight) return;
+    if (!messageText || uploadInFlight || aiInputDisabled) return;
     try {
       const didAccept = await Promise.resolve(onSendMessage(messageText));
       if (didAccept) {
@@ -635,7 +693,7 @@ export default function ChatPanel({
                   opacity: 0.85;
                 `}
               >
-                Quotas
+                AI Energy
               </span>
             </div>
             {dailyGenerationUsage != null && dailyGenerationBarText && (
@@ -646,7 +704,7 @@ export default function ChatPanel({
                     font-weight: 700;
                   `}
                 >
-                  Daily Code Generations
+                  Shared Battery
                 </div>
                 <ProgressBar
                   progress={dailyGenerationUsage}
@@ -670,7 +728,7 @@ export default function ChatPanel({
                         opacity: 0.78;
                       `}
                     >
-                      {`You've used today's full quota. Reset #${generationResetUi.resetPurchasesToday + 1} adds ${formatTokenCount(generationResetUi.baseGenerationLimit)} more generations today.`}
+                      {`AI Energy is empty. Recharge #${generationResetUi.resetPurchasesToday + 1} restores one full battery for today.`}
                     </div>
                     <GameCTAButton
                       icon="redo"
@@ -684,7 +742,7 @@ export default function ChatPanel({
                       onClick={onPurchaseGenerationReset}
                     >
                       {generationResetUi.hasEnoughCoins
-                        ? `Reset quota (${generationResetUi.resetCost.toLocaleString()} coins)`
+                        ? `Recharge Energy (${generationResetUi.resetCost.toLocaleString()} coins)`
                         : `Need ${generationResetUi.resetCost.toLocaleString()} coins (you have ${twinkleCoins.toLocaleString()})`}
                     </GameCTAButton>
                     {generationResetError ? (
@@ -1079,7 +1137,12 @@ export default function ChatPanel({
           )}
           {aiInputDisabled && (
             <AIDisabledNotice
-              title="Build AI Is Unavailable"
+              title={
+                AI_FEATURES_DISABLED
+                  ? 'Build AI Is Unavailable'
+                  : 'AI Energy Required'
+              }
+              notice={aiInputDisabledNotice}
               style={{ marginBottom: '0.6rem' }}
             />
           )}
@@ -1096,7 +1159,7 @@ export default function ChatPanel({
               onKeyDown={handleKeyDown}
               placeholder={
                 aiInputDisabled
-                  ? AI_DISABLED_NOTICE
+                  ? aiInputDisabledNotice
                   : generating
                     ? 'Describe what to change next...'
                     : 'Describe what you want to build...'

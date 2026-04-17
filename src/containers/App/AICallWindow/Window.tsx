@@ -4,11 +4,16 @@ import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ZeroPic from '~/components/ZeroPic';
 import { useKeyContext, useNotiContext } from '~/contexts';
-import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 
 interface WindowProps {
   initialPosition: { x: number; y: number };
   onHangUp: () => void;
+}
+
+interface AiUsagePolicy {
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
 }
 
 function Window({ initialPosition, onHangUp }: WindowProps) {
@@ -19,18 +24,33 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
 
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStats?.aiCallDuration]);
+  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
 
   const batteryLevel = useMemo(() => {
     if (isAdmin) return 100;
-    return Math.round(
-      ((MAX_AI_CALL_DURATION - aiCallDuration) / MAX_AI_CALL_DURATION) * 100
+    return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
+  }, [aiUsagePolicy?.energyPercent, isAdmin]);
+
+  const energySegments = useMemo(() => {
+    return Math.max(1, aiUsagePolicy?.energySegments || 5);
+  }, [aiUsagePolicy?.energySegments]);
+
+  const energySegmentsRemaining = useMemo(() => {
+    if (isAdmin) return energySegments;
+    return Math.max(
+      0,
+      Math.min(
+        energySegments,
+        aiUsagePolicy?.energySegmentsRemaining ??
+          Math.ceil((batteryLevel / 100) * energySegments)
+      )
     );
-  }, [aiCallDuration, isAdmin]);
+  }, [
+    aiUsagePolicy?.energySegmentsRemaining,
+    batteryLevel,
+    energySegments,
+    isAdmin
+  ]);
 
   return (
     <>
@@ -102,17 +122,24 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
+            gap: 3px;
           `}
         >
-          <div
-            className={css`
-              width: 100%;
-              height: ${batteryLevel}%;
-              background-color: #4caf50;
-              border-radius: 7px;
-              transition: height 0.3s ease-in-out;
-            `}
-          />
+          {Array.from({ length: energySegments }).map((_, index) => (
+            <span
+              key={index}
+              className={css`
+                width: 100%;
+                flex: 1;
+                border-radius: 6px;
+                background-color: ${energySegments - index <=
+                energySegmentsRemaining
+                  ? '#4caf50'
+                  : 'rgba(255, 255, 255, 0.65)'};
+                transition: background-color 0.3s ease-in-out;
+              `}
+            />
+          ))}
           <div
             className={css`
               position: absolute;

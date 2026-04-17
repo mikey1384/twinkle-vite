@@ -178,6 +178,8 @@ export default function useAISocket({
     socket.on('new_ai_message_received', handleReceiveAIMessage);
     socket.on('ai_message_error', handleAIMessageError);
     socket.on('ai_call_duration_updated', handleAICallDurationUpdate);
+    socket.on('ai_usage_policy_updated', handleAiUsagePolicyUpdate);
+    socket.on('ai_voice_error', handleAIVoiceError);
     socket.on('ai_call_max_duration_reached', handleAICallMaxDurationReached);
     socket.on('openai_voice_session_ended', handleAIVoiceSessionEnded);
     socket.on('last_used_files_updated', onUpdateLastUsedFiles);
@@ -197,6 +199,8 @@ export default function useAISocket({
       socket.off('new_ai_message_received', handleReceiveAIMessage);
       socket.off('ai_message_error', handleAIMessageError);
       socket.off('ai_call_duration_updated', handleAICallDurationUpdate);
+      socket.off('ai_usage_policy_updated', handleAiUsagePolicyUpdate);
+      socket.off('ai_voice_error', handleAIVoiceError);
       socket.off(
         'ai_call_max_duration_reached',
         handleAICallMaxDurationReached
@@ -478,6 +482,29 @@ export default function useAISocket({
           aiCallDuration: totalDuration
         }
       });
+    }
+
+    function handleAiUsagePolicyUpdate({
+      aiUsagePolicy
+    }: {
+      aiUsagePolicy: any;
+    }) {
+      onUpdateTodayStats({
+        newStats: {
+          aiUsagePolicy
+        }
+      });
+    }
+
+    function handleAIVoiceError({
+      aiUsagePolicy
+    }: {
+      aiUsagePolicy?: any;
+    } = {}) {
+      if (aiUsagePolicy) {
+        handleAiUsagePolicyUpdate({ aiUsagePolicy });
+      }
+      handleAIVoiceSessionEnded();
     }
 
     function handleAIFileGenerated({

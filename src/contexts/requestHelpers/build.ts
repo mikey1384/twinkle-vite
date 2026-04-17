@@ -921,7 +921,7 @@ export default function buildRequestHelpers({
             error.response.data?.error ||
               error.response.data?.message ||
               error.message ||
-              'Failed to purchase generation quota reset'
+              'Failed to recharge AI Energy'
           );
           nextError.status = error.response.status;
           if (error.response.data?.code) {

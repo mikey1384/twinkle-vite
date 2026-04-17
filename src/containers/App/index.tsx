@@ -38,7 +38,6 @@ import { useLocation, useNavigate, Routes, Route } from 'react-router-dom';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import {
   localStorageKeys,
-  MAX_AI_CALL_DURATION,
   ZERO_TWINKLE_ID,
   DEFAULT_PROFILE_THEME
 } from '~/constants/defaultValues';
@@ -306,12 +305,6 @@ export default function App() {
     return idToCheck !== prevUserId.current;
   }, []);
 
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStats?.aiCallDuration]);
-
   const aiCallOngoing = useMemo(
     () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
     [aiCallChannelId, zeroChannelId]
@@ -339,16 +332,11 @@ export default function App() {
     });
   }, [location]);
 
-  const maxAiCallDurationReached = useMemo(() => {
-    if (isAdmin) return false;
-    return aiCallDuration >= MAX_AI_CALL_DURATION;
-  }, [aiCallDuration, isAdmin]);
-
   useEffect(() => {
     checkZeroCallAvailability();
 
     async function checkZeroCallAvailability() {
-      if (userId && !maxAiCallDurationReached) {
+      if (userId) {
         const { pathId, channelId } = await loadDMChannel({
           recipient: { id: ZERO_TWINKLE_ID },
           createIfNotExist: true
@@ -360,7 +348,7 @@ export default function App() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, maxAiCallDurationReached]);
+  }, [userId]);
 
   useEffect(() => {
     handleLoadRankings();

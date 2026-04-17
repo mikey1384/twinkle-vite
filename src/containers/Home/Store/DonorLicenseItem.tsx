@@ -149,8 +149,8 @@ export default function DonorLicenseItem({
               font-weight: 500;
             `}
           >
-            By donating, you make it possible for others to use{' '}
-            <strong>Think Hard mode</strong> for Zero and Ciel for free.
+            By donating, you make it possible for others to recharge{' '}
+            <strong>AI Energy</strong> for Zero and Ciel.
           </p>
         </div>
       </div>

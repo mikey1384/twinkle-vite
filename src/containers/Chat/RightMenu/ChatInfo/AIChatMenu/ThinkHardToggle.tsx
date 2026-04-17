@@ -1,31 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import { priceTable } from '~/constants/defaultValues';
 import Icon from '~/components/Icon';
-import DonorFundsModal from './DonorFundsModal';
 
 export default function ThinkHardToggle({
   thinkHard,
-  twinkleCoins,
-  communityFundsAvailable,
-  onToggle
+  onToggle,
+  disabled = false
 }: {
   thinkHard: boolean;
-  twinkleCoins: number;
-  communityFundsAvailable?: boolean;
   onToggle: (value: boolean) => void;
+  disabled?: boolean;
 }) {
-  const [donorModalShown, setDonorModalShown] = useState(false);
-
-  const insufficientFunds = useMemo(
-    () => twinkleCoins < priceTable.thinkHard,
-    [twinkleCoins]
-  );
-
-  const isDisabled =
-    !thinkHard && insufficientFunds && !communityFundsAvailable;
-
   return (
     <div
       className={css`
@@ -65,36 +50,6 @@ export default function ThinkHardToggle({
             <Icon icon="lightbulb" />
             Think Hard
           </h3>
-          {communityFundsAvailable && (
-            <div
-              className={css`
-                background: linear-gradient(
-                  135deg,
-                  ${Color.logoBlue()} 0%,
-                  ${Color.rose()} 100%
-                );
-                border-radius: 1rem;
-                padding: 0.2rem 0.5rem;
-                font-size: 0.7rem;
-                color: white;
-                font-weight: bold;
-                cursor: pointer;
-                transition: transform 0.2s ease;
-                display: flex;
-                align-items: center;
-                gap: 0.3rem;
-
-                &:hover {
-                  transform: scale(1.05);
-                }
-              `}
-              onClick={() => setDonorModalShown(true)}
-              title="Community sponsored - click for details"
-            >
-              <Icon icon="heart" style={{ fontSize: '0.7rem' }} />
-              SPONSORED
-            </div>
-          )}
         </div>
         <label
           className={css`
@@ -102,19 +57,13 @@ export default function ThinkHardToggle({
             display: inline-block;
             width: 54px;
             height: 28px;
-            cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
-            opacity: ${isDisabled ? 0.6 : 1};
+            cursor: ${disabled ? 'not-allowed' : 'pointer'};
           `}
-          title={
-            isDisabled
-              ? `Not enough coins. You need ${priceTable.thinkHard} coins.`
-              : ''
-          }
         >
           <input
             type="checkbox"
             checked={thinkHard}
-            disabled={isDisabled}
+            disabled={disabled}
             onChange={(e) => onToggle(e.target.checked)}
             className={css`
               opacity: 0;
@@ -125,12 +74,16 @@ export default function ThinkHardToggle({
           <span
             className={css`
               position: absolute;
-              cursor: pointer;
+              cursor: ${disabled ? 'not-allowed' : 'pointer'};
               top: 0;
               left: 0;
               right: 0;
               bottom: 0;
-              background-color: ${thinkHard ? '#00aa00' : '#ddd'};
+              background-color: ${disabled
+                ? '#d4d4d4'
+                : thinkHard
+                  ? '#00aa00'
+                  : '#ddd'};
               transition: all 0.3s ease;
               border-radius: 28px;
               box-shadow: ${thinkHard
@@ -151,7 +104,11 @@ export default function ThinkHardToggle({
               }
 
               &:hover {
-                background-color: ${thinkHard ? '#00bb00' : '#ccc'};
+                background-color: ${disabled
+                  ? '#d4d4d4'
+                  : thinkHard
+                    ? '#00bb00'
+                    : '#ccc'};
               }
             `}
           />
@@ -166,20 +123,13 @@ export default function ThinkHardToggle({
             font-weight: normal;
           `}
         >
-          {insufficientFunds && !thinkHard && !communityFundsAvailable
-            ? `Not enough coins (need ${priceTable.thinkHard})`
-            : thinkHard && communityFundsAvailable
-            ? 'Enhanced reasoning active (community sponsored)'
-            : thinkHard
-            ? 'Enhanced reasoning active (500 coins/message)'
-            : communityFundsAvailable
-            ? 'Enhanced reasoning mode (community sponsored)'
-            : 'Enhanced reasoning mode (500 coins/message)'}
+          {thinkHard
+            ? 'Enhanced reasoning active. Uses more AI Energy.'
+            : disabled
+              ? 'Recharge AI Energy to use enhanced reasoning.'
+            : 'Enhanced reasoning mode. Uses more AI Energy.'}
         </p>
       </div>
-      {donorModalShown && (
-        <DonorFundsModal onHide={() => setDonorModalShown(false)} />
-      )}
     </div>
   );
 }

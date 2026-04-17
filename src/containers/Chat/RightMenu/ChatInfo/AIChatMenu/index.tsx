@@ -6,7 +6,12 @@ import { css } from '@emotion/css';
 import FileSelector from './FileSelector';
 import ThinkHardToggle from './ThinkHardToggle';
 import { FileData } from '~/types';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
 import FilterBar from '~/components/FilterBar';
 
@@ -76,9 +81,10 @@ function AIChatMenu({
     view: BookmarkView;
     data: any;
   } | null>(null);
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
+  const aiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy
+  );
   const onSetThinkHardZero = useChatContext(
     (v) => v.actions.onSetThinkHardZero
   );
@@ -110,6 +116,10 @@ function AIChatMenu({
   const key = topicId ? topicId.toString() : 'global';
   const thinkHard =
     thinkHardState[aiType][key] ?? thinkHardState[aiType].global;
+  const thinkHardDisabled =
+    !!aiUsagePolicy &&
+    (!aiUsagePolicy.hasVerifiedEmail ||
+      Number(aiUsagePolicy?.energyRemaining || 0) <= 0);
 
   return (
     <div
@@ -181,9 +191,8 @@ function AIChatMenu({
           />
           <ThinkHardToggle
             thinkHard={thinkHard}
-            twinkleCoins={twinkleCoins || 0}
-            communityFundsAvailable={communityFunds > 500}
             onToggle={handleSetThinkHard}
+            disabled={thinkHardDisabled}
           />
         </>
       )}
@@ -206,6 +215,7 @@ function AIChatMenu({
   );
 
   function handleSetThinkHard(value: boolean) {
+    if (thinkHardDisabled && value) return;
     if (topicId) {
       onSetThinkHardForTopic({ aiType, topicId, thinkHard: value });
     } else if (isCielChat) {

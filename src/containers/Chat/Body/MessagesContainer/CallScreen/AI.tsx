@@ -1,8 +1,13 @@
 import React, { useMemo } from 'react';
 import ProfilePic from '~/components/ProfilePic';
 import { useNotiContext, useKeyContext } from '~/contexts';
-import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 import { css } from '@emotion/css';
+
+interface AiUsagePolicy {
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+}
 
 export default function CallScreen({
   style,
@@ -17,18 +22,33 @@ export default function CallScreen({
   const userId = useKeyContext((v) => v.myState.userId);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const todayStats = useNotiContext((v) => v.state.todayStats);
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStats?.aiCallDuration]);
+  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
 
   const batteryLevel = useMemo(() => {
     if (isAdmin) return 100;
-    return Math.round(
-      ((MAX_AI_CALL_DURATION - aiCallDuration) / MAX_AI_CALL_DURATION) * 100
+    return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
+  }, [aiUsagePolicy?.energyPercent, isAdmin]);
+
+  const energySegments = useMemo(() => {
+    return Math.max(1, aiUsagePolicy?.energySegments || 5);
+  }, [aiUsagePolicy?.energySegments]);
+
+  const energySegmentsRemaining = useMemo(() => {
+    if (isAdmin) return energySegments;
+    return Math.max(
+      0,
+      Math.min(
+        energySegments,
+        aiUsagePolicy?.energySegmentsRemaining ??
+          Math.ceil((batteryLevel / 100) * energySegments)
+      )
     );
-  }, [aiCallDuration, isAdmin]);
+  }, [
+    aiUsagePolicy?.energySegmentsRemaining,
+    batteryLevel,
+    energySegments,
+    isAdmin
+  ]);
 
   return (
     <div
@@ -83,17 +103,24 @@ export default function CallScreen({
             border-radius: 20px;
             padding: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 4px;
           `}
         >
-          <div
-            className={css`
-              height: 100%;
-              width: ${batteryLevel}%;
-              background-color: #4caf50;
-              border-radius: 15px;
-              transition: width 0.3s ease-in-out;
-            `}
-          />
+          {Array.from({ length: energySegments }).map((_, index) => (
+            <span
+              key={index}
+              className={css`
+                flex: 1;
+                height: 100%;
+                background-color: ${index < energySegmentsRemaining
+                  ? '#4caf50'
+                  : 'rgba(255, 255, 255, 0.6)'};
+                border-radius: 15px;
+                transition: background-color 0.3s ease-in-out;
+              `}
+            />
+          ))}
         </div>
         <div
           className={css`
@@ -102,7 +129,7 @@ export default function CallScreen({
             color: #555;
           `}
         >
-          AI Power: {batteryLevel}%
+          AI Energy: {batteryLevel}%
         </div>
       </div>
     </div>
