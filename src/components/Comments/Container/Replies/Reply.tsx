@@ -22,6 +22,9 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Loading from '~/components/Loading';
 import RewardButton from '~/components/Buttons/RewardButton';
 import ZeroButton from '~/components/Buttons/ZeroButton';
+import AiEnergySponsorButton, {
+  shouldRenderAiEnergySponsorNotice
+} from '~/components/Comments/AiEnergySponsorButton';
 import { commentContainer } from '../Styles';
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom';
@@ -459,6 +462,8 @@ function Reply({
                       >
                         {commentWasDeletedLabel}
                       </div>
+                    ) : shouldRenderAiEnergySponsorNotice(reply) ? (
+                      <AiEnergySponsorButton comment={reply} theme={theme} />
                     ) : !replyIsEmpty ? (
                       <RichText
                         isAIMessage={

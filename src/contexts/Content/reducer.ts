@@ -491,7 +491,18 @@ export default function ContentReducer(
                       ...(prevContentState.targetObj.comment.id ===
                         action.contentId && action.contentType === 'comment'
                         ? action.data
-                        : {})
+                        : {}),
+                      comments:
+                        action.contentType === 'comment'
+                          ? prevContentState.targetObj.comment.comments?.map(
+                              (comment: Comment) => ({
+                                ...comment,
+                                ...(comment.id === action.contentId
+                                  ? action.data
+                                  : {})
+                              })
+                            )
+                          : prevContentState.targetObj.comment.comments
                     }
                   : undefined,
                 subject: prevContentState.targetObj.subject
@@ -1689,6 +1700,7 @@ export default function ContentReducer(
     case 'UPLOAD_REPLY': {
       const newState = { ...state };
       const contentKeys = Object.keys(newState);
+      const uploadItems = [action.data].concat(action.data.replies || []);
       if (action.data.commentId || action.data.replyId) {
         for (const contentKey of contentKeys) {
           const prevContentState = newState[contentKey];
@@ -1702,7 +1714,7 @@ export default function ContentReducer(
                 ) {
                   return {
                     ...comment,
-                    replies: (comment.replies || []).concat(action.data)
+                    replies: (comment.replies || []).concat(uploadItems)
                   };
                 }
                 return comment;
@@ -1722,7 +1734,7 @@ export default function ContentReducer(
                 comment.id === action.data.replyId
                   ? {
                       ...comment,
-                      replies: (comment.replies || []).concat([action.data])
+                      replies: (comment.replies || []).concat(uploadItems)
                     }
                   : comment
             )
@@ -1735,7 +1747,7 @@ export default function ContentReducer(
         prevContentState.contentType === 'comment' &&
         prevContentState.contentId === commentId
       ) {
-        newComments.push(action.data);
+        newComments.push(...uploadItems);
       }
       return {
         ...newState,
@@ -1747,7 +1759,7 @@ export default function ContentReducer(
               ['comment' + commentId]: {
                 ...state['comment' + commentId],
                 comments: (state['comment' + commentId].comments || []).concat(
-                  action.data
+                  uploadItems
                 )
               }
             }
@@ -1769,7 +1781,7 @@ export default function ContentReducer(
             return {
               ...comment,
               replies: match
-                ? (comment.replies || []).concat([action.data])
+                ? (comment.replies || []).concat(uploadItems)
                 : comment.replies
             };
           }),
@@ -1781,7 +1793,7 @@ export default function ContentReducer(
                 comment.id === action.data.replyId
                   ? {
                       ...comment,
-                      replies: (comment.replies || []).concat([action.data])
+                      replies: (comment.replies || []).concat(uploadItems)
                     }
                   : comment
               )
@@ -1805,7 +1817,8 @@ export default function ContentReducer(
           subjects: [action.subject].concat(prevContentState.subjects)
         }
       };
-    case 'UPLOAD_TARGET_COMMENT':
+    case 'UPLOAD_TARGET_COMMENT': {
+      const uploadItems = [action.data].concat(action.data.replies || []);
       return {
         ...state,
         [contentKey]: {
@@ -1814,13 +1827,14 @@ export default function ContentReducer(
             ...prevContentState.targetObj,
             comment: {
               ...prevContentState.targetObj.comment,
-              comments: [action.data].concat(
+              comments: uploadItems.concat(
                 prevContentState.targetObj?.comment?.comments || []
               )
             }
           }
         }
       };
+    }
     default:
       return state;
   }

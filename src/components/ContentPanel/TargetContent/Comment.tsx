@@ -8,6 +8,9 @@ import RichText from '~/components/Texts/RichText';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import ContentFileViewer from '~/components/ContentFileViewer';
 import LoginToViewContent from '~/components/LoginToViewContent';
+import AiEnergySponsorButton, {
+  shouldRenderAiEnergySponsorNotice
+} from '~/components/Comments/AiEnergySponsorButton';
 import { css } from '@emotion/css';
 import { useNavigate } from 'react-router-dom';
 import { timeSince } from '~/helpers/timeStampHelpers';
@@ -150,14 +153,18 @@ function Comment({
                 padding-left: 0px;
               `}
             >
-              <RichText
-                theme={theme}
-                style={{
-                  margin: '0.5rem 0 1rem 0'
-                }}
-              >
-                {content}
-              </RichText>
+              {shouldRenderAiEnergySponsorNotice(comment) ? (
+                <AiEnergySponsorButton comment={comment} theme={theme} />
+              ) : (
+                <RichText
+                  theme={theme}
+                  style={{
+                    margin: '0.5rem 0 1rem 0'
+                  }}
+                >
+                  {content}
+                </RichText>
+              )}
               {filePath &&
                 (userId ? (
                   <div
