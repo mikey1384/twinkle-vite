@@ -84,6 +84,7 @@ export interface BuildLiveRunState {
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
+  requestLimits?: any | null;
   updatedAt: number;
 }
 
@@ -117,6 +118,7 @@ export interface BuildLiveRunStreamUpdatePayload {
   runtimeExplorationPlan?: any | null;
   runtimePlanRefined?: boolean;
   billingState?: 'charged' | 'not_charged' | 'pending' | null;
+  requestLimits?: any | null;
 }
 
 export interface BuildLiveRunRunningSnapshotPayload {
@@ -666,6 +668,12 @@ function applyBuildRunStreamUpdate(
       Object.prototype.hasOwnProperty.call(buildRun || {}, 'billingState')
         ? buildRun?.billingState ?? null
         : currentRun.billingState,
+    requestLimits: Object.prototype.hasOwnProperty.call(
+      buildRun || {},
+      'requestLimits'
+    )
+      ? buildRun?.requestLimits ?? null
+      : currentRun.requestLimits,
     updatedAt: resolveBuildRunUpdatedAt(options?.updatedAt)
   };
 }
@@ -1038,6 +1046,11 @@ export default function BuildReducer(
           Object.prototype.hasOwnProperty.call(action.buildRun, 'billingState')
             ? action.buildRun.billingState ?? null
             : currentRun.billingState,
+        requestLimits:
+          action.buildRun &&
+          Object.prototype.hasOwnProperty.call(action.buildRun, 'requestLimits')
+            ? action.buildRun.requestLimits ?? null
+            : currentRun.requestLimits,
         updatedAt: Date.now()
       };
       return {
@@ -1113,6 +1126,14 @@ export default function BuildReducer(
               : null,
             streamingProjectFiles: null,
             streamingFocusFilePath: null,
+            requestLimits:
+              action.buildRun &&
+              Object.prototype.hasOwnProperty.call(
+                action.buildRun,
+                'requestLimits'
+              )
+                ? action.buildRun.requestLimits ?? null
+                : currentRun.requestLimits,
             updatedAt: Date.now()
           }
         },

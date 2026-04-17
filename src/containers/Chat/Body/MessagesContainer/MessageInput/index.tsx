@@ -246,6 +246,9 @@ export default function MessageInput({
   const globalAiUsagePolicy = useNotiContext(
     (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
   );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const {
     actions: {
       onEnterComment,
@@ -273,8 +276,7 @@ export default function MessageInput({
     null
   );
   const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
-  const [aiUsagePolicyLoadFailed, setAiUsagePolicyLoadFailed] =
-    useState(false);
+  const [aiUsagePolicyLoadFailed, setAiUsagePolicyLoadFailed] = useState(false);
   const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
   const aiUsagePolicyRef = useRef<AiUsagePolicy | null>(null);
   const aiUsagePolicyCardRef = useRef<HTMLDivElement | null>(null);
@@ -305,6 +307,7 @@ export default function MessageInput({
   useEffect(() => {
     onRegisterAiUsagePolicyUpdate(applyConfirmedAiUsagePolicy);
     return () => onRegisterAiUsagePolicyUpdate(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterAiUsagePolicyUpdate, selectedChannelId, subchannelId]);
 
   useEffect(() => {
@@ -369,6 +372,7 @@ export default function MessageInput({
   useEffect(() => {
     if (!isAIChannel || !globalAiUsagePolicy) return;
     applyConfirmedAiUsagePolicy(globalAiUsagePolicy);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalAiUsagePolicy, isAIChannel]);
 
   useEffect(() => {
@@ -826,7 +830,11 @@ export default function MessageInput({
       const result = await getZeroCielAiUsagePolicy();
       const nextPolicy = result?.aiUsagePolicy || null;
       if (!isCancelled()) {
-        setAiUsagePolicy(nextPolicy);
+        if (nextPolicy) {
+          applyConfirmedAiUsagePolicy(nextPolicy);
+        } else {
+          setAiUsagePolicy(null);
+        }
         setAiUsagePolicyLoadFailed(!nextPolicy);
       }
       return nextPolicy;
@@ -851,7 +859,7 @@ export default function MessageInput({
         useCommunityFunds
       });
       if (result?.aiUsagePolicy) {
-        setAiUsagePolicy(result.aiUsagePolicy);
+        applyConfirmedAiUsagePolicy(result.aiUsagePolicy);
       }
       if (typeof result?.newBalance === 'number') {
         onSetUserState({
@@ -885,10 +893,7 @@ export default function MessageInput({
     if (!aiUsagePolicy) {
       if (!aiUsagePolicyLoadFailed) return null;
       return (
-        <div
-          ref={aiUsagePolicyCardRef}
-          className={aiUsagePolicyRetryCls}
-        >
+        <div ref={aiUsagePolicyCardRef} className={aiUsagePolicyRetryCls}>
           <div className={aiUsagePolicyRetryTextCls}>
             <b>AI Energy did not load.</b>
             <span>Try again before sending a message.</span>
@@ -944,15 +949,22 @@ export default function MessageInput({
   }
 
   function applyConfirmedAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
-    if (!isAIChannelRef.current || !nextPolicy) return;
+    if (!nextPolicy) return;
+    if (globalAiUsagePolicy !== nextPolicy) {
+      onUpdateTodayStats({
+        newStats: {
+          aiUsagePolicy: nextPolicy
+        }
+      });
+    }
+    if (!isAIChannelRef.current) return;
     setAiUsagePolicy((policy) => ({
       ...nextPolicy,
       ...(policy?.communityFundResetEligibility &&
       !nextPolicy.communityFundResetEligibility &&
       (!nextPolicy.dayIndex || nextPolicy.dayIndex === policy.dayIndex)
         ? {
-            communityFundResetEligibility:
-              policy.communityFundResetEligibility
+            communityFundResetEligibility: policy.communityFundResetEligibility
           }
         : {})
     }));
@@ -987,9 +999,7 @@ export default function MessageInput({
       return;
     }
     const normalizedSourceSubchannelId = Number(sourceSubchannelId) || 0;
-    if (
-      normalizedSourceSubchannelId !== (Number(currentSubchannelId) || 0)
-    ) {
+    if (normalizedSourceSubchannelId !== (Number(currentSubchannelId) || 0)) {
       return;
     }
     const normalizedSourceTopicId = Number(sourceTopicId) || 0;
