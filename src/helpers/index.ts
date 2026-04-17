@@ -260,6 +260,7 @@ export function buildTodayStatsForNextDay(
 
   return {
     aiCallDuration: 0,
+    aiUsagePolicy: null,
     xpEarned: 0,
     coinsEarned: 0,
     ...dailyTaskPatch,
@@ -308,6 +309,7 @@ export function buildTodayStatsFromResponse({
   dailyTaskBestStreak,
   dailyTaskStatus,
   aiCallDuration,
+  aiUsagePolicy,
   dailyHasBonus,
   dailyBonusAttempted,
   dailyRewardResultViewed,
@@ -329,6 +331,7 @@ export function buildTodayStatsFromResponse({
     dailyTaskBestStreak,
     dailyTaskStatus,
     aiCallDuration,
+    aiUsagePolicy,
     dailyHasBonus,
     dailyBonusAttempted,
     dailyRewardResultViewed,

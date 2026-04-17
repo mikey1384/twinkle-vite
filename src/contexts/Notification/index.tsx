@@ -27,6 +27,7 @@ export const initialNotiState = {
   socketConnected: false,
 	  todayStats: {
 	    aiCallDuration: 0,
+      aiUsagePolicy: null,
 	    myAchievementsObj: {},
 	    achievedDailyGoals: [],
       dailyTaskStatus: null,

@@ -24,8 +24,7 @@ import {
 import {
   mb,
   returnMaxUploadSize,
-  GENERAL_CHAT_ID,
-  priceTable
+  GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
 import {
   useAppContext,
@@ -54,6 +53,22 @@ interface AiUsageRequirement {
 interface AiUsagePolicy {
   dayIndex?: number;
   hasVerifiedEmail: boolean;
+  baseEnergyUnitsPerDay?: number;
+  energyLimit?: number;
+  energyUsed?: number;
+  energyCharged?: number;
+  energyOverflow?: number;
+  energyRemaining?: number;
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+  energyUnitsPerSegment?: number;
+  lowEnergyUsed?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  lastUsageOverflowed?: boolean;
+  communityFundRechargeCoinsToday?: number;
+  communityFundRechargeCoinsRemaining?: number;
+  communityFundRechargeCoinsDailyCap?: number;
   baseRepliesPerDay: number;
   resetPurchasesToday: number;
   resetCost: number;
@@ -168,8 +183,6 @@ export default function MessageInput({
   );
   const banned = useKeyContext((v) => v.myState.banned);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
   const myId = useKeyContext((v) => v.myState.userId);
   const getZeroCielAiUsagePolicy = useAppContext(
     (v) => v.requestHelpers.getZeroCielAiUsagePolicy
@@ -179,7 +192,6 @@ export default function MessageInput({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
-  const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const channelState =
     useChatContext((v) => v.state.channelsObj[selectedChannelId]) || {};
   const isAICallOngoing = useMemo(
@@ -198,23 +210,6 @@ export default function MessageInput({
     if (!currentlyStreamingAIMsgId) return false;
     return !channelState?.cancelledMessageIds?.has(currentlyStreamingAIMsgId);
   }, [currentlyStreamingAIMsgId, channelState?.cancelledMessageIds]);
-
-  const currentThinkHard = useMemo(() => {
-    if (isCielChannel) {
-      return thinkHardState.ciel[topicId] ?? thinkHardState.ciel.global;
-    }
-    if (isZeroChannel) {
-      return thinkHardState.zero[topicId] ?? thinkHardState.zero.global;
-    }
-    return false;
-  }, [isCielChannel, isZeroChannel, thinkHardState, topicId]);
-
-  const hasInsufficientCoinsForThinkHard = useMemo(() => {
-    if (!isAIChannel || !currentThinkHard) return false;
-    const userHasEnoughCoins = (twinkleCoins || 0) >= priceTable.thinkHard;
-    const communityCanCover = (communityFunds || 0) >= priceTable.thinkHard;
-    return !userHasEnoughCoins && !communityCanCover;
-  }, [isAIChannel, currentThinkHard, twinkleCoins, communityFunds]);
 
   const textForThisChannel = useMemo(
     () =>
@@ -243,6 +238,9 @@ export default function MessageInput({
     : successColorKey;
   const nextDayTimeStamp = useNotiContext(
     (v) => v.state.todayStats.nextDayTimeStamp
+  );
+  const globalAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
   );
   const {
     actions: {
@@ -365,6 +363,11 @@ export default function MessageInput({
   }, [isAIChannel, myId, selectedChannelId]);
 
   useEffect(() => {
+    if (!isAIChannel || !globalAiUsagePolicy) return;
+    applyConfirmedAiUsagePolicy(globalAiUsagePolicy);
+  }, [globalAiUsagePolicy, isAIChannel]);
+
+  useEffect(() => {
     let animationFrame: number | null = null;
     const reportHeight = () => {
       animationFrame = null;
@@ -424,9 +427,7 @@ export default function MessageInput({
   const aiUsageBlocked = useMemo(() => {
     if (!isAIChannel) return false;
     if (!aiUsagePolicy) return true;
-    return (
-      !aiUsagePolicy.hasVerifiedEmail || aiUsagePolicy.repliesRemaining <= 0
-    );
+    return !aiUsagePolicy.hasVerifiedEmail;
   }, [aiUsagePolicy, isAIChannel]);
 
   useEffect(() => {
@@ -467,9 +468,9 @@ export default function MessageInput({
     const currentAiUsagePolicy = aiUsagePolicyRef.current;
     if (isAIChannelRef.current) {
       if (!currentAiUsagePolicy) {
-        setAlertModalTitle('AI Replies');
+        setAlertModalTitle('AI Energy');
         setAlertModalContent(
-          'Checking AI reply usage. Please try again in a moment.'
+          'Checking AI Energy. Please try again in a moment.'
         );
         setAlertModalShown(true);
         return;
@@ -477,15 +478,7 @@ export default function MessageInput({
       if (!currentAiUsagePolicy.hasVerifiedEmail) {
         setAlertModalTitle('Verify Email');
         setAlertModalContent(
-          'Please verify your email before using Zero or Ciel AI replies.'
-        );
-        setAlertModalShown(true);
-        return;
-      }
-      if (currentAiUsagePolicy.repliesRemaining <= 0) {
-        setAlertModalTitle('AI Replies');
-        setAlertModalContent(
-          `You have used all ${currentAiUsagePolicy.repliesPerDay} Zero/Ciel AI replies for today. Reset for ${currentAiUsagePolicy.resetCost.toLocaleString()} coins to keep going.`
+          'Please verify your email before using Zero or Ciel AI features.'
         );
         setAlertModalShown(true);
         return;
@@ -507,19 +500,6 @@ export default function MessageInput({
 
     if (!socketConnected || isAIActuallyStreaming) {
       inputCoolingDown.current = false;
-      return;
-    }
-
-    if (hasInsufficientCoinsForThinkHard) {
-      inputCoolingDown.current = false;
-      const userCoins = twinkleCoins || 0;
-      const availableFunds = communityFunds || 0;
-      setAlertModalTitle('Insufficient Coins');
-      setAlertModalContent(
-        `Not enough Twinkle Coins for Think Hard mode. You need ${priceTable.thinkHard} coins. ` +
-          `You have ${userCoins} coins and community funds have ${availableFunds} coins.`
-      );
-      setAlertModalShown(true);
       return;
     }
 
@@ -559,7 +539,7 @@ export default function MessageInput({
         setAlertModalTitle(
           error?.code === 'zero_ciel_ai_verified_email_required'
             ? 'Verify Email'
-            : 'AI Replies'
+            : 'AI Energy'
         );
         setAlertModalContent(error?.message || 'Unable to send AI message.');
         setAlertModalShown(true);
@@ -742,7 +722,6 @@ export default function MessageInput({
                 isAIActuallyStreaming ||
                 coolingDown ||
                 isExceedingCharLimit ||
-                hasInsufficientCoinsForThinkHard ||
                 aiUsageBlocked
               }
               color={sendButtonColorKey}
@@ -899,9 +878,9 @@ export default function MessageInput({
       if (error?.aiUsagePolicy) {
         applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
       }
-      setAlertModalTitle('AI Replies');
+      setAlertModalTitle('AI Energy');
       setAlertModalContent(
-        error?.message || 'Unable to reset AI replies right now.'
+        error?.message || 'Unable to recharge AI Energy right now.'
       );
       setAlertModalShown(true);
     } finally {
@@ -943,8 +922,8 @@ export default function MessageInput({
           >
             <b>
               {aiUsagePolicyLoadFailed
-                ? 'Unable to load Zero/Ciel replies'
-                : 'Checking Zero/Ciel replies'}
+                ? 'Unable to load AI Energy'
+                : 'Checking AI Energy'}
             </b>
             <Button
               variant="soft"
@@ -955,16 +934,37 @@ export default function MessageInput({
             </Button>
           </div>
           {aiUsagePolicyLoadFailed && (
-            <span>Refresh to check your reply limit before sending.</span>
+            <span>Refresh to check your AI Energy before sending.</span>
           )}
         </div>
       );
     }
     const resetNeeded =
-      aiUsagePolicy.hasVerifiedEmail && aiUsagePolicy.repliesRemaining <= 0;
+      aiUsagePolicy.hasVerifiedEmail &&
+      typeof aiUsagePolicy.energyRemaining === 'number' &&
+      aiUsagePolicy.energyRemaining <= 0;
     const communityEligibility =
       aiUsagePolicy.communityFundResetEligibility || null;
     const communityFundResetAvailable = !!communityEligibility?.eligible;
+    const energySegments = Math.max(1, aiUsagePolicy.energySegments || 5);
+    const energySegmentsRemaining = Math.max(
+      0,
+      Math.min(
+        energySegments,
+        aiUsagePolicy.energySegmentsRemaining ??
+          Math.ceil(
+            ((aiUsagePolicy.energyPercent ?? 0) / 100) * energySegments
+          )
+      )
+    );
+    const energyPercent = Math.max(
+      0,
+      Math.min(100, aiUsagePolicy.energyPercent ?? 0)
+    );
+    const energyMode =
+      aiUsagePolicy.currentMode === 'low_energy'
+        ? 'Low-energy mode'
+        : 'Full-quality mode';
 
     return (
       <div
@@ -997,8 +997,8 @@ export default function MessageInput({
         >
           <b>
             {aiUsagePolicy.hasVerifiedEmail
-              ? `${aiUsagePolicy.repliesRemaining}/${aiUsagePolicy.repliesPerDay} Zero/Ciel replies left today`
-              : 'Verify your email to use Zero or Ciel AI replies'}
+              ? 'AI Energy'
+              : 'Verify your email to use Zero or Ciel AI features'}
           </b>
           <Button
             variant="soft"
@@ -1008,6 +1008,48 @@ export default function MessageInput({
             Refresh
           </Button>
         </div>
+        {aiUsagePolicy.hasVerifiedEmail && (
+          <div
+            className={css`
+              display: flex;
+              align-items: center;
+              gap: 0.8rem;
+              flex-wrap: wrap;
+            `}
+          >
+            <div
+              aria-label={`AI Energy ${energyPercent}%`}
+              className={css`
+                display: grid;
+                grid-template-columns: repeat(${energySegments}, 1fr);
+                gap: 0.25rem;
+                width: 10rem;
+                max-width: 45vw;
+                height: 1.6rem;
+                padding: 0.25rem;
+                border: 1px solid ${Color.borderGray()};
+                border-radius: 6px;
+                background: ${Color.white()};
+              `}
+            >
+              {Array.from({ length: energySegments }).map((_, index) => (
+                <div
+                  key={index}
+                  className={css`
+                    border-radius: 4px;
+                    background: ${index < energySegmentsRemaining
+                      ? Color.green()
+                      : Color.lightGray()};
+                  `}
+                />
+              ))}
+            </div>
+            <span>
+              {energyPercent}% · {energyMode}
+              {aiUsagePolicy.lastUsageOverflowed ? ' · extra used' : ''}
+            </span>
+          </div>
+        )}
         {resetNeeded && (
           <div
             className={css`
@@ -1018,7 +1060,7 @@ export default function MessageInput({
             `}
           >
             <span>
-              Reset for {aiUsagePolicy.resetCost.toLocaleString()} coins.
+              Recharge for {aiUsagePolicy.resetCost.toLocaleString()} coins.
             </span>
             <Button
               variant="soft"
@@ -1153,7 +1195,7 @@ export default function MessageInput({
     setAlertModalTitle(
       error?.code === 'zero_ciel_ai_verified_email_required'
         ? 'Verify Email'
-        : 'AI Replies'
+        : 'AI Energy'
     );
     setAlertModalContent(
       restoredDraft

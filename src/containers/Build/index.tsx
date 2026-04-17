@@ -65,6 +65,21 @@ interface BuildCopilotPolicy {
   requestLimits: {
     dayIndex: number;
     dayKey: string;
+    hasVerifiedEmail?: boolean;
+    baseEnergyUnitsPerDay?: number;
+    energyLimit?: number;
+    energyUsed?: number;
+    energyCharged?: number;
+    energyOverflow?: number;
+    energyRemaining?: number;
+    energyPercent?: number;
+    energySegments?: number;
+    energySegmentsRemaining?: number;
+    energyUnitsPerSegment?: number;
+    currentMode?: 'full_quality' | 'low_energy';
+    lastUsageOverflowed?: boolean;
+    resetPurchasesToday?: number;
+    resetCost?: number;
     generationBaseRequestsPerDay: number;
     generationResetPurchasesToday: number;
     generationResetCost: number;

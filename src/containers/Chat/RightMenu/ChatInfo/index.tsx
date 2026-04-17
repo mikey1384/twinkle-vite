@@ -12,10 +12,7 @@ import {
 } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { v1 as uuidv1 } from 'uuid';
-import {
-  GENERAL_CHAT_ID,
-  MAX_AI_CALL_DURATION
-} from '~/constants/defaultValues';
+import { GENERAL_CHAT_ID } from '~/constants/defaultValues';
 import { checkMicrophoneAccess, objectify } from '~/helpers';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import CallButton from './CallButton';
@@ -63,23 +60,16 @@ function ChatInfo({
   const [callDisabled, setCallDisabled] = useState(false);
   const onSetCall = useChatContext((v) => v.actions.onSetCall);
   const onSetAICall = useChatContext((v) => v.actions.onSetAICall);
-  const onSetAICallEnding = useChatContext(
-    (v) => v.actions.onSetAICallEnding
-  );
+  const onSetAICallEnding = useChatContext((v) => v.actions.onSetAICallEnding);
   const onHangUp = useChatContext((v) => v.actions.onHangUp);
   const onSubmitMessage = useChatContext((v) => v.actions.onSubmitMessage);
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const aiUsagePolicy = todayStats?.aiUsagePolicy;
   const aiCallEnding = useChatContext((v) => v.state.aiCallEnding);
 
   const {
     state: { aiCallChannelId }
   } = useContext(LocalContext);
-
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayStats?.aiCallDuration]);
 
   const files = useMemo(() => {
     if (!currentChannel?.files?.main?.ids) return [];
@@ -106,10 +96,16 @@ function ChatInfo({
     return currentChannel.files?.main?.hasMore || false;
   }, [currentChannel.selectedTab, currentChannel.files, topicId]);
 
-  const maxAiCallDurationReachedAndIsAIChat = useMemo(() => {
+  const aiEnergyUnavailableAndIsAIChat = useMemo(() => {
     if (isAdmin) return false;
-    return aiCallDuration >= MAX_AI_CALL_DURATION && (isZeroChat || isCielChat);
-  }, [aiCallDuration, isAdmin, isZeroChat, isCielChat]);
+    if (!(isZeroChat || isCielChat)) return false;
+    if (!aiUsagePolicy) return false;
+    return (
+      aiUsagePolicy.hasVerifiedEmail === false ||
+      (typeof aiUsagePolicy.energyRemaining === 'number' &&
+        aiUsagePolicy.energyRemaining <= 0)
+    );
+  }, [aiUsagePolicy, isAdmin, isZeroChat, isCielChat]);
 
   const allMemberIds = useMemo(() => {
     if (currentChannel?.twoPeople) {
@@ -159,7 +155,13 @@ function ChatInfo({
     if (AI_FEATURES_DISABLED && (isZeroChat || isCielChat)) return false;
     const isRegularChat = !(isZeroChat || isCielChat);
     return (isZeroChat || isRegularChat) && isTwoPeopleConnected;
-  }, [banned?.chat, isZeroChat, isCielChat, isTwoPeopleConnected]);
+  }, [
+    banned?.chat,
+    AI_FEATURES_DISABLED,
+    isZeroChat,
+    isCielChat,
+    isTwoPeopleConnected
+  ]);
 
   const onlineChannelMembers = useMemo(() => {
     const me = { id: myId, username, profilePicUrl };
@@ -356,7 +358,7 @@ function ChatInfo({
     } else {
       setMicrophoneModalShown(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     callOngoing,
     aiCallOngoing,
@@ -402,9 +404,7 @@ function ChatInfo({
                 disabled={
                   callDisabled ||
                   aiCallEndingOnThisChannel ||
-                  (!aiCallOngoing &&
-                    !isAdmin &&
-                    maxAiCallDurationReachedAndIsAIChat)
+                  (!aiCallOngoing && aiEnergyUnavailableAndIsAIChat)
                 }
                 onCall={handleCallButtonClick}
               />

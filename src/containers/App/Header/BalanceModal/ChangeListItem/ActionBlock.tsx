@@ -47,7 +47,7 @@ export default function ActionBlock({
       return 'used premium AI prompt';
     }
     if (action === 'thinkHard' && target === 'aiChat') {
-      return 'used "Think Hard" mode';
+      return 'used AI Energy';
     }
     if (action === 'attempt') {
       if (target === 'mission') {
@@ -164,7 +164,7 @@ export default function ActionBlock({
       return 'purchased a Daily Tasks streak repair';
     }
     if (action === 'buildGenerationQuotaReset') {
-      return "purchased today's build generation quota reset";
+      return 'recharged AI Energy';
     }
     if (
       action === 'dailyQuestionTomorrowVibeSelection' &&

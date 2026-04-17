@@ -5,7 +5,6 @@ import CallZero from './CallZero';
 import { useChatContext, useKeyContext, useNotiContext } from '~/contexts';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
-import { MAX_AI_CALL_DURATION } from '~/constants/defaultValues';
 
 export default function Featured() {
   const userId = useKeyContext((v) => v.myState.userId);
@@ -23,14 +22,15 @@ export default function Featured() {
   const isZeroChannelLoading = useMemo(() => {
     return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
   }, [aiCallEnding, aiCallOngoing, userId, zeroChannelId]);
-  const aiCallDuration = useMemo(() => {
-    if (!todayStats) return 0;
-    return todayStats.aiCallDuration;
-  }, [todayStats]);
   const hasReachedDailyLimit = useMemo(() => {
     if (isAdmin) return false;
-    return aiCallDuration >= MAX_AI_CALL_DURATION;
-  }, [aiCallDuration, isAdmin]);
+    const aiUsagePolicy = todayStats?.aiUsagePolicy;
+    if (!aiUsagePolicy) return false;
+    return (
+      !aiUsagePolicy.hasVerifiedEmail ||
+      Number(aiUsagePolicy.energyRemaining || 0) <= 0
+    );
+  }, [isAdmin, todayStats?.aiUsagePolicy]);
 
   const isZeroInterfaceExpanded = useMemo(() => {
     return (

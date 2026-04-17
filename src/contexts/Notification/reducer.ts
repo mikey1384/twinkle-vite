@@ -186,6 +186,8 @@ export default function NotiReducer(
       return {
         ...state,
         todayStats: {
+          aiCallDuration: 0,
+          aiUsagePolicy: null,
           myAchievementsObj: {},
           achievedDailyGoals: [],
           dailyTaskStatus: null,
