@@ -66,6 +66,8 @@ interface BuildCopilotPolicy {
     dayIndex: number;
     dayKey: string;
     hasVerifiedEmail?: boolean;
+    identityType?: 'verified_email' | 'user';
+    isLegacyUnverifiedIdentity?: boolean;
     baseEnergyUnitsPerDay?: number;
     energyLimit?: number;
     energyUsed?: number;

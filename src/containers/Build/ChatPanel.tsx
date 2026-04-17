@@ -6,6 +6,7 @@ import CodeDiff from '~/components/CodeDiff';
 import Button from '~/components/Button';
 import Modal from '~/components/Modal';
 import ProgressBar from '~/components/ProgressBar';
+import AiEnergyCard from '~/components/AiEnergyCard';
 import { css } from '@emotion/css';
 import { useViewContext } from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
@@ -118,6 +119,8 @@ interface BuildCopilotPolicy {
     dayIndex: number;
     dayKey: string;
     hasVerifiedEmail?: boolean;
+    identityType?: 'verified_email' | 'user';
+    isLegacyUnverifiedIdentity?: boolean;
     baseEnergyUnitsPerDay?: number;
     energyLimit?: number;
     energyUsed?: number;
@@ -319,17 +322,14 @@ export default function ChatPanel({
   const energyPolicy = copilotPolicy?.requestLimits || null;
   const energyUnavailable =
     !!energyPolicy &&
-    (energyPolicy.hasVerifiedEmail === false ||
-      (typeof energyPolicy.energyRemaining === 'number' &&
-        energyPolicy.energyRemaining <= 0));
+    typeof energyPolicy.energyRemaining === 'number' &&
+    energyPolicy.energyRemaining <= 0;
   const aiInputDisabled = AI_FEATURES_DISABLED || energyUnavailable;
   const aiInputDisabledNotice = AI_FEATURES_DISABLED
     ? AI_DISABLED_NOTICE
-    : energyPolicy?.hasVerifiedEmail === false
-      ? 'Verify your email to use Lumine.'
-      : energyUnavailable
-        ? 'Recharge AI Energy to use Lumine.'
-        : '';
+    : energyUnavailable
+      ? 'Recharge AI Energy to use Lumine.'
+      : '';
   const currentActivity = useMemo(() => {
     for (let index = runEvents.length - 1; index >= 0; index -= 1) {
       const event = runEvents[index];
@@ -477,7 +477,6 @@ export default function ChatPanel({
   const dailyGenerationUsage = useMemo(() => {
     if (!copilotPolicy) return null;
     const requestLimits = copilotPolicy.requestLimits;
-    if (requestLimits.hasVerifiedEmail === false) return 0;
     if (typeof requestLimits.energyPercent === 'number') {
       return Math.max(0, Math.min(100, requestLimits.energyPercent));
     }
@@ -491,33 +490,6 @@ export default function ChatPanel({
           100
       )
     );
-  }, [copilotPolicy]);
-  const dailyGenerationBarText = useMemo(() => {
-    if (!copilotPolicy) return null;
-    const requestLimits = copilotPolicy.requestLimits;
-    if (requestLimits.hasVerifiedEmail === false) {
-      return 'Verify email to use AI Energy';
-    }
-    if (typeof requestLimits.energyPercent === 'number') {
-      const energyPercent = Math.max(
-        0,
-        Math.min(100, Math.floor(requestLimits.energyPercent))
-      );
-      const segments = Math.max(1, requestLimits.energySegments || 5);
-      const segmentsRemaining = Math.max(
-        0,
-        Math.min(
-          segments,
-          requestLimits.energySegmentsRemaining ??
-            Math.ceil((energyPercent / 100) * segments)
-        )
-      );
-      return `${energyPercent}% Energy · ${segmentsRemaining}/${segments} bars${
-        requestLimits.lastUsageOverflowed ? ' · extra used' : ''
-      }`;
-    }
-    if (requestLimits.generationRequestsPerDay <= 0) return null;
-    return `${formatTokenCount(requestLimits.generationRequestsToday)} / ${formatTokenCount(requestLimits.generationRequestsPerDay)} generations`;
   }, [copilotPolicy]);
   const generationResetUi = useMemo(() => {
     if (!copilotPolicy) return null;
@@ -669,97 +641,38 @@ export default function ChatPanel({
             className={css`
               margin-top: 0.4rem;
               margin-bottom: 1rem;
-              border: 1px solid var(--ui-border);
-              border-radius: 10px;
-              background: var(--chat-bg);
-              padding: 0.7rem 0.75rem 0.95rem;
               display: flex;
               flex-direction: column;
-              gap: 0.6rem;
+              gap: 0.7rem;
               font-size: var(--build-workshop-body-font-size);
               color: var(--chat-text);
             `}
           >
-            <div
-              className={css`
-                display: flex;
-                align-items: center;
-                gap: 0.4rem;
-              `}
-            >
-              <span
-                className={css`
-                  font-weight: 800;
-                  opacity: 0.85;
-                `}
-              >
-                AI Energy
-              </span>
-            </div>
-            {dailyGenerationUsage != null && dailyGenerationBarText && (
-              <>
-                <div
-                  className={css`
-                    font-size: var(--build-workshop-label-font-size);
-                    font-weight: 700;
-                  `}
-                >
-                  Shared Battery
-                </div>
-                <ProgressBar
-                  progress={dailyGenerationUsage}
-                  text={dailyGenerationBarText}
-                  style={{ marginTop: '-0.2rem' }}
-                />
-                {generationResetUi ? (
-                  <div
-                    className={css`
-                      margin-top: 0.35rem;
-                      display: flex;
-                      flex-direction: column;
-                      gap: 0.45rem;
-                    `}
-                  >
-                    <div
-                      className={css`
-                        font-size: var(--build-workshop-meta-font-size);
-                        line-height: 1.45;
-                        color: var(--chat-text);
-                        opacity: 0.78;
-                      `}
-                    >
-                      {`AI Energy is empty. Recharge #${generationResetUi.resetPurchasesToday + 1} restores one full battery for today.`}
-                    </div>
-                    <GameCTAButton
-                      icon="redo"
-                      variant="orange"
-                      shiny
-                      loading={purchasingGenerationReset}
-                      disabled={
-                        purchasingGenerationReset ||
-                        !generationResetUi.hasEnoughCoins
-                      }
-                      onClick={onPurchaseGenerationReset}
-                    >
-                      {generationResetUi.hasEnoughCoins
-                        ? `Recharge Energy (${generationResetUi.resetCost.toLocaleString()} coins)`
-                        : `Need ${generationResetUi.resetCost.toLocaleString()} coins (you have ${twinkleCoins.toLocaleString()})`}
-                    </GameCTAButton>
-                    {generationResetError ? (
-                      <div
-                        className={css`
-                          font-size: var(--build-workshop-meta-font-size);
-                          line-height: 1.4;
-                          color: ${Color.rose()};
-                          font-weight: 700;
-                        `}
-                      >
-                        {generationResetError}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </>
+            {dailyGenerationUsage != null && (
+              <AiEnergyCard
+                energyPercent={dailyGenerationUsage}
+                energySegments={copilotPolicy.requestLimits.energySegments}
+                energySegmentsRemaining={
+                  copilotPolicy.requestLimits.energySegmentsRemaining
+                }
+                mode={copilotPolicy.requestLimits.currentMode}
+                overflowed={copilotPolicy.requestLimits.lastUsageOverflowed}
+                resetNeeded={!!generationResetUi}
+                resetCost={generationResetUi?.resetCost}
+                resetPurchaseNumber={
+                  generationResetUi
+                    ? generationResetUi.resetPurchasesToday + 1
+                    : undefined
+                }
+                twinkleCoins={twinkleCoins}
+                rechargeLoading={purchasingGenerationReset}
+                rechargeError={generationResetError}
+                onRecharge={
+                  generationResetUi
+                    ? () => onPurchaseGenerationReset()
+                    : undefined
+                }
+              />
             )}
             {limitsExpanded && (
               <>

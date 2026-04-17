@@ -7,6 +7,7 @@ import React, {
   useState
 } from 'react';
 import ChessTarget from '../ChessTarget';
+import AiEnergyCard from '~/components/AiEnergyCard';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import InputArea from './InputArea';
@@ -38,7 +39,7 @@ import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { mobileMaxWidth } from '~/constants/css';
 
 const deviceIsMobileOS = isMobile(navigator);
 
@@ -53,6 +54,8 @@ interface AiUsageRequirement {
 interface AiUsagePolicy {
   dayIndex?: number;
   hasVerifiedEmail: boolean;
+  identityType?: 'verified_email' | 'user';
+  isLegacyUnverifiedIdentity?: boolean;
   baseEnergyUnitsPerDay?: number;
   energyLimit?: number;
   energyUsed?: number;
@@ -184,6 +187,7 @@ export default function MessageInput({
   const banned = useKeyContext((v) => v.myState.banned);
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const myId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const getZeroCielAiUsagePolicy = useAppContext(
     (v) => v.requestHelpers.getZeroCielAiUsagePolicy
   );
@@ -351,11 +355,11 @@ export default function MessageInput({
     if (!isAIChannel || !myId) {
       setAiUsagePolicy(null);
       setAiUsagePolicyLoadFailed(false);
+      setAiUsagePolicyLoading(false);
       return;
     }
-    setAiUsagePolicyLoadFailed(false);
     let cancelled = false;
-    refreshAiUsagePolicy({ silent: false, isCancelled: () => cancelled });
+    loadAiUsagePolicy({ isCancelled: () => cancelled });
     return () => {
       cancelled = true;
     };
@@ -427,7 +431,7 @@ export default function MessageInput({
   const aiUsageBlocked = useMemo(() => {
     if (!isAIChannel) return false;
     if (!aiUsagePolicy) return true;
-    return !aiUsagePolicy.hasVerifiedEmail;
+    return false;
   }, [aiUsagePolicy, isAIChannel]);
 
   useEffect(() => {
@@ -471,14 +475,6 @@ export default function MessageInput({
         setAlertModalTitle('AI Energy');
         setAlertModalContent(
           'Checking AI Energy. Please try again in a moment.'
-        );
-        setAlertModalShown(true);
-        return;
-      }
-      if (!currentAiUsagePolicy.hasVerifiedEmail) {
-        setAlertModalTitle('Verify Email');
-        setAlertModalContent(
-          'Please verify your email before using Zero or Ciel AI features.'
         );
         setAlertModalShown(true);
         return;
@@ -536,11 +532,7 @@ export default function MessageInput({
         applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
       }
       if (error?.code?.startsWith?.('zero_ciel_ai_') || error?.message) {
-        setAlertModalTitle(
-          error?.code === 'zero_ciel_ai_verified_email_required'
-            ? 'Verify Email'
-            : 'AI Energy'
-        );
+        setAlertModalTitle('AI Energy');
         setAlertModalContent(error?.message || 'Unable to send AI message.');
         setAlertModalShown(true);
       }
@@ -821,31 +813,31 @@ export default function MessageInput({
     </div>
   );
 
-  async function refreshAiUsagePolicy({
-    silent = true,
+  async function loadAiUsagePolicy({
     isCancelled = () => false
   }: {
-    silent?: boolean;
     isCancelled?: () => boolean;
   } = {}) {
-    if (!isAIChannel || !myId) return;
-    if (!silent) {
+    if (!isAIChannel || !myId) return null;
+    if (!isCancelled()) {
       setAiUsagePolicyLoading(true);
-      setAiUsagePolicyLoadFailed(false);
     }
     try {
       const result = await getZeroCielAiUsagePolicy();
+      const nextPolicy = result?.aiUsagePolicy || null;
       if (!isCancelled()) {
-        setAiUsagePolicy(result?.aiUsagePolicy || null);
-        setAiUsagePolicyLoadFailed(false);
+        setAiUsagePolicy(nextPolicy);
+        setAiUsagePolicyLoadFailed(!nextPolicy);
       }
+      return nextPolicy;
     } catch (error) {
       if (!isCancelled()) {
         console.error(error);
         setAiUsagePolicyLoadFailed(true);
       }
+      return null;
     } finally {
-      if (!silent && !isCancelled()) {
+      if (!isCancelled()) {
         setAiUsagePolicyLoading(false);
       }
     }
@@ -891,231 +883,63 @@ export default function MessageInput({
   function renderAiUsagePolicy() {
     if (!isAIChannel) return null;
     if (!aiUsagePolicy) {
+      if (!aiUsagePolicyLoadFailed) return null;
       return (
         <div
           ref={aiUsagePolicyCardRef}
-          className={css`
-            margin: 0.4rem 1rem 0;
-            padding: 0.8rem 1rem;
-            border: 1px solid ${Color.borderGray()};
-            border-radius: 8px;
-            background: ${Color.white()};
-            display: flex;
-            flex-direction: column;
-            gap: 0.7rem;
-            font-size: 1.2rem;
-            color: ${Color.darkerGray()};
-
-            @media (max-width: ${mobileMaxWidth}) {
-              margin: 0.4rem 0.6rem 0;
-              font-size: 1.1rem;
-            }
-          `}
+          className={aiUsagePolicyRetryCls}
         >
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 1rem;
-            `}
-          >
-            <b>
-              {aiUsagePolicyLoadFailed
-                ? 'Unable to load AI Energy'
-                : 'Checking AI Energy'}
-            </b>
-            <Button
-              variant="soft"
-              disabled={aiUsagePolicyLoading}
-              onClick={() => refreshAiUsagePolicy({ silent: false })}
-            >
-              {aiUsagePolicyLoading ? 'Checking' : 'Refresh'}
-            </Button>
+          <div className={aiUsagePolicyRetryTextCls}>
+            <b>AI Energy did not load.</b>
+            <span>Try again before sending a message.</span>
           </div>
-          {aiUsagePolicyLoadFailed && (
-            <span>Refresh to check your AI Energy before sending.</span>
-          )}
+          <Button
+            variant="soft"
+            tone="raised"
+            size="sm"
+            color="darkerGray"
+            loading={aiUsagePolicyLoading}
+            disabled={aiUsagePolicyLoading}
+            onClick={() => loadAiUsagePolicy()}
+          >
+            Try again
+          </Button>
         </div>
       );
     }
     const resetNeeded =
-      aiUsagePolicy.hasVerifiedEmail &&
       typeof aiUsagePolicy.energyRemaining === 'number' &&
       aiUsagePolicy.energyRemaining <= 0;
     const communityEligibility =
       aiUsagePolicy.communityFundResetEligibility || null;
-    const communityFundResetAvailable = !!communityEligibility?.eligible;
-    const energySegments = Math.max(1, aiUsagePolicy.energySegments || 5);
-    const energySegmentsRemaining = Math.max(
-      0,
-      Math.min(
-        energySegments,
-        aiUsagePolicy.energySegmentsRemaining ??
-          Math.ceil(
-            ((aiUsagePolicy.energyPercent ?? 0) / 100) * energySegments
-          )
-      )
-    );
-    const energyPercent = Math.max(
-      0,
-      Math.min(100, aiUsagePolicy.energyPercent ?? 0)
-    );
-    const energyMode =
-      aiUsagePolicy.currentMode === 'low_energy'
-        ? 'Low-energy mode'
-        : 'Full-quality mode';
-
     return (
-      <div
-        ref={aiUsagePolicyCardRef}
+      <AiEnergyCard
+        variant="inline"
+        cardRef={aiUsagePolicyCardRef}
         className={css`
-          margin: 0.4rem 1rem 0;
-          padding: 0.8rem 1rem;
-          border: 1px solid ${Color.borderGray()};
-          border-radius: 8px;
-          background: ${Color.white()};
-          display: flex;
-          flex-direction: column;
-          gap: 0.7rem;
-          font-size: 1.2rem;
-          color: ${Color.darkerGray()};
-
+          margin: 0 0 0.7rem;
           @media (max-width: ${mobileMaxWidth}) {
-            margin: 0.4rem 0.6rem 0;
-            font-size: 1.1rem;
+            margin: 0 0 0.5rem;
           }
         `}
-      >
-        <div
-          className={css`
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-          `}
-        >
-          <b>
-            {aiUsagePolicy.hasVerifiedEmail
-              ? 'AI Energy'
-              : 'Verify your email to use Zero or Ciel AI features'}
-          </b>
-          <Button
-            variant="soft"
-            disabled={aiUsagePolicyLoading}
-            onClick={() => refreshAiUsagePolicy({ silent: false })}
-          >
-            Refresh
-          </Button>
-        </div>
-        {aiUsagePolicy.hasVerifiedEmail && (
-          <div
-            className={css`
-              display: flex;
-              align-items: center;
-              gap: 0.8rem;
-              flex-wrap: wrap;
-            `}
-          >
-            <div
-              aria-label={`AI Energy ${energyPercent}%`}
-              className={css`
-                display: grid;
-                grid-template-columns: repeat(${energySegments}, 1fr);
-                gap: 0.25rem;
-                width: 10rem;
-                max-width: 45vw;
-                height: 1.6rem;
-                padding: 0.25rem;
-                border: 1px solid ${Color.borderGray()};
-                border-radius: 6px;
-                background: ${Color.white()};
-              `}
-            >
-              {Array.from({ length: energySegments }).map((_, index) => (
-                <div
-                  key={index}
-                  className={css`
-                    border-radius: 4px;
-                    background: ${index < energySegmentsRemaining
-                      ? Color.green()
-                      : Color.lightGray()};
-                  `}
-                />
-              ))}
-            </div>
-            <span>
-              {energyPercent}% · {energyMode}
-              {aiUsagePolicy.lastUsageOverflowed ? ' · extra used' : ''}
-            </span>
-          </div>
-        )}
-        {resetNeeded && (
-          <div
-            className={css`
-              display: flex;
-              flex-wrap: wrap;
-              align-items: center;
-              gap: 0.6rem;
-            `}
-          >
-            <span>
-              Recharge for {aiUsagePolicy.resetCost.toLocaleString()} coins.
-            </span>
-            <Button
-              variant="soft"
-              disabled={aiUsageResetLoading}
-              onClick={() => handlePurchaseAiUsageReset(false)}
-            >
-              Use coins
-            </Button>
-            <Button
-              variant="soft"
-              disabled={aiUsageResetLoading || !communityFundResetAvailable}
-              onClick={() => handlePurchaseAiUsageReset(true)}
-            >
-              Use community funds
-            </Button>
-          </div>
-        )}
-        {resetNeeded && communityEligibility && (
-          <div
-            className={css`
-              display: flex;
-              flex-direction: column;
-              gap: 0.45rem;
-            `}
-          >
-            {communityEligibility.requirements.map((requirement) => (
-              <div
-                key={requirement.key}
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  gap: 0.6rem;
-                  font-weight: 600;
-                  color: ${requirement.done
-                    ? Color.green()
-                    : Color.darkerGray()};
-                `}
-              >
-                <Icon
-                  icon={requirement.done ? 'check' : 'times'}
-                  style={{
-                    color: requirement.done ? Color.green() : Color.gray()
-                  }}
-                />
-                <span>
-                  {requirement.label}
-                  {typeof requirement.required === 'number'
-                    ? ` (${requirement.current || 0}/${requirement.required})`
-                    : ''}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        energyPercent={aiUsagePolicy.energyPercent ?? 0}
+        energySegments={aiUsagePolicy.energySegments}
+        energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
+        mode={aiUsagePolicy.currentMode}
+        overflowed={aiUsagePolicy.lastUsageOverflowed}
+        resetNeeded={resetNeeded}
+        resetCost={aiUsagePolicy.resetCost}
+        twinkleCoins={twinkleCoins}
+        rechargeLoading={aiUsageResetLoading}
+        onRecharge={() => handlePurchaseAiUsageReset(false)}
+        communityFundsEligible={!!communityEligibility?.eligible}
+        communityFundsRequirements={communityEligibility?.requirements}
+        onRechargeWithCommunityFunds={
+          communityEligibility
+            ? () => handlePurchaseAiUsageReset(true)
+            : undefined
+        }
+      />
     );
   }
 
@@ -1192,11 +1016,7 @@ export default function MessageInput({
       error?.message ||
       error?.error ||
       'Unable to save this AI message right now.';
-    setAlertModalTitle(
-      error?.code === 'zero_ciel_ai_verified_email_required'
-        ? 'Verify Email'
-        : 'AI Energy'
-    );
+    setAlertModalTitle('AI Energy');
     setAlertModalContent(
       restoredDraft
         ? `${message} Your message was restored so you can try again.`
@@ -1245,3 +1065,37 @@ export default function MessageInput({
     textRef.current = newText;
   }
 }
+
+const aiUsagePolicyRetryCls = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin: 0 0 0.7rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.9);
+
+  @media (max-width: ${mobileMaxWidth}) {
+    align-items: stretch;
+    flex-direction: column;
+    margin: 0 0 0.5rem;
+    padding: 0.6rem 0.7rem;
+  }
+`;
+
+const aiUsagePolicyRetryTextCls = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  color: #475569;
+  font-size: 1.1rem;
+  line-height: 1.35;
+
+  b {
+    color: #334155;
+    font-size: 1.15rem;
+  }
+`;

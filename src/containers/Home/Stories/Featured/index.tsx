@@ -27,7 +27,6 @@ export default function Featured() {
     const aiUsagePolicy = todayStats?.aiUsagePolicy;
     if (!aiUsagePolicy) return false;
     return (
-      !aiUsagePolicy.hasVerifiedEmail ||
       Number(aiUsagePolicy.energyRemaining || 0) <= 0
     );
   }, [isAdmin, todayStats?.aiUsagePolicy]);
