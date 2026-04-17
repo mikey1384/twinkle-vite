@@ -9,7 +9,10 @@ import {
 } from '~/constants/defaultValues';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { logForAdmin, parseChannelPath } from '~/helpers';
-import { getStoredItem } from '~/helpers/userDataHelpers';
+import {
+  getStoredItem,
+  getTwinkleDeviceId
+} from '~/helpers/userDataHelpers';
 import {
   useAppContext,
   useHomeContext,
@@ -447,13 +450,15 @@ export default function useInitSocket({
         loadChatRetryCountRef.current = 0;
 
         const token = getStoredItem('token');
+        const deviceId = getTwinkleDeviceId();
         socket.emit(
           'bind_uid_to_socket',
           {
             userId: userIdRef.current,
             username: usernameRef.current,
             profilePicUrl: profilePicUrlRef.current,
-            token
+            token,
+            deviceId
           },
           (result?: { authError?: boolean }) => {
             if (result?.authError) {
@@ -791,9 +796,10 @@ export default function useInitSocket({
     if (userId) {
       // User logged in - bind socket to new user
       const token = getStoredItem('token');
+      const deviceId = getTwinkleDeviceId();
       socket.emit(
         'bind_uid_to_socket',
-        { userId, username, profilePicUrl, token },
+        { userId, username, profilePicUrl, token, deviceId },
         (result?: { authError?: boolean }) => {
           if (result?.authError) {
             window.location.reload();

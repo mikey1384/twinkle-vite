@@ -101,7 +101,6 @@ function ChatInfo({
     if (!(isZeroChat || isCielChat)) return false;
     if (!aiUsagePolicy) return false;
     return (
-      aiUsagePolicy.hasVerifiedEmail === false ||
       (typeof aiUsagePolicy.energyRemaining === 'number' &&
         aiUsagePolicy.energyRemaining <= 0)
     );

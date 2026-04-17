@@ -118,8 +118,7 @@ function AIChatMenu({
     thinkHardState[aiType][key] ?? thinkHardState[aiType].global;
   const thinkHardDisabled =
     !!aiUsagePolicy &&
-    (!aiUsagePolicy.hasVerifiedEmail ||
-      Number(aiUsagePolicy?.energyRemaining || 0) <= 0);
+    Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
 
   return (
     <div

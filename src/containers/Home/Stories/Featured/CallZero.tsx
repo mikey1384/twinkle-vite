@@ -23,6 +23,8 @@ import { useRoleColor } from '~/theme/useRoleColor';
 
 interface AiUsagePolicy {
   hasVerifiedEmail?: boolean;
+  identityType?: 'verified_email' | 'user';
+  isLegacyUnverifiedIdentity?: boolean;
   energyPercent?: number;
   energyRemaining?: number;
   energySegments?: number;
@@ -275,9 +277,8 @@ export default function CallZero({
     if (isAdmin) return false;
     if (!aiUsagePolicy) return false;
     return (
-      !aiUsagePolicy.hasVerifiedEmail ||
-      (typeof aiUsagePolicy.energyRemaining === 'number' &&
-        aiUsagePolicy.energyRemaining <= 0)
+      typeof aiUsagePolicy.energyRemaining === 'number' &&
+      aiUsagePolicy.energyRemaining <= 0
     );
   }, [aiUsagePolicy, isAdmin]);
 
@@ -315,11 +316,8 @@ export default function CallZero({
 
   const getCallQuotaMessage = useMemo(() => {
     if (!hasReachedDailyLimit) return '';
-    if (aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail) {
-      return 'Verify your email to call Zero.';
-    }
     return 'Recharge AI Energy or come back tomorrow.';
-  }, [aiUsagePolicy, hasReachedDailyLimit]);
+  }, [hasReachedDailyLimit]);
 
   const accentBaseColor = useMemo(() => {
     if (aiCallOngoing) return Color.rose();
@@ -460,16 +458,13 @@ export default function CallZero({
       return 'Ending...';
     }
     if (hasReachedDailyLimit) {
-      return aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail
-        ? 'Verify Email'
-        : 'No Energy';
+      return 'No Energy';
     }
     return 'Call Zero';
   }, [
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
-    aiUsagePolicy,
     hasReachedDailyLimit,
     isZeroChannelLoading
   ]);
@@ -488,16 +483,13 @@ export default function CallZero({
     if (isZeroChannelLoading) return 'Connecting to Zero';
     if (aiCallEnding) return 'Ending the previous call with Zero';
     if (hasReachedDailyLimit) {
-      return aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail
-        ? 'Verify your email to call Zero.'
-        : 'AI Energy is empty. Recharge or come back tomorrow.';
+      return 'AI Energy is empty. Recharge or come back tomorrow.';
     }
     return 'Call Zero for voice assistance';
   }, [
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
-    aiUsagePolicy,
     hasReachedDailyLimit,
     isZeroChannelLoading
   ]);
@@ -541,9 +533,7 @@ export default function CallZero({
                 color: ${Color.rose()};
               `}
             >
-              {aiUsagePolicy && !aiUsagePolicy.hasVerifiedEmail
-                ? 'Email Verification Needed'
-                : 'AI Energy Empty'}
+              AI Energy Empty
             </h2>
             <p
               className={css`
