@@ -41,7 +41,7 @@ export default function AiEnergyCard({
   energyPercent,
   energySegments = 5,
   energySegmentsRemaining,
-  mode = 'full_quality',
+  mode,
   overflowed = false,
   resetNeeded = false,
   resetCost = 0,
@@ -90,8 +90,14 @@ export default function AiEnergyCard({
   const ratio = remaining / segments;
   const tone = ratio >= 0.6 ? 'green' : ratio >= 0.3 ? 'gold' : 'red';
   const fill = TONE[tone];
-  const modeLabel =
-    mode === 'low_energy' ? 'Low-energy' : 'Full-quality';
+  const modeLabel = mode
+    ? mode === 'low_energy'
+      ? 'Low-energy'
+      : 'Full-quality'
+    : '';
+  const statusLabel = [modeLabel, overflowed ? 'extra used' : '']
+    .filter(Boolean)
+    .join(' · ');
   const hasEnoughCoins = twinkleCoins >= resetCost;
   const showRequirements = !!(
     communityFundsRequirements && communityFundsRequirements.length > 0
@@ -113,10 +119,7 @@ export default function AiEnergyCard({
           <span className={percentCls} data-tone={tone}>
             {percent}%
           </span>
-          <span className={modeCls}>
-            · {modeLabel}
-            {overflowed ? ' · extra used' : ''}
-          </span>
+          {statusLabel && <span className={modeCls}>· {statusLabel}</span>}
         </div>
       </div>
 
