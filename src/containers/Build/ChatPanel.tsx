@@ -655,8 +655,6 @@ export default function ChatPanel({
                 energySegmentsRemaining={
                   copilotPolicy.requestLimits.energySegmentsRemaining
                 }
-                mode={copilotPolicy.requestLimits.currentMode}
-                overflowed={copilotPolicy.requestLimits.lastUsageOverflowed}
                 resetNeeded={!!generationResetUi}
                 resetCost={generationResetUi?.resetCost}
                 resetPurchaseNumber={
