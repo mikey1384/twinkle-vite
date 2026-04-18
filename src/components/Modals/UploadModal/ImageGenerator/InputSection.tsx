@@ -87,7 +87,7 @@ export default function InputSection({
               (Ctrl+Enter to generate)
             </span>
           </label>
-          {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+          {/* Engine selector hidden - hardcoded to image-1.5 (openai) */}
           {false && (
             <div
               className={css`

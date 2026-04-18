@@ -141,7 +141,7 @@ export default function SuccessModal({
   const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
-  // Hardcoded to 'openai' (image-1) - Gemini is unstable
+  // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
   const [imageEngine, setImageEngine] = useState<'gemini' | 'openai'>('openai');
   const [vocabSummary, setVocabSummary] = useState<{
     eligibleCount: number;
@@ -199,7 +199,7 @@ export default function SuccessModal({
   }, [initialImageUrl, storyId]);
 
   useEffect(() => {
-    // Always use 'openai' (image-1) - ignoring user preferences since Gemini is unstable
+    // Always use 'openai' (image-1.5) - ignoring user preferences since Gemini is unstable
     setImageEngine('openai');
   }, [userSettings?.aiImage?.engine]);
 
@@ -391,7 +391,7 @@ export default function SuccessModal({
                   </div>
                 )}
 
-                {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+                {/* Engine selector hidden - hardcoded to image-1.5 (openai) */}
                 {false && (
                   <div
                     style={{
