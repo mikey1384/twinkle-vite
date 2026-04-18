@@ -2457,7 +2457,7 @@ export default function BuildEditor({
     };
     code?: string | null;
     projectFiles?: Array<{ path: string; content?: string }> | null;
-    interruptionReason?: 'tool_limit' | null;
+    interruptionReason?: 'tool_limit' | 'energy_depleted' | null;
     executionPlan?: BuildExecutionPlan | null;
     followUpPrompt?: BuildFollowUpPrompt | null;
     deferredBuildRequest?: DeferredBuildRequest | null;
