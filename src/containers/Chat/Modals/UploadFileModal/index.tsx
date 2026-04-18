@@ -928,7 +928,6 @@ function UploadFileModal({
     attachment: ImageAttachment
   ) {
     if (!attachment?.file) return;
-    if (!channelId) return;
 
     let fileToUpload = attachment.file;
 

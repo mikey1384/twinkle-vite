@@ -45,6 +45,13 @@ const loadingPromises: { [channelId: string]: any } = {};
 const deviceIsMobile = isMobile(navigator);
 const deviceIsTablet = isTablet(navigator);
 
+interface ChatSubchannel {
+  id?: number | string;
+  path?: string;
+  loaded?: boolean;
+  [key: string]: any;
+}
+
 const LoadingBackground = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -420,9 +427,7 @@ export default function Main({
     pathId: number | string;
     members: any[];
     subchannelObj: {
-      [key: string]: {
-        path: string;
-      };
+      [key: string]: ChatSubchannel;
     };
     theme: string;
     subchannelIds: number[];
@@ -574,7 +579,8 @@ export default function Main({
     navigate,
     userId,
     selectedSubchannelId,
-    topicId
+    topicId,
+    currentPathId
   ]);
 
   useEffect(() => {
@@ -1274,13 +1280,19 @@ export default function Main({
           }
 
           if (subchannelPath) {
-            const subchannelLoaded =
-              channelsObj[channelId]?.subchannelObj[selectedSubchannelId]
-                ?.loaded;
+            const targetSubchannel = getTargetSubchannel({
+              channelId,
+              subchannelPath
+            });
+            const targetSubchannelId = Number(targetSubchannel?.id || 0);
+            if (!targetSubchannelId) {
+              return;
+            }
+            const subchannelLoaded = targetSubchannel?.loaded;
             if (!subchannelLoaded) {
               const subchannel = await loadSubchannel({
                 channelId,
-                subchannelId: selectedSubchannelId
+                subchannelId: targetSubchannelId
               });
               if (isStale()) return;
 
@@ -1413,6 +1425,25 @@ export default function Main({
     })();
 
     return loadingPromises[requestKey];
+  }
+
+  function getTargetSubchannel({
+    channelId,
+    subchannelPath
+  }: {
+    channelId: number;
+    subchannelPath?: string;
+  }) {
+    if (!subchannelPath) {
+      return null;
+    }
+    const subchannelObj = (channelsObj[channelId]?.subchannelObj ||
+      {}) as Record<string, ChatSubchannel>;
+    return (
+      Object.values(subchannelObj).find(
+        (subchannel) => subchannel?.path === subchannelPath
+      ) || null
+    );
   }
 
   async function handleScrollToBottom() {

@@ -53,7 +53,7 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
-  // Hardcoded to 'openai' (image-1) - Gemini is unstable
+  // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
   const [engine, setEngine] = useState<'gemini' | 'openai'>('openai');
   const [followUpEngine, setFollowUpEngine] = useState<'gemini' | 'openai'>(
     'openai'
@@ -130,7 +130,7 @@ export default function ImageGenerator({
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
 
   useEffect(() => {
-    // Always use 'openai' (image-1) - ignoring user preferences since Gemini is unstable
+    // Always use 'openai' (image-1.5) - ignoring user preferences since Gemini is unstable
     setEngine('openai');
     setFollowUpEngine('openai');
 

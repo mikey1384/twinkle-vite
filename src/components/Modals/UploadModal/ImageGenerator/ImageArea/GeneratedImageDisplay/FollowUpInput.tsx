@@ -56,7 +56,7 @@ export default function FollowUpInput({
         >
           Modify this image
         </label>
-        {/* Engine selector hidden - hardcoded to image-1 (openai) */}
+        {/* Engine selector hidden - hardcoded to image-1.5 (openai) */}
         {false && (
           <select
             value={followUpEngine}

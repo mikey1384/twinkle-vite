@@ -916,7 +916,7 @@ export default function contentRequestHelpers({
       engine?: 'gemini' | 'openai';
     }) {
       try {
-        // Hardcoded to 'openai' (image-1) - Gemini is unstable
+        // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
         const forcedEngine = 'openai';
         const {
           data: { imageUrl, coins }
@@ -2091,7 +2091,7 @@ export default function contentRequestHelpers({
       engine?: 'gemini' | 'openai';
     }) {
       try {
-        // Hardcoded to 'openai' (image-1) - Gemini is unstable
+        // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
         const forcedEngine = 'openai';
         const { data } = await request.post(
           `${URL}/content/image/ai`,
