@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useRoleColor } from '~/theme/useRoleColor';
+import DonorFundsModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/DonorFundsModal';
 
 interface CommunityFundRequirement {
   key: string;
@@ -80,6 +81,8 @@ export default function AiEnergyCard({
   cardRef?: React.Ref<HTMLDivElement>;
   themeColor?: string;
 }) {
+  const [communityFundsModalShown, setCommunityFundsModalShown] =
+    useState(false);
   const modeBadgeRole = useRoleColor('button', {
     themeName: themeColor,
     fallback: themeColor || 'logoBlue'
@@ -183,102 +186,124 @@ export default function AiEnergyCard({
   );
 
   return (
-    <div ref={cardRef} className={`${wrapperCls} ${className ?? ''}`} style={style}>
-      {isInline ? (
-        <div className={inlineRowCls}>
-          <div className={inlineTitleCls}>
-            <Icon icon="bolt" className={boltCls} />
+    <>
+      <div
+        ref={cardRef}
+        className={`${wrapperCls} ${className ?? ''}`}
+        style={style}
+      >
+        {isInline ? (
+          <div className={inlineRowCls}>
+            <button
+              type="button"
+              className={`${energyBadgeCls} ${inlineTitleCls}`}
+              onClick={() => setCommunityFundsModalShown(true)}
+              title="Open community fund"
+            >
+              <Icon icon="bolt" className={boltCls} />
+              {statusLabel && (
+                <span className={inlineTitleTextCls}>Energy</span>
+              )}
+            </button>
+            <div className={inlineMeterWrapCls}>
+              {meter}
+              <span className={inlinePercentCls}>{percent}%</span>
+            </div>
             {statusLabel && (
-              <span className={inlineTitleTextCls}>Energy</span>
+              <span className={inlineModeCls} style={modeBadgeStyle}>
+                {statusLabel}
+              </span>
             )}
           </div>
-          <div className={inlineMeterWrapCls}>
-            {meter}
-            <span className={inlinePercentCls}>{percent}%</span>
-          </div>
-          {statusLabel && (
-            <span className={inlineModeCls} style={modeBadgeStyle}>
-              {statusLabel}
-            </span>
-          )}
-        </div>
-      ) : (
-        <>
-          <div className={headerCls}>
-            <div className={titleCls}>
-              <Icon icon="bolt" className={boltCls} />
-              <span>Energy</span>
-            </div>
-            <div className={statusCls}>
-              <span className={percentCls} data-tone={tone}>
-                {percent}%
-              </span>
-              {statusLabel && (
-                <span className={modeCls} style={modeBadgeStyle}>
-                  {statusLabel}
+        ) : (
+          <>
+            <div className={headerCls}>
+              <button
+                type="button"
+                className={`${energyBadgeCls} ${titleCls}`}
+                onClick={() => setCommunityFundsModalShown(true)}
+                title="Open community fund"
+              >
+                <Icon icon="bolt" className={boltCls} />
+                <span>Energy</span>
+              </button>
+              <div className={statusCls}>
+                <span className={percentCls} data-tone={tone}>
+                  {percent}%
                 </span>
-              )}
-            </div>
-          </div>
-          {meter}
-        </>
-      )}
-
-      {resetNeeded && (
-        <div className={rechargeSectionCls}>
-          <div className={rechargeMessageCls}>
-            {resetPurchaseNumber
-              ? `Battery is empty. Recharge #${resetPurchaseNumber} restores one full battery for today.`
-              : 'Battery is empty. Recharge to restore one full battery for today.'}
-          </div>
-          {onRecharge && (
-            <GameCTAButton
-              icon="bolt"
-              variant="orange"
-              shiny
-              loading={rechargeLoading}
-              disabled={rechargeLoading || !hasEnoughCoins}
-              onClick={onRecharge}
-            >
-              {hasEnoughCoins
-                ? `Recharge (${resetCost.toLocaleString()} coins)`
-                : `Need ${resetCost.toLocaleString()} coins (you have ${twinkleCoins.toLocaleString()})`}
-            </GameCTAButton>
-          )}
-          {showRequirements && (
-            <div className={requirementsListCls}>
-              {communityFundsRequirements!.map((req) => (
-                <div
-                  key={req.key}
-                  className={requirementRowCls}
-                  data-done={req.done}
-                >
-                  <Icon icon={req.done ? 'check' : 'times'} />
-                  <span>
-                    {req.label}
-                    {typeof req.required === 'number'
-                      ? ` (${req.current || 0}/${req.required})`
-                      : ''}
+                {statusLabel && (
+                  <span className={modeCls} style={modeBadgeStyle}>
+                    {statusLabel}
                   </span>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-          )}
-          {onRechargeWithCommunityFunds && (
-            <GameCTAButton
-              icon="heart"
-              variant="pink"
-              loading={rechargeLoading}
-              disabled={rechargeLoading || !communityFundsEligible}
-              onClick={onRechargeWithCommunityFunds}
-            >
-              Use community funds
-            </GameCTAButton>
-          )}
-          {rechargeError && <div className={errorCls}>{rechargeError}</div>}
-        </div>
+            {meter}
+          </>
+        )}
+
+        {resetNeeded && (
+          <div className={rechargeSectionCls}>
+            <div className={rechargeMessageCls}>
+              {resetPurchaseNumber
+                ? `Battery is empty. Recharge #${resetPurchaseNumber} restores one full battery for today.`
+                : 'Battery is empty. Recharge to restore one full battery for today.'}
+            </div>
+            {onRecharge && (
+              <GameCTAButton
+                icon="bolt"
+                variant="orange"
+                shiny
+                loading={rechargeLoading}
+                disabled={rechargeLoading || !hasEnoughCoins}
+                onClick={onRecharge}
+              >
+                {hasEnoughCoins
+                  ? `Recharge (${resetCost.toLocaleString()} coins)`
+                  : `Need ${resetCost.toLocaleString()} coins (you have ${twinkleCoins.toLocaleString()})`}
+              </GameCTAButton>
+            )}
+            {showRequirements && (
+              <div className={requirementsListCls}>
+                {communityFundsRequirements!.map((req) => (
+                  <div
+                    key={req.key}
+                    className={requirementRowCls}
+                    data-done={req.done}
+                  >
+                    <Icon icon={req.done ? 'check' : 'times'} />
+                    <span>
+                      {req.label}
+                      {typeof req.required === 'number'
+                        ? ` (${req.current || 0}/${req.required})`
+                        : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {onRechargeWithCommunityFunds && (
+              <GameCTAButton
+                icon="heart"
+                variant="pink"
+                loading={rechargeLoading}
+                disabled={rechargeLoading || !communityFundsEligible}
+                onClick={onRechargeWithCommunityFunds}
+              >
+                Use community funds
+              </GameCTAButton>
+            )}
+            {rechargeError && <div className={errorCls}>{rechargeError}</div>}
+          </div>
+        )}
+      </div>
+      {communityFundsModalShown && (
+        <DonorFundsModal
+          modalLevel={3}
+          onHide={() => setCommunityFundsModalShown(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
 
@@ -331,6 +356,32 @@ const inlineTitleCls = css`
   font-weight: 800;
   color: ${Color.darkerGray()};
   white-space: nowrap;
+`;
+
+const energyBadgeCls = css`
+  appearance: none;
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: 6px;
+  background: rgba(255, 251, 235, 0.95);
+  box-shadow: 0 2px 0 rgba(180, 83, 9, 0.18);
+  padding: 0.25rem 0.5rem;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease;
+
+  &:hover {
+    background: #fff7d6;
+    box-shadow: 0 3px 0 rgba(180, 83, 9, 0.22);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    box-shadow: 0 1px 0 rgba(180, 83, 9, 0.18);
+    transform: translateY(1px);
+  }
 `;
 
 const inlineTitleTextCls = css`
@@ -453,16 +504,17 @@ const cellCls = css`
   overflow: hidden;
   border-radius: 6px;
   border: 2px solid;
+  background-clip: padding-box;
   transition: background 0.2s ease, border-color 0.2s ease,
     box-shadow 0.2s ease;
 `;
 
 const cellFillCls = css`
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: -2px;
+  bottom: -2px;
   left: 0;
-  border-radius: inherit;
+  border-radius: 6px;
   transition: width 0.2s ease;
 `;
 

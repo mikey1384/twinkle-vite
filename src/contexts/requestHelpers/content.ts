@@ -781,20 +781,28 @@ export default function contentRequestHelpers({
         throw error;
       }
     },
-    async loadAIStoryListeningImage(storyText: string, userId: string) {
+    async loadAIStoryListeningImage({
+      storyText,
+      storyId
+    }: {
+      storyText: string;
+      storyId: number | string;
+    }) {
       try {
-        const { data } = await request.post(
+        const {
+          data: { imageUrl, aiUsagePolicy }
+        } = await request.post(
           `${URL}/content/game/story/listening/image`,
           {
             story: storyText,
-            userId
+            storyId
           },
           {
             ...auth(),
             responseType: 'json'
           }
         );
-        return data.imageUrl;
+        return { imageUrl, aiUsagePolicy };
       } catch (error) {
         console.error('Error fetching image:', error);
         throw error;
@@ -909,24 +917,35 @@ export default function contentRequestHelpers({
     async generateAIStoryImage({
       storyId,
       style
-    }: // engine
-    {
-      storyId: string;
+    }: {
+      storyId: number | string;
       style?: string;
       engine?: 'gemini' | 'openai';
     }) {
       try {
         // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
-        const forcedEngine = 'openai';
+        const forcedEngine = 'openai' as const;
         const {
-          data: { imageUrl, coins }
+          data: { imageUrl, aiUsagePolicy }
         } = await request.post(
           `${URL}/content/game/story/image`,
           { storyId, style, engine: forcedEngine },
           auth()
         );
-        return { imageUrl, coins };
+        return { imageUrl, aiUsagePolicy };
       } catch (error) {
+        const response = (error as any)?.response;
+        if (response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: response.status,
+            message:
+              response.data.error ||
+              response.data.message ||
+              'Unable to generate image.',
+            code: response.data.code,
+            aiUsagePolicy: response.data.aiUsagePolicy
+          });
+        }
         return handleError(error);
       }
     },
