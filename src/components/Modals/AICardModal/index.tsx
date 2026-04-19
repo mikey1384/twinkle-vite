@@ -10,7 +10,12 @@ import SellModal from './SellModal';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import Loading from '~/components/Loading';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { useRoleColor } from '~/theme/useRoleColor';
 import { returnCardBurnXP } from '~/constants/defaultValues';
@@ -68,6 +73,8 @@ function labelFromStage(stage: CardImageStage, callingOpenAITime: number) {
       return 'Finalizing...';
     case 'completed':
       return 'Finishing touches...';
+    case 'error':
+      return 'Try Again';
     default:
       return 'Generating...';
   }
@@ -114,6 +121,9 @@ export default function AICardModal({
     (v) => v.actions.onWithdrawOutgoingOffer
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const cardObj = useChatContext((v) => v.state.cardObj);
   const [cardNotFound, setCardNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -122,6 +132,7 @@ export default function AICardModal({
   const [activeTab, setActiveTab] = useState('myMenu');
   const [offerModalShown, setOfferModalShown] = useState(false);
   const [sellModalShown, setSellModalShown] = useState(false);
+  const [imageGenerationError, setImageGenerationError] = useState('');
 
   const [callingOpenAITime, setCallingOpenAITime] = useState(0);
   const [prevCardId, setPrevCardId] = useState(null);
@@ -333,6 +344,7 @@ export default function AICardModal({
 
   useEffect(() => {
     setCallingOpenAITime(0);
+    setImageGenerationError('');
   }, [cardId]);
 
   const rootPath = useMemo(() => {
@@ -575,14 +587,29 @@ export default function AICardModal({
                   ) : (
                     <>
                       {!card.imagePath && userIsOwner && (
-                        <GradientButton
-                          loading={generatingImage}
-                          onClick={handleGenerateImage}
-                          fontSize="1.5rem"
-                          mobileFontSize="1.1rem"
-                        >
-                          {buttonLabel}
-                        </GradientButton>
+                        <>
+                          <GradientButton
+                            loading={generatingImage}
+                            onClick={handleGenerateImage}
+                            fontSize="1.5rem"
+                            mobileFontSize="1.1rem"
+                          >
+                            {buttonLabel}
+                          </GradientButton>
+                          {imageGenerationError && (
+                            <div
+                              className={css`
+                                max-width: 32rem;
+                                color: ${Color.rose()};
+                                font-weight: bold;
+                                text-align: center;
+                                font-size: 1.25rem;
+                              `}
+                            >
+                              {imageGenerationError}
+                            </div>
+                          )}
+                        </>
                       )}
                       {cardIsLive &&
                         (card.isListed ? (
@@ -700,6 +727,7 @@ export default function AICardModal({
 
   async function handleGenerateImage() {
     if (!card || generatingImage) return;
+    setImageGenerationError('');
     // Mark generation as started globally for this card so UI persists across modal open/close
     onUpdateAICard({
       cardId: card.id,
@@ -710,14 +738,33 @@ export default function AICardModal({
       }
     });
     try {
-      const { card: newState } = await generateAICardImage({
+      const { card: newState, aiUsagePolicy } = await generateAICardImage({
         cardId: card.id
       });
+      if (aiUsagePolicy) {
+        onUpdateTodayStats({
+          newStats: {
+            aiUsagePolicy
+          }
+        });
+      }
       if (newState) {
         onUpdateAICard({ cardId: card.id, newState });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error: any) {
+      console.error(error);
+      if (error?.aiUsagePolicy) {
+        onUpdateTodayStats({
+          newStats: {
+            aiUsagePolicy: error.aiUsagePolicy
+          }
+        });
+        setImageGenerationError('Recharge Energy to generate this image.');
+      } else {
+        setImageGenerationError(
+          error?.message || 'Image generation failed. Please try again.'
+        );
+      }
       onUpdateAICard({
         cardId: card.id,
         newState: {

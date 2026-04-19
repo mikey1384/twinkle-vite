@@ -709,7 +709,7 @@ export default function chatRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleChatError(error);
       }
     },
     async getOffersForCard({
@@ -919,7 +919,7 @@ export default function chatRequestHelpers({
         );
         return data;
       } catch (error) {
-        return handleError(error);
+        return handleChatError(error);
       }
     },
     async getCurrentNextDayTimeStamp() {

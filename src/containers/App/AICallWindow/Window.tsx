@@ -13,7 +13,6 @@ interface WindowProps {
 interface AiUsagePolicy {
   energyPercent?: number;
   energySegments?: number;
-  energySegmentsRemaining?: number;
 }
 
 function Window({ initialPosition, onHangUp }: WindowProps) {
@@ -35,22 +34,9 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);
   }, [aiUsagePolicy?.energySegments]);
 
-  const energySegmentsRemaining = useMemo(() => {
-    if (isAdmin) return energySegments;
-    return Math.max(
-      0,
-      Math.min(
-        energySegments,
-        aiUsagePolicy?.energySegmentsRemaining ??
-          Math.ceil((batteryLevel / 100) * energySegments)
-      )
-    );
-  }, [
-    aiUsagePolicy?.energySegmentsRemaining,
-    batteryLevel,
-    energySegments,
-    isAdmin
-  ]);
+  const visualSegmentFill = useMemo(() => {
+    return (batteryLevel / 100) * energySegments;
+  }, [batteryLevel, energySegments]);
 
   return (
     <>
@@ -125,21 +111,40 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
             gap: 3px;
           `}
         >
-          {Array.from({ length: energySegments }).map((_, index) => (
-            <span
-              key={index}
-              className={css`
-                width: 100%;
-                flex: 1;
-                border-radius: 6px;
-                background-color: ${energySegments - index <=
-                energySegmentsRemaining
-                  ? '#4caf50'
-                  : 'rgba(255, 255, 255, 0.65)'};
-                transition: background-color 0.3s ease-in-out;
-              `}
-            />
-          ))}
+          {Array.from({ length: energySegments }).map((_, index) => {
+            const fillRatio = Math.max(
+              0,
+              Math.min(1, visualSegmentFill - (energySegments - index - 1))
+            );
+            return (
+              <span
+                key={index}
+                className={css`
+                  position: relative;
+                  width: 100%;
+                  flex: 1;
+                  overflow: hidden;
+                  border-radius: 6px;
+                  background-color: rgba(255, 255, 255, 0.65);
+                `}
+              >
+                {fillRatio > 0 && (
+                  <span
+                    className={css`
+                      position: absolute;
+                      right: 0;
+                      bottom: 0;
+                      left: 0;
+                      height: ${fillRatio * 100}%;
+                      border-radius: inherit;
+                      background-color: #4caf50;
+                      transition: height 0.3s ease-in-out;
+                    `}
+                  />
+                )}
+              </span>
+            );
+          })}
           <div
             className={css`
               position: absolute;

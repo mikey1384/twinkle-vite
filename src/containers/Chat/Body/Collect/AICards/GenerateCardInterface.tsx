@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import { useKeyContext, useViewContext } from '~/contexts';
-import { MAX_NUM_SUMMONS, priceTable } from '~/constants/defaultValues';
+import { useViewContext } from '~/contexts';
+import { MAX_NUM_SUMMONS } from '~/constants/defaultValues';
 import GradientButton from '~/components/Buttons/GradientButton';
 import Icon from '~/components/Icon';
 
@@ -10,13 +10,17 @@ export default function GenerateCardInterface({
   canGenerateAICard,
   loading,
   onGenerateAICard,
-  posting
+  posting,
+  energyDepleted,
+  energyLoading
 }: {
   numSummoned: number;
   canGenerateAICard: boolean;
   loading: boolean;
   onGenerateAICard: () => void;
   posting: boolean;
+  energyDepleted: boolean;
+  energyLoading: boolean;
 }) {
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
@@ -25,9 +29,6 @@ export default function GenerateCardInterface({
     () => numSummoned >= MAX_NUM_SUMMONS,
     [numSummoned]
   );
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const hasEnoughTwinkleCoins = twinkleCoins >= priceTable.card;
-
   if (AI_FEATURES_DISABLED) {
     return <AIDisabledNotice title="AI Card Generation Is Unavailable" />;
   }
@@ -43,7 +44,8 @@ export default function GenerateCardInterface({
         <GradientButton
           loading={posting}
           disabled={
-            !hasEnoughTwinkleCoins ||
+            energyDepleted ||
+            energyLoading ||
             loading ||
             !canGenerateAICard ||
             maxSummoned
@@ -56,25 +58,19 @@ export default function GenerateCardInterface({
             'Need License'
           ) : maxSummoned ? (
             'Daily Limit Reached'
-          ) : !hasEnoughTwinkleCoins ? (
+          ) : energyLoading ? (
+            'Checking Energy...'
+          ) : energyDepleted ? (
             <div>
-              <span style={{ marginRight: '0.7rem' }}>Not Enough Coins</span>(
-              <Icon
-                style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
-                icon="coins"
-              />
-              {priceTable.card})
+              <span style={{ marginRight: '0.7rem' }}>Recharge Energy</span>
+              <Icon style={{ fontWeight: 'bold' }} icon="battery-empty" />
             </div>
           ) : posting ? (
             'Summoning...'
           ) : (
             <div>
-              <span style={{ marginRight: '0.7rem' }}>Summon Card</span>(
-              <Icon
-                style={{ fontWeight: 'bold', marginRight: '0.2rem' }}
-                icon="coins"
-              />
-              {priceTable.card})
+              <span style={{ marginRight: '0.7rem' }}>Summon Card</span>
+              <Icon style={{ fontWeight: 'bold' }} icon="bolt" />
             </div>
           )}
         </GradientButton>

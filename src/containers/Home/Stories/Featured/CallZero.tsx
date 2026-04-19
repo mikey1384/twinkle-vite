@@ -28,7 +28,6 @@ interface AiUsagePolicy {
   energyPercent?: number;
   energyRemaining?: number;
   energySegments?: number;
-  energySegmentsRemaining?: number;
   currentMode?: string;
 }
 
@@ -252,22 +251,9 @@ export default function CallZero({
     return Math.max(1, aiUsagePolicy?.energySegments || 5);
   }, [aiUsagePolicy?.energySegments]);
 
-  const energySegmentsRemaining = useMemo(() => {
-    if (isAdmin) return energySegments;
-    return Math.max(
-      0,
-      Math.min(
-        energySegments,
-        aiUsagePolicy?.energySegmentsRemaining ??
-          Math.ceil((batteryLevel / 100) * energySegments)
-      )
-    );
-  }, [
-    aiUsagePolicy?.energySegmentsRemaining,
-    batteryLevel,
-    energySegments,
-    isAdmin
-  ]);
+  const visualSegmentFill = useMemo(() => {
+    return (batteryLevel / 100) * energySegments;
+  }, [batteryLevel, energySegments]);
 
   const isZeroChannelLoading = useMemo(() => {
     return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
@@ -648,19 +634,39 @@ export default function CallZero({
                 gap: 4px;
               `}
             >
-              {Array.from({ length: energySegments }).map((_, index) => (
-                <span
-                  key={index}
-                  className={css`
-                    height: 100%;
-                    border-radius: 8px;
-                    background-color: ${index < energySegmentsRemaining
-                      ? '#4caf50'
-                      : 'rgba(255, 255, 255, 0.55)'};
-                    transition: background-color 0.3s ease-in-out;
-                  `}
-                />
-              ))}
+              {Array.from({ length: energySegments }).map((_, index) => {
+                const fillRatio = Math.max(
+                  0,
+                  Math.min(1, visualSegmentFill - index)
+                );
+                return (
+                  <span
+                    key={index}
+                    className={css`
+                      position: relative;
+                      height: 100%;
+                      overflow: hidden;
+                      border-radius: 8px;
+                      background-color: rgba(255, 255, 255, 0.55);
+                    `}
+                  >
+                    {fillRatio > 0 && (
+                      <span
+                        className={css`
+                          position: absolute;
+                          top: 0;
+                          bottom: 0;
+                          left: 0;
+                          width: ${fillRatio * 100}%;
+                          border-radius: inherit;
+                          background-color: #4caf50;
+                          transition: width 0.3s ease-in-out;
+                        `}
+                      />
+                    )}
+                  </span>
+                );
+              })}
             </div>
             <div
               className={css`
