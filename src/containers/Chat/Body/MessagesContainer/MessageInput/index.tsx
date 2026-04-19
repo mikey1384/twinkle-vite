@@ -188,11 +188,11 @@ export default function MessageInput({
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const myId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const getZeroCielAiUsagePolicy = useAppContext(
-    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
   );
-  const purchaseZeroCielAiUsageReset = useAppContext(
-    (v) => v.requestHelpers.purchaseZeroCielAiUsageReset
+  const purchaseAiEnergyRecharge = useAppContext(
+    (v) => v.requestHelpers.purchaseAiEnergyRecharge
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const aiCallChannelId = useChatContext((v) => v.state.aiCallChannelId);
@@ -827,7 +827,7 @@ export default function MessageInput({
       setAiUsagePolicyLoading(true);
     }
     try {
-      const result = await getZeroCielAiUsagePolicy();
+      const result = await getAiEnergyPolicy();
       const nextPolicy = result?.aiUsagePolicy || null;
       if (!isCancelled()) {
         if (nextPolicy) {
@@ -855,7 +855,7 @@ export default function MessageInput({
     if (aiUsageResetLoading) return;
     setAiUsageResetLoading(true);
     try {
-      const result = await purchaseZeroCielAiUsageReset({
+      const result = await purchaseAiEnergyRecharge({
         useCommunityFunds
       });
       if (result?.aiUsagePolicy) {

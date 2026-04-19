@@ -1986,7 +1986,7 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async getZeroCielAiUsagePolicy() {
+    async getAiEnergyPolicy() {
       try {
         const { data } = await request.get(
           `${URL}/chat/ai-usage-policy`,
@@ -1997,7 +1997,7 @@ export default function chatRequestHelpers({
         return handleError(error);
       }
     },
-    async purchaseZeroCielAiUsageReset({
+    async purchaseAiEnergyRecharge({
       useCommunityFunds = false
     }: {
       useCommunityFunds?: boolean;
