@@ -51,11 +51,11 @@ export default function AICards({
   const canGenerateAICard = useKeyContext((v) => v.myState.canGenerateAICard);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const generateAICard = useAppContext((v) => v.requestHelpers.generateAICard);
-  const getZeroCielAiUsagePolicy = useAppContext(
-    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
   );
-  const purchaseZeroCielAiUsageReset = useAppContext(
-    (v) => v.requestHelpers.purchaseZeroCielAiUsageReset
+  const purchaseAiEnergyRecharge = useAppContext(
+    (v) => v.requestHelpers.purchaseAiEnergyRecharge
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetCollectType = useAppContext(
@@ -251,7 +251,7 @@ export default function AICards({
       setAiUsagePolicyLoading(true);
     }
     try {
-      const result = await getZeroCielAiUsagePolicy();
+      const result = await getAiEnergyPolicy();
       const nextPolicy = result?.aiUsagePolicy || null;
       if (!isCancelled()) {
         applyAiUsagePolicy(nextPolicy);
@@ -291,7 +291,7 @@ export default function AICards({
     setAiUsageResetLoading(true);
     setAiUsageResetError('');
     try {
-      const result = await purchaseZeroCielAiUsageReset({
+      const result = await purchaseAiEnergyRecharge({
         useCommunityFunds
       });
       if (result?.aiUsagePolicy) {

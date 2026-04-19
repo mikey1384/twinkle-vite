@@ -72,8 +72,8 @@ export default function DonorFundsModal({
   const loadDonorLeaderboard = useAppContext(
     (v) => v.requestHelpers.loadDonorLeaderboard
   );
-  const getZeroCielAiUsagePolicy = useAppContext(
-    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
   );
 
   const [loading, setLoading] = useState(true);
@@ -108,7 +108,7 @@ export default function DonorFundsModal({
           loadCommunityFunds(),
           loadCommunityFundStats(),
           loadDonorLeaderboard(),
-          getZeroCielAiUsagePolicy().catch((error: any) => {
+          getAiEnergyPolicy().catch((error: any) => {
             console.error('Failed to load AI Energy recharge policy:', error);
             return null;
           })

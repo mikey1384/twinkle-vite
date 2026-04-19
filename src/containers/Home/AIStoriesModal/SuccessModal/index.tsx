@@ -206,11 +206,11 @@ export default function SuccessModal({
   const updateImageGenerationSettings = useAppContext(
     (v) => v.requestHelpers.updateImageGenerationSettings
   );
-  const getZeroCielAiUsagePolicy = useAppContext(
-    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
   );
-  const purchaseZeroCielAiUsageReset = useAppContext(
-    (v) => v.requestHelpers.purchaseZeroCielAiUsageReset
+  const purchaseAiEnergyRecharge = useAppContext(
+    (v) => v.requestHelpers.purchaseAiEnergyRecharge
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const globalAiUsagePolicy = useNotiContext(
@@ -828,7 +828,7 @@ export default function SuccessModal({
       setAiUsagePolicyLoading(true);
     }
     try {
-      const result = await getZeroCielAiUsagePolicy();
+      const result = await getAiEnergyPolicy();
       const nextPolicy = result?.aiUsagePolicy || null;
       if (!isCancelled()) {
         applyAiUsagePolicy(nextPolicy);
@@ -868,7 +868,7 @@ export default function SuccessModal({
     setAiUsageResetLoading(true);
     setAiUsageResetError('');
     try {
-      const result = await purchaseZeroCielAiUsageReset({
+      const result = await purchaseAiEnergyRecharge({
         useCommunityFunds
       });
       if (result?.aiUsagePolicy) {
