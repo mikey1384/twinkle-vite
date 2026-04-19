@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '~/contexts';
 import { css, keyframes } from '@emotion/css';
 
-export default function GeneratedImage() {
+export default function GeneratedImage({
+  storyId,
+  storyText
+}: {
+  storyId: number;
+  storyText: string;
+}) {
   const loadAIStoryListeningImage = useAppContext(
     (v) => v.requestHelpers.loadAIStoryListeningImage
   );
@@ -15,9 +21,10 @@ export default function GeneratedImage() {
 
     async function loadImage() {
       try {
-        const storyText = 'dummy_story_text'; // Replace with the actual story text if available
-        const userId = 'dummy_user_id'; // Replace with the actual user ID
-        const imageUrl = await loadAIStoryListeningImage(storyText, userId);
+        const { imageUrl } = await loadAIStoryListeningImage({
+          storyText,
+          storyId
+        });
         setImageUrl(imageUrl);
       } catch (error) {
         console.error('Error loading image:', error);
@@ -25,7 +32,7 @@ export default function GeneratedImage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storyId, storyText]);
 
   return (
     <div>

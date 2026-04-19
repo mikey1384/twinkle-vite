@@ -14,6 +14,7 @@ import RankBadge from '~/components/RankBadge';
 
 interface DonorFundsModalProps {
   onHide: () => void;
+  modalLevel?: number;
 }
 
 interface FundStats {
@@ -38,7 +39,29 @@ interface DonorLeaderboard {
   myTotalDonated: number;
 }
 
-export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
+interface CommunityFundRequirement {
+  key: string;
+  label: string;
+  done: boolean;
+  current?: number;
+  required?: number;
+}
+
+interface AiUsagePolicy {
+  resetCost?: number;
+  communityFundRechargeCoinsToday?: number;
+  communityFundRechargeCoinsRemaining?: number;
+  communityFundRechargeCoinsDailyCap?: number;
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: CommunityFundRequirement[];
+  };
+}
+
+export default function DonorFundsModal({
+  onHide,
+  modalLevel
+}: DonorFundsModalProps) {
   const myId = useKeyContext((v) => v.myState.userId);
   const loadCommunityFunds = useAppContext(
     (v) => v.requestHelpers.loadCommunityFunds
@@ -48,6 +71,9 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
   );
   const loadDonorLeaderboard = useAppContext(
     (v) => v.requestHelpers.loadDonorLeaderboard
+  );
+  const getZeroCielAiUsagePolicy = useAppContext(
+    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
   );
 
   const [loading, setLoading] = useState(true);
@@ -63,6 +89,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
     myDonationRank: null,
     myTotalDonated: 0
   });
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(null);
 
   const [activeTab, setActiveTab] = useState('funds');
   const [userMenuShown, setUserMenuShown] = useState(false);
@@ -72,17 +99,25 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
     init();
     async function init() {
       try {
-        const [fundsResponse, statsResponse, donorResponse] = await Promise.all(
-          [
-            loadCommunityFunds(),
-            loadCommunityFundStats(),
-            loadDonorLeaderboard()
-          ]
-        );
+        const [
+          fundsResponse,
+          statsResponse,
+          donorResponse,
+          aiUsagePolicyResponse
+        ] = await Promise.all([
+          loadCommunityFunds(),
+          loadCommunityFundStats(),
+          loadDonorLeaderboard(),
+          getZeroCielAiUsagePolicy().catch((error: any) => {
+            console.error('Failed to load AI Energy recharge policy:', error);
+            return null;
+          })
+        ]);
 
         setTotalFunds(fundsResponse.totalFunds || 0);
         setFundStats(statsResponse);
         setDonorData(donorResponse);
+        setAiUsagePolicy(aiUsagePolicyResponse?.aiUsagePolicy || null);
 
         setLoading(false);
       } catch (error) {
@@ -119,6 +154,7 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
         </div>
       }
       closeOnBackdropClick={!userMenuShown}
+      modalLevel={modalLevel}
       size="md"
       bodyPadding={0}
       footer={
@@ -230,6 +266,107 @@ export default function DonorFundsModal({ onHide }: DonorFundsModalProps) {
                     Twinkle Coins available for AI Energy recharge
                   </p>
                 </div>
+
+                {aiUsagePolicy?.communityFundResetEligibility && (
+                  <div
+                    className={css`
+                      background: #fff;
+                      border: 1px solid var(--ui-border);
+                      border-radius: 1rem;
+                      padding: 1.5rem;
+                      margin-bottom: 2rem;
+                    `}
+                  >
+                    <h3
+                      className={css`
+                        margin: 0 0 1rem 0;
+                        font-size: 1.6rem;
+                        font-weight: bold;
+                        color: ${Color.black()};
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                      `}
+                    >
+                      <Icon icon="bolt" style={{ color: Color.orange() }} />
+                      Community Recharge
+                    </h3>
+                    <div
+                      className={css`
+                        margin-bottom: 1rem;
+                        color: ${Color.darkGray()};
+                        font-size: 1.2rem;
+                        line-height: 1.4;
+                      `}
+                    >
+                      {aiUsagePolicy.communityFundResetEligibility.eligible
+                        ? 'Unlocked today. You can use community funds when your Energy is empty.'
+                        : "Complete today's requirements to unlock community-funded Energy recharge."}
+                    </div>
+                    <div
+                      className={css`
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.6rem;
+                      `}
+                    >
+                      {aiUsagePolicy.communityFundResetEligibility.requirements.map(
+                        (requirement) => (
+                          <div
+                            key={requirement.key}
+                            className={css`
+                              display: flex;
+                              align-items: center;
+                              gap: 0.7rem;
+                              padding: 0.65rem 0.8rem;
+                              border: 1px solid
+                                ${requirement.done
+                                  ? 'rgba(34, 197, 94, 0.35)'
+                                  : 'rgba(148, 163, 184, 0.35)'};
+                              border-radius: 8px;
+                              background: ${requirement.done
+                                ? 'rgba(220, 252, 231, 0.65)'
+                                : 'rgba(248, 250, 252, 0.9)'};
+                              color: ${Color.darkerGray()};
+                              font-size: 1.15rem;
+                            `}
+                          >
+                            <Icon
+                              icon={requirement.done ? 'check' : 'times'}
+                              style={{
+                                color: requirement.done
+                                  ? Color.green()
+                                  : Color.darkGray()
+                              }}
+                            />
+                            <span>
+                              {requirement.label}
+                              {typeof requirement.required === 'number'
+                                ? ` (${requirement.current || 0}/${requirement.required})`
+                                : ''}
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                    {typeof aiUsagePolicy.communityFundRechargeCoinsRemaining ===
+                      'number' && (
+                      <div
+                        className={css`
+                          margin-top: 1rem;
+                          color: ${Color.darkGray()};
+                          font-size: 1.1rem;
+                          text-align: center;
+                        `}
+                      >
+                        {addCommasToNumber(
+                          aiUsagePolicy.communityFundRechargeCoinsRemaining
+                        )}{' '}
+                        community coins available for your recharges today
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Usage Statistics */}
                 <div

@@ -8,12 +8,13 @@ import GradientButton from '~/components/Buttons/GradientButton';
 import Input from '~/components/Texts/Input';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { addCommasToNumber, truncateText } from '~/helpers/stringHelpers';
 import { socket } from '~/constants/sockets/api';
 import { useRoleColor } from '~/theme/useRoleColor';
 import VocabQuizModal from './VocabQuizModal';
 import { cloudFrontURL } from '~/constants/defaultValues';
+import AiEnergyCard from '~/components/AiEnergyCard';
 
 const colorHash: Record<
   number,
@@ -56,6 +57,91 @@ interface ImageGenStatus {
   imageUrl?: string;
   message?: string;
   partialImageB64?: string;
+}
+
+interface AiUsageRequirement {
+  key: string;
+  label: string;
+  done: boolean;
+  current?: number;
+  required?: number;
+}
+
+interface AiUsagePolicy {
+  dayIndex?: number;
+  energyRemaining?: number;
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  lastUsageOverflowed?: boolean;
+  resetCost?: number;
+  resetPurchasesToday?: number;
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: AiUsageRequirement[];
+  };
+}
+
+const aiStoryImageGenerationStoryIds = new Set<number>();
+const aiStoryGeneratedImageUrlsByStoryId = new Map<number, string>();
+
+function getAIStoryImageGenerationStoryId(storyId?: number | string) {
+  const numericStoryId = Number(storyId);
+  if (!Number.isInteger(numericStoryId) || numericStoryId <= 0) return 0;
+  return numericStoryId;
+}
+
+function setAIStoryImageGenerationInProgress({
+  storyId,
+  inProgress
+}: {
+  storyId: number;
+  inProgress: boolean;
+}) {
+  if (!storyId) return;
+  if (inProgress) {
+    aiStoryImageGenerationStoryIds.add(storyId);
+  } else {
+    aiStoryImageGenerationStoryIds.delete(storyId);
+  }
+}
+
+function isAIStoryImageGenerationInProgress(storyId: number) {
+  return !!storyId && aiStoryImageGenerationStoryIds.has(storyId);
+}
+
+function imageGenerationStatusIsRunning(status: ImageGenStatus) {
+  if (status.stage === 'error') return false;
+  if (status.stage === 'completed') return !status.imageUrl;
+  return true;
+}
+
+function getImageGenerationDisplayStage(status: ImageGenStatus) {
+  if (status.stage === 'completed' && !status.imageUrl) {
+    return 'downloading';
+  }
+  return status.stage;
+}
+
+function getAIStoryGeneratedImageUrl(storyId: number) {
+  if (!storyId) return '';
+  return aiStoryGeneratedImageUrlsByStoryId.get(storyId) || '';
+}
+
+function setAIStoryGeneratedImageUrl({
+  storyId,
+  imageUrl
+}: {
+  storyId: number;
+  imageUrl: string;
+}) {
+  if (!storyId || !imageUrl) return;
+  aiStoryGeneratedImageUrlsByStoryId.set(storyId, imageUrl);
+}
+
+function imageGenerationStageIsRunning(stage: ImageGenStatus['stage']) {
+  return !['not_started', 'error', 'completed'].includes(stage);
 }
 
 function labelFromStage(s: ImageGenStatus['stage'], callingOpenAITime: number) {
@@ -120,10 +206,25 @@ export default function SuccessModal({
   const updateImageGenerationSettings = useAppContext(
     (v) => v.requestHelpers.updateImageGenerationSettings
   );
+  const getZeroCielAiUsagePolicy = useAppContext(
+    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  );
+  const purchaseZeroCielAiUsageReset = useAppContext(
+    (v) => v.requestHelpers.purchaseZeroCielAiUsageReset
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const globalAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
+  const normalizedStoryId = getAIStoryImageGenerationStoryId(storyId);
 
   const initialImageUrl = useMemo(() => {
-    if (!initialImagePath) return '';
+    if (!initialImagePath) {
+      return getAIStoryGeneratedImageUrl(normalizedStoryId);
+    }
     if (
       initialImagePath.startsWith('http') ||
       initialImagePath.startsWith('data:')
@@ -134,10 +235,12 @@ export default function SuccessModal({
       /^\/?ai-story\//,
       ''
     )}`;
-  }, [initialImagePath]);
+  }, [initialImagePath, normalizedStoryId]);
 
   const [imageUrl, setImageUrl] = useState(initialImageUrl);
-  const [generatingImage, setGeneratingImage] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(() =>
+    isAIStoryImageGenerationInProgress(normalizedStoryId)
+  );
   const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
@@ -149,9 +252,19 @@ export default function SuccessModal({
   } | null>(null);
   const [loadingVocabSummary, setLoadingVocabSummary] = useState(false);
   const [vocabQuizShown, setVocabQuizShown] = useState(false);
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
+    globalAiUsagePolicy || null
+  );
+  const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
+  const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
+  const [aiUsageResetError, setAiUsageResetError] = useState('');
 
-  const [progressStage, setProgressStage] =
-    useState<ImageGenStatus['stage']>('not_started');
+  const [progressStage, setProgressStage] = useState<ImageGenStatus['stage']>(
+    () =>
+      isAIStoryImageGenerationInProgress(normalizedStoryId)
+        ? 'calling_openai'
+        : 'not_started'
+  );
 
   const [callingOpenAITime, setCallingOpenAITime] = useState(0);
 
@@ -160,6 +273,31 @@ export default function SuccessModal({
   const eligibleVocabCount = useMemo(() => {
     return Number(vocabSummary?.eligibleCount || 0);
   }, [vocabSummary]);
+
+  const energyDepleted = useMemo(() => {
+    return (
+      !!aiUsagePolicy &&
+      typeof aiUsagePolicy.energyRemaining === 'number' &&
+      aiUsagePolicy.energyRemaining <= 0
+    );
+  }, [aiUsagePolicy]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    loadAiUsagePolicy({ isCancelled: () => cancelled });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
+    if (globalAiUsagePolicy) {
+      applyAiUsagePolicy(globalAiUsagePolicy);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalAiUsagePolicy]);
 
   useEffect(() => {
     if (!storyId) return;
@@ -196,7 +334,25 @@ export default function SuccessModal({
 
   useEffect(() => {
     setImageUrl(initialImageUrl);
-  }, [initialImageUrl, storyId]);
+    if (initialImageUrl) {
+      setAIStoryImageGenerationInProgress({
+        storyId: normalizedStoryId,
+        inProgress: false
+      });
+      setGeneratingImage(false);
+      setPreviewImageUrl('');
+      setProgressStage('not_started');
+      return;
+    }
+    const isGenerating =
+      isAIStoryImageGenerationInProgress(normalizedStoryId);
+    setGeneratingImage(isGenerating);
+    if (isGenerating) {
+      setProgressStage((stage) =>
+        imageGenerationStageIsRunning(stage) ? stage : 'calling_openai'
+      );
+    }
+  }, [initialImageUrl, normalizedStoryId]);
 
   useEffect(() => {
     // Always use 'openai' (image-1.5) - ignoring user preferences since Gemini is unstable
@@ -234,12 +390,25 @@ export default function SuccessModal({
     );
 
     function handleImageGenerationStatusReceived(status: ImageGenStatus) {
-      if (status.storyId && status.storyId !== storyId) return;
-      setProgressStage(status.stage);
+      const statusStoryId = getAIStoryImageGenerationStoryId(
+        status.storyId || normalizedStoryId
+      );
+      if (status.storyId && statusStoryId !== normalizedStoryId) return;
+      const isRunning = imageGenerationStatusIsRunning(status);
+      setAIStoryImageGenerationInProgress({
+        storyId: statusStoryId,
+        inProgress: isRunning
+      });
+      setProgressStage(getImageGenerationDisplayStage(status));
+      setGeneratingImage(isRunning);
       if (status.partialImageB64) {
         setPreviewImageUrl(`data:image/png;base64,${status.partialImageB64}`);
       }
       if (status.imageUrl) {
+        setAIStoryGeneratedImageUrl({
+          storyId: statusStoryId,
+          imageUrl: status.imageUrl
+        });
         setImageUrl(status.imageUrl);
         setPreviewImageUrl('');
         setGeneratingImage(false);
@@ -258,29 +427,31 @@ export default function SuccessModal({
         handleImageGenerationStatusReceived
       );
     };
-  }, [storyId]);
-
-  const freeThreshold = isListening ? 5 : 3;
-  const imageGenerationCost = useMemo(() => {
-    return imageGeneratedCount < freeThreshold ? 0 : 1000;
-  }, [freeThreshold, imageGeneratedCount]);
+  }, [normalizedStoryId]);
 
   const canGenerateImage = useMemo(() => {
-    if (imageGeneratedCount === 0) {
-      return true;
-    }
-    return twinkleCoins >= imageGenerationCost;
-  }, [imageGeneratedCount, twinkleCoins, imageGenerationCost]);
+    return (
+      !generatingImage &&
+      !energyDepleted &&
+      !(aiUsagePolicyLoading && !aiUsagePolicy)
+    );
+  }, [aiUsagePolicy, aiUsagePolicyLoading, energyDepleted, generatingImage]);
 
   const buttonLabel = useMemo(() => {
-    return canGenerateImage
-      ? labelFromStage(progressStage, callingOpenAITime)
-      : 'Not Enough Coins';
-  }, [progressStage, canGenerateImage, callingOpenAITime]);
+    if (aiUsagePolicyLoading && !aiUsagePolicy) return 'Checking Energy...';
+    if (energyDepleted) return 'Recharge Energy';
+    return labelFromStage(progressStage, callingOpenAITime);
+  }, [
+    aiUsagePolicy,
+    aiUsagePolicyLoading,
+    energyDepleted,
+    progressStage,
+    callingOpenAITime
+  ]);
 
   const imageGenerationCostText = useMemo(() => {
-    return imageGenerationCost === 0 ? 'Free' : '1,000 coins';
-  }, [imageGenerationCost]);
+    return energyDepleted ? 'Energy empty' : 'Uses Energy';
+  }, [energyDepleted]);
 
   return (
     <>
@@ -431,6 +602,42 @@ export default function SuccessModal({
                   </div>
                 )}
 
+                {aiUsagePolicy && (
+                  <AiEnergyCard
+                    variant="inline"
+                    className={css`
+                      width: min(100%, 34rem);
+                      margin-top: 1.2rem;
+                    `}
+                    energyPercent={aiUsagePolicy.energyPercent ?? 0}
+                    energySegments={aiUsagePolicy.energySegments}
+                    energySegmentsRemaining={
+                      aiUsagePolicy.energySegmentsRemaining
+                    }
+                    overflowed={aiUsagePolicy.lastUsageOverflowed}
+                    resetNeeded={energyDepleted}
+                    resetCost={aiUsagePolicy.resetCost || 0}
+                    resetPurchaseNumber={
+                      (aiUsagePolicy.resetPurchasesToday || 0) + 1
+                    }
+                    twinkleCoins={twinkleCoins}
+                    rechargeLoading={aiUsageResetLoading}
+                    rechargeError={aiUsageResetError}
+                    onRecharge={() => handlePurchaseAiUsageReset(false)}
+                    communityFundsEligible={
+                      !!aiUsagePolicy.communityFundResetEligibility?.eligible
+                    }
+                    communityFundsRequirements={
+                      aiUsagePolicy.communityFundResetEligibility?.requirements
+                    }
+                    onRechargeWithCommunityFunds={
+                      aiUsagePolicy.communityFundResetEligibility
+                        ? () => handlePurchaseAiUsageReset(true)
+                        : undefined
+                    }
+                  />
+                )}
+
                 <GradientButton
                   theme={colorHash[difficulty] || 'default'}
                   loading={generatingImage}
@@ -464,22 +671,8 @@ export default function SuccessModal({
                     textAlign: 'center'
                   }}
                 >
-                  <div>
-                    {isListening ? (
-                      <>
-                        <div>
-                          Listening images are free for all 5 daily clears
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div>First 3 image generations are free</div>
-                        <div>
-                          1,000 coins for 4th and subsequent generations
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <div>Image generation uses Energy.</div>
+                  <div>Recharge when the battery is empty.</div>
                   <div style={{ marginTop: '0.5rem' }}>
                     You generated {imageGeneratedCount} image
                     {imageGeneratedCount === 1 ? '' : 's'} today
@@ -558,9 +751,28 @@ export default function SuccessModal({
   }
 
   async function handleGenerateImage() {
-    if (inputError || generatingImage) return;
+    if (
+      inputError ||
+      generatingImage ||
+      isAIStoryImageGenerationInProgress(normalizedStoryId)
+    ) {
+      return;
+    }
+    const policy = aiUsagePolicy || (await loadAiUsagePolicy());
+    if (
+      policy &&
+      typeof policy.energyRemaining === 'number' &&
+      policy.energyRemaining <= 0
+    ) {
+      setProgressStage('error');
+      return;
+    }
 
     setGeneratingImage(true);
+    setAIStoryImageGenerationInProgress({
+      storyId: normalizedStoryId,
+      inProgress: true
+    });
     setImageUrl('');
     setPreviewImageUrl('');
     setProgressStage(
@@ -568,25 +780,122 @@ export default function SuccessModal({
     );
 
     try {
-      const { imageUrl, coins } = await generateAIStoryImage({
-        storyId,
-        style: styleText,
-        engine: imageEngine
-      });
+      const { imageUrl, aiUsagePolicy: nextAiUsagePolicy } =
+        await generateAIStoryImage({
+          storyId,
+          style: styleText,
+          engine: imageEngine
+        });
 
+      setAIStoryGeneratedImageUrl({
+        storyId: normalizedStoryId,
+        imageUrl
+      });
       if (!isMountedRef.current) return;
 
       setImageUrl(imageUrl);
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
+      if (nextAiUsagePolicy) {
+        applyAiUsagePolicy(nextAiUsagePolicy);
+      }
       setProgressStage('not_started');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setProgressStage('error');
-      setPreviewImageUrl('');
+      if (error?.aiUsagePolicy) {
+        applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      if (isMountedRef.current) {
+        setProgressStage('error');
+        setPreviewImageUrl('');
+      }
     } finally {
+      setAIStoryImageGenerationInProgress({
+        storyId: normalizedStoryId,
+        inProgress: false
+      });
       if (isMountedRef.current) {
         setGeneratingImage(false);
       }
+    }
+  }
+
+  async function loadAiUsagePolicy({
+    isCancelled = () => false
+  }: {
+    isCancelled?: () => boolean;
+  } = {}) {
+    if (!userId) return null;
+    if (!isCancelled()) {
+      setAiUsagePolicyLoading(true);
+    }
+    try {
+      const result = await getZeroCielAiUsagePolicy();
+      const nextPolicy = result?.aiUsagePolicy || null;
+      if (!isCancelled()) {
+        applyAiUsagePolicy(nextPolicy);
+      }
+      return nextPolicy;
+    } catch (error) {
+      console.error(error);
+      return null;
+    } finally {
+      if (!isCancelled()) {
+        setAiUsagePolicyLoading(false);
+      }
+    }
+  }
+
+  function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+    if (!nextPolicy) return;
+    setAiUsagePolicy((policy) => ({
+      ...nextPolicy,
+      ...(policy?.communityFundResetEligibility &&
+      !nextPolicy.communityFundResetEligibility &&
+      (!nextPolicy.dayIndex || nextPolicy.dayIndex === policy.dayIndex)
+        ? {
+            communityFundResetEligibility: policy.communityFundResetEligibility
+          }
+        : {})
+    }));
+    onUpdateTodayStats({
+      newStats: {
+        aiUsagePolicy: nextPolicy
+      }
+    });
+  }
+
+  async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
+    if (aiUsageResetLoading) return;
+    setAiUsageResetLoading(true);
+    setAiUsageResetError('');
+    try {
+      const result = await purchaseZeroCielAiUsageReset({
+        useCommunityFunds
+      });
+      if (result?.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
+      if (typeof result?.newBalance === 'number') {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: result.newBalance }
+        });
+      }
+      if (typeof result?.communityFunds === 'number') {
+        onSetUserState({
+          userId,
+          newState: { communityFunds: result.communityFunds }
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      if (error?.aiUsagePolicy) {
+        applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      setAiUsageResetError(
+        error?.message || 'Unable to recharge Energy right now.'
+      );
+    } finally {
+      setAiUsageResetLoading(false);
     }
   }
 
