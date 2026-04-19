@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface CommunityFundRequirement {
   key: string;
@@ -40,7 +41,6 @@ const EMPTY_FLAT = 'rgba(148,163,184,0.22)';
 export default function AiEnergyCard({
   energyPercent,
   energySegments = 5,
-  energySegmentsRemaining,
   mode,
   overflowed = false,
   resetNeeded = false,
@@ -56,7 +56,8 @@ export default function AiEnergyCard({
   variant = 'standalone',
   className,
   style,
-  cardRef
+  cardRef,
+  themeColor
 }: {
   energyPercent: number;
   energySegments?: number;
@@ -77,23 +78,23 @@ export default function AiEnergyCard({
   className?: string;
   style?: React.CSSProperties;
   cardRef?: React.Ref<HTMLDivElement>;
+  themeColor?: string;
 }) {
+  const modeBadgeRole = useRoleColor('button', {
+    themeName: themeColor,
+    fallback: themeColor || 'logoBlue'
+  });
   const segments = Math.max(1, energySegments);
-  const remaining = Math.max(
-    0,
-    Math.min(
-      segments,
-      energySegmentsRemaining ?? Math.ceil((energyPercent / 100) * segments)
-    )
-  );
-  const percent = Math.max(0, Math.min(100, Math.round(energyPercent)));
-  const ratio = remaining / segments;
+  const rawPercent = Math.max(0, Math.min(100, energyPercent));
+  const percent = Math.round(rawPercent);
+  const ratio = rawPercent / 100;
+  const visualSegmentFill = ratio * segments;
   const tone = ratio >= 0.6 ? 'green' : ratio >= 0.3 ? 'gold' : 'red';
   const fill = TONE[tone];
   const modeLabel = mode
     ? mode === 'low_energy'
       ? 'Low-energy'
-      : 'Full-quality'
+      : 'Max'
     : '';
   const statusLabel = [modeLabel, overflowed ? 'extra used' : '']
     .filter(Boolean)
@@ -102,63 +103,126 @@ export default function AiEnergyCard({
   const showRequirements = !!(
     communityFundsRequirements && communityFundsRequirements.length > 0
   );
+  const themedModeBadgeStyle = {
+    '--energy-mode-bg': modeBadgeRole.getColor(0.92),
+    '--energy-mode-border': modeBadgeRole.getColor(),
+    '--energy-mode-shadow': modeBadgeRole.getColor(0.36)
+  } as React.CSSProperties;
+  const lowEnergyModeBadgeStyle = {
+    '--energy-mode-bg': TONE.gold.flat,
+    '--energy-mode-border': TONE.gold.border,
+    '--energy-mode-shadow': TONE.gold.shadow
+  } as React.CSSProperties;
+  const modeBadgeStyle =
+    mode === 'low_energy' ? lowEnergyModeBadgeStyle : themedModeBadgeStyle;
 
   const isInline = variant === 'inline';
   const wrapperCls = isInline ? inlineCls : cardCls;
   const cellsClass = isInline ? cellsFlatCls : cellsCls;
   const cellClass = isInline ? cellFlatCls : cellCls;
+  const energyCells = Array.from({ length: segments }).map((_, index) => {
+    const fillRatio = Math.max(0, Math.min(1, visualSegmentFill - index));
+    const filled = fillRatio > 0;
+    const fillWidth = `${fillRatio * 100}%`;
+    if (isInline) {
+      return (
+        <div
+          key={index}
+          className={cellClass}
+          style={{
+            background: EMPTY_FLAT
+          }}
+        >
+          {filled && (
+            <span
+              className={cellFlatFillCls}
+              style={{
+                width: fillWidth,
+                background: fill.flat
+              }}
+            />
+          )}
+        </div>
+      );
+    }
+    return (
+      <div
+        key={index}
+        className={cellClass}
+        style={{
+          background: EMPTY_BG,
+          borderColor: filled ? fill.border : EMPTY_BORDER,
+          boxShadow: filled
+            ? `0 2px 0 ${fill.shadow}, inset 0 1px 0 rgba(255,255,255,0.4)`
+            : 'inset 0 1px 2px rgba(0,0,0,0.06)'
+        }}
+      >
+        {filled && (
+          <span
+            className={cellFillCls}
+            style={{
+              width: fillWidth,
+              background: fill.bg
+            }}
+          />
+        )}
+      </div>
+    );
+  });
+  const meter = (
+    <div
+      className={cellsClass}
+      role="meter"
+      aria-valuenow={percent}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Energy ${percent}%`}
+    >
+      {energyCells}
+    </div>
+  );
 
   return (
     <div ref={cardRef} className={`${wrapperCls} ${className ?? ''}`} style={style}>
-      <div className={headerCls}>
-        <div className={titleCls}>
-          <Icon icon="bolt" className={boltCls} />
-          <span>AI Energy</span>
+      {isInline ? (
+        <div className={inlineRowCls}>
+          <div className={inlineTitleCls}>
+            <Icon icon="bolt" className={boltCls} />
+            {statusLabel && (
+              <span className={inlineTitleTextCls}>Energy</span>
+            )}
+          </div>
+          <div className={inlineMeterWrapCls}>
+            {meter}
+            <span className={inlinePercentCls}>{percent}%</span>
+          </div>
+          {statusLabel && (
+            <span className={inlineModeCls} style={modeBadgeStyle}>
+              {statusLabel}
+            </span>
+          )}
         </div>
-        <div className={statusCls}>
-          <span className={percentCls} data-tone={tone}>
-            {percent}%
-          </span>
-          {statusLabel && <span className={modeCls}>· {statusLabel}</span>}
-        </div>
-      </div>
-
-      <div
-        className={cellsClass}
-        role="meter"
-        aria-valuenow={percent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`AI Energy ${percent}%`}
-      >
-        {Array.from({ length: segments }).map((_, index) => {
-          const filled = index < remaining;
-          if (isInline) {
-            return (
-              <div
-                key={index}
-                className={cellClass}
-                style={{
-                  background: filled ? fill.flat : EMPTY_FLAT
-                }}
-              />
-            );
-          }
-          return (
-            <div
-              key={index}
-              className={cellClass}
-              style={{
-                background: filled ? fill.bg : EMPTY_BG,
-                borderColor: filled ? fill.border : EMPTY_BORDER,
-                boxShadow: filled
-                  ? `0 2px 0 ${fill.shadow}, inset 0 1px 0 rgba(255,255,255,0.4)`
-                  : 'inset 0 1px 2px rgba(0,0,0,0.06)'
-              }}
-            />
-          );
-        })}
-      </div>
+      ) : (
+        <>
+          <div className={headerCls}>
+            <div className={titleCls}>
+              <Icon icon="bolt" className={boltCls} />
+              <span>Energy</span>
+            </div>
+            <div className={statusCls}>
+              <span className={percentCls} data-tone={tone}>
+                {percent}%
+              </span>
+              {statusLabel && (
+                <span className={modeCls} style={modeBadgeStyle}>
+                  {statusLabel}
+                </span>
+              )}
+            </div>
+          </div>
+          {meter}
+        </>
+      )}
 
       {resetNeeded && (
         <div className={rechargeSectionCls}>
@@ -239,7 +303,7 @@ const cardCls = css`
 const inlineCls = css`
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
   padding: 0;
   background: transparent;
   border: none;
@@ -249,6 +313,74 @@ const inlineCls = css`
   @media (max-width: ${mobileMaxWidth}) {
     font-size: 1.05rem;
   }
+`;
+
+const inlineRowCls = css`
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 2rem;
+`;
+
+const inlineTitleCls = css`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  font-weight: 800;
+  color: ${Color.darkerGray()};
+  white-space: nowrap;
+`;
+
+const inlineTitleTextCls = css`
+  @media (max-width: ${mobileMaxWidth}) {
+    display: none;
+  }
+`;
+
+const inlineMeterWrapCls = css`
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 8rem;
+`;
+
+const inlinePercentCls = css`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.2rem;
+  padding: 0.15rem 0.45rem;
+  transform: translate(-50%, -50%);
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.35);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  white-space: nowrap;
+`;
+
+const inlineModeCls = css`
+  flex-shrink: 0;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--energy-mode-border);
+  border-radius: 6px;
+  background: var(--energy-mode-bg);
+  box-shadow: 0 2px 0 var(--energy-mode-shadow);
+  color: #fff;
+  font-size: 0.95em;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+  white-space: nowrap;
 `;
 
 const headerCls = css`
@@ -264,7 +396,7 @@ const titleCls = css`
   align-items: center;
   gap: 0.45rem;
   font-weight: 800;
-  letter-spacing: 0.2px;
+  letter-spacing: 0;
   color: ${Color.darkerGray()};
 `;
 
@@ -275,7 +407,7 @@ const boltCls = css`
 
 const statusCls = css`
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.35rem;
   font-weight: 600;
 `;
@@ -295,8 +427,17 @@ const percentCls = css`
 `;
 
 const modeCls = css`
-  opacity: 0.75;
-  font-size: 0.95em;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid var(--energy-mode-border);
+  border-radius: 6px;
+  background: var(--energy-mode-bg);
+  box-shadow: 0 2px 0 var(--energy-mode-shadow);
+  color: #fff;
+  font-size: 0.9em;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+  white-space: nowrap;
 `;
 
 const cellsCls = css`
@@ -316,17 +457,38 @@ const cellCls = css`
     box-shadow 0.2s ease;
 `;
 
+const cellFillCls = css`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  transition: width 0.2s ease;
+`;
+
 const cellsFlatCls = css`
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: 0.3rem;
-  height: 1rem;
+  width: 100%;
+  height: 1.6rem;
 `;
 
 const cellFlatCls = css`
+  position: relative;
+  overflow: hidden;
   border-radius: 3px;
   transition: background 0.2s ease;
+`;
+
+const cellFlatFillCls = css`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  transition: width 0.2s ease;
 `;
 
 const rechargeSectionCls = css`

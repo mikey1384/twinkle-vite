@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import GenerateCardInterface from './GenerateCardInterface';
 import FilterBar from '~/components/FilterBar';
 import ActivitiesContainer from './ActivitiesContainer';
@@ -6,9 +6,39 @@ import Loading from '~/components/Loading';
 import { Link, useNavigate } from 'react-router-dom';
 import { Color } from '~/constants/css';
 import { VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
-import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
+import {
+  useAppContext,
+  useChatContext,
+  useKeyContext,
+  useNotiContext
+} from '~/contexts';
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
+import AiEnergyCard from '~/components/AiEnergyCard';
+
+interface AiUsageRequirement {
+  key: string;
+  label: string;
+  done: boolean;
+  current?: number;
+  required?: number;
+}
+
+interface AiUsagePolicy {
+  dayIndex?: number;
+  energyRemaining?: number;
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  lastUsageOverflowed?: boolean;
+  resetCost?: number;
+  resetPurchasesToday?: number;
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: AiUsageRequirement[];
+  };
+}
 
 export default function AICards({
   displayedThemeColor,
@@ -19,7 +49,14 @@ export default function AICards({
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
   const canGenerateAICard = useKeyContext((v) => v.myState.canGenerateAICard);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const generateAICard = useAppContext((v) => v.requestHelpers.generateAICard);
+  const getZeroCielAiUsagePolicy = useAppContext(
+    (v) => v.requestHelpers.getZeroCielAiUsagePolicy
+  );
+  const purchaseZeroCielAiUsageReset = useAppContext(
+    (v) => v.requestHelpers.purchaseZeroCielAiUsageReset
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onSetCollectType = useAppContext(
     (v) => v.user.actions.onSetCollectType
@@ -41,7 +78,43 @@ export default function AICards({
     (v) => v.actions.onSetAICardStatusMessage
   );
   const onPostAICardFeed = useChatContext((v) => v.actions.onPostAICardFeed);
+  const globalAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
+    globalAiUsagePolicy || null
+  );
+  const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
+  const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
+  const [aiUsageResetError, setAiUsageResetError] = useState('');
   const navigate = useNavigate();
+  const energyDepleted = useMemo(() => {
+    return (
+      !!aiUsagePolicy &&
+      typeof aiUsagePolicy.energyRemaining === 'number' &&
+      aiUsagePolicy.energyRemaining <= 0
+    );
+  }, [aiUsagePolicy]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    loadAiUsagePolicy({ isCancelled: () => cancelled });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
+    if (globalAiUsagePolicy) {
+      applyAiUsagePolicy(globalAiUsagePolicy);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalAiUsagePolicy]);
 
   return (
     <div
@@ -109,18 +182,55 @@ export default function AICards({
       )}
       <div
         className={css`
-          height: 6.5rem;
+          min-height: ${energyDepleted ? '13rem' : '9.5rem'};
+          max-height: 45%;
           background: ${Color.inputGray()};
           padding: 1rem;
           border-top: 1px solid var(--ui-border);
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
         `}
       >
+        {aiUsagePolicy && (
+          <AiEnergyCard
+            variant="inline"
+            className={css`
+              flex-shrink: 0;
+            `}
+            energyPercent={aiUsagePolicy.energyPercent ?? 0}
+            energySegments={aiUsagePolicy.energySegments}
+            energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
+            overflowed={aiUsagePolicy.lastUsageOverflowed}
+            resetNeeded={energyDepleted}
+            resetCost={aiUsagePolicy.resetCost || 0}
+            resetPurchaseNumber={(aiUsagePolicy.resetPurchasesToday || 0) + 1}
+            twinkleCoins={twinkleCoins}
+            rechargeLoading={aiUsageResetLoading}
+            rechargeError={aiUsageResetError}
+            onRecharge={() => handlePurchaseAiUsageReset(false)}
+            communityFundsEligible={
+              !!aiUsagePolicy.communityFundResetEligibility?.eligible
+            }
+            communityFundsRequirements={
+              aiUsagePolicy.communityFundResetEligibility?.requirements
+            }
+            onRechargeWithCommunityFunds={
+              aiUsagePolicy.communityFundResetEligibility
+                ? () => handlePurchaseAiUsageReset(true)
+                : undefined
+            }
+          />
+        )}
         <GenerateCardInterface
           canGenerateAICard={!!canGenerateAICard}
           numSummoned={numCardSummonedToday}
           onGenerateAICard={handleGenerateCard}
           posting={isGeneratingAICard}
           loading={loadingAICardChat}
+          energyDepleted={energyDepleted}
+          energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
         />
       </div>
     </div>
@@ -131,19 +241,113 @@ export default function AICards({
     navigate(`/chat/${VOCAB_CHAT_TYPE}`);
   }
 
+  async function loadAiUsagePolicy({
+    isCancelled = () => false
+  }: {
+    isCancelled?: () => boolean;
+  } = {}) {
+    if (!userId) return null;
+    if (!isCancelled()) {
+      setAiUsagePolicyLoading(true);
+    }
+    try {
+      const result = await getZeroCielAiUsagePolicy();
+      const nextPolicy = result?.aiUsagePolicy || null;
+      if (!isCancelled()) {
+        applyAiUsagePolicy(nextPolicy);
+      }
+      return nextPolicy;
+    } catch (error) {
+      console.error(error);
+      return null;
+    } finally {
+      if (!isCancelled()) {
+        setAiUsagePolicyLoading(false);
+      }
+    }
+  }
+
+  function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+    if (!nextPolicy) return;
+    setAiUsagePolicy((policy) => ({
+      ...nextPolicy,
+      ...(policy?.communityFundResetEligibility &&
+      !nextPolicy.communityFundResetEligibility &&
+      (!nextPolicy.dayIndex || nextPolicy.dayIndex === policy.dayIndex)
+        ? {
+            communityFundResetEligibility: policy.communityFundResetEligibility
+          }
+        : {})
+    }));
+    onUpdateTodayStats({
+      newStats: {
+        aiUsagePolicy: nextPolicy
+      }
+    });
+  }
+
+  async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
+    if (aiUsageResetLoading) return;
+    setAiUsageResetLoading(true);
+    setAiUsageResetError('');
+    try {
+      const result = await purchaseZeroCielAiUsageReset({
+        useCommunityFunds
+      });
+      if (result?.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
+      if (typeof result?.newBalance === 'number') {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: result.newBalance }
+        });
+      }
+      if (typeof result?.communityFunds === 'number') {
+        onSetUserState({
+          userId,
+          newState: { communityFunds: result.communityFunds }
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      if (error?.aiUsagePolicy) {
+        applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      setAiUsageResetError(
+        error?.message || 'Unable to recharge Energy right now.'
+      );
+    } finally {
+      setAiUsageResetLoading(false);
+    }
+  }
+
   async function handleGenerateCard() {
     try {
+      const policy = aiUsagePolicy || (await loadAiUsagePolicy());
+      if (
+        policy &&
+        typeof policy.energyRemaining === 'number' &&
+        policy.energyRemaining <= 0
+      ) {
+        return onSetAICardStatusMessage(
+          'Recharge Energy to summon a card.'
+        );
+      }
       onSetIsGeneratingAICard(true);
-      onSetAICardStatusMessage('Processing transaction...');
+      onSetAICardStatusMessage('Checking Energy...');
       const {
         isMaxReached,
-        notEnoughCoins,
         coins,
         numCardSummoned,
         feed,
         card,
-        isMysteryCard
+        isMysteryCard,
+        aiUsagePolicy: nextAiUsagePolicy
       } = await generateAICard();
+      if (nextAiUsagePolicy) {
+        applyAiUsagePolicy(nextAiUsagePolicy);
+      }
       onUpdateNumSummoned(numCardSummoned);
       if (isMaxReached) {
         onSetIsGeneratingAICard(false);
@@ -151,12 +355,8 @@ export default function AICards({
           `You cannot summon any more cards today.`
         );
       }
-      onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      if (notEnoughCoins) {
-        onSetIsGeneratingAICard(false);
-        return onSetAICardStatusMessage(
-          `You don't have enough Twinkle Coins to summon a card.`
-        );
+      if (typeof coins === 'number') {
+        onSetUserState({ userId, newState: { twinkleCoins: coins } });
       }
       onSetAICardStatusMessage(
         isMysteryCard ? 'Mystery Card Summoned' : 'Card Summoned'
@@ -169,15 +369,18 @@ export default function AICards({
     } catch (error: any) {
       console.error(error);
 
-      const errorKey = error?.data?.error;
+      const errorKey = error?.error || error?.data?.error;
 
       let errorMessage = 'An unexpected error occurred. Please try again.';
 
-      if (errorKey === 'inappropriate_word') {
-        errorMessage = 'Payment failed. Please try again.';
+      if (error?.aiUsagePolicy) {
+        applyAiUsagePolicy(error.aiUsagePolicy);
+        errorMessage = 'Recharge Energy to summon a card.';
+      } else if (errorKey === 'inappropriate_word') {
+        errorMessage = 'Card setup failed. Please try again.';
       } else if (errorKey === 'image_generation_failed') {
         errorMessage =
-          "Card generation failed after payment. Open 'My Collection' at the bottom right, select your card, and press 'Generate' to add an image.";
+          "Card generation failed. Open 'My Collection' at the bottom right, select your card, and press 'Generate' to add an image.";
       }
 
       onSetAICardStatusMessage(errorMessage);
