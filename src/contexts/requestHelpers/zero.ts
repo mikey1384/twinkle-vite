@@ -167,6 +167,7 @@ export default function zeroRequestHelpers({
           `${URL}/zero/tts`,
           { text, voice },
           {
+            ...auth(),
             responseType: 'blob'
           }
         );
