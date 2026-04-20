@@ -107,7 +107,7 @@ export default function DrawingToolsUI({
                 padding: '0.75rem',
                 minWidth: '5rem',
                 height: 'auto',
-                fontSize: '0.85rem',
+                fontSize: '1rem',
                 fontWeight: 500
               }}
             >
@@ -138,7 +138,7 @@ export default function DrawingToolsUI({
           >
             <label
               className={css`
-                font-size: 0.85rem;
+                font-size: 1rem;
                 font-weight: 600;
                 color: ${Color.darkGray()};
                 text-transform: uppercase;
@@ -209,7 +209,7 @@ export default function DrawingToolsUI({
               </div>
               <div
                 className={css`
-                  font-size: 0.8rem;
+                  font-size: 1rem;
                   color: ${Color.darkGray()};
                   font-weight: 500;
                 `}
@@ -226,7 +226,7 @@ export default function DrawingToolsUI({
             >
               <div
                 className={css`
-                  font-size: 0.8rem;
+                  font-size: 1rem;
                   font-weight: 500;
                   color: ${Color.darkGray()};
                   text-align: center;
@@ -287,7 +287,7 @@ export default function DrawingToolsUI({
               >
                 <div
                   className={css`
-                    font-size: 0.7rem;
+                    font-size: 1rem;
                     font-weight: 500;
                     color: ${Color.darkGray()};
                     text-align: center;
@@ -345,7 +345,7 @@ export default function DrawingToolsUI({
           >
             <label
               className={css`
-                font-size: 0.85rem;
+                font-size: 1rem;
                 font-weight: 600;
                 color: ${Color.darkGray()};
                 text-transform: uppercase;
@@ -395,7 +395,7 @@ export default function DrawingToolsUI({
               />
               <span
                 className={css`
-                  font-size: 0.875rem;
+                  font-size: 1rem;
                   font-weight: 600;
                   color: ${Color.darkGray()};
                   min-width: 2rem;
@@ -417,7 +417,7 @@ export default function DrawingToolsUI({
             >
               <label
                 className={css`
-                  font-size: 0.75rem;
+                  font-size: 1rem;
                   font-weight: 600;
                   color: ${Color.darkGray()};
                   text-transform: uppercase;
@@ -467,7 +467,7 @@ export default function DrawingToolsUI({
                 />
                 <span
                   className={css`
-                    font-size: 0.875rem;
+                    font-size: 1rem;
                     font-weight: 600;
                     color: ${Color.darkGray()};
                     min-width: 2rem;
@@ -490,7 +490,7 @@ export default function DrawingToolsUI({
             >
               <label
                 className={css`
-                  font-size: 0.85rem;
+                  font-size: 1rem;
                   font-weight: 600;
                   color: ${Color.darkGray()};
                   text-transform: uppercase;
@@ -541,7 +541,7 @@ export default function DrawingToolsUI({
                 </button>
                 <span
                   className={css`
-                    font-size: 0.875rem;
+                    font-size: 1rem;
                     font-weight: 600;
                     color: ${Color.darkGray()};
                     min-width: 3rem;
@@ -712,7 +712,7 @@ export default function DrawingToolsUI({
             >
               <label
                 className={css`
-                  font-size: 0.875rem;
+                  font-size: 1rem;
                   font-weight: 500;
                   color: ${Color.darkGray()};
                 `}
@@ -721,7 +721,7 @@ export default function DrawingToolsUI({
               </label>
               <span
                 className={css`
-                  font-size: 0.875rem;
+                  font-size: 1rem;
                   font-weight: 600;
                   color: ${Color.darkGray()};
                   min-width: 2rem;

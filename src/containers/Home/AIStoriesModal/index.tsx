@@ -39,7 +39,6 @@ interface AIStoryClearFollowUp {
   difficulty: number;
   isListening: boolean;
   numQuestions: number;
-  imageGeneratedCount: number;
   imagePath?: string;
 }
 
@@ -304,7 +303,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
         </div>
         {successModalShown && successModalStory && (
           <SuccessModal
-            imageGeneratedCount={successModalStory.imageGeneratedCount}
             initialImagePath={successModalStory.imagePath}
             isListening={successModalStory.isListening}
             onHide={handleCloseSuccessModal}
@@ -429,7 +427,6 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       difficulty: Number(story.difficulty || 1),
       isListening: Boolean(story.isListening),
       numQuestions: Number(story.numQuestions || 0),
-      imageGeneratedCount: Number(story.imageGeneratedCount || 0),
       imagePath: story.imagePath || ''
     };
   }

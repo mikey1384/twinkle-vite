@@ -96,8 +96,8 @@ export default function AiEnergyCard({
   const fill = TONE[tone];
   const modeLabel = mode
     ? mode === 'low_energy'
-      ? 'Low-energy'
-      : 'Max'
+      ? 'Lite Mode'
+      : 'Max Mode'
     : '';
   const statusLabel = [modeLabel, overflowed ? 'extra used' : '']
     .filter(Boolean)
@@ -118,6 +118,16 @@ export default function AiEnergyCard({
   } as React.CSSProperties;
   const modeBadgeStyle =
     mode === 'low_energy' ? lowEnergyModeBadgeStyle : themedModeBadgeStyle;
+  const themedCardStyle = {
+    '--energy-card-border': modeBadgeRole.getColor(0.3),
+    '--energy-card-bg': modeBadgeRole.getColor(0.035),
+    '--energy-card-shadow': modeBadgeRole.getColor(0.12),
+    '--energy-badge-bg': 'rgba(255, 251, 235, 0.95)',
+    '--energy-badge-border': 'rgba(245, 158, 11, 0.42)',
+    '--energy-badge-shadow': 'rgba(180, 83, 9, 0.18)',
+    '--energy-badge-hover-bg': '#fff7d6',
+    '--energy-bolt-color': '#f59e0b'
+  } as React.CSSProperties;
 
   const isInline = variant === 'inline';
   const wrapperCls = isInline ? inlineCls : cardCls;
@@ -190,7 +200,7 @@ export default function AiEnergyCard({
       <div
         ref={cardRef}
         className={`${wrapperCls} ${className ?? ''}`}
-        style={style}
+        style={{ ...themedCardStyle, ...style }}
       >
         {isInline ? (
           <div className={inlineRowCls}>
@@ -312,10 +322,10 @@ const cardCls = css`
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.7rem 0.9rem 0.8rem;
-  border: 2px solid ${Color.borderGray()};
-  border-radius: 12px;
+  border: 1px solid var(--energy-card-border);
+  border-radius: 8px;
   background: #fff;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 0 var(--energy-card-shadow);
   font-size: 1.2rem;
   color: ${Color.darkerGray()};
 
@@ -360,10 +370,10 @@ const inlineTitleCls = css`
 
 const energyBadgeCls = css`
   appearance: none;
-  border: 1px solid rgba(245, 158, 11, 0.42);
+  border: 1px solid var(--energy-badge-border);
   border-radius: 6px;
-  background: rgba(255, 251, 235, 0.95);
-  box-shadow: 0 2px 0 rgba(180, 83, 9, 0.18);
+  background: var(--energy-badge-bg);
+  box-shadow: 0 2px 0 var(--energy-badge-shadow);
   padding: 0.25rem 0.5rem;
   font: inherit;
   cursor: pointer;
@@ -373,13 +383,13 @@ const energyBadgeCls = css`
     background-color 120ms ease;
 
   &:hover {
-    background: #fff7d6;
-    box-shadow: 0 3px 0 rgba(180, 83, 9, 0.22);
+    background: var(--energy-badge-hover-bg);
+    box-shadow: 0 3px 0 var(--energy-badge-shadow);
     transform: translateY(-1px);
   }
 
   &:active {
-    box-shadow: 0 1px 0 rgba(180, 83, 9, 0.18);
+    box-shadow: 0 1px 0 var(--energy-badge-shadow);
     transform: translateY(1px);
   }
 `;
@@ -411,7 +421,7 @@ const inlinePercentCls = css`
   border-radius: 6px;
   background: rgba(17, 24, 39, 0.35);
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
   line-height: 1;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
@@ -427,7 +437,7 @@ const inlineModeCls = css`
   background: var(--energy-mode-bg);
   box-shadow: 0 2px 0 var(--energy-mode-shadow);
   color: #fff;
-  font-size: 0.95em;
+  font-size: 1em;
   font-weight: 900;
   line-height: 1;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
@@ -452,8 +462,8 @@ const titleCls = css`
 `;
 
 const boltCls = css`
-  color: #f59e0b;
-  filter: drop-shadow(0 1px 0 rgba(180, 83, 9, 0.45));
+  color: var(--energy-bolt-color);
+  filter: drop-shadow(0 1px 0 var(--energy-badge-shadow));
 `;
 
 const statusCls = css`
@@ -484,7 +494,7 @@ const modeCls = css`
   background: var(--energy-mode-bg);
   box-shadow: 0 2px 0 var(--energy-mode-shadow);
   color: #fff;
-  font-size: 0.9em;
+  font-size: 1em;
   font-weight: 900;
   line-height: 1;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
@@ -551,7 +561,7 @@ const rechargeSectionCls = css`
 `;
 
 const rechargeMessageCls = css`
-  font-size: 0.95em;
+  font-size: 1em;
   line-height: 1.45;
   opacity: 0.85;
 `;
@@ -560,7 +570,7 @@ const requirementsListCls = css`
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.95em;
+  font-size: 1em;
 `;
 
 const requirementRowCls = css`
@@ -575,7 +585,7 @@ const requirementRowCls = css`
 `;
 
 const errorCls = css`
-  font-size: 0.95em;
+  font-size: 1em;
   font-weight: 700;
   color: ${Color.rose()};
 `;

@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
-import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useNotiContext,
+  useViewContext
+} from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import { css } from '@emotion/css';
 import {
@@ -16,6 +21,8 @@ import ImageArea from './ImageArea';
 import ImageEditor from './ImageEditor';
 import FilterBar from '~/components/FilterBar';
 import Icon from '~/components/Icon';
+import AiEnergyCard from '~/components/AiEnergyCard';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface ImageGeneratorProps {
   onImageGenerated: (file: File) => void;
@@ -25,6 +32,25 @@ interface ImageGeneratorProps {
   onRegisterUseImageHandler?: (
     handler: (() => void | Promise<void>) | null
   ) => void;
+}
+
+type AiImageEngine = 'gemini' | 'openai';
+type AiImageQuality = 'low' | 'medium' | 'high';
+
+interface AiUsagePolicy {
+  dayIndex?: number;
+  energyRemaining?: number;
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  lastUsageOverflowed?: boolean;
+  resetCost?: number;
+  resetPurchasesToday?: number;
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: any[];
+  };
 }
 
 export default function ImageGenerator({
@@ -53,13 +79,21 @@ export default function ImageGenerator({
     null
   );
   const [mode, setMode] = useState<'text' | 'draw'>('text');
-  // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
-  const [engine, setEngine] = useState<'gemini' | 'openai'>('openai');
-  const [followUpEngine, setFollowUpEngine] = useState<'gemini' | 'openai'>(
-    'openai'
-  );
+  const [engine, setEngine] = useState<AiImageEngine>('openai');
+  const [followUpEngine, setFollowUpEngine] =
+    useState<AiImageEngine>('openai');
+  const [quality, setQuality] = useState<AiImageQuality>('high');
+  const [followUpQuality, setFollowUpQuality] =
+    useState<AiImageQuality>('high');
   const [drawingCanvasUrl, setDrawingCanvasUrl] = useState<string | null>(null);
   const [canvasHasContent, setCanvasHasContent] = useState(false);
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
+    null
+  );
+  const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
+  const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
+  const [aiUsageResetError, setAiUsageResetError] = useState('');
+  const aiUsagePolicyRef = useRef<AiUsagePolicy | null>(null);
 
   const setError = (err: any) => {
     if (err === null) {
@@ -124,40 +158,79 @@ export default function ImageGenerator({
     (v) => v.requestHelpers.updateImageGenerationSettings
   );
 
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
+  );
+  const purchaseAiEnergyRecharge = useAppContext(
+    (v) => v.requestHelpers.purchaseAiEnergyRecharge
+  );
+
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const uploadThemeRole = useRoleColor('button', {
+    themeName: profileTheme,
+    fallback: profileTheme || 'logoBlue'
+  });
+  const globalAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
 
   useEffect(() => {
-    // Always use 'openai' (image-1.5) - ignoring user preferences since Gemini is unstable
-    setEngine('openai');
-    setFollowUpEngine('openai');
+    setEngine(parseAiImageEngine(userSettings?.aiImage?.engine));
+    setFollowUpEngine(
+      parseAiImageEngine(
+        userSettings?.aiImage?.followUpEngine || userSettings?.aiImage?.engine
+      )
+    );
+    setQuality(parseAiImageQuality(userSettings?.aiImage?.quality));
+    setFollowUpQuality(
+      parseAiImageQuality(
+        userSettings?.aiImage?.followUpQuality || userSettings?.aiImage?.quality
+      )
+    );
+  }, [
+    userSettings?.aiImage?.engine,
+    userSettings?.aiImage?.followUpEngine,
+    userSettings?.aiImage?.quality,
+    userSettings?.aiImage?.followUpQuality
+  ]);
 
-    // Original code kept for reference:
-    // const preferredEngine =
-    //   userSettings?.aiImage?.engine === 'openai' ? 'openai' : 'gemini';
-    // setEngine(preferredEngine);
-    //
-    // const preferredFollowUp =
-    //   userSettings?.aiImage?.followUpEngine ||
-    //   userSettings?.aiImage?.engine ||
-    //   null;
-    // if (preferredFollowUp) {
-    //   setFollowUpEngine(preferredFollowUp === 'openai' ? 'openai' : 'gemini');
-    // }
-  }, [userSettings?.aiImage?.engine, userSettings?.aiImage?.followUpEngine]);
-
-  const IMAGE_GENERATION_COST = 10000;
-  const FOLLOW_UP_COST = 1000;
+  const energyDepleted = useMemo(() => {
+    return (
+      !!aiUsagePolicy &&
+      typeof aiUsagePolicy.energyRemaining === 'number' &&
+      aiUsagePolicy.energyRemaining <= 0
+    );
+  }, [aiUsagePolicy]);
 
   const canAffordGeneration = useMemo(() => {
-    return twinkleCoins >= IMAGE_GENERATION_COST;
-  }, [twinkleCoins, IMAGE_GENERATION_COST]);
+    return !energyDepleted && !(aiUsagePolicyLoading && !aiUsagePolicy);
+  }, [aiUsagePolicy, aiUsagePolicyLoading, energyDepleted]);
 
-  const canAffordFollowUp = useMemo(() => {
-    return twinkleCoins >= FOLLOW_UP_COST;
-  }, [twinkleCoins, FOLLOW_UP_COST]);
+  const canAffordFollowUp = canAffordGeneration;
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    loadAiUsagePolicy({ isCancelled: () => cancelled });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
+    if (globalAiUsagePolicy) {
+      applyAiUsagePolicy(globalAiUsagePolicy);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalAiUsagePolicy]);
 
   useEffect(() => {
     const handleImageGenerationStatus = (status: {
@@ -169,7 +242,7 @@ export default function ImageGenerator({
       message?: string;
       imageId?: string;
       responseId?: string;
-      coins?: number;
+      aiUsagePolicy?: AiUsagePolicy;
     }) => {
       try {
         setProgressStage(status.stage);
@@ -180,23 +253,19 @@ export default function ImageGenerator({
             `data:image/png;base64,${status.partialImageB64}`
           );
         } else if (status.stage === 'completed') {
-          if (status.imageUrl) {
-            setGeneratedImageUrl(status.imageUrl);
-            if (status.responseId) {
-              setGeneratedResponseId(status.responseId);
-            }
-            if (status.imageId) {
-              setGeneratedImageId(status.imageId);
-            }
-            // showFollowUp is now computed based on generatedImageUrl
+          if (!status.imageUrl) {
+            return;
+          }
+          setGeneratedImageUrl(status.imageUrl);
+          if (status.responseId) {
+            setGeneratedResponseId(status.responseId);
+          }
+          if (status.imageId) {
+            setGeneratedImageId(status.imageId);
           }
 
-          // Update coin balance if provided by server
-          if (typeof status.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: status.coins }
-            });
+          if (status.aiUsagePolicy) {
+            applyAiUsagePolicy(status.aiUsagePolicy);
           }
 
           if (isFollowUpGenerating) {
@@ -220,11 +289,8 @@ export default function ImageGenerator({
             convertPartialImageToReference(latestPartialImage);
           }
 
-          if (typeof status.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: status.coins }
-            });
+          if (status.aiUsagePolicy) {
+            applyAiUsagePolicy(status.aiUsagePolicy);
           }
 
           setIsGenerating(false);
@@ -273,16 +339,22 @@ export default function ImageGenerator({
 
   async function persistImageModelPreference({
     engine: initialEngine,
-    followUpEngine: followUp
+    followUpEngine: followUp,
+    quality: initialQuality,
+    followUpQuality: followUpImageQuality
   }: {
-    engine?: 'gemini' | 'openai';
-    followUpEngine?: 'gemini' | 'openai';
+    engine?: AiImageEngine;
+    followUpEngine?: AiImageEngine;
+    quality?: AiImageQuality;
+    followUpQuality?: AiImageQuality;
   }) {
     if (!userId) return;
     try {
       const result = await updateImageGenerationSettings({
         engine: initialEngine,
-        followUpEngine: followUp
+        followUpEngine: followUp,
+        quality: initialQuality,
+        followUpQuality: followUpImageQuality
       });
       if (result?.settings) {
         onSetUserState({
@@ -304,6 +376,16 @@ export default function ImageGenerator({
   function handleFollowUpEngineChange(value: 'gemini' | 'openai') {
     setFollowUpEngine(value);
     persistImageModelPreference({ followUpEngine: value });
+  }
+
+  function handleQualityChange(value: AiImageQuality) {
+    setQuality(value);
+    persistImageModelPreference({ quality: value });
+  }
+
+  function handleFollowUpQualityChange(value: AiImageQuality) {
+    setFollowUpQuality(value);
+    persistImageModelPreference({ followUpQuality: value });
   }
 
   useEffect(() => {
@@ -335,6 +417,13 @@ export default function ImageGenerator({
     !generatedImageUrl &&
     !partialImageData &&
     Boolean(referenceImageUrl || drawingCanvasUrl);
+  const hasImageAreaContent = Boolean(
+    partialImageData ||
+      generatedImageUrl ||
+      referenceImageUrl ||
+      drawingCanvasUrl ||
+      isGenerating
+  );
 
   const imageArea = (
     <ImageArea
@@ -357,9 +446,12 @@ export default function ImageGenerator({
       canvasHasContent={canvasHasContent}
       isShowingLoadingState={isShowingLoadingState}
       canAffordFollowUp={canAffordFollowUp}
-      followUpCost={FOLLOW_UP_COST}
+      energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
       followUpEngine={followUpEngine}
       onFollowUpEngineChange={handleFollowUpEngineChange}
+      followUpQuality={followUpQuality}
+      onFollowUpQualityChange={handleFollowUpQualityChange}
+      themeColor={profileTheme}
     />
   );
 
@@ -372,11 +464,11 @@ export default function ImageGenerator({
       className={css`
         padding: 1rem;
         width: 100%;
-        height: 100%;
+        height: ${hasImageAreaContent || mode === 'draw' ? '100%' : 'auto'};
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        min-height: 400px;
+        min-height: ${hasImageAreaContent || mode === 'draw' ? '400px' : '0'};
       `}
     >
       <FilterBar>
@@ -393,6 +485,38 @@ export default function ImageGenerator({
           Draw
         </nav>
       </FilterBar>
+      {aiUsagePolicy && (
+        <AiEnergyCard
+          variant="inline"
+          className={css`
+            width: min(100%, 42rem);
+            align-self: center;
+          `}
+          energyPercent={aiUsagePolicy.energyPercent ?? 0}
+          energySegments={aiUsagePolicy.energySegments}
+          energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
+          overflowed={aiUsagePolicy.lastUsageOverflowed}
+          resetNeeded={energyDepleted}
+          resetCost={aiUsagePolicy.resetCost || 0}
+          resetPurchaseNumber={(aiUsagePolicy.resetPurchasesToday || 0) + 1}
+          twinkleCoins={twinkleCoins}
+          rechargeLoading={aiUsageResetLoading}
+          rechargeError={aiUsageResetError}
+          onRecharge={() => handlePurchaseAiUsageReset(false)}
+          communityFundsEligible={
+            !!aiUsagePolicy.communityFundResetEligibility?.eligible
+          }
+          communityFundsRequirements={
+            aiUsagePolicy.communityFundResetEligibility?.requirements
+          }
+          onRechargeWithCommunityFunds={
+            aiUsagePolicy.communityFundResetEligibility
+              ? () => handlePurchaseAiUsageReset(true)
+              : undefined
+          }
+          themeColor={profileTheme}
+        />
+      )}
       {mode === 'text' && (
         <div
           className={css`
@@ -406,22 +530,23 @@ export default function ImageGenerator({
               align-items: center;
               justify-content: center;
               gap: 1rem;
-              padding: 1rem 2rem;
+              padding: 0.8rem 1.4rem;
               background: transparent;
-              border: 2px dashed ${isShowingLoadingState ? '#ccc' : '#007bff'};
-              border-radius: 10px;
+              border: 2px dashed
+                ${isShowingLoadingState ? '#ccc' : uploadThemeRole.getColor(0.58)};
+              border-radius: 8px;
               cursor: ${isShowingLoadingState ? 'not-allowed' : 'pointer'};
               transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
               font-size: 1rem;
-              font-weight: 600;
-              color: ${isShowingLoadingState ? '#ccc' : '#007bff'};
+              font-weight: 800;
+              color: ${isShowingLoadingState ? '#ccc' : uploadThemeRole.getColor()};
               position: relative;
               overflow: hidden;
               min-width: 200px;
               opacity: ${isShowingLoadingState ? 0.5 : 1};
 
               &:hover {
-                background: rgba(0, 123, 255, 0.05);
+                background: ${uploadThemeRole.getColor(0.08)};
               }
             `}
           >
@@ -461,10 +586,12 @@ export default function ImageGenerator({
         onKeyDown={handleKeyDown}
         isGenerating={isGenerating}
         canAffordGeneration={canAffordGeneration}
-        generationCost={IMAGE_GENERATION_COST}
-        twinkleCoins={twinkleCoins}
+        energyLoading={aiUsagePolicyLoading && !aiUsagePolicy}
         engine={engine}
         onEngineChange={handleEngineChange}
+        quality={quality}
+        onQualityChange={handleQualityChange}
+        themeColor={profileTheme}
       />
 
       {error && <ErrorDisplay error={error} onDismiss={() => setError(null)} />}
@@ -473,12 +600,104 @@ export default function ImageGenerator({
     </div>
   );
 
+  async function loadAiUsagePolicy({
+    isCancelled = () => false
+  }: {
+    isCancelled?: () => boolean;
+  } = {}) {
+    if (!userId) return null;
+    if (!isCancelled()) {
+      setAiUsagePolicyLoading(true);
+    }
+    try {
+      const result = await getAiEnergyPolicy();
+      const nextPolicy = result?.aiUsagePolicy || null;
+      if (!isCancelled()) {
+        applyAiUsagePolicy(nextPolicy);
+      }
+      return nextPolicy;
+    } catch (error) {
+      console.error(error);
+      return null;
+    } finally {
+      if (!isCancelled()) {
+        setAiUsagePolicyLoading(false);
+      }
+    }
+  }
+
+  function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+    if (!nextPolicy) return;
+    const currentPolicy = aiUsagePolicyRef.current;
+    const sameDay =
+      currentPolicy?.dayIndex == null ||
+      nextPolicy.dayIndex == null ||
+      currentPolicy.dayIndex === nextPolicy.dayIndex;
+    const mergedPolicy =
+      sameDay &&
+      currentPolicy?.communityFundResetEligibility &&
+      !nextPolicy.communityFundResetEligibility
+        ? {
+            ...nextPolicy,
+            communityFundResetEligibility:
+              currentPolicy.communityFundResetEligibility
+          }
+        : nextPolicy;
+    aiUsagePolicyRef.current = mergedPolicy;
+    setAiUsagePolicy(mergedPolicy);
+    onUpdateTodayStats({
+      newStats: {
+        aiUsagePolicy: mergedPolicy
+      }
+    });
+  }
+
+  async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
+    if (aiUsageResetLoading) return;
+    setAiUsageResetLoading(true);
+    setAiUsageResetError('');
+    try {
+      const result = await purchaseAiEnergyRecharge({
+        useCommunityFunds
+      });
+      if (result?.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
+      if (typeof result?.newBalance === 'number') {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: result.newBalance }
+        });
+      }
+      if (typeof result?.communityFunds === 'number') {
+        onSetUserState({
+          userId,
+          newState: { communityFunds: result.communityFunds }
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      if (error?.aiUsagePolicy) {
+        applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      setAiUsageResetError(
+        error?.message || 'Unable to recharge Energy right now.'
+      );
+    } finally {
+      setAiUsageResetLoading(false);
+    }
+  }
+
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return;
 
-    // Check if user can afford image generation
-    if (!canAffordGeneration) {
-      const errorMessage = `Insufficient coins. You need ${IMAGE_GENERATION_COST.toLocaleString()} coins to generate an image.`;
+    const policy = aiUsagePolicy || (await loadAiUsagePolicy());
+    if (
+      policy &&
+      typeof policy.energyRemaining === 'number' &&
+      policy.energyRemaining <= 0
+    ) {
+      const errorMessage = 'Energy is empty. Recharge or come back tomorrow.';
       setError(errorMessage);
       onError?.(errorMessage);
       return;
@@ -504,8 +723,13 @@ export default function ImageGenerator({
       const result = await generateAIImage({
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
-        engine
+        engine,
+        quality: engine === 'openai' ? quality : undefined
       });
+
+      if (result.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
 
       if (!result.success) {
         const isStreamingActive =
@@ -515,12 +739,6 @@ export default function ImageGenerator({
           const rawError = result.error || 'Failed to generate image';
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
-          if (typeof result.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: result.coins }
-            });
-          }
           setIsGenerating(false);
           setProgressStage('not_started');
           onError?.(errorMessage);
@@ -555,8 +773,13 @@ export default function ImageGenerator({
       return;
     }
 
-    if (!canAffordFollowUp) {
-      const errorMessage = `Insufficient coins. You need ${FOLLOW_UP_COST.toLocaleString()} coins for follow-up generation.`;
+    const policy = aiUsagePolicy || (await loadAiUsagePolicy());
+    if (
+      policy &&
+      typeof policy.energyRemaining === 'number' &&
+      policy.energyRemaining <= 0
+    ) {
+      const errorMessage = 'Energy is empty. Recharge or come back tomorrow.';
       setError(errorMessage);
       onError?.(errorMessage);
       return;
@@ -579,8 +802,13 @@ export default function ImageGenerator({
         previousResponseId: generatedResponseId, // Keep for backend pricing logic
         previousImageId: generatedImageId, // Keep for backend pricing logic
         referenceImageB64: referenceB64, // Send previous image as reference for Gemini
-        engine: followUpEngine
+        engine: followUpEngine,
+        quality: followUpEngine === 'openai' ? followUpQuality : undefined
       });
+
+      if (result.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
 
       if (!result.success) {
         // Only show error if socket streaming hasn't started
@@ -591,12 +819,6 @@ export default function ImageGenerator({
           const rawError = result.error || 'Failed to generate follow-up image';
           const errorMessage = safeErrorToString(rawError);
           setError(errorMessage);
-          if (typeof result.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: result.coins }
-            });
-          }
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
@@ -664,6 +886,8 @@ export default function ImageGenerator({
         return 'Generating image...';
       case 'calling_openai':
         return 'Calling OpenAI...';
+      case 'calling_gemini':
+        return 'Calling Nano Banana...';
       case 'in_progress':
         return 'Processing...';
       case 'generating':
@@ -799,4 +1023,14 @@ function safeErrorToString(error: any): string {
   } catch {
     return String(error);
   }
+}
+
+function parseAiImageEngine(value: unknown): AiImageEngine {
+  return value === 'gemini' || value === 'openai' ? value : 'openai';
+}
+
+function parseAiImageQuality(value: unknown): AiImageQuality {
+  return value === 'low' || value === 'medium' || value === 'high'
+    ? value
+    : 'high';
 }

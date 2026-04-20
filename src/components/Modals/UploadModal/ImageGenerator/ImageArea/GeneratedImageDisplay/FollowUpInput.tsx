@@ -1,10 +1,8 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { Color } from '~/constants/css';
-import { isMobile } from '~/helpers';
+import { Color, mobileMaxWidth } from '~/constants/css';
 import ActionButton from '../../ActionButton';
-
-const deviceIsMobile = isMobile(navigator);
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface FollowUpInputProps {
   followUpPrompt: string;
@@ -13,9 +11,12 @@ interface FollowUpInputProps {
   isGenerating: boolean;
   isFollowUpGenerating: boolean;
   canAffordFollowUp?: boolean;
-  followUpCost?: number;
+  energyLoading?: boolean;
   followUpEngine?: 'gemini' | 'openai';
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
+  followUpQuality?: 'low' | 'medium' | 'high';
+  onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  themeColor?: string;
 }
 
 export default function FollowUpInput({
@@ -25,10 +26,18 @@ export default function FollowUpInput({
   isGenerating,
   isFollowUpGenerating,
   canAffordFollowUp = true,
-  followUpCost = 0,
+  energyLoading = false,
   followUpEngine = 'gemini',
-  onFollowUpEngineChange
+  onFollowUpEngineChange,
+  followUpQuality = 'high',
+  onFollowUpQualityChange,
+  themeColor
 }: FollowUpInputProps) {
+  const themeRole = useRoleColor('button', {
+    themeName: themeColor,
+    fallback: themeColor || 'logoBlue'
+  });
+
   return (
     <div
       className={css`
@@ -48,7 +57,7 @@ export default function FollowUpInput({
         <label
           className={css`
             display: block;
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
             color: ${Color.black()};
             margin-bottom: 0;
@@ -56,35 +65,61 @@ export default function FollowUpInput({
         >
           Modify this image
         </label>
-        {/* Engine selector hidden - hardcoded to image-1.5 (openai) */}
-        {false && (
+        <div
+          className={css`
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+          `}
+        >
           <select
             value={followUpEngine}
             onChange={(e) =>
               onFollowUpEngineChange(e.target.value as 'gemini' | 'openai')
             }
             disabled={isGenerating || isFollowUpGenerating}
-            className={css`
-              padding: 0.2rem 0.5rem;
-              border: 1px solid var(--ui-border);
-              border-radius: 4px;
-              font-size: 0.75rem;
-              background: #fff;
-              outline: none;
-              color: #333;
-            `}
+            className={selectClassName}
+            style={{
+              borderColor: themeRole.getColor(0.32),
+              color: themeRole.getColor()
+            }}
           >
-            <option value="gemini">Nano Banana Pro</option>
-            <option value="openai">GPT Image-1</option>
+            <option value="openai">Image 1.5</option>
+            <option value="gemini">Nano Banana</option>
           </select>
-        )}
+          {followUpEngine === 'openai' && (
+            <select
+              value={followUpQuality}
+              onChange={(e) =>
+                onFollowUpQualityChange(
+                  e.target.value as 'low' | 'medium' | 'high'
+                )
+              }
+              disabled={isGenerating || isFollowUpGenerating}
+              className={selectClassName}
+              style={{
+                borderColor: themeRole.getColor(0.32),
+                color: themeRole.getColor()
+              }}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          )}
+        </div>
       </div>
       <div
         className={css`
-          display: flex;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
           gap: 1rem;
-          align-items: flex-end;
-          flex-direction: ${deviceIsMobile ? 'column' : 'row'};
+          align-items: stretch;
+
+          @media (max-width: ${mobileMaxWidth}) {
+            grid-template-columns: 1fr;
+          }
         `}
       >
         <input
@@ -106,10 +141,11 @@ export default function FollowUpInput({
             padding: 0.875rem 1rem;
             border: 2px solid var(--ui-border);
             border-radius: 10px;
-            font-size: 0.95rem;
+            font-size: 1rem;
             outline: none;
             transition: all 0.2s ease;
             width: 100%;
+            min-width: 0;
             box-sizing: border-box;
 
             &:focus {
@@ -123,30 +159,6 @@ export default function FollowUpInput({
           `}
         />
 
-        {/* Cost display for follow-up */}
-        {followUpCost > 0 && (
-          <div
-            className={css`
-              padding: 0.5rem 0.75rem;
-              background: ${canAffordFollowUp ? '#f0f9ff' : '#fef2f2'};
-              border: 1px solid ${canAffordFollowUp ? '#bae6fd' : '#fecaca'};
-              border-radius: 8px;
-              font-size: 0.75rem;
-              text-align: center;
-              min-width: ${deviceIsMobile ? '100%' : '100px'};
-            `}
-          >
-            <div
-              className={css`
-                color: ${canAffordFollowUp ? '#0369a1' : '#dc2626'};
-                font-weight: 600;
-              `}
-            >
-              {followUpCost.toLocaleString()} coins
-            </div>
-          </div>
-        )}
-
         <ActionButton
           onClick={onFollowUpGenerate}
           disabled={
@@ -157,17 +169,36 @@ export default function FollowUpInput({
           }
           variant="secondary"
           className={css`
-            min-width: ${deviceIsMobile ? '100%' : '120px'};
-            border-radius: 10px;
+            min-width: 8.5rem;
+            justify-self: end;
+            border-radius: 8px;
+
+            @media (max-width: ${mobileMaxWidth}) {
+              width: 100%;
+              min-width: 0;
+            }
           `}
         >
           {isGenerating || isFollowUpGenerating
             ? 'Modifying...'
+            : energyLoading
+            ? 'Checking Energy...'
             : !canAffordFollowUp
-            ? 'Insufficient Coins'
+            ? 'Recharge Energy'
             : 'Modify'}
         </ActionButton>
       </div>
     </div>
   );
 }
+
+const selectClassName = css`
+  padding: 0.48rem 0.7rem;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+`;

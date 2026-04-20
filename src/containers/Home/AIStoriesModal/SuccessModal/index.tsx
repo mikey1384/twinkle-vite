@@ -177,7 +177,6 @@ export default function SuccessModal({
   difficulty,
   initialImagePath,
   isListening,
-  imageGeneratedCount,
   onHide,
   numQuestions,
   rewardTable,
@@ -186,7 +185,6 @@ export default function SuccessModal({
   difficulty: number;
   initialImagePath?: string;
   isListening: boolean;
-  imageGeneratedCount: number;
   onHide: () => void;
   numQuestions: number;
   rewardTable: any;
@@ -673,11 +671,6 @@ export default function SuccessModal({
                 >
                   <div>Image generation uses Energy.</div>
                   <div>Recharge when the battery is empty.</div>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    You generated {imageGeneratedCount} image
-                    {imageGeneratedCount === 1 ? '' : 's'} today
-                    {isListening ? ' for listening' : ' for reading'}
-                  </div>
                 </div>
               </div>
             )}

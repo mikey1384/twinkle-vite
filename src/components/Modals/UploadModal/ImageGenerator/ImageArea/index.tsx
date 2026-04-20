@@ -24,9 +24,12 @@ interface ImageAreaProps {
   onSetHasBeenEdited: (value: boolean) => void;
   canvasHasContent: boolean;
   canAffordFollowUp?: boolean;
-  followUpCost?: number;
+  energyLoading?: boolean;
   followUpEngine?: 'gemini' | 'openai';
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
+  followUpQuality?: 'low' | 'medium' | 'high';
+  onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  themeColor?: string;
 }
 
 export default function ImageArea({
@@ -46,10 +49,21 @@ export default function ImageArea({
   isShowingLoadingState,
   onSetHasBeenEdited,
   canAffordFollowUp,
-  followUpCost,
+  energyLoading,
   followUpEngine = 'gemini',
-  onFollowUpEngineChange
+  onFollowUpEngineChange,
+  followUpQuality = 'high',
+  onFollowUpQualityChange,
+  themeColor
 }: ImageAreaProps) {
+  const hasImageContent = Boolean(
+    partialImageData || generatedImageUrl || referenceImageUrl || canvasUrl
+  );
+
+  if (!hasImageContent && !isGenerating) {
+    return null;
+  }
+
   return (
     <div
       className={css`
@@ -59,10 +73,7 @@ export default function ImageArea({
         gap: 1.5rem;
       `}
     >
-      {partialImageData ||
-      generatedImageUrl ||
-      referenceImageUrl ||
-      canvasUrl ? (
+      {hasImageContent ? (
         <GeneratedImageDisplay
           key={`${generatedImageUrl}-${referenceImageUrl}-${canvasUrl}-${partialImageData}`}
           partialImageData={partialImageData}
@@ -81,12 +92,18 @@ export default function ImageArea({
           isShowingLoadingState={isShowingLoadingState}
           onSetHasBeenEdited={onSetHasBeenEdited}
           canAffordFollowUp={canAffordFollowUp}
-          followUpCost={followUpCost}
+          energyLoading={energyLoading}
           followUpEngine={followUpEngine}
           onFollowUpEngineChange={onFollowUpEngineChange}
+          followUpQuality={followUpQuality}
+          onFollowUpQualityChange={onFollowUpQualityChange}
+          themeColor={themeColor}
         />
       ) : isGenerating ? (
-        <LoadingState getProgressLabel={getProgressLabel} />
+        <LoadingState
+          getProgressLabel={getProgressLabel}
+          themeColor={themeColor}
+        />
       ) : null}
     </div>
   );
