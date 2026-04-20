@@ -3,6 +3,22 @@ import URL from '~/constants/URL';
 import { RequestHelpers } from '~/types';
 import axios from 'axios';
 
+interface AiCostEventCursor {
+  createdAt: number;
+  sourceRank: number;
+  eventId: number;
+}
+
+function appendAiCostEventCursor(
+  params: URLSearchParams,
+  cursor?: AiCostEventCursor | null
+) {
+  if (!cursor) return;
+  params.set('beforeCreatedAt', String(cursor.createdAt));
+  params.set('beforeSourceRank', String(cursor.sourceRank));
+  params.set('beforeEventId', String(cursor.eventId));
+}
+
 export default function managementRequestHelpers({
   auth,
   handleError
@@ -85,6 +101,27 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAiCostEvents({
+      days,
+      cursor
+    }: {
+      days: number;
+      cursor?: AiCostEventCursor | null;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          days: String(days)
+        });
+        appendAiCostEventCursor(params, cursor);
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/events?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async loadAiCostReportCSV(days: number) {
       try {
         const { data } = await request.get(
@@ -116,6 +153,33 @@ export default function managementRequestHelpers({
         });
         const { data } = await request.get(
           `${URL}/management/ai-costs/risk-group?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAiCostRiskGroupEvents({
+      days,
+      riskKeyType,
+      riskKeyHash,
+      cursor
+    }: {
+      days: number;
+      riskKeyType: string;
+      riskKeyHash: string;
+      cursor?: AiCostEventCursor | null;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          days: String(days),
+          riskKeyType,
+          riskKeyHash
+        });
+        appendAiCostEventCursor(params, cursor);
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/risk-group/events?${params.toString()}`,
           auth()
         );
         return data;
