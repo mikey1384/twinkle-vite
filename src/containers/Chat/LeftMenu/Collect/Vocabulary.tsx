@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import Icon from '~/components/Icon';import { css } from '@emotion/css';
+import Icon from '~/components/Icon';
+import { css } from '@emotion/css';
 import { mobileMaxWidth, tabletMaxWidth } from '~/constants/css';
 import { useChatContext, useKeyContext } from '~/contexts';
 
@@ -27,23 +28,33 @@ export default function Vocabulary() {
   const myId = useKeyContext((v) => v.myState.userId);
   const vocabFeedIds = useChatContext((v) => v.state.vocabFeedIds);
   const vocabFeedObj = useChatContext((v) => v.state.vocabFeedObj);
+  const previewFeed = useChatContext(
+    (v) => v.state.collectPreviews?.vocabulary || null
+  );
 
   const vocabFeeds = vocabFeedIds.map((id: number) => vocabFeedObj[id] || null);
   const lastFeed = useMemo(() => {
-    return vocabFeeds[0] || {};
-  }, [vocabFeeds]);
+    const cachedFeed = vocabFeeds.reduce((latest: any, feed: any) => {
+      if (!feed?.id) return latest;
+      if (!latest?.id || Number(feed.id) > Number(latest.id)) return feed;
+      return latest;
+    }, null);
+    return Number(previewFeed?.id || 0) > Number(cachedFeed?.id || 0)
+      ? previewFeed
+      : cachedFeed || previewFeed;
+  }, [previewFeed, vocabFeeds]);
   const isBreakAction =
-    lastFeed.action === 'break_start' || lastFeed.action === 'break_clear';
+    lastFeed?.action === 'break_start' || lastFeed?.action === 'break_clear';
 
   const breakLabel = useMemo(() => {
     if (!isBreakAction) return '';
-    const breakType = breakTypeLabels[lastFeed.breakType] || 'break';
-    const breakIndex = lastFeed.breakIndex;
+    const breakType = breakTypeLabels[lastFeed?.breakType] || 'break';
+    const breakIndex = lastFeed?.breakIndex;
     return breakIndex ? `Break ${breakIndex}: ${breakType}` : breakType;
-  }, [isBreakAction, lastFeed.breakType, lastFeed.breakIndex]);
+  }, [isBreakAction, lastFeed?.breakType, lastFeed?.breakIndex]);
 
   const target = useMemo(() => {
-    if (lastFeed.action === 'reward') {
+    if (lastFeed?.action === 'reward') {
       return 'AI Card';
     }
     return lastFeed?.content;
@@ -64,7 +75,7 @@ export default function Vocabulary() {
           Word Master
         </span>
       </div>
-      {lastFeed && (
+      {lastFeed?.id && (
         <div style={{ position: 'absolute' }}>
           <p
             style={{

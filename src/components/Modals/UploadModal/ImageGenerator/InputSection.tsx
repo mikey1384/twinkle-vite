@@ -82,7 +82,7 @@ export default function InputSection({
             >
               Prompt
             </label>
-            <span
+            <div
               className={css`
                 display: flex;
                 align-items: center;
@@ -125,7 +125,7 @@ export default function InputSection({
                   <option value="high">High</option>
                 </select>
               )}
-            </span>
+            </div>
           </div>
           <textarea
             placeholder="A magical forest with glowing mushrooms and fireflies, Japanese anime style..."
