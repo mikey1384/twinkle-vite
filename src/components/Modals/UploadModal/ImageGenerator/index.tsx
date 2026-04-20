@@ -731,6 +731,21 @@ export default function ImageGenerator({
         applyAiUsagePolicy(result.aiUsagePolicy);
       }
 
+      if (result.success && result.imageUrl) {
+        setGeneratedImageUrl(result.imageUrl);
+        setPartialImageData(null);
+        if (result.responseId) {
+          setGeneratedResponseId(result.responseId);
+        }
+        if (result.imageId) {
+          setGeneratedImageId(result.imageId);
+        }
+        setIsGenerating(false);
+        setIsFollowUpGenerating(false);
+        setProgressStage('completed');
+        return;
+      }
+
       if (!result.success) {
         const isStreamingActive =
           progressStage === 'partial_image' || partialImageData !== null;
@@ -808,6 +823,22 @@ export default function ImageGenerator({
 
       if (result.aiUsagePolicy) {
         applyAiUsagePolicy(result.aiUsagePolicy);
+      }
+
+      if (result.success && result.imageUrl) {
+        setGeneratedImageUrl(result.imageUrl);
+        setPartialImageData(null);
+        if (result.responseId) {
+          setGeneratedResponseId(result.responseId);
+        }
+        if (result.imageId) {
+          setGeneratedImageId(result.imageId);
+        }
+        setFollowUpPrompt('');
+        setIsGenerating(false);
+        setIsFollowUpGenerating(false);
+        setProgressStage('completed');
+        return;
       }
 
       if (!result.success) {
