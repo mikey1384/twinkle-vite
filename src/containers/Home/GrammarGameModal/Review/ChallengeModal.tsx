@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
@@ -31,17 +31,21 @@ export default function ChallengeModal({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const userId = useKeyContext((v) => v.myState.userId);
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
-  const cannotAfford = useMemo(
-    () => (typeof twinkleCoins === 'number' ? twinkleCoins < 5000 : true),
-    [twinkleCoins]
-  );
   const [challenging, setChallenging] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [challengeError, setChallengeError] = useState('');
   const [streamingThought, setStreamingThought] = useState('');
   const thoughtRef = useRef('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setAccepted(false);
+    setChallengeError('');
+    setStreamingThought('');
+    thoughtRef.current = '';
+  }, [isOpen, questionId]);
 
   useEffect(() => {
     if (AI_FEATURES_DISABLED) return;
@@ -110,10 +114,9 @@ export default function ChallengeModal({
               variant="magenta"
               size="sm"
               loading={challenging}
-              disabled={cannotAfford}
               onClick={handleChallenge}
             >
-              Pay 5,000 coins and Challenge
+              Challenge
             </GameCTAButton>
           </>
         )
@@ -152,10 +155,22 @@ export default function ChallengeModal({
             font-size: 1.5rem;
           `}
         >
-          You can challenge this question’s correctness for 5,000 coins. We’ll
-          verify that the marked answer is undoubtedly correct and others are
-          undoubtedly wrong. If your challenge is justified, we’ll improve the
-          question and reward you with 50,000 coins.
+          You can challenge this question’s correctness. We’ll verify that the
+          marked answer is undoubtedly correct and others are undoubtedly wrong.
+          If your challenge is justified, we’ll improve the question and reward
+          you with 50,000 coins.
+          {challengeError ? (
+            <div
+              className={css`
+                color: ${Color.red()};
+                font-size: 1.3rem;
+                font-weight: bold;
+                margin-top: 1.2rem;
+              `}
+            >
+              {challengeError}
+            </div>
+          ) : null}
         </div>
       )}
     </Modal>
@@ -168,6 +183,7 @@ export default function ChallengeModal({
     try {
       isSubmittingRef.current = true;
       setChallenging(true);
+      setChallengeError('');
       const { explanation, newBalance, justified } =
         await challengeGrammarQuestion({
           questionId
@@ -181,6 +197,10 @@ export default function ChallengeModal({
       } else {
         onClose();
       }
+    } catch (error: any) {
+      setChallengeError(
+        error?.message || 'Challenge failed. Please try again in a moment.'
+      );
     } finally {
       setChallenging(false);
       isSubmittingRef.current = false;

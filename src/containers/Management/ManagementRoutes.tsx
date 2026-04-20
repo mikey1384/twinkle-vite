@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import Tools from './Tools';
+import AiCosts from './AiCosts';
 
 export default function ManagementRoutes({ className }: { className: string }) {
   const location = useLocation();
@@ -26,6 +27,7 @@ export default function ManagementRoutes({ className }: { className: string }) {
           <Route path="*" element={<Main />} />
           <Route path="tools" element={<Tools />} />
           <Route path="mod-activities" element={<ModActivities />} />
+          <Route path="ai-costs" element={<AiCosts />} />
         </Routes>
       </div>
       <Notification

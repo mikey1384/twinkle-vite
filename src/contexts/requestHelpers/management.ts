@@ -74,6 +74,55 @@ export default function managementRequestHelpers({
         return handleError(error);
       }
     },
+    async loadAiCostReport(days: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/report?days=${days}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAiCostReportCSV(days: number) {
+      try {
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/report.csv?days=${days}`,
+          {
+            ...auth(),
+            responseType: 'blob'
+          }
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
+    async loadAiCostRiskGroup({
+      days,
+      riskKeyType,
+      riskKeyHash
+    }: {
+      days: number;
+      riskKeyType: string;
+      riskKeyHash: string;
+    }) {
+      try {
+        const params = new URLSearchParams({
+          days: String(days),
+          riskKeyType,
+          riskKeyHash
+        });
+        const { data } = await request.get(
+          `${URL}/management/ai-costs/risk-group?${params.toString()}`,
+          auth()
+        );
+        return data;
+      } catch (error) {
+        return handleError(error);
+      }
+    },
     async addModerators(newModerators: number[]) {
       try {
         const { data } = await request.post(
