@@ -34,6 +34,7 @@ interface AiCostSummary {
 interface AiCostRow extends Partial<AiCostSummary> {
   eventId?: number;
   source?: string;
+  sourceRank?: number;
   dayIndex?: number;
   dayKey?: string;
   userId?: number;
@@ -56,6 +57,19 @@ interface AiCostRow extends Partial<AiCostSummary> {
   createdAt?: number;
 }
 
+interface AiCostEventCursor {
+  createdAt: number;
+  sourceRank: number;
+  eventId: number;
+}
+
+interface AiCostEventPage {
+  events: AiCostRow[];
+  nextCursor: AiCostEventCursor | null;
+  hasMore: boolean;
+  pageSize: number;
+}
+
 interface AiCostReport {
   days: number;
   startDayIndex: number;
@@ -70,6 +84,9 @@ interface AiCostReport {
   topIdentities: AiCostRow[];
   topRiskGroups: AiCostRow[];
   recentEvents: AiCostRow[];
+  recentEventsCursor: AiCostEventCursor | null;
+  recentEventsHasMore: boolean;
+  recentEventsPageSize: number;
 }
 
 interface AiCostRiskGroupDetail {
@@ -85,6 +102,9 @@ interface AiCostRiskGroupDetail {
   };
   accounts: AiCostRow[];
   events: AiCostRow[];
+  eventsCursor: AiCostEventCursor | null;
+  eventsHasMore: boolean;
+  eventsPageSize: number;
 }
 
 const RANGE_OPTIONS: { label: string; value: RangeOption }[] = [
@@ -99,6 +119,8 @@ export default function AiCosts() {
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [eventsLoadingMore, setEventsLoadingMore] = useState(false);
+  const [eventsError, setEventsError] = useState('');
   const [error, setError] = useState('');
   const [report, setReport] = useState<AiCostReport | null>(null);
   const [selectedRiskGroup, setSelectedRiskGroup] = useState<{
@@ -108,16 +130,25 @@ export default function AiCosts() {
   const [riskGroupDetail, setRiskGroupDetail] =
     useState<AiCostRiskGroupDetail | null>(null);
   const [riskGroupLoading, setRiskGroupLoading] = useState(false);
+  const [riskGroupEventsLoadingMore, setRiskGroupEventsLoadingMore] =
+    useState(false);
   const [riskGroupError, setRiskGroupError] = useState('');
+  const [riskGroupEventsError, setRiskGroupEventsError] = useState('');
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
   const loadAiCostReport = useAppContext(
     (v) => v.requestHelpers.loadAiCostReport
+  );
+  const loadAiCostEvents = useAppContext(
+    (v) => v.requestHelpers.loadAiCostEvents
   );
   const loadAiCostReportCSV = useAppContext(
     (v) => v.requestHelpers.loadAiCostReportCSV
   );
   const loadAiCostRiskGroup = useAppContext(
     (v) => v.requestHelpers.loadAiCostRiskGroup
+  );
+  const loadAiCostRiskGroupEvents = useAppContext(
+    (v) => v.requestHelpers.loadAiCostRiskGroupEvents
   );
   const canView = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
 
@@ -128,6 +159,8 @@ export default function AiCosts() {
     async function init() {
       setLoading(true);
       setError('');
+      setEventsError('');
+      setEventsLoadingMore(false);
       try {
         const data = await loadAiCostReport(days);
         if (canceled) return;
@@ -151,7 +184,9 @@ export default function AiCosts() {
     if (!canView || !selectedRiskGroup) {
       setRiskGroupDetail(null);
       setRiskGroupError('');
+      setRiskGroupEventsError('');
       setRiskGroupLoading(false);
+      setRiskGroupEventsLoadingMore(false);
       return;
     }
     const riskGroup = selectedRiskGroup;
@@ -160,6 +195,8 @@ export default function AiCosts() {
     async function init() {
       setRiskGroupLoading(true);
       setRiskGroupError('');
+      setRiskGroupEventsError('');
+      setRiskGroupEventsLoadingMore(false);
       try {
         const data = await loadAiCostRiskGroup({
           days,
@@ -314,7 +351,7 @@ export default function AiCosts() {
           </Panel>
 
           <div className={twoColumnClass}>
-            <Panel title="By Surface">
+            <Panel title="Top Surfaces" note="Top 100 by estimated spend.">
               <DataTable
                 columns={[
                   { key: 'surface', label: 'Surface' },
@@ -340,7 +377,10 @@ export default function AiCosts() {
               />
             </Panel>
 
-            <Panel title="By Provider">
+            <Panel
+              title="Top Providers"
+              note="Top 100 provider/model/policy groups."
+            >
               <DataTable
                 columns={[
                   {
@@ -402,7 +442,7 @@ export default function AiCosts() {
               />
             </Panel>
 
-            <Panel title="Top Accounts">
+            <Panel title="Top Accounts" note="Top 50 by estimated spend.">
               <DataTable
                 columns={[
                   {
@@ -431,7 +471,10 @@ export default function AiCosts() {
           </div>
 
           <div className={twoColumnClass}>
-            <Panel title="Energy Identities">
+            <Panel
+              title="Top Energy Identities"
+              note="Top 50 shared Energy identities by spend."
+            >
               <DataTable
                 columns={[
                   { key: 'identityKey', label: 'Identity' },
@@ -454,8 +497,8 @@ export default function AiCosts() {
             </Panel>
 
             <Panel
-              title="Risk Groups"
-              note="Click a group to inspect accounts and events. Hashes only; raw IP, device id, and user-agent are not stored."
+              title="Top Risk Groups"
+              note="Top 50 shared device/IP/user-agent groups by spend. Click a group to inspect accounts and events."
             >
               <DataTable
                 columns={[
@@ -493,7 +536,7 @@ export default function AiCosts() {
           {selectedRiskGroup && (
             <Panel
               title="Risk Group Detail"
-              note={`${selectedRiskGroup.riskKeyType} ${shortenHash(
+              note={`Top 100 accounts, paginated events. ${selectedRiskGroup.riskKeyType} ${shortenHash(
                 selectedRiskGroup.riskKeyHash
               )}`}
               action={
@@ -541,7 +584,7 @@ export default function AiCosts() {
                     </div>
                   </div>
 
-                  <h3 className={detailHeadingClass}>Accounts</h3>
+                  <h3 className={detailHeadingClass}>Top Accounts</h3>
                   <DataTable
                     columns={[
                       {
@@ -568,7 +611,14 @@ export default function AiCosts() {
                     rows={riskGroupDetail.accounts}
                   />
 
-                  <h3 className={detailHeadingClass}>Recent Events</h3>
+                  <SubsectionHeader
+                    title="Recent Events"
+                    note={`Showing ${formatNumber(
+                      riskGroupDetail.events.length
+                    )} of ${formatNumber(
+                      riskGroupDetail.summary.eventCount
+                    )} events.`}
+                  />
                   <DataTable
                     columns={[
                       {
@@ -607,12 +657,23 @@ export default function AiCosts() {
                     ]}
                     rows={riskGroupDetail.events}
                   />
+                  <PaginationFooter
+                    hasMore={riskGroupDetail.eventsHasMore}
+                    loading={riskGroupEventsLoadingMore}
+                    error={riskGroupEventsError}
+                    onLoadMore={handleLoadMoreRiskGroupEvents}
+                  />
                 </>
               )}
             </Panel>
           )}
 
-          <Panel title="Recent Events">
+          <Panel
+            title="Recent Events"
+            note={`Showing ${formatNumber(
+              report.recentEvents.length
+            )} of ${formatNumber(report.summary.eventCount)} events.`}
+          >
             <DataTable
               columns={[
                 {
@@ -620,14 +681,14 @@ export default function AiCosts() {
                   label: 'Time',
                   render: (value) => formatTime(numberValue(value))
                 },
-	                { key: 'source', label: 'Source', render: formatTokenLabel },
-	                { key: 'surface', label: 'Surface' },
-	                { key: 'operation', label: 'Operation' },
-	                {
-	                  key: 'billingPolicy',
-	                  label: 'Policy',
-	                  render: formatBillingPolicy
-	                },
+                { key: 'source', label: 'Source', render: formatTokenLabel },
+                { key: 'surface', label: 'Surface' },
+                { key: 'operation', label: 'Operation' },
+                {
+                  key: 'billingPolicy',
+                  label: 'Policy',
+                  render: formatBillingPolicy
+                },
                 {
                   key: 'username',
                   label: 'Account',
@@ -642,6 +703,12 @@ export default function AiCosts() {
                 }
               ]}
               rows={report.recentEvents}
+            />
+            <PaginationFooter
+              hasMore={report.recentEventsHasMore}
+              loading={eventsLoadingMore}
+              error={eventsError}
+              onLoadMore={handleLoadMoreEvents}
             />
           </Panel>
         </>
@@ -669,6 +736,82 @@ export default function AiCosts() {
       console.error('Error downloading AI cost CSV:', downloadError);
     } finally {
       setDownloading(false);
+    }
+  }
+
+  async function handleLoadMoreEvents() {
+    if (!report?.recentEventsHasMore || !report.recentEventsCursor) return;
+    const requestDays = days;
+    const cursor = report.recentEventsCursor;
+    setEventsLoadingMore(true);
+    setEventsError('');
+    try {
+      const page = (await loadAiCostEvents({
+        days: requestDays,
+        cursor
+      })) as AiCostEventPage;
+      setReport((currentReport) => {
+        if (!currentReport || currentReport.days !== requestDays) {
+          return currentReport;
+        }
+        return {
+          ...currentReport,
+          recentEvents: [...currentReport.recentEvents, ...page.events],
+          recentEventsCursor: page.nextCursor,
+          recentEventsHasMore: page.hasMore,
+          recentEventsPageSize: page.pageSize
+        };
+      });
+    } catch (loadError: any) {
+      setEventsError(loadError?.message || 'Failed to load more events');
+    } finally {
+      setEventsLoadingMore(false);
+    }
+  }
+
+  async function handleLoadMoreRiskGroupEvents() {
+    if (
+      !selectedRiskGroup ||
+      !riskGroupDetail?.eventsHasMore ||
+      !riskGroupDetail.eventsCursor
+    ) {
+      return;
+    }
+    const requestDays = days;
+    const riskGroup = selectedRiskGroup;
+    const cursor = riskGroupDetail.eventsCursor;
+    setRiskGroupEventsLoadingMore(true);
+    setRiskGroupEventsError('');
+    try {
+      const page = (await loadAiCostRiskGroupEvents({
+        days: requestDays,
+        riskKeyType: riskGroup.riskKeyType,
+        riskKeyHash: riskGroup.riskKeyHash,
+        cursor
+      })) as AiCostEventPage;
+      setRiskGroupDetail((currentDetail) => {
+        if (
+          !currentDetail ||
+          currentDetail.days !== requestDays ||
+          currentDetail.riskKeyType !== riskGroup.riskKeyType ||
+          currentDetail.riskKeyHash !== riskGroup.riskKeyHash
+        ) {
+          return currentDetail;
+        }
+        return {
+          ...currentDetail,
+          events: [...currentDetail.events, ...page.events],
+          eventsCursor: page.nextCursor,
+          eventsHasMore: page.hasMore,
+          eventsPageSize: page.pageSize
+        };
+      });
+    } catch (loadError: any) {
+      setRiskGroupEventsError(
+        loadError?.message || 'Failed to load more risk group events'
+      );
+    } finally {
+      setRiskGroupEventsLoadingMore(false);
     }
   }
 
@@ -753,6 +896,44 @@ function BarRow({
         <div style={{ width: `${widthPercent}%` }} />
       </div>
       <strong>{value}</strong>
+    </div>
+  );
+}
+
+function SubsectionHeader({ title, note }: { title: string; note: string }) {
+  return (
+    <div className={subsectionHeaderClass}>
+      <h3>{title}</h3>
+      <span>{note}</span>
+    </div>
+  );
+}
+
+function PaginationFooter({
+  hasMore,
+  loading,
+  error,
+  onLoadMore
+}: {
+  hasMore: boolean;
+  loading: boolean;
+  error: string;
+  onLoadMore: () => void;
+}) {
+  if (!hasMore && !error) return null;
+  return (
+    <div className={paginationFooterClass}>
+      {error && <span>{error}</span>}
+      {hasMore && (
+        <Button
+          color="logoBlue"
+          variant="outline"
+          loading={loading}
+          onClick={onLoadMore}
+        >
+          Load More
+        </Button>
+      )}
     </div>
   );
 }
@@ -1323,6 +1504,46 @@ const detailSummaryClass = css`
 const detailHeadingClass = css`
   margin: 1.6rem 0 0.8rem;
   font-size: 1.45rem;
+`;
+
+const subsectionHeaderClass = css`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.6rem 0 0.8rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.45rem;
+  }
+
+  span {
+    color: ${Color.darkGray()};
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  @media (max-width: ${mobileMaxWidth}) {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+`;
+
+const paginationFooterClass = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.2rem 0 0.2rem;
+
+  span {
+    color: ${Color.red()};
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
 `;
 
 const detailErrorClass = css`
