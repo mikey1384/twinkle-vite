@@ -27,6 +27,8 @@ import Loading from '~/components/Loading';
 import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
 import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/colorSettings';
+import AiEnergyCard from '~/components/AiEnergyCard';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 // Helper to get proxied URL for CloudFront images
 function getProxiedUrl(imageUrl: string): string {
@@ -53,7 +55,19 @@ interface ImageEditModalProps {
 }
 
 interface AiUsagePolicy {
+  dayIndex?: number;
   energyRemaining?: number;
+  energyPercent?: number;
+  energySegments?: number;
+  energySegmentsRemaining?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  lastUsageOverflowed?: boolean;
+  resetCost?: number;
+  resetPurchasesToday?: number;
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: any[];
+  };
 }
 
 export default function ImageEditModal({
@@ -98,12 +112,21 @@ export default function ImageEditModal({
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
+  const purchaseAiEnergyRecharge = useAppContext(
+    (v) => v.requestHelpers.purchaseAiEnergyRecharge
+  );
   const updateImageEditorSettings = useAppContext(
     (v) => v.requestHelpers.updateImageEditorSettings
   );
   const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const energyThemeRole = useRoleColor('button', {
+    themeName: profileTheme,
+    fallback: profileTheme || 'logoBlue'
+  });
   const globalAiUsagePolicy = useNotiContext(
     (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
   );
@@ -116,17 +139,22 @@ export default function ImageEditModal({
     globalAiUsagePolicy || null
   );
   const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
+  const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
+  const [aiUsageResetError, setAiUsageResetError] = useState('');
+  const aiUsagePolicyRef = useRef<AiUsagePolicy | null>(
+    globalAiUsagePolicy || null
+  );
+  const energyDepleted =
+    !!aiUsagePolicy &&
+    typeof aiUsagePolicy.energyRemaining === 'number' &&
+    aiUsagePolicy.energyRemaining <= 0;
 
   const canAffordGeneration = useMemo(() => {
     return (
       !(aiUsagePolicyLoading && !aiUsagePolicy) &&
-      !(
-        aiUsagePolicy &&
-        typeof aiUsagePolicy.energyRemaining === 'number' &&
-        aiUsagePolicy.energyRemaining <= 0
-      )
+      !energyDepleted
     );
-  }, [aiUsagePolicy, aiUsagePolicyLoading]);
+  }, [aiUsagePolicy, aiUsagePolicyLoading, energyDepleted]);
   const aiModificationDisabled = AI_FEATURES_DISABLED;
 
   // Handle "Use This Image" for embedded mode
@@ -595,7 +623,8 @@ export default function ImageEditModal({
         {/* AI Modification Section */}
         <div
           className={css`
-            background: ${Color.highlightGray()};
+            background: ${energyThemeRole.getColor(0.035)};
+            border: 1px solid ${energyThemeRole.getColor(0.22)};
             border-radius: 8px;
             padding: 1rem;
           `}
@@ -617,6 +646,39 @@ export default function ImageEditModal({
             <AIDisabledNotice
               title="AI Image Modification Is Unavailable"
               style={{ marginBottom: '0.75rem' }}
+            />
+          )}
+          {aiUsagePolicy && (
+            <AiEnergyCard
+              variant="inline"
+              className={css`
+                margin-bottom: 0.85rem;
+              `}
+              energyPercent={aiUsagePolicy.energyPercent ?? 0}
+              energySegments={aiUsagePolicy.energySegments}
+              energySegmentsRemaining={aiUsagePolicy.energySegmentsRemaining}
+              overflowed={aiUsagePolicy.lastUsageOverflowed}
+              resetNeeded={energyDepleted}
+              resetCost={aiUsagePolicy.resetCost || 0}
+              resetPurchaseNumber={
+                (aiUsagePolicy.resetPurchasesToday || 0) + 1
+              }
+              twinkleCoins={twinkleCoins}
+              rechargeLoading={aiUsageResetLoading}
+              rechargeError={aiUsageResetError}
+              onRecharge={() => handlePurchaseAiUsageReset(false)}
+              communityFundsEligible={
+                !!aiUsagePolicy.communityFundResetEligibility?.eligible
+              }
+              communityFundsRequirements={
+                aiUsagePolicy.communityFundResetEligibility?.requirements
+              }
+              onRechargeWithCommunityFunds={
+                aiUsagePolicy.communityFundResetEligibility
+                  ? () => handlePurchaseAiUsageReset(true)
+                  : undefined
+              }
+              themeColor={profileTheme}
             />
           )}
           <div
@@ -753,12 +815,64 @@ export default function ImageEditModal({
 
   function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
     if (!nextPolicy) return;
-    setAiUsagePolicy(nextPolicy);
+    const currentPolicy = aiUsagePolicyRef.current;
+    const sameDay =
+      currentPolicy?.dayIndex == null ||
+      nextPolicy.dayIndex == null ||
+      currentPolicy.dayIndex === nextPolicy.dayIndex;
+    const mergedPolicy =
+      sameDay &&
+      currentPolicy?.communityFundResetEligibility &&
+      !nextPolicy.communityFundResetEligibility
+        ? {
+            ...nextPolicy,
+            communityFundResetEligibility:
+              currentPolicy.communityFundResetEligibility
+          }
+        : nextPolicy;
+    aiUsagePolicyRef.current = mergedPolicy;
+    setAiUsagePolicy(mergedPolicy);
     onUpdateTodayStats({
       newStats: {
-        aiUsagePolicy: nextPolicy
+        aiUsagePolicy: mergedPolicy
       }
     });
+  }
+
+  async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
+    if (aiUsageResetLoading) return;
+    setAiUsageResetLoading(true);
+    setAiUsageResetError('');
+    try {
+      const result = await purchaseAiEnergyRecharge({
+        useCommunityFunds
+      });
+      if (result?.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
+      if (typeof result?.newBalance === 'number') {
+        onSetUserState({
+          userId,
+          newState: { twinkleCoins: result.newBalance }
+        });
+      }
+      if (typeof result?.communityFunds === 'number') {
+        onSetUserState({
+          userId,
+          newState: { communityFunds: result.communityFunds }
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
+      if (error?.aiUsagePolicy) {
+        applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      setAiUsageResetError(
+        error?.message || 'Unable to recharge Energy right now.'
+      );
+    } finally {
+      setAiUsageResetLoading(false);
+    }
   }
 
   function handlePromptKeyDown(e: React.KeyboardEvent) {
@@ -807,6 +921,17 @@ export default function ImageEditModal({
 
       if (result.aiUsagePolicy) {
         applyAiUsagePolicy(result.aiUsagePolicy);
+      }
+
+      if (result.success && result.imageUrl) {
+        clearDrawingOverlayRef.current();
+        loadImageOntoCanvas(result.imageUrl);
+        isGeneratingRef.current = false;
+        setIsGenerating(false);
+        setPartialImageData(null);
+        setPrompt('');
+        setProgressStage('completed');
+        return;
       }
 
       if (!result.success) {
