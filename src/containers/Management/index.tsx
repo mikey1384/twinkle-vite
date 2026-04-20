@@ -7,6 +7,7 @@ import SideMenu from '~/components/SideMenu';
 import Icon from '~/components/Icon';
 import { css } from '@emotion/css';
 import { mobileMaxWidth } from '~/constants/css';
+import { ADMIN_MANAGEMENT_LEVEL } from '~/constants/defaultValues';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useManagementContext, useKeyContext } from '~/contexts';
 
@@ -19,6 +20,7 @@ export default function Management() {
   );
   const userId = useKeyContext((v) => v.myState.userId);
   const managementLevel = useKeyContext((v) => v.myState.managementLevel);
+  const canViewAiCosts = managementLevel >= ADMIN_MANAGEMENT_LEVEL;
 
   useEffect(() => {
     onLoadManagement();
@@ -53,6 +55,15 @@ export default function Management() {
           <Icon icon="clipboard-check" />
           <span style={{ marginLeft: '1.1rem' }}>Moderation</span>
         </NavLink>
+        {canViewAiCosts && (
+          <NavLink
+            to="/management/ai-costs"
+            className={(navData) => (navData.isActive ? 'active' : '')}
+          >
+            <Icon icon="chart-line" />
+            <span style={{ marginLeft: '1.1rem' }}>AI Costs</span>
+          </NavLink>
+        )}
       </SideMenu>
       <FilterBar
         style={{ height: '5rem', marginBottom: 0 }}
@@ -82,6 +93,16 @@ export default function Management() {
         >
           Mod Activities
         </nav>
+        {canViewAiCosts && (
+          <nav
+            className={
+              location.pathname === `/management/ai-costs` ? 'active' : ''
+            }
+            onClick={() => navigate('/management/ai-costs')}
+          >
+            AI Costs
+          </nav>
+        )}
       </FilterBar>
       <ManagementRoutes
         className={css`
