@@ -403,7 +403,7 @@ export default function ImageEditor({
                 />
                 <div
                   className={css`
-                    font-size: 0.875rem;
+                    font-size: 1rem;
                     font-weight: 500;
                   `}
                 >
@@ -430,7 +430,7 @@ export default function ImageEditor({
               >
                 <div
                   className={css`
-                    font-size: 0.9rem;
+                    font-size: 1rem;
                     font-weight: 600;
                     max-width: 360px;
                   `}

@@ -92,15 +92,19 @@ export default function userRequestHelpers({
     },
     async updateImageGenerationSettings({
       engine,
-      followUpEngine
+      followUpEngine,
+      quality,
+      followUpQuality
     }: {
       engine?: 'gemini' | 'openai';
       followUpEngine?: 'gemini' | 'openai';
+      quality?: 'low' | 'medium' | 'high';
+      followUpQuality?: 'low' | 'medium' | 'high';
     }) {
       try {
         const { data } = await request.put(
           `${URL}/user/settings/imageGeneration`,
-          { engine, followUpEngine },
+          { engine, followUpEngine, quality, followUpQuality },
           auth()
         );
         return data;

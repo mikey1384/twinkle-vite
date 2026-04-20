@@ -9,7 +9,12 @@ import { css } from '@emotion/css';
 import AIDisabledNotice from '~/components/AIDisabledNotice';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
-import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useNotiContext,
+  useViewContext
+} from '~/contexts';
 import {
   dataUrlToBlob,
   extractBase64FromDataUrl
@@ -22,8 +27,6 @@ import Loading from '~/components/Loading';
 import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
 import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/colorSettings';
-
-const IMAGE_GENERATION_COST = 10000;
 
 // Helper to get proxied URL for CloudFront images
 function getProxiedUrl(imageUrl: string): string {
@@ -47,6 +50,10 @@ interface ImageEditModalProps {
   onRegisterUseImageHandler?: (
     handler: (() => void | Promise<void>) | null
   ) => void;
+}
+
+interface AiUsagePolicy {
+  energyRemaining?: number;
 }
 
 export default function ImageEditModal({
@@ -88,19 +95,38 @@ export default function ImageEditModal({
   const generateAIImage = useAppContext(
     (v) => v.requestHelpers.generateAIImage
   );
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
+  );
   const updateImageEditorSettings = useAppContext(
     (v) => v.requestHelpers.updateImageEditorSettings
   );
-  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const userId = useKeyContext((v) => v.myState.userId);
   const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const globalAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy as AiUsagePolicy | null
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const { color: initialDrawingColor, recentColors: initialRecentColors } =
     extractDrawingColorSettings(userSettings);
+  const [aiUsagePolicy, setAiUsagePolicy] = useState<AiUsagePolicy | null>(
+    globalAiUsagePolicy || null
+  );
+  const [aiUsagePolicyLoading, setAiUsagePolicyLoading] = useState(false);
 
   const canAffordGeneration = useMemo(() => {
-    return twinkleCoins >= IMAGE_GENERATION_COST;
-  }, [twinkleCoins]);
+    return (
+      !(aiUsagePolicyLoading && !aiUsagePolicy) &&
+      !(
+        aiUsagePolicy &&
+        typeof aiUsagePolicy.energyRemaining === 'number' &&
+        aiUsagePolicy.energyRemaining <= 0
+      )
+    );
+  }, [aiUsagePolicy, aiUsagePolicyLoading]);
   const aiModificationDisabled = AI_FEATURES_DISABLED;
 
   // Handle "Use This Image" for embedded mode
@@ -136,6 +162,23 @@ export default function ImageEditModal({
       return () => onRegisterUseImageHandler(null);
     }
   }, [embedded, onRegisterUseImageHandler, handleUseThisImage]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    loadAiUsagePolicy({ isCancelled: () => cancelled });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  useEffect(() => {
+    if (globalAiUsagePolicy) {
+      applyAiUsagePolicy(globalAiUsagePolicy);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalAiUsagePolicy]);
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
@@ -319,7 +362,7 @@ export default function ImageEditModal({
       imageUrl?: string;
       error?: string;
       message?: string;
-      coins?: number;
+      aiUsagePolicy?: AiUsagePolicy;
     }) => {
       try {
         setProgressStage(status.stage);
@@ -329,18 +372,16 @@ export default function ImageEditModal({
             `data:image/png;base64,${status.partialImageB64}`
           );
         } else if (status.stage === 'completed') {
-          if (status.imageUrl) {
-            // Clear any existing drawings before loading the new AI image
-            clearDrawingOverlayRef.current();
-            // Load the new AI-generated image onto the canvas
-            loadImageOntoCanvas(status.imageUrl);
+          if (!status.imageUrl) {
+            return;
           }
+          // Clear any existing drawings before loading the new AI image
+          clearDrawingOverlayRef.current();
+          // Load the new AI-generated image onto the canvas
+          loadImageOntoCanvas(status.imageUrl);
 
-          if (typeof status.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: status.coins }
-            });
+          if (status.aiUsagePolicy) {
+            applyAiUsagePolicy(status.aiUsagePolicy);
           }
 
           isGeneratingRef.current = false;
@@ -354,11 +395,8 @@ export default function ImageEditModal({
             'An error occurred during image generation';
           setError(errorMessage);
 
-          if (typeof status.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: status.coins }
-            });
+          if (status.aiUsagePolicy) {
+            applyAiUsagePolicy(status.aiUsagePolicy);
           }
 
           isGeneratingRef.current = false;
@@ -619,7 +657,13 @@ export default function ImageEditModal({
                 loading={isGenerating}
                 style={{ minWidth: '120px' }}
               >
-                {isGenerating ? getProgressLabel() : 'Generate'}
+                {isGenerating
+                  ? getProgressLabel()
+                  : aiUsagePolicyLoading && !aiUsagePolicy
+                  ? 'Checking Energy...'
+                  : !canAffordGeneration
+                  ? 'Recharge Energy'
+                  : 'Generate'}
               </Button>
               <div
                 className={css`
@@ -632,8 +676,7 @@ export default function ImageEditModal({
                     : Color.rose()};
                 `}
               >
-                <span>{IMAGE_GENERATION_COST.toLocaleString()} coins</span>
-                <span>(You have: {twinkleCoins?.toLocaleString() || 0})</span>
+                <span>Uses Energy</span>
               </div>
             </div>
           </div>
@@ -682,6 +725,42 @@ export default function ImageEditModal({
     </Modal>
   );
 
+  async function loadAiUsagePolicy({
+    isCancelled = () => false
+  }: {
+    isCancelled?: () => boolean;
+  } = {}) {
+    if (!userId) return null;
+    if (!isCancelled()) {
+      setAiUsagePolicyLoading(true);
+    }
+    try {
+      const result = await getAiEnergyPolicy();
+      const nextPolicy = result?.aiUsagePolicy || null;
+      if (!isCancelled()) {
+        applyAiUsagePolicy(nextPolicy);
+      }
+      return nextPolicy;
+    } catch (error) {
+      console.error(error);
+      return null;
+    } finally {
+      if (!isCancelled()) {
+        setAiUsagePolicyLoading(false);
+      }
+    }
+  }
+
+  function applyAiUsagePolicy(nextPolicy?: AiUsagePolicy | null) {
+    if (!nextPolicy) return;
+    setAiUsagePolicy(nextPolicy);
+    onUpdateTodayStats({
+      newStats: {
+        aiUsagePolicy: nextPolicy
+      }
+    });
+  }
+
   function handlePromptKeyDown(e: React.KeyboardEvent) {
     if (e.key !== 'Enter' || isGenerating) return;
     if (!e.ctrlKey && !e.metaKey) return;
@@ -693,10 +772,13 @@ export default function ImageEditModal({
     if (aiModificationDisabled) return;
     if (!prompt.trim() || isGenerating || isGeneratingRef.current) return;
 
-    if (!canAffordGeneration) {
-      setError(
-        `Insufficient coins. You need ${IMAGE_GENERATION_COST.toLocaleString()} coins to generate an image.`
-      );
+    const policy = aiUsagePolicy || (await loadAiUsagePolicy());
+    if (
+      policy &&
+      typeof policy.energyRemaining === 'number' &&
+      policy.energyRemaining <= 0
+    ) {
+      setError('Energy is empty. Recharge or come back tomorrow.');
       return;
     }
 
@@ -719,8 +801,13 @@ export default function ImageEditModal({
       const result = await generateAIImage({
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
-        engine: 'openai'
+        engine: 'openai',
+        quality: 'high'
       });
+
+      if (result.aiUsagePolicy) {
+        applyAiUsagePolicy(result.aiUsagePolicy);
+      }
 
       if (!result.success) {
         const isStreamingActive =
@@ -729,13 +816,6 @@ export default function ImageEditModal({
         if (!isStreamingActive) {
           const errorMessage = result.error || 'Failed to generate image';
           setError(errorMessage);
-
-          if (typeof result.coins === 'number' && userId) {
-            onSetUserState({
-              userId,
-              newState: { twinkleCoins: result.coins }
-            });
-          }
 
           isGeneratingRef.current = false;
           setIsGenerating(false);
@@ -791,6 +871,8 @@ export default function ImageEditModal({
         return 'Generating image...';
       case 'calling_openai':
         return 'Calling OpenAI...';
+      case 'calling_gemini':
+        return 'Calling Nano Banana...';
       case 'in_progress':
         return 'Processing...';
       case 'generating':

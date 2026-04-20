@@ -2130,18 +2130,18 @@ export default function contentRequestHelpers({
       prompt,
       previousImageId,
       previousResponseId,
-      referenceImageB64
-    }: // engine
-    {
+      referenceImageB64,
+      engine = 'openai',
+      quality = 'high'
+    }: {
       prompt: string;
       previousResponseId?: string;
       previousImageId?: string;
       referenceImageB64?: string;
       engine?: 'gemini' | 'openai';
+      quality?: 'low' | 'medium' | 'high';
     }) {
       try {
-        // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
-        const forcedEngine = 'openai';
         const { data } = await request.post(
           `${URL}/content/image/ai`,
           {
@@ -2149,26 +2149,31 @@ export default function contentRequestHelpers({
             previousImageId,
             previousResponseId,
             referenceImageB64,
-            engine: forcedEngine
+            engine,
+            quality
           },
-          auth()
+          {
+            ...auth(),
+            timeout: 360000,
+            meta: { allowExtendedTimeout: true, enforceTimeout: false }
+          }
         );
         return {
           success: true,
           imageUrl: data.imageUrl,
           responseId: data.responseId,
           imageId: data.imageId,
-          coins: data.coins
+          engine: data.engine,
+          quality: data.quality,
+          aiUsagePolicy: data.aiUsagePolicy
         };
       } catch (error: any) {
         console.error('AI image generation error:', error);
         let errorMessage = 'Failed to generate image';
 
-        const coins =
-          typeof error?.response?.data?.coins === 'number'
-            ? error.response.data.coins
-            : undefined;
         const reason = error?.response?.data?.reason;
+        const code = error?.response?.data?.code;
+        const aiUsagePolicy = error?.response?.data?.aiUsagePolicy;
 
         if (error?.response?.data?.error) {
           const apiError = error.response.data.error;
@@ -2198,8 +2203,9 @@ export default function contentRequestHelpers({
         return {
           success: false,
           error: errorMessage,
-          coins,
-          reason
+          reason,
+          code,
+          aiUsagePolicy
         };
       }
     },

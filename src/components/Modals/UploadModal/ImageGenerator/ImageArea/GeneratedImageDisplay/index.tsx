@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 import FollowUpInput from './FollowUpInput';
 import ImageEditor from '../../ImageEditor';
@@ -23,9 +24,12 @@ interface GeneratedImageDisplayProps {
   isShowingLoadingState: boolean;
   onSetHasBeenEdited: (value: boolean) => void;
   canAffordFollowUp?: boolean;
-  followUpCost?: number;
+  energyLoading?: boolean;
   followUpEngine?: 'gemini' | 'openai';
   onFollowUpEngineChange: (engine: 'gemini' | 'openai') => void;
+  followUpQuality?: 'low' | 'medium' | 'high';
+  onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  themeColor?: string;
 }
 
 export default function GeneratedImageDisplay({
@@ -45,11 +49,18 @@ export default function GeneratedImageDisplay({
   isShowingLoadingState,
   onSetHasBeenEdited,
   canAffordFollowUp = true,
-  followUpCost = 0,
+  energyLoading = false,
   followUpEngine = 'gemini',
-  onFollowUpEngineChange
+  onFollowUpEngineChange,
+  followUpQuality = 'high',
+  onFollowUpQualityChange,
+  themeColor
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const themeRole = useRoleColor('button', {
+    themeName: themeColor,
+    fallback: themeColor || 'logoBlue'
+  });
   const currentImageSrc =
     partialImageData || generatedImageUrl || referenceImageUrl || canvasUrl;
 
@@ -124,11 +135,11 @@ export default function GeneratedImageDisplay({
               position: absolute;
               top: 1rem;
               right: 1rem;
-              background: ${Color.logoBlue(0.9)};
+              background: ${themeRole.getColor(0.9)};
               color: white;
               padding: 0.5rem 1rem;
               border-radius: 12px;
-              font-size: 0.85rem;
+              font-size: 1rem;
               font-weight: 500;
               backdrop-filter: blur(8px);
             `}
@@ -158,7 +169,7 @@ export default function GeneratedImageDisplay({
                 width: 48px;
                 height: 48px;
                 border: 4px solid rgba(255, 255, 255, 0.3);
-                border-top: 4px solid ${Color.logoBlue()};
+                border-top: 4px solid ${themeRole.getColor()};
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
 
@@ -178,7 +189,7 @@ export default function GeneratedImageDisplay({
                 color: white;
                 padding: 0.75rem 1.25rem;
                 border-radius: 12px;
-                font-size: 0.9rem;
+                font-size: 1rem;
                 font-weight: 500;
                 backdrop-filter: blur(8px);
                 text-align: center;
@@ -338,9 +349,12 @@ export default function GeneratedImageDisplay({
           isGenerating={isGenerating}
           isFollowUpGenerating={isFollowUpGenerating}
           canAffordFollowUp={canAffordFollowUp}
-          followUpCost={followUpCost}
+          energyLoading={energyLoading}
           followUpEngine={followUpEngine}
           onFollowUpEngineChange={onFollowUpEngineChange}
+          followUpQuality={followUpQuality}
+          onFollowUpQualityChange={onFollowUpQualityChange}
+          themeColor={themeColor}
         />
       )}
 

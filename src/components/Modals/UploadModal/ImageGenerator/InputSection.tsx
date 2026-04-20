@@ -1,6 +1,7 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import ActionButton from './ActionButton';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface InputSectionProps {
   prompt: string;
@@ -9,10 +10,12 @@ interface InputSectionProps {
   onKeyDown: (event: React.KeyboardEvent) => void;
   isGenerating: boolean;
   canAffordGeneration?: boolean;
-  generationCost?: number;
-  twinkleCoins?: number;
+  energyLoading?: boolean;
   engine: 'gemini' | 'openai';
   onEngineChange: (engine: 'gemini' | 'openai') => void;
+  quality: 'low' | 'medium' | 'high';
+  onQualityChange: (quality: 'low' | 'medium' | 'high') => void;
+  themeColor?: string;
 }
 
 export default function InputSection({
@@ -22,34 +25,30 @@ export default function InputSection({
   onKeyDown,
   isGenerating,
   canAffordGeneration = true,
-  generationCost = 0,
-  twinkleCoins = 0,
+  energyLoading = false,
   engine,
-  onEngineChange
+  onEngineChange,
+  quality,
+  onQualityChange,
+  themeColor
 }: InputSectionProps) {
+  const themeRole = useRoleColor('button', {
+    themeName: themeColor,
+    fallback: themeColor || 'logoBlue'
+  });
+
   return (
     <div
       className={css`
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 1rem;
-        border: 1px solid var(--ui-border);
-
-        @media (min-width: 768px) {
-          padding: 1.5rem;
-        }
+        background: transparent;
       `}
     >
       <div
         className={css`
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
+          gap: 0.8rem;
           align-items: stretch;
-
-          @media (min-width: 768px) {
-            gap: 0.5rem;
-          }
         `}
       >
         <div
@@ -58,43 +57,37 @@ export default function InputSection({
             width: 100%;
           `}
         >
-          <label
+          <div
             className={css`
-              display: block;
-              font-size: 1rem;
-              font-weight: 600;
-              color: #333333;
-              margin-bottom: 0.5rem;
-
-              @media (min-width: 768px) {
-                font-size: 1.1rem;
-              }
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 0.8rem;
+              margin-bottom: 0.55rem;
+              flex-wrap: wrap;
             `}
           >
-            Prompt
-            <span
-              className={css`
-                font-weight: 400;
-                color: #888888;
-                font-size: 0.8rem;
-                margin-left: 0.5rem;
-
-                @media (min-width: 768px) {
-                  font-size: 0.9rem;
-                }
-              `}
-            >
-              (Ctrl+Enter to generate)
-            </span>
-          </label>
-          {/* Engine selector hidden - hardcoded to image-1.5 (openai) */}
-          {false && (
-            <div
+            <label
               className={css`
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
-                margin-bottom: 0.5rem;
+                font-size: 1rem;
+                font-weight: 800;
+                color: #333333;
+
+                @media (min-width: 768px) {
+                  font-size: 1.05rem;
+                }
+              `}
+            >
+              Prompt
+            </label>
+            <span
+              className={css`
+                display: flex;
+                align-items: center;
+                gap: 0.45rem;
+                flex-wrap: wrap;
               `}
             >
               <select
@@ -103,21 +96,37 @@ export default function InputSection({
                   onEngineChange(e.target.value as 'gemini' | 'openai')
                 }
                 disabled={isGenerating}
-                className={css`
-                  padding: 0.25rem 0.5rem;
-                  border: 1px solid var(--ui-border);
-                  border-radius: 4px;
-                  font-size: 0.8rem;
-                  background: #fff;
-                  outline: none;
-                  color: #333;
-                `}
+                className={selectClassName}
+                style={{
+                  borderColor: themeRole.getColor(0.32),
+                  color: themeRole.getColor()
+                }}
               >
-                <option value="gemini">Nano Banana Pro</option>
-                <option value="openai">GPT Image-1</option>
+                <option value="openai">Image 1.5</option>
+                <option value="gemini">Nano Banana</option>
               </select>
-            </div>
-          )}
+              {engine === 'openai' && (
+                <select
+                  value={quality}
+                  onChange={(e) =>
+                    onQualityChange(
+                      e.target.value as 'low' | 'medium' | 'high'
+                    )
+                  }
+                  disabled={isGenerating}
+                  className={selectClassName}
+                  style={{
+                    borderColor: themeRole.getColor(0.32),
+                    color: themeRole.getColor()
+                  }}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              )}
+            </span>
+          </div>
           <textarea
             placeholder="A magical forest with glowing mushrooms and fireflies, Japanese anime style..."
             value={prompt}
@@ -128,21 +137,22 @@ export default function InputSection({
             className={css`
               width: 100%;
               padding: 0.875rem 1rem;
-              border: 2px solid var(--ui-border);
-              border-radius: 12px;
-              font-size: 1.1rem;
+              border: 1px solid ${themeRole.getColor(0.42)};
+              border-radius: 8px;
+              font-size: 1.7rem;
+              line-height: 1.45;
               outline: none;
               transition: all 0.2s ease;
-              background: #f8fafc;
+              background: #fff;
               box-sizing: border-box;
               font-family: inherit;
               resize: vertical;
-              min-height: 80px;
+              min-height: 92px;
               max-height: 180px;
 
               &:focus {
-                border-color: #007bff;
-                box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+                border-color: ${themeRole.getColor(0.78)};
+                box-shadow: 0 0 0 3px ${themeRole.getColor(0.1)};
               }
 
               &:disabled {
@@ -157,50 +167,16 @@ export default function InputSection({
               }
 
               @media (min-width: 768px) {
-                font-size: 1.2rem;
+                font-size: 1.7rem;
+              }
+
+              @media (max-width: 768px) {
+                font-size: 16px;
+                line-height: 1.6;
               }
             `}
           />
         </div>
-
-        {/* Cost display */}
-        {generationCost > 0 && (
-          <div
-            className={css`
-              margin-top: 0.5rem;
-              padding: 0.75rem;
-              background: ${canAffordGeneration ? '#f0f9ff' : '#fef2f2'};
-              border: 1px solid ${canAffordGeneration ? '#bae6fd' : '#fecaca'};
-              border-radius: 8px;
-              font-size: 1rem;
-              text-align: center;
-
-              @media (min-width: 768px) {
-                margin-top: 0;
-                margin-left: 1rem;
-                flex-shrink: 0;
-              }
-            `}
-          >
-            <div
-              className={css`
-                color: ${canAffordGeneration ? '#0369a1' : '#dc2626'};
-                font-weight: 600;
-              `}
-            >
-              Cost: {generationCost.toLocaleString()} coins
-            </div>
-            <div
-              className={css`
-                color: ${canAffordGeneration ? '#0284c7' : '#ef4444'};
-                font-size: 0.85rem;
-                margin-top: 0.25rem;
-              `}
-            >
-              Balance: {twinkleCoins.toLocaleString()} coins
-            </div>
-          </div>
-        )}
 
         <ActionButton
           onClick={onGenerate}
@@ -215,16 +191,35 @@ export default function InputSection({
               width: auto;
               margin-top: 0;
               align-self: flex-end;
+              min-width: 12rem;
             }
           `}
         >
           {isGenerating
             ? 'Generating...'
+            : energyLoading
+            ? 'Checking Energy...'
             : !canAffordGeneration
-            ? 'Insufficient Coins'
+            ? 'Recharge Energy'
             : 'Generate'}
         </ActionButton>
       </div>
     </div>
   );
 }
+
+const selectClassName = css`
+  padding: 0.48rem 0.7rem;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;

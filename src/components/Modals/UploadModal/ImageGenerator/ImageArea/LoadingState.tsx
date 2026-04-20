@@ -1,12 +1,22 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
+import { useRoleColor } from '~/theme/useRoleColor';
 
 interface LoadingStateProps {
   getProgressLabel: () => string;
+  themeColor?: string;
 }
 
-export default function LoadingState({ getProgressLabel }: LoadingStateProps) {
+export default function LoadingState({
+  getProgressLabel,
+  themeColor
+}: LoadingStateProps) {
+  const themeRole = useRoleColor('button', {
+    themeName: themeColor,
+    fallback: themeColor || 'logoBlue'
+  });
+
   return (
     <div
       className={css`
@@ -50,7 +60,7 @@ export default function LoadingState({ getProgressLabel }: LoadingStateProps) {
               width: 32px;
               height: 32px;
               border: 4px solid var(--ui-border);
-              border-top: 4px solid ${Color.logoBlue()};
+              border-top: 4px solid ${themeRole.getColor()};
               border-radius: 50%;
               animation: spin 1s linear infinite;
 

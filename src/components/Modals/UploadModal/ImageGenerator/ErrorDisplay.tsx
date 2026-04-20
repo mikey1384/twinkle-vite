@@ -40,7 +40,7 @@ export default function ErrorDisplay({ error, onDismiss }: ErrorDisplayProps) {
           className={css`
             color: ${Color.red()};
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 1rem;
           `}
         >
           {typeof error === 'string' ? error : JSON.stringify(error)}
