@@ -7,13 +7,28 @@ import { useChatContext } from '~/contexts';
 export default function AICards() {
   const aiCardFeedIds = useChatContext((v) => v.state.aiCardFeedIds);
   const aiCardFeedObj = useChatContext((v) => v.state.aiCardFeedObj);
+  const previewFeed = useChatContext(
+    (v) => v.state.collectPreviews?.aiCard || null
+  );
 
   const aiCardFeeds = useMemo(
     () => aiCardFeedIds.map((id: number) => aiCardFeedObj[id]),
     [aiCardFeedIds, aiCardFeedObj]
   );
 
-  const lastActivity = useMemo(() => aiCardFeeds?.[0], [aiCardFeeds]);
+  const description = useMemo(
+    () => {
+      const cachedFeed = aiCardFeeds.reduce((latest: any, feed: any) => {
+        if (!feed?.id) return latest;
+        if (!latest?.id || Number(feed.id) > Number(latest.id)) return feed;
+        return latest;
+      }, null);
+      return Number(previewFeed?.id || 0) > Number(cachedFeed?.id || 0)
+        ? previewFeed.description
+        : cachedFeed?.description || previewFeed?.description || '';
+    },
+    [aiCardFeeds, previewFeed]
+  );
 
   return (
     <div style={{ height: '5rem', position: 'relative' }}>
@@ -39,7 +54,7 @@ export default function AICards() {
             width: '100%'
           }}
         >
-          {lastActivity?.description}
+          {description}
         </p>
       </div>
     </div>

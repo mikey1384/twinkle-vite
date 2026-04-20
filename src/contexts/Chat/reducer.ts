@@ -1712,6 +1712,7 @@ export default function ChatReducer(
             : action.data.chatType,
         classChannelIds: action.data.classChannelIds,
         classLoadMoreButton,
+        collectPreviews: action.data.collectPreviews || {},
         customChannelNames: action.data.customChannelNames,
         favoriteChannelIds: action.data.favoriteChannelIds,
         favoriteLoadMoreButton,
