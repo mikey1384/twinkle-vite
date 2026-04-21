@@ -4,7 +4,7 @@ import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { useRoleColor } from '~/theme/useRoleColor';
-import DonorFundsModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/DonorFundsModal';
+import AiEnergyDashboardModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal';
 
 interface CommunityFundRequirement {
   key: string;
@@ -81,7 +81,7 @@ export default function AiEnergyCard({
   cardRef?: React.Ref<HTMLDivElement>;
   themeColor?: string;
 }) {
-  const [communityFundsModalShown, setCommunityFundsModalShown] =
+  const [aiEnergyDashboardModalShown, setAiEnergyDashboardModalShown] =
     useState(false);
   const modeBadgeRole = useRoleColor('button', {
     themeName: themeColor,
@@ -207,8 +207,8 @@ export default function AiEnergyCard({
             <button
               type="button"
               className={`${energyBadgeCls} ${inlineTitleCls}`}
-              onClick={() => setCommunityFundsModalShown(true)}
-              title="Open community fund"
+              onClick={() => setAiEnergyDashboardModalShown(true)}
+              title="Open AI Energy dashboard"
             >
               <Icon icon="bolt" className={boltCls} />
               {statusLabel && (
@@ -231,8 +231,8 @@ export default function AiEnergyCard({
               <button
                 type="button"
                 className={`${energyBadgeCls} ${titleCls}`}
-                onClick={() => setCommunityFundsModalShown(true)}
-                title="Open community fund"
+                onClick={() => setAiEnergyDashboardModalShown(true)}
+                title="Open AI Energy dashboard"
               >
                 <Icon icon="bolt" className={boltCls} />
                 <span>Energy</span>
@@ -307,10 +307,10 @@ export default function AiEnergyCard({
           </div>
         )}
       </div>
-      {communityFundsModalShown && (
-        <DonorFundsModal
+      {aiEnergyDashboardModalShown && (
+        <AiEnergyDashboardModal
           modalLevel={3}
-          onHide={() => setCommunityFundsModalShown(false)}
+          onHide={() => setAiEnergyDashboardModalShown(false)}
         />
       )}
     </>
