@@ -89,7 +89,7 @@ export default function Tools() {
   const [loading, setLoading] = useState(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [editingTimes, setEditingTimes] = useState<any>({});
+  const [editingTimes, setEditingTimes] = useState<Record<string, string>>({});
 
   const MAX_MB = 2500;
 
