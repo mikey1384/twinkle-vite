@@ -6,22 +6,6 @@ import React, {
   useRef,
   useState
 } from 'react';
-import DisplayedMessages from './DisplayedMessages';
-import ConfirmModal from '~/components/Modals/ConfirmModal';
-import MessageInput from './MessageInput';
-import ChannelHeader from './ChannelHeader';
-import SubjectMsgsModal from '../../Modals/SubjectMsgsModal';
-import InviteUsersModal from '../../Modals/InviteUsers';
-import ChessModal from '../../Modals/GameModals/ChessModal';
-import OmokModal from '../../Modals/GameModals/OmokModal';
-import WordleModal from '../../Modals/WordleModal';
-import SelectVideoModal from '../../Modals/SelectVideoModal';
-import SelectNewOwnerModal from '../../Modals/SelectNewOwnerModal';
-import TransactionModal from '../../Modals/TransactionModal';
-import SettingsModal from '../../Modals/SettingsModal';
-import BuyTopicsModal from '../../Modals/BuyTopicsModal';
-import HumanCallScreen from './CallScreen/Human';
-import AICallScreen from './CallScreen/AI';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { countdownStore } from '~/contexts/GameCountdown';
 import { v1 as uuidv1 } from 'uuid';
@@ -33,11 +17,8 @@ import {
   ZERO_TWINKLE_ID,
   GENERAL_CHAT_ID
 } from '~/constants/defaultValues';
-import { css } from '@emotion/css';
 import { socket } from '~/constants/sockets/api';
 import { isMobile, parseChannelPath } from '~/helpers';
-import { useSearch } from '~/helpers/hooks';
-import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { useNavigate } from 'react-router-dom';
 import {
   useAppContext,
@@ -50,10 +31,19 @@ import {
   getLatestGameBoundaryMessageId,
   getPendingTerminalToken
 } from '~/containers/Chat/helpers/gameMessageIds';
+import CallScreens from './CallScreens';
+import { CALL_SCREEN_HEIGHT } from './constants';
+import Content from './Content';
+import Modals from './Modals';
+import type {
+  DeleteModalState,
+  MessagesContainerProps,
+  SubjectMsgsModalState
+} from './types';
+import useMessageInputBridge from './useMessageInputBridge';
+import useMessageSearch from './useMessageSearch';
 import LocalContext from '../../Context';
-const CALL_SCREEN_HEIGHT = '30%';
 const deviceIsMobile = isMobile(navigator);
-const leaveChatGroupLabel = 'Leave Chat Group';
 
 export default function MessagesContainer({
   channelName,
@@ -69,24 +59,7 @@ export default function MessagesContainer({
   topicSelectorModalShown,
   onScrollToBottom,
   onSetTopicSelectorModalShown
-}: {
-  channelName?: string;
-  partner?: {
-    id: number;
-    username: string;
-  };
-  currentChannel: any;
-  currentPathId: string | number;
-  displayedThemeColor: string;
-  isAICardModalShown: boolean;
-  MessagesRef: React.RefObject<any>;
-  onSetAICardModalCardId: (cardId: number) => void;
-  subchannelId?: number;
-  subchannelPath?: string;
-  topicSelectorModalShown: boolean;
-  onScrollToBottom: () => void;
-  onSetTopicSelectorModalShown: (shown: boolean) => void;
-}) {
+}: MessagesContainerProps) {
   const reportError = useAppContext((v) => v.requestHelpers.reportError);
   const declineChessRewind = useAppContext(
     (v) => v.requestHelpers.declineChessRewind
@@ -195,22 +168,18 @@ export default function MessagesContainer({
   const [aiUsagePolicyHeight, setAiUsagePolicyHeight] = useState(0);
   const [inviteUsersModalShown, setInviteUsersModalShown] = useState(false);
   const [selectVideoModalShown, setSelectVideoModalShown] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{
-    shown: boolean;
-    fileName: string;
-    filePath: string;
-    messageId: number | null;
-  }>({
+  const [deleteModal, setDeleteModal] = useState<DeleteModalState>({
     shown: false,
     fileName: '',
     filePath: '',
     messageId: null
   });
-  const [subjectMsgsModal, setSubjectMsgsModal] = useState({
-    shown: false,
-    subjectId: 0,
-    content: ''
-  });
+  const [subjectMsgsModal, setSubjectMsgsModal] =
+    useState<SubjectMsgsModalState>({
+      shown: false,
+      subjectId: 0,
+      content: ''
+    });
   const [groupObjs, setGroupObjs] = useState<any>({});
   const [transactionModalShown, setTransactionModalShown] = useState(false);
   const [buyTopicModalShown, setBuyTopicModalShown] = useState(false);
@@ -231,21 +200,6 @@ export default function MessagesContainer({
   const MessageToScrollToFromAll = useRef<number | null>(null);
   const MessageToScrollToFromTopic = useRef<number | null>(null);
   const ChatInputRef: React.RefObject<any> = useRef(null);
-  const messageInputSetTextRef = useRef<((text: string) => void) | null>(null);
-  const messageInputAiUsagePolicyUpdateRef = useRef<
-    ((policy?: any) => void) | null
-  >(null);
-  const messageInputAiMessageSaveErrorRef = useRef<
-    | ((payload: {
-        content?: string;
-        error?: any;
-        aiUsagePolicy?: any;
-        channelId?: number;
-        subchannelId?: number;
-        topicId?: number;
-      }) => void)
-    | null
-  >(null);
   const favoritingRef = useRef(false);
   const shouldScrollToBottomRef = useRef(true);
   const visibleMessageIdRef = useRef<number | null>(null);
@@ -257,36 +211,6 @@ export default function MessagesContainer({
   const pendingTerminalTokenRef = useRef<
     Record<number, Partial<Record<'chess' | 'omok', string>>>
   >({});
-  const [searchText, setSearchText] = useState('');
-  const searchContextRef = useRef({
-    channelId: selectedChannelId,
-    selectedTab,
-    topicId: null as number | null,
-    searchText: ''
-  });
-
-  const { handleSearch, searching } = useSearch({
-    onSearch: handleMessageSearch,
-    onEmptyQuery: () => {
-      onSeachChatMessages({
-        channelId: selectedChannelId,
-        topicId: selectedTab === 'topic' ? appliedTopicId : null,
-        messageIds: [],
-        messagesObj: {},
-        loadMoreShown: false
-      });
-    },
-    onClear: () => {
-      onSeachChatMessages({
-        channelId: selectedChannelId,
-        topicId: selectedTab === 'topic' ? appliedTopicId : null,
-        messageIds: [],
-        messagesObj: {},
-        loadMoreShown: false
-      });
-    },
-    onSetSearchText: setSearchText
-  });
 
   const subchannel = useMemo(() => {
     if (!subchannelPath) {
@@ -355,37 +279,17 @@ export default function MessagesContainer({
     [aiCallChannelId, selectedChannelId]
   );
 
-  const handleRegisterMessageInputSetText = useCallback(
-    (handler: ((text: string) => void) | null) => {
-      messageInputSetTextRef.current = handler;
-    },
-    []
-  );
-
-  const handleRegisterAiUsagePolicyUpdate = useCallback(
-    (handler: ((policy?: any) => void) | null) => {
-      messageInputAiUsagePolicyUpdateRef.current = handler;
-    },
-    []
-  );
-
-  const handleRegisterAiMessageSaveError = useCallback(
-    (
-      handler:
-        | ((payload: {
-            content?: string;
-            error?: any;
-            aiUsagePolicy?: any;
-            channelId?: number;
-            subchannelId?: number;
-            topicId?: number;
-          }) => void)
-        | null
-    ) => {
-      messageInputAiMessageSaveErrorRef.current = handler;
-    },
-    []
-  );
+  const {
+    handleAiUsagePolicyUpdate,
+    handleOptimisticAiMessageSaveError,
+    handleRegisterAiMessageSaveError,
+    handleRegisterAiUsagePolicyUpdate,
+    handleRegisterMessageInputSetText,
+    messageInputSetTextRef
+  } = useMessageInputBridge({
+    selectedChannelId,
+    subchannelId
+  });
 
   const selectedChannelIdAndPathIdNotSynced = useMemo(() => {
     const pathId = Number(currentPathId);
@@ -434,15 +338,13 @@ export default function MessagesContainer({
       currentChannel.featuredTopicId,
     [currentChannel.selectedTopicId, currentChannel.featuredTopicId, subjectId]
   );
-
-  useEffect(() => {
-    searchContextRef.current = {
-      channelId: selectedChannelId,
-      selectedTab,
-      topicId: selectedTab === 'topic' ? appliedTopicId : null,
-      searchText
-    };
-  }, [appliedTopicId, searchText, selectedChannelId, selectedTab]);
+  const { handleSearch, searchText, searching } = useMessageSearch({
+    appliedTopicId,
+    onSeachChatMessages,
+    searchChatMessages,
+    selectedChannelId,
+    selectedTab
+  });
 
   const currentlySelectedTopic = useMemo(() => {
     if (topicObj[appliedTopicId]) {
@@ -1662,366 +1564,258 @@ export default function MessagesContainer({
     isSearchActive
   ]);
 
+  const channelHeaderProps = {
+    currentChannel,
+    displayedThemeColor,
+    isAIChannel,
+    isSearchActive,
+    onInputFocus: () => ChatInputRef.current?.focus(),
+    onSaveScrollPositionForAll: handleSaveScrollPositionForAll,
+    onSetInviteUsersModalShown: setInviteUsersModalShown,
+    onSetLeaveConfirmModalShown: setLeaveConfirmModalShown,
+    onSetBuyTopicModalShown: setBuyTopicModalShown,
+    onSetSettingsModalShown: setSettingsModalShown,
+    onSetTopicSelectorModalShown,
+    onSearch: handleSearch,
+    searchText,
+    selectedChannelId,
+    topicSelectorModalShown,
+    subchannel,
+    onFavoriteClick: handleFavoriteClick,
+    onSetHideModalShown: setHideModalShown
+  };
+
+  const displayedMessagesProps = {
+    pageLoading,
+    loadMoreShownAtBottom,
+    isLoadingTopicMessages,
+    isReconnecting: reconnecting,
+    isConnecting: !selectedChannelIdAndPathIdNotSynced,
+    isLoadingChannel: !currentChannel?.loaded,
+    chessTarget,
+    boardCountdownObj,
+    currentChannel,
+    displayedThemeColor,
+    groupObjs,
+    onSetGroupObjs: setGroupObjs,
+    isAICardModalShown,
+    isRestrictedChannel:
+      !!isRestrictedChannel ||
+      (isOnlyOwnerPostingTopic && currentChannel.creatorId !== userId) ||
+      (currentChannel.isOwnerPostingOnly &&
+        selectedTab !== 'topic' &&
+        currentChannel.creatorId !== userId),
+    isSearching: searching,
+    isSearchActive,
+    ChatInputRef,
+    MessagesRef,
+    MessageToScrollToFromAll,
+    MessageToScrollToFromTopic,
+    onAcceptRewind: handleAcceptRewind,
+    onCancelRewindRequest: handleCancelRewindRequest,
+    onChessModalShown: handleChessModalShown,
+    onChessSpoilerClick: handleChessSpoilerClick,
+    onOmokModalShown: handleOmokModalShown,
+    onOmokSpoilerClick: handleOmokSpoilerClick,
+    onDeclineRewind: handleDeclineRewind,
+    onMessageSubmit: handleMessageSubmit,
+    onAiUsagePolicyUpdate: handleAiUsagePolicyUpdate,
+    onOptimisticAiMessageSaveError: handleOptimisticAiMessageSaveError,
+    onReplyTargetSelected: (target: any) => {
+      replyTargetRef.current = target;
+    },
+    onSetAICardModalCardId,
+    onSetDeleteModal: setDeleteModal,
+    onSetSubjectMsgsModalShown: setSubjectMsgsModal,
+    onSetTransactionModalShown: setTransactionModalShown,
+    onScrollToBottom,
+    onSetVisibleMessageId: handleSetVisibleMessageId,
+    partner,
+    searchText,
+    selectedTab,
+    subchannel
+  };
+
+  const messageInputProps = {
+    currentTopic: currentlySelectedTopic,
+    partner,
+    currentTransactionId,
+    selectedChannelId,
+    isZeroChannel,
+    isCielChannel,
+    isRestrictedChannel: !!isRestrictedChannel,
+    isBanned: !!banned?.chat,
+    isOwner: currentChannel.creatorId === userId,
+    isOnlyOwnerPostingTopic,
+    isOwnerPostingOnly: currentChannel.isOwnerPostingOnly,
+    innerRef: ChatInputRef,
+    currentlyStreamingAIMsgId: currentChannel.currentlyStreamingAIMsgId,
+    loading: pageLoading,
+    socketConnected,
+    inputState,
+    isRespondingToSubject: appliedIsRespondingToSubject,
+    isTwoPeopleChannel: currentChannel.twoPeople,
+    onChessButtonClick: handleChessModalShown,
+    onOmokButtonClick: handleOmokModalShown,
+    onScrollToBottom,
+    onWordleButtonClick: handleWordleModalShown,
+    onMessageSubmit: async ({
+      message,
+      subchannelId,
+      selectedTab,
+      topicId
+    }: {
+      message: string;
+      subchannelId?: number;
+      selectedTab?: string;
+      topicId?: number;
+    }) => {
+      if (loadMoreShownAtBottom) {
+        await loadTopicMessagesAndUpdate();
+      }
+      await handleMessageSubmit({
+        content: message,
+        subchannelId,
+        selectedTab: selectedTab || 'all',
+        topicId,
+        target: replyTargetRef.current || replyTarget
+      });
+    },
+    onHeightChange: (height: number) => {
+      if (height !== textAreaHeight) {
+        setTextAreaHeight(height > 46 ? height : 0);
+      }
+    },
+    onAiUsagePolicyHeightChange: (height: number) => {
+      setAiUsagePolicyHeight((currentHeight) =>
+        currentHeight === height ? currentHeight : height
+      );
+    },
+    onSelectVideoButtonClick: () => setSelectVideoModalShown(true),
+    onSetTextAreaHeight: setTextAreaHeight,
+    onSetTransactionModalShown: setTransactionModalShown,
+    onRegisterSetText: handleRegisterMessageInputSetText,
+    onRegisterAiUsagePolicyUpdate: handleRegisterAiUsagePolicyUpdate,
+    onRegisterAiMessageSaveError: handleRegisterAiMessageSaveError,
+    recipientId: partner?.id,
+    recipientUsername: partner?.username,
+    chessTarget,
+    replyTarget,
+    selectedTab,
+    subchannelId: subchannel?.id,
+    topicId: appliedTopicId,
+    legacyTopicObj: appliedLegacyTopicObj
+  };
+
   return (
     <ErrorBoundary componentPath="MessagesContainer/index">
-      {selectedChannelIsOnCall && (
-        <HumanCallScreen style={{ height: CALL_SCREEN_HEIGHT }} />
-      )}
-      {selectedChannelIsOnAICall && partner && (
-        <AICallScreen
-          partner={partner as any}
-          style={{ height: CALL_SCREEN_HEIGHT }}
-        />
-      )}
-      <div
-        className={css`
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          height: 100%;
-          position: relative;
-        `}
-        style={{
-          height: containerHeight
+      <CallScreens
+        partner={partner}
+        selectedChannelIsOnAICall={selectedChannelIsOnAICall}
+        selectedChannelIsOnCall={selectedChannelIsOnCall}
+      />
+      <Content
+        containerHeight={containerHeight}
+        subchannel={subchannel}
+        channelHeaderProps={channelHeaderProps}
+        displayedMessagesProps={displayedMessagesProps}
+        messageInputKey={selectedChannelId}
+        messageInputProps={messageInputProps}
+      />
+      <Modals
+        boardCountdownObj={boardCountdownObj}
+        buyTopicModalShown={buyTopicModalShown}
+        channelName={channelName}
+        chessModalShown={chessModalShown}
+        currentChannel={currentChannel}
+        currentTransactionId={currentTransactionId}
+        deleteModal={deleteModal}
+        displayedThemeColor={displayedThemeColor}
+        editCanChangeTopic={editCanChangeTopic}
+        groupObjs={groupObjs}
+        hideModalShown={hideModalShown}
+        inputText={textForThisChannel}
+        inviteUsersModalShown={inviteUsersModalShown}
+        isAICardModalShown={isAICardModalShown}
+        isLeaving={isLeaving}
+        leaveConfirmModalShown={leaveConfirmModalShown}
+        omokModalShown={omokModalShown}
+        partner={partner}
+        selectNewOwnerModalShown={!!selectNewOwnerModalShown}
+        selectVideoModalShown={selectVideoModalShown}
+        selectingNewOwner={selectingNewOwner}
+        selectedChannelId={selectedChannelId}
+        settingsModalShown={settingsModalShown}
+        socketConnected={socketConnected}
+        subjectMsgsModal={subjectMsgsModal}
+        transactionModalShown={transactionModalShown}
+        userId={userId}
+        wordleAttemptState={wordleAttemptState}
+        wordleGuesses={wordleGuesses}
+        wordleModalShown={wordleModalShown}
+        wordleSolution={wordleSolution}
+        wordleStats={wordleStats}
+        wordleWordLevel={wordleWordLevel}
+        onAcceptRewind={handleAcceptRewind}
+        onBuyTopicDone={() => setBuyTopicModalShown(false)}
+        onCancelRewindRequest={handleCancelRewindRequest}
+        onChessSpoilerClick={handleChessSpoilerClick}
+        onConfirmChessMove={handleConfirmChessMove}
+        onConfirmDelete={handleDelete}
+        onConfirmHideChat={handleHideChat}
+        onConfirmLeave={handleLeaveConfirm}
+        onConfirmOmokMove={handleConfirmOmokMove}
+        onDeclineRewind={handleDeclineRewind}
+        onHideChessModal={() => onSetChessModalShown(false)}
+        onHideDeleteModal={() =>
+          setDeleteModal({
+            shown: false,
+            fileName: '',
+            filePath: '',
+            messageId: null
+          })
+        }
+        onHideHideModal={() => setHideModalShown(false)}
+        onHideInviteUsersModal={() => setInviteUsersModalShown(false)}
+        onHideLeaveConfirmModal={() => setLeaveConfirmModalShown(false)}
+        onHideOmokModal={() => onSetOmokModalShown(false)}
+        onHideSelectNewOwnerModal={() => setSelectNewOwnerModalShown(false)}
+        onHideSelectVideoModal={() => setSelectVideoModalShown(false)}
+        onHideSettingsModal={() => setSettingsModalShown(false)}
+        onHideSubjectMessagesModal={() =>
+          setSubjectMsgsModal({
+            shown: false,
+            subjectId: 0,
+            content: ''
+          })
+        }
+        onHideTransactionModal={() => setTransactionModalShown(false)}
+        onHideWordleModal={() => onSetWordleModalShown(false)}
+        onInviteUsersDone={handleInviteUsersDone}
+        onMessageTextSelected={(text) => {
+          messageInputSetTextRef.current?.(text);
         }}
-      >
-        {!subchannel?.isRestricted && (
-          <ChannelHeader
-            currentChannel={currentChannel}
-            displayedThemeColor={displayedThemeColor}
-            isAIChannel={isAIChannel}
-            isSearchActive={isSearchActive}
-            onInputFocus={() => ChatInputRef.current?.focus()}
-            onSaveScrollPositionForAll={handleSaveScrollPositionForAll}
-            onSetInviteUsersModalShown={setInviteUsersModalShown}
-            onSetLeaveConfirmModalShown={setLeaveConfirmModalShown}
-            onSetBuyTopicModalShown={setBuyTopicModalShown}
-            onSetSettingsModalShown={setSettingsModalShown}
-            onSetTopicSelectorModalShown={onSetTopicSelectorModalShown}
-            onSearch={handleSearch}
-            searchText={searchText}
-            selectedChannelId={selectedChannelId}
-            topicSelectorModalShown={topicSelectorModalShown}
-            subchannel={subchannel}
-            onFavoriteClick={handleFavoriteClick}
-            onSetHideModalShown={setHideModalShown}
-          />
-        )}
-        <DisplayedMessages
-          pageLoading={pageLoading}
-          loadMoreShownAtBottom={loadMoreShownAtBottom}
-          isLoadingTopicMessages={isLoadingTopicMessages}
-          isReconnecting={reconnecting}
-          isConnecting={!selectedChannelIdAndPathIdNotSynced}
-          isLoadingChannel={!currentChannel?.loaded}
-          chessTarget={chessTarget}
-          boardCountdownObj={boardCountdownObj}
-          currentChannel={currentChannel}
-          displayedThemeColor={displayedThemeColor}
-          groupObjs={groupObjs}
-          onSetGroupObjs={setGroupObjs}
-          isAICardModalShown={isAICardModalShown}
-          isRestrictedChannel={
-            !!isRestrictedChannel ||
-            (isOnlyOwnerPostingTopic && currentChannel.creatorId !== userId) ||
-            (currentChannel.isOwnerPostingOnly &&
-              selectedTab !== 'topic' &&
-              currentChannel.creatorId !== userId)
-          }
-          isSearching={searching}
-          isSearchActive={isSearchActive}
-          ChatInputRef={ChatInputRef}
-          MessagesRef={MessagesRef}
-          MessageToScrollToFromAll={MessageToScrollToFromAll}
-          MessageToScrollToFromTopic={MessageToScrollToFromTopic}
-          onAcceptRewind={handleAcceptRewind}
-          onCancelRewindRequest={handleCancelRewindRequest}
-          onChessModalShown={handleChessModalShown}
-          onChessSpoilerClick={handleChessSpoilerClick}
-          onOmokModalShown={handleOmokModalShown}
-          onOmokSpoilerClick={handleOmokSpoilerClick}
-          onDeclineRewind={handleDeclineRewind}
-          onMessageSubmit={handleMessageSubmit}
-          onAiUsagePolicyUpdate={handleAiUsagePolicyUpdate}
-          onOptimisticAiMessageSaveError={handleOptimisticAiMessageSaveError}
-          onReplyTargetSelected={(target: any) => {
-            replyTargetRef.current = target;
-          }}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          onSetDeleteModal={setDeleteModal}
-          onSetSubjectMsgsModalShown={setSubjectMsgsModal}
-          onSetTransactionModalShown={setTransactionModalShown}
-          onScrollToBottom={onScrollToBottom}
-          onSetVisibleMessageId={handleSetVisibleMessageId}
-          partner={partner}
-          searchText={searchText}
-          selectedTab={selectedTab}
-          subchannel={subchannel}
-        />
-      </div>
-      {hideModalShown && (
-        <ConfirmModal
-          onHide={() => setHideModalShown(false)}
-          title="Hide Chat"
-          onConfirm={handleHideChat}
-        />
-      )}
-      {deleteModal.shown && (
-        <ConfirmModal
-          onHide={() =>
-            setDeleteModal({
-              shown: false,
-              fileName: '',
-              filePath: '',
-              messageId: null
-            })
-          }
-          title="Remove Message"
-          onConfirm={handleDelete}
-        />
-      )}
-      {subjectMsgsModal.shown && (
-        <SubjectMsgsModal
-          displayedThemeColor={displayedThemeColor}
-          subjectId={subjectMsgsModal.subjectId}
-          subjectTitle={subjectMsgsModal.content}
-          onHide={() =>
-            setSubjectMsgsModal({
-              shown: false,
-              subjectId: 0,
-              content: ''
-            })
-          }
-        />
-      )}
-      <div
-        style={{
-          background: 'var(--chat-bg)',
-          padding: '1rem',
-          borderTop: '1px solid var(--ui-border)'
+        onOmokSpoilerClick={handleOmokSpoilerClick}
+        onPurchaseSubject={(topic) =>
+          socket.emit('purchased_chat_subject', {
+            channelId: selectedChannelId,
+            topic
+          })
+        }
+        onScrollToBottom={onScrollToBottom}
+        onSelectNewOwner={handleSelectNewOwner}
+        onSetAICardModalCardId={onSetAICardModalCardId}
+        onSetGroupObjs={setGroupObjs}
+        onSetTopicVideoComment={(text) => {
+          onEnterComment({
+            contentType: 'chat',
+            contentId: selectedChannelId,
+            targetKey: subchannelId,
+            text
+          });
         }}
-      >
-        <MessageInput
-          key={selectedChannelId}
-          currentTopic={currentlySelectedTopic}
-          partner={partner}
-          currentTransactionId={currentTransactionId}
-          selectedChannelId={selectedChannelId}
-          isZeroChannel={isZeroChannel}
-          isCielChannel={isCielChannel}
-          isRestrictedChannel={!!isRestrictedChannel}
-          isBanned={!!banned?.chat}
-          isOwner={currentChannel.creatorId === userId}
-          isOnlyOwnerPostingTopic={isOnlyOwnerPostingTopic}
-          isOwnerPostingOnly={currentChannel.isOwnerPostingOnly}
-          innerRef={ChatInputRef}
-          currentlyStreamingAIMsgId={currentChannel.currentlyStreamingAIMsgId}
-          loading={pageLoading}
-          socketConnected={socketConnected}
-          inputState={inputState}
-          isRespondingToSubject={appliedIsRespondingToSubject}
-          isTwoPeopleChannel={currentChannel.twoPeople}
-          onChessButtonClick={handleChessModalShown}
-          onOmokButtonClick={handleOmokModalShown}
-          onScrollToBottom={onScrollToBottom}
-          onWordleButtonClick={handleWordleModalShown}
-          onMessageSubmit={async ({
-            message,
-            subchannelId,
-            selectedTab,
-            topicId
-          }) => {
-            if (loadMoreShownAtBottom) {
-              await loadTopicMessagesAndUpdate();
-            }
-            await handleMessageSubmit({
-              content: message,
-              subchannelId,
-              selectedTab,
-              topicId,
-              target: replyTargetRef.current || replyTarget
-            });
-          }}
-          onHeightChange={(height) => {
-            if (height !== textAreaHeight) {
-              setTextAreaHeight(height > 46 ? height : 0);
-            }
-          }}
-          onAiUsagePolicyHeightChange={(height) => {
-            setAiUsagePolicyHeight((currentHeight) =>
-              currentHeight === height ? currentHeight : height
-            );
-          }}
-          onSelectVideoButtonClick={() => setSelectVideoModalShown(true)}
-          onSetTextAreaHeight={setTextAreaHeight}
-          onSetTransactionModalShown={setTransactionModalShown}
-          onRegisterSetText={handleRegisterMessageInputSetText}
-          onRegisterAiUsagePolicyUpdate={handleRegisterAiUsagePolicyUpdate}
-          onRegisterAiMessageSaveError={handleRegisterAiMessageSaveError}
-          recipientId={partner?.id}
-          recipientUsername={partner?.username}
-          chessTarget={chessTarget}
-          replyTarget={replyTarget}
-          selectedTab={selectedTab}
-          subchannelId={subchannel?.id}
-          topicId={appliedTopicId}
-          legacyTopicObj={appliedLegacyTopicObj}
-        />
-      </div>
-      {chessModalShown && partner && (
-        <ChessModal
-          currentChannel={currentChannel}
-          channelId={selectedChannelId}
-          isCountdownActive={!!boardCountdownObj[selectedChannelId]?.chess}
-          myId={userId}
-          onConfirmChessMove={handleConfirmChessMove}
-          onHide={() => onSetChessModalShown(false)}
-          onAcceptRewind={handleAcceptRewind}
-          onCancelRewindRequest={handleCancelRewindRequest}
-          onDeclineRewind={handleDeclineRewind}
-          onScrollToBottom={onScrollToBottom}
-          onSpoilerClick={handleChessSpoilerClick}
-          opponentId={partner.id}
-          opponentName={partner.username}
-          socketConnected={socketConnected}
-        />
-      )}
-      {omokModalShown && partner && (
-        <OmokModal
-          currentChannel={currentChannel}
-          channelId={selectedChannelId}
-          isCountdownActive={!!boardCountdownObj[selectedChannelId]?.omok}
-          myId={userId}
-          opponentId={partner.id}
-          opponentName={partner.username}
-          onConfirmOmokMove={handleConfirmOmokMove}
-          onHide={() => onSetOmokModalShown(false)}
-          onSpoilerClick={handleOmokSpoilerClick}
-          onScrollToBottom={onScrollToBottom}
-          socketConnected={socketConnected}
-        />
-      )}
-      {wordleModalShown && (
-        <WordleModal
-          channelId={selectedChannelId}
-          channelName={channelName}
-          attemptState={wordleAttemptState}
-          guesses={wordleGuesses}
-          solution={wordleSolution}
-          wordLevel={wordleWordLevel}
-          wordleStats={wordleStats}
-          onHide={() => onSetWordleModalShown(false)}
-          socketConnected={socketConnected}
-          theme={displayedThemeColor}
-        />
-      )}
-      {inviteUsersModalShown && (
-        <InviteUsersModal
-          onHide={() => setInviteUsersModalShown(false)}
-          currentChannel={currentChannel}
-          selectedChannelId={selectedChannelId}
-          onDone={handleInviteUsersDone}
-          isOwner={currentChannel.creatorId === userId}
-        />
-      )}
-      {buyTopicModalShown && (
-        <BuyTopicsModal
-          canChangeSubject={currentChannel.canChangeSubject}
-          onDone={async (canChange) => {
-            await editCanChangeTopic({
-              channelId: selectedChannelId,
-              canChangeTopic: canChange
-            });
-            setBuyTopicModalShown(false);
-          }}
-          channelId={selectedChannelId}
-          onPurchaseSubject={(topic) =>
-            socket.emit('purchased_chat_subject', {
-              channelId: selectedChannelId,
-              topic
-            })
-          }
-          onScrollToBottom={onScrollToBottom}
-          userIsChannelOwner={currentChannel.creatorId === userId}
-        />
-      )}
-      {settingsModalShown && (
-        <SettingsModal
-          canChangeSubject={currentChannel.canChangeSubject}
-          channelName={channelName}
-          description={currentChannel.description}
-          isClass={currentChannel.isClass}
-          isClosed={currentChannel.isClosed}
-          isPublic={currentChannel.isPublic}
-          members={currentChannel.members}
-          onlyOwnerCanPost={currentChannel.isOwnerPostingOnly}
-          onHide={() => setSettingsModalShown(false)}
-          onDone={handleEditSettings}
-          channelId={selectedChannelId}
-          onPurchaseSubject={(topic) =>
-            socket.emit('purchased_chat_subject', {
-              channelId: selectedChannelId,
-              topic
-            })
-          }
-          onSelectNewOwner={handleSelectNewOwner}
-          onScrollToBottom={onScrollToBottom}
-          selectingNewOwner={selectingNewOwner}
-          theme={currentChannel.theme}
-          thumbPath={currentChannel.thumbPath}
-          unlockedThemes={currentChannel.unlockedThemes}
-          userIsChannelOwner={currentChannel.creatorId === userId}
-        />
-      )}
-      {leaveConfirmModalShown && (
-        <ConfirmModal
-          title={leaveChatGroupLabel}
-          onHide={() => setLeaveConfirmModalShown(false)}
-          onConfirm={handleLeaveConfirm}
-          disabled={isLeaving}
-        />
-      )}
-      {selectVideoModalShown && (
-        <SelectVideoModal
-          onHide={() => setSelectVideoModalShown(false)}
-          onDone={({ videoId }) => {
-            const newText = !stringIsEmpty(textForThisChannel)
-              ? `${textForThisChannel.trim()} https://www.twin-kle.com/videos/${videoId}`
-              : `https://www.twin-kle.com/videos/${videoId}`;
-            messageInputSetTextRef.current?.(newText);
-            onEnterComment({
-              contentType: 'chat',
-              contentId: selectedChannelId,
-              targetKey: subchannelId,
-              text: newText
-            });
-            setSelectVideoModalShown(false);
-          }}
-        />
-      )}
-      {!!selectNewOwnerModalShown && (
-        <SelectNewOwnerModal
-          onHide={() => setSelectNewOwnerModalShown(false)}
-          members={currentChannel.members}
-          onSubmit={handleSelectNewOwner}
-          isClass={currentChannel.isClass}
-          loading={selectingNewOwner}
-          andLeave
-          channelId={currentChannel.id}
-        />
-      )}
-      {transactionModalShown && partner && (
-        <TransactionModal
-          currentTransactionId={currentTransactionId}
-          channelId={selectedChannelId}
-          groupObjs={groupObjs}
-          onSetGroupObjs={setGroupObjs}
-          partner={partner}
-          isAICardModalShown={isAICardModalShown}
-          onSetAICardModalCardId={onSetAICardModalCardId}
-          onHide={() => setTransactionModalShown(false)}
-        />
-      )}
+        onSettingsDone={handleEditSettings}
+      />
     </ErrorBoundary>
   );
 
@@ -2050,29 +1844,6 @@ export default function MessagesContainer({
     } finally {
       setIsLoadingTopicMessages(false);
     }
-  }
-
-  function handleAiUsagePolicyUpdate(policy?: any) {
-    messageInputAiUsagePolicyUpdateRef.current?.(policy);
-  }
-
-  function handleOptimisticAiMessageSaveError(payload: {
-    content?: string;
-    error?: any;
-    aiUsagePolicy?: any;
-    channelId?: number;
-    subchannelId?: number;
-    topicId?: number;
-  }) {
-    const sourceChannelId = Number(payload.channelId) || 0;
-    if (sourceChannelId && sourceChannelId !== Number(selectedChannelId)) {
-      return;
-    }
-    const sourceSubchannelId = Number(payload.subchannelId) || 0;
-    if (sourceSubchannelId !== (Number(subchannelId) || 0)) {
-      return;
-    }
-    messageInputAiMessageSaveErrorRef.current?.(payload);
   }
 
   function handleChessSpoilerClick(senderId: number) {
@@ -2108,49 +1879,6 @@ export default function MessagesContainer({
       gameType: 'omok'
     });
     onSetOmokModalShown(true);
-  }
-
-  async function handleMessageSearch(text: string) {
-    const requestedTopicId = selectedTab === 'topic' ? appliedTopicId : null;
-    const requestContext = {
-      channelId: selectedChannelId,
-      selectedTab,
-      topicId: requestedTopicId,
-      searchText: text.trim()
-    };
-    try {
-      const {
-        searchText: returnedSearchText,
-        messageIds,
-        messagesObj,
-        loadMoreButton
-      } = await searchChatMessages({
-        channelId: selectedChannelId,
-        topicId: requestedTopicId,
-        text
-      });
-      const currentContext = searchContextRef.current;
-      if (
-        currentContext.channelId !== requestContext.channelId ||
-        currentContext.selectedTab !== requestContext.selectedTab ||
-        currentContext.topicId !== requestContext.topicId ||
-        currentContext.searchText.trim() !== requestContext.searchText
-      ) {
-        return;
-      }
-      if ((returnedSearchText || '').trim() !== requestContext.searchText) {
-        return;
-      }
-      onSeachChatMessages({
-        channelId: requestContext.channelId,
-        topicId: requestedTopicId,
-        messageIds,
-        messagesObj,
-        loadMoreShown: loadMoreButton
-      });
-    } catch (error) {
-      console.error('Error searching messages:', error);
-    }
   }
 
   function setLatestBoardMessageId({
