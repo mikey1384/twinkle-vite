@@ -7,62 +7,40 @@ import React, {
   useRef,
   useState
 } from 'react';
-import FileUploadStatusIndicator from '~/components/FileUploadStatusIndicator';
+import moment from 'moment';
 import ProfilePic from '~/components/ProfilePic';
 import UsernameText from '~/components/Texts/UsernameText';
-import Chess from '../../Chess';
-import Omok from '../../Omok';
-import GameOverMessage from './GameOverMessage';
-import TextMessage from './TextMessage';
-import Icon from '~/components/Icon';
-import DropdownButton from '~/components/Buttons/DropdownButton';
-import TargetMessage from './TargetMessage';
-import TargetSubject from './TargetSubject';
-import RewardMessage from './RewardMessage';
-import Invitation from './Invitation';
-import DrawOffer from './DrawOffer';
-import WordleResult from './WordleResult';
-import MessageRewardModal from '../../Modals/MessageRewardModal';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import LocalContext from '../../Context';
-import ReactionButton from './ReactionButton';
-import Reactions from './Reactions';
-import moment from 'moment';
-import FileAttachment from './FileAttachment';
-import TargetChessPosition from './TargetChessPosition';
-import TopicMessagePreview from './TopicMessagePreview';
-import TopicStartNotification from './TopicStartNotification';
-import TransferMessage from './TransferMessage';
-import TransactionDetails from '../../TransactionDetails';
-import ApprovalRequest from './ApprovalRequest';
-import ModificationNotice from './ModificationNotice';
-
 import { socket } from '~/constants/sockets/api';
-import { MessageStyle } from '../../Styles';
 import { fetchURLFromText } from '~/helpers/stringHelpers';
 import { useAppContext, useChatContext, useKeyContext } from '~/contexts';
 import { useMyLevel } from '~/helpers/hooks';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
-import { isMobile, isSupermod } from '~/helpers';
+import { isSupermod } from '~/helpers';
 import {
   CIEL_TWINKLE_ID,
   ZERO_TWINKLE_ID,
   GENERAL_CHAT_ID,
-  BOOKMARK_VIEWS,
   BookmarkView
 } from '~/constants/defaultValues';
-import { getUserChatSquareColors } from '~/containers/Chat/Chess/helpers/theme';
 import {
   getLatestBoardMessageId,
   getLatestGameBoundaryMessageId
 } from '~/containers/Chat/helpers/gameMessageIds';
-
-const deviceIsMobile = isMobile(navigator);
-const replyLabel = 'Reply';
-const rewardLabel = 'Reward';
-const removeLabel = 'Remove';
-const editLabel = 'Edit';
+import MessageRewardModal from '../../Modals/MessageRewardModal';
+import LocalContext from '../../Context';
+import TransactionDetails from '../../TransactionDetails';
+import { MessageStyle } from '../../Styles';
+import ActionButtons from './ActionButtons';
+import Content from './Content';
+import GameOverMessage from './GameOverMessage';
+import TopicMessagePreview from './TopicMessagePreview';
+import TopicStartNotification from './TopicStartNotification';
+import TransferMessage from './TransferMessage';
+import type { MessageBodyProps } from './types';
+import useOptimisticSave from './useOptimisticSave';
+import WordleResult from './WordleResult';
 
 function MessageBody({
   channelId,
@@ -87,19 +65,14 @@ function MessageBody({
   message,
   message: {
     id: messageId,
-    aiThinkingStatus,
-    aiThoughtContent,
-    attachmentHidden,
     chessState,
     omokState,
     content,
     fileToUpload,
     fileName,
     filePath,
-    fileSize,
     gameWinnerId,
     invitePath,
-    invitationChannelId,
     isChessMsg,
     isAbort,
     isDraw,
@@ -108,10 +81,7 @@ function MessageBody({
     isReloadedSubject,
     isSubject,
     moveViewTimeStamp,
-    numMsgs,
     rewardAmount,
-    rewardReason,
-    rootId,
     subchannelId,
     subjectId,
     thumbUrl,
@@ -148,67 +118,13 @@ function MessageBody({
   onShowSubjectMsgsModal,
   recentThumbUrl,
   zIndex
-}: {
-  isChessCountdownActive?: boolean;
-  isOmokCountdownActive?: boolean;
-  partner: any;
-  channelId: number;
-  currentChannel: any;
-  displayedThemeColor: string;
-  groupObjs: any;
-  isAIMessage: boolean;
-  isCielMessage?: boolean;
-  isAICardModalShown: boolean;
-  isApprovalRequest: boolean;
-  isModificationNotice: boolean;
-  message: any;
-  nextMessageHasTopic: boolean;
-  prevMessageHasTopic: boolean;
-  onDelete: (v: any) => void;
-  index: number;
-  isBanned: boolean;
-  isLastMsg: boolean;
-  isNotification: boolean;
-  isRestricted: boolean;
-  isEditing: boolean;
-  loading: boolean;
-  onAcceptGroupInvitation: (v: any) => void;
-  onChessBoardClick: () => void;
-  onChessSpoilerClick: (v: number) => void;
-  onOmokBoardClick: () => void;
-  onOmokSpoilerClick: (v: number) => void;
-  onCancelRewindRequest: () => void;
-  onAcceptRewind: (v: any) => void;
-  onDeclineRewind: () => void;
-  onReceiveNewMessage: () => void;
-  onAiUsagePolicyUpdate?: (policy?: any) => void;
-  onOptimisticAiMessageSaveError?: (payload: {
-    content?: string;
-    error?: any;
-    aiUsagePolicy?: any;
-    channelId?: number;
-    subchannelId?: number;
-    topicId?: number;
-  }) => void;
-  onReplyClick: (target: any) => void;
-  onRequestRewind: (v: any) => void;
-  onSetAICardModalCardId: (v: any) => void;
-  onSetChessTarget: (v: any) => void;
-  onSetGroupObjs: (v: any) => void;
-  onSetMessageToScrollTo: (v: any) => void;
-  onSetTransactionModalShown: (v: boolean) => void;
-  onRewardMessageSubmit: (v: any) => void;
-  onShowSubjectMsgsModal: (v: any) => void;
-  recentThumbUrl: string;
-  zIndex?: number;
-}) {
+}: MessageBodyProps) {
   const chessThemeVersion = useChatContext((v) => v.state.chessThemeVersion);
   const rewardColor = useKeyContext((v) => v.theme.reward.color);
   const myId = useKeyContext((v) => v.myState.userId);
   const myUsername = useKeyContext((v) => v.myState.username);
   const myProfilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const level = useKeyContext((v) => v.myState.level);
-  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
 
   const bookmarkChatMessage = useAppContext(
     (v) => v.requestHelpers.bookmarkChatMessage
@@ -254,13 +170,10 @@ function MessageBody({
   const user = useAppContext((v) => v.user.state.userObj[userId]) || {};
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const { username: memberName, profilePicUrl: memberProfilePicUrl } = user;
-  const DropdownButtonRef = useRef(null);
   const userIsUploader = useMemo(() => myId === userId, [myId, userId]);
   const isAIChat = useMemo(() => {
     return partner?.id === ZERO_TWINKLE_ID || partner?.id === CIEL_TWINKLE_ID;
   }, [partner?.id]);
-
-  // Check if this AI message has an error
 
   useEffect(() => {
     if (isLastMsg && isNewMessage && !userIsUploader) {
@@ -268,30 +181,30 @@ function MessageBody({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLastMsg, isNewMessage, userIsUploader]);
+
   const userCanDeleteThis = useMemo(() => {
     if (isDrawOffer) return false;
 
     const hasEditOrDeletePermission = canEdit || canDelete;
     const isGeneralChannel = channelId === GENERAL_CHAT_ID;
-    const isSuperMod = isSupermod(level);
     const hasRequiredLevel = level > uploaderLevel;
-
     const hasPermission =
       hasEditOrDeletePermission &&
-      (isGeneralChannel || isSuperMod) &&
+      (isGeneralChannel || isSupermod(level)) &&
       hasRequiredLevel;
 
     return hasPermission || userIsUploader || isAIMessage;
   }, [
-    isDrawOffer,
-    canEdit,
     canDelete,
+    canEdit,
+    channelId,
+    isAIMessage,
+    isDrawOffer,
     level,
     uploaderLevel,
-    channelId,
-    userIsUploader,
-    isAIMessage
+    userIsUploader
   ]);
+
   const userCanEditThis = useMemo(() => {
     return (
       !rewardAmount &&
@@ -303,19 +216,21 @@ function MessageBody({
         userIsUploader)
     );
   }, [
-    rewardAmount,
+    canEdit,
+    channelId,
     invitePath,
     isDrawOffer,
-    canEdit,
     level,
+    rewardAmount,
     uploaderLevel,
-    channelId,
     userIsUploader
   ]);
+
   const userCanRewardThis = useMemo(
     () => canReward && level > uploaderLevel && myId !== userId,
-    [level, canReward, uploaderLevel, userId, myId]
+    [canReward, level, myId, uploaderLevel, userId]
   );
+
   const [uploadStatus = {}] = useMemo(
     () =>
       filesBeingUploaded[
@@ -325,6 +240,7 @@ function MessageBody({
       ) || [],
     [channelId, filePath, filesBeingUploaded, subchannelId]
   );
+
   const { username, profilePicUrl, targetMessage, targetSubject, isCallMsg } =
     message;
   let appliedUsername = memberName || username;
@@ -337,11 +253,12 @@ function MessageBody({
     if (hasChessBoardState) return 'chess';
     if (message.gameType === 'omok') return 'omok';
     if (message.gameType === 'chess') return 'chess';
-    const lc = (content || '').toLowerCase();
-    if (lc.includes('omok')) return 'omok';
-    if (lc.includes('chess')) return 'chess';
+    const lowerCaseContent = (content || '').toLowerCase();
+    if (lowerCaseContent.includes('omok')) return 'omok';
+    if (lowerCaseContent.includes('chess')) return 'chess';
     return 'chess';
   }, [content, hasChessBoardState, hasOmokBoardState, message.gameType]);
+
   const isTerminalGameMessage = useMemo(
     () =>
       typeof gameWinnerId === 'number' || isDraw || isAbort || isResign,
@@ -361,9 +278,36 @@ function MessageBody({
     appliedUsername = myUsername;
     appliedProfilePicUrl = myProfilePicUrl;
   }
+
+  useOptimisticSave({
+    channelId,
+    currentChannel,
+    hasChessBoardState,
+    hasOmokBoardState,
+    index,
+    isCallMsg,
+    level,
+    message,
+    onAiUsagePolicyUpdate,
+    onOptimisticAiMessageSaveError,
+    onRemoveTempMessage,
+    onSaveMessage,
+    onSetMessageState,
+    onSetUserState,
+    onUpdateRecentChessMessage,
+    onUpdateRecentOmokMessage,
+    partner,
+    saveChatMessage,
+    subjectId,
+    subchannelId,
+    targetMessage,
+    targetSubject,
+    thinkHardState,
+    userIsUploader,
+    userId
+  });
+
   useEffect(() => {
-    // Messages render newest-first, so terminal rows establish the boundary
-    // before any older board rows from the same finished game mount.
     if (typeof messageId === 'number' && hasOmokBoardState) {
       onUpdateLastOmokMessageId({
         channelId,
@@ -403,175 +347,11 @@ function MessageBody({
     messageId
   ]);
 
-  useEffect(() => {
-    if (!message.id && hasChessBoardState) {
-      onUpdateRecentChessMessage({ channelId, message });
-    }
-    if (!message.id && hasOmokBoardState) {
-      onUpdateRecentOmokMessage({ channelId, message });
-    }
-    if (
-      userIsUploader &&
-      !message.id &&
-      !message.fileToUpload &&
-      !message.isSubject &&
-      !message.settings?.saveFailed &&
-      (!(message.isNotification && !message.chessState) || isCallMsg)
-    ) {
-      handleSaveMessage(message);
-    }
-
-    async function handleSaveMessage(newMessage: {
-      tempMessageId: number | string;
-      userId: number;
-      isChessMsg: boolean;
-      isDrawOffer: boolean;
-      isDraw: boolean;
-      isAbort: boolean;
-      isCallMsg: boolean;
-      isReloadedSubject: boolean;
-      isResign: boolean;
-      isNotification?: boolean;
-      chessState: any;
-      omokState: any;
-      content: string;
-      channelId: number;
-      gameWinnerId: number;
-      rewardReason: string;
-      rewardAmount: number;
-      targetMessageId: number;
-      timeStamp: number;
-      subchannelId?: number;
-      subjectId?: number;
-      username?: string;
-      profilePicUrl?: string;
-      targetMessage?: any;
-    }) {
-      const isCielChat = partner?.id === CIEL_TWINKLE_ID;
-      const isZeroChat = partner?.id === ZERO_TWINKLE_ID;
-      const { tempMessageId } = newMessage;
-      const post = {
-        userId: newMessage.userId,
-        content: newMessage.content,
-        channelId: newMessage.channelId,
-        chessState: newMessage.chessState,
-        omokState: newMessage.omokState,
-        isCallMsg: newMessage.isCallMsg,
-        isChessMsg: newMessage.isChessMsg,
-        isDrawOffer: newMessage.isDrawOffer,
-        isDraw: newMessage.isDraw,
-        isAbort: newMessage.isAbort,
-        isResign: newMessage.isResign,
-        isReloadedSubject: newMessage.isReloadedSubject,
-        isNotification: !!newMessage.isNotification,
-        gameWinnerId: newMessage.gameWinnerId,
-        rewardReason: newMessage.rewardReason,
-        rewardAmount: newMessage.rewardAmount,
-        targetMessageId: newMessage.targetMessageId,
-        timeStamp: newMessage.timeStamp,
-        subjectId: newMessage.subjectId || 0,
-        subchannelId: newMessage.subchannelId
-      };
-      let savedMessage;
-      try {
-        savedMessage = await saveChatMessage({
-          message: post,
-          targetMessageId: targetMessage?.id,
-          targetSubject,
-          isCielChat,
-          isZeroChat,
-          thinkHard:
-            (isCielChat &&
-              (thinkHardState.ciel[subjectId] ?? thinkHardState.ciel.global)) ||
-            (isZeroChat &&
-              (thinkHardState.zero[subjectId] ?? thinkHardState.zero.global))
-        });
-      } catch (error: any) {
-        console.error('Failed to save optimistic chat message:', error);
-        const isAIChat = isCielChat || isZeroChat;
-        if (error?.aiUsagePolicy) {
-          onAiUsagePolicyUpdate?.(error.aiUsagePolicy);
-        }
-        if (isAIChat) {
-          onOptimisticAiMessageSaveError?.({
-            content: newMessage.content,
-            error,
-            aiUsagePolicy: error?.aiUsagePolicy,
-            channelId,
-            subchannelId: newMessage.subchannelId,
-            topicId: newMessage.subjectId || 0
-          });
-          onRemoveTempMessage({
-            channelId,
-            subchannelId: newMessage.subchannelId,
-            topicId: newMessage.subjectId || 0,
-            tempMessageId
-          });
-          return;
-        }
-
-        onSetMessageState({
-          channelId,
-          messageId: tempMessageId,
-          newState: {
-            settings: {
-              ...(message.settings || {}),
-              saveFailed: true
-            }
-          }
-        });
-        return;
-      }
-
-      const { messageId, timeStamp, netCoins, aiUsagePolicy } = savedMessage;
-
-      if (typeof netCoins === 'number') {
-        onSetUserState({
-          userId,
-          newState: { twinkleCoins: netCoins }
-        });
-      }
-      if (aiUsagePolicy) {
-        onAiUsagePolicyUpdate?.(aiUsagePolicy);
-      }
-      onSaveMessage({
-        messageId,
-        subchannelId,
-        index,
-        channelId,
-        timeStamp,
-        topicId: subjectId || 0,
-        tempMessageId
-      });
-      const messageToSendOverSocket = {
-        ...message,
-        uploaderLevel: level,
-        isNewMessage: true,
-        targetSubject: subjectId
-          ? targetSubject || currentChannel?.topicObj[subjectId]
-          : null,
-        id: messageId
-      };
-      delete messageToSendOverSocket.tempMessageId;
-      const channelData = {
-        id: currentChannel.id,
-        channelName: currentChannel.channelName,
-        members: currentChannel.members,
-        twoPeople: currentChannel.twoPeople,
-        pathId: currentChannel.pathId
-      };
-      socket.emit('new_chat_message', {
-        message: messageToSendOverSocket,
-        channel: channelData
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const chessSpoilerOff = useMemo(() => {
     if (isChessCountdownActive) {
       return true;
     }
+
     const userMadeThisMove = chessState?.move?.by === myId;
     const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'chess');
     const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
@@ -581,6 +361,7 @@ function MessageBody({
     const userIsTheLastMoveViewer =
       currentChannel?.lastChessMoveViewerId === myId &&
       messageId === latestBoardMessageId;
+
     if (
       userMadeThisMove ||
       userIsTheLastMoveViewer ||
@@ -591,11 +372,12 @@ function MessageBody({
     ) {
       return true;
     }
+
     return false;
   }, [
-    isChessCountdownActive,
     chessState?.move?.by,
     currentChannel,
+    isChessCountdownActive,
     messageId,
     moveViewTimeStamp,
     myId
@@ -605,6 +387,7 @@ function MessageBody({
     if (isOmokCountdownActive) {
       return true;
     }
+
     const userMadeThisMove = omokState?.move?.by === myId;
     const latestBoardMessageId = getLatestBoardMessageId(currentChannel, 'omok');
     const latestBoundaryMessageId = getLatestGameBoundaryMessageId(
@@ -614,6 +397,7 @@ function MessageBody({
     const userIsTheLastMoveViewer =
       currentChannel?.lastOmokMoveViewerId === myId &&
       messageId === latestBoardMessageId;
+
     if (
       userMadeThisMove ||
       userIsTheLastMoveViewer ||
@@ -624,138 +408,15 @@ function MessageBody({
     ) {
       return true;
     }
+
     return false;
   }, [
     currentChannel,
+    isOmokCountdownActive,
     messageId,
     moveViewTimeStamp,
     myId,
-    isOmokCountdownActive,
     omokState?.move?.by
-  ]);
-
-  const dropdownMenuItems = useMemo(() => {
-    const result: any[] = [];
-    if (isBanned) return result;
-    if (!isRestricted) {
-      result.push({
-        label: (
-          <>
-            <Icon icon="reply" />
-            <span style={{ marginLeft: '1rem' }}>{replyLabel}</span>
-          </>
-        ),
-        onClick: () => {
-          const target = rewardAmount
-            ? targetMessage
-            : {
-                ...message,
-                thumbUrl: thumbUrl || recentThumbUrl,
-                timeStamp
-              };
-          onSetReplyTarget({
-            channelId: currentChannel.id,
-            subchannelId,
-            target
-          });
-          onReplyClick(target);
-        }
-      });
-    }
-    if (userCanEditThis) {
-      result.push({
-        label: (
-          <>
-            <Icon icon="pencil-alt"></Icon>
-            <span style={{ marginLeft: '1rem' }}>{editLabel}</span>
-          </>
-        ),
-        onClick: () => {
-          onSetIsEditing({
-            contentId: messageId,
-            contentType: 'chat',
-            isEditing: true
-          });
-        }
-      });
-    }
-    if (userCanDeleteThis) {
-      result.push({
-        label: (
-          <>
-            <Icon icon="trash-alt"></Icon>
-            <span style={{ marginLeft: '1rem' }}>{removeLabel}</span>
-          </>
-        ),
-        onClick: () => {
-          onDelete({ messageId, filePath, fileName });
-        }
-      });
-    }
-    if (userCanRewardThis && !rewardAmount && !isAIMessage) {
-      result.push({
-        label: (
-          <>
-            <Icon icon="star" />
-            <span style={{ marginLeft: '1rem' }}>{rewardLabel}</span>
-          </>
-        ),
-        style: { color: '#fff', background: Color[rewardColor]() },
-        className: css`
-          opacity: 0.9;
-          &:hover {
-            opacity: 1 !important;
-          }
-        `,
-        onClick: () => setMessageRewardModalShown(true)
-      });
-    }
-    const canBookmark =
-      isAIChat && (isAIMessage || (!!myId && userId === myId && !!messageId));
-    if (canBookmark) {
-      const bookmarkView = isAIMessage ? BOOKMARK_VIEWS.AI : BOOKMARK_VIEWS.ME;
-      result.push({
-        label: (
-          <>
-            <Icon icon="bookmark" />
-            <span style={{ marginLeft: '1rem' }}>Bookmark</span>
-          </>
-        ),
-        style: {
-          color: '#fff',
-          background: Color[isCielMessage ? 'magenta' : 'logoBlue']()
-        },
-        className: css`
-          opacity: 0.9;
-          &:hover {
-            opacity: 1 !important;
-          }
-        `,
-        onClick: () => handleBookmarkMessage(messageId, bookmarkView)
-      });
-    }
-    return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canDelete,
-    channelId,
-    isAIChat,
-    isBanned,
-    isAdmin,
-    isAIMessage,
-    isCielMessage,
-    isDrawOffer,
-    message,
-    messageId,
-    myId,
-    recentThumbUrl,
-    rewardAmount,
-    targetMessage,
-    thumbUrl,
-    userId,
-    userCanEditThis,
-    userCanRewardThis,
-    userIsUploader
   ]);
 
   const displayedTimeStamp = useMemo(
@@ -768,11 +429,6 @@ function MessageBody({
       currentChannel?.currentlyStreamingAIMsgId &&
       currentChannel.currentlyStreamingAIMsgId === messageId,
     [currentChannel?.currentlyStreamingAIMsgId, messageId]
-  );
-
-  const dropdownButtonShown = useMemo(
-    () => dropdownMenuItems?.length > 0 && !isCurrentlyStreaming,
-    [dropdownMenuItems?.length, isCurrentlyStreaming]
   );
 
   const isMenuButtonsAllowed = useMemo(
@@ -1120,254 +776,97 @@ function MessageBody({
                 {displayedTimeStamp}
               </span>
             </div>
-            <div>
-              {isApprovalRequest ? (
-                <ApprovalRequest
-                  displayedThemeColor={displayedThemeColor}
-                  userId={userId}
-                  username={appliedUsername}
-                  requestId={rootId}
-                  messageId={messageId}
-                />
-              ) : isModificationNotice ? (
-                <ModificationNotice
-                  modificationId={rootId}
-                  username={appliedUsername}
-                />
-              ) : invitePath ? (
-                <Invitation
-                  sender={{ id: userId, username: appliedUsername }}
-                  channelId={channelId}
-                  invitationChannelId={invitationChannelId}
-                  invitePath={invitePath}
-                  messageId={messageId}
-                  onAcceptGroupInvitation={onAcceptGroupInvitation}
-                />
-              ) : isDrawOffer ? (
-                <DrawOffer
-                  myId={myId}
-                  userId={userId}
-                  username={appliedUsername}
-                  onClick={onChessBoardClick}
-                />
-              ) : hasOmokBoardState ? (
-                <Omok
-                  channelId={channelId}
-                  isCountdownActive={isOmokCountdownActive}
-                  gameWinnerId={gameWinnerId}
-                  initialState={omokState}
-                  lastOmokMessageId={currentChannel.lastOmokMessageId}
-                  loaded={socketConnected}
-                  messageId={messageId}
-                  moveViewed={!!moveViewTimeStamp}
-                  myId={myId}
-                  onBoardClick={onOmokBoardClick}
-                  onSpoilerClick={handleOmokSpoilerClick}
-                  opponentId={partner?.id}
-                  opponentName={partner?.username}
-                  senderId={userId}
-                  spoilerOff={omokSpoilerOff}
-                  isDraw={!!isDraw}
-                  isAbort={!!isAbort}
-                  displaySize="inline"
-                  style={{ marginTop: '1rem', width: '100%' }}
-                />
-              ) : hasChessBoardState ? (
-                <Chess
-                  key={chessThemeVersion}
-                  loaded
-                  moveViewed={!!moveViewTimeStamp}
-                  channelId={channelId}
-                  isCountdownActive={isChessCountdownActive}
-                  gameWinnerId={gameWinnerId}
-                  spoilerOff={chessSpoilerOff}
-                  messageId={messageId}
-                  myId={myId}
-                  initialState={chessState}
-                  lastChessMessageId={currentChannel.lastChessMessageId}
-                  latestChessBoardMessageId={
-                    currentChannel.latestChessBoardMessageId
-                  }
-                  onBoardClick={onChessBoardClick}
-                  onRewindClick={() =>
-                    onRequestRewind({
-                      ...(chessState.previousState || chessState),
-                      isDiscussion: true,
-                      isRewindRequest: true
-                    })
-                  }
-                  onDiscussClick={() => {
-                    onSetChessTarget({
-                      chessState: {
-                        ...chessState,
-                        isRewinded: false,
-                        rewindRequestId: null,
-                        isRewindRequest: false
-                      },
-                      messageId,
-                      channelId
-                    });
-                  }}
-                  onSpoilerClick={handleChessSpoilerClick}
-                  opponentId={partner?.id}
-                  opponentName={partner?.username}
-                  senderId={userId}
-                  displaySize="inline"
-                  style={{ marginTop: '1rem', width: '100%' }}
-                  squareColors={getUserChatSquareColors(myId)}
-                />
-              ) : fileToUpload && !loading ? (
-                <FileUploadStatusIndicator
-                  key={channelId}
-                  theme={displayedThemeColor}
-                  fileName={fileToUpload.name}
-                  uploadProgress={uploadStatus.uploadProgress}
-                />
-              ) : (
-                <>
-                  {isChessDiscussion && (
-                    <TargetChessPosition
-                      chessState={chessState}
-                      channelId={channelId}
-                      messageId={messageId}
-                      myId={myId}
-                      userId={userId}
-                      username={appliedUsername}
-                      gameState={currentChannel?.gameState?.chess || {}}
-                      latestChessBoardMessageId={
-                        currentChannel.latestChessBoardMessageId
-                      }
-                      onCancelRewindRequest={onCancelRewindRequest}
-                      onAcceptRewind={onAcceptRewind}
-                      onDeclineRewind={onDeclineRewind}
-                      onRequestRewind={onRequestRewind}
-                    />
-                  )}
-                  {targetSubject && currentChannel?.selectedTab !== 'topic' && (
-                    <ErrorBoundary componentPath="Chat/Message/MessageBody/TargetSubject">
-                      <TargetSubject subject={targetSubject} />
-                    </ErrorBoundary>
-                  )}
-                  {targetMessage && (
-                    <ErrorBoundary componentPath="Chat/Message/MessageBody/TargetMessage">
-                      <TargetMessage
-                        displayedThemeColor={displayedThemeColor}
-                        message={targetMessage}
-                      />
-                    </ErrorBoundary>
-                  )}
-                  {filePath && fileName && (
-                    <ErrorBoundary componentPath="Chat/Message/MessageBody/FileAttachment">
-                      <FileAttachment
-                        fileName={fileName}
-                        filePath={filePath}
-                        fileSize={fileSize}
-                        messageId={messageId}
-                        theme={displayedThemeColor}
-                        thumbUrl={thumbUrl || recentThumbUrl}
-                      />
-                    </ErrorBoundary>
-                  )}
-                  {rewardAmount ? (
-                    <RewardMessage
-                      rewardAmount={rewardAmount}
-                      rewardReason={rewardReason}
-                    />
-                  ) : (
-                    <TextMessage
-                      aiThinkingStatus={aiThinkingStatus}
-                      aiThoughtContent={aiThoughtContent}
-                      aiThoughtIsThinkingHard={message.aiThoughtIsThinkingHard}
-                      attachmentHidden={attachmentHidden}
-                      content={content}
-                      displayedThemeColor={displayedThemeColor}
-                      extractedUrl={extractedUrl}
-                      isAIMessage={isAIMessage}
-                      isCurrentlyStreaming={isCurrentlyStreaming}
-                      messageId={messageId}
-                      numMsgs={numMsgs}
-                      isCielMessage={isCielMessage}
-                      isCallMsg={isCallMsg}
-                      isNotification={isNotification}
-                      isSubject={!!isSubject}
-                      isReloadedSubject={!!isReloadedSubject}
-                      MessageStyle={MessageStyle}
-                      isLastMsg={isLastMsg}
-                      isEditing={isEditing}
-                      onEditCancel={handleEditCancel}
-                      onEditDone={handleEditDone}
-                      onHideAttachment={handleHideAttachment}
-                      onShowSubjectMsgsModal={onShowSubjectMsgsModal}
-                      socketConnected={socketConnected}
-                      subjectId={subjectId}
-                      userCanEditThis={userCanEditThis}
-                    />
-                  )}
-                  {message.settings?.saveFailed && (
-                    <div
-                      className={css`
-                        margin-top: 0.75rem;
-                        color: ${Color.red()};
-                        font-size: 1.2rem;
-                        font-weight: bold;
-                      `}
-                    >
-                      Message failed to send. Copy it and try again.
-                    </div>
-                  )}
-                  {!isEditing && !isNotification && (
-                    <div style={{ marginTop: '2rem', height: '2.5rem' }}>
-                      {isMenuButtonsAllowed && (
-                        <Reactions
-                          reactions={message.reactions}
-                          reactionsMenuShown={reactionsMenuShown}
-                          onRemoveReaction={handleRemoveReaction}
-                          onAddReaction={handleAddReaction}
-                          theme={displayedThemeColor}
-                        />
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-            {isMenuButtonsAllowed && (
-              <div
-                className={css`
-                  position: absolute;
-                  top: 0;
-                  right: 0;
-                  display: flex;
-                `}
-              >
-                {!invitePath && !isDrawOffer && !isChessMsg && !isBanned && (
-                  <ReactionButton
-                    onReactionClick={handleAddReaction}
-                    reactionsMenuShown={reactionsMenuShown}
-                    onSetReactionsMenuShown={setReactionsMenuShown}
-                    style={{
-                      marginRight: dropdownButtonShown ? '0.5rem' : 0
-                    }}
-                  />
-                )}
-                {dropdownButtonShown && (
-                  <DropdownButton
-                    variant="solid"
-                    tone="raised"
-                    buttonStyle={{
-                      fontSize: '1rem',
-                      lineHeight: 1
-                    }}
-                    className="menu-button"
-                    innerRef={DropdownButtonRef}
-                    color="darkerGray"
-                    icon={deviceIsMobile ? 'chevron-down' : 'ellipsis-h'}
-                    menuProps={dropdownMenuItems}
-                    onDropdownShown={setHighlighted}
-                  />
-                )}
-              </div>
-            )}
+            <Content
+              appliedUsername={appliedUsername}
+              channelId={channelId}
+              chessSpoilerOff={chessSpoilerOff}
+              chessThemeVersion={chessThemeVersion}
+              currentChannel={currentChannel}
+              displayedThemeColor={displayedThemeColor}
+              extractedUrl={extractedUrl}
+              handleAddReaction={handleAddReaction}
+              handleChessSpoilerClick={handleChessSpoilerClick}
+              handleEditCancel={handleEditCancel}
+              handleEditDone={handleEditDone}
+              handleHideAttachment={handleHideAttachment}
+              handleOmokSpoilerClick={handleOmokSpoilerClick}
+              handleRemoveReaction={handleRemoveReaction}
+              hasChessBoardState={hasChessBoardState}
+              hasOmokBoardState={hasOmokBoardState}
+              isAIMessage={isAIMessage}
+              isApprovalRequest={isApprovalRequest}
+              isCallMsg={isCallMsg}
+              isChessCountdownActive={isChessCountdownActive}
+              isChessDiscussion={isChessDiscussion}
+              isCielMessage={isCielMessage}
+              isCurrentlyStreaming={isCurrentlyStreaming}
+              isDrawOffer={isDrawOffer}
+              isEditing={isEditing}
+              isLastMsg={isLastMsg}
+              isMenuButtonsAllowed={isMenuButtonsAllowed}
+              isModificationNotice={isModificationNotice}
+              isNotification={isNotification}
+              isOmokCountdownActive={isOmokCountdownActive}
+              loading={loading}
+              message={message}
+              myId={myId}
+              omokSpoilerOff={omokSpoilerOff}
+              onAcceptGroupInvitation={onAcceptGroupInvitation}
+              onAcceptRewind={onAcceptRewind}
+              onCancelRewindRequest={onCancelRewindRequest}
+              onChessBoardClick={onChessBoardClick}
+              onDeclineRewind={onDeclineRewind}
+              onOmokBoardClick={onOmokBoardClick}
+              onRequestRewind={onRequestRewind}
+              onSetChessTarget={onSetChessTarget}
+              onShowSubjectMsgsModal={onShowSubjectMsgsModal}
+              partner={partner}
+              reactionsMenuShown={reactionsMenuShown}
+              recentThumbUrl={recentThumbUrl}
+              socketConnected={socketConnected}
+              uploadStatus={uploadStatus}
+              userCanEditThis={userCanEditThis}
+              userId={userId}
+            />
+            <ActionButtons
+              currentChannelId={currentChannel.id}
+              fileName={fileName}
+              filePath={filePath}
+              invitePath={invitePath}
+              isAIChat={isAIChat}
+              isAIMessage={isAIMessage}
+              isBanned={isBanned}
+              isCielMessage={isCielMessage}
+              isChessMsg={isChessMsg}
+              isCurrentlyStreaming={!!isCurrentlyStreaming}
+              isDrawOffer={isDrawOffer}
+              isMenuButtonsAllowed={isMenuButtonsAllowed}
+              isRestricted={isRestricted}
+              message={message}
+              messageId={messageId}
+              myId={myId}
+              onAddReaction={handleAddReaction}
+              onBookmark={handleBookmarkMessage}
+              onDelete={onDelete}
+              onDropdownShown={setHighlighted}
+              onOpenRewardModal={() => setMessageRewardModalShown(true)}
+              onReplyClick={onReplyClick}
+              onSetIsEditing={onSetIsEditing}
+              onSetReactionsMenuShown={setReactionsMenuShown}
+              onSetReplyTarget={onSetReplyTarget}
+              reactionsMenuShown={reactionsMenuShown}
+              recentThumbUrl={recentThumbUrl}
+              rewardAmount={rewardAmount}
+              rewardColor={rewardColor}
+              subchannelId={subchannelId}
+              targetMessage={targetMessage}
+              thumbUrl={thumbUrl}
+              timeStamp={timeStamp}
+              userCanDeleteThis={userCanDeleteThis}
+              userCanEditThis={userCanEditThis}
+              userCanRewardThis={userCanRewardThis}
+              userId={userId}
+            />
           </div>
           {messageRewardModalShown && (
             <MessageRewardModal
@@ -1394,7 +893,7 @@ function MessageBody({
   );
 
   async function handleBookmarkMessage(
-    messageId: number,
+    targetMessageId: number,
     bookmarkView: BookmarkView
   ) {
     if (!isAIChat || (!isAIMessage && userId !== myId)) {
@@ -1402,7 +901,7 @@ function MessageBody({
     }
     try {
       const bookmark = await bookmarkChatMessage({
-        messageId,
+        messageId: targetMessageId,
         channelId,
         topicId: subjectId
       });
