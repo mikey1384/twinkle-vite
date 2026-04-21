@@ -1,29 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import Button from '../Button';
-import ButtonGroup from '../ButtonGroup';
 import { debounce } from 'lodash';
 import { mobileMaxWidth } from '~/constants/css';
-
-interface SrtSegment {
-  index: number;
-  start: number;
-  end: number;
-  text: string;
-}
+import Button from '../Button';
+import ButtonGroup from '../ButtonGroup';
+import { buttonStyles } from './styles';
+import type {
+  EditingTimes,
+  SrtSegment,
+  SubtitleField,
+  TimeField
+} from './types';
 
 interface SubtitleEditorProps {
   sub: SrtSegment;
   index: number;
-  editingTimes: Record<string, string>;
+  editingTimes: EditingTimes;
   isPlaying: boolean;
   secondsToSrtTime: (seconds: number) => string;
   onEditSubtitle: (
     index: number,
-    field: 'start' | 'end' | 'text',
+    field: SubtitleField,
     value: number | string
   ) => void;
-  onTimeInputBlur: (index: number, field: 'start' | 'end') => void;
+  onTimeInputBlur: (index: number, field: TimeField) => void;
   onRemoveSubtitle: (index: number) => void;
   onInsertSubtitle: (index: number) => void;
   onSeekToSubtitle: (startTime: number) => void;
@@ -32,7 +32,6 @@ interface SubtitleEditorProps {
   isShiftingDisabled: boolean;
 }
 
-// Style for the textarea
 const textInputStyles = {
   width: '100%',
   minHeight: '60px',
@@ -47,7 +46,6 @@ const textInputStyles = {
   whiteSpace: 'pre-wrap' as const
 };
 
-// Style for time inputs
 const timeInputStyles = css`
   width: 150px;
   padding: 6px 8px;
@@ -56,131 +54,13 @@ const timeInputStyles = css`
   background-color: rgba(255, 255, 255, 0.9);
   font-family: monospace;
   transition: border-color 0.2s ease;
+
   &:focus {
     outline: none;
     border-color: rgba(0, 123, 255, 0.8);
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
   }
 `;
-
-// Add gradient styles for buttons
-const buttonGradientStyles = {
-  base: css`
-    position: relative;
-    font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-    color: white !important;
-
-    &:hover:not(:disabled) {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      color: white !important;
-    }
-
-    &:active:not(:disabled) {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      color: white !important;
-    }
-
-    &:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-      color: rgba(255, 255, 255, 0.9) !important;
-    }
-  `,
-  primary: css`
-    background: linear-gradient(
-      135deg,
-      rgba(0, 123, 255, 0.9),
-      rgba(0, 80, 188, 0.9)
-    ) !important;
-
-    &:hover:not(:disabled) {
-      background: linear-gradient(
-        135deg,
-        rgba(0, 143, 255, 0.95),
-        rgba(0, 103, 204, 0.95)
-      ) !important;
-    }
-
-    &:disabled {
-      background: linear-gradient(
-        135deg,
-        rgba(0, 123, 255, 0.6),
-        rgba(0, 80, 188, 0.6)
-      ) !important;
-    }
-  `,
-  success: css`
-    background: linear-gradient(
-      135deg,
-      rgba(40, 167, 69, 0.9),
-      rgba(30, 126, 52, 0.9)
-    ) !important;
-
-    &:hover:not(:disabled) {
-      background: linear-gradient(
-        135deg,
-        rgba(50, 187, 79, 0.95),
-        rgba(40, 146, 62, 0.95)
-      ) !important;
-    }
-
-    &:disabled {
-      background: linear-gradient(
-        135deg,
-        rgba(40, 167, 69, 0.6),
-        rgba(30, 126, 52, 0.6)
-      ) !important;
-    }
-  `,
-  secondary: css`
-    background: linear-gradient(
-      135deg,
-      rgba(108, 117, 125, 0.9),
-      rgba(84, 91, 98, 0.9)
-    ) !important;
-
-    &:hover:not(:disabled) {
-      background: linear-gradient(
-        135deg,
-        rgba(128, 137, 145, 0.95),
-        rgba(104, 111, 118, 0.95)
-      ) !important;
-    }
-
-    &:disabled {
-      background: linear-gradient(
-        135deg,
-        rgba(108, 117, 125, 0.6),
-        rgba(84, 91, 98, 0.6)
-      ) !important;
-    }
-  `,
-  danger: css`
-    background: linear-gradient(
-      135deg,
-      rgba(220, 53, 69, 0.9),
-      rgba(189, 33, 48, 0.9)
-    ) !important;
-
-    &:hover:not(:disabled) {
-      background: linear-gradient(
-        135deg,
-        rgba(240, 73, 89, 0.95),
-        rgba(209, 53, 68, 0.95)
-      ) !important;
-    }
-
-    &:disabled {
-      background: linear-gradient(
-        135deg,
-        rgba(220, 53, 69, 0.6),
-        rgba(189, 33, 48, 0.6)
-      ) !important;
-    }
-  `
-};
 
 function SubtitleEditor({
   sub,
@@ -197,18 +77,15 @@ function SubtitleEditor({
   onShiftSubtitle,
   isShiftingDisabled
 }: SubtitleEditorProps) {
-  // Local state for the textarea to avoid re-renders of all items
   const [text, setText] = useState(sub.text);
 
-  // Update local state when subtitle changes from outside
   useEffect(() => {
     setText(sub.text);
   }, [sub.text]);
 
-  // Debounce the actual update to the parent component
   const debouncedTextUpdate = useRef(
-    debounce((index: number, text: string) => {
-      onEditSubtitle(index, 'text', text);
+    debounce((subtitleIndex: number, nextText: string) => {
+      onEditSubtitle(subtitleIndex, 'text', nextText);
     }, 300)
   ).current;
 
@@ -223,6 +100,7 @@ function SubtitleEditor({
         border: 1px solid rgba(222, 226, 230, 0.7);
         background-color: rgba(248, 249, 250, 0.5);
         transition: all 0.2s ease;
+
         &:hover {
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
           background-color: rgba(248, 249, 250, 0.8);
@@ -243,7 +121,7 @@ function SubtitleEditor({
             size="sm"
             variant="danger"
             title="Remove this subtitle"
-            className={`${buttonGradientStyles.base} ${buttonGradientStyles.danger}`}
+            className={`${buttonStyles.base} ${buttonStyles.danger}`}
           >
             Delete
           </Button>
@@ -252,7 +130,7 @@ function SubtitleEditor({
             size="sm"
             variant="primary"
             title="Insert a new subtitle after this one"
-            className={`${buttonGradientStyles.base} ${buttonGradientStyles.primary}`}
+            className={`${buttonStyles.base} ${buttonStyles.primary}`}
           >
             Insert
           </Button>
@@ -268,6 +146,7 @@ function SubtitleEditor({
           id={`subtitle-${index}-text`}
         />
       </div>
+
       <div
         style={{
           display: 'flex',
@@ -289,7 +168,9 @@ function SubtitleEditor({
             value={
               editingTimes[`${index}-start`] ?? secondsToSrtTime(sub.start)
             }
-            onChange={(e) => onEditSubtitle(index, 'start', e.target.value)}
+            onChange={(event) =>
+              onEditSubtitle(index, 'start', event.target.value)
+            }
             onBlur={() => onTimeInputBlur(index, 'start')}
             className={timeInputStyles}
             id={`subtitle-${index}-start`}
@@ -300,14 +181,15 @@ function SubtitleEditor({
           <input
             type="text"
             value={editingTimes[`${index}-end`] ?? secondsToSrtTime(sub.end)}
-            onChange={(e) => onEditSubtitle(index, 'end', e.target.value)}
+            onChange={(event) =>
+              onEditSubtitle(index, 'end', event.target.value)
+            }
             onBlur={() => onTimeInputBlur(index, 'end')}
             className={timeInputStyles}
             id={`subtitle-${index}-end`}
           />
         </div>
 
-        {/* Add Shift Buttons */}
         <div style={{ display: 'flex', gap: '4px' }}>
           <Button
             onClick={() => onShiftSubtitle(index, -0.1)}
@@ -385,10 +267,8 @@ function SubtitleEditor({
             variant={isPlaying ? 'danger' : 'primary'}
             style={{ minWidth: '60px' }}
             title={isPlaying ? 'Pause playback' : 'Play this subtitle segment'}
-            className={`${buttonGradientStyles.base} ${
-              isPlaying
-                ? buttonGradientStyles.danger
-                : buttonGradientStyles.primary
+            className={`${buttonStyles.base} ${
+              isPlaying ? buttonStyles.danger : buttonStyles.primary
             } ${css`
               @media (max-width: ${mobileMaxWidth}) {
                 flex: 1;
@@ -402,14 +282,13 @@ function SubtitleEditor({
     </div>
   );
 
-  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const newText = e.target.value;
-    setText(newText);
-    debouncedTextUpdate(index, newText);
+  function handleTextChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    const nextText = event.target.value;
+    setText(nextText);
+    debouncedTextUpdate(index, nextText);
   }
 }
 
-// Export memoized version to prevent unnecessary re-renders
 export default React.memo(SubtitleEditor, (prevProps, nextProps) => {
   return (
     prevProps.isPlaying === nextProps.isPlaying &&
@@ -421,6 +300,5 @@ export default React.memo(SubtitleEditor, (prevProps, nextProps) => {
       nextProps.editingTimes[`${nextProps.index}-start`] &&
     prevProps.editingTimes[`${prevProps.index}-end`] ===
       nextProps.editingTimes[`${nextProps.index}-end`]
-    // Note: we don't compare text as it's managed locally
   );
 });
