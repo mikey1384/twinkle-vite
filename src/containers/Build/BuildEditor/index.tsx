@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import ChatPanel from './ChatPanel';
-import PreviewPanel from './PreviewPanel';
+import { useNavigate } from 'react-router-dom';
+import type { ChatPanelProps } from './ChatPanel/types';
+import Header from './Header';
+import Modals from './Modals';
+import Workspace from './Workspace';
 import useBuildRunIdentity, {
   getSharedBuildRunIdentityState,
   type BuildRunMode,
@@ -14,12 +16,10 @@ import useRuntimeBuildFollowUp from './useRuntimeBuildFollowUp';
 import useSharedBuildRunReconciliation from './useSharedBuildRunReconciliation';
 import type {
   PreviewPanelHandle,
+  PreviewPanelProps,
   PreviewRuntimeUploadsSyncPayload
-} from './PreviewPanel/types';
-import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
-import BuildDescriptionModal from './BuildDescriptionModal';
-import BuildThumbnailModal from './BuildThumbnailModal';
-import type { BuildCapabilitySnapshot } from './capabilityTypes';
+} from '../PreviewPanel/types';
+import type { BuildCapabilitySnapshot } from '../capabilityTypes';
 import type {
   BuildLiveRunMessage,
   BuildLiveRunState
@@ -27,7 +27,7 @@ import type {
 import type {
   BuildRuntimeExplorationPlan,
   BuildRuntimeObservationState
-} from './runtimeObservationTypes';
+} from '../runtimeObservationTypes';
 import {
   useAppContext,
   useBuildContext,
@@ -35,33 +35,24 @@ import {
   useViewContext
 } from '~/contexts';
 import { css } from '@emotion/css';
-import { borderRadius, mobileMaxWidth } from '~/constants/css';
-import {
-  cloudFrontURL,
-  DEFAULT_PROFILE_THEME
-} from '~/constants/defaultValues';
-import Icon from '~/components/Icon';
-import GameCTAButton from '~/components/Buttons/GameCTAButton';
-import ScopedTheme from '~/theme/ScopedTheme';
+import { mobileMaxWidth } from '~/constants/css';
+import { cloudFrontURL } from '~/constants/defaultValues';
 import { socket } from '~/constants/sockets/api';
-import UploadModal from '~/components/Modals/UploadModal';
-import UploadFileModal from '~/containers/Chat/Modals/UploadFileModal';
 import { generateFileName } from '~/helpers/stringHelpers';
 import { returnImageFileFromUrl } from '~/helpers';
 import { v1 as uuidv1 } from 'uuid';
-
-const displayFontFamily =
-  "'Trebuchet MS', 'Comic Sans MS', 'Segoe UI', 'Arial Rounded MT Bold', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif";
+import {
+  BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH,
+  DEFAULT_BUILD_CHAT_PANEL_WIDTH,
+  MAX_BUILD_CHAT_PANEL_WIDTH,
+  MIN_BUILD_CHAT_PANEL_WIDTH,
+  MIN_BUILD_PREVIEW_PANEL_WIDTH
+} from './constants';
 const buildForkUiEnabled = false;
 const EMPTY_BUILD_PROJECT_FILES: Array<{ path: string; content?: string }> = [];
 const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
 const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
   'twinkle:build-workshop-chat-panel-width';
-const DEFAULT_BUILD_CHAT_PANEL_WIDTH = 380;
-const MIN_BUILD_CHAT_PANEL_WIDTH = 320;
-const MAX_BUILD_CHAT_PANEL_WIDTH = 720;
-const MIN_BUILD_PREVIEW_PANEL_WIDTH = 360;
-const BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH = 12;
 
 function clampBuildChatPanelWidth(width: number, workspaceWidth = 0) {
   const safeWidth = Number.isFinite(width)
@@ -160,219 +151,6 @@ const pageClass = css`
   @media (max-width: ${mobileMaxWidth}) {
     height: calc(100% - var(--mobile-nav-total-height, 7rem));
   }
-`;
-
-const headerClass = css`
-  padding: 1.2rem 1.8rem;
-  background: #fff;
-  border-bottom: 1px solid var(--ui-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-`;
-
-const badgeClass = css`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--theme-bg) 12%, white);
-  color: color-mix(in srgb, var(--theme-border) 82%, #24324a);
-  border: 1px solid color-mix(in srgb, var(--theme-bg) 22%, white);
-  font-weight: 900;
-  font-size: 1.05rem;
-  text-transform: none;
-  letter-spacing: normal;
-  font-family: ${displayFontFamily};
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    background-color 0.15s ease;
-  &:hover {
-    transform: translateY(-1px);
-    background: color-mix(in srgb, var(--theme-bg) 18%, white);
-    text-decoration: none;
-  }
-  &:active {
-    text-decoration: none;
-  }
-  &:focus-visible {
-    outline: 2px solid var(--theme-border);
-    outline-offset: 2px;
-    text-decoration: none;
-  }
-`;
-
-const headerTitleClass = css`
-  margin: 0;
-  font-size: 2rem;
-  color: var(--chat-text);
-  font-family: ${displayFontFamily};
-  font-weight: 900;
-  line-height: 1.15;
-`;
-
-const headerTitleRowClass = css`
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-`;
-
-const headerTitleEditButtonClass = css`
-  width: 2.15rem;
-  height: 2.15rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--chat-text);
-  cursor: pointer;
-  opacity: 0.78;
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease,
-    border-color 0.18s ease,
-    background-color 0.18s ease;
-  &:hover {
-    opacity: 1;
-    transform: translateY(-1px);
-    border-color: var(--ui-border-strong);
-    background: #f8faff;
-  }
-  &:focus-visible {
-    outline: 2px solid var(--ui-border-strong);
-    outline-offset: 2px;
-  }
-`;
-
-const headerSubtitleClass = css`
-  font-size: 1.05rem;
-  color: var(--chat-text);
-  opacity: 0.75;
-`;
-
-const headerActionsClass = css`
-  display: flex;
-  gap: 0.55rem;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const badgePillClass = css`
-  font-size: 0.76rem;
-  padding: 0.38rem 0.74rem;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 900;
-  font-family: ${displayFontFamily};
-  border: 1px solid transparent;
-  line-height: 1;
-`;
-
-const panelShellClass = css`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  padding: 0.85rem 1.6rem 1.6rem;
-  overflow: hidden;
-  min-height: 0;
-  @media (max-width: ${mobileMaxWidth}) {
-    padding: 0.75rem 1rem 1rem;
-    grid-template-rows: auto 1fr;
-    gap: 0.5rem;
-  }
-`;
-
-const workspaceShellBase = css`
-  --build-workspace-header-height: 4.5rem;
-  display: grid;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: ${borderRadius};
-  border: 1px solid var(--ui-border);
-  background: #fff;
-`;
-
-const workspaceWithChatClass = css`
-  ${workspaceShellBase};
-  grid-template-columns:
-    var(--build-chat-panel-width, ${DEFAULT_BUILD_CHAT_PANEL_WIDTH}px)
-    ${BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH}px minmax(0, 1fr);
-  @media (max-width: ${mobileMaxWidth}) {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-  }
-`;
-
-const workspaceResizeHandleClass = css`
-  position: relative;
-  width: 100%;
-  min-width: ${BUILD_WORKSPACE_RESIZE_HANDLE_WIDTH}px;
-  min-height: 0;
-  border: none;
-  border-left: 1px solid var(--ui-border);
-  border-right: 1px solid var(--ui-border);
-  background: #fff;
-  cursor: col-resize;
-  padding: 0;
-  touch-action: none;
-  transition:
-    background-color 0.16s ease,
-    border-color 0.16s ease;
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 3px;
-    height: 2.7rem;
-    border-radius: 999px;
-    background: rgba(100, 116, 139, 0.35);
-    transform: translate(-50%, -50%);
-    transition: background-color 0.16s ease;
-  }
-  &:hover,
-  &:focus-visible {
-    background: rgba(59, 130, 246, 0.06);
-    border-color: var(--theme-border);
-    outline: none;
-  }
-  &:hover::before,
-  &:focus-visible::before {
-    background: var(--theme-border);
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    display: none;
-  }
-`;
-
-const mobilePanelHiddenClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
-    display: none;
-  }
-`;
-
-const mobileTabBarClass = css`
-  display: none;
-  @media (max-width: ${mobileMaxWidth}) {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0.5rem 1rem 0;
-  }
-`;
-
-const workspaceNoChatClass = css`
-  ${workspaceShellBase};
-  grid-template-columns: 1fr;
 `;
 
 interface Build {
@@ -5451,292 +5229,152 @@ export default function BuildEditor({
         '--build-chat-panel-width': `${buildChatPanelWidth}px`
       } as React.CSSProperties)
     : undefined;
+  const showForkButton =
+    buildForkUiEnabled && !isOwner && Boolean(userId) && build.isPublic;
+  const chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'> = {
+    messages: mergedChatMessages,
+    executionPlan: currentBuildRunView.executionPlan,
+    scopedPlanQuestion: resolveScopedPlanQuestion(
+      currentBuildRunView.executionPlan
+    ),
+    followUpPrompt: currentBuildRunView.followUpPrompt,
+    runMode: currentBuildRunView.runMode,
+    generating: currentBuildRunView.generating,
+    generatingStatus: currentBuildRunView.status,
+    assistantStatusSteps: currentBuildRunView.assistantStatusSteps,
+    copilotPolicy,
+    pageFeedbackEvents,
+    runEvents: currentBuildRunView.runEvents,
+    runError: currentBuildRunView.error,
+    activeStreamMessageIds: currentBuildRunView.activeStreamMessageIds,
+    isOwner,
+    chatScrollRef,
+    chatEndRef,
+    onChatScroll: handleChatScroll,
+    draftMessage: buildChatDraftMessage,
+    onDraftMessageChange: setBuildChatDraftMessage,
+    onSendMessage: handleSendMessage,
+    onContinueScopedPlan: handleContinueScopedPlan,
+    onCancelScopedPlan: handleCancelScopedPlan,
+    onAcceptFollowUpPrompt: handleAcceptFollowUpPrompt,
+    onDismissFollowUpPrompt: handleDismissFollowUpPrompt,
+    onOpenBuildChatUpload: handleOpenBuildChatUpload,
+    uploadInFlight: buildChatUploadInFlight,
+    runtimeUploadsModalShown,
+    runtimeUploadAssets,
+    runtimeUploadsNextCursor,
+    runtimeUploadsLoading,
+    runtimeUploadsLoadingMore,
+    runtimeUploadsError,
+    runtimeUploadDeletingId,
+    onOpenRuntimeUploadsManager: handleOpenRuntimeUploadsManager,
+    onCloseRuntimeUploadsManager: handleCloseRuntimeUploadsManager,
+    onLoadMoreRuntimeUploads: handleLoadMoreRuntimeUploads,
+    onDeleteRuntimeUpload: handleDeleteRuntimeUploadManagerAsset,
+    twinkleCoins: Number(twinkleCoins) || 0,
+    purchasingGenerationReset,
+    generationResetError,
+    onPurchaseGenerationReset: handlePurchaseGenerationReset,
+    onStopGeneration: handleStopGeneration,
+    onFixRuntimeObservationMessage: handleFixRuntimeObservationMessage,
+    onDeleteMessage: handleDeleteMessage
+  };
+  const previewPanelProps: Omit<PreviewPanelProps, 'className'> = {
+    build,
+    code: build.code,
+    projectFiles: previewProjectFiles,
+    streamingProjectFiles: currentBuildRunView.streamingProjectFiles,
+    streamingFocusFilePath: currentBuildRunView.streamingFocusFilePath,
+    isOwner,
+    capabilitySnapshot: build.capabilitySnapshot || null,
+    runtimeExplorationPlan: currentBuildRunView.runtimeExplorationPlan,
+    onReplaceCode: handleReplaceCode,
+    onApplyRestoredProjectFiles: handleApplyRestoredProjectFiles,
+    onSaveProjectFiles: (files, options) =>
+      handleSaveProjectFiles(files, {
+        resumePausedQueue: true,
+        ...options
+      }),
+    onEditableProjectFilesStateChange:
+      projectFileDrafts.handleProjectFilesDraftStateChange,
+    onRuntimeObservationChange: runtimeFollowUp.handleRuntimeObservationChange,
+    onRuntimeUploadsSync: handleRuntimeUploadsSyncFromPreview,
+    onOpenRuntimeUploadsManager: handleOpenRuntimeUploadsManager,
+    currentBuildRuntimeAssets
+  };
 
   return (
     <div className={pageClass}>
-      <header className={headerClass}>
-        <div
-          className={css`
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-          `}
-        >
-          <ScopedTheme
-            as="span"
-            theme={(profileTheme || DEFAULT_PROFILE_THEME) as any}
-          >
-            <Link to="/build" className={badgeClass} title="Back to main menu">
-              <Icon icon="arrow-left" />
-              Back to Main Menu
-            </Link>
-          </ScopedTheme>
-          <div className={headerTitleRowClass}>
-            <h2 className={headerTitleClass}>{build.title}</h2>
-            {isOwner && (
-              <button
-                type="button"
-                className={headerTitleEditButtonClass}
-                onClick={handleOpenDescriptionModal}
-                aria-label="Edit build details"
-                title="Edit build details"
-              >
-                <Icon icon="pencil-alt" />
-              </button>
-            )}
-          </div>
-          {renderBuildDescription()}
-        </div>
-        <div className={headerActionsClass}>
-          <span
-            className={badgePillClass}
-            style={getVisibilityBadgeStyle(build.isPublic)}
-          >
-            {build.isPublic ? 'public' : 'private'}
-          </span>
-          {isOwner && (
-            <GameCTAButton
-              onClick={handleOpenDescriptionModal}
-              variant="neutral"
-              size="md"
-              icon="pencil-alt"
-            >
-              {build.description?.trim() ? 'Edit Details' : 'Add Details'}
-            </GameCTAButton>
-          )}
-          {isOwner && (
-            <GameCTAButton
-              onClick={handleOpenThumbnailModal}
-              disabled={savingThumbnail || publishing}
-              loading={savingThumbnail}
-              variant="neutral"
-              size="md"
-              icon="image"
-            >
-              Thumbnail
-            </GameCTAButton>
-          )}
-          {isOwner && (
-            <GameCTAButton
-              onClick={build.isPublic ? handleUnpublish : handlePublish}
-              disabled={publishing || (!build.isPublic && !build.code)}
-              loading={publishing}
-              variant={build.isPublic ? 'neutral' : 'magenta'}
-              size="md"
-              icon={build.isPublic ? 'eye-slash' : 'globe'}
-            >
-              {publishing
-                ? 'Processing...'
-                : build.isPublic
-                  ? 'Unpublish'
-                  : 'Publish'}
-            </GameCTAButton>
-          )}
-          {buildForkUiEnabled && !isOwner && userId && build.isPublic && (
-            <GameCTAButton
-              onClick={handleFork}
-              disabled={forking}
-              loading={forking}
-              variant="primary"
-              size="md"
-              icon="code-branch"
-            >
-              {forking ? 'Forking...' : 'Fork'}
-            </GameCTAButton>
-          )}
-        </div>
-      </header>
-
-      <div className={panelShellClass}>
-        {isOwner && (
-          <div className={mobileTabBarClass}>
-            <SegmentedToggle
-              value={mobilePanelTab}
-              options={[
-                { value: 'chat' as const, label: 'Chat', icon: 'comments' },
-                { value: 'preview' as const, label: 'Preview', icon: 'eye' }
-              ]}
-              onChange={setMobilePanelTab}
-              ariaLabel="Switch between chat and preview"
-              size="sm"
-            />
-          </div>
-        )}
-        <div
-          ref={workspaceShellRef}
-          className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
-          style={workspaceShellStyle}
-        >
-          {isOwner && (
-            <ChatPanel
-              className={
-                mobilePanelTab !== 'chat' ? mobilePanelHiddenClass : undefined
-              }
-              workshopScale={buildWorkshopScale}
-              messages={mergedChatMessages}
-              executionPlan={currentBuildRunView.executionPlan}
-              scopedPlanQuestion={resolveScopedPlanQuestion(
-                currentBuildRunView.executionPlan
-              )}
-              followUpPrompt={currentBuildRunView.followUpPrompt}
-              runMode={currentBuildRunView.runMode}
-              generating={currentBuildRunView.generating}
-              generatingStatus={currentBuildRunView.status}
-              assistantStatusSteps={currentBuildRunView.assistantStatusSteps}
-              copilotPolicy={copilotPolicy}
-              pageFeedbackEvents={pageFeedbackEvents}
-              runEvents={currentBuildRunView.runEvents}
-              runError={currentBuildRunView.error}
-              activeStreamMessageIds={currentBuildRunView.activeStreamMessageIds}
-              isOwner={isOwner}
-              chatScrollRef={chatScrollRef}
-              chatEndRef={chatEndRef}
-              onChatScroll={handleChatScroll}
-              draftMessage={buildChatDraftMessage}
-              onDraftMessageChange={setBuildChatDraftMessage}
-              onSendMessage={handleSendMessage}
-              onContinueScopedPlan={handleContinueScopedPlan}
-              onCancelScopedPlan={handleCancelScopedPlan}
-              onAcceptFollowUpPrompt={handleAcceptFollowUpPrompt}
-              onDismissFollowUpPrompt={handleDismissFollowUpPrompt}
-              onOpenBuildChatUpload={handleOpenBuildChatUpload}
-              uploadInFlight={buildChatUploadInFlight}
-              runtimeUploadsModalShown={runtimeUploadsModalShown}
-              runtimeUploadAssets={runtimeUploadAssets}
-              runtimeUploadsNextCursor={runtimeUploadsNextCursor}
-              runtimeUploadsLoading={runtimeUploadsLoading}
-              runtimeUploadsLoadingMore={runtimeUploadsLoadingMore}
-              runtimeUploadsError={runtimeUploadsError}
-              runtimeUploadDeletingId={runtimeUploadDeletingId}
-              onOpenRuntimeUploadsManager={handleOpenRuntimeUploadsManager}
-              onCloseRuntimeUploadsManager={handleCloseRuntimeUploadsManager}
-              onLoadMoreRuntimeUploads={handleLoadMoreRuntimeUploads}
-              onDeleteRuntimeUpload={handleDeleteRuntimeUploadManagerAsset}
-              twinkleCoins={Number(twinkleCoins) || 0}
-              purchasingGenerationReset={purchasingGenerationReset}
-              generationResetError={generationResetError}
-              onPurchaseGenerationReset={handlePurchaseGenerationReset}
-              onStopGeneration={handleStopGeneration}
-              onFixRuntimeObservationMessage={
-                handleFixRuntimeObservationMessage
-              }
-              onDeleteMessage={handleDeleteMessage}
-            />
-          )}
-          {isOwner && (
-            <button
-              type="button"
-              className={workspaceResizeHandleClass}
-              onPointerDown={handleWorkspaceResizePointerDown}
-              onKeyDown={handleWorkspaceResizeKeyDown}
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Resize Lumine chat and workspace"
-              aria-valuemin={MIN_BUILD_CHAT_PANEL_WIDTH}
-              aria-valuemax={MAX_BUILD_CHAT_PANEL_WIDTH}
-              aria-valuenow={buildChatPanelWidth}
-              title="Drag to resize Lumine and workspace"
-            />
-          )}
-          <PreviewPanel
-            ref={previewPanelRef}
-            className={
-              isOwner && mobilePanelTab !== 'preview'
-                ? mobilePanelHiddenClass
-                : undefined
-            }
-            build={build}
-            code={build.code}
-            projectFiles={previewProjectFiles}
-            streamingProjectFiles={currentBuildRunView.streamingProjectFiles}
-            streamingFocusFilePath={currentBuildRunView.streamingFocusFilePath}
-            isOwner={isOwner}
-            capabilitySnapshot={build.capabilitySnapshot || null}
-            runtimeExplorationPlan={currentBuildRunView.runtimeExplorationPlan}
-            onReplaceCode={handleReplaceCode}
-            onApplyRestoredProjectFiles={handleApplyRestoredProjectFiles}
-            onSaveProjectFiles={(files, options) =>
-              handleSaveProjectFiles(files, {
-                resumePausedQueue: true,
-                ...options
-              })
-            }
-            onEditableProjectFilesStateChange={
-              projectFileDrafts.handleProjectFilesDraftStateChange
-            }
-            onRuntimeObservationChange={runtimeFollowUp.handleRuntimeObservationChange}
-            onRuntimeUploadsSync={handleRuntimeUploadsSyncFromPreview}
-            onOpenRuntimeUploadsManager={handleOpenRuntimeUploadsManager}
-            currentBuildRuntimeAssets={currentBuildRuntimeAssets}
-          />
-        </div>
-      </div>
-      {isOwner && buildChatUploadModalShown && (
-        <UploadModal
-          isOpen
-          multiple
-          allowMultipleGenericFileSelection
-          onHide={() => setBuildChatUploadModalShown(false)}
-          onFileSelect={(file) => {
-            setBuildChatUploadModalShown(false);
-            setBuildChatUploadFileObj(file);
-          }}
-          onFilesSelect={(files) => {
-            setBuildChatUploadModalShown(false);
-            setBuildChatUploadFileObj(files);
-          }}
-        />
-      )}
-      {isOwner && buildChatUploadFileObj && (
-        <UploadFileModal
-          initialCaption={buildChatDraftMessage}
-          fileObj={buildChatUploadFileObj}
-          onEmbed={() => {}}
-          onScrollToBottom={() => {}}
-          onCustomUploadSubmit={({ files, caption }) => {
-            return startBuildChatUploadProcessing(files, {
-              messageText: caption,
-              historyUserNoteText: caption
-            });
-          }}
-          onUpload={() => {
-            setBuildChatDraftMessage('');
-            setBuildChatUploadFileObj(null);
-          }}
-          onHide={() => setBuildChatUploadFileObj(null)}
-        />
-      )}
-      {descriptionModalShown && isOwner && (
-        <BuildDescriptionModal
-          initialTitle={build.title}
-          initialDescription={build.description}
-          loading={savingDescription}
-          onHide={handleCloseDescriptionModal}
-          onSubmit={handleSaveMetadata}
-        />
-      )}
-      {thumbnailModalShown && isOwner && (
-        <BuildThumbnailModal
-          initialImageUrl={
-            build.thumbnailUrl || getLatestBuild()?.thumbnailUrl || null
-          }
-          loading={savingThumbnail}
-          saveError={thumbnailSaveError}
-          onHide={handleCloseThumbnailModal}
-          onSave={handleSaveThumbnail}
-          onCaptureFromPreview={captureThumbnailFromPreview}
-        />
-      )}
+      <Header
+        build={build}
+        forking={forking}
+        isOwner={isOwner}
+        profileTheme={profileTheme}
+        publishing={publishing}
+        savingThumbnail={savingThumbnail}
+        showForkButton={showForkButton}
+        onFork={handleFork}
+        onOpenDescriptionModal={handleOpenDescriptionModal}
+        onOpenThumbnailModal={handleOpenThumbnailModal}
+        onTogglePublish={build.isPublic ? handleUnpublish : handlePublish}
+      />
+      <Workspace
+        buildChatPanelWidth={buildChatPanelWidth}
+        buildWorkshopScale={buildWorkshopScale}
+        chatPanelProps={chatPanelProps}
+        isOwner={isOwner}
+        mobilePanelTab={mobilePanelTab}
+        onMobilePanelTabChange={setMobilePanelTab}
+        onWorkspaceResizeKeyDown={handleWorkspaceResizeKeyDown}
+        onWorkspaceResizePointerDown={handleWorkspaceResizePointerDown}
+        previewPanelProps={previewPanelProps}
+        previewPanelRef={previewPanelRef}
+        workspaceShellRef={workspaceShellRef}
+        workspaceShellStyle={workspaceShellStyle}
+      />
+      <Modals
+        buildChatDraftMessage={buildChatDraftMessage}
+        buildChatUploadFileObj={buildChatUploadFileObj}
+        buildChatUploadModalShown={buildChatUploadModalShown}
+        buildDescription={build.description}
+        buildTitle={build.title}
+        descriptionModalShown={descriptionModalShown}
+        isOwner={isOwner}
+        savingDescription={savingDescription}
+        savingThumbnail={savingThumbnail}
+        thumbnailInitialImageUrl={
+          build.thumbnailUrl || getLatestBuild()?.thumbnailUrl || null
+        }
+        thumbnailModalShown={thumbnailModalShown}
+        thumbnailSaveError={thumbnailSaveError}
+        onCaptureThumbnailFromPreview={captureThumbnailFromPreview}
+        onCompleteBuildChatUpload={() => {
+          setBuildChatDraftMessage('');
+          setBuildChatUploadFileObj(null);
+        }}
+        onCustomUploadSubmit={({ files, caption }) =>
+          startBuildChatUploadProcessing(files, {
+            messageText: caption,
+            historyUserNoteText: caption
+          })
+        }
+        onHideBuildChatUploadFileModal={() => setBuildChatUploadFileObj(null)}
+        onHideBuildChatUploadModal={() => setBuildChatUploadModalShown(false)}
+        onHideDescriptionModal={handleCloseDescriptionModal}
+        onHideThumbnailModal={handleCloseThumbnailModal}
+        onSaveThumbnail={handleSaveThumbnail}
+        onSelectBuildChatUploadFile={(file) => {
+          setBuildChatUploadModalShown(false);
+          setBuildChatUploadFileObj(file);
+        }}
+        onSelectBuildChatUploadFiles={(files) => {
+          setBuildChatUploadModalShown(false);
+          setBuildChatUploadFileObj(files);
+        }}
+        onSubmitBuildMetadata={handleSaveMetadata}
+      />
     </div>
   );
-
-  function renderBuildDescription() {
-    if (build.description?.trim()) {
-      return <span className={headerSubtitleClass}>{build.description}</span>;
-    }
-
-    return <span className={headerSubtitleClass}>by {build.username}</span>;
-  }
 
   function handleWorkspaceResizePointerDown(
     event: React.PointerEvent<HTMLButtonElement>
@@ -6673,19 +6311,4 @@ export default function BuildEditor({
     });
     replaceChatMessages(nextMessages);
   }
-}
-
-function getVisibilityBadgeStyle(isPublic: boolean): React.CSSProperties {
-  if (isPublic) {
-    return {
-      background: 'rgba(65, 140, 235, 0.14)',
-      borderColor: 'rgba(65, 140, 235, 0.34)',
-      color: '#1d4ed8'
-    };
-  }
-  return {
-    background: 'rgba(100, 116, 139, 0.14)',
-    borderColor: 'rgba(100, 116, 139, 0.3)',
-    color: '#334155'
-  };
 }
