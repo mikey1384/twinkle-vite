@@ -1,308 +1,54 @@
 import React, {
-  useState,
-  useEffect,
   useCallback,
+  useEffect,
+  useMemo,
   useRef,
-  useMemo
+  useState
 } from 'react';
 import Button from '~/components/Button';
 import ErrorBoundary from '~/components/ErrorBoundary';
-import Loading from '~/components/Loading';
-import ProgressBar from '~/components/ProgressBar';
-import GradingResult from './GradingResult';
 import Icon from '~/components/Icon';
-import { css, keyframes } from '@emotion/css';
-import { Color, mobileMaxWidth } from '~/constants/css';
+import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import { socket } from '~/constants/sockets/api';
-
-type Screen = 'loading' | 'start' | 'writing' | 'grading' | 'result';
-
-const INACTIVITY_LIMIT = 10;
-const MIN_RESPONSE_LENGTH = 50;
-const PROGRESS_TICK_MS = 80;
-const PROGRESS_MILESTONE_HOLD = 0.8;
-const QUESTION_PROGRESS_DURATIONS = {
-  early: 45000,
-  middle: 30000,
-  late: 35000
-} as const;
-const GRADING_DURATION_MULTIPLIER = 1.25;
-const MIN_GRADING_DURATION_MS = 12000;
-
-// Typing metadata for anti-cheat - keep it simple, calculate at submit
-interface TypingMetadata {
-  startTime: number;
-  keystrokeTimestamps: number[]; // just raw timestamps
-}
-
-function createEmptyTypingMetadata(): TypingMetadata {
-  return {
-    startTime: 0,
-    keystrokeTimestamps: []
-  };
-}
-
-function normalizeTypingMetadata(value: unknown): TypingMetadata | null {
-  const parsed = value as Partial<TypingMetadata> | null;
-  if (!parsed || typeof parsed !== 'object') return null;
-
-  const startTime = Number(parsed.startTime);
-  if (!Number.isFinite(startTime) || startTime <= 0) {
-    return null;
-  }
-
-  if (!Array.isArray(parsed.keystrokeTimestamps)) {
-    return null;
-  }
-
-  const keystrokeTimestamps = parsed.keystrokeTimestamps
-    .map((timestamp) => Number(timestamp))
-    .filter((timestamp) => Number.isFinite(timestamp) && timestamp > 0)
-    .map((timestamp) => Math.floor(timestamp))
-    .slice(-5000);
-
-  if (keystrokeTimestamps.length === 0) {
-    return null;
-  }
-
-  return {
-    startTime: Math.floor(startTime),
-    keystrokeTimestamps
-  };
-}
-
-function cloneTypingMetadata(metadata: TypingMetadata | null | undefined) {
-  if (!metadata) {
-    return createEmptyTypingMetadata();
-  }
-
-  return {
-    startTime: metadata.startTime,
-    keystrokeTimestamps: [...metadata.keystrokeTimestamps]
-  };
-}
-
-function isDeletionOnlyChange(previousText: string, nextText: string): boolean {
-  if (nextText.length >= previousText.length) return false;
-
-  let nextIndex = 0;
-  for (
-    let previousIndex = 0;
-    previousIndex < previousText.length && nextIndex < nextText.length;
-    previousIndex++
-  ) {
-    if (previousText[previousIndex] === nextText[nextIndex]) {
-      nextIndex++;
-    }
-  }
-
-  return nextIndex === nextText.length;
-}
-
-function normalizeSelectionArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === 'string');
-}
-
-const DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY = 'dailyQuestionPending';
-const DAILY_QUESTION_RECOVERY_POLL_MS = 2000;
-const DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS = 30;
-const DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT = 3;
-const DAILY_QUESTION_DRAFT_RESTORED_NOTICE =
-  "We couldn't confirm your previous submission. Your draft is restored. Start again to resubmit.";
-const DAILY_QUESTION_DRAFT_SAVED_NOTICE =
-  "We couldn't restore your submission right now. Your draft is saved. Start again when you're ready to resubmit.";
-const VIBE_LABELS: Record<string, string> = {
-  default: 'Let Twinkle Pick',
-  follow_up: 'Keep Going',
-  go_deeper: 'Go Deeper',
-  open_new_door: 'New Angle',
-  light: 'Light & Easy',
-  opinion: 'My Take',
-  autobiography: 'My Story',
-  connection: 'People & Connection',
-  growth: 'Level Up',
-  fictional: 'Hypothetical'
-};
-const FOCUS_LABELS: Record<
-  string,
-  string | { default: string; adult?: string }
-> = {
-  infer: 'Let Twinkle Pick',
-  dating_partner_search: 'Crushes & Dating',
-  relationship_partnership: 'Relationship Vibes',
-  breakup_recovery: 'After a Breakup',
-  family_parenting: 'Family Life',
-  friendship_social_life: 'Friends & Social Life',
-  job_search_career: {
-    default: 'School & Future Dreams',
-    adult: 'Career & Work Direction'
-  },
-  exam_test_prep: {
-    default: 'Tests & Study',
-    adult: 'Exams & Certifications'
-  },
-  entrepreneurship: {
-    default: 'Projects & Big Ideas',
-    adult: 'Projects & Entrepreneurship'
-  },
-  financial_stability: {
-    default: 'Money Habits & Goals',
-    adult: 'Financial Stability'
-  },
-  purpose_identity: 'Who Am I?',
-  confidence_self_trust: 'Confidence / Self-trust',
-  stress_burnout: 'Stress / Burnout',
-  grief_loss: 'Grief / Loss',
-  health_energy: 'Health / Energy',
-  life_transitions: 'Life Transitions',
-  faith_spirituality: 'Faith / Spirituality'
-};
-
-type PendingDailyQuestionRecoveryState = 'pending' | 'draft';
-
-interface PendingDailyQuestionSubmission {
-  userId: number;
-  questionId: number;
-  clientRequestId: string;
-  response: string;
-  createdAt: number;
-  recoveryState: PendingDailyQuestionRecoveryState;
-  typingMetadata?: TypingMetadata | null;
-}
-
-interface RecoverPendingSubmissionArgs {
-  questionId: number;
-  clientRequestId: string;
-  responseText: string;
-  attempt?: number;
-}
-
-function createDailyQuestionClientRequestId() {
-  return typeof crypto !== 'undefined' &&
-    typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function getTodayVibeLabel(vibe: string | null) {
-  return VIBE_LABELS[vibe || 'default'] || VIBE_LABELS.default;
-}
-
-function getTodayFocusLabel(focus: string | null, isAdultUser: boolean) {
-  const option = FOCUS_LABELS[focus || 'infer'] || FOCUS_LABELS.infer;
-  if (typeof option === 'string') {
-    return option;
-  }
-  return isAdultUser && option.adult ? option.adult : option.default;
-}
-
-function getDailyQuestionPendingSubmissionStorageKey(userId: number) {
-  return `${DAILY_QUESTION_PENDING_SUBMISSION_STORAGE_KEY}:${userId}`;
-}
-
-function normalizePendingSubmissionRecoveryState(
-  value: unknown
-): PendingDailyQuestionRecoveryState {
-  return value === 'draft' ? 'draft' : 'pending';
-}
-
-function loadPendingDailyQuestionSubmission(userId: number) {
-  if (
-    typeof window === 'undefined' ||
-    typeof window.sessionStorage === 'undefined'
-  ) {
-    return null;
-  }
-
-  try {
-    const rawValue = window.sessionStorage.getItem(
-      getDailyQuestionPendingSubmissionStorageKey(userId)
-    );
-    if (!rawValue) return null;
-
-    const parsed = JSON.parse(
-      rawValue
-    ) as Partial<PendingDailyQuestionSubmission>;
-    if (
-      Number(parsed?.userId) !== userId ||
-      !Number.isFinite(Number(parsed?.questionId)) ||
-      Number(parsed?.questionId) <= 0 ||
-      typeof parsed?.clientRequestId !== 'string' ||
-      !parsed.clientRequestId ||
-      typeof parsed?.response !== 'string'
-    ) {
-      return null;
-    }
-
-    return {
-      userId,
-      questionId: Number(parsed.questionId),
-      clientRequestId: parsed.clientRequestId,
-      response: parsed.response,
-      createdAt: Number(parsed.createdAt) || 0,
-      recoveryState: normalizePendingSubmissionRecoveryState(
-        parsed?.recoveryState
-      ),
-      typingMetadata: normalizeTypingMetadata(parsed?.typingMetadata)
-    };
-  } catch {
-    return null;
-  }
-}
-
-function savePendingDailyQuestionSubmission({
-  userId,
-  questionId,
-  clientRequestId,
-  response,
-  createdAt,
-  recoveryState,
-  typingMetadata
-}: PendingDailyQuestionSubmission) {
-  if (
-    typeof window === 'undefined' ||
-    typeof window.sessionStorage === 'undefined'
-  ) {
-    return;
-  }
-
-  try {
-    window.sessionStorage.setItem(
-      getDailyQuestionPendingSubmissionStorageKey(userId),
-      JSON.stringify({
-        userId,
-        questionId,
-        clientRequestId,
-        response,
-        createdAt,
-        recoveryState,
-        typingMetadata: normalizeTypingMetadata(typingMetadata)
-      })
-    );
-  } catch {}
-}
-
-function clearPendingDailyQuestionSubmission(userId: number) {
-  if (
-    typeof window === 'undefined' ||
-    typeof window.sessionStorage === 'undefined'
-  ) {
-    return;
-  }
-
-  try {
-    window.sessionStorage.removeItem(
-      getDailyQuestionPendingSubmissionStorageKey(userId)
-    );
-  } catch {}
-}
-
-const pulseAnimation = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-`;
+import {
+  DAILY_QUESTION_DRAFT_RESTORED_NOTICE,
+  DAILY_QUESTION_DRAFT_SAVED_NOTICE,
+  DAILY_QUESTION_RECOVERY_MAX_ATTEMPTS,
+  DAILY_QUESTION_RECOVERY_NOT_FOUND_RETRY_LIMIT,
+  DAILY_QUESTION_RECOVERY_POLL_MS,
+  GRADING_DURATION_MULTIPLIER,
+  INACTIVITY_LIMIT,
+  MIN_GRADING_DURATION_MS,
+  MIN_RESPONSE_LENGTH,
+  PROGRESS_MILESTONE_HOLD,
+  PROGRESS_TICK_MS,
+  QUESTION_PROGRESS_DURATIONS
+} from './constants';
+import GradingResult from './GradingResult';
+import ProgressScreen from './ProgressScreen';
+import { getFocusLabel, getVibeLabel } from './questionPreferences';
+import StartScreen from './StartScreen';
+import {
+  clearPendingDailyQuestionSubmission,
+  cloneTypingMetadata,
+  createDailyQuestionClientRequestId,
+  createEmptyTypingMetadata,
+  isDeletionOnlyChange,
+  loadPendingDailyQuestionSubmission,
+  normalizeSelectionArray,
+  normalizeTypingMetadata,
+  savePendingDailyQuestionSubmission
+} from './storage';
+import { centeredContainerCls } from './styles';
+import type {
+  DailyQuestionGradingResultState,
+  DailyQuestionSubmitResult,
+  RecoverPendingSubmissionArgs,
+  Screen,
+  TypingMetadata
+} from './types';
+import WritingScreen from './WritingScreen';
 
 export default function DailyQuestionPanel({
   onClose
@@ -312,7 +58,6 @@ export default function DailyQuestionPanel({
   const { userId, profileTheme, twinkleCoins } = useKeyContext(
     (v) => v.myState
   );
-  const STREAK_REPAIR_COST = 100000;
   const getDailyQuestion = useAppContext(
     (v) => v.requestHelpers.getDailyQuestion
   );
@@ -345,21 +90,8 @@ export default function DailyQuestionPanel({
   const [loadingMessage, setLoadingMessage] = useState('');
   const [gradingProgress, setGradingProgress] = useState(0);
   const [gradingMessage, setGradingMessage] = useState('');
-  const [gradingResult, setGradingResult] = useState<{
-    grade: string;
-    masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
-    xpAwarded: number;
-    feedback: string;
-    responseId: number;
-    isShared: boolean;
-    sharedWithZero: boolean;
-    sharedWithCiel: boolean;
-    originalResponse: string;
-    sharedResponse: string | null;
-    streak?: number;
-    streakMultiplier?: number;
-    usedRepair?: boolean;
-  } | null>(null);
+  const [gradingResult, setGradingResult] =
+    useState<DailyQuestionGradingResultState | null>(null);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [todayVibe, setTodayVibe] = useState<string | null>(null);
   const [todayCurrentFocus, setTodayCurrentFocus] = useState<string | null>(
@@ -414,10 +146,7 @@ export default function DailyQuestionPanel({
     (args: RecoverPendingSubmissionArgs) => Promise<void>
   >(async () => {});
 
-  // Typing metadata for anti-cheat verification
   const typingMetadataRef = useRef<TypingMetadata>(createEmptyTypingMetadata());
-
-  // Refs for smooth progress animation
   const loadingProgressRef = useRef(0);
   const loadingTargetRef = useRef(0);
   const gradingProgressRef = useRef(0);
@@ -440,7 +169,6 @@ export default function DailyQuestionPanel({
   onSetUserStateRef.current = onSetUserState;
   onApplyTodayStatsProgressRef.current = onApplyTodayStatsProgress;
 
-  // Socket event listeners for progress updates with smooth animation
   useEffect(() => {
     function animateProgress(
       currentRef: React.RefObject<number>,
@@ -569,7 +297,6 @@ export default function DailyQuestionPanel({
     };
   }, []);
 
-  // Use a ref to track mount state - survives across effect re-runs
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
@@ -672,21 +399,7 @@ export default function DailyQuestionPanel({
     result,
     fallbackOriginalResponse
   }: {
-    result: {
-      isThoughtful: boolean;
-      grade?: string;
-      masterpieceType?: 'heart' | 'mind' | 'heart_and_mind' | null;
-      originalResponse?: string;
-      xpAwarded?: number;
-      newXP?: number;
-      feedback?: string;
-      rejectionReason?: string;
-      responseId?: number;
-      sharedResponse?: string | null;
-      streak?: number;
-      streakMultiplier?: number;
-      usedRepair?: boolean;
-    };
+    result: DailyQuestionSubmitResult;
     fallbackOriginalResponse?: string;
   }) {
     gradingCompleteRef.current = true;
@@ -864,7 +577,6 @@ export default function DailyQuestionPanel({
   useEffect(() => {
     if (!userId) return;
 
-    // Reset progress refs
     loadingProgressRef.current = 0;
     loadingTargetRef.current = 0;
     if (loadingAnimationRef.current) {
@@ -878,7 +590,6 @@ export default function DailyQuestionPanel({
     setLoadingProgress(0);
     setLoadingMessage('Loading...');
 
-    // Track this specific request to avoid race conditions
     const requestId = Date.now();
     const currentRequestRef = { id: requestId, cancelled: false };
 
@@ -886,7 +597,6 @@ export default function DailyQuestionPanel({
       try {
         const data = await getDailyQuestionRef.current();
 
-        // Skip if component unmounted or this request was superseded
         if (!isMountedRef.current || currentRequestRef.cancelled) return;
 
         if (data.error) {
@@ -898,8 +608,6 @@ export default function DailyQuestionPanel({
         setQuestionId(data.questionId);
         setQuestion(data.question);
         setOriginalQuestion(data.question);
-
-        // Save streak info
         setCurrentStreak(data.currentStreak || 0);
         setTodayVibe(data.todayVibe || null);
         setTodayCurrentFocus(data.todayCurrentFocus || null);
@@ -1071,7 +779,7 @@ export default function DailyQuestionPanel({
     setIsSimplified(false);
   }
 
-  const hasEnoughCoins = (twinkleCoins || 0) >= STREAK_REPAIR_COST;
+  const hasEnoughCoins = (twinkleCoins || 0) >= 100000;
 
   async function handlePurchaseRepair() {
     if (purchasingRepair || streakRepairAvailable || !hasEnoughCoins) return;
@@ -1081,8 +789,6 @@ export default function DailyQuestionPanel({
       const result = await purchaseDailyQuestionRepair();
 
       if (result.error) {
-        // "Not enough coins" is expected if client data is stale - button will disable
-        // Other errors should be shown to the user
         if (!result.error.toLowerCase().includes('not enough coins')) {
           setError(result.error);
         }
@@ -1091,7 +797,6 @@ export default function DailyQuestionPanel({
 
       if (result.success) {
         setStreakRepairAvailable(true);
-        // Update user's coin balance
         if (userId && result.newBalance !== undefined) {
           onSetUserState({
             userId,
@@ -1100,8 +805,6 @@ export default function DailyQuestionPanel({
         }
       }
     } catch (err: any) {
-      // "Not enough coins" from API is expected if client data is stale
-      // Other errors (network, server) should be shown
       const errorMessage = err?.message || '';
       if (!errorMessage.toLowerCase().includes('not enough coins')) {
         console.error('Failed to purchase repair:', err);
@@ -1226,13 +929,19 @@ export default function DailyQuestionPanel({
     []
   );
 
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    e.preventDefault();
-  }, []);
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      e.preventDefault();
+    },
+    []
+  );
 
-  const handleCut = useCallback((e: React.ClipboardEvent) => {
-    e.preventDefault();
-  }, []);
+  const handleCut = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      e.preventDefault();
+    },
+    []
+  );
 
   function handleDragOver(e: React.DragEvent<HTMLTextAreaElement>) {
     e.preventDefault();
@@ -1254,7 +963,6 @@ export default function DailyQuestionPanel({
     clearRecoveryPoll();
     setRecoveryNotice(null);
 
-    // Calculate typing metrics from raw timestamps
     const metadata = typingMetadataRef.current;
     const endTime = Date.now();
     const timestamps = metadata.keystrokeTimestamps;
@@ -1275,19 +983,17 @@ export default function DailyQuestionPanel({
       });
     }
 
-    // Calculate burst metrics (chars typed within 500ms of each other)
     let maxBurstSize = 0;
     let burstCount = 0;
-    const BURST_PAUSE_THRESHOLD = 500;
+    const burstPauseThreshold = 500;
 
     if (timestamps.length > 0) {
       let currentBurst = 1;
       for (let i = 1; i < timestamps.length; i++) {
         const gap = timestamps[i] - timestamps[i - 1];
-        if (gap <= BURST_PAUSE_THRESHOLD) {
+        if (gap <= burstPauseThreshold) {
           currentBurst++;
         } else {
-          // End of a burst
           if (currentBurst > 1) {
             burstCount++;
             if (currentBurst > maxBurstSize) {
@@ -1297,7 +1003,6 @@ export default function DailyQuestionPanel({
           currentBurst = 1;
         }
       }
-      // Check final burst
       if (currentBurst > 1) {
         burstCount++;
         if (currentBurst > maxBurstSize) {
@@ -1306,7 +1011,6 @@ export default function DailyQuestionPanel({
       }
     }
 
-    // Reset grading progress refs
     gradingProgressRef.current = 0;
     gradingTargetRef.current = 0;
     if (gradingAnimationRef.current) {
@@ -1402,23 +1106,15 @@ export default function DailyQuestionPanel({
   );
 
   const timeWarning = inactivityTimer <= 3 && inactivityTimer > 0;
-  const todayVibeLabel = getTodayVibeLabel(todayVibe);
-  const todayCurrentFocusLabel = getTodayFocusLabel(
-    todayCurrentFocus,
-    isAdultUser
-  );
+  const todayVibeLabel = getVibeLabel(todayVibe);
+  const todayCurrentFocusLabel = getFocusLabel(todayCurrentFocus, isAdultUser);
 
-  // Loading screen
   if (screen === 'loading') {
     return (
-      <div className={centeredContainerCls}>
-        <div className={innerContainerCls}>
-          <Loading text={loadingMessage || "Loading today's question..."} />
-          <div style={{ width: '60%', marginTop: 0 }}>
-            <ProgressBar progress={loadingProgress} />
-          </div>
-        </div>
-      </div>
+      <ProgressScreen
+        text={loadingMessage || "Loading today's question..."}
+        progress={loadingProgress}
+      />
     );
   }
 
@@ -1437,433 +1133,65 @@ export default function DailyQuestionPanel({
 
   if (screen === 'start') {
     return (
-      <ErrorBoundary componentPath="DailyQuestionPanel/Start">
-        <div className={containerCls}>
-          {recoveryNotice && (
-            <div
-              className={css`
-                text-align: center;
-                margin-bottom: 1rem;
-                padding: 0.75rem 1rem;
-                border-radius: 10px;
-                background: ${Color.yellow(0.18)};
-                border: 1px solid ${Color.yellow(0.5)};
-              `}
-            >
-              <p
-                className={css`
-                  margin: 0;
-                  color: ${Color.darkerGray()};
-                  font-size: 1.1rem;
-                  line-height: 1.4;
-                  font-weight: 600;
-                `}
-              >
-                {recoveryNotice}
-              </p>
-            </div>
-          )}
-          {/* Streak Display */}
-          {currentStreak > 0 && !streakBroken && !streakAtRisk && (
-            <div
-              className={css`
-                text-align: center;
-                margin-bottom: 1.5rem;
-                padding: 1rem 1.5rem;
-                background: ${currentStreak >= 10
-                  ? '#FFD700'
-                  : currentStreak >= 7
-                    ? '#E53935'
-                    : currentStreak >= 4
-                      ? '#FF9800'
-                      : '#9E9E9E'}15;
-                border: 2px solid
-                  ${currentStreak >= 10
-                    ? '#FFD700'
-                    : currentStreak >= 7
-                      ? '#E53935'
-                      : currentStreak >= 4
-                        ? '#FF9800'
-                        : '#9E9E9E'}40;
-                border-radius: 12px;
-              `}
-            >
-              <div
-                className={css`
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 0.5rem;
-                `}
-              >
-                <span
-                  className={css`
-                    font-size: 1.8rem;
-                  `}
-                >
-                  🔥
-                </span>
-                <span
-                  className={css`
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    color: ${currentStreak >= 10
-                      ? '#FFD700'
-                      : currentStreak >= 7
-                        ? '#E53935'
-                        : currentStreak >= 4
-                          ? '#FF9800'
-                          : '#9E9E9E'};
-                  `}
-                >
-                  {currentStreak}-day streak
-                </span>
-              </div>
-              <p
-                className={css`
-                  font-size: 1.2rem;
-                  color: ${Color.darkerGray()};
-                  margin-top: 0.3rem;
-                `}
-              >
-                Keep it going for x{Math.min(currentStreak + 1, 10)} XP!
-              </p>
-            </div>
-          )}
-
-          {/* Missed Yesterday Warning */}
-          {streakAtRisk && currentStreak > 0 && (
-            <div
-              className={css`
-                text-align: center;
-                margin-bottom: 1.5rem;
-                padding: 1rem 1.5rem;
-                background: ${Color.rose()}15;
-                border: 2px solid ${Color.rose()}40;
-                border-radius: 12px;
-              `}
-            >
-              <p
-                className={css`
-                  font-size: 1.3rem;
-                  font-weight: bold;
-                  color: ${Color.rose()};
-                  margin-bottom: 0.5rem;
-                `}
-              >
-                ⚠️ You missed yesterday
-              </p>
-              <p
-                className={css`
-                  font-size: 1.2rem;
-                  color: ${Color.darkerGray()};
-                  margin-bottom: 0.75rem;
-                `}
-              >
-                Your {currentStreak}-day streak is broken. Use a repair today to
-                restore it and continue to {currentStreak + 1} days when you
-                answer.
-              </p>
-              {streakRepairAvailable ? (
-                <p
-                  className={css`
-                    font-size: 1.2rem;
-                    color: ${Color.green()};
-                    font-weight: 600;
-                    margin-bottom: 0;
-                  `}
-                >
-                  ✨ Repair ready — answer today to restore your {currentStreak}
-                  -day streak and continue to {currentStreak + 1} days.
-                </p>
-              ) : (
-                <Button
-                  variant="solid"
-                  color="orange"
-                  onClick={handlePurchaseRepair}
-                  disabled={purchasingRepair || !hasEnoughCoins}
-                  loading={purchasingRepair}
-                >
-                  <Icon icon="wrench" style={{ marginRight: '0.5rem' }} />
-                  {hasEnoughCoins
-                    ? `Restore Streak (100,000 coins)`
-                    : `Need 100,000 coins (you have ${(
-                        twinkleCoins || 0
-                      ).toLocaleString()})`}
-                </Button>
-              )}
-            </div>
-          )}
-
-          {streakBroken && (
-            <div
-              className={css`
-                text-align: center;
-                margin-bottom: 1.5rem;
-                padding: 1rem 1.5rem;
-                background: ${Color.gray()}10;
-                border: 2px solid ${Color.borderGray()};
-                border-radius: 12px;
-              `}
-            >
-              <p
-                className={css`
-                  font-size: 1.3rem;
-                  font-weight: bold;
-                  color: ${Color.darkerGray()};
-                  margin-bottom: 0.5rem;
-                `}
-              >
-                Your streak was broken
-              </p>
-              <p
-                className={css`
-                  font-size: 1.2rem;
-                  color: ${Color.darkerGray()};
-                  margin-bottom: 0;
-                `}
-              >
-                Start a new streak by answering today.
-              </p>
-            </div>
-          )}
-
-          {streakRepairAvailable &&
-            !streakAtRisk &&
-            !streakBroken &&
-            currentStreak > 0 && (
-              <div
-                className={css`
-                  text-align: center;
-                  margin-bottom: 1rem;
-                  padding: 0.75rem 1rem;
-                  background: ${Color.green()}15;
-                  border-radius: 8px;
-                `}
-              >
-                <p
-                  className={css`
-                    font-size: 1.2rem;
-                    color: ${Color.green()};
-                    font-weight: 600;
-                  `}
-                >
-                  ✨ Streak repair ready - your streak is protected!
-                </p>
-              </div>
-            )}
-
-          <div className={todayPreferenceRowCls}>
-            <div className={todayPreferenceCardCls}>
-              <span className={todayPreferenceLabelCls}>Today's vibe</span>
-              <span className={todayPreferenceValueCls}>{todayVibeLabel}</span>
-            </div>
-            <div className={todayPreferenceCardCls}>
-              <span className={todayPreferenceLabelCls}>Current focus</span>
-              <span className={todayPreferenceValueCls}>
-                {todayCurrentFocusLabel}
-              </span>
-            </div>
-          </div>
-
-          <p className={questionTextCls}>{question}</p>
-
-          <div
-            className={css`
-              margin-bottom: 1.5rem;
-            `}
-          >
-            {isSimplified ? (
-              <Button
-                variant="soft"
-                tone="raised"
-                color={profileTheme}
-                onClick={handleShowOriginal}
-                uppercase={false}
-              >
-                <Icon icon="undo" style={{ marginRight: '0.5rem' }} />
-                Show original question
-              </Button>
-            ) : (
-              <Button
-                variant="soft"
-                tone="raised"
-                color={profileTheme}
-                onClick={handleSimplify}
-                disabled={isSimplifying}
-                loading={isSimplifying}
-                uppercase={false}
-              >
-                <Icon icon="child" style={{ marginRight: '0.5rem' }} />
-                {isSimplifying
-                  ? 'Simplifying...'
-                  : 'Make question easier to understand'}
-              </Button>
-            )}
-          </div>
-
-          <div className={instructionBoxCls}>
-            <h4 style={{ marginBottom: '0.75rem', color: Color.black() }}>
-              <Icon icon="info-circle" style={{ marginRight: '0.5rem' }} />
-              Rules
-            </h4>
-            <ul className={instructionListCls}>
-              <li>
-                <span className={ruleTitleCls}>Keep typing</span> — if you stop
-                for more than{' '}
-                <span className={ruleWarningCls}>
-                  {INACTIVITY_LIMIT} seconds
-                </span>
-                , your response auto-submits
-              </li>
-              <li>
-                <span className={ruleTitleCls}>Minimum length</span> — write at
-                least{' '}
-                <span className={ruleSuccessCls}>
-                  {MIN_RESPONSE_LENGTH} characters
-                </span>{' '}
-                before the timer runs out, or it's an{' '}
-                <span className={ruleWarningCls}>automatic fail</span>
-              </li>
-              <li>
-                <span className={ruleTitleCls}>No going back</span> —{' '}
-                <span className={ruleWarningCls}>
-                  backspace and delete are disabled
-                </span>
-                . Just keep moving forward!
-              </li>
-              <li>
-                <span className={ruleTitleCls}>No copy‑paste</span> — write in
-                your own words
-              </li>
-              <li>
-                <span className={ruleTitleCls}>
-                  Closing this window cancels
-                </span>{' '}
-                — your response{' '}
-                <span className={ruleWarningCls}>won't be saved</span>, so
-                you'll need to start over
-              </li>
-            </ul>
-          </div>
-
-          <div className={buttonContainerCls}>
-            <Button variant="ghost" onClick={onClose}>
-              Maybe Later
-            </Button>
-            <Button variant="solid" color="green" onClick={handleStart}>
-              <Icon icon="play" style={{ marginRight: '0.5rem' }} />
-              Start Writing
-            </Button>
-          </div>
-        </div>
-      </ErrorBoundary>
+      <StartScreen
+        currentStreak={currentStreak}
+        hasEnoughCoins={hasEnoughCoins}
+        isSimplified={isSimplified}
+        isSimplifying={isSimplifying}
+        profileTheme={profileTheme}
+        purchasingRepair={purchasingRepair}
+        question={question}
+        recoveryNotice={recoveryNotice}
+        streakAtRisk={streakAtRisk}
+        streakBroken={streakBroken}
+        streakRepairAvailable={streakRepairAvailable}
+        todayCurrentFocusLabel={todayCurrentFocusLabel}
+        todayVibeLabel={todayVibeLabel}
+        twinkleCoins={twinkleCoins}
+        onClose={onClose}
+        onPurchaseRepair={handlePurchaseRepair}
+        onShowOriginal={handleShowOriginal}
+        onSimplify={handleSimplify}
+        onStart={handleStart}
+      />
     );
   }
 
   if (screen === 'writing') {
     return (
-      <ErrorBoundary componentPath="DailyQuestionPanel/Writing">
-        <div className={containerCls}>
-          <div className={timerContainerCls}>
-            <div
-              className={css`
-                font-size: 2.5rem;
-                font-weight: bold;
-                color: ${timeWarning ? Color.rose() : Color.black()};
-                ${!restoredDraftNeedsFreshTyping && timeWarning
-                  ? `animation: ${pulseAnimation} 0.5s infinite;`
-                  : ''}
-              `}
-            >
-              {restoredDraftNeedsFreshTyping ? '--' : `${inactivityTimer}s`}
-            </div>
-            <div style={{ color: Color.darkerGray(), fontSize: '1.2rem' }}>
-              {restoredDraftNeedsFreshTyping
-                ? 'Make one small edit to resume'
-                : inactivityTimer <= 3
-                  ? 'Done?'
-                  : 'Keep typing!'}
-            </div>
-          </div>
-
-          <p className={questionTextSmallCls}>{question}</p>
-
-          <textarea
-            ref={textareaRef}
-            value={response}
-            onChange={handleInput}
-            onBeforeInput={handleBeforeInput}
-            onKeyDown={handleKeyDown}
-            onCompositionStart={handleCompositionStart}
-            onCompositionEnd={handleCompositionEnd}
-            onPaste={handlePaste}
-            onCut={handleCut}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            placeholder="Just start typing... don't stop to think, just write..."
-            className={textareaCls}
-            autoFocus
-          />
-
-          {restoredDraftNeedsFreshTyping && (
-            <div
-              className={css`
-                width: 100%;
-                margin-top: 0.75rem;
-                padding: 0.75rem 1rem;
-                border-radius: 10px;
-                background: ${Color.yellow(0.14)};
-                border: 1px solid ${Color.yellow(0.35)};
-                color: ${Color.darkerGray()};
-                font-size: 1.05rem;
-                line-height: 1.4;
-              `}
-            >
-              This restored draft needs one fresh edit before the timer resumes
-              and it can be resubmitted safely.
-            </div>
-          )}
-
-          <div className={statsRowCls}>
-            <span style={{ color: Color.lightGray() }}>{wordCount} words</span>
-            <span style={{ color: Color.lightGray(), fontSize: '1.1rem' }}>
-              {minLengthMet ? 'Minimum met' : `${remainingChars} chars to go`}
-            </span>
-          </div>
-          {minEffortBarShown && (
-            <div style={{ width: '100%' }}>
-              <ProgressBar
-                text={minEffortDisplayLabel}
-                color={minEffortColor}
-                progress={minEffortProgress}
-              />
-            </div>
-          )}
-          <div
-            style={{
-              color: Color.lightGray(),
-              fontSize: '1.1rem',
-              marginTop: '0.3rem'
-            }}
-          >
-            No backspace allowed - keep going!
-          </div>
-        </div>
-      </ErrorBoundary>
+      <WritingScreen
+        inactivityTimer={inactivityTimer}
+        minEffortBarShown={minEffortBarShown}
+        minEffortColor={minEffortColor}
+        minEffortDisplayLabel={minEffortDisplayLabel}
+        minEffortProgress={minEffortProgress}
+        minLengthMet={minLengthMet}
+        question={question}
+        remainingChars={remainingChars}
+        response={response}
+        restoredDraftNeedsFreshTyping={restoredDraftNeedsFreshTyping}
+        textareaRef={textareaRef}
+        timeWarning={timeWarning}
+        wordCount={wordCount}
+        onBeforeInput={handleBeforeInput}
+        onCompositionEnd={handleCompositionEnd}
+        onCompositionStart={handleCompositionStart}
+        onCut={handleCut}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
+      />
     );
   }
 
   if (screen === 'grading') {
     return (
-      <div className={centeredContainerCls}>
-        <div className={innerContainerCls}>
-          <Loading text={gradingMessage || 'Evaluating your response...'} />
-          <div style={{ width: '60%' }}>
-            <ProgressBar progress={gradingProgress} />
-          </div>
-        </div>
-      </div>
+      <ProgressScreen
+        text={gradingMessage || 'Evaluating your response...'}
+        progress={gradingProgress}
+      />
     );
   }
 
@@ -1901,182 +1229,3 @@ export default function DailyQuestionPanel({
 
   return null;
 }
-
-const containerCls = css`
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 300px;
-`;
-
-const centeredContainerCls = css`
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 300px;
-`;
-
-const innerContainerCls = css`
-  margin-top: -7rem;
-  display: flex;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-`;
-
-const questionTextCls = css`
-  font-size: 1.7rem;
-  color: ${Color.black()};
-  line-height: 1.5;
-  font-weight: 500;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.5rem;
-  }
-`;
-
-const questionTextSmallCls = css`
-  font-size: 1.4rem;
-  color: ${Color.darkerGray()};
-  line-height: 1.4;
-  text-align: center;
-  margin-bottom: 1rem;
-  font-style: italic;
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.2rem;
-  }
-`;
-
-const todayPreferenceRowCls = css`
-  display: flex;
-  width: 100%;
-  max-width: 560px;
-  margin-bottom: 1.5rem;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: 16px;
-  background: ${Color.highlightGray()};
-  overflow: hidden;
-  @media (max-width: ${mobileMaxWidth}) {
-    flex-direction: column;
-  }
-  > div:not(:last-child) {
-    border-right: 1px solid ${Color.borderGray()};
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    > div:not(:last-child) {
-      border-right: 0;
-      border-bottom: 1px solid ${Color.borderGray()};
-    }
-  }
-`;
-
-const todayPreferenceCardCls = css`
-  flex: 1;
-  min-width: 0;
-  padding: 0.95rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  text-align: center;
-  align-items: center;
-`;
-
-const todayPreferenceLabelCls = css`
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: ${Color.lightGray()};
-`;
-
-const todayPreferenceValueCls = css`
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: ${Color.black()};
-  line-height: 1.35;
-`;
-
-const instructionBoxCls = css`
-  background: ${Color.highlightGray()};
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  width: 100%;
-  max-width: 500px;
-`;
-
-const instructionListCls = css`
-  margin: 0;
-  padding-left: 1.5rem;
-  font-size: 1.3rem;
-  color: ${Color.darkerGray()};
-  line-height: 1.8;
-  li {
-    margin-bottom: 0.3rem;
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.2rem;
-  }
-`;
-
-const ruleTitleCls = css`
-  font-weight: 700;
-  color: ${Color.black()};
-`;
-
-const ruleWarningCls = css`
-  font-weight: 700;
-  color: ${Color.rose()};
-`;
-
-const ruleSuccessCls = css`
-  font-weight: 700;
-  color: ${Color.green()};
-`;
-
-const timerContainerCls = css`
-  text-align: center;
-  margin-bottom: 1rem;
-`;
-
-const textareaCls = css`
-  width: 100%;
-  min-height: 200px;
-  padding: 1rem;
-  font-size: 1.5rem;
-  line-height: 1.7;
-  border: 1px solid ${Color.borderGray()};
-  border-radius: 8px;
-  resize: vertical;
-  font-family: inherit;
-  &:focus {
-    outline: none;
-    border-color: ${Color.logoBlue()};
-  }
-  @media (max-width: ${mobileMaxWidth}) {
-    font-size: 1.3rem;
-  }
-`;
-
-const statsRowCls = css`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.5rem;
-  font-size: 1.2rem;
-  width: 100%;
-`;
-
-const buttonContainerCls = css`
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-`;
