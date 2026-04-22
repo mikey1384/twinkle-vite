@@ -219,7 +219,13 @@ export default function chatRequestHelpers({
           data: { isAccessible, isPublic, channelId }
         } = await request.get(
           `${URL}/chat/check/accessible?pathId=${pathId}`,
-          auth()
+          {
+            ...auth(),
+            timeout: 10000,
+            meta: {
+              collapseKey: null
+            }
+          }
         );
         return { isAccessible, isPublic, channelId };
       } catch (error) {
@@ -1039,7 +1045,7 @@ export default function chatRequestHelpers({
           {
             ...auth(),
             meta: {
-              allowExtendedTimeout: true,
+              collapseKey: null,
               enforceTimeout: false
             }
           }
@@ -1082,7 +1088,7 @@ export default function chatRequestHelpers({
           {
             ...auth(),
             meta: {
-              allowExtendedTimeout: true,
+              collapseKey: null,
               enforceTimeout: false
             }
           }

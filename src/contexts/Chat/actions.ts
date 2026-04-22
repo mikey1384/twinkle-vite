@@ -645,11 +645,20 @@ export default function ChatActions(dispatch: Dispatch) {
         channelId
       });
     },
-    onInitChat({ data, userId }: { data: object; userId: number }) {
+    onInitChat({
+      data,
+      userId,
+      bootstrapId
+    }: {
+      data: object;
+      userId: number;
+      bootstrapId?: string;
+    }) {
       return dispatch({
         type: 'INIT_CHAT',
         data,
-        userId
+        userId,
+        bootstrapId
       });
     },
     onInviteUsersToChannel(data: object) {

@@ -1,5 +1,6 @@
 import React, { useReducer, ReactNode, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
+import { socket } from '~/constants/sockets/api';
 import NotiActions from './actions';
 import NotiReducer from './reducer';
 
@@ -24,7 +25,7 @@ export const initialNotiState = {
   rewardsTimeoutExecuted: false,
   top30s: [],
   top30sMonthly: [],
-  socketConnected: false,
+  socketConnected: socket.connected,
 	  todayStats: {
 	    aiCallDuration: 0,
       aiUsagePolicy: null,

@@ -38,6 +38,7 @@ export default function FilterModal({
     | 'DALL-E 3'
     | 'image-1'
     | 'image-1.5'
+    | 'image-2'
     | 'Nano Banana'
   >(filters.engine || 'any');
   const filterComponents = useMemo(() => {
@@ -179,6 +180,7 @@ export default function FilterModal({
         | 'DALL-E 3'
         | 'image-1'
         | 'image-1.5'
+        | 'image-2'
         | 'Nano Banana';
     } = {};
     if (selectedOwner) {

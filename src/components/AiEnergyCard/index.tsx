@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import Icon from '~/components/Icon';
@@ -38,12 +38,13 @@ const TONE = {
 const EMPTY_BG = 'rgba(148,163,184,0.18)';
 const EMPTY_BORDER = 'rgba(148,163,184,0.4)';
 const EMPTY_FLAT = 'rgba(148,163,184,0.22)';
+const CHARGE_CTA_ACK_STORAGE_KEY = 'twinkle_ai_energy_charge_cta_ack';
 
 export default function AiEnergyCard({
   energyPercent,
   energySegments = 5,
   mode,
-  overflowed = false,
+  overflowed: _overflowed = false,
   resetNeeded = false,
   resetCost = 0,
   resetPurchaseNumber,
@@ -58,7 +59,8 @@ export default function AiEnergyCard({
   className,
   style,
   cardRef,
-  themeColor
+  themeColor,
+  chargeCtaAttentionKey
 }: {
   energyPercent: number;
   energySegments?: number;
@@ -80,9 +82,13 @@ export default function AiEnergyCard({
   style?: React.CSSProperties;
   cardRef?: React.Ref<HTMLDivElement>;
   themeColor?: string;
+  chargeCtaAttentionKey?: string;
 }) {
   const [aiEnergyDashboardModalShown, setAiEnergyDashboardModalShown] =
     useState(false);
+  const [acknowledgedChargeKey, setAcknowledgedChargeKey] = useState<
+    string | null
+  >(null);
   const modeBadgeRole = useRoleColor('button', {
     themeName: themeColor,
     fallback: themeColor || 'logoBlue'
@@ -99,9 +105,7 @@ export default function AiEnergyCard({
       ? 'Lite Mode'
       : 'Max Mode'
     : '';
-  const statusLabel = [modeLabel, overflowed ? 'extra used' : '']
-    .filter(Boolean)
-    .join(' · ');
+  const statusLabel = modeLabel;
   const hasEnoughCoins = twinkleCoins >= resetCost;
   const showRequirements = !!(
     communityFundsRequirements && communityFundsRequirements.length > 0
@@ -130,9 +134,44 @@ export default function AiEnergyCard({
   } as React.CSSProperties;
 
   const isInline = variant === 'inline';
+  const chargeCtaType = resetNeeded
+    ? communityFundsEligible
+      ? 'free'
+      : 'paid'
+    : null;
+  const effectiveChargeAttentionKey =
+    chargeCtaType && chargeCtaAttentionKey ? chargeCtaAttentionKey : null;
+  const chargeButtonShiny =
+    !!chargeCtaType &&
+    (!effectiveChargeAttentionKey ||
+      acknowledgedChargeKey !== effectiveChargeAttentionKey);
   const wrapperCls = isInline ? inlineCls : cardCls;
   const cellsClass = isInline ? cellsFlatCls : cellsCls;
   const cellClass = isInline ? cellFlatCls : cellCls;
+
+  useEffect(() => {
+    if (!effectiveChargeAttentionKey) {
+      setAcknowledgedChargeKey(null);
+      return;
+    }
+    if (typeof window === 'undefined') return;
+    const storedKey = window.sessionStorage.getItem(CHARGE_CTA_ACK_STORAGE_KEY);
+    setAcknowledgedChargeKey(
+      storedKey === effectiveChargeAttentionKey ? storedKey : null
+    );
+  }, [effectiveChargeAttentionKey]);
+
+  function handleOpenDashboard() {
+    if (effectiveChargeAttentionKey && typeof window !== 'undefined') {
+      window.sessionStorage.setItem(
+        CHARGE_CTA_ACK_STORAGE_KEY,
+        effectiveChargeAttentionKey
+      );
+      setAcknowledgedChargeKey(effectiveChargeAttentionKey);
+    }
+    setAiEnergyDashboardModalShown(true);
+  }
+
   const energyCells = Array.from({ length: segments }).map((_, index) => {
     const fillRatio = Math.max(0, Math.min(1, visualSegmentFill - index));
     const filled = fillRatio > 0;
@@ -204,17 +243,30 @@ export default function AiEnergyCard({
       >
         {isInline ? (
           <div className={inlineRowCls}>
-            <button
-              type="button"
-              className={`${energyBadgeCls} ${inlineTitleCls}`}
-              onClick={() => setAiEnergyDashboardModalShown(true)}
-              title="Open AI Energy dashboard"
-            >
-              <Icon icon="bolt" className={boltCls} />
-              {statusLabel && (
-                <span className={inlineTitleTextCls}>Energy</span>
-              )}
-            </button>
+            {chargeCtaType ? (
+              <GameCTAButton
+                icon="bolt"
+                variant={chargeCtaType === 'free' ? 'gold' : 'orange'}
+                size="sm"
+                shiny={chargeButtonShiny}
+                onClick={handleOpenDashboard}
+                style={{ flexShrink: 0 }}
+              >
+                Charge
+              </GameCTAButton>
+            ) : (
+              <button
+                type="button"
+                className={`${energyBadgeCls} ${inlineTitleCls}`}
+                onClick={handleOpenDashboard}
+                title="Open AI Energy dashboard"
+              >
+                <Icon icon="bolt" className={boltCls} />
+                {statusLabel && (
+                  <span className={inlineTitleTextCls}>Energy</span>
+                )}
+              </button>
+            )}
             <div className={inlineMeterWrapCls}>
               {meter}
               <span className={inlinePercentCls}>{percent}%</span>
@@ -231,7 +283,7 @@ export default function AiEnergyCard({
               <button
                 type="button"
                 className={`${energyBadgeCls} ${titleCls}`}
-                onClick={() => setAiEnergyDashboardModalShown(true)}
+                onClick={handleOpenDashboard}
                 title="Open AI Energy dashboard"
               >
                 <Icon icon="bolt" className={boltCls} />
@@ -252,7 +304,7 @@ export default function AiEnergyCard({
           </>
         )}
 
-        {resetNeeded && (
+        {resetNeeded && !isInline && (
           <div className={rechargeSectionCls}>
             <div className={rechargeMessageCls}>
               {resetPurchaseNumber
@@ -285,7 +337,9 @@ export default function AiEnergyCard({
                     <span>
                       {req.label}
                       {typeof req.required === 'number'
-                        ? ` (${req.current || 0}/${req.required})`
+                        ? req.label === 'Chess puzzle XP'
+                          ? ` (${req.current || 0}/${req.required} xp)`
+                          : ` (${req.current || 0}/${req.required})`
                         : ''}
                     </span>
                   </div>

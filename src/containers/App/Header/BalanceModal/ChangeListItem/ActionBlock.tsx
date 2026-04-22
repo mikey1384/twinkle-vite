@@ -163,6 +163,15 @@ export default function ActionBlock({
     if (action === 'dailyTaskStreakRepair') {
       return 'purchased a Daily Tasks streak repair';
     }
+    if (action === 'aiEnergyRecharge' && target === 'aiEnergyBattery') {
+      return 'recharged AI Energy';
+    }
+    if (
+      action === 'aiEnergyRechargeSponsored' &&
+      target === 'aiEnergyBattery'
+    ) {
+      return 'recharged AI Energy via community funds';
+    }
     if (action === 'buildGenerationQuotaReset') {
       return 'recharged AI Energy';
     }

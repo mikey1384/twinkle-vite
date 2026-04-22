@@ -118,6 +118,7 @@ export default function AICardDetails({
           {(engine === 'DALL-E 3' ||
             engine === 'image-1' ||
             engine === 'image-1.5' ||
+            engine === 'image-2' ||
             isNanoBananaEngine) && (
             <div
               className={css`

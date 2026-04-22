@@ -1,9 +1,29 @@
-import React, { ReactNode, useReducer, useMemo } from 'react';
+import React, { ReactNode, useEffect, useReducer, useMemo } from 'react';
 import { createContext } from 'use-context-selector';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
+import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 
 export const ChatContext = createContext({});
+
+interface ChatStateWindow extends Window {
+  __twinkleChatStateSnapshot?: any;
+}
+
+function getChatStateWindow() {
+  if (typeof window === 'undefined') return null;
+  return window as ChatStateWindow;
+}
+
+function getPersistedChatStateSnapshot() {
+  return getChatStateWindow()?.__twinkleChatStateSnapshot || null;
+}
+
+function persistChatStateSnapshot(state: any) {
+  const targetWindow = getChatStateWindow();
+  if (!targetWindow) return;
+  targetWindow.__twinkleChatStateSnapshot = state;
+}
 
 function getThinkHardFromStorage() {
   try {
@@ -32,6 +52,17 @@ function getThinkHardFromStorage() {
 }
 
 function getInitialChatState() {
+  const persistedState = getPersistedChatStateSnapshot();
+  if (persistedState && typeof persistedState === 'object') {
+    recordChatBootstrapEvent('chat-context-restored-snapshot', {
+      loaded: persistedState.loaded,
+      loadedForUserId: persistedState.loadedForUserId,
+      selectedChannelId: persistedState.selectedChannelId,
+      channelCount: Object.keys(persistedState.channelsObj || {}).length
+    });
+    return persistedState;
+  }
+
   return {
     aiCallChannelId: null,
     aiCallEnding: false,
@@ -78,6 +109,7 @@ function getInitialChatState() {
     loadingAICardChat: false,
     loadingVocabulary: false,
     loaded: false,
+    loadedForUserId: null,
     myCardIds: [],
     myCardsLoadMoreButton: false,
     myListedCardIds: [],
@@ -167,6 +199,7 @@ export const initialChatState = {
   loadingAICardChat: false,
   loadingVocabulary: false,
   loaded: false,
+  loadedForUserId: null,
   myCardIds: [],
   myCardsLoadMoreButton: false,
   myListedCardIds: [],
@@ -209,10 +242,21 @@ export const initialChatState = {
 };
 
 export function ChatContextProvider({ children }: { children: ReactNode }) {
-  const [chatState, chatDispatch] = useReducer(
-    ChatReducer,
+  const [chatState, chatDispatch] = useReducer(ChatReducer, undefined, () =>
     getInitialChatState()
   );
+
+  useEffect(() => {
+    recordChatBootstrapEvent('chat-context-mounted', {});
+    return () => {
+      recordChatBootstrapEvent('chat-context-unmounted', {});
+    };
+  }, []);
+
+  useEffect(() => {
+    persistChatStateSnapshot(chatState);
+  }, [chatState]);
+
   const memoizedActions = useMemo(
     () => ChatActions(chatDispatch),
     [chatDispatch]

@@ -3,6 +3,15 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import ActionButton from '../../ActionButton';
 import { useRoleColor } from '~/theme/useRoleColor';
+import AiEnergyCard from '~/components/AiEnergyCard';
+
+interface CommunityFundRequirement {
+  key: string;
+  label: string;
+  done: boolean;
+  current?: number;
+  required?: number;
+}
 
 interface FollowUpInputProps {
   followUpPrompt: string;
@@ -17,6 +26,19 @@ interface FollowUpInputProps {
   followUpQuality?: 'low' | 'medium' | 'high';
   onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
   themeColor?: string;
+  energyPercent?: number;
+  energySegments?: number;
+  overflowed?: boolean;
+  resetNeeded?: boolean;
+  resetCost?: number;
+  resetPurchaseNumber?: number;
+  twinkleCoins?: number;
+  rechargeLoading?: boolean;
+  rechargeError?: string;
+  onRecharge?: () => void;
+  communityFundsEligible?: boolean;
+  communityFundsRequirements?: CommunityFundRequirement[];
+  onRechargeWithCommunityFunds?: () => void;
 }
 
 export default function FollowUpInput({
@@ -31,7 +53,20 @@ export default function FollowUpInput({
   onFollowUpEngineChange,
   followUpQuality = 'high',
   onFollowUpQualityChange,
-  themeColor
+  themeColor,
+  energyPercent,
+  energySegments,
+  overflowed = false,
+  resetNeeded = false,
+  resetCost = 0,
+  resetPurchaseNumber,
+  twinkleCoins = 0,
+  rechargeLoading = false,
+  rechargeError = '',
+  onRecharge,
+  communityFundsEligible = false,
+  communityFundsRequirements,
+  onRechargeWithCommunityFunds
 }: FollowUpInputProps) {
   const themeRole = useRoleColor('button', {
     themeName: themeColor,
@@ -46,6 +81,29 @@ export default function FollowUpInput({
         margin-bottom: -0.5rem;
       `}
     >
+      {typeof energyPercent === 'number' && (
+        <AiEnergyCard
+          variant="inline"
+          className={css`
+            width: 100%;
+            margin-bottom: 1rem;
+          `}
+          energyPercent={energyPercent}
+          energySegments={energySegments}
+          overflowed={overflowed}
+          resetNeeded={resetNeeded}
+          resetCost={resetCost}
+          resetPurchaseNumber={resetPurchaseNumber}
+          twinkleCoins={twinkleCoins}
+          rechargeLoading={rechargeLoading}
+          rechargeError={rechargeError}
+          onRecharge={onRecharge}
+          communityFundsEligible={communityFundsEligible}
+          communityFundsRequirements={communityFundsRequirements}
+          onRechargeWithCommunityFunds={onRechargeWithCommunityFunds}
+          themeColor={themeColor}
+        />
+      )}
       <div
         className={css`
           display: flex;
@@ -85,7 +143,7 @@ export default function FollowUpInput({
               color: themeRole.getColor()
             }}
           >
-            <option value="openai">Image 1.5</option>
+            <option value="openai">Image 2</option>
             <option value="gemini">Nano Banana</option>
           </select>
           {followUpEngine === 'openai' && (

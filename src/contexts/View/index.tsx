@@ -43,6 +43,7 @@ const initialViewState: ViewState = {
   homeNav: '/',
   audioKey: '',
   aiFeaturesDisabled: true,
+  aiFeaturesLoaded: false,
   aiDisabledNotice: AI_DISABLED_NOTICE
 };
 
