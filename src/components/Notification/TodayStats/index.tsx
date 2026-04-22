@@ -9,9 +9,12 @@ import TodayXPRankings from './TodayXPRankings';
 import Button from '~/components/Button';
 import Icon from '~/components/Icon';
 import Loading from '~/components/Loading';
+import AiEnergyCard from '~/components/AiEnergyCard';
 import { themedCardBase } from '~/theme/themedCard';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { useRoleColor } from '~/theme/useRoleColor';
+import AiEnergyDashboardModal from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal';
+import { FULL_RECHARGE_COST } from '~/containers/Chat/RightMenu/ChatInfo/AIChatMenu/AiEnergyDashboardModal/helpers';
 
 const DEFAULT_PROGRESS_COLOR = 'rgba(65, 140, 235, 1)';
 const DEFAULT_XP_NUMBER_COLOR = 'rgba(97, 226, 101, 1)';
@@ -63,6 +66,42 @@ const buttonRankTextOnlyClass = css`
   font-weight: 700;
 `;
 
+const aiEnergyPanelCls = css`
+  margin: 1rem auto 0.9rem;
+  max-width: 40rem;
+  padding: 1rem 1.05rem 1.05rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.98);
+`;
+
+const aiEnergyPanelButtonWrapCls = css`
+  display: flex;
+  justify-content: center;
+  margin-top: 0.8rem;
+
+  @media (max-width: 767px) {
+    width: 100%;
+  }
+`;
+
+interface AiUsagePolicy {
+  dayIndex?: number;
+  energyPercent?: number;
+  energySegments?: number;
+  energyRemaining?: number;
+  resetCost?: number;
+  communityFundRechargeCoinsRemaining?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  communityFundResetEligibility?: {
+    eligible: boolean;
+    requirements: Array<{
+      key: string;
+      done: boolean;
+    }>;
+  };
+}
+
 export default function TodayStats({
   isDailyRewardChecked,
   isDailyBonusButtonShown,
@@ -75,6 +114,8 @@ export default function TodayStats({
   onSetMyAchievementsObj: (myAchievementsObj: any) => void;
 }) {
   const [myTodayRank, setMyTodayRank] = useState<number | null>(null);
+  const [aiEnergyDashboardModalShown, setAiEnergyDashboardModalShown] =
+    useState(false);
   const todayProgressRole = useRoleColor('todayProgressText', {
     fallback: 'logoBlue'
   });
@@ -95,6 +136,7 @@ export default function TodayStats({
 
   const buttonColor = buttonRole.colorKey;
   const todayStats = useNotiContext((v) => v.state.todayStats);
+  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -106,6 +148,30 @@ export default function TodayStats({
     role: 'sectionPanel',
     intensity: 0.05
   });
+  const energyPercentValue = Math.max(
+    0,
+    Math.min(100, Number(aiUsagePolicy?.energyPercent ?? 0))
+  );
+  const energySegments = Math.max(1, Number(aiUsagePolicy?.energySegments || 5));
+  const rechargeCost = Math.max(
+    1,
+    Number(aiUsagePolicy?.resetCost || FULL_RECHARGE_COST)
+  );
+  const energyIsEmpty = Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
+  const communityChargeAvailable =
+    !!aiUsagePolicy?.communityFundResetEligibility?.eligible &&
+    Number(aiUsagePolicy?.communityFundRechargeCoinsRemaining || 0) >=
+      rechargeCost;
+  const energyChargeAttentionKey = aiUsagePolicy
+    ? [
+        'today-stats',
+        aiUsagePolicy.dayIndex || 'unknown',
+        energyIsEmpty ? 'empty' : 'full',
+        communityChargeAvailable ? 'free' : 'paid',
+        rechargeCost
+      ].join(':')
+    : '';
+  const energyButtonLabel = energyIsEmpty ? 'Charge' : 'Open AI Energy';
 
   useEffect(() => {
     let cancelled = false;
@@ -216,7 +282,44 @@ export default function TodayStats({
               myAchievementsObj={myAchievementsObj}
               onSetMyAchievementsObj={onSetMyAchievementsObj}
             />
+            {!!aiUsagePolicy && (
+              <div className={aiEnergyPanelCls}>
+                <AiEnergyCard
+                  variant="inline"
+                  energyPercent={energyPercentValue}
+                  energySegments={energySegments}
+                  mode={aiUsagePolicy?.currentMode}
+                  resetNeeded={energyIsEmpty}
+                  resetCost={rechargeCost}
+                  communityFundsEligible={communityChargeAvailable}
+                  chargeCtaAttentionKey={energyChargeAttentionKey}
+                  themeColor={buttonColor}
+                />
+                <div className={aiEnergyPanelButtonWrapCls}>
+                  <Button
+                    color={buttonColor}
+                    variant="soft"
+                    tone="raised"
+                    size="sm"
+                    uppercase={false}
+                    onClick={() => setAiEnergyDashboardModalShown(true)}
+                    style={{
+                      minWidth: '10.5rem'
+                    }}
+                  >
+                    <Icon icon="bolt" />
+                    <span>{energyButtonLabel}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
             {todayStats.showXPRankings && <TodayXPRankings />}
+            {aiEnergyDashboardModalShown && (
+              <AiEnergyDashboardModal
+                modalLevel={3}
+                onHide={() => setAiEnergyDashboardModalShown(false)}
+              />
+            )}
           </div>
         ) : (
           <Loading />

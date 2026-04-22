@@ -216,6 +216,7 @@ export default function CallZero({
   const AI_FEATURES_DISABLED = useViewContext(
     (v) => v.state.aiFeaturesDisabled
   );
+  const aiFeaturesLoaded = useViewContext((v) => v.state.aiFeaturesLoaded);
   const userId = useKeyContext((v) => v.myState.userId);
   const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const getCurrentNextDayTimeStamp = useAppContext(
@@ -243,9 +244,8 @@ export default function CallZero({
   const [microphoneModalShown, setMicrophoneModalShown] = useState(false);
 
   const batteryLevel = useMemo(() => {
-    if (isAdmin) return 100;
     return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
-  }, [aiUsagePolicy?.energyPercent, isAdmin]);
+  }, [aiUsagePolicy?.energyPercent]);
 
   const energySegments = useMemo(() => {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);
@@ -255,9 +255,19 @@ export default function CallZero({
     return (batteryLevel / 100) * energySegments;
   }, [batteryLevel, energySegments]);
 
-  const isZeroChannelLoading = useMemo(() => {
-    return !!userId && !zeroChannelId && !aiCallOngoing && !aiCallEnding;
-  }, [aiCallEnding, aiCallOngoing, userId, zeroChannelId]);
+  const isCallButtonLoading = useMemo(() => {
+    if (!userId || aiCallOngoing || aiCallEnding) return false;
+    if (!aiFeaturesLoaded) return true;
+    if (AI_FEATURES_DISABLED) return false;
+    return !zeroChannelId;
+  }, [
+    AI_FEATURES_DISABLED,
+    aiCallEnding,
+    aiCallOngoing,
+    aiFeaturesLoaded,
+    userId,
+    zeroChannelId
+  ]);
 
   const hasReachedDailyLimit = useMemo(() => {
     if (isAdmin) return false;
@@ -271,8 +281,8 @@ export default function CallZero({
   const isCallButtonUnavailable = useMemo(() => {
     if (aiCallOngoing) return false;
     return (
-      AI_FEATURES_DISABLED ||
-      isZeroChannelLoading ||
+      (aiFeaturesLoaded && AI_FEATURES_DISABLED) ||
+      isCallButtonLoading ||
       aiCallEnding ||
       hasReachedDailyLimit
     );
@@ -280,15 +290,16 @@ export default function CallZero({
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
+    aiFeaturesLoaded,
     hasReachedDailyLimit,
-    isZeroChannelLoading
+    isCallButtonLoading
   ]);
 
   const showCallInfoPanel = useMemo(() => {
     return (
       callButtonHovered ||
       aiCallOngoing ||
-      isZeroChannelLoading ||
+      isCallButtonLoading ||
       aiCallEnding ||
       hasReachedDailyLimit
     );
@@ -297,7 +308,7 @@ export default function CallZero({
     aiCallOngoing,
     callButtonHovered,
     hasReachedDailyLimit,
-    isZeroChannelLoading
+    isCallButtonLoading
   ]);
 
   const getCallQuotaMessage = useMemo(() => {
@@ -434,11 +445,11 @@ export default function CallZero({
     if (aiCallOngoing) {
       return 'Hang Up';
     }
-    if (AI_FEATURES_DISABLED) {
-      return 'Call Unavailable';
-    }
-    if (isZeroChannelLoading) {
+    if (isCallButtonLoading) {
       return 'Connecting...';
+    }
+    if (aiFeaturesLoaded && AI_FEATURES_DISABLED) {
+      return 'Call Unavailable';
     }
     if (aiCallEnding) {
       return 'Ending...';
@@ -451,22 +462,25 @@ export default function CallZero({
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
+    aiFeaturesLoaded,
     hasReachedDailyLimit,
-    isZeroChannelLoading
+    isCallButtonLoading
   ]);
   const callButtonIcon = useMemo(
     () =>
       aiCallOngoing
         ? 'phone-slash'
-        : aiCallEnding || isZeroChannelLoading
+        : aiCallEnding || isCallButtonLoading
           ? 'spinner'
           : 'phone-volume',
-    [aiCallEnding, aiCallOngoing, isZeroChannelLoading]
+    [aiCallEnding, aiCallOngoing, isCallButtonLoading]
   );
   const callButtonAriaLabel = useMemo(() => {
     if (aiCallOngoing) return 'Hang up the call with Zero';
-    if (AI_FEATURES_DISABLED) return 'Zero voice calls are unavailable.';
-    if (isZeroChannelLoading) return 'Connecting to Zero';
+    if (isCallButtonLoading) return 'Connecting to Zero';
+    if (aiFeaturesLoaded && AI_FEATURES_DISABLED) {
+      return 'Zero voice calls are unavailable.';
+    }
     if (aiCallEnding) return 'Ending the previous call with Zero';
     if (hasReachedDailyLimit) {
       return 'AI Energy is empty. Recharge or come back tomorrow.';
@@ -476,8 +490,9 @@ export default function CallZero({
     AI_FEATURES_DISABLED,
     aiCallEnding,
     aiCallOngoing,
+    aiFeaturesLoaded,
     hasReachedDailyLimit,
-    isZeroChannelLoading
+    isCallButtonLoading
   ]);
 
   return (

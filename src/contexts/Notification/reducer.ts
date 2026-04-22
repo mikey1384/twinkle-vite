@@ -1,3 +1,25 @@
+function mergeAiUsagePolicy(
+  prevPolicy: Record<string, any> | null | undefined,
+  nextPolicy: Record<string, any> | null | undefined
+) {
+  if (!nextPolicy) return nextPolicy;
+  const hasCommunityEligibility = Object.prototype.hasOwnProperty.call(
+    nextPolicy,
+    'communityFundResetEligibility'
+  );
+  if (
+    prevPolicy?.communityFundResetEligibility &&
+    !hasCommunityEligibility &&
+    (!nextPolicy.dayIndex || nextPolicy.dayIndex === prevPolicy.dayIndex)
+  ) {
+    return {
+      ...nextPolicy,
+      communityFundResetEligibility: prevPolicy.communityFundResetEligibility
+    };
+  }
+  return nextPolicy;
+}
+
 function mergeTodayStats(
   state: any,
   newStats: Record<string, any>,
@@ -9,11 +31,18 @@ function mergeTodayStats(
     loading?: boolean;
   } = {}
 ) {
+  const nextAiUsagePolicy =
+    'aiUsagePolicy' in newStats
+      ? mergeAiUsagePolicy(state.todayStats.aiUsagePolicy, newStats.aiUsagePolicy)
+      : state.todayStats.aiUsagePolicy;
   return {
     ...state,
     todayStats: {
       ...state.todayStats,
       ...newStats,
+      ...('aiUsagePolicy' in newStats
+        ? { aiUsagePolicy: nextAiUsagePolicy }
+        : {}),
       ...(typeof loaded === 'boolean' ? { loaded } : {}),
       ...(typeof loading === 'boolean' ? { loading } : {})
     }

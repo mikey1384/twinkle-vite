@@ -47,6 +47,7 @@ interface AiUsagePolicy {
   lastUsageOverflowed?: boolean;
   resetCost?: number;
   resetPurchasesToday?: number;
+  communityFundRechargeCoinsRemaining?: number;
   communityFundResetEligibility?: {
     eligible: boolean;
     requirements: any[];
@@ -452,6 +453,29 @@ export default function ImageGenerator({
       followUpQuality={followUpQuality}
       onFollowUpQualityChange={handleFollowUpQualityChange}
       themeColor={profileTheme}
+      energyPercent={aiUsagePolicy?.energyPercent}
+      energySegments={aiUsagePolicy?.energySegments}
+      overflowed={aiUsagePolicy?.lastUsageOverflowed}
+      resetNeeded={energyDepleted}
+      resetCost={aiUsagePolicy?.resetCost || 0}
+      resetPurchaseNumber={(aiUsagePolicy?.resetPurchasesToday || 0) + 1}
+      twinkleCoins={twinkleCoins}
+      rechargeLoading={aiUsageResetLoading}
+      rechargeError={aiUsageResetError}
+      onRecharge={() => handlePurchaseAiUsageReset(false)}
+      communityFundsEligible={
+        !!aiUsagePolicy?.communityFundResetEligibility?.eligible &&
+        Number(aiUsagePolicy?.communityFundRechargeCoinsRemaining || 0) >=
+          Math.max(1, Number(aiUsagePolicy?.resetCost || 1000000))
+      }
+      communityFundsRequirements={
+        aiUsagePolicy?.communityFundResetEligibility?.requirements
+      }
+      onRechargeWithCommunityFunds={
+        aiUsagePolicy?.communityFundResetEligibility
+          ? () => handlePurchaseAiUsageReset(true)
+          : undefined
+      }
     />
   );
 
@@ -504,7 +528,9 @@ export default function ImageGenerator({
           rechargeError={aiUsageResetError}
           onRecharge={() => handlePurchaseAiUsageReset(false)}
           communityFundsEligible={
-            !!aiUsagePolicy.communityFundResetEligibility?.eligible
+            !!aiUsagePolicy.communityFundResetEligibility?.eligible &&
+            Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
+              Math.max(1, Number(aiUsagePolicy.resetCost || 1000000))
           }
           communityFundsRequirements={
             aiUsagePolicy.communityFundResetEligibility?.requirements

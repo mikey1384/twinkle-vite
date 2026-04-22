@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
 import Icon from '~/components/Icon';
 import ZeroPic from '~/components/ZeroPic';
-import { useKeyContext, useNotiContext } from '~/contexts';
+import { useNotiContext } from '~/contexts';
 
 interface WindowProps {
   initialPosition: { x: number; y: number };
@@ -21,14 +21,12 @@ function Window({ initialPosition, onHangUp }: WindowProps) {
   const dragOffset = useRef({ x: 0, y: 0 });
   const windowRef = useRef<HTMLDivElement>(null);
 
-  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
 
   const batteryLevel = useMemo(() => {
-    if (isAdmin) return 100;
     return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
-  }, [aiUsagePolicy?.energyPercent, isAdmin]);
+  }, [aiUsagePolicy?.energyPercent]);
 
   const energySegments = useMemo(() => {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);

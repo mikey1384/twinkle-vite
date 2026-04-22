@@ -15,6 +15,7 @@ export default function EngineFilter({
     | 'DALL-E 3'
     | 'image-1'
     | 'image-1.5'
+    | 'image-2'
     | 'Nano Banana';
   onSelectEngine: (
     v:
@@ -23,6 +24,7 @@ export default function EngineFilter({
       | 'DALL-E 3'
       | 'image-1'
       | 'image-1.5'
+      | 'image-2'
       | 'Nano Banana'
   ) => void;
   onDropdownShown: (isShown: boolean) => void;
@@ -36,6 +38,7 @@ export default function EngineFilter({
       | 'DALL-E 3'
       | 'image-1'
       | 'image-1.5'
+      | 'image-2'
       | 'Nano Banana'
     > = [
       'any',
@@ -43,6 +46,7 @@ export default function EngineFilter({
       'DALL-E 3',
       'image-1',
       'image-1.5',
+      'image-2',
       'Nano Banana'
     ];
     const rearranged = engines.filter((e) => e !== selectedEngine);

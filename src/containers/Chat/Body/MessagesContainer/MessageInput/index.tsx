@@ -917,6 +917,17 @@ export default function MessageInput({
       aiUsagePolicy.energyRemaining <= 0;
     const communityEligibility =
       aiUsagePolicy.communityFundResetEligibility || null;
+    const communityFundsChargeAvailable =
+      !!communityEligibility?.eligible &&
+      Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
+        Math.max(1, Number(aiUsagePolicy.resetCost || 1000000));
+    const chargeAttentionKey = [
+      'chat-input',
+      aiUsagePolicy.dayIndex || 'unknown',
+      resetNeeded ? 'empty' : 'full',
+      communityFundsChargeAvailable ? 'free' : 'paid',
+      aiUsagePolicy.resetCost || 0
+    ].join(':');
     return (
       <AiEnergyCard
         variant="inline"
@@ -935,9 +946,10 @@ export default function MessageInput({
         resetNeeded={resetNeeded}
         resetCost={aiUsagePolicy.resetCost}
         twinkleCoins={twinkleCoins}
+        chargeCtaAttentionKey={chargeAttentionKey}
         rechargeLoading={aiUsageResetLoading}
         onRecharge={() => handlePurchaseAiUsageReset(false)}
-        communityFundsEligible={!!communityEligibility?.eligible}
+        communityFundsEligible={communityFundsChargeAvailable}
         communityFundsRequirements={communityEligibility?.requirements}
         onRechargeWithCommunityFunds={
           communityEligibility

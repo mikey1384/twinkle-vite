@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useReducer, useRef } from 'react';
 import { socket } from '~/constants/sockets/api';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +9,10 @@ import {
 } from '~/constants/defaultValues';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
 import { logForAdmin, parseChannelPath } from '~/helpers';
+import {
+  nextChatBootstrapId,
+  recordChatBootstrapEvent
+} from '~/helpers/chatBootstrapDebug';
 import {
   getStoredItem,
   getTwinkleDeviceId
@@ -61,7 +65,9 @@ export default function useInitSocket({
   const feeds = useHomeContext((v) => v.state.feeds);
   const subFilter = useHomeContext((v) => v.state.subFilter);
   const feedsOutdated = useHomeContext((v) => v.state.feedsOutdated);
+  const chatLoaded = useChatContext((v) => v.state.loaded);
   const latestPathId = useChatContext((v) => v.state.latestPathId);
+  const loadedForUserId = useChatContext((v) => v.state.loadedForUserId);
   const numNewPosts = useNotiContext((v) => v.state.numNewPosts);
 
   const onChangeSocketStatus = useNotiContext(
@@ -119,7 +125,14 @@ export default function useInitSocket({
   const latestChatTypeRef = useRef(chatType);
   const latestPathIdRef = useRef(latestPathId);
   const selectedChannelIdRef = useRef(selectedChannelId);
+  const currentPathIdRef = useRef(currentPathId);
+  const subchannelPathRef = useRef(subchannelPath);
+  const chatLoadedRef = useRef(chatLoaded);
+  const loadedForUserIdRef = useRef(loadedForUserId);
+  const didSocketDisconnectRef = useRef(false);
   const isLoadingChatRef = useRef(false);
+  const activeBootstrapIdRef = useRef<string | null>(null);
+  const lastFailedBootstrapIdRef = useRef<string | null>(null);
   const loadChatRetryTimerRef = useRef<number | null>(null);
   const loadChatRetryCountRef = useRef(0);
   const heartbeatTimerRef = useRef<number | null>(null);
@@ -134,6 +147,20 @@ export default function useInitSocket({
   const checkFeedsInflightRef = useRef<Promise<void> | null>(null);
   const checkFeedsRerunRequestedRef = useRef(false);
   const pendingHydrateFromOutdatedRef = useRef(false);
+  const channelPathIdHashRef = useRef(channelPathIdHash);
+  const autoLoadDecisionSignatureRef = useRef('');
+  const [loadChatHandlerVersion, bumpLoadChatHandlerVersion] = useReducer(
+    (version) => version + 1,
+    0
+  );
+  const handleLoadChatRef = useRef<
+    | (({
+        selectedChannelId
+      }: {
+        selectedChannelId: number;
+      }) => Promise<void>)
+    | null
+  >(null);
   const categoryRef = useRef(category);
   const displayOrderRef = useRef(displayOrder);
   const channelsObjRef = useRef(channelsObj);
@@ -162,6 +189,9 @@ export default function useInitSocket({
   useEffect(() => {
     channelsObjRef.current = channelsObj;
   }, [channelsObj]);
+  useEffect(() => {
+    channelPathIdHashRef.current = channelPathIdHash;
+  }, [channelPathIdHash]);
   useEffect(() => {
     feedsRef.current = feeds;
   }, [feeds]);
@@ -278,12 +308,28 @@ export default function useInitSocket({
   }, [chatType]);
 
   useEffect(() => {
+    chatLoadedRef.current = chatLoaded;
+  }, [chatLoaded]);
+
+  useEffect(() => {
+    loadedForUserIdRef.current = loadedForUserId;
+  }, [loadedForUserId]);
+
+  useEffect(() => {
     latestPathIdRef.current = latestPathId;
   }, [latestPathId]);
 
   useEffect(() => {
     selectedChannelIdRef.current = selectedChannelId;
   }, [selectedChannelId]);
+
+  useEffect(() => {
+    currentPathIdRef.current = currentPathId;
+  }, [currentPathId]);
+
+  useEffect(() => {
+    subchannelPathRef.current = subchannelPath;
+  }, [subchannelPath]);
 
   useEffect(() => {
     if (userId) return;
@@ -392,6 +438,8 @@ export default function useInitSocket({
     socket.on('disconnect', handleDisconnect);
     socket.on('home_outdated', handleHomeOutdated);
 
+    onChangeSocketStatus(socket.connected);
+
     return function cleanUp() {
       socket.off('online_acknowledged', handleOnlineAcknowledged);
       socket.off('connect', handleConnect);
@@ -401,6 +449,7 @@ export default function useInitSocket({
         clearTimeout(loadChatRetryTimerRef.current);
         loadChatRetryTimerRef.current = null;
       }
+      handleLoadChatRef.current = null;
     };
 
     function handleOnlineAcknowledged() {
@@ -426,6 +475,16 @@ export default function useInitSocket({
       pendingHydrateFromOutdatedRef.current = true;
     }
 
+    async function handleCheckVersion() {
+      const data = await checkVersion();
+      onCheckVersion(data);
+    }
+
+    async function handleGetNumberOfUnreadMessages() {
+      const numUnreads = await getNumberOfUnreadMessages();
+      onGetNumberOfUnreadMessages(numUnreads);
+    }
+
     function handleConnect() {
       logForAdmin({
         message: 'connected to socket'
@@ -436,10 +495,19 @@ export default function useInitSocket({
       // Start capturing user actions immediately upon connect
       handleStartUserActionCapture();
 
-      const shouldSkipReload = isLoadingChatRef.current;
+      const shouldResyncLoadedChat =
+        didSocketDisconnectRef.current &&
+        chatLoadedRef.current &&
+        loadedForUserIdRef.current === userIdRef.current;
+      const shouldSkipReload =
+        isLoadingChatRef.current ||
+        (!shouldResyncLoadedChat &&
+          chatLoadedRef.current &&
+          loadedForUserIdRef.current === userIdRef.current);
+      didSocketDisconnectRef.current = false;
 
       onClearRecentChessMessage(selectedChannelIdRef.current);
-      handleCheckVersion();
+      void handleCheckVersion();
       void checkFeedsOutdated({ bypassThrottle: true, withFallback: true });
 
       if (userIdRef.current) {
@@ -471,7 +539,7 @@ export default function useInitSocket({
             userActionAckedRef.current = false;
             userActionAttemptsRef.current = 0;
             handleStartUserActionCapture();
-            handleCheckVersion();
+            void handleCheckVersion();
             void checkFeedsOutdated({
               bypassThrottle: true,
               withFallback: true
@@ -481,8 +549,17 @@ export default function useInitSocket({
         socket.emit('enter_my_notification_channel', userIdRef.current);
 
         if (!shouldSkipReload) {
-          handleGetNumberOfUnreadMessages();
-          handleLoadChat({ selectedChannelId: selectedChannelIdRef.current });
+          recordChatBootstrapEvent('chat-bootstrap-triggered-by-connect', {
+            userId: userIdRef.current,
+            selectedChannelId: selectedChannelIdRef.current,
+            currentPathId: currentPathIdRef.current,
+            latestPathId: latestPathIdRef.current,
+            socketConnected: socket.connected
+          });
+          void handleGetNumberOfUnreadMessages();
+          void handleLoadChat({
+            selectedChannelId: selectedChannelIdRef.current
+          });
         }
         // Start heartbeat to keep presence accurate (handles sleep/network drops)
         if (heartbeatTimerRef.current) {
@@ -492,16 +569,6 @@ export default function useInitSocket({
           if (userIdRef.current) socket.emit('user_heartbeat');
         }, 15000);
       }
-
-      async function handleCheckVersion() {
-        const data = await checkVersion();
-        onCheckVersion(data);
-      }
-
-      async function handleGetNumberOfUnreadMessages() {
-        const numUnreads = await getNumberOfUnreadMessages();
-        onGetNumberOfUnreadMessages(numUnreads);
-      }
     }
 
     async function handleLoadChat({
@@ -509,35 +576,68 @@ export default function useInitSocket({
     }: {
       selectedChannelId: number;
     }): Promise<void> {
+      if (!userIdRef.current) {
+        recordChatBootstrapEvent('chat-bootstrap-skip-no-user', {
+          selectedChannelId,
+          currentPathId: currentPathIdRef.current,
+          latestPathId: latestPathIdRef.current
+        });
+        return;
+      }
       onSetReconnecting();
       isLoadingChatRef.current = true;
       let didInitChat = false;
+      const rawCurrentPathId = currentPathIdRef.current;
+      const routePathId = Number(rawCurrentPathId);
+      const hasRoutePathId = !isNaN(routePathId) && routePathId > 0;
+      const fallbackPathId =
+        Number(latestPathIdRef.current) > 0
+          ? Number(latestPathIdRef.current)
+          : GENERAL_CHAT_PATH_ID;
+      const bootstrapChannelId = hasRoutePathId
+        ? parseChannelPath(routePathId)
+        : selectedChannelId || parseChannelPath(fallbackPathId);
+      const requestedSubchannelPath = hasRoutePathId
+        ? subchannelPathRef.current || ''
+        : '';
+      const bootstrapId = nextChatBootstrapId();
+      activeBootstrapIdRef.current = bootstrapId;
+
+      recordChatBootstrapEvent('chat-bootstrap-attempt-start', {
+        bootstrapId,
+        userId: userIdRef.current,
+        selectedChannelId,
+        bootstrapChannelId,
+        requestedSubchannelPath,
+        rawCurrentPathId,
+        routePathId: hasRoutePathId ? routePathId : null,
+        fallbackPathId,
+        latestPathId: latestPathIdRef.current,
+        socketConnected: socket.connected
+      });
 
       try {
         onInit();
-        const pathId = Number(currentPathId);
-        let currentChannelIsAccessible = true;
-        let currentChannelIsPublic = false;
-        let currentChannelId = 0;
-
-        if (!isNaN(pathId) && userIdRef.current) {
-          const { isAccessible, isPublic, channelId } =
-            await checkChatAccessible(pathId);
-          currentChannelIsAccessible = isAccessible;
-          currentChannelIsPublic = isPublic;
-          currentChannelId = channelId;
-        }
+        recordChatBootstrapEvent('chat-bootstrap-on-init', {
+          bootstrapId,
+          userId: userIdRef.current
+        });
 
         logForAdmin({
           message: 'Loading chat...'
         });
         const startTime = Date.now();
+        recordChatBootstrapEvent('chat-bootstrap-request-start', {
+          bootstrapId,
+          channelId: bootstrapChannelId,
+          requestedSubchannelPath,
+          selectedChannelId,
+          socketConnected: socket.connected
+        });
 
         const data = await loadChat({
-          channelId: !isNaN(pathId)
-            ? parseChannelPath(pathId)
-            : selectedChannelId,
-          subchannelPath
+          channelId: bootstrapChannelId,
+          subchannelPath: requestedSubchannelPath
         });
 
         const endTime = Date.now();
@@ -545,31 +645,55 @@ export default function useInitSocket({
         logForAdmin({
           message: `Chat loaded in ${chatLoadingTime} seconds`
         });
+        recordChatBootstrapEvent('chat-bootstrap-request-success', {
+          bootstrapId,
+          elapsedMs: endTime - startTime,
+          hasChannelsObj: !!data?.channelsObj,
+          channelCount: Object.keys(data?.channelsObj || {}).length,
+          currentChannelId: data?.currentChannelId ?? null,
+          currentPathId: data?.currentPathId ?? null,
+          messageCount: Array.isArray(data?.messageIds)
+            ? data.messageIds.length
+            : null,
+          chatType: data?.chatType ?? null
+        });
         loadChatRetryCountRef.current = 0;
         if (loadChatRetryTimerRef.current) {
           clearTimeout(loadChatRetryTimerRef.current);
           loadChatRetryTimerRef.current = null;
         }
 
-        onInitChat({ data, userId: userIdRef.current });
+        recordChatBootstrapEvent('chat-bootstrap-dispatch-init-chat', {
+          bootstrapId,
+          userId: userIdRef.current,
+          currentChannelId: data?.currentChannelId ?? null,
+          hasChannelsObj: !!data?.channelsObj
+        });
+        onInitChat({ data, userId: userIdRef.current, bootstrapId });
+        chatLoadedRef.current = true;
+        loadedForUserIdRef.current = userIdRef.current;
         didInitChat = true;
+        void handleGetNumberOfUnreadMessages();
+        lastFailedBootstrapIdRef.current = null;
 
-        const latestPathId = latestPathIdRef.current;
-        const latestPathIdMatchesCurrentPath =
-          !isNaN(pathId) && Number(latestPathId) === Number(pathId);
+        const latestPathId = Number(latestPathIdRef.current) > 0
+          ? Number(latestPathIdRef.current)
+          : 0;
 
+        // Explicit routed numeric chat paths are resolved by Chat/Main.handleChannelEnter().
+        // Keep this bootstrap reconciliation for non-routed restore cases like plain /chat.
         if (
+          !hasRoutePathId &&
           latestPathId &&
           (data.currentPathId !== latestPathId || data.chatType) &&
-          userIdRef.current &&
-          (isNaN(pathId) || latestPathIdMatchesCurrentPath)
+          userIdRef.current
         ) {
           const channelId = parseChannelPath(latestPathId);
           const { isAccessible, isPublic } =
             await checkChatAccessible(latestPathId);
           if (!isAccessible) {
             if (isPublic) {
-              if (!channelPathIdHash[latestPathId]) {
+              if (!channelPathIdHashRef.current[latestPathId]) {
                 onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
               }
               const { channel, joinMessage } =
@@ -618,12 +742,12 @@ export default function useInitSocket({
           }
 
           if (channelId > 0) {
-            if (!channelPathIdHash[latestPathId]) {
+            if (!channelPathIdHashRef.current[latestPathId]) {
               onUpdateChannelPathIdHash({ channelId, pathId: latestPathId });
             }
             const channelData = await loadChatChannel({
               channelId,
-              subchannelPath
+              subchannelPath: requestedSubchannelPath
             });
             onEnterChannelWithId(channelData);
             for (const member of channelData?.channel?.members || []) {
@@ -657,62 +781,70 @@ export default function useInitSocket({
             });
           }
         );
-        if (!currentChannelIsAccessible) {
-          if (currentChannelIsPublic) {
-            if (!channelPathIdHash[pathId]) {
-              onUpdateChannelPathIdHash({
-                channelId: currentChannelId,
-                pathId
-              });
-            }
-            const { channel, joinMessage } =
-              await acceptInvitation(currentChannelId);
-            if (channel.id === currentChannelId) {
-              socket.emit('join_chat_group', channel.id);
-              socket.emit('new_chat_message', {
-                message: joinMessage,
-                channel: {
-                  id: channel.id,
-                  channelName: channel.channelName,
-                  pathId: channel.pathId
-                },
-                newMembers: [{ id: userId, username, profilePicUrl }]
-              });
-            }
-          } else {
-            // Check if this is an AI DM channel before forcing navigation to general
-            const channel = channelsObjRef.current[currentChannelId];
-            const isAIDM =
-              channel?.twoPeople &&
-              channel?.members?.some(
-                (m: { id: number }) =>
-                  m.id === ZERO_TWINKLE_ID || m.id === CIEL_TWINKLE_ID
-              );
-            if (!isAIDM) {
-              onUpdateSelectedChannelId(GENERAL_CHAT_ID);
-              if (usingChatRef.current) {
-                navigate(`/chat/${GENERAL_CHAT_PATH_ID}`);
-              }
-            }
-            // For AI DM channels, don't redirect
-          }
-        }
       } catch (error) {
+        const normalizedError = error as {
+          status?: number;
+          message?: string;
+          code?: string;
+          name?: string;
+        };
+        recordChatBootstrapEvent('chat-bootstrap-attempt-failed', {
+          bootstrapId,
+          didInitChat,
+          status: normalizedError?.status ?? null,
+          code: normalizedError?.code ?? null,
+          name: normalizedError?.name ?? null,
+          message: normalizedError?.message ?? null,
+          retryCount: loadChatRetryCountRef.current,
+          socketConnected: socket.connected
+        });
         if (!didInitChat) {
+          lastFailedBootstrapIdRef.current = bootstrapId;
           console.error('Failed to load chat:', error);
-          scheduleLoadChatRetry();
+          if (socket.connected) {
+            scheduleLoadChatRetry();
+          } else {
+            recordChatBootstrapEvent(
+              'chat-bootstrap-retry-skipped-disconnected',
+              {
+                sourceBootstrapId: bootstrapId,
+                retryCount: loadChatRetryCountRef.current,
+                userId: userIdRef.current,
+                selectedChannelId: selectedChannelIdRef.current
+              }
+            );
+          }
         } else {
           console.error('Failed to sync post-load chat state:', error);
         }
       } finally {
         isLoadingChatRef.current = false;
+        recordChatBootstrapEvent('chat-bootstrap-attempt-finished', {
+          bootstrapId,
+          didInitChat,
+          isLoadingChat: isLoadingChatRef.current,
+          hasRetryTimer: !!loadChatRetryTimerRef.current
+        });
+        if (activeBootstrapIdRef.current === bootstrapId) {
+          activeBootstrapIdRef.current = null;
+        }
       }
     }
+
+    handleLoadChatRef.current = handleLoadChat;
+    bumpLoadChatHandlerVersion();
 
     function scheduleLoadChatRetry() {
       if (loadChatRetryTimerRef.current || !userIdRef.current) return;
       const delay = Math.min(1000 * 2 ** loadChatRetryCountRef.current, 10000);
       loadChatRetryCountRef.current += 1;
+      recordChatBootstrapEvent('chat-bootstrap-retry-scheduled', {
+        sourceBootstrapId: lastFailedBootstrapIdRef.current,
+        retryCount: loadChatRetryCountRef.current,
+        delayMs: delay,
+        userId: userIdRef.current,
+        selectedChannelId: selectedChannelIdRef.current
+      });
       logForAdmin({
         message: `Retrying chat load in ${Math.round(delay / 1000)}s`
       });
@@ -722,7 +854,25 @@ export default function useInitSocket({
           loadChatRetryCountRef.current = 0;
           return;
         }
-        if (!socket.connected || isLoadingChatRef.current) return;
+        if (!socket.connected) {
+          recordChatBootstrapEvent(
+            'chat-bootstrap-retry-skipped-disconnected',
+            {
+              sourceBootstrapId: lastFailedBootstrapIdRef.current,
+              retryCount: loadChatRetryCountRef.current,
+              userId: userIdRef.current,
+              selectedChannelId: selectedChannelIdRef.current
+            }
+          );
+          return;
+        }
+        if (isLoadingChatRef.current) return;
+        recordChatBootstrapEvent('chat-bootstrap-retry-fired', {
+          sourceBootstrapId: lastFailedBootstrapIdRef.current,
+          retryCount: loadChatRetryCountRef.current,
+          userId: userIdRef.current,
+          selectedChannelId: selectedChannelIdRef.current
+        });
         void handleLoadChat({ selectedChannelId: selectedChannelIdRef.current });
       }, delay);
     }
@@ -731,6 +881,7 @@ export default function useInitSocket({
       logForAdmin({
         message: `disconnected from socket. reason: ${reason}`
       });
+      didSocketDisconnectRef.current = true;
       onSetAICallEnding(false);
       onChangeSocketStatus(false);
 
@@ -778,6 +929,41 @@ export default function useInitSocket({
     };
   }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+    if (chatLoaded && loadedForUserId === userId) return;
+    const decisionDetails = {
+      userId,
+      chatLoaded,
+      loadedForUserId,
+      isLoadingChat: isLoadingChatRef.current,
+      hasRetryTimer: !!loadChatRetryTimerRef.current,
+      selectedChannelId: selectedChannelIdRef.current,
+      currentPathId: currentPathIdRef.current,
+      latestPathId: latestPathIdRef.current
+    };
+    const decisionSignature = JSON.stringify(decisionDetails);
+    if (autoLoadDecisionSignatureRef.current !== decisionSignature) {
+      autoLoadDecisionSignatureRef.current = decisionSignature;
+      recordChatBootstrapEvent(
+        isLoadingChatRef.current || loadChatRetryTimerRef.current
+          ? 'chat-bootstrap-autoload-blocked'
+          : 'chat-bootstrap-autoload-triggered',
+        decisionDetails
+      );
+    }
+    if (isLoadingChatRef.current || loadChatRetryTimerRef.current) return;
+    if (!handleLoadChatRef.current) {
+      recordChatBootstrapEvent('chat-bootstrap-autoload-missing-handler', {
+        ...decisionDetails
+      });
+      return;
+    }
+    void handleLoadChatRef.current?.({
+      selectedChannelId: selectedChannelIdRef.current
+    });
+  }, [chatLoaded, loadedForUserId, loadChatHandlerVersion, userId]);
+
   // Track previous userId to properly leave old notification channel
   const prevUserIdRef = useRef<number | undefined>(undefined);
 
@@ -806,6 +992,10 @@ export default function useInitSocket({
             return;
           }
           dispatchSocketAuthReady(userId);
+          socket.emit('change_busy_status', !usingChatRef.current);
+          userActionAckedRef.current = false;
+          userActionAttemptsRef.current = 0;
+          handleStartUserActionCapture();
         }
       );
       socket.emit('enter_my_notification_channel', userId);

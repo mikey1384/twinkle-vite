@@ -64,6 +64,7 @@ interface AiUsagePolicy {
   lastUsageOverflowed?: boolean;
   resetCost?: number;
   resetPurchasesToday?: number;
+  communityFundRechargeCoinsRemaining?: number;
   communityFundResetEligibility?: {
     eligible: boolean;
     requirements: any[];
@@ -668,7 +669,9 @@ export default function ImageEditModal({
               rechargeError={aiUsageResetError}
               onRecharge={() => handlePurchaseAiUsageReset(false)}
               communityFundsEligible={
-                !!aiUsagePolicy.communityFundResetEligibility?.eligible
+                !!aiUsagePolicy.communityFundResetEligibility?.eligible &&
+                Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
+                  Math.max(1, Number(aiUsagePolicy.resetCost || 1000000))
               }
               communityFundsRequirements={
                 aiUsagePolicy.communityFundResetEligibility?.requirements

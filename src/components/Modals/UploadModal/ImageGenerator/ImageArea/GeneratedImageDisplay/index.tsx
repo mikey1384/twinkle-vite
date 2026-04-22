@@ -30,6 +30,25 @@ interface GeneratedImageDisplayProps {
   followUpQuality?: 'low' | 'medium' | 'high';
   onFollowUpQualityChange: (quality: 'low' | 'medium' | 'high') => void;
   themeColor?: string;
+  energyPercent?: number;
+  energySegments?: number;
+  overflowed?: boolean;
+  resetNeeded?: boolean;
+  resetCost?: number;
+  resetPurchaseNumber?: number;
+  twinkleCoins?: number;
+  rechargeLoading?: boolean;
+  rechargeError?: string;
+  onRecharge?: () => void;
+  communityFundsEligible?: boolean;
+  communityFundsRequirements?: Array<{
+    key: string;
+    label: string;
+    done: boolean;
+    current?: number;
+    required?: number;
+  }>;
+  onRechargeWithCommunityFunds?: () => void;
 }
 
 export default function GeneratedImageDisplay({
@@ -54,7 +73,20 @@ export default function GeneratedImageDisplay({
   onFollowUpEngineChange,
   followUpQuality = 'high',
   onFollowUpQualityChange,
-  themeColor
+  themeColor,
+  energyPercent,
+  energySegments,
+  overflowed = false,
+  resetNeeded = false,
+  resetCost = 0,
+  resetPurchaseNumber,
+  twinkleCoins = 0,
+  rechargeLoading = false,
+  rechargeError = '',
+  onRecharge,
+  communityFundsEligible = false,
+  communityFundsRequirements,
+  onRechargeWithCommunityFunds
 }: GeneratedImageDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const themeRole = useRoleColor('button', {
@@ -355,6 +387,19 @@ export default function GeneratedImageDisplay({
           followUpQuality={followUpQuality}
           onFollowUpQualityChange={onFollowUpQualityChange}
           themeColor={themeColor}
+          energyPercent={energyPercent}
+          energySegments={energySegments}
+          overflowed={overflowed}
+          resetNeeded={resetNeeded}
+          resetCost={resetCost}
+          resetPurchaseNumber={resetPurchaseNumber}
+          twinkleCoins={twinkleCoins}
+          rechargeLoading={rechargeLoading}
+          rechargeError={rechargeError}
+          onRecharge={onRecharge}
+          communityFundsEligible={communityFundsEligible}
+          communityFundsRequirements={communityFundsRequirements}
+          onRechargeWithCommunityFunds={onRechargeWithCommunityFunds}
         />
       )}
 

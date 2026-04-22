@@ -134,9 +134,11 @@ export default function Card({
     }
     return `${cloudFrontURL}${finalCard.imagePath}`;
   }, [finalCard.imagePath, finalCard.imageGenerationPreviewUrl]);
-  const isImageOne = useMemo(
+  const isOpenAiImage = useMemo(
     () =>
-      finalCard?.engine === 'image-1' || finalCard?.engine === 'image-1.5',
+      finalCard?.engine === 'image-1' ||
+      finalCard?.engine === 'image-1.5' ||
+      finalCard?.engine === 'image-2',
     [finalCard?.engine]
   );
   const { cardCss, cardColor } = useAICard(finalCard);
@@ -199,7 +201,7 @@ export default function Card({
           `}
         >
           {imageExists && !finalCard.isBurned ? (
-            isImageOne ? (
+            isOpenAiImage ? (
               <>
                 <img
                   loading="lazy"

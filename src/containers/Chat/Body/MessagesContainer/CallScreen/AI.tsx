@@ -19,14 +19,12 @@ export default function CallScreen({
   };
 }) {
   const userId = useKeyContext((v) => v.myState.userId);
-  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
 
   const batteryLevel = useMemo(() => {
-    if (isAdmin) return 100;
     return Math.max(0, Math.min(100, aiUsagePolicy?.energyPercent ?? 100));
-  }, [aiUsagePolicy?.energyPercent, isAdmin]);
+  }, [aiUsagePolicy?.energyPercent]);
 
   const energySegments = useMemo(() => {
     return Math.max(1, aiUsagePolicy?.energySegments || 5);

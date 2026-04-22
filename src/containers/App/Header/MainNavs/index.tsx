@@ -6,7 +6,11 @@ import { matchPath } from 'react-router-dom';
 import { mobileMaxWidth } from '~/constants/css';
 import { css } from '@emotion/css';
 import { getSectionFromPathname, isTablet } from '~/helpers';
-import { AI_CARD_CHAT_TYPE, VOCAB_CHAT_TYPE } from '~/constants/defaultValues';
+import {
+  AI_CARD_CHAT_TYPE,
+  GENERAL_CHAT_PATH_ID,
+  VOCAB_CHAT_TYPE
+} from '~/constants/defaultValues';
 import { truncateText } from '~/helpers/stringHelpers';
 import {
   useAppContext,
@@ -67,6 +71,7 @@ export default function MainNavs({
   const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
     (v) => v.myState
   );
+  const userLoaded = useAppContext((v) => v.user.state.loaded);
   const exploreCategory = useViewContext((v) => v.state.exploreCategory);
   const contentPath = useViewContext((v) => v.state.contentPath);
   const contentNav = useViewContext((v) => v.state.contentNav);
@@ -89,7 +94,6 @@ export default function MainNavs({
   );
   const feedsOutdated = useHomeContext((v) => v.state.feedsOutdated);
   const chatType = useChatContext((v) => v.state.chatType);
-  const chatLoaded = useChatContext((v) => v.state.loaded);
   const loaded = useRef(false);
   const isMissionSection = useMemo(
     () => pathname.startsWith('/missions'),
@@ -323,7 +327,9 @@ export default function MainNavs({
     if (chatMatch) {
       const lastChatPathArray = pathname.split('chat/');
       const path = lastChatPathArray?.[1] || '';
-      onSetLastChatPath(`/${path}`);
+      if (path) {
+        onSetLastChatPath(`/${path}`);
+      }
     }
 
     if (contentPageMatch) {
@@ -406,16 +412,17 @@ export default function MainNavs({
   );
 
   const chatButtonPath = useMemo(() => {
-    return `/chat${
-      chatLoaded
-        ? chatType === VOCAB_CHAT_TYPE
-          ? `/${VOCAB_CHAT_TYPE}`
-          : chatType === AI_CARD_CHAT_TYPE
-            ? `/${AI_CARD_CHAT_TYPE}`
-            : lastChatPath || ''
-        : ''
-    }`;
-  }, [chatLoaded, chatType, lastChatPath]);
+    const normalizedLastChatPath =
+      lastChatPath && lastChatPath !== '/' ? lastChatPath : '';
+    const preferredChatPath =
+      chatType === VOCAB_CHAT_TYPE
+        ? `/${VOCAB_CHAT_TYPE}`
+        : chatType === AI_CARD_CHAT_TYPE
+          ? `/${AI_CARD_CHAT_TYPE}`
+          : normalizedLastChatPath ||
+            (userLoaded ? `/${GENERAL_CHAT_PATH_ID}` : '');
+    return preferredChatPath ? `/chat${preferredChatPath}` : '/chat';
+  }, [chatType, lastChatPath, userLoaded]);
 
   useEffect(() => {
     socket.emit('change_busy_status', !chatMatch || isAIChat);

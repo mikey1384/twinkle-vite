@@ -11,6 +11,7 @@ export interface ViewState {
   homeNav: string;
   audioKey: string;
   aiFeaturesDisabled: boolean;
+  aiFeaturesLoaded: boolean;
   aiDisabledNotice: string;
 }
 
@@ -53,7 +54,8 @@ export default function ViewReducer(
     case 'SET_AI_FEATURES_DISABLED':
       return {
         ...state,
-        aiFeaturesDisabled: action.disabled!
+        aiFeaturesDisabled: action.disabled!,
+        aiFeaturesLoaded: true
       };
     case 'CHANGE_PAGE_VISIBILITY':
       return {

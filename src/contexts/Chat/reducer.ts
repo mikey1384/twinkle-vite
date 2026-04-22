@@ -8,6 +8,7 @@ import {
 } from '~/constants/defaultValues';
 import { determineSelectedChatTab } from './helpers';
 import { objectify } from '~/helpers';
+import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { v1 as uuidv1 } from 'uuid';
 
 interface BookmarkListMap {
@@ -1458,7 +1459,23 @@ export default function ChatReducer(
         }
       };
     case 'INIT_CHAT': {
-      if (!action.data?.channelsObj) return state;
+      recordChatBootstrapEvent('chat-init-reducer-enter', {
+        bootstrapId: action.bootstrapId || null,
+        userId: action.userId,
+        prevUserId: state.prevUserId,
+        hasChannelsObj: !!action.data?.channelsObj,
+        channelCount: Object.keys(action.data?.channelsObj || {}).length,
+        currentChannelId: action.data?.currentChannelId ?? null
+      });
+      if (!action.data?.channelsObj) {
+        recordChatBootstrapEvent('chat-init-reducer-rejected-missing-channels', {
+          bootstrapId: action.bootstrapId || null,
+          userId: action.userId,
+          prevUserId: state.prevUserId,
+          currentChannelId: action.data?.currentChannelId ?? null
+        });
+        return state;
+      }
       const alreadyUsingChat =
         (!!state.selectedChannelId || state.selectedChannelId === 0) &&
         state.selectedChannelId !== action.data.currentChannelId &&
@@ -1681,7 +1698,7 @@ export default function ChatReducer(
         }
       }
 
-      return {
+      const nextState = {
         ...state,
         ...initialChatState,
         wordleModalShown: state.wordleModalShown || false,
@@ -1740,6 +1757,7 @@ export default function ChatReducer(
             ? state.lastSubchannelPaths
             : action.data.lastSubchannelPaths || {},
         loaded: true,
+        loadedForUserId: action.userId,
         listedCardIds:
           action.userId === state.prevUserId
             ? state.listedCardIds
@@ -1818,6 +1836,16 @@ export default function ChatReducer(
         prevUserId: action.userId,
         thinkHard: state.thinkHard
       };
+      recordChatBootstrapEvent('chat-init-reducer-success', {
+        bootstrapId: action.bootstrapId || null,
+        userId: action.userId,
+        loaded: nextState.loaded,
+        loadedForUserId: nextState.loadedForUserId,
+        selectedChannelId: nextState.selectedChannelId,
+        prevUserId: nextState.prevUserId,
+        channelCount: Object.keys(nextState.channelsObj || {}).length
+      });
+      return nextState;
     }
 
     case 'INVITE_USERS_TO_CHANNEL':
@@ -3596,6 +3624,14 @@ export default function ChatReducer(
       };
     }
     case 'RESET_CHAT': {
+      recordChatBootstrapEvent('chat-reset-reducer', {
+        userId: action.userId,
+        prevUserId: state.prevUserId,
+        loaded: state.loaded,
+        loadedForUserId: state.loadedForUserId,
+        selectedChannelId: state.selectedChannelId,
+        channelCount: Object.keys(state.channelsObj || {}).length
+      });
       const newChatStatus: Record<string, any> = {};
       for (const key in state.chatStatus) {
         if (Number(key) !== Number(action.userId)) {
@@ -4203,13 +4239,18 @@ export default function ChatReducer(
           : {}
       };
     case 'SET_RECONNECTING': {
-      const newChannelsObj = { ...state.channelsObj };
-      for (const key in newChannelsObj) {
-        (newChannelsObj[key] || {}).loaded = false;
+      const channelsObj: Record<string, any> = {};
+      for (const [channelId, channel] of Object.entries(state.channelsObj)) {
+        channelsObj[channelId] = channel
+          ? {
+              ...channel,
+              loaded: false
+            }
+          : channel;
       }
       return {
         ...state,
-        channelsObj: newChannelsObj,
+        channelsObj,
         reconnecting: true
       };
     }

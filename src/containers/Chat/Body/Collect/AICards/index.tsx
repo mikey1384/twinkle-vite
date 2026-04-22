@@ -34,6 +34,7 @@ interface AiUsagePolicy {
   lastUsageOverflowed?: boolean;
   resetCost?: number;
   resetPurchasesToday?: number;
+  communityFundRechargeCoinsRemaining?: number;
   communityFundResetEligibility?: {
     eligible: boolean;
     requirements: AiUsageRequirement[];
@@ -182,7 +183,7 @@ export default function AICards({
       )}
       <div
         className={css`
-          min-height: ${energyDepleted ? '13rem' : '9.5rem'};
+          min-height: 9.5rem;
           max-height: 45%;
           background: ${Color.inputGray()};
           padding: 1rem;
@@ -211,7 +212,9 @@ export default function AICards({
             rechargeError={aiUsageResetError}
             onRecharge={() => handlePurchaseAiUsageReset(false)}
             communityFundsEligible={
-              !!aiUsagePolicy.communityFundResetEligibility?.eligible
+              !!aiUsagePolicy.communityFundResetEligibility?.eligible &&
+              Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
+                Math.max(1, Number(aiUsagePolicy.resetCost || 1000000))
             }
             communityFundsRequirements={
               aiUsagePolicy.communityFundResetEligibility?.requirements

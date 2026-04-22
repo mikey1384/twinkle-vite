@@ -102,7 +102,7 @@ export default function InputSection({
                   color: themeRole.getColor()
                 }}
               >
-                <option value="openai">Image 1.5</option>
+                <option value="openai">Image 2</option>
                 <option value="gemini">Nano Banana</option>
               </select>
               {engine === 'openai' && (

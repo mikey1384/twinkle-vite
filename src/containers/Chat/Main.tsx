@@ -16,6 +16,7 @@ import AICardModal from '~/components/Modals/AICardModal';
 import queryString from 'query-string';
 import loading from './loading.jpeg';
 import { isMobile, isTablet, parseChannelPath } from '~/helpers';
+import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
 import { stringIsEmpty } from '~/helpers/stringHelpers';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { aiCardScrollHeight, vocabScrollHeight } from '~/constants/state';
@@ -244,6 +245,7 @@ export default function Main({
   const loadingVocabulary = useChatContext((v) => v.state.loadingVocabulary);
   const loadingAICardChat = useChatContext((v) => v.state.loadingAICardChat);
   const loaded = useChatContext((v) => v.state.loaded);
+  const loadedForUserId = useChatContext((v) => v.state.loadedForUserId);
   const reconnecting = useChatContext((v) => v.state.reconnecting);
   const selectedChannelId = useChatContext((v) => v.state.selectedChannelId);
   const selectedSubchannelId = useChatContext(
@@ -388,7 +390,6 @@ export default function Main({
     (v) => v.actions.onUpdateSelectedChannelId
   );
   const onUploadChatTopic = useChatContext((v) => v.actions.onUploadChatTopic);
-  const prevUserId = useChatContext((v) => v.state.prevUserId);
 
   const onSetEmbeddedUrl = useContentContext((v) => v.actions.onSetEmbeddedUrl);
   const onSetActualDescription = useContentContext(
@@ -420,6 +421,7 @@ export default function Main({
   const MessagesRef: React.RefObject<any> = useRef(null);
   const currentSelectedChannelIdRef = useRef(selectedChannelId);
   const prevTopicId = useRef(topicId);
+  const prevRoutedUserId = useRef<number | null>(userId || null);
   const activeParamsRef = useRef({
     pathId: currentPathId,
     subchannelPath,
@@ -439,7 +441,10 @@ export default function Main({
     () => channelsObj[selectedChannelId] || {},
     [channelsObj, selectedChannelId]
   );
+  const chatReadyForCurrentUser =
+    !!userId && loaded && loadedForUserId === userId;
   const prevSubchannelPath = useRef(subchannelPath);
+  const loaderGateSignatureRef = useRef('');
 
   const wordleModalShownRef = useRef(false);
   const saveScrollPositionForAllRef = useRef<(() => void) | null>(null);
@@ -455,6 +460,33 @@ export default function Main({
       topicId
     };
   }, [currentPathId, subchannelPath, topicId]);
+
+  useEffect(() => {
+    const gateDetails = {
+      userId: userId || null,
+      loaded,
+      loadedForUserId: loadedForUserId || null,
+      reconnecting,
+      selectedChannelId: selectedChannelId || null,
+      currentPathId: currentPathId || null,
+      pathname,
+      chatReadyForCurrentUser,
+      loaderVisible: !!userId && !chatReadyForCurrentUser
+    };
+    const gateSignature = JSON.stringify(gateDetails);
+    if (loaderGateSignatureRef.current === gateSignature) return;
+    loaderGateSignatureRef.current = gateSignature;
+    recordChatBootstrapEvent('chat-loader-gate', gateDetails);
+  }, [
+    chatReadyForCurrentUser,
+    currentPathId,
+    loaded,
+    loadedForUserId,
+    pathname,
+    reconnecting,
+    selectedChannelId,
+    userId
+  ]);
 
   useEffect(() => {
     const { cardId } = queryString.parse(search);
@@ -526,8 +558,15 @@ export default function Main({
   const isUsingCollectRef = useRef(isUsingCollect);
 
   useEffect(() => {
+    if (!userId) {
+      prevRoutedUserId.current = null;
+    }
+  }, [userId]);
+
+  useEffect(() => {
     isUsingCollectRef.current = !!isUsingCollect;
     if (isUsingCollect && userId) {
+      prevRoutedUserId.current = userId || null;
       prevPathId.current = currentPathId;
       prevSubchannelPath.current = '';
       onUpdateLatestPathId(null);
@@ -545,6 +584,7 @@ export default function Main({
         onUpdateChatType(null);
       }
       if (currentPathId === 'new') {
+        prevRoutedUserId.current = userId || null;
         prevPathId.current = currentPathId;
         prevSubchannelPath.current = '';
         if (homeChannelIds.includes(0)) {
@@ -556,12 +596,14 @@ export default function Main({
         ((currentPathId &&
           Number(currentPathId) !== Number(prevPathId.current)) ||
           (subchannelPath && subchannelPath !== prevSubchannelPath.current) ||
-          topicId !== prevTopicId.current) &&
+          topicId !== prevTopicId.current ||
+          userId !== prevRoutedUserId.current) &&
         userId &&
-        loaded
+        chatReadyForCurrentUser
       ) {
         const isChannelChange =
           Number(currentPathId) !== Number(prevPathId.current);
+        prevRoutedUserId.current = userId || null;
         prevPathId.current = currentPathId;
         prevSubchannelPath.current = subchannelPath || '';
         prevTopicId.current = topicId;
@@ -576,7 +618,7 @@ export default function Main({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isUsingCollect,
-    loaded,
+    chatReadyForCurrentUser,
     subchannelPath,
     lastChatPath,
     navigate,
@@ -592,13 +634,14 @@ export default function Main({
 
   useEffect(() => {
     if (
+      chatReadyForCurrentUser &&
       !prevPathId.current &&
       !isNaN(currentChannel.pathId as number) &&
       Number(currentChannel.pathId) !== Number(currentPathId)
     ) {
       navigate(`/chat/${currentChannel.pathId}`, { replace: true });
     }
-  }, [currentPathId, currentChannel.pathId, navigate]);
+  }, [chatReadyForCurrentUser, currentPathId, currentChannel.pathId, navigate]);
 
   useEffect(() => {
     if (
@@ -626,30 +669,34 @@ export default function Main({
       } else if (chatType === AI_CARD_CHAT_TYPE) {
         prevPathId.current = AI_CARD_CHAT_TYPE;
         navigate(`/chat/${AI_CARD_CHAT_TYPE}`, { replace: true });
-      } else if (!isNaN(currentChannel.pathId as number)) {
+      } else if (
+        chatReadyForCurrentUser &&
+        !isNaN(currentChannel.pathId as number)
+      ) {
         prevPathId.current = currentChannel.pathId;
         navigate(`/chat/${currentChannel.pathId}`, { replace: true });
+      } else if (userId && !chatReadyForCurrentUser) {
+        return;
+      } else {
+        const fallbackChatPath =
+          lastChatPath && lastChatPath !== '/'
+            ? lastChatPath
+            : `/${GENERAL_CHAT_PATH_ID}`;
+        prevPathId.current = fallbackChatPath.slice(1);
+        navigate(`/chat${fallbackChatPath}`, { replace: true });
       }
     }
   }, [
     chatType,
+    chatReadyForCurrentUser,
     currentChannel.pathId,
     currentPathId,
+    lastChatPath,
     navigate,
     pathname,
-    subchannelPath
+    subchannelPath,
+    userId
   ]);
-
-  useEffect(() => {
-    if (userId && userId !== prevUserId && !isUsingCollectRef.current) {
-      handleChannelEnter({
-        pathId: currentPathId,
-        subchannelPath,
-        topicId
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, currentPathId, subchannelPath, topicId]);
 
   useEffect(() => {
     userIdRef.current = userId;
@@ -785,11 +832,11 @@ export default function Main({
   }, [chatType]);
 
   useEffect(() => {
-    if (userId && loaded && selectedChannelId) {
+    if (chatReadyForCurrentUser && selectedChannelId) {
       updateChatLastRead(selectedChannelId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded, userId, selectedChannelId]);
+  }, [chatReadyForCurrentUser, selectedChannelId]);
 
   useEffect(() => {
     if (pageVisible) {
@@ -1058,7 +1105,7 @@ export default function Main({
     >
       <ErrorBoundary componentPath="Chat/Main">
         {userId ? (
-          loaded && userId === prevUserId ? (
+          chatReadyForCurrentUser ? (
             <div
               className={css`
                 width: 100%;
@@ -1155,9 +1202,7 @@ export default function Main({
                     color: Color.black(),
                     textShadow: `2px 2px 4px ${Color.darkerGray(0.7)}`
                   }}
-                  text={`Loading Twinkle Chat${
-                    !loaded ? '...' : userId !== prevUserId ? '..!' : ''
-                  }`}
+                  text="Loading Twinkle Chat..."
                 />
               </div>
             </div>

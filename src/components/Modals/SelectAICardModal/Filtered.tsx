@@ -36,6 +36,7 @@ export default function Filtered({
     | 'DALL-E 3'
     | 'image-1'
     | 'image-1.5'
+    | 'image-2'
     | 'Nano Banana';
   loadFilteredAICards: (v: any) => any;
   myId: number;

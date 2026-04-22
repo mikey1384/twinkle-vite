@@ -77,6 +77,7 @@ interface AiUsagePolicy {
   lastUsageOverflowed?: boolean;
   resetCost?: number;
   resetPurchasesToday?: number;
+  communityFundRechargeCoinsRemaining?: number;
   communityFundResetEligibility?: {
     eligible: boolean;
     requirements: AiUsageRequirement[];
@@ -242,7 +243,7 @@ export default function SuccessModal({
   const [previewImageUrl, setPreviewImageUrl] = useState('');
   const [inputError, setInputError] = useState('');
   const [styleText, setStyleText] = useState('');
-  // Hardcoded to 'openai' (image-1.5) - Gemini is unstable
+  // Hardcoded to OpenAI image generation - Gemini is unstable
   const [imageEngine, setImageEngine] = useState<'gemini' | 'openai'>('openai');
   const [vocabSummary, setVocabSummary] = useState<{
     eligibleCount: number;
@@ -353,7 +354,7 @@ export default function SuccessModal({
   }, [initialImageUrl, normalizedStoryId]);
 
   useEffect(() => {
-    // Always use 'openai' (image-1.5) - ignoring user preferences since Gemini is unstable
+    // Always use OpenAI image generation - ignoring user preferences since Gemini is unstable
     setImageEngine('openai');
   }, [userSettings?.aiImage?.engine]);
 
@@ -560,7 +561,7 @@ export default function SuccessModal({
                   </div>
                 )}
 
-                {/* Engine selector hidden - hardcoded to image-1.5 (openai) */}
+                {/* Engine selector hidden - hardcoded to OpenAI image generation */}
                 {false && (
                   <div
                     style={{
@@ -623,7 +624,10 @@ export default function SuccessModal({
                     rechargeError={aiUsageResetError}
                     onRecharge={() => handlePurchaseAiUsageReset(false)}
                     communityFundsEligible={
-                      !!aiUsagePolicy.communityFundResetEligibility?.eligible
+                      !!aiUsagePolicy.communityFundResetEligibility?.eligible &&
+                      Number(
+                        aiUsagePolicy.communityFundRechargeCoinsRemaining || 0
+                      ) >= Math.max(1, Number(aiUsagePolicy.resetCost || 1000000))
                     }
                     communityFundsRequirements={
                       aiUsagePolicy.communityFundResetEligibility?.requirements

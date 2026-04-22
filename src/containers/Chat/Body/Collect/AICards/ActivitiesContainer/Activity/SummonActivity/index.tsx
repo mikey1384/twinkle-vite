@@ -142,6 +142,7 @@ export default function SummonActivity({ card }: { card: any }) {
         {(card.engine === 'DALL-E 3' ||
           card.engine === 'image-1' ||
           card.engine === 'image-1.5' ||
+          card.engine === 'image-2' ||
           isNanoBananaEngine) && (
           <div
             className={css`
