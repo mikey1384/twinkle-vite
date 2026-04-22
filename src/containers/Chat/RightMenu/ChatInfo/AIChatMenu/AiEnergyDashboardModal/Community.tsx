@@ -25,14 +25,19 @@ import type { CommunityFundRequirement, FundStats } from './types';
 interface Props {
   communityAccentColor: string;
   communityAccentSoft: string;
+  communityDailyCapAvailable: boolean;
+  communityFundHasEnoughCoins: boolean;
   communityRechargeDailyCap: number;
   communityRechargeCoinsRemaining: number;
-  communityRechargeUnlocked: boolean;
+  communityRequirementsComplete: boolean;
+  communityRechargeReady: boolean;
   communityStatusLabel: string;
+  communitySponsoredChargeUnlocked: boolean;
   energyAccentColor: string;
   fundStats: FundStats;
   onOpenChessPuzzle?: () => void;
   onOpenLumineBuild?: () => void;
+  rechargeCost: number;
   requirements: CommunityFundRequirement[];
   totalFunds: number;
 }
@@ -40,14 +45,19 @@ interface Props {
 export default function Community({
   communityAccentColor,
   communityAccentSoft,
+  communityDailyCapAvailable,
+  communityFundHasEnoughCoins,
   communityRechargeDailyCap,
   communityRechargeCoinsRemaining,
-  communityRechargeUnlocked,
+  communityRequirementsComplete,
+  communityRechargeReady,
   communityStatusLabel,
+  communitySponsoredChargeUnlocked,
   energyAccentColor,
   fundStats,
   onOpenChessPuzzle,
   onOpenLumineBuild,
+  rechargeCost,
   requirements,
   totalFunds
 }: Props) {
@@ -66,6 +76,37 @@ export default function Community({
     0,
     Number(fundStats.totalDonationsAllTime || 0) - Number(totalFunds || 0)
   );
+  const formattedRechargeCost = `${addCommasToNumber(rechargeCost)} coins`;
+  const communityNotice = communityRechargeReady
+    ? 'Sponsored recharge ready. When your battery hits 0%, the next full charge is free.'
+    : communityRequirementsComplete && !communitySponsoredChargeUnlocked
+      ? "Tasks are done, but today's sponsored recharges are already used."
+      : communitySponsoredChargeUnlocked && !communityDailyCapAvailable
+        ? "Tasks are done, but today's sponsored limit is already used up."
+        : communitySponsoredChargeUnlocked && !communityFundHasEnoughCoins
+        ? `Tasks are done, but the community fund is below ${formattedRechargeCost} right now.`
+        : requirements.length > 0
+          ? 'Complete the tasks below to unlock the next sponsored recharge.'
+          : 'Tasks unavailable right now.';
+  const communityNoticeStyle = communityRechargeReady
+    ? {
+        color: Color.green(),
+        borderColor: Color.green(0.22),
+        background: Color.green(0.08)
+      }
+    : (communityRequirementsComplete && !communitySponsoredChargeUnlocked) ||
+        (communitySponsoredChargeUnlocked &&
+          (!communityDailyCapAvailable || !communityFundHasEnoughCoins))
+      ? {
+          color: Color.orange(),
+          borderColor: Color.orange(0.22),
+          background: Color.orange(0.08)
+        }
+      : {
+          color: Color.darkGray(),
+          borderColor: Color.rose(0.18),
+          background: '#fff'
+        };
 
   function getRequirementAction(label: string) {
     switch (label) {
@@ -114,7 +155,7 @@ export default function Community({
           <MetricTile
             accentColor={energyAccentColor}
             icon="bolt"
-            label="Used so far"
+            label="Used all-time"
             value={`${addCommasToNumber(totalCommunityCoinsUsed)} coins`}
           />
         </div>
@@ -126,22 +167,37 @@ export default function Community({
           <div
             className={statusPillCls}
             style={{
-              color: communityRechargeUnlocked
+              color: communityRechargeReady
                 ? Color.green()
-                : communityAccentColor,
-              background: communityRechargeUnlocked
+                : (communityRequirementsComplete &&
+                    !communitySponsoredChargeUnlocked) ||
+                    (communitySponsoredChargeUnlocked &&
+                      (!communityDailyCapAvailable ||
+                        !communityFundHasEnoughCoins))
+                  ? Color.orange()
+                  : communityAccentColor,
+              background: communityRechargeReady
                 ? Color.green(0.1)
-                : communityAccentSoft
+                : (communityRequirementsComplete &&
+                    !communitySponsoredChargeUnlocked) ||
+                    (communitySponsoredChargeUnlocked &&
+                      (!communityDailyCapAvailable ||
+                        !communityFundHasEnoughCoins))
+                  ? Color.orange(0.1)
+                  : communityAccentSoft
             }}
           >
             {communityStatusLabel}
           </div>
         </div>
         <p className={surfaceDescriptionCls}>
-          Complete these to unlock sponsored AI recharges. Daily cap:{' '}
-          {addCommasToNumber(communityRechargeDailyCap)} coins. Remaining
+          1 sponsored recharge = {formattedRechargeCost}. Daily sponsored
+          limit: {addCommasToNumber(communityRechargeDailyCap)} coins. Left
           today: {addCommasToNumber(communityRechargeCoinsRemaining)} coins.
         </p>
+        <div className={emptyInlineStateCls} style={communityNoticeStyle}>
+          {communityNotice}
+        </div>
         {requirements.length > 0 ? (
           <div className={requirementsListCls}>
             {requirements.map((requirement) => {

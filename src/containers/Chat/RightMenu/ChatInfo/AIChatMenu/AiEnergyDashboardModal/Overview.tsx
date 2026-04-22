@@ -20,6 +20,7 @@ interface Props {
   energyBorderColor: string;
   energyPercentValue: number;
   energySegments: number;
+  heroDescription: string;
   chargeButtonDisabled: boolean;
   chargeButtonLoading: boolean;
   chargeButtonMeta: string;
@@ -37,6 +38,7 @@ export default function Overview({
   energyBorderColor,
   energyPercentValue,
   energySegments,
+  heroDescription,
   chargeButtonDisabled,
   chargeButtonLoading,
   chargeButtonMeta,
@@ -65,7 +67,7 @@ export default function Overview({
           Today
         </div>
         <div className={heroTitleCls}>AI Energy overview</div>
-        <p className={heroDescriptionCls}>Battery and sponsored recharges.</p>
+        <p className={heroDescriptionCls}>{heroDescription}</p>
         <BatteryMeter
           accentColor={energyAccentColor}
           accentSoft={energyAccentSoft}

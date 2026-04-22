@@ -109,3 +109,11 @@ export function withAlpha(color: string, alpha: number) {
 
   return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, ${alpha})`;
 }
+
+export function errorHasActualCommunityFundsBalance(error?: {
+  code?: string | null;
+}) {
+  return (
+    error?.code === 'zero_ciel_ai_usage_reset_insufficient_community_funds'
+  );
+}

@@ -41,7 +41,8 @@ export const initialMyState = {
   userId: null,
   wordleStrictMode: false,
   xpThisMonth: null,
-  communityFunds: 0
+  communityFunds: 0,
+  communityFundsLoaded: false
 };
 
 const REDIRECT_RELOAD_STORAGE_KEY = 'twinkleRedirectReloadAt';

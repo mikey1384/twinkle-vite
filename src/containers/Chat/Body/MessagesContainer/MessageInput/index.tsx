@@ -34,6 +34,10 @@ import {
   useNotiContext,
   useViewContext
 } from '~/contexts';
+import {
+  errorHasActualCommunityFundsBalance,
+  isCommunityFundRechargeAvailable
+} from '~/helpers/aiEnergy';
 import LocalContext from '../../../Context';
 import LeftButtons from './LeftButtons';
 import RightButtons from './RightButtons';
@@ -188,6 +192,10 @@ export default function MessageInput({
   const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
   const myId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const communityFundsLoaded = useKeyContext(
+    (v) => v.myState.communityFundsLoaded
+  );
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
   );
@@ -878,6 +886,19 @@ export default function MessageInput({
       if (error?.aiUsagePolicy) {
         applyConfirmedAiUsagePolicy(error.aiUsagePolicy);
       }
+      if (
+        typeof error?.currentCommunityFunds === 'number' &&
+        errorHasActualCommunityFundsBalance(error)
+      ) {
+        const normalizedCommunityFunds = Math.max(
+          0,
+          Number(error.currentCommunityFunds || 0)
+        );
+        onSetUserState({
+          userId: myId,
+          newState: { communityFunds: normalizedCommunityFunds }
+        });
+      }
       setAlertModalTitle('AI Energy');
       setAlertModalContent(
         error?.message || 'Unable to recharge AI Energy right now.'
@@ -917,10 +938,11 @@ export default function MessageInput({
       aiUsagePolicy.energyRemaining <= 0;
     const communityEligibility =
       aiUsagePolicy.communityFundResetEligibility || null;
-    const communityFundsChargeAvailable =
-      !!communityEligibility?.eligible &&
-      Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
-        Math.max(1, Number(aiUsagePolicy.resetCost || 1000000));
+    const communityFundsChargeAvailable = isCommunityFundRechargeAvailable({
+      aiUsagePolicy,
+      communityFunds,
+      communityFundsKnown: communityFundsLoaded
+    });
     const chargeAttentionKey = [
       'chat-input',
       aiUsagePolicy.dayIndex || 'unknown',

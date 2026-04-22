@@ -17,6 +17,7 @@ import Community from './Community';
 import {
   defaultDonorData,
   defaultFundStats,
+  errorHasActualCommunityFundsBalance,
   FULL_RECHARGE_COST,
   getSectionMeta,
   isCommunityRechargeRequirement
@@ -58,6 +59,10 @@ export default function AiEnergyDashboardModal({
   const myId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const communityFundsLoaded = useKeyContext(
+    (v) => v.myState.communityFundsLoaded
+  );
   const loadCommunityFunds = useAppContext(
     (v) => v.requestHelpers.loadCommunityFunds
   );
@@ -77,6 +82,9 @@ export default function AiEnergyDashboardModal({
     (v) => v.actions.onSetChessPuzzleModalShown
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onSetCommunityFunds = useAppContext(
+    (v) => v.user.actions.onSetCommunityFunds
+  );
   const energyAccentRole = useRoleColor('button', {
     themeName: profileTheme,
     fallback: profileTheme || 'logoBlue'
@@ -86,7 +94,7 @@ export default function AiEnergyDashboardModal({
   const [activeSection, setActiveSection] =
     useState<DashboardSection>('overview');
   const [userMenuShown, setUserMenuShown] = useState(false);
-  const [totalFunds, setTotalFunds] = useState(0);
+  const [communityFundsConfirmed, setCommunityFundsConfirmed] = useState(false);
   const [fundStats, setFundStats] = useState<FundStats>(defaultFundStats);
   const [donorData, setDonorData] =
     useState<DonorLeaderboard>(defaultDonorData);
@@ -108,7 +116,11 @@ export default function AiEnergyDashboardModal({
     1,
     aiUsagePolicy?.resetCost || FULL_RECHARGE_COST
   );
+  const formattedRechargeCost = addCommasToNumber(rechargeCost);
   const availableCoins = Math.max(0, Number(twinkleCoins || 0));
+  const totalCommunityFunds = Math.max(0, Number(communityFunds || 0));
+  const communityFundBalanceKnown =
+    communityFundsConfirmed || communityFundsLoaded || totalCommunityFunds > 0;
   const energyPercentValue =
     typeof aiUsagePolicy?.energyPercent === 'number'
       ? Math.max(0, Math.min(100, aiUsagePolicy.energyPercent))
@@ -132,27 +144,113 @@ export default function AiEnergyDashboardModal({
     0,
     Number(aiUsagePolicy?.communityFundRechargeCoinsDailyCap || 0)
   );
-  const communityRechargeUnlocked =
-    !!aiUsagePolicy?.communityFundResetEligibility?.eligible &&
+  const communitySponsoredChargeUnlocked =
+    !!aiUsagePolicy?.communityFundResetEligibility?.eligible;
+  const communityRequirementsComplete =
+    requirementCount > 0 && completedRequirementCount >= requirementCount;
+  const communityDailyCapAvailable =
     communityRechargeCoinsRemaining >= rechargeCost;
+  const communityFundHasEnoughCoins =
+    !communityFundBalanceKnown || totalCommunityFunds >= rechargeCost;
+  const communityRechargeReady =
+    communitySponsoredChargeUnlocked &&
+    communityDailyCapAvailable &&
+    communityFundHasEnoughCoins;
   const energyDepleted =
     typeof aiUsagePolicy?.energyRemaining === 'number' &&
     aiUsagePolicy.energyRemaining <= 0;
-  const freeChargeAvailable = energyDepleted && communityRechargeUnlocked;
+  const freeChargeAvailable = energyDepleted && communityRechargeReady;
   const chargeButtonVariant = freeChargeAvailable ? 'gold' : 'orange';
-  const chargeButtonMeta = freeChargeAvailable
-    ? 'Free via community recharge.'
-    : availableCoins >= rechargeCost
-      ? `${addCommasToNumber(rechargeCost)} coins`
-      : `${addCommasToNumber(rechargeCost)} coins required. You have ${addCommasToNumber(availableCoins)}.`;
+  let chargeButtonMeta = `${formattedRechargeCost} coins`;
+  if (freeChargeAvailable) {
+    chargeButtonMeta = communityFundBalanceKnown
+      ? 'Free now via community fund.'
+      : 'Community fund balance is syncing. Sponsored recharge will be tried first.';
+  } else if (
+    energyDepleted &&
+    communityRequirementsComplete &&
+    !communitySponsoredChargeUnlocked
+  ) {
+    chargeButtonMeta =
+      availableCoins >= rechargeCost
+        ? `Today's sponsored recharges are already used. Paid recharge: ${formattedRechargeCost} coins.`
+        : `Today's sponsored recharges are already used. You have ${addCommasToNumber(availableCoins)} coins.`;
+  } else if (
+    energyDepleted &&
+    communitySponsoredChargeUnlocked &&
+    !communityDailyCapAvailable
+  ) {
+    chargeButtonMeta =
+      availableCoins >= rechargeCost
+        ? `Sponsored limit used up today. Paid recharge: ${formattedRechargeCost} coins.`
+        : `Sponsored limit used up today. You have ${addCommasToNumber(availableCoins)} coins.`;
+  } else if (
+    energyDepleted &&
+    communitySponsoredChargeUnlocked &&
+    !communityFundHasEnoughCoins
+  ) {
+    chargeButtonMeta =
+      availableCoins >= rechargeCost
+        ? `Community fund is below ${formattedRechargeCost} coins right now. Paid recharge: ${formattedRechargeCost} coins.`
+        : `Community fund is below ${formattedRechargeCost} coins right now. You have ${addCommasToNumber(availableCoins)} coins.`;
+  } else if (
+    energyDepleted &&
+    requirementCount > 0 &&
+    !communityRequirementsComplete
+  ) {
+    chargeButtonMeta =
+      availableCoins >= rechargeCost
+        ? `Paid recharge: ${formattedRechargeCost} coins. Or finish the tasks below for a sponsored charge.`
+        : `Need ${formattedRechargeCost} coins, or finish the tasks below for a sponsored charge.`;
+  } else if (availableCoins < rechargeCost) {
+    chargeButtonMeta = `${formattedRechargeCost} coins required. You have ${addCommasToNumber(availableCoins)}.`;
+  }
   const currentModeLabel = aiUsagePolicy
     ? aiUsagePolicy.currentMode === 'low_energy'
       ? 'Lite Mode'
       : 'Max Mode'
     : 'Unavailable';
+  let overviewDescription = 'Battery and sponsored recharges.';
+  if (freeChargeAvailable) {
+    overviewDescription = communityFundBalanceKnown
+      ? 'Battery empty. A free sponsored recharge is ready now.'
+      : 'Battery empty. Sponsored recharge is available and the fund balance is syncing.';
+  } else if (
+    energyDepleted &&
+    communityRequirementsComplete &&
+    !communitySponsoredChargeUnlocked
+  ) {
+    overviewDescription =
+      "Battery empty. Today's sponsored recharges are already used.";
+  } else if (
+    energyDepleted &&
+    communitySponsoredChargeUnlocked &&
+    !communityDailyCapAvailable
+  ) {
+    overviewDescription =
+      "Battery empty. Today's sponsored recharge limit is already used up.";
+  } else if (
+    energyDepleted &&
+    communitySponsoredChargeUnlocked &&
+    !communityFundHasEnoughCoins
+  ) {
+    overviewDescription =
+      'Battery empty. Community tasks are done, but the shared fund is too low right now.';
+  } else if (communityRechargeReady) {
+    overviewDescription =
+      'Battery is healthy. Your next empty battery can be recharged free.';
+  }
   const communityStatusLabel =
     requirementCount > 0
-      ? `${completedRequirementCount}/${requirementCount} complete`
+      ? communityRechargeReady
+        ? 'Sponsored ready'
+        : communityRequirementsComplete && !communitySponsoredChargeUnlocked
+          ? 'Used today'
+          : communitySponsoredChargeUnlocked && !communityDailyCapAvailable
+            ? 'Daily cap used'
+            : communitySponsoredChargeUnlocked && !communityFundHasEnoughCoins
+            ? 'Fund too low'
+            : `${completedRequirementCount}/${requirementCount} complete`
       : 'Tasks unavailable';
 
   useEffect(() => {
@@ -174,7 +272,7 @@ export default function AiEnergyDashboardModal({
         ] = await Promise.all([
           loadCommunityFunds().catch((error: any) => {
             console.error('Failed to load community fund balance:', error);
-            return { totalFunds: 0 };
+            return null;
           }),
           loadCommunityFundStats().catch((error: any) => {
             console.error('Failed to load community fund stats:', error);
@@ -192,7 +290,10 @@ export default function AiEnergyDashboardModal({
 
         if (cancelled) return;
 
-        setTotalFunds(Number(fundsResponse?.totalFunds || 0));
+        if (typeof fundsResponse?.totalFunds === 'number') {
+          onSetCommunityFunds(Number(fundsResponse.totalFunds || 0));
+          setCommunityFundsConfirmed(true);
+        }
         setFundStats({
           ...defaultFundStats,
           ...(statsResponse || {})
@@ -331,6 +432,7 @@ export default function AiEnergyDashboardModal({
                 energyBorderColor={energyAccentBorder}
                 energyPercentValue={energyPercentValue || 0}
                 energySegments={energySegments}
+                heroDescription={overviewDescription}
               />
               <Community
                 communityAccentColor={communityAccentColor}
@@ -339,14 +441,21 @@ export default function AiEnergyDashboardModal({
                 communityRechargeCoinsRemaining={
                   communityRechargeCoinsRemaining
                 }
-                communityRechargeUnlocked={communityRechargeUnlocked}
+                communityDailyCapAvailable={communityDailyCapAvailable}
+                communityFundHasEnoughCoins={communityFundHasEnoughCoins}
+                communityRequirementsComplete={communityRequirementsComplete}
+                communityRechargeReady={communityRechargeReady}
                 communityStatusLabel={communityStatusLabel}
+                communitySponsoredChargeUnlocked={
+                  communitySponsoredChargeUnlocked
+                }
                 energyAccentColor={energyAccentColor}
                 fundStats={fundStats}
                 onOpenChessPuzzle={handleOpenChessPuzzle}
                 onOpenLumineBuild={handleOpenLumineBuild}
+                rechargeCost={rechargeCost}
                 requirements={requirements}
-                totalFunds={totalFunds}
+                totalFunds={totalCommunityFunds}
               />
               <Leaderboard
                 communityAccentColor={communityAccentColor}
@@ -364,14 +473,21 @@ export default function AiEnergyDashboardModal({
               communityAccentSoft={communityAccentSoft}
               communityRechargeDailyCap={communityRechargeDailyCap}
               communityRechargeCoinsRemaining={communityRechargeCoinsRemaining}
-              communityRechargeUnlocked={communityRechargeUnlocked}
+              communityDailyCapAvailable={communityDailyCapAvailable}
+              communityFundHasEnoughCoins={communityFundHasEnoughCoins}
+              communityRequirementsComplete={communityRequirementsComplete}
+              communityRechargeReady={communityRechargeReady}
               communityStatusLabel={communityStatusLabel}
+              communitySponsoredChargeUnlocked={
+                communitySponsoredChargeUnlocked
+              }
               energyAccentColor={energyAccentColor}
               fundStats={fundStats}
               onOpenChessPuzzle={handleOpenChessPuzzle}
               onOpenLumineBuild={handleOpenLumineBuild}
+              rechargeCost={rechargeCost}
               requirements={requirements}
-              totalFunds={totalFunds}
+              totalFunds={totalCommunityFunds}
             />
           )}
 
@@ -397,16 +513,20 @@ export default function AiEnergyDashboardModal({
 
   function handleOpenLumineBuild() {
     onHide();
-    navigate('/build/new');
+    navigate('/build');
   }
 
   async function handleCharge() {
     if (!energyDepleted || chargeLoading) return;
     setChargeError('');
     setChargeLoading(true);
+    const shouldTryCommunityFunds =
+      communitySponsoredChargeUnlocked &&
+      communityDailyCapAvailable &&
+      (!communityFundBalanceKnown || totalCommunityFunds >= rechargeCost);
     try {
       const result = await purchaseAiEnergyRecharge({
-        useCommunityFunds: freeChargeAvailable
+        useCommunityFunds: shouldTryCommunityFunds
       });
       const nextPolicy = result?.aiUsagePolicy || null;
       if (nextPolicy) {
@@ -424,11 +544,8 @@ export default function AiEnergyDashboardModal({
         });
       }
       if (typeof result?.communityFunds === 'number') {
-        onSetUserState({
-          userId: myId,
-          newState: { communityFunds: result.communityFunds }
-        });
-        setTotalFunds(result.communityFunds);
+        onSetCommunityFunds(Number(result.communityFunds || 0));
+        setCommunityFundsConfirmed(true);
         try {
           const statsResponse = await loadCommunityFundStats();
           setFundStats({
@@ -448,6 +565,17 @@ export default function AiEnergyDashboardModal({
             aiUsagePolicy: error.aiUsagePolicy
           }
         });
+      }
+      if (
+        typeof error?.currentCommunityFunds === 'number' &&
+        errorHasActualCommunityFundsBalance(error)
+      ) {
+        const normalizedCommunityFunds = Math.max(
+          0,
+          Number(error.currentCommunityFunds || 0)
+        );
+        onSetCommunityFunds(normalizedCommunityFunds);
+        setCommunityFundsConfirmed(true);
       }
       setChargeError(error?.message || 'Unable to charge AI Energy right now.');
     } finally {

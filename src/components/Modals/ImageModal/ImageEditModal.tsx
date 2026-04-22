@@ -28,6 +28,10 @@ import Textarea from '~/components/Texts/Textarea';
 import DrawingTools from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools';
 import { extractDrawingColorSettings } from '~/components/Modals/UploadModal/ImageGenerator/DrawingTools/colorSettings';
 import AiEnergyCard from '~/components/AiEnergyCard';
+import {
+  errorHasActualCommunityFundsBalance,
+  isCommunityFundRechargeAvailable
+} from '~/helpers/aiEnergy';
 import { useRoleColor } from '~/theme/useRoleColor';
 
 // Helper to get proxied URL for CloudFront images
@@ -122,6 +126,10 @@ export default function ImageEditModal({
   const userId = useKeyContext((v) => v.myState.userId);
   const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const communityFundsLoaded = useKeyContext(
+    (v) => v.myState.communityFundsLoaded
+  );
   const userSettings = useKeyContext((v) => v.myState.settings);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const energyThemeRole = useRoleColor('button', {
@@ -668,11 +676,11 @@ export default function ImageEditModal({
               rechargeLoading={aiUsageResetLoading}
               rechargeError={aiUsageResetError}
               onRecharge={() => handlePurchaseAiUsageReset(false)}
-              communityFundsEligible={
-                !!aiUsagePolicy.communityFundResetEligibility?.eligible &&
-                Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
-                  Math.max(1, Number(aiUsagePolicy.resetCost || 1000000))
-              }
+              communityFundsEligible={isCommunityFundRechargeAvailable({
+                aiUsagePolicy,
+                communityFunds,
+                communityFundsKnown: communityFundsLoaded
+              })}
               communityFundsRequirements={
                 aiUsagePolicy.communityFundResetEligibility?.requirements
               }
@@ -869,6 +877,19 @@ export default function ImageEditModal({
       console.error(error);
       if (error?.aiUsagePolicy) {
         applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      if (
+        typeof error?.currentCommunityFunds === 'number' &&
+        errorHasActualCommunityFundsBalance(error)
+      ) {
+        const normalizedCommunityFunds = Math.max(
+          0,
+          Number(error.currentCommunityFunds || 0)
+        );
+        onSetUserState({
+          userId,
+          newState: { communityFunds: normalizedCommunityFunds }
+        });
       }
       setAiUsageResetError(
         error?.message || 'Unable to recharge Energy right now.'

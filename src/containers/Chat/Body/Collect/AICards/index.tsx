@@ -15,6 +15,10 @@ import {
 import { css } from '@emotion/css';
 import StatusInterface from './StatusInterface';
 import AiEnergyCard from '~/components/AiEnergyCard';
+import {
+  errorHasActualCommunityFundsBalance,
+  isCommunityFundRechargeAvailable
+} from '~/helpers/aiEnergy';
 
 interface AiUsageRequirement {
   key: string;
@@ -51,6 +55,10 @@ export default function AICards({
   const userId = useKeyContext((v) => v.myState.userId);
   const canGenerateAICard = useKeyContext((v) => v.myState.canGenerateAICard);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const communityFundsLoaded = useKeyContext(
+    (v) => v.myState.communityFundsLoaded
+  );
   const generateAICard = useAppContext((v) => v.requestHelpers.generateAICard);
   const getAiEnergyPolicy = useAppContext(
     (v) => v.requestHelpers.getAiEnergyPolicy
@@ -211,11 +219,11 @@ export default function AICards({
             rechargeLoading={aiUsageResetLoading}
             rechargeError={aiUsageResetError}
             onRecharge={() => handlePurchaseAiUsageReset(false)}
-            communityFundsEligible={
-              !!aiUsagePolicy.communityFundResetEligibility?.eligible &&
-              Number(aiUsagePolicy.communityFundRechargeCoinsRemaining || 0) >=
-                Math.max(1, Number(aiUsagePolicy.resetCost || 1000000))
-            }
+            communityFundsEligible={isCommunityFundRechargeAvailable({
+              aiUsagePolicy,
+              communityFunds,
+              communityFundsKnown: communityFundsLoaded
+            })}
             communityFundsRequirements={
               aiUsagePolicy.communityFundResetEligibility?.requirements
             }
@@ -316,6 +324,19 @@ export default function AICards({
       console.error(error);
       if (error?.aiUsagePolicy) {
         applyAiUsagePolicy(error.aiUsagePolicy);
+      }
+      if (
+        typeof error?.currentCommunityFunds === 'number' &&
+        errorHasActualCommunityFundsBalance(error)
+      ) {
+        const normalizedCommunityFunds = Math.max(
+          0,
+          Number(error.currentCommunityFunds || 0)
+        );
+        onSetUserState({
+          userId,
+          newState: { communityFunds: normalizedCommunityFunds }
+        });
       }
       setAiUsageResetError(
         error?.message || 'Unable to recharge Energy right now.'

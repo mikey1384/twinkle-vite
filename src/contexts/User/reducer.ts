@@ -4,6 +4,20 @@ import {
   achievementIdToType
 } from '~/constants/defaultValues';
 
+function normalizeCommunityFundsState(data: { [key: string]: any } | null) {
+  if (!data) return data;
+  if (Object.prototype.hasOwnProperty.call(data, 'communityFundsLoaded')) {
+    return data;
+  }
+  if (Object.prototype.hasOwnProperty.call(data, 'communityFunds')) {
+    return {
+      ...data,
+      communityFundsLoaded: true
+    };
+  }
+  return data;
+}
+
 export default function UserReducer(
   state: { [key: string]: any },
   action: { type: string; [key: string]: any }
@@ -32,7 +46,7 @@ export default function UserReducer(
         ...state,
         myState: {
           ...state.myState,
-          ...action.data
+          ...normalizeCommunityFundsState(action.data)
         },
         missions: action.data.state?.missions || {},
         loaded: true
@@ -65,7 +79,10 @@ export default function UserReducer(
     case 'LOGIN':
       return {
         ...state,
-        myState: action.data,
+        myState: {
+          ...initialMyState,
+          ...normalizeCommunityFundsState(action.data)
+        },
         signinModalShown: false
       };
     case 'LOGOUT':
@@ -110,7 +127,10 @@ export default function UserReducer(
     case 'SIGNUP':
       return {
         ...state,
-        myState: action.data,
+        myState: {
+          ...initialMyState,
+          ...normalizeCommunityFundsState(action.data)
+        },
         signinModalShown: false
       };
     case 'SET_ACHIEVERS': {
@@ -190,17 +210,18 @@ export default function UserReducer(
         }
       };
     case 'SET_USER_STATE': {
+      const normalizedNewState = normalizeCommunityFundsState(action.newState);
       const prevUser = state.userObj[action.userId] || {};
       let updatedUser: any = {
         ...prevUser,
-        ...action.newState,
+        ...normalizedNewState,
         userId: action.userId,
         contentId: action.userId
       };
 
       const prevRank = Number(prevUser.rank);
       const incomingHasRank = Object.prototype.hasOwnProperty.call(
-        action.newState || {},
+        normalizedNewState || {},
         'rank'
       );
       const mergedRank = Number(updatedUser.rank);
@@ -213,7 +234,7 @@ export default function UserReducer(
       if (isViewer) {
         nextMyState = {
           ...state.myState,
-          ...action.newState,
+          ...normalizedNewState,
           userId: action.userId,
           contentId: action.userId
         } as any;
@@ -280,7 +301,8 @@ export default function UserReducer(
         ...state,
         myState: {
           ...state.myState,
-          communityFunds: action.amount
+          communityFunds: action.amount,
+          communityFundsLoaded: true
         }
       };
     case 'UPDATE_COMMUNITY_FUNDS':
@@ -288,7 +310,8 @@ export default function UserReducer(
         ...state,
         myState: {
           ...state.myState,
-          communityFunds: action.totalFunds
+          communityFunds: action.totalFunds,
+          communityFundsLoaded: true
         }
       };
     default:

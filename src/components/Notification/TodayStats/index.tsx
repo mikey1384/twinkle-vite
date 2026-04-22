@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import { css } from '@emotion/css';
-import { useNotiContext, useAppContext } from '~/contexts';
+import { useNotiContext, useAppContext, useKeyContext } from '~/contexts';
+import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
 import { addCommasToNumber } from '~/helpers/stringHelpers';
 import DailyGoals from './DailyGoals';
 import AchievementProgress from './AchievementProgress';
@@ -135,6 +136,10 @@ export default function TodayStats({
     recommendationRole.getColor() || DEFAULT_RECOMMENDATION_COLOR;
 
   const buttonColor = buttonRole.colorKey;
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const communityFundsLoaded = useKeyContext(
+    (v) => v.myState.communityFundsLoaded
+  );
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
   const onUpdateTodayStats = useNotiContext(
@@ -158,10 +163,11 @@ export default function TodayStats({
     Number(aiUsagePolicy?.resetCost || FULL_RECHARGE_COST)
   );
   const energyIsEmpty = Number(aiUsagePolicy?.energyRemaining || 0) <= 0;
-  const communityChargeAvailable =
-    !!aiUsagePolicy?.communityFundResetEligibility?.eligible &&
-    Number(aiUsagePolicy?.communityFundRechargeCoinsRemaining || 0) >=
-      rechargeCost;
+  const communityChargeAvailable = isCommunityFundRechargeAvailable({
+    aiUsagePolicy,
+    communityFunds,
+    communityFundsKnown: communityFundsLoaded
+  });
   const energyChargeAttentionKey = aiUsagePolicy
     ? [
         'today-stats',
