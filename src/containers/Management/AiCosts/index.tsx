@@ -12,7 +12,7 @@ import {
 } from './types';
 
 export default function AiCosts() {
-  const [days, setDays] = useState<RangeOption>(7);
+  const [days, setDays] = useState<RangeOption>(1);
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
