@@ -169,7 +169,7 @@ export default function Review() {
           </div>
         );
       }),
-    [items, answerState, challengedQIds]
+    [items, answerState, challengedQIds, AI_FEATURES_DISABLED]
   );
 
   if (loading) {

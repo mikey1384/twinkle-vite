@@ -130,6 +130,7 @@ export default function Notification({
         !!todayStats?.dailyRewardResultViewed
     );
   }, [
+    AI_FEATURES_DISABLED,
     dailyRewardModalShown,
     todayStats?.dailyBonusAttempted,
     todayStats?.dailyRewardResultViewed,

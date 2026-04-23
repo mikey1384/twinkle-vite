@@ -113,6 +113,7 @@ function Nav({
       (hasDailyBonusButNotAttempted || resultNotViewed)
     );
   }, [
+    AI_FEATURES_DISABLED,
     isHome,
     isUsingChat,
     todayStats?.achievedDailyGoals?.length,
