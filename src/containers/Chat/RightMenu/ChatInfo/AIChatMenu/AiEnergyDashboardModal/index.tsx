@@ -546,15 +546,6 @@ export default function AiEnergyDashboardModal({
       if (typeof result?.communityFunds === 'number') {
         onSetCommunityFunds(Number(result.communityFunds || 0));
         setCommunityFundsConfirmed(true);
-        try {
-          const statsResponse = await loadCommunityFundStats();
-          setFundStats({
-            ...defaultFundStats,
-            ...(statsResponse || {})
-          });
-        } catch (error) {
-          console.error('Failed to refresh community fund stats:', error);
-        }
       }
     } catch (error: any) {
       console.error('Failed to recharge AI Energy:', error);
