@@ -93,12 +93,6 @@ const workspaceResizeHandleClass = css`
   }
 `;
 
-const mobilePanelHiddenClass = css`
-  @media (max-width: ${mobileMaxWidth}) {
-    display: none;
-  }
-`;
-
 const mobileTabBarClass = css`
   display: none;
   @media (max-width: ${mobileMaxWidth}) {
@@ -157,7 +151,9 @@ export default function Workspace({
   const [mobilePanelTab, setMobilePanelTab] = useState<MobilePanelTab>(
     mobilePanelTabIntent.tab
   );
-  const previewRuntimeHostVisible =
+  const showChatPanel =
+    isOwner && (isDesktopWorkspaceLayout || mobilePanelTab === 'chat');
+  const showPreviewPanel =
     !isOwner || isDesktopWorkspaceLayout || mobilePanelTab === 'preview';
 
   useEffect(() => {
@@ -185,16 +181,13 @@ export default function Workspace({
         className={isOwner ? workspaceWithChatClass : workspaceNoChatClass}
         style={workspaceShellStyle}
       >
-        {isOwner ? (
+        {showChatPanel ? (
           <ChatPanel
             {...chatPanelProps}
-            className={
-              mobilePanelTab !== 'chat' ? mobilePanelHiddenClass : undefined
-            }
             workshopScale={buildWorkshopScale}
           />
         ) : null}
-        {isOwner ? (
+        {isOwner && isDesktopWorkspaceLayout ? (
           <button
             type="button"
             className={workspaceResizeHandleClass}
@@ -209,16 +202,13 @@ export default function Workspace({
             title="Drag to resize Lumine and workspace"
           />
         ) : null}
-        <PreviewPanel
-          {...previewPanelProps}
-          runtimeHostVisible={previewRuntimeHostVisible}
-          ref={previewPanelRef}
-          className={
-            isOwner && mobilePanelTab !== 'preview'
-              ? mobilePanelHiddenClass
-              : undefined
-          }
-        />
+        {showPreviewPanel ? (
+          <PreviewPanel
+            {...previewPanelProps}
+            runtimeHostVisible={showPreviewPanel}
+            ref={previewPanelRef}
+          />
+        ) : null}
       </div>
     </div>
   );
