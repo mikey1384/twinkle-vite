@@ -1130,7 +1130,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       );
     const [previewLifecycleState, setPreviewLifecycleState] =
       useState<PreviewLifecycleState>(() =>
-        runtimeHostVisible === false ? 'background' : 'active'
+        runtimeHostVisible === false ? 'suspended' : 'active'
       );
     const buildRef = useRef(build);
     const projectFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1706,7 +1706,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         return;
       }
 
-      setPreviewLifecycleState('background');
+      setPreviewLifecycleState((currentState) =>
+        currentState === 'active' ? 'background' : 'suspended'
+      );
       const suspendTimeout = window.setTimeout(() => {
         setPreviewLifecycleState((currentState) =>
           currentState === 'background' ? 'suspended' : currentState
