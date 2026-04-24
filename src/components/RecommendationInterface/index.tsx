@@ -7,7 +7,8 @@ import { isMobile, isSupermod } from '~/helpers';
 import { expectedResponseLength, priceTable } from '~/constants/defaultValues';
 import { useAppContext, useContentContext, useKeyContext } from '~/contexts';
 import { css } from '@emotion/css';
-import SwitchButton from '~/components/Buttons/SwitchButton';import PriceText from './PriceText';
+import SwitchButton from '~/components/Buttons/SwitchButton';
+import PriceText from './PriceText';
 
 const recommendLabel = 'Recommend?';
 const yesLabel = 'Yes';
@@ -64,6 +65,7 @@ export default function RecommendationInterface({
       contentType !== 'xpChange' &&
       contentType !== 'sharedTopic' &&
       contentType !== 'aiStory' &&
+      contentType !== 'build' &&
       contentType !== 'dailyReflection'
     );
   }, [content, contentType, expectedContentLength]);
@@ -102,6 +104,7 @@ export default function RecommendationInterface({
       isSupermod(level) &&
       !isPassContent &&
       contentType !== 'aiStory' &&
+      contentType !== 'build' &&
       contentType !== 'xpChange' &&
       contentType !== 'dailyReflection' &&
       contentType !== 'sharedTopic'

@@ -449,30 +449,19 @@ export default function ContentPanel({
                     }}
                   />
                 )}
-                {contentType === 'comment' && appliedRootType === 'video' && (
-                  <ContentListItem
-                    hideSideBordersOnMobile
-                    noTopBorderRadius
-                    style={{
-                      position: 'relative',
-                      marginTop: alignTopWithTarget ?? targetTuckMargin
-                    }}
-                    expandable
-                    contentObj={rootObj}
-                  />
-                )}
-                {contentType === 'comment' && appliedRootType === 'aiStory' && (
-                  <ContentListItem
-                    hideSideBordersOnMobile
-                    noTopBorderRadius
-                    style={{
-                      position: 'relative',
-                      marginTop: alignTopWithTarget ?? targetTuckMargin
-                    }}
-                    expandable
-                    contentObj={rootObj}
-                  />
-                )}
+                {contentType === 'comment' &&
+                  ['aiStory', 'build', 'video'].includes(appliedRootType) && (
+                    <ContentListItem
+                      hideSideBordersOnMobile
+                      noTopBorderRadius
+                      style={{
+                        position: 'relative',
+                        marginTop: alignTopWithTarget ?? targetTuckMargin
+                      }}
+                      expandable
+                      contentObj={rootObj}
+                    />
+                  )}
                 {(contentType === 'comment' || contentType === 'subject') &&
                   appliedRootType === 'url' &&
                   !contentState.rootObj?.notFound &&

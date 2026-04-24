@@ -93,8 +93,11 @@ function ContentListItem({
     topic,
     title,
     thumbUrl,
+    thumbnailUrl,
     uploader = {}
   } = currentContent;
+  const displayThumbUrl = thumbUrl || thumbnailUrl;
+  const isBuildItem = contentType === 'build';
 
   const isVisible = useLazyLoad({
     id: `list-item-${contentType}-${contentId}`,
@@ -110,15 +113,19 @@ function ContentListItem({
     <div
       style={{
         width: style?.width || '100%',
-        height: '17rem',
-        overflow: 'hidden',
+        height: isBuildItem ? undefined : '17rem',
+        minHeight: isBuildItem ? '17rem' : undefined,
+        overflow: isBuildItem ? 'visible' : 'hidden',
         ...(expandable ? { marginTop: 'CALC(-1rem - 1px)' } : {}),
         ...style
       }}
       ref={ComponentRef}
     >
       {contentShown ? (
-        <div ref={PanelRef} style={{ width: '100%', height: '100%' }}>
+        <div
+          ref={PanelRef}
+          style={{ width: '100%', height: isBuildItem ? undefined : '100%' }}
+        >
           {isCommentItem ? (
             <CommentContent
               contentId={contentId}
@@ -160,7 +167,7 @@ function ContentListItem({
               siteUrl={siteUrl}
               selectable={selectable}
               story={story}
-              thumbUrl={thumbUrl}
+              thumbUrl={displayThumbUrl}
               title={title}
               topic={topic}
               uploader={uploader}

@@ -6,6 +6,7 @@ import ContentFileViewer from '~/components/ContentFileViewer';
 import Thumbnail from '../Thumbnail';
 import VideoThumbnail from './VideoThumbnail';
 import ContentDetails from './ContentDetails';
+import Icon from '~/components/Icon';
 import { getFileInfoFromFileName } from '~/helpers/stringHelpers';
 import {
   Color,
@@ -16,6 +17,15 @@ import {
 } from '~/constants/css';
 import { useThemedCardVars } from '~/theme/useThemedCardVars';
 import { css } from '@emotion/css';
+
+function setAlphaExact(rgba: string, a: number) {
+  const m = rgba.match(
+    /rgba\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/i
+  );
+  if (!m) return rgba;
+  const [_, r, g, b] = m;
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, a))})`;
+}
 
 const rootContentCSS = css`
   display: grid;
@@ -171,6 +181,163 @@ const rootContentCSS = css`
     }
   }
 
+  &.is-build {
+    position: relative;
+    min-height: 17rem;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 34%);
+    grid-template-rows: 1fr;
+    grid-template-areas: 'buildDetails thumb';
+    align-items: stretch;
+    align-content: start;
+    gap: 0.9rem 1.5rem;
+    padding: 1.25rem;
+    overflow: hidden;
+    border-color: var(--build-card-border, rgba(71, 126, 235, 0.32));
+    background: var(--build-card-bg, #fff);
+    box-shadow: none;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0.45rem;
+      background: var(--build-card-accent, ${Color.logoBlue()});
+    }
+    .build-details {
+      grid-area: buildDetails;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+    .title {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 0;
+      > p {
+        font-size: 2.45rem;
+        line-height: 1.14;
+        max-height: 5.7rem;
+        -webkit-line-clamp: 2;
+        -moz-line-clamp: 2;
+        line-clamp: 2;
+      }
+      > small {
+        color: ${Color.darkGray(0.68)};
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+    }
+    .build-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      align-self: flex-start;
+      padding: 0.45rem 0.8rem;
+      border: 1px solid ${Color.logoBlue(0.2)};
+      border-radius: 999px;
+      background: ${Color.logoBlue(0.12)};
+      color: ${Color.logoBlue()};
+      font-size: 1.15rem;
+      font-weight: 800;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .description {
+      position: relative;
+      z-index: 1;
+      align-self: start;
+      color: ${Color.darkGray(0.88)};
+      font-size: 1.22rem;
+      line-height: 1.5;
+      -webkit-line-clamp: 3;
+      -moz-line-clamp: 3;
+      line-clamp: 3;
+    }
+    .build-card-action {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      align-self: start;
+      justify-self: start;
+      min-height: 3.4rem;
+      padding: 0.7rem 1rem;
+      border-radius: 0.8rem;
+      background: var(--build-card-accent, ${Color.logoBlue()});
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .thumb.build-thumb {
+      justify-content: stretch;
+      align-items: stretch;
+      min-height: 14rem;
+      border: 1px solid var(--build-card-border, rgba(20, 35, 60, 0.14));
+      border-radius: 0.9rem;
+      overflow: hidden;
+      background: #101828;
+      > img {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        object-fit: cover;
+      }
+    }
+    .build-thumb-toolbar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.36rem;
+      height: 1.8rem;
+      padding: 0 0.7rem;
+      background: rgba(255, 255, 255, 0.88);
+      span {
+        width: 0.48rem;
+        height: 0.48rem;
+        border-radius: 50%;
+        background: rgba(50, 65, 90, 0.42);
+      }
+    }
+    .build-thumb-label {
+      position: absolute;
+      right: 0.75rem;
+      bottom: 0.75rem;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    &.no-thumb {
+      grid-template-columns: 1fr;
+      grid-template-areas: 'buildDetails';
+    }
+    &.selected {
+      box-shadow: none;
+    }
+  }
+
   @media (max-width: ${mobileMaxWidth}) {
     grid-template-columns: 2fr 1fr;
     grid-template-areas:
@@ -195,6 +362,34 @@ const rootContentCSS = css`
     &.hideSideBordersOnMobile {
       border-left: none;
       border-right: none;
+    }
+    &.is-build {
+      min-height: 0;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        'thumb'
+        'buildDetails';
+      gap: 0.8rem;
+      padding: 1rem;
+      .title > p {
+        font-size: 1.95rem;
+        max-height: 4.5rem;
+      }
+      .description {
+        font-size: 1.05rem;
+        -webkit-line-clamp: 3;
+        -moz-line-clamp: 3;
+        line-clamp: 3;
+      }
+      .build-card-action {
+        width: 100%;
+      }
+      .thumb.build-thumb {
+        min-height: 15rem;
+      }
+      &.no-thumb {
+        grid-template-areas: 'buildDetails';
+      }
     }
   }
   @media (min-width: ${desktopMinWidth}) {
@@ -268,14 +463,32 @@ export default function RootContent({
   thumbUrl?: string;
   title: string;
   topic?: string;
-  uploader: { id: number; username: string };
+  uploader: { id: number; username: string; profileTheme?: string | null };
   userId?: number;
   itemSelectedColor?: string;
   itemSelectedOpacity?: number;
   noTopBorderRadius?: boolean;
 }) {
   const { cardVars } = useThemedCardVars({ role: 'sectionPanel' });
+  const {
+    accentColor: buildAccentColor,
+    borderColor: buildBorderColor
+  } = useThemedCardVars({
+    role: 'sectionPanel',
+    themeName: uploader?.profileTheme || undefined
+  });
   // Use global UI border vars for consistency with ContentPanel
+
+  const buildCardVars = useMemo(
+    () =>
+      ({
+        ['--build-card-accent' as const]: buildAccentColor,
+        ['--build-card-border' as const]: buildBorderColor,
+        ['--build-card-tint' as const]: setAlphaExact(buildAccentColor, 0.1),
+        ['--build-card-bg' as const]: '#fff'
+      } as React.CSSProperties),
+    [buildAccentColor, buildBorderColor]
+  );
 
   const selectedBorder = useMemo(() => {
     if (!itemSelectedColor) return 'var(--ui-border-strong)';
@@ -315,6 +528,9 @@ export default function RootContent({
       border-width: 2px;
       box-shadow: inset 0 0 0 2px ${selectedBorder};
     }
+    &.is-build.selected {
+      box-shadow: none;
+    }
   `;
 
   const { fileType } = useMemo(
@@ -330,9 +546,10 @@ export default function RootContent({
     return (
       (contentType === 'subject' && rootId) ||
       (filePath && userId) ||
+      (contentType === 'build' && thumbUrl) ||
       contentType === 'video'
     );
-  }, [contentType, filePath, rootId, userId]);
+  }, [contentType, filePath, rootId, thumbUrl, userId]);
 
   return (
     <div
@@ -340,12 +557,15 @@ export default function RootContent({
       className={`${rootContentCSS} ${cardThemeCSS} ${
         selected ? 'selected ' : ''
       }${contentType === 'video' ? 'is-video' : ''}${
+        contentType === 'build' ? ' is-build' : ''
+      }${
         isRewardBarShown ? '' : ' no-reward'
       }${hasThumb ? '' : ' no-thumb'}${
         hideSideBordersOnMobile ? ' hideSideBordersOnMobile' : ''
       }`}
       style={{
         ...cardVars,
+        ...(contentType === 'build' ? buildCardVars : null),
         ...(noTopBorderRadius
           ? { borderTopLeftRadius: 0, borderTopRightRadius: 0 }
           : null)
@@ -373,6 +593,20 @@ export default function RootContent({
           contentId={contentId}
           rewardLevel={rewardLevel}
         />
+      )}
+      {contentType === 'build' && thumbUrl && (
+        <div className="thumb build-thumb">
+          <div className="build-thumb-toolbar">
+            <span />
+            <span />
+            <span />
+          </div>
+          <img src={thumbUrl} alt={title || 'Lumine App'} />
+          <div className="build-thumb-label">
+            <Icon icon="external-link-alt" />
+            <span>Live app</span>
+          </div>
+        </div>
       )}
       {contentType === 'subject' && rootId && (
         <>
@@ -445,8 +679,10 @@ export default function RootContent({
             ? 'ai-storie'
             : contentType === 'dailyReflection'
               ? 'daily-reflection'
+              : contentType === 'build'
+                ? 'app'
               : contentType
-      }s/${contentId}`
+      }${contentType === 'build' ? '' : 's'}/${contentId}`
     );
   }
 }

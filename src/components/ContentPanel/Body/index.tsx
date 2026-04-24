@@ -174,7 +174,6 @@ export default function Body({
   const [loadingComments, setLoadingComments] = useState(false);
   const [recommendationInterfaceShown, setRecommendationInterfaceShown] =
     useState(false);
-  const buildContentReadOnly = contentType === 'build';
 
   const CommentInputAreaRef = useRef<any>(null);
   const RewardInterfaceRef = useRef(null);
@@ -234,9 +233,6 @@ export default function Body({
   ]);
 
   useEffect(() => {
-    if (buildContentReadOnly) {
-      return;
-    }
     if (!commentsLoaded && !(numPreviewComments > 0 && previewLoaded)) {
       loadInitialComments(numPreviewComments);
     }
@@ -262,7 +258,7 @@ export default function Body({
       setLoadingComments(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildContentReadOnly, commentsLoaded, previewLoaded]);
+  }, [commentsLoaded, previewLoaded]);
 
   const secretHidden = useMemo(() => {
     const contentSecretHidden = !(secretShown || uploader.id === userId);
@@ -415,160 +411,157 @@ export default function Body({
           onClickSecretAnswer={onSecretAnswerClick}
         />
 
-        {!buildContentReadOnly && (
-          <>
-            <BottomInterface
-              userLevel={level}
-              autoExpand={autoExpand}
-              canDelete={!!canDelete}
-              canEdit={!!canEdit}
-              canReward={!!canReward}
-              commentsShown={commentsShown}
-              CommentInputAreaRef={CommentInputAreaRef}
-              contentObj={contentObj}
-              finalRewardLevel={finalRewardLevel}
-              isEditing={isEditing}
-              isRecommendedByUser={isRecommendedByUser}
-              onByUserStatusChange={onByUserStatusChange}
-              onExpandComments={handleExpandComments}
-              onSetCloseConfirmModalShown={setCloseConfirmModalShown}
-              onSetDeleteConfirmModalShown={setDeleteConfirmModalShown}
-              onSetIsEditing={onSetIsEditing}
-              onSetRewardLevel={onSetRewardLevel}
-              onSetRecommendationInterfaceShown={
-                setRecommendationInterfaceShown
-              }
-              onSetUserListModalShown={setUserListModalShown}
-              onSetXpRewardInterfaceShown={onSetXpRewardInterfaceShown}
-              recommendationInterfaceShown={recommendationInterfaceShown}
-              rewardColor={rewardColor}
-              secretHidden={secretHidden}
-              subjectUploaderId={subjectUploaderId}
-              theme={theme}
-              userCanRewardThis={userCanRewardThis}
-              userId={userId}
-              xpRewardInterfaceShown={xpRewardInterfaceShown}
-            />
+        <>
+          <BottomInterface
+            userLevel={level}
+            autoExpand={autoExpand}
+            canDelete={!!canDelete}
+            canEdit={!!canEdit}
+            canReward={!!canReward}
+            commentsShown={commentsShown}
+            CommentInputAreaRef={CommentInputAreaRef}
+            contentObj={contentObj}
+            finalRewardLevel={finalRewardLevel}
+            isEditing={isEditing}
+            isRecommendedByUser={isRecommendedByUser}
+            onByUserStatusChange={onByUserStatusChange}
+            onExpandComments={handleExpandComments}
+            onSetCloseConfirmModalShown={setCloseConfirmModalShown}
+            onSetDeleteConfirmModalShown={setDeleteConfirmModalShown}
+            onSetIsEditing={onSetIsEditing}
+            onSetRewardLevel={onSetRewardLevel}
+            onSetRecommendationInterfaceShown={setRecommendationInterfaceShown}
+            onSetUserListModalShown={setUserListModalShown}
+            onSetXpRewardInterfaceShown={onSetXpRewardInterfaceShown}
+            recommendationInterfaceShown={recommendationInterfaceShown}
+            rewardColor={rewardColor}
+            secretHidden={secretHidden}
+            subjectUploaderId={subjectUploaderId}
+            theme={theme}
+            userCanRewardThis={userCanRewardThis}
+            userId={userId}
+            xpRewardInterfaceShown={xpRewardInterfaceShown}
+          />
 
-            <RecommendationStatus
-              style={{ marginBottom: '1rem' }}
-              contentType={contentType}
-              recommendations={recommendations}
-              theme={theme}
-            />
-            {recommendationInterfaceShown && (
-              <RecommendationInterface
-                contentId={contentId}
-                contentType={contentType}
-                rootType={rootType}
-                onHide={() => setRecommendationInterfaceShown(false)}
-                recommendations={recommendations}
-                rewardLevel={finalRewardLevel}
-                content={contentObj?.content}
-                theme={theme}
-                uploaderId={uploader.id}
-              />
-            )}
-
-            {xpRewardInterfaceShown &&
-              contentType !== 'aiStory' &&
-              contentType !== 'pass' &&
-              contentType !== 'xpChange' &&
-              contentType !== 'sharedTopic' &&
-              contentType !== 'dailyReflection' && (
-                <XPRewardInterface
-                  innerRef={RewardInterfaceRef}
-                  contentType={contentType}
-                  contentId={contentId}
-                  onReward={() =>
-                    setRecommendationInterfaceShown(
-                      !isRecommendedByUser && twinkleCoins > 0
-                    )
-                  }
-                  rewardLevel={finalRewardLevel}
-                  rewardContextType={rewardContext.rewardContextType}
-                  rewardContextId={rewardContext.rewardContextId}
-                  uploaderLevel={uploader.level}
-                  uploaderId={uploader.id}
-                  rewards={rewards}
-                />
-              )}
-
-            <RewardStatus
-              theme={theme}
-              contentType={contentType}
+          <RecommendationStatus
+            style={{ marginBottom: '1rem' }}
+            contentType={contentType}
+            recommendations={recommendations}
+            theme={theme}
+          />
+          {recommendationInterfaceShown && (
+            <RecommendationInterface
               contentId={contentId}
+              contentType={contentType}
+              rootType={rootType}
+              onHide={() => setRecommendationInterfaceShown(false)}
+              recommendations={recommendations}
               rewardLevel={finalRewardLevel}
-              onCommentEdit={onEditRewardComment}
-              rewards={rewards}
-              className={css`
-                margin-top: ${secretHidden && rewardLevel ? '1rem' : ''};
-                margin-left: -1px;
-                margin-right: -1px;
-                @media (max-width: ${mobileMaxWidth}) {
-                  margin-left: 0px;
-                  margin-right: 0px;
-                }
-              `}
+              content={contentObj?.content}
+              theme={theme}
+              uploaderId={uploader.id}
             />
+          )}
 
-            {!isNotification && (
-              <Comments
-                theme={theme}
-                alwaysShowInput={!autoExpand}
-                autoExpand={
-                  (autoExpand && !secretHidden) ||
-                  (contentType === 'subject' && secretHidden)
+          {xpRewardInterfaceShown &&
+            contentType !== 'aiStory' &&
+            contentType !== 'build' &&
+            contentType !== 'pass' &&
+            contentType !== 'xpChange' &&
+            contentType !== 'sharedTopic' &&
+            contentType !== 'dailyReflection' && (
+              <XPRewardInterface
+                innerRef={RewardInterfaceRef}
+                contentType={contentType}
+                contentId={contentId}
+                onReward={() =>
+                  setRecommendationInterfaceShown(
+                    !isRecommendedByUser && twinkleCoins > 0
+                  )
                 }
-                comments={comments}
-                commentsLoadLimit={commentsLoadLimit}
-                commentsShown={commentsShown && !secretHidden}
-                numInputRows={!commentsShown && !autoExpand ? 1 : undefined}
-                disableReason={disableReason}
-                inputAreaInnerRef={CommentInputAreaRef}
-                inputAtBottom={inputAtBottom}
-                loadMoreButton={commentsLoadMoreButton}
-                inputTypeLabel={contentType === 'comment' ? 'reply' : 'comment'}
-                isLoading={loadingComments}
-                numPreviews={numPreviewComments}
-                onCommentSubmit={handleCommentSubmit}
-                onDelete={onDeleteComment}
-                onEditDone={onEditComment}
-                onLikeClick={({ commentId, likes }) =>
-                  onLikeContent({
-                    likes,
-                    contentId: commentId,
-                    contentType: 'comment'
-                  })
-                }
-                onPreviewClick={handleExpandComments}
-                onLoadMoreComments={onLoadMoreComments}
-                onLoadMoreReplies={onLoadMoreReplies}
-                onLoadRepliesOfReply={onLoadRepliesOfReply}
-                onReplySubmit={onReplySubmit}
-                onRewardCommentEdit={onEditRewardComment}
-                parent={contentObj}
-                rootContent={rootObj}
-                showSecretButtonAvailable={
-                  contentType === 'subject' && secretHidden
-                }
-                commentsHidden={secretHidden}
-                style={{
-                  padding: '0 1rem 0.5rem 1rem'
-                }}
-                userId={userId}
+                rewardLevel={finalRewardLevel}
+                rewardContextType={rewardContext.rewardContextType}
+                rewardContextId={rewardContext.rewardContextId}
+                uploaderLevel={uploader.level}
+                uploaderId={uploader.id}
+                rewards={rewards}
               />
             )}
 
-            {userListModalShown && (
-              <UserListModal
-                onHide={() => setUserListModalShown(false)}
-                title={`People who liked this ${contentType}`}
-                users={likes}
-              />
-            )}
-          </>
-        )}
+          <RewardStatus
+            theme={theme}
+            contentType={contentType}
+            contentId={contentId}
+            rewardLevel={finalRewardLevel}
+            onCommentEdit={onEditRewardComment}
+            rewards={rewards}
+            className={css`
+              margin-top: ${secretHidden && rewardLevel ? '1rem' : ''};
+              margin-left: -1px;
+              margin-right: -1px;
+              @media (max-width: ${mobileMaxWidth}) {
+                margin-left: 0px;
+                margin-right: 0px;
+              }
+            `}
+          />
+
+          {!isNotification && (
+            <Comments
+              theme={theme}
+              alwaysShowInput={!autoExpand}
+              autoExpand={
+                (autoExpand && !secretHidden) ||
+                (contentType === 'subject' && secretHidden)
+              }
+              comments={comments}
+              commentsLoadLimit={commentsLoadLimit}
+              commentsShown={commentsShown && !secretHidden}
+              numInputRows={!commentsShown && !autoExpand ? 1 : undefined}
+              disableReason={disableReason}
+              inputAreaInnerRef={CommentInputAreaRef}
+              inputAtBottom={inputAtBottom}
+              loadMoreButton={commentsLoadMoreButton}
+              inputTypeLabel={contentType === 'comment' ? 'reply' : 'comment'}
+              isLoading={loadingComments}
+              numPreviews={numPreviewComments}
+              onCommentSubmit={handleCommentSubmit}
+              onDelete={onDeleteComment}
+              onEditDone={onEditComment}
+              onLikeClick={({ commentId, likes }) =>
+                onLikeContent({
+                  likes,
+                  contentId: commentId,
+                  contentType: 'comment'
+                })
+              }
+              onPreviewClick={handleExpandComments}
+              onLoadMoreComments={onLoadMoreComments}
+              onLoadMoreReplies={onLoadMoreReplies}
+              onLoadRepliesOfReply={onLoadRepliesOfReply}
+              onReplySubmit={onReplySubmit}
+              onRewardCommentEdit={onEditRewardComment}
+              parent={contentObj}
+              rootContent={rootObj}
+              showSecretButtonAvailable={
+                contentType === 'subject' && secretHidden
+              }
+              commentsHidden={secretHidden}
+              style={{
+                padding: '0 1rem 0.5rem 1rem'
+              }}
+              userId={userId}
+            />
+          )}
+
+          {userListModalShown && (
+            <UserListModal
+              onHide={() => setUserListModalShown(false)}
+              title={`People who liked this ${contentType}`}
+              users={likes}
+            />
+          )}
+        </>
       </div>
 
       {deleteConfirmModalShown && (

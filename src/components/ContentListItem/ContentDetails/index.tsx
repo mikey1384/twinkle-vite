@@ -4,6 +4,7 @@ import SubjectDetails from './SubjectDetails';
 import UrlDetails from './UrlDetails';
 import AIStoryDetails from './AIStoryDetails';
 import DailyReflectionDetails from './DailyReflectionDetails';
+import BuildDetails from './BuildDetails';
 import { User } from '~/types';
 
 export default function ContentDetails({
@@ -69,6 +70,13 @@ export default function ContentDetails({
         <DailyReflectionDetails
           description={description}
           question={question}
+          uploader={uploader}
+        />
+      )}
+      {contentType === 'build' && (
+        <BuildDetails
+          description={description}
+          title={title}
           uploader={uploader}
         />
       )}

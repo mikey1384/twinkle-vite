@@ -24,7 +24,15 @@ const commentLabel = 'Comment';
 const copiedLabel = 'Copied!';
 const replyLabel = 'Reply';
 const respondLabel = 'Respond';
-const nonEditableContentTypes = ['pass', 'xpChange', 'sharedTopic'];
+const nonEditableContentTypes = ['build', 'pass', 'xpChange', 'sharedTopic'];
+const noRewardContentTypes = [
+  'aiStory',
+  'build',
+  'dailyReflection',
+  'pass',
+  'sharedTopic',
+  'xpChange'
+];
 
 const bottomInterfaceCSS = css`
   display: flex;
@@ -186,6 +194,7 @@ export default function BottomInterface({
 
   const userCanDeleteThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
+    if (contentType === 'build') return false;
     if (userId === uploader.id) return true;
     // dailyReflection can only be deleted by the uploader or admin
     if (contentType === 'dailyReflection') {
@@ -227,6 +236,7 @@ export default function BottomInterface({
 
   const userCanEditThis = useMemo(() => {
     if (contentType === 'aiStory') return false;
+    if (contentType === 'build') return false;
     if (contentType === 'dailyReflection') return false;
     if (userId === uploader.id || (canEdit && userLevel > uploader.level)) {
       return (
@@ -370,6 +380,7 @@ export default function BottomInterface({
                   <span className="button-label" style={{ marginLeft: '0.7rem' }}>
                     {contentType === 'video' ||
                     contentType === 'url' ||
+                    contentType === 'build' ||
                     contentType === 'pass' ||
                     contentType === 'xpChange' ||
                     contentType === 'sharedTopic'
@@ -401,11 +412,7 @@ export default function BottomInterface({
             )}
             {userCanRewardThis &&
               !secretHidden &&
-              contentType !== 'aiStory' &&
-              contentType !== 'pass' &&
-              contentType !== 'xpChange' &&
-              contentType !== 'sharedTopic' &&
-              contentType !== 'dailyReflection' && (
+              !noRewardContentTypes.includes(contentType) && (
                 <RewardButton
                   labelClassName="reward-button-label"
                   hideLabel={deviceIsTablet}
@@ -562,7 +569,12 @@ export default function BottomInterface({
   }
 
   async function handleLikeClick({ isUnlike }: { isUnlike: boolean }) {
-    if (!xpButtonDisabled && userCanRewardThis && !isRewardedByUser) {
+    if (
+      !noRewardContentTypes.includes(contentType) &&
+      !xpButtonDisabled &&
+      userCanRewardThis &&
+      !isRewardedByUser
+    ) {
       onSetXpRewardInterfaceShown({
         contentType,
         contentId,
@@ -579,17 +591,21 @@ export default function BottomInterface({
   }
 
   async function handleCopyToClipboard() {
-    const contentUrl = `https://www.twin-kle.com/${
-      contentType === 'aiStory'
-        ? 'ai-storie'
-        : contentType === 'url'
-        ? 'link'
-        : contentType === 'sharedTopic'
-        ? 'shared-prompt'
-        : contentType === 'dailyReflection'
-        ? 'daily-reflection'
-        : contentType
-    }s/${contentId}`;
+    const contentPath =
+      contentType === 'build'
+        ? `app/${contentId}`
+        : `${
+            contentType === 'aiStory'
+              ? 'ai-storie'
+              : contentType === 'url'
+              ? 'link'
+              : contentType === 'sharedTopic'
+              ? 'shared-prompt'
+              : contentType === 'dailyReflection'
+              ? 'daily-reflection'
+              : contentType
+          }s/${contentId}`;
+    const contentUrl = `https://www.twin-kle.com/${contentPath}`;
     try {
       await navigator.clipboard.writeText(contentUrl);
     } catch (err) {
