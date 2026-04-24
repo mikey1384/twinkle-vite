@@ -1636,7 +1636,10 @@ export default function BuildEditor({
       typeof window.matchMedia === 'function' &&
       window.matchMedia(`(max-width: ${mobileMaxWidth})`).matches;
     if (!isMobileWorkspace) {
-      setMobilePanelTab('preview');
+      setMobilePanelTabIntent((currentIntent) => ({
+        tab: 'preview',
+        version: currentIntent.version + 1
+      }));
     }
   }, [currentBuildRunView.streamingProjectFiles]);
 
@@ -5334,6 +5337,7 @@ export default function BuildEditor({
         isDesktopWorkspaceLayout={isDesktopWorkspaceLayout}
         isOwner={isOwner}
         mobilePanelTabIntent={mobilePanelTabIntent}
+        onMobilePanelTabChange={setMobilePanelTab}
         onWorkspaceResizeKeyDown={handleWorkspaceResizeKeyDown}
         onWorkspaceResizePointerDown={handleWorkspaceResizePointerDown}
         previewPanelProps={previewPanelProps}
@@ -5390,6 +5394,14 @@ export default function BuildEditor({
       tab,
       version: currentIntent.version + 1
     }));
+    if (tab === 'chat' && !isDesktopWorkspaceLayout) {
+      shouldAutoScrollRef.current = true;
+      scrollChatToBottom('auto', { force: true });
+      window.requestAnimationFrame(() => {
+        shouldAutoScrollRef.current = true;
+        scrollChatToBottom('auto', { force: true });
+      });
+    }
   }
 
   function handleWorkspaceResizePointerDown(

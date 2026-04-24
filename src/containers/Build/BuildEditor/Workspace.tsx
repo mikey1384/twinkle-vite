@@ -122,6 +122,7 @@ interface WorkspaceProps {
   isDesktopWorkspaceLayout: boolean;
   isOwner: boolean;
   mobilePanelTabIntent: MobilePanelTabIntent;
+  onMobilePanelTabChange: (tab: MobilePanelTab) => void;
   onWorkspaceResizeKeyDown: (
     event: React.KeyboardEvent<HTMLButtonElement>
   ) => void;
@@ -141,6 +142,7 @@ export default function Workspace({
   isDesktopWorkspaceLayout,
   isOwner,
   mobilePanelTabIntent,
+  onMobilePanelTabChange,
   onWorkspaceResizeKeyDown,
   onWorkspaceResizePointerDown,
   previewPanelProps,
@@ -160,6 +162,11 @@ export default function Workspace({
     setMobilePanelTab(mobilePanelTabIntent.tab);
   }, [mobilePanelTabIntent.tab, mobilePanelTabIntent.version]);
 
+  function handleMobilePanelTabChange(tab: MobilePanelTab) {
+    setMobilePanelTab(tab);
+    onMobilePanelTabChange(tab);
+  }
+
   return (
     <div className={panelShellClass}>
       {isOwner ? (
@@ -170,7 +177,7 @@ export default function Workspace({
               { value: 'chat' as const, label: 'Chat', icon: 'comments' },
               { value: 'preview' as const, label: 'Preview', icon: 'eye' }
             ]}
-            onChange={setMobilePanelTab}
+            onChange={handleMobilePanelTabChange}
             ariaLabel="Switch between chat and preview"
             size="sm"
           />
