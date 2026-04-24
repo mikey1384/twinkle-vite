@@ -2218,9 +2218,25 @@ export default function BuildEditor({
 
   useEffect(() => {
     if (didInitialChatScrollRef.current) return;
+    if (mergedChatMessages.length === 0) return;
+    if (!isDesktopWorkspaceLayout && mobilePanelTabIntent.tab !== 'chat') {
+      return;
+    }
+    if (!chatScrollRef.current && !chatEndRef.current) return;
     didInitialChatScrollRef.current = true;
+    shouldAutoScrollRef.current = true;
     scrollChatToBottom('auto', { force: true });
-  }, [mergedChatMessages.length, build.id]);
+    window.requestAnimationFrame(() => {
+      shouldAutoScrollRef.current = true;
+      scrollChatToBottom('auto', { force: true });
+    });
+  }, [
+    mergedChatMessages.length,
+    build.id,
+    isDesktopWorkspaceLayout,
+    mobilePanelTabIntent.tab,
+    mobilePanelTabIntent.version
+  ]);
 
   async function applyGenerateComplete({
     requestId,
