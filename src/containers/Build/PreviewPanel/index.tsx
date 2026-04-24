@@ -44,6 +44,7 @@ import {
 } from './usePreviewSource';
 import {
   buildPreviewFrameWindowName,
+  canUseSameOriginBuildPreviewSandbox,
   getBuildPreviewMessageTargetOrigin
 } from '../previewOrigin';
 import { BUILD_APP_IFRAME_ALLOW } from '../iframePermissions';
@@ -254,6 +255,8 @@ const EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS: PreviewRuntimeUploadAsset[] = [];
 const PREVIEW_HIDDEN_SUSPEND_DELAY_MS = 1200;
 const PREVIEW_IFRAME_SANDBOX =
   'allow-scripts allow-downloads allow-pointer-lock';
+const RUNTIME_CAPABILITY_IFRAME_SANDBOX =
+  `${PREVIEW_IFRAME_SANDBOX} allow-same-origin`;
 
 type PreviewLifecycleState = 'active' | 'background' | 'suspended';
 const BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES = new Set([
@@ -277,6 +280,12 @@ function buildProjectExportBaseName(title: string, buildId: number) {
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
   return normalized || `lumine-project-${buildId}`;
+}
+
+function getRuntimePreviewIframeSandbox(frameSrc: string | null | undefined) {
+  return canUseSameOriginBuildPreviewSandbox(frameSrc)
+    ? RUNTIME_CAPABILITY_IFRAME_SANDBOX
+    : PREVIEW_IFRAME_SANDBOX;
 }
 
 function triggerBrowserDownload({
@@ -3478,7 +3487,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     name={buildPreviewFrameWindowName(runtimePreviewFrameNonce)}
                     allow={BUILD_APP_IFRAME_ALLOW}
                     allowFullScreen
-                    sandbox={PREVIEW_IFRAME_SANDBOX}
+                    sandbox={getRuntimePreviewIframeSandbox(
+                      runtimePreviewFrameSrc
+                    )}
                     onLoad={() =>
                       handlePreviewFrameLoad('primary', runtimePreviewFrameSrc)
                     }

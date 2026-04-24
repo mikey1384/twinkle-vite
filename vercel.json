@@ -1,16 +1,18 @@
 {
-  "redirects": [
-    {
-      "source": "/build/preview/(.*)",
-      "missing": [{ "type": "host", "value": "preview.lumine.app" }],
-      "destination": "https://preview.lumine.app/build/preview/$1",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/build/preview/(.*)",
       "has": [{ "type": "host", "value": "preview.lumine.app" }],
+      "destination": "https://api.twinkle.network/build/preview/$1"
+    },
+    {
+      "source": "/build/preview/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "^b-[0-9]+\\.preview\\.lumine\\.app$"
+        }
+      ],
       "destination": "https://api.twinkle.network/build/preview/$1"
     },
     { "source": "/(.*)", "destination": "/" }
