@@ -114,7 +114,6 @@ function ContentListItem({
       style={{
         width: style?.width || '100%',
         height: isBuildItem ? undefined : '17rem',
-        minHeight: isBuildItem ? '17rem' : undefined,
         overflow: isBuildItem ? 'visible' : 'hidden',
         ...(expandable ? { marginTop: 'CALC(-1rem - 1px)' } : {}),
         ...style

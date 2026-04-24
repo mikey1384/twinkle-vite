@@ -6,6 +6,7 @@ import { useRoleColor } from '~/theme/useRoleColor';
 import { css } from '@emotion/css';
 import { useContentContext } from '~/contexts';
 import { useInView } from 'react-intersection-observer';
+import { BUILD_APP_IFRAME_ALLOW } from '~/containers/Build/iframePermissions';
 
 export default function BuildContent({
   build,
@@ -300,6 +301,8 @@ export default function BuildContent({
             ref={iframeRef}
             src={embeddedAppPath}
             title={build.title || 'Lumine App'}
+            allow={BUILD_APP_IFRAME_ALLOW}
+            allowFullScreen
             loading="lazy"
             onLoad={() => {
               setIframeReady(true);

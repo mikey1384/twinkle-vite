@@ -46,6 +46,7 @@ import {
   buildPreviewFrameWindowName,
   getBuildPreviewMessageTargetOrigin
 } from '../previewOrigin';
+import { BUILD_APP_IFRAME_ALLOW } from '../iframePermissions';
 import { resolveLocalProjectPathFromBase } from './moduleRewrite';
 import type {
   ArtifactVersion,
@@ -3475,6 +3476,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     src={runtimePreviewFrameSrc}
                     title="App preview"
                     name={buildPreviewFrameWindowName(runtimePreviewFrameNonce)}
+                    allow={BUILD_APP_IFRAME_ALLOW}
+                    allowFullScreen
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad('primary', runtimePreviewFrameSrc)
@@ -3545,6 +3548,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     name={buildPreviewFrameWindowName(
                       previewFrameMetaRef.current.primary.messageNonce
                     )}
+                    allow={BUILD_APP_IFRAME_ALLOW}
+                    allowFullScreen
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(
@@ -3580,6 +3585,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     name={buildPreviewFrameWindowName(
                       previewFrameMetaRef.current.secondary.messageNonce
                     )}
+                    allow={BUILD_APP_IFRAME_ALLOW}
+                    allowFullScreen
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(

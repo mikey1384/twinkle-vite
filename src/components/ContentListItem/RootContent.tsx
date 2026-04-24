@@ -364,28 +364,62 @@ const rootContentCSS = css`
       border-right: none;
     }
     &.is-build {
-      min-height: 0;
-      grid-template-columns: 1fr;
-      grid-template-areas:
-        'thumb'
-        'buildDetails';
-      gap: 0.8rem;
-      padding: 1rem;
+      min-height: 10.5rem;
+      grid-template-columns: minmax(0, 1fr) minmax(8.25rem, 38%);
+      grid-template-areas: 'buildDetails thumb';
+      gap: 0.75rem;
+      padding: 0.9rem 1rem;
+      &::before {
+        display: none;
+      }
+      .build-details {
+        gap: 0.5rem;
+      }
       .title > p {
-        font-size: 1.95rem;
-        max-height: 4.5rem;
+        font-size: 1.55rem;
+        line-height: 1.16;
+        max-height: 3.6rem;
+      }
+      .title > small {
+        font-size: 0.95rem;
+      }
+      .build-badge {
+        gap: 0.35rem;
+        padding: 0.32rem 0.55rem;
+        font-size: 0.82rem;
       }
       .description {
-        font-size: 1.05rem;
-        -webkit-line-clamp: 3;
-        -moz-line-clamp: 3;
-        line-clamp: 3;
+        font-size: 0.9rem;
+        line-height: 1.35;
+        -webkit-line-clamp: 2;
+        -moz-line-clamp: 2;
+        line-clamp: 2;
       }
       .build-card-action {
-        width: 100%;
+        min-height: 2.35rem;
+        padding: 0.45rem 0.7rem;
+        border-radius: 0.65rem;
+        font-size: 0.95rem;
       }
       .thumb.build-thumb {
-        min-height: 15rem;
+        min-height: 8.5rem;
+        border-radius: 0.7rem;
+      }
+      .build-thumb-toolbar {
+        height: 1.35rem;
+        padding: 0 0.5rem;
+        gap: 0.25rem;
+        span {
+          width: 0.36rem;
+          height: 0.36rem;
+        }
+      }
+      .build-thumb-label {
+        right: 0.5rem;
+        bottom: 0.5rem;
+        gap: 0.3rem;
+        padding: 0.34rem 0.5rem;
+        font-size: 0.82rem;
       }
       &.no-thumb {
         grid-template-areas: 'buildDetails';
