@@ -1,6 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { useInView } from 'react-intersection-observer';
 import Icon from '~/components/Icon';
 import { Color } from '~/constants/css';
 import { useLazyLoad } from '~/helpers/hooks';
@@ -48,9 +47,7 @@ export default function MessageRow({
   onDeleteMessage
 }: MessageRowProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const [componentRef, inView] = useInView({
-    rootMargin: '480px 0px'
-  });
+  const { componentRef, inView } = useBuildMessageInView();
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
   const isLastAssistant =
     message.role === 'assistant' && index === lastAssistantIndex;
@@ -208,4 +205,36 @@ export default function MessageRow({
       )}
     </div>
   );
+}
+
+function useBuildMessageInView() {
+  const componentRef = useRef<HTMLDivElement | null>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const element = componentRef.current;
+    if (!element) return;
+    if (typeof IntersectionObserver !== 'function') {
+      setInView(true);
+      return;
+    }
+
+    let active = true;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!active) return;
+        setInView(Boolean(entry?.isIntersecting));
+      },
+      { rootMargin: '480px 0px' }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, []);
+
+  return { componentRef, inView };
 }
