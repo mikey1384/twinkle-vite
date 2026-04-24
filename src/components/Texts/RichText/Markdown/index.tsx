@@ -18,6 +18,10 @@ import {
   processInternalLink
 } from '~/helpers/stringHelpers';
 import LazyCodeBlockWrapper from './LazyCodeBlockWrapper';
+import {
+  protectCurrencyLiteralsOutsideMath,
+  restoreCurrencyPlaceholders
+} from './currencyPlaceholders';
 
 const SECTION_LABEL_CLASS = 'rich-text-section-label';
 const INLINE_LABEL_TAGS = new Set([
@@ -114,7 +118,6 @@ function Markdown({
           .replace(/\\\(([\s\S]*?)\\\)/g, (_, p1: string) => {
             return '$' + p1.trim() + '$';
           });
-
       }
 
       const preprocessedText = preprocessText(textToProcess);
@@ -122,12 +125,8 @@ function Markdown({
       // For AI messages, protect currency from being interpreted as math
       let textForMarkdown = preprocessedText;
       if (isAIMessage) {
-        // Replace simple currency patterns with a temporary placeholder
-        // Use negative lookahead to avoid matching math like $2(a+b)$ or $2x$
-        textForMarkdown = preprocessedText.replace(
-          /\$(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)(?![a-zA-Z(^_{}])/g,
-          'TWINKLECURRENCY$1ENDTWINKLECURRENCY'
-        );
+        textForMarkdown =
+          protectCurrencyLiteralsOutsideMath(preprocessedText);
       }
 
       const markupString = isAIMessage
@@ -150,24 +149,7 @@ function Markdown({
 
       // Restore currency symbols
       const finalString = isAIMessage
-        ? (() => {
-            let restored = markupString;
-
-            // Find all currency placeholders and replace them one by one
-            const matches = [
-              ...markupString.matchAll(
-                /TWINKLECURRENCY([^E]+?)ENDTWINKLECURRENCY/g
-              )
-            ];
-
-            for (const match of matches) {
-              const fullMatch = match[0];
-              const currencyValue = match[1];
-              restored = restored.replace(fullMatch, `$${currencyValue}`);
-            }
-
-            return restored;
-          })()
+        ? restoreCurrencyPlaceholders(markupString)
         : markupString;
 
       const result = convertStringToJSX({

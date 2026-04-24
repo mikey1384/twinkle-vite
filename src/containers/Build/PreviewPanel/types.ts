@@ -108,6 +108,7 @@ export interface PreviewSeedCacheEntry {
 export interface PreviewFrameMeta {
   buildId: number | null;
   codeSignature: string | null;
+  messageNonce: string | null;
 }
 
 export interface EditableProjectFile {

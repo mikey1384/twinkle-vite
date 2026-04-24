@@ -54,6 +54,13 @@ const DEDUPED_PROCESSING_RECOVERY_STATUS = 'Recovering live response...';
 const BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY =
   'twinkle:build-workshop-chat-panel-width';
 
+type MobilePanelTab = 'chat' | 'preview';
+
+interface MobilePanelTabIntent {
+  tab: MobilePanelTab;
+  version: number;
+}
+
 function clampBuildChatPanelWidth(width: number, workspaceWidth = 0) {
   const safeWidth = Number.isFinite(width)
     ? width
@@ -1377,9 +1384,11 @@ export default function BuildEditor({
     (v) => v.requestHelpers.purchaseBuildGenerationReset
   );
 
-  const [mobilePanelTab, setMobilePanelTab] = useState<'chat' | 'preview'>(
-    'chat'
-  );
+  const [mobilePanelTabIntent, setMobilePanelTabIntent] =
+    useState<MobilePanelTabIntent>(() => ({
+      tab: 'chat',
+      version: 0
+    }));
   const [publishing, setPublishing] = useState(false);
   const [forking, setForking] = useState(false);
   const [descriptionModalShown, setDescriptionModalShown] = useState(false);
@@ -5322,9 +5331,9 @@ export default function BuildEditor({
         buildChatPanelWidth={buildChatPanelWidth}
         buildWorkshopScale={buildWorkshopScale}
         chatPanelProps={chatPanelProps}
+        isDesktopWorkspaceLayout={isDesktopWorkspaceLayout}
         isOwner={isOwner}
-        mobilePanelTab={mobilePanelTab}
-        onMobilePanelTabChange={setMobilePanelTab}
+        mobilePanelTabIntent={mobilePanelTabIntent}
         onWorkspaceResizeKeyDown={handleWorkspaceResizeKeyDown}
         onWorkspaceResizePointerDown={handleWorkspaceResizePointerDown}
         previewPanelProps={previewPanelProps}
@@ -5375,6 +5384,13 @@ export default function BuildEditor({
       />
     </div>
   );
+
+  function setMobilePanelTab(tab: MobilePanelTab) {
+    setMobilePanelTabIntent((currentIntent) => ({
+      tab,
+      version: currentIntent.version + 1
+    }));
+  }
 
   function handleWorkspaceResizePointerDown(
     event: React.PointerEvent<HTMLButtonElement>

@@ -42,6 +42,10 @@ import {
   buildPreviewBaseSrc,
   useWorkspacePreviewSrc
 } from './usePreviewSource';
+import {
+  buildPreviewFrameWindowName,
+  getBuildPreviewMessageTargetOrigin
+} from '../previewOrigin';
 import { resolveLocalProjectPathFromBase } from './moduleRewrite';
 import type {
   ArtifactVersion,
@@ -246,8 +250,11 @@ const BUILD_PROJECT_UNSUPPORTED_UPLOAD_EXTENSIONS = [
   '.tsx'
 ] as const;
 const EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS: PreviewRuntimeUploadAsset[] = [];
+const PREVIEW_HIDDEN_SUSPEND_DELAY_MS = 1200;
 const PREVIEW_IFRAME_SANDBOX =
   'allow-scripts allow-downloads allow-pointer-lock';
+
+type PreviewLifecycleState = 'active' | 'background' | 'suspended';
 const BUILD_PROJECT_TEXT_UPLOAD_MIME_TYPES = new Set([
   'application/json',
   'application/javascript',
@@ -1121,6 +1128,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           codeSignature: null
         })
       );
+    const [previewLifecycleState, setPreviewLifecycleState] =
+      useState<PreviewLifecycleState>(() =>
+        runtimeHostVisible === false ? 'background' : 'active'
+      );
     const buildRef = useRef(build);
     const projectFileInputRef = useRef<HTMLInputElement | null>(null);
     const projectFolderInputRef = useRef<HTMLInputElement | null>(null);
@@ -1686,6 +1697,26 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       Number(build.currentArtifactVersionId) > 0
         ? `artifact:${build.currentArtifactVersionId}`
         : `current:${build.id}:${Number(build.updatedAt) || 0}`;
+    const previewHostVisible = runtimeHostVisible !== false;
+    const previewFrameSuspended = previewLifecycleState === 'suspended';
+
+    useEffect(() => {
+      if (previewHostVisible) {
+        setPreviewLifecycleState('active');
+        return;
+      }
+
+      setPreviewLifecycleState('background');
+      const suspendTimeout = window.setTimeout(() => {
+        setPreviewLifecycleState((currentState) =>
+          currentState === 'background' ? 'suspended' : currentState
+        );
+      }, PREVIEW_HIDDEN_SUSPEND_DELAY_MS);
+
+      return () => {
+        window.clearTimeout(suspendTimeout);
+      };
+    }, [build.id, previewCodeSignature, previewHostVisible]);
 
     const {
       activePreviewFrame,
@@ -1705,14 +1736,30 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       buildId: build.id,
       runtimeOnly,
       previewCodeSignature,
-      runtimePreviewSrc,
+      runtimePreviewSrc: previewFrameSuspended ? null : runtimePreviewSrc,
       workspacePreviewSrc:
-        normalizedPreviewSrcOverride || workspacePreviewSrc
+        previewFrameSuspended
+          ? null
+          : normalizedPreviewSrcOverride || workspacePreviewSrc
     });
+    const runtimePreviewFrameSrc = runtimeOnly
+      ? previewFrameSources.primary
+      : null;
+    const runtimePreviewFrameNonce = runtimeOnly
+      ? previewFrameMetaRef.current.primary.messageNonce
+      : null;
+    const shouldShowRuntimePreviewStage = Boolean(
+      runtimePreviewFrameSrc || previewSrc
+    );
+    const shouldMountRuntimePreviewFrame = Boolean(
+      runtimePreviewFrameSrc && runtimePreviewFrameNonce
+    );
 
     useEffect(() => {
       if (!onCaptureReadyChange) return;
       const ready =
+        previewHostVisible &&
+        !previewFrameSuspended &&
         Boolean(previewSrc) &&
         previewFrameReady[activePreviewFrame] &&
         !previewTransitioning;
@@ -1720,7 +1767,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }, [
       activePreviewFrame,
       onCaptureReadyChange,
+      previewFrameSuspended,
       previewFrameReady,
+      previewHostVisible,
       previewSrc,
       previewTransitioning
     ]);
@@ -1735,17 +1784,43 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         }
       };
       const previewFrames = [
-        primaryIframeRef.current?.contentWindow,
-        secondaryIframeRef.current?.contentWindow
+        {
+          frame: 'primary' as const,
+          window: primaryIframeRef.current?.contentWindow || null
+        },
+        {
+          frame: 'secondary' as const,
+          window: secondaryIframeRef.current?.contentWindow || null
+        }
       ];
-      for (const targetWindow of previewFrames) {
+      for (const { frame, window: targetWindow } of previewFrames) {
         if (!targetWindow) continue;
-        targetWindow.postMessage(message, '*');
+        const frameSource =
+          frame === 'primary'
+            ? previewFrameSources.primary
+            : previewFrameSources.secondary;
+        const frameMessageNonce =
+          frame === 'primary'
+            ? previewFrameMetaRef.current.primary.messageNonce
+            : previewFrameMetaRef.current.secondary.messageNonce;
+        const targetOrigin = getBuildPreviewMessageTargetOrigin(
+          frameSource
+        );
+        targetWindow.postMessage(
+          {
+            ...message,
+            previewNonce: frameMessageNonce
+          },
+          targetOrigin
+        );
       }
     }, [
       previewSrc,
       previewFrameReady.primary,
       previewFrameReady.secondary,
+      previewFrameSources.primary,
+      previewFrameSources.secondary,
+      previewFrameMetaRef,
       primaryIframeRef,
       runtimeHostVisible,
       secondaryIframeRef
@@ -3373,9 +3448,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
           `}
         >
           {runtimeOnly ? (
-            previewFrameSources.primary || previewSrc ? (
+            shouldShowRuntimePreviewStage ? (
               <div className={previewStageClass}>
-                {!previewFrameReady.primary && (
+                {(!shouldMountRuntimePreviewFrame ||
+                  !previewFrameReady.primary) && (
                   <div className={previewPreloadSurfaceClass}>
                     <div className={previewPreloadIconWrapClass}>
                       <Icon icon="spinner" className={previewSpinnerClass} />
@@ -3383,23 +3459,24 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                     <div className={previewPreloadLabelClass}>Loading...</div>
                   </div>
                 )}
-                <iframe
-                  ref={primaryIframeRef}
-                  src={previewFrameSources.primary || previewSrc || undefined}
-                  title="App preview"
-                  sandbox={PREVIEW_IFRAME_SANDBOX}
-                  onLoad={() =>
-                    handlePreviewFrameLoad(
-                      'primary',
-                      previewFrameSources.primary || previewSrc
-                    )
-                  }
-                  className={previewIframeClass}
-                  style={{
-                    opacity: previewFrameReady.primary ? 1 : 0,
-                    pointerEvents: previewFrameReady.primary ? 'auto' : 'none'
-                  }}
-                />
+                {shouldMountRuntimePreviewFrame && runtimePreviewFrameSrc ? (
+                  <iframe
+                    key={runtimePreviewFrameNonce || 'primary'}
+                    ref={primaryIframeRef}
+                    src={runtimePreviewFrameSrc}
+                    title="App preview"
+                    name={buildPreviewFrameWindowName(runtimePreviewFrameNonce)}
+                    sandbox={PREVIEW_IFRAME_SANDBOX}
+                    onLoad={() =>
+                      handlePreviewFrameLoad('primary', runtimePreviewFrameSrc)
+                    }
+                    className={previewIframeClass}
+                    style={{
+                      opacity: previewFrameReady.primary ? 1 : 0,
+                      pointerEvents: previewFrameReady.primary ? 'auto' : 'none'
+                    }}
+                  />
+                ) : null}
               </div>
             ) : (
               <div
@@ -3450,9 +3527,17 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 )}
                 {previewFrameSources.primary && (
                   <iframe
+                    key={
+                      previewFrameMetaRef.current.primary.messageNonce ||
+                      previewFrameSources.primary ||
+                      'primary'
+                    }
                     ref={primaryIframeRef}
                     src={previewFrameSources.primary}
                     title="Preview (primary)"
+                    name={buildPreviewFrameWindowName(
+                      previewFrameMetaRef.current.primary.messageNonce
+                    )}
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(
@@ -3477,9 +3562,17 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 )}
                 {previewFrameSources.secondary && (
                   <iframe
+                    key={
+                      previewFrameMetaRef.current.secondary.messageNonce ||
+                      previewFrameSources.secondary ||
+                      'secondary'
+                    }
                     ref={secondaryIframeRef}
                     src={previewFrameSources.secondary}
                     title="Preview (secondary)"
+                    name={buildPreviewFrameWindowName(
+                      previewFrameMetaRef.current.secondary.messageNonce
+                    )}
                     sandbox={PREVIEW_IFRAME_SANDBOX}
                     onLoad={() =>
                       handlePreviewFrameLoad(

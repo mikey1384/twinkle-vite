@@ -486,6 +486,7 @@ var Twinkle;
       publishPreviewLayout(false);
       scheduleViewportAppFit();
       schedulePreviewHealthSnapshot();
+      scheduleBlankRenderProbe();
     } else {
       queueScheduledHostVisibilityAnimationFrames();
       pauseActiveMediaElementsForHostVisibility();
@@ -729,6 +730,30 @@ var Twinkle;
     return 'twinkle_' + (++requestId) + '_' + Date.now();
   }
 
+  function getParentMessageTargetOrigin() {
+    try {
+      var referrer = String(document.referrer || '').trim();
+      if (referrer) {
+        return new URL(referrer).origin;
+      }
+    } catch (_) {}
+    return '*';
+  }
+
+  function getPreviewBridgeNonce() {
+    try {
+      var windowName = String(window.name || '').trim();
+      var prefix = 'twinkle-build-preview:';
+      if (windowName.indexOf(prefix) === 0) {
+        return windowName.slice(prefix.length);
+      }
+    } catch (_) {}
+    return '';
+  }
+
+  var parentMessageTargetOrigin = getParentMessageTargetOrigin();
+  var previewBridgeNonce = getPreviewBridgeNonce();
+
   function resolveRequestTimeoutMs(type, options) {
     const requestedTimeout = Number(options && options.timeoutMs);
     if (Number.isFinite(requestedTimeout) && requestedTimeout > 0) {
@@ -751,9 +776,10 @@ var Twinkle;
       window.parent.postMessage({
         source: 'twinkle-build',
         id: id,
+        previewNonce: previewBridgeNonce,
         type: type,
         payload: payload
-      }, '*');
+      }, parentMessageTargetOrigin);
     });
   }
 
@@ -1730,6 +1756,7 @@ var Twinkle;
   }
 
   function scheduleViewportAppFit() {
+    if (!hostVisibilityState.visible) return;
     if (viewportFitState.scheduled) return;
     viewportFitState.scheduled = true;
     requestAnimationFrame(function() {
@@ -1788,6 +1815,7 @@ var Twinkle;
 
   function reportRuntimeObservation(kind, details) {
     try {
+      if (!hostVisibilityState.visible) return;
       var message = trimObservationText(details && details.message, 400);
       if (!message) return;
       var filename = trimObservationText(details && details.filename, 240);
@@ -1807,6 +1835,7 @@ var Twinkle;
       if (rememberRuntimeObservationKey(key)) return;
       window.parent.postMessage({
         source: 'twinkle-build',
+        previewNonce: previewBridgeNonce,
         type: 'runtime-observation',
         payload: {
           kind:
@@ -1830,7 +1859,7 @@ var Twinkle;
             Number.isFinite(columnNumber) && columnNumber > 0 ? columnNumber : null,
           createdAt: Date.now()
         }
-      }, '*');
+      }, parentMessageTargetOrigin);
     } catch (_) {}
   }
 
@@ -1932,12 +1961,14 @@ var Twinkle;
 
   function reportPreviewHealthSnapshot(force) {
     try {
+      if (!hostVisibilityState.visible) return;
       var nextState = collectPreviewUiState();
       var nextKey = buildPreviewHealthKey(nextState);
       if (!force && nextKey === previewHealthLastKey) return;
       previewHealthLastKey = nextKey;
       window.parent.postMessage({
         source: 'twinkle-build',
+        previewNonce: previewBridgeNonce,
         type: 'preview-health',
         payload: {
           text: nextState.text,
@@ -1956,11 +1987,12 @@ var Twinkle;
           gameLike: nextState.gameLike,
           updatedAt: Date.now()
         }
-      }, '*');
+      }, parentMessageTargetOrigin);
     } catch (_) {}
   }
 
   function schedulePreviewHealthSnapshot() {
+    if (!hostVisibilityState.visible) return;
     if (previewHealthMutationTimer) return;
     previewHealthMutationTimer = setTimeout(function() {
       previewHealthMutationTimer = null;
@@ -1969,6 +2001,7 @@ var Twinkle;
   }
 
   function scheduleForcedPreviewHealthSnapshot() {
+    if (!hostVisibilityState.visible) return;
     requestAnimationFrame(function() {
       // Let the queued viewport-fit pass settle first so overflow checks
       // reflect the fitted game canvas instead of the pre-fit layout.
@@ -2009,10 +2042,12 @@ var Twinkle;
   }
 
   function scheduleBlankRenderProbe() {
+    if (!hostVisibilityState.visible) return;
     if (blankRenderProbeState.scheduled || blankRenderProbeState.reported) return;
     blankRenderProbeState.scheduled = true;
     setTimeout(function() {
       blankRenderProbeState.scheduled = false;
+      if (!hostVisibilityState.visible) return;
       if (blankRenderProbeState.reported) return;
       if (hasMeaningfulRender()) {
         blankRenderProbeState.resolved = true;
@@ -2095,8 +2130,15 @@ var Twinkle;
 
   window.addEventListener('message', (event) => {
     if (event.source !== window.parent) return;
-    const { source, id, type, payload, error } = event.data || {};
+    if (
+      parentMessageTargetOrigin !== '*' &&
+      event.origin !== parentMessageTargetOrigin
+    ) {
+      return;
+    }
+    const { source, id, type, payload, error, previewNonce } = event.data || {};
     if (source !== 'twinkle-parent') return;
+    if (previewBridgeNonce && previewNonce !== previewBridgeNonce) return;
     if (type === 'host-visibility:update') {
       applyHostVisibility(!payload || payload.visible !== false);
       return;

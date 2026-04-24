@@ -67,6 +67,18 @@ function clearCachedPreviewSeed(buildId: number) {
   previewSeedCache.delete(buildId);
 }
 
+function createPreviewFrameMessageNonce() {
+  try {
+    const values = new Uint32Array(4);
+    window.crypto.getRandomValues(values);
+    return Array.from(values)
+      .map((value) => value.toString(36))
+      .join('');
+  } catch {
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  }
+}
+
 interface UsePreviewFrameManagerArgs {
   buildId: number;
   runtimeOnly: boolean;
@@ -109,8 +121,8 @@ export function usePreviewFrameManager({
     primary: PreviewFrameMeta;
     secondary: PreviewFrameMeta;
   }>({
-    primary: { buildId: null, codeSignature: null },
-    secondary: { buildId: null, codeSignature: null }
+    primary: { buildId: null, codeSignature: null, messageNonce: null },
+    secondary: { buildId: null, codeSignature: null, messageNonce: null }
   });
   const previewFrameSourcesRef = useRef<{
     primary: string | null;
@@ -167,7 +179,8 @@ export function usePreviewFrameManager({
           ...previewFrameMetaRef.current,
           [activeFrame]: {
             buildId,
-            codeSignature: cached.codeSignature || previewCodeSignature
+            codeSignature: cached.codeSignature || previewCodeSignature,
+            messageNonce: createPreviewFrameMessageNonce()
           }
         };
         const seededReady = {
@@ -197,8 +210,8 @@ export function usePreviewFrameManager({
       previewFrameSourcesRef.current = cleared;
       setPreviewFrameSources(cleared);
       previewFrameMetaRef.current = {
-        primary: { buildId: null, codeSignature: null },
-        secondary: { buildId: null, codeSignature: null }
+        primary: { buildId: null, codeSignature: null, messageNonce: null },
+        secondary: { buildId: null, codeSignature: null, messageNonce: null }
       };
       const clearedReady = { primary: false, secondary: false };
       previewFrameReadyRef.current = clearedReady;
@@ -227,7 +240,8 @@ export function usePreviewFrameManager({
         ...previewFrameMetaRef.current,
         [activeFrame]: {
           buildId,
-          codeSignature: previewCodeSignature
+          codeSignature: previewCodeSignature,
+          messageNonce: createPreviewFrameMessageNonce()
         }
       };
       const nextReady = {
@@ -255,7 +269,8 @@ export function usePreviewFrameManager({
           ...previewFrameMetaRef.current,
           [reusedFrame]: {
             buildId,
-            codeSignature: nextSignature
+            codeSignature: nextSignature,
+            messageNonce: currentMeta?.messageNonce || null
           }
         };
       }
@@ -276,7 +291,8 @@ export function usePreviewFrameManager({
       ...previewFrameMetaRef.current,
       [inactiveFrame]: {
         buildId,
-        codeSignature: previewCodeSignature
+        codeSignature: previewCodeSignature,
+        messageNonce: createPreviewFrameMessageNonce()
       }
     };
     const nextReady = {
@@ -312,11 +328,13 @@ export function usePreviewFrameManager({
     previewFrameMetaRef.current = {
       primary: {
         buildId,
-        codeSignature: previewCodeSignature
+        codeSignature: previewCodeSignature,
+        messageNonce: previewFrameMetaRef.current.primary.messageNonce
       },
       secondary: {
         buildId: null,
-        codeSignature: null
+        codeSignature: null,
+        messageNonce: null
       }
     };
     messageTargetFrameRef.current = 'primary';
@@ -420,7 +438,8 @@ export function usePreviewFrameManager({
       ...previewFrameMetaRef.current,
       [activeFrame]: {
         buildId: null,
-        codeSignature: null
+        codeSignature: null,
+        messageNonce: null
       }
     };
     const nextReady = {

@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 import SegmentedToggle from '~/components/Buttons/SegmentedToggle';
 import { borderRadius, mobileMaxWidth } from '~/constants/css';
@@ -114,13 +114,20 @@ const workspaceNoChatClass = css`
   grid-template-columns: 1fr;
 `;
 
+type MobilePanelTab = 'chat' | 'preview';
+
+interface MobilePanelTabIntent {
+  tab: MobilePanelTab;
+  version: number;
+}
+
 interface WorkspaceProps {
   buildChatPanelWidth: number;
   buildWorkshopScale: number;
   chatPanelProps: Omit<ChatPanelProps, 'className' | 'workshopScale'>;
+  isDesktopWorkspaceLayout: boolean;
   isOwner: boolean;
-  mobilePanelTab: 'chat' | 'preview';
-  onMobilePanelTabChange: (tab: 'chat' | 'preview') => void;
+  mobilePanelTabIntent: MobilePanelTabIntent;
   onWorkspaceResizeKeyDown: (
     event: React.KeyboardEvent<HTMLButtonElement>
   ) => void;
@@ -137,9 +144,9 @@ export default function Workspace({
   buildChatPanelWidth,
   buildWorkshopScale,
   chatPanelProps,
+  isDesktopWorkspaceLayout,
   isOwner,
-  mobilePanelTab,
-  onMobilePanelTabChange,
+  mobilePanelTabIntent,
   onWorkspaceResizeKeyDown,
   onWorkspaceResizePointerDown,
   previewPanelProps,
@@ -147,6 +154,16 @@ export default function Workspace({
   workspaceShellRef,
   workspaceShellStyle
 }: WorkspaceProps) {
+  const [mobilePanelTab, setMobilePanelTab] = useState<MobilePanelTab>(
+    mobilePanelTabIntent.tab
+  );
+  const previewRuntimeHostVisible =
+    !isOwner || isDesktopWorkspaceLayout || mobilePanelTab === 'preview';
+
+  useEffect(() => {
+    setMobilePanelTab(mobilePanelTabIntent.tab);
+  }, [mobilePanelTabIntent.tab, mobilePanelTabIntent.version]);
+
   return (
     <div className={panelShellClass}>
       {isOwner ? (
@@ -157,7 +174,7 @@ export default function Workspace({
               { value: 'chat' as const, label: 'Chat', icon: 'comments' },
               { value: 'preview' as const, label: 'Preview', icon: 'eye' }
             ]}
-            onChange={onMobilePanelTabChange}
+            onChange={setMobilePanelTab}
             ariaLabel="Switch between chat and preview"
             size="sm"
           />
@@ -194,6 +211,7 @@ export default function Workspace({
         ) : null}
         <PreviewPanel
           {...previewPanelProps}
+          runtimeHostVisible={previewRuntimeHostVisible}
           ref={previewPanelRef}
           className={
             isOwner && mobilePanelTab !== 'preview'

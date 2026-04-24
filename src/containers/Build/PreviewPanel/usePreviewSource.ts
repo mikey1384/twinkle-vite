@@ -4,6 +4,7 @@ import {
   type PreviewHostBridgeAuth
 } from './usePreviewHostBridge';
 import type { Build } from './types';
+import { buildPreviewFrameSrc } from '../previewOrigin';
 
 function toPreviewBaseSrc(build: Build) {
   return Number(build.currentArtifactVersionId) > 0
@@ -12,7 +13,7 @@ function toPreviewBaseSrc(build: Build) {
 }
 
 export function buildPreviewBaseSrc(build: Build) {
-  return toPreviewBaseSrc(build);
+  return buildPreviewFrameSrc(toPreviewBaseSrc(build));
 }
 
 export function useWorkspacePreviewSrc({
@@ -44,7 +45,7 @@ export function useWorkspacePreviewSrc({
         return;
       }
 
-      const basePreviewSrc = toPreviewBaseSrc(build);
+      const basePreviewSrc = buildPreviewBaseSrc(build);
 
       if (Boolean(build.isPublic) || !previewAuth.isOwnerRef.current) {
         setWorkspacePreviewSrc(basePreviewSrc);

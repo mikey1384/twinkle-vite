@@ -8,6 +8,7 @@ import React, {
 import Build from '~/containers/Build';
 import BuildRuntime from '~/containers/Build/Runtime';
 import BuildThumbnailCaptureHost from '~/containers/Build/ThumbnailCaptureHost';
+import { buildPreviewFrameSrc } from '~/containers/Build/previewOrigin';
 import Builds from '~/containers/Builds';
 import Chat from '~/containers/Chat';
 import ContentPage from '~/containers/ContentPage';
@@ -100,13 +101,21 @@ function BuildPreviewPassthrough() {
   const location = useLocation();
 
   useEffect(() => {
+    const previewPath = `${location.pathname}${location.search}${location.hash}`;
+    const previewHostDestination = buildPreviewFrameSrc(previewPath);
+    if (
+      previewHostDestination &&
+      previewHostDestination !== previewPath &&
+      previewHostDestination !== window.location.href
+    ) {
+      window.location.replace(previewHostDestination);
+      return;
+    }
+
     const rawBackendUrl = String(API_URL || '').trim();
     if (!rawBackendUrl) return;
     try {
-      const destination = new URL(
-        `${location.pathname}${location.search}${location.hash}`,
-        rawBackendUrl
-      ).toString();
+      const destination = new URL(previewPath, rawBackendUrl).toString();
       if (destination === window.location.href) return;
       window.location.replace(destination);
     } catch (error) {

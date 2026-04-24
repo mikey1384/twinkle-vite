@@ -5,6 +5,7 @@ import Loading from '~/components/Loading';
 import InvalidPage from '~/components/InvalidPage';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
+import { normalizeAllowedBuildPreviewFrameSrc } from './previewOrigin';
 
 const shellClass = css`
   width: 100%;
@@ -69,7 +70,7 @@ export default function BuildThumbnailCaptureHost() {
   const previewPath = useMemo(() => {
     const params = new URLSearchParams(location.search);
     const path = String(params.get('previewPath') || '').trim();
-    return path.startsWith('/build/preview/') ? path : '';
+    return normalizeAllowedBuildPreviewFrameSrc(path);
   }, [location.search]);
 
   useEffect(() => {

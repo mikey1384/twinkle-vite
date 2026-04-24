@@ -26,6 +26,10 @@ import type {
   PreviewRuntimeUploadsSyncPayload
 } from './types';
 import { TWINKLE_SOCKET_AUTH_READY_EVENT } from '~/constants/socketEvents';
+import {
+  getBuildPreviewMessageTargetOrigin,
+  isAllowedBuildPreviewMessageOrigin
+} from '../previewOrigin';
 
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
@@ -655,16 +659,30 @@ function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
 function postToPreviewFrames(
   primaryIframeRef: RefObject<HTMLIFrameElement | null>,
   secondaryIframeRef: RefObject<HTMLIFrameElement | null>,
+  previewFrameMetaRef: RefObject<{
+    primary: PreviewFrameMeta;
+    secondary: PreviewFrameMeta;
+  }>,
   message: Record<string, any>
 ) {
   const previewFrames = [
-    primaryIframeRef.current?.contentWindow,
-    secondaryIframeRef.current?.contentWindow
+    { frame: 'primary' as const, element: primaryIframeRef.current },
+    { frame: 'secondary' as const, element: secondaryIframeRef.current }
   ];
 
-  for (const targetWindow of previewFrames) {
-    if (!targetWindow) continue;
-    targetWindow.postMessage(message, '*');
+  for (const targetFrame of previewFrames) {
+    const targetWindow = targetFrame.element?.contentWindow;
+    if (!targetFrame.element || !targetWindow) continue;
+    targetWindow.postMessage(
+      {
+        ...message,
+        previewNonce:
+          previewFrameMetaRef.current[targetFrame.frame].messageNonce
+      },
+      getBuildPreviewMessageTargetOrigin(
+        targetFrame.element.getAttribute('src') || targetFrame.element.src
+      )
+    );
   }
 }
 
@@ -707,10 +725,15 @@ function getBuildRuntimeChatSubscriptionKey(buildId: number, roomKey: string) {
 
 function postBuildRuntimeChatEventToFrames({
   subscriptions,
-  payload
+  payload,
+  getTargetBridge
 }: {
   subscriptions: Map<string, Set<Window>>;
   payload: any;
+  getTargetBridge: (targetWindow: Window) => {
+    targetOrigin: string;
+    previewNonce: string | null;
+  };
 }) {
   const buildId = Number(payload?.buildId || 0);
   const roomKey = String(payload?.roomKey || '').trim();
@@ -722,13 +745,15 @@ function postBuildRuntimeChatEventToFrames({
   if (!frames?.size) return;
 
   for (const targetWindow of Array.from(frames)) {
+    const targetBridge = getTargetBridge(targetWindow);
     targetWindow.postMessage(
       {
         source: 'twinkle-parent',
         type: 'chat:event',
-        payload
+        payload,
+        previewNonce: targetBridge.previewNonce
       },
-      '*'
+      targetBridge.targetOrigin
     );
   }
 }
@@ -759,11 +784,16 @@ export function usePreviewHostBridge({
 }: UsePreviewHostBridgeArgs) {
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
-    postToPreviewFrames(primaryIframeRef, secondaryIframeRef, {
-      source: 'twinkle-parent',
-      type: 'viewer:update',
-      viewer
-    });
+    postToPreviewFrames(
+      primaryIframeRef,
+      secondaryIframeRef,
+      previewFrameMetaRef,
+      {
+        source: 'twinkle-parent',
+        type: 'viewer:update',
+        viewer
+      }
+    );
   }, [
     buildId,
     buildIsPublic,
@@ -772,25 +802,46 @@ export function usePreviewHostBridge({
     username,
     profilePicUrl,
     previewAuth,
+    previewFrameMetaRef,
     primaryIframeRef,
     secondaryIframeRef
   ]);
 
   useEffect(() => {
-    postToPreviewFrames(primaryIframeRef, secondaryIframeRef, {
-      source: 'twinkle-parent',
-      type: 'capabilities:update',
-      capabilities: resolvedCapabilitySnapshot
-    });
-  }, [primaryIframeRef, resolvedCapabilitySnapshot, secondaryIframeRef]);
+    postToPreviewFrames(
+      primaryIframeRef,
+      secondaryIframeRef,
+      previewFrameMetaRef,
+      {
+        source: 'twinkle-parent',
+        type: 'capabilities:update',
+        capabilities: resolvedCapabilitySnapshot
+      }
+    );
+  }, [
+    previewFrameMetaRef,
+    primaryIframeRef,
+    resolvedCapabilitySnapshot,
+    secondaryIframeRef
+  ]);
 
   useEffect(() => {
-    postToPreviewFrames(primaryIframeRef, secondaryIframeRef, {
-      source: 'twinkle-parent',
-      type: 'exploration-plan:update',
-      explorationPlan: resolvedRuntimeExplorationPlan
-    });
-  }, [primaryIframeRef, resolvedRuntimeExplorationPlan, secondaryIframeRef]);
+    postToPreviewFrames(
+      primaryIframeRef,
+      secondaryIframeRef,
+      previewFrameMetaRef,
+      {
+        source: 'twinkle-parent',
+        type: 'exploration-plan:update',
+        explorationPlan: resolvedRuntimeExplorationPlan
+      }
+    );
+  }, [
+    previewFrameMetaRef,
+    primaryIframeRef,
+    resolvedRuntimeExplorationPlan,
+    secondaryIframeRef
+  ]);
 
   useEffect(() => {
     const chatSubscriptions = new Map<string, Set<Window>>();
@@ -812,7 +863,8 @@ export function usePreviewHostBridge({
     function handleBuildRuntimeChatEvent(payload: any) {
       postBuildRuntimeChatEventToFrames({
         subscriptions: chatSubscriptions,
-        payload
+        payload,
+        getTargetBridge: getMessageTargetBridgeForWindow
       });
     }
 
@@ -830,10 +882,38 @@ export function usePreviewHostBridge({
       replayBuildRuntimeChatSubscriptions();
     }
 
+    function getMessageTargetBridgeForWindow(targetWindow: Window) {
+      const primaryWindow = primaryIframeRef.current?.contentWindow || null;
+      if (primaryWindow && targetWindow === primaryWindow) {
+        return {
+          targetOrigin: getBuildPreviewMessageTargetOrigin(
+            previewFrameSourcesRef.current.primary ||
+              primaryIframeRef.current?.getAttribute('src') ||
+              primaryIframeRef.current?.src
+          ),
+          previewNonce: previewFrameMetaRef.current.primary.messageNonce
+        };
+      }
+
+      const secondaryWindow = secondaryIframeRef.current?.contentWindow || null;
+      if (secondaryWindow && targetWindow === secondaryWindow) {
+        return {
+          targetOrigin: getBuildPreviewMessageTargetOrigin(
+            previewFrameSourcesRef.current.secondary ||
+              secondaryIframeRef.current?.getAttribute('src') ||
+              secondaryIframeRef.current?.src
+          ),
+          previewNonce: previewFrameMetaRef.current.secondary.messageNonce
+        };
+      }
+
+      return { targetOrigin: '*', previewNonce: null };
+    }
+
     async function handleMessage(event: MessageEvent) {
       const data = event.data;
       if (!data || data.source !== 'twinkle-build') return;
-      const { id, type, payload } = data;
+      const { id, type, payload, previewNonce } = data;
 
       const sourceWindow = event.source as Window | null;
       if (!sourceWindow) return;
@@ -846,6 +926,31 @@ export function usePreviewHostBridge({
             ? 'secondary'
             : null;
       if (!sourceFrame) return;
+      const sourceFrameMeta = previewFrameMetaRef.current[sourceFrame];
+      if (
+        !sourceFrameMeta.messageNonce ||
+        previewNonce !== sourceFrameMeta.messageNonce
+      ) {
+        return;
+      }
+      const sourcePreviewSrc =
+        previewFrameSourcesRef.current[sourceFrame] ||
+        (sourceFrame === 'primary'
+          ? primaryIframeRef.current?.getAttribute('src') ||
+            primaryIframeRef.current?.src
+          : secondaryIframeRef.current?.getAttribute('src') ||
+            secondaryIframeRef.current?.src);
+      if (
+        !isAllowedBuildPreviewMessageOrigin({
+          eventOrigin: event.origin,
+          previewSrc: sourcePreviewSrc
+        })
+      ) {
+        return;
+      }
+      const previewMessageTargetOrigin =
+        getBuildPreviewMessageTargetOrigin(sourcePreviewSrc);
+      const previewMessageNonce = sourceFrameMeta.messageNonce;
       const targetFrame = messageTargetFrameRef.current;
       const targetWindow =
         targetFrame === 'primary' ? primaryWindow : secondaryWindow;
@@ -1003,10 +1108,11 @@ export function usePreviewHostBridge({
             {
               source: 'twinkle-parent',
               id,
+              previewNonce: previewMessageNonce,
               error:
                 'Preview is updating. This request was skipped to prevent duplicate side effects.'
             },
-            '*'
+            previewMessageTargetOrigin
           );
           return;
         }
@@ -1682,18 +1788,20 @@ export function usePreviewHostBridge({
           {
             source: 'twinkle-parent',
             id,
+            previewNonce: previewMessageNonce,
             payload: response
           },
-          '*'
+          previewMessageTargetOrigin
         );
       } catch (error: any) {
         sourceWindow.postMessage(
           {
             source: 'twinkle-parent',
             id,
+            previewNonce: previewMessageNonce,
             error: error.message || 'Unknown error'
           },
-          '*'
+          previewMessageTargetOrigin
         );
       }
     }
