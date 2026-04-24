@@ -1698,7 +1698,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
         ? `artifact:${build.currentArtifactVersionId}`
         : `current:${build.id}:${Number(build.updatedAt) || 0}`;
     const previewHostVisible = runtimeHostVisible !== false;
-    const previewFrameSuspended = previewLifecycleState === 'suspended';
+    const previewFrameSuspended =
+      !previewHostVisible && previewLifecycleState === 'suspended';
 
     useEffect(() => {
       if (previewHostVisible) {
@@ -1755,6 +1756,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     );
     const shouldMountRuntimePreviewFrame = Boolean(
       runtimePreviewFrameSrc && runtimePreviewFrameNonce
+    );
+    const shouldShowWorkspacePreviewStage = Boolean(
+      previewHostVisible ||
+        previewFrameSources.primary ||
+        previewFrameSources.secondary ||
+        previewSrc
     );
 
     useEffect(() => {
@@ -3515,9 +3522,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
               </div>
             )
           ) : viewMode === 'preview' ? (
-            previewFrameSources.primary ||
-            previewFrameSources.secondary ||
-            previewSrc ? (
+            shouldShowWorkspacePreviewStage ? (
               <div className={previewStageClass}>
                 {!previewFrameReady[activePreviewFrame] && (
                   <div className={previewPreloadSurfaceClass}>
