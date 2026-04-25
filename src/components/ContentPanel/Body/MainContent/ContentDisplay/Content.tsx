@@ -611,7 +611,6 @@ export default function Content({
     imageStyle,
     story,
     Description,
-    checkIfUserResponded,
     rootId,
     userId,
     navigate,

@@ -7,6 +7,7 @@ import StatusTag from './StatusTag';
 import { css, cx } from '@emotion/css';
 
 const deviceIsMobile = isMobile(navigator);
+const EMPTY_USER_PROFILE = {};
 
 function toCssSize(value?: number | string) {
   if (typeof value === 'number') {
@@ -64,9 +65,9 @@ export default function ProfilePic({
   statusSize?: 'auto' | 'medium' | 'large' | 'dot';
   size?: number | string;
 }) {
-  const userProfile = useAppContext(
-    (v) => v.user?.state?.userObj?.[userId] || {}
-  );
+  const userProfile =
+    useAppContext((v) => v.user?.state?.userObj?.[userId]) ||
+    EMPTY_USER_PROFILE;
   const myId = useKeyContext((v) => v.myState.userId);
   const [hasError, setHasError] = useState(false);
   const [changePictureShown, setChangePictureShown] = useState(false);

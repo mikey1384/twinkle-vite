@@ -7,6 +7,8 @@ import { css } from '@emotion/css';
 import { Color, mobileMaxWidth } from '~/constants/css';
 import { timeSinceShort } from '~/helpers/timeStampHelpers';
 
+const EMPTY_MEMBER_STATE = {};
+
 export default function MemberListItem({
   onlineMemberObj,
   creatorId,
@@ -23,9 +25,9 @@ export default function MemberListItem({
   onRemoveMember?: () => void;
 }) {
   const chatStatus = useChatContext((v) => v.state.chatStatus);
-  const updatedMemberState = useAppContext(
-    (v) => v.user.state.userObj[member.id] || {}
-  );
+  const updatedMemberState =
+    useAppContext((v) => v.user.state.userObj[member.id]) ||
+    EMPTY_MEMBER_STATE;
   const { username: memberName, profilePicUrl: memberProfilePicUrl } =
     updatedMemberState;
   const { isAway, isBusy, username, profilePicUrl, lastActive } = useMemo(

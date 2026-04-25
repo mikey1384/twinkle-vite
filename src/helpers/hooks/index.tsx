@@ -38,6 +38,7 @@ import { throttle } from '~/helpers';
 const allContentState: Record<string, any> = {};
 const BodyRef = document.scrollingElement || document.documentElement;
 const EMPTY_PROFILE_FEEDS: any[] = [];
+const EMPTY_USER_STATE = {};
 const DEFAULT_PROFILE_NOTABLES = {
   feeds: EMPTY_PROFILE_FEEDS,
   loaded: false,
@@ -284,9 +285,8 @@ export function useMyState() {
   const userId = useAppContext((v) => v.user.state.myState.userId);
 
   // Retrieve the current user's state from 'userObj'
-  const myStateFromUserObj = useAppContext(
-    (v) => v.user.state.userObj[userId] || {}
-  );
+  const myStateFromUserObj =
+    useAppContext((v) => v.user.state.userObj[userId]) || EMPTY_USER_STATE;
 
   // Key values from the global app context
   const missions = useAppContext((v) => v.user.state.missions);

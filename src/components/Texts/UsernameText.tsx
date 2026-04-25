@@ -5,6 +5,7 @@ import { isMobile } from '~/helpers';
 import { User } from '~/types';import UserPopup from '~/components/UserPopup';
 const deviceIsMobile = isMobile(navigator);
 const deletedLabel = 'Deleted';
+const EMPTY_USER_STATE = {};
 
 export default function UsernameText({
   className,
@@ -43,9 +44,8 @@ export default function UsernameText({
   activityPoints?: number;
 }) {
   const [loading, setLoading] = useState(false);
-  const { level, twinkleXP } = useAppContext(
-    (v) => v.user.state.userObj[user.id] || {}
-  );
+  const { level, twinkleXP } =
+    useAppContext((v) => v.user.state.userObj[user.id]) || EMPTY_USER_STATE;
   const coolDownRef = useRef(false);
   const showTimerRef: React.RefObject<any> = useRef(0);
   const hideTimerRef: React.RefObject<any> = useRef(0);
