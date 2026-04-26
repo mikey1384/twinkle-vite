@@ -16,6 +16,8 @@ var Twinkle;
   let viewerInfo = null;
   let capabilitySnapshot = null;
   let chatSubscriptionListeners = new Map();
+  let aiImageGenerationStatusListeners = new Map();
+  let aiImageGenerationStatusListenerId = 0;
   var blankRenderProbeState = {
     scheduled: false,
     resolved: false,
@@ -759,6 +761,9 @@ var Twinkle;
     if (Number.isFinite(requestedTimeout) && requestedTimeout > 0) {
       return requestedTimeout;
     }
+    if (type === 'ai:generate-image') {
+      return 390000;
+    }
     return 30000;
   }
 
@@ -781,6 +786,319 @@ var Twinkle;
         payload: payload
       }, parentMessageTargetOrigin);
     });
+  }
+
+  function normalizeLocalDownloadFileName(rawFileName) {
+    var fileName = String(rawFileName || '').trim();
+    if (!fileName) fileName = 'download.txt';
+    fileName = fileName
+      .replace(/[\u0000-\u001f\\/:*?"<>|]+/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!fileName || fileName === '.' || fileName === '..') {
+      fileName = 'download.txt';
+    }
+    return fileName.slice(0, 180);
+  }
+
+  function hasOwnValue(object, key) {
+    return !!object && Object.prototype.hasOwnProperty.call(object, key);
+  }
+
+  function isLocalDownloadBlob(value) {
+    return typeof Blob === 'function' && value instanceof Blob;
+  }
+
+  function isLocalDownloadArrayBuffer(value) {
+    return typeof ArrayBuffer === 'function' && value instanceof ArrayBuffer;
+  }
+
+  function isLocalDownloadTypedArray(value) {
+    return (
+      typeof ArrayBuffer !== 'undefined' &&
+      ArrayBuffer.isView &&
+      ArrayBuffer.isView(value)
+    );
+  }
+
+  function normalizeLocalDownloadUrl(rawUrl) {
+    var url = String(rawUrl || '').trim();
+    if (!/^https?:\/\//i.test(url)) return '';
+    return url;
+  }
+
+  function normalizeLocalDownloadOptions(options) {
+    if (
+      options &&
+      typeof options === 'object' &&
+      !isLocalDownloadBlob(options) &&
+      !isLocalDownloadArrayBuffer(options) &&
+      !isLocalDownloadTypedArray(options)
+    ) {
+      return options;
+    }
+    return { data: options };
+  }
+
+  function buildLocalDownloadRequestPayload(options) {
+    var normalizedOptions = normalizeLocalDownloadOptions(options);
+    var fileName = normalizeLocalDownloadFileName(
+      normalizedOptions.fileName ||
+        normalizedOptions.name ||
+        (normalizedOptions.file && normalizedOptions.file.name) ||
+        'download'
+    );
+    var mimeType = String(
+      normalizedOptions.mimeType ||
+        normalizedOptions.type ||
+        (normalizedOptions.file && normalizedOptions.file.type) ||
+        (normalizedOptions.blob && normalizedOptions.blob.type) ||
+        ''
+    ).trim();
+    var payload = {
+      fileName: fileName,
+      mimeType: mimeType
+    };
+    var value;
+
+    if (hasOwnValue(normalizedOptions, 'url')) {
+      var downloadUrl = normalizeLocalDownloadUrl(normalizedOptions.url);
+      if (!downloadUrl) throw new Error('Invalid URL for download.');
+      payload.url = downloadUrl;
+      return payload;
+    }
+    if (hasOwnValue(normalizedOptions, 'dataUrl')) {
+      var dataUrl = String(normalizedOptions.dataUrl || '');
+      var dataUrlDownloadUrl = normalizeLocalDownloadUrl(dataUrl);
+      if (dataUrlDownloadUrl) {
+        payload.url = dataUrlDownloadUrl;
+      } else {
+        payload.dataUrl = dataUrl;
+      }
+      return payload;
+    }
+    if (hasOwnValue(normalizedOptions, 'blob')) {
+      value = normalizedOptions.blob;
+      payload.blob = value;
+    } else if (hasOwnValue(normalizedOptions, 'file')) {
+      value = normalizedOptions.file;
+      payload.blob = value;
+    } else if (hasOwnValue(normalizedOptions, 'bytes')) {
+      value = normalizedOptions.bytes;
+      payload.bytes = value;
+    } else if (hasOwnValue(normalizedOptions, 'text')) {
+      value =
+        normalizedOptions.text == null ? '' : String(normalizedOptions.text);
+      if (!payload.mimeType) payload.mimeType = 'text/plain;charset=utf-8';
+      payload.text = value;
+    } else if (hasOwnValue(normalizedOptions, 'json')) {
+      value = JSON.stringify(normalizedOptions.json, null, 2);
+      if (!payload.mimeType) payload.mimeType = 'application/json;charset=utf-8';
+      payload.text = value;
+    } else if (hasOwnValue(normalizedOptions, 'data')) {
+      value = normalizedOptions.data;
+      if (isLocalDownloadBlob(value)) {
+        payload.blob = value;
+      } else if (
+        isLocalDownloadArrayBuffer(value) ||
+        isLocalDownloadTypedArray(value)
+      ) {
+        payload.bytes = value;
+      } else if (typeof value === 'string' && value.indexOf('data:') === 0) {
+        payload.dataUrl = value;
+      } else {
+        payload.data = value;
+      }
+    }
+
+    if (value === undefined) {
+      throw new Error(
+        'Twinkle.files.saveAs requires url, dataUrl, data, text, json, bytes, blob, or file'
+      );
+    }
+    if (!payload.mimeType) {
+      payload.mimeType =
+        typeof value === 'string'
+          ? 'text/plain;charset=utf-8'
+          : 'application/octet-stream';
+    }
+    return payload;
+  }
+
+  function isVideoFileCandidate(file) {
+    if (!file) return false;
+    var mimeType = String(file.type || '').toLowerCase();
+    if (mimeType.indexOf('video/') === 0) {
+      return true;
+    }
+    var fileName = String(file.name || '').toLowerCase();
+    return /\.(mp4|webm|mov|avi|mkv|wmv|m4v|3gp|mpeg|mpg|ogv)$/.test(fileName);
+  }
+
+  function resolveFilesUploadTimeoutMs(files) {
+    var totalBytes = Array.isArray(files)
+      ? files.reduce(function(sum, file) {
+          return sum + Math.max(0, Number(file && file.size) || 0);
+        }, 0)
+      : 0;
+    var floorBytesPerSecond = 32 * 1024;
+    var estimatedMs =
+      2 * 60 * 1000 + Math.ceil(totalBytes / floorBytesPerSecond) * 1000;
+    return Math.max(10 * 60 * 1000, Math.min(2 * 60 * 60 * 1000, estimatedMs));
+  }
+
+  async function createGeneratedUploadFile(options) {
+    var normalizedOptions = normalizeLocalDownloadOptions(options);
+    var mimeType = String(
+      normalizedOptions.mimeType || normalizedOptions.type || ''
+    ).trim();
+    var blob;
+    if (hasOwnValue(normalizedOptions, 'url')) {
+      var downloadUrl = normalizeLocalDownloadUrl(normalizedOptions.url);
+      if (!downloadUrl) throw new Error('Invalid URL for upload.');
+      var response = await fetch(downloadUrl, { credentials: 'omit' });
+      if (!response.ok) {
+        throw new Error('Could not fetch generated file URL (' + response.status + ').');
+      }
+      blob = await response.blob();
+      if (mimeType && blob.type !== mimeType) {
+        blob = blob.slice(0, blob.size, mimeType);
+      }
+    } else if (
+      hasOwnValue(normalizedOptions, 'dataUrl') &&
+      normalizeLocalDownloadUrl(normalizedOptions.dataUrl)
+    ) {
+      return await createGeneratedUploadFile({
+        fileName: normalizedOptions.fileName || normalizedOptions.name,
+        mimeType: mimeType,
+        url: normalizedOptions.dataUrl
+      });
+    } else {
+      blob = createImmediateLocalDownloadBlob(normalizedOptions);
+    }
+    var fileName = normalizeLocalDownloadFileName(
+      normalizedOptions.fileName ||
+        normalizedOptions.name ||
+        (normalizedOptions.file && normalizedOptions.file.name) ||
+        'generated-file'
+    );
+    var finalMimeType = String(
+      mimeType || blob.type || 'application/octet-stream'
+    ).trim();
+    if (typeof File !== 'function') {
+      throw new Error('This browser does not support generated file uploads.');
+    }
+    return new File([blob], fileName, {
+      type: finalMimeType || blob.type || 'application/octet-stream'
+    });
+  }
+
+  function createLocalDownloadBlobFromDataUrl(dataUrl, fallbackMimeType) {
+    var match = String(dataUrl || '').match(
+      /^data:([^;,]+)(?:;[^,]*)?;base64,(.*)$/i
+    );
+    if (!match) {
+      throw new Error('Invalid data URL for download.');
+    }
+    var binary = atob(String(match[2] || '').replace(/\s/g, ''));
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new Blob([bytes], {
+      type: match[1] || fallbackMimeType || 'application/octet-stream'
+    });
+  }
+
+  function createImmediateLocalDownloadBlob(options) {
+    var normalizedOptions = normalizeLocalDownloadOptions(options);
+    var mimeType = String(
+      normalizedOptions.mimeType || normalizedOptions.type || ''
+    ).trim();
+    var value;
+    if (hasOwnValue(normalizedOptions, 'url')) {
+      throw new Error('URL generated files must be fetched before conversion.');
+    }
+    if (hasOwnValue(normalizedOptions, 'dataUrl')) {
+      var dataUrl = String(normalizedOptions.dataUrl || '');
+      if (normalizeLocalDownloadUrl(dataUrl)) {
+        throw new Error('URL generated files must be fetched before conversion.');
+      }
+      return createLocalDownloadBlobFromDataUrl(dataUrl, mimeType);
+    }
+    if (hasOwnValue(normalizedOptions, 'blob')) {
+      value = normalizedOptions.blob;
+    } else if (hasOwnValue(normalizedOptions, 'file')) {
+      value = normalizedOptions.file;
+    } else if (hasOwnValue(normalizedOptions, 'bytes')) {
+      value = normalizedOptions.bytes;
+    } else if (hasOwnValue(normalizedOptions, 'text')) {
+      value =
+        normalizedOptions.text == null ? '' : String(normalizedOptions.text);
+      if (!mimeType) mimeType = 'text/plain;charset=utf-8';
+    } else if (hasOwnValue(normalizedOptions, 'json')) {
+      value = JSON.stringify(normalizedOptions.json, null, 2);
+      if (!mimeType) mimeType = 'application/json;charset=utf-8';
+    } else if (hasOwnValue(normalizedOptions, 'data')) {
+      value = normalizedOptions.data;
+    }
+
+    if (value === undefined) {
+      throw new Error(
+        'Twinkle.files.uploadGenerated requires url, dataUrl, data, text, json, bytes, blob, or file'
+      );
+    }
+    if (isLocalDownloadBlob(value)) {
+      return value;
+    }
+    if (!mimeType) {
+      mimeType =
+        typeof value === 'string'
+          ? 'text/plain;charset=utf-8'
+          : 'application/octet-stream';
+    }
+    if (isLocalDownloadArrayBuffer(value)) {
+      return new Blob([value], { type: mimeType });
+    }
+    if (isLocalDownloadTypedArray(value)) {
+      return new Blob([value], { type: mimeType });
+    }
+    if (typeof value === 'string' && value.indexOf('data:') === 0) {
+      return createLocalDownloadBlobFromDataUrl(value, mimeType);
+    }
+    if (typeof value === 'string') {
+      return new Blob([value], { type: mimeType });
+    }
+    var serializedValue = JSON.stringify(value, null, 2);
+    return new Blob(
+      [serializedValue === undefined ? String(value) : serializedValue],
+      {
+        type: mimeType || 'application/json;charset=utf-8'
+      }
+    );
+  }
+
+  function dispatchAiImageGenerationStatus(payload) {
+    aiImageGenerationStatusListeners.forEach(function(listener) {
+      try {
+        listener(payload || {});
+      } catch (error) {
+        setTimeout(function() {
+          throw error;
+        }, 0);
+      }
+    });
+  }
+
+  function addAiImageGenerationStatusListener(listener) {
+    if (typeof listener !== 'function') {
+      throw new Error('listener must be a function');
+    }
+    var listenerId = ++aiImageGenerationStatusListenerId;
+    aiImageGenerationStatusListeners.set(listenerId, listener);
+    return function unsubscribeAiImageGenerationStatus() {
+      aiImageGenerationStatusListeners.delete(listenerId);
+    };
   }
 
   function normalizeChatRoomKey(roomKey) {
@@ -2147,6 +2465,10 @@ var Twinkle;
       dispatchChatEvent(payload);
       return;
     }
+    if (type === 'ai:image-generation-status') {
+      dispatchAiImageGenerationStatus(payload);
+      return;
+    }
     if (!pendingRequests.has(id)) return;
 
     const { resolve, reject, timeout } = pendingRequests.get(id);
@@ -2299,6 +2621,38 @@ var Twinkle;
       }
     },
 
+    files: {
+      async uploadGenerated(options) {
+        var file = await createGeneratedUploadFile(options);
+        if (isVideoFileCandidate(file)) {
+          throw new Error('Video uploads are not supported in Twinkle.files yet.');
+        }
+        var response = await sendRequest(
+          'files:upload-selected',
+          { files: [file] },
+          { timeoutMs: resolveFilesUploadTimeoutMs([file]) }
+        );
+        return {
+          assets: Array.isArray(response && response.assets)
+            ? response.assets
+            : [],
+          failed: Array.isArray(response && response.failed)
+            ? response.failed
+            : [],
+          canceled: false
+        };
+      },
+
+      async saveAs(options) {
+        var payload = buildLocalDownloadRequestPayload(options);
+        return await sendRequest('files:save-as', payload, {
+          timeoutMs: 300000
+        });
+      },
+
+      // Simple same-origin downloads can still use <a href="..." download>.
+    },
+
     ai: {
       _prompts: null,
 
@@ -2323,6 +2677,58 @@ var Twinkle;
           text: response.response,
           prompt: response.prompt
         };
+      },
+
+      async generateImage({
+        prompt,
+        referenceImageB64,
+        previousResponseId,
+        previousImageId,
+        engine,
+        quality,
+        requestId,
+        onStatus,
+        timeoutMs
+      } = {}) {
+        if (!prompt) throw new Error('prompt is required');
+        var streamRequestId =
+          requestId ||
+          'img_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+
+        var unsubscribeStatus =
+          typeof onStatus === 'function'
+            ? addAiImageGenerationStatusListener(function(status) {
+                if (
+                  status &&
+                  status.requestId &&
+                  status.requestId !== streamRequestId
+                ) {
+                  return;
+                }
+                onStatus(status);
+              })
+            : null;
+        try {
+          return await sendRequest(
+            'ai:generate-image',
+            {
+              prompt: prompt,
+              referenceImageB64: referenceImageB64,
+              previousResponseId: previousResponseId,
+              previousImageId: previousImageId,
+              engine: engine || 'openai',
+              quality: quality || 'high',
+              requestId: streamRequestId
+            },
+            { timeoutMs: timeoutMs || 390000 }
+          );
+        } finally {
+          if (unsubscribeStatus) unsubscribeStatus();
+        }
+      },
+
+      onImageGenerationStatus(listener) {
+        return addAiImageGenerationStatusListener(listener);
       }
     },
 
@@ -2340,12 +2746,29 @@ var Twinkle;
         if (!actionName) throw new Error('actionName is required');
         const snapshot = await this.get();
         const normalizedActionName = String(actionName || '').trim();
-        return Boolean(
-          snapshot?.lumine?.actionDetails?.some(
-            (detail) =>
-              detail?.name === normalizedActionName && detail?.allowed === true
-          )
+        const lumineDetails = Array.isArray(snapshot?.lumine?.actionDetails)
+          ? snapshot.lumine.actionDetails
+          : [];
+        const lumineDetail = lumineDetails.find(
+          (detail) => detail?.name === normalizedActionName
         );
+        if (lumineDetail) return lumineDetail.allowed === true;
+
+        const actionParts = normalizedActionName.split('.');
+        const namespaceName =
+          actionParts.length >= 2 && actionParts[0] === 'Twinkle'
+            ? actionParts.slice(0, 2).join('.')
+            : '';
+        const availableNamespaces = Array.isArray(snapshot?.availableNamespaces)
+          ? snapshot.availableNamespaces
+          : [];
+        if (!namespaceName || !availableNamespaces.includes(namespaceName)) {
+          return false;
+        }
+        const blockedWriteActions = Array.isArray(snapshot?.blockedWriteActions)
+          ? snapshot.blockedWriteActions
+          : [];
+        return !blockedWriteActions.includes(normalizedActionName);
       },
 
       async listActions() {
@@ -2901,7 +3324,6 @@ var Twinkle;
     if (info) window.Twinkle._init(info);
   }).catch(() => {});
 
-  console.log('Twinkle SDK loaded');
 })();
 </script>
 `;

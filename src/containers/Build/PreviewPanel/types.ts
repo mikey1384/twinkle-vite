@@ -59,6 +59,7 @@ export interface PreviewPanelProps {
   onRuntimeUploadsSync?: (
     payload: PreviewRuntimeUploadsSyncPayload | null
   ) => void;
+  onAiUsagePolicyUpdate?: (aiUsagePolicy: Record<string, any>) => void;
   onOpenRuntimeUploadsManager?: () => void;
   currentBuildRuntimeAssets?: PreviewRuntimeUploadAsset[];
   previewSrcOverride?: string | null;

@@ -25,7 +25,7 @@ export function useWorkspacePreviewSrc({
 }: {
   build: Build;
   runtimeOnly: boolean;
-  viewMode: 'preview' | 'code';
+  viewMode: 'preview' | 'code' | 'manual';
   userId: number | null;
   previewAuth: PreviewHostBridgeAuth;
 }) {

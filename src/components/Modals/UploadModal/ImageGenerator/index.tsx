@@ -99,6 +99,7 @@ export default function ImageGenerator({
   const [aiUsageResetLoading, setAiUsageResetLoading] = useState(false);
   const [aiUsageResetError, setAiUsageResetError] = useState('');
   const aiUsagePolicyRef = useRef<AiUsagePolicy | null>(null);
+  const activeImageRequestIdRef = useRef<string | null>(null);
 
   const setError = (err: any) => {
     if (err === null) {
@@ -251,9 +252,13 @@ export default function ImageGenerator({
       message?: string;
       imageId?: string;
       responseId?: string;
+      requestId?: string;
       aiUsagePolicy?: AiUsagePolicy;
     }) => {
       try {
+        if (!status || shouldIgnoreImageGenerationStatus(status.requestId)) {
+          return;
+        }
         setProgressStage(status.stage);
 
         if (status.stage === 'partial_image' && status.partialImageB64) {
@@ -282,6 +287,7 @@ export default function ImageGenerator({
           }
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
+          clearActiveImageRequest(status.requestId);
         } else if (status.stage === 'error') {
           const rawError =
             status.error ||
@@ -305,6 +311,7 @@ export default function ImageGenerator({
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
+          clearActiveImageRequest(status.requestId);
           onError?.(errorMessage);
         }
       } catch (err) {
@@ -319,6 +326,7 @@ export default function ImageGenerator({
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
+        activeImageRequestIdRef.current = null;
         onError?.(fallbackMessage);
       }
     };
@@ -686,6 +694,34 @@ export default function ImageGenerator({
     });
   }
 
+  function createImageRequestId(kind: 'initial' | 'follow-up') {
+    return `upload-image-${kind}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+  }
+
+  function startImageRequest(kind: 'initial' | 'follow-up') {
+    const requestId = createImageRequestId(kind);
+    activeImageRequestIdRef.current = requestId;
+    return requestId;
+  }
+
+  function clearActiveImageRequest(requestId?: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (
+      !normalizedRequestId ||
+      activeImageRequestIdRef.current === normalizedRequestId
+    ) {
+      activeImageRequestIdRef.current = null;
+    }
+  }
+
+  function shouldIgnoreImageGenerationStatus(requestId?: string) {
+    const activeRequestId = String(activeImageRequestIdRef.current || '').trim();
+    const statusRequestId = String(requestId || '').trim();
+    return !activeRequestId || statusRequestId !== activeRequestId;
+  }
+
   async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
     if (aiUsageResetLoading) return;
     setAiUsageResetLoading(true);
@@ -758,6 +794,7 @@ export default function ImageGenerator({
     setGeneratedResponseId(null);
     setGeneratedImageId(null);
     setIsFollowUpGenerating(false);
+    const requestId = startImageRequest('initial');
 
     try {
       let referenceB64: string | undefined;
@@ -771,7 +808,8 @@ export default function ImageGenerator({
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
         engine,
-        quality: engine === 'openai' ? quality : undefined
+        quality: engine === 'openai' ? quality : undefined,
+        requestId
       });
 
       if (result.aiUsagePolicy) {
@@ -790,6 +828,7 @@ export default function ImageGenerator({
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('completed');
+        clearActiveImageRequest(requestId);
         return;
       }
 
@@ -803,6 +842,7 @@ export default function ImageGenerator({
           setError(errorMessage);
           setIsGenerating(false);
           setProgressStage('not_started');
+          clearActiveImageRequest(requestId);
           onError?.(errorMessage);
         }
         // If streaming is active, don't show error - let socket determine final state
@@ -819,6 +859,7 @@ export default function ImageGenerator({
         setError(errorMessage);
         setIsGenerating(false);
         setProgressStage('not_started');
+        clearActiveImageRequest(requestId);
         onError?.(errorMessage);
       }
       // If streaming is active, socket will handle final state
@@ -852,6 +893,7 @@ export default function ImageGenerator({
     setError(null);
     setPartialImageData(null);
     setProgressStage('prompt_ready');
+    const requestId = startImageRequest('follow-up');
 
     try {
       let referenceB64: string | undefined;
@@ -865,7 +907,8 @@ export default function ImageGenerator({
         previousImageId: generatedImageId, // Keep for backend pricing logic
         referenceImageB64: referenceB64, // Send previous image as reference for Gemini
         engine: followUpEngine,
-        quality: followUpEngine === 'openai' ? followUpQuality : undefined
+        quality: followUpEngine === 'openai' ? followUpQuality : undefined,
+        requestId
       });
 
       if (result.aiUsagePolicy) {
@@ -885,6 +928,7 @@ export default function ImageGenerator({
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('completed');
+        clearActiveImageRequest(requestId);
         return;
       }
 
@@ -900,6 +944,7 @@ export default function ImageGenerator({
           setIsGenerating(false);
           setIsFollowUpGenerating(false);
           setProgressStage('not_started');
+          clearActiveImageRequest(requestId);
           onError?.(errorMessage);
         }
       }
@@ -915,6 +960,7 @@ export default function ImageGenerator({
         setIsGenerating(false);
         setIsFollowUpGenerating(false);
         setProgressStage('not_started');
+        clearActiveImageRequest(requestId);
         onError?.(errorMessage);
       }
     }

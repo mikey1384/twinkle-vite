@@ -159,6 +159,8 @@ export default function CodeWorkspacePane({
               onChange={(e) => onNewFilePathChange(e.target.value)}
               disabled={projectFilesLocked}
               placeholder="/src/app.js"
+              aria-label="New project file path"
+              data-testid="build-new-project-file-path"
               className={css`
                 flex: 1;
                 min-width: 0;
@@ -302,6 +304,7 @@ export default function CodeWorkspacePane({
                   onChange={(e) => onFolderMoveTargetPathChange(e.target.value)}
                   disabled={projectFilesLocked}
                   placeholder="/new/folder/path"
+                  aria-label={`Move folder ${selectedFolderPath} to path`}
                   className={css`
                     flex: 1;
                     min-width: 0;
@@ -317,6 +320,7 @@ export default function CodeWorkspacePane({
                   type="button"
                   onClick={onMoveSelectedFolder}
                   disabled={projectFilesLocked}
+                  aria-label={`Move folder ${selectedFolderPath}`}
                   className={css`
                     border: 1px solid rgba(255, 255, 255, 0.18);
                     border-radius: 8px;
@@ -364,6 +368,7 @@ export default function CodeWorkspacePane({
                   <button
                     type="button"
                     onClick={() => onToggleFolderCollapsed(entry.path)}
+                    aria-label={`Toggle folder ${entry.path}`}
                     className={css`
                       border: 1px solid rgba(255, 255, 255, 0.12);
                       border-radius: 8px;
@@ -379,6 +384,7 @@ export default function CodeWorkspacePane({
                   <button
                     type="button"
                     onClick={() => onSelectFolder(entry.path)}
+                    aria-label={`Select folder ${entry.path}`}
                     className={css`
                       flex: 1;
                       min-width: 0;
@@ -437,6 +443,7 @@ export default function CodeWorkspacePane({
                 <button
                   type="button"
                   onClick={() => onSelectFile(file.path)}
+                  aria-label={`Open file ${file.path}`}
                   className={css`
                     flex: 1;
                     min-width: 0;
@@ -722,6 +729,8 @@ export default function CodeWorkspacePane({
                   onChange={(e) => onRenamePathInputChange(e.target.value)}
                   disabled={projectFilesLocked}
                   placeholder="/src/new-path.js"
+                  aria-label="Active file path"
+                  data-testid="build-active-file-path"
                   className={css`
                     flex: 1;
                     min-width: 0;
@@ -742,6 +751,7 @@ export default function CodeWorkspacePane({
                   type="button"
                   onClick={onRenameOrMoveActiveFile}
                   disabled={projectFilesLocked}
+                  aria-label={`Move active file ${activeFile.path}`}
                   className={css`
                     border: 1px solid rgba(255, 255, 255, 0.18);
                     border-radius: 8px;
@@ -920,6 +930,8 @@ export default function CodeWorkspacePane({
               readOnly={
                 !isOwner || isShowingStreamingCode || projectFilesLocked
               }
+              aria-label={`Code editor for ${activeFile.path}`}
+              data-testid="build-code-editor"
               spellCheck={false}
               className={css`
                 width: 100%;

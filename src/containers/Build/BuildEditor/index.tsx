@@ -32,6 +32,7 @@ import {
   useAppContext,
   useBuildContext,
   useKeyContext,
+  useNotiContext,
   useViewContext
 } from '~/contexts';
 import { css } from '@emotion/css';
@@ -297,6 +298,11 @@ interface BuildCopilotPolicy {
   };
 }
 
+type BuildRequestLimitsSnapshot = Partial<
+  BuildCopilotPolicy['requestLimits']
+> &
+  Record<string, any>;
+
 interface BuildRunEvent {
   id: string;
   kind: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
@@ -447,7 +453,7 @@ function applyRuntimeUploadUsageToCopilotPolicy(
 
 function applyRequestLimitsToCopilotPolicy(
   policy: BuildCopilotPolicy | null,
-  requestLimits: BuildCopilotPolicy['requestLimits'] | null | undefined
+  requestLimits: BuildRequestLimitsSnapshot | null | undefined
 ) {
   if (!policy || !requestLimits) {
     return policy;
@@ -1340,6 +1346,9 @@ export default function BuildEditor({
   const { userId, profileTheme, twinkleCoins } = useKeyContext(
     (v) => v.myState
   );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const updateBuildProjectFiles = useAppContext(
     (v) => v.requestHelpers.updateBuildProjectFiles
@@ -1383,6 +1392,8 @@ export default function BuildEditor({
   const purchaseBuildGenerationReset = useAppContext(
     (v) => v.requestHelpers.purchaseBuildGenerationReset
   );
+  const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
+  onUpdateTodayStatsRef.current = onUpdateTodayStats;
 
   const [mobilePanelTabIntent, setMobilePanelTabIntent] =
     useState<MobilePanelTabIntent>(() => ({
@@ -1507,6 +1518,27 @@ export default function BuildEditor({
       areChatMessagesEqual: chatMessagesEqual
     }
   );
+
+  function handlePreviewAiUsagePolicyUpdate(
+    aiUsagePolicy: Record<string, any> | null | undefined
+  ) {
+    if (!aiUsagePolicy || typeof aiUsagePolicy !== 'object') {
+      return;
+    }
+    onUpdateTodayStatsRef.current({
+      newStats: {
+        aiUsagePolicy
+      }
+    });
+    const latestPolicy = getLatestCopilotPolicy();
+    const nextPolicy = applyRequestLimitsToCopilotPolicy(
+      latestPolicy,
+      aiUsagePolicy as BuildRequestLimitsSnapshot
+    );
+    if (nextPolicy && nextPolicy !== latestPolicy) {
+      replaceCopilotPolicy(nextPolicy);
+    }
+  }
 
   useEffect(() => {
     function handleWindowResize() {
@@ -5327,6 +5359,7 @@ export default function BuildEditor({
       projectFileDrafts.handleProjectFilesDraftStateChange,
     onRuntimeObservationChange: runtimeFollowUp.handleRuntimeObservationChange,
     onRuntimeUploadsSync: handleRuntimeUploadsSyncFromPreview,
+    onAiUsagePolicyUpdate: handlePreviewAiUsagePolicyUpdate,
     onOpenRuntimeUploadsManager: handleOpenRuntimeUploadsManager,
     currentBuildRuntimeAssets
   };

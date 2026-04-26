@@ -28,6 +28,18 @@ export default function buildRequestHelpers({
     return getFileInfoFromFileName(file?.name || '').fileType === 'video';
   }
 
+  function isRuntimeUploadFileCandidate(file: unknown): file is File {
+    if (!file || typeof file !== 'object') return false;
+    if (typeof File !== 'undefined' && file instanceof File) return true;
+    const candidate = file as File;
+    return (
+      typeof candidate.name === 'string' &&
+      typeof candidate.slice === 'function' &&
+      Number.isFinite(Number(candidate.size)) &&
+      Number(candidate.size) > 0
+    );
+  }
+
   async function prepareBuildRuntimeFileUpload({
     buildId,
     file,
@@ -1062,9 +1074,12 @@ export default function buildRequestHelpers({
     }) {
       try {
         const normalizedFiles = Array.isArray(files)
-          ? files.filter((file) => file instanceof File)
+          ? files.filter(isRuntimeUploadFileCandidate)
           : [];
         if (normalizedFiles.length === 0) {
+          console.warn('[build-runtime-files-upload] no uploadable files', {
+            receivedCount: Array.isArray(files) ? files.length : 0
+          });
           return { assets: [] };
         }
 

@@ -57,6 +57,7 @@ import type {
   PreviewRuntimeUploadAsset
 } from './types';
 import VersionHistoryModal from './VersionHistoryModal';
+import AgentManualPane from './AgentManualPane';
 const GUEST_RESTRICTION_BANNER_TEXT =
   'Some features were restricted because this app uses user-only data. Sign in to access those parts.';
 
@@ -193,9 +194,12 @@ const previewSpinnerClass = css`
   }
 `;
 
+type WorkspaceViewMode = 'preview' | 'code' | 'manual';
+
 const workspaceViewOptions = [
   { value: 'preview', label: 'Preview', icon: 'eye' },
-  { value: 'code', label: 'Code', icon: 'code' }
+  { value: 'code', label: 'Code', icon: 'code' },
+  { value: 'manual', label: 'Manual', icon: 'book-open' }
 ] as const;
 const BUILD_PROJECT_UPLOAD_ACCEPT =
   '.html,.htm,.css,.js,.mjs,.cjs,.json,.txt,.md,.svg,.xml,.csv,.yml,.yaml';
@@ -1080,6 +1084,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       runtimeExplorationPlan = null,
       onRuntimeObservationChange,
       onRuntimeUploadsSync,
+      onAiUsagePolicyUpdate,
       onOpenRuntimeUploadsManager,
       currentBuildRuntimeAssets = EMPTY_PREVIEW_RUNTIME_UPLOAD_ASSETS,
       previewSrcOverride = null,
@@ -1088,7 +1093,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     }: PreviewPanelProps,
     ref
   ) {
-    const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+    const [viewMode, setViewMode] = useState<WorkspaceViewMode>('preview');
     const [historyOpen, setHistoryOpen] = useState(false);
     const [loadingVersions, setLoadingVersions] = useState(false);
     const [versions, setVersions] = useState<ArtifactVersion[]>([]);
@@ -1102,6 +1107,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       onRuntimeObservationChange || null
     );
     const onRuntimeUploadsSyncRef = useRef(onRuntimeUploadsSync || null);
+    const onAiUsagePolicyUpdateRef = useRef(onAiUsagePolicyUpdate || null);
     const onEditableProjectFilesStateChangeRef = useRef(
       onEditableProjectFilesStateChange || null
     );
@@ -1433,6 +1439,9 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const callBuildAiChat = useAppContext(
       (v) => v.requestHelpers.callBuildAiChat
     );
+    const generateAIImage = useAppContext(
+      (v) => v.requestHelpers.generateAIImage
+    );
     const listBuildArtifacts = useAppContext(
       (v) => v.requestHelpers.listBuildArtifacts
     );
@@ -1554,6 +1563,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const uploadBuildDatabaseRef = useRef(uploadBuildDatabase);
     const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
     const callBuildAiChatRef = useRef(callBuildAiChat);
+    const generateAiImageRef = useRef(generateAIImage);
     const listBuildArtifactsRef = useRef(listBuildArtifacts);
     const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
     const restoreBuildArtifactVersionRef = useRef(restoreBuildArtifactVersion);
@@ -1630,6 +1640,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       uploadBuildDatabaseRef,
       loadBuildAiPromptsRef,
       callBuildAiChatRef,
+      generateAiImageRef,
       queryViewerDbRef,
       execViewerDbRef,
       getBuildApiUserRef,
@@ -1867,7 +1878,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setRuntimeObservationState,
       previewAuth,
       requestRefs: previewRequestRefs,
-      runtimeUploadsSyncRef: onRuntimeUploadsSyncRef
+      runtimeUploadsSyncRef: onRuntimeUploadsSyncRef,
+      onAiUsagePolicyUpdateRef
     });
 
     useEffect(() => {
@@ -1892,6 +1904,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     useEffect(() => {
       onRuntimeUploadsSyncRef.current = onRuntimeUploadsSync || null;
     }, [onRuntimeUploadsSync]);
+
+    useEffect(() => {
+      onAiUsagePolicyUpdateRef.current = onAiUsagePolicyUpdate || null;
+    }, [onAiUsagePolicyUpdate]);
 
     useEffect(() => {
       onEditableProjectFilesStateChangeRef.current =
@@ -2170,7 +2186,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       )}`;
     }
 
-    function handleViewModeChange(nextMode: 'preview' | 'code') {
+    function handleViewModeChange(nextMode: WorkspaceViewMode) {
       if (nextMode === viewMode) return;
       if (isShowingStreamingCode) {
         streamingAutoFollowEnabledRef.current = nextMode === 'code';
@@ -3447,7 +3463,7 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                   History
                 </GameCTAButton>
               )}
-              <SegmentedToggle<'preview' | 'code'>
+              <SegmentedToggle<WorkspaceViewMode>
                 value={viewMode}
                 onChange={handleViewModeChange}
                 options={workspaceViewOptions}
@@ -3663,6 +3679,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
                 </p>
               </div>
             )
+          ) : viewMode === 'manual' ? (
+            <AgentManualPane
+              capabilitySnapshot={resolvedCapabilitySnapshot}
+            />
           ) : (
             <CodeWorkspacePane
               displayedProjectFiles={displayedProjectFiles}

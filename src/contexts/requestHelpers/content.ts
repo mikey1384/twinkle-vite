@@ -2132,7 +2132,8 @@ export default function contentRequestHelpers({
       previousResponseId,
       referenceImageB64,
       engine = 'openai',
-      quality = 'high'
+      quality = 'high',
+      requestId
     }: {
       prompt: string;
       previousResponseId?: string;
@@ -2140,6 +2141,7 @@ export default function contentRequestHelpers({
       referenceImageB64?: string;
       engine?: 'gemini' | 'openai';
       quality?: 'low' | 'medium' | 'high';
+      requestId?: string;
     }) {
       try {
         const { data } = await request.post(
@@ -2150,7 +2152,8 @@ export default function contentRequestHelpers({
             previousResponseId,
             referenceImageB64,
             engine,
-            quality
+            quality,
+            requestId
           },
           {
             ...auth(),
@@ -2160,6 +2163,7 @@ export default function contentRequestHelpers({
         );
         return {
           success: true,
+          requestId: data.requestId,
           imageUrl: data.imageUrl,
           responseId: data.responseId,
           imageId: data.imageId,

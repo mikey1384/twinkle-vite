@@ -91,6 +91,7 @@ export default function ImageEditModal({
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isGeneratingRef = useRef(false);
+  const activeImageRequestIdRef = useRef<string | null>(null);
   const clearDrawingOverlayRef = useRef<() => void>(() => {});
   const updateDisplayRef = useRef<() => void>(() => {});
   const lastSavedColorSettingsRef = useRef('');
@@ -399,9 +400,13 @@ export default function ImageEditModal({
       imageUrl?: string;
       error?: string;
       message?: string;
+      requestId?: string;
       aiUsagePolicy?: AiUsagePolicy;
     }) => {
       try {
+        if (!status || shouldIgnoreImageGenerationStatus(status.requestId)) {
+          return;
+        }
         setProgressStage(status.stage);
 
         if (status.stage === 'partial_image' && status.partialImageB64) {
@@ -425,6 +430,7 @@ export default function ImageEditModal({
           setIsGenerating(false);
           setPartialImageData(null);
           setPrompt('');
+          clearActiveImageRequest(status.requestId);
         } else if (status.stage === 'error') {
           const errorMessage =
             status.error ||
@@ -440,6 +446,7 @@ export default function ImageEditModal({
           setIsGenerating(false);
           setProgressStage('not_started');
           setPartialImageData(null);
+          clearActiveImageRequest(status.requestId);
         }
       } catch (err) {
         console.error('Error handling image generation status:', err);
@@ -448,6 +455,7 @@ export default function ImageEditModal({
         setIsGenerating(false);
         setProgressStage('not_started');
         setPartialImageData(null);
+        activeImageRequestIdRef.current = null;
       }
     };
 
@@ -850,6 +858,34 @@ export default function ImageEditModal({
     });
   }
 
+  function createImageRequestId() {
+    return `image-editor-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+  }
+
+  function startImageRequest() {
+    const requestId = createImageRequestId();
+    activeImageRequestIdRef.current = requestId;
+    return requestId;
+  }
+
+  function clearActiveImageRequest(requestId?: string) {
+    const normalizedRequestId = String(requestId || '').trim();
+    if (
+      !normalizedRequestId ||
+      activeImageRequestIdRef.current === normalizedRequestId
+    ) {
+      activeImageRequestIdRef.current = null;
+    }
+  }
+
+  function shouldIgnoreImageGenerationStatus(requestId?: string) {
+    const activeRequestId = String(activeImageRequestIdRef.current || '').trim();
+    const statusRequestId = String(requestId || '').trim();
+    return !activeRequestId || statusRequestId !== activeRequestId;
+  }
+
   async function handlePurchaseAiUsageReset(useCommunityFunds = false) {
     if (aiUsageResetLoading) return;
     setAiUsageResetLoading(true);
@@ -925,6 +961,7 @@ export default function ImageEditModal({
     setError(null);
     setProgressStage('prompt_ready');
     setPartialImageData(null);
+    const requestId = startImageRequest();
 
     try {
       // Get current canvas state as base64
@@ -940,7 +977,8 @@ export default function ImageEditModal({
         prompt: prompt.trim(),
         referenceImageB64: referenceB64,
         engine: 'openai',
-        quality: 'high'
+        quality: 'high',
+        requestId
       });
 
       if (result.aiUsagePolicy) {
@@ -955,6 +993,7 @@ export default function ImageEditModal({
         setPartialImageData(null);
         setPrompt('');
         setProgressStage('completed');
+        clearActiveImageRequest(requestId);
         return;
       }
 
@@ -969,6 +1008,7 @@ export default function ImageEditModal({
           isGeneratingRef.current = false;
           setIsGenerating(false);
           setProgressStage('not_started');
+          clearActiveImageRequest(requestId);
         }
         // If streaming is active, don't show error - let socket determine final state
       }
@@ -985,6 +1025,7 @@ export default function ImageEditModal({
         isGeneratingRef.current = false;
         setIsGenerating(false);
         setProgressStage('not_started');
+        clearActiveImageRequest(requestId);
       }
       // If streaming is active, socket will handle final state
     }

@@ -20,6 +20,7 @@ import {
   executeGuestViewerDbQuery
 } from './guestViewerDb';
 import { socket } from '~/constants/sockets/api';
+import API_URL from '~/constants/URL';
 import type {
   Build,
   PreviewFrameMeta,
@@ -34,13 +35,19 @@ import {
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
   'This feature requires signing in because it uses user-only data.';
+const PREVIEW_DOWNLOAD_PROXY_HOSTS = new Set([
+  'd3jvoamd2k4p0s.cloudfront.net',
+  'twinkle-network.s3.amazonaws.com'
+]);
 const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'ai:chat',
+  'ai:generate-image',
   'chat:create-room',
   'chat:delete-message',
   'chat:send-message',
   'db:save',
   'files:delete',
+  'files:save-as',
   'files:upload-selected',
   'private-db:remove',
   'private-db:set',
@@ -81,6 +88,7 @@ interface PreviewHostBridgeRequestRefs {
   uploadBuildDatabaseRef: AsyncRequestRef;
   loadBuildAiPromptsRef: AsyncRequestRef;
   callBuildAiChatRef: AsyncRequestRef;
+  generateAiImageRef: AsyncRequestRef;
   queryViewerDbRef: AsyncRequestRef;
   execViewerDbRef: AsyncRequestRef;
   getBuildApiUserRef: AsyncRequestRef;
@@ -150,6 +158,9 @@ interface UsePreviewHostBridgeArgs {
   requestRefs: PreviewHostBridgeRequestRefs;
   runtimeUploadsSyncRef: RefObject<
     ((payload: PreviewRuntimeUploadsSyncPayload | null) => void) | null
+  >;
+  onAiUsagePolicyUpdateRef: RefObject<
+    ((aiUsagePolicy: Record<string, any>) => void) | null
   >;
 }
 
@@ -656,6 +667,214 @@ function getViewerInfo(previewAuth: PreviewHostBridgeAuth) {
   };
 }
 
+function normalizePreviewDownloadFileName(rawFileName: unknown) {
+  let fileName = String(rawFileName || '').trim();
+  if (!fileName) fileName = 'download.txt';
+  fileName = fileName
+    .replace(/[\u0000-\u001f\\/:*?"<>|]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!fileName || fileName === '.' || fileName === '..') {
+    fileName = 'download.txt';
+  }
+  return fileName.slice(0, 180);
+}
+
+function isPreviewDownloadBlob(value: any): value is Blob {
+  return (
+    value instanceof Blob ||
+    (value &&
+      typeof value === 'object' &&
+      typeof value.arrayBuffer === 'function' &&
+      typeof value.slice === 'function' &&
+      Number.isFinite(Number(value.size)))
+  );
+}
+
+function isPreviewDownloadArrayBuffer(value: any): value is ArrayBuffer {
+  return typeof ArrayBuffer === 'function' && value instanceof ArrayBuffer;
+}
+
+function isPreviewDownloadTypedArray(value: any) {
+  return (
+    typeof ArrayBuffer !== 'undefined' &&
+    ArrayBuffer.isView &&
+    ArrayBuffer.isView(value)
+  );
+}
+
+function createBlobFromPreviewDownloadDataUrl(
+  dataUrl: string,
+  fallbackMimeType: string
+) {
+  const match = String(dataUrl || '').match(
+    /^data:([^;,]+)(?:;[^,]*)?;base64,(.*)$/i
+  );
+  if (!match) {
+    throw new Error('Invalid data URL for download.');
+  }
+  const binary = atob(String(match[2] || '').replace(/\s/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], {
+    type: match[1] || fallbackMimeType || 'application/octet-stream'
+  });
+}
+
+function createBlobFromPreviewDownloadPayload(payload: any) {
+  const mimeType = String(payload?.mimeType || payload?.type || '').trim();
+  let value: any;
+
+  if (typeof payload?.dataUrl === 'string') {
+    return createBlobFromPreviewDownloadDataUrl(payload.dataUrl, mimeType);
+  }
+  if (isPreviewDownloadBlob(payload?.blob)) {
+    const blob = payload.blob;
+    return mimeType && blob.type !== mimeType
+      ? blob.slice(0, blob.size, mimeType)
+      : blob;
+  }
+  if (isPreviewDownloadBlob(payload?.file)) {
+    const blob = payload.file;
+    return mimeType && blob.type !== mimeType
+      ? blob.slice(0, blob.size, mimeType)
+      : blob;
+  }
+  if (payload && Object.prototype.hasOwnProperty.call(payload, 'bytes')) {
+    value = payload.bytes;
+  } else if (payload && Object.prototype.hasOwnProperty.call(payload, 'text')) {
+    value = payload.text == null ? '' : String(payload.text);
+  } else if (payload && Object.prototype.hasOwnProperty.call(payload, 'data')) {
+    value = payload.data;
+  }
+
+  if (value === undefined) {
+    throw new Error(
+      'Twinkle.files.saveAs requires url, dataUrl, data, text, json, bytes, blob, or file'
+    );
+  }
+
+  const resolvedMimeType =
+    mimeType ||
+    (typeof value === 'string'
+      ? 'text/plain;charset=utf-8'
+      : 'application/octet-stream');
+
+  if (isPreviewDownloadArrayBuffer(value) || isPreviewDownloadTypedArray(value)) {
+    return new Blob([value], { type: resolvedMimeType });
+  }
+  if (typeof value === 'string' && value.indexOf('data:') === 0) {
+    return createBlobFromPreviewDownloadDataUrl(value, resolvedMimeType);
+  }
+  if (typeof value === 'string') {
+    return new Blob([value], { type: resolvedMimeType });
+  }
+  const serializedValue = JSON.stringify(value, null, 2);
+  return new Blob([serializedValue ?? String(value)], {
+    type: resolvedMimeType
+  });
+}
+
+function triggerPreviewObjectUrlDownload(blob: Blob, fileName: string) {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = fileName;
+  link.rel = 'noopener';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  return {
+    success: true,
+    fileName,
+    size: blob.size,
+    mimeType: blob.type || '',
+    method: 'object-url-anchor'
+  };
+}
+
+function getPreviewDownloadFetchUrl(parsedUrl: URL) {
+  if (PREVIEW_DOWNLOAD_PROXY_HOSTS.has(parsedUrl.hostname)) {
+    return `${API_URL}/content/image/proxy?url=${encodeURIComponent(
+      parsedUrl.href
+    )}`;
+  }
+  return parsedUrl.href;
+}
+
+async function createBlobFromPreviewDownloadUrl(
+  parsedUrl: URL,
+  fallbackMimeType: string
+) {
+  const fetchUrl = getPreviewDownloadFetchUrl(parsedUrl);
+  let response: Response;
+  try {
+    response = await fetch(fetchUrl, { credentials: 'omit' });
+  } catch {
+    throw new Error(
+      'Could not fetch download URL. The remote server may block browser downloads.'
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(`Could not fetch download URL (${response.status}).`);
+  }
+
+  const blob = await response.blob();
+  return fallbackMimeType && blob.type !== fallbackMimeType
+    ? blob.slice(0, blob.size, fallbackMimeType)
+    : blob;
+}
+
+async function triggerPreviewUrlDownload(
+  url: string,
+  fileName: string,
+  mimeType: string
+) {
+  const parsedUrl = new URL(String(url || '').trim(), window.location.href);
+  if (!/^https?:$/i.test(parsedUrl.protocol)) {
+    throw new Error('Invalid URL for download.');
+  }
+
+  if (parsedUrl.origin === window.location.origin) {
+    const link = document.createElement('a');
+    link.href = parsedUrl.href;
+    link.download = fileName;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return {
+      success: true,
+      fileName,
+      mimeType: '',
+      method: 'same-origin-anchor'
+    };
+  }
+
+  const blob = await createBlobFromPreviewDownloadUrl(parsedUrl, mimeType);
+  return triggerPreviewObjectUrlDownload(blob, fileName);
+}
+
+async function triggerPreviewLocalDownload(payload: any) {
+  const fileName = normalizePreviewDownloadFileName(
+    payload?.fileName || payload?.name || payload?.file?.name || 'download'
+  );
+
+  if (typeof payload?.url === 'string' && payload.url.trim()) {
+    const mimeType = String(payload?.mimeType || payload?.type || '').trim();
+    return triggerPreviewUrlDownload(payload.url, fileName, mimeType);
+  }
+
+  const blob = createBlobFromPreviewDownloadPayload(payload);
+  return triggerPreviewObjectUrlDownload(blob, fileName);
+}
+
 function postToPreviewFrames(
   primaryIframeRef: RefObject<HTMLIFrameElement | null>,
   secondaryIframeRef: RefObject<HTMLIFrameElement | null>,
@@ -780,7 +999,8 @@ export function usePreviewHostBridge({
   setRuntimeObservationState,
   previewAuth,
   requestRefs,
-  runtimeUploadsSyncRef
+  runtimeUploadsSyncRef,
+  onAiUsagePolicyUpdateRef
 }: UsePreviewHostBridgeArgs) {
   useEffect(() => {
     const viewer = getViewerInfo(previewAuth);
@@ -845,6 +1065,15 @@ export function usePreviewHostBridge({
 
   useEffect(() => {
     const chatSubscriptions = new Map<string, Set<Window>>();
+    const activeAiImageStatusTargets = new Map<
+      string,
+      {
+        requestId: string;
+        sourceWindow: Window;
+        statusCount: number;
+        terminalStatusForwarded: boolean;
+      }
+    >();
 
     function subscribeBuildRuntimeChatRoom(buildId: number, roomKey: string) {
       socket.emit('build_app_chat_subscribe', {
@@ -868,6 +1097,157 @@ export function usePreviewHostBridge({
       });
     }
 
+    async function ensureAiImageNotificationChannel() {
+      const userId = previewAuth.userIdRef.current;
+      if (!userId) return;
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const timeout = window.setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        }, 1000);
+        try {
+          socket.emit(
+            'enter_my_notification_channel',
+            userId,
+            () => {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timeout);
+              resolve();
+            }
+          );
+        } catch {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          resolve();
+        }
+      });
+    }
+
+    function handleAiImageGenerationStatus(payload: any) {
+      let appliedAiUsagePolicy = false;
+      for (const target of activeAiImageStatusTargets.values()) {
+        const payloadRequestId = String(payload?.requestId || '').trim();
+        if (!payloadRequestId || payloadRequestId !== target.requestId) {
+          continue;
+        }
+        if (
+          !appliedAiUsagePolicy &&
+          payload?.aiUsagePolicy &&
+          typeof payload.aiUsagePolicy === 'object'
+        ) {
+          appliedAiUsagePolicy = true;
+          onAiUsagePolicyUpdateRef.current?.(payload.aiUsagePolicy);
+        }
+        target.statusCount += 1;
+        const stage = String(payload?.stage || '').trim();
+        if (stage === 'completed' || stage === 'error') {
+          target.terminalStatusForwarded = true;
+        }
+        const targetWindow = target.sourceWindow;
+        const targetBridge = getMessageTargetBridgeForWindow(targetWindow);
+        try {
+          targetWindow.postMessage(
+            {
+              source: 'twinkle-parent',
+              type: 'ai:image-generation-status',
+              previewNonce: targetBridge.previewNonce,
+              payload
+            },
+            targetBridge.targetOrigin
+          );
+        } catch (error) {
+          console.error(
+            'Failed to forward AI image generation status to build preview:',
+            error
+          );
+        }
+      }
+    }
+
+    function buildTerminalAiImageStatusFromResponse({
+      response,
+      requestId
+    }: {
+      response: any;
+      requestId: string;
+    }) {
+      if (response?.success === false) {
+        const errorMessage =
+          response.error ||
+          response.message ||
+          'Image generation failed';
+        return {
+          requestId,
+          stage: 'error',
+          error: errorMessage,
+          message: errorMessage,
+          ...(response.code ? { code: response.code } : {}),
+          ...(response.reason ? { reason: response.reason } : {}),
+          ...(response.aiUsagePolicy
+            ? { aiUsagePolicy: response.aiUsagePolicy }
+            : {})
+        };
+      }
+
+      if (response?.imageUrl) {
+        return {
+          requestId,
+          stage: 'completed',
+          imageUrl: response.imageUrl,
+          responseId: response.responseId,
+          imageId: response.imageId,
+          engine: response.engine,
+          quality: response.quality,
+          ...(response.aiUsagePolicy
+            ? { aiUsagePolicy: response.aiUsagePolicy }
+            : {})
+        };
+      }
+
+      return null;
+    }
+
+    function forwardTerminalAiImageStatusIfNeeded({
+      target,
+      response
+    }: {
+      target: {
+        requestId: string;
+        sourceWindow: Window;
+        statusCount: number;
+        terminalStatusForwarded: boolean;
+      };
+      response: any;
+    }) {
+      if (target.terminalStatusForwarded) return;
+      const terminalStatus = buildTerminalAiImageStatusFromResponse({
+        response,
+        requestId: target.requestId
+      });
+      if (!terminalStatus) return;
+      handleAiImageGenerationStatus(terminalStatus);
+    }
+
+    function buildAiImageErrorResponse(error: any) {
+      const errorMessage =
+        error?.message ||
+        error?.error ||
+        error?.toString?.() ||
+        'Image generation failed';
+      return {
+        success: false,
+        error: errorMessage,
+        message: errorMessage,
+        ...(error?.code ? { code: error.code } : {}),
+        ...(error?.reason ? { reason: error.reason } : {}),
+        ...(error?.aiUsagePolicy ? { aiUsagePolicy: error.aiUsagePolicy } : {})
+      };
+    }
+
     function replayBuildRuntimeChatSubscriptions() {
       for (const subscriptionKey of chatSubscriptions.keys()) {
         const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
@@ -880,6 +1260,9 @@ export function usePreviewHostBridge({
 
     function handleSocketAuthReady() {
       replayBuildRuntimeChatSubscriptions();
+      if (activeAiImageStatusTargets.size > 0) {
+        void ensureAiImageNotificationChannel();
+      }
     }
 
     function getMessageTargetBridgeForWindow(targetWindow: Window) {
@@ -1197,6 +1580,53 @@ export function usePreviewHostBridge({
             });
             break;
 
+          case 'ai:generate-image':
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
+            }
+            activeAiImageStatusTargets.set(id, {
+              requestId: String(payload?.requestId || id),
+              sourceWindow,
+              statusCount: 0,
+              terminalStatusForwarded: false
+            });
+            const aiImageStatusTarget = activeAiImageStatusTargets.get(id);
+            try {
+              await ensureAiImageNotificationChannel();
+              response = await requestRefs.generateAiImageRef.current({
+                prompt: payload?.prompt,
+                previousImageId: payload?.previousImageId,
+                previousResponseId: payload?.previousResponseId,
+                referenceImageB64: payload?.referenceImageB64,
+                engine: payload?.engine || 'openai',
+                quality: payload?.quality || 'high',
+                requestId: payload?.requestId || id
+              });
+              if (
+                response?.aiUsagePolicy &&
+                typeof response.aiUsagePolicy === 'object'
+              ) {
+                onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+              }
+              if (aiImageStatusTarget) {
+                forwardTerminalAiImageStatusIfNeeded({
+                  target: aiImageStatusTarget,
+                  response
+                });
+              }
+            } catch (error: any) {
+              if (aiImageStatusTarget) {
+                forwardTerminalAiImageStatusIfNeeded({
+                  target: aiImageStatusTarget,
+                  response: buildAiImageErrorResponse(error)
+                });
+              }
+              throw error;
+            } finally {
+              activeAiImageStatusTargets.delete(id);
+            }
+            break;
+
           case 'viewer:get':
             response = { viewer: getViewerInfo(previewAuth) };
             break;
@@ -1305,6 +1735,10 @@ export function usePreviewHostBridge({
             }
             break;
           }
+
+          case 'files:save-as':
+            response = await triggerPreviewLocalDownload(payload);
+            break;
 
           case 'files:list': {
             const filesReadToken = await ensureBuildApiToken(
@@ -1812,6 +2246,10 @@ export function usePreviewHostBridge({
       handleSocketAuthReady
     );
     socket.on('build_app_chat_event', handleBuildRuntimeChatEvent);
+    socket.on(
+      'image_generation_status_received',
+      handleAiImageGenerationStatus
+    );
     return () => {
       window.removeEventListener('message', handleMessage);
       window.removeEventListener(
@@ -1819,6 +2257,10 @@ export function usePreviewHostBridge({
         handleSocketAuthReady
       );
       socket.off('build_app_chat_event', handleBuildRuntimeChatEvent);
+      socket.off(
+        'image_generation_status_received',
+        handleAiImageGenerationStatus
+      );
       for (const subscriptionKey of chatSubscriptions.keys()) {
         const [rawBuildId, ...roomKeyParts] = subscriptionKey.split(':');
         const subscribedBuildId = Number(rawBuildId);
@@ -1827,6 +2269,7 @@ export function usePreviewHostBridge({
         unsubscribeBuildRuntimeChatRoom(subscribedBuildId, subscribedRoomKey);
       }
       chatSubscriptions.clear();
+      activeAiImageStatusTargets.clear();
     };
   }, [
     buildId,
@@ -1840,6 +2283,7 @@ export function usePreviewHostBridge({
     primaryIframeRef,
     requestRefs,
     runtimeUploadsSyncRef,
+    onAiUsagePolicyUpdateRef,
     runtimeExplorationPlanRef,
     runtimeOnly,
     secondaryIframeRef,
