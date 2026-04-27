@@ -53,11 +53,5 @@ export function recordChatBootstrapEvent(
     targetWindow.__chatBootstrapHistory = history;
   }
 
-  console.log('[chat-bootstrap]', entry);
-  try {
-    console.log(`[chat-bootstrap-json] ${JSON.stringify(entry)}`);
-  } catch {
-    console.log('[chat-bootstrap-json] {"event":"serialization_failed"}');
-  }
   return entry;
 }
