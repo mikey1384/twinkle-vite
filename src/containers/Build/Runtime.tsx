@@ -1,12 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { css } from '@emotion/css';
 import ErrorBoundary from '~/components/ErrorBoundary';
 import InvalidPage from '~/components/InvalidPage';
 import Loading from '~/components/Loading';
 import Icon from '~/components/Icon';
+import AiEnergyCard from '~/components/AiEnergyCard';
 import { mobileMaxWidth } from '~/constants/css';
-import { useAppContext, useKeyContext } from '~/contexts';
+import { isCommunityFundRechargeAvailable } from '~/helpers/aiEnergy';
+import { useAppContext, useKeyContext, useNotiContext } from '~/contexts';
 import PreviewPanel from './PreviewPanel';
 import type { BuildCapabilitySnapshot } from './capabilityTypes';
 
@@ -31,6 +33,21 @@ interface RuntimeBuild {
   }>;
 }
 
+interface AiUsagePolicy {
+  energyPercent?: number;
+  energyRemaining?: number;
+  energySegments?: number;
+  currentMode?: 'full_quality' | 'low_energy';
+  lastUsageOverflowed?: boolean;
+  resetCost?: number;
+  resetPurchasesToday?: number;
+  dayIndex?: number | string;
+  communityFundRechargeCoinsRemaining?: number | null;
+  communityFundResetEligibility?: {
+    eligible?: boolean | null;
+  } | null;
+}
+
 const shellClass = css`
   width: 100%;
   min-width: 0;
@@ -47,6 +64,7 @@ const shellClass = css`
 `;
 
 const headerClass = css`
+  position: relative;
   border-bottom: 1px solid var(--ui-border);
   background: #fff;
   padding: 1.1rem 1.3rem 1rem;
@@ -60,11 +78,44 @@ const headerClass = css`
 `;
 
 const headerTopRowClass = css`
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 0.7rem;
   min-width: 0;
   flex-wrap: wrap;
+`;
+
+const headerButtonGroupClass = css`
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  flex-wrap: wrap;
+`;
+
+const headerEnergySlotClass = css`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(36rem, 38vw);
+  min-width: 18rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  @media (max-width: 900px) {
+    position: static;
+    width: min(100%, 36rem);
+    min-width: 0;
+    margin: 0.1rem auto 0.2rem;
+    transform: none;
+  }
+`;
+
+const runtimeEnergyCardClass = css`
+  width: 100%;
 `;
 
 const titleRowClass = css`
@@ -159,12 +210,30 @@ export default function BuildRuntime() {
   const { buildId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const loadRuntimeBuild = useAppContext((v) => v.requestHelpers.loadRuntimeBuild);
+  const loadRuntimeBuild = useAppContext(
+    (v) => v.requestHelpers.loadRuntimeBuild
+  );
+  const getAiEnergyPolicy = useAppContext(
+    (v) => v.requestHelpers.getAiEnergyPolicy
+  );
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
+  const todayStats = useNotiContext((v) => v.state.todayStats);
   const userId = useKeyContext((v) => v.myState.userId);
+  const communityFunds = useKeyContext((v) => v.myState.communityFunds);
+  const communityFundsLoaded = useKeyContext(
+    (v) => v.myState.communityFundsLoaded
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [build, setBuild] = useState<RuntimeBuild | null>(null);
   const [runtimeHostVisible, setRuntimeHostVisible] = useState(true);
+  const [aiUsagePolicyLoadAttempted, setAiUsagePolicyLoadAttempted] =
+    useState(false);
+  const getAiEnergyPolicyRef = useRef(getAiEnergyPolicy);
+  const onUpdateTodayStatsRef = useRef(onUpdateTodayStats);
+  const aiUsagePolicy = todayStats?.aiUsagePolicy as AiUsagePolicy | null;
 
   const numericBuildId = useMemo(() => {
     const id = parseInt(buildId || '', 10);
@@ -189,6 +258,31 @@ export default function BuildRuntime() {
         ? 'Go back'
         : 'Back to Twinkle';
   }, [canUseHistoryBack, location.state]);
+  const showAiEnergy = !!userId && !!aiUsagePolicy;
+  const energyPercent = Math.max(
+    0,
+    Math.min(100, Number(aiUsagePolicy?.energyPercent ?? 0))
+  );
+  const energySegments = Math.max(
+    1,
+    Number(aiUsagePolicy?.energySegments || 5)
+  );
+  const energyIsEmpty =
+    !!aiUsagePolicy && Number(aiUsagePolicy.energyRemaining || 0) <= 0;
+  const communityChargeAvailable = isCommunityFundRechargeAvailable({
+    aiUsagePolicy,
+    communityFunds,
+    communityFundsKnown: communityFundsLoaded
+  });
+  const energyChargeAttentionKey = aiUsagePolicy
+    ? [
+        'runtime-app',
+        aiUsagePolicy.dayIndex || 'unknown',
+        energyIsEmpty ? 'empty' : 'available',
+        communityChargeAvailable ? 'free' : 'paid',
+        aiUsagePolicy.resetCost || 0
+      ].join(':')
+    : '';
 
   function handleBack() {
     if (canUseHistoryBack) {
@@ -200,6 +294,17 @@ export default function BuildRuntime() {
 
   function handleGoToBuildMenu() {
     navigate('/build');
+  }
+
+  function applyRuntimeAiUsagePolicyUpdate(
+    nextAiUsagePolicy?: Record<string, any> | null
+  ) {
+    if (!nextAiUsagePolicy || typeof nextAiUsagePolicy !== 'object') return;
+    onUpdateTodayStatsRef.current({
+      newStats: {
+        aiUsagePolicy: nextAiUsagePolicy
+      }
+    });
   }
 
   function renderRuntimeUnavailable({
@@ -218,23 +323,25 @@ export default function BuildRuntime() {
           {!isEmbedded && (
             <div className={headerClass}>
               <div className={headerTopRowClass}>
-                <button
-                  type="button"
-                  className={backButtonClass}
-                  onClick={handleBack}
-                >
-                  <Icon icon="arrow-left" />
-                  <span>{backLabel}</span>
-                </button>
-                <button
-                  type="button"
-                  className={backButtonClass}
-                  onClick={handleGoToBuildMenu}
-                  title="Go to build main menu"
-                >
-                  <Icon icon="rocket-launch" />
-                  <span>Build Menu</span>
-                </button>
+                <div className={headerButtonGroupClass}>
+                  <button
+                    type="button"
+                    className={backButtonClass}
+                    onClick={handleBack}
+                  >
+                    <Icon icon="arrow-left" />
+                    <span>{backLabel}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={backButtonClass}
+                    onClick={handleGoToBuildMenu}
+                    title="Go to build main menu"
+                  >
+                    <Icon icon="rocket-launch" />
+                    <span>Build Menu</span>
+                  </button>
+                </div>
               </div>
               <div className={titleRowClass}>
                 <Icon icon="laptop-code" />
@@ -255,6 +362,42 @@ export default function BuildRuntime() {
   }
 
   useEffect(() => {
+    getAiEnergyPolicyRef.current = getAiEnergyPolicy;
+    onUpdateTodayStatsRef.current = onUpdateTodayStats;
+  });
+
+  useEffect(() => {
+    if (userId) return;
+    setAiUsagePolicyLoadAttempted(false);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || aiUsagePolicy || aiUsagePolicyLoadAttempted) return;
+    let cancelled = false;
+    setAiUsagePolicyLoadAttempted(true);
+
+    async function loadAiEnergyPolicy() {
+      try {
+        const result = await getAiEnergyPolicyRef.current();
+        if (!cancelled && result?.aiUsagePolicy) {
+          onUpdateTodayStatsRef.current({
+            newStats: {
+              aiUsagePolicy: result.aiUsagePolicy
+            }
+          });
+        }
+      } catch {
+        // AI Energy is non-critical chrome on public app pages.
+      }
+    }
+
+    void loadAiEnergyPolicy();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, aiUsagePolicy, aiUsagePolicyLoadAttempted]);
+
+  useEffect(() => {
     if (!numericBuildId) return;
     void handleLoad();
 
@@ -267,7 +410,9 @@ export default function BuildRuntime() {
           setBuild({
             ...data.build,
             capabilitySnapshot: data.capabilitySnapshot || null,
-            projectFiles: Array.isArray(data.projectFiles) ? data.projectFiles : []
+            projectFiles: Array.isArray(data.projectFiles)
+              ? data.projectFiles
+              : []
           });
         } else {
           setError('Build not found');
@@ -326,24 +471,46 @@ export default function BuildRuntime() {
         {!isEmbedded && (
           <div className={headerClass}>
             <div className={headerTopRowClass}>
-              <button
-                type="button"
-                className={backButtonClass}
-                onClick={handleBack}
-              >
-                <Icon icon="arrow-left" />
-                <span>{backLabel}</span>
-              </button>
-              <button
-                type="button"
-                className={backButtonClass}
-                onClick={handleGoToBuildMenu}
-                title="Go to build main menu"
-              >
-                <Icon icon="rocket-launch" />
-                <span>Build Menu</span>
-              </button>
+              <div className={headerButtonGroupClass}>
+                <button
+                  type="button"
+                  className={backButtonClass}
+                  onClick={handleBack}
+                >
+                  <Icon icon="arrow-left" />
+                  <span>{backLabel}</span>
+                </button>
+                <button
+                  type="button"
+                  className={backButtonClass}
+                  onClick={handleGoToBuildMenu}
+                  title="Go to build main menu"
+                >
+                  <Icon icon="rocket-launch" />
+                  <span>Build Menu</span>
+                </button>
+              </div>
             </div>
+            {showAiEnergy && (
+              <div className={headerEnergySlotClass}>
+                <AiEnergyCard
+                  variant="inline"
+                  className={runtimeEnergyCardClass}
+                  energyPercent={energyPercent}
+                  energySegments={energySegments}
+                  overflowed={aiUsagePolicy.lastUsageOverflowed}
+                  resetNeeded={energyIsEmpty}
+                  resetCost={aiUsagePolicy.resetCost || 0}
+                  resetPurchaseNumber={
+                    typeof aiUsagePolicy.resetPurchasesToday === 'number'
+                      ? aiUsagePolicy.resetPurchasesToday + 1
+                      : undefined
+                  }
+                  communityFundsEligible={communityChargeAvailable}
+                  chargeCtaAttentionKey={energyChargeAttentionKey}
+                />
+              </div>
+            )}
             <div className={titleRowClass}>
               <Icon icon="laptop-code" />
               <h1 className={titleClass}>{build.title}</h1>
@@ -368,6 +535,7 @@ export default function BuildRuntime() {
               runtimeOnly
               runtimeHostVisible={runtimeHostVisible}
               capabilitySnapshot={build.capabilitySnapshot || null}
+              onAiUsagePolicyUpdate={applyRuntimeAiUsagePolicyUpdate}
               onReplaceCode={() => {}}
               onApplyRestoredProjectFiles={() => {}}
               onSaveProjectFiles={async () => ({ success: false })}

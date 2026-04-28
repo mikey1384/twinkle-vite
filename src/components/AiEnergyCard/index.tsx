@@ -569,7 +569,9 @@ const cellCls = css`
   border-radius: 6px;
   border: 2px solid;
   background-clip: padding-box;
-  transition: background 0.2s ease, border-color 0.2s ease,
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
     box-shadow 0.2s ease;
 `;
 
