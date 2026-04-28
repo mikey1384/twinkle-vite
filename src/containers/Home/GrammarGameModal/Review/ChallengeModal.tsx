@@ -4,7 +4,12 @@ import Modal from '~/components/Modal';
 import GameCTAButton from '~/components/Buttons/GameCTAButton';
 import { css } from '@emotion/css';
 import { Color } from '~/constants/css';
-import { useAppContext, useKeyContext, useViewContext } from '~/contexts';
+import {
+  useAppContext,
+  useKeyContext,
+  useNotiContext,
+  useViewContext
+} from '~/contexts';
 import { socket } from '~/constants/sockets/api';
 import StreamingThoughtContent from '~/components/StreamingThoughtContent';
 
@@ -30,6 +35,9 @@ export default function ChallengeModal({
     (v) => v.requestHelpers.challengeGrammarQuestion
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
+  const onUpdateTodayStats = useNotiContext(
+    (v) => v.actions.onUpdateTodayStats
+  );
   const userId = useKeyContext((v) => v.myState.userId);
   const [challenging, setChallenging] = useState(false);
   const [accepted, setAccepted] = useState(false);
@@ -184,10 +192,17 @@ export default function ChallengeModal({
       isSubmittingRef.current = true;
       setChallenging(true);
       setChallengeError('');
-      const { explanation, newBalance, justified } =
+      const { explanation, newBalance, justified, aiUsagePolicy } =
         await challengeGrammarQuestion({
           questionId
         });
+      if (aiUsagePolicy) {
+        onUpdateTodayStats({
+          newStats: {
+            aiUsagePolicy
+          }
+        });
+      }
       onAfterSuccess({ explanation, newBalance, justified });
       if (typeof newBalance === 'number') {
         onSetUserState({ userId, newState: { twinkleCoins: newBalance } });
@@ -198,6 +213,13 @@ export default function ChallengeModal({
         onClose();
       }
     } catch (error: any) {
+      if (error?.aiUsagePolicy) {
+        onUpdateTodayStats({
+          newStats: {
+            aiUsagePolicy: error.aiUsagePolicy
+          }
+        });
+      }
       setChallengeError(
         error?.message || 'Challenge failed. Please try again in a moment.'
       );

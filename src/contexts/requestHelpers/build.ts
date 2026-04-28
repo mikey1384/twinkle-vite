@@ -10,6 +10,19 @@ export default function buildRequestHelpers({
 }: RequestHelpers) {
   const BUILD_RUNTIME_UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024;
 
+  interface BuildRuntimeAiChatStreamEvent {
+    type?: string;
+    status?: string;
+    text?: string;
+    response?: string;
+    delta?: string;
+    done?: boolean;
+    model?: string;
+    aiUsagePolicy?: Record<string, any>;
+    error?: string;
+    code?: string;
+  }
+
   function getBuildApiConfig(token?: string) {
     return {
       ...auth(),
@@ -18,6 +31,69 @@ export default function buildRequestHelpers({
         ...(token ? { 'x-build-api-token': token } : {})
       }
     };
+  }
+
+  function getFetchAuthHeaders(extraHeaders?: Record<string, string>) {
+    const headers = new Headers();
+    const authHeaders = auth()?.headers || {};
+    Object.entries(authHeaders).forEach(([key, value]) => {
+      if (value == null) return;
+      headers.set(key, String(value));
+    });
+    Object.entries(extraHeaders || {}).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+    return headers;
+  }
+
+  async function readBuildRuntimeAiChatStream({
+    response,
+    onEvent
+  }: {
+    response: Response;
+    onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
+  }) {
+    const decoder = new TextDecoder();
+    const reader = response.body?.getReader();
+    let buffer = '';
+    let finalEvent: BuildRuntimeAiChatStreamEvent | null = null;
+
+    function consumeLine(rawLine: string) {
+      const line = rawLine.trim();
+      if (!line) return;
+      const event = JSON.parse(line) as BuildRuntimeAiChatStreamEvent;
+      onEvent?.(event);
+      if (event.type === 'error') {
+        throw new Error(event.error || 'AI chat stream failed');
+      }
+      if (event.type === 'done') {
+        finalEvent = event;
+      }
+    }
+
+    if (!reader) {
+      const text = await response.text();
+      text.split('\n').forEach(consumeLine);
+      return finalEvent || {};
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        consumeLine(line);
+      }
+    }
+
+    buffer += decoder.decode();
+    if (buffer.trim()) {
+      consumeLine(buffer);
+    }
+
+    return finalEvent || {};
   }
 
   function isVideoRuntimeUploadCandidate(file: File) {
@@ -263,7 +339,15 @@ export default function buildRequestHelpers({
           auth()
         );
         return data;
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: error.response.status,
+            message: error.response.data.error || 'AI chat failed',
+            code: error.response.data.code,
+            aiUsagePolicy: error.response.data.aiUsagePolicy
+          });
+        }
         return handleError(error);
       }
     },
@@ -822,6 +906,86 @@ export default function buildRequestHelpers({
         );
         return data;
       } catch (error) {
+        return handleError(error);
+      }
+    },
+
+    async callBuildRuntimeAiChat({
+      buildId,
+      promptId,
+      message,
+      history
+    }: {
+      buildId: number;
+      promptId?: number;
+      message: string;
+      history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    }) {
+      try {
+        const { data } = await request.post(
+          `${URL}/build/${buildId}/runtime-ai-chat`,
+          { promptId, message, history },
+          auth()
+        );
+        return data;
+      } catch (error: any) {
+        const response = error?.response;
+        if (response?.data?.code || response?.data?.aiUsagePolicy) {
+          return Promise.reject({
+            status: response.status,
+            message:
+              response.data.error ||
+              response.data.message ||
+              'AI chat failed',
+            code: response.data.code,
+            aiUsagePolicy: response.data.aiUsagePolicy
+          });
+        }
+        return handleError(error);
+      }
+    },
+
+    async callBuildRuntimeAiChatStream({
+      buildId,
+      promptId,
+      message,
+      history,
+      onEvent
+    }: {
+      buildId: number;
+      promptId?: number;
+      message: string;
+      history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+      onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
+    }) {
+      try {
+        const response = await fetch(
+          `${URL}/build/${buildId}/runtime-ai-chat/stream`,
+          {
+            method: 'POST',
+            headers: getFetchAuthHeaders({
+              Accept: 'application/x-ndjson',
+              'Content-Type': 'application/json'
+            }),
+            body: JSON.stringify({ promptId, message, history })
+          }
+        );
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          const error: any = new Error(
+            errorPayload?.error || 'AI chat stream failed'
+          );
+          if (errorPayload?.code) error.code = errorPayload.code;
+          if (errorPayload?.aiUsagePolicy) {
+            error.aiUsagePolicy = errorPayload.aiUsagePolicy;
+          }
+          throw error;
+        }
+        return await readBuildRuntimeAiChatStream({ response, onEvent });
+      } catch (error: any) {
+        if (error?.aiUsagePolicy || error?.code) {
+          return Promise.reject(error);
+        }
         return handleError(error);
       }
     },

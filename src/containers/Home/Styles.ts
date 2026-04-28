@@ -16,13 +16,20 @@ export const Left = css`
   top: 4.5rem;
   width: 18vw;
 
+  height: calc(100vh - 4.5rem);
+  height: calc(100dvh - 4.5rem);
   max-height: calc(100vh - 4.5rem);
+  max-height: calc(100dvh - 4.5rem);
 
   display: flex;
   flex-direction: column;
 
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  scroll-padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 7rem);
 
   @media (max-width: ${mobileMaxWidth}) {
     display: none;

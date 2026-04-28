@@ -40,6 +40,7 @@ const guideSections: GuideSection[] = [
     title: 'Runtime model',
     items: [
       'Build apps run in a sandboxed iframe with window.Twinkle injected.',
+      'Build apps do not have app-local backend routes. Do not create or fetch /api/* endpoints from the iframe.',
       'Local project paths should be relative, such as ./src/app.js or /src/app.js from /index.html.',
       'The SDK methods proxy through the parent app and backend. Signed-in and owner-only checks are enforced outside the iframe.',
       'When an SDK call returns aiUsagePolicy, update the app UI from that returned policy instead of guessing battery state.'
@@ -59,13 +60,15 @@ const sdkSections: GuideSection[] = [
     title: 'Twinkle.ai',
     items: [
       'await Twinkle.ai.generateImage({ prompt, referenceImageB64, engine: "openai", quality: "high", requestId, onStatus }) generates or edits an image.',
-      'onStatus receives real-time stages: prompt_ready, in_progress, generating, partial_image, completed, and error.',
+      'await Twinkle.ai.chat({ message, history, onText, onStatus }) generates text with the default Lumine text model and streams accumulated text through onText when provided.',
+      'Use Twinkle.ai.chat for in-app AI replies instead of creating or fetching app-local endpoints such as /api/chat.',
+      'Image onStatus receives stages such as prompt_ready, in_progress, generating, partial_image, completed, and error; text onStatus receives thinking, completed, or error.',
       'Use status.partialImageB64 for progressive preview UI while the final imageUrl is still generating.',
+      'For text chat UIs, use onText to render the assistant response as it arrives, then use the resolved result for the final text and aiUsagePolicy.',
       'Twinkle.ai.onImageGenerationStatus(listener) returns an unsubscribe function for shared streaming UI.',
       'Pass a unique requestId to correlate iframe logs, parent bridge logs, and backend stream logs for one generation.',
-      'Signed-in viewers only. Each successful image generation consumes AI Energy from the signed-in viewer.',
-      'The prompt and optional reference image are sent to the configured image AI provider.',
-      'await Twinkle.ai.chat(...) is owner workspace chat and should not be used for manual external-agent building.'
+      'Signed-in viewers only. Each successful image or text generation consumes AI Energy from the signed-in viewer.',
+      'The prompt, message, optional history, and optional reference image are sent to the configured AI provider.'
     ]
   },
   {

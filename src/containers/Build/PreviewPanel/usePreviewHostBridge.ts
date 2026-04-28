@@ -88,6 +88,8 @@ interface PreviewHostBridgeRequestRefs {
   uploadBuildDatabaseRef: AsyncRequestRef;
   loadBuildAiPromptsRef: AsyncRequestRef;
   callBuildAiChatRef: AsyncRequestRef;
+  callBuildRuntimeAiChatRef: AsyncRequestRef;
+  callBuildRuntimeAiChatStreamRef: AsyncRequestRef;
   generateAiImageRef: AsyncRequestRef;
   queryViewerDbRef: AsyncRequestRef;
   execViewerDbRef: AsyncRequestRef;
@@ -1293,6 +1295,33 @@ export function usePreviewHostBridge({
       return { targetOrigin: '*', previewNonce: null };
     }
 
+    function forwardAiChatStreamEventToFrame({
+      sourceWindow,
+      requestId,
+      event
+    }: {
+      sourceWindow: Window;
+      requestId: string;
+      event: any;
+    }) {
+      if (event?.aiUsagePolicy && typeof event.aiUsagePolicy === 'object') {
+        onAiUsagePolicyUpdateRef.current?.(event.aiUsagePolicy);
+      }
+      const targetBridge = getMessageTargetBridgeForWindow(sourceWindow);
+      sourceWindow.postMessage(
+        {
+          source: 'twinkle-parent',
+          type: 'ai:chat-status',
+          previewNonce: targetBridge.previewNonce,
+          payload: {
+            requestId,
+            ...(event || {})
+          }
+        },
+        targetBridge.targetOrigin
+      );
+    }
+
     async function handleMessage(event: MessageEvent) {
       const data = event.data;
       if (!data || data.source !== 'twinkle-build') return;
@@ -1569,15 +1598,39 @@ export function usePreviewHostBridge({
             break;
 
           case 'ai:chat':
-            if (!owner) {
-              throw new Error('Not authorized');
+            if (!previewAuth.userIdRef.current) {
+              triggerGuestRestriction(previewAuth);
             }
-            response = await requestRefs.callBuildAiChatRef.current({
-              buildId: activeBuild.id,
-              promptId: payload.promptId,
-              message: payload.message,
-              history: payload.history
-            });
+            if (payload?.stream) {
+              const requestId = String(payload?.requestId || id);
+              response =
+                await requestRefs.callBuildRuntimeAiChatStreamRef.current({
+                  buildId: activeBuild.id,
+                  promptId: payload.promptId,
+                  message: payload.message,
+                  history: payload.history,
+                  onEvent: (streamEvent: any) => {
+                    forwardAiChatStreamEventToFrame({
+                      sourceWindow,
+                      requestId,
+                      event: streamEvent
+                    });
+                  }
+                });
+            } else {
+              response = await requestRefs.callBuildRuntimeAiChatRef.current({
+                buildId: activeBuild.id,
+                promptId: payload.promptId,
+                message: payload.message,
+                history: payload.history
+              });
+            }
+            if (
+              response?.aiUsagePolicy &&
+              typeof response.aiUsagePolicy === 'object'
+            ) {
+              onAiUsagePolicyUpdateRef.current?.(response.aiUsagePolicy);
+            }
             break;
 
           case 'ai:generate-image':
@@ -2228,6 +2281,12 @@ export function usePreviewHostBridge({
           previewMessageTargetOrigin
         );
       } catch (error: any) {
+        if (
+          error?.aiUsagePolicy &&
+          typeof error.aiUsagePolicy === 'object'
+        ) {
+          onAiUsagePolicyUpdateRef.current?.(error.aiUsagePolicy);
+        }
         sourceWindow.postMessage(
           {
             source: 'twinkle-parent',

@@ -1439,6 +1439,12 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const callBuildAiChat = useAppContext(
       (v) => v.requestHelpers.callBuildAiChat
     );
+    const callBuildRuntimeAiChat = useAppContext(
+      (v) => v.requestHelpers.callBuildRuntimeAiChat
+    );
+    const callBuildRuntimeAiChatStream = useAppContext(
+      (v) => v.requestHelpers.callBuildRuntimeAiChatStream
+    );
     const generateAIImage = useAppContext(
       (v) => v.requestHelpers.generateAIImage
     );
@@ -1563,6 +1569,10 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
     const uploadBuildDatabaseRef = useRef(uploadBuildDatabase);
     const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
     const callBuildAiChatRef = useRef(callBuildAiChat);
+    const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
+    const callBuildRuntimeAiChatStreamRef = useRef(
+      callBuildRuntimeAiChatStream
+    );
     const generateAiImageRef = useRef(generateAIImage);
     const listBuildArtifactsRef = useRef(listBuildArtifacts);
     const listBuildArtifactVersionsRef = useRef(listBuildArtifactVersions);
@@ -1640,6 +1650,8 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       uploadBuildDatabaseRef,
       loadBuildAiPromptsRef,
       callBuildAiChatRef,
+      callBuildRuntimeAiChatRef,
+      callBuildRuntimeAiChatStreamRef,
       generateAiImageRef,
       queryViewerDbRef,
       execViewerDbRef,

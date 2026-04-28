@@ -4,7 +4,12 @@ import AiEnergyCard from '~/components/AiEnergyCard';
 import Icon from '~/components/Icon';
 import ProgressBar from '~/components/ProgressBar';
 import { Color, mobileMaxWidth } from '~/constants/css';
-import { BuildCopilotPolicy, BuildRunEvent, LimitProgressItem } from './types';
+import {
+  BuildAiUsagePolicy,
+  BuildCopilotPolicy,
+  BuildRunEvent,
+  LimitProgressItem
+} from './types';
 import {
   buildLimitProgressItem,
   formatBytes,
@@ -36,6 +41,7 @@ const headerTitleClass = css`
 
 interface HeaderProps {
   copilotPolicy: BuildCopilotPolicy | null;
+  aiUsagePolicy: BuildAiUsagePolicy | null;
   pageFeedbackEvents: BuildRunEvent[];
   twinkleCoins: number;
   purchasingGenerationReset: boolean;
@@ -52,6 +58,7 @@ interface HeaderProps {
 
 export default function Header({
   copilotPolicy,
+  aiUsagePolicy,
   pageFeedbackEvents,
   twinkleCoins,
   purchasingGenerationReset,
@@ -63,22 +70,21 @@ export default function Header({
   onToggleLimitsExpanded
 }: HeaderProps) {
   const dailyGenerationUsage = useMemo(() => {
-    if (!copilotPolicy) return null;
-    const requestLimits = copilotPolicy.requestLimits;
-    if (typeof requestLimits.energyPercent === 'number') {
-      return Math.max(0, Math.min(100, requestLimits.energyPercent));
+    if (!aiUsagePolicy) return null;
+    if (typeof aiUsagePolicy.energyPercent === 'number') {
+      return Math.max(0, Math.min(100, aiUsagePolicy.energyPercent));
     }
-    if (requestLimits.generationRequestsPerDay <= 0) return null;
+    if (Number(aiUsagePolicy.generationRequestsPerDay || 0) <= 0) return null;
     return Math.max(
       0,
       Math.min(
         100,
-        (requestLimits.generationRequestsToday /
-          requestLimits.generationRequestsPerDay) *
+        (Number(aiUsagePolicy.generationRequestsToday || 0) /
+          Number(aiUsagePolicy.generationRequestsPerDay || 1)) *
           100
       )
     );
-  }, [copilotPolicy]);
+  }, [aiUsagePolicy]);
   const expandedLimitItems = useMemo(() => {
     if (!copilotPolicy) return [];
     const { limits, usage } = copilotPolicy;
@@ -143,10 +149,9 @@ export default function Header({
           {dailyGenerationUsage != null ? (
             <AiEnergyCard
               energyPercent={dailyGenerationUsage}
-              energySegments={copilotPolicy.requestLimits.energySegments}
-              energySegmentsRemaining={
-                copilotPolicy.requestLimits.energySegmentsRemaining
-              }
+              energySegments={aiUsagePolicy?.energySegments}
+              energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}
+              mode={aiUsagePolicy?.currentMode}
               resetNeeded={!!generationResetUi}
               resetCost={generationResetUi?.resetCost}
               resetPurchaseNumber={

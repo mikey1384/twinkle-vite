@@ -5,6 +5,7 @@ import WelcomeMessage from './WelcomeMessage';
 import Icon from '~/components/Icon';
 import {
   Color,
+  desktopMinWidth,
   mobileMaxWidth,
   tabletMaxWidth,
   borderRadius
@@ -142,6 +143,40 @@ const container = css`
       .navigation-icon {
         color: var(--profile-widget-accent, ${Color.logoBlue()});
       }
+    }
+  }
+
+  @media (min-width: ${desktopMinWidth}) and (max-height: 760px) {
+    margin-top: 0.6rem;
+    .heading {
+      padding: 0.5rem 1rem;
+      gap: 0.8rem;
+      .widget__profile-pic {
+        --profile-pic-size: 4.8rem;
+      }
+      .titles {
+        .real-name {
+          font-size: 1.6rem;
+        }
+        .username {
+          font-size: 1.1rem;
+        }
+        &.no-realname {
+          .username {
+            font-size: 1.6rem;
+          }
+        }
+      }
+    }
+    .details {
+      padding: 0.5rem 1rem 0.7rem;
+      gap: 0.5rem;
+    }
+    .navigation {
+      gap: 0.4rem;
+    }
+    .navigation-item {
+      padding: 0.35rem 0.7rem;
     }
   }
 

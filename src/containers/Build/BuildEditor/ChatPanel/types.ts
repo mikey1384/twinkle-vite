@@ -67,6 +67,11 @@ export interface BuildCopilotPolicy {
   };
 }
 
+export type BuildAiUsagePolicy = Partial<
+  BuildCopilotPolicy['requestLimits']
+> &
+  Record<string, any>;
+
 export interface BuildRunEvent {
   id: string;
   kind: 'lifecycle' | 'phase' | 'action' | 'status' | 'usage';
@@ -148,6 +153,7 @@ export interface ChatPanelProps {
   generatingStatus: string | null;
   assistantStatusSteps: string[];
   copilotPolicy: BuildCopilotPolicy | null;
+  aiUsagePolicy: BuildAiUsagePolicy | null;
   pageFeedbackEvents: BuildRunEvent[];
   runEvents: BuildRunEvent[];
   runError: string | null;

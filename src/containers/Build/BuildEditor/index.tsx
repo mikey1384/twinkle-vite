@@ -451,22 +451,6 @@ function applyRuntimeUploadUsageToCopilotPolicy(
   };
 }
 
-function applyRequestLimitsToCopilotPolicy(
-  policy: BuildCopilotPolicy | null,
-  requestLimits: BuildRequestLimitsSnapshot | null | undefined
-) {
-  if (!policy || !requestLimits) {
-    return policy;
-  }
-  return {
-    ...policy,
-    requestLimits: {
-      ...policy.requestLimits,
-      ...requestLimits
-    }
-  };
-}
-
 interface CurrentBuildRunView {
   requestId: string | null;
   runMode: BuildLiveRunState['runMode'];
@@ -1346,6 +1330,9 @@ export default function BuildEditor({
   const { userId, profileTheme, twinkleCoins } = useKeyContext(
     (v) => v.myState
   );
+  const todayAiUsagePolicy = useNotiContext(
+    (v) => v.state.todayStats.aiUsagePolicy as BuildRequestLimitsSnapshot | null
+  );
   const onUpdateTodayStats = useNotiContext(
     (v) => v.actions.onUpdateTodayStats
   );
@@ -1522,22 +1509,20 @@ export default function BuildEditor({
   function handlePreviewAiUsagePolicyUpdate(
     aiUsagePolicy: Record<string, any> | null | undefined
   ) {
-    if (!aiUsagePolicy || typeof aiUsagePolicy !== 'object') {
-      return;
-    }
+    applyCopilotRequestLimitsSnapshot(
+      aiUsagePolicy as BuildRequestLimitsSnapshot | null | undefined
+    );
+  }
+
+  function applyCopilotRequestLimitsSnapshot(
+    requestLimits: BuildRequestLimitsSnapshot | null | undefined
+  ) {
+    if (!requestLimits || typeof requestLimits !== 'object') return;
     onUpdateTodayStatsRef.current({
       newStats: {
-        aiUsagePolicy
+        aiUsagePolicy: requestLimits
       }
     });
-    const latestPolicy = getLatestCopilotPolicy();
-    const nextPolicy = applyRequestLimitsToCopilotPolicy(
-      latestPolicy,
-      aiUsagePolicy as BuildRequestLimitsSnapshot
-    );
-    if (nextPolicy && nextPolicy !== latestPolicy) {
-      replaceCopilotPolicy(nextPolicy);
-    }
   }
 
   useEffect(() => {
@@ -1974,7 +1959,8 @@ export default function BuildEditor({
         : null,
       baseProjectFiles: normalizeSharedBuildRunBaseProjectFiles(sharedBuildRun),
       streamingProjectFiles: sharedBuildRun.streamingProjectFiles || null,
-      streamingFocusFilePath: sharedBuildRun.streamingFocusFilePath || null
+      streamingFocusFilePath: sharedBuildRun.streamingFocusFilePath || null,
+      runEvents: sharedBuildRun.runEvents || []
     });
     const {
       isInitialSync: isInitialStreamSync,
@@ -2039,6 +2025,7 @@ export default function BuildEditor({
     ) {
       resetDedupedProcessingReconcileState();
     }
+    markActiveBuildRunActivity(sharedBuildRun.updatedAt);
     maybeAutoScrollDuringStream();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedBuildRun]);
@@ -2320,13 +2307,7 @@ export default function BuildEditor({
     if (!requestId || requestId !== currentRequestId) return;
     markActiveBuildRunActivity();
     resetDedupedProcessingReconcileState();
-    const nextPolicy = applyRequestLimitsToCopilotPolicy(
-      getLatestCopilotPolicy(),
-      requestLimits
-    );
-    if (nextPolicy) {
-      replaceCopilotPolicy(nextPolicy);
-    }
+    applyCopilotRequestLimitsSnapshot(requestLimits);
     const completedRunMode = getCurrentRunMode(
       requestId,
       latestSharedRunIdentityState
@@ -2646,13 +2627,7 @@ export default function BuildEditor({
                 entry.codeGenerated.trim().length > 0))
         )
     );
-    const nextPolicy = applyRequestLimitsToCopilotPolicy(
-      getLatestCopilotPolicy(),
-      requestLimits
-    );
-    if (nextPolicy) {
-      replaceCopilotPolicy(nextPolicy);
-    }
+    applyCopilotRequestLimitsSnapshot(requestLimits);
     if (!shouldPreserveAssistantArtifacts) {
       const nextAssistantId = upsertLocalBuildChatAssistantMessage(
         assistantId,
@@ -5255,19 +5230,21 @@ export default function BuildEditor({
         });
       }
       if (Object.prototype.hasOwnProperty.call(result || {}, 'copilotPolicy')) {
-        replaceCopilotPolicy(result?.copilotPolicy || null);
+        const nextPolicy = result?.copilotPolicy || null;
+        replaceCopilotPolicy(nextPolicy);
+        if (nextPolicy?.requestLimits) {
+          onUpdateTodayStatsRef.current({
+            newStats: {
+              aiUsagePolicy: nextPolicy.requestLimits
+            }
+          });
+        }
       }
     } catch (error: any) {
       console.error('Failed to recharge Build AI Energy:', error);
       const nextRequestLimits =
         error?.response?.data?.requestLimits || error?.requestLimits || null;
-      const nextPolicy = applyRequestLimitsToCopilotPolicy(
-        getLatestCopilotPolicy(),
-        nextRequestLimits
-      );
-      if (nextPolicy) {
-        replaceCopilotPolicy(nextPolicy);
-      }
+      applyCopilotRequestLimitsSnapshot(nextRequestLimits);
       setGenerationResetError(
         error?.response?.data?.error ||
           error?.message ||
@@ -5303,6 +5280,7 @@ export default function BuildEditor({
     generatingStatus: currentBuildRunView.status,
     assistantStatusSteps: currentBuildRunView.assistantStatusSteps,
     copilotPolicy,
+    aiUsagePolicy: todayAiUsagePolicy,
     pageFeedbackEvents,
     runEvents: currentBuildRunView.runEvents,
     runError: currentBuildRunView.error,
@@ -6110,15 +6088,11 @@ export default function BuildEditor({
     if (!normalizedRequestId) return false;
     const activeBuildId = Number(getLatestBuild()?.id || build.id);
     if (!Number.isFinite(activeBuildId) || activeBuildId <= 0) return false;
-    if (
-      !runOrchestration.didUserRequestStop() &&
-      !runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)
-    ) {
-      return false;
-    }
     const nextStatus = runOrchestration.didUserRequestStop()
       ? 'Stopping...'
-      : DEDUPED_PROCESSING_RECOVERY_STATUS;
+      : runOrchestration.isDedupedProcessingInFlight(normalizedRequestId)
+        ? DEDUPED_PROCESSING_RECOVERY_STATUS
+        : 'Still working... reconnecting to Lumine.';
     if (
       String(sharedBuildRun?.requestId || '').trim() === normalizedRequestId &&
       String(sharedBuildRun?.status || '').trim() === nextStatus

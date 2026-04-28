@@ -18,6 +18,8 @@ var Twinkle;
   let chatSubscriptionListeners = new Map();
   let aiImageGenerationStatusListeners = new Map();
   let aiImageGenerationStatusListenerId = 0;
+  let aiChatStatusListeners = new Map();
+  let aiChatStatusListenerId = 0;
   var blankRenderProbeState = {
     scheduled: false,
     resolved: false,
@@ -1098,6 +1100,29 @@ var Twinkle;
     aiImageGenerationStatusListeners.set(listenerId, listener);
     return function unsubscribeAiImageGenerationStatus() {
       aiImageGenerationStatusListeners.delete(listenerId);
+    };
+  }
+
+  function dispatchAiChatStatus(payload) {
+    aiChatStatusListeners.forEach(function(listener) {
+      try {
+        listener(payload || {});
+      } catch (error) {
+        setTimeout(function() {
+          throw error;
+        }, 0);
+      }
+    });
+  }
+
+  function addAiChatStatusListener(listener) {
+    if (typeof listener !== 'function') {
+      throw new Error('listener must be a function');
+    }
+    var listenerId = ++aiChatStatusListenerId;
+    aiChatStatusListeners.set(listenerId, listener);
+    return function unsubscribeAiChatStatus() {
+      aiChatStatusListeners.delete(listenerId);
     };
   }
 
@@ -2469,6 +2494,10 @@ var Twinkle;
       dispatchAiImageGenerationStatus(payload);
       return;
     }
+    if (type === 'ai:chat-status') {
+      dispatchAiChatStatus(payload);
+      return;
+    }
     if (!pendingRequests.has(id)) return;
 
     const { resolve, reject, timeout } = pendingRequests.get(id);
@@ -2663,20 +2692,77 @@ var Twinkle;
         return this._prompts;
       },
 
-      async chat({ promptId, message, history }) {
-        if (!promptId) throw new Error('promptId is required');
+      async chat({ promptId, message, history, requestId, onText, onStatus } = {}) {
         if (!message) throw new Error('message is required');
+        var hasPerCallChatCallbacks =
+          typeof onText === 'function' || typeof onStatus === 'function';
+        var shouldStream =
+          hasPerCallChatCallbacks || aiChatStatusListeners.size > 0;
+        var streamRequestId =
+          requestId ||
+          'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        var unsubscribeStatus = hasPerCallChatCallbacks
+          ? addAiChatStatusListener(function(status) {
+              if (
+                status &&
+                status.requestId &&
+                status.requestId !== streamRequestId
+              ) {
+                return;
+              }
+              if (status && status.type === 'status' && typeof onStatus === 'function') {
+                onStatus(status.status || '', status);
+              }
+              if (status && status.type === 'text' && typeof onText === 'function') {
+                onText(status.text || '', {
+                  done: false,
+                  delta: status.delta || '',
+                  requestId: streamRequestId,
+                  status: status
+                });
+              }
+              if (status && status.type === 'done') {
+                if (typeof onText === 'function') {
+                  onText(status.text || status.response || '', {
+                    done: true,
+                    delta: '',
+                    requestId: streamRequestId,
+                    status: status
+                  });
+                }
+                if (typeof onStatus === 'function') {
+                  onStatus('completed', status);
+                }
+              }
+              if (status && status.type === 'error' && typeof onStatus === 'function') {
+                onStatus('error', status);
+              }
+            })
+          : null;
 
-        const response = await sendRequest('ai:chat', {
-          promptId: promptId,
-          message: message,
-          history: history || []
-        });
+        try {
+          const response = await sendRequest(
+            'ai:chat',
+            {
+              promptId: promptId,
+              message: message,
+              history: history || [],
+              stream: shouldStream,
+              requestId: streamRequestId
+            },
+            { timeoutMs: shouldStream ? 300000 : undefined }
+          );
 
-        return {
-          text: response.response,
-          prompt: response.prompt
-        };
+          return {
+            text: response.text || response.response || '',
+            response: response.response || response.text || '',
+            prompt: response.prompt,
+            model: response.model,
+            aiUsagePolicy: response.aiUsagePolicy
+          };
+        } finally {
+          if (unsubscribeStatus) unsubscribeStatus();
+        }
       },
 
       async generateImage({
@@ -2729,6 +2815,10 @@ var Twinkle;
 
       onImageGenerationStatus(listener) {
         return addAiImageGenerationStatusListener(listener);
+      },
+
+      onChatStatus(listener) {
+        return addAiChatStatusListener(listener);
       }
     },
 

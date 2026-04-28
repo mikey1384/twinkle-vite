@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Color,
+  desktopMinWidth,
   mobileMaxWidth,
   tabletMaxWidth,
   borderRadius,
@@ -83,7 +84,7 @@ export default function HomeMenuItems({
       <div
         className={`unselectable ${css`
           width: 100%;
-          flex: 1 1 auto;
+          flex: 0 0 auto;
           min-height: 0;
           overflow-y: visible;
           position: relative;
@@ -223,6 +224,17 @@ export default function HomeMenuItems({
                 > .label {
                   padding-left: 0;
                 }
+              }
+            }
+          }
+          @media (min-width: ${desktopMinWidth}) and (max-height: 760px) {
+            font-size: 1.45rem;
+            padding: 0.3rem 0 0.4rem;
+            > nav {
+              height: 4rem;
+              margin: 0.2rem 0;
+              .homemenu__item {
+                padding: 0.8rem 1.1rem;
               }
             }
           }

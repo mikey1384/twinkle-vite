@@ -56,6 +56,7 @@ export default function ChatPanel({
   generatingStatus,
   assistantStatusSteps,
   copilotPolicy,
+  aiUsagePolicy,
   pageFeedbackEvents,
   runEvents,
   runError,
@@ -101,7 +102,7 @@ export default function ChatPanel({
   const AI_DISABLED_NOTICE = useViewContext((v) => v.state.aiDisabledNotice);
   const [limitsExpanded, setLimitsExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const energyPolicy = copilotPolicy?.requestLimits || null;
+  const energyPolicy = aiUsagePolicy;
   const energyUnavailable =
     !!energyPolicy &&
     typeof energyPolicy.energyRemaining === 'number' &&
@@ -177,12 +178,11 @@ export default function ChatPanel({
     return entries;
   }, [assistantStatusSteps, runEvents]);
   const generationResetUi = useMemo(() => {
-    if (!copilotPolicy) return null;
-    const requestLimits = copilotPolicy.requestLimits;
+    if (!aiUsagePolicy) return null;
     const resetCost = Math.max(
       0,
       Math.floor(
-        Number(requestLimits.resetCost ?? requestLimits.generationResetCost) ||
+        Number(aiUsagePolicy.resetCost ?? aiUsagePolicy.generationResetCost) ||
           0
       )
     );
@@ -190,16 +190,16 @@ export default function ChatPanel({
       0,
       Math.floor(
         Number(
-          requestLimits.resetPurchasesToday ??
-            requestLimits.generationResetPurchasesToday
+          aiUsagePolicy.resetPurchasesToday ??
+            aiUsagePolicy.generationResetPurchasesToday
         ) || 0
       )
     );
     const quotaMaxed =
-      typeof requestLimits.energyRemaining === 'number'
-        ? requestLimits.energyRemaining <= 0
-        : requestLimits.generationRequestsPerDay > 0 &&
-          requestLimits.generationRequestsRemaining <= 0;
+      typeof aiUsagePolicy.energyRemaining === 'number'
+        ? aiUsagePolicy.energyRemaining <= 0
+        : Number(aiUsagePolicy.generationRequestsPerDay || 0) > 0 &&
+          Number(aiUsagePolicy.generationRequestsRemaining || 0) <= 0;
     if (!quotaMaxed || generating || resetCost < 1) {
       return null;
     }
@@ -207,7 +207,7 @@ export default function ChatPanel({
       resetCost,
       resetPurchasesToday
     };
-  }, [copilotPolicy, generating]);
+  }, [aiUsagePolicy, generating]);
   const showScopedPlanQuickReplies =
     isOwner &&
     executionPlan?.status === 'awaiting_confirmation' &&
@@ -309,6 +309,7 @@ export default function ChatPanel({
     >
       <Header
         copilotPolicy={copilotPolicy}
+        aiUsagePolicy={aiUsagePolicy}
         pageFeedbackEvents={pageFeedbackEvents}
         twinkleCoins={twinkleCoins}
         purchasingGenerationReset={purchasingGenerationReset}
