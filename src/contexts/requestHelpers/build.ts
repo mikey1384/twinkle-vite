@@ -914,17 +914,19 @@ export default function buildRequestHelpers({
       buildId,
       promptId,
       message,
-      history
+      history,
+      systemPrompt
     }: {
       buildId: number;
       promptId?: number;
       message: string;
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+      systemPrompt?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/runtime-ai-chat`,
-          { promptId, message, history },
+          { promptId, message, history, systemPrompt },
           auth()
         );
         return data;
@@ -950,12 +952,14 @@ export default function buildRequestHelpers({
       promptId,
       message,
       history,
+      systemPrompt,
       onEvent
     }: {
       buildId: number;
       promptId?: number;
       message: string;
       history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+      systemPrompt?: string;
       onEvent?: (event: BuildRuntimeAiChatStreamEvent) => void;
     }) {
       try {
@@ -967,7 +971,7 @@ export default function buildRequestHelpers({
               Accept: 'application/x-ndjson',
               'Content-Type': 'application/json'
             }),
-            body: JSON.stringify({ promptId, message, history })
+            body: JSON.stringify({ promptId, message, history, systemPrompt })
           }
         );
         if (!response.ok) {

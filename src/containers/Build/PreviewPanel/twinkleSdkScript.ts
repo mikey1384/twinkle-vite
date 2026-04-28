@@ -2692,7 +2692,7 @@ var Twinkle;
         return this._prompts;
       },
 
-      async chat({ promptId, message, history, requestId, onText, onStatus } = {}) {
+      async chat({ promptId, message, history, systemPrompt, requestId, onText, onStatus } = {}) {
         if (!message) throw new Error('message is required');
         var hasPerCallChatCallbacks =
           typeof onText === 'function' || typeof onStatus === 'function';
@@ -2747,6 +2747,7 @@ var Twinkle;
               promptId: promptId,
               message: message,
               history: history || [],
+              systemPrompt: systemPrompt,
               stream: shouldStream,
               requestId: streamRequestId
             },

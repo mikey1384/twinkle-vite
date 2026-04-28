@@ -1609,6 +1609,7 @@ export function usePreviewHostBridge({
                   promptId: payload.promptId,
                   message: payload.message,
                   history: payload.history,
+                  systemPrompt: payload.systemPrompt,
                   onEvent: (streamEvent: any) => {
                     forwardAiChatStreamEventToFrame({
                       sourceWindow,
@@ -1622,7 +1623,8 @@ export function usePreviewHostBridge({
                 buildId: activeBuild.id,
                 promptId: payload.promptId,
                 message: payload.message,
-                history: payload.history
+                history: payload.history,
+                systemPrompt: payload.systemPrompt
               });
             }
             if (
