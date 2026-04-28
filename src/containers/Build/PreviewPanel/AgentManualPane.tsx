@@ -89,6 +89,10 @@ const sdkSections: GuideSection[] = [
     items: [
       'Twinkle.viewerDb stores per-viewer server-side SQLite data.',
       'Twinkle.sharedDb stores shared build data when the capability allows it.',
+      'Twinkle.sharedDb.getEntries(topic, { limit }) returns newest entries first by default and includes cursor and hasMore for pagination.',
+      'Use limit or pageSize to choose how many entries appear per page. Default is 20, max is 100.',
+      'Use Twinkle.sharedDb.loadMoreEntries(topic, { limit, cursor }) for Load more buttons.',
+      "Pass order: 'asc' or order: 'oldest' for oldest-first chronological reads. sort and direction are accepted aliases.",
       'Twinkle.privateDb stores private per-user build data.',
       'Twinkle.db is owner-only build SQLite. It is not for normal viewer runtime state.'
     ]

@@ -1721,20 +1721,24 @@ export default function buildRequestHelpers({
       topicName,
       topicId,
       limit,
+      pageSize,
       cursor,
+      order,
       token
     }: {
       buildId: number;
       topicName?: string;
       topicId?: number;
       limit?: number;
+      pageSize?: number;
       cursor?: { id?: number };
+      order?: string;
       token?: string;
     }) {
       try {
         const { data } = await request.post(
           `${URL}/build/${buildId}/api/shared-db/entries`,
-          { topicName, topicId, limit, cursor },
+          { topicName, topicId, limit, pageSize, cursor, order },
           {
             ...auth(),
             headers: {

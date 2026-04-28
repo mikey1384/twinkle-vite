@@ -1980,7 +1980,9 @@ export function usePreviewHostBridge({
               topicName: payload?.topicName,
               topicId: payload?.topicId,
               limit: payload?.limit,
+              pageSize: payload?.pageSize,
               cursor: payload?.cursor,
+              order: payload?.order || payload?.sort || payload?.direction,
               token: sharedDbEntriesToken
             });
             break;

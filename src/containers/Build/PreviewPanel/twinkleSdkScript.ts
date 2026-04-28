@@ -3201,8 +3201,20 @@ var Twinkle;
         var options = opts || {};
         return await sendRequest('shared-db:get-entries', {
           topicName: topicName,
-          limit: options.limit,
-          cursor: options.cursor
+          limit: options.limit == null ? options.pageSize : options.limit,
+          cursor: options.cursor,
+          order: options.order || options.sort || options.direction
+        });
+      },
+
+      async loadMoreEntries(topicName, opts) {
+        if (!topicName) throw new Error('topicName is required');
+        var options = opts || {};
+        return await sendRequest('shared-db:get-entries', {
+          topicName: topicName,
+          limit: options.limit == null ? options.pageSize : options.limit,
+          cursor: options.cursor,
+          order: options.order || options.sort || options.direction
         });
       },
 
