@@ -151,7 +151,6 @@ export default function Header({
               energyPercent={dailyGenerationUsage}
               energySegments={aiUsagePolicy?.energySegments}
               energySegmentsRemaining={aiUsagePolicy?.energySegmentsRemaining}
-              mode={aiUsagePolicy?.currentMode}
               resetNeeded={!!generationResetUi}
               resetCost={generationResetUi?.resetCost}
               resetPurchaseNumber={
