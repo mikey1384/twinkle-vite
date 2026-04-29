@@ -7,6 +7,7 @@ import {
   useKeyContext
 } from '~/contexts';
 import { getSectionFromPathname } from '~/helpers';
+import { setStoredItem } from '~/helpers/userDataHelpers';
 
 import useAICardSocket from './useAICardSocket';
 import useAISocket from './useAISocket';
@@ -98,7 +99,7 @@ export default function useAPISocket({
 
   useEffect(() => {
     if (userId && profilePicUrl !== prevProfilePicUrl.current) {
-      localStorage.setItem('profilePicUrl', profilePicUrl);
+      setStoredItem('profilePicUrl', profilePicUrl);
       socket.emit('change_profile_pic', profilePicUrl);
     }
     prevProfilePicUrl.current = profilePicUrl;

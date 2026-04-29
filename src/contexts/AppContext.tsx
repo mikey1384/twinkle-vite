@@ -21,6 +21,7 @@ import {
   LAST_ONLINE_FILTER_LABEL,
   localStorageKeys
 } from '~/constants/defaultValues';
+import { removeStoredItem } from '~/helpers/userDataHelpers';
 
 export const AppContext = createContext({});
 export const initialMyState = {
@@ -137,9 +138,9 @@ export function AppContextProvider({ children }: { children: ReactNode }) {
           'An unexpected error occurred';
 
         if (status === 401) {
-          localStorage.removeItem('token');
+          removeStoredItem('token');
           Object.keys(localStorageKeys).forEach((key) =>
-            localStorage.removeItem(key)
+            removeStoredItem(key)
           );
           userDispatch({
             type: 'LOGOUT_AND_OPEN_SIGNIN_MODAL'

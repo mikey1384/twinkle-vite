@@ -46,6 +46,7 @@ import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { socket } from '~/constants/sockets/api';
 import { addEvent, removeEvent } from '~/helpers/listenerHelpers';
+import { setStoredItem } from '~/helpers/userDataHelpers';
 import { finalizeEmoji, generateFileName } from '~/helpers/stringHelpers';
 import { useMyState, useScrollPosition } from '~/helpers/hooks';
 import {
@@ -1075,7 +1076,7 @@ export default function App() {
       if (data?.id) {
         Object.keys(localStorageKeys).forEach((key) => {
           const value = data[key] || localStorageKeys[key];
-          localStorage.setItem(key, value);
+          setStoredItem(key, value);
         });
         onSetUserState({
           userId: data?.id,

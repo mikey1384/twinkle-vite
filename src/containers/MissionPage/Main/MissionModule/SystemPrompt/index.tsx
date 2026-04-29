@@ -12,6 +12,7 @@ import {
   useViewContext
 } from '~/contexts';
 import { deriveImprovedInstructionsText } from '~/helpers/improveCustomInstructions';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import Checklist from './Checklist';
 import Editor from './Editor';
 import TargetSelector from './TargetSelector';
@@ -896,7 +897,7 @@ export default function SystemPromptMission({
         });
         // Also persist to localStorage
         try {
-          const stored = localStorage.getItem('thinkHard') || '{}';
+          const stored = getStoredItem('thinkHard', '{}');
           const parsed = JSON.parse(stored);
           const updated = {
             ...parsed,
@@ -905,7 +906,7 @@ export default function SystemPromptMission({
               [data.topicId]: false
             }
           };
-          localStorage.setItem('thinkHard', JSON.stringify(updated));
+          setStoredItem('thinkHard', JSON.stringify(updated));
         } catch {
           // Ignore localStorage errors
         }

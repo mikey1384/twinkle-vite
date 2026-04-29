@@ -8,6 +8,7 @@ import { css } from '@emotion/css';
 import { CHAT_ID_BASE_NUMBER } from '~/constants/defaultValues';
 import { Color } from '~/constants/css';
 import { socket } from '~/constants/sockets/api';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import zero from '~/assets/zero.png';
 import ciel from '~/assets/ciel.png';
 
@@ -322,7 +323,7 @@ export default function CloneButtons({
         });
         // Also persist to localStorage
         try {
-          const stored = localStorage.getItem('thinkHard') || '{}';
+          const stored = getStoredItem('thinkHard', '{}');
           const parsed = JSON.parse(stored);
           const updated = {
             ...parsed,
@@ -331,7 +332,7 @@ export default function CloneButtons({
               [data.subjectId]: false
             }
           };
-          localStorage.setItem('thinkHard', JSON.stringify(updated));
+          setStoredItem('thinkHard', JSON.stringify(updated));
         } catch {
           // Ignore localStorage errors
         }

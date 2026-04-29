@@ -16,6 +16,7 @@ import {
 } from '~/contexts';
 import { v1 as uuidv1 } from 'uuid';
 import { getLevelCategory } from '../../../../Home/ChessPuzzleModal/helpers';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 
 const acceptDrawLabel = 'Accept Draw';
 const chessLabel = 'Chess';
@@ -282,10 +283,8 @@ export default function ChessModal({
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`tw-chat-chess-theme-${userId}`);
-      setTheme(saved || null);
-    } catch {}
+    const saved = getStoredItem(`tw-chat-chess-theme-${userId}`);
+    setTheme(saved || null);
   }, [userId, chessThemeVersion]);
 
   useEffect(() => {

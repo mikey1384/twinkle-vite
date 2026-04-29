@@ -31,6 +31,7 @@ import {
   getBuildPreviewMessageTargetOrigin,
   isAllowedBuildPreviewMessageOrigin
 } from '../previewOrigin';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 const GUEST_SESSION_STORAGE_KEY = 'twinkle_build_guest_session_id';
 const GUEST_RESTRICTION_ERROR_MESSAGE =
@@ -548,16 +549,10 @@ function ensureGuestSessionId(previewAuth: PreviewHostBridgeAuth) {
     return previewAuth.guestSessionIdRef.current;
   }
 
-  try {
-    const storedGuestSessionId = window.localStorage.getItem(
-      GUEST_SESSION_STORAGE_KEY
-    );
-    if (storedGuestSessionId) {
-      previewAuth.guestSessionIdRef.current = storedGuestSessionId;
-      return storedGuestSessionId;
-    }
-  } catch {
-    // no-op
+  const storedGuestSessionId = getStoredItem(GUEST_SESSION_STORAGE_KEY);
+  if (storedGuestSessionId) {
+    previewAuth.guestSessionIdRef.current = storedGuestSessionId;
+    return storedGuestSessionId;
   }
 
   const generatedGuestSessionId = `guest_${
@@ -567,14 +562,7 @@ function ensureGuestSessionId(previewAuth: PreviewHostBridgeAuth) {
 
   previewAuth.guestSessionIdRef.current = generatedGuestSessionId;
 
-  try {
-    window.localStorage.setItem(
-      GUEST_SESSION_STORAGE_KEY,
-      generatedGuestSessionId
-    );
-  } catch {
-    // no-op
-  }
+  setStoredItem(GUEST_SESSION_STORAGE_KEY, generatedGuestSessionId);
 
   return generatedGuestSessionId;
 }

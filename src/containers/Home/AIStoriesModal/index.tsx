@@ -10,6 +10,7 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import ConfirmModal from '~/components/Modals/ConfirmModal';
 import { useAppContext, useNotiContext, useViewContext } from '~/contexts';
 import { buildTodayStatsPatchFromDailyTaskStatus, sleep } from '~/helpers';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 const rewardTable = {
   1: {
@@ -53,8 +54,9 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
   const [displayedSection, setDisplayedSection] = useState('story');
   const [rankingsTab, setRankingsTab] = useState('all');
   const [attemptId, setAttemptId] = useState(0);
-  const loadedDifficulty = localStorage.getItem('story-difficulty');
-  const [difficulty, setDifficulty] = useState(Number(loadedDifficulty) || 3);
+  const [difficulty, setDifficulty] = useState(
+    () => Number(getStoredItem('story-difficulty')) || 3
+  );
   const [dropdownShown, setDropdownShown] = useState(false);
   const loadAIStoryTopic = useAppContext(
     (v) => v.requestHelpers.loadAIStoryTopic
@@ -103,7 +105,7 @@ export default function AIStoriesModal({ onHide }: { onHide: () => void }) {
       setTopicLoadError(false);
       return;
     }
-    localStorage.setItem('story-difficulty', String(difficulty));
+    setStoredItem('story-difficulty', String(difficulty));
     const currentRequestId = Math.random();
     requestRef.current = currentRequestId;
     if (difficulty && currentRequestId) {

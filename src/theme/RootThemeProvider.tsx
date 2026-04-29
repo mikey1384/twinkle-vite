@@ -9,6 +9,11 @@ import React, {
 } from 'react';
 import { useAppContext } from '~/contexts';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import {
+  getStoredItem,
+  removeStoredItem,
+  setStoredItem
+} from '~/helpers/userDataHelpers';
 import { applyThemeVars, getThemeRoles, ThemeName, type RoleTokens } from '.';
 import { useLocation } from 'react-router-dom';
 
@@ -33,7 +38,7 @@ export function RootThemeProvider({ children }: { children: ReactNode }) {
     if (typeof window !== 'undefined') {
       const path = window.location?.pathname || '';
       if (path.startsWith('/users/')) {
-        return localStorage.getItem('routeProfileTheme') as ThemeName | null;
+        return getStoredItem('routeProfileTheme') as ThemeName | null;
       }
     }
     return null;
@@ -42,13 +47,11 @@ export function RootThemeProvider({ children }: { children: ReactNode }) {
   const setRouteThemeOverride = useCallback((theme: ThemeName | null) => {
     setRouteThemeOverrideState(theme);
     // Keep localStorage in sync for page reloads
-    try {
-      if (theme) {
-        localStorage.setItem('routeProfileTheme', theme);
-      } else {
-        localStorage.removeItem('routeProfileTheme');
-      }
-    } catch (_err) {}
+    if (theme) {
+      setStoredItem('routeProfileTheme', theme);
+    } else {
+      removeStoredItem('routeProfileTheme');
+    }
   }, []);
 
   // Clear route override when navigating away from profile pages
@@ -62,7 +65,7 @@ export function RootThemeProvider({ children }: { children: ReactNode }) {
   const themeName = useMemo<ThemeName>(() => {
     let stored: string | null = null;
     if (typeof window !== 'undefined') {
-      stored = localStorage.getItem('profileTheme');
+      stored = getStoredItem('profileTheme');
     }
     const isOnProfilePage = (location?.pathname || '').startsWith('/users/');
 

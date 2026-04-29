@@ -21,25 +21,78 @@ export function checkMultiMissionPassStatus({
     passed: numTasks > 0 && numTasks === numPassedTasks
   };
 }
+export function getLocalStorage() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const storage = window.localStorage;
+    if (
+      !storage ||
+      typeof storage.getItem !== 'function' ||
+      typeof storage.setItem !== 'function' ||
+      typeof storage.removeItem !== 'function'
+    ) {
+      return null;
+    }
+    return storage;
+  } catch {
+    return null;
+  }
+}
+
 export function getStoredItem(key: string, defaultValue = ''): string {
-  if (typeof localStorage === 'undefined') {
+  const storage = getLocalStorage();
+  if (!storage) {
     return defaultValue;
   }
+
   let item = '';
   try {
-    item = localStorage.getItem(key) || '';
+    item = storage.getItem(key) || '';
   } catch {
     return defaultValue;
   }
   return item || defaultValue;
 }
 
+export function setStoredItem(key: string, value: string) {
+  const storage = getLocalStorage();
+  if (!storage) {
+    return false;
+  }
+
+  try {
+    storage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removeStoredItem(key: string) {
+  const storage = getLocalStorage();
+  if (!storage) {
+    return false;
+  }
+
+  try {
+    storage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 let sessionTwinkleDeviceId = '';
 
 export function getTwinkleDeviceId() {
-  if (typeof localStorage !== 'undefined') {
+  const storage = getLocalStorage();
+
+  if (storage) {
     try {
-      const existingId = localStorage.getItem('twinkleDeviceId');
+      const existingId = storage.getItem('twinkleDeviceId');
       if (existingId) return existingId;
     } catch {
       // Fall back to an in-memory id for browsers with restricted storage.
@@ -55,9 +108,9 @@ export function getTwinkleDeviceId() {
   const deviceId = `web:${randomId}`;
   sessionTwinkleDeviceId = deviceId;
 
-  if (typeof localStorage !== 'undefined') {
+  if (storage) {
     try {
-      localStorage.setItem('twinkleDeviceId', deviceId);
+      storage.setItem('twinkleDeviceId', deviceId);
     } catch {
       // The session id is still stable for this page lifetime.
     }

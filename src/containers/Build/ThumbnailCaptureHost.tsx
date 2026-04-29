@@ -6,6 +6,7 @@ import InvalidPage from '~/components/InvalidPage';
 import PreviewPanel from './PreviewPanel';
 import { useAppContext } from '~/contexts';
 import { normalizeAllowedBuildPreviewFrameSrc } from './previewOrigin';
+import { setStoredItem } from '~/helpers/userDataHelpers';
 
 const shellClass = css`
   width: 100%;
@@ -124,10 +125,8 @@ export default function BuildThumbnailCaptureHost() {
   useEffect(() => {
     const rawAuthToken = captureBootstrap.authToken;
     if (rawAuthToken) {
-      try {
-        window.localStorage.setItem('token', rawAuthToken);
-      } catch (error) {
-        console.error('Failed to persist capture auth token:', error);
+      if (!setStoredItem('token', rawAuthToken)) {
+        console.error('Failed to persist capture auth token.');
       }
       if (location.hash) {
         window.history.replaceState(

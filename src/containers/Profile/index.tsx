@@ -18,6 +18,7 @@ import Loading from '~/components/Loading';
 import { useThemeTokens } from '~/theme/useThemeTokens';
 import { useRootTheme } from '~/theme/RootThemeProvider';
 import { DEFAULT_PROFILE_THEME } from '~/constants/defaultValues';
+import { setStoredItem } from '~/helpers/userDataHelpers';
 
 export default function Profile() {
   const params = useParams();
@@ -178,6 +179,6 @@ export default function Profile() {
   async function handleSetTheme() {
     await setTheme({ color: selectedTheme });
     onSetUserState({ userId, newState: { profileTheme: selectedTheme } });
-    localStorage.setItem('profileTheme', selectedTheme);
+    setStoredItem('profileTheme', selectedTheme);
   }
 }

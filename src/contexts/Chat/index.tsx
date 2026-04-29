@@ -3,6 +3,7 @@ import { createContext } from 'use-context-selector';
 import ChatActions from './actions';
 import ChatReducer from './reducer';
 import { recordChatBootstrapEvent } from '~/helpers/chatBootstrapDebug';
+import { getStoredItem, removeStoredItem } from '~/helpers/userDataHelpers';
 
 export const ChatContext = createContext({});
 
@@ -27,7 +28,7 @@ function persistChatStateSnapshot(state: any) {
 
 function getThinkHardFromStorage() {
   try {
-    let stored = localStorage.getItem('thinkHard');
+    const stored = getStoredItem('thinkHard');
     if (!stored) return { zero: { global: false }, ciel: { global: false } };
     const parsed = JSON.parse(stored);
 
@@ -46,7 +47,7 @@ function getThinkHardFromStorage() {
     return parsed;
   } catch (error) {
     console.error('Error parsing thinkHard from localStorage:', error);
-    localStorage.removeItem('thinkHard');
+    removeStoredItem('thinkHard');
     return { zero: { global: false }, ciel: { global: false } };
   }
 }

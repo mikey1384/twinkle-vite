@@ -3,6 +3,7 @@ import {
   DEFAULT_PROFILE_THEME,
   localStorageKeys
 } from '~/constants/defaultValues';
+import { removeStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 export default function UserActions(dispatch: Dispatch) {
   return {
@@ -48,10 +49,10 @@ export default function UserActions(dispatch: Dispatch) {
     },
     onLogout() {
       Object.keys(localStorageKeys).forEach((key) =>
-        localStorage.removeItem(key)
+        removeStoredItem(key)
       );
-      localStorage.removeItem('token');
-      localStorage.setItem('profileTheme', DEFAULT_PROFILE_THEME);
+      removeStoredItem('token');
+      setStoredItem('profileTheme', DEFAULT_PROFILE_THEME);
       return dispatch({
         type: 'LOGOUT'
       });

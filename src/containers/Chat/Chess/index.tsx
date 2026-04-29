@@ -32,6 +32,7 @@ import { isMobile } from '~/helpers';
 import { useChatContext, useKeyContext, useChessContext } from '~/contexts';
 import { getLevelCategory } from '../../Home/ChessPuzzleModal/helpers';
 import { mapThemeToColors } from './helpers/theme';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 const deviceIsMobile = isMobile(navigator);
 
@@ -132,10 +133,8 @@ export default function Chess({
   const [currentTheme, setCurrentTheme] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`tw-chat-chess-theme-${userId}`);
-      setCurrentTheme(saved || null);
-    } catch {}
+    const saved = getStoredItem(`tw-chat-chess-theme-${userId}`);
+    setCurrentTheme(saved || null);
   }, [userId, chessThemeVersion]);
 
   const maxLevelUnlocked: number =
@@ -183,9 +182,7 @@ export default function Chess({
   const handleApplyTheme = useCallback(
     (value: string) => {
       setCurrentTheme(value);
-      try {
-        localStorage.setItem(`tw-chat-chess-theme-${userId}`, value);
-      } catch {}
+      setStoredItem(`tw-chat-chess-theme-${userId}`, value);
       // Notify chat to re-render other messages to pick up new theme
       onBumpChessThemeVersion();
     },
@@ -202,9 +199,7 @@ export default function Chess({
         label: it.label,
         onClick: () => {
           handleApplyTheme(it.value);
-          try {
-            localStorage.setItem(`tw-chat-chess-theme-${userId}`, it.value);
-          } catch {}
+          setStoredItem(`tw-chat-chess-theme-${userId}`, it.value);
         }
       }));
   }

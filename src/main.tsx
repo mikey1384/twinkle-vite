@@ -210,6 +210,7 @@ import { RootThemeProvider } from './theme/RootThemeProvider';
 import App from './containers/App';
 import { applyThemeVars, type ThemeName } from './theme';
 import { DEFAULT_PROFILE_THEME } from './constants/defaultValues';
+import { getStoredItem } from './helpers/userDataHelpers';
 import { install } from 'resize-observer';
 
 if (!window.ResizeObserver) install();
@@ -428,9 +429,9 @@ library.add(
   try {
     const path = window.location?.pathname || '';
     const routeTheme = path.startsWith('/users/')
-      ? (localStorage.getItem('routeProfileTheme') as ThemeName | null)
+      ? (getStoredItem('routeProfileTheme') as ThemeName | null)
       : null;
-    const storedTheme = (localStorage.getItem('profileTheme') ||
+    const storedTheme = (getStoredItem('profileTheme') ||
       DEFAULT_PROFILE_THEME) as ThemeName;
     applyThemeVars((routeTheme || storedTheme) as ThemeName);
   } catch (_err) {

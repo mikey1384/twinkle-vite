@@ -1,3 +1,5 @@
+import { getStoredItem } from '~/helpers/userDataHelpers';
+
 export type ChatChessTheme =
   | 'DEFAULT'
   | 'INTERMEDIATE'
@@ -31,11 +33,7 @@ export function mapThemeToColors(
 
 export function getUserChatTheme(userId?: number | null): string | null {
   if (!userId) return null;
-  try {
-    return localStorage.getItem(`tw-chat-chess-theme-${userId}`);
-  } catch {
-    return null;
-  }
+  return getStoredItem(`tw-chat-chess-theme-${userId}`) || null;
 }
 
 export function getUserChatSquareColors(

@@ -8,6 +8,7 @@ import { Color } from '~/constants/css';
 import { useAppContext, useKeyContext } from '~/contexts';
 import { priceTable } from '~/constants/defaultValues';
 import { validateUsername, stringIsEmpty } from '~/helpers/stringHelpers';
+import { setStoredItem } from '~/helpers/userDataHelpers';
 const changeLabel = 'Change';
 const notEnoughTwinkleCoinsLabel = `You don't have enough Twinkle Coins`;
 const enterNewUsernameLabel = 'Enter New Username';
@@ -140,7 +141,7 @@ export default function ChangeUsername({
     } else {
       socket.emit('change_username', newUsername);
       onSetUserState({ userId, newState: { twinkleCoins: coins } });
-      localStorage.setItem('username', newUsername);
+      setStoredItem('username', newUsername);
       setNewUsername('');
     }
     setChanging(false);

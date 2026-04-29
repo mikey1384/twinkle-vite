@@ -14,6 +14,7 @@ import useBuildEditorMutableState from './useBuildEditorMutableState';
 import useBuildRunOrchestration from './useBuildRunOrchestration';
 import useRuntimeBuildFollowUp from './useRuntimeBuildFollowUp';
 import useSharedBuildRunReconciliation from './useSharedBuildRunReconciliation';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 import type {
   PreviewPanelHandle,
   PreviewPanelProps,
@@ -84,9 +85,7 @@ function clampBuildChatPanelWidth(width: number, workspaceWidth = 0) {
 function readInitialBuildChatPanelWidth() {
   if (typeof window === 'undefined') return DEFAULT_BUILD_CHAT_PANEL_WIDTH;
   try {
-    const storedValue = window.localStorage.getItem(
-      BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY
-    );
+    const storedValue = getStoredItem(BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY);
     if (!storedValue) return DEFAULT_BUILD_CHAT_PANEL_WIDTH;
     const storedWidth = Number(storedValue);
     if (!Number.isFinite(storedWidth) || storedWidth <= 0) {
@@ -101,7 +100,7 @@ function readInitialBuildChatPanelWidth() {
 function persistBuildChatPanelWidth(width: number) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(
+    setStoredItem(
       BUILD_CHAT_PANEL_WIDTH_STORAGE_KEY,
       String(clampBuildChatPanelWidth(width))
     );

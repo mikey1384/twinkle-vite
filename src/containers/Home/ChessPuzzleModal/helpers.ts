@@ -1,6 +1,7 @@
 import React from 'react';
 import { Chess } from 'chess.js';
 import { PuzzleMove } from '~/types/chess';
+import { getStoredItem } from '~/helpers/userDataHelpers';
 
 export async function validateMoveWithAnalysis({
   userMove,
@@ -487,12 +488,8 @@ export function applyFenToBoard({
 }
 
 export function isCastlingDebug(): boolean {
-  try {
-    const v = localStorage.getItem('tw-chess-debug-castling');
-    return v === '1' || v === 'true';
-  } catch {
-    return false;
-  }
+  const v = getStoredItem('tw-chess-debug-castling');
+  return v === '1' || v === 'true';
 }
 
 export async function requestEngineReplyUnified({

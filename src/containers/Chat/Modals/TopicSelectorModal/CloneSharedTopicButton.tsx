@@ -6,6 +6,7 @@ import { css } from '@emotion/css';
 import Icon from '~/components/Icon';
 import ScopedTheme from '~/theme/ScopedTheme';
 import { useNavigate } from 'react-router-dom';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 export default function CloneSharedTopicButton({
   channelId,
@@ -139,7 +140,7 @@ export default function CloneSharedTopicButton({
         });
         // Also persist to localStorage
         try {
-          const stored = localStorage.getItem('thinkHard') || '{}';
+          const stored = getStoredItem('thinkHard', '{}');
           const parsed = JSON.parse(stored);
           const updated = {
             ...parsed,
@@ -148,7 +149,7 @@ export default function CloneSharedTopicButton({
               [subjectId]: false
             }
           };
-          localStorage.setItem('thinkHard', JSON.stringify(updated));
+          setStoredItem('thinkHard', JSON.stringify(updated));
         } catch {
           // Ignore localStorage errors
         }

@@ -1,3 +1,9 @@
+import {
+  getStoredItem,
+  removeStoredItem,
+  setStoredItem
+} from '~/helpers/userDataHelpers';
+
 const HOST_SQL_JS_CDN_BASE =
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3';
 const GUEST_VIEWER_DB_STORAGE_KEY_PREFIX = 'twinkle_build_guest_viewer_db:';
@@ -124,18 +130,14 @@ async function getGuestViewerDb({
   const storageKey = getGuestViewerDbStorageKey(buildId, guestSessionId);
 
   try {
-    const storedBase64 = window.localStorage.getItem(storageKey);
+    const storedBase64 = getStoredItem(storageKey);
     if (storedBase64) {
       const db = new SQL.Database(base64ToBytes(storedBase64));
       guestViewerDbCache.set(cacheKey, db);
       return db;
     }
   } catch {
-    try {
-      window.localStorage.removeItem(storageKey);
-    } catch {
-      // no-op
-    }
+    removeStoredItem(storageKey);
   }
 
   const emptyDb = new SQL.Database();
@@ -157,12 +159,11 @@ function persistGuestViewerDb({
     throw new Error('Guest app data exceeds the local storage limit.');
   }
 
-  try {
-    window.localStorage.setItem(
-      getGuestViewerDbStorageKey(buildId, guestSessionId),
-      bytesToBase64(exported)
-    );
-  } catch {
+  const stored = setStoredItem(
+    getGuestViewerDbStorageKey(buildId, guestSessionId),
+    bytesToBase64(exported)
+  );
+  if (!stored) {
     throw new Error('Failed to save guest app data locally.');
   }
 }

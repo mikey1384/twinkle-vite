@@ -4,6 +4,7 @@ import URL from '~/constants/URL';
 import { clientVersion } from '~/constants/defaultValues';
 import { RequestHelpers } from '~/types';
 import { queryStringForArray } from '~/helpers/stringHelpers';
+import { setStoredItem } from '~/helpers/userDataHelpers';
 
 export default function userRequestHelpers({
   auth,
@@ -50,7 +51,7 @@ export default function userRequestHelpers({
           password
         });
         if (data.token) {
-          localStorage.setItem('token', data.token);
+          setStoredItem('token', data.token);
         }
         return data;
       } catch (error) {
@@ -73,7 +74,7 @@ export default function userRequestHelpers({
           auth()
         );
         if (isSuccess && token) {
-          localStorage.setItem('token', token);
+          setStoredItem('token', token);
         }
         return { isSuccess };
       } catch (error) {
@@ -654,7 +655,7 @@ export default function userRequestHelpers({
     async login(params: { username: string; password: string }) {
       try {
         const { data } = await axios.post(`${URL}/user/login`, params);
-        localStorage.setItem('token', data.token);
+        setStoredItem('token', data.token);
         return data;
       } catch (error: any) {
         if (error.response.status === 401) {
@@ -874,7 +875,7 @@ export default function userRequestHelpers({
           userType
         });
         if (data.token) {
-          localStorage.setItem('token', data.token);
+          setStoredItem('token', data.token);
         }
         return data;
       } catch (error) {

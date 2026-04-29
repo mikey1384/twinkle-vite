@@ -14,6 +14,7 @@ import {
 } from '~/contexts';
 import { BOOKMARK_VIEWS, BookmarkView } from '~/constants/defaultValues';
 import FilterBar from '~/components/FilterBar';
+import { getStoredItem, setStoredItem } from '~/helpers/userDataHelpers';
 
 function AIChatMenu({
   bookmarkedMessages,
@@ -222,7 +223,7 @@ function AIChatMenu({
     } else {
       onSetThinkHardZero(value);
     }
-    let stored = localStorage.getItem('thinkHard') || '';
+    const stored = getStoredItem('thinkHard');
     const parsed = stored ? JSON.parse(stored) : {};
     const updatedThinkHard = {
       ...parsed,
@@ -231,7 +232,7 @@ function AIChatMenu({
         [key]: value
       }
     };
-    localStorage.setItem('thinkHard', JSON.stringify(updatedThinkHard));
+    setStoredItem('thinkHard', JSON.stringify(updatedThinkHard));
   }
 }
 
