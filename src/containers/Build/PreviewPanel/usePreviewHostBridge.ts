@@ -45,7 +45,6 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'chat:create-room',
   'chat:delete-message',
   'chat:send-message',
-  'db:save',
   'files:delete',
   'files:save-as',
   'files:upload-selected',
@@ -59,7 +58,7 @@ const MUTATING_PREVIEW_REQUEST_TYPES = new Set([
   'shared-db:create-topic',
   'shared-db:delete-entry',
   'shared-db:update-entry',
-  'viewer-db:exec'
+  'user-db:exec'
 ]);
 
 type AsyncRequestRef = RefObject<(...args: any[]) => Promise<any>>;
@@ -84,8 +83,6 @@ export interface PreviewHostBridgeAuth {
 }
 
 interface PreviewHostBridgeRequestRefs {
-  downloadBuildDatabaseRef: AsyncRequestRef;
-  uploadBuildDatabaseRef: AsyncRequestRef;
   loadBuildAiPromptsRef: AsyncRequestRef;
   callBuildAiChatRef: AsyncRequestRef;
   callBuildRuntimeAiChatRef: AsyncRequestRef;
@@ -1530,8 +1527,6 @@ export function usePreviewHostBridge({
         }
       }
 
-      const owner = previewAuth.isOwnerRef.current;
-
       try {
         let response: any = {};
 
@@ -1550,44 +1545,6 @@ export function usePreviewHostBridge({
           case 'capabilities:get':
             response = { capabilities: capabilitySnapshotRef.current };
             break;
-
-          case 'db:load': {
-            if (!owner) {
-              throw new Error('Not authorized');
-            }
-            const dbData = await requestRefs.downloadBuildDatabaseRef.current(
-              activeBuild.id
-            );
-            if (dbData) {
-              const bytes = new Uint8Array(dbData);
-              let binary = '';
-              for (let i = 0; i < bytes.length; i += 1) {
-                binary += String.fromCharCode(bytes[i]);
-              }
-              response = { data: btoa(binary) };
-            } else {
-              response = { data: null };
-            }
-            break;
-          }
-
-          case 'db:save': {
-            if (!owner) {
-              throw new Error('Not authorized');
-            }
-            const base64 = payload.data;
-            const binaryStr = atob(base64);
-            const len = binaryStr.length;
-            const bytesArr = new Uint8Array(len);
-            for (let i = 0; i < len; i += 1) {
-              bytesArr[i] = binaryStr.charCodeAt(i);
-            }
-            response = await requestRefs.uploadBuildDatabaseRef.current({
-              buildId: activeBuild.id,
-              data: bytesArr.buffer
-            });
-            break;
-          }
 
           case 'ai:list-prompts':
             response = {
@@ -1686,7 +1643,7 @@ export function usePreviewHostBridge({
             response = { viewer: getViewerInfo(previewAuth) };
             break;
 
-          case 'viewer-db:query':
+          case 'user-db:query':
             if (isGuestViewerActive(previewAuth)) {
               response = await executeGuestViewerDbQuery({
                 buildId: activeBuild.id,
@@ -1703,7 +1660,7 @@ export function usePreviewHostBridge({
             }
             break;
 
-          case 'viewer-db:exec':
+          case 'user-db:exec':
             if (isGuestViewerActive(previewAuth)) {
               response = await executeGuestViewerDbExec({
                 buildId: activeBuild.id,

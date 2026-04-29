@@ -1421,17 +1421,11 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       const normalized = String(previewSrcOverride || '').trim();
       return normalized || null;
     }, [previewSrcOverride]);
-    const downloadBuildDatabase = useAppContext(
-      (v) => v.requestHelpers.downloadBuildDatabase
-    );
     const captureBuildThumbnailPreview = useAppContext(
       (v) => v.requestHelpers.captureBuildThumbnailPreview
     );
     const downloadBuildProjectArchive = useAppContext(
       (v) => v.requestHelpers.downloadBuildProjectArchive
-    );
-    const uploadBuildDatabase = useAppContext(
-      (v) => v.requestHelpers.uploadBuildDatabase
     );
     const loadBuildAiPrompts = useAppContext(
       (v) => v.requestHelpers.loadBuildAiPrompts
@@ -1565,8 +1559,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       (v) => v.user.actions.onOpenSigninModal
     );
 
-    const downloadBuildDatabaseRef = useRef(downloadBuildDatabase);
-    const uploadBuildDatabaseRef = useRef(uploadBuildDatabase);
     const loadBuildAiPromptsRef = useRef(loadBuildAiPrompts);
     const callBuildAiChatRef = useRef(callBuildAiChat);
     const callBuildRuntimeAiChatRef = useRef(callBuildRuntimeAiChat);
@@ -1646,8 +1638,6 @@ const PreviewPanel = React.forwardRef<PreviewPanelHandle, PreviewPanelProps>(
       setGuestRestrictionBannerVisible
     }).current;
     const previewRequestRefs = useRef({
-      downloadBuildDatabaseRef,
-      uploadBuildDatabaseRef,
       loadBuildAiPromptsRef,
       callBuildAiChatRef,
       callBuildRuntimeAiChatRef,

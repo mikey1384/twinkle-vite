@@ -43,6 +43,7 @@ const guideSections: GuideSection[] = [
       'Build apps do not have app-local backend routes. Do not create or fetch /api/* endpoints from the iframe.',
       'Local project paths should be relative, such as ./src/app.js or /src/app.js from /index.html.',
       'The SDK methods proxy through the parent app and backend. Signed-in and owner-only checks are enforced outside the iframe.',
+      'Do not use sessionStorage. Use Twinkle.privateDb for default private persistence, Twinkle.sharedDb for shared data, Twinkle.userDb only for advanced private SQLite needs, or plain in-memory state for temporary UI state.',
       'When an SDK call returns aiUsagePolicy, update the app UI from that returned policy instead of guessing battery state.'
     ]
   }
@@ -79,7 +80,7 @@ const sdkSections: GuideSection[] = [
       'await Twinkle.files.saveAs({ fileName, url, dataUrl, blob, bytes, text, json, mimeType }) downloads generated or remote files through the parent frame without opening a popup.',
       'await Twinkle.files.uploadGenerated({ fileName, dataUrl, mimeType }) uploads an app-generated image/file to Twinkle storage without opening a picker.',
       'await Twinkle.files.pickAndUpload({ accept: "image/*", multiple: true }) opens a viewer file picker and uploads to Twinkle storage.',
-      'Store returned asset references in Twinkle.viewerDb, Twinkle.privateDb, or Twinkle.sharedDb instead of storing raw image bytes.',
+      'Store returned asset references in Twinkle.privateDb for private refs, Twinkle.sharedDb for shared refs, or Twinkle.userDb only when the app already needs advanced private SQLite.',
       "await Twinkle.files.list({ limit: 20 }) lists this viewer's runtime uploads for the build.",
       "await Twinkle.files.delete(assetId) deletes one of the viewer's uploaded runtime files."
     ]
@@ -87,14 +88,14 @@ const sdkSections: GuideSection[] = [
   {
     title: 'Databases',
     items: [
-      'Twinkle.viewerDb stores per-viewer server-side SQLite data.',
+      'Twinkle.privateDb is the default private per-user store for preferences, drafts, settings, and small JSON state.',
+      'Twinkle.userDb is advanced private per-user SQLite for tables, indexes, many rows, filtered queries, or aggregates.',
       'Twinkle.sharedDb stores shared build data when the capability allows it.',
       'Twinkle.sharedDb.getEntries(topic, { limit }) returns newest entries first by default and includes cursor and hasMore for pagination.',
       'Use limit or pageSize to choose how many entries appear per page. Default is 20, max is 100.',
       'Use Twinkle.sharedDb.loadMoreEntries(topic, { limit, cursor }) for Load more buttons.',
       "Pass order: 'asc' or order: 'oldest' for oldest-first chronological reads. sort and direction are accepted aliases.",
-      'Twinkle.privateDb stores private per-user build data.',
-      'Twinkle.db is owner-only build SQLite. It is not for normal viewer runtime state.'
+      'Do not use sessionStorage for runtime state or persistence.'
     ]
   },
   {

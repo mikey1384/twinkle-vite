@@ -822,21 +822,6 @@ export default function buildRequestHelpers({
       }
     },
 
-    async downloadBuildDatabase(buildId: number) {
-      try {
-        const response = await request.get(`${URL}/build/${buildId}/db`, {
-          ...auth(),
-          responseType: 'arraybuffer'
-        });
-        if (response.status === 204) {
-          return null;
-        }
-        return response.data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
     async downloadBuildProjectArchive(buildId: number) {
       try {
         const response = await request.get(
@@ -851,27 +836,6 @@ export default function buildRequestHelpers({
             }
           }
         );
-        return response.data;
-      } catch (error) {
-        return handleError(error);
-      }
-    },
-
-    async uploadBuildDatabase({
-      buildId,
-      data
-    }: {
-      buildId: number;
-      data: ArrayBuffer;
-    }) {
-      try {
-        const response = await request.put(`${URL}/build/${buildId}/db`, data, {
-          ...auth(),
-          headers: {
-            ...auth().headers,
-            'Content-Type': 'application/x-sqlite3'
-          }
-        });
         return response.data;
       } catch (error) {
         return handleError(error);
