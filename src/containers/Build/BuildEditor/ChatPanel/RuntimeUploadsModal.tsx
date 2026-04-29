@@ -217,26 +217,21 @@ export default function RuntimeUploadsModal({
               display: flex;
               flex-direction: column;
               gap: 0.9rem;
-              min-height: 0;
-              max-height: min(62vh, 620px);
-              overflow-y: auto;
               padding-right: 0.15rem;
+              padding-bottom: 0.25rem;
             `}
           >
             {groupedRuntimeUploadAssets.map((group) => (
               <section
                 key={group.key}
                 className={css`
-                  display: grid;
-                  grid-template-rows: auto minmax(0, 1fr);
+                  display: flex;
+                  flex-direction: column;
+                  flex-shrink: 0;
                   border: 1px solid var(--ui-border);
                   border-radius: 12px;
                   background: #fff;
-                  overflow: hidden;
-                  max-height: min(36vh, 320px);
-                  @media (max-width: ${mobileMaxWidth}) {
-                    max-height: min(40vh, 320px);
-                  }
+                  overflow: clip;
                 `}
               >
                 <div
@@ -306,8 +301,6 @@ export default function RuntimeUploadsModal({
                     display: flex;
                     flex-direction: column;
                     min-height: 0;
-                    overflow-y: auto;
-                    overscroll-behavior: contain;
                   `}
                 >
                   {group.assets.map((asset) => (
