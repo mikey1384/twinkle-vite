@@ -50,9 +50,10 @@ export default function SecretMessageInput({
   const [alertModalShown, setAlertModalShown] = useState(false);
   const [draggedFile, setDraggedFile] = useState();
   const FileInputRef: React.RefObject<any> = useRef(null);
-  const { fileUploadLvl, level, twinkleXP, userId } = useKeyContext(
-    (v) => v.myState
-  );
+  const fileUploadLvl = useKeyContext((v) => v.myState.fileUploadLvl);
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleXP = useKeyContext((v) => v.myState.twinkleXP);
+  const userId = useKeyContext((v) => v.myState.userId);
   const { colorKey: buttonColorKey } = useRoleColor('button', {
     fallback: 'logoBlue'
   });

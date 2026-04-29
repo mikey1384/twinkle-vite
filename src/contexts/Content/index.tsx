@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode, useMemo } from 'react';
+import React, { useReducer, ReactNode, useMemo, useRef } from 'react';
 import { createContext } from 'use-context-selector';
 import ContentActions from './actions';
 import ContentReducer from './reducer';
@@ -11,13 +11,23 @@ export function ContentContextProvider({ children }: { children: ReactNode }) {
     ContentReducer,
     initialContentState
   );
+  const latestContentStateRef = useRef(initialContentState);
+  latestContentStateRef.current = contentState;
   const memoizedActions = useMemo(
     () => ContentActions(contentDispatch),
     [contentDispatch]
   );
+  const getContentStateSnapshot = useMemo(
+    () => () => latestContentStateRef.current,
+    []
+  );
   const contextValue = useMemo(
-    () => ({ state: contentState, actions: memoizedActions }),
-    [contentState, memoizedActions]
+    () => ({
+      state: contentState,
+      actions: memoizedActions,
+      getContentStateSnapshot
+    }),
+    [contentState, getContentStateSnapshot, memoizedActions]
   );
   return (
     <ContentContext.Provider value={contextValue}>

@@ -7,9 +7,11 @@ import { karmaPointTable } from '~/constants/defaultValues';
 import { useAppContext, useViewContext, useKeyContext } from '~/contexts';
 
 export default function TwinkleStore({ mission }: { mission: any }) {
-  const { canChangeUsername, userId, karmaPoints } = useKeyContext(
-    (v) => v.myState
+  const canChangeUsername = useKeyContext(
+    (v) => v.myState.canChangeUsername
   );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
   const loadKarmaPoints = useAppContext(
     (v) => v.requestHelpers.loadKarmaPoints
   );

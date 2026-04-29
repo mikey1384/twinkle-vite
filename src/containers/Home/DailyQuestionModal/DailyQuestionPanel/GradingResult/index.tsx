@@ -91,7 +91,8 @@ export default function GradingResult({
   );
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const onLoadNewFeeds = useHomeContext((v) => v.actions.onLoadNewFeeds);
-  const { userId, twinkleCoins } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const thinkHardState = useChatContext((v) => v.state.thinkHard);
   const { colorKey: doneColor } = useRoleColor('done', { fallback: 'blue' });
   const xpNumberRole = useRoleColor('xpNumber', { fallback: 'logoGreen' });

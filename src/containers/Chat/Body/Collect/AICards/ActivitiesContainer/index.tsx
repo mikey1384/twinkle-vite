@@ -22,9 +22,8 @@ export default function ActivitiesContainer({
 }: {
   displayedThemeColor: string;
 }) {
-  const { userId: myId, username: myUsername } = useKeyContext(
-    (v) => v.myState
-  );
+  const myId = useKeyContext((v) => v.myState.userId);
+  const myUsername = useKeyContext((v) => v.myState.username);
   const loadAICardFeeds = useAppContext(
     (v) => v.requestHelpers.loadAICardFeeds
   );

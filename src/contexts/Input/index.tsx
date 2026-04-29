@@ -1,4 +1,4 @@
-import React, { useReducer, ReactNode, useMemo } from 'react';
+import React, { useReducer, ReactNode, useMemo, useRef } from 'react';
 import { createContext } from 'use-context-selector';
 import InputActions from './actions';
 import InputReducer from './reducer';
@@ -41,13 +41,19 @@ export function InputContextProvider({ children }: { children: ReactNode }) {
     InputReducer,
     initialInputState
   );
+  const latestInputStateRef = useRef<any>(initialInputState);
+  latestInputStateRef.current = inputState;
   const memoizedActions = useMemo(
     () => InputActions(inputDispatch),
     [inputDispatch]
   );
+  const getInputStateValue = useMemo(
+    () => (key: string) => latestInputStateRef.current[key],
+    []
+  );
   const contextValue = useMemo(
-    () => ({ state: inputState, actions: memoizedActions }),
-    [inputState, memoizedActions]
+    () => ({ state: inputState, actions: memoizedActions, getInputStateValue }),
+    [getInputStateValue, inputState, memoizedActions]
   );
   return (
     <InputContext.Provider value={contextValue}>{children}</InputContext.Provider>

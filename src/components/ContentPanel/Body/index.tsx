@@ -63,9 +63,9 @@ export default function Body({
     (v) => v.requestHelpers.checkIfUserResponded
   );
 
-  const { level, twinkleCoins, userId } = useKeyContext(
-    (v) => v.myState
-  );
+  const level = useKeyContext((v) => v.myState.level);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
   const { canDelete, canEdit, canReward } = useMyLevel();
 
   const { colorKey: rewardColor } = useRoleColor('reward', {

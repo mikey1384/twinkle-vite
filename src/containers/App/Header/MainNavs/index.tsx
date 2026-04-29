@@ -68,9 +68,10 @@ export default function MainNavs({
   onSetBalanceModalShown: () => void;
   totalRewardAmount: number;
 }) {
-  const { twinkleCoins, userId, banned, lastChatPath } = useKeyContext(
-    (v) => v.myState
-  );
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const banned = useKeyContext((v) => v.myState.banned);
+  const lastChatPath = useKeyContext((v) => v.myState.lastChatPath);
   const userLoaded = useAppContext((v) => v.user.state.loaded);
   const exploreCategory = useViewContext((v) => v.state.exploreCategory);
   const contentPath = useViewContext((v) => v.state.contentPath);

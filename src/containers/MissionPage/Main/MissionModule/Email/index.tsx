@@ -5,8 +5,9 @@ import ErrorBoundary from '~/components/ErrorBoundary';
 import { useKeyContext } from '~/contexts';
 
 export default function Email({ taskId }: { taskId: number }) {
-  const { verifiedEmail, emailMissionAttempted } = useKeyContext(
-    (v) => v.myState
+  const verifiedEmail = useKeyContext((v) => v.myState.verifiedEmail);
+  const emailMissionAttempted = useKeyContext(
+    (v) => v.myState.emailMissionAttempted
   );
   const conditionPassed = useMemo(() => !!verifiedEmail, [verifiedEmail]);
   const passMessage = useMemo(

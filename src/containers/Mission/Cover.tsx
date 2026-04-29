@@ -21,9 +21,10 @@ export default function Cover({
   myAttempts: { [key: string]: any };
 }) {
   const navigate = useNavigate();
-  const { profilePicUrl, userId, username, profileTheme } = useKeyContext(
-    (v) => v.myState
-  );
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const {
     color: coverColorValue,
     colorKey: coverColorKey,

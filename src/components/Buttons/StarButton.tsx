@@ -38,9 +38,11 @@ export default function StarButton({
   uploader: User;
   style?: React.CSSProperties;
 }) {
-  const { canReward, canEditRewardLevel, userId } = useKeyContext(
-    (v) => v.myState
+  const canReward = useKeyContext((v) => v.myState.canReward);
+  const canEditRewardLevel = useKeyContext(
+    (v) => v.myState.canEditRewardLevel
   );
+  const userId = useKeyContext((v) => v.myState.userId);
   const setByUser = useAppContext((v) => v.requestHelpers.setByUser);
   const { description } = useContentState({ contentId, contentType });
   const [cannotChangeModalShown, setCannotChangeModalShown] = useState(false);

@@ -12,7 +12,7 @@ export default function AnswerDailyQuestionButton({
   noBorderTop?: boolean;
   style?: React.CSSProperties;
 }) {
-  const { userId } = useKeyContext((v) => v.myState);
+  const userId = useKeyContext((v) => v.myState.userId);
   const todayStats = useNotiContext((v) => v.state.todayStats);
   const [dailyQuestionModalShown, setDailyQuestionModalShown] = useState(false);
 

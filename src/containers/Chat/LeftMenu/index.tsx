@@ -55,9 +55,10 @@ export default function LeftMenu({
   onSetTopicSelectorModalShown: (shown: boolean) => void;
 }) {
   const [isChannelsScrolling, setIsChannelsScrolling] = useState(false);
-  const { collectType, username, userId, profilePicUrl } = useKeyContext(
-    (v) => v.myState
-  );
+  const collectType = useKeyContext((v) => v.myState.collectType);
+  const username = useKeyContext((v) => v.myState.username);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
   const loadDMChannel = useAppContext((v) => v.requestHelpers.loadDMChannel);
   const onOpenNewChatTab = useChatContext((v) => v.actions.onOpenNewChatTab);
   const onUpdateSelectedChannelId = useChatContext(

@@ -33,9 +33,7 @@ export default function EditTab({
   const editWord = useAppContext((v) => v.requestHelpers.editWord);
   const canDelete = useKeyContext((v) => v.myState.canDelete);
   const level = useKeyContext((v) => v.myState.level);
-  const {
-    done: { color: doneColor }
-  } = useKeyContext((v) => v.theme);
+  const doneColor = useKeyContext((v) => v.theme.done.color);
   const [selectedTab, setSelectedTab] = useState('reorder');
   const [posting, setPosting] = useState(false);
   const [poses, setPoses] = useState<string[]>([]);

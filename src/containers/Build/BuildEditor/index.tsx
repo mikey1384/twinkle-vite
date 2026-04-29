@@ -1326,9 +1326,9 @@ export default function BuildEditor({
     (v) => v.actions.onClearBuildRuntimeVerifyResult
   );
   const navigate = useNavigate();
-  const { userId, profileTheme, twinkleCoins } = useKeyContext(
-    (v) => v.myState
-  );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const todayAiUsagePolicy = useNotiContext(
     (v) => v.state.todayStats.aiUsagePolicy as BuildRequestLimitsSnapshot | null
   );

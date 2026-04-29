@@ -48,9 +48,7 @@ export default function RightPanel({
   runResult: 'PLAYING' | 'SUCCESS' | 'FAIL' | 'PENDING';
   promoSolved: number;
 }) {
-  const {
-    xpNumber: { color: xpNumberColor }
-  } = useKeyContext((v) => v.theme);
+  const xpNumberColor = useKeyContext((v) => v.theme.xpNumber.color);
 
   const panelCls = css`
     grid-area: right;

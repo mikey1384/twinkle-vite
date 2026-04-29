@@ -95,11 +95,11 @@ export default function Details({
   });
   const banned = useKeyContext((v) => v.myState.banned);
   const level = useKeyContext((v) => v.myState.level);
-  const {
-    canEditRewardLevel: keyCanEditRewardLevel,
-    canReward: keyCanReward,
-    userId: myUserId
-  } = useKeyContext((v) => v.myState);
+  const keyCanEditRewardLevel = useKeyContext(
+    (v) => v.myState.canEditRewardLevel
+  );
+  const keyCanReward = useKeyContext((v) => v.myState.canReward);
+  const myUserId = useKeyContext((v) => v.myState.userId);
   const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
 
   const { canDelete, canEdit, canReward } = useMyLevel();

@@ -55,9 +55,9 @@ export default function DailyQuestionPanel({
 }: {
   onClose: () => void;
 }) {
-  const { userId, profileTheme, twinkleCoins } = useKeyContext(
-    (v) => v.myState
-  );
+  const userId = useKeyContext((v) => v.myState.userId);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const getDailyQuestion = useAppContext(
     (v) => v.requestHelpers.getDailyQuestion
   );

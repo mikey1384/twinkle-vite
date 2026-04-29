@@ -684,7 +684,7 @@ export default function userRequestHelpers({
       message
     }: {
       componentPath: string;
-      info: string;
+      info?: string;
       message: string;
     }) {
       try {

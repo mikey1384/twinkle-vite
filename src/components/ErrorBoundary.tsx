@@ -42,7 +42,7 @@ export default class ErrorBoundary extends Component<
     };
   }
 
-  async componentDidCatch(error: Error) {
+  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const shouldAutoRecover =
       this.props.autoRecoverDomMutationError &&
       isRecoverableDomMutationError(error) &&
@@ -50,8 +50,8 @@ export default class ErrorBoundary extends Component<
 
     reportError({
       componentPath: this.props.componentPath,
-      message: error.stack || '',
-      info: ''
+      message: error.stack || error.message || String(error),
+      info: buildErrorInfo(errorInfo)
     });
 
     if (shouldAutoRecover) {
@@ -182,13 +182,39 @@ function isRecoverableDomMutationError(error: Error) {
   );
 }
 
+function buildErrorInfo(errorInfo: React.ErrorInfo) {
+  const info = [
+    getCurrentLocation(),
+    getCurrentUserAgent(),
+    errorInfo.componentStack
+      ? `Component stack:\n${errorInfo.componentStack}`
+      : ''
+  ].filter(Boolean);
+
+  return info.join('\n\n');
+}
+
+function getCurrentLocation() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  return `URL: ${window.location.href}`;
+}
+
+function getCurrentUserAgent() {
+  if (typeof navigator === 'undefined') {
+    return '';
+  }
+  return `User agent: ${navigator.userAgent}`;
+}
+
 async function reportError({
   componentPath,
   info,
   message
 }: {
   componentPath: string;
-  info: string;
+  info?: string;
   message: string;
 }) {
   try {

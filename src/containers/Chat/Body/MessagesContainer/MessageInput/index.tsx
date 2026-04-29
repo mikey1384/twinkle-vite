@@ -30,6 +30,7 @@ import {
 import {
   useAppContext,
   useChatContext,
+  useInputContext,
   useKeyContext,
   useNotiContext,
   useViewContext
@@ -93,7 +94,6 @@ export default function MessageInput({
   currentTopic,
   selectedChannelId = 0,
   innerRef,
-  inputState,
   currentlyStreamingAIMsgId,
   isBanned,
   isRestrictedChannel,
@@ -134,7 +134,6 @@ export default function MessageInput({
   selectedChannelId: number;
   innerRef: any;
   currentlyStreamingAIMsgId: number;
-  inputState: any;
   isBanned: boolean;
   isCielChannel: boolean;
   isZeroChannel: boolean;
@@ -222,12 +221,14 @@ export default function MessageInput({
     if (!currentlyStreamingAIMsgId) return false;
     return !channelState?.cancelledMessageIds?.has(currentlyStreamingAIMsgId);
   }, [currentlyStreamingAIMsgId, channelState?.cancelledMessageIds]);
+  const getInputStateValue = useInputContext((v) => v.getInputStateValue);
 
   const textForThisChannel = useMemo(
-    () =>
-      inputState[
-        'chat' + selectedChannelId + (subchannelId ? `/${subchannelId}` : '')
-      ]?.text || '',
+    () => {
+      const inputKey =
+        'chat' + selectedChannelId + (subchannelId ? `/${subchannelId}` : '');
+      return getInputStateValue(inputKey)?.text || '';
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedChannelId, subchannelId]
   );

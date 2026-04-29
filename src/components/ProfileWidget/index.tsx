@@ -223,9 +223,10 @@ export default function ProfileWidget() {
   const onOpenSigninModal = useAppContext(
     (v) => v.user.actions.onOpenSigninModal
   );
-  const { profilePicUrl, realName, userId, username } = useKeyContext(
-    (v) => v.myState
-  );
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const realName = useKeyContext((v) => v.myState.realName);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const username = useKeyContext((v) => v.myState.username);
   const { themeStyles, accentColor: defaultAccent } = useHomePanelVars(0.08);
   const themeBg = themeStyles.hoverBg || 'transparent';
   const homeMenuItemActiveRole = useRoleColor('homeMenuItemActive', {

@@ -315,6 +315,27 @@ export default function App() {
     return idToCheck !== prevUserId.current;
   }, []);
 
+  const keyContextMyState = useMemo(
+    () => ({
+      ...myState,
+      loadingRankings,
+      profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
+    }),
+    [loadingRankings, myState]
+  );
+  const keyContextHelpers = useMemo(
+    () => ({ checkUserChange, setMobileMenuShown }),
+    [checkUserChange]
+  );
+  const keyContextValue = useMemo(
+    () => ({
+      myState: keyContextMyState,
+      theme: themeRoles,
+      helpers: keyContextHelpers
+    }),
+    [keyContextHelpers, keyContextMyState, themeRoles]
+  );
+
   const aiCallOngoing = useMemo(
     () => !!zeroChannelId && zeroChannelId === aiCallChannelId,
     [aiCallChannelId, zeroChannelId]
@@ -507,17 +528,7 @@ export default function App() {
         }
       `}
     >
-      <KeyContext.Provider
-        value={{
-          myState: {
-            ...myState,
-            loadingRankings,
-            profileTheme: myState.profileTheme || DEFAULT_PROFILE_THEME
-          },
-          theme: themeRoles,
-          helpers: { checkUserChange, setMobileMenuShown }
-        }}
-      >
+      <KeyContext.Provider value={keyContextValue}>
         {mobileMenuShown && (
           <MobileMenu onClose={() => setMobileMenuShown(false)} />
         )}

@@ -28,9 +28,11 @@ export default function DailyGoals({
   isDailyBonusButtonShown: boolean;
   achievedGoals: string[];
 }) {
-  const { userId, isAchievementsLoaded, twinkleCoins } = useKeyContext(
-    (v) => v.myState
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAchievementsLoaded = useKeyContext(
+    (v) => v.myState.isAchievementsLoaded
   );
+  const twinkleCoins = useKeyContext((v) => v.myState.twinkleCoins);
   const purchaseDailyTaskRepair = useAppContext(
     (v) => v.requestHelpers.purchaseDailyTaskRepair
   );

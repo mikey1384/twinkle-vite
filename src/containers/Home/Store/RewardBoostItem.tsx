@@ -188,9 +188,9 @@ export default function RewardBoostItem({
   style?: React.CSSProperties;
 }) {
   const [unlocking, setUnlocking] = useState(false);
-  const { rewardBoostLvl, karmaPoints, userId } = useKeyContext(
-    (v) => v.myState
-  );
+  const rewardBoostLvl = useKeyContext((v) => v.myState.rewardBoostLvl);
+  const karmaPoints = useKeyContext((v) => v.myState.karmaPoints);
+  const userId = useKeyContext((v) => v.myState.userId);
   const onSetUserState = useAppContext((v) => v.user.actions.onSetUserState);
   const upgradeRewardBoost = useAppContext(
     (v) => v.requestHelpers.upgradeRewardBoost

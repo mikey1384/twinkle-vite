@@ -50,10 +50,9 @@ export default function useNotiSocket({
   );
   const onUploadComment = useContentContext((v) => v.actions.onUploadComment);
   const onUploadReply = useContentContext((v) => v.actions.onUploadReply);
-
-  const contentState = useContentContext((v) => v.state);
-  const contentStateRef = useRef(contentState);
-  contentStateRef.current = contentState;
+  const getContentStateSnapshot = useContentContext(
+    (v) => v.getContentStateSnapshot
+  );
 
   const fetchNotifications = useAppContext(
     (v) => v.requestHelpers.fetchNotifications
@@ -227,7 +226,7 @@ export default function useNotiSocket({
     }) {
       const { contentId, contentType } = target;
       const targetKey = `${contentType}${contentId}`;
-      const currentContentState = contentStateRef.current;
+      const currentContentState = getContentStateSnapshot();
       if (currentContentState[targetKey]) {
         return true;
       }
@@ -257,7 +256,7 @@ export default function useNotiSocket({
 
     function commentExistsInState(commentId: number) {
       const id = Number(commentId);
-      const currentContentState = contentStateRef.current;
+      const currentContentState = getContentStateSnapshot();
       return Object.values(currentContentState).some((value: any) =>
         commentIsNested(value, id, new Set<any>())
       );

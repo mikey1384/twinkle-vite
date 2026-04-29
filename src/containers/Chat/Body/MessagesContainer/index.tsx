@@ -24,6 +24,7 @@ import {
   useAppContext,
   useChatContext,
   useHomeContext,
+  useInputContext,
   useKeyContext
 } from '~/contexts';
 import { User } from '~/types';
@@ -136,12 +137,13 @@ export default function MessagesContainer({
       aiCallChannelId,
       socketConnected,
       wordleModalShown
-    },
-    inputState
+    }
   } = useContext(LocalContext);
-  const { banned, profilePicUrl, userId, isAdmin, username } = useKeyContext(
-    (v) => v.myState
-  );
+  const banned = useKeyContext((v) => v.myState.banned);
+  const profilePicUrl = useKeyContext((v) => v.myState.profilePicUrl);
+  const userId = useKeyContext((v) => v.myState.userId);
+  const isAdmin = useKeyContext((v) => v.myState.isAdmin);
+  const username = useKeyContext((v) => v.myState.username);
 
   const {
     currentTransactionId,
@@ -157,9 +159,8 @@ export default function MessagesContainer({
     legacyTopicObj = {},
     selectedTab = 'all'
   } = currentChannel;
-  const textForThisChannel = useMemo(
-    () => inputState['chat' + selectedChannelId]?.text || '',
-    [selectedChannelId, inputState]
+  const textForThisChannel = useInputContext(
+    (v) => v.state['chat' + selectedChannelId]?.text || ''
   );
   const [boardCountdownObj, setBoardCountdownObj] = useState<
     Record<number, Partial<Record<'chess' | 'omok', number | null>>>
@@ -1652,7 +1653,6 @@ export default function MessagesContainer({
     currentlyStreamingAIMsgId: currentChannel.currentlyStreamingAIMsgId,
     loading: pageLoading,
     socketConnected,
-    inputState,
     isRespondingToSubject: appliedIsRespondingToSubject,
     isTwoPeopleChannel: currentChannel.twoPeople,
     onChessButtonClick: handleChessModalShown,

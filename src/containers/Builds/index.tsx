@@ -58,7 +58,7 @@ const galleryFilterClass = css`
 export default function Builds() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profileTheme } = useKeyContext((v) => v.myState);
+  const profileTheme = useKeyContext((v) => v.myState.profileTheme);
   const loadPublicBuilds = useAppContext(
     (v) => v.requestHelpers.loadPublicBuilds
   );
