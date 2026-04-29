@@ -9,7 +9,6 @@ import {
   formatAccountName,
   formatBillingPolicy,
   formatCompact,
-  formatDuration,
   formatNumber,
   formatProviderModel,
   formatProviderName,
@@ -109,7 +108,7 @@ export default function Content({
           <h1>AI Costs</h1>
           <p>
             Official Twinkle-paid provider spend, Energy usage, helper calls,
-            and account/risk-group attribution.
+            and account/risk-group attribution. Dates are bucketed by UTC day.
           </p>
         </div>
         <div className={actionsClass}>
@@ -174,14 +173,14 @@ export default function Content({
               color="orange"
             />
             <MetricCard
-              label="Images + Audio"
+              label="Images"
               value={formatNumber(report.summary.imageCount)}
-              detail={`${formatDuration(report.summary.audioSeconds)} audio`}
+              detail="image events"
               color="rose"
             />
           </section>
 
-          <Panel title="Daily Spend">
+          <Panel title="Daily Spend (UTC)">
             {report.byDay.length === 0 ? (
               <EmptyMessage />
             ) : (

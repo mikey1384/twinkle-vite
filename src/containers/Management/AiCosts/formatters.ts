@@ -21,14 +21,6 @@ export function formatCompact(value: unknown) {
   }).format(numberValue(value));
 }
 
-export function formatDuration(value: unknown) {
-  const seconds = Math.floor(numberValue(value));
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}m ${remainingSeconds}s`;
-}
-
 export function formatTime(value: number) {
   if (!value) return '';
   return new Date(value * 1000).toLocaleString();
